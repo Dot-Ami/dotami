@@ -3,7 +3,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`  
 Type: number inputs + checkbox
 
-Last updated: 2026-06-11  
+Last updated: 2026-09-21
 Workshop status: **Signed off — Phase 4 intake workshop**
 
 ## What it is
@@ -25,13 +25,13 @@ Workshop direction:
 - Step 4 remains explicitly optional and skippable.
 - Revenue fields should be framed as rough assumptions, not forecasts.
 - Hire-first should be user-facing branch language, not internal graph language. Preferred label direction: `Show a hire-first path`.
-- The right preview should show how rough numbers and hiring intent affect thresholds, assumptions, and graph branches.
+- The right preview should show how rough numbers and hiring intent affect thresholds and graph branches.
 
 ## Why it exists (user purpose)
 
 Revenue targets unlock threshold nodes (GST, incorporation timing) on the map. Hire-first toggles a branch on the scenario graph. Optional because many users do not know targets on day one.
 
-Step 4 should reduce pressure. The page can say "skip if unsure" while still making it clear that a rough answer unlocks more precise thresholds and projections later.
+Step 4 should reduce pressure. The page can say "skip if unsure" while still making it clear that a rough answer unlocks more precise threshold checks later.
 
 ## Copy (current labels)
 
@@ -45,7 +45,6 @@ Step 4 should reduce pressure. The page can say "skip if unsure" while still mak
 When Step 4 fields change, the live preview should eventually surface cards such as:
 
 - `GST/HST threshold watch` when target revenue approaches or exceeds the small supplier threshold.
-- `Projection assumptions become visible` when Y1/Y3 revenue values are present.
 - `Hiring path adds payroll / worker classification branches` when hire-first is enabled.
 - `Skip is okay` reminder when optional fields are empty, keeping the primary launch available.
 
@@ -61,7 +60,7 @@ Cards must avoid deterministic financial advice. Use `may trigger`, `watch`, `if
 
 - **`buildScenarioFromIntake`** — revenue targets and hireFirst on scenario profile/branches
 - **Live preview** — node count and graph shape
-- **Projection footer** (cockpit) — uses scenario revenue assumptions
+- **Cockpit map** — uses scenario revenue assumptions for threshold and incorporation branches
 
 ## Cleanup / open questions
 
@@ -70,4 +69,4 @@ Cards must avoid deterministic financial advice. Use `may trigger`, `watch`, `if
 
 ## Backend wiring
 
-TBD — to be specified later. Backend should convert rough revenue and hire-first state into threshold, projection, and branch preview candidates.
+TBD — to be specified later. Backend should convert rough revenue and hire-first state into threshold and branch preview candidates.

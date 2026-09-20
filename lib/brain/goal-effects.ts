@@ -56,15 +56,7 @@ export const GOAL_EFFECTS: Record<IntakeGoalId, ProductCard> = {
 };
 
 /** Refine-step product guidance (carried over from the signed-off preview copy). */
-export const REFINE_EFFECTS: Record<"projection" | "hire-first", ProductCard> = {
-  projection: {
-    typeChip: "Next action",
-    title: "Projection assumptions become visible",
-    why: "Shown because Y1/Y3 revenue assumptions are present.",
-    payoff: "If these numbers change, cockpit projections can update without changing the intake flow.",
-    source: { label: "DotAmi", href: "#" },
-    citations: [],
-  },
+export const REFINE_EFFECTS: Record<"hire-first", ProductCard> = {
   "hire-first": {
     typeChip: "Compliance",
     title: "Hiring path adds payroll branches",
