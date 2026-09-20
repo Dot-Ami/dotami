@@ -8,6 +8,7 @@ import { buildEvaluationProfile, evaluateProfile } from "@/lib/brain";
 import type { UnlockItem } from "@/lib/brain";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
+import { saveScenario } from "@/lib/journey/save-scenario";
 import type { IntakeDraft, IntakeGoalId } from "@/lib/journey/types";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import {
@@ -22,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 /**
- * Three-screen intake. Screen 0 (2026-09-13, S2.5.4a — maintainer ruling: "get to know about me first")
+ * Three-screen intake. Screen 0 (2026-09-13, S2.5.4a — decided: get to know the person first)
  * asks what the person wants DotAmi to know about them, kept as dated verbatim statements
  * that feed nothing downstream. Then the 2026-07-02 pair (W1/W5/W6): Screen A confirms the
  * AI's translation of the user's own words; Screen B grounds it (location + optional
@@ -100,6 +101,7 @@ export function IntakePage() {
   const [screen, setScreen] = useState<ScreenId>("about");
   const [freeText, setFreeText] = useState("");
   const [parsing, setParsing] = useState(false);
+  const [opening, setOpening] = useState(false);
 
   // Local calendar day, same as the cockpit — a UTC slice flipped time-boxed items a day early
   // in the evening anywhere west of UTC (found 2026-09-14).
@@ -160,30 +162,34 @@ export function IntakePage() {
     }));
   }
 
-  function openMap() {
-    if (intake.province === null) return;
+  async function openMap() {
+    if (intake.province === null || opening) return;
     if (intake.employmentStatus === "other") {
       saveEmploymentSuggestion(intake.employmentOther);
     }
     setIntake((prev) => ({ ...prev, intentParse: null }));
-    setScenario(
-      buildScenarioFromIntake(
-        {
-          // S2.5.4d: never the parse's raw sentence — that is often about the person, not the venture.
-          name: intake.name.trim() || "My venture",
-          type: intake.ventureType,
-          targetRevenueY1: intake.targetRevenueY1,
-          targetRevenueY3: intake.targetRevenueY3,
-          province: intake.province,
-          hireFirst: intake.hireFirst,
-          employmentStatus: intake.employmentStatus,
-          activityTags: [...intake.activityTags, ...intake.customTags],
-          capitalPurchasePlanned: intake.capitalPurchasePlanned,
-          stage: intake.ventureStage,
-        },
-        crypto.randomUUID(),
-      ),
+    const scenario = buildScenarioFromIntake(
+      {
+        // S2.5.4d: never the parse's raw sentence — that is often about the person, not the venture.
+        name: intake.name.trim() || "My venture",
+        type: intake.ventureType,
+        targetRevenueY1: intake.targetRevenueY1,
+        targetRevenueY3: intake.targetRevenueY3,
+        province: intake.province,
+        hireFirst: intake.hireFirst,
+        employmentStatus: intake.employmentStatus,
+        activityTags: [...intake.activityTags, ...intake.customTags],
+        capitalPurchasePlanned: intake.capitalPurchasePlanned,
+        stage: intake.ventureStage,
+      },
+      crypto.randomUUID(),
     );
+    setScenario(scenario);
+    // Issue #1: the venture reaches the database here, not only when someone finds "Save" on
+    // the cockpit rail. Fail-soft — with no database the tab copy still opens and the cockpit
+    // says so on its own save line.
+    setOpening(true);
+    await saveScenario(scenario);
     router.push("/cockpit");
   }
 
@@ -469,10 +475,10 @@ export function IntakePage() {
                 <div className="flex items-center justify-end gap-4 pt-2">
                   <Pill
                     variant="maple"
-                    onClick={() => openMap()}
-                    disabled={intake.province === null}
+                    onClick={() => void openMap()}
+                    disabled={intake.province === null || opening}
                   >
-                    Open my map →
+                    {opening ? "Opening…" : "Open my map →"}
                   </Pill>
                 </div>
                 {intake.province === null ? (

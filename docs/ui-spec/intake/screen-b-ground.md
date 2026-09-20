@@ -42,6 +42,10 @@ straight to the cockpit.
   map — it gates most of the rules" hint). On success: seeds `goalWeights` from
   `intake.goals` (`seedGoalWeightsFromIntakeGoals` — feeds Explore/Lens ranking), clears
   `intentParse`, builds the scenario (`buildScenarioFromIntake`), routes to `/cockpit`.
+  **Issue #1 (2026-09-20):** before routing it awaits `saveScenario(scenario)`
+  (`lib/journey/save-scenario.ts` → `POST /api/scenario/save`), button reads *"Opening…"*
+  and is disabled meanwhile; a failed save (no database) still opens the map — the cockpit's
+  save line reports it. The venture therefore exists in `/ventures` the moment the map opens.
   If `intake.goals` includes `discover-now`, a secondary `Compare starting points →` link
   offers `openMap("/explore")` instead — same gate, same seeding.
 

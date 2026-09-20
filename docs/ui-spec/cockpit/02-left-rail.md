@@ -61,11 +61,16 @@ spot in the product — it carries 6+ unrelated concerns.
   replaces the user's real scenario in the session with the example — there is no undo
   and no confirmation; a user who built a custom venture and taps "Maya — woodworker"
   loses their working state (recoverable only if previously saved to Postgres).
-- **"Save / resume"** — `handleSave`: POST `{ scenario }` to `/api/scenario/save`
-  (which runs `parseScenarioInput` — the validation gate C1 wants reused). States:
-  saving → saved (2.2s flash) / "Save unavailable." on error. On success also writes
-  the scenario into the session. Persists via venture upsert (H7: not transactional —
-  open audit item).
+- **Autosave + "Save now" (issue #1, 2026-09-20).** Every edit on this page (structure
+  select, branch toggles) calls `scheduleSave(next)`: the save line reads *"Unsaved
+  changes…"*, and `AUTOSAVE_DELAY_MS` (800 ms) after the last edit `persist()` POSTs
+  `{ scenario }` to `/api/scenario/save` via `lib/journey/save-scenario.ts` (an upsert keyed
+  by `scenario.id` — repeat saves are idempotent). Outcome on the line: *"Saved · 12:04"*
+  (sage, local time, stays until the next edit) or *"Save unavailable — kept in this tab.
+  Save now retries."* (maple). Before any edit the line reads *"Edits save
+  automatically."* **"Save now"** skips the pause and is the retry. The intake already
+  saved the venture on **Open my map**, so a cockpit reached from the intake is on disk
+  before it renders. (H7 transactionality still open.)
 - **"Edit venture profile"** — link to `/intake` (whole-journey walkthrough; the
   quick-edit vs full-intake question from 2026-06-10 stands).
 
@@ -79,7 +84,8 @@ change or persist it. The archetype switcher is a dev/review affordance (per the
 
 "Venture" · `<name>` · `<archetype label> · <type> · <province>` · `<planningFocus>` ·
 FieldRow labels: Type / Province / Target Y1 / Target Y3 / Structure / Employed ·
-"Switch labeled example" · "Save / resume" / "Saving…" / "Saved." / "Save unavailable."
+"Switch labeled example" · "Save now" / "Saving…" · save line: "Edits save automatically." /
+"Unsaved changes…" / "Saved · <hh:mm>" / "Save unavailable — kept in this tab. Save now retries."
 · "Edit venture profile" · "Compass, not GPS. Profile drives which surfaces appear on
 the map. DotAmi never files, predicts, or replaces an accountant."
 
@@ -104,8 +110,8 @@ Lens context, export all re-derive.
   (surface 7 workshop), switcher behind a demo toggle.
 - Archetype label/planningFocus shown for custom ventures is example bleed-through —
   either hide when the archetype is a fallback or label it as an example lens.
-- Save button says "Save / resume" but only saves; resume happens implicitly at route
-  load. Label overpromises.
+- ~~Save button says "Save / resume" but only saves~~ Fixed 2026-09-20 (issue #1): "Save
+  now" + autosave; resume still happens implicitly at route load.
 
 ## Backend wiring
 

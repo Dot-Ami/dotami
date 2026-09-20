@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { TemplatesRail } from "@/components/cockpit/templates-rail";
 import { StrategyMap } from "@/components/cockpit/strategy-map";
@@ -14,6 +14,7 @@ import { itemsForNode } from "@/lib/brain/node-items";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import {
   branchDecisions,
   updateScenarioBranch,
@@ -69,7 +70,19 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   const [selectedNodeId, setSelectedNodeId] = useState<CFENodeId | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>(null);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // Issue #1: every edit on this page is written to the database after a short pause; the
+  // line under "Save now" always says where things stand. `dirty` = an edit is waiting.
+  const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved" | "error">(
+    "idle",
+  );
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const autosaveTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+    },
+    [],
+  );
 
   const cfeNodes = cfeCatalogV2026.nodes;
   const cfeNodeById = useMemo(() => new Map(cfeNodes.map((node) => [node.id, node])), [cfeNodes]);
@@ -106,10 +119,33 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       : "structure-sole-prop";
   const decidedBranchIds = new Set(scenario.state.decidedBranchIds ?? []);
 
+  /** Writes `target` to the database and reports the outcome on the save line. Never throws. */
+  async function persist(target: Scenario) {
+    setSaveState("saving");
+    const result = await saveScenario(target);
+    if (result.ok) {
+      setSaveState("saved");
+      setSavedAt(new Date());
+    } else {
+      setSaveState("error");
+    }
+  }
+
+  /** Debounced autosave: the last edit wins; the line reads "Unsaved changes…" until it lands. */
+  function scheduleSave(next: Scenario) {
+    setSaveState("dirty");
+    if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = window.setTimeout(() => {
+      autosaveTimer.current = null;
+      void persist(next);
+    }, AUTOSAVE_DELAY_MS);
+  }
+
   function handleBranchChange(decision: BranchDecision, optionId: CFENodeId) {
     const next = updateScenarioBranch(scenario, decision.id, optionId);
     setCurrentScenario(next);
     setScenario(next);
+    scheduleSave(next);
   }
 
   /** S2.5.4d: the one place the person sets their structure. "" = not set (map assumes sole-prop). */
@@ -124,26 +160,16 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     };
     setCurrentScenario(next);
     setScenario(next);
+    scheduleSave(next);
   }
 
-  async function handleSave() {
-    setSaveState("saving");
-    try {
-      const response = await fetch("/api/scenario/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario }),
-      });
-      if (!response.ok) {
-        setSaveState("error");
-        return;
-      }
-      setSaveState("saved");
-      setScenario(scenario);
-      window.setTimeout(() => setSaveState("idle"), 2200);
-    } catch {
-      setSaveState("error");
+  /** "Save now": skips the pause. Also the retry when autosave reported the database away. */
+  function handleSave() {
+    if (autosaveTimer.current !== null) {
+      window.clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = null;
     }
+    void persist(scenario);
   }
 
   const showRightSlot = rightPanel === "playbook" || (rightPanel === "node" && selectedNode);
@@ -252,12 +278,23 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           )}
 
           <div className="mt-4 flex flex-col gap-2.5">
-            <Pill variant="maple" className="w-full justify-center" onClick={() => void handleSave()}>
-              {saveState === "saving" ? "Saving…" : "Save / resume"}
+            <Pill variant="maple" className="w-full justify-center" onClick={() => handleSave()}>
+              {saveState === "saving" ? "Saving…" : "Save now"}
             </Pill>
-            {saveState === "saved" ? <p className="text-center text-[10px] text-sage">Saved.</p> : null}
+            {/* The save line — always truthful about where the person's edits are. */}
+            {saveState === "dirty" ? (
+              <p className="text-center font-mono text-[10px] text-stone">Unsaved changes…</p>
+            ) : null}
+            {saveState === "saved" && savedAt ? (
+              <p className="text-center font-mono text-[10px] text-sage">Saved · {formatSavedAt(savedAt)}</p>
+            ) : null}
             {saveState === "error" ? (
-              <p className="text-center text-[10px] text-maple">Save unavailable.</p>
+              <p className="text-center text-[10px] text-maple">
+                Save unavailable — kept in this tab. Save now retries.
+              </p>
+            ) : null}
+            {saveState === "idle" ? (
+              <p className="text-center font-mono text-[10px] text-stone-dim">Edits save automatically.</p>
             ) : null}
             <Link href="/intake">
               <Pill variant="ghost" className="w-full justify-center">
