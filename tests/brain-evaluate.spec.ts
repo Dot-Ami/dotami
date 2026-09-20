@@ -175,6 +175,8 @@ describe("strategy rules engine — profile and intake coverage", () => {
     // No goals picked, no tags, no province → no goal cards, no venture/location claims.
     expect(result.unlocks.filter((u) => u.step === "goals")).toHaveLength(0);
     expect(result.unlocks.filter((u) => u.step === "venture")).toHaveLength(0);
+    expect(result.unlocks.filter((u) => u.step === "refine")).toHaveLength(0);
+    expect(result.unlocks.some((u) => u.id === "refine-projection")).toBe(false);
     expect(result.provinceCoverage).toBe("unknown");
   });
 

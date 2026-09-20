@@ -303,15 +303,7 @@ function goalUnlocks(profile: EvaluationProfile): UnlockItem[] {
 }
 
 function refineUnlocks(profile: EvaluationProfile): UnlockItem[] {
-  const items: UnlockItem[] = [
-    {
-      ...REFINE_EFFECTS.projection,
-      id: "refine-projection",
-      engine: "goal",
-      state: "green",
-      step: "refine",
-    },
-  ];
+  const items: UnlockItem[] = [];
   if (profile.hireFirst) {
     items.push({
       ...REFINE_EFFECTS["hire-first"],
