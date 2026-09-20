@@ -20,6 +20,21 @@ describe("intent fallback matcher", () => {
     expect(r.capitalPurchasePlanned).toBe(true);
   });
 
+  it("does not treat repair as AI or a van as a generic substring", () => {
+    const r = parseIntentFallback(
+      "A mobile bike repair van in Calgary — I drive to people's homes and offices and fix their bikes on the spot.",
+    );
+    expect(r.activityTags).toEqual(["Trades"]);
+    expect(r.capitalPurchasePlanned).toBe(true);
+    expect(r.province).toBe("AB");
+  });
+
+  it("does not treat carpenter as a car purchase", () => {
+    const r = parseIntentFallback("I am a carpenter in Calgary");
+    expect(r.activityTags).toContain("Trades");
+    expect(r.capitalPurchasePlanned).toBe(false);
+  });
+
   it("detects side-gig framing and hobby monetization", () => {
     const r = parseIntentFallback("Turn my weekend woodworking hobby into something official");
     expect(r.ventureType).toBe("side-gig");
