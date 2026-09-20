@@ -90,13 +90,17 @@ In order of least trust required:
 2. **Local adapters.** Read-only readers for ledgers that live on disk — plain-text
    accounting files, desktop accounting databases — through one typed **facts interface**
    the engine reads (revenue by period, purchases by class, payroll, payments to owners).
-3. **Cloud accounting APIs** — only if the tokens and the data stay on the person's machine,
-   and only after 1–2 exist. Open question whether this belongs in the project at all.
+3. **Anything with a login** (QuickBooks Online, Xero, a bank, payroll, a spreadsheet, a
+   CRM) — reached by the **person's own agent** through the MCP server that tool already
+   has, and written into DotAmi as proposed facts the person confirms. DotAmi holds no
+   tokens and ships no vendor list; see §8 and the design.
+
+Design, with eight scenarios and the facts schema:
+[docs/architecture/connectors-and-agents.md](architecture/connectors-and-agents.md).
 
 Open: the ledger model (accounts, transactions, periods, entities — a person with two
-ventures has two sets of books); the facts interface between ledger and engine; partial
-years; a privacy audit of every import path before it merges; how "check first" is shown when
-a figure is derived rather than stated.
+ventures has two sets of books); partial and fiscal years; a privacy audit of every import
+path before it merges; how a retracted fact shows on a card that lit from it.
 
 ## 6. Complex tax strategies and business structures — as roadmaps
 
@@ -122,10 +126,23 @@ company — the ideas DB's cross-references are the seed), sequencing across tax
 Open: how to draw a multi-entity structure on the map; how each node carries its audit read
 without softening it; which facts from §5 each strategy needs before it can light.
 
-## 7. Dependencies, in one place
+## 7. DotAmi as an MCP server — the map any agent can read
+
+Today a coding agent reaches DotAmi through `GET /api/readout`. Speaking the Model Context
+Protocol turns that into tools any MCP client can call — Claude Code, Claude Desktop, or
+whatever the person runs: `readout`, `list_ventures`, `list_statements` / `add_statement`,
+`law_provision` ("Show the words"), and — as §2, §3 and §5 land — `set_progress`,
+`add_question`, `propose_facts`. The server never confirms a fact, never edits a catalog,
+never changes a branch pick; those stay human clicks in the cockpit. Read-only tools first
+(a "walk my map and tell me what's stale" review works the day they land), writes after.
+Design and the tool table: [connectors-and-agents.md](architecture/connectors-and-agents.md) § C.
+
+## 8. Dependencies, in one place
 
 - §4 (jurisdictions) before any non-Canadian roadmap in §1.
-- §5 (records) needs the facts interface; §6 (strategies) lights from it.
+- §5 (records) needs the facts interface; §6 (strategies) lights from it; §7 (MCP) is how
+  facts arrive from anything with a login.
 - §6 needs multi-entity ventures, which build on the ideas DB.
+- §7's read-only tools depend on nothing; its write tools depend on §2, §3, §5.
 - Authentication and tenant isolation are **not** on this list: DotAmi is designed to be run
-  by the person, for the person, on their own machine.
+  by the person, for the person, on their own machine — and their agent is theirs too.
