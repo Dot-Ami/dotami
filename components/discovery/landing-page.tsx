@@ -112,8 +112,6 @@ export function LandingPage() {
         </section>
       </main>
 
-      {/* S2.5.4h: "See a sample venture" is gone with the labeled-example archetypes. */}
-      <footer className="px-8 py-7 md:px-14" />
     </div>
   );
 }
