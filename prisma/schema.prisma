@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VentureType {
+  SERVICE
+  PRODUCT
+  SIDE_GIG
+}
+
+enum Province {
+  AB
+  BC
+  MB
+  NB
+  NL
+  NS
+  NT
+  NU
+  ON
+  PE
+  QC
+  SK
+  YT
+}
+
+/// S2.5.4i: where an idea is on its way to being a business. the ideas DB: every idea is a
+/// Venture row from the moment it is named; `stage` says how real it is.
+enum VentureStage {
+  IDEA
+  PROTOTYPE
+  FIRST_CUSTOMERS
+  ESTABLISHED
+}
+
+/// S2.5.4i: how two of the person's ideas relate. Undirected in meaning; stored once (from -> to).
+/// maintainer ruling, 2026-09-14: \"some of them will likely intertwine, overlap, and can eventually become
+/// sister companies ... they will know what I am working on and be able to cross reference each idea."
+enum VentureLinkKind {
+  SISTER
+  OVERLAPS
+  FEEDS
+  RELATED
+}
+
+enum EmploymentStatus {
+  EMPLOYEE
+  APPRENTICE
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+  RETIRED
+  UNEMPLOYED
+  OTHER
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String?           @unique
+  name             String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  ventures         Venture[]
+  personStatements PersonStatement[]
+}
+
+/// What the person told DotAmi about themselves — verbatim, dated, append-only (S2.5.4a).
+/// Charter rule: never summarised into a profile; a newer row supersedes by `saidAt`, never by
+/// editing an older one. No UPDATE/DELETE path exists on purpose. Vault statements are NOT
+/// stored here — they are read live from disk (lib/person/vault-reader.ts).
+model PersonStatement {
+  id        String   @id @default(cuid())
+  userId    String
+  /// The person's own words. Max length enforced at the API (STATEMENT_MAX_CHARS).
+  text      String
+  /// The calendar day the person says they said it — their claim, not the insert time.
+  saidAt    DateTime @db.Date
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, saidAt])
+}
+
+model Venture {
+  id               String           @id @default(cuid())
+  userId           String
+  /// Stable key from TS scenarios (e.g. `example-service`) — used by Lens persistence when no Postgres intake row exists yet.
+  scenarioSeedKey  String?          @unique
+  name             String
+  type             VentureType
+  province         Province
+  targetRevenueY1  Int
+  targetRevenueY3  Int
+  structure        String           @default("sole-prop")
+  /// S2.5.4d: "user" = the person set the structure; "assumed" = the map's default (sole-prop).
+  structureSource  String           @default("assumed")
+  hireFirst        Boolean          @default(false)
+  /// S2.5.4e: intake Screen A tags + capital toggle, so the cockpit evaluator sees what the person said.
+  activityTags     String[]         @default([])
+  capitalPurchasePlanned Boolean    @default(false)
+  employmentStatus EmploymentStatus
+  /// S2.5.4i: idea -> prototype -> first customers -> established. Intake's `ventureStage` lands here.
+  stage            VentureStage     @default(IDEA)
+  /// S2.5.4i: the person's own notes on the idea, in their words. Free text; never summarised by the app.
+  notes            String           @default("")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioState    ScenarioState?
+  linksFrom        VentureLink[]    @relation("VentureLinkFrom")
+  linksTo          VentureLink[]    @relation("VentureLinkTo")
+
+  @@index([userId])
+}
+
+/// S2.5.4i: a cross-reference between two ideas. `note` is the person's reason, in their words.
+model VentureLink {
+  id        String          @id @default(cuid())
+  fromId    String
+  toId      String
+  kind      VentureLinkKind @default(RELATED)
+  note      String          @default("")
+  createdAt DateTime        @default(now())
+  from      Venture         @relation("VentureLinkFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to        Venture         @relation("VentureLinkTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId])
+}
+
+model ScenarioState {
+  id              String   @id @default(cuid())
+  ventureId       String   @unique
+  activeNodeIds   String[]
+  completedNodeIds String[]
+  ghostedNodeIds  String[]
+  activeBranches  Json
+  updatedAt       DateTime @updatedAt
+  venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+}

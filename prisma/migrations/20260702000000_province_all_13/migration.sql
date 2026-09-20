@@ -1,0 +1,12 @@
+-- Widen Province enum to all 13 provinces/territories (W3, 2026-07-02).
+-- Postgres requires each ALTER TYPE ... ADD VALUE in its own statement.
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'MB';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'NB';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'NL';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'NS';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'NT';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'NU';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'PE';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'QC';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'SK';
+ALTER TYPE "Province" ADD VALUE IF NOT EXISTS 'YT';
