@@ -163,7 +163,8 @@ export function IntakePage() {
   }
 
   async function openMap() {
-    if (intake.province === null || opening) return;
+    if (intake.province === null || intake.employmentStatus === null || opening) return;
+    const employmentStatus = intake.employmentStatus;
     if (intake.employmentStatus === "other") {
       saveEmploymentSuggestion(intake.employmentOther);
     }
@@ -177,7 +178,7 @@ export function IntakePage() {
         targetRevenueY3: intake.targetRevenueY3,
         province: intake.province,
         hireFirst: intake.hireFirst,
-        employmentStatus: intake.employmentStatus,
+        employmentStatus,
         activityTags: [...intake.activityTags, ...intake.customTags],
         capitalPurchasePlanned: intake.capitalPurchasePlanned,
         stage: intake.ventureStage,
@@ -388,7 +389,7 @@ export function IntakePage() {
 
                 <FieldGroup label="Current employment">
                   <select
-                    value={intake.employmentStatus}
+                    value={intake.employmentStatus ?? ""}
                     onChange={(e) =>
                       setIntake((p) => ({
                         ...p,
@@ -397,6 +398,7 @@ export function IntakePage() {
                     }
                     className="w-full max-w-sm rounded border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-none focus:border-maple-soft"
                   >
+                    <option value="">Choose…</option>
                     {EMPLOYMENT_OPTIONS.map((o) => (
                       <option key={o.id} value={o.id}>
                         {o.label}
@@ -476,7 +478,7 @@ export function IntakePage() {
                   <Pill
                     variant="maple"
                     onClick={() => void openMap()}
-                    disabled={intake.province === null || opening}
+                    disabled={intake.province === null || intake.employmentStatus === null || opening}
                   >
                     {opening ? "Opening…" : "Open my map →"}
                   </Pill>
@@ -484,6 +486,10 @@ export function IntakePage() {
                 {intake.province === null ? (
                   <p className="text-right text-[11px] text-stone-dim">
                     Pick a province to open the map — it gates most of the rules.
+                  </p>
+                ) : intake.employmentStatus === null ? (
+                  <p className="text-right text-[11px] text-stone-dim">
+                    Choose your current employment context to open the map — it affects which paths may apply.
                   </p>
                 ) : null}
               </>
