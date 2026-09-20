@@ -23,6 +23,17 @@ law behind it one click away.
 > never claims a qualification. Every figure it shows carries its source and the date it was
 > last verified — check that date before you rely on it.
 
+## See it
+
+![Describe a venture in one sentence, confirm what was understood, open the map, then read the statute behind a card](docs/media/intake-to-map.gif)
+
+*A made-up venture on an empty database, with no API key: the keyword parser and the rules
+engine did all of it. About 25 seconds, loops.*
+
+| Confirm what was understood | The map | The law, in its own words |
+|---|---|---|
+| ![The confirm screen: venture type, kind of work, goals and province, parsed from one sentence](docs/media/intake-confirm.png) | ![The map: four tier columns of stage and lever cards, lit from the answers given](docs/media/map.png) | ![A card's citation expanded to the Income Tax Act's own text, with the audit caution above it](docs/media/show-the-words.png) |
+
 ## What it does
 
 - **Intake → map.** Three screens (about you · confirm what you're building · where it
@@ -115,3 +126,4 @@ verified yourself, no self-promotion. Sign your commits off with the [DCO](DCO.m
 | Catalog conventions (read before editing a catalog) | `docs/engines/README.md` |
 | Architecture | `docs/architecture/` |
 | Where this is going | `docs/roadmap.md` |
+| Screenshots and the GIF above | `docs/media/` — from a made-up venture on an empty database |
