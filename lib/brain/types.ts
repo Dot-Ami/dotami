@@ -15,7 +15,8 @@ export interface EvaluationProfile {
   activityTags: string[];
   /** null until the user picks — the evaluator then surfaces federal (CA) entries only. */
   province: Province | null;
-  employmentStatus: EmploymentStatus;
+  /** null until intake asks; no employment-dependent rule may be inferred before then. */
+  employmentStatus: EmploymentStatus | null;
   structure: StructureEntityType;
   targetRevenueY1: number;
   targetRevenueY3: number;

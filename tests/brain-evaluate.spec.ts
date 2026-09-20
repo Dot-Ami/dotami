@@ -176,6 +176,7 @@ describe("strategy rules engine — profile and intake coverage", () => {
     expect(result.unlocks.filter((u) => u.step === "goals")).toHaveLength(0);
     expect(result.unlocks.filter((u) => u.step === "venture")).toHaveLength(0);
     expect(result.provinceCoverage).toBe("unknown");
+    expect(profile.employmentStatus).toBeNull();
   });
 
   it("a filled draft produces unlocks in every step group", () => {
