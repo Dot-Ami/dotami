@@ -157,6 +157,7 @@ function ItemRow({ item }: { item: UnlockItem }) {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-start gap-2 text-left"
         aria-expanded={open}
+        aria-label={`${open ? "Hide" : "Show"} details for ${item.title}`}
       >
         <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${STATE_DOT[item.state]}`} />
         <span className="min-w-0 flex-1">
