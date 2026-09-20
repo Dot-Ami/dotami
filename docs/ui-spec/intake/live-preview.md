@@ -25,7 +25,8 @@ unlocks, live, as the user edits any field.
   fork-bearing and time-boxed items surface first.
 - Renders the top 3 (`PREVIEW_VISIBLE`) as collapsed rows; remainder shown only as a
   count: "N more in your map →". Each row: colored dot (sage = green, amber = yellow),
-  type chip (`item.typeChip`), title, +/− expand toggle.
+  type chip (`item.typeChip`), title, +/− expand toggle. The toggle exposes `aria-expanded`
+  and names the item whose details it opens or closes.
 - Expanded row shows: why (`item.why`), payoff (`item.payoff`), expiry line if
   time-boxed (`item.expires`, "in use before \<year\>"), fork block if present
   (`item.fork.label`/`.note`), risk block if present (level: professional-required /

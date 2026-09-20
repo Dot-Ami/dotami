@@ -217,6 +217,7 @@ function StageCard({
       onFocus={() => onHover(true)}
       onBlur={() => onHover(false)}
       aria-pressed={selected}
+      aria-label={`${node.label}, ${chip.label}, opens detail`}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
       } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
@@ -248,6 +249,7 @@ function LeverCard({ item, onClick }: { item: UnlockItem; onClick: () => void })
       <button
         type="button"
         onClick={onClick}
+        aria-label={`Open details for ${item.title}`}
         className="w-full rounded-md border border-rule bg-ink2 px-2.5 py-2 text-left transition hover:border-maple-soft"
       >
         <div className="flex items-center gap-2">

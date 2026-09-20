@@ -10,6 +10,7 @@ export function Chip({ active, children, className, type = "button", ...props }:
   return (
     <button
       type={type}
+      aria-pressed={active}
       className={cn(
         "rounded-full border px-3 py-1.5 font-mono text-[10.5px] tracking-wide transition",
         active
