@@ -26,16 +26,24 @@ advisory unless you ask not to be.
   only GitHub-owned or verified actions, pinned to commit hashes.
 - **Dependencies:** Dependabot alerts and security-update PRs are on; routine bumps arrive
   weekly as one grouped PR. Secret scanning with push protection is on.
-- **The app:** every response carries `X-Content-Type-Options`, `X-Frame-Options: DENY`,
-  `Content-Security-Policy: frame-ancestors 'none'`, `Referrer-Policy` and a restrictive
-  `Permissions-Policy`. Every route that writes or spawns a process enforces a byte cap on
-  the request body and a per-client rate limit (`lib/api/`). The statute-store lookup runs
-  as a child process with allow-listed arguments and a minimal environment — the database
-  URL and any API key never reach it.
+- **The app:** every page carries a per-request **Content-Security-Policy** (`middleware.ts`):
+  scripts only from this origin or carrying the request's nonce (`'strict-dynamic'`, no
+  `'unsafe-inline'`), connections/images/fonts/frames/forms same-origin, `object-src 'none'`,
+  `frame-ancestors 'none'`. Every response also carries `X-Content-Type-Options`,
+  `X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive `Permissions-Policy`. Fonts
+  are committed to the repo and served from this origin — no page view contacts a third
+  party. Write routes accept only same-origin `application/json` bodies, with a byte cap and
+  a per-client rate limit (`lib/api/`). Links built from data the app did not write render
+  only as absolute `https:` URLs (`lib/http/safe-url.ts`). The statute-store lookup runs as
+  a child process with allow-listed arguments and a minimal environment — the database URL
+  and any API key never reach it.
 - **Your machine:** `npm run dev` binds to `127.0.0.1` only. Pass `-- -H 0.0.0.0` if you
   knowingly want the dev server reachable from your network.
 
-Contract tests for the above: `tests/security-hardening.spec.ts`.
+Contract tests for the above: `tests/security-hardening.spec.ts`. Independent scanners run on
+2026-09-20/21: gitleaks (history + tree, `.gitleaks.toml`), Snyk Open Source and Snyk Code
+(`.snyk`), Anthropic's Claude Code security review; CodeQL runs in CI while the repository is
+public (`.github/workflows/codeql.yml`).
 
 ## In scope
 

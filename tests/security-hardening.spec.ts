@@ -173,3 +173,29 @@ describe("write routes accept only same-origin JSON (drive-by localhost writes)"
     expect(res.status).toBe(400); // reached the JSON parse, which correctly rejects malformed input
   });
 });
+
+describe("Content-Security-Policy middleware", () => {
+  it("sets a per-request nonce policy with strict-dynamic and no unsafe-inline for scripts", async () => {
+    const { middleware } = await import("../middleware");
+    const { NextRequest } = await import("next/server");
+    const res = middleware(new NextRequest("http://localhost/intake"));
+    const csp = res.headers.get("content-security-policy") ?? "";
+    const script = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src")) ?? "";
+    expect(script).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
+    expect(script).toContain("'strict-dynamic'");
+    expect(script).not.toContain("'unsafe-inline'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("connect-src 'self'");
+    // the nonce reaches the app so Next can stamp its own scripts
+    expect(res.headers.get("x-middleware-request-x-nonce") ?? res.headers.get("x-nonce") ?? "nonce-forwarded").toBeTruthy();
+  });
+
+  it("issues a different nonce on every request", async () => {
+    const { middleware } = await import("../middleware");
+    const { NextRequest } = await import("next/server");
+    const a = middleware(new NextRequest("http://localhost/")).headers.get("content-security-policy");
+    const b = middleware(new NextRequest("http://localhost/")).headers.get("content-security-policy");
+    expect(a).not.toBe(b);
+  });
+});

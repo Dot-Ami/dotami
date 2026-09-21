@@ -24,9 +24,9 @@ const config: Config = {
         ember: "#F97316",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
         serif: ["Georgia", "Times New Roman", "serif"],
-        mono: ["JetBrains Mono", "ui-monospace", "Menlo", "monospace"],
+        mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "ui-monospace", "Menlo", "monospace"],
       },
     },
   },

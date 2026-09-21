@@ -50,7 +50,7 @@ engine did all of it. About 25 seconds, loops.*
 - **Your words.** What you tell it about yourself is kept as dated statements in your own
   words — never summarised into a profile, never used to rank anything.
 - **Your data stays yours.** Self-hosted, on your machine, in a database you own. Nothing
-  is sent anywhere.
+  is sent anywhere — not even a font request: every asset is served from your own machine.
 
 ## What it does not do (on purpose)
 
