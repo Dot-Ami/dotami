@@ -56,7 +56,9 @@ jobs:
   # Dependabot's job; this stops new ones arriving through a PR.
   dependency-review:
     name: Dependency review
-    if: github.event_name == 'pull_request'
+    # Switched on by the repository variable DEPENDENCY_REVIEW=on once GitHub's dependency-graph
+    # compare works for this repo (it answered 403 on 2026-09-20 although the graph itself is on).
+    if: github.event_name == 'pull_request' && vars.DEPENDENCY_REVIEW == 'on'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
