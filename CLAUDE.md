@@ -56,7 +56,9 @@ says where it is going.
 - Never put venture or tax knowledge in a component — it goes in a catalog.
 - Never derive a fact about the person that the person did not state.
 - Never invent a number: no projections, no dollar ranges without a sourced figure.
-- Stack: Next.js 14 App Router, TypeScript, Tailwind, Prisma, PostgreSQL. Monolith.
+- Stack: Next.js 15 App Router (15.5.24 or later), React 19, TypeScript, Tailwind, Prisma,
+  PostgreSQL. Monolith. Moved from 14 on 2026-09-20: the 14.x line has no fix for
+  GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.
 - Scope guard: no in-app AI beyond the optional intake parser, no marketplace, no filing,

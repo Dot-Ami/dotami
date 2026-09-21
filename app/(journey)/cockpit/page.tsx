@@ -22,9 +22,9 @@ async function resolveInitialScenario(ventureId: string | undefined) {
 export default async function CockpitRoutePage({
   searchParams,
 }: {
-  searchParams?: { venture?: string };
+  searchParams?: Promise<{ venture?: string }>;
 }) {
-  const ventureId = searchParams?.venture?.trim() || undefined;
+  const ventureId = (await searchParams)?.venture?.trim() || undefined;
   const scenario = await resolveInitialScenario(ventureId);
   return <CockpitPageClient initialScenario={scenario} pinned={Boolean(ventureId && scenario)} />;
 }
