@@ -20,3 +20,9 @@ updates:
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # Major versions are deliberate work (the Next.js 14 -> 15 move took code changes and a
+      # browser run); Dependabot proposes minors and patches only. Security advisories that
+      # need a major still surface as alerts.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
