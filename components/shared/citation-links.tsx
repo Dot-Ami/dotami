@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "@/lib/engines/shared/types";
+import { httpsOnly } from "@/lib/http/safe-url";
 
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
@@ -159,8 +160,8 @@ function ProvisionWords({ pointer }: { pointer: CorpusPointer }) {
               </p>
               <p className="mt-1.5 font-mono text-[9px] uppercase tracking-wider text-stone-dim">
                 The provision&apos;s own words, read from the law store through its contract. Not a summary.{" "}
-                {data.officialUrl ? (
-                  <a href={data.officialUrl} target="_blank" rel="noreferrer" className="text-maple hover:underline">
+                {httpsOnly(data.officialUrl) ? (
+                  <a href={httpsOnly(data.officialUrl) ?? undefined} target="_blank" rel="noreferrer" className="text-maple hover:underline">
                     official text ↗
                   </a>
                 ) : null}

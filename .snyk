@@ -1,0 +1,17 @@
+# Snyk (https://snyk.io) policy file. Run: snyk test · snyk code test
+version: v1.25.0
+ignore:
+  # Snyk Code: DOM XSS via dynamic href in components/shared/citation-links.tsx.
+  # Reviewed 2026-09-20. The href is `officialUrl` from the law-store API. It is scrubbed on
+  # the server (app/api/law/provision/route.ts → httpsOnly) AND at render (httpsOnly again):
+  # only an absolute https: URL is ever rendered; javascript:/data:/relative values become
+  # nothing. Test: tests/security-hardening.spec.ts "links rendered from data the app did not
+  # write". The analyzer does not model httpsOnly as a sanitizer, so the flag remains; the CLI
+  # applies Snyk Code ignores from the web UI (org "consistent ignores"), so this entry is the
+  # written reason, not a suppression.
+  'javascript/DOMXSS':
+    - 'components/shared/citation-links.tsx':
+        reason: officialUrl is restricted to absolute https URLs on the server and at render (lib/http/safe-url.ts, tested)
+        expires: 2027-03-31T00:00:00.000Z
+        created: 2026-09-20T00:00:00.000Z
+patch: {}

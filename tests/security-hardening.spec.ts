@@ -114,3 +114,27 @@ describe("law/provision", () => {
     expect(last).toBe(429);
   });
 });
+
+describe("links rendered from data the app did not write", () => {
+  it("keeps only absolute https URLs (Snyk Code DOMXSS finding, citation-links.tsx)", async () => {
+    const { httpsOnly } = await import("@/lib/http/safe-url");
+    expect(httpsOnly("https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-20.html")).toBe(
+      "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-20.html",
+    );
+    for (const bad of [
+      "javascript:alert(1)",
+      "JAVASCRIPT:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "http://laws-lois.justice.gc.ca/insecure",
+      "/relative/path",
+      "not a url",
+      "",
+      undefined,
+      null,
+      42,
+      "https://" + "a".repeat(3000),
+    ]) {
+      expect(httpsOnly(bad), `should reject ${String(bad).slice(0, 40)}`).toBeNull();
+    }
+  });
+});

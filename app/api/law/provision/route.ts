@@ -5,6 +5,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+import { httpsOnly } from "@/lib/http/safe-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,6 +120,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ found: false, reason: "The law store answered but not in a form the app could read." }, { status: 502 });
   }
 
+  // The client renders officialUrl as a link: only an absolute https URL survives.
+  if ("officialUrl" in body) body.officialUrl = httpsOnly(body.officialUrl) ?? undefined;
   if (body.found) cache.set(key, body);
   return NextResponse.json(body, { status: body.found ? 200 : 404, headers: { "X-Law-Cache": "miss" } });
 }

@@ -1,0 +1,21 @@
+# gitleaks configuration — secrets-in-git scanner (https://github.com/gitleaks/gitleaks).
+# Run: gitleaks git . --log-opts="--all" --redact   (history)   ·   gitleaks dir . --redact   (tree)
+# 2026-09-20: full history of this repo scanned clean; the two shapes below are the only hits and
+# are not credentials — a browser-storage key NAME and Recharts chart-column props.
+
+title = "DotAmi"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secrets"
+paths = [
+  '''^\.next/''',                 # Next.js build output: per-build random keys, gitignored, never committed
+  '''^node_modules/''',
+]
+regexTarget = "line"
+regexes = [
+  '''JOURNEY_STORAGE_KEY\s*=\s*"dotami-journey-v\d+"''',   # sessionStorage key name, lib/journey/types.ts
+  '''dataKey="[A-Za-z0-9_]+"''',                            # Recharts series field names
+]

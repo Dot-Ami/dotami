@@ -1,0 +1,40 @@
+# GitHub's own static analysis (CodeQL) over the TypeScript/JavaScript in this repo, on every
+# push and PR to main plus a weekly sweep for newly published query packs. Free for public
+# repositories; on a private repository it needs GitHub Advanced Security, so the job skips
+# itself while the repo is private instead of failing.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL (javascript-typescript)
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write # to upload results to the Security tab
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: "/language:javascript-typescript"
