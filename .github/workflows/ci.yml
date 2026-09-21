@@ -19,15 +19,16 @@ jobs:
   quality:
     name: Typecheck, lint, test, build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       # Prisma datasource URL is required for client init during `next build` bundling;
       # no database needs to be reachable for this CI smoke build.
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/dotami_ci?schema=public
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "20"
           cache: npm
@@ -49,3 +50,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Fails a pull request that adds or upgrades to a dependency with a known high/critical
+  # vulnerability, or one under a license the project cannot ship. Alerts on main are
+  # Dependabot's job; this stops new ones arriving through a PR.
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0

@@ -17,6 +17,26 @@ Include what you found, how to reproduce it, and what you think the impact is. Y
 an acknowledgement within a week. Once a fix is released, you will be credited in the
 advisory unless you ask not to be.
 
+## How the repository and the app are protected
+
+- **Pull requests:** every change runs the same gate (`prisma generate → typecheck → lint →
+  test → build`), a DCO sign-off check, and GitHub's dependency review, which fails a PR that
+  introduces a package with a known high or critical vulnerability. `main` cannot be
+  force-pushed or deleted; merges are squash-only. Workflows run with a read-only token, use
+  only GitHub-owned or verified actions, pinned to commit hashes.
+- **Dependencies:** Dependabot alerts and security-update PRs are on; routine bumps arrive
+  weekly as one grouped PR. Secret scanning with push protection is on.
+- **The app:** every response carries `X-Content-Type-Options`, `X-Frame-Options: DENY`,
+  `Content-Security-Policy: frame-ancestors 'none'`, `Referrer-Policy` and a restrictive
+  `Permissions-Policy`. Every route that writes or spawns a process enforces a byte cap on
+  the request body and a per-client rate limit (`lib/api/`). The statute-store lookup runs
+  as a child process with allow-listed arguments and a minimal environment — the database
+  URL and any API key never reach it.
+- **Your machine:** `npm run dev` binds to `127.0.0.1` only. Pass `-- -H 0.0.0.0` if you
+  knowingly want the dev server reachable from your network.
+
+Contract tests for the above: `tests/security-hardening.spec.ts`.
+
 ## In scope
 
 - Anything that lets a catalog entry, a citation URL, a statute-store response or a saved
