@@ -138,3 +138,38 @@ describe("links rendered from data the app did not write", () => {
     }
   });
 });
+
+describe("write routes accept only same-origin JSON (drive-by localhost writes)", () => {
+  it("refuses a text/plain body — the shape a hostile web page can send without a preflight", async () => {
+    const { POST } = await import("@/app/api/scenario/save/route");
+    const req = new Request("http://localhost/api/scenario/save", {
+      method: "POST",
+      headers: { "content-type": "text/plain", "x-forwarded-for": "203.0.113.20" },
+      body: JSON.stringify({ scenario: {} }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(415);
+  });
+
+  it("refuses a browser request stamped cross-site, even with the right content type", async () => {
+    const { POST } = await import("@/app/api/person/statements/route");
+    const req = new Request("http://localhost/api/person/statements", {
+      method: "POST",
+      headers: { "content-type": "application/json", "sec-fetch-site": "cross-site", "x-forwarded-for": "203.0.113.21" },
+      body: JSON.stringify({ text: "hello" }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("still lets the app's own same-origin JSON through to validation", async () => {
+    const { POST } = await import("@/app/api/scenario/save/route");
+    const req = new Request("http://localhost/api/scenario/save", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8", "sec-fetch-site": "same-origin", "x-forwarded-for": "203.0.113.22" },
+      body: "{",
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400); // reached the JSON parse, which correctly rejects malformed input
+  });
+});

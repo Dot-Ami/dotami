@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { ACTIVITY_TAXONOMY, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     const body = await readJsonWithLimit<{ text?: unknown }>(request, MAX_BODY_BYTES);
     text = `${body.text ?? ""}`.trim();
   } catch (error) {
-    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
+    if (error instanceof RequestRejectedError) return rejectedResponse(error);
     return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 

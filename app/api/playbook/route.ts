@@ -1,4 +1,4 @@
-import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { buildPlaybookSkeleton } from "@/lib/playbook/build-skeleton";
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   try {
     bodyUnknown = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
   } catch (error) {
-    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
+    if (error instanceof RequestRejectedError) return rejectedResponse(error);
     return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 

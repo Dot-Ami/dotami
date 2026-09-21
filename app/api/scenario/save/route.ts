@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   try {
     body = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
   } catch (error) {
-    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
+    if (error instanceof RequestRejectedError) return rejectedResponse(error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
