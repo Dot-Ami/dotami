@@ -15,7 +15,8 @@ const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
 const MAX_BODY_BYTES = 96 * 1024;
 
 /** PATCH { stage?, notes?, name? } — the three things the ideas page edits. Everything else is the map's. */
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const rateLimit = checkRateLimit(`venture-patch:${clientKeyFromRequest(request)}`, RATE_LIMIT);
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
@@ -53,7 +54,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 
   try {
-    const row = await updateVenture(prisma, params.id, patch);
+    const row = await updateVenture(prisma, id, patch);
     return NextResponse.json({ ok: true, id: row.id, updatedAt: row.updatedAt.toISOString() });
   } catch (error) {
     console.error("[ventures/patch]", error);

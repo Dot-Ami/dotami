@@ -61,14 +61,14 @@ describe("write routes refuse oversized bodies before touching the database", ()
       headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.8" },
       body: huge,
     });
-    const res = await PATCH(req, { params: { id: "abc" } });
+    const res = await PATCH(req, { params: Promise.resolve({ id: "abc" }) });
     expect(res.status).toBe(413);
   });
 
   it("ventures/[id]/links POST answers 413 to a body over its cap", async () => {
     const { POST } = await import("@/app/api/ventures/[id]/links/route");
     const huge = JSON.stringify({ toId: "def", kind: "related", note: "x".repeat(32 * 1024) });
-    const res = await POST(jsonPost("http://localhost/api/ventures/abc/links", huge), { params: { id: "abc" } });
+    const res = await POST(jsonPost("http://localhost/api/ventures/abc/links", huge), { params: Promise.resolve({ id: "abc" }) });
     expect(res.status).toBe(413);
   });
 });

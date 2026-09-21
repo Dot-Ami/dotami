@@ -13,7 +13,8 @@ const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 const MAX_BODY_BYTES = 16 * 1024;
 
 /** POST { toId, kind, note? } — cross-reference this idea with another. One row per pair. */
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const rateLimit = checkRateLimit(`venture-links:${clientKeyFromRequest(request)}`, RATE_LIMIT);
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
@@ -27,14 +28,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const body = (raw ?? {}) as { toId?: unknown; kind?: unknown; note?: unknown };
   const toId = typeof body.toId === "string" ? body.toId.trim() : "";
   if (!toId) return NextResponse.json({ error: "toId required" }, { status: 400 });
-  if (toId === params.id) return NextResponse.json({ error: "an idea cannot link to itself" }, { status: 400 });
+  if (toId === id) return NextResponse.json({ error: "an idea cannot link to itself" }, { status: 400 });
   if (!(VENTURE_LINK_KINDS as readonly string[]).includes(body.kind as string)) {
     return NextResponse.json({ error: `kind must be one of ${VENTURE_LINK_KINDS.join(", ")}` }, { status: 400 });
   }
   const note = typeof body.note === "string" ? body.note.slice(0, NOTE_MAX) : "";
 
   try {
-    const link = await linkVentures(prisma, params.id, toId, body.kind as VentureLinkKind, note);
+    const link = await linkVentures(prisma, id, toId, body.kind as VentureLinkKind, note);
     return NextResponse.json({ ok: true, id: link.id });
   } catch (error) {
     console.error("[ventures/links]", error);

@@ -71,4 +71,6 @@ components/
 
 ## Stack
 
-Next.js 14 App Router, TypeScript, Tailwind, Prisma, PostgreSQL, React Flow, dagre, Recharts, Anthropic Haiku (Lens), Vercel.
+Next.js 15 App Router (15.5.24+, since 2026-09-20), React 19, TypeScript, Tailwind, Prisma, PostgreSQL, Recharts.
+Self-hosted; no hosting provider is assumed. The optional intake parser is the only model call
+(`ANTHROPIC_API_KEY`, off by default). React Flow, dagre and the Lens chat were removed in 2026-09.
