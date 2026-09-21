@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { addTypedStatement, listTypedStatements } from "@/lib/person/statements";
 import {
   isValidSaidAt,
@@ -10,6 +12,9 @@ import {
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+
+const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
+const MAX_BODY_BYTES = 16 * 1024;
 export const dynamic = "force-dynamic";
 
 /**
@@ -45,10 +50,14 @@ export async function GET() {
 
 /** POST { text, saidAt? } — appends one verbatim statement. `saidAt` defaults to today (UTC). */
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`statements:${clientKeyFromRequest(request)}`, RATE_LIMIT);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    raw = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { linkVentures, unlinkVentures, VENTURE_LINK_KINDS, type VentureLinkKind } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
 
@@ -7,13 +9,19 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const NOTE_MAX = 2_000;
+const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
+const MAX_BODY_BYTES = 16 * 1024;
 
 /** POST { toId, kind, note? } — cross-reference this idea with another. One row per pair. */
 export async function POST(request: Request, { params }: { params: { id: string } }) {
+  const rateLimit = checkRateLimit(`venture-links:${clientKeyFromRequest(request)}`, RATE_LIMIT);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    raw = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const body = (raw ?? {}) as { toId?: unknown; kind?: unknown; note?: unknown };

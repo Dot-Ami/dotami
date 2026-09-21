@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { PayloadTooLargeError, payloadTooLargeResponse, readJsonWithLimit } from "@/lib/api/body-limit";
+import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { updateVenture, type VentureUpdate } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
 import { VENTURE_STAGES, type VentureStage } from "@/lib/scenarios/types";
@@ -9,13 +11,19 @@ export const dynamic = "force-dynamic";
 
 const NOTES_MAX = 20_000;
 const NAME_MAX = 80;
+const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
+const MAX_BODY_BYTES = 96 * 1024;
 
 /** PATCH { stage?, notes?, name? } — the three things the ideas page edits. Everything else is the map's. */
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const rateLimit = checkRateLimit(`venture-patch:${clientKeyFromRequest(request)}`, RATE_LIMIT);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    raw = await readJsonWithLimit<unknown>(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) return payloadTooLargeResponse(error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const body = (raw ?? {}) as { stage?: unknown; notes?: unknown; name?: unknown };

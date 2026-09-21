@@ -4,6 +4,8 @@ import path from "node:path";
 
 import { NextResponse } from "next/server";
 
+import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,12 @@ export const dynamic = "force-dynamic";
  */
 
 const SOURCES = new Set(["ita", "itr", "cbca", "abca"]);
-const LABEL_RE = /^[A-Za-z0-9.\- ]{1,40}$/;
+/** Must start with a letter or digit so a label can never be read as a flag by the lookup script. */
+const LABEL_RE = /^[A-Za-z0-9][A-Za-z0-9.\- ]{0,39}$/;
 const SUB_RE = /^(\([0-9a-z.]{1,8}\)){1,4}$/;
 const TIMEOUT_MS = 20_000;
+/** Each cache miss spawns a Python process; 60/min per client is generous for a human reading cards. */
+const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 
 const cache = new Map<string, unknown>();
 
@@ -32,12 +37,35 @@ function storePath(): string | null {
   return existsSync(script) ? script : null;
 }
 
+/**
+ * The child gets what a Python interpreter needs to start and find its packages (on Windows the
+ * user site-packages live under APPDATA/USERPROFILE) and nothing else: the app's DATABASE_URL
+ * and ANTHROPIC_API_KEY never reach a subprocess.
+ */
+const CHILD_ENV_NAMES = new Set([
+  "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR",
+  "APPDATA", "LOCALAPPDATA", "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "HOME", "USER", "USERNAME",
+  "LANG", "LC_ALL", "LAW_STORE_PATH",
+]);
+const CHILD_ENV_PREFIXES = ["PYTHON", "VIRTUAL_ENV", "CONDA", "PIP_"];
+
+function childEnv(): NodeJS.ProcessEnv {
+  // Next's types mark NODE_ENV as required on ProcessEnv; the child does not need it.
+  const env = {} as NodeJS.ProcessEnv;
+  for (const [name, value] of Object.entries(process.env)) {
+    const upper = name.toUpperCase();
+    if (CHILD_ENV_NAMES.has(upper) || CHILD_ENV_PREFIXES.some((p) => upper.startsWith(p))) env[name] = value;
+  }
+  env.PYTHONIOENCODING = "utf-8";
+  return env;
+}
+
 function runLookup(script: string, args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawn("python", [script, ...args], {
       cwd: path.dirname(script),
       windowsHide: true,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      env: childEnv(),
     });
     let stdout = "";
     let stderr = "";
@@ -56,6 +84,9 @@ function runLookup(script: string, args: string[]): Promise<{ code: number | nul
 }
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(`law-provision:${clientKeyFromRequest(request)}`, RATE_LIMIT);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
   const url = new URL(request.url);
   const source = url.searchParams.get("source")?.trim() ?? "";
   const label = url.searchParams.get("label")?.trim() ?? "";
