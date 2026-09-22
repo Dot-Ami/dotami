@@ -84,14 +84,24 @@ roadmaps of their own. Pick something up.
 Requires Node 20+, PostgreSQL 15+ (Docker is fine), and `npm`.
 
 ```bash
+# Postgres, reachable from this machine only — note the 127.0.0.1 in front of the port.
+# `-p 5432:5432` alone would publish your database to every device on your network.
+docker run -d --name dotami-pg --restart unless-stopped \
+  -p 127.0.0.1:5432:5432 -e POSTGRES_PASSWORD=choose-your-own postgres:17
+
 cp .env.example .env          # set DATABASE_URL
 npm ci
 npm run prisma:deploy         # applies the migrations to your database
-npm run dev                   # http://localhost:3000
+npm run dev                   # http://localhost:3000 — bound to this machine only
 ```
 
 Self-hosted, single user, no auth — run it on your own machine. A hosted multi-user
 instance needs authentication and tenant isolation that do not exist yet.
+
+Both the dev server and the database above listen on `127.0.0.1`, so nothing on your network
+can reach them. If you deliberately want to open either to your LAN (`npm run dev -- -H
+0.0.0.0`, or `-p 5432:5432`), know that there is no authentication in front of the app and
+your database password is the only thing in front of your data.
 
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
 CI runs the same chain on every pull request.
