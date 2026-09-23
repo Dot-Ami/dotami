@@ -1,6 +1,6 @@
 # Engine Reasoning Docs
 
-Last updated: 2026-07-02
+Last updated: 2026-09-22
 
 One file per engine: what it holds, how it reasons (today vs target), and the authoring
 conventions that keep a cheaper model's output correct. The *catalog shape contract*
@@ -41,6 +41,11 @@ in `docs/brain/`.
    the date; if you can't verify, don't touch the entry.
 8. **IDs are forever.** Archetypes, annotations, and (soon) risk entries reference engine
    ids. Rename labels freely; never rename ids.
+9. **A new entry usually needs a hint too.** `NODE_ENGINE_HINTS` in
+   `lib/brain/node-items.ts` maps each lifecycle node to the catalog entry ids that show on
+   its card. Add your id to the node it belongs under; an entry with no hint still appears,
+   but only under "Elsewhere on your map". `tests/engine-integrity.spec.ts` fails on a hint
+   naming an id no catalog has.
 
 ## Known duplication — status
 
@@ -49,8 +54,9 @@ The hardcoded preview-card builders in `components/discovery/intake-page.tsx` we
 rule stands permanently: **never add venture knowledge to a component** — add it to a
 catalog and let the brain drive the UI.
 
-Residual violations to sweep (found in the 2026-07-04 audit): "$30K GST
-line" copy in `intake-page.tsx`, stage/GST labels in `exploration-page.tsx` and
-`cockpit-projection-footer.tsx`, `lib/brain/goal-effects.ts` cards with empty citations,
-and the static node→engine hint maps in `lib/archetypes/annotations.ts` (parallel source
-of truth until cockpit node coloring wires to the evaluator).
+Since then `exploration-page.tsx`, `cockpit-projection-footer.tsx` and `lib/archetypes/`
+were deleted (S2.5.4h, 2026-09-14); the node→engine hint map now lives in
+`lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` (convention 9 below).
+
+Residual to sweep: the "$30K GST line" copy in `components/discovery/intake-page.tsx`,
+and the `lib/brain/goal-effects.ts` cards that still carry empty citations.

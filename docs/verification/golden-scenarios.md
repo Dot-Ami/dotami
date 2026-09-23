@@ -1,6 +1,6 @@
 # Golden scenarios (Phase 2)
 
-This document locks what “golden” means for DotAmi v0 deterministic verification. Catalog bodies stay in `lib/cfe/v2026/`; golden **inputs** are `Scenario` objects under `tests/fixtures/golden-scenarios.ts` (kept outside `lib/` so Tailwind’s `lib/**/*.ts` scan stays clear of Vitest files).
+This document locks what “golden” means for DotAmi v0 deterministic verification. Catalog bodies stay in `lib/engines/cfe/v2026/`; golden **inputs** are `Scenario` objects under `tests/fixtures/golden-scenarios.ts` (kept outside `lib/` so Tailwind’s `lib/**/*.ts` scan stays clear of Vitest files).
 
 Original v0 success criteria: five golden scenarios; structure exact; illustrative projection numbers stable in-repo via regression tests, with ±10% reserved for future cross-checks against external spreadsheets.
 

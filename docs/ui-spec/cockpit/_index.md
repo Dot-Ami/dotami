@@ -8,7 +8,7 @@ Last updated: 2026-07-05 (page-mechanics workshop, surface 6/11 — verified aga
 **Components:** [components/cockpit/cockpit-page.tsx](../../../components/cockpit/cockpit-page.tsx)
 (shell, header, left rail, canvas, panel switching),
 [cockpit-page-client.tsx](../../../components/cockpit/cockpit-page-client.tsx) (Suspense wrapper),
-[stage-node.tsx](../../../components/cockpit/stage-node.tsx) (React Flow node renderer)
+[strategy-map.tsx](../../../components/cockpit/strategy-map.tsx) (tier-column renderer)
 **Workshop status:** mechanics documented 2026-07-05; superseded by the S2.5.4h/j notes below.
 
 ## Scope note

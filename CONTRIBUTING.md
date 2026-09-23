@@ -58,8 +58,9 @@ nothing is asserted from memory.**
 
 Catalog entries are TypeScript objects under `lib/engines/<engine>/v2026/` (write-offs,
 grants, compliance, structure, templates, risk) and lifecycle nodes under
-`lib/engines/cfe/v2026/`. Read `docs/engines/README.md` and the engine's own
-`docs/engines/<engine>.md` first — they define the fields. The shape every entry shares:
+`lib/engines/cfe/v2026/`. Read `docs/engines/README.md` and the engine's own file first —
+`docs/engines/{writeoffs,grants,compliance,structure,templates,cfe}.md`. The risk engine's
+spec is [docs/brain/risk-calculator.md](docs/brain/risk-calculator.md). They define the fields. The shape every entry shares:
 
 ```ts
 {
@@ -137,6 +138,8 @@ Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI r
 suite includes `tests/engine-integrity.spec.ts`, which fails on an entry without a citation,
 a citation without an official URL or `lastVerified`, a duplicate id, or a corpus pointer
 that cannot resolve. Green is the floor, not the bar — a maintainer still reads the sources.
+The scenarios those deterministic tests lock are described in
+[docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
 
 One PR per topic. A PR that adds a node and also reformats three files is two PRs.
 

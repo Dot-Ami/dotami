@@ -1,29 +1,28 @@
 # DotAmi Architecture Overview
 
-Last updated: 2026-06-08
+Last updated: 2026-09-22
 
 ## Layer map
 
 ```mermaid
 flowchart TB
-  subgraph layers [Product layers]
-    Discovery --> Exploration --> Cockpit --> Modeling --> Execution
-  end
-  subgraph engines [Data engines lib/engines]
-    CFE[CFE]
+  Landing["/ (free-text front door)"] --> Intake["/intake (about you - confirm - ground it)"]
+  Intake --> Cockpit["/cockpit (the map)"]
+  Ventures["/ventures (saved ideas)"] --> Cockpit
+  Cockpit --> Brain["lib/brain (deterministic rules engine)"]
+  Intake --> Brain
+  Brain --> engines
+  subgraph engines [Read-only catalogs lib/engines/*/v2026]
+    CFE[CFE lifecycle]
     Structure[Structure]
     Grants[Grants]
-    Writeoffs[Write-off]
+    Writeoffs[Write-offs]
     Compliance[Compliance]
     Templates[Templates]
+    Risk[Risk]
   end
-  Archetypes[lib/archetypes/v2026] --> engines
-  Discovery --> Archetypes
-  Exploration --> Grants
-  Exploration --> Writeoffs
-  Cockpit --> CFE
-  Cockpit --> Structure
-  Cockpit --> Compliance
+  Brain --> DB[(PostgreSQL: the person's answers only)]
+  Cockpit -. optional .-> Law["law store (statute text)"]
 ```
 
 ## Routes
@@ -32,8 +31,8 @@ flowchart TB
 |-------|-------|----------------|
 | `/` | Discovery | `components/discovery/landing-page` |
 | `/intake` | Discovery | `components/discovery/intake-page` |
-| `/explore` | Exploration | `components/exploration/exploration-page` |
 | `/cockpit` | Cockpit | `components/cockpit/cockpit-page` |
+| `/ventures` | Ideas | `components/ventures/ventures-page` |
 
 ## Folder layout
 

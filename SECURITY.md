@@ -20,8 +20,10 @@ advisory unless you ask not to be.
 ## How the repository and the app are protected
 
 - **Pull requests:** every change runs the same gate (`prisma generate → typecheck → lint →
-  test → build`), a DCO sign-off check, and GitHub's dependency review, which fails a PR that
-  introduces a package with a known high or critical vulnerability. `main` cannot be
+  test → build`) and a DCO sign-off check. While the repository variable `DEPENDENCY_REVIEW`
+  is set to `on`, GitHub's dependency review also runs and fails a PR that introduces a
+  package with a known high or critical vulnerability, or a licence the project cannot ship;
+  when the variable is unset that job does not run. `main` cannot be
   force-pushed or deleted; merges are squash-only. Workflows run with a read-only token, use
   only GitHub-owned or verified actions, pinned to commit hashes.
 - **Dependencies:** Dependabot alerts and security-update PRs are on; routine bumps arrive
