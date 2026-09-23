@@ -92,6 +92,7 @@ docker run -d --name dotami-pg --restart unless-stopped \
 cp .env.example .env          # set DATABASE_URL
 npm ci
 npm run prisma:deploy         # applies the migrations to your database
+npm run seed                  # optional: two invented ventures so the map has something to show
 npm run dev                   # http://localhost:3000 — bound to this machine only
 ```
 

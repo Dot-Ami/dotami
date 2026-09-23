@@ -130,6 +130,7 @@ Rename the label, never the id.
 cp .env.example .env     # DATABASE_URL → a PostgreSQL you own (Docker is fine)
 npm ci
 npm run prisma:deploy
+npm run seed             # optional: two invented ventures so the map is not empty
 npm run dev
 ```
 
