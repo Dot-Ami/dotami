@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/Dot-Ami/dotami/security/advisories/new
+    about: Never in a public issue — this reaches the maintainer privately. See SECURITY.md.
+  - name: Ask a question, or think out loud
+    url: https://github.com/Dot-Ami/dotami/discussions
+    about: Discussions, not issues, for anything that does not yet have a source behind it.
+  - name: How a node is written (read before a content issue)
+    url: https://github.com/Dot-Ami/dotami/blob/main/CONTRIBUTING.md#how-a-node-is-written
+    about: The citation rules — one paragraph, typed sources in authority order, dated.

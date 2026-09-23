@@ -14,6 +14,9 @@ One paragraph a first-timer could repeat back.
 Engine (write-offs / grants / compliance / structure / templates / risk / lifecycle) and the
 tier or stage it sits under. If it attaches to an existing lifecycle node, name that node id.
 
+(If it should show on that node's card, the PR also adds the entry id to `NODE_ENGINE_HINTS`
+in `lib/brain/node-items.ts` — see CONTRIBUTING.)
+
 ## Sources (official, in authority order)
 
 1. Statute / regulation section (Justice Canada or the provincial King's Printer): URL + the day you read it

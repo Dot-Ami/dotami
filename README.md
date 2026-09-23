@@ -1,5 +1,10 @@
 # DotAmi
 
+[![CI](https://github.com/Dot-Ami/dotami/actions/workflows/ci.yml/badge.svg)](https://github.com/Dot-Ami/dotami/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Dot-Ami/dotami/badge)](https://scorecard.dev/viewer/?uri=github.com/Dot-Ami/dotami)
+[![Code: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
+[![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE-CONTENT.md)
+
 **Every path to financial freedom, mapped step by step and cited to the law — open source,
 community-curated, so everyone has access to the same tools, tactics and tricks the elite have.**
 
@@ -138,3 +143,4 @@ verified yourself, no self-promotion. Sign your commits off with the [DCO](DCO.m
 | Architecture | `docs/architecture/` |
 | Where this is going | `docs/roadmap.md` |
 | Screenshots and the GIF above | `docs/media/` — from a made-up venture on an empty database |
+| What changed between snapshots | `CHANGELOG.md` — entry dates live on the entries themselves |

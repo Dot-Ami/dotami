@@ -1,0 +1,8 @@
+# Every pull request requests a review from the maintainer. CONTRIBUTING promises that a
+# maintainer confirms the shape of a contribution; this is what routes it.
+*                 @Dot-Ami
+
+# The parts where a mistake is a wrong claim about the law, not a bug.
+/lib/engines/     @Dot-Ami
+/SECURITY.md      @Dot-Ami
+/CONTRIBUTING.md  @Dot-Ami

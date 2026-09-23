@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: DotAmi
+message: >-
+  If you cite something you found here, cite the entry's own source first — the statute, the
+  regulation or the authority's page. DotAmi is the map, not the authority.
+type: software
+authors:
+  - name: The DotAmi contributors
+repository-code: https://github.com/Dot-Ami/dotami
+abstract: >-
+  An open-source map of paths to financial freedom — structures, write-offs, grants,
+  thresholds, elections and strategies — with every claim cited to the law that makes it work
+  and dated with the day a human last read the source. Canada is the first jurisdiction mapped.
+keywords:
+  - tax
+  - small-business
+  - canada
+  - citations
+  - open-data
+license: Apache-2.0
+license-url: https://github.com/Dot-Ami/dotami/blob/main/LICENSE

@@ -14,4 +14,5 @@ For every rule, rate, threshold or date touched: the official URL and the day yo
 - [ ] No number appears in prose that is not also a typed field with a source
 - [ ] Nothing reads as a recommendation ("you should")
 - [ ] The matching `docs/ui-spec/` or `docs/engines/` file is updated if behaviour changed
+- [ ] A new catalog entry that belongs on a node's card is listed in `NODE_ENGINE_HINTS` (`lib/brain/node-items.ts`)
 - [ ] Commits are signed off (`git commit -s`, see `DCO.md`)
