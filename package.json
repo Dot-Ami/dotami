@@ -44,6 +44,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
+    "deepmerge-ts": "^8.0.0",
     "glob": "^10.5.0",
     "postcss": "^8.5.13"
   }
