@@ -15,6 +15,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "ci:quality": "npm run prisma:generate && npm run typecheck && npm run lint && npm run test && npm run build"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
     "@prisma/client": "^6.19.3",
