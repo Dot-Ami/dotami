@@ -16,6 +16,11 @@ nothing is asserted from memory.**
 - [Sign-off (DCO) and licenses](#sign-off-dco-and-licenses)
 - [Good vs. not-so-good contributions](#good-vs-not-so-good-contributions)
 
+**What to expect back.** A first response on an issue or a pull request within 7 days, and
+a decision — merged, changes requested, or a plain reason it is out of scope — within 14.
+If it has been longer, say so on the thread; that is a bug in the maintaining, not rudeness.
+Vulnerabilities go through [SECURITY.md](SECURITY.md), never a public issue.
+
 ## What we need
 
 1. **Jurisdictions.** Canada is mapped first: federal entries plus Alberta, British Columbia
@@ -82,6 +87,11 @@ Typed fields for anything the rules engine reasons about (a rate, a threshold am
 expiry date) — never a number hidden in a sentence. Time-boxed rules carry their expiry so
 the engine can surface them amber and drop them when they lapse.
 
+**One step that is easy to miss:** if the entry should appear on a particular lifecycle
+node's card, add its id to that node in `NODE_ENGINE_HINTS` (`lib/brain/node-items.ts`).
+An entry with no hint still shows, but only under "Elsewhere on your map", and
+`tests/engine-integrity.spec.ts` fails if a hint names an id no catalog has.
+
 ## Citations and the source order
 
 Every citation is:
@@ -142,7 +152,11 @@ that cannot resolve. Green is the floor, not the bar — a maintainer still read
 The scenarios those deterministic tests lock are described in
 [docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
 
-One PR per topic. A PR that adds a node and also reformats three files is two PRs.
+One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
+that from happening by accident, the repository ships `.editorconfig` and a Prettier config:
+run `npm run format` before you commit, or let your editor pick them up. Formatting is not
+part of the gate yet — it joins `ci:quality` once the open pull requests have landed, so
+that nobody's branch is invalidated by a whitespace commit.
 
 ## Sign-off (DCO) and licenses
 
