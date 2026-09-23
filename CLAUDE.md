@@ -63,6 +63,14 @@ says where it is going.
   isolation that do not exist yet; do not pretend they do.
 - Scope guard: no in-app AI beyond the optional intake parser, no marketplace, no filing,
   no regulatory automation.
+- **Code ships explained.** Every new file opens with a short header: what it is responsible
+  for, what it must never do. Every non-obvious function says why it exists, what it
+  guarantees, and the gotcha that will bite the next reader. Comment the *why*, never the
+  *what* — `// increment i` is noise; *"the CRA rule triggers on exceeding the threshold, not
+  reaching it"* is the job. Point at `docs/ui-spec/` and `docs/engines/` rather than copying
+  them: one source of truth per fact. A comment that is wrong is worse than no comment, so if
+  the code contradicts a doc or a rule here, open an issue instead of writing a comment that
+  papers over it. `lib/api/rate-limit.ts` and `lib/api/body-limit.ts` are the house style.
 
 ## Verification
 
