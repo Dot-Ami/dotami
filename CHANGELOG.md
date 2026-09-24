@@ -36,5 +36,5 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-09-20
 
 ### Added
-- First public release: seven catalogs (84 citations) behind a deterministic rules engine,
+- First public release: seven catalogs (74 citations) behind a deterministic rules engine,
   the intake, the map, saved ideas, the JSON readout, and the optional local statute store.
