@@ -11,6 +11,8 @@ on:
     branches: [main]
   schedule:
     - cron: "17 6 * * 1" # Mondays 06:17 UTC
+  # A 'Run workflow' button on the Actions tab, so a scan can be run by hand any time.
+  workflow_dispatch:
 
 permissions:
   contents: read

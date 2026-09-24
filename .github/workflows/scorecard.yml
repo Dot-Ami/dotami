@@ -10,6 +10,8 @@ on:
     branches: [main]
   schedule:
     - cron: "43 7 * * 2" # Tuesdays 07:43 UTC
+  # A 'Run workflow' button on the Actions tab, so a scan can be run by hand any time.
+  workflow_dispatch:
   branch_protection_rule:
 
 permissions: read-all
