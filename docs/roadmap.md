@@ -83,16 +83,17 @@ figure shows the rows it came from. It still never files, never recommends.
 
 In order of least trust required:
 
-1. **File imports.** Bank and card exports (CSV, OFX/QFX); exports from common accounting
-   software (CSV, and the vendor formats where they are documented). A chart-of-accounts
-   mapping the person confirms — categorisation is theirs, the app proposes nothing it has
-   not shown.
+1. **File imports.** Excel and CSV exports from accounting software — QuickBooks Online,
+   Xero, Wave, FreshBooks and Sage all offer them. A row mapping the person confirms —
+   categorisation is theirs, the app proposes nothing it has not shown. The file is read and
+   not kept; the totals are. Bank and card records are not read (decided 2026-09-24; kept as
+   an idea for forks in [connectors/README.md](connectors/README.md)).
 2. **Local adapters.** Read-only readers for ledgers that live on disk — plain-text
    accounting files, desktop accounting databases — through one typed **facts interface**
    the engine reads (revenue by period, purchases by class, payroll, payments to owners).
-3. **Anything with a login** (QuickBooks Online, Xero, a bank, payroll, a spreadsheet, a
-   CRM) — reached by the **person's own agent** through the MCP server that tool already
-   has, and written into DotAmi as proposed facts the person confirms. DotAmi holds no
+3. **Anything with a login** (QuickBooks Online, Xero, payroll, a spreadsheet, a CRM) —
+   reached by the **person's own agent** through the MCP server or official command-line
+   tool that product already has, and written into DotAmi as proposed facts the person confirms. DotAmi holds no
    tokens and ships no vendor list; see §8 and the design.
 
 Design, with eight scenarios and the facts schema:
