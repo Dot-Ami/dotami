@@ -42,7 +42,7 @@ export function matchPredicate(profile: EvaluationProfile, predicate: Predicate)
     case "ventureType":
       return predicate.value.includes(profile.ventureType);
     case "employmentStatus":
-      return predicate.value.includes(profile.employmentStatus);
+      return profile.employmentStatus !== null && predicate.value.includes(profile.employmentStatus);
     case "activityTags":
       return tagsIntersect(profile.activityTags, predicate.value);
     case "targetRevenueY1":

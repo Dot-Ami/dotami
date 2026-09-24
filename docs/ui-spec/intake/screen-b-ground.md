@@ -5,7 +5,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: location + optional numbers screen
 
-Last updated: 2026-07-02 (page-mechanics workshop, verified against shipped code)
+Last updated: 2026-09-21 (employment context is explicitly chosen before opening the map)
 Workshop status: **signed off**
 
 ## What it is
@@ -20,7 +20,7 @@ straight to the cockpit.
   `FULL_COVERAGE_PROVINCES` (AB/BC/ON) render nothing further; the rest also show: *"Federal rules apply. Provincial coverage for
   \<province\> is coming — nothing shown will be wrong, some provincial programs just won't
   appear yet."* Federal (CA-wide) engine entries surface for every province regardless.
-- **Current employment** — 7 options as of this session (was 5 — see Fixed below):
+- **Current employment** — starts at **Choose…**, then offers 7 options as of this session (was 5 — see Fixed below):
   employee, self-employed, business-owner, apprentice/student, retired, unemployed,
   other. Choosing **Other…** reveals a free-text input backed by a `<datalist>` cached in
   `localStorage` (`dotami-employment-suggestions`, key persists across sessions/tabs —
@@ -38,8 +38,8 @@ straight to the cockpit.
   detected it, editable here regardless of whether it was detected).
 - **Hire-first toggle** — sets `intake.hireFirst`.
 - Primary action: `Open my map →` (`openMap("/cockpit")`) — **hard-blocked while
-  `intake.province === null`** (button disabled + explicit "Pick a province to open the
-  map — it gates most of the rules" hint). On success: seeds `goalWeights` from
+  `intake.province === null` or `intake.employmentStatus === null`** (button disabled + an
+  explicit hint for the missing field). On success: seeds `goalWeights` from
   `intake.goals` (`seedGoalWeightsFromIntakeGoals` — feeds Explore/Lens ranking), clears
   `intentParse`, builds the scenario (`buildScenarioFromIntake`), routes to `/cockpit`.
   **Issue #1 (2026-09-20):** before routing it awaits `saveScenario(scenario)`
@@ -57,7 +57,7 @@ field feeds a specific downstream rule.
 
 ## State touched
 
-`intake.province`, `intake.employmentStatus`, `intake.employmentOther`,
+`intake.province`, `intake.employmentStatus` (null until chosen), `intake.employmentOther`,
 `intake.targetRevenueY1/Y3`, `intake.capitalPurchasePlanned`, `intake.hireFirst`, and at
 submit: `intake.goalWeights`, `intake.intentParse` (cleared), plus `scenario` (full write
 via `setScenario`).
