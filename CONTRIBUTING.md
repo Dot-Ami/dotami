@@ -152,14 +152,6 @@ that cannot resolve. Green is the floor, not the bar — a maintainer still read
 The scenarios those deterministic tests lock are described in
 [docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
 
-**Leave comments in the code.** A new file opens with a header saying what it is responsible
-for and what it must not do; anything non-obvious says *why* it is that way, not what the
-line does. Point at the spec (`docs/ui-spec/`, `docs/engines/`) instead of restating it, and
-if you find code that contradicts a doc, open an issue rather than describing the mismatch
-in a comment. `lib/api/rate-limit.ts` is the style to copy. This applies to catalog entries
-too: if an eligibility rule reads oddly because the source says something surprising, say so
-beside it.
-
 One PR per topic. A PR that adds a node and also reformats three files is two PRs. To keep
 that from happening by accident, the repository ships `.editorconfig` and a Prettier config:
 run `npm run format` before you commit, or let your editor pick them up. Formatting is not
