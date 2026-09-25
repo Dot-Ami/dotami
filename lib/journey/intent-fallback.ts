@@ -25,6 +25,7 @@ const TAG_SYNONYMS: Record<ActivityTag, string[]> = {
   Trades: [
     "plumb", "electric", "carpent", "renovat", "construction", "weld", "hvac", "landscap",
     "contractor", "roofing", "painting", "woodwork", "furniture", "handyman", "mechanic",
+    "repair",
   ],
   "Content / streaming": [
     "youtube", "stream", "podcast", "tiktok", "content", "blog", "twitch", "video channel",
@@ -73,12 +74,22 @@ const CAPITAL_KEYWORDS = [
 const SIDE_GIG_KEYWORDS = ["side gig", "side hustle", "side-gig", "hobby", "weekend", "part time", "part-time", "evenings"];
 const PRODUCT_KEYWORDS = ["product", "sell", "shop", "store", "manufactur", "device", "hardware", "game"];
 
+function matchesKeyword(text: string, keyword: string): boolean {
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (keyword.length <= 3) {
+    const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}s?(?:[^a-z0-9]|$)`, "i");
+    return pattern.test(text);
+  }
+  const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}`, "i");
+  return pattern.test(text);
+}
+
 function detectVentureType(text: string, tags: string[]): VentureType {
-  if (SIDE_GIG_KEYWORDS.some((k) => text.includes(k))) return "side-gig";
+  if (SIDE_GIG_KEYWORDS.some((k) => matchesKeyword(text, k))) return "side-gig";
   if (
     tags.includes("E-commerce / retail") ||
     tags.includes("Manufacturing") ||
-    PRODUCT_KEYWORDS.some((k) => text.includes(k))
+    PRODUCT_KEYWORDS.some((k) => matchesKeyword(text, k))
   ) {
     return "product";
   }
@@ -95,19 +106,19 @@ export function parseIntentFallback(rawText: string): IntentParseResult {
   const text = rawText.toLowerCase();
 
   const activityTags = ACTIVITY_TAXONOMY.filter((tag) =>
-    TAG_SYNONYMS[tag].some((syn) => text.includes(syn)),
+    TAG_SYNONYMS[tag].some((syn) => matchesKeyword(text, syn)),
   );
 
   const goals = (Object.keys(GOAL_KEYWORDS) as IntakeGoalId[]).filter((goal) =>
-    GOAL_KEYWORDS[goal].some((k) => text.includes(k)),
+    GOAL_KEYWORDS[goal].some((k) => matchesKeyword(text, k)),
   );
 
   const province =
     (Object.keys(PROVINCE_KEYWORDS) as Province[]).find((code) =>
-      PROVINCE_KEYWORDS[code].some((k) => text.includes(k)),
+      PROVINCE_KEYWORDS[code].some((k) => matchesKeyword(text, k)),
     ) ?? null;
 
-  const capitalPurchasePlanned = CAPITAL_KEYWORDS.some((k) => text.includes(k));
+  const capitalPurchasePlanned = CAPITAL_KEYWORDS.some((k) => matchesKeyword(text, k));
 
   return {
     ventureType: detectVentureType(text, activityTags),
