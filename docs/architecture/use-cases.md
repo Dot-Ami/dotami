@@ -43,6 +43,17 @@ The back-end plan at the end is what those people add up to.
    what the AI did.
 7. **An accountant reviews at the end.** A roadmap is marked *reviewed* only after a
    professional has read it.
+8. **Bank and card records are the person's call (2026-09-28).** The project doesn't
+   recommend it, but a person may point the Lens at a bank statement. A warning comes up
+   first, every time a new source of bank data is added. This replaces the 2026-09-24 rule
+   that DotAmi reads none.
+9. **A figure is confirmed only by the person agreeing to it.** When the Lens (or an outside
+   agent) has figures to confirm, the app asks, the way Claude Code asks before using a tool:
+   the figures, where each came from, and *Agree* or *No, I'll do it myself*. No permission
+   level skips this question.
+10. **Any tax software.** DotAmi works with whatever tax software the person files with —
+    Wealthsimple Tax, TurboTax or any other — by speaking the CRA's own form and line numbers
+    (see *Tax software* below).
 
 ## The people
 
@@ -120,7 +131,8 @@ Some in Excel, receipts as phone photos, invoices in email, a bank PDF.
 
 - **Needs:** the Lens reading files wherever they are (with the person's permission for each
   folder), images read by a model that can see, and every figure it finds arriving as
-  *proposed* with the file it came from.
+  *proposed* with the file it came from. A bank statement is allowed after the bank-records
+  warning (decision 8).
 
 ### 9. Someone who moves province, pauses, or closes a business
 
@@ -239,6 +251,29 @@ and its Canadian customer terms have no such clause. DotAmi quotes, the person d
 the same routes, off by default, with a warning before it is turned on and a record of every
 write it made.
 
+## Tax software — any tool, through the CRA's own line numbers
+
+Tax software (Wealthsimple Tax, TurboTax, UFile and the rest) is a different thing from
+accounting software: it is used once a year to fill in the CRA's forms, and every certified
+tool fills in the **same forms with the same line numbers**. DotAmi works with all of them by
+speaking those numbers, not by connecting to any one tool.
+
+- **In — last year's return.** Wealthsimple Tax saves "a comprehensive PDF of your tax return,
+  including the complete T1, Schedule 1, and all applicable forms"
+  ([Wealthsimple help](https://help.wealthsimple.com/hc/en-ca/articles/4409636031515-Access-a-PDF-copy-of-your-tax-return),
+  read 2026-09-28). The person drops that PDF in; the Lens reads it and proposes figures, each
+  tagged with its form and line — for a sole proprietor, form T2125 line 8299 (gross business
+  income) and line 9369 (net income before adjustments)
+  ([CRA, T2125 Part 3C](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/part-3-gross-business-professional-income.html)).
+  The person agrees to them (decision 9).
+- **Out — a sheet for whatever tool they file with.** For the coming return, DotAmi lists each
+  confirmed figure next to the form and line it belongs on. The person types them into their
+  tax software, or — with the browser switched on and its warning read — has the Lens enter
+  them in a web-based tool. **Submitting the return is always the person's own click;**
+  DotAmi never files.
+- **Connector notes** for tax software say where that tool saves its PDF and any quirks;
+  Wealthsimple Tax and TurboTax are the first two.
+
 ## Permission levels — one model for the Lens and outside agents
 
 The person sets one level per venture; the Lens and any connected agent get the same:
@@ -250,8 +285,9 @@ The person sets one level per venture; the Lens and any connected agent get the 
 | Act, asking first | make changes after the person approves each action |
 | Act freely | make changes without asking; everything is logged and can be undone |
 
-Commands on the computer, the browser and writing to accounting software are switched on
-separately, each with its own warning.
+Commands on the computer, the browser, bank records and writing to accounting software are
+switched on separately, each with its own warning. Confirming a figure is never covered by a
+level: it always asks (decision 9).
 
 ## What the back end stores
 
@@ -267,18 +303,51 @@ separately, each with its own warning.
 Protection for a stolen laptop is the operating system's disk encryption (BitLocker,
 FileVault); setup tells the person to turn it on.
 
+## The desktop app — database and shell (recommendation, awaiting the maintainer's go)
+
+Today DotAmi needs a PostgreSQL server running beside it. A desktop app can't ask a person to
+install one. Three ways out, read against the vendors' own docs on 2026-09-28:
+
+| | What it is | Cost | Risk |
+|---|---|---|---|
+| **SQLite** (recommended) | the database most desktop apps use: one file in the app's folder | the 4 list fields (`activityTags`, `activeNodeIds`, `completedNodeIds`, `ghostedNodeIds`) become JSON, because Prisma "scalar lists" work only on PostgreSQL, CockroachDB and MongoDB; the 8 migrations are replaced by one fresh starting migration | Prisma's SQLite adapters are official ([driver list](https://www.prisma.io/docs/orm/v6/overview/databases/database-drivers)); SQLite "doesn't enforce enum values at the database level", so Prisma checks them instead ([SQLite page](https://www.prisma.io/docs/orm/overview/databases/sqlite)) |
+| PGlite | PostgreSQL rebuilt to run inside the app | no schema change | Prisma lists its PGlite adapter as **community-maintained** — a volunteer project under the most sensitive data DotAmi holds |
+| A real PostgreSQL server inside the app | today's setup, bundled | no schema change | a database server running in the background on every user's computer, to install, start, upgrade and repair |
+
+Why SQLite: the one file *is* the person's data — back it up by copying it, delete everything
+by deleting it; the library support is official; and contributors stop needing Docker too.
+
+**The shell: Electron.** DotAmi is a Next.js app whose server needs Node.js, and the Lens needs
+a browser inside the app that Playwright can drive. Electron ships both. Playwright's Electron
+support is labelled **experimental** ([Playwright docs](https://playwright.dev/docs/api/class-electron)).
+Actual Budget, a local-first finance app, ships its desktop app the same way
+([`desktop-electron`](https://github.com/actualbudget/actual)).
+
+**The running cost — code signing.** Unsigned, the app would stop exactly the people it is
+for. On Windows it shows "Windows protected your PC" and needs *Run anyway*, and Windows 11's
+Smart App Control "will block execution of unsigned files"
+([Microsoft](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation)).
+On a Mac, "macOS Catalina and later also requires software to be notarized"; otherwise it
+says "Apple cannot check [the app] for malicious software"
+([Apple](https://support.apple.com/en-us/102445)).
+- Apple Developer Program (signing + notarizing): "99 USD per membership year"
+  ([Apple](https://developer.apple.com/programs/enroll/)).
+- Windows, Microsoft's Artifact Signing: "Starts at $9.99/month". Even signed, a new app shows
+  an *unrecognized* prompt "until reputation accumulates", which "can take several weeks and
+  hundreds of clean installs". Publishing through the Microsoft Store avoids the prompt
+  entirely (same Microsoft page).
+
+**The maintainer's own data** lives in PostgreSQL in the private copy; the switch comes with a
+one-time copy script, run and checked before anything is removed.
+
+**Order, one pull request each:** (1) SQLite — schema, the four fields, a fresh migration,
+tests, a shorter README install; (2) Electron — the app window, the Next.js server inside it,
+the data file in the user's app-data folder; (3) installers, signing, automatic updates;
+(4) the landing page.
+
 ## Open questions for the maintainer
 
-1. **Bank records.** The 2026-09-24 decision was that DotAmi reads none. With the Lens able to
-   read any file the person points it at, does that still hold, or does the person decide
-   here too?
-2. **"Act freely" and confirming figures.** Should the person be able to let the Lens confirm
-   figures for them, or does a figure always need their own click?
-3. **The database in a desktop app.** Today DotAmi needs a PostgreSQL server. A desktop app
-   either bundles one or moves to a database that lives in a single file. That changes the
-   locked stack, so it is a decision, not a detail.
-4. **Which accounting software the maintainer uses** — the first connector note should be a
-   real one.
+1. **The database and shell above** — go or change.
 
 ## Build order (proposed)
 
@@ -287,7 +356,8 @@ FileVault); setup tells the person to turn it on.
 3. **DotAmi's MCP server, read-only** — outside agents can read the map.
 4. **The Lens, first version** — the person's own model, reading and proposing only.
 5. **The branching questionnaire** — questions as data, run by the screens or the Lens.
-6. **The desktop app** — packaging, the database decision, the landing page.
+6. **The desktop app** — SQLite, Electron, signed installers, the landing page (see *The
+   desktop app* above).
 7. **Lens powers, one at a time** — web search, file reading, the built-in browser, acting,
    writing back — each with its warning and its permission switch.
 8. **Progress, tasks and the first strategy roadmaps.**
