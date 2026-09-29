@@ -20,7 +20,7 @@ plain English, no recommendations, no numbers from memory.
 - **Ideas** (`/ventures`): every saved venture, its stage, notes, cross-references.
 - **The readout** (`GET /api/readout`): everything the map knows about a venture as JSON, so
   a coding agent working with the person can reason over it. In-app AI is off by design.
-- **Self-hosted, single user, no auth**, PostgreSQL on the person's machine. Nothing leaves it.
+- **Self-hosted, single user, no auth**, the database is one SQLite file on the person's machine. Nothing leaves it.
 
 ## 1. Roadmaps as data
 

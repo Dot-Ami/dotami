@@ -44,8 +44,10 @@ says where it is going.
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store).
-- Data: PostgreSQL via Prisma — `User` (single stub user, no auth) · `PersonStatement` ·
-  `Venture` · `VentureLink` · `ScenarioState`. Catalogs are code, never rows.
+- Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
+  auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState`. SQLite has no list
+  columns: list fields are JSON arrays, read back through `lib/db/json-list.ts`. Catalogs are
+  code, never rows.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 
@@ -57,7 +59,8 @@ says where it is going.
 - Never derive a fact about the person that the person did not state.
 - Never invent a number: no projections, no dollar ranges without a sourced figure.
 - Stack: Next.js 15 App Router (15.5.24 or later), React 19, TypeScript, Tailwind, Prisma,
-  PostgreSQL. Monolith. Moved from 14 on 2026-09-20: the 14.x line has no fix for
+  SQLite (PostgreSQL until 2026-09-28; moved so a desktop app needs no database server —
+  `docs/architecture/use-cases.md`). Monolith. Moved from 14 on 2026-09-20: the 14.x line has no fix for
   GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.

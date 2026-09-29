@@ -20,7 +20,7 @@ One line.
 
 ## Your setup
 
-- Node version (`node -v`), PostgreSQL version, operating system
+- Node version (`node -v`), operating system
 - Did `npm run ci:quality` pass before you hit this? If it failed, the last 20 lines.
 
 ## Anything in the console or the server log

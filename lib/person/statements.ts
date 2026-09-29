@@ -5,7 +5,7 @@ import type { PersonStatement } from "./types";
 const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
 
 /**
- * Postgres side of the person store (S2.5.4a). Two operations only — list and append.
+ * Database side of the person store (S2.5.4a). Two operations only — list and append.
  * There is deliberately no update and no delete: the charter's "never summarised, newer
  * beats older" rule is enforced by the absence of the code path, not by a check.
  */

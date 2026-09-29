@@ -50,9 +50,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("\nSeeding failed. Is the database running and migrated?");
-  console.error("  docker start dotami-pg   # or your own Postgres");
-  console.error("  npm run prisma:deploy");
+  console.error("\nSeeding failed. Has the database file been created?");
+  console.error("  npm run prisma:deploy   # creates the file DATABASE_URL points at");
   console.error(`\n${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });

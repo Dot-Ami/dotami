@@ -94,7 +94,7 @@ supported vendors.
    │                        add_statement · law_provision ·                  │
    │                        propose_facts · list_facts · set_progress        │
    ├─ local importers ── CSV / OFX / QFX / accounting exports / ledger files (read-only)
-   ├─ facts store ────── typed · dated · sourced · confirmed-by-the-person · in their Postgres
+   ├─ facts store ────── typed · dated · sourced · confirmed-by-the-person · in their database file
    └─ rules engine ──── lights cards from answers AND facts; every derived figure shows its rows
 ```
 

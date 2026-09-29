@@ -1,5 +1,6 @@
 import type { EmploymentStatus, ScenarioState as DbScenarioState, Venture, VentureType } from "@prisma/client";
 
+import { toStringList } from "@/lib/db/json-list";
 import { reverseStage } from "@/lib/db/scenario-to-prisma";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import type { Scenario, ScenarioState, VentureProfile } from "@/lib/scenarios/types";
@@ -75,7 +76,7 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
     structure: row.structure === "corporation" ? "corporation" : "sole-prop",
     structureSource: row.structureSource === "assumed" ? "assumed" : "user",
     hireFirst: row.hireFirst,
-    activityTags: row.activityTags,
+    activityTags: toStringList(row.activityTags),
     capitalPurchasePlanned: row.capitalPurchasePlanned,
     employmentStatus: reverseEmployment(row.employmentStatus),
     stage: reverseStage(row.stage),
