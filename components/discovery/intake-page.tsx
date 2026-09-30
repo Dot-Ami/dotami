@@ -677,7 +677,13 @@ function PreviewRow({
         item.state === "yellow" ? "border-amber/40" : "border-rule"
       }`}
     >
-      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 p-3 text-left">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? "Hide" : "Show"} details for ${item.title}`}
+        className="flex w-full items-center gap-3 p-3 text-left"
+      >
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
             item.state === "yellow" ? "bg-amber" : "bg-sage"
