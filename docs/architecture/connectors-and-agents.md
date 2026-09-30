@@ -1,25 +1,40 @@
 # Connectors and agents — how DotAmi reaches accounting software, financial records and any other tool
 
-Status: design, 2026-09-20. Nothing here is built. It expands [roadmap §5](../roadmap.md)
-(records, local-first) and adds §7 (DotAmi as an MCP server). Scenarios first, then the
-shape that makes all of them possible, then what has to exist for each.
+Status: design, 2026-09-20; revised 2026-09-24. Nothing here is built. It expands
+[roadmap §5](../roadmap.md) (records, local-first) and adds §7 (DotAmi as an MCP server).
+Scenarios first, then the shape that makes all of them possible, then what has to exist for
+each.
+
+**Revised 2026-09-24** after checking each vendor's own documentation — findings, sources and
+the decisions are in [connectors/README.md](../connectors/README.md). Excel/CSV exports come
+first because all five common packages offer them, and DotAmi stores totals per period, not
+the rows of a file.
+
+**Revised again 2026-09-29 — [use-cases.md](use-cases.md) is the newer plan and wins where
+this page differs.** Three decisions changed: the **Lens** returns as a built-in agent on the
+person's own model, so a person without an agent of their own gets one; a person **may add
+their own keys** for a live connection, after a warning (none by default); and **bank and
+card records** and **the built-in browser** are the person's call, each behind a warning.
+Everything below that says "the agent" now means the Lens *or* the person's own agent.
 
 ## The one rule everything below obeys
 
-**The records never leave the machine, and DotAmi holds no one's tokens.** DotAmi is
-self-hosted, single-user, and runs no model of its own beyond the optional intake parser.
-The reasoning agent — Claude Code, Claude Desktop, or any client that speaks the Model
-Context Protocol — is the person's, runs where they choose, and is already the thing that
-connects to their other tools. So DotAmi does not grow a connector for every accounting
+**The records never leave the machine, and DotAmi holds no one's tokens unless the person
+chooses to add them.** DotAmi is self-hosted and single-user. Models run only where the
+person chose them — the intake parser, and the Lens on a local model or the person's own
+key. The person's own agent — Claude Code, Claude Desktop, or any client that speaks the
+Model Context Protocol — runs where they choose and can connect to their other tools too. So DotAmi does not grow a connector for every accounting
 package. It does two things instead:
 
 1. **Speaks MCP as a server** — the map, the ventures, the person's statements, the law
    store and (later) progress and facts become tools the person's agent can call.
-2. **Reads local files** — bank and accounting exports on disk, read-only, no credentials.
+2. **Reads local files** — accounting exports (Excel, CSV) and on-disk ledgers, read-only, no
+   credentials. Bank and card records only if the person chooses to, after a warning
+   ([use-cases.md](use-cases.md), decision 8).
 
-Everything with an API and a login (QuickBooks Online, Xero, Wave, FreshBooks, a bank, a
-payroll provider, a spreadsheet) is reached by the **agent**, through whatever MCP server the
-person has installed for it, and the figures arrive in DotAmi as **typed, dated, sourced
+Everything with an API and a login (QuickBooks Online, Xero, Wave, FreshBooks, a payroll
+provider, a spreadsheet) is reached by the **agent**, through whatever MCP server or official
+command-line tool the person has installed for it, and the figures arrive in DotAmi as **typed, dated, sourced
 facts the person confirms**. The rules engine then lights cards from facts the same way it
 lights them from typed answers today — deterministically, with the source one click away.
 
@@ -27,13 +42,14 @@ lights them from typed answers today — deterministically, with the source one 
 
 Each is written as the person would live it. *Needs* lists the pieces from the next section.
 
-**S1 — The GST line, from a bank export.** A sole proprietor downloads six months of
-business-account transactions as CSV and drops the file on the cockpit. DotAmi reads it,
-proposes a mapping (deposits → revenue, the rest → expenses by a category the person
-picks), shows the rows, and the person confirms. The **GST/HST small-supplier threshold**
+**S1 — The GST line, from an accounting export.** A sole proprietor exports a profit and loss
+report by quarter from their accounting package as Excel and drops the file on the cockpit.
+DotAmi reads it in memory, proposes a mapping (this row is revenue, these are expenses — the
+person picks), shows the totals it found, and the person confirms. DotAmi keeps the totals per
+quarter, the row count and the file name — not the file. The **GST/HST small-supplier threshold**
 card stops saying *check first* and shows "$27,400 of taxable supplies in the last four
 quarters · from your records · 212 rows" — and turns amber at $30,000. No agent, no login.
-*Needs:* file importer (CSV/OFX), facts interface, "from your records" chip.
+*Needs:* file importer (Excel/CSV), facts interface, "from your records" chip.
 
 **S2 — Salary versus dividends, from real profit.** An incorporated owner's agent has the
 QuickBooks Online MCP server installed. In Claude Code they say: *"read my DotAmi map for
@@ -86,22 +102,23 @@ supported vendors.
 
 ```
  person's agent (Claude Code, Claude Desktop, any MCP client)
-   │  MCP client to:   QuickBooks · Xero · bank · payroll · sheets · CRM · …  (their servers, their tokens)
+   │  MCP client to:   QuickBooks · Xero · payroll · sheets · CRM · …  (their servers, their tokens)
    │  MCP client to:   DotAmi  ──────────────────────────────────────────────┐
    ▼                                                                         │
  DotAmi (self-hosted, single user, no model)                                 │
    ├─ MCP server ─── tools: readout · list_ventures · list_statements ·      │
    │                        add_statement · law_provision ·                  │
    │                        propose_facts · list_facts · set_progress        │
-   ├─ local importers ── CSV / OFX / QFX / accounting exports / ledger files (read-only)
+   ├─ local importers ── Excel / CSV accounting exports / ledger files (read-only, totals kept)
    ├─ facts store ────── typed · dated · sourced · confirmed-by-the-person · in their database file
-   └─ rules engine ──── lights cards from answers AND facts; every derived figure shows its rows
+   └─ rules engine ──── lights cards from answers AND facts; every derived figure shows its source
 ```
 
-**Why the agent and not DotAmi holds the connections:** the agent already has them; adding
-them to DotAmi would mean storing tokens, running OAuth flows, and shipping a vendor list
-that goes stale — the opposite of self-hosted and local. It also keeps the constraint that
-DotAmi runs no model: the agent proposes, the person confirms, the engine decides.
+**Why no keys by default:** storing tokens, running OAuth flows and shipping a vendor list
+that goes stale is the opposite of self-hosted and local, and a breach of an install with no
+keys exposes no live access to anyone's books. A person who wants a live connection adds their
+own keys, knowingly. Either way the agent — the Lens or the person's own — proposes, the
+person confirms, and the engine decides.
 
 **Why facts and not "sync":** a fact is a claim with a source and a date, exactly like a
 catalog citation. The engine can reason about it; the person can see where it came from and
@@ -126,7 +143,7 @@ A `Fact` is stored in the person's database, per venture:
   fields: Record<string, string | number | boolean>;   // kind-specific, typed (class hint, headcount, …)
   source: {
     via: "file" | "agent" | "typed";
-    connector?: string;               // "quickbooks-mcp", "csv:bank-export", "hledger"
+    connector?: string;               // "quickbooks-mcp", "xlsx:wave-pnl", "hledger"
     ref?: string;                     // "P&L 2026-01-01..2026-09-20", "rows 12–224"
     importedAt: string;               // ISO datetime
   };
@@ -138,7 +155,8 @@ A `Fact` is stored in the person's database, per venture:
 The evaluator gets one new input beside the profile: `facts: Fact[]` (confirmed only). Where
 a fact answers a question the profile only estimated — revenue against a threshold, a
 purchase against a class, payroll against a compliance rule — the fact wins, the card says
-*from your records*, and the detail lists the rows. Nothing else in the engine changes.
+*from your records*, and the detail shows the source, the period and how many rows the
+total came from. Nothing else in the engine changes.
 
 Open: partial years and fiscal years; currency for other jurisdictions; how "retracted"
 shows on a card that lit from it; a privacy audit of the store (facts are the most sensitive
@@ -146,13 +164,15 @@ thing DotAmi will ever hold).
 
 ### B. Local importers
 
-`CSV` (bank and card exports; configurable column mapping the person confirms once per
-source), `OFX/QFX` (bank standard), accounting exports (QuickBooks, Xero, Wave CSV — as
-documented by each vendor, no reverse-engineering), and adapters for on-disk books
-(ledger/hledger journals, GnuCash SQLite). All read-only; a file is never modified or
-copied beyond the facts derived from it. Each importer is a folder with a README stating
-what it reads, what facts it yields, and its test fixture (a synthetic file — never a real
-person's export).
+Accounting exports first — `Excel` and `CSV`, the one format all five common packages offer
+([connectors/README.md](../connectors/README.md)) — with a row mapping the person confirms once
+per source, read as each vendor documents its export, no reverse-engineering. Then adapters
+for on-disk books (ledger/hledger journals, GnuCash SQLite). All read-only; a file is read in
+memory and not kept — what is stored is the totals per period, the row count and the file's
+name. Each importer is a folder with a README stating what it reads, what facts it yields, and
+its test fixture (a synthetic file — never a real person's export). Bank and card records
+(CSV, OFX/QFX) are read only if the person chooses to, after a warning
+([use-cases.md](use-cases.md), decision 8).
 
 ### C. DotAmi as an MCP server
 
@@ -192,7 +212,7 @@ X" — a page, a fixture, and if needed an adapter — not a vendor integration 
 ## Order and dependencies
 
 1. **A** the facts interface + the engine reading confirmed facts + the *from your records*
-   chip. Nothing visible changes until a fact exists; the CSV importer (B, first format) is
+   chip. Nothing visible changes until a fact exists; the Excel/CSV importer (B, first format) is
    the proof.
 2. **C** the MCP server with the read-only tools first (`readout`, `list_*`, `law_provision`)
    — S7 works the day this lands; then `propose_facts`, `set_progress`, `add_question` as
