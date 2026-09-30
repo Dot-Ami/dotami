@@ -163,7 +163,8 @@ export function IntakePage() {
   }
 
   async function openMap() {
-    if (intake.province === null || opening) return;
+    if (intake.province === null || intake.employmentStatus === null || opening) return;
+    const employmentStatus = intake.employmentStatus;
     if (intake.employmentStatus === "other") {
       saveEmploymentSuggestion(intake.employmentOther);
     }
@@ -177,7 +178,7 @@ export function IntakePage() {
         targetRevenueY3: intake.targetRevenueY3,
         province: intake.province,
         hireFirst: intake.hireFirst,
-        employmentStatus: intake.employmentStatus,
+        employmentStatus,
         activityTags: [...intake.activityTags, ...intake.customTags],
         capitalPurchasePlanned: intake.capitalPurchasePlanned,
         stage: intake.ventureStage,
@@ -196,7 +197,7 @@ export function IntakePage() {
   const coverage = evaluation.provinceCoverage;
 
   return (
-    <div className="flex min-h-screen flex-col bg-ink">
+    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         {screen === "about" ? (
           <GhostLink href="/" tone="stone">
@@ -388,15 +389,19 @@ export function IntakePage() {
 
                 <FieldGroup label="Current employment">
                   <select
-                    value={intake.employmentStatus}
+                    value={intake.employmentStatus ?? ""}
                     onChange={(e) =>
                       setIntake((p) => ({
                         ...p,
-                        employmentStatus: e.target.value as EmploymentStatus,
+                        employmentStatus:
+                          e.target.value === ""
+                            ? null
+                            : (e.target.value as EmploymentStatus),
                       }))
                     }
                     className="w-full max-w-sm rounded border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-none focus:border-maple-soft"
                   >
+                    <option value="">Choose…</option>
                     {EMPLOYMENT_OPTIONS.map((o) => (
                       <option key={o.id} value={o.id}>
                         {o.label}
@@ -476,7 +481,7 @@ export function IntakePage() {
                   <Pill
                     variant="maple"
                     onClick={() => void openMap()}
-                    disabled={intake.province === null || opening}
+                    disabled={intake.province === null || intake.employmentStatus === null || opening}
                   >
                     {opening ? "Opening…" : "Open my map →"}
                   </Pill>
@@ -484,6 +489,10 @@ export function IntakePage() {
                 {intake.province === null ? (
                   <p className="text-right text-[11px] text-stone-dim">
                     Pick a province to open the map — it gates most of the rules.
+                  </p>
+                ) : intake.employmentStatus === null ? (
+                  <p className="text-right text-[11px] text-stone-dim">
+                    Choose your current employment context to open the map — it affects which paths may apply.
                   </p>
                 ) : null}
               </>
@@ -677,7 +686,13 @@ function PreviewRow({
         item.state === "yellow" ? "border-amber/40" : "border-rule"
       }`}
     >
-      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 p-3 text-left">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? "Hide" : "Show"} details for ${item.title}`}
+        className="flex w-full items-center gap-3 p-3 text-left"
+      >
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
             item.state === "yellow" ? "bg-amber" : "bg-sage"
