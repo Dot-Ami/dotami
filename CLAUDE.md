@@ -23,9 +23,11 @@ says where it is going.
   unlocks; it does not rank options by what it thinks matters to the person, and it never
   says "you should". Compass, not GPS: *"if X, this may unlock Y."*
 - **Rules decide; models explain at most.** Node states, unlocks, forks and risk reads come
-  from deterministic, versioned TypeScript catalogs — never from a model. The only optional
-  model call is the intake's free-text parser, which has a keyword fallback and whose output
-  the person confirms on screen before anything uses it.
+  from deterministic, versioned TypeScript catalogs — never from a model. Models appear in two
+  places: the intake's free-text parser (keyword fallback, output confirmed on screen) and the
+  Lens, the planned built-in agent that runs on the person's own model — local or their own
+  key. The Lens may change the person's answers, plan and settings at the permission level the
+  person chose; it never changes a catalog. Plan: `docs/architecture/use-cases.md`.
 - **Every claim is cited and dated.** A rule, rate, threshold, date or eligibility condition
   without a typed citation is a bug. `lastVerified` is the day a human read the source.
 - **Legal but honest.** Every lever ships with its audit/GAAR read. Nothing is presented as
@@ -61,8 +63,11 @@ says where it is going.
   GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.
-- Scope guard: no in-app AI beyond the optional intake parser, no marketplace, no filing,
-  no regulatory automation.
+- Scope guard: no marketplace, no filing, no regulatory automation. In-app AI is the intake
+  parser and the Lens (decided 2026-09-27; `docs/architecture/use-cases.md`), always on a model
+  the person chose — DotAmi ships no key. Every powerful Lens action (running commands,
+  driving a logged-in browser, writing to accounting software) is off until the person turns
+  it on, after a plain warning.
 - Comment the code the way any developer would: a line on a non-obvious decision, a short
   note on what a tricky function does or why it's handled a certain way — as you write it,
   not as a separate pass. `lib/api/rate-limit.ts` is a good example of the level worth aiming
