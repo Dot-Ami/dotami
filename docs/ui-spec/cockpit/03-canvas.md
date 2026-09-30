@@ -22,6 +22,10 @@ relevant to that stage (`itemsForNode(...).forThisStage`, S2.5.4e).
 | Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a) | opens node detail |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
+Stage and lever buttons have explicit accessible names. Stage names include the current status
+and the action; lever names identify the item whose details open. Stage selection remains exposed
+as `aria-pressed`.
+
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid.
 

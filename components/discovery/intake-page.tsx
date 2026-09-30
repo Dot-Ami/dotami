@@ -197,7 +197,7 @@ export function IntakePage() {
   const coverage = evaluation.provinceCoverage;
 
   return (
-    <div className="flex min-h-screen flex-col bg-ink">
+    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         {screen === "about" ? (
           <GhostLink href="/" tone="stone">
@@ -686,7 +686,13 @@ function PreviewRow({
         item.state === "yellow" ? "border-amber/40" : "border-rule"
       }`}
     >
-      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 p-3 text-left">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? "Hide" : "Show"} details for ${item.title}`}
+        className="flex w-full items-center gap-3 p-3 text-left"
+      >
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
             item.state === "yellow" ? "bg-amber" : "bg-sage"
