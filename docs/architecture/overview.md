@@ -21,7 +21,7 @@ flowchart TB
     Templates[Templates]
     Risk[Risk]
   end
-  Brain --> DB[(PostgreSQL: the person's answers only)]
+  Brain --> DB[(SQLite file: the person's answers only)]
   Cockpit -. optional .-> Law["law store (statute text)"]
 ```
 
@@ -48,7 +48,7 @@ lib/
     templates/v2026/
     index.ts              # barrel export
   paths/v2026/            # exploration path catalog + scoring
-  scenarios/              # user scenario state (Postgres-backed)
+  scenarios/              # user scenario state (database-backed)
   journey/                # cross-route intake draft (sessionStorage)
   cfe/                    # shim re-export → engines/cfe (legacy imports)
 
@@ -64,12 +64,12 @@ components/
 
 ## State boundaries
 
-- **Engines:** read-only catalogs; never in Postgres
-- **Scenario:** user profile + branch state in Postgres via Prisma
+- **Engines:** read-only catalogs; never in the database
+- **Scenario:** user profile + branch state in SQLite via Prisma
 - **Journey draft:** intake + archetype selection in sessionStorage
 
 ## Stack
 
-Next.js 15 App Router (15.5.24+, since 2026-09-20), React 19, TypeScript, Tailwind, Prisma, PostgreSQL, Recharts.
+Next.js 15 App Router (15.5.24+, since 2026-09-20), React 19, TypeScript, Tailwind, Prisma, SQLite (PostgreSQL until 2026-09-28), Recharts.
 Self-hosted; no hosting provider is assumed. The optional intake parser is the only model call
 (`ANTHROPIC_API_KEY`, off by default). React Flow, dagre and the Lens chat were removed in 2026-09.

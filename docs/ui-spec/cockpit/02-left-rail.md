@@ -60,7 +60,7 @@ spot in the product — it carries 6+ unrelated concerns.
   (`setScenario`), clears selection/panels, returns to Plan tab. **Destructive:** it
   replaces the user's real scenario in the session with the example — there is no undo
   and no confirmation; a user who built a custom venture and taps "Maya — woodworker"
-  loses their working state (recoverable only if previously saved to Postgres).
+  loses their working state (recoverable only if previously saved to the database).
 - **Autosave + "Save now" (issue #1, 2026-09-20).** Every edit on this page (structure
   select, branch toggles) calls `scheduleSave(next)`: the save line reads *"Unsaved
   changes…"*, and `AUTOSAVE_DELAY_MS` (800 ms) after the last edit `persist()` POSTs
@@ -97,7 +97,7 @@ Reads `currentScenario.profile`, archetype config. Writes `currentScenario` + se
 ## Downstream consumers (where the data goes today)
 
 Save → `/api/scenario/save` → `parseScenarioInput` → venture + scenarioState upsert in
-Postgres (stub user). Archetype switch → full scenario replacement → graph, footer,
+the database (stub user). Archetype switch → full scenario replacement → graph, footer,
 Lens context, export all re-derive.
 
 ## Cleanup / open questions

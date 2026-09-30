@@ -2,8 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// SQLite since 2026-09-28: the whole database is one file on the person's machine, which a
+// desktop app can ship without a database server (docs/architecture/use-cases.md § The desktop
+// app). SQLite has no list columns, so the four list fields below are JSON arrays; the
+// read side turns them back into string[] in lib/db/json-list.ts.
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -77,8 +81,9 @@ model PersonStatement {
   userId    String
   /// The person's own words. Max length enforced at the API (STATEMENT_MAX_CHARS).
   text      String
-  /// The calendar day the person says they said it — their claim, not the insert time.
-  saidAt    DateTime @db.Date
+  /// The calendar day the person says they said it — their claim, not the insert time. Stored
+  /// as midnight UTC of that day (lib/person/statements.ts writes it that way).
+  saidAt    DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -88,7 +93,7 @@ model PersonStatement {
 model Venture {
   id               String           @id @default(cuid())
   userId           String
-  /// Stable key from TS scenarios (e.g. `example-service`) — used by Lens persistence when no Postgres intake row exists yet.
+  /// Stable key from TS scenarios (e.g. `example-service`); the cockpit's scenario id.
   scenarioSeedKey  String?          @unique
   name             String
   type             VentureType
@@ -100,7 +105,8 @@ model Venture {
   structureSource  String           @default("assumed")
   hireFirst        Boolean          @default(false)
   /// S2.5.4e: intake Screen A tags + capital toggle, so the cockpit evaluator sees what the person said.
-  activityTags     String[]         @default([])
+  /// A JSON array of strings.
+  activityTags     Json             @default("[]")
   capitalPurchasePlanned Boolean    @default(false)
   employmentStatus EmploymentStatus
   /// S2.5.4i: idea -> prototype -> first customers -> established. Intake's `ventureStage` lands here.
@@ -135,9 +141,10 @@ model VentureLink {
 model ScenarioState {
   id              String   @id @default(cuid())
   ventureId       String   @unique
-  activeNodeIds   String[]
-  completedNodeIds String[]
-  ghostedNodeIds  String[]
+  /// JSON arrays of lifecycle node ids.
+  activeNodeIds   Json
+  completedNodeIds Json
+  ghostedNodeIds  Json
   activeBranches  Json
   updatedAt       DateTime @updatedAt
   venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)

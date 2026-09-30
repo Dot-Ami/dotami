@@ -6,24 +6,31 @@ Scenarios first, then the shape that makes all of them possible, then what has t
 each.
 
 **Revised 2026-09-24** after checking each vendor's own documentation — findings, sources and
-the decisions are in [connectors/README.md](../connectors/README.md). In short: Excel/CSV
-exports come first because all five common packages offer them; DotAmi reads no bank or card
-records (kept as an idea for forks); DotAmi stores totals per period, not the rows of a file;
-and it ships no browser automation.
+the decisions are in [connectors/README.md](../connectors/README.md). Excel/CSV exports come
+first because all five common packages offer them, and DotAmi stores totals per period, not
+the rows of a file.
+
+**Revised again 2026-09-29 — [use-cases.md](use-cases.md) is the newer plan and wins where
+this page differs.** Three decisions changed: the **Lens** returns as a built-in agent on the
+person's own model, so a person without an agent of their own gets one; a person **may add
+their own keys** for a live connection, after a warning (none by default); and **bank and
+card records** and **the built-in browser** are the person's call, each behind a warning.
+Everything below that says "the agent" now means the Lens *or* the person's own agent.
 
 ## The one rule everything below obeys
 
-**The records never leave the machine, and DotAmi holds no one's tokens.** DotAmi is
-self-hosted, single-user, and runs no model of its own beyond the optional intake parser.
-The reasoning agent — Claude Code, Claude Desktop, or any client that speaks the Model
-Context Protocol — is the person's, runs where they choose, and is already the thing that
-connects to their other tools. So DotAmi does not grow a connector for every accounting
+**The records never leave the machine, and DotAmi holds no one's tokens unless the person
+chooses to add them.** DotAmi is self-hosted and single-user. Models run only where the
+person chose them — the intake parser, and the Lens on a local model or the person's own
+key. The person's own agent — Claude Code, Claude Desktop, or any client that speaks the
+Model Context Protocol — runs where they choose and can connect to their other tools too. So DotAmi does not grow a connector for every accounting
 package. It does two things instead:
 
 1. **Speaks MCP as a server** — the map, the ventures, the person's statements, the law
    store and (later) progress and facts become tools the person's agent can call.
 2. **Reads local files** — accounting exports (Excel, CSV) and on-disk ledgers, read-only, no
-   credentials. Not bank or card records — see [connectors/README.md](../connectors/README.md).
+   credentials. Bank and card records only if the person chooses to, after a warning
+   ([use-cases.md](use-cases.md), decision 8).
 
 Everything with an API and a login (QuickBooks Online, Xero, Wave, FreshBooks, a payroll
 provider, a spreadsheet) is reached by the **agent**, through whatever MCP server or official
@@ -103,14 +110,15 @@ supported vendors.
    │                        add_statement · law_provision ·                  │
    │                        propose_facts · list_facts · set_progress        │
    ├─ local importers ── Excel / CSV accounting exports / ledger files (read-only, totals kept)
-   ├─ facts store ────── typed · dated · sourced · confirmed-by-the-person · in their Postgres
+   ├─ facts store ────── typed · dated · sourced · confirmed-by-the-person · in their database file
    └─ rules engine ──── lights cards from answers AND facts; every derived figure shows its source
 ```
 
-**Why the agent and not DotAmi holds the connections:** the agent already has them; adding
-them to DotAmi would mean storing tokens, running OAuth flows, and shipping a vendor list
-that goes stale — the opposite of self-hosted and local. It also keeps the constraint that
-DotAmi runs no model: the agent proposes, the person confirms, the engine decides.
+**Why no keys by default:** storing tokens, running OAuth flows and shipping a vendor list
+that goes stale is the opposite of self-hosted and local, and a breach of an install with no
+keys exposes no live access to anyone's books. A person who wants a live connection adds their
+own keys, knowingly. Either way the agent — the Lens or the person's own — proposes, the
+person confirms, and the engine decides.
 
 **Why facts and not "sync":** a fact is a claim with a source and a date, exactly like a
 catalog citation. The engine can reason about it; the person can see where it came from and
@@ -163,7 +171,8 @@ for on-disk books (ledger/hledger journals, GnuCash SQLite). All read-only; a fi
 memory and not kept — what is stored is the totals per period, the row count and the file's
 name. Each importer is a folder with a README stating what it reads, what facts it yields, and
 its test fixture (a synthetic file — never a real person's export). Bank and card records
-(CSV, OFX/QFX) are not read; they are kept as an idea for forks in the connectors README.
+(CSV, OFX/QFX) are read only if the person chooses to, after a warning
+([use-cases.md](use-cases.md), decision 8).
 
 ### C. DotAmi as an MCP server
 

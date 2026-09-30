@@ -18,7 +18,7 @@ const MAX_BODY_BYTES = 16 * 1024;
 export const dynamic = "force-dynamic";
 
 /**
- * GET — everything DotAmi currently holds about the person: typed rows from Postgres, newest
+ * GET — everything DotAmi currently holds about the person: typed rows from the database, newest
  * first. The database half fails soft and SAYS SO in the response, so the surface can show
  * "saving is off" instead of an empty list that looks like "nothing on record".
  * (`vault` is kept in the shape for compatibility; a self-hosted build may add its own

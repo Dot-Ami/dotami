@@ -6,6 +6,10 @@ coverage
 .env.*
 !.env.example
 *.tsbuildinfo
-prisma/dev.db
+# A person's SQLite database, wherever it sits — never commit one.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 .vercel
 

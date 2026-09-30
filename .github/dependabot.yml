@@ -9,6 +9,12 @@ updates:
       interval: weekly
     commit-message:
       prefix: "ci(actions)"
+    groups:
+      # One PR for all action bumps. CodeQL's init, analyze and upload-sarif steps must run
+      # the same version — split into separate PRs, each one mixes versions and CodeQL fails
+      # with "Loaded a configuration file for version X, but running version Y" (#57, #58).
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: /

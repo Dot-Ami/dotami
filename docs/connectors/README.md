@@ -10,26 +10,32 @@ directories and aggregators are not sources here. Where a vendor's own docs did 
 something, this page says *not confirmed* rather than filling the gap. Vendors change these
 pages — if one is out of date, a PR that updates the row and the date is welcome.
 
-## Decisions (2026-09-24)
+## Decisions (2026-09-24, updated 2026-09-29)
+
+Decisions 2, 4 and 5 changed on 2026-09-29 to match
+[architecture/use-cases.md](../architecture/use-cases.md), which is the newer plan: the
+person decides, and DotAmi warns.
 
 1. **Excel and CSV files first, for every package.** Each of the five packages below lets a
    person export reports by hand, so one file importer covers all of them. It is the only
    route that needs no login, no developer account and no network.
-2. **The person's own agent does any logged-in connecting; DotAmi stores no logins.** Where a
-   vendor publishes an official MCP server or command-line tool, the person's agent (Claude
-   Code, Claude Desktop, any MCP client) uses it, and hands figures to DotAmi as *proposed*
-   facts. Only a click in the cockpit confirms one. A breach of a DotAmi install therefore
-   exposes no live access to anyone's books.
+2. **No keys by default; the person's own keys if they choose.** Logged-in connecting is done
+   by the Lens (DotAmi's built-in agent, on the person's own model) or by the person's own
+   agent (Claude Code, Claude Desktop, any MCP client), through the vendor's official MCP
+   server or command-line tool where one exists. A person who wants that connection adds
+   their own keys, after a warning; they are kept in the operating system's keychain, never in
+   the database. Figures arrive as *proposed*, and only the person agreeing confirms one.
 3. **DotAmi stores totals, not rows.** An import keeps a total per period, the row count and
-   the file's name; the file is read in memory and not kept. This matters as much as the
-   login rule: fewer stored rows, less to lose.
-4. **No bank records in DotAmi.** Bank and card transactions are more sensitive than a profit
-   and loss report, and the benefit does not justify holding them in the project as shipped.
-   What we learned is kept below under [Ideas for forks](#ideas-for-forks-bank-records) for
-   anyone who wants to make a different call in their own fork.
-5. **DotAmi ships no browser automation.** See [the vendors' terms](#browser-automation--what-each-vendors-terms-say)
-   — they differ, and some forbid it outright. A person's agent driving their own browser is
-   the person's decision under their vendor's terms, not something this project builds.
+   the file's name; the file is read in memory and not kept. Fewer stored rows, less to lose.
+4. **Bank and card records are the person's call.** They are more sensitive than a profit and
+   loss report, and the project doesn't recommend it, but a person may point DotAmi at a bank
+   statement after a warning. What we found about banks is below under
+   [Bank records](#bank-records--what-we-found).
+5. **The built-in browser is the person's call under their vendor's terms.** The Lens can
+   drive a browser inside the app (QuickBooks, Xero or email open in it) when the person
+   switches it on. [The vendors' terms](#browser-automation--what-each-vendors-terms-say)
+   differ and some forbid automation; DotAmi quotes them in the warning, and the person
+   decides.
 
 ## The five packages, four ways in (read 2026-09-24)
 
@@ -68,10 +74,10 @@ Read 2026-09-24. Quoted, not interpreted — this page is not legal advice.
 | FreshBooks | [Terms of service][fb-tos], §9 | "you may not use any data mining, robots or similar data gathering or extraction methods" |
 | Sage | — | Sage's terms pages returned an error; not confirmed |
 
-## Ideas for forks: bank records
+## Bank records — what we found
 
-DotAmi does not read bank or card records (decision 4). If you fork it and decide otherwise,
-this is where things stood on 2026-09-23:
+Bank and card records are the person's call (decision 4). This is where things stood on
+2026-09-23:
 
 - **No big Canadian bank publishes a customer API or MCP server.** We checked RBC, TD,
   Scotiabank, BMO, CIBC, National Bank, Desjardins and ATB and found only file downloads

@@ -20,7 +20,7 @@ plain English, no recommendations, no numbers from memory.
 - **Ideas** (`/ventures`): every saved venture, its stage, notes, cross-references.
 - **The readout** (`GET /api/readout`): everything the map knows about a venture as JSON, so
   a coding agent working with the person can reason over it. In-app AI is off by design.
-- **Self-hosted, single user, no auth**, PostgreSQL on the person's machine. Nothing leaves it.
+- **Self-hosted, single user, no auth**, the database is one SQLite file on the person's machine. Nothing leaves it.
 
 ## 1. Roadmaps as data
 
@@ -86,15 +86,16 @@ In order of least trust required:
 1. **File imports.** Excel and CSV exports from accounting software — QuickBooks Online,
    Xero, Wave, FreshBooks and Sage all offer them. A row mapping the person confirms —
    categorisation is theirs, the app proposes nothing it has not shown. The file is read and
-   not kept; the totals are. Bank and card records are not read (decided 2026-09-24; kept as
-   an idea for forks in [connectors/README.md](connectors/README.md)).
+   not kept; the totals are. Bank and card records only if the person chooses to, after a
+   warning (decided 2026-09-29; [architecture/use-cases.md](architecture/use-cases.md)).
 2. **Local adapters.** Read-only readers for ledgers that live on disk — plain-text
    accounting files, desktop accounting databases — through one typed **facts interface**
    the engine reads (revenue by period, purchases by class, payroll, payments to owners).
 3. **Anything with a login** (QuickBooks Online, Xero, payroll, a spreadsheet, a CRM) —
-   reached by the **person's own agent** through the MCP server or official command-line
-   tool that product already has, and written into DotAmi as proposed facts the person confirms. DotAmi holds no
-   tokens and ships no vendor list; see §8 and the design.
+   reached by the **Lens** (DotAmi's built-in agent) or the **person's own agent** through the
+   MCP server or official command-line tool that product already has, and written into DotAmi
+   as proposed facts the person confirms. No keys by default; the person may add their own,
+   after a warning. See §8 and the design.
 
 Design, with eight scenarios and the facts schema:
 [docs/architecture/connectors-and-agents.md](architecture/connectors-and-agents.md).
