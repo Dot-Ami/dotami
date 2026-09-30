@@ -25,6 +25,8 @@ Workshop direction:
 
 - Venture type stays single-select because it is the clearest first branch for the map.
 - Activity tags stay multi-select and plain-language; they are not expert taxonomies.
+- Every venture and activity chip exposes its selection state to assistive technology with
+  `aria-pressed`, in addition to the visual selected styling.
 - Description and venture name stay optional. Description can later help AI/backend labeling, but Phase 4 does not parse free text.
 - The right preview should show **what this venture shape may unlock**: likely write-offs, grant/program hints, compliance checks, and next-map branches tied to selected tags.
 
