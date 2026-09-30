@@ -20,6 +20,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Issue chooser, bug-report template, `CODEOWNERS`, `CITATION.cff`, README badges.
 
 ### Changed
+- **Database: PostgreSQL → SQLite (2026-09-28).** The whole database is now one file
+  (`prisma/dotami.db` by default), so DotAmi needs no database server — the first step toward
+  a desktop app. The four list fields are stored as JSON arrays. The eight PostgreSQL
+  migrations are replaced by one SQLite starting migration (they remain in git history).
+  **If you already run DotAmi on PostgreSQL:** a fresh SQLite file starts empty. Stay on the
+  commit before this change until a copy script lands, or re-enter your ventures; nothing is
+  deleted from your PostgreSQL database.
+- The database layer now has a test: `tests/db-roundtrip.spec.ts` migrates a throwaway SQLite
+  file, saves and reloads ventures, links and statements, and deletes the file.
 - Stack moved to Next.js 15.5 / React 19 / Vitest 4. The 14.x line had no fix for
   GHSA-p293-qw3h-jr36 (unauthenticated remote code execution on Windows hosts).
 - The dev server and the documented Postgres container bind to `127.0.0.1`, not every

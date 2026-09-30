@@ -22,9 +22,9 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: "1"
-      # Prisma datasource URL is required for client init during `next build` bundling;
-      # no database needs to be reachable for this CI smoke build.
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/dotami_ci?schema=public
+      # Prisma needs a datasource URL for `next build`. SQLite makes the file on first use; the
+      # database round-trip test migrates its own throwaway file in the temp folder.
+      DATABASE_URL: file:./ci.db
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

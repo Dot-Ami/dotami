@@ -1,5 +1,6 @@
 import type { PrismaClient, VentureLinkKind as DbLinkKind } from "@prisma/client";
 
+import { toStringList } from "@/lib/db/json-list";
 import { mapVentureRowToScenario } from "@/lib/db/prisma-venture-to-scenario";
 import { mapStage, reverseStage } from "@/lib/db/scenario-to-prisma";
 import type { Scenario, VentureStage } from "@/lib/scenarios/types";
@@ -81,7 +82,7 @@ export async function listVentures(prisma: PrismaClient): Promise<VentureSummary
     province: row.province,
     stage: reverseStage(row.stage),
     notes: row.notes,
-    activityTags: row.activityTags,
+    activityTags: toStringList(row.activityTags),
     structure: row.structure,
     structureSource: row.structureSource,
     targetRevenueY1: row.targetRevenueY1,

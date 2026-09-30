@@ -6,7 +6,7 @@ import type { Scenario } from "@/lib/scenarios/types";
 const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
 
 /**
- * Finds or inserts the Postgres row for a scenario (keyed by the scenario id in `scenarioSeedKey`)
+ * Finds or inserts the database row for a scenario (keyed by the scenario id in `scenarioSeedKey`)
  * and its branch state. Used by /api/scenario/save.
  */
 export async function ensureVentureFromScenario(

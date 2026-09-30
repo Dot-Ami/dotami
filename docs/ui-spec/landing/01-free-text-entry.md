@@ -44,5 +44,5 @@ translate it, but never decide for them — Screen A is where they confirm.
 `ANTHROPIC_API_KEY` or on any error.
 
 **Persistence:** merged draft written to `sessionStorage` (`journey-provider.tsx`) —
-browser-tab-scoped only, no server log, no Postgres write. Whether to log query text at all
+browser-tab-scoped only, no server log, no database write. Whether to log query text at all
 is an open question for the maintainers.

@@ -83,7 +83,7 @@ export interface ScenarioState {
   activeBranches: Record<string, CFENodeId>;
   /**
    * S2.5.4d: decisions the person has actually clicked. Everything else in `activeBranches`
-   * is a template default and is labelled as one. Session-persisted only — Postgres does not
+   * is a template default and is labelled as one. Session-persisted only — the database does not
    * store it, so a reloaded venture shows its picks as defaults again (honest: we don't know).
    */
   decidedBranchIds?: string[];

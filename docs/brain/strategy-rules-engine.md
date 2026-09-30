@@ -19,7 +19,7 @@ evaluateProfile(profile, catalogs) → {
 }
 ```
 
-No LLM calls. No network. No Postgres. Pure function over TypeScript data — same testing
+No LLM calls. No network. No database. Pure function over TypeScript data — same testing
 story as the existing catalogs.
 
 ## Where it lives

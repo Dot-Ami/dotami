@@ -137,7 +137,7 @@ Rename the label, never the id.
 ## Local development and the gate
 
 ```bash
-cp .env.example .env     # DATABASE_URL → a PostgreSQL you own (Docker is fine)
+cp .env.example .env     # the default DATABASE_URL is a SQLite file in prisma/
 npm ci
 npm run prisma:deploy
 npm run seed             # optional: two invented ventures so the map is not empty

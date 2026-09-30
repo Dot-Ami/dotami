@@ -21,7 +21,7 @@ in `docs/brain/`.
 ## Conventions that apply to every engine (do not deviate)
 
 1. **Catalogs are read-only, versioned, year-locked TypeScript** under
-   `lib/engines/<name>/v2026/`. Never in Postgres. New year = new folder, not edits that
+   `lib/engines/<name>/v2026/`. Never in the database. New year = new folder, not edits that
    erase history.
 2. **Every entry cites its source** (`title, authority, jurisdiction, url, lastVerified,
    note`). No citation, no entry — the integrity test enforces presence; *you* enforce that

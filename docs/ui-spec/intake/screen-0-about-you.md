@@ -12,7 +12,7 @@ Workshop status: **built 2026-09-13; the behaviour below is the shipped surface*
 The first intake screen, before anything about the venture. Its framing (decided 2026-09-13):
 **get to know the person first.** It asks one thing — what should DotAmi know about you — and
 keeps the answer as a **dated statement in the person's own words**. Below the composer it
-shows everything already on record, newest first: statements typed here (Postgres) and, when a
+shows everything already on record, newest first: statements typed here (the database) and, when a
 self-hosted build configures one, an external read-only source (see "External sources" below).
 
 ## What it does (behavior on interact)
@@ -72,7 +72,7 @@ pretend to use).
 
 ## Backend wiring
 
-- **Postgres:** `PersonStatement` model (`prisma/schema.prisma`), migration
+- **Database:** `PersonStatement` model (`prisma/schema.prisma`), migration
   `prisma/migrations/20260913000000_person_statements/`. Columns: `text`, `saidAt` (DATE —
   the person's claim), `createdAt`. **No UPDATE or DELETE path exists** — the contract's
   "newer beats older, never overwritten" is enforced by the absence of the code, not by a
@@ -80,7 +80,7 @@ pretend to use).
   stub user upserted on first write, same pattern as the venture save).
 - **External sources:** none in this build — typed statements only (`source: "typed"`).
   `"vault"` is reserved in the types for a self-hosted, read-only source of dated statements
-  (for example a personal notes folder read live from disk, never copied into Postgres). A
+  (for example a personal notes folder read live from disk, never copied into the database). A
   build that adds one reports it through `vault.available` and the source tag; this build
   always returns `vault.available=false` with the reason "No external statement source
   configured."

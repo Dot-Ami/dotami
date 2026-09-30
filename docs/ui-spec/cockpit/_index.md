@@ -23,7 +23,7 @@ detail overlay (10), export panel (11).
 ## Architecture in one paragraph
 
 Server route `app/(journey)/cockpit/page.tsx` (`force-dynamic`) loads the stub user's
-latest venture from Postgres (`loadLatestVentureScenarioForStubUser`), falling back to
+latest venture from the database (`loadLatestVentureScenarioForStubUser`), falling back to
 `defaultExampleScenario` (Maya) on no-DB/no-rows/error. Client `CockpitPage` resolves the
 working scenario by priority: session (`useJourney().scenario`) → `?sample=<archetypeId>`
 → server prop → Maya; after sessionStorage hydration it re-adopts the session scenario

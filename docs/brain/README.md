@@ -47,7 +47,7 @@ catalog authoring/verification. Why:
 
 1. Hallucinated tax law must never drive UI state.
 2. Engines stay auditable and testable (`tests/engine-integrity.spec.ts`, golden scenarios).
-3. It preserves the existing invariant: engines are read-only catalogs, Postgres stores
+3. It preserves the existing invariant: engines are read-only catalogs, the database stores
    user state only.
 
 ## Build order (locked in the 2026-07-02 audit; reasoning matters)

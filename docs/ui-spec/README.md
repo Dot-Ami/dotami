@@ -10,7 +10,7 @@ Per-page catalogs of **what each interactive control does and why** — purpose-
 |-------|----------|---------|
 | Design workshop | the dated S2.5.4 notes at the top of each `docs/ui-spec/<page>/` file | Page job, must-show/hide, maintainer sign-off |
 | **UI behavior spec** | `docs/ui-spec/<page>/` | Control groups: behavior, copy, state fields, downstream consumers |
-| Backend wiring | TBD in each control file | Postgres, APIs, validation — filled in Phase 5 |
+| Backend wiring | TBD in each control file | Database, APIs, validation — filled in Phase 5 |
 
 ## Folder structure
 
