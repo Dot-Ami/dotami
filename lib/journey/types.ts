@@ -20,7 +20,8 @@ export interface IntakeDraft {
   name: string;
   /** null until the user picks — nothing may pretend to know provincial rules before then. */
   province: Province | null;
-  employmentStatus: EmploymentStatus;
+  /** null until the person chooses an employment context on the Ground-it screen. */
+  employmentStatus: EmploymentStatus | null;
   /** Free-text when employmentStatus is "other" (W6). */
   employmentOther: string;
   customerGeography: string[];
@@ -53,7 +54,7 @@ export const defaultIntakeDraft = (): IntakeDraft => ({
   ventureStage: "idea",
   name: "",
   province: null,
-  employmentStatus: "employee",
+  employmentStatus: null,
   employmentOther: "",
   customerGeography: [],
   targetRevenueY1: 0,
