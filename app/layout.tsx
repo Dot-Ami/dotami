@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { connection } from "next/server";
 import "./globals.css";
 
 // Self-hosted, committed to the repo (app/fonts, SIL Open Font License): no request leaves the
@@ -27,11 +28,17 @@ export const metadata: Metadata = {
     "Every path to financial freedom, mapped step by step and cited to the law. Canada is the first jurisdiction mapped.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Render every page per request. The CSP in middleware.ts only lets scripts run that carry
+  // this request's nonce, and Next.js can stamp the nonce only on a page rendered for a request;
+  // a page pre-rendered at build time ships un-nonced scripts that the browser blocks. That is
+  // what left `/` and `/intake` dead in production builds from 2026-09-21 to 10-03
+  // (e2e/app.spec.ts catches it).
+  await connection();
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen bg-ink font-sans text-[13px] leading-snug text-paper antialiased">

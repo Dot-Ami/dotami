@@ -18,6 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Prettier and `.editorconfig` (configured, not yet part of the gate).
 - Node 20 pinned (`.nvmrc`, `engines`) to match CI.
 - Issue chooser, bug-report template, `CODEOWNERS`, `CITATION.cff`, README badges.
+- **Browser tests** (`npm run test:browser`, Playwright, `e2e/`): the real build on a fresh
+  database, driven like a person — one sentence to a saved map, a stage change surviving a
+  reload, the disclaimer footer inside the window. A CI job runs them on every pull request.
 
 ### Changed
 - **Database: PostgreSQL → SQLite (2026-09-28).** The whole database is now one file
@@ -37,6 +40,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Recharts removed — nothing imported it after the projection footer was cut.
 
 ### Fixed
+- **The landing page and the intake were dead in production builds** (`npm run build && npm
+  start`) from 2026-09-21: they were pre-rendered at build time, so their scripts carried no CSP
+  nonce and the browser blocked every one — the text box filled, but "Map it" never enabled.
+  Development mode renders per request, so it never showed. Every page now renders per request
+  (`app/layout.tsx`), as the Next.js CSP guide requires. Found by the first browser test.
 - Links built from data the app did not write are restricted to absolute `https:` URLs.
 - `deepmerge-ts` forced to 8.x (GHSA-ggr8-5vv4-36mx). It arrives through Prisma's CLI and
   no Prisma release — including 7.10 — has moved off the vulnerable 7.x yet.
