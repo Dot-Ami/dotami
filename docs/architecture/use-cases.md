@@ -1,7 +1,8 @@
 # Who DotAmi is for — the people, what each needs, and what the back end must do
 
 Status: plan, 2026-09-27. Nothing here is built. It sits above the other architecture
-documents: [connectors-and-agents.md](connectors-and-agents.md) (how figures arrive),
+documents: [settings-and-edge-cases.md](settings-and-edge-cases.md) (every setting, and the
+edge cases each story must test), [connectors-and-agents.md](connectors-and-agents.md) (how figures arrive),
 [engines.md](engines.md) (the catalogs) and [law-store.md](law-store.md) (the statute text).
 Where this page and those disagree, this page is newer, and the older page gets updated in
 the pull request that builds the piece.
