@@ -116,6 +116,9 @@ CI runs the same chain on every pull request.
 
 ## Contribute
 
+**Looking for something to pick up? [docs/task-list.md](docs/task-list.md)** lists every planned
+story with its tasks, what's done, and what needs a decision first.
+
 Any path to financial freedom you can cite: a jurisdiction, a structure, a strategy, a
 write-off, a grant, a threshold, a correction, a fresher `lastVerified` date. The style guide
 and the rules are in [CONTRIBUTING.md](CONTRIBUTING.md). Short version: one paragraph per
