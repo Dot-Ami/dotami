@@ -37,6 +37,8 @@ content and the project itself run alongside everything.
   - [ ] The app checks for and installs updates
   - [ ] ⏸ Code signing and app stores — later
 - ⬜ **[7e] Landing page website** — what it is, demos, a download button. ⏸ hosting decision.
+- ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who
+  self-hosted before the SQLite switch; runs on their own computer; waits for [7b].
 - ⬜ **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
   each story adds its own rows.
 

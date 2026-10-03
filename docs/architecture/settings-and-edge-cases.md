@@ -1,8 +1,8 @@
 # Settings and edge cases — every story, before it's built
 
 Status: plan, 2026-10-03. Nothing here is built. Companion to [use-cases.md](use-cases.md) (who
-DotAmi is for and the build order). The maintainer's tracker numbers each story (S2.5.7a …); the
-codes in brackets match it.
+DotAmi is for and the build order). The codes in brackets match the stories in
+[../task-list.md](../task-list.md).
 
 **How this is used.** Each edge case below is a test waiting to be written. A story isn't done
 until its edge cases have tests or a written reason why not. Part 4 lists things not decided
@@ -66,8 +66,9 @@ disk is full mid-write; the file is read-only.
 **Landing page [7e]** — every download link points at the latest release; works without
 JavaScript; readable on a phone; no tracking unless Part 4 decides otherwise.
 
-**Private copy moves into the app [7f]** — row counts match on both sides before anything old is
-removed; dates keep their calendar day across the move; run twice → no duplicates.
+**Moving an existing PostgreSQL install into the app [7f]** — for anyone who self-hosted before the
+SQLite switch: row counts match on both sides before anything old is removed; dates keep their
+calendar day across the move; run twice → no duplicates; nothing leaves the computer.
 
 ### Your figures
 
