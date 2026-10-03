@@ -83,6 +83,10 @@ chain CI runs. Stop the dev server first (`prisma generate` cannot replace the e
 binary while `next dev` holds it), and delete `.next` before restarting the dev server after
 a production build. `tests/engine-integrity.spec.ts` must stay green; new catalog work adds
 its test first. Never claim green without the command and its output.
+`npm run test:browser` (Playwright, `e2e/`) runs the production build on a throwaway database in
+Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path.
+Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
+weeks) — browser tests run the real build for that reason.
 
 ## Where things are decided
 

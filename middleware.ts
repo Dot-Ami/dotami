@@ -11,9 +11,12 @@ import { NextResponse, type NextRequest } from "next/server";
  * (`style={{…}}`) render as attributes; that is the standard trade and does not weaken script
  * protection. Everything else (connections, images, fonts, frames, forms) is same-origin.
  *
- * The nonce makes every page dynamic (it must differ per response) — right for a self-hosted,
- * single-user app. API routes and Next's static assets are excluded by the matcher; they get
- * the fixed headers from next.config.mjs instead.
+ * The nonce must differ per response, so every page has to render per request — and setting a
+ * header here does NOT make that happen on its own: a page with nothing request-specific is
+ * pre-rendered at build time and its scripts get no nonce. `app/layout.tsx` forces per-request
+ * rendering (`await connection()`); without it the landing and intake pages were dead in
+ * production builds. Right for a self-hosted, single-user app. API routes and Next's static
+ * assets are excluded by the matcher; they get the fixed headers from next.config.mjs instead.
  */
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");

@@ -12,4 +12,7 @@ coverage
 *.db-wal
 *.db-shm
 .vercel
+# Browser-test output (screenshots, traces, the HTML report).
+playwright-report
+test-results
 

@@ -112,7 +112,9 @@ Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry
 date before you pull — a fresh SQLite file starts empty.
 
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
-CI runs the same chain on every pull request.
+CI runs the same chain on every pull request. **Browser tests:** `npm run test:browser` builds
+the app, starts it on a fresh throwaway database and drives it in Chromium the way a person would
+(first time: `npx playwright install chromium`). CI runs them on every pull request too.
 
 ## Contribute
 
