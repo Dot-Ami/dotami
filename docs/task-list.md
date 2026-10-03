@@ -151,7 +151,8 @@ content and the project itself run alongside everything.
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
   - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces`, under Tailwind and ESLint)
-- 🔄 **[13e] Tests that use the app like a person** — Playwright on the real build, in CI (#64).
+- ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
+  every pull request (#64); `npm run test:browser`. Each new screen adds its own test.
 - ⬜ **[13f] Privacy policy, terms, and the usage-sharing decision** ⏸ maintainer's decision;
   needed before the first download.
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
@@ -161,4 +162,4 @@ content and the project itself run alongside everything.
   - [ ] **Wired:** what's typed or clicked saves, reloads and survives a restart; errors handled
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't name them).
-- 🔄 **[13i] The landing page and intake were dead in production builds** — fixed in #64.
+- ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
