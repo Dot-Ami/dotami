@@ -251,8 +251,10 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "usage-sharing",
     group: "privacy",
     label: "Share anonymous usage",
-    does: "Whether the app ever asks you to share anonymous usage. The proposal: off unless you say yes, and never your figures, words or files.",
-    defaultValue: "not decided",
+    // Decided 2026-10-05: people are asked, and nothing is shared unless they say yes. What is
+    // sent, where it goes and who sees it are still open (Part 4), so the row stays "undecided".
+    does: "Anonymous usage is shared only if you say yes when asked — never your figures, words or files. What is shared, where it goes and who sees it aren't decided yet.",
+    defaultValue: "off until you say yes",
     options: "see Part 4",
     warning: null,
     story: null,

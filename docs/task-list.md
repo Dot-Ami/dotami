@@ -36,7 +36,7 @@ content and the project itself run alongside everything.
   - [ ] An installer per operating system on each release
   - [ ] The app checks for and installs updates
   - [ ] ⏸ Code signing and app stores — later
-- ⬜ **[7e] Landing page website** — what it is, demos, a download button. ⏸ hosting decision.
+- ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who
   self-hosted before the SQLite switch; runs on their own computer; waits for [7b].
 - 🔄 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
@@ -74,7 +74,8 @@ content and the project itself run alongside everything.
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
-- ⬜ **[9a] Pick your model** — a local model or your own key; keys in the OS keychain.
+- ⬜ **[9a] Pick your model** — three ways in, one setup screen: a provider's own key, OpenRouter,
+  or a model on your own machine; keys in the OS keychain.
 - ⬜ **[9b] Know the model before you use it** — test it directly (an image, a tool call, how much
   it reads); say in plain words what you'd miss; an accuracy score on invented receipts.
 - ⬜ **[9c] The test set** — invented receipts, returns and statements with known answers, and a scorer.

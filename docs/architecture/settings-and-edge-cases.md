@@ -37,7 +37,7 @@ Change both together.
 | Deadline reminders | on for deadlines on your map | on · off per kind | — | [10d] |
 | Tax year shown | the current one | any year with catalogs | — | [11i] |
 | Language | English | English · French (when it exists) | — | [11j] |
-| Share anonymous usage | **not decided** | see Part 4 | — | Part 4 |
+| Share anonymous usage | **off until you say yes** | see Part 4 | — | Part 4 |
 
 ## Part 2 — Edge cases, story by story
 
@@ -259,7 +259,9 @@ committed by mistake (secret scanning).
 
 ## Part 4 — Not decided yet (the maintainer's calls)
 
-1. **Asking people to share anonymous usage.** DotAmi today sends nothing anywhere. (Corrected
+1. **Asking people to share anonymous usage.** **Decided 2026-10-05: people are asked, and nothing
+   is shared unless they say yes.** Still open below: what is sent, where it goes, who sees it.
+   DotAmi today sends nothing anywhere. (Corrected
    2026-10-05: DotAmi's own code sends nothing, but the Next.js framework under it sends Vercel
    anonymous counts when `npm run dev` or `npm run build` runs, unless turned off —
    [nextjs.org/telemetry](https://nextjs.org/telemetry), read 2026-10-05. The settings page's
