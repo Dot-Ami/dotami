@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-03. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-05. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -150,9 +150,15 @@ content and the project itself run alongside everything.
 - ⬜ **[13b] Releases** — tags, changelog, release notes.
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
-  - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces`, under Tailwind and ESLint)
+  - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces` stack-exhaustion). **No fixed
+    version exists yet** — it covers every `braces` release up to 3.0.3, the newest (checked
+    2026-10-05). It reaches DotAmi only at build time, through Tailwind 3 and Next's ESLint plugin,
+    on glob patterns from the project's own config; nothing shipped to people runs it. Either wait
+    for a fixed `braces`, or the upgrade below.
+  - [ ] Tailwind 3 → 4 (Tailwind 4's own packages don't use `braces`; then check the ESLint path)
 - ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
-  every pull request (#64); `npm run test:browser`. Each new screen adds its own test.
+  every pull request (#64); `npm run test:browser`. Each new screen adds its own test. A required
+  check on `main` since 2026-10-05: nothing merges with them failing.
 - ⬜ **[13f] Privacy policy, terms, and the usage-sharing decision** ⏸ maintainer's decision;
   needed before the first download.
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
