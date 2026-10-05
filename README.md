@@ -99,6 +99,13 @@ npm run dev                   # http://localhost:3000 — bound to this machine 
 Self-hosted, single user, no auth — run it on your own machine. A hosted multi-user
 instance needs authentication and tenant isolation that do not exist yet.
 
+DotAmi itself sends nothing anywhere, but two tools it's built with report anonymous usage
+counts unless told not to: Next.js on `npm run dev` / `npm run build`
+([nextjs.org/telemetry](https://nextjs.org/telemetry); `npx next telemetry disable` stops it), and
+the Prisma CLI each time it runs. The `prisma:*` scripts switch Prisma's off
+(`scripts/prisma.mjs`); `npm ci` runs it once on its own, so set `CHECKPOINT_DISABLE=1` in your
+environment before installing to stop that too. CI sets both off.
+
 **Your data is the one file `DATABASE_URL` points at.** Back it up by copying it; start over
 by deleting it and running `npm run prisma:deploy` again. It is never committed (`.gitignore`
 covers `*.db`). Turn on your operating system's disk encryption (BitLocker, FileVault) — that
