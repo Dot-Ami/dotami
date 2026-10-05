@@ -15,9 +15,18 @@ export const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "off" },
 ];
 
+// The desktop app ([7b]) runs a self-contained build of this server inside Electron. It builds
+// into its own folder so a desktop build never overwrites the `.next` a running `npm run dev`
+// or `next start` is using; every other build is unchanged. Set by desktop/build.mjs.
+const desktopBuild = process.env.DOTAMI_DESKTOP_BUILD === "1";
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Not `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
+  // Windows they never match (node_modules/next/dist/build/collect-build-traces.js:503). The
+  // build script removes and checks for private files instead.
+  ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop" } : {}),
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

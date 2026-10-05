@@ -89,6 +89,9 @@ its test first. Never claim green without the command and its output.
 Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path.
 Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
 weeks) — browser tests run the real build for that reason.
+`npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
+(`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
+after touching `desktop/`, `next.config.mjs` or the database setup. Not in CI yet.
 
 ## Where things are decided
 

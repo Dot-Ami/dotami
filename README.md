@@ -111,10 +111,16 @@ authentication in front of the app.
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
 
+**The desktop app (early — no installer yet):** `npm run desktop:build` then `npm run desktop`
+opens DotAmi in its own window, with its data in the app's own folder (`%APPDATA%\DotAmi` on
+Windows) instead of `prisma/`. How it works: [docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
+
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
 CI runs the same chain on every pull request. **Browser tests:** `npm run test:browser` builds
 the app, starts it on a fresh throwaway database and drives it in Chromium the way a person would
 (first time: `npx playwright install chromium`). CI runs them on every pull request too.
+**Desktop test:** `npm run test:desktop` builds the desktop app's server and drives the real app
+(start → describe a venture → close → start again → still there). Not in CI yet.
 
 ## Contribute
 
