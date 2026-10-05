@@ -52,6 +52,9 @@ export function VenturesPage() {
         </GhostLink>
         <WordMark />
         <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your ideas</p>
+        <GhostLink href="/settings" tone="stone">
+          Settings
+        </GhostLink>
       </nav>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-10">

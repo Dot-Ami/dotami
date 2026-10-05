@@ -63,6 +63,9 @@ export function LandingPage() {
           <GhostLink href="/cockpit" tone="stone">
             Open cockpit →
           </GhostLink>
+          <GhostLink href="/settings" tone="stone">
+            Settings
+          </GhostLink>
         </div>
       </header>
 

@@ -39,8 +39,15 @@ content and the project itself run alongside everything.
 - ⬜ **[7e] Landing page website** — what it is, demos, a download button. ⏸ hosting decision.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who
   self-hosted before the SQLite switch; runs on their own computer; waits for [7b].
-- ⬜ **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
+- 🔄 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
   each story adds its own rows.
+  - [x] One screen (`/settings`), grouped: data and backups · your figures · the Lens · the map ·
+    privacy · updates — each group opens with what is true of this copy today
+  - [x] Every Part 1 setting listed with its default, choices, warning and the story that brings
+    it; a test keeps the page and Part 1 in step
+  - [x] A browser test for the page
+  - [ ] A setting changed there survives a restart — waits for the first setting that can be
+    switched (none can yet; each arrives with its story, starting with [7b]'s data folder)
 
 ## 8 — Your figures (confirmed totals, never the records) · roadmap §5 · #46
 
