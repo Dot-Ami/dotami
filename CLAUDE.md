@@ -42,7 +42,9 @@ says where it is going.
 - Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the map: tier columns of stage cards + lever cards; node
   detail; playbook export) · `/ventures` (every saved venture, its stage, notes,
-  cross-references).
+  cross-references) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
+  with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
+  this copy today).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store).

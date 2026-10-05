@@ -1,0 +1,225 @@
+import type { ReactNode } from "react";
+
+import { GhostLink, WordMark } from "@/components/ui";
+import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
+import type { SettingsToday } from "@/lib/settings/today";
+
+import { CopyPathButton } from "./copy-path-button";
+
+const TASK_LIST_URL = "https://github.com/Dot-Ami/dotami/blob/main/docs/task-list.md";
+const PART_4_URL =
+  "https://github.com/Dot-Ami/dotami/blob/main/docs/architecture/settings-and-edge-cases.md#part-4--not-decided-yet-the-maintainers-calls";
+const NEXT_TELEMETRY_URL = "https://nextjs.org/telemetry";
+
+/**
+ * S2.5.7g — the settings page. One screen for every setting in Part 1 of
+ * docs/architecture/settings-and-edge-cases.md, grouped; the rows come from lib/settings/catalog.ts.
+ *
+ * Each group opens with what is true in this copy TODAY (read on the server from the app's own
+ * environment), then lists the settings planned for it with their default and the warning shown
+ * before switching on anything risky. A setting whose story isn't built has no control — it
+ * says which story brings it. The story that builds a setting adds its control here.
+ */
+export function SettingsPage({ today }: { today: SettingsToday }) {
+  return (
+    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
+      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+        <GhostLink href="/" tone="stone">
+          ← Back
+        </GhostLink>
+        <WordMark />
+        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Settings</p>
+      </nav>
+
+      <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
+        <header>
+          <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+            Settings, <span className="font-normal italic text-maple">and what&apos;s true today.</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-paper-dim">
+            Each group starts with what this copy of DotAmi does right now. Below that is every
+            setting planned for it: its default, its choices, and the warning you&apos;ll see
+            before switching on anything risky. None can be changed yet — each one arrives with
+            the feature it controls, named by its code on the{" "}
+            <a href={TASK_LIST_URL} target="_blank" rel="noreferrer" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
+              public task list
+            </a>
+            .
+          </p>
+        </header>
+
+        <nav aria-label="Setting groups" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
+          {SETTING_GROUPS.map((g) => (
+            <a key={g.id} href={`#${g.id}`} className="text-xs text-stone underline decoration-rule underline-offset-4 hover:text-paper">
+              {g.title}
+            </a>
+          ))}
+        </nav>
+
+        <div className="mt-8 space-y-10">
+          {SETTING_GROUPS.map((g) => (
+            <section key={g.id} id={g.id} aria-labelledby={`${g.id}-title`} className="scroll-mt-6">
+              <h2 id={`${g.id}-title`} className="font-serif text-xl font-bold tracking-tight text-paper">
+                {g.title}
+              </h2>
+              <p className="mt-0.5 text-[12px] text-stone">{g.blurb}</p>
+
+              <div className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3">
+                <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-sage">Today</p>
+                <div className="mt-1.5 space-y-2 text-sm leading-relaxed text-paper">{todayFor(g.id, today)}</div>
+              </div>
+
+              <ul className="mt-3 space-y-3">
+                {settingsInGroup(g.id).map((s) => (
+                  <SettingRow key={s.id} setting={s} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function SettingRow({ setting }: { setting: SettingEntry }) {
+  const status =
+    setting.status === "undecided"
+      ? "Waiting on a decision"
+      : setting.status === "planned"
+        ? `Not built yet · [${setting.story}]`
+        : null;
+
+  return (
+    <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-semibold text-paper">{setting.label}</h3>
+        {status ? (
+          // Not upper-cased: the story code must read exactly as the task list writes it ("[7b]").
+          <span className="rounded border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
+            {status}
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-[12.5px] text-paper-dim">{setting.does}</p>
+      <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[12px]">
+        <dt className="font-mono text-[9.5px] uppercase leading-[18px] tracking-[0.14em] text-stone">Default</dt>
+        <dd className="text-paper">{setting.defaultValue}</dd>
+        <dt className="font-mono text-[9.5px] uppercase leading-[18px] tracking-[0.14em] text-stone">Choices</dt>
+        <dd className="text-paper-dim">
+          {setting.status === "undecided" ? (
+            <a href={PART_4_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+              {setting.options}
+            </a>
+          ) : (
+            setting.options
+          )}
+        </dd>
+      </dl>
+      {setting.warning ? (
+        <p className="mt-2 rounded border border-amber/40 bg-amber/5 px-3 py-1.5 text-[12px] text-amber">
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]">Warning · </span>
+          {setting.warning}
+        </p>
+      ) : null}
+    </li>
+  );
+}
+
+function Code({ children }: { children: ReactNode }) {
+  return <code className="break-all rounded bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
+}
+
+/** The "Today" lines for one group. Every sentence here must stay true of the running app. */
+function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
+  switch (group) {
+    case "data": {
+      const { path, exists } = today.dataFile;
+      if (!path) {
+        return <p>This copy&apos;s database setting doesn&apos;t point at a file, so there is no single data file to show.</p>;
+      }
+      if (!exists) {
+        return (
+          <p>
+            Your data file belongs at <Code>{path}</Code>, but there&apos;s no file there yet.{" "}
+            <Code>npm run prisma:deploy</Code> creates it (README, Quick start).
+          </p>
+        );
+      }
+      return (
+        <>
+          <p>All of your data is one file on this computer:</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Code>{path}</Code>
+            <CopyPathButton path={path} />
+          </div>
+          <p className="text-paper-dim">
+            Copying that file while DotAmi is stopped is a complete backup; deleting it starts over.
+            Back up and Restore buttons arrive with [7c].
+          </p>
+        </>
+      );
+    }
+    case "figures":
+      return (
+        <p>
+          DotAmi keeps no confirmed figures yet — only what you typed on the intake, such as your
+          first-year revenue estimate. The figures store arrives with [8a].
+        </p>
+      );
+    case "lens":
+      return (
+        <p>
+          No model is chosen: the Lens isn&apos;t built yet (it arrives with [9a]), and no outside
+          agent can connect. The only AI in the app today is the reader for the sentence you type to
+          describe a venture — see Privacy.
+        </p>
+      );
+    case "map":
+      return (
+        <p>
+          The cards use the {today.taxYear} rules, the only tax year mapped so far. The app is in
+          English.
+        </p>
+      );
+    case "privacy":
+      return (
+        <>
+          {today.intake.sentTo === "anthropic" ? (
+            <p>
+              <strong>One thing leaves this computer:</strong> the sentence you type to describe a
+              venture is sent to Anthropic to be read (model <Code>{today.intake.model}</Code>),
+              because a model key (<Code>ANTHROPIC_API_KEY</Code>) is set for this copy, usually in
+              its <Code>.env</Code> file. Empty the key and it&apos;s read here, by keyword matching,
+              instead.
+            </p>
+          ) : (
+            <p>
+              <strong>DotAmi sends nothing off this computer.</strong> The sentence you type to
+              describe a venture is read here, by keyword matching — no model key is set.
+            </p>
+          )}
+          <p className="text-paper-dim">
+            DotAmi has no server of its own and collects no usage data. Links to official sources
+            and to GitHub open those sites only when you click them.
+          </p>
+          <p className="text-paper-dim">
+            If you run DotAmi from its source code: the Next.js framework it is built on sends
+            Vercel anonymous counts when <Code>npm run dev</Code> or <Code>npm run build</Code> runs
+            — the command, versions, the kind of computer, the app&apos;s size (
+            <a href={NEXT_TELEMETRY_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+              nextjs.org/telemetry
+            </a>
+            , read 2026-10-05). <Code>npx next telemetry disable</Code> turns it off.
+          </p>
+        </>
+      );
+    case "updates":
+      return (
+        <p>
+          This is version <Code>{today.version}</Code>. DotAmi doesn&apos;t update itself yet: new
+          versions come from GitHub. Automatic updates arrive with [7d].
+        </p>
+      );
+  }
+}

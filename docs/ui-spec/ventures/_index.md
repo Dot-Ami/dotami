@@ -18,6 +18,7 @@ venture becomes a card the first time "Save / resume" is pressed on its map.
 
 | Control | Behaviour | Persists to |
 |---|---|---|
+| **Settings** (nav, right) | opens `/settings` (added 2026-10-05, [7g]) | — |
 | **New idea →** | resets the session journey, opens `/intake` | — |
 | **Stage** select (Idea · Prototype · First customers · Established) | `PATCH { stage }` on change | `Venture.stage` |
 | **Your notes** textarea | `PATCH { notes }` on blur, only if changed; "Saved." / "Save failed." under it | `Venture.notes` — their words, never summarised |

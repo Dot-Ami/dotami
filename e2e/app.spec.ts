@@ -7,6 +7,8 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
+
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
  * is a plain <p> that isn't tied to its <select>, so a screen reader can't name the dropdown
@@ -77,6 +79,53 @@ test("a stage change on the ideas page survives a reload", async ({ page }) => {
       .getByRole("combobox")
       .first(),
   ).toHaveValue("established");
+});
+
+test("the settings page: every group, what's true today, every setting and its warning", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+
+  for (const g of SETTING_GROUPS) {
+    await expect(page.getByRole("heading", { name: g.title, level: 2 })).toBeVisible();
+  }
+
+  // "Today" is read from the running app: its data file is this run's throwaway database, and
+  // with no model key (playwright.config.ts) the typed sentence never leaves the computer.
+  const data = page.getByRole("region", { name: "Data and backups" });
+  const filePath = data.locator("code").filter({ hasText: /e2e\.db$/ });
+  await expect(filePath).toBeVisible();
+  const privacy = page.getByRole("region", { name: "Privacy" });
+  await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
+  await expect(privacy).not.toContainText("sent to Anthropic");
+
+  // Every planned setting is listed with its default, its warning when it has one, and the story
+  // that brings it — and nothing on the page pretends to be a switch that works.
+  for (const s of SETTINGS) {
+    const row = page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: s.label, level: 3, exact: true }) });
+    await expect(row).toContainText(s.defaultValue);
+    if (s.warning) await expect(row).toContainText(s.warning);
+    if (s.status === "planned") await expect(row).toContainText(`Not built yet · [${s.story}]`);
+  }
+  await expect(page.locator("main").locator("input, select, textarea")).toHaveCount(0);
+
+  // The one control: the data file's path lands on the clipboard exactly as shown.
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await data.getByRole("button", { name: "Copy path" }).click();
+  await expect(data.getByRole("button", { name: "Copied" })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await filePath.textContent());
+
+  // A long path wraps on a phone-width window instead of pushing the page sideways.
+  await page.setViewportSize({ width: 390, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  // Reachable from the ideas page too.
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/ventures");
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings$/);
 });
 
 test("the disclaimer footer is on the page and inside the window", async ({ page }) => {

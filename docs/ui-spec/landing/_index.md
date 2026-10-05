@@ -15,6 +15,7 @@ sourced, risk-rated, cited to the law. Canada is the first jurisdiction mapped."
 | Free-text box + Map it | `01-free-text-entry.md` | The page's one real control — captures text, calls intent parse, routes to intake |
 | Example chips | `02-example-chips.md` | Fill the box, no submission |
 | Escape hatches | `03-escape-hatches.md` | Sample venture + open cockpit — both skip parsing |
+| Settings link | `../settings/_index.md` | Header, after "Open cockpit →" — opens `/settings` (added 2026-10-05, [7g]) |
 
 The shared root layout also renders a footer on every route: "Information, not legal or tax
 advice · a prep tool for you and your accountant · open source on GitHub", with the final phrase

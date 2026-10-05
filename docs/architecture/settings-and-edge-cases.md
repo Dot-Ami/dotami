@@ -12,6 +12,11 @@ yet — they need the maintainer's call before the story that depends on them st
 
 Defaults lean safe: anything that sends data, acts on its own or touches a login starts off.
 
+The settings page ([7g], `/settings`) is drawn from this table: each row is an entry in
+`lib/settings/catalog.ts`, and `tests/settings-catalog.spec.ts` fails if the two disagree (a row
+in one and not the other, a different default, choices or story, or a quoted warning reworded).
+Change both together.
+
 | Setting | Default | Options | Warning before switching on | Story |
 |---|---|---|---|---|
 | Where the data file lives | the app's own folder | any folder | moving it: "the app will close and reopen" | [7b] |
@@ -32,7 +37,7 @@ Defaults lean safe: anything that sends data, acts on its own or touches a login
 | Deadline reminders | on for deadlines on your map | on · off per kind | — | [10d] |
 | Tax year shown | the current one | any year with catalogs | — | [11i] |
 | Language | English | English · French (when it exists) | — | [11j] |
-| Share anonymous usage | **not decided** | see Part 4 | — | Part 4 |
+| Share anonymous usage | **off until you say yes** | see Part 4 | — | Part 4 |
 
 ## Part 2 — Edge cases, story by story
 
@@ -62,6 +67,14 @@ disk is full mid-write; the file is read-only.
 - An update fails to install → roll back to the version that worked.
 - An update includes a database change → back up first, then upgrade.
 - No internet at all → the app works fully; it just doesn't update.
+
+**The settings page [7g]** (shell built 2026-10-05; tested in `e2e/app.spec.ts`)
+- A setting whose story isn't built → shown with its default and warning, no control, and the story that brings it. Tested.
+- The data file isn't there yet, or the database URL isn't a file → the page says so instead of showing a path. Unit-tested (`tests/settings-today.spec.ts`).
+- A model key is set → Privacy says the typed sentence goes to Anthropic, and to which model; the key itself is never shown. Unit-tested.
+- A long data-file path on a narrow window → wraps; no sideways scrolling. Tested at 390 px.
+- The clipboard is refused → "Copy failed — select it instead". Not tested (a browser grants it in tests).
+- Still to test when the first setting goes live: changed → survives a restart; a risky one can't be switched without its warning being shown.
 
 **Landing page [7e]** — every download link points at the latest release; works without
 JavaScript; readable on a phone; no tracking unless Part 4 decides otherwise.
@@ -246,7 +259,13 @@ committed by mistake (secret scanning).
 
 ## Part 4 — Not decided yet (the maintainer's calls)
 
-1. **Asking people to share anonymous usage.** DotAmi today sends nothing anywhere. A proposal:
+1. **Asking people to share anonymous usage.** **Decided 2026-10-05: people are asked, and nothing
+   is shared unless they say yes.** Still open below: what is sent, where it goes, who sees it.
+   DotAmi today sends nothing anywhere. (Corrected
+   2026-10-05: DotAmi's own code sends nothing, but the Next.js framework under it sends Vercel
+   anonymous counts when `npm run dev` or `npm run build` runs, unless turned off —
+   [nextjs.org/telemetry](https://nextjs.org/telemetry), read 2026-10-05. The settings page's
+   Privacy group says so. Whether to turn it off by default is open.) A proposal:
    - **Off unless the person says yes**, asked once at first launch in plain words, changeable any time.
    - **Never sent:** figures, statements, venture names or notes, file contents, model
      conversations, anything typed.
