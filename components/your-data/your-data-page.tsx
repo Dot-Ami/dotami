@@ -26,9 +26,13 @@ const SECTIONS = [
  * DotAmi keeps about the person, counted from the data file each time it opens (never a stored
  * claim), so the person can check DotAmi's word against the file itself.
  *
- * Every row is drawn from lib/privacy/inventory.ts, the list a test keeps complete: a new table
- * or browser-storage key can't merge without appearing here. This page changes nothing and has no
- * forget or delete control; docs/ui-spec/your-data/_index.md says what it deliberately leaves out.
+ * Every row is drawn from lib/privacy/inventory.ts, a list a test checks against the schema and the
+ * code: a new table, a browser-storage key or a request out written in the ordinary way (or one of
+ * the common disguises) fails that test until it is listed. That is a safety net, not a proof: the
+ * test can't see code written to hide a request (tests/helpers/source-scan.ts lists what it
+ * misses), so this page shows what the list says and code review covers the rest. This page changes
+ * nothing and has no forget or delete control; docs/ui-spec/your-data/_index.md says what it
+ * deliberately leaves out.
  *
  * `holdings` is null when the data file couldn't be read: the page says so instead of failing.
  */

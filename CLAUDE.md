@@ -54,9 +54,12 @@ says where it is going.
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
-  browser-storage key and every way the code can reach the network (other than a literal `/api/…`
-  path on DotAmi's own server) is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts`
-  fails until a new one is added there, and `/your-data` is drawn from that list. Nothing may write an
+  browser-storage key and every way the code can reach the network that the privacy test can see
+  (other than a literal `/api/…` path on DotAmi's own server) is listed in `lib/privacy/inventory.ts`;
+  `tests/privacy-inventory.spec.ts` fails until a new one is added there, and `/your-data` is drawn
+  from that list. The network check reads syntax trees: a safety net that catches ordinary requests
+  and the common disguises, not code written to hide one (the header of `tests/helpers/source-scan.ts`
+  says what gets past), so code review is still the cover. Nothing may write an
   error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
   report is switched off in `lib/prisma.ts` because it quotes the values it was given.
 

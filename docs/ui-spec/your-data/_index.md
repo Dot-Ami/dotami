@@ -77,8 +77,28 @@ logs only the error's name and code.
 
 `lib/privacy/inventory.ts` is the list the page is drawn from, and `tests/privacy-inventory.spec.ts`
 fails when `prisma/schema.prisma` gains a model, or any code under `app/`, `components/` or `lib/`
-uses a browser-storage key (or a new kind of storage, or a new request out of the computer), that
-the inventory doesn't list. `tests/privacy-holdings.spec.ts` checks the reader's counts, grouping
+uses a browser-storage key (or a new kind of storage) that the inventory doesn't list. The same
+test fails on a network request (or a module that makes them) in `app/`, `components/`, `lib/`,
+`desktop/`, `middleware.ts` or `next.config.mjs` that the inventory doesn't list.
+
+**What the request check is, and is not.** A safety net, not a proof. It reads each file's syntax
+tree, so it catches requests written in ordinary code and refuses the common disguises (a name
+written with an escape or joined from strings, a module named by a template or by joined strings,
+`require` reached through `createRequire`, `fetch` handed on or called through `.call`/`.bind`, a
+lookup on the global object by a key that isn't a plain string, `child_process`, electron's `net`).
+It does **not** catch code written to hide a request: a copy of `window` under another name, a
+`<script src>` or `new Image().src`, `window.open`, the global `eval`, a request made inside a
+package in `node_modules`, or whatever a program the app starts does (the statute store's script).
+Code review covers those. In the browser, the Content-Security-Policy in `middleware.ts` blocks
+most of them while a page runs: `connect-src` stops fetch, XMLHttpRequest, sendBeacon, WebSocket
+and EventSource to another address, `img-src` stops images, and frames and media fall back to
+`default-src`. It does not stop navigation (`window.open`, links), nor a script that code adds
+(`script-src` carries `'strict-dynamic'`), and it covers nothing that runs on the server or in the
+desktop app's main process. The browser-storage check above still reads text, so a quote inside a
+regular expression could hide a key written after it. The full lists are in the header of
+`tests/helpers/source-scan.ts`, and a test there pins each thing the scan misses.
+
+`tests/privacy-holdings.spec.ts` checks the reader's counts, grouping
 and dates on a throwaway database. `tests/error-logging.spec.ts` checks the log claim in section 3
 for DotAmi's own routes, and `tests/prisma-log.spec.ts` checks it for the database library: it runs a
 write built wrongly on purpose, in its own process, and fails if anything on stdout or stderr

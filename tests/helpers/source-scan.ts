@@ -1,11 +1,73 @@
 /**
- * Helpers for the tests that read DotAmi's own source code to prove a rule holds everywhere —
- * "every browser-storage key is on the privacy inventory" (tests/privacy-inventory.spec.ts),
- * "no route logs an error object" (tests/error-logging.spec.ts). These are blunt on purpose: they
- * read text, not a syntax tree (the one exception is whether `fetch` is handed on without being
- * called, which text can't tell from the word in a sentence on the page or from another object's
- * `fetch`), and the tests that use them also check they still find the things they are meant to
- * find, so a scan that quietly sees nothing can't pass for a clean one.
+ * Helpers for the tests that read DotAmi's own source code to check a rule — "every browser-storage
+ * key and every way out to the network is on the privacy inventory" (tests/privacy-inventory.spec.ts),
+ * "no route logs an error object" (tests/error-logging.spec.ts). The tests that use them also check
+ * they still find the things they are meant to find, so a scan that quietly sees nothing can't pass
+ * for a clean one.
+ *
+ * Two kinds of reading live here:
+ *   - The NETWORK scan (networkCalls) reads the TypeScript syntax tree: the `typescript` package
+ *     parses each file, so a comment, a string, the words on a page, a quote or backtick inside a
+ *     regular expression, a name written with a unicode escape (fetch spelled with "u0066" after a
+ *     backslash) and a template where a plain string is expected are each read as what they are.
+ *   - The browser-storage and log scans (everything built on simplify) still read TEXT. simplify
+ *     is not a parser: a quote or backtick inside a regular expression literal throws it out of
+ *     step and can hide the code after it. The "finds what it should find today" checks would not
+ *     show that for a file written later.
+ *
+ * WHAT THE NETWORK SCAN IS, AND WHAT IT IS NOT
+ * It is a safety net, not a proof. It catches network calls written in ordinary code and it
+ * refuses the common disguises. It is NOT proof against code written to hide a request: code
+ * review is what covers that. When this scan is clean, the accurate statement is "no ordinary or
+ * commonly disguised request is unlisted", never "nothing leaves this computer".
+ *
+ * Refused as an unlisted network path (unless the allow-list in lib/privacy/inventory.ts names it):
+ *   - fetch(…), sendBeacon(…), new WebSocket(…), new EventSource(…), an XMLHttpRequest's open(…),
+ *     node's http/https/http2/net/tls request/get/connect, and any wrapper the allow-list names,
+ *     unless the address is one literal "/…" path on DotAmi's own server;
+ *   - those functions handed on without being called (`const send = fetch`, `window.fetch`,
+ *     `x.fetch.call(…)` / `.apply` / `.bind`, `const { fetch } = globalThis`), or looked up by a
+ *     string (`globalThis["fetch"]`, `navigator["sendBeacon"]`);
+ *   - importing or requiring, however it is quoted or reached (`import`, `import(…)`, `require`,
+ *     `createRequire(…)(…)`, `process.getBuiltinModule(…)`; even an import only for its types),
+ *     node's http, https, http2, net, tls, dgram, dns or child_process (which can run `curl`),
+ *     electron's `net`, the HTTP, update and analytics libraries in NETWORK_MODULE, and anything
+ *     loaded from a URL;
+ *   - a module name that is not a plain string (`import("node:" + "https")`, `require(name)`), and
+ *     a module loaded through `require.call(…)` / `.apply` / `.bind`;
+ *   - looking something up on globalThis, window, self, global, navigator, process or the electron
+ *     module by a key that is not a plain string (`globalThis[k]`, `globalThis["fe" + "tch"]`), and
+ *     Reflect.get on those. (A bare `parent`, `top` or `frames` is not read as a window here, so a
+ *     tree node called `parent` can be indexed; `window.parent[k]` is.)
+ *
+ * STILL GETS PAST (the spec's "known gaps" test pins each of these, so the list can't go stale):
+ *   - a copy of the global object under another name: `const w = window; const s = w.fetch; s(url)`,
+ *     `document.defaultView.fetch` (a direct call `w.fetch(url)` IS caught, whatever `w` is);
+ *   - making the page do the loading instead of calling a function: `new Image().src = url`, a
+ *     <script src>, <img>, <iframe>, <link> or <form action>, `window.open(url)`,
+ *     `location.href = url`, `location.assign(url)`, and in the desktop app `shell.openExternal(url)`;
+ *   - workers and their scripts: `new Worker(url)`, `importScripts(url)`, `serviceWorker.register(url)`;
+ *   - code made at run time, by the global `eval` or the Function constructor;
+ *   - computed lookups other than the ones above: `Object.getOwnPropertyDescriptor(window, k)`;
+ *   - node internals and native add-ons: `process.binding(…)`, a `.node` file;
+ *   - a wrapper named in the allow-list, handed on and called under another name;
+ *   - anything outside the files it reads (app/, components/, lib/, desktop/, middleware.ts,
+ *     next.config.mjs): scripts/, prisma/, tests, and the packages in node_modules (Next.js and
+ *     Prisma make requests of their own; Settings → Privacy says which ones DotAmi knows of);
+ *   - what another program does: the statute store's lookup.py is started with child_process, and
+ *     its code is not in this repository.
+ *
+ * IN THE BROWSER the Content-Security-Policy that middleware.ts sets stops most of those at run
+ * time: `connect-src 'self'` stops fetch, XMLHttpRequest, sendBeacon, WebSocket, EventSource and
+ * a link's ping to any other address; `img-src 'self' blob: data:` stops `new Image().src` and
+ * <img>; `default-src 'self'` covers frames and media; `form-action 'self'` stops a form posting
+ * elsewhere. `script-src` stops a <script src> in the page's own HTML, but because it carries
+ * 'strict-dynamic' a script that is already running may add or import another one, so a script
+ * added by code is not reliably stopped. The policy does NOT stop navigation (window.open, a
+ * link, `location.href`; in the desktop app the window refuses to leave DotAmi's own pages and
+ * opens such addresses in the person's own browser instead). It also covers only the pages
+ * middleware.ts serves: the API routes, everything that runs on the server, and the desktop
+ * app's main process are not under it, and there this scan and code review are all there is.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -38,26 +100,22 @@ export function readSource(file: string): string {
   return readFileSync(path.join(ROOT, file), "utf8");
 }
 
-/** What `simplify(…, "mask")` writes for each character inside a string: not a character that code uses. */
-const FILL = "§";
-
 /**
- * The code with comments removed, and with the text inside quotes kept, emptied, or masked.
+ * The code with comments removed, and with the text inside quotes kept or emptied.
  *
  * Comments go first so a sentence like "the journey lives in sessionStorage" doesn't count as code.
  * With `keepStrings` false every string becomes an empty pair of quotes (a template keeps its
  * `${…}` parts, which are code), so parentheses and words inside a message can't be mistaken for
- * code. With "mask" each character of a string becomes a filler character instead, so the result is
- * exactly as long as the `true` version: a scan can find code in the masked text and read what a
- * string says at the same offset in the kept text. Not a full parser: a quote character inside a
- * regular expression would confuse it, which the sanity checks in the tests that use it would show
- * up as a scan that finds nothing.
+ * code. NOT a parser: a quote or backtick inside a regular expression literal throws it out of
+ * step, and code after it can then be read as part of a string and go unseen. A check that the
+ * scan still finds today's keys or writes would not show that for a file written later; the
+ * network scan (networkCalls) reads the syntax tree instead, so it doesn't have this limit.
  */
-export function simplify(code: string, keepStrings: boolean | "mask"): string {
+export function simplify(code: string, keepStrings: boolean): string {
   type Frame = { kind: "code"; braces: number } | { kind: "template" };
   const frames: Frame[] = [{ kind: "code", braces: 0 }];
   /** What is written for the characters of a string. */
-  const inString = (s: string) => (keepStrings === true ? s : keepStrings === "mask" ? FILL.repeat(s.length) : "");
+  const inString = (s: string) => (keepStrings ? s : "");
   let out = "";
   let i = 0;
   const n = code.length;
@@ -300,32 +358,7 @@ export function errorWrites(code: string): string[] {
 }
 
 // ---------------------------------------------------------------------------------------------
-// What can reach the network
-
-/** A place where the code can reach the network. */
-export interface NetworkCall {
-  /** The call as the inventory's allow-list spells it: `fetch(TELEMETRY`, `https.get(url`, `package "electron-updater"`. */
-  call: string;
-  /** True when the address is a literal path on this app's own server ("/api/…"), which cannot leave the computer. */
-  relative: boolean;
-}
-
-/**
- * A literal path on this app's own server. The whole argument must be one string (or one template)
- * that starts with a single "/" and a character of the path's first segment. Refused, because a
- * browser could read each as another computer or the scan can't see what the address ends up as:
- *   "//host" and "/\host";            a lone "/";
- *   "/${…" (the template could put a host there), and anything that starts with "${…}";
- *   "/" + "/host", "/" + HOST_PATH and "/api/" + id: a literal with more joined to it;
- *   "/<tab>/host": a browser drops tabs and line breaks from an address, which leaves "//host".
- */
-function isRelativeLiteral(address: string): boolean {
-  const text = address.trim();
-  if (!/^(["'`])\/(?![/\\\s\u0000-\u001f\u007f]|\$\{|\1)/.test(text)) return false;
-  // That was only the start of the argument: nothing may follow the literal that opened it.
-  const end = skipLiteral(text, 0);
-  return text[end - 1] === text[0] && text.slice(end).trim() === "";
-}
+// Reading a call's arguments from text (catchScopes uses this; the network scan reads the syntax tree)
 
 /** Index just past the string or template literal that opens at `i`. */
 function skipLiteral(code: string, i: number): number {
@@ -387,32 +420,50 @@ export function callArguments(code: string, open: number): string[] {
   return args;
 }
 
+// ---------------------------------------------------------------------------------------------
+// What can reach the network. Read from the syntax tree: see the header for what that does and
+// does not catch.
+
+/** A place where the code can reach the network. */
+export interface NetworkCall {
+  /** The call as the inventory's allow-list spells it: `fetch(TELEMETRY`, `https.get(url`, `package "electron-updater"`. */
+  call: string;
+  /** True when the address is a literal path on this app's own server ("/api/…"), which cannot leave the computer. */
+  relative: boolean;
+}
+
+/** The ways a page or node sends something somewhere. A call of one is judged by its address; handing one on is refused. */
+const NETWORK_NAMES = ["fetch", "sendBeacon", "XMLHttpRequest", "WebSocket", "EventSource"];
+
 /**
  * Modules that talk to the network, or whose job is to: importing one is itself a way to reach out,
- * so it is listed whether or not a call to it is visible. Node's own network modules, the two
- * libraries DotAmi uses that make requests on their own, and the usual HTTP clients and trackers.
+ * so it is listed whether or not a call to it is visible. Node's own network modules (and
+ * child_process, which can run `curl`), the two libraries DotAmi uses that make requests on their
+ * own, and the usual HTTP clients and trackers.
  */
 const NETWORK_MODULE =
-  /^(?:node:)?(?:https?|http2|net|tls|dgram|dns)(?:\/promises)?$|^(?:@anthropic-ai\/sdk|electron-updater|axios|node-fetch|cross-fetch|isomorphic-fetch|undici|got|ky|superagent|ws|socket\.io-client|openai|posthog-js|@vercel\/analytics|@sentry\/[\w-]+|@segment\/[\w-]+)$/;
+  /^(?:node:)?(?:https?|http2|net|tls|dgram|dns|child_process)(?:\/promises)?$|^(?:@anthropic-ai\/sdk|electron-updater|axios|node-fetch|cross-fetch|isomorphic-fetch|undici|got|ky|superagent|ws|socket\.io-client|openai|posthog-js|@vercel\/analytics|@sentry\/[\w-]+|@segment\/[\w-]+)$/;
+
+/** A module name that is an address: `import("https://…")` loads code over the network (and a data: address is code written into the name). */
+const URL_SPECIFIER = /^(?:(?:https?|wss?|ftp|data|blob):|\/\/)/i;
+
+/** node's request-making functions, and the modules they come from: `https.get(…)`, `net.connect(…)`. */
+const NODE_REQUEST_METHODS = new Set(["request", "get", "connect", "createConnection"]);
+const NODE_REQUEST_MODULES = new Set(["http", "https", "http2", "net", "tls"]);
+
+/** Names of the global object. `window.fetch` is the page's own fetch; `router.fetch` is not. */
+const GLOBAL_OBJECTS = new Set(["globalThis", "window", "self", "global", "navigator"]);
+/** Other windows, which are global objects too. Common as the name of something else (`parent[key]` in a tree), so only trusted where it matters less (see isGlobalObject). */
+const OTHER_WINDOWS = new Set(["top", "parent", "frames"]);
 
 /** Collapses a source snippet to one short line, for naming a call. */
 function tidy(text: string): string {
   return text.replace(/\s+/g, " ").trim().slice(0, 60);
 }
 
-/**
- * What can stand between `new` and the name of a constructor reached through another object:
- * `globalThis.`, `window.parent.`, `(globalThis as any).`. Lazy, so `new WebSocket(` matches with nothing there.
- */
-const NEW_PREFIX = String.raw`(?:[\w$.\s]|\([^()]*\))*?`;
-
-/** Names of the global object, and of the windows that are one. `window.fetch` is the page's own fetch; `router.fetch` is not. */
-const GLOBAL_OBJECTS = new Set(["globalThis", "window", "self", "global", "top", "parent", "frames"]);
-
-/** Whether `node` is the global object itself: `window`, `(globalThis as any)`, `window.parent`. */
-function isGlobalObject(node: ts.Node): boolean {
+/** `node` without the brackets, casts and `!` that wrap it without changing what it is: `(globalThis as any)` is `globalThis`. */
+function unwrap(node: ts.Node): ts.Node {
   let inner = node;
-  // A cast or a pair of brackets around it is still the same object.
   while (
     ts.isParenthesizedExpression(inner) ||
     ts.isAsExpression(inner) ||
@@ -422,28 +473,92 @@ function isGlobalObject(node: ts.Node): boolean {
   ) {
     inner = inner.expression;
   }
-  if (ts.isIdentifier(inner)) return GLOBAL_OBJECTS.has(inner.text);
-  if (ts.isPropertyAccessExpression(inner)) return GLOBAL_OBJECTS.has(inner.name.text) && isGlobalObject(inner.expression);
-  if (ts.isQualifiedName(inner)) return GLOBAL_OBJECTS.has(inner.right.text) && isGlobalObject(inner.left);
+  return inner;
+}
+
+/** What a string written out says: "x", 'x' or `x` with no ${} in it. Null for anything else, however constant it looks ("a" + "b"). */
+function plainString(node: ts.Node | undefined): string | null {
+  const inner = node && unwrap(node);
+  return inner && (ts.isStringLiteral(inner) || ts.isNoSubstitutionTemplateLiteral(inner)) ? inner.text : null;
+}
+
+/**
+ * The name `node` ends in: `fetch`, `x.fetch`, `x["fetch"]`. Null when it isn't a name written out.
+ * ts.Identifier.text is the name after TypeScript has decoded any unicode escapes in it, so a
+ * `fetch` spelled with an escape reads as plain `fetch`.
+ */
+function nameOf(node: ts.Node): string | null {
+  if (ts.isIdentifier(node)) return node.text;
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isElementAccessExpression(node)) return plainString(node.argumentExpression);
+  return null;
+}
+
+/**
+ * Whether `node` is the global object itself: `window`, `(globalThis as any)`, `window.parent`,
+ * `window["navigator"]`. A bare `top`, `parent` or `frames` is another window only when `bareWindows`
+ * (the default): a lookup by a computed key refuses just the unambiguous names, so a tree node
+ * called `parent` can be indexed freely.
+ */
+function isGlobalObject(node: ts.Node, bareWindows = true): boolean {
+  const inner = unwrap(node);
+  const known = (name: string) => GLOBAL_OBJECTS.has(name) || OTHER_WINDOWS.has(name);
+  if (ts.isIdentifier(inner)) return GLOBAL_OBJECTS.has(inner.text) || (bareWindows && OTHER_WINDOWS.has(inner.text));
+  if (ts.isPropertyAccessExpression(inner)) return known(inner.name.text) && isGlobalObject(inner.expression, bareWindows);
+  if (ts.isElementAccessExpression(inner)) {
+    const key = plainString(inner.argumentExpression);
+    return key !== null && known(key) && isGlobalObject(inner.expression, bareWindows);
+  }
   return false;
 }
 
-/** Whether `node` is what a plain call `node(…)` calls: the call rule in networkCalls judges those by their address. (`node?.(…)` and `node<T>(…)` it can't read, so they are not plain.) */
-function isCalled(node: ts.Node): boolean {
-  const call = node.parent;
-  return ts.isCallExpression(call) && call.expression === node && !call.questionDotToken && !call.typeArguments;
+/** Whether `node` is what a call or `new` is made on: the call rules judge those by their address. */
+function isCalledOrConstructed(node: ts.Node): boolean {
+  const parent = node.parent;
+  return (ts.isCallExpression(parent) || ts.isNewExpression(parent)) && parent.expression === node;
 }
 
-/** Whether this `fetch` is the network's function being passed around, rather than called, defined by the code, or the word in some other thing's name. */
-function isFetchHandedOn(id: ts.Identifier): boolean {
+/** Whether `node` has `.call`, `.apply` or `.bind` taken off it: another way to call it, with the address in a later argument. */
+function isRecalledOrBound(node: ts.Node): boolean {
+  const parent = node.parent;
+  const taken = (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) && parent.expression === node;
+  return taken && ["call", "apply", "bind"].includes(nameOf(parent) ?? "");
+}
+
+/**
+ * Whether `node` sits where only a type is written (`let s: WebSocket`, `typeof fetch`, `interface
+ * Deps { fetch: … }`): nothing there runs. A class that EXTENDS something is a real use.
+ */
+function inTypeOnlyPosition(node: ts.Node): boolean {
+  for (let up: ts.Node | undefined = node.parent; up && !ts.isSourceFile(up); up = up.parent) {
+    if (ts.isExpressionWithTypeArguments(up) && ts.isHeritageClause(up.parent) && up.parent.token === ts.SyntaxKind.ExtendsKeyword && !ts.isInterfaceDeclaration(up.parent.parent)) {
+      return false;
+    }
+    if (ts.isTypeNode(up) || ts.isInterfaceDeclaration(up) || ts.isTypeAliasDeclaration(up)) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether this identifier, spelled like one of the network's functions, is that function being
+ * passed around rather than called, defined by the code, or the word in some other thing's name.
+ */
+function isHandedOn(id: ts.Identifier): boolean {
   const parent = id.parent;
-  if (isCalled(id)) return false;
-  // router.fetch, this.client.fetch: some other object's own. Only the global object's is the network's.
-  if (ts.isPropertyAccessExpression(parent) && parent.name === id) return !isCalled(parent) && isGlobalObject(parent.expression);
-  if (ts.isQualifiedName(parent) && parent.right === id) return isGlobalObject(parent.left);
-  // function fetch(…) {…} and a method called fetch: code defining its own, which is not using the network's.
+  if (isCalledOrConstructed(id) || inTypeOnlyPosition(id)) return false;
+  if (ts.isPropertyAccessExpression(parent) && parent.name === id) {
+    if (isCalledOrConstructed(parent)) return false;
+    // router.fetch, this.client.fetch: some other object's own. Only the global object's is the
+    // network's, and `anything.fetch.call(…)` is a way of calling it whatever that is.
+    return isGlobalObject(parent.expression) || isRecalledOrBound(parent);
+  }
+  // function fetch(…) {…}, a method called fetch, class WebSocket {…}: code defining its own, which is not using the network's.
   if (
-    (ts.isFunctionDeclaration(parent) || ts.isFunctionExpression(parent) || ts.isMethodDeclaration(parent) || ts.isMethodSignature(parent)) &&
+    (ts.isFunctionDeclaration(parent) ||
+      ts.isFunctionExpression(parent) ||
+      ts.isMethodDeclaration(parent) ||
+      ts.isClassDeclaration(parent) ||
+      ts.isClassExpression(parent)) &&
     parent.name === id
   ) {
     return false;
@@ -452,116 +567,238 @@ function isFetchHandedOn(id: ts.Identifier): boolean {
 }
 
 /**
- * How many times `fetch` is handed on rather than called: `const send = fetch`, `{ fetch: custom }`,
- * `window.fetch`, `const { fetch } = globalThis`. Read from the syntax tree, because the word also
- * appears as another object's property (`router.fetch`), which the text alone can't tell from a real
- * use. A comment, a string or the text of a page (see withoutJsxText) holds no identifier at all.
+ * A literal path on this app's own server. The whole argument must be one string (or one template)
+ * that starts with a single "/" and a character of the path's first segment. Refused, because a
+ * browser could read each as another computer or the scan can't see what the address ends up as:
+ *   "//host" and "/\host";            a lone "/";
+ *   "/${…" (the template could put a host there), and anything that starts with "${…}";
+ *   "/" + "/host", "/" + HOST_PATH and "/api/" + id: a literal with more joined to it;
+ *   "/<tab>/host": a browser drops tabs and line breaks from an address, which leaves "//host".
+ * It is judged on the text as written, not on what an escape decodes to, so "/\x2fhost" is refused too.
  */
-function fetchHandedOn(tree: ts.SourceFile): number {
-  let count = 0;
-  const visit = (node: ts.Node) => {
-    if (ts.isIdentifier(node) && node.text === "fetch" && isFetchHandedOn(node)) count += 1;
-    ts.forEachChild(node, visit);
-  };
-  visit(tree);
-  return count;
+function isRelativeLiteral(address: ts.Expression | undefined): boolean {
+  if (!address) return false;
+  if (!ts.isStringLiteral(address) && !ts.isNoSubstitutionTemplateLiteral(address) && !ts.isTemplateExpression(address)) return false;
+  return /^(["'`])\/(?![/\\\s\u0000-\u001f\u007f]|\$\{|\1)/.test(address.getText());
+}
+
+/** What a call loads as a module, and the argument that names it. */
+interface Loading {
+  /** How the call is written, for the name of a refusal: `import`, `require`, `process.getBuiltinModule`. */
+  how: string;
+  argument: ts.Expression | undefined;
 }
 
 /**
- * The source with the text of the page blanked out: what sits between the tags in JSX
- * (`<p>We fetch(url) nothing</p>`) is words for a person, not code, but the scans below read text and
- * would take a `fetch(` in a sentence for a call. Same length as the source, line breaks kept.
+ * Whether this call loads a module: `import("x")`, `require("x")`, `module.require("x")`,
+ * `createRequire(import.meta.url)("x")` (or a name that holds the result of createRequire), and
+ * `process.getBuiltinModule("x")`.
  */
-function withoutJsxText(source: string, tree: ts.SourceFile): string {
-  let out = "";
-  let copied = 0; // how much of `source` is already in `out`
-  const visit = (node: ts.Node) => {
-    if (ts.isJsxText(node)) {
-      out += source.slice(copied, node.pos) + source.slice(node.pos, node.end).replace(/[^\n]/g, " ");
-      copied = node.end;
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(tree);
-  return out + source.slice(copied);
+function loading(call: ts.CallExpression, requireNames: ReadonlySet<string>): Loading | null {
+  const callee = unwrap(call.expression);
+  const argument = call.arguments[0];
+  if (callee.kind === ts.SyntaxKind.ImportKeyword) return { how: "import", argument };
+  if (ts.isCallExpression(callee) && nameOf(unwrap(callee.expression)) === "createRequire") return { how: "require", argument };
+  const name = nameOf(callee);
+  if (name === "require" || (ts.isIdentifier(callee) && requireNames.has(callee.text))) return { how: "require", argument };
+  if (name === "getBuiltinModule") return { how: "process.getBuiltinModule", argument };
+  return null;
+}
+
+/** Calls `visit` on `node` and everything inside it. */
+function walk(node: ts.Node, visit: (node: ts.Node) => void) {
+  visit(node);
+  ts.forEachChild(node, (child) => walk(child, visit));
 }
 
 /**
  * Every place this code can reach the network, for the privacy inventory's scan: fetch (and any
  * wrapper function named in `wrappers`), XMLHttpRequest's open, navigator.sendBeacon, WebSocket,
  * EventSource (also through the global object: `new globalThis.WebSocket(…)`), node's
- * http/https/net request, get and connect, and the import of a module that makes requests. A call
- * is `relative` only when its address is a literal "/…" path, the app's own server (see
- * isRelativeLiteral); one whose address is a variable, a constant, built up from pieces or an
- * absolute URL is not, because the scan can't see where it goes. `source` is a whole file's text and
- * `file` its name (the extension picks TypeScript, JSX or plain JavaScript for the one rule that
- * reads the syntax tree).
+ * http/https/net request, get and connect, the import of a module that makes requests, and the
+ * disguises listed in this file's header. A call is `relative` only when its address is a literal
+ * "/…" path, the app's own server (see isRelativeLiteral); one whose address is a variable, a
+ * constant, built up from pieces or an absolute URL is not, because the scan can't see where it
+ * goes. `source` is a whole file's text and `file` its name (the extension picks TypeScript, JSX or
+ * plain JavaScript for the parser). Throws when the file doesn't parse: a file the scan can't read
+ * must not pass for a clean one.
  */
 export function networkCalls(source: string, wrappers: readonly string[] = [], file = "source.tsx"): NetworkCall[] {
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
-  const code = withoutJsxText(source, tree);
-  const kept = simplify(code, true);
-  // Same length as `kept`, with every string blanked: finds code without being fooled by a word in a message.
-  const masked = simplify(code, "mask");
+  const problems = (tree as unknown as { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
+  if (problems.length > 0) {
+    const { line } = tree.getLineAndCharacterOfPosition(problems[0].start ?? 0);
+    throw new Error(`${file}:${line + 1} doesn't parse (${ts.flattenDiagnosticMessageText(problems[0].messageText, " ")}), so the network scan can't read it`);
+  }
+
   const found: NetworkCall[] = [];
+  const refuse = (call: string) => found.push({ call, relative: false });
+  const text = (node: ts.Node | undefined) => (node ? tidy(node.getText()) : "");
+  /** A call whose address is `address`: relative only when that is a literal path on this server. */
+  const callAt = (label: string, address: ts.Expression | undefined) =>
+    found.push({ call: `${label}(${text(address)}`, relative: isRelativeLiteral(address) });
+  const byName = (name: string) => `${name} (by name: ["${name}"])`;
 
-  const callAt = (label: string, open: number, addressIndex: number) => {
-    const address = callArguments(kept, open)[addressIndex] ?? "";
-    found.push({ call: `${label}(${tidy(address)}`, relative: isRelativeLiteral(address) });
-  };
-
-  const addressFirst: [RegExp, string][] = [
-    [/(?<!\bfunction\s+)\bfetch\s*\(/g, "fetch"],
-    [/\bsendBeacon\s*\(/g, "sendBeacon"],
-    // Also `new globalThis.WebSocket(…)`, `new self.EventSource(…)`, `new (window as any).WebSocket(…)`: named as the bare constructor.
-    [new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\bWebSocket\s*\(`, "g"), "new WebSocket"],
-    [new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\bEventSource\s*\(`, "g"), "new EventSource"],
-  ];
-  // Wrapper functions around fetch (the allow-list names them): a call to one is judged like a fetch.
-  for (const name of wrappers) {
-    addressFirst.push([new RegExp(`(?<![\\w$.])(?<!\\bfunction\\s+)${name}\\s*\\(`, "g"), name]);
-  }
-  for (const [pattern, label] of addressFirst) {
-    for (const m of masked.matchAll(pattern)) callAt(label, m.index! + m[0].length - 1, 0);
-  }
-  // The same two looked up by name: `new globalThis["WebSocket"](…)`. The name is a string, so it is
-  // found as a blanked string in `masked` and read from the same place in `kept`.
-  const lookedUp = new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\[\s*(["'\`])(${FILL}+)\1\s*\]\s*\(`, "dg");
-  for (const m of masked.matchAll(lookedUp)) {
-    const [start, end] = m.indices![2];
-    const name = kept.slice(start, end);
-    if (name === "WebSocket" || name === "EventSource") callAt(`new ${name}`, m.index! + m[0].length - 1, 0);
-  }
-
-  // xhr.open("GET", address): the address is the second argument. Only in a file that uses
-  // XMLHttpRequest, so window.open(url) (a link the person clicks) isn't read as a request.
-  if (/\bXMLHttpRequest\b/.test(masked)) {
-    for (const m of masked.matchAll(/\.\s*open\s*\(/g)) {
-      const open = m.index! + m[0].length - 1;
-      if (callArguments(kept, open).length >= 2) callAt("XMLHttpRequest.open", open, 1);
+  // What the file calls some things, found before the rules run (a name can be declared after it is used).
+  let usesXhr = false;
+  /** `const load = createRequire(…)`: calling `load("x")` loads a module like require does. */
+  const requireNames = new Set<string>();
+  /** The module "electron" under whatever name this file gives it, and the plain word `electron`. */
+  const electronNames = new Set<string>(["electron"]);
+  walk(tree, (node) => {
+    if (ts.isIdentifier(node) && node.text === "XMLHttpRequest") usesXhr = true;
+    if (ts.isElementAccessExpression(node) && plainString(node.argumentExpression) === "XMLHttpRequest") usesXhr = true;
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      const init = unwrap(node.initializer);
+      const made = ts.isCallExpression(init) && nameOf(unwrap(init.expression)) === "createRequire";
+      if (made || (ts.isIdentifier(init) && init.text === "require")) requireNames.add(node.name.text);
     }
-  }
+  });
+  /** Whether `node` is the electron module: its name, `require("electron")`, `(await import("electron")).default`. */
+  const isElectron = (node: ts.Node): boolean => {
+    let inner = unwrap(node);
+    while (ts.isAwaitExpression(inner) || (ts.isPropertyAccessExpression(inner) && inner.name.text === "default")) inner = unwrap(inner.expression);
+    if (ts.isIdentifier(inner)) return electronNames.has(inner.text);
+    if (ts.isCallExpression(inner)) {
+      const load = loading(inner, requireNames);
+      return load !== null && plainString(load.argument) === "electron";
+    }
+    return false;
+  };
+  walk(tree, (node) => {
+    if (ts.isImportDeclaration(node) && plainString(node.moduleSpecifier) === "electron") {
+      const clause = node.importClause;
+      if (clause?.name) electronNames.add(clause.name.text);
+      if (clause?.namedBindings && ts.isNamespaceImport(clause.namedBindings)) electronNames.add(clause.namedBindings.name.text);
+    }
+    if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) && plainString(node.moduleReference.expression) === "electron") {
+      electronNames.add(node.name.text);
+    }
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && isElectron(node.initializer)) electronNames.add(node.name.text);
+  });
 
-  // https.get(…), net.connect(…): raw network calls never count as "relative" (a literal there is a
-  // socket path or a host, not this app's own server).
-  for (const m of masked.matchAll(/\b(https?|http2|net|tls)\s*\.\s*(request|get|connect|createConnection)\s*\(/g)) {
-    const address = callArguments(kept, m.index! + m[0].length - 1)[0] ?? "";
-    found.push({ call: `${m[1]}.${m[2]}(${tidy(address)}`, relative: false });
-  }
-
-  // fetch handed on without being called (`const send = fetch`, `{ fetch: custom }`, `window.fetch`, `["fetch"]`) is a way around the scan.
-  for (let n = fetchHandedOn(tree); n > 0; n -= 1) found.push({ call: "fetch (used as a value)", relative: false });
-  if (/\[\s*(["'`])fetch\1\s*\]/.test(kept)) found.push({ call: 'fetch (by name: ["fetch"])', relative: false });
-
-  // Modules: from "x", import("x"), require("x"), import "x".
+  /** The modules the file loads by a plain name, each listed once (as the allow-list lists them). */
   const modules = new Set<string>();
-  for (const m of kept.matchAll(/\bfrom\s*(["'])([^"'\n]+)\1|\b(?:import|require)\s*\(\s*(["'])([^"'\n]+)\3\s*\)|\bimport\s*(["'])([^"'\n]+)\5/g)) {
-    modules.add(m[2] ?? m[4] ?? m[6]);
-  }
-  for (const spec of modules) if (NETWORK_MODULE.test(spec)) found.push({ call: `package "${spec}"`, relative: false });
-  // Electron's own `net` (requests from the main process) comes out of the "electron" module by name.
-  if (/\{[^}]*\bnet\b[^}]*\}\s*(?:from\s*|=\s*require\s*\(\s*)(["'])electron\1/.test(kept)) {
-    found.push({ call: 'package "electron" (net)', relative: false });
-  }
+  const load = (how: string, argument: ts.Expression | undefined) => {
+    if (!argument) return;
+    const name = plainString(argument);
+    if (name !== null) modules.add(name);
+    else refuse(`${how}(${text(argument)} (package name not a plain string)`);
+  };
+  /** electron's own `net` (requests from the main process), however it is reached. */
+  const electronNet = () => refuse('package "electron" (net)');
+
+  walk(tree, (node) => {
+    // --- Modules: import … from "x", export … from "x", import x = require("x"), import("x"), require("x") and the like.
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+      const spec = plainString(node.moduleSpecifier);
+      if (spec !== null) modules.add(spec);
+      if (spec === "electron") {
+        const names = ts.isImportDeclaration(node)
+          ? node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)
+            ? node.importClause.namedBindings.elements
+            : []
+          : node.exportClause && ts.isNamedExports(node.exportClause)
+            ? node.exportClause.elements
+            : [];
+        for (const element of names) if ((element.propertyName ?? element.name).text === "net") electronNet();
+      }
+    }
+    if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) load("require", node.moduleReference.expression);
+    if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) && ts.isStringLiteral(node.argument.literal)) modules.add(node.argument.literal.text);
+
+    if (ts.isCallExpression(node)) {
+      const loads = loading(node, requireNames);
+      if (loads) load(loads.how, loads.argument);
+
+      const callee = node.expression;
+      const [first, second] = node.arguments;
+      const calleeName = ts.isIdentifier(callee) || ts.isPropertyAccessExpression(callee) ? nameOf(callee) : null;
+      // fetch(address), x.fetch(address), sendBeacon(address, data), and a wrapper the allow-list names: the address is the first argument.
+      if (calleeName === "fetch" || calleeName === "sendBeacon") callAt(calleeName, first);
+      else if (ts.isIdentifier(callee) && wrappers.includes(callee.text)) callAt(callee.text, first);
+
+      // `owner.method(…)`: the method's name, and the name of what it is called on.
+      const member = ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee) ? callee : null;
+      const method = member ? nameOf(member) : null;
+      const owner = member ? nameOf(unwrap(member.expression)) : null;
+      // xhr.open("GET", address): the address is the second argument. Only in a file that uses
+      // XMLHttpRequest, so window.open(url) (a link the person clicks) isn't read as a request.
+      if (usesXhr && method === "open" && node.arguments.length >= 2) callAt("XMLHttpRequest.open", second);
+      // https.get(…), net.connect(…): raw network calls never count as "relative" (a literal there is a
+      // socket path or a host, not this app's own server).
+      if (method !== null && owner !== null && NODE_REQUEST_METHODS.has(method) && NODE_REQUEST_MODULES.has(owner)) {
+        refuse(`${owner}.${method}(${text(first)}`);
+      }
+      // Reflect.get(globalThis, …): looks a name up on the global object without writing it.
+      if (method === "get" && owner === "Reflect") {
+        if ((first && (isGlobalObject(first, false) || isElectron(first))) || NETWORK_NAMES.includes(plainString(second) ?? "")) refuse(`Reflect.get(${text(first)}`);
+      }
+      // require.call(null, "https"), process.getBuiltinModule.apply(…): a module loaded with its name in a later argument.
+      if (member && ["call", "apply", "bind"].includes(method ?? "")) {
+        const loader = nameOf(unwrap(member.expression));
+        if (loader === "require" || loader === "getBuiltinModule" || (loader !== null && requireNames.has(loader))) {
+          refuse(`${loader}.${method}(${text(second ?? first)} (a module loaded through .call, .apply or .bind)`);
+        }
+      }
+      // xhr.open.call(xhr, "GET", address): the same request with the address in a later argument.
+      if (usesXhr && member && ["call", "apply", "bind"].includes(method ?? "") && nameOf(unwrap(member.expression)) === "open") {
+        refuse(`XMLHttpRequest.open.${method}(${text(first)}`);
+      }
+    }
+
+    // --- new WebSocket(address), new globalThis.EventSource(address), new globalThis["WebSocket"](address).
+    if (ts.isNewExpression(node)) {
+      const name = nameOf(unwrap(node.expression));
+      if (name === "WebSocket" || name === "EventSource") callAt(`new ${name}`, node.arguments?.[0]);
+    }
+
+    // --- A name looked up by a string or by something that isn't one.
+    if (ts.isElementAccessExpression(node)) {
+      const key = plainString(node.argumentExpression);
+      const object = unwrap(node.expression);
+      const constructed = ts.isNewExpression(node.parent) && node.parent.expression === node;
+      // globalThis["fetch"]: named by a string, which the call rules can't read the address of.
+      // (`new globalThis["WebSocket"](address)` is read as a constructor above.)
+      if (key !== null && NETWORK_NAMES.includes(key) && !(constructed && (key === "WebSocket" || key === "EventSource"))) refuse(byName(key));
+      if (key === "net" && isElectron(object)) electronNet();
+      const reached = isGlobalObject(object, false) || isElectron(object) || (ts.isIdentifier(object) && object.text === "process");
+      // globalThis[k], globalThis["fe" + "tch"]: whatever the key is, the scan can't say it isn't fetch. (A number can't be.)
+      if (reached && key === null && !ts.isNumericLiteral(unwrap(node.argumentExpression))) {
+        refuse(`${text(node.expression)}[${text(node.argumentExpression)}] (key not a plain string)`);
+      }
+    }
+    if (ts.isPropertyAccessExpression(node) && node.name.text === "net" && isElectron(node.expression)) electronNet();
+
+    // --- Object keys that are strings: { "fetch": send }, { ["fetch"]: send }, const { "fetch": send } = window.
+    if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && NETWORK_NAMES.includes(node.text)) {
+      const parent = node.parent;
+      const isKey =
+        (ts.isPropertyAssignment(parent) && parent.name === node) ||
+        (ts.isBindingElement(parent) && parent.propertyName === node) ||
+        ts.isComputedPropertyName(parent);
+      if (isKey) refuse(byName(node.text));
+    }
+    if (ts.isBindingElement(node)) {
+      const pattern = node.parent;
+      const declaration = pattern.parent;
+      const from = ts.isObjectBindingPattern(pattern) && ts.isVariableDeclaration(declaration) ? declaration.initializer : undefined;
+      if (from) {
+        const key = node.propertyName ?? node.name;
+        // const { net } = require("electron")
+        if ((ts.isIdentifier(key) || ts.isStringLiteral(key)) && key.text === "net" && isElectron(from)) electronNet();
+        // const { [k]: f } = globalThis
+        if (node.propertyName && ts.isComputedPropertyName(node.propertyName) && plainString(node.propertyName.expression) === null && (isGlobalObject(from, false) || isElectron(from))) {
+          refuse(`${text(from)}[${text(node.propertyName.expression)}] (key not a plain string)`);
+        }
+      }
+    }
+
+    // --- fetch (or another of the network's functions) handed on without being called: `const send = fetch`,
+    // `{ fetch: custom }`, `window.fetch`, `const { fetch } = globalThis`, `navigator.sendBeacon.bind(navigator)`.
+    if (ts.isIdentifier(node) && NETWORK_NAMES.includes(node.text) && isHandedOn(node)) refuse(`${node.text} (used as a value)`);
+  });
+
+  for (const spec of modules) if (NETWORK_MODULE.test(spec) || URL_SPECIFIER.test(spec)) refuse(`package "${tidy(spec)}"`);
   return found;
 }

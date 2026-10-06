@@ -3,12 +3,27 @@
  * ("What DotAmi knows about you") is drawn from this list, the way /settings is drawn from
  * lib/settings/catalog.ts.
  *
- * The point of the list is that it can't quietly go stale. tests/privacy-inventory.spec.ts fails
+ * The point of the list is to make going stale loud. tests/privacy-inventory.spec.ts fails
  * when prisma/schema.prisma gains a model, or any code under app/, components/ or lib/ starts
- * using a browser-storage key, or any code (desktop/ included) starts reaching the network, in a
- * way that isn't listed here. So a new store (the Lens's conversation, a settings table, a
+ * using a browser-storage key that isn't listed here. It also fails when code under app/,
+ * components/, lib/ or desktop/ (or middleware.ts or next.config.mjs) makes a network request, or
+ * loads a module that makes them, in the ordinary way or one of the common disguises, and the
+ * request isn't listed here. So a new store (the Lens's conversation, a settings table, a
  * remembered file layout) or a new request out has to say what it holds or sends, and how it is
  * removed, before it can merge — and the page then shows it without anyone remembering to.
+ *
+ * What the network check is, plainly: a safety net, not a proof. It reads each file's syntax tree,
+ * so it catches requests written in ordinary code and refuses the common disguises (a name that is
+ * escaped or built from joined strings, a module named by a template, require reached through
+ * createRequire, fetch handed on or called through .call/.bind, a lookup on the global object by a
+ * key that isn't a plain string, child_process, electron's net). It does NOT catch code written to
+ * hide a request — for example a copy of `window` under another name, a <script src> or
+ * `new Image().src`, `window.open`, the global eval, a request made inside a package in
+ * node_modules, or whatever a program the app starts does. Code review is what covers those. In
+ * the browser, the Content-Security-Policy in middleware.ts (connect-src, img-src, script-src)
+ * blocks most of them while a page runs, but not navigation, not a script that code adds
+ * (script-src carries 'strict-dynamic'), and nothing that runs on the server or in the desktop
+ * app's main process. The full list is in the header of tests/helpers/source-scan.ts.
  *
  * Every string below is read by a person, so it is plain English: no table names in the
  * sentences, no story codes. `model` and `key` are the exact technical names the test matches.
@@ -54,9 +69,12 @@ export interface FolderEntry {
  * A place in the code that can reach the network, and why it is allowed. For developers: the page
  * never shows these. tests/privacy-inventory.spec.ts reads app/, components/, lib/ and desktop/ for
  * every call whose address isn't a literal "/…" path on DotAmi's own server (fetch, XMLHttpRequest,
- * sendBeacon, WebSocket, EventSource, node's http/https/net, and the import of a library that makes
- * requests), and fails on any that isn't listed — on the entry it belongs to, or in LOCAL_REQUESTS.
- * It also fails on a listed call that has gone, so the list can't outlive the code.
+ * sendBeacon, WebSocket, EventSource, node's http/https/net, the import of a library that makes
+ * requests, child_process, electron's net, and the disguises named in the header of
+ * tests/helpers/source-scan.ts), and fails on any that isn't listed — on the entry it belongs to,
+ * or in LOCAL_REQUESTS, STARTS_PROGRAMS or BUILD_TIME_ONLY. It also fails on a listed call that has
+ * gone, so the list can't outlive the code. An entry says the scan SAW this call and a person
+ * judged it fine; it says nothing about code the scan can't see (that header's "still gets past").
  */
 export interface AllowedCall {
   /** The file, relative to the repo. */
@@ -247,5 +265,38 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
     file: "desktop/main.mjs",
     call: 'package "node:net"',
     why: "Used only for net.createServer, to ask the system for a free port on 127.0.0.1 for DotAmi's own server. It makes no outgoing connection; a net.connect would be listed on its own line.",
+  },
+];
+
+/**
+ * Code that starts another program on this computer. node's child_process can run anything,
+ * `curl` included, so importing it counts as a way to reach the network and is refused unless it
+ * is listed here with the reason it is fine. A listing covers what DotAmi starts, never what
+ * that program then does.
+ */
+export const STARTS_PROGRAMS: readonly AllowedCall[] = [
+  {
+    file: "app/api/law/provision/route.ts",
+    call: 'package "node:child_process"',
+    why: "Runs `python` on the optional statute store's own lookup.py, and only when LAW_STORE_PATH names a store on this computer. The program is fixed, the route checks every argument before passing it (a source from a short list, a label and a sub-path in a strict shape), and the child is given no API key and no database address. What lookup.py itself does is not in this repository, so this scan can't say whether it reaches the network; that is the store's own review.",
+  },
+];
+
+/**
+ * Build scripts that import child_process. They run on a developer's computer (or CI) when
+ * `npm run desktop:build` or `desktop:package` is run; they are never part of the app people run
+ * and never a request path of it. tests/privacy-inventory.spec.ts checks that desktop/package.mjs
+ * does not stage these files into the installed app.
+ */
+export const BUILD_TIME_ONLY: readonly AllowedCall[] = [
+  {
+    file: "desktop/build.mjs",
+    call: 'package "node:child_process"',
+    why: "Build-time only. Runs Next's own `next build` with this Node (process.execPath) to make the desktop app's server. The command is fixed and takes nothing from the person's data; the file is not copied into the installed app.",
+  },
+  {
+    file: "desktop/package.mjs",
+    call: 'package "node:child_process"',
+    why: "Build-time only. Runs desktop/build.mjs with this Node (process.execPath) before packaging the installer. The command is fixed and takes nothing from the person's data; the file is not copied into the installed app.",
   },
 ];
