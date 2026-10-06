@@ -21,7 +21,7 @@ export function CopyPathButton({ path }: { path: string }) {
     <button
       type="button"
       onClick={() => void copy()}
-      className="shrink-0 rounded border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-stone transition hover:border-maple-soft hover:text-paper"
+      className="shrink-0 rounded-sm border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-stone transition hover:border-maple-soft hover:text-paper"
     >
       {state === "copied" ? "Copied" : state === "failed" ? "Copy failed — select it instead" : "Copy path"}
     </button>

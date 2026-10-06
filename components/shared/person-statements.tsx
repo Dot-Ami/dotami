@@ -149,7 +149,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                 ? "Something about you, in your words…"
                 : "Anything you want DotAmi to know about you — how you work, what you won't do, what you're after. Your words, kept as-is."
             }
-            className="w-full resize-y rounded-lg border border-rule bg-ink px-3 py-2.5 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-none"
+            className="w-full resize-y rounded-lg border border-rule bg-ink px-3 py-2.5 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
           />
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
@@ -159,7 +159,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                 value={saidAt}
                 max={todayIso()}
                 onChange={(e) => setSaidAt(e.target.value)}
-                className="rounded border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] normal-case tracking-normal text-paper"
+                className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] normal-case tracking-normal text-paper"
               />
             </label>
             <span className="font-mono text-[10px] text-stone-dim">
@@ -194,7 +194,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="rounded border border-rule px-2 py-1 text-[10px] text-stone transition hover:border-maple-soft hover:text-paper"
+          className="rounded-sm border border-rule px-2 py-1 text-[10px] text-stone transition hover:border-maple-soft hover:text-paper"
         >
           + Add something
         </button>
