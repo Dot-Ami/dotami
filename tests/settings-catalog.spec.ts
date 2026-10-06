@@ -87,4 +87,11 @@ describe("settings catalog shape", () => {
     // as the control, its storage and its browser test (story [7g]'s done-when).
     expect(SETTINGS.filter((s) => s.status === "live")).toEqual([]);
   });
+
+  it("says where the app asks for every setting it asks for each time, and only those", () => {
+    for (const s of SETTINGS) {
+      if (s.status === "asked") expect(s.where).toMatch(/\S/);
+      else expect(s.where).toBeUndefined();
+    }
+  });
 });

@@ -28,7 +28,9 @@ execFileSync(process.execPath, [path.join(root, "desktop", "build.mjs")], { stdi
 // 2. Stage the app.
 rmSync(path.join(root, "dist-desktop"), { recursive: true, force: true });
 mkdirSync(stage, { recursive: true });
-for (const f of ["main.mjs", "migrate.mjs"]) cpSync(path.join(root, "desktop", f), path.join(stage, "desktop", f));
+for (const f of ["main.mjs", "migrate.mjs", "backup.mjs", "passphrase.html", "passphrase.js", "passphrase-preload.cjs"]) {
+  cpSync(path.join(root, "desktop", f), path.join(stage, "desktop", f));
+}
 cpSync(path.join(root, "prisma", "migrations"), path.join(stage, "prisma", "migrations"), { recursive: true });
 copyWithDependencies("electron-updater", stage);
 // The server ships as its own folder beside the app (resources/server), copied as-is: inside the

@@ -1,0 +1,45 @@
+<!doctype html>
+<!-- The backup passphrase window (desktop/main.mjs askPassphrase). A local page with no network
+     access: the CSP allows only its own script, and the only things it can send back are the
+     passphrase or "cancel" (desktop/passphrase-preload.cjs). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'" />
+    <title>DotAmi</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 22px 24px; background: #161619; color: #efe7d6; font: 13px/1.45 system-ui, sans-serif; }
+      h1 { margin: 0 0 6px; font: 700 17px Georgia, serif; }
+      p { margin: 0 0 10px; color: #cfc6b3; }
+      label { display: block; margin: 10px 0 4px; font-size: 12px; color: #8c8678; }
+      input { box-sizing: border-box; width: 100%; padding: 7px 9px; border: 1px solid #32303a; border-radius: 6px; background: #1c1b1f; color: #efe7d6; font: inherit; }
+      input:focus { outline: none; border-color: #7a2f1c; }
+      .warning { margin-top: 12px; padding: 7px 10px; border: 1px solid rgba(200, 137, 58, 0.45); border-radius: 6px; color: #c8893a; font-size: 12px; }
+      .error { min-height: 18px; margin-top: 8px; color: #e08a6e; font-size: 12px; }
+      .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+      button { padding: 6px 14px; border-radius: 999px; border: 1px solid #32303a; background: transparent; color: #efe7d6; font: inherit; cursor: pointer; }
+      button.primary { border-color: #b94a2c; background: #b94a2c; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <h1 id="title"></h1>
+    <p id="intro"></p>
+    <form id="form" autocomplete="off">
+      <label for="pass">Passphrase</label>
+      <input id="pass" type="password" />
+      <div id="confirm-row">
+        <label for="confirm">Type it again</label>
+        <input id="confirm" type="password" />
+      </div>
+      <p id="warning" class="warning" hidden></p>
+      <div id="error" class="error" role="alert"></div>
+      <div class="buttons">
+        <button type="button" id="cancel">Cancel</button>
+        <button type="submit" id="ok" class="primary"></button>
+      </div>
+    </form>
+    <script src="passphrase.js"></script>
+  </body>
+</html>

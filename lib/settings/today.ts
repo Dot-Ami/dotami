@@ -20,6 +20,8 @@ export interface SettingsToday {
    * (desktop/main.mjs sets DOTAMI_UPDATES). "manual": run from the source code; updates with git.
    */
   updates: "github" | "manual";
+  /** The desktop app (DOTAMI_DESKTOP from desktop/main.mjs): it has Back up and Restore in its File menu. */
+  desktop: boolean;
   /** The tax year the catalogs cover (lib/engines/<engine>/v2026). Becomes a setting with [11i]. */
   taxYear: number;
 }
@@ -52,6 +54,7 @@ export function readSettingsToday(
     intake: keySet ? { sentTo: "anthropic", model: DEFAULT_INTENT_ANTHROPIC_MODEL } : { sentTo: "nobody", model: null },
     version: pkg.version,
     updates: env.DOTAMI_UPDATES === "github" ? "github" : "manual",
+    desktop: env.DOTAMI_DESKTOP === "1",
     taxYear: 2026,
   };
 }
