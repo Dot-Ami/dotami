@@ -186,7 +186,7 @@ function without(list: string[], remove: string[]): string[] {
  */
 function requestsOutside(sources: { file: string; code: string }[], allowed: readonly AllowedCall[]) {
   const found = sources.flatMap(({ file, code }) =>
-    networkCalls(code, WRAPPERS)
+    networkCalls(code, WRAPPERS, file)
       .filter((c) => !c.relative)
       .map((c) => `${file}: ${c.call}`),
   );
@@ -206,7 +206,7 @@ describe("the privacy inventory lists what can leave this computer", () => {
   });
 
   it("sees the requests the app makes today (a guard against the scan silently finding nothing)", () => {
-    const calls = networkSources.flatMap(({ file, code }) => networkCalls(code, WRAPPERS).map((c) => ({ file, ...c })));
+    const calls = networkSources.flatMap(({ file, code }) => networkCalls(code, WRAPPERS, file).map((c) => ({ file, ...c })));
     expect(calls.filter((c) => c.relative).length).toBeGreaterThanOrEqual(15);
     expect(calls.filter((c) => !c.relative).map((c) => `${c.file}: ${c.call}`)).toEqual(
       expect.arrayContaining(ALLOWED.map((a) => `${a.file}: ${a.call}`)),
@@ -261,6 +261,20 @@ describe("the scan for requests leaving this computer can't be got round", () =>
     ["a protocol-relative address (another host)", `await fetch("//example.invalid/x");`, 'fetch("//example.invalid/x"'],
     ["a slash-backslash address (another host)", String.raw`await fetch("/\example.invalid/x");`, String.raw`fetch("/\example.invalid/x"`],
     ["a template that could put a host after the slash", "await fetch(`/${where}`);", "fetch(`/${where}`"],
+    // An address is a path on DotAmi's own server only when the whole first argument is one literal.
+    // A slash that is then joined to more text can still be the "//" that starts a host.
+    [
+      "a protocol-relative address built from two literals",
+      `await fetch("/" + "/example.invalid/collect");`,
+      `fetch("/" + "/example.invalid/collect"`,
+    ],
+    ["a slash joined to a constant", `await fetch("/" + HOST_PATH);`, `fetch("/" + HOST_PATH`],
+    ["a literal path with something added on", `await fetch("/api/ventures/" + id);`, `fetch("/api/ventures/" + id`],
+    ["a template that starts with a constant", "await fetch(`${BASE}/api/ventures`);", "fetch(`${BASE}/api/ventures`"],
+    ["a lone slash", `await fetch("/");`, `fetch("/"`],
+    // Browsers drop a tab or a line break inside a URL, so "/<tab>/host" is read as "//host".
+    // (The tab is written as \t here and becomes a real one in the probe; the scan names it with a space.)
+    ["a slash, a tab and a slash (another host once the tab is dropped)", `await fetch("/\t/example.invalid/x");`, `fetch("/ /example.invalid/x"`],
     [
       "XMLHttpRequest.open",
       `const request = new XMLHttpRequest();\nrequest.open("POST", TELEMETRY);`,
@@ -269,6 +283,14 @@ describe("the scan for requests leaving this computer can't be got round", () =>
     ["navigator.sendBeacon", `navigator.sendBeacon(TELEMETRY, payload);`, "sendBeacon(TELEMETRY"],
     ["a WebSocket", `const socket = new WebSocket(TELEMETRY);`, "new WebSocket(TELEMETRY"],
     ["an EventSource", `const feed = new EventSource(TELEMETRY);`, "new EventSource(TELEMETRY"],
+    // The same constructors reached through the global object. The scan names them as the bare constructor.
+    ["a WebSocket reached through globalThis", `const socket = new globalThis.WebSocket(TELEMETRY);`, "new WebSocket(TELEMETRY"],
+    ["a WebSocket reached through window", `const socket = new window.WebSocket(TELEMETRY);`, "new WebSocket(TELEMETRY"],
+    ["an EventSource reached through self", `const feed = new self.EventSource(TELEMETRY);`, "new EventSource(TELEMETRY"],
+    ["an EventSource reached through a longer chain", `const feed = new window.parent.EventSource(TELEMETRY);`, "new EventSource(TELEMETRY"],
+    ["a WebSocket reached through a cast global", `const socket = new (globalThis as any).WebSocket(TELEMETRY);`, "new WebSocket(TELEMETRY"],
+    ["a WebSocket looked up by name", `const socket = new globalThis["WebSocket"](TELEMETRY);`, "new WebSocket(TELEMETRY"],
+    ["an EventSource looked up by name", `const feed = new self['EventSource'](TELEMETRY);`, "new EventSource(TELEMETRY"],
     ["node's https.get", `import https from "node:https";\nhttps.get(TELEMETRY, () => {});`, "https.get(TELEMETRY"],
     ["importing node's https at all", `import { request } from "https";`, 'package "https"'],
     ["node's net.connect", `import net from "node:net";\nnet.connect(443, "example.invalid");`, "net.connect(443"],
@@ -276,6 +298,22 @@ describe("the scan for requests leaving this computer can't be got round", () =>
     ["a library required rather than imported", `const got = require("got");`, 'package "got"'],
     ["a library loaded on demand", `const { default: ky } = await import("ky");`, 'package "ky"'],
     ["fetch handed on under another name", `const send = fetch;\nawait send(TELEMETRY);`, "fetch (used as a value)"],
+    // Taking fetch off the global object is still handing it on. Only another object's own `fetch` is left alone.
+    ["fetch taken off window", `const send = window.fetch;\nawait send(TELEMETRY);`, "fetch (used as a value)"],
+    ["fetch taken off globalThis", `const send = globalThis.fetch;`, "fetch (used as a value)"],
+    ["fetch taken off self", `const send = self.fetch;`, "fetch (used as a value)"],
+    ["fetch taken off a cast global", `const send = (window as unknown as Deps).fetch;`, "fetch (used as a value)"],
+    ["fetch taken off the global object by optional chaining", `const send = globalThis?.fetch;`, "fetch (used as a value)"],
+    ["fetch pulled out of window by destructuring", `const { fetch: send } = window;`, "fetch (used as a value)"],
+    ["fetch passed to something else as a property", `startClient({ fetch: send });`, "fetch (used as a value)"],
+    ["fetch inside a comparison and a ternary (not JSX)", `const pick = (a: number, b: number) => [a > 1 ? fetch : null, b <a];`, "fetch (used as a value)"],
+    // Blanking the page's words must leave the code around them in view.
+    [
+      "a call inside an element's attribute, beside text that mentions one",
+      `export const Send = () => <button onClick={() => fetch(TELEMETRY)}>Send (we fetch(x) for you)</button>;`,
+      "fetch(TELEMETRY",
+    ],
+    ["a call in an expression between the page's words", `export const Sent = () => <p>Sent {fetch(TELEMETRY)} and done</p>;`, "fetch(TELEMETRY"],
     ["fetch looked up by name", `await globalThis["fetch"](TELEMETRY);`, 'fetch (by name: ["fetch"])'],
     ["a call through the wrapper around fetch", `await postJson("https://example.invalid/x", {});`, 'postJson("https://example.invalid/x"'],
   ];
@@ -296,13 +334,40 @@ describe("the scan for requests leaving this computer can't be got round", () =>
     expect(outside("await fetch(`/api/ventures/${id}/links?linkId=${encodeURIComponent(linkId)}`);")).toEqual([]);
     expect(outside(`const request = new XMLHttpRequest();\nrequest.open("GET", "/api/readout");`)).toEqual([]);
     expect(outside(`await postJson("/api/figures/agree", { ventureId });`)).toEqual([]);
+    // Single quotes, a query string and a template with several parts are still one literal.
+    expect(outside(`await fetch('/api/figures?venture=abc');`)).toEqual([]);
+    expect(outside("await fetch(`/api/figures?venture=${encodeURIComponent(venture.id)}`, { cache: \"no-store\" });")).toEqual([]);
+    // "/api/…" followed by a comma is the end of the first argument, not the start of more of it.
+    expect(outside(`await fetch("/api/readout", { method: "POST" });`)).toEqual([]);
   });
 
   it("is not fooled by the words in a comment or a message", () => {
     expect(outside(`// await fetch(TELEMETRY);\nconst note = "could not fetch(data) from https://example.invalid";`)).toEqual([]);
     expect(outside(`/* new WebSocket(TELEMETRY) */ export const label = "sendBeacon(x)";`)).toEqual([]);
+    expect(outside(`// new globalThis.WebSocket(TELEMETRY)\nexport const label = "new self.EventSource(x) and new window['WebSocket'](y)";`)).toEqual([]);
     // window.open is a link the person clicks, not a request DotAmi makes.
     expect(outside(`window.open("https://example.invalid/", "_blank");`)).toEqual([]);
+  });
+
+  // The word "fetch" in these is not the network function, so the scan has nothing to say about them.
+  const NOT_THE_NETWORK: [string, string][] = [
+    ["the word in text on the page", `export const Note = () => <p>We fetch nothing</p>;`],
+    [
+      "the word in text after an expression, with punctuation and an entity",
+      "export function Note({ count }: { count: number }) {\n  return (\n    <p>\n      {count} fetch (or two) &amp; more; done\n    </p>\n  );\n}",
+    ],
+    ["the word in the text of an element with attributes", `export const Note = () => <a href="/x" onClick={() => go()}>fetch it later</a>;`],
+    // Text that reads like a call is still text: the page's words are not code for any of the scan's rules.
+    [
+      "text on the page that reads like a call",
+      "export const Note = () => (\n  <p>\n    We fetch(url) and new WebSocket(x), and don't sendBeacon(y) or call https.get(z).\n  </p>\n);",
+    ],
+    ["a property of another object", `const go = router.fetch;`],
+    ["a property reached through a longer path", `const go = this.client.fetch;\nconst again = api?.fetch;\nconst third = routes[0].fetch;`],
+  ];
+
+  it.each(NOT_THE_NETWORK)("is not fooled by the word fetch as %s", (_what, code) => {
+    expect(outside(code)).toEqual([]);
   });
 
   it("allows a listed call only in the file it is listed for, and only as often as it is listed", () => {

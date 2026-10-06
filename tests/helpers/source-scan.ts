@@ -2,11 +2,14 @@
  * Helpers for the tests that read DotAmi's own source code to prove a rule holds everywhere —
  * "every browser-storage key is on the privacy inventory" (tests/privacy-inventory.spec.ts),
  * "no route logs an error object" (tests/error-logging.spec.ts). These are blunt on purpose: they
- * read text, not a syntax tree, and the tests that use them also check they still find the
- * things they are meant to find, so a scan that quietly sees nothing can't pass for a clean one.
+ * read text, not a syntax tree (the one exception is whether `fetch` is handed on without being
+ * called, which text can't tell from the word in a sentence on the page or from another object's
+ * `fetch`), and the tests that use them also check they still find the things they are meant to
+ * find, so a scan that quietly sees nothing can't pass for a clean one.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
 const ROOT = process.cwd();
 
@@ -128,11 +131,48 @@ export function argumentsAt(code: string, open: number): string {
   return code.slice(open + 1);
 }
 
-/** Every `console.<method>(…)` call in the code, with what was passed to it. `code` must be simplify(…, false). */
-export function consoleCalls(code: string): { method: string; args: string }[] {
+/** What the name of something reached by property is when the code looks it up with brackets: the string inside them is gone (simplify(…, false)), so it can't be read. */
+const LOOKED_UP = "[…]";
+
+/** Index of the "(" (or "{") a match ends with: the bracket that opens the arguments or the block. */
+const openingOf = (m: RegExpMatchArray) => m.index! + m[0].length - 1;
+
+/** A property read: `.name`, `?.name`, or `["name"]` / `?.["name"]` (the name inside the brackets is unreadable, see LOOKED_UP). */
+const PROPERTY = String.raw`(?:\??\.\s*(\w+)|\??\.?\s*\[[^\]]*\])`;
+/** `.write`, `?.write` or `["write"]`: the ways of reaching a stream's write. */
+const WRITE = String.raw`(?:\??\.\s*write\b|\??\.?\s*\[[^\]]*\])`;
+/** The end of a call: the "(" itself, or `?.(`. */
+const CALL = String.raw`\s*(?:\?\.\s*)?\(`;
+
+/** The `{ a, b: c }` of a destructuring, as the name looked up and the name it is held under. `pattern` is what is between the braces. */
+function destructured(pattern: string): { key: string; local: string }[] {
+  return pattern.split(",").flatMap((part) => {
+    const m = part.trim().match(/^([A-Za-z_$][\w$]*)\s*(?::\s*([A-Za-z_$][\w$]*))?\s*(?:=[\s\S]*)?$/);
+    return m ? [{ key: m[1], local: m[2] ?? m[1] }] : [];
+  });
+}
+
+/** A pattern for the bare name `local` being called: `local(…)`, not `thing.local(…)`. */
+function callOf(local: string): RegExp {
+  return new RegExp(String.raw`(?<![\w$.])${local.replace(/\$/g, "\\$&")}${CALL}`, "g");
+}
+
+/**
+ * Every console call in the code, with what was passed to it: `console.error(…)`, `console?.error(…)`,
+ * `console["error"](…)` (named `[…]`), and a method taken out of console and called by its own name
+ * (`const { error: log } = console; log(…)`). `code` must be simplify(…, false); `within` is the
+ * whole file when `code` is only a part of it, since a method taken out of console is named in the
+ * file's other lines.
+ */
+export function consoleCalls(code: string, within: string = code): { method: string; args: string }[] {
   const calls: { method: string; args: string }[] = [];
-  for (const m of code.matchAll(/\bconsole\s*\.\s*(\w+)\s*\(/g)) {
-    calls.push({ method: m[1], args: argumentsAt(code, m.index! + m[0].length - 1) });
+  for (const m of code.matchAll(new RegExp(String.raw`\bconsole\s*${PROPERTY}${CALL}`, "g"))) {
+    calls.push({ method: m[1] ?? LOOKED_UP, args: argumentsAt(code, openingOf(m)) });
+  }
+  for (const taken of within.matchAll(/\b(?:const|let|var)\s*\{([^}]*)\}\s*=\s*console\b(?!\s*[.[])/g)) {
+    for (const { key, local } of destructured(taken[1])) {
+      for (const m of code.matchAll(callOf(local))) calls.push({ method: key, args: argumentsAt(code, openingOf(m)) });
+    }
   }
   return calls;
 }
@@ -140,11 +180,32 @@ export function consoleCalls(code: string): { method: string; args: string }[] {
 // ---------------------------------------------------------------------------------------------
 // What gets written to the log
 
-/** Every direct write to the process's output — `process.stdout.write(…)`, `process.stderr.write(…)`. `code` must be simplify(…, false). */
-export function streamWrites(code: string): { method: string; args: string }[] {
+/**
+ * Every direct write to the process's output: `process.stdout.write(…)`, `process.stderr.write(…)`,
+ * `process["stderr"].write(…)`, and a stream held under another name (`const { stderr } = process;`
+ * or `const out = process.stderr;` and then `stderr.write(…)`). `code` must be simplify(…, false);
+ * `within` is the whole file when `code` is only a part of it, as for consoleCalls.
+ */
+export function streamWrites(code: string, within: string = code): { method: string; args: string }[] {
   const writes: { method: string; args: string }[] = [];
-  for (const m of code.matchAll(/\bprocess\s*\.\s*(stdout|stderr)\s*\.\s*write\s*\(/g)) {
-    writes.push({ method: `process.${m[1]}.write`, args: argumentsAt(code, m.index! + m[0].length - 1) });
+  const add = (stream: string, m: RegExpMatchArray) =>
+    writes.push({ method: `process.${stream}.write`, args: argumentsAt(code, openingOf(m)) });
+
+  for (const m of code.matchAll(new RegExp(String.raw`\bprocess\s*(?:\??\.\s*(stdout|stderr)\b|\??\.?\s*\[[^\]]*\])\s*${WRITE}${CALL}`, "g"))) {
+    add(m[1] ?? LOOKED_UP, m);
+  }
+
+  // The streams the file holds under a name of its own, and what each stands for.
+  const held = new Map<string, string>();
+  for (const m of within.matchAll(/\b(?:const|let|var)\s*\{([^}]*)\}\s*=\s*process\b(?!\s*[.[])/g)) {
+    for (const { key, local } of destructured(m[1])) if (key === "stdout" || key === "stderr") held.set(local, key);
+  }
+  for (const m of within.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=;]+)?=\s*process\s*(?:\??\.\s*(stdout|stderr)\b|\[[^\]]*\])(?!\s*[.[(])/g)) {
+    held.set(m[1], m[2] ?? LOOKED_UP);
+  }
+  for (const [local, stream] of held) {
+    const name = local.replace(/\$/g, "\\$&");
+    for (const m of code.matchAll(new RegExp(String.raw`(?<![\w$.])${name}\s*${WRITE}${CALL}`, "g"))) add(stream, m);
   }
   return writes;
 }
@@ -174,20 +235,31 @@ export interface CatchScope {
   body: string;
 }
 
+/** A function written out as an argument (`(x) => …`, `x => …`, `function (x) {…}`): the name it gives its first parameter, and its text. Null when `argument` isn't one. */
+function handlerScope(argument: string): CatchScope | null {
+  const handler = argument.match(/^\s*(?:async\s+)?(?:function\b[^(]*\(([^)]*)\)|\(([^)]*)\)\s*(?::[^=]*)?=>|([A-Za-z_$][\w$]*)\s*=>)/);
+  return handler ? { names: boundNames(handler[1] ?? handler[2] ?? handler[3] ?? ""), body: argument } : null;
+}
+
 /**
  * Every place the code catches an error: `catch (x) { … }` (the names come from the parentheses, so
- * `catch (boom)` is read as well as `catch (error)`) and a promise's `.catch((x) => …)`, which is the
- * other way to name a caught error. `code` must be simplify(…, false).
+ * `catch (boom)` is read as well as `catch (error)`) and a promise's `.catch((x) => …)` or the
+ * rejection handler in the second argument of `.then(ok, (x) => …)`, which are the other ways to
+ * name a caught error. `code` must be simplify(…, false).
  */
 export function catchScopes(code: string): CatchScope[] {
   const scopes: CatchScope[] = [];
   for (const m of code.matchAll(/\bcatch\s*\(([^)]*)\)\s*\{/g)) {
-    scopes.push({ names: boundNames(m[1]), body: blockAt(code, m.index! + m[0].length - 1) });
+    scopes.push({ names: boundNames(m[1]), body: blockAt(code, openingOf(m)) });
   }
   for (const m of code.matchAll(/\.\s*catch\s*\(/g)) {
-    const args = argumentsAt(code, m.index! + m[0].length - 1);
-    const handler = args.match(/^\s*(?:async\s+)?(?:function\b[^(]*\(([^)]*)\)|\(([^)]*)\)\s*(?::[^=]*)?=>|([A-Za-z_$][\w$]*)\s*=>)/);
-    if (handler) scopes.push({ names: boundNames(handler[1] ?? handler[2] ?? handler[3] ?? ""), body: args });
+    const scope = handlerScope(argumentsAt(code, openingOf(m)));
+    if (scope) scopes.push(scope);
+  }
+  // .then's first argument is for the result; only the second one is told about an error.
+  for (const m of code.matchAll(/\.\s*then\s*\(/g)) {
+    const scope = handlerScope(callArguments(code, openingOf(m))[1] ?? "");
+    if (scope) scopes.push(scope);
   }
   return scopes;
 }
@@ -207,9 +279,14 @@ function namesPattern(names: readonly string[]): RegExp {
  * as the call's text. `code` must be simplify(…, false).
  */
 export function errorWrites(code: string): string[] {
+  // `text` is the whole file or a catch's part of it; a console method or stream the file holds under
+  // another name is declared outside the catch, so the whole file is what names them.
   const writesIn = (text: string) => [
-    ...consoleCalls(text).map((c) => ({ call: `console.${c.method}(${c.args.trim()})`, args: c.args })),
-    ...streamWrites(text).map((w) => ({ call: `${w.method}(${w.args.trim()})`, args: w.args })),
+    ...consoleCalls(text, code).map((c) => ({
+      call: `console${c.method === LOOKED_UP ? c.method : `.${c.method}`}(${c.args.trim()})`,
+      args: c.args,
+    })),
+    ...streamWrites(text, code).map((w) => ({ call: `${w.method}(${w.args.trim()})`, args: w.args })),
   ];
   const found = new Set<string>();
   const usual = namesPattern(USUAL_ERROR_NAMES);
@@ -234,11 +311,20 @@ export interface NetworkCall {
 }
 
 /**
- * A literal path on this app's own server: it starts with one "/". Not "//host" or "/\host", which
- * a browser reads as another computer, and not "/${…" where the template could put one there.
+ * A literal path on this app's own server. The whole argument must be one string (or one template)
+ * that starts with a single "/" and a character of the path's first segment. Refused, because a
+ * browser could read each as another computer or the scan can't see what the address ends up as:
+ *   "//host" and "/\host";            a lone "/";
+ *   "/${…" (the template could put a host there), and anything that starts with "${…}";
+ *   "/" + "/host", "/" + HOST_PATH and "/api/" + id: a literal with more joined to it;
+ *   "/<tab>/host": a browser drops tabs and line breaks from an address, which leaves "//host".
  */
 function isRelativeLiteral(address: string): boolean {
-  return /^(["'`])\/(?![/\\]|\$\{)/.test(address.trim());
+  const text = address.trim();
+  if (!/^(["'`])\/(?![/\\\s\u0000-\u001f\u007f]|\$\{|\1)/.test(text)) return false;
+  // That was only the start of the argument: nothing may follow the literal that opened it.
+  const end = skipLiteral(text, 0);
+  return text[end - 1] === text[0] && text.slice(end).trim() === "";
 }
 
 /** Index just past the string or template literal that opens at `i`. */
@@ -315,17 +401,108 @@ function tidy(text: string): string {
 }
 
 /**
+ * What can stand between `new` and the name of a constructor reached through another object:
+ * `globalThis.`, `window.parent.`, `(globalThis as any).`. Lazy, so `new WebSocket(` matches with nothing there.
+ */
+const NEW_PREFIX = String.raw`(?:[\w$.\s]|\([^()]*\))*?`;
+
+/** Names of the global object, and of the windows that are one. `window.fetch` is the page's own fetch; `router.fetch` is not. */
+const GLOBAL_OBJECTS = new Set(["globalThis", "window", "self", "global", "top", "parent", "frames"]);
+
+/** Whether `node` is the global object itself: `window`, `(globalThis as any)`, `window.parent`. */
+function isGlobalObject(node: ts.Node): boolean {
+  let inner = node;
+  // A cast or a pair of brackets around it is still the same object.
+  while (
+    ts.isParenthesizedExpression(inner) ||
+    ts.isAsExpression(inner) ||
+    ts.isNonNullExpression(inner) ||
+    ts.isTypeAssertionExpression(inner) ||
+    ts.isSatisfiesExpression(inner)
+  ) {
+    inner = inner.expression;
+  }
+  if (ts.isIdentifier(inner)) return GLOBAL_OBJECTS.has(inner.text);
+  if (ts.isPropertyAccessExpression(inner)) return GLOBAL_OBJECTS.has(inner.name.text) && isGlobalObject(inner.expression);
+  if (ts.isQualifiedName(inner)) return GLOBAL_OBJECTS.has(inner.right.text) && isGlobalObject(inner.left);
+  return false;
+}
+
+/** Whether `node` is what a plain call `node(…)` calls: the call rule in networkCalls judges those by their address. (`node?.(…)` and `node<T>(…)` it can't read, so they are not plain.) */
+function isCalled(node: ts.Node): boolean {
+  const call = node.parent;
+  return ts.isCallExpression(call) && call.expression === node && !call.questionDotToken && !call.typeArguments;
+}
+
+/** Whether this `fetch` is the network's function being passed around, rather than called, defined by the code, or the word in some other thing's name. */
+function isFetchHandedOn(id: ts.Identifier): boolean {
+  const parent = id.parent;
+  if (isCalled(id)) return false;
+  // router.fetch, this.client.fetch: some other object's own. Only the global object's is the network's.
+  if (ts.isPropertyAccessExpression(parent) && parent.name === id) return !isCalled(parent) && isGlobalObject(parent.expression);
+  if (ts.isQualifiedName(parent) && parent.right === id) return isGlobalObject(parent.left);
+  // function fetch(…) {…} and a method called fetch: code defining its own, which is not using the network's.
+  if (
+    (ts.isFunctionDeclaration(parent) || ts.isFunctionExpression(parent) || ts.isMethodDeclaration(parent) || ts.isMethodSignature(parent)) &&
+    parent.name === id
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * How many times `fetch` is handed on rather than called: `const send = fetch`, `{ fetch: custom }`,
+ * `window.fetch`, `const { fetch } = globalThis`. Read from the syntax tree, because the word also
+ * appears as another object's property (`router.fetch`), which the text alone can't tell from a real
+ * use. A comment, a string or the text of a page (see withoutJsxText) holds no identifier at all.
+ */
+function fetchHandedOn(tree: ts.SourceFile): number {
+  let count = 0;
+  const visit = (node: ts.Node) => {
+    if (ts.isIdentifier(node) && node.text === "fetch" && isFetchHandedOn(node)) count += 1;
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return count;
+}
+
+/**
+ * The source with the text of the page blanked out: what sits between the tags in JSX
+ * (`<p>We fetch(url) nothing</p>`) is words for a person, not code, but the scans below read text and
+ * would take a `fetch(` in a sentence for a call. Same length as the source, line breaks kept.
+ */
+function withoutJsxText(source: string, tree: ts.SourceFile): string {
+  let out = "";
+  let copied = 0; // how much of `source` is already in `out`
+  const visit = (node: ts.Node) => {
+    if (ts.isJsxText(node)) {
+      out += source.slice(copied, node.pos) + source.slice(node.pos, node.end).replace(/[^\n]/g, " ");
+      copied = node.end;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return out + source.slice(copied);
+}
+
+/**
  * Every place this code can reach the network, for the privacy inventory's scan: fetch (and any
  * wrapper function named in `wrappers`), XMLHttpRequest's open, navigator.sendBeacon, WebSocket,
- * EventSource, node's http/https/net request, get and connect, and the import of a module that
- * makes requests. A call is `relative` only when its address is a literal "/…" path, the app's
- * own server; one whose address is a variable, a constant or an absolute URL is not, because the
- * scan can't see where it goes. `source` is a whole file's text.
+ * EventSource (also through the global object: `new globalThis.WebSocket(…)`), node's
+ * http/https/net request, get and connect, and the import of a module that makes requests. A call
+ * is `relative` only when its address is a literal "/…" path, the app's own server (see
+ * isRelativeLiteral); one whose address is a variable, a constant, built up from pieces or an
+ * absolute URL is not, because the scan can't see where it goes. `source` is a whole file's text and
+ * `file` its name (the extension picks TypeScript, JSX or plain JavaScript for the one rule that
+ * reads the syntax tree).
  */
-export function networkCalls(source: string, wrappers: readonly string[] = []): NetworkCall[] {
-  const kept = simplify(source, true);
+export function networkCalls(source: string, wrappers: readonly string[] = [], file = "source.tsx"): NetworkCall[] {
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const code = withoutJsxText(source, tree);
+  const kept = simplify(code, true);
   // Same length as `kept`, with every string blanked: finds code without being fooled by a word in a message.
-  const masked = simplify(source, "mask");
+  const masked = simplify(code, "mask");
   const found: NetworkCall[] = [];
 
   const callAt = (label: string, open: number, addressIndex: number) => {
@@ -336,8 +513,9 @@ export function networkCalls(source: string, wrappers: readonly string[] = []): 
   const addressFirst: [RegExp, string][] = [
     [/(?<!\bfunction\s+)\bfetch\s*\(/g, "fetch"],
     [/\bsendBeacon\s*\(/g, "sendBeacon"],
-    [/\bnew\s+WebSocket\s*\(/g, "new WebSocket"],
-    [/\bnew\s+EventSource\s*\(/g, "new EventSource"],
+    // Also `new globalThis.WebSocket(…)`, `new self.EventSource(…)`, `new (window as any).WebSocket(…)`: named as the bare constructor.
+    [new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\bWebSocket\s*\(`, "g"), "new WebSocket"],
+    [new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\bEventSource\s*\(`, "g"), "new EventSource"],
   ];
   // Wrapper functions around fetch (the allow-list names them): a call to one is judged like a fetch.
   for (const name of wrappers) {
@@ -345,6 +523,14 @@ export function networkCalls(source: string, wrappers: readonly string[] = []): 
   }
   for (const [pattern, label] of addressFirst) {
     for (const m of masked.matchAll(pattern)) callAt(label, m.index! + m[0].length - 1, 0);
+  }
+  // The same two looked up by name: `new globalThis["WebSocket"](…)`. The name is a string, so it is
+  // found as a blanked string in `masked` and read from the same place in `kept`.
+  const lookedUp = new RegExp(String.raw`\bnew\s+${NEW_PREFIX}\[\s*(["'\`])(${FILL}+)\1\s*\]\s*\(`, "dg");
+  for (const m of masked.matchAll(lookedUp)) {
+    const [start, end] = m.indices![2];
+    const name = kept.slice(start, end);
+    if (name === "WebSocket" || name === "EventSource") callAt(`new ${name}`, m.index! + m[0].length - 1, 0);
   }
 
   // xhr.open("GET", address): the address is the second argument. Only in a file that uses
@@ -363,10 +549,8 @@ export function networkCalls(source: string, wrappers: readonly string[] = []): 
     found.push({ call: `${m[1]}.${m[2]}(${tidy(address)}`, relative: false });
   }
 
-  // fetch handed on without being called (`const send = fetch`, `{ fetch: custom }`, `["fetch"]`) is a way around the scan.
-  found.push(
-    ...[...masked.matchAll(/(?<![\w$])fetch\b(?!\s*\()/g)].map(() => ({ call: "fetch (used as a value)", relative: false })),
-  );
+  // fetch handed on without being called (`const send = fetch`, `{ fetch: custom }`, `window.fetch`, `["fetch"]`) is a way around the scan.
+  for (let n = fetchHandedOn(tree); n > 0; n -= 1) found.push({ call: "fetch (used as a value)", relative: false });
   if (/\[\s*(["'`])fetch\1\s*\]/.test(kept)) found.push({ call: 'fetch (by name: ["fetch"])', relative: false });
 
   // Modules: from "x", import("x"), require("x"), import "x".

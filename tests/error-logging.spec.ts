@@ -89,6 +89,30 @@ describe("the scan that checks the routes", () => {
     ["a promise's catch handler", `store().catch((oops) => console.warn("[save]", oops));`, "oops"],
     ["a promise's catch handler without brackets", `store().catch(oops => { console.log(oops); });`, "oops"],
     ["a stream write of an error held under a usual name", "process.stdout.write(`failed: ${err}`);", "err"],
+    // A rejection handler is named by the second argument of .then(), not only by .catch().
+    ["a rejection handler passed as .then's second argument", `store().then(ok, (boom) => console.error(boom));`, "boom"],
+    ["a rejection handler written as a function", `store().then(ok, function (boom) { console.log("[save]", boom); });`, "boom"],
+    ["a rejection handler on a .then that spans lines", `store().then(\n  (saved) => keep(saved),\n  async (boom: unknown) => {\n    console.warn("[save]", boom);\n  },\n);`, "boom"],
+    // A console method looked up by name, or reached through an optional chain.
+    ["a console method looked up by name", `try {} catch (boom) { console["error"](boom); }`, "boom"],
+    ["a console method looked up by a variable", `try {} catch (boom) { console[level](boom); }`, "boom"],
+    ["a console call through an optional chain", `try {} catch (boom) { console?.error(boom); }`, "boom"],
+    ["a console method called with an optional call", `try {} catch (boom) { console.error?.(boom); }`, "boom"],
+    // A stream (or a console method) held under another name, so the write doesn't say `process.stderr`.
+    [
+      "a stream destructured out of process",
+      `const { stderr } = process;\nexport function save() {\n  try {} catch (boom) {\n    stderr.write(String(boom));\n  }\n}`,
+      "boom",
+    ],
+    [
+      "a stream destructured out of process under another name",
+      `const { stdout: out, stderr: oops } = process;\ntry {} catch (boom) { oops.write(\`failed: \${boom}\`); }`,
+      "boom",
+    ],
+    ["a stream held in a variable", `const out = process.stderr;\ntry {} catch (boom) { out.write(String(boom)); }`, "boom"],
+    ["a stream looked up by name", `try {} catch (boom) { process["stderr"].write(String(boom)); }`, "boom"],
+    ["a console method destructured out of console", `const { error: log } = console;\ntry {} catch (boom) { log(boom); }`, "boom"],
+    ["a destructured stream written to with a usual name", `const { stderr } = process;\nstderr.write(String(err));`, "err"],
   ];
 
   it.each(PROBES)("flags %s", (_what, code, name) => {
@@ -115,6 +139,33 @@ describe("the scan that checks the routes", () => {
     // A name means the caught error only inside its own catch.
     expect(flagged(`const boom = 3; console.log(boom);`)).toBe(false);
     expect(flagged(`try {} catch (boom) { keep(boom); }\nconsole.log(boom);`)).toBe(false);
+    // The same, for the other ways of writing to the log.
+    expect(flagged(`store().then(ok, (boom) => console.error("[save] failed"));`)).toBe(false);
+    expect(flagged(`store().then((result) => console.log(result), () => console.log("[save] failed"));`)).toBe(false);
+    // .then's first argument is the success handler: what it names is a result, not an error.
+    expect(flagged(`store().then((boom) => console.log(boom));`)).toBe(false);
+    expect(flagged(`try {} catch (boom) { console["error"]("[save] failed"); }`)).toBe(false);
+    expect(flagged(`const { stderr } = process;\nstderr.write("ready\\n");`)).toBe(false);
+    expect(flagged(`const { stderr } = process;\ntry {} catch (boom) { stderr.write("[save] failed\\n"); }`)).toBe(false);
+    // A stream or a name that process and console didn't hand over is not theirs.
+    expect(flagged(`const stderr = makeStream();\ntry {} catch (boom) { stderr.write(String(boom)); }`)).toBe(false);
+    expect(flagged(`const { error: log } = logger;\ntry {} catch (boom) { log(boom); }`)).toBe(false);
+  });
+
+  it("counts a console call or a stream write however it is spelled (the routes may use neither)", () => {
+    const count = (src: string) => {
+      const code = simplify(src, false);
+      return { console: consoleCalls(code).length, streams: streamWrites(code).length };
+    };
+    expect(count(`console.log("x");`)).toEqual({ console: 1, streams: 0 });
+    expect(count(`console["log"]("x");`)).toEqual({ console: 1, streams: 0 });
+    expect(count(`console?.log("x");`)).toEqual({ console: 1, streams: 0 });
+    expect(count(`const { warn } = console;\nwarn("x");`)).toEqual({ console: 1, streams: 0 });
+    expect(count(`process.stdout.write("x");`)).toEqual({ console: 0, streams: 1 });
+    expect(count(`const { stdout } = process;\nstdout.write("x");`)).toEqual({ console: 0, streams: 1 });
+    expect(count(`const out = process.stderr;\nout.write("x");`)).toEqual({ console: 0, streams: 1 });
+    expect(count(`process["stdout"].write("x");`)).toEqual({ console: 0, streams: 1 });
+    expect(count(`const { stdout } = other;\nstdout.write("x");\nlogger.write("y");`)).toEqual({ console: 0, streams: 0 });
   });
 
   it("reads the names from the catch, so it finds the catch variables in the real routes", () => {

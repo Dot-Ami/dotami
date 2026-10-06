@@ -185,8 +185,10 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
       return (
         <p>
           DotAmi keeps the totals you agree to, each with where it came from and the day you agreed.
-          One you take back stops counting but stays in your data file. Your revenue estimates from the
-          intake are kept separately. Every figure, and where it came from, is listed on{" "}
+          It also keeps the ones still waiting for your answer, and the ones you turned down or took
+          back. None of those count, but every one stays in your data file, amount included. Your
+          revenue estimates from the intake are kept separately. Every figure, and where it came from,
+          is listed on{" "}
           <Link href="/your-data" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
             What DotAmi knows about you
           </Link>
