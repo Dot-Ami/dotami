@@ -303,7 +303,7 @@ export function IntakePage() {
                           e.currentTarget.value = "";
                         }
                       }}
-                      className="mt-3 w-full max-w-xs rounded border border-rule bg-ink px-3 py-2 text-sm text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft"
+                      className="mt-3 w-full max-w-xs rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                     />
                   </FieldGroup>
 
@@ -365,7 +365,7 @@ export function IntakePage() {
                         province: e.target.value === "" ? null : (e.target.value as Province),
                       }))
                     }
-                    className="w-full max-w-sm rounded border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-none focus:border-maple-soft"
+                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-hidden focus:border-maple-soft"
                   >
                     <option value="">Choose…</option>
                     {PROVINCES.map((code) => (
@@ -379,7 +379,7 @@ export function IntakePage() {
                   </p>
                   {intake.province !== null &&
                   !FULL_COVERAGE_PROVINCES.includes(intake.province) ? (
-                    <p className="mt-2 max-w-sm rounded border border-rule bg-ink px-3 py-2 text-[11px] leading-snug text-stone">
+                    <p className="mt-2 max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-[11px] leading-snug text-stone">
                       <span className="text-amber">Federal rules apply.</span> Provincial coverage
                       for {PROVINCE_LABELS[intake.province]} is coming — nothing shown will be
                       wrong, some provincial programs just won&apos;t appear yet.
@@ -399,7 +399,7 @@ export function IntakePage() {
                             : (e.target.value as EmploymentStatus),
                       }))
                     }
-                    className="w-full max-w-sm rounded border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-none focus:border-maple-soft"
+                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-hidden focus:border-maple-soft"
                   >
                     <option value="">Choose…</option>
                     {EMPLOYMENT_OPTIONS.map((o) => (
@@ -417,7 +417,7 @@ export function IntakePage() {
                           setIntake((p) => ({ ...p, employmentOther: e.target.value }))
                         }
                         placeholder="Tell us in your words"
-                        className="mt-2 w-full max-w-sm rounded border border-rule bg-ink px-3 py-2 text-sm text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft"
+                        className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                       />
                       <datalist id="employment-suggestions">
                         {readEmploymentSuggestions().map((s) => (
@@ -435,7 +435,7 @@ export function IntakePage() {
                     maxLength={80}
                     onChange={(e) => setIntake((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="What the map should call this venture (default: My venture)"
-                    className="w-full max-w-sm rounded-lg border border-rule bg-ink px-3 py-2 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-none"
+                    className="w-full max-w-sm rounded-lg border border-rule bg-ink px-3 py-2 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
                   />
                 </FieldGroup>
 
@@ -567,7 +567,7 @@ function ConfirmEmptyState({
           }}
           placeholder="Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
           rows={3}
-          className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-[15px] leading-relaxed text-paper outline-none placeholder:text-stone-dim"
+          className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
         />
         <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
           <Pill variant="maple" onClick={onParse} disabled={parsing || freeText.trim().length === 0}>
@@ -600,7 +600,7 @@ function RevenueInput({
   return (
     <label className="block">
       <span className="mb-1.5 block text-[11px] text-stone">{label}</span>
-      <div className="flex items-center rounded border border-rule bg-ink focus-within:border-maple-soft">
+      <div className="flex items-center rounded-sm border border-rule bg-ink focus-within:border-maple-soft">
         <span className="pl-3 text-sm text-stone-dim">$</span>
         <input
           inputMode="numeric"
@@ -610,7 +610,7 @@ function RevenueInput({
             onChange(Number.isFinite(n) ? n : 0);
           }}
           placeholder="0"
-          className="w-full bg-transparent px-2 py-2 text-sm text-paper outline-none placeholder:text-stone-dim"
+          className="w-full bg-transparent px-2 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim"
         />
       </div>
     </label>
@@ -635,7 +635,7 @@ function PreviewRail({
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Live preview</p>
 
       {coverage === "federal-only" ? (
-        <p className="mt-3 rounded border border-rule bg-ink2 px-3 py-2 text-[10.5px] leading-snug text-stone">
+        <p className="mt-3 rounded-sm border border-rule bg-ink2 px-3 py-2 text-[10.5px] leading-snug text-stone">
           <span className="text-amber">Federal rules only</span> for your province so far —
           provincial coverage coming.
         </p>
@@ -699,7 +699,7 @@ function PreviewRow({
           }`}
           aria-hidden
         />
-        <span className="shrink-0 rounded border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] text-maple">
+        <span className="shrink-0 rounded-sm border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] text-maple">
           {item.typeChip}
         </span>
         <span className="flex-1 truncate text-xs font-semibold text-paper">{item.title}</span>
@@ -717,7 +717,7 @@ function PreviewRow({
             </p>
           ) : null}
           {item.fork ? (
-            <div className="rounded border border-amber/40 bg-amber/5 p-2">
+            <div className="rounded-sm border border-amber/40 bg-amber/5 p-2">
               <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-amber">
                 {item.fork.label}
               </p>
@@ -725,7 +725,7 @@ function PreviewRow({
             </div>
           ) : null}
           {item.risk ? (
-            <div className="rounded border border-rule bg-ink2 p-2">
+            <div className="rounded-sm border border-rule bg-ink2 p-2">
               <p
                 className={`font-mono text-[9px] uppercase tracking-[0.14em] ${
                   item.risk.level === "professional-required" ? "text-maple" : "text-amber"

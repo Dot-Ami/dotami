@@ -35,9 +35,9 @@ import { describePeriod, formatAmount, postJson } from "./agree-prompt";
  */
 
 const FIELD =
-  "rounded border border-rule bg-ink px-2 py-1 text-sm text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft";
+  "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
 const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
-const ALERT = "mt-2 rounded border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
+const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
 
 /** Same limits as the screen spec: how far down the column names may be, and the route's cap. */
 const HEADER_ROW_CHOICES = 30;
@@ -385,7 +385,7 @@ export function FileDrop({
   }, [preview]);
 
   return (
-    <div className="rounded border border-rule-soft bg-ink px-3 py-3">
+    <div className="rounded-sm border border-rule-soft bg-ink px-3 py-3">
       <div
         role="group"
         aria-label="Drop a spreadsheet here"
@@ -395,7 +395,7 @@ export function FileDrop({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded border border-dashed px-3 py-3 transition ${
+        className={`rounded-sm border border-dashed px-3 py-3 transition ${
           dragging
             ? "border-maple bg-maple/10"
             : "border-rule hover:border-maple-soft focus-within:border-maple-soft"

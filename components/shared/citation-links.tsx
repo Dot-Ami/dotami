@@ -35,7 +35,7 @@ const STATUS_CLASS: Record<CitationVerificationStatus, string> = {
 export function StatusChip({ status, className = "" }: { status: CitationVerificationStatus; className?: string }) {
   return (
     <span
-      className={`rounded border px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${STATUS_CLASS[status]} ${className}`}
+      className={`rounded-sm border px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${STATUS_CLASS[status]} ${className}`}
       title={
         status === "partial"
           ? "Part of this rests on Regulations not yet in the corpus — figures come from CRA pages only."
@@ -54,7 +54,7 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
   return (
     <ul className={compact ? "space-y-1" : "space-y-1.5"}>
       {citations.map((c) => (
-        <li key={`${c.url}-${c.title}`} className={`rounded border border-rule ${compact ? "p-1.5" : "p-2"} text-xs`}>
+        <li key={`${c.url}-${c.title}`} className={`rounded-sm border border-rule ${compact ? "p-1.5" : "p-2"} text-xs`}>
           <a href={c.url} target="_blank" rel="noreferrer" className="block hover:opacity-90">
             <span className="flex items-start gap-2">
               <span className="min-w-0 flex-1 font-semibold text-paper">{c.title} ↗</span>
@@ -135,12 +135,12 @@ function ProvisionWords({ pointer }: { pointer: CorpusPointer }) {
       <button
         type="button"
         onClick={() => void toggle()}
-        className="rounded border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-maple hover:bg-maple/20"
+        className="rounded-sm border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-maple hover:bg-maple/20"
       >
         {state === "loading" ? "Reading…" : state === "open" ? `Hide ${pointerLabel(pointer)}` : `Show the words · ${pointerLabel(pointer)}`}
       </button>
       {state === "open" || state === "error" ? (
-        <div className="mt-1.5 rounded border border-rule-soft bg-ink px-2.5 py-2">
+        <div className="mt-1.5 rounded-sm border border-rule-soft bg-ink px-2.5 py-2">
           {data?.found ? (
             <>
               <p className="font-mono text-[9px] uppercase tracking-wider text-stone">
