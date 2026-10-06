@@ -1,12 +1,13 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-05. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-06. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
 brackets match.
 
-**Status:** ✅ done · 🔄 in progress · ⬜ not started · ⏸ waiting on a decision or another story.
+**Status:** ✅ done · 🟡 partly done (what's left is listed) · 🔄 in progress · ⬜ not started ·
+⏸ waiting on a decision or another story.
 
 **To pick something up:** comment on the linked issue, or open one naming the code (e.g. "[8c]")
 and the first pull request you'd send. Every commit is signed off (`git commit -s`, see
@@ -39,15 +40,17 @@ content and the project itself run alongside everything.
   - [x] A test: back up on one computer → restore on another → the same ventures
 - 🔄 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
   [how to release](architecture/desktop-app.md#releasing-an-update)).
-  - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after)
+  - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
+    the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [ ] Proven end to end: a published release reaches an installed app
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
-- ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who
-  self-hosted before the SQLite switch; runs on their own computer; waits for [7b].
-- 🔄 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
+- ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
+  starts fresh in the app rather than moving data (decided 2026-10-05). If you self-hosted on
+  PostgreSQL before the SQLite switch and need your data moved, open an issue.
+- 🟡 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
   each story adds its own rows.
   - [x] One screen (`/settings`), grouped: data and backups · your figures · the Lens · the map ·
     privacy · updates — each group opens with what is true of this copy today
@@ -175,9 +178,16 @@ content and the project itself run alongside everything.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
-- ⬜ **[13b] Releases** — tags, changelog, release notes.
+- 🔄 **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
+  - [x] Version tags (v0.1.0, v0.2.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
+  - [ ] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d])
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
+  - [ ] Newer advisories (checked 2026-10-06): `source-map-js` 1.2.1 (build-time; a patch — Dependabot
+    #71) · `sharp` 0.35.4's SVG reader (ships with Next.js's image tools, which DotAmi doesn't feed
+    SVGs — Dependabot #73) · `postcss-selector-parser` 6.1.4 (build-time, under Tailwind 3 — the
+    upgrade below) · `sprintf-js` (build-time, under the installer builder; no fix published)
   - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces` stack-exhaustion). **No fixed
     version exists yet** — it covers every `braces` release up to 3.0.3, the newest (checked
     2026-10-05). It reaches DotAmi only at build time, through Tailwind 3 and Next's ESLint plugin,
@@ -187,8 +197,10 @@ content and the project itself run alongside everything.
 - ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
   every pull request (#64); `npm run test:browser`. Each new screen adds its own test. A required
   check on `main` since 2026-10-05: nothing merges with them failing.
-- ⬜ **[13f] Privacy policy, terms, and the usage-sharing decision** ⏸ maintainer's decision;
-  needed before the first download.
+- ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
+  - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
+  - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
+    privacy policy and terms
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?
