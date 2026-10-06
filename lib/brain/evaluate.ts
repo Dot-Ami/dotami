@@ -14,11 +14,14 @@ import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 
 import { GOAL_EFFECTS, REFINE_EFFECTS } from "./goal-effects";
 import { matchPredicate, tagsIntersect } from "./predicates";
+import { formatCad, monthName, readRevenue } from "./records";
 import type {
+  ConfirmedFigure,
   EvaluationProfile,
   EvaluationResult,
   IntakeStep,
   NodeStateColor,
+  RecordsBasis,
   UnlockItem,
   UnlockState,
   UnlockTypeChip,
@@ -215,7 +218,94 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
   };
 }
 
-function evaluateComplianceRule(profile: EvaluationProfile, entry: ComplianceRule): UnlockItem | null {
+/**
+ * [8a] What the person's confirmed revenue figures say about a quarter-based threshold rule.
+ * `decides` is true only when the figures settle it — a quarter (or the window, counted as a lower
+ * bound) already over the line, or every month of the window covered. Otherwise the estimate keeps
+ * deciding and `why` says how far the figures got. A figure beats an estimate; a partial set of
+ * figures doesn't pretend to.
+ */
+interface RecordsVerdict {
+  decides: boolean;
+  crossed: boolean;
+  /** At or above the watch ratio but not over. */
+  near: boolean;
+  why: string;
+  basis: RecordsBasis;
+}
+
+const NUMBER_WORDS: Record<number, string> = { 2: "two", 3: "three", 4: "four" };
+
+function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure[] | undefined, today: string): RecordsVerdict | null {
+  if (entry.thresholdAmount === undefined || !entry.thresholdTest || !figures?.length) return null;
+  const thresholdCents = entry.thresholdAmount * 100;
+  const n = entry.thresholdTest.consecutiveQuarters;
+  const read = readRevenue(figures, { today, consecutiveQuarters: n, thresholdCents });
+  if (!read) return null;
+
+  const line = formatCad(thresholdCents);
+  const span = `the ${NUMBER_WORDS[n] ?? n} calendar quarters from ${monthName(read.window[0].start.slice(0, 7))} to ${monthName(read.window[n - 1].end.slice(0, 7))}`;
+  const total = formatCad(read.windowCents);
+  const single = entry.thresholdTest.singleQuarter ? read.overSingleQuarter : null;
+
+  let decides = true;
+  let crossed = false;
+  let near = false;
+  let why: string;
+  if (single) {
+    crossed = true;
+    why = `Shown because your confirmed revenue for ${single.label} is ${formatCad(single.cents)} — over ${line} in a single calendar quarter.`;
+  } else if (read.windowCents > thresholdCents) {
+    crossed = true;
+    why = `Shown because your confirmed revenue for ${span} is ${read.windowComplete ? "" : "at least "}${total} — over ${line}.`;
+  } else if (read.windowComplete) {
+    near = read.windowCents >= thresholdCents * THRESHOLD_WATCH_RATIO;
+    why = `Shown because your confirmed revenue for ${span} is ${total} — ${near ? "approaching" : "under"} ${line}.`;
+  } else {
+    decides = false;
+    const covered = read.window.filter((q) => q.monthsCovered === 3).length;
+    why = `Your confirmed figures cover ${covered} of the last ${NUMBER_WORDS[n] ?? n} calendar quarters (${total} so far) — not enough to replace the estimate yet.`;
+  }
+  if (read.conflictMonths.length > 0) {
+    why += ` Two figures cover ${monthName(read.conflictMonths[0])}${read.conflictMonths.length > 1 ? " and other months" : ""}; that quarter is left out until you choose which one counts.`;
+  }
+  if (read.notCounted.length > 0) {
+    const k = read.notCounted.length;
+    why += ` ${k === 1 ? "One figure isn't" : `${k} figures aren't`} counted: ${read.notCounted[0].reason}${k > 1 ? ", and others" : ""}.`;
+  }
+
+  const rows = read.used.reduce((sum, f) => sum + (f.sourceRows ?? 0), 0);
+  const labels = new Map<string, number | null>();
+  for (const f of read.used) {
+    const prev = labels.get(f.sourceLabel);
+    labels.set(f.sourceLabel, f.sourceRows === null ? (prev ?? null) : (prev ?? 0) + f.sourceRows);
+  }
+  const count = read.used.length;
+  return {
+    decides,
+    crossed,
+    near,
+    why,
+    basis: {
+      summary: `From your records · ${count} figure${count === 1 ? "" : "s"}${rows > 0 ? ` · ${rows} rows` : ""}`,
+      figureIds: read.used.map((f) => f.id),
+      sources: [...labels.entries()].map(([label, r]) => ({ label, rows: r })),
+    },
+  };
+}
+
+/** The GST small-supplier rule's verdict, for the map's GST stages (same rule as its card). */
+function gstRecordsVerdict(figures: readonly ConfirmedFigure[] | undefined, today: string): RecordsVerdict | null {
+  const rule = complianceCatalogV2026.entries.find((e) => e.id === "compliance-gst-small-supplier");
+  return rule ? recordsVerdict(rule, figures, today) : null;
+}
+
+function evaluateComplianceRule(
+  profile: EvaluationProfile,
+  entry: ComplianceRule,
+  figures: readonly ConfirmedFigure[] | undefined,
+  today: string,
+): UnlockItem | null {
   if (!provinceMatches(profile, entry.provinces)) return null;
   if (entry.industryTags && !tagsIntersect(profile.activityTags, entry.industryTags)) return null;
 
@@ -224,23 +314,45 @@ function evaluateComplianceRule(profile: EvaluationProfile, entry: ComplianceRul
   let step: IntakeStep = "location";
   let payoff = entry.lensAnnotations.tax;
   let why = `Shown because you selected ${provinceName(profile.province)}.`;
+  let fromRecords: RecordsBasis | undefined;
 
   if (entry.thresholdAmount !== undefined) {
     typeChip = "Threshold";
-    const y1 = profile.targetRevenueY1;
-    // CRA's small-supplier rule triggers on EXCEEDING the threshold, not reaching it —
-    // registration is required once revenue is over $30K, not at exactly $30K (audit
-    // H3). Matches the `>` used in `computeNodeStates`'s `gstTriggered` below.
-    if (y1 > entry.thresholdAmount) {
-      state = "yellow";
-      step = "refine";
-      why = `Shown because your Y1 revenue target crosses the ${entry.threshold ?? "registration"} threshold.`;
-      payoff = "If your assumptions hold, registration timing becomes a checkpoint on the map, not a surprise.";
-    } else if (y1 >= entry.thresholdAmount * THRESHOLD_WATCH_RATIO) {
-      state = "yellow";
-      step = "refine";
-      why = `Shown because your Y1 revenue target approaches the ${entry.threshold ?? "registration"} threshold.`;
-      payoff = "If revenue lands near this line, the voluntary-vs-mandatory registration fork is worth modeling early.";
+    const verdict = recordsVerdict(entry, figures, today);
+    if (verdict?.decides) {
+      // The person's own confirmed figures settle it: they beat the estimate.
+      fromRecords = verdict.basis;
+      why = verdict.why;
+      if (verdict.crossed) {
+        state = "yellow";
+        step = "refine";
+        payoff = "If this holds, registration may already be required — the CRA page says from when. Take it to your accountant.";
+      } else if (verdict.near) {
+        state = "yellow";
+        step = "refine";
+        payoff = "If revenue keeps near this line, the voluntary-vs-mandatory registration fork is worth modeling now.";
+      }
+    } else {
+      const y1 = profile.targetRevenueY1;
+      // CRA's small-supplier rule triggers on EXCEEDING the threshold, not reaching it —
+      // registration is required once revenue is over $30K, not at exactly $30K (audit
+      // H3). Matches the `>` used in `computeNodeStates`'s `gstTriggered` below.
+      if (y1 > entry.thresholdAmount) {
+        state = "yellow";
+        step = "refine";
+        why = `Shown because your Y1 revenue target crosses the ${entry.threshold ?? "registration"} threshold.`;
+        payoff = "If your assumptions hold, registration timing becomes a checkpoint on the map, not a surprise.";
+      } else if (y1 >= entry.thresholdAmount * THRESHOLD_WATCH_RATIO) {
+        state = "yellow";
+        step = "refine";
+        why = `Shown because your Y1 revenue target approaches the ${entry.threshold ?? "registration"} threshold.`;
+        payoff = "If revenue lands near this line, the voluntary-vs-mandatory registration fork is worth modeling early.";
+      }
+      // Figures that were read but couldn't decide still say so, next to the estimate's reason.
+      if (verdict) {
+        why = `${why} ${verdict.why}`;
+        fromRecords = verdict.basis;
+      }
     }
   }
 
@@ -255,6 +367,7 @@ function evaluateComplianceRule(profile: EvaluationProfile, entry: ComplianceRul
     source: firstCitationSource(entry.citations),
     citations: entry.citations,
     step,
+    ...(fromRecords ? { fromRecords } : {}),
   };
 }
 
@@ -320,6 +433,7 @@ function computeNodeStates(
   profile: EvaluationProfile,
   activeBranches: Record<string, CFENodeId>,
   today: string,
+  gstRecords: RecordsVerdict | null,
 ): Record<CFENodeId, NodeStateColor> {
   const states: Record<string, NodeStateColor> = {};
   const gstThreshold = 30000;
@@ -330,14 +444,19 @@ function computeNodeStates(
   states["stage-1-sole-prop-activation"] = "green";
 
   const gstPick = activeBranches["gstTiming"];
-  // Exceed, not reach — mirrors `evaluateComplianceRule`'s threshold check (audit H3).
-  const gstTriggered = profile.targetRevenueY1 > gstThreshold;
+  // Exceed, not reach — mirrors `evaluateComplianceRule`'s threshold check (audit H3). When the
+  // person's confirmed figures settle it ([8a]), they decide instead of the estimate.
+  const recordsDecide = gstRecords?.decides === true;
+  const gstTriggered = recordsDecide ? gstRecords.crossed : profile.targetRevenueY1 > gstThreshold;
+  const gstNear = recordsDecide
+    ? gstRecords.crossed || gstRecords.near
+    : profile.targetRevenueY1 >= gstThreshold * THRESHOLD_WATCH_RATIO;
   for (const nodeId of ["stage-2a-voluntary-gst-registration", "stage-2b-mandatory-gst-registration"]) {
     if (nodeId === gstPick) {
       states[nodeId] = gstTriggered ? "green" : "yellow";
     } else {
       // Alternate GST path stays visible as a fork when revenue is near the line.
-      states[nodeId] = profile.targetRevenueY1 >= gstThreshold * THRESHOLD_WATCH_RATIO ? "yellow" : "gray";
+      states[nodeId] = gstNear ? "yellow" : "gray";
     }
   }
 
@@ -429,6 +548,12 @@ export interface EvaluateOptions {
   today: string;
   /** Cockpit branch picks; defaults mirror recomputeScenarioState's defaults. */
   activeBranches?: Record<string, CFENodeId>;
+  /**
+   * [8a] The venture's CONFIRMED figures only (proposed, retracted or discarded ones must never be
+   * passed). A figure beats an estimate where it settles a rule; cards it decided carry
+   * `fromRecords`.
+   */
+  figures?: readonly ConfirmedFigure[];
 }
 
 export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
@@ -448,7 +573,7 @@ export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOpt
       .map((entry) => evaluateGrant(profile, entry))
       .filter((item): item is UnlockItem => item !== null),
     ...complianceCatalogV2026.entries
-      .map((entry) => evaluateComplianceRule(profile, entry))
+      .map((entry) => evaluateComplianceRule(profile, entry, options.figures, today))
       .filter((item): item is UnlockItem => item !== null),
     ...structureLadderV2026
       .map((step) => evaluateStructureStep(profile, step))
@@ -457,7 +582,7 @@ export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOpt
 
   return {
     unlocks: attachRisk(profile, unlocks),
-    nodeStates: computeNodeStates(profile, activeBranches, today),
+    nodeStates: computeNodeStates(profile, activeBranches, today, gstRecordsVerdict(options.figures, today)),
     provinceCoverage: provinceCoverageFor(profile.province),
   };
 }

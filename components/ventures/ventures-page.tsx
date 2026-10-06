@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
+import { FiguresPanel } from "@/components/ventures/figures-panel";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
@@ -215,6 +216,8 @@ function VentureCard({
           {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved." : saving === "error" ? "Save failed." : `touched ${venture.updatedAt.slice(0, 10)}`}
         </p>
       </div>
+
+      <FiguresPanel ventureId={venture.id} />
 
       <div className="mt-3 border-t border-rule-soft pt-3">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Cross-references</p>

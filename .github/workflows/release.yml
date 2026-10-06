@@ -45,7 +45,16 @@ jobs:
         env:
           DOTAMI_DESKTOP_EXE: ${{ github.workspace }}\dist-desktop\out\win-unpacked\DotAmi.exe
 
-      - name: Build the installer and upload it to a draft release
+      # electron-builder uploads its files in parallel and each upload made its own draft when none
+      # existed yet — v0.2.0 came out as two drafts (installer + latest.yml in one, the blockmap in
+      # the other). Making the one draft first gives every upload the same place to land.
+      - name: Create the draft release first
+        shell: bash
+        run: gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --draft --title "DotAmi ${GITHUB_REF_NAME#v}" --notes "Release notes are written before this draft is published. Changes: CHANGELOG.md."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the installer and upload it to the draft release
         run: node desktop/package.mjs --installer --publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

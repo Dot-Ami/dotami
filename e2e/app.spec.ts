@@ -131,6 +131,71 @@ test("the settings page: every group, what's true today, every setting and its w
   await expect(page).toHaveURL(/\/settings$/);
 });
 
+test("a confirmed figure decides the GST card, with its source — and only the agree prompt confirms", async ({ page }) => {
+  // The last complete calendar quarter before today, so the figure has ended and sits in the window.
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const now = new Date();
+  let year = now.getFullYear();
+  let quarter = Math.floor(now.getMonth() / 3) - 1;
+  if (quarter < 0) {
+    quarter = 3;
+    year -= 1;
+  }
+  const first = quarter * 3 + 1;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const from = `${year}-${pad(first)}-01`;
+  const to = `${year}-${pad(first + 2)}-${new Date(Date.UTC(year, first + 2, 0)).getUTCDate()}`;
+  const label = `${MONTHS[first - 1]} to ${MONTHS[first + 1]} ${year}`;
+
+  await page.goto("/ventures");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+    .first();
+  const ventureId = new URL((await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href"))!, "http://x").searchParams.get("venture")!;
+
+  // Type a figure: it goes through the same agree prompt as every other figure.
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  await card.getByLabel("From", { exact: true }).fill(from);
+  await card.getByLabel("To", { exact: true }).fill(to);
+  await card.getByLabel("Amount", { exact: true }).fill("31,200");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+
+  // Closing the prompt confirms nothing.
+  await page.keyboard.press("Escape");
+  await expect(prompt).toBeHidden();
+  const listed = async () => ((await (await page.request.get(`/api/figures?venture=${ventureId}`)).json()) as { figures: { id: string; status: string }[] }).figures;
+  const [waiting] = await listed();
+  expect(waiting.status).toBe("proposed");
+
+  // Nothing but the app's own page can confirm: a script calling the API is refused, and the
+  // route outside agents use can only propose.
+  expect((await page.request.post("/api/figures/agree", { data: { ventureId, figureIds: [waiting.id] } })).status()).toBe(403);
+  const sneaky = await page.request.post("/api/figures/propose", {
+    data: {
+      ventureId,
+      source: { kind: "agent", label: "an agent" },
+      figures: [{ kind: "gross-revenue", periodStart: from, periodEnd: to, amountCents: 100, currency: "CAD", status: "confirmed" }],
+    },
+  });
+  expect(sneaky.status()).toBe(400);
+  expect((await listed()).map((f) => f.status)).toEqual(["proposed"]);
+
+  // The person agrees.
+  await card.getByRole("button", { name: "Review" }).click();
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+  expect((await listed()).map((f) => f.status)).toEqual(["confirmed"]);
+
+  // The map's GST card now reads the person's own figure instead of the $45,000 estimate.
+  await card.getByRole("link", { name: /Open in cockpit/ }).click();
+  await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
+  await expect(page.getByText(`Shown because your confirmed revenue for ${label} is $31,200 — over $30,000 in a single calendar quarter.`).first()).toBeVisible();
+  await expect(page.getByText(/From your records · 1 figure · from typed by you/).first()).toBeVisible();
+});
+
 /** A raw GET with headers a browser page could be tricked into sending; resolves with the status. */
 function rawGet(baseURL: string, path: string, headers: Record<string, string>): Promise<number> {
   const { hostname, port } = new URL(baseURL);

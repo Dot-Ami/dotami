@@ -5,7 +5,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -15,7 +15,13 @@ import { migrate, MigrationRefused } from "../desktop/migrate.mjs";
 
 const root = path.resolve(__dirname, "..");
 const migrations = path.join(root, "prisma", "migrations");
-const localNames = ["20260928000000_sqlite_init"];
+// Every migration folder (one holding a migration.sql), oldest first — read from disk so a new
+// migration doesn't mean editing this test. Folder names start with a timestamp, so a plain sort
+// is apply order.
+const localNames = readdirSync(migrations, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && existsSync(path.join(migrations, entry.name, "migration.sql")))
+  .map((entry) => entry.name)
+  .sort();
 
 let dir = "";
 let dbFile = "";
@@ -63,13 +69,17 @@ describe("desktop migrator — the same result as Prisma's own migrate deploy", 
     expect(result).toEqual({ applied: localNames, backup: null });
     expect(tables(dbFile)).toEqual(expect.arrayContaining(["User", "Venture", "PersonStatement", "ScenarioState", "_prisma_migrations"]));
 
-    const [row] = query<{ checksum: string; finished_at: number | null; applied_steps_count: number }>(
-      dbFile,
-      `SELECT checksum, finished_at, applied_steps_count FROM "_prisma_migrations"`,
-    );
-    expect(row.checksum).toBe(fileHash(path.join(migrations, localNames[0], "migration.sql")));
-    expect(row.finished_at).toEqual(expect.any(Number));
-    expect(row.applied_steps_count).toBe(1);
+    // Every migration recorded the way Prisma records it — each looked up by name, not by row order.
+    for (const name of localNames) {
+      const [row] = query<{ checksum: string; finished_at: number | null; applied_steps_count: number }>(
+        dbFile,
+        `SELECT checksum, finished_at, applied_steps_count FROM "_prisma_migrations" WHERE migration_name = ?`,
+        name,
+      );
+      expect(row.checksum).toBe(fileHash(path.join(migrations, name, "migration.sql")));
+      expect(row.finished_at).toEqual(expect.any(Number));
+      expect(row.applied_steps_count).toBe(1);
+    }
 
     const status = prisma(["migrate", "status"], dbFile);
     expect(status.out).toContain("Database schema is up to date");

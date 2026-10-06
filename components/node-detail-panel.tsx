@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useState } from "react";
 
 import type { NodeItems } from "@/lib/brain/node-items";
@@ -170,6 +171,21 @@ function ItemRow({ item }: { item: UnlockItem }) {
         </span>
         <span className="font-mono text-xs text-stone">{open ? "−" : "+"}</span>
       </button>
+      {item.fromRecords ? (
+        // [8a] The person's own confirmed figures decided (or were read for) this card: say so,
+        // name where they came from, and keep them one click away. Outside the toggle button,
+        // because a link can't sit inside a button.
+        <p className="mt-1.5 pl-3.5 font-mono text-[10px] leading-4 text-sage">
+          {item.fromRecords.summary}
+          {item.fromRecords.sources.length > 0
+            ? ` · from ${item.fromRecords.sources.map((s) => s.label).join(", ")}`
+            : ""}{" "}
+          ·{" "}
+          <Link href="/ventures" className="underline decoration-sage/50 underline-offset-2 hover:text-paper">
+            see your figures
+          </Link>
+        </p>
+      ) : null}
       {open ? (
         <div className="mt-3 space-y-2.5 border-t border-rule-soft pt-3 text-xs leading-5 text-stone">
           <p className="text-paper-dim">{item.payoff}</p>

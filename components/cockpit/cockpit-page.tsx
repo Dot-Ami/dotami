@@ -9,7 +9,8 @@ import { PersonStatements } from "@/components/shared/person-statements";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
-import { evaluateProfile } from "@/lib/brain";
+import { evaluateProfile, type ConfirmedFigure } from "@/lib/brain";
+import type { FigureView } from "@/lib/figures/types";
 import { itemsForNode } from "@/lib/brain/node-items";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
@@ -88,14 +89,55 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   const cfeNodeById = useMemo(() => new Map(cfeNodes.map((node) => [node.id, node])), [cfeNodes]);
   const selectedNode = selectedNodeId ? cfeNodeById.get(selectedNodeId) : null;
 
+  // [8a] The person's CONFIRMED figures for this venture, once it has been saved: they beat the
+  // estimate wherever they settle a rule. Proposed, retracted and discarded figures never reach
+  // the evaluator. An unsaved venture (or no database) simply has none.
+  const [confirmedFigures, setConfirmedFigures] = useState<ConfirmedFigure[]>([]);
+  const scenarioId = currentScenario?.id ?? null;
+  useEffect(() => {
+    let cancelled = false;
+    setConfirmedFigures([]);
+    if (!scenarioId) return;
+    (async () => {
+      try {
+        const ventures = (await (await fetch("/api/ventures", { cache: "no-store" })).json()) as {
+          ventures?: { id: string; scenarioId: string | null }[];
+        };
+        const venture = ventures.ventures?.find((v) => v.scenarioId === scenarioId);
+        if (!venture) return;
+        const res = await fetch(`/api/figures?venture=${encodeURIComponent(venture.id)}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json()) as { figures?: FigureView[] };
+        const confirmed = (body.figures ?? [])
+          .filter((f) => f.status === "confirmed")
+          .map(({ id, kind, periodStart, periodEnd, amountCents, currency, sourceLabel, sourceRows }) => ({
+            id,
+            kind,
+            periodStart,
+            periodEnd,
+            amountCents,
+            currency,
+            sourceLabel,
+            sourceRows,
+          }));
+        if (!cancelled) setConfirmedFigures(confirmed);
+      } catch {
+        // Offline or no database: the map runs on the estimates, as it always has.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [scenarioId]);
+
   // S2.5.4e: the cockpit runs the same evaluator the intake preview runs — on this scenario.
   const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
   const evaluation = useMemo(
     () =>
       currentScenario
-        ? evaluateProfile(buildEvaluationProfileFromScenario(currentScenario), { today })
+        ? evaluateProfile(buildEvaluationProfileFromScenario(currentScenario), { today, figures: confirmedFigures })
         : null,
-    [currentScenario, today],
+    [currentScenario, today, confirmedFigures],
   );
   const nodeItems = useMemo(
     () =>
