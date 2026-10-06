@@ -237,14 +237,40 @@ describe("a figure older than the rule reads is listed, not dropped", () => {
   it("says so on the card, naming the span the rule reads", () => {
     const { card } = gstCard(10_000, [old, fig(...QUARTERS[3], 5_000)]);
     expect(card.fromRecords?.notes).toContain(
-      "One older figure isn't read: this rule looks only at the last four calendar quarters (October 2025 to September 2026).",
+      "One older figure isn't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
     );
   });
 
   it("counts several: '2 older figures aren't read'", () => {
     const { card } = gstCard(10_000, [old, fig("2023-01-01", "2023-03-31", 100), fig(...QUARTERS[3], 5_000)]);
     expect(card.fromRecords?.notes).toContain(
-      "2 older figures aren't read: this rule looks only at the last four calendar quarters (October 2025 to September 2026).",
+      "2 older figures aren't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
+    );
+  });
+});
+
+describe("two overlapping figures that are both older than the rule reads", () => {
+  // The same month twice would normally be a conflict. But a month this rule never reads can't
+  // make a quarter ambiguous, so [8e] keeps older figures out of the month map: they are listed
+  // as older figures and raise no "two figures cover this month" sentence.
+  const first = fig("2024-03-01", "2024-03-31", 4_000);
+  const second = fig("2024-03-01", "2024-03-31", 9_000);
+
+  it("lists both as outside the window, with no conflict month and nothing counted", () => {
+    const read = readRevenue([first, second], WINDOW)!;
+    expect(read.outsideWindow).toEqual([first, second]);
+    expect(read.conflictMonths).toEqual([]);
+    expect(read.window.some((q) => q.conflict)).toBe(false);
+    expect(read.used).toEqual([]);
+    expect(read.notCounted).toEqual([]);
+  });
+
+  it("says nothing about two figures on the card, only that two older figures aren't read", () => {
+    const { card } = gstCard(10_000, [first, second]);
+    expect(card.why).not.toContain("Two figures cover");
+    expect(card.why).not.toContain("until you choose which one counts");
+    expect(card.fromRecords?.notes).toContain(
+      "2 older figures aren't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
     );
   });
 });

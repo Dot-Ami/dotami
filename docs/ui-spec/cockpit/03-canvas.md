@@ -57,9 +57,11 @@ Under it, a second grey line of whole sentences written by the rule (`RecordsBas
   aren't fully covered yet." — recent quarters the rule reads that the figures don't cover in
   full, newest first. A quarter already explained as "two figures cover the same month" isn't
   repeated here.
-- "One older figure isn't read: this rule looks only at the last four calendar quarters (October
-  2025 to September 2026)." — figures from before the first quarter the rule reads are listed,
-  never dropped. The span comes from the rule's own `thresholdTest`, not from a number here.
+- "One older figure isn't read: this rule looks only at the last four complete calendar quarters
+  (October 2025 to September 2026) and the current one." — figures from before the first quarter
+  the rule reads are listed, never dropped. The span comes from the rule's own `thresholdTest`,
+  not from a number here; the current quarter is also read (for the single-quarter test), hence
+  "and the current one".
 
 A figure whose period ends after today is never counted (a wrong computer clock when it was
 typed, a clock set back since, a restored backup). The card's own text says so, with the date:

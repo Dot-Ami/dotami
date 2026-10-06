@@ -308,6 +308,46 @@ test.describe("how old each figure is", () => {
     // ...and never reads the future-dated figure as this quarter's revenue.
     await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
   });
+
+  test("a map left open past midnight on a quarter's last day moves to the new four-quarter window without a reload", async ({
+    page,
+  }) => {
+    // A June 2025 figure is older than every window below, before and after midnight, so the card
+    // always lists it as "not read" and names the span it is reading. That span is the quarter
+    // wording this test watches. (No other figure in this shared database starts before 2026.)
+    // It is made on the real clock: it ended long ago for the server and the page alike.
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+    await typeFigure(card, "2025-06-01", "2025-06-30", "1,200");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    const cockpitPath = await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href");
+    expect(cockpitPath).toBeTruthy();
+
+    // 06:59 UTC on October 1 is 11:59 p.m. on September 30 in Vancouver (daylight time, UTC-7):
+    // the last minute of the third quarter. Installed after the figure is in, so the minute isn't
+    // spent typing it. Time flows from here, which leaves the page about a minute before midnight.
+    await page.clock.install({ time: "2026-10-01T06:59:00Z" });
+    await page.goto(cockpitPath!);
+    await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
+
+    // The quarter we're in is July to September, so the four complete ones before it run from
+    // July 2025 to June 2026.
+    const before = page.getByText(
+      /looks only at the last four complete calendar quarters \(July 2025 to June 2026\) and the current one/,
+    );
+    const after = page.getByText(
+      /looks only at the last four complete calendar quarters \(October 2025 to September 2026\) and the current one/,
+    );
+    await expect(before.first()).toBeVisible();
+    await expect(after).toHaveCount(0);
+
+    // Past local midnight, with no reload: October begins, the current quarter is now October to
+    // December, and the four complete quarters before it run from October 2025 to September 2026.
+    await page.clock.runFor(2 * 60 * 1000);
+    await expect(after.first()).toBeVisible();
+    await expect(before).toHaveCount(0);
+  });
 });
 
 // ---- [8c] Add from a file -------------------------------------------------------------------

@@ -295,8 +295,10 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
   if (read.outsideWindow.length > 0) {
     const k = read.outsideWindow.length;
     const readSpan = `${monthName(read.window[0].start.slice(0, 7))} to ${monthName(read.window[n - 1].end.slice(0, 7))}`;
+    // readRevenue also reads the quarter we're in (for the single-quarter test), so the sentence
+    // says "and the current one" instead of claiming the complete quarters are all it looks at.
     notes.push(
-      `${k === 1 ? "One older figure isn't" : `${k} older figures aren't`} read: this rule looks only at the last ${NUMBER_WORDS[n] ?? n} calendar quarters (${readSpan}).`,
+      `${k === 1 ? "One older figure isn't" : `${k} older figures aren't`} read: this rule looks only at the last ${NUMBER_WORDS[n] ?? n} complete calendar quarters (${readSpan}) and the current one.`,
     );
   }
 
