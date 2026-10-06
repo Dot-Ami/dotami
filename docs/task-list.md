@@ -31,10 +31,12 @@ content and the project itself run alongside everything.
   - [x] A test: start → describe a venture → close → start again → it's still there
   - [x] An installer you double-click (`npm run desktop:installer`; the same test runs on the packaged app)
   - [x] A Windows build from CI, with the desktop test on the packaged app (Mac and Linux after)
-- ⬜ **[7c] Backup, restore, moving to a new computer.**
-  - [ ] *Back up* copies the database file; optional passphrase encryption
-  - [ ] *Restore* checks a backup before replacing anything
-  - [ ] Setup suggests turning on disk encryption
+- ✅ **[7c] Backup, restore, moving to a new computer** (desktop app, File menu;
+  [how it works](architecture/desktop-app.md#backup-and-restore-7c)).
+  - [x] *Back up* copies the database file; optional passphrase encryption
+  - [x] *Restore* checks a backup before replacing anything, and keeps a copy of what it replaces
+  - [x] Setup suggests turning on disk encryption (the settings page, Windows Home and Pro)
+  - [x] A test: back up on one computer → restore on another → the same ventures
 - 🔄 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
   [how to release](architecture/desktop-app.md#releasing-an-update)).
   - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after)

@@ -26,8 +26,8 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
    2026-10-05).
 6. **Updates** (installed app only) — see below.
-7. **Menu.** File → Open data folder · Quit; Go → Home · Your ideas · Settings; View; Help →
-   About · Check for updates · Source on GitHub.
+7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
+   ideas · Settings; View; Help → About · Check for updates · Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
 
@@ -52,6 +52,32 @@ which is about 146 MB of engines for five kinds of database and reports usage to
   `backups/` in the data folder (`VACUUM INTO`, consistent even if the file is open).
 - **All or nothing per migration:** each runs in a transaction; SQLite undoes schema changes too,
   so a failure leaves the database exactly as it was and unrecorded.
+
+## Backup and restore ([7c], `desktop/backup.mjs`)
+
+**File → Back up…** asks for an optional passphrase (twice; the warning *"lose it and the backup
+can't be opened — nobody can recover it"* is shown first), then where to save, and writes one
+`.dotami-backup` file. **File → Restore from a backup…** opens one, asks for its passphrase if it's
+locked, checks it, asks for confirmation, keeps a safety copy of the current data in `backups/`,
+swaps it in and restarts the app (an older backup is then upgraded by the migrator).
+
+- **The file:** `DOTAMI-BACKUP` + a JSON header (format, app version, date, the migrations it
+  holds, the SHA-256 of the database) + the database — made with `VACUUM INTO`, consistent even
+  while the app has it open. Written beside its real name and renamed, so a crash never leaves a
+  half-written file that looks finished.
+- **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
+  header is authenticated too, so editing any of it makes the backup refuse to open. A header that
+  asks for different scrypt settings is refused, so a hostile file can't make the app hang.
+- **Checked before anything changes:** not a backup · damaged (cut short, a changed byte, or a
+  database SQLite's `integrity_check` rejects) · locked and the passphrase is wrong (GCM can't tell
+  a wrong passphrase from a damaged file, so the message says both) · made by a newer DotAmi. All
+  checks run on a temporary copy; the live data is untouched until the person confirms.
+- **The passphrase window** is a local page with no network access (its own CSP) that can send
+  back only the passphrase or "cancel"; the app checks the message came from that window.
+- **Tests:** `tests/desktop-backup.spec.ts` (9 cases; checked that it bites — without header
+  authentication, the edited-header case fails) and the desktop test "back up on one computer →
+  restore on another", through the real passphrase window, a wrong passphrase first (checked: with
+  the swap skipped it fails).
 
 ## Building and packaging
 

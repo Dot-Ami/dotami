@@ -88,7 +88,9 @@ function SettingRow({ setting }: { setting: SettingEntry }) {
       ? "Waiting on a decision"
       : setting.status === "planned"
         ? `Not built yet · [${setting.story}]`
-        : null;
+        : setting.status === "asked"
+          ? `Asked each time · ${setting.where}`
+          : null;
 
   return (
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
@@ -153,9 +155,27 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <Code>{path}</Code>
             <CopyPathButton path={path} />
           </div>
+          {today.desktop ? (
+            <p className="text-paper-dim">
+              <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you
+              can keep somewhere else, locked with a passphrase if you choose.{" "}
+              <strong className="font-semibold text-paper">File → Restore from a backup…</strong> puts
+              one back — on this computer or a new one — after checking it, and keeps a copy of
+              what was here in the backups folder.
+            </p>
+          ) : (
+            <p className="text-paper-dim">
+              Copying that file while DotAmi is stopped is a complete backup; deleting it starts
+              over. The desktop app has Back up and Restore in its File menu.
+            </p>
+          )}
           <p className="text-paper-dim">
-            Copying that file while DotAmi is stopped is a complete backup; deleting it starts over.
-            Back up and Restore buttons arrive with [7c].
+            {/* Microsoft's own page, read 2026-10-06: support.microsoft.com "Device encryption in Windows". */}
+            The backup doesn&apos;t protect this computer&apos;s copy if the computer is lost or
+            stolen — disk encryption does. On Windows: Settings → Privacy &amp; security → Device
+            encryption (on Windows Home; Pro also has BitLocker). It needs supported hardware and is
+            only switched on by itself if you signed in with a Microsoft account. On a Mac:
+            FileVault.
           </p>
         </>
       );

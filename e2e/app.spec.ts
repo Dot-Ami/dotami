@@ -108,6 +108,7 @@ test("the settings page: every group, what's true today, every setting and its w
     await expect(row).toContainText(s.defaultValue);
     if (s.warning) await expect(row).toContainText(s.warning);
     if (s.status === "planned") await expect(row).toContainText(`Not built yet · [${s.story}]`);
+    if (s.status === "asked") await expect(row).toContainText(`Asked each time · ${s.where}`);
   }
   await expect(page.locator("main").locator("input, select, textarea")).toHaveCount(0);
 

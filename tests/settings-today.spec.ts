@@ -55,6 +55,11 @@ describe("readSettingsToday", () => {
     expect(readSettingsToday({ DOTAMI_UPDATES: "yes" }, cwd).updates).toBe("manual");
   });
 
+  it("knows it's the desktop app only when the desktop app says so", () => {
+    expect(readSettingsToday({ DOTAMI_DESKTOP: "1" }, cwd).desktop).toBe(true);
+    expect(readSettingsToday({}, cwd).desktop).toBe(false);
+  });
+
   it("reports the version from package.json", () => {
     expect(readSettingsToday({}, cwd).version).toMatch(/^\d+\.\d+\.\d+/);
   });

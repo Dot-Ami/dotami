@@ -25,18 +25,25 @@ Each group:
    environment on every visit (never a stored claim):
    - Data and backups: the absolute path of the database file (from `DATABASE_URL`, relative
      paths read from `prisma/` as Prisma does) with a **Copy path** button; "no file there yet"
-     when it's missing; a plain line when the URL isn't a SQLite file.
+     when it's missing; a plain line when the URL isn't a SQLite file. In the desktop app
+     (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu); from source: copying the
+     file is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,
+     BitLocker on Pro — Microsoft's page, read 2026-10-06; FileVault on a Mac).
    - Your figures: no confirmed figures are kept yet.
    - The Lens: no model chosen; no outside agent can connect.
    - The map: the tax year the catalogs cover.
-   - Privacy: whether the sentence a person types to describe a venture is sent to Anthropic —
-     the same test the intake's parser makes (`ANTHROPIC_API_KEY` non-empty); DotAmi has no
-     server and collects no usage data; and, for people running from source, the Next.js
-     framework's own telemetry on `npm run dev` / `npm run build` with how to turn it off.
-   - Updates: the version from `package.json`; no automatic updates yet.
+   - Privacy: what leaves the computer — the sentence typed to describe a venture goes to
+     Anthropic only when `ANTHROPIC_API_KEY` is set (the intake parser's own test); the installed
+     app's update check shows GitHub the computer's internet address and version
+     (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source:
+     Next.js telemetry and Prisma's check-in, and how to stop them.
+   - Updates: the version; the installed app checks GitHub at start and asks before installing;
+     a copy run from source updates with git.
 2. **One card per setting** — label · what it controls · Default · Choices · the warning shown
-   before switching on the risky option (amber) · a status chip: `Not built yet · [code]` or
-   `Waiting on a decision` (the usage-sharing row, whose Choices link to Part 4).
+   before switching on the risky option (amber) · a status chip: `Not built yet · [code]`,
+   `Asked each time · <where>` (the backup passphrase — asked in the passphrase window, which
+   shows the same warning), or `Waiting on a decision` (the usage-sharing row, whose Choices link
+   to Part 4).
 
 | Control | Behaviour | Persists to |
 |---|---|---|

@@ -12,7 +12,12 @@
 
 export type SettingGroupId = "data" | "figures" | "lens" | "map" | "privacy" | "updates";
 
-export type SettingStatus = "planned" | "live" | "undecided";
+/**
+ * planned — its story isn't built; live — changed on the settings page and stored; undecided —
+ * waiting on the maintainer; asked — never stored: the app asks each time it's needed (`where`
+ * says where), showing the same warning there.
+ */
+export type SettingStatus = "planned" | "live" | "undecided" | "asked";
 
 export interface SettingGroup {
   id: SettingGroupId;
@@ -41,6 +46,8 @@ export interface SettingEntry {
   /** The code in docs/task-list.md (e.g. "7b"); null while the setting is undecided. */
   story: string | null;
   status: SettingStatus;
+  /** For an `asked` setting: where the app asks for it. */
+  where?: string;
 }
 
 /** The order the page shows them in. "The map" holds the three rows that fit none of the others. */
@@ -78,7 +85,8 @@ export const SETTINGS: readonly SettingEntry[] = [
     options: "a passphrase",
     warning: "Before setting one: \"lose it and the backup can't be opened — nobody can recover it\".",
     story: "7c",
-    status: "planned",
+    status: "asked",
+    where: "File → Back up… in the desktop app",
   },
   {
     id: "figure-reminders",

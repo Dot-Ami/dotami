@@ -58,12 +58,14 @@ is read-only.
 - A menu item clicked while the first page is still loading → the app keeps going. *Fixed and tested (found 2026-10-05: it used to close the app).*
 - A model key in the environment the app was started from → never reaches the app's server. *Tested.*
 
-**Backup, restore, new computer [7c]**
-- Restore a backup older than the app's current database version → upgrade it, then restore.
-- Restore a backup made by a *newer* app → refuse with "update the app first".
-- Wrong passphrase → refuse, nothing replaced.
-- A corrupted or truncated backup file → detected before anything is replaced.
-- Restore over existing data → "this replaces everything on this computer" + keep a safety copy.
+**Backup, restore, new computer [7c]** (built 2026-10-06; `tests/desktop-backup.spec.ts` + the desktop test)
+- Restore a backup older than the app's current database version → upgrade it, then restore. *Built: accepted, then upgraded by the migrator when the app restarts; the upgrade path is tested in `tests/desktop-migrate.spec.ts`, the older-backup restore itself isn't (there's only one migration so far).*
+- Restore a backup made by a *newer* app → refuse with "update the app first". *Tested; the live data is byte-identical afterwards.*
+- Wrong passphrase → refuse, nothing replaced. *Tested (unit + desktop test, which asks again).*
+- A corrupted or truncated backup file → detected before anything is replaced. *Tested: cut short, a changed byte (plain and locked), an edited header, random bytes, a raw database, an empty file.*
+- Restore over existing data → "this replaces everything on this computer" + keep a safety copy. *Tested: the safety copy holds the old data.*
+- A backup written while the app is busy → a consistent copy (`VACUUM INTO`). *Built; not tested under load.*
+- The app crashes mid-backup → no half-written file under the real name. *Built (write then rename); tested that no `.partial` is left.*
 
 **Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
 - An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); not tested.*

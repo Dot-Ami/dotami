@@ -5,13 +5,14 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { mkdirSync, accessSync, constants, createWriteStream, existsSync } from "node:fs";
+import { mkdirSync, accessSync, constants, createWriteStream, existsSync, rmSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { app, BrowserWindow, dialog, Menu, session, shell, utilityProcess } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
+import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
 import { migrate, MigrationRefused } from "./migrate.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,6 +35,8 @@ let server = null;
 let quitting = false;
 /** @type {import("node:fs").WriteStream | null} */
 let log = null;
+let dataDir = "";
+let dbFile = "";
 
 // Only the installed app updates itself, from GitHub Releases ([7d]); a copy run from the source
 // code updates with git. Tests switch the check off so they never reach the internet.
@@ -61,8 +64,8 @@ app.on("before-quit", () => {
 });
 
 async function start() {
-  const dataDir = app.getPath("userData");
-  const dbFile = path.join(dataDir, "dotami.db");
+  dataDir = app.getPath("userData");
+  dbFile = path.join(dataDir, "dotami.db");
   try {
     mkdirSync(dataDir, { recursive: true });
     accessSync(dataDir, constants.W_OK);
@@ -198,8 +201,9 @@ async function checkForUpdates(byHand) {
  */
 function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
+  // DOTAMI_DESKTOP tells it this is the desktop app, which has Back up and Restore in its File menu.
   const updates = updatesOn ? "github" : "";
-  const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates };
+  const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
   return env;
@@ -265,6 +269,9 @@ function buildMenu(origin, dataDir) {
       {
         label: "File",
         submenu: [
+          { id: "backup", label: "Back up…", click: () => void backUp() },
+          { id: "restore", label: "Restore from a backup…", click: () => void restore() },
+          { type: "separator" },
           { label: "Open data folder", click: () => void shell.openPath(dataDir) },
           { type: "separator" },
           { role: "quit" },
@@ -304,6 +311,153 @@ function buildMenu(origin, dataDir) {
 }
 
 /** Says what went wrong in plain words, then quits — never a blank window. */
+/**
+ * File → Back up…: one file holding the whole database, locked with a passphrase if the person
+ * chooses one (desktop/backup.mjs). Meant to be kept somewhere other than this computer.
+ */
+async function backUp() {
+  const passphrase = await askPassphrase("backup");
+  if (passphrase === null) return;
+  const day = new Date().toLocaleDateString("en-CA");
+  const { canceled, filePath } = await dialog.showSaveDialog(win ?? undefined, {
+    title: "Back up DotAmi",
+    defaultPath: path.join(app.getPath("documents"), `DotAmi backup ${day}.${BACKUP_EXTENSION}`),
+    filters: [{ name: "DotAmi backup", extensions: [BACKUP_EXTENSION] }],
+  });
+  if (canceled || !filePath) return;
+  try {
+    const { encrypted } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
+    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"})\n`);
+    await dialog.showMessageBox(win ?? undefined, {
+      type: "info",
+      title: "Backed up",
+      message: `Backed up to ${filePath}`,
+      detail:
+        (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
+        "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
+    });
+  } catch (error) {
+    log?.write(`[backup] failed: ${error}\n`);
+    await dialog.showMessageBox(win ?? undefined, { type: "error", title: "Backup failed", message: "DotAmi couldn't write the backup.", detail: String(error?.message ?? error) });
+  }
+}
+
+/**
+ * File → Restore from a backup…: everything is checked on a temporary copy first — the
+ * passphrase, that the file is whole, that a newer DotAmi didn't make it — and only then, after
+ * the person confirms, the current data is copied to backups/ and replaced. The app restarts so
+ * the database opens fresh (and an older backup is upgraded by desktop/migrate.mjs).
+ */
+async function restore() {
+  const { canceled, filePaths } = await dialog.showOpenDialog(win ?? undefined, {
+    title: "Restore DotAmi from a backup",
+    properties: ["openFile"],
+    filters: [{ name: "DotAmi backup", extensions: [BACKUP_EXTENSION] }],
+  });
+  if (canceled || filePaths.length === 0) return;
+  const staging = path.join(dataDir, "restore-staging.db");
+  let passphrase = "";
+  let header;
+  for (;;) {
+    try {
+      ({ header } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
+      break;
+    } catch (error) {
+      if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
+        const message = error.kind === "cannot-decrypt" ? "That passphrase didn't open it. Try again — or the file may be damaged." : "";
+        const again = await askPassphrase("restore", message);
+        if (again === null) return;
+        passphrase = again;
+        continue;
+      }
+      log?.write(`[restore] refused: ${error}\n`);
+      await dialog.showMessageBox(win ?? undefined, {
+        type: "error",
+        title: "Can't restore",
+        message: error instanceof BackupError ? error.message : "DotAmi couldn't read that backup. Nothing was changed.",
+      });
+      return;
+    }
+  }
+
+  const { response } = await dialog.showMessageBox(win ?? undefined, {
+    type: "warning",
+    title: "Restore from a backup",
+    buttons: ["Replace and restart", "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+    message: "This replaces everything in DotAmi on this computer with the backup.",
+    detail: `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.`,
+  });
+  if (response !== 0) {
+    rmSync(staging, { force: true });
+    return;
+  }
+
+  // The server has the database open; stop it and wait, so the file can be replaced.
+  quitting = true;
+  if (server) {
+    const stopped = new Promise((resolve) => server.once("exit", resolve));
+    server.kill();
+    await stopped;
+  }
+  try {
+    const { safetyCopy } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
+    log?.write(`[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}\n`);
+  } catch (error) {
+    // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
+    // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
+    log?.write(`[restore] failed to replace the data: ${error}\n`);
+    dialog.showErrorBox("DotAmi", `The restore didn't finish: ${error?.message ?? error}\n\nYour data was copied to the backups folder first. DotAmi will restart.`);
+  }
+  app.relaunch();
+  app.exit(0);
+}
+
+/**
+ * A small window asking for a backup passphrase. Resolves with the passphrase ("" = none, for a
+ * backup), or null if the person cancels or closes it. The window is a local page that can only
+ * send back the passphrase or "cancel" (desktop/passphrase-preload.cjs); its message is checked
+ * to come from that window before it's believed (Electron security checklist #17).
+ */
+function askPassphrase(mode, message = "") {
+  return new Promise((resolve) => {
+    const prompt = new BrowserWindow({
+      parent: win ?? undefined,
+      modal: Boolean(win),
+      width: 460,
+      height: mode === "backup" ? 360 : 270,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      title: "DotAmi",
+      backgroundColor: "#161619",
+      webPreferences: {
+        preload: path.join(root, "desktop", "passphrase-preload.cjs"),
+        contextIsolation: true,
+        sandbox: true,
+        nodeIntegration: false,
+      },
+    });
+    prompt.setMenu(null);
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      ipcMain.removeListener("dotami-passphrase", onAnswer);
+      if (!prompt.isDestroyed()) prompt.close();
+      resolve(value);
+    };
+    const onAnswer = (event, answer) => {
+      if (event.sender !== prompt.webContents) return;
+      finish(answer?.cancelled ? null : String(answer?.passphrase ?? ""));
+    };
+    ipcMain.on("dotami-passphrase", onAnswer);
+    prompt.on("closed", () => finish(null));
+    void prompt.loadFile(path.join(root, "desktop", "passphrase.html"), { query: { mode, message } });
+  });
+}
+
 function fail(message, error) {
   if (error) console.error(error);
   if (quitting) return;
