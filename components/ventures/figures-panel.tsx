@@ -20,7 +20,7 @@ import { FileDrop } from "./file-drop";
  */
 
 const FIELD =
-  "rounded border border-rule bg-ink px-2 py-1 text-sm text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft";
+  "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
 const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
 
 /** Newest period first; ties broken by the start day so a month sorts above the year around it. */
@@ -94,12 +94,12 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
       </p>
 
       {loadError ? (
-        <p role="alert" className="mt-2 rounded border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
+        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
           {loadError}
         </p>
       ) : null}
       {actionError ? (
-        <p role="alert" className="mt-2 rounded border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
+        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
           {actionError}
         </p>
       ) : null}
@@ -109,7 +109,7 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
       ) : (
         <>
           {proposed.length > 0 ? (
-            <div className="mt-2 flex flex-wrap items-center gap-3 rounded border border-amber/40 bg-amber/5 px-3 py-2">
+            <div className="mt-2 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
               <p className="text-xs text-amber">
                 {proposed.length} {proposed.length === 1 ? "figure" : "figures"} waiting for you to agree
               </p>
@@ -152,7 +152,7 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
                     ) : null}
                   </div>
                   {confirmingId === f.id ? (
-                    <div className="mt-1 flex flex-wrap items-center gap-2 rounded border border-rule-soft bg-ink px-3 py-1.5">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 rounded-sm border border-rule-soft bg-ink px-3 py-1.5">
                       <span className="text-[11px] text-paper-dim">Retract this figure? Cards go back to your estimate.</span>
                       <Pill variant="maple-out" size="small" onClick={() => void retract(f.id)} disabled={retractBusy}>
                         Retract
@@ -286,7 +286,7 @@ function AddFigureForm({
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="rounded border border-rule-soft bg-ink px-3 py-3">
+    <form onSubmit={(e) => void submit(e)} className="rounded-sm border border-rule-soft bg-ink px-3 py-3">
       <div className="flex flex-wrap items-start gap-3">
         <div>
           <label htmlFor={`${uid}-kind`} className={FIELD_LABEL}>

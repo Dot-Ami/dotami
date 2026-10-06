@@ -224,7 +224,7 @@ function StageCard({
     >
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{node.label}</h4>
-        <span className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${chip.className}`}>
+        <span className={`shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${chip.className}`}>
           {chip.label}
         </span>
       </div>
@@ -254,7 +254,7 @@ function LeverCard({ item, onClick }: { item: UnlockItem; onClick: () => void })
       >
         <div className="flex items-center gap-2">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} aria-hidden />
-          <span className="shrink-0 rounded border border-rule px-1 py-0.5 font-mono text-[8px] uppercase tracking-wider text-stone">
+          <span className="shrink-0 rounded-sm border border-rule px-1 py-0.5 font-mono text-[8px] uppercase tracking-wider text-stone">
             {item.typeChip}
           </span>
           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper" title={item.title}>
@@ -320,7 +320,7 @@ function Legend({ coverage }: { coverage: EvaluationResult["provinceCoverage"] }
       <span className="text-stone-dim">Stage chip = where it sits on your path</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-sage" /> applies as answered</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-amber" /> check first — confirm, time-boxed, or one fork away</span>
-      <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-sm bg-rule" /> left bar = what your answers support</span>
+      <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-xs bg-rule" /> left bar = what your answers support</span>
       {coverage === "federal-only" ? <span className="text-amber">federal rules only for this province</span> : null}
       <span className="ml-auto normal-case tracking-normal text-stone-dim">Compass, not GPS — nothing here is a recommendation.</span>
     </footer>

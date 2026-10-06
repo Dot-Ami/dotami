@@ -38,7 +38,7 @@ export function SectionCard({
         {badge ? (
           <span
             className={cn(
-              "rounded px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] border",
+              "rounded-sm px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] border",
               badgeClasses[badge],
             )}
           >

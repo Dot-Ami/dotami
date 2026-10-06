@@ -170,7 +170,7 @@ function VentureCard({
           {venture.activityTags.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {venture.activityTags.map((t) => (
-                <span key={t} className="rounded border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-stone">
+                <span key={t} className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-stone">
                   {t}
                 </span>
               ))}
@@ -183,7 +183,7 @@ function VentureCard({
             <select
               value={venture.stage}
               onChange={(e) => void patch({ stage: e.target.value as VentureStage })}
-              className="rounded border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
             >
               {VENTURE_STAGES.map((s) => (
                 <option key={s} value={s}>
@@ -210,7 +210,7 @@ function VentureCard({
           }}
           rows={3}
           placeholder="Anything about this idea, in your words. Saved when you click away."
-          className="mt-1.5 w-full resize-y rounded border border-rule bg-ink px-3 py-2 text-sm text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft"
+          className="mt-1.5 w-full resize-y rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
         />
         <p className="mt-1 text-right font-mono text-[9px] uppercase tracking-wider text-stone-dim">
           {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved." : saving === "error" ? "Save failed." : `touched ${venture.updatedAt.slice(0, 10)}`}
@@ -246,7 +246,7 @@ function VentureCard({
             <select
               value={linkKind}
               onChange={(e) => setLinkKind(e.target.value as VentureLinkKind)}
-              className="rounded border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
             >
               {VENTURE_LINK_KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -257,7 +257,7 @@ function VentureCard({
             <select
               value={linkTo}
               onChange={(e) => setLinkTo(e.target.value)}
-              className="rounded border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
             >
               <option value="">Choose an idea…</option>
               {others.map((o) => (
@@ -270,7 +270,7 @@ function VentureCard({
               value={linkNote}
               onChange={(e) => setLinkNote(e.target.value)}
               placeholder="why (optional)"
-              className="min-w-[160px] flex-1 rounded border border-rule bg-ink px-2 py-0.5 text-xs text-paper outline-none placeholder:text-stone-dim focus:border-maple-soft"
+              className="min-w-[160px] flex-1 rounded-sm border border-rule bg-ink px-2 py-0.5 text-xs text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
             />
             <Pill variant="ghost" size="small" onClick={() => void addLink()} disabled={!linkTo}>
               + Link
