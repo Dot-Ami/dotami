@@ -15,6 +15,8 @@
     "test:desktop": "node desktop/build.mjs && playwright test -c playwright.desktop.config.ts",
     "desktop": "electron .",
     "desktop:build": "node desktop/build.mjs",
+    "desktop:package": "node desktop/package.mjs",
+    "desktop:installer": "node desktop/package.mjs --installer",
     "prisma:generate": "node scripts/prisma.mjs generate",
     "prisma:migrate": "node scripts/prisma.mjs migrate dev",
     "prisma:deploy": "node scripts/prisma.mjs migrate deploy",
@@ -24,7 +26,7 @@
     "ci:quality": "npm run prisma:generate && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -40,6 +42,8 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.6.1",
     "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "electron-updater": "^6.8.9",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.26",
     "postcss": "^8.5.13",

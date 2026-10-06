@@ -14,12 +14,17 @@ const root = path.resolve(__dirname, "..");
 let dataDir = "";
 let app: ElectronApplication | null = null;
 
+// DOTAMI_DESKTOP_EXE points the test at a packaged app (dist-desktop/out/win-unpacked/DotAmi.exe,
+// from `npm run desktop:package`) instead of running this checkout with Electron.
+const packagedExe = process.env.DOTAMI_DESKTOP_EXE;
+
 async function launch(): Promise<Page> {
   // ANTHROPIC_API_KEY is set here on purpose: the app must not pass a key from the shell it was
   // started from to its server (desktop/main.mjs serverEnv) — the settings page proves it didn't.
+  // DOTAMI_NO_UPDATE_CHECK keeps a packaged app from asking GitHub for updates during the test.
   app = await electron.launch({
-    args: [root],
-    env: { ...process.env, DOTAMI_DATA_DIR: dataDir, ANTHROPIC_API_KEY: "sk-from-the-shell" },
+    ...(packagedExe ? { executablePath: packagedExe, args: [] } : { args: [root] }),
+    env: { ...process.env, DOTAMI_DATA_DIR: dataDir, ANTHROPIC_API_KEY: "sk-from-the-shell", DOTAMI_NO_UPDATE_CHECK: "1" },
   });
   const page = await app.firstWindow();
   await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\//);

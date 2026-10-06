@@ -91,7 +91,13 @@ Dev mode hides production-only failures (a CSP-blocked page looked fine in `next
 weeks) — browser tests run the real build for that reason.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
-after touching `desktop/`, `next.config.mjs` or the database setup. Not in CI yet.
+after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
+the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
+A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
+migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee.
+Releases: tag `v<version>` → `.github/workflows/release.yml` → a DRAFT release the maintainer
+publishes by hand (docs/architecture/desktop-app.md § Releasing an update). Never publish a release
+or push a tag without the maintainer saying so.
 
 ## Where things are decided
 

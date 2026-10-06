@@ -1,6 +1,8 @@
 .next
 # desktop app build (desktop/build.mjs)
 .next-desktop
+# installable desktop app (desktop/package.mjs)
+dist-desktop
 node_modules
 dist
 coverage

@@ -86,7 +86,9 @@ roadmaps of their own. Pick something up.
 
 ## Run it
 
-Requires Node 20+ and `npm`. The database is SQLite — a single file, nothing else to install.
+Requires Node 22.13+ and `npm` (the desktop app's database tests use Node's built-in SQLite; CI
+runs Node 24, the version inside the desktop app). The database is SQLite — a single file,
+nothing else to install.
 
 ```bash
 cp .env.example .env          # the default keeps your data in prisma/dotami.db
@@ -118,16 +120,20 @@ authentication in front of the app.
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
 
-**The desktop app (early — no installer yet):** `npm run desktop:build` then `npm run desktop`
-opens DotAmi in its own window, with its data in the app's own folder (`%APPDATA%\DotAmi` on
-Windows) instead of `prisma/`. How it works: [docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
+**The desktop app (early, Windows first, not yet released):** `npm run desktop:build` then
+`npm run desktop` opens DotAmi in its own window, with its data in the app's own folder
+(`%APPDATA%\DotAmi` on Windows) instead of `prisma/`. `npm run desktop:installer` builds the
+installer (`dist-desktop/out/`); the installed app updates itself from GitHub Releases and asks
+before installing. How it works, and how releases are made:
+[docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
 
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
 CI runs the same chain on every pull request. **Browser tests:** `npm run test:browser` builds
 the app, starts it on a fresh throwaway database and drives it in Chromium the way a person would
 (first time: `npx playwright install chromium`). CI runs them on every pull request too.
 **Desktop test:** `npm run test:desktop` builds the desktop app's server and drives the real app
-(start → describe a venture → close → start again → still there). Not in CI yet.
+(start → describe a venture → close → start again → still there). CI runs it on Windows against
+the packaged app.
 
 ## Contribute
 

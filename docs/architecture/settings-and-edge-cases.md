@@ -43,9 +43,10 @@ Change both together.
 
 ### The desktop app
 
-**SQLite database [7a]** (built) — covered by `tests/db-roundtrip.spec.ts`. Still to test: a
-database file from a *newer* app version opened by an older one (refuse, don't damage it); the
-disk is full mid-write; the file is read-only.
+**SQLite database [7a]** (built) — covered by `tests/db-roundtrip.spec.ts`. A database file from a
+*newer* app version opened by an older one → refused, file unchanged (desktop app; tested in
+`tests/desktop-migrate.spec.ts`, 2026-10-05). Still to test: the disk is full mid-write; the file
+is read-only.
 
 **The Electron app [7b]** (first slice 2026-10-05; status per case — [desktop-app.md](desktop-app.md))
 - The local port is already taken → pick another, never fail to open. *Built: the app asks the system for a free port each launch.*
@@ -64,11 +65,13 @@ disk is full mid-write; the file is read-only.
 - A corrupted or truncated backup file → detected before anything is replaced.
 - Restore over existing data → "this replaces everything on this computer" + keep a safety copy.
 
-**Installers and updates [7d]**
-- An update downloads halfway and the connection drops → resume or retry; the old version still runs.
-- An update fails to install → roll back to the version that worked.
-- An update includes a database change → back up first, then upgrade.
-- No internet at all → the app works fully; it just doesn't update.
+**Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
+- An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); not tested.*
+- An update fails to install → roll back to the version that worked. *Not built or tested.*
+- An update includes a database change → back up first, then upgrade. *Built and tested (`tests/desktop-migrate.spec.ts`): a full copy in `backups/` first; a failing change is undone.*
+- No internet at all → the app works fully; it just doesn't update. *The check failing is logged and ignored; not tested.*
+- A half-finished database change from an earlier run → refused, nothing changed. *Tested.*
+- A draft release (CI's output) → invisible to installed apps until the maintainer publishes it. *GitHub's behaviour; not tested by us.*
 
 **The settings page [7g]** (shell built 2026-10-05; tested in `e2e/app.spec.ts`)
 - A setting whose story isn't built → shown with its default and warning, no control, and the story that brings it. Tested.

@@ -1,8 +1,10 @@
-# The desktop app — how it runs ([7b])
+# The desktop app — how it runs, installs and updates ([7b], [7d])
 
-Status: 2026-10-05, first slice built: runs from a checkout (`npm run desktop`), not yet packaged
-as an installer. Plan of record: [use-cases.md § The desktop app](use-cases.md#the-desktop-app--database-and-shell-go-given-2026-09-29).
-Edge cases: [settings-and-edge-cases.md § The Electron app](settings-and-edge-cases.md#the-desktop-app).
+Status: 2026-10-05. Runs from a checkout (`npm run desktop`), packages into a Windows installer
+(`npm run desktop:installer`), and updates itself from GitHub Releases. Not yet released: the
+first release is the maintainer's call. Plan of record:
+[use-cases.md § The desktop app](use-cases.md#the-desktop-app--database-and-shell-go-given-2026-09-29).
+Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-cases.md#the-desktop-app).
 
 ## What happens when it starts
 
@@ -11,57 +13,110 @@ Edge cases: [settings-and-edge-cases.md § The Electron app](settings-and-edge-c
 1. **Data folder.** The app's own folder (`%APPDATA%\DotAmi` on Windows), or `DOTAMI_DATA_DIR`
    if set. It must be writable, or the app says so and stops.
 2. **One copy per data folder.** A second launch brings the first window forward.
-3. **The database.** `dotami.db` in that folder, created or brought up to date by Prisma's own
-   `prisma migrate deploy`, run with Electron's Node. Output goes to `logs/server.log` in the
-   data folder. `CHECKPOINT_DISABLE=1` is set: without it the Prisma CLI reports to
-   `https://checkpoint.prisma.io` on every run (found in `node_modules/prisma/build/index.js`,
-   2026-10-05; Prisma's environment-variable reference doesn't list it).
-4. **The server.** The self-contained Next.js server built by `desktop/build.mjs`, started as an
-   Electron utility process on a free port bound to `127.0.0.1` — reachable from this computer
-   only. Its environment never carries a model key from the shell that started the app
-   (`ANTHROPIC_API_KEY` is removed): DotAmi ships no key, and the person's model will come from
-   the app's own settings ([9a]).
+3. **The database.** `dotami.db` in that folder, created or brought up to date by
+   `desktop/migrate.mjs` (below). Output goes to `logs/server.log` in the data folder.
+4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
+   free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
+   carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
+   DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
 5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). Electron's defaults stay on and are set
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
    2026-10-05).
-6. **Menu.** File → Open data folder · Quit; Go → Home · Your ideas · Settings; View; Help →
-   About (version, data folder) · Source on GitHub.
+6. **Updates** (installed app only) — see below.
+7. **Menu.** File → Open data folder · Quit; Go → Home · Your ideas · Settings; View; Help →
+   About · Check for updates · Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
 
-## The build (`npm run desktop:build`)
+## The database migrator (`desktop/migrate.mjs`)
 
-`next build` in standalone mode into `.next-desktop/` (its own folder, so it never overwrites
-the `.next` a running dev server uses), then:
+The app applies Prisma's own migration files (`prisma/migrations/*/migration.sql`) with the
+SQLite built into Electron's Node (`node:sqlite`; added in Node 22.5, no flag since 22.13, a
+"release candidate" from 25.7 — [Node docs](https://nodejs.org/api/sqlite.html), read 2026-10-05 —
+so still marked experimental in Electron 44's Node 24.21). It replaces shipping the Prisma CLI,
+which is about 146 MB of engines for five kinds of database and reports usage to
+`checkpoint.prisma.io` on every run.
 
-- copies `public/` and the static assets in (the standalone server doesn't carry them —
-  [Next.js `output`](https://nextjs.org/docs/app/api-reference/config/next-config-js/output));
-- **removes the project's `.env`**, which Next copies next to `server.js`, and a stray `.git`
-  file the tracer swept in;
-- **fails the build** if any git data, env file or database is still inside it.
-- puts back `tsconfig.json` and `next-env.d.ts`, which `next build` rewrites for a new folder.
+- **Same bookkeeping as Prisma.** It writes Prisma's `_prisma_migrations` table exactly as
+  `prisma migrate deploy` does — SHA-256 of the file's bytes, times in milliseconds (read from a
+  database Prisma migrated). `tests/desktop-migrate.spec.ts` uses **Prisma's own `migrate status`
+  as the referee**: a database the app migrated must read "up to date", and a database Prisma
+  migrated must need nothing from the app. (Checked that the referee bites: with the migrator
+  not marking a migration finished, Prisma's check fails the test on its own.)
+- **Refuses, untouched:** a database a newer DotAmi has migrated ("update the app first"), and one
+  where an update was left half-done.
+- **Backs up first:** before changing a database that already has data, a full copy goes to
+  `backups/` in the data folder (`VACUUM INTO`, consistent even if the file is open).
+- **All or nothing per migration:** each runs in a transaction; SQLite undoes schema changes too,
+  so a failure leaves the database exactly as it was and unrecorded.
 
-Why the build script and not `outputFileTracingExcludes`: Next 15.5 joins those globs with the
-OS path separator, so on Windows they never match
-(`node_modules/next/dist/build/collect-build-traces.js:503`).
+## Building and packaging
+
+- `npm run desktop:build` — `next build` in standalone mode into `.next-desktop/` (its own folder,
+  so it never overwrites the `.next` a running dev server uses). It removes the project's `.env`,
+  which Next copies next to `server.js`, and a stray `.git` file the tracer once swept in, then
+  **fails if any git data, env file or database is still inside**. It puts back `tsconfig.json`
+  and `next-env.d.ts`, which `next build` rewrites for a new folder. (Not
+  `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
+  Windows they never match — `collect-build-traces.js:503`.)
+- `npm run desktop:package` — an unpacked app in `dist-desktop/out/win-unpacked/`.
+  `npm run desktop:installer` — the installer, `DotAmi Setup <version>.exe` (about 126 MB), plus
+  `latest.yml`. `desktop/package.mjs` stages only what ships: the main process, the migrator, the
+  migration files, the updater (with its locked dependencies) and the server — then checks the
+  finished app for private files again. The server is copied in after electron-builder assembles
+  the app, because electron-builder's file filters drop `node_modules` from both `files` and
+  `extraResources` (both tried: the first package was 5 MB and couldn't have started).
+- **Installs per user**, no administrator rights (`%LOCALAPPDATA%\Programs\DotAmi`). **Uninstalling
+  leaves the data folder alone** — whether to offer deleting it is an open decision (settings doc,
+  Part 4 §6). Not code-signed: Windows shows "Windows protected your PC" on first install (signing
+  is deferred until app stores, the maintainer's call 2026-09-29).
+
+## Updates
+
+The installed app checks GitHub Releases when it starts (and on Help → Check for updates),
+downloads a newer version, and **asks before installing it** — nothing installs without the
+person's click ("Restart and update"). A copy run from the source code never checks; it updates
+with git. The settings page says which kind of copy it is, and its Privacy group says what the
+check reveals: GitHub sees the computer's internet address and which version it runs.
+
+- **Only published releases count.** CI uploads every build as a **draft**; a draft is invisible to
+  installed apps until the maintainer publishes it.
+- **Pre-releases for work in progress.** A version with a pre-release tag (`0.2.0-dev.1`) published
+  as a GitHub *pre-release* reaches only copies that are themselves on a pre-release version —
+  electron-updater's own `allowPrerelease` default
+  (`node_modules/electron-updater/out/AppUpdater.d.ts`). Normal copies stay on normal releases.
+- **What protects an update.** The download must match the SHA-512 in the release's `latest.yml`
+  (a corrupted or swapped download is refused). Both come from the same release, so the real lock
+  is **who can publish a release on `Dot-Ami/dotami`** — the maintainer's GitHub account (keep
+  two-factor sign-in on). Code signing would add a second, independent check; it's deferred.
+
+### Releasing an update
+
+1. Bump `version` in `package.json` (e.g. `0.1.1`, or `0.2.0-dev.1` for a pre-release) in a PR.
+2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
+3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
+   the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.
+4. Read the draft on GitHub (for a pre-release, tick *Set as a pre-release*), then **Publish**.
+   Installed apps pick it up the next time they start.
 
 ## Tests
 
-`npm run test:desktop` builds the server, then `e2e-desktop/desktop.spec.ts` drives the real app
-on an empty temporary data folder: the database is created on first launch · a venture is
-described and mapped · the settings page shows the app's own data file and says nothing leaves
-the computer (the test starts the app with a model key in its environment, which must not reach
-the server) · an outside link goes to the person's browser, the window stays on DotAmi · close,
-start again, the venture is still there.
+- `npm run test:desktop` builds the server and drives the app from this checkout;
+  `DOTAMI_DESKTOP_EXE=<path to DotAmi.exe>` points the same test at a packaged app. Empty data
+  folder → database created → describe a venture → the settings page shows the app's own data file
+  and "nothing leaves this computer" although the app was started with a model key in its
+  environment → an outside link goes to the browser, the window stays → close → start again → the
+  venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
+  "Desktop app (Windows)").
+- `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
+  refuse / back up / undo cases.
 
 ## Not done yet
 
-- **An installer / double-click.** Packaging (the Prisma CLI and its engine must ship with it,
-  about 40 MB of engines on Windows) and a Windows build in CI.
-- Not tested yet: a second launch while the first runs; a data folder that can't be written;
-  the app killed mid-save; a server that never answers.
-- A backup before a migration changes an existing database ([7d]).
-- The data folder can't be moved from the settings page yet ([7b]'s settings row).
+- An update actually released on GitHub reaching an installed app (needs the first two releases).
+- Not tested: a second launch while the first runs; an unwritable data folder; the app killed
+  mid-save; a server that never answers; the update dialog itself.
+- An app icon (the default Electron icon is used); Mac and Linux builds.

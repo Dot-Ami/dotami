@@ -15,6 +15,11 @@ export interface SettingsToday {
   /** Whether the sentence a person types to describe a venture is sent to a model. */
   intake: { sentTo: "nobody" | "anthropic"; model: string | null };
   version: string;
+  /**
+   * "github": the installed desktop app, which checks GitHub Releases for a newer version at start
+   * (desktop/main.mjs sets DOTAMI_UPDATES). "manual": run from the source code; updates with git.
+   */
+  updates: "github" | "manual";
   /** The tax year the catalogs cover (lib/engines/<engine>/v2026). Becomes a setting with [11i]. */
   taxYear: number;
 }
@@ -46,6 +51,7 @@ export function readSettingsToday(
     dataFile: { path: file, exists: file ? existsSync(file) : false },
     intake: keySet ? { sentTo: "anthropic", model: DEFAULT_INTENT_ANTHROPIC_MODEL } : { sentTo: "nobody", model: null },
     version: pkg.version,
+    updates: env.DOTAMI_UPDATES === "github" ? "github" : "manual",
     taxYear: 2026,
   };
 }

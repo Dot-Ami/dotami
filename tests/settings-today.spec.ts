@@ -49,6 +49,12 @@ describe("readSettingsToday", () => {
     expect(today.dataFile).toEqual({ path: path.join(cwd, "prisma", "does-not-exist.db"), exists: false });
   });
 
+  it("says the copy checks GitHub for updates only when the installed app says so", () => {
+    expect(readSettingsToday({ DOTAMI_UPDATES: "github" }, cwd).updates).toBe("github");
+    expect(readSettingsToday({}, cwd).updates).toBe("manual");
+    expect(readSettingsToday({ DOTAMI_UPDATES: "yes" }, cwd).updates).toBe("manual");
+  });
+
   it("reports the version from package.json", () => {
     expect(readSettingsToday({}, cwd).version).toMatch(/^\d+\.\d+\.\d+/);
   });

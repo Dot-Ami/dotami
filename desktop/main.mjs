@@ -1,11 +1,10 @@
 // The desktop app ([7b]): the same DotAmi, in its own window, with the data on this computer.
 //
 // On launch: pick the data folder (the app's own folder, or DOTAMI_DATA_DIR) → bring the database
-// file up to date with Prisma's own `migrate deploy` → start the self-contained Next.js server
-// (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on it.
-// Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
+// file up to date (desktop/migrate.mjs, Prisma's own migration files) → start the self-contained
+// Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
+// it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { spawn } from "node:child_process";
 import { mkdirSync, accessSync, constants, createWriteStream, existsSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -13,10 +12,15 @@ import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, dialog, Menu, session, shell, utilityProcess } from "electron";
 
+import { migrate, MigrationRefused } from "./migrate.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const serverEntry = path.join(root, ".next-desktop", "standalone", "server.js");
-const prismaCli = path.join(root, "node_modules", "prisma", "build", "index.js");
-const schema = path.join(root, "prisma", "schema.prisma");
+// Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
+// checkout, it's desktop/build.mjs's output.
+const serverEntry = app.isPackaged
+  ? path.join(process.resourcesPath, "server", "server.js")
+  : path.join(root, ".next-desktop", "standalone", "server.js");
+const migrations = path.join(root, "prisma", "migrations");
 
 app.setName("DotAmi");
 // Tests (and anyone who wants their data elsewhere) point the app at another folder. Must be set
@@ -28,6 +32,13 @@ let win = null;
 /** @type {Electron.UtilityProcess | null} */
 let server = null;
 let quitting = false;
+/** @type {import("node:fs").WriteStream | null} */
+let log = null;
+
+// Only the installed app updates itself, from GitHub Releases ([7d]); a copy run from the source
+// code updates with git. Tests switch the check off so they never reach the internet.
+const updatesOn = app.isPackaged && process.env.DOTAMI_NO_UPDATE_CHECK !== "1";
+let updaterReady = false;
 
 // One copy per data folder: a second launch brings the first window forward instead of starting
 // a second server writing to the same file.
@@ -64,17 +75,22 @@ async function start() {
 
   const logDir = path.join(dataDir, "logs");
   mkdirSync(logDir, { recursive: true });
-  const log = createWriteStream(path.join(logDir, "server.log"), { flags: "a" });
+  log = createWriteStream(path.join(logDir, "server.log"), { flags: "a" });
   log.write(`\n--- ${new Date().toISOString()} starting DotAmi ${app.getVersion()}\n`);
 
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
 
-  // A fresh data folder gets its database here; an existing one gets any new migrations.
-  const migrated = await run(prismaCli, ["migrate", "deploy", "--schema", schema], { DATABASE_URL: databaseUrl }, log);
-  log.write(`[desktop] database setup finished with code ${migrated}\n`);
-  if (migrated !== 0) {
-    return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nDetails are in ${path.join(logDir, "server.log")}.`);
+  // A fresh data folder gets its database here; an existing one gets any new migrations, after a
+  // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
+  // untouched.
+  try {
+    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
+    log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
+  } catch (error) {
+    if (error instanceof MigrationRefused) return fail(error.message);
+    log.write(`[desktop] ${error}\n`);
+    return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
 
   const port = await freePort();
@@ -113,6 +129,66 @@ async function start() {
     // load. That isn't a failure; treating it as one closed the app (seen 2026-10-05).
     if (error?.code !== "ERR_ABORTED") throw error;
   });
+  if (updatesOn) void checkForUpdates(false);
+}
+
+/**
+ * Asks GitHub Releases for a newer version and downloads it; installing is always the person's
+ * click ("Restart and update"), never automatic. Only published releases count — a draft the CI
+ * made is invisible until the maintainer publishes it. A copy whose version has a pre-release tag
+ * (e.g. 0.2.0-dev.1) also takes pre-releases; a normal copy doesn't (electron-updater's own
+ * `allowPrerelease` default, node_modules/electron-updater/out/AppUpdater.d.ts). The download is
+ * checked against the SHA-512 in the release's latest.yml before it can be installed.
+ */
+async function checkForUpdates(byHand) {
+  if (!updatesOn) {
+    if (byHand) {
+      void dialog.showMessageBox({
+        type: "info",
+        title: "Updates",
+        message: "This copy runs from DotAmi's source code.",
+        detail: "It updates with git, not by itself. The installed app checks GitHub for new versions.",
+      });
+    }
+    return;
+  }
+  const { autoUpdater } = (await import("electron-updater")).default;
+  if (!updaterReady) {
+    updaterReady = true;
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = false;
+    autoUpdater.logger = {
+      info: (m) => log?.write(`[update] ${m}\n`),
+      warn: (m) => log?.write(`[update] ${m}\n`),
+      error: (m) => log?.write(`[update] ${m}\n`),
+      debug: () => {},
+    };
+    autoUpdater.on("update-downloaded", async (info) => {
+      const { response } = await dialog.showMessageBox(win ?? undefined, {
+        type: "info",
+        title: "Update ready",
+        buttons: ["Restart and update", "Later"],
+        defaultId: 0,
+        cancelId: 1,
+        message: `DotAmi ${info.version} is ready to install.`,
+        detail: "Your data stays in its folder, and the app copies it to backups/ before any change to how it's stored.",
+      });
+      if (response === 0) autoUpdater.quitAndInstall();
+    });
+  }
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    if (byHand && !result?.isUpdateAvailable) {
+      void dialog.showMessageBox({ type: "info", title: "Updates", message: `You have the latest version (${app.getVersion()}).` });
+    } else if (byHand) {
+      void dialog.showMessageBox({ type: "info", title: "Updates", message: `Downloading DotAmi ${result.updateInfo.version}…`, detail: "You'll be asked before it installs." });
+    }
+  } catch (error) {
+    log?.write(`[update] check failed: ${error}\n`);
+    if (byHand) {
+      void dialog.showMessageBox({ type: "warning", title: "Updates", message: "DotAmi couldn't check for updates right now.", detail: "Check your internet connection and try again from Help → Check for updates." });
+    }
+  }
 }
 
 /**
@@ -121,34 +197,12 @@ async function start() {
  * from the app's settings once the Lens exists ([9a]).
  */
 function serverEnv(own) {
-  const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1" };
+  // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
+  const updates = updatesOn ? "github" : "";
+  const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
   return env;
-}
-
-/**
- * Runs a one-off Node script with Electron's own Node; resolves with its exit code. Output goes
- * to the log. A plain child process, not a utility process: a utility process stays alive after
- * its script finishes (seen 2026-10-05 — the Prisma CLI finished and `exit` never came).
- */
-function run(script, args, extraEnv, log) {
-  return new Promise((resolve) => {
-    const child = spawn(process.execPath, [script, ...args], {
-      cwd: root,
-      windowsHide: true,
-      // CHECKPOINT_DISABLE: without it the Prisma CLI reports to https://checkpoint.prisma.io on
-      // each run (node_modules/prisma/build/index.js, checked 2026-10-05). The app sends nothing.
-      env: { ...process.env, ...extraEnv, ELECTRON_RUN_AS_NODE: "1", CHECKPOINT_DISABLE: "1", PRISMA_HIDE_UPDATE_MESSAGE: "1" },
-    });
-    child.stdout.pipe(log, { end: false });
-    child.stderr.pipe(log, { end: false });
-    child.on("error", (error) => {
-      log.write(`[desktop] ${error}\n`);
-      resolve(null);
-    });
-    child.on("exit", (code) => resolve(code));
-  });
 }
 
 /** A port nothing is using right now, on this computer only. */
@@ -241,6 +295,7 @@ function buildMenu(origin, dataDir) {
                 detail: `Your data: ${dataDir}\n\nInformation, not legal or tax advice — a prep tool for you and your accountant. Open source: github.com/Dot-Ami/dotami`,
               }),
           },
+          { label: "Check for updates…", click: () => void checkForUpdates(true) },
           { label: "Source on GitHub", click: () => void shell.openExternal("https://github.com/Dot-Ami/dotami") },
         ],
       },
