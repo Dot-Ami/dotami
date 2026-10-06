@@ -68,6 +68,10 @@ says where it is going.
   GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.
+- Every request is refused unless its Host is this computer's own name (`middleware.ts` +
+  `lib/http/allowed-host.ts`, the DNS-rebinding guard) — never add a matcher exception or an early
+  return before that check. Every write route reads its body through `readJsonWithLimit`.
+  Before storing anything sensitive, read `docs/architecture/figures-privacy-review.md`.
 - Scope guard: no marketplace, no filing, no regulatory automation. In-app AI is the intake
   parser and the Lens (decided 2026-09-27; `docs/architecture/use-cases.md`), always on a model
   the person chose — DotAmi ships no key. Every powerful Lens action (running commands,

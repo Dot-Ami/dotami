@@ -59,11 +59,13 @@ content and the project itself run alongside everything.
 
 ## 8 — Your figures (confirmed totals, never the records) · roadmap §5 · #46
 
-- ⬜ **[8a] The figures store.**
+- 🔄 **[8a] The figures store.**
   - [ ] A figure: kind, period or date, amount, typed fields, source, proposed / confirmed / retracted
   - [ ] The rules engine reads confirmed figures; a figure beats an estimate
   - [ ] Cards say *"from your records · N rows"*, source one click away
-  - [ ] A privacy review of the store before the first import lands
+  - [x] A privacy review of the store before the first import lands
+    ([figures-privacy-review.md](architecture/figures-privacy-review.md) — found and fixed a DNS
+    rebinding hole: the app now answers only on this computer's own address)
 - ⬜ **[8b] The agree prompt** — figures are confirmed only by the person agreeing; *Agree* or
   *No, I'll do it myself*; nothing can skip it.
 - ⬜ **[8c] Drop a file: Excel and CSV.**

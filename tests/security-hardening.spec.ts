@@ -178,7 +178,7 @@ describe("Content-Security-Policy middleware", () => {
   it("sets a per-request nonce policy with strict-dynamic and no unsafe-inline for scripts", async () => {
     const { middleware } = await import("../middleware");
     const { NextRequest } = await import("next/server");
-    const res = middleware(new NextRequest("http://localhost/intake"));
+    const res = middleware(new NextRequest("http://localhost/intake", { headers: { host: "localhost" } }));
     const csp = res.headers.get("content-security-policy") ?? "";
     const script = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src")) ?? "";
     expect(script).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
@@ -194,8 +194,8 @@ describe("Content-Security-Policy middleware", () => {
   it("issues a different nonce on every request", async () => {
     const { middleware } = await import("../middleware");
     const { NextRequest } = await import("next/server");
-    const a = middleware(new NextRequest("http://localhost/")).headers.get("content-security-policy");
-    const b = middleware(new NextRequest("http://localhost/")).headers.get("content-security-policy");
+    const a = middleware(new NextRequest("http://localhost/", { headers: { host: "localhost" } })).headers.get("content-security-policy");
+    const b = middleware(new NextRequest("http://localhost/", { headers: { host: "localhost" } })).headers.get("content-security-policy");
     expect(a).not.toBe(b);
   });
 });

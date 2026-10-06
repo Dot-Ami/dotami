@@ -5,6 +5,8 @@
  * lands, its main path gets a test here; edge cases come from
  * docs/architecture/settings-and-edge-cases.md.
  */
+import http from "node:http";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
@@ -127,6 +129,31 @@ test("the settings page: every group, what's true today, every setting and its w
   await page.goto("/ventures");
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page).toHaveURL(/\/settings$/);
+});
+
+/** A raw GET with headers a browser page could be tricked into sending; resolves with the status. */
+function rawGet(baseURL: string, path: string, headers: Record<string, string>): Promise<number> {
+  const { hostname, port } = new URL(baseURL);
+  return new Promise((resolve, reject) => {
+    const req = http.request({ host: hostname, port, path, method: "GET", headers }, (res) => {
+      res.resume();
+      resolve(res.statusCode ?? 0);
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+test("answers only on this computer's own address (DNS rebinding guard)", async ({ baseURL }) => {
+  const port = new URL(baseURL!).port;
+  // A rebound page sends its own domain as the Host: data routes, pages and prefetches all refuse.
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `evil.example:${port}` })).toBe(421);
+  expect(await rawGet(baseURL!, "/", { Host: `evil.example:${port}` })).toBe(421);
+  expect(await rawGet(baseURL!, "/ventures", { Host: `evil.example:${port}`, "next-router-prefetch": "1" })).toBe(421);
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `evil.example:${port}`, purpose: "prefetch" })).toBe(421);
+  // This computer's own names still work.
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `127.0.0.1:${port}` })).toBe(200);
+  expect(await rawGet(baseURL!, "/api/ventures", { Host: `localhost:${port}` })).toBe(200);
 });
 
 test("the disclaimer footer is on the page and inside the window", async ({ page }) => {

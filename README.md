@@ -113,9 +113,12 @@ by deleting it and running `npm run prisma:deploy` again. It is never committed 
 covers `*.db`). Turn on your operating system's disk encryption (BitLocker, FileVault) — that
 is what protects the file if the computer is lost.
 
-The dev server listens on `127.0.0.1`, so nothing on your network can reach it. If you
-deliberately open it to your LAN (`npm run dev -- -H 0.0.0.0`), know that there is no
-authentication in front of the app.
+The dev server listens on `127.0.0.1`, so nothing on your network can reach it. It also answers
+only to this computer's own names (`localhost`, `127.0.0.1`), which stops a website you visit from
+reaching it through DNS rebinding. If you deliberately open it to your LAN
+(`npm run dev -- -H 0.0.0.0`), list the names you'll use in `DOTAMI_ALLOWED_HOSTS` (e.g.
+`DOTAMI_ALLOWED_HOSTS=192.168.1.5,my-pc`), and know that there is no authentication in front of
+the app.
 
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
