@@ -619,6 +619,280 @@ describe("books that don't hang together are refused, not patched up", () => {
   });
 });
 
+/**
+ * One sale of 100.00 on 2026-03-05 (bank in, sales out), as the builder writes it. The probes below
+ * edit its text; each one asserts its edit changed something, so a probe can't pass by missing.
+ */
+const oneSale = () =>
+  gnucashXml(
+    smallBook({
+      transactions: [
+        {
+          date: "2026-03-05",
+          splits: [
+            { account: "bank", quantity: "10000/100" },
+            { account: "sales", quantity: "-10000/100" },
+          ],
+        },
+      ],
+    }),
+  );
+
+/** Replaces the first `find` with `put`, failing the test if `find` isn't there. */
+function edit(xml: string, find: string, put: string): string {
+  expect(xml, `"${find}" should be in the book`).toContain(find);
+  return xml.replace(find, put);
+}
+
+/** A transaction using every part the schema lists, in each part's place. */
+const fullSale = () => {
+  let xml = oneSale();
+  xml = edit(xml, "</trn:currency>", "</trn:currency>\n<trn:num>1001</trn:num>");
+  xml = edit(xml, "</trn:date-posted>", "<ts:ns>0</ts:ns>\n</trn:date-posted>");
+  xml = edit(
+    xml,
+    "<trn:splits>",
+    `<trn:slots><slot><slot:key>notes</slot:key><slot:value type="frame"><slot><slot:key>a</slot:key><slot:value type="gdate"><gdate>2026-03-05</gdate></slot:value></slot><anything-at-all/></slot:value></slot></trn:slots>\n<trn:splits>`,
+  );
+  return edit(
+    xml,
+    "</trn:split>",
+    `<split:memo>m</split:memo><split:action>a</split:action>` +
+      `<split:reconcile-date><ts:date>2026-03-06 10:59:00 +0000</ts:date><ts:ns>5</ts:ns></split:reconcile-date>` +
+      `<split:lot type="guid">00000000000000000000000000000abc</split:lot>` +
+      `<split:slots><slot><slot:key>k</slot:key><slot:value type="string">v</slot:value></slot></split:slots>\n</trn:split>`,
+  );
+};
+
+describe("a transaction with a part it doesn't know is refused, never read around", () => {
+  const UNKNOWN = "a part DotAmi doesn't know";
+
+  it("refuses a split wrapped in an element it doesn't know, naming the element", () => {
+    // Before this was refused, the wrapped splits were simply not picked up: no lines, no reason.
+    const wrapped = edit(
+      edit(oneSale(), "<trn:splits>", "<trn:splits>\n<trn:future>"),
+      "</trn:splits>",
+      "</trn:future>\n</trn:splits>",
+    );
+    const error = refusalOf(text(wrapped));
+    expect(error).toContain(UNKNOWN);
+    expect(error).toContain('"trn:future"');
+    expect(error).toContain("read nothing");
+  });
+
+  it("refuses an unknown element wherever a transaction or a split could hold one", () => {
+    const places: Array<[string, (xml: string) => string]> = [
+      [
+        "in the transaction",
+        (x) => edit(x, "</gnc:transaction>", "<trn:future/>\n</gnc:transaction>"),
+      ],
+      ["among the splits", (x) => edit(x, "<trn:splits>", "<trn:splits>\n<trn:future/>")],
+      [
+        "in a split",
+        (x) => edit(x, "</trn:split>", "<split:future>x</split:future>\n</trn:split>"),
+      ],
+      [
+        "a split outside the splits",
+        (x) => edit(x, "</trn:splits>", "</trn:splits>\n<trn:split/>"),
+      ],
+      [
+        "inside a text part",
+        (x) => edit(x, "<trn:description>Invented entry", "<trn:description>Invented <b>entry</b>"),
+      ],
+      [
+        "inside a posted date",
+        (x) => edit(x, "</trn:date-posted>", "<ts:future/>\n</trn:date-posted>"),
+      ],
+      [
+        "inside the currency",
+        (x) => edit(x, "</trn:currency>", "<cmdty:future/>\n</trn:currency>"),
+      ],
+      [
+        "another transaction inside it",
+        (x) => edit(x, "</trn:splits>", '</trn:splits>\n<gnc:transaction version="2.0.0"/>'),
+      ],
+    ];
+    for (const [where, change] of places) {
+      expect(refusalOf(text(change(oneSale()))), where).toContain(UNKNOWN);
+    }
+  });
+
+  it("holds a scheduled transaction to the same rule", () => {
+    const xml = gnucashXml(
+      smallBook({
+        templateTransactions: [
+          { date: "2026-02-01", splits: [{ account: "sales", quantity: "-50000/100" }] },
+        ],
+      }),
+    );
+    const wrapped = edit(
+      edit(xml, "<trn:splits>", "<trn:splits>\n<trn:future>"),
+      "</trn:splits>",
+      "</trn:future>\n</trn:splits>",
+    );
+    expect(refusalOf(text(wrapped))).toContain(UNKNOWN);
+  });
+
+  it("refuses a transaction sitting in a place the book never keeps one", () => {
+    const hidden = edit(
+      edit(
+        oneSale(),
+        '<gnc:transaction version="2.0.0">',
+        '<gnc:future>\n<gnc:transaction version="2.0.0">',
+      ),
+      "</gnc:transaction>",
+      "</gnc:transaction>\n</gnc:future>",
+    );
+    expect(refusalOf(text(hidden))).toContain("a transaction in a place DotAmi doesn't expect");
+  });
+
+  it("reads a transaction that uses every part GnuCash's schema lists", () => {
+    const book = bookOf(text(fullSale()));
+    expect(book.lines.map((l) => [l.day, l.amount?.num])).toEqual([
+      ["2026-03-05", 10000n],
+      ["2026-03-05", -10000n],
+    ]);
+  });
+
+  it("does not look inside slots, and reads nothing from inside them as a part of the transaction", () => {
+    // Slots are free-form notes and settings. A posted date or a quantity tucked inside one
+    // (after the real one, where taking the last would let it win) must not replace the real one.
+    const posted = edit(
+      oneSale(),
+      "<trn:splits>",
+      `<trn:slots><slot><slot:key>x</slot:key><slot:value type="frame"><trn:date-posted><ts:date>2026-04-09 10:59:00 +0000</ts:date></trn:date-posted></slot:value></slot></trn:slots>\n<trn:splits>`,
+    );
+    const quantity = edit(
+      posted,
+      "</trn:split>",
+      `<split:slots><slot><slot:key>x</slot:key><slot:value type="frame"><split:quantity>-99900/100</split:quantity></slot:value></slot></split:slots>\n</trn:split>`,
+    );
+    const book = bookOf(text(quantity));
+    expect(book.lines.map((l) => [l.day, l.amount?.num])).toEqual([
+      ["2026-03-05", 10000n],
+      ["2026-03-05", -10000n],
+    ]);
+  });
+
+  it("cuts a long unknown name before showing it", () => {
+    const long = `trn:${"x".repeat(200)}`;
+    const error = refusalOf(text(edit(oneSale(), "<trn:splits>", `<trn:splits>\n<${long}/>`)));
+    expect(error).toContain("…");
+    expect(error).not.toContain(long);
+    expect(error.length).toBeLessThan(400);
+  });
+});
+
+describe("a part that appears twice is refused as damaged, never settled by taking the last", () => {
+  it("refuses a second quantity on a split, whichever one is the real one", () => {
+    // Before this was refused the last quantity won: a second -99900/100 after the real
+    // -10000/100 was read as 99900 cents.
+    const later = edit(
+      oneSale(),
+      "<split:quantity>-10000/100</split:quantity>",
+      "<split:quantity>-10000/100</split:quantity>\n<split:quantity>-99900/100</split:quantity>",
+    );
+    expect(refusalOf(text(later))).toContain("damaged or cut short");
+    const earlier = edit(
+      oneSale(),
+      "<split:quantity>-10000/100</split:quantity>",
+      "<split:quantity>-99900/100</split:quantity>\n<split:quantity>-10000/100</split:quantity>",
+    );
+    expect(refusalOf(text(earlier))).toContain("damaged or cut short");
+  });
+
+  it("refuses a repeat even when both copies say the same thing", () => {
+    const same = edit(
+      oneSale(),
+      "<split:quantity>-10000/100</split:quantity>",
+      "<split:quantity>-10000/100</split:quantity>\n<split:quantity>-10000/100</split:quantity>",
+    );
+    expect(refusalOf(text(same))).toContain("damaged or cut short");
+  });
+
+  it("refuses a second account on a split and a second posted date on a transaction", () => {
+    const account = oneSale().match(/<split:account type="guid">[0-9a-f]+<\/split:account>/)![0];
+    expect(refusalOf(text(edit(oneSale(), account, `${account}\n${account}`)))).toContain(
+      "damaged or cut short",
+    );
+
+    const posted = oneSale().match(/<trn:date-posted>[\s\S]*?<\/trn:date-posted>/)![0];
+    const otherDay = posted.replace("2026-03-05", "2026-04-09");
+    expect(refusalOf(text(edit(oneSale(), posted, `${posted}\n${otherDay}`)))).toContain(
+      "damaged or cut short",
+    );
+  });
+
+  it("refuses a second date inside one posted date", () => {
+    const twice = edit(
+      oneSale(),
+      "</trn:date-posted>",
+      "<ts:date>2026-04-09 10:59:00 +0000</ts:date>\n</trn:date-posted>",
+    );
+    expect(refusalOf(text(twice))).toContain("damaged or cut short");
+  });
+
+  it("refuses a repeat of any part a transaction or a split has, but not a second split", () => {
+    // Every part of the schema, copied once more in place inside the transaction.
+    const parts = [
+      "trn:id",
+      "trn:currency",
+      "trn:num",
+      "trn:date-posted",
+      "trn:date-entered",
+      "trn:description",
+      "trn:slots",
+      "trn:splits",
+      "split:id",
+      "split:memo",
+      "split:action",
+      "split:reconciled-state",
+      "split:reconcile-date",
+      "split:value",
+      "split:quantity",
+      "split:account",
+      "split:lot",
+      "split:slots",
+      "ts:date",
+      "ts:ns",
+      "cmdty:space",
+      "cmdty:id",
+    ];
+    // Reads in full as is — and has more than one split, so repeated splits are shown to be fine.
+    const whole = fullSale();
+    expect(bookOf(text(whole)).lines).toHaveLength(2);
+
+    const open = whole.indexOf("<gnc:transaction");
+    const close = whole.indexOf("</gnc:transaction>");
+    const inside = whole.slice(open, close);
+    for (const part of parts) {
+      const first = inside.match(new RegExp(`<${part}(?:\\s[^>]*)?>[\\s\\S]*?</${part}>`));
+      expect(first, `${part} should be in the transaction`).not.toBeNull();
+      const changed =
+        whole.slice(0, open) +
+        inside.replace(first![0], () => `${first![0]}\n${first![0]}`) +
+        whole.slice(close);
+      expect(refusalOf(text(changed)), part).toContain("damaged or cut short");
+    }
+  });
+
+  it("holds a scheduled transaction to the same rule", () => {
+    const xml = gnucashXml(
+      smallBook({
+        templateTransactions: [
+          { date: "2026-02-01", splits: [{ account: "sales", quantity: "-50000/100" }] },
+        ],
+      }),
+    );
+    const twice = edit(
+      xml,
+      "<split:quantity>-50000/100</split:quantity>",
+      "<split:quantity>-50000/100</split:quantity>\n<split:quantity>-1/100</split:quantity>",
+    );
+    expect(refusalOf(text(twice))).toContain("damaged or cut short");
+  });
+});
+
 describe("refusals never quote the book", () => {
   it("puts no amount and no account name in any refusal message", () => {
     const secretName = "Acme Corp Retainer";
@@ -644,6 +918,8 @@ describe("refusals never quote the book", () => {
         `<act:name>${secretName}</act:name>`,
         `<act:name>${secretName}&nbsp;</act:name>`,
       ),
+      base.replace("<trn:splits>", "<trn:splits>\n<trn:future/>"), // a part it doesn't know
+      base.replace("<split:quantity>", "<split:quantity>1/1</split:quantity><split:quantity>"), // a part twice
     ];
     for (const attempt of attempts) {
       const error = refusalOf(text(attempt));

@@ -11,6 +11,11 @@
  *    and asks for a newer GnuCash, so DotAmi names the feature and does the same;
  *  - a file or element version other than the 2.0.0 every GnuCash 2–5 writes;
  *  - an account type it doesn't know;
+ *  - a part inside a transaction or a split that GnuCash's schema doesn't list there (see
+ *    gnucash-shape.ts), or a transaction in a place the schema doesn't put one — either would
+ *    leave lines out of the totals without a word;
+ *  - a part that may appear once appearing twice (two quantities, two accounts, two posted dates):
+ *    taking the last would quietly pick one of them, so the book is refused as damaged;
  *  - XML outside the subset lib/figures/books/xml.ts reads (document types, custom entities);
  *  - a book cut short, damaged, or unpacking to more than MAX_UNPACKED_BYTES.
  *
@@ -24,6 +29,7 @@ import { Gunzip } from "fflate";
 import { MAX_FILE_BYTES } from "../file/types";
 import { isRealCalendarDay } from "../validate";
 import { parseFraction } from "./amount";
+import { TransactionShape } from "./gnucash-shape";
 import type { AccountSide, BookAccount, BookLine, BookReadResult } from "./types";
 import { walkXml, XmlRefusal, type XmlAttributes, type XmlHandlers } from "./xml";
 
@@ -110,6 +116,12 @@ const NEWER_VERSION =
   "That GnuCash file is a newer file version than DotAmi knows how to read, so DotAmi read nothing.";
 const NO_BOOK =
   "That GnuCash file holds an account list but no book of transactions, so there is nothing to add up.";
+const MISPLACED_TRANSACTION =
+  "That GnuCash book has a transaction in a place DotAmi doesn't expect one, so it can't be sure it found every transaction. DotAmi won't guess, so it read nothing.";
+
+/** A part inside a transaction that DotAmi has no place for; the name is the file's own, cleaned. */
+const unknownPart = (name: string) =>
+  `That book has a transaction with a part DotAmi doesn't know ("${tidyName(name)}"). It may have been saved by a newer GnuCash, or changed by another program. DotAmi won't guess, so it read nothing.`;
 
 /** A refusal with its sentence ready. Thrown inside this file only; the entry point turns it into a result. */
 class Refusal extends Error {
@@ -224,6 +236,8 @@ class Collector implements XmlHandlers {
 
   private transaction: TransactionDraft | null = null;
   private transactionDepth = 0;
+  /** Checks every element inside the open transaction against what the schema allows there. */
+  private shape: TransactionShape | null = null;
   private split: SplitDraft | null = null;
   private splitDepth = 0;
 
@@ -250,6 +264,15 @@ class Collector implements XmlHandlers {
 
     this.path.push(name);
 
+    // Inside a transaction, every element must be one the schema lists at that place, once. The
+    // picking-out below only looks for the few parts it needs, so without this a part it doesn't
+    // know (a split wrapped in a new element, a second quantity) would be skipped or overwritten.
+    if (this.shape !== null) {
+      const problem = this.shape.open(name);
+      if (problem?.kind === "unknown") throw new Refusal(unknownPart(problem.name));
+      if (problem?.kind === "twice") throw new Refusal(DAMAGED);
+    }
+
     if (this.split !== null) {
       if (depth === this.splitDepth + 1) {
         if (name === "split:account") this.startLeaf("split-account", depth);
@@ -260,7 +283,12 @@ class Collector implements XmlHandlers {
         this.split = { account: null, quantity: null };
         this.splitDepth = depth;
         this.transaction.splits.push(this.split);
-      } else if (name === "ts:date" && parent === "trn:date-posted") {
+      } else if (
+        depth === this.transactionDepth + 2 &&
+        name === "ts:date" &&
+        parent === "trn:date-posted"
+      ) {
+        // Exactly the transaction's own posted date, not one that sits further down inside its slots.
         this.startLeaf("posted-date", depth);
       }
     } else if (this.account !== null) {
@@ -285,6 +313,13 @@ class Collector implements XmlHandlers {
     }
 
     if (depth === 2 && name === "gnc:book") this.books += 1;
+
+    // GnuCash's schema has transactions only in the book and in its template-transactions
+    // (gnucash-v2.rnc, read 2026-10-06; source in gnucash-shape.ts). One that the walk above didn't
+    // take up is somewhere else, and its lines would be left out unseen.
+    if (name === "gnc:transaction" && this.transaction === null) {
+      throw new Refusal(MISPLACED_TRANSACTION);
+    }
   }
 
   text(text: string): void {
@@ -295,6 +330,10 @@ class Collector implements XmlHandlers {
     const depth = this.path.length;
 
     if (this.leaf !== null && depth === this.leafDepth) this.finishLeaf();
+
+    // The transaction's own closing tag ends its shape check (in finishTransaction); anything
+    // inside it just steps back out.
+    if (this.shape !== null && depth > this.transactionDepth) this.shape.close();
 
     if (this.split !== null && depth === this.splitDepth) this.split = null;
     if (this.transaction !== null && depth === this.transactionDepth) this.finishTransaction();
@@ -329,6 +368,7 @@ class Collector implements XmlHandlers {
   private startTransaction(depth: number, scheduled: boolean): void {
     this.transaction = { scheduled, day: null, splits: [] };
     this.transactionDepth = depth;
+    this.shape = new TransactionShape();
   }
 
   /**
@@ -409,6 +449,7 @@ class Collector implements XmlHandlers {
   private finishTransaction(): void {
     const draft = this.transaction!;
     this.transaction = null;
+    this.shape = null;
     for (const split of draft.splits) {
       // A split with no account can't be placed anywhere; the file is damaged.
       if (split.account === null || split.account === "") throw new Refusal(DAMAGED);
