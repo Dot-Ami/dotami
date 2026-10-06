@@ -8,6 +8,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Your figures** ([8a]) — on the ideas page, totals you've agreed to (revenue for now), never
+  your transactions. Where they settle a rule, the map uses them instead of your estimates: the
+  GST/HST card says what your confirmed quarters add up to, and *"From your records"* with the
+  source. Only figures that are exactly a calendar month or quarter are counted; nothing is split,
+  converted or added twice, and the card says what it left out.
+- **The agree prompt** ([8b]) — nothing counts until you agree: figures grouped by where they came
+  from, amounts editable, *Agree* or *No, I'll do it myself*. Closing it confirms nothing, and only
+  DotAmi's own page can confirm — the route importers and agents use can only propose.
+
+### Fixed
+- The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
+- Releases: the workflow creates the draft first, so a release is one draft, not one per file.
+
 ## [0.2.0] — 2026-10-06
 
 The first desktop release: DotAmi in its own window on Windows, with an installer, an update
