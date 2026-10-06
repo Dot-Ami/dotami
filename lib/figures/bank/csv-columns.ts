@@ -12,8 +12,9 @@
  * last in the pickers. Nothing outside the picked columns is ever read into a row, so an account
  * number sitting in another column (or in lines above the column names) never gets into one.
  *
- * Header words below are common English and French ones; no bank's public page lists its CSV
- * columns (docs/connectors/README.md), so none of them is claimed as any bank's own.
+ * Header words below are common English and French ones, not any bank's own. We have no dated
+ * source for the column names a given bank uses in its CSV download, so none of them is claimed
+ * for a bank, and the person always sees the guess and can pick the columns themselves.
  *
  * Runs in the browser and keeps nothing: no logging, no storing, no sending.
  */
