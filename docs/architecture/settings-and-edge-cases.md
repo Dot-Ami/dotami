@@ -92,20 +92,21 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 
 ### Your figures
 
-**The figures store [8a]**
-- A figure for a period that overlaps another source's figure for the same thing → show both, ask which one counts; never add them silently.
-- A retracted figure that a card was using → the card falls back to the estimate and says so.
-- A venture is deleted → its figures go with it (asked first).
-- Fiscal year ≠ calendar year → periods stored as exact dates, never "Q3" alone.
-- A partial year (business started in June) → the card says it's a partial year.
-- Negative figures (a loss) and zero → shown as they are, never dropped.
-- Currencies other than CAD → stored with their currency; not converted silently.
+**The figures store [8a]** (built 2026-10-06; `tests/figures.spec.ts`, `tests/brain-records.spec.ts`, `e2e/app.spec.ts`)
+- A figure for a period that overlaps another source's figure for the same thing → show both, ask which one counts; never add them silently. *Never added: the card names the month and leaves that quarter out "until you choose which one counts" (tested). Choosing = retracting one; there's no dedicated chooser yet.*
+- A retracted figure that a card was using → the card falls back to the estimate and says so. *Falls back (retracted figures never reach the rules engine); the card doesn't yet say a figure was retracted.*
+- A venture is deleted → its figures go with it (asked first). *They go with it (database cascade, tested); there's no delete-a-venture control yet, so nothing to ask.*
+- Fiscal year ≠ calendar year → periods stored as exact dates, never "Q3" alone. *Exact first and last day stored. A figure that isn't one calendar month or quarter isn't counted toward the GST quarters, and the card says why (tested).*
+- A partial year (business started in June) → the card says it's a partial year. *The card says how many of the last four quarters the figures cover, or "at least" when they're already over (tested).*
+- Negative figures (a loss) and zero → shown as they are, never dropped. *Tested.*
+- Currencies other than CAD → stored with their currency; not converted silently. *Stored as given; not counted toward a CAD threshold, and the card says so (tested).*
+- An amount in a URL or a log → never (privacy review rule); the routes read only `venture` from a URL (a source-scan test).
 
-**The agree prompt [8b]**
-- 200 figures at once → grouped, with *agree all* only after the person has seen them.
-- The person closes the prompt → nothing confirmed.
-- An agent tries to confirm through the server or MCP → refused (a test proves it).
-- The person edits a figure before agreeing → the edit is what's stored, with "edited by you".
+**The agree prompt [8b]** (built 2026-10-06)
+- 200 figures at once → grouped, with *agree all* only after the person has seen them. *Grouped by source; above 20, Agree waits until the list is scrolled to the end. Not browser-tested yet.*
+- The person closes the prompt → nothing confirmed. *Tested in the browser (Escape).*
+- An agent tries to confirm through the server or MCP → refused (a test proves it). *The agree route answers only to DotAmi's own page; the propose route refuses a figure carrying a status (unit + browser tests). There's no MCP server yet ([9i]).*
+- The person edits a figure before agreeing → the edit is what's stored, with "edited by you". *Built and tested at the API; the edit in the prompt isn't browser-tested yet.*
 
 **Drop a file: Excel and CSV [8c]**
 - Money written as `$1,234.56`, `1 234,56` (French), `(1,234.56)` for negatives, `1234.5-`.

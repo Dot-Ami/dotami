@@ -84,7 +84,13 @@ describe("desktop backup — round trips", () => {
     const backup = path.join(dir, "plain.dotami-backup");
     const info = writeBackup(makeDb(path.join(dir, "old", "dotami.db")), backup, { appVersion: "1.2.3" });
     expect(info.encrypted).toBe(false);
-    expect(info.migrations).toEqual(["20260928000000_sqlite_init"]);
+    // Every migration the app ships — read from the folder, so a new migration doesn't break this.
+    const shipped = readdirSync(migrations, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && existsSync(path.join(migrations, d.name, "migration.sql")))
+      .map((d) => d.name)
+      .sort();
+    expect(shipped.length).toBeGreaterThan(0);
+    expect(info.migrations).toEqual(shipped);
     expect(info.bytes).toBe(readFileSync(backup).length);
 
     const staging = path.join(dir, "new", "dotami.db.restoring");

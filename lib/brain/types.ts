@@ -61,6 +61,33 @@ export interface UnlockRisk {
   mitigation: string;
 }
 
+/**
+ * [8a] A figure the person confirmed in the agree prompt, as the rules engine reads it. The
+ * figures store's own view (lib/figures/types.ts) carries more; this is all a rule may use.
+ */
+export interface ConfirmedFigure {
+  id: string;
+  /** e.g. "gross-revenue" */
+  kind: string;
+  /** First and last calendar day it covers, inclusive (YYYY-MM-DD). */
+  periodStart: string;
+  periodEnd: string;
+  /** Integer cents; negative for a loss. */
+  amountCents: number;
+  currency: string;
+  /** What the person sees as its source, e.g. "typed by you", "sales-2025.xlsx". */
+  sourceLabel: string;
+  sourceRows: number | null;
+}
+
+/** [8a] What a card leaned on when the person's own figures decided it, instead of an estimate. */
+export interface RecordsBasis {
+  /** One line for the card, e.g. "From your records · 4 figures · 312 rows". */
+  summary: string;
+  figureIds: string[];
+  sources: { label: string; rows: number | null }[];
+}
+
 export interface UnlockItem {
   /** Stable id for React keys — engine entry id, or goal id for goal effects. */
   id: string;
@@ -79,6 +106,8 @@ export interface UnlockItem {
   expires?: string;
   fork?: UnlockFork;
   risk?: UnlockRisk;
+  /** [8a] Present when confirmed figures decided this card (or were read and fell short). */
+  fromRecords?: RecordsBasis;
 }
 
 export type NodeStateColor = "green" | "yellow" | "gray";

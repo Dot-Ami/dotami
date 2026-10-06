@@ -8,21 +8,23 @@ export const complianceRulesV2026 = [
     label: "GST/HST small-supplier threshold",
     ruleType: "gst-threshold",
     description:
-      "Most Canadian businesses need not register for GST/HST until worldwide taxable supplies exceed $30,000 in a single calendar quarter or over four consecutive quarters.",
+      "Most Canadian businesses need not register for GST/HST until worldwide taxable supplies exceed $30,000 in a single calendar quarter or over four consecutive calendar quarters. Supplies of financial services, sales of capital property and goodwill from selling a business don't count.",
     threshold: "$30,000 rolling four-quarter / single quarter",
     thresholdAmount: 30000,
+    thresholdTest: { singleQuarter: true, consecutiveQuarters: 4 },
     lensAnnotations: {
       tax: "If revenue stays under $30K, small-supplier status may defer GST registration — voluntary registration remains an option for ITCs.",
       legal: "If B2B customers require a GST number, registration may be needed before the threshold.",
     },
     citations: [
       {
-        title: "When to register for GST/HST",
+        title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register.html",
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
         lastVerified: LAST_VERIFIED,
-        note: "CRA small-supplier registration rules.",
+        note:
+          "CRA small-supplier registration rules. The page moved: the old address (…/when-register.html) answered 404 on 2026-10-06. Its content was re-read by a model that day (page modified 2026-06-16) and matches this entry, including the exclusions; lastVerified stays the last human read — a human re-check is owed.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],

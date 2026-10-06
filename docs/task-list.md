@@ -59,15 +59,21 @@ content and the project itself run alongside everything.
 
 ## 8 — Your figures (confirmed totals, never the records) · roadmap §5 · #46
 
-- 🔄 **[8a] The figures store.**
-  - [ ] A figure: kind, period or date, amount, typed fields, source, proposed / confirmed / retracted
-  - [ ] The rules engine reads confirmed figures; a figure beats an estimate
-  - [ ] Cards say *"from your records · N rows"*, source one click away
+- ✅ **[8a] The figures store.** One kind so far: revenue (gross). Typed in on the ideas page;
+  file drop is [8c], the Lens is [9].
+  - [x] A figure: kind, period, amount (integer cents), currency, source, proposed / confirmed / retracted
+  - [x] The rules engine reads confirmed figures; a figure beats an estimate where it settles the
+    rule (the GST/HST card: one quarter over $30,000, or four quarters — counted only from figures
+    that are exactly a calendar month or quarter; nothing split, converted or added twice)
+  - [x] Cards say *"From your records · N figures · N rows"*, the source named, the figures one click away
   - [x] A privacy review of the store before the first import lands
     ([figures-privacy-review.md](architecture/figures-privacy-review.md) — found and fixed a DNS
     rebinding hole: the app now answers only on this computer's own address)
-- ⬜ **[8b] The agree prompt** — figures are confirmed only by the person agreeing; *Agree* or
+- ✅ **[8b] The agree prompt** — figures are confirmed only by the person agreeing; *Agree* or
   *No, I'll do it myself*; nothing can skip it.
+  - [x] The figures grouped by where they came from; amounts editable (stored as "edited by you"); discard one
+  - [x] Close or Escape confirms nothing; more than 20 figures → *Agree* only after scrolling through them
+  - [x] Only DotAmi's own page can confirm: the route agents and importers use can only propose (tested)
 - ⬜ **[8c] Drop a file: Excel and CSV.**
   - [ ] Read in memory, never kept; totals per period + row count + file name are what's stored
   - [ ] Map columns once per source, remembered

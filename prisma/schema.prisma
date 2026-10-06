@@ -119,6 +119,7 @@ model Venture {
   scenarioState    ScenarioState?
   linksFrom        VentureLink[]    @relation("VentureLinkFrom")
   linksTo          VentureLink[]    @relation("VentureLinkTo")
+  figures          Figure[]
 
   @@index([userId])
 }
@@ -148,4 +149,35 @@ model ScenarioState {
   activeBranches  Json
   updatedAt       DateTime @updatedAt
   venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+}
+
+/// [8a] A total about the person's business — confirmed only by the person agreeing to it in the
+/// agree prompt ([8b]). Totals, never transactions; the file it came from is never kept.
+model Figure {
+  id             String    @id @default(cuid())
+  ventureId      String
+  /// lib/figures/types.ts FIGURE_KINDS — "gross-revenue" for now.
+  kind           String
+  /// First and last calendar day the total covers, inclusive; stored as midnight UTC of that day.
+  periodStart    DateTime
+  periodEnd      DateTime
+  /// Integer cents, never floating point; negative allowed (a loss). BigInt: Int tops out at $21M.
+  amountCents    BigInt
+  /// ISO 4217, stored as given — never converted.
+  currency       String    @default("CAD")
+  /// "typed" | "file" | "agent" | "tax-return"
+  sourceKind     String
+  /// What the person sees as the source, e.g. "typed by you", "sales-2025.xlsx", "the Lens".
+  sourceLabel    String
+  /// How many rows were summed, when it came from a file.
+  sourceRows     Int?
+  /// "proposed" | "confirmed" | "retracted" | "discarded"
+  status         String    @default("proposed")
+  editedByPerson Boolean   @default(false)
+  proposedAt     DateTime  @default(now())
+  confirmedAt    DateTime?
+  retractedAt    DateTime?
+  venture        Venture   @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+
+  @@index([ventureId, status])
 }
