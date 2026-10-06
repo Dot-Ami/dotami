@@ -44,14 +44,18 @@ says where it is going.
   detail; playbook export) · `/ventures` (every saved venture, its stage, notes,
   cross-references) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
-  this copy today).
+  this copy today) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
+  everything else, what sits outside the database and what leaves the computer; read-only, read
+  from the data file on every visit by `lib/privacy/holdings.ts`).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
-  auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState`. SQLite has no list
-  columns: list fields are JSON arrays, read back through `lib/db/json-list.ts`. Catalogs are
-  code, never rows.
+  auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
+  the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
+  through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table and every
+  browser-storage key DotAmi uses is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts`
+  fails until a new one is added there, and `/your-data` is drawn from that list.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 

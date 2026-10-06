@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
@@ -234,7 +235,12 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           ) : null}
           <p className="text-paper-dim">
             DotAmi has no server of its own and collects no usage data. Links to official sources
-            and to GitHub open those sites only when you click them.
+            and to GitHub open those sites only when you click them. Everything DotAmi keeps about
+            you is listed on{" "}
+            <Link href="/your-data" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+              What DotAmi knows about you
+            </Link>
+            .
           </p>
           {today.updates === "github" ? null : (
           <p className="text-paper-dim">

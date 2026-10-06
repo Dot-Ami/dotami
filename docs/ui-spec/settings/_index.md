@@ -36,7 +36,8 @@ Each group:
      Anthropic only when `ANTHROPIC_API_KEY` is set (the intake parser's own test); the installed
      app's update check shows GitHub the computer's internet address and version
      (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source:
-     Next.js telemetry and Prisma's check-in, and how to stop them.
+     Next.js telemetry and Prisma's check-in, and how to stop them. Includes a link, "What DotAmi
+     knows about you", to `/your-data` ([8d], docs/ui-spec/your-data/_index.md).
    - Updates: the version; the installed app checks GitHub at start and asks before installing;
      a copy run from source updates with git.
 2. **One card per setting** — label · what it controls · Default · Choices · the warning shown
@@ -50,6 +51,7 @@ Each group:
 | Jump links | in-page anchors to each group | — |
 | **Copy path** | copies the data file path; says "Copied", or "Copy failed — select it instead" when the clipboard is refused | — |
 | Public task list / Part 4 / nextjs.org links | open in a new tab | — |
+| **What DotAmi knows about you** (Privacy group) | opens `/your-data` in the same tab | — |
 
 ## What it deliberately does not do
 
