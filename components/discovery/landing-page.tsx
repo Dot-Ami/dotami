@@ -90,7 +90,7 @@ export function LandingPage() {
               }}
               placeholder="What are you building — or what do you want to write off? Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
               rows={3}
-              className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-paper outline-none placeholder:text-stone-dim"
+              className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
             />
             <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
               <Pill variant="maple" onClick={handleMapIt} disabled={parsing || text.trim().length === 0}>

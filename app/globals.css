@@ -1,21 +1,104 @@
 /* Fonts are self-hosted through next/font/local (app/layout.tsx, files in app/fonts):
    served from this origin. No request leaves the machine for a font, ever. */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind CSS 4: the theme lives here, not in tailwind.config.ts. `source(none)` plus the three
+   @source lines scan the same folders the v3 config listed under `content`; left to itself v4
+   scans every file under the folder the build was started from (docs, tests, scripts). */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../lib";
 
-:root {
-  color-scheme: dark;
-  background: #161619;
-  color: #efe7d6;
+@theme {
+  --color-ink: #161619;
+  --color-ink2: #131316;
+  --color-ink3: #1c1b1f;
+  --color-ink4: #181620;
+  --color-paper: #efe7d6;
+  --color-paper-dim: #cfc6b3;
+  --color-maple: #b94a2c;
+  --color-maple-soft: #7a2f1c;
+  --color-spruce: #1f3f44;
+  --color-spruce-line: #2f5a60;
+  --color-sage: #6b8e5a;
+  --color-amber: #c8893a;
+  --color-stone: #8c8678;
+  --color-stone-dim: #5a564f;
+  --color-rule: #32303a;
+  --color-rule-soft: #26252c;
+  --color-ember: #f97316;
+
+  /* --font-inter and --font-jetbrains-mono are set on <html> by next/font (app/layout.tsx). */
+  --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-serif: Georgia, Times New Roman, serif;
+  --font-mono: var(--font-jetbrains-mono), JetBrains Mono, ui-monospace, Menlo, monospace;
+
+  /* v3's line heights for text-xs … text-4xl, in rem. v4 writes them as ratios (text-xs is
+     1.333), which children inherit as a ratio of their OWN size: a text-[9px] label inside a
+     text-xs row got 12px instead of 16px, and rows across the map, the ideas page and the file
+     panel came out 1–4px shorter. A length inherits as a length, as it did in v3. */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
 }
 
-body {
-  min-height: 100vh;
-  background: #161619;
+/* Tailwind 4 changed a few browser defaults (tailwindcss.com/docs/upgrade-guide § Default border
+   color, § Preflight changes). These keep DotAmi the way it looked and behaved on Tailwind 3. */
+@layer base {
+  /* v4's default border colour is currentcolor; v3's was gray-200. Anything with `border` and no
+     colour class depends on this. Added by the upgrade tool. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 gives buttons the arrow cursor; v3 gave them the pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* v4's placeholder is the text colour at half strength; v3's was gray-400. Every placeholder
+     today also carries placeholder:text-stone-dim, which still wins over this. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  /* v4 zeroes every element's padding; v3 left table cells the browser's 1px, so the monthly
+     totals table in "Add from a file" (components/ventures/file-drop.tsx) closed up 2px a row.
+     Classes like pr-4 on a cell still win over this. */
+  th,
+  td {
+    padding: 1px;
+  }
 }
 
-* {
-  box-sizing: border-box;
+/* These sat after Tailwind's output in v3, unlayered. In v4 everything Tailwind makes is in a
+   cascade layer, and an unlayered rule beats every layered one — so left unlayered, `body` here
+   would override any utility class put on <body>. In the base layer they still beat Tailwind's
+   reset (as in v3) and lose to utilities (as in v3). */
+@layer base {
+  :root {
+    color-scheme: dark;
+    background: #161619;
+    color: #efe7d6;
+  }
+
+  body {
+    min-height: 100vh;
+    background: #161619;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
 }

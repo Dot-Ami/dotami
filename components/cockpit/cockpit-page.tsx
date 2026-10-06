@@ -280,7 +280,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 aria-label="Structure"
                 value={structureAssumed ? "" : scenario.profile.structure}
                 onChange={(e) => handleStructureChange(e.target.value as "" | VentureStructure)}
-                className="rounded border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
+                className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
               >
                 <option value="">Not set</option>
                 <option value="sole-prop">Sole prop</option>
