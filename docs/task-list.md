@@ -82,18 +82,42 @@ content and the project itself run alongside everything.
     row count + the file name are what's stored (as proposed figures — the agree prompt decides)
   - [x] Map the date and amount columns (guessed only when the column names make it clear); the
     edge cases in [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md#your-figures)
-  - [ ] [8c-2] Remember the column choice per source, and recognise the same file by fingerprint
-  - [ ] [8c-3] Invented test files shaped like each package's documented export (QuickBooks, Xero,
-    Wave, FreshBooks, Sage) — never a real export
-- ⬜ **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
+  - [ ] [8c-2] and [8c-3] below
+
+All of [8c-2] to [8h] were researched on 2026-10-06; the design, the shared data model and every open
+decision are in [architecture/figures-roadmap.md](architecture/figures-roadmap.md). Each story's first
+slice needs no decision; the rest waits on the maintainer's answers.
+
+- 🔄 **[8c-2] Remember a file's columns, and recognise the same file dropped twice.**
+  - [x] First slice, in review (#81): the file's fingerprint and column-name matching, worked out in
+    the window; nothing stored
+  - [ ] Keeping the column choice and the fingerprint (needs a table — waits on decisions)
+- 🔄 **[8c-3] Practice files shaped like each accounting program's export** — never a real export.
+  - [x] Xero and QuickBooks Online, in review (#84), with today's known gaps pinned as "fails today" tests
+  - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
+- 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
-- ⬜ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
-- ⬜ **[8f] Tax software, through the CRA's line numbers.**
+  - [x] First slice, in review: the read-only page, a test that fails when something DotAmi keeps
+    isn't listed on it, and logs that hold events only
+  - [ ] *Forget this source*, *delete everything* (wait on decisions)
+- 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
+  - [x] First slice, in review (#85): every figure's age; a figure dated after today is flagged and
+    never counted (it could make the GST/HST card say "over $30,000"); dates in the person's own day
+  - [ ] Reminders (wait on decisions)
+- 🔄 **[8f] Tax software, through the CRA's line numbers.** Researched; waits on the decision of who
+  reads the return first (plain code or the Lens).
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
-- ⬜ **[8g] Bank and card records** — opt-in, behind a warning.
-- ⬜ **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
+- 🔄 **[8g] Bank and card records** — opt-in, behind a warning.
+  - [x] First slice, in review (#82): ticked bank rows to complete-month totals; a row has no field for
+    an account or card number
+  - [ ] The warning, the screen, OFX files (wait on decisions). Until then "Add from a file" doesn't
+    ask whether a file is a bank download.
+- 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
+  - [x] First slice, in review (#83): GnuCash XML read in the window, revenue accounts to monthly
+    totals; refuses what it doesn't fully understand
+  - [ ] Proposing figures, the other formats (wait on decisions)
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -185,9 +209,9 @@ content and the project itself run alongside everything.
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
   - [ ] Newer advisories (checked 2026-10-06): `source-map-js` 1.2.1 (build-time; a patch — Dependabot
-    #71) · `sharp` 0.35.4's SVG reader (ships with Next.js's image tools, which DotAmi doesn't feed
-    SVGs — Dependabot #73) · `postcss-selector-parser` 6.1.4 (build-time, under Tailwind 3 — the
-    upgrade below) · `sprintf-js` (build-time, under the installer builder; no fix published)
+    #71) · `sprintf-js` (build-time, under the installer builder; no fix published)
+  - [x] `sharp` 0.35.5 — its SVG reader's advisory (#73) · `postcss-selector-parser` — gone with
+    Tailwind 4 (#80)
   - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces` stack-exhaustion). **No fixed
     version exists yet** — it covers every `braces` release up to 3.0.3, the newest (checked
     2026-10-06). Since Tailwind 4 it reaches DotAmi only through Next's ESLint plugin
