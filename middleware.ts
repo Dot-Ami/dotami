@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { allowedHostsFromEnv, isAllowedHost } from "@/lib/http/allowed-host";
+
 /**
  * Content-Security-Policy with a per-request nonce (2026-09-20 hardening).
  *
@@ -15,10 +17,25 @@ import { NextResponse, type NextRequest } from "next/server";
  * header here does NOT make that happen on its own: a page with nothing request-specific is
  * pre-rendered at build time and its scripts get no nonce. `app/layout.tsx` forces per-request
  * rendering (`await connection()`); without it the landing and intake pages were dead in
- * production builds. Right for a self-hosted, single-user app. API routes and Next's static
- * assets are excluded by the matcher; they get the fixed headers from next.config.mjs instead.
+ * production builds. Right for a self-hosted, single-user app. API routes pass through after the
+ * host check without a CSP and keep the fixed headers from next.config.mjs; Next's static assets
+ * skip the middleware entirely (matcher below).
  */
 export function middleware(request: NextRequest) {
+  // First, on every request — pages, API routes, prefetches: answer only on this computer's own
+  // address (DNS rebinding guard, lib/http/allowed-host.ts).
+  if (!isAllowedHost(request.headers.get("host"), allowedHostsFromEnv(process.env.DOTAMI_ALLOWED_HOSTS))) {
+    return new NextResponse("DotAmi only answers on this computer's own address.", {
+      status: 421,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  // API routes keep next.config's fixed headers, and Next's link prefetches get no CSP of their
+  // own (they used to skip the middleware entirely; a header a page can set is no reason to skip
+  // the host check above, so they now pass through here instead).
+  const prefetch = request.headers.has("next-router-prefetch") || request.headers.get("purpose") === "prefetch";
+  if (request.nextUrl.pathname.startsWith("/api/") || prefetch) return NextResponse.next();
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   // Next's dev server evaluates source maps and HMR payloads; production never needs eval.
   const dev = process.env.NODE_ENV === "development";
@@ -46,14 +63,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    {
-      // Pages only: API routes, Next's static/image assets and the favicon keep next.config's headers.
-      source: "/((?!api|_next/static|_next/image|favicon.ico).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-  ],
+  // Everything except Next's own static and image assets and the favicon (public build files,
+  // no data): the host check must see every page, API route and prefetch.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
