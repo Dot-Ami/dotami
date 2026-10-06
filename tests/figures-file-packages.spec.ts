@@ -209,6 +209,25 @@ describe("Xero", () => {
     // A month where every line sold one item is the one place the two agree.
     expect(summed["2026-09"]).toBe(invoiced["2026-09"]);
   });
+
+  it("the true totals written beside the wrong-today figures in the fixture match the line data", () => {
+    // French file: July sold 1 x 1100,00 and 2 x 80,50; August sold one item at 250,00.
+    expect(xero.invoicedCents(xero.FRANCE_LINES)).toMatchObject({
+      "2026-07": 126100,
+      "2026-08": 25000,
+    });
+    // Read month-first, 02/07/2026 is 7 February: put each line in the month its day number names.
+    const readMonthFirst = xero.AMBIGUOUS_LINES.map((l) => {
+      const [year, month, day] = l.date.split("-");
+      return { ...l, date: `${year}-${day}-${month}` };
+    });
+    expect(xero.invoicedCents(readMonthFirst)).toMatchObject({
+      "2026-02": 32500,
+      "2026-03": 12000,
+      "2026-05": 7500,
+      "2026-09": 5000,
+    });
+  });
 });
 
 /*
@@ -241,6 +260,8 @@ describe("known gaps (fail today, by design)", () => {
 
   // Open decision: should group names and "Total for" rows stop counting against a date column?
   // With one line per customer they outnumber the dates, so the Date column is left unguessed.
+  // This depends on an ASSUMED layout (names and "Total for" rows in the Date column; no listed
+  // source documents it), so it is a gap in the practice file, not yet proven in a real export.
   it.fails("QuickBooks: pre-fills Date when each customer has only one line", async () => {
     const file = find("quickbooks-grouped-sparse");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);

@@ -43,9 +43,15 @@ These are cases where today's code gets it wrong. Each is written as a test that
 while the gap exists** (`it.fails`), so the day someone fixes one, the test errors and says so. None
 is fixed here; each waits for a decision.
 
-| Gap                                                                 | What happens today                                                           | Open decision                                                             |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Xero's `UnitAmount` is pre-filled as the amount                     | it is the price of one item, so July's column adds to less than was invoiced | stop pre-filling price-per-item columns?                                  |
-| Xero's `InvoiceDate` isn't pre-filled                               | it sits beside `DueDate` and neither name is recognised                      | prefer the invoice date over the due date?                                |
-| QuickBooks' `Date` isn't pre-filled when each customer has one line | the customer-name and "Total for" rows outnumber the dates                   | ignore group and total rows when judging the date column?                 |
-| QuickBooks' Transaction List counts an invoice and its payment      | the same sale is added twice                                                 | pick a "type" column and skip payments, warn, or only add a line of help? |
+| Gap                                                                 | What happens today                                                                           | Open decision                                                             |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Xero's `UnitAmount` is pre-filled as the amount                     | it is the price of one item, so July's column adds to less than was invoiced                 | stop pre-filling price-per-item columns?                                  |
+| Xero's `InvoiceDate` isn't pre-filled                               | it sits beside `DueDate` and neither name is recognised                                      | prefer the invoice date over the due date?                                |
+| QuickBooks' `Date` isn't pre-filled when each customer has one line | the customer-name and "Total for" rows outnumber the dates, on an assumed layout (see below) | ignore group and total rows when judging the date column?                 |
+| QuickBooks' Transaction List counts an invoice and its payment      | the same sale is added twice                                                                 | pick a "type" column and skip payments, warn, or only add a line of help? |
+
+**The QuickBooks "one line per customer" gap rests on a guess about the layout.** It only happens if
+a real Sales by Customer Detail export writes the customer names and the "Total for" rows in the same
+column as `Date`. That layout is assumed: none of the help pages listed in
+[the QuickBooks fixture](../../tests/fixtures/packages/quickbooks-online.ts) says where those cells
+go. Until a real export's layout has been checked, read this gap as possible, not confirmed.

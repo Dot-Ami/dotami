@@ -9,8 +9,9 @@
  * What the pages say, as read on 2026-10-06 (the 8c-3 design pass; see docs/connectors/practice-files.md):
  *  - Excel is reached through Reports > Export to Excel; the pages do not describe the file's
  *    layout, so the layout below is shaped from the report pages, not from a file anyone here saw;
- *  - a report has a header (company name, report title, report period) and a footer (date and
- *    time prepared, report basis);
+ *  - a report has a header (company name, report title, report period); its date and time
+ *    prepared and report basis are footer OPTIONS a person can switch off. Whether an Excel
+ *    export keeps a footer, and in what words, is assumed (see FOOTER);
  *  - "Sales by Customer Detail" lists invoice lines grouped by customer, with a Description column;
  *  - a grouped report carries "Total for <name>" rows and a grand total, while a "list" report
  *    (Transaction List by Date) shows amounts and no totals rows;
@@ -51,7 +52,7 @@ export const sources: VendorSource[] = [
   {
     url: CUSTOMIZE_PAGE,
     read: READ,
-    says: "a report's header (company name, title, period) and footer (date and time prepared, basis)",
+    says: "a report's header (company name, title, period); date and time prepared and basis are footer options a person can switch off",
   },
   {
     url: LIST_VS_TOTALED_PAGE,
@@ -80,8 +81,12 @@ const assumed = (header: string): ColumnNote => ({
 
 /**
  * The grouped report's columns. The titles are Intuit's Transaction List titles reused (assumed to
- * be the same on this report), plus four we added. Date sits in column A, which is why a
- * customer's name or a "Total for" row, written alone in column A, sits in the date column too.
+ * be the same on this report), plus four we added.
+ *
+ * ASSUMED LAYOUT, and the "sparse" gap depends on it: that the customer names and the "Total for"
+ * rows are written in the SAME column as Date (column A), so they sit in the date column too. No
+ * source listed here documents where those cells go. If a real export puts them elsewhere, the
+ * sparse gap may not exist at all.
  */
 const GROUPED_COLUMNS: ColumnNote[] = [
   assumed("Date"), // 0
@@ -113,7 +118,12 @@ const LIST_COLUMNS: ColumnNote[] = [
 const LIST_AMOUNT = 9;
 
 const COMPANY = "Invented Shop Ltd.";
-/** Every Excel export of a report ends with when it was made; 2026-10-06 is a Tuesday. */
+/**
+ * ASSUMED footer. The customize page says only that date and time prepared (and the basis) are
+ * footer OPTIONS a person can switch on or off; no page read says an Excel export keeps a footer,
+ * or in what words. It is here so the files exercise a text row after the totals.
+ * 2026-10-06 is a Tuesday.
+ */
 const FOOTER = "Accrual basis Tuesday, October 6, 2026 10:15 AM";
 
 interface SaleLine {
@@ -331,8 +341,10 @@ export const files: PracticeFile[] = [
     bytes: () => makeXlsx([{ name: "Sales by Customer Detail", rows: groupedSheet(SPARSE) }]),
     columns: GROUPED_COLUMNS,
     expected: {
-      // WRONG TODAY: 3 dates against 8 other cells in column A is under half, so the date column is
-      // left empty and the person picks "Date". See the fails-today test "QuickBooks sparse".
+      // WRONG TODAY, on the ASSUMED layout (names and "Total for" rows in column A, see
+      // GROUPED_COLUMNS): 3 dates against 8 other cells in column A is under half, so the date
+      // column is left empty and the person picks "Date". See the fails-today test "QuickBooks:
+      // pre-fills Date when each customer has only one line".
       guess: { headerRow: 4, dateColumn: null, amountColumn: GROUPED_AMOUNT },
       picks: { dateColumn: 0 },
       dateOrder: { order: null, ambiguous: false, conflicting: false },

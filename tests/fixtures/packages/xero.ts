@@ -14,9 +14,10 @@
  *  - dates are DD/MM/YYYY on the global page and MM/DD/YYYY on the US page;
  *  - France and Germany write comma decimals (1100,00 / 1.000,00).
  * What the pages do NOT say, and so is assumed below: the order of the columns, a Description and
- * a Quantity column (the field list as read does not name them), the line breaks, and how a
- * comma-decimal export is quoted. There is no line-total column among the documented fields, which
- * is the point of the "UnitAmount" gap: a price per item is not what was sold.
+ * a Quantity column (the field list as read does not name them), the line breaks, what a real
+ * export writes in a cell that has nothing (EmailAddress and the like are left empty here), and
+ * how a comma-decimal export is quoted. There is no line-total column among the documented
+ * fields, which is the point of the "UnitAmount" gap: a price per item is not what was sold.
  */
 import { windows1252, utf8 } from "../../helpers/encode";
 import { csv } from "./csv";
@@ -187,7 +188,7 @@ function exportText(
 ): string {
   const rows = lines.map((l) => [
     l.contact,
-    "", // EmailAddress: left empty, as Xero does for a client with none on file
+    "", // EmailAddress: left empty here. ASSUMED: no page read says what a real export writes for it
     l.number,
     written(l.date, order),
     written(l.due, order),
@@ -204,9 +205,18 @@ function exportText(
   return csv([COLUMNS.map((c) => c.header), ...rows]);
 }
 
-const SALES_MONTHS_DAY_FIRST = [
+/**
+ * What DotAmi adds up today for MAIN_LINES and AMBIGUOUS_LINES read day-first: the UnitAmount
+ * column (a price per item) summed by month, because that column is the pre-filled amount. Where
+ * a line sold more than one item the sum falls short of what was invoiced, and the entry says so.
+ */
+const UNIT_AMOUNT_SUMS_DAY_FIRST = [
+  // WRONG TODAY: 100.00 + 50.00 = 150.00 is a sum of prices per item. Invoiced: 3 x 100.00 + 50.00
+  // = 350.00 (35000 cents). See the fails-today test "Xero: does not pre-fill UnitAmount".
   { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 15000, rows: 2 },
+  // WRONG TODAY: 40.00 + 60.00 = 100.00. Invoiced: 3 x 40.00 + 60.00 = 180.00 (18000 cents).
   { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 10000, rows: 2 },
+  // Right only because the one line sold one item: 75.00 is both the price per item and the total.
   { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 7500, rows: 1 },
 ];
 
@@ -214,8 +224,12 @@ const SALES_MONTHS_DAY_FIRST = [
  * The guess today for any Xero export, and what is wrong with it:
  *  - dateColumn is null: InvoiceDate and DueDate both read as mostly dates, and neither header
  *    matches the "date" word test (no word boundary inside "InvoiceDate"), so nothing is pre-filled.
+ *    WRONG TODAY: the date column should be InvoiceDate (column 3), the day the invoice was made
+ *    out; the open decision is whether it beats DueDate. See the fails-today test
+ *    "Xero: pre-fills InvoiceDate as the date column".
  *  - amountColumn is UnitAmount: it matches "amount" but is a price per item, so summing it
- *    leaves out the quantity. See the fails-today test "Xero UnitAmount".
+ *    leaves out the quantity. WRONG TODAY: no documented column holds a line total, so the true
+ *    guess is none. See the fails-today test "Xero: does not pre-fill UnitAmount".
  */
 const TODAYS_GUESS = { headerRow: 0, dateColumn: null, amountColumn: UNIT_AMOUNT };
 
@@ -231,7 +245,7 @@ export const files: PracticeFile[] = [
       picks: { dateColumn: INVOICE_DATE },
       dateOrder: { order: "dmy", ambiguous: false, conflicting: false },
       decimalStyle: "point",
-      months: SALES_MONTHS_DAY_FIRST,
+      months: UNIT_AMOUNT_SUMS_DAY_FIRST,
       // Row 7 is 2 October, a month that has not ended on 2026-10-06.
       skipped: [{ row: 7, reason: "not-over" }],
     },
@@ -248,7 +262,7 @@ export const files: PracticeFile[] = [
       // 07/15/2026 can only be month-first.
       dateOrder: { order: "mdy", ambiguous: false, conflicting: false },
       decimalStyle: "point",
-      months: SALES_MONTHS_DAY_FIRST,
+      months: UNIT_AMOUNT_SUMS_DAY_FIRST,
       skipped: [{ row: 7, reason: "not-over" }],
     },
   },
@@ -265,7 +279,7 @@ export const files: PracticeFile[] = [
       // The file was written day-first, so that is the true answer.
       answer: "dmy",
       decimalStyle: "point",
-      months: SALES_MONTHS_DAY_FIRST,
+      months: UNIT_AMOUNT_SUMS_DAY_FIRST,
       skipped: [{ row: 7, reason: "not-over" }],
     },
   },
@@ -282,8 +296,11 @@ export const files: PracticeFile[] = [
       dateOrder: { order: "dmy", ambiguous: false, conflicting: false },
       decimalStyle: "comma",
       months: [
-        // 1100,00 + 80,50 (a price per item: the second line sold two of them).
+        // WRONG TODAY: 1100,00 + 80,50 = 1180,50 sums prices per item, and the second line sold two
+        // of them. Invoiced: 1 x 1100,00 + 2 x 80,50 = 1261,00 (126100 cents). See the fails-today
+        // test "Xero: does not pre-fill UnitAmount".
         { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 118050, rows: 2 },
+        // Right only because the one line sold one item.
         { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 25000, rows: 1 },
       ],
       // Row 5 is 3 October, a month that has not ended.
@@ -295,13 +312,18 @@ export const files: PracticeFile[] = [
 /**
  * The ambiguous file read the other way round. Month-first, 02/07/2026 is 7 February, so the same
  * rows land in other months, and one (11/08/2026, read as 8 November) is a month not over yet.
- * Asking is what keeps a month filed under the right name.
+ * Asking is what keeps a month filed under the right name. The amounts are the UnitAmount sums
+ * again, so they carry the same WRONG TODAY gap as UNIT_AMOUNT_SUMS_DAY_FIRST.
  */
 export const AMBIGUOUS_READ_MONTH_FIRST = {
   answer: "mdy" as const,
   months: [
+    // WRONG TODAY: 100.00 + 25.00 = 125.00 sums prices per item. Invoiced on these two lines:
+    // 3 x 100.00 + 25.00 = 325.00 (32500 cents).
     { periodStart: "2026-02-01", periodEnd: "2026-02-28", amountCents: 12500, rows: 2 },
+    // WRONG TODAY: 40.00 is a price per item. Invoiced: 3 x 40.00 = 120.00 (12000 cents).
     { periodStart: "2026-03-01", periodEnd: "2026-03-31", amountCents: 4000, rows: 1 },
+    // These two are right only because each line sold one item.
     { periodStart: "2026-05-01", periodEnd: "2026-05-31", amountCents: 7500, rows: 1 },
     { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 5000, rows: 1 },
   ],
