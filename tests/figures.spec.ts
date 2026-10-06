@@ -165,6 +165,21 @@ describe("validateFigureInput", () => {
     expect(validateFigureInput(null, TODAY).ok).toBe(false);
     expect(validateFigureInput("1000", TODAY).ok).toBe(false);
   });
+
+  it("keeps a figure's own row count when one is given ([8c]: one month of a file)", () => {
+    expect(validateFigureInput({ ...good, rows: 14 }, TODAY)).toEqual({ ok: true, value: { ...good, currency: "CAD", rows: 14 } });
+    expect(validateFigureInput({ ...good, rows: null }, TODAY)).toEqual({ ok: true, value: { ...good, currency: "CAD" } });
+  });
+
+  it.each([
+    ["a negative row count", -1],
+    ["a fractional row count", 2.5],
+    ["a row count as text", "14"],
+  ])("refuses %s on a figure", (_name, rows) => {
+    const result = validateFigureInput({ ...good, rows }, TODAY);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/row count/);
+  });
 });
 
 describe("validateFigureSource", () => {
@@ -233,6 +248,15 @@ describe("POST /api/figures/propose", () => {
     expect(created.map((f) => f.amountCents).sort((a, b) => a - b)).toEqual([-2500, 1_000_000]);
     expect(created[0].periodStart).toBe("2025-01-01");
     expect(created[0].periodEnd).toBe("2025-12-31");
+  });
+
+  it("stores each figure's own row count over the batch's ([8c] monthly totals from a file)", async () => {
+    const march = { ...good, periodStart: "2025-03-01", periodEnd: "2025-03-31", rows: 9 };
+    const april = { ...good, periodStart: "2025-04-01", periodEnd: "2025-04-30" };
+    const created = await propose([march, april]);
+    const rowsByStart = Object.fromEntries(created.map((f) => [f.periodStart, f.sourceRows]));
+    // March carries its own 9; April has none of its own, so the source's 12 applies.
+    expect(rowsByStart).toEqual({ "2025-03-01": 9, "2025-04-01": 12 });
   });
 
   it.each([

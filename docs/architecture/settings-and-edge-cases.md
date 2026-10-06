@@ -108,15 +108,16 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 - An agent tries to confirm through the server or MCP → refused (a test proves it). *The agree route answers only to DotAmi's own page; the propose route refuses a figure carrying a status (unit + browser tests). There's no MCP server yet ([9i]).*
 - The person edits a figure before agreeing → the edit is what's stored, with "edited by you". *Built and tested at the API; the edit in the prompt isn't browser-tested yet.*
 
-**Drop a file: Excel and CSV [8c]**
-- Money written as `$1,234.56`, `1 234,56` (French), `(1,234.56)` for negatives, `1234.5-`.
-- Dates written as `2026-03-01`, `03/01/2026`, `01/03/2026` (ambiguous → ask once), Excel serial dates.
-- A CSV with a byte-order mark, semicolons instead of commas, or French accents in headers.
-- Merged cells, totals rows, blank rows and notes in an Excel report.
-- A password-protected Excel file → "open it in Excel and save a copy without a password".
-- A 100 MB file → a size limit with a plain message; never freeze the app.
-- The same file dropped twice → recognised (by fingerprint), not counted twice.
-- A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run.
+**Drop a file: Excel and CSV [8c]** (built 2026-10-06; the file is read in the app's window and never sent or kept — `lib/figures/file/`, `tests/figures-file-read.spec.ts`, `tests/figures-file-logic.spec.ts`)
+- Money written as `$1,234.56`, `1 234,56` (French), `(1,234.56)` for negatives, `1234.5-`. *All read; the column's style is preset from the file and the person can switch it. More than two decimals, or any currency but a "$" sign (US$, €, EUR…), is left out as "an amount DotAmi can't read" — never rounded, never converted (tested).*
+- Dates written as `2026-03-01`, `03/01/2026`, `01/03/2026` (ambiguous → ask once), Excel serial dates. *All read, plus month names in English and French. 03/01/2026 is asked once per file unless another date in the column settles it; two-digit years are never guessed; a time after the date never moves the day (tested).*
+- A CSV with a byte-order mark, semicolons instead of commas, or French accents in headers. *Read, including Windows-1252 files from Excel on Windows and UTF-16 "Unicode text" (tested).*
+- Merged cells, totals rows, blank rows and notes in an Excel report. *Every row below the column names is either counted or listed with its reason and row number: blank, the file's own totals row, no date, a date but no amount, an unreadable amount, a month not over yet. A merged cell's value sits in its first row only; the rows under it show as "no date" — never filled down (tested).*
+- A password-protected Excel file → "open it in Excel and save a copy without a password". *Refused with that sentence; an old .xls gets the same one (same container) (tested).*
+- A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused before the file is read; a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested).*
+- The same file dropped twice → recognised (by fingerprint), not counted twice. *Recognised by its totals instead: a month already waiting or agreed with the same total and currency is listed as "already in DotAmi" and not proposed again (tested). A byte fingerprint would need a table — left for [8c-2] with the remembered column choice. Even a second, different total for the same month is never added: the map leaves that quarter out until the person chooses ([8a]).*
+- A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. Nothing in a workbook is ever run — only its XML text is read (tested).*
+- A "Total" column next to a tax column → the total probably includes the tax. *Never pre-filled; the person picks, with a note to check (tested).*
 
 **Sources and "what DotAmi knows about me" [8d]** — forgetting a source with 0 figures; forgetting
 one that a confirmed figure on a card depends on (the card updates); *delete everything* asks twice
