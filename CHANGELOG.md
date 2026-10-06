@@ -8,7 +8,49 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-06
+
+The first desktop release: DotAmi in its own window on Windows, with an installer, an update
+button, and backup and restore. The installer isn't code-signed yet, so Windows shows "Windows
+protected your PC" on first install (More info → Run anyway).
+
 ### Added
+- **The desktop app** (Windows first; `docs/architecture/desktop-app.md`): DotAmi in its own
+  window, its data in one file in the app's own folder (`%APPDATA%\DotAmi`), its server listening
+  on this computer only. The window shows only DotAmi's pages; outside links open in your browser.
+- **An installer and the update button.** The installed app checks GitHub Releases when it
+  starts (and on Help → Check for updates), downloads a newer version and **asks before
+  installing it**. Releases are built by CI as drafts and reach installed apps only when the
+  maintainer publishes them. Pre-release versions reach only pre-release copies.
+- **Backup and restore** (File menu): one `.dotami-backup` file, locked with a passphrase if you
+  choose (AES-256-GCM); a restore checks the file first, keeps a copy of what it replaces, and
+  refuses a backup from a newer version.
+- **Database updates the app applies itself**, keeping Prisma's own bookkeeping (checked against
+  Prisma's `migrate status`): it backs the database up before changing it and refuses data saved
+  by a newer version or a half-finished update.
+- **The settings page** (`/settings`): every planned setting with its default, its warning and
+  the task that brings it, plus what is true of this copy today — where the data is, what leaves
+  the computer, how updates arrive, how to turn on disk encryption.
+- Desktop tests (`npm run test:desktop`): start → describe a venture → close → start again; back
+  up on one computer → restore on another. CI runs them on Windows against the packaged app.
+
+### Changed
+- Node 22.13 or later (the desktop app's database code uses Node's built-in SQLite); CI and
+  `.nvmrc` use Node 24, the version inside the desktop app.
+- The Prisma CLI's usage check-in (`checkpoint.prisma.io`) is switched off for the project's
+  `prisma:*` scripts and in CI; the desktop app doesn't ship the Prisma CLI at all.
+- README and the settings page now say what tools report while you build from source (Next.js
+  telemetry, Prisma's check-in during `npm ci`) and how to stop it.
+
+### Security
+- **DotAmi answers only on this computer's own address.** A web page could use DNS rebinding to
+  read and write DotAmi's data (a request carrying another site's name was answered). Every
+  request whose Host isn't `localhost`, `127.0.0.1`, `[::1]` or `*.localhost` is now refused;
+  `DOTAMI_ALLOWED_HOSTS` lists extra names for deliberate use on your own network.
+
+### Also in 0.2.0 — earlier changes since the first snapshot (2026-09-20 → 10-03)
+
+#### Added
 - `npm run seed` — two invented ventures so a fresh clone shows a working map instead of an
   empty app.
 - Per-request Content-Security-Policy on every page; fonts served from this origin instead of
@@ -16,13 +58,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Byte caps, per-client rate limits and same-origin JSON checks on every write route.
 - CodeQL and OpenSSF Scorecard workflows; Dependabot configuration; `.gitleaks.toml`.
 - Prettier and `.editorconfig` (configured, not yet part of the gate).
-- Node 20 pinned (`.nvmrc`, `engines`) to match CI.
+- Node pinned (`.nvmrc`, `engines`) to match CI — Node 20 then; Node 22.13+ / 24 from this release (above).
 - Issue chooser, bug-report template, `CODEOWNERS`, `CITATION.cff`, README badges.
 - **Browser tests** (`npm run test:browser`, Playwright, `e2e/`): the real build on a fresh
   database, driven like a person — one sentence to a saved map, a stage change surviving a
   reload, the disclaimer footer inside the window. A CI job runs them on every pull request.
 
-### Changed
+#### Changed
 - **Database: PostgreSQL → SQLite (2026-09-28).** The whole database is now one file
   (`prisma/dotami.db` by default), so DotAmi needs no database server — the first step toward
   a desktop app. The four list fields are stored as JSON arrays. The eight PostgreSQL
@@ -39,7 +81,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `@anthropic-ai/sdk` 0.92 → 0.127 (the optional intake parser's only dependency).
 - Recharts removed — nothing imported it after the projection footer was cut.
 
-### Fixed
+#### Fixed
 - **The landing page and the intake were dead in production builds** (`npm run build && npm
   start`) from 2026-09-21: they were pre-rendered at build time, so their scripts carried no CSP
   nonce and the browser blocked every one — the text box filled, but "Map it" never enabled.
