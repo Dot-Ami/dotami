@@ -86,6 +86,15 @@ export interface RecordsBasis {
   summary: string;
   figureIds: string[];
   sources: { label: string; rows: number | null }[];
+  /** [8e] The last day of the newest figure the card counted (YYYY-MM-DD); null when it counted none. */
+  newestPeriodEnd: string | null;
+  /** [8e] Recent quarters the rule reads that the figures don't fully cover, newest first ("April to June 2026"). */
+  uncoveredQuarters: string[];
+  /**
+   * [8e] Whole sentences for the card's second line — how recent the figures are and what the read
+   * leaves out. Built here, with the rule; the component only shows them.
+   */
+  notes: string[];
 }
 
 export interface UnlockItem {

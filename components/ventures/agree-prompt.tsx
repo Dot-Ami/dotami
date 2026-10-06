@@ -5,6 +5,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Pill } from "@/components/ui";
 import { FIGURE_KIND_LABELS, type FigureView } from "@/lib/figures/types";
 import { formatCents, parseMoneyToCents } from "@/lib/figures/money";
+import { useLocalToday } from "@/lib/figures/use-local-today";
+
+import { FigureDates, FutureDateNote } from "./figure-age";
 
 /**
  * [8b] The agree prompt. This is the only place a proposed figure becomes a figure the person
@@ -133,6 +136,9 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
   const listRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
 
+  // [8e] Each row says how long ago its period ended, so a mistyped year stands out before the
+  // person agrees to it.
+  const today = useLocalToday();
   const [rows, setRows] = useState<FigureView[]>(figures);
   const [amounts, setAmounts] = useState<Record<string, string>>(() =>
     Object.fromEntries(figures.map((f) => [f.id, plainAmount(f.amountCents)])),
@@ -359,6 +365,8 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
                             Discard
                           </button>
                         </div>
+                        <FigureDates figure={row} today={today} />
+                        <FutureDateNote periodEnd={row.periodEnd} today={today} />
                         {problem ? (
                           <p id={`${inputId}-problem`} className="mt-1 text-[11px] text-amber">
                             {problem}

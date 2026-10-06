@@ -1,6 +1,6 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-09-16 (S2.5.4j — built and verified in the pane). **Supersedes** the React
+Last updated: 2026-10-06 (card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
 **Component:** `components/cockpit/strategy-map.tsx` · **Tier data:**
@@ -42,7 +42,32 @@ activation": 4 solid + 14 dashed, 1 card dimmed.
 No dollar ranges — the reference image had "$3K–$7K/yr" on every card; no engine computes
 that, so nothing is shown. No ordering by merit; columns are lifecycle order, cards
 are catalog order. No venture knowledge in the component: figures reach the screen only
-through the evaluator's `why` / `expires`.
+through the evaluator's `why` / `expires` / `fromRecords`.
+
+## When a card rests on the person's figures ([8a], [8e])
+
+Under a card's text, node detail shows a green line when confirmed figures decided it or were
+read for it: "From your records · N figures · N rows · from <sources> · see your figures".
+Under it, a second grey line of whole sentences written by the rule (`RecordsBasis.notes`,
+`lib/brain/evaluate.ts`; the component only prints them):
+
+- "Newest figure ends September 30, 2026." — the last day of the newest figure the card counted.
+  Left out when it counted none.
+- "July to September 2026 isn't fully covered yet." / "April to June 2026 and 2 earlier quarters
+  aren't fully covered yet." — recent quarters the rule reads that the figures don't cover in
+  full, newest first. A quarter already explained as "two figures cover the same month" isn't
+  repeated here.
+- "One older figure isn't read: this rule looks only at the last four calendar quarters (October
+  2025 to September 2026)." — figures from before the first quarter the rule reads are listed,
+  never dropped. The span comes from the rule's own `thresholdTest`, not from a number here.
+
+A figure whose period ends after today is never counted (a wrong computer clock when it was
+typed, a clock set back since, a restored backup). The card's own text says so, with the date:
+"One figure isn't counted: it ends after today (2026-10-31) — check its date."
+
+"Today" is the person's own calendar day (`lib/figures/use-local-today.ts`). It is read again when
+the window comes back into view or gets focus, and at the next local midnight, so a map left open
+across midnight or a quarter end moves to the new day without a reload.
 
 ## Layout
 

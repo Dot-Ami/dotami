@@ -7,7 +7,7 @@
  */
 import http from "node:http";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
@@ -195,6 +195,119 @@ test("a confirmed figure decides the GST card, with its source — and only the 
   await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
   await expect(page.getByText(`Shown because your confirmed revenue for ${label} is $31,200 — over $30,000 in a single calendar quarter.`).first()).toBeVisible();
   await expect(page.getByText(/From your records · 1 figure · from typed by you/).first()).toBeVisible();
+});
+
+// ---- [8e] How old each figure is ------------------------------------------------------------
+// Both use the invented venture "Demo — Chinook Sign Painting", through figures of their own, and
+// run in British Columbia with the browser's clock set by the test. The server keeps its real
+// clock, so a period that has ended for the server can still be after "today" for the page —
+// exactly what a computer with a wrong clock looks like.
+test.describe("how old each figure is", () => {
+  test.use({ timezoneId: "America/Vancouver" });
+
+  /** The Chinook card on /ventures, with its id-free helpers. */
+  async function openChinook(page: Page) {
+    await page.goto("/ventures");
+    const card = page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+      .first();
+    // The panel has loaded its figures once its add buttons are there.
+    await expect(card.getByRole("button", { name: "Add a figure" })).toBeVisible();
+    return card;
+  }
+
+  /** Types a figure into the add form and opens the agree prompt for it. */
+  async function typeFigure(card: Locator, from: string, to: string, amount: string) {
+    await card.getByRole("button", { name: "Add a figure" }).click();
+    await card.getByLabel("From", { exact: true }).fill(from);
+    await card.getByLabel("To", { exact: true }).fill(to);
+    await card.getByLabel("Amount", { exact: true }).fill(amount);
+    await card.getByRole("button", { name: "Review this figure" }).click();
+  }
+
+  test("each figure says how long ago it ended and the day you agreed, in your own day — 11:30 p.m. on March 31 in BC is still March", async ({
+    page,
+  }) => {
+    // 06:30 UTC on April 1 is 11:30 p.m. on March 31 in Vancouver. Time flows from here, so the
+    // test can run it past midnight below.
+    await page.clock.install({ time: "2026-04-01T06:30:00Z" });
+    // The agreed and retracted moments come from the server's clock, which is "now" for real.
+    // Pin them to the same evening so the test checks the day the page works out for them (March
+    // 31 in Vancouver) whatever hour it runs at — a UTC reading would say April 1.
+    await page.route(/\/api\/figures\?venture=/, async (route) => {
+      if (route.request().method() !== "GET") return route.continue();
+      const response = await route.fetch();
+      const body = (await response.json()) as { figures?: { confirmedAt: string | null; retractedAt: string | null }[] };
+      for (const f of body.figures ?? []) {
+        if (f.confirmedAt) f.confirmedAt = "2026-04-01T06:30:00.000Z";
+        if (f.retractedAt) f.retractedAt = "2026-04-01T06:30:00.000Z";
+      }
+      return route.fulfill({ status: response.status(), contentType: "application/json", body: JSON.stringify(body) });
+    });
+
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+    // A figure's row, found by its period written out in full ("March 2026"), so a quarter such as
+    // "January to March 2026" from another test never answers to it.
+    const row = (period: string) => card.getByRole("listitem").filter({ has: page.getByText(period, { exact: true }) });
+
+    // March ends today: the agree prompt says so, and flags nothing.
+    await typeFigure(card, "2026-03-01", "2026-03-31", "1,000");
+    await expect(prompt).toContainText("ends today");
+    await expect(prompt).not.toContainText("Check this date");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    await expect(row("March 2026")).toContainText("ends today · agreed 2026-03-31");
+
+    // April hasn't ended on this page's clock. The server accepts it (its clock is later), so it
+    // can be agreed to — and it is flagged, in the prompt and in the list.
+    await typeFigure(card, "2026-04-01", "2026-04-30", "500");
+    await expect(prompt).toContainText("Check this date. This period ends after today (2026-04-30 is later than 2026-03-31)");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    await expect(row("April 2026")).toContainText("ends next month · agreed 2026-03-31");
+    await expect(row("April 2026")).toContainText("This period ends after today (2026-04-30 is later than 2026-03-31)");
+
+    // The window stays open past midnight: nobody reloads, and "today" moves on by itself.
+    await page.clock.runFor(31 * 60 * 1000);
+    await expect(row("March 2026")).toContainText("ended yesterday · agreed 2026-03-31");
+    await expect(row("March 2026")).not.toContainText("ends today");
+    await expect(row("April 2026")).toContainText("This period ends after today (2026-04-30 is later than 2026-04-01)");
+
+    // Retracting shows the person's day, not the UTC day the timestamp starts with.
+    await row("March 2026").getByRole("button", { name: "Retract", exact: true }).click();
+    await row("March 2026").getByRole("button", { name: "Retract", exact: true }).click();
+    const retracted = card.getByRole("listitem").filter({ hasText: "retracted 2026-03-31" });
+    await expect(retracted).toBeVisible();
+    await expect(retracted).toContainText("ended yesterday · agreed 2026-03-31");
+    await expect(card).not.toContainText("retracted 2026-04-01");
+  });
+
+  test("a figure dated after today is never counted by the GST card, which says how recent its figures are", async ({ page }) => {
+    // Mid-February on the page's clock. A February figure of $31,200 sits in this quarter, and
+    // before [8e] it was read as the quarter's revenue, so the card said "over $30,000 in a
+    // single calendar quarter" from a figure that hadn't ended.
+    await page.clock.install({ time: "2026-02-15T20:00:00Z" });
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+
+    await typeFigure(card, "2026-02-01", "2026-02-28", "31,200");
+    await expect(prompt).toContainText("Check this date");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+
+    await card.getByRole("link", { name: /Open in cockpit/ }).click();
+    await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
+
+    // The card says what it left out and why, and what the figures it did read don't cover.
+    await expect(
+      page.getByText(/(One figure isn't|\d+ figures aren't) counted: it ends after today \(\d{4}-\d{2}-\d{2}\) — check its date/).first(),
+    ).toBeVisible();
+    await expect(page.getByText("October to December 2025 and 3 earlier quarters aren't fully covered yet.").first()).toBeVisible();
+    // ...and never reads the future-dated figure as this quarter's revenue.
+    await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
+  });
 });
 
 // ---- [8c] Add from a file -------------------------------------------------------------------
