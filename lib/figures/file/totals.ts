@@ -1,0 +1,137 @@
+/**
+ * [8c] Adding a sheet's rows up into one total per calendar month.
+ *
+ * Every row below the column names is accounted for: either it is added into a month or it is
+ * listed as skipped with the reason, so the person can see exactly what the totals leave out.
+ * Nothing here logs, and no error message ever carries an amount or a cell's text.
+ */
+import type { FigureView } from "../types";
+import { cellToCents } from "./amounts";
+import { cellToDay } from "./dates";
+import { isBlankRow } from "./table";
+import type { Cell, ColumnChoice, MonthTotal, SkippedRow, TotalsResult } from "./types";
+
+/**
+ * The text of a report's own sum row: "Total", "Total for Customer A", "Grand total", "Subtotal",
+ * "Sous-total", "Total général", "Totaux". Anchored at the start, and not followed by another
+ * letter, so "Totally new client" is just a note.
+ */
+export const TOTAL_ROW_LABEL =
+  /^\s*(?:grand[\s-]+total|sub[\s-]?total|sous[\s-]?total|totals|totaux|total)(?!\p{L})/iu;
+
+function isEmpty(cell: Cell | undefined): boolean {
+  return cell === null || cell === undefined || (typeof cell === "string" && cell.trim() === "");
+}
+
+/** The last day of a YYYY-MM month, written YYYY-MM-DD (leap years included). */
+function lastDayOfMonth(month: string): string {
+  const year = Number(month.slice(0, 4));
+  const m = Number(month.slice(5, 7));
+  // Day 0 of the next month is the last day of this one.
+  const last = new Date(Date.UTC(year, m, 0)).getUTCDate();
+  return `${month}-${String(last).padStart(2, "0")}`;
+}
+
+/**
+ * Walks every row after the column names and totals the amounts by month. Only months that have
+ * ended by `today` (YYYY-MM-DD) are totalled: a month still running has no total yet.
+ */
+export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: string): TotalsResult {
+  // Blank rows after the last real row are just the sheet's trailing space, not part of the table.
+  let lastRow = rows.length - 1;
+  while (lastRow > choice.headerRow && isBlankRow(rows[lastRow])) lastRow -= 1;
+
+  const sums = new Map<string, { cents: bigint; rows: number }>();
+  const skipped: SkippedRow[] = [];
+  let rowsCounted = 0;
+
+  for (let i = choice.headerRow + 1; i <= lastRow; i += 1) {
+    const row = rows[i];
+    const skip = (reason: SkippedRow["reason"]) => skipped.push({ row: i + 1, reason });
+
+    if (isBlankRow(row)) {
+      skip("blank");
+      continue;
+    }
+
+    const day = cellToDay(row[choice.dateColumn] ?? null, choice.dateOrder);
+    if (day === null) {
+      const isSumRow = row.some((cell) => typeof cell === "string" && TOTAL_ROW_LABEL.test(cell));
+      skip(isSumRow ? "total" : "no-date");
+      continue;
+    }
+
+    const amountCell = row[choice.amountColumn];
+    if (isEmpty(amountCell)) {
+      skip("no-amount");
+      continue;
+    }
+    const cents = cellToCents(amountCell ?? null, choice.decimalStyle);
+    if (cents === null) {
+      skip("bad-amount");
+      continue;
+    }
+
+    const month = day.slice(0, 7);
+    // ISO dates compare correctly as text: a month that ends after today isn't over.
+    if (lastDayOfMonth(month) > today) {
+      skip("not-over");
+      continue;
+    }
+
+    // BigInt, so a very long sheet can never silently lose a cent to floating point.
+    const sum = sums.get(month) ?? { cents: 0n, rows: 0 };
+    sum.cents += BigInt(cents);
+    sum.rows += 1;
+    sums.set(month, sum);
+    rowsCounted += 1;
+  }
+
+  const months: MonthTotal[] = [];
+  for (const month of [...sums.keys()].sort()) {
+    const sum = sums.get(month)!;
+    const amount = Number(sum.cents);
+    if (!Number.isSafeInteger(amount) || BigInt(amount) !== sum.cents) {
+      throw new Error("A month's total is too large to hold exactly.");
+    }
+    months.push({
+      periodStart: `${month}-01`,
+      periodEnd: lastDayOfMonth(month),
+      amountCents: amount,
+      rows: sum.rows,
+    });
+  }
+
+  return { months, rowsCounted, skipped };
+}
+
+/**
+ * Splits proposed months into those the figures store already holds (same month, same amount,
+ * same currency, still proposed or confirmed) and the fresh ones. A discarded or retracted figure
+ * doesn't count as known, and neither does the same month with a different amount — that is
+ * something new for the person to look at.
+ */
+export function splitAlreadyKnown(
+  months: MonthTotal[],
+  existing: Pick<
+    FigureView,
+    "kind" | "periodStart" | "periodEnd" | "amountCents" | "currency" | "status"
+  >[],
+  currency: string,
+): { fresh: MonthTotal[]; known: MonthTotal[] } {
+  const fresh: MonthTotal[] = [];
+  const known: MonthTotal[] = [];
+  for (const month of months) {
+    const isKnown = existing.some(
+      (figure) =>
+        (figure.status === "proposed" || figure.status === "confirmed") &&
+        figure.kind === "gross-revenue" &&
+        figure.periodStart === month.periodStart &&
+        figure.periodEnd === month.periodEnd &&
+        figure.amountCents === month.amountCents &&
+        figure.currency === currency,
+    );
+    (isKnown ? known : fresh).push(month);
+  }
+  return { fresh, known };
+}

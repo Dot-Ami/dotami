@@ -121,7 +121,8 @@ export async function proposeFigures(
           currency: v.currency,
           sourceKind: checkedSource.value.kind,
           sourceLabel: checkedSource.value.label,
-          sourceRows: checkedSource.value.rows,
+          // A figure's own row count (one month of a file) wins over the batch's.
+          sourceRows: v.rows ?? checkedSource.value.rows,
           // Not left to the column default: proposing never confirms, and this line says so.
           status: "proposed",
         },

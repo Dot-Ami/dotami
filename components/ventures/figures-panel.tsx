@@ -7,6 +7,7 @@ import { FIGURE_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureView } fr
 import { parseMoneyToCents } from "@/lib/figures/money";
 
 import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from "./agree-prompt";
+import { FileDrop } from "./file-drop";
 
 /**
  * [8a]/[8b] "Your figures" on an idea's card: the totals the person has agreed to, never
@@ -34,7 +35,8 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
   const [reviewing, setReviewing] = useState<FigureView[] | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [retractBusy, setRetractBusy] = useState(false);
-  const [adding, setAdding] = useState(false);
+  // Which add form is open: typing one figure, or reading a file. Never both at once.
+  const [adding, setAdding] = useState<"typed" | "file" | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -69,6 +71,14 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
     }
     setConfirmingId(null);
     await load();
+  }
+
+  // Typed and file figures arrive the same way: the form closes and the agree prompt opens.
+  function handleProposed(proposedFigures: FigureView[]) {
+    setAdding(null);
+    setReviewing(proposedFigures);
+    // The new proposal exists now, so the banner should be right behind the prompt.
+    void load();
   }
 
   const proposed = (figures ?? []).filter((f) => f.status === "proposed");
@@ -123,7 +133,7 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
                     <span className="font-mono text-paper">{formatAmount(f.amountCents, f.currency)}</span>
                     <span className="text-stone-dim">
                       from {f.sourceLabel}
-                      {f.sourceRows !== null ? ` · ${f.sourceRows} rows` : ""}
+                      {f.sourceRows !== null ? ` · ${f.sourceRows} ${f.sourceRows === 1 ? "row" : "rows"}` : ""}
                     </span>
                     {f.editedByPerson ? (
                       <span className="font-mono text-[9px] uppercase tracking-wider text-maple">edited by you</span>
@@ -177,21 +187,24 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
       )}
 
       <div className="mt-3">
-        {adding ? (
-          <AddFigureForm
+        {adding === "typed" ? (
+          <AddFigureForm ventureId={ventureId} onCancel={() => setAdding(null)} onProposed={handleProposed} />
+        ) : adding === "file" ? (
+          <FileDrop
             ventureId={ventureId}
-            onCancel={() => setAdding(false)}
-            onProposed={(proposedFigures) => {
-              setAdding(false);
-              setReviewing(proposedFigures);
-              // The new proposal exists now, so the banner should be right behind the prompt.
-              void load();
-            }}
+            existing={figures ?? []}
+            onCancel={() => setAdding(null)}
+            onProposed={handleProposed}
           />
         ) : (
-          <Pill variant="ghost" size="small" onClick={() => setAdding(true)}>
-            Add a figure
-          </Pill>
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill variant="ghost" size="small" onClick={() => setAdding("typed")}>
+              Add a figure
+            </Pill>
+            <Pill variant="ghost" size="small" onClick={() => setAdding("file")}>
+              Add from a file
+            </Pill>
+          </div>
         )}
       </div>
 

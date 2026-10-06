@@ -8,7 +8,7 @@ income, the price of a big purchase) are the most sensitive thing DotAmi will ho
 
 Confirmed totals only, each with: what it is, the period or date, the amount and currency, where it
 came from (a source name, the file name, how many rows were summed), who confirmed it and when.
-**Not stored:** individual transactions, the imported files, bank or card numbers ([8g]), login
+**Not stored:** individual transactions, the imported files (not even sent to the local server — [8c] reads them in the app's window), bank or card numbers ([8g]), login
 details for anything. All of it in the one database file on the person's computer.
 
 ## Who could reach it, and what stops them
@@ -19,6 +19,7 @@ details for anything. All of it in the one database file on the person's compute
 | Someone with a backup file | opens it | a backup passphrase (AES-256-GCM, [7c]) | the person's choice; the warning is shown |
 | A website the person visits — a write | a page fires a request at DotAmi's local address | cross-site writes and non-JSON writes refused (`lib/api/body-limit.ts`, 2026-09-20); the browser's CORS rules block other methods | in place |
 | A website the person visits — DNS rebinding | the page re-points its own domain at 127.0.0.1, then reads and writes as if DotAmi were its own site | **was open:** `GET /api/ventures` with `Host: evil.example` returned every venture (2026-10-06). **Fixed:** every request whose Host isn't this computer's own name is refused with 421 (`lib/http/allowed-host.ts`, `middleware.ts`), prefetches included | fixed; `e2e/app.spec.ts` "DNS rebinding guard" fails on the old code (200) and passes now |
+| A file the person drops ([8c]) | a spreadsheet crafted to attack its reader, or simply holding every transaction | it is read inside the app's window, in memory: the bytes never go to the server or the disk, and only the monthly totals the person goes on to agree to are sent (`/api/figures/propose`). Its type is decided by its first bytes, macros refuse the file, the size is capped before reading and again before unpacking, and no library error text is shown (it could quote the file). A reader bug stays inside the page's sandbox, away from the database | in place (2026-10-06) |
 | Another computer on the network | connects to the port | the server listens on 127.0.0.1 only | in place |
 | Another program on this computer | reads the file, or calls the local server (no login) | **nothing in DotAmi** — a program running as the person can already read their files. Same trust as the person's own account; stated, not defended | by design for a single-user app |
 | A model the Lens uses ([9]) | reads figures to answer | the person's chosen model and permission level; a hosted model's company sees what it reads (the "own key" warning) | when the Lens exists |

@@ -10,6 +10,7 @@ import http from "node:http";
 import { expect, test, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
+import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -194,6 +195,436 @@ test("a confirmed figure decides the GST card, with its source — and only the 
   await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
   await expect(page.getByText(`Shown because your confirmed revenue for ${label} is $31,200 — over $30,000 in a single calendar quarter.`).first()).toBeVisible();
   await expect(page.getByText(/From your records · 1 figure · from typed by you/).first()).toBeVisible();
+});
+
+// ---- [8c] Add from a file -------------------------------------------------------------------
+// All three use the invented venture "Demo — Salish Trail Maps" (the figures test above uses
+// Chinook). Only the first one proposes anything for it; the other two prove their refusals and
+// previews create nothing. Months are counted back from today, so the tests never go stale.
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** The calendar month `n` months before the current one (n = 0 is this month; negative looks ahead). */
+function monthsAgo(n: number): { y: number; m: number; name: string } {
+  const now = new Date();
+  const total = now.getFullYear() * 12 + now.getMonth() - n;
+  const y = Math.floor(total / 12);
+  const m = (total % 12) + 1;
+  return { y, m, name: `${MONTH_NAMES[m - 1]} ${y}` };
+}
+
+const two = (n: number) => String(n).padStart(2, "0");
+
+/** Opens /ventures and returns the Salish card with its id, and a way to list that idea's figures. */
+async function openSalish(page: Page) {
+  await page.goto("/ventures");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Salish Trail Maps", level: 2 }) })
+    .first();
+  const href = await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href");
+  const ventureId = new URL(href!, "http://x").searchParams.get("venture")!;
+  const figures = async () =>
+    (
+      (await (await page.request.get(`/api/figures?venture=${ventureId}`)).json()) as {
+        figures: {
+          status: string;
+          amountCents: number;
+          sourceLabel: string;
+          sourceRows: number | null;
+          periodStart: string;
+        }[];
+      }
+    ).figures;
+  // The panel has loaded its figures once its add buttons are there.
+  await expect(card.getByRole("button", { name: "Add from a file" })).toBeVisible();
+  return { card, ventureId, figures };
+}
+
+/** Every request the page makes from now on: where it went and what it carried. */
+function watchRequests(page: Page) {
+  const seen: { path: string; url: string; method: string; body: string | null }[] = [];
+  page.on("request", (r) => {
+    const url = new URL(r.url());
+    seen.push({ path: url.pathname, url: r.url(), method: r.method(), body: r.postData() });
+  });
+  return seen;
+}
+
+/** Privacy: while a file is being read and previewed, the page talks only to its own code chunks and /api/figures. */
+function expectNothingLeftThisPage(seen: ReturnType<typeof watchRequests>, secrets: string[]) {
+  for (const r of seen) {
+    expect(
+      r.path.startsWith("/_next/static/") || r.path.startsWith("/api/figures"),
+      `unexpected request to ${r.path}`,
+    ).toBe(true);
+    for (const secret of secrets) {
+      expect(r.url, "a cell value in a URL").not.toContain(encodeURIComponent(secret));
+      expect(r.url, "a cell value in a URL").not.toContain(secret);
+      expect(r.body ?? "", "a cell value in a request body").not.toContain(secret);
+    }
+  }
+}
+
+test("a dropped CSV becomes monthly figures, waiting for the person to agree", async ({ page }) => {
+  const { card, ventureId, figures } = await openSalish(page);
+  expect(await figures()).toEqual([]);
+  const seen = watchRequests(page);
+
+  // An invented French export: UTF-8 BOM, semicolons, day-first dates (a day above 12 settles the
+  // order, so nothing needs asking), "1 234,56" amounts, and the clutter real exports carry.
+  const [a, b, c] = [monthsAgo(4), monthsAgo(3), monthsAgo(2)];
+  const next = monthsAgo(-1);
+  const lines: string[] = ["Date de facture;Client;Montant"];
+  const add = (line: string) => lines.push(line) && lines.length; // the line's 1-based row number
+  add(`15/${two(a.m)}/${a.y};Atelier Nord;1 234,56`);
+  add(`20/${two(a.m)}/${a.y};Café Lune;500,00`);
+  const blankRow = add(";;");
+  add(`18/${two(b.m)}/${b.y};Boulangerie Ours;2 000,00`);
+  add(`19/${two(b.m)}/${b.y};Atelier Nord;300,50`);
+  add(`27/${two(b.m)}/${b.y};Café Lune;0,50`);
+  const noteRow = add("Note: exported from Facturex;;");
+  add(`25/${two(c.m)}/${c.y};Atelier Nord;99,99`);
+  add(`28/${two(c.m)}/${c.y};Café Lune;0,01`);
+  const totalRow = add("Total;;4 135,56");
+  const futureRow = add(`15/${two(next.m)}/${next.y};Atelier Nord;10,00`);
+  const file = {
+    name: "factures-salish.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("\ufeff" + lines.join("\r\n") + "\r\n", "utf8"),
+  };
+  const secrets = ["Atelier", "Café", "Boulangerie", "Facturex", "1 234,56", "1234,56"];
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await expect(
+    card.getByText(
+      "It's read here, on this computer, and never kept — only the monthly totals you agree to are saved.",
+    ),
+  ).toBeVisible();
+  await card.getByLabel("Choose a file").setInputFiles(file);
+
+  // The columns are guessed from the French names, and the person is told to check.
+  await expect(
+    card.getByText("DotAmi guessed these from the column names — check them."),
+  ).toBeVisible();
+  await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
+    "Row 1",
+  );
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "A · Date de facture",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "C · Montant",
+  );
+  await expect(card.getByLabel("Amounts are written").locator("option:checked")).toHaveText(
+    "1 234,56",
+  );
+  await expect(
+    card.getByText("If the file also has a tax column, check whether this one includes the tax."),
+  ).toBeVisible();
+  await expect(card.getByLabel("Dates are written")).toHaveCount(0);
+
+  // One total and row count per month, then everything left out and why.
+  const table = card.getByRole("table", { name: "Monthly totals from factures-salish.csv" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${a.name} \\$1,734\\.56 2 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${b.name} \\$2,301\\.00 3 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${c.name} \\$100\\.00 2 rows$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(`1 blank row: row ${blankRow}`)).toBeVisible();
+  await expect(
+    card.getByText(`1 row without a date DotAmi can read: row ${noteRow}`),
+  ).toBeVisible();
+  await expect(
+    card.getByText(`1 row that is a totals row (the file's own sum): row ${totalRow}`),
+  ).toBeVisible();
+  await expect(
+    card.getByText(`1 row in a month that isn't over yet: row ${futureRow}`),
+  ).toBeVisible();
+
+  // Reading and previewing touched nothing but the page's own code and /api/figures, and sent no body.
+  expectNothingLeftThisPage(seen, secrets);
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+  expect(await figures()).toEqual([]);
+
+  // Review: only the totals go to the server — no cell, no client name, no file content.
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  const proposals = seen.filter((r) => r.path === "/api/figures/propose");
+  expect(proposals).toHaveLength(1);
+  expect(JSON.parse(proposals[0].body!)).toEqual({
+    ventureId,
+    source: { kind: "file", label: "factures-salish.csv", rows: 7 },
+    figures: [
+      {
+        kind: "gross-revenue",
+        periodStart: `${a.y}-${two(a.m)}-01`,
+        periodEnd: `${a.y}-${two(a.m)}-${new Date(Date.UTC(a.y, a.m, 0)).getUTCDate()}`,
+        amountCents: 173456,
+        currency: "CAD",
+        rows: 2,
+      },
+      {
+        kind: "gross-revenue",
+        periodStart: `${b.y}-${two(b.m)}-01`,
+        periodEnd: `${b.y}-${two(b.m)}-${new Date(Date.UTC(b.y, b.m, 0)).getUTCDate()}`,
+        amountCents: 230100,
+        currency: "CAD",
+        rows: 3,
+      },
+      {
+        kind: "gross-revenue",
+        periodStart: `${c.y}-${two(c.m)}-01`,
+        periodEnd: `${c.y}-${two(c.m)}-${new Date(Date.UTC(c.y, c.m, 0)).getUTCDate()}`,
+        amountCents: 10000,
+        currency: "CAD",
+        rows: 2,
+      },
+    ],
+  });
+  expectNothingLeftThisPage(seen, secrets);
+
+  // The agree prompt lists the months under the file's name; nothing is confirmed until Agree.
+  await expect(prompt.getByRole("region", { name: "From factures-salish.csv" })).toContainText(
+    a.name,
+  );
+  await expect(prompt.getByRole("region", { name: "From factures-salish.csv" })).toContainText(
+    c.name,
+  );
+  expect((await figures()).map((f) => f.status)).toEqual(["proposed", "proposed", "proposed"]);
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+
+  // The ideas card lists each figure with where it came from and how many rows made it.
+  await expect(card.getByText("from factures-salish.csv · 2 rows")).toHaveCount(2);
+  await expect(card.getByText("from factures-salish.csv · 3 rows")).toHaveCount(1);
+  expect((await figures()).map((f) => f.status)).toEqual(["confirmed", "confirmed", "confirmed"]);
+  expectNothingLeftThisPage(seen, secrets);
+  expect(
+    seen
+      .filter((r) => r.body !== null)
+      .map((r) => r.path)
+      .sort(),
+  ).toEqual(["/api/figures/agree", "/api/figures/propose"]);
+
+  // Dropping the same file again (a real drop this time): the months are already here.
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  const dropped = await page.evaluateHandle(
+    ({ name, text }) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([text], name, { type: "text/csv" }));
+      return transfer;
+    },
+    { name: file.name, text: file.buffer.toString("utf8") },
+  );
+  await card
+    .getByRole("group", { name: "Drop a spreadsheet here" })
+    .dispatchEvent("drop", { dataTransfer: dropped });
+  await expect(card.getByText("Nothing new to propose from this file.")).toBeVisible();
+  await expect(
+    card.getByText(`${a.name} — already in DotAmi with the same total, not proposed again`),
+  ).toBeVisible();
+  await expect(
+    card.getByText(`${b.name} — already in DotAmi with the same total, not proposed again`),
+  ).toBeVisible();
+  await expect(
+    card.getByText(`${c.name} — already in DotAmi with the same total, not proposed again`),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await expect(card.getByRole("button", { name: "Add from a file" })).toBeVisible();
+  expect(await figures()).toHaveLength(3);
+});
+
+test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // 04/09/2025 is 4 September day first and April 9 month first; no date in this file settles it.
+  const target = monthsAgo(9);
+  const day = target.m === 4 ? 5 : 4;
+  const lines = [
+    "Date,Customer,Amount",
+    `${two(day)}/${two(target.m)}/${target.y},Client A,100.00`,
+    `${two(day + 1)}/${two(target.m)}/${target.y},Client B,50.00`,
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "two-ways.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  const order = card.getByLabel("Dates are written");
+  await expect(order).toBeVisible();
+  await expect(order).toHaveValue("");
+  await expect(card.getByText("Say how the dates are written to see the totals.")).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+
+  await order.selectOption("dmy");
+  const table = card.getByRole("table", { name: "Monthly totals from two-ways.csv" });
+  await expect(table.getByRole("row")).toHaveCount(1);
+  await expect(table.getByRole("row", { name: new RegExp(`^${target.name} \\$150\\.00 2 rows$`) })).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("an .xlsx is read in the window; a renamed picture and a macro workbook are refused", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+
+  // Real date cells (Excel's serial numbers with a date format) and plain numbers, in months
+  // well apart from the CSV test's so the two never meet.
+  const [a, b] = [monthsAgo(7), monthsAgo(6)];
+  const workbook = makeXlsx([
+    {
+      name: "Invoices",
+      rows: [
+        ["Invoice Date", "Customer", "Amount"],
+        [{ date: `${a.y}-${two(a.m)}-03` }, "Client One", 1500.5],
+        [{ date: `${a.y}-${two(a.m)}-21` }, "Client Two", 250],
+        [{ date: `${b.y}-${two(b.m)}-09` }, "Client One", 80.25],
+      ],
+    },
+  ]);
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  const input = card.getByLabel("Choose a file");
+  await input.setInputFiles({
+    name: "invoices.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: Buffer.from(workbook),
+  });
+  const table = card.getByRole("table", { name: "Monthly totals from invoices.xlsx" });
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${a.name} \\$1,750\\.50 2 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${b.name} \\$80\\.25 1 row$`) }),
+  ).toBeVisible();
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "A · Invoice Date",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "C · Amount",
+  );
+
+  // A picture's first bytes under a spreadsheet's name: turned away, no preview, nothing sent.
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.alloc(64, 7),
+  ]);
+  await input.setInputFiles({
+    name: "sales.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: png,
+  });
+  await expect(card.getByRole("alert")).toContainText("That isn't a spreadsheet.");
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+
+  // A macro workbook: refused with the macros message.
+  const macros = makeXlsx(
+    [
+      {
+        name: "Sheet1",
+        rows: [
+          ["Date", "Amount"],
+          [{ date: `${a.y}-${two(a.m)}-03` }, 10],
+        ],
+      },
+    ],
+    { withMacros: true },
+  );
+  await input.setInputFiles({
+    name: "sales.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: Buffer.from(macros),
+  });
+  await expect(card.getByRole("alert")).toContainText(
+    "That workbook has macros. DotAmi never runs macros",
+  );
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // Neither refusal, nor the preview, created anything; and nothing but the page's own code and
+  // /api/figures was ever asked for, with no request carrying a body.
+  expect(await figures()).toEqual(before);
+  expectNothingLeftThisPage(seen, ["Client One", "Client Two", "Invoice Date"]);
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+});
+
+test("a large workbook reads without freezing", async ({ page }) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const problems: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error" || m.type() === "warning") problems.push(m.text());
+  });
+  page.on("pageerror", (e) => problems.push(e.message));
+  const workers: string[] = [];
+  page.on("worker", (w) => workers.push(w.url()));
+
+  // 12,000 invoices spread evenly over 24 past months: 500 rows and $5,000.00 each. Its sheet XML
+  // unpacks to about 1.3 MB from about 150 KB, and fflate (inside read-excel-file) unpacks a part
+  // that big and that well compressed in a background worker started from a blob: address. The
+  // app's Content-Security-Policy has no worker-src, so script-src applies, and its 'strict-dynamic'
+  // lets the app's own trusted scripts start one. This test proves the worker really starts under
+  // the real policy — if a policy change ever blocks it, large workbooks stop reading.
+  const ROWS = 12_000;
+  const MONTHS = 24;
+  const rows: XlsxCell[][] = [["Invoice Date", "Customer", "Amount"]];
+  for (let i = 0; i < ROWS; i += 1) {
+    const month = monthsAgo(3 + (i % MONTHS));
+    rows.push([
+      { date: `${month.y}-${two(month.m)}-${two(1 + (i % 28))}` },
+      `Customer ${i % 40}`,
+      10,
+    ]);
+  }
+  const workbook = makeXlsx([{ name: "Invoices", rows }]);
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "big-year.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: Buffer.from(workbook),
+  });
+
+  const table = card.getByRole("table", { name: "Monthly totals from big-year.xlsx" });
+  await expect(table).toBeVisible({ timeout: 20_000 });
+  await expect(table.getByRole("row")).toHaveCount(MONTHS);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${monthsAgo(3).name} \\$5,000\\.00 500 rows$`) }),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: `Review these ${MONTHS} figures` })).toBeVisible();
+  expect(problems.filter((p) => /worker|content security policy|refused/i.test(p))).toEqual([]);
+  expect(workers.some((url) => url.startsWith("blob:"))).toBe(true);
+  expect(await figures()).toEqual(before);
 });
 
 /** A raw GET with headers a browser page could be tricked into sending; resolves with the status. */

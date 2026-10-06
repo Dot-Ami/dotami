@@ -17,6 +17,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The agree prompt** ([8b]) — nothing counts until you agree: figures grouped by where they came
   from, amounts editable, *Agree* or *No, I'll do it myself*. Closing it confirms nothing, and only
   DotAmi's own page can confirm — the route importers and agents use can only propose.
+- **Add from a file** ([8c]) — drop an Excel (.xlsx) or CSV export of your sales and DotAmi
+  proposes one revenue total per month, each with how many rows it adds up. The file is read inside
+  the app's window and never sent or kept; only the totals you agree to are saved. It finds the
+  column names, guesses the date and amount columns only when their names make it clear, asks once
+  when a date like 03/04/2026 could be read two ways, reads "1 234,56" and Windows-encoded French
+  files, and lists every row it left out with the reason. Macro workbooks, old .xls or
+  password-locked files, pictures renamed .xlsx and files over 10 MB are refused with what to do
+  instead. Months already waiting or agreed with the same total aren't proposed twice.
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.

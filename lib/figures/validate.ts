@@ -15,6 +15,11 @@ export interface ProposedFigureInput {
   periodEnd: string;
   amountCents: number;
   currency: string;
+  /**
+   * How many rows were added up into this one figure, when it differs from the batch's — a file
+   * proposes one total per month, each from its own rows ([8c]). Absent: the source's count applies.
+   */
+  rows?: number;
 }
 
 export interface FigureSourceInput {
@@ -35,6 +40,15 @@ export function isRealCalendarDay(text: unknown): text is string {
 
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
+}
+
+const ROWS_ERROR = "The row count has to be a whole number, zero or more.";
+
+/** A row count is optional; when given it must be a whole number, zero or more. */
+function checkRows(rows: unknown): Checked<number | null> {
+  if (rows === undefined || rows === null) return { ok: true, value: null };
+  if (typeof rows !== "number" || !Number.isSafeInteger(rows) || rows < 0) return { ok: false, error: ROWS_ERROR };
+  return { ok: true, value: rows };
 }
 
 /**
@@ -71,7 +85,20 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
     return { ok: false, error: "The currency has to be a three-letter code such as CAD." };
   }
 
-  return { ok: true, value: { kind: kind as FigureKind, periodStart, periodEnd, amountCents, currency } };
+  const rows = checkRows(input.rows);
+  if (!rows.ok) return rows;
+
+  return {
+    ok: true,
+    value: {
+      kind: kind as FigureKind,
+      periodStart,
+      periodEnd,
+      amountCents,
+      currency,
+      ...(rows.value !== null ? { rows: rows.value } : {}),
+    },
+  };
 }
 
 /** Checks where a batch of proposed figures came from. */
@@ -88,13 +115,8 @@ export function validateFigureSource(input: unknown): Checked<FigureSourceInput>
     return { ok: false, error: `The source needs a name of 1 to ${SOURCE_LABEL_MAX} characters.` };
   }
 
-  let rows: number | null = null;
-  if (input.rows !== undefined && input.rows !== null) {
-    if (typeof input.rows !== "number" || !Number.isSafeInteger(input.rows) || input.rows < 0) {
-      return { ok: false, error: "The row count has to be a whole number, zero or more." };
-    }
-    rows = input.rows;
-  }
+  const rows = checkRows(input.rows);
+  if (!rows.ok) return rows;
 
-  return { ok: true, value: { kind: kind as FigureSourceKind, label, rows } };
+  return { ok: true, value: { kind: kind as FigureSourceKind, label, rows: rows.value } };
 }

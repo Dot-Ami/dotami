@@ -74,10 +74,14 @@ content and the project itself run alongside everything.
   - [x] The figures grouped by where they came from; amounts editable (stored as "edited by you"); discard one
   - [x] Close or Escape confirms nothing; more than 20 figures → *Agree* only after scrolling through them
   - [x] Only DotAmi's own page can confirm: the route agents and importers use can only propose (tested)
-- ⬜ **[8c] Drop a file: Excel and CSV.**
-  - [ ] Read in memory, never kept; totals per period + row count + file name are what's stored
-  - [ ] Map columns once per source, remembered
-  - [ ] Invented test files per package (QuickBooks, Xero, Wave, FreshBooks, Sage) — never a real export
+- 🟡 **[8c] Drop a file: Excel and CSV.** "Add from a file" on the ideas page.
+  - [x] Read in the app's window, in memory, never sent or kept; one total per calendar month + its
+    row count + the file name are what's stored (as proposed figures — the agree prompt decides)
+  - [x] Map the date and amount columns (guessed only when the column names make it clear); the
+    edge cases in [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md#your-figures)
+  - [ ] [8c-2] Remember the column choice per source, and recognise the same file by fingerprint
+  - [ ] [8c-3] Invented test files shaped like each package's documented export (QuickBooks, Xero,
+    Wave, FreshBooks, Sage) — never a real export
 - ⬜ **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
 - ⬜ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
