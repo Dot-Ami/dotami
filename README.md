@@ -99,6 +99,13 @@ npm run dev                   # http://localhost:3000 — bound to this machine 
 Self-hosted, single user, no auth — run it on your own machine. A hosted multi-user
 instance needs authentication and tenant isolation that do not exist yet.
 
+DotAmi itself sends nothing anywhere, but two tools it's built with report anonymous usage
+counts unless told not to: Next.js on `npm run dev` / `npm run build`
+([nextjs.org/telemetry](https://nextjs.org/telemetry); `npx next telemetry disable` stops it), and
+the Prisma CLI each time it runs. The `prisma:*` scripts switch Prisma's off
+(`scripts/prisma.mjs`); `npm ci` runs it once on its own, so set `CHECKPOINT_DISABLE=1` in your
+environment before installing to stop that too. CI sets both off.
+
 **Your data is the one file `DATABASE_URL` points at.** Back it up by copying it; start over
 by deleting it and running `npm run prisma:deploy` again. It is never committed (`.gitignore`
 covers `*.db`). Turn on your operating system's disk encryption (BitLocker, FileVault) — that
@@ -111,10 +118,16 @@ authentication in front of the app.
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
 
+**The desktop app (early — no installer yet):** `npm run desktop:build` then `npm run desktop`
+opens DotAmi in its own window, with its data in the app's own folder (`%APPDATA%\DotAmi` on
+Windows) instead of `prisma/`. How it works: [docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
+
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
 CI runs the same chain on every pull request. **Browser tests:** `npm run test:browser` builds
 the app, starts it on a fresh throwaway database and drives it in Chromium the way a person would
 (first time: `npx playwright install chromium`). CI runs them on every pull request too.
+**Desktop test:** `npm run test:desktop` builds the desktop app's server and drives the real app
+(start → describe a venture → close → start again → still there). Not in CI yet.
 
 ## Contribute
 

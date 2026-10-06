@@ -47,13 +47,15 @@ Change both together.
 database file from a *newer* app version opened by an older one (refuse, don't damage it); the
 disk is full mid-write; the file is read-only.
 
-**The Electron app [7b]**
-- The local port is already taken → pick another, never fail to open.
-- Two copies of the app opened at once → the second brings the first to the front; one writer.
-- First launch with no data folder, or one the person can't write to → say so, offer another folder.
-- The app is closed in the middle of a save → nothing half-written (SQLite transactions) — test by killing the process.
-- Corporate or antivirus software blocks the local server → a plain message, not a blank window.
-- Screen sizes: a 13" laptop and a large monitor; window resized very small.
+**The Electron app [7b]** (first slice 2026-10-05; status per case — [desktop-app.md](desktop-app.md))
+- The local port is already taken → pick another, never fail to open. *Built: the app asks the system for a free port each launch.*
+- Two copies of the app opened at once → the second brings the first to the front; one writer. *Built (one copy per data folder); not tested.*
+- First launch with no data folder, or one the person can't write to → say so, offer another folder. *Built: a missing folder is created (tested); an unwritable one gets a plain message and the app stops — offering another folder waits for the data-folder setting. Not tested.*
+- The app is closed in the middle of a save → nothing half-written (SQLite transactions) — test by killing the process. *Not tested.*
+- Corporate or antivirus software blocks the local server → a plain message, not a blank window. *Built: a server that doesn't answer in 30 s, or stops, gets a message naming the log file. Not tested.*
+- Screen sizes: a 13" laptop and a large monitor; window resized very small. *A minimum window size (720 × 520) is set; not tested.*
+- A menu item clicked while the first page is still loading → the app keeps going. *Fixed and tested (found 2026-10-05: it used to close the app).*
+- A model key in the environment the app was started from → never reaches the app's server. *Tested.*
 
 **Backup, restore, new computer [7c]**
 - Restore a backup older than the app's current database version → upgrade it, then restore.

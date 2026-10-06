@@ -22,6 +22,9 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # Stops the Prisma CLI reporting to checkpoint.prisma.io — `npm ci` runs it too, outside
+      # the npm scripts that set this (scripts/prisma.mjs says what it would send).
+      CHECKPOINT_DISABLE: "1"
       # Prisma needs a datasource URL for `next build`. SQLite makes the file on first use; the
       # database round-trip test migrates its own throwaway file in the temp folder.
       DATABASE_URL: file:./ci.db
@@ -37,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Typecheck
         run: npm run typecheck
@@ -60,6 +63,7 @@ jobs:
     timeout-minutes: 20
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      CHECKPOINT_DISABLE: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -72,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium

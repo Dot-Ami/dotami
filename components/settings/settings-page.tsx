@@ -210,7 +210,11 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <a href={NEXT_TELEMETRY_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
               nextjs.org/telemetry
             </a>
-            , read 2026-10-05). <Code>npx next telemetry disable</Code> turns it off.
+            , read 2026-10-05). <Code>npx next telemetry disable</Code> turns it off. The Prisma
+            database tool reports the same kind of counts to Prisma each time it runs; the
+            project&apos;s own scripts switch that off, but installing with <Code>npm ci</Code> runs it
+            once on its own — set <Code>CHECKPOINT_DISABLE=1</Code> in your environment to stop that
+            too.
           </p>
         </>
       );

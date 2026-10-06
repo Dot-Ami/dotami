@@ -1,4 +1,6 @@
 .next
+# desktop app build (desktop/build.mjs)
+.next-desktop
 node_modules
 dist
 coverage

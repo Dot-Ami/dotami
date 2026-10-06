@@ -11,7 +11,8 @@ for (const f of [dbFile, `${dbFile}-journal`]) {
   if (existsSync(f)) rmSync(f);
 }
 
-const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL ?? "file:./e2e.db" };
+// CHECKPOINT_DISABLE: the Prisma CLI's usage check-in stays off (scripts/prisma.mjs says why).
+const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL ?? "file:./e2e.db", CHECKPOINT_DISABLE: "1" };
 const run = (script, args) =>
   execFileSync(process.execPath, [path.join(root, "node_modules", ...script), ...args], {
     env,

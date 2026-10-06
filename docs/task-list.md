@@ -22,11 +22,14 @@ content and the project itself run alongside everything.
 ## 7 — The desktop app (one download, everything on your computer)
 
 - ✅ **[7a] SQLite database.** One file, no database server (#60).
-- ⬜ **[7b] The Electron app** — the same screens in their own window.
-  - [ ] Build Next.js as a self-contained server the app can start
-  - [ ] Electron starts it on a private local port and opens a window on it
-  - [ ] The database file in the user's own app folder; created and migrated on first launch
-  - [ ] App menu: about, quit, open data folder
+- 🔄 **[7b] The Electron app** — the same screens in their own window
+  ([how it runs](architecture/desktop-app.md); `npm run desktop:build && npm run desktop`).
+  - [x] Build Next.js as a self-contained server the app can start
+  - [x] Electron starts it on a private local port and opens a window on it
+  - [x] The database file in the user's own app folder; created and migrated on first launch
+  - [x] App menu: about, quit, open data folder
+  - [x] A test: start → describe a venture → close → start again → it's still there
+  - [ ] An installer you double-click (packaging, with the database tools inside)
   - [ ] A Windows build from CI (Mac and Linux after)
 - ⬜ **[7c] Backup, restore, moving to a new computer.**
   - [ ] *Back up* copies the database file; optional passphrase encryption
