@@ -5,9 +5,10 @@
  *
  * The point of the list is that it can't quietly go stale. tests/privacy-inventory.spec.ts fails
  * when prisma/schema.prisma gains a model, or any code under app/, components/ or lib/ starts
- * using a browser-storage key, that isn't listed here. So a new store (the Lens's conversation,
- * a settings table, a remembered file layout) has to say what it holds and how it is removed
- * before it can merge — and the page then shows it without anyone remembering to.
+ * using a browser-storage key, or any code (desktop/ included) starts reaching the network, in a
+ * way that isn't listed here. So a new store (the Lens's conversation, a settings table, a
+ * remembered file layout) or a new request out has to say what it holds or sends, and how it is
+ * removed, before it can merge — and the page then shows it without anyone remembering to.
  *
  * Every string below is read by a person, so it is plain English: no table names in the
  * sentences, no story codes. `model` and `key` are the exact technical names the test matches.
@@ -49,6 +50,28 @@ export interface FolderEntry {
   writtenBy: { file: string; mentions: string };
 }
 
+/**
+ * A place in the code that can reach the network, and why it is allowed. For developers: the page
+ * never shows these. tests/privacy-inventory.spec.ts reads app/, components/, lib/ and desktop/ for
+ * every call whose address isn't a literal "/…" path on DotAmi's own server (fetch, XMLHttpRequest,
+ * sendBeacon, WebSocket, EventSource, node's http/https/net, and the import of a library that makes
+ * requests), and fails on any that isn't listed — on the entry it belongs to, or in LOCAL_REQUESTS.
+ * It also fails on a listed call that has gone, so the list can't outlive the code.
+ */
+export interface AllowedCall {
+  /** The file, relative to the repo. */
+  file: string;
+  /** The call as the scan names it (networkCalls in tests/helpers/source-scan.ts): `fetch(url`, `package "electron-updater"`. */
+  call: string;
+  /** Why this call is fine, for the next developer. */
+  why: string;
+  /**
+   * Set when `call` is a fetch inside a helper that other code calls with the address: the scan then
+   * reads every call of that helper as if it were a fetch, so the address can't hide behind it.
+   */
+  wrapper?: string;
+}
+
 /** One way something can leave this computer. */
 export interface SentElsewhereEntry {
   id: "intake-sentence" | "update-check" | "files-you-save";
@@ -58,6 +81,8 @@ export interface SentElsewhereEntry {
   what: string;
   /** Whether DotAmi can take it back afterwards. */
   canTakeBack: string;
+  /** The code that does it (none when nothing is requested over the network). Not shown on the page. */
+  calls: readonly AllowedCall[];
 }
 
 /**
@@ -69,7 +94,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "User",
     name: "Placeholder account",
     holds:
-      "One record that owns your ideas and statements, so DotAmi can tell whose they are. There is no sign-in; the name and address on it are placeholders DotAmi makes up, not yours.",
+      "One record that owns your ideas and statements, so DotAmi can tell whose they are. There is no sign-in; the name and address on it are placeholders DotAmi makes up, not yours. A copy you host yourself can set its own address (STUB_USER_EMAIL); either way it is only a label DotAmi uses to find this one record.",
     removedBy: "Nothing in the app removes it. Deleting the data file removes it along with everything else.",
   },
   {
@@ -92,7 +117,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "VentureLink",
     name: "Links between ideas",
     holds: "Which of your ideas relate to which, the kind of link, and your reason for it in your own words.",
-    removedBy: "Unlink, on an idea's card on the Ideas page.",
+    removedBy: "The “remove” button beside a link, under Cross-references on an idea's card on the Ideas page.",
   },
   {
     model: "ScenarioState",
@@ -154,7 +179,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library prints its own error report to the same place, and for a request DotAmi built wrongly that report can quote the values in it.",
+      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
   },
 ];
@@ -168,6 +193,13 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
     what: "The sentence, to Anthropic, to be read.",
     canTakeBack:
       "No. DotAmi can't take it back once sent; Anthropic's own page says what it keeps and for how long.",
+    calls: [
+      {
+        file: "app/api/intent/parse/route.ts",
+        call: 'package "@anthropic-ai/sdk"',
+        why: "The intake's sentence reader, the only code that talks to Anthropic. It runs only when ANTHROPIC_API_KEY is set.",
+      },
+    ],
   },
   {
     id: "update-check",
@@ -175,6 +207,13 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
     when: "Each time the desktop app starts.",
     what: "A request to GitHub, which sees this computer's internet address and which version it runs. None of your data.",
     canTakeBack: "There is nothing of yours to take back.",
+    calls: [
+      {
+        file: "desktop/main.mjs",
+        call: 'package "electron-updater"',
+        why: "The installed app's update check: asks GitHub Releases for a newer version at start and from Help → Check for updates.",
+      },
+    ],
   },
   {
     id: "files-you-save",
@@ -182,5 +221,31 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
     when: "Whenever you save a backup or download a playbook.",
     what: "A copy of what you chose to save, in the place you chose.",
     canTakeBack: "DotAmi doesn't know where those files are, so it can't remove them.",
+    // Saving writes a file where the person picks; nothing is requested over the network.
+    calls: [],
+  },
+];
+
+/**
+ * Requests that never leave this computer: DotAmi's pages and its desktop window talking to
+ * DotAmi's own server. They belong to none of the entries above, but the scan can't tell a local
+ * address held in a variable from a remote one, so each is listed here with the reason it is local.
+ */
+export const LOCAL_REQUESTS: readonly AllowedCall[] = [
+  {
+    file: "components/ventures/agree-prompt.tsx",
+    call: "fetch(url",
+    why: "postJson, the one helper that sends the figures routes their JSON. The address is its parameter, so the scan also reads every call of postJson and requires a literal /api/… path in each.",
+    wrapper: "postJson",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: "fetch(origin",
+    why: "Waits for DotAmi's own server to start answering. origin is http://127.0.0.1:<port>, built from a free port a few lines earlier in the same file.",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: 'package "node:net"',
+    why: "Used only for net.createServer, to ask the system for a free port on 127.0.0.1 for DotAmi's own server. It makes no outgoing connection; a net.connect would be listed on its own line.",
   },
 ];

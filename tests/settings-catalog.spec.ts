@@ -95,3 +95,27 @@ describe("settings catalog shape", () => {
     }
   });
 });
+
+describe("the settings page's Your figures line", () => {
+  // The text the page shows under "Your figures", read from the component (the repo's way of
+  // pinning wording: there is no render test setup, see tests/accessibility-contract.spec.ts).
+  const page = readFileSync(new URL("../components/settings/settings-page.tsx", import.meta.url), "utf8");
+  const start = page.indexOf('case "figures":');
+  const figuresLine = page.slice(start, page.indexOf('case "lens":'));
+
+  it("finds the line (a guard against the slice silently being empty)", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(figuresLine).toContain("<p>");
+  });
+
+  it("no longer says the figures store is yet to come, or names the story that built it", () => {
+    expect(figuresLine).not.toMatch(/no confirmed figures/i);
+    expect(figuresLine).not.toMatch(/arrives with/i);
+    expect(figuresLine).not.toMatch(/\[\d+[a-z]?\]/);
+  });
+
+  it("points to the page that lists every figure", () => {
+    expect(figuresLine).toContain('href="/your-data"');
+    expect(figuresLine).toContain("What DotAmi knows about you");
+  });
+});

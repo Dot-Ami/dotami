@@ -29,7 +29,10 @@ Each group:
      (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu); from source: copying the
      file is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,
      BitLocker on Pro — Microsoft's page, read 2026-10-06; FileVault on a Mac).
-   - Your figures: no confirmed figures are kept yet.
+   - Your figures: DotAmi keeps the totals the person agrees to, each with its source and the day
+     agreed; one taken back stops counting but stays in the data file; the intake's revenue
+     estimates are separate. Links to `/your-data` ("What DotAmi knows about you"), which lists every
+     figure ([8a], [8d]).
    - The Lens: no model chosen; no outside agent can connect.
    - The map: the tax year the catalogs cover.
    - Privacy: what leaves the computer — the sentence typed to describe a venture goes to
@@ -51,7 +54,7 @@ Each group:
 | Jump links | in-page anchors to each group | — |
 | **Copy path** | copies the data file path; says "Copied", or "Copy failed — select it instead" when the clipboard is refused | — |
 | Public task list / Part 4 / nextjs.org links | open in a new tab | — |
-| **What DotAmi knows about you** (Privacy group) | opens `/your-data` in the same tab | — |
+| **What DotAmi knows about you** (Privacy group, and again in Your figures) | opens `/your-data` in the same tab | — |
 
 ## What it deliberately does not do
 

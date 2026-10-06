@@ -184,8 +184,13 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
     case "figures":
       return (
         <p>
-          DotAmi keeps no confirmed figures yet — only what you typed on the intake, such as your
-          first-year revenue estimate. The figures store arrives with [8a].
+          DotAmi keeps the totals you agree to, each with where it came from and the day you agreed.
+          One you take back stops counting but stays in your data file. Your revenue estimates from the
+          intake are kept separately. Every figure, and where it came from, is listed on{" "}
+          <Link href="/your-data" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+            What DotAmi knows about you
+          </Link>
+          .
         </p>
       );
     case "lens":

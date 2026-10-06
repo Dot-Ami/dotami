@@ -2,9 +2,16 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { FOLDERS, SENT_ELSEWHERE, TABLES, WINDOW_STORAGE } from "@/lib/privacy/inventory";
+import {
+  FOLDERS,
+  LOCAL_REQUESTS,
+  SENT_ELSEWHERE,
+  TABLES,
+  WINDOW_STORAGE,
+  type AllowedCall,
+} from "@/lib/privacy/inventory";
 
-import { readSource, simplify, sourceFiles } from "./helpers/source-scan";
+import { JS_FILES, networkCalls, readSource, simplify, sourceFiles } from "./helpers/source-scan";
 
 /**
  * The /your-data page is drawn from lib/privacy/inventory.ts, so the page is only as honest as
@@ -45,6 +52,17 @@ describe("the privacy inventory lists every database table", () => {
       expect(t.holds.trim(), `${t.model} needs to say what it holds`).not.toBe("");
       expect(t.removedBy.trim(), `${t.model} needs to say what removes it ("nothing" is an answer)`).not.toBe("");
     }
+  });
+
+  it("calls the button that removes a link by the label it really has", () => {
+    const label = TABLES.find((t) => t.model === "VentureLink")!.removedBy.match(/“([^”]+)”/)?.[1];
+    expect(label, "the VentureLink entry should quote the button's label in “curly quotes”").toBeDefined();
+    expect(readSource("components/ventures/ventures-page.tsx")).toMatch(new RegExp(`>\\s*${label}\\s*</button>`));
+  });
+
+  it("says the placeholder account's address can be set, by the setting the code really reads", () => {
+    expect(TABLES.find((t) => t.model === "User")!.holds).toContain("STUB_USER_EMAIL");
+    expect(readSource("lib/person/statements.ts")).toContain("process.env.STUB_USER_EMAIL");
   });
 });
 
@@ -140,28 +158,75 @@ describe("the privacy inventory lists what the desktop app writes beside the dat
   });
 });
 
+// Every file that can reach the network: the app's own code, the desktop app's (it runs the update
+// check and starts the server), and the two root files that configure the server.
+const NETWORK_FILES = [...files, ...sourceFiles(["desktop"], JS_FILES), "middleware.ts", "next.config.mjs"];
+const networkSources = NETWORK_FILES.map((file) => ({ file, code: readSource(file) }));
+
+// The calls the inventory explains: each entry's own, and the ones that stay on this computer.
+const ALLOWED: readonly AllowedCall[] = [...SENT_ELSEWHERE.flatMap((s) => s.calls), ...LOCAL_REQUESTS];
+// Helper functions that wrap fetch: a call of one is judged like a fetch.
+const WRAPPERS = ALLOWED.flatMap((c) => (c.wrapper ? [c.wrapper] : []));
+
+/** `list` without one copy of each of `remove`'s items (the same call can be listed, or made, twice). */
+function without(list: string[], remove: string[]): string[] {
+  const rest = [...remove];
+  return list.filter((item) => {
+    const at = rest.indexOf(item);
+    if (at === -1) return true;
+    rest.splice(at, 1);
+    return false;
+  });
+}
+
+/**
+ * Every way the given files can reach the network other than a literal "/…" path on DotAmi's own
+ * server, as "file: call": `unlisted` are the ones the allow-list doesn't name (a failure),
+ * `stale` are allow-list entries that match nothing (also a failure: the list outlived the code).
+ */
+function requestsOutside(sources: { file: string; code: string }[], allowed: readonly AllowedCall[]) {
+  const found = sources.flatMap(({ file, code }) =>
+    networkCalls(code, WRAPPERS)
+      .filter((c) => !c.relative)
+      .map((c) => `${file}: ${c.call}`),
+  );
+  const listed = allowed.map((a) => `${a.file}: ${a.call}`);
+  return { unlisted: without(found, listed), stale: without(listed, found) };
+}
+
 describe("the privacy inventory lists what can leave this computer", () => {
   // Where the app's own code talks to anything outside this computer. Each place must be one the
   // inventory describes, so a new request out can't be added without the page saying so.
-  const sdkUsers: string[] = [];
-  const outgoing: string[] = [];
-  for (const f of files) {
-    const code = simplify(readSource(f), true);
-    if (/from\s+["']@anthropic-ai\/sdk["']/.test(code)) sdkUsers.push(f);
-    for (const m of code.matchAll(
-      /\bfetch\s*\(\s*["'`]https?:|from\s+["'](?:node:)?https?["']|\bXMLHttpRequest\b|\bnew\s+WebSocket\b|\bnew\s+EventSource\b|\bsendBeacon\b/g,
-    )) {
-      outgoing.push(`${f}: ${m[0]}`);
-    }
-  }
+  const sdkUsers = files.filter((f) => /from\s+["']@anthropic-ai\/sdk["']/.test(simplify(readSource(f), true)));
+  const found = requestsOutside(networkSources, ALLOWED);
 
   it("knows the only code that reaches Anthropic: the intake's sentence reader", () => {
     expect(sdkUsers).toEqual(["app/api/intent/parse/route.ts"]);
     expect(SENT_ELSEWHERE.map((s) => s.id)).toContain("intake-sentence");
   });
 
-  it("finds no other request leaving this computer from the app's own code", () => {
-    expect(outgoing, "describe it in SENT_ELSEWHERE (lib/privacy/inventory.ts), then allow it here").toEqual([]);
+  it("sees the requests the app makes today (a guard against the scan silently finding nothing)", () => {
+    const calls = networkSources.flatMap(({ file, code }) => networkCalls(code, WRAPPERS).map((c) => ({ file, ...c })));
+    expect(calls.filter((c) => c.relative).length).toBeGreaterThanOrEqual(15);
+    expect(calls.filter((c) => !c.relative).map((c) => `${c.file}: ${c.call}`)).toEqual(
+      expect.arrayContaining(ALLOWED.map((a) => `${a.file}: ${a.call}`)),
+    );
+    expect(networkSources.map((s) => s.file)).toEqual(expect.arrayContaining(["desktop/main.mjs", "middleware.ts"]));
+  });
+
+  it("finds no request leaving this computer that the inventory doesn't list", () => {
+    expect(
+      found.unlisted,
+      "describe it on an entry of SENT_ELSEWHERE (or in LOCAL_REQUESTS if it stays on this computer) in lib/privacy/inventory.ts",
+    ).toEqual([]);
+  });
+
+  it("lists no request the code no longer makes", () => {
+    expect(found.stale, "remove it from lib/privacy/inventory.ts").toEqual([]);
+  });
+
+  it("says why each listed call is allowed", () => {
+    for (const a of ALLOWED) expect(a.why.trim(), `${a.file}: ${a.call}`).not.toBe("");
   });
 
   it("still has the update check it describes (the installed app asks GitHub at start)", () => {
@@ -177,5 +242,73 @@ describe("the privacy inventory lists what can leave this computer", () => {
       expect(s.what.trim()).not.toBe("");
       expect(s.canTakeBack.trim()).not.toBe("");
     }
+  });
+});
+
+describe("the scan for requests leaving this computer can't be got round", () => {
+  const PROBE_FILE = "components/probe.tsx";
+  const outside = (code: string, file = PROBE_FILE) => requestsOutside([{ file, code }], ALLOWED).unlisted;
+
+  // Each is code that sends something somewhere the scan can't see to be a literal path on DotAmi's
+  // own server, and what the scan must call it. String.raw keeps the backslash in the fourth.
+  const PROBES: [string, string, string][] = [
+    [
+      "an address held in a constant (a telemetry call)",
+      `const TELEMETRY = "https://example.invalid/collect";\nexport async function report(data: unknown) {\n  await fetch(TELEMETRY, { method: "POST", body: JSON.stringify(data) });\n}`,
+      "fetch(TELEMETRY",
+    ],
+    ["an absolute URL", `await fetch("https://example.invalid/x");`, 'fetch("https://example.invalid/x"'],
+    ["a protocol-relative address (another host)", `await fetch("//example.invalid/x");`, 'fetch("//example.invalid/x"'],
+    ["a slash-backslash address (another host)", String.raw`await fetch("/\example.invalid/x");`, String.raw`fetch("/\example.invalid/x"`],
+    ["a template that could put a host after the slash", "await fetch(`/${where}`);", "fetch(`/${where}`"],
+    [
+      "XMLHttpRequest.open",
+      `const request = new XMLHttpRequest();\nrequest.open("POST", TELEMETRY);`,
+      "XMLHttpRequest.open(TELEMETRY",
+    ],
+    ["navigator.sendBeacon", `navigator.sendBeacon(TELEMETRY, payload);`, "sendBeacon(TELEMETRY"],
+    ["a WebSocket", `const socket = new WebSocket(TELEMETRY);`, "new WebSocket(TELEMETRY"],
+    ["an EventSource", `const feed = new EventSource(TELEMETRY);`, "new EventSource(TELEMETRY"],
+    ["node's https.get", `import https from "node:https";\nhttps.get(TELEMETRY, () => {});`, "https.get(TELEMETRY"],
+    ["importing node's https at all", `import { request } from "https";`, 'package "https"'],
+    ["node's net.connect", `import net from "node:net";\nnet.connect(443, "example.invalid");`, "net.connect(443"],
+    ["a library that makes requests", `import axios from "axios";`, 'package "axios"'],
+    ["a library required rather than imported", `const got = require("got");`, 'package "got"'],
+    ["a library loaded on demand", `const { default: ky } = await import("ky");`, 'package "ky"'],
+    ["fetch handed on under another name", `const send = fetch;\nawait send(TELEMETRY);`, "fetch (used as a value)"],
+    ["fetch looked up by name", `await globalThis["fetch"](TELEMETRY);`, 'fetch (by name: ["fetch"])'],
+    ["a call through the wrapper around fetch", `await postJson("https://example.invalid/x", {});`, 'postJson("https://example.invalid/x"'],
+  ];
+
+  it.each(PROBES)("refuses %s", (_what, code, call) => {
+    expect(outside(code)).toContain(`${PROBE_FILE}: ${call}`);
+  });
+
+  it("refuses the telemetry probe inside the real files too (the same scan the real check runs)", () => {
+    const [, probe] = PROBES[0];
+    const before = requestsOutside(networkSources, ALLOWED).unlisted;
+    const after = requestsOutside([...networkSources, { file: PROBE_FILE, code: probe }], ALLOWED).unlisted;
+    expect(after).toEqual([...before, `${PROBE_FILE}: fetch(TELEMETRY`]);
+  });
+
+  it("lets through a literal path on DotAmi's own server", () => {
+    expect(outside(`await fetch("/api/ventures", { cache: "no-store" });`)).toEqual([]);
+    expect(outside("await fetch(`/api/ventures/${id}/links?linkId=${encodeURIComponent(linkId)}`);")).toEqual([]);
+    expect(outside(`const request = new XMLHttpRequest();\nrequest.open("GET", "/api/readout");`)).toEqual([]);
+    expect(outside(`await postJson("/api/figures/agree", { ventureId });`)).toEqual([]);
+  });
+
+  it("is not fooled by the words in a comment or a message", () => {
+    expect(outside(`// await fetch(TELEMETRY);\nconst note = "could not fetch(data) from https://example.invalid";`)).toEqual([]);
+    expect(outside(`/* new WebSocket(TELEMETRY) */ export const label = "sendBeacon(x)";`)).toEqual([]);
+    // window.open is a link the person clicks, not a request DotAmi makes.
+    expect(outside(`window.open("https://example.invalid/", "_blank");`)).toEqual([]);
+  });
+
+  it("allows a listed call only in the file it is listed for, and only as often as it is listed", () => {
+    const listed = LOCAL_REQUESTS.find((c) => c.call === "fetch(url")!;
+    expect(outside("await fetch(url, init);", listed.file)).toEqual([]);
+    expect(outside("await fetch(url, init);")).toEqual([`${PROBE_FILE}: fetch(url`]);
+    expect(outside("await fetch(url, init);\nawait fetch(url, other);", listed.file)).toEqual([`${listed.file}: fetch(url`]);
   });
 });

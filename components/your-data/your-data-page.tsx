@@ -137,7 +137,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                   <p>
                     This page can&apos;t remove anything. What you can do today: on an idea&apos;s card, retract
                     an agreed figure or discard a waiting one (it stops counting, and its amount stays in the file,
-                    listed above), and unlink two ideas.
+                    listed above), and remove a link between two ideas.
                   </p>
                   <p>
                     Nothing in DotAmi erases a figure, a statement or an idea yet. The only way to remove everything

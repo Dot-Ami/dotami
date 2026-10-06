@@ -53,9 +53,12 @@ says where it is going.
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
-  through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table and every
-  browser-storage key DotAmi uses is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts`
-  fails until a new one is added there, and `/your-data` is drawn from that list.
+  through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
+  browser-storage key and every way the code can reach the network (other than a literal `/api/…`
+  path on DotAmi's own server) is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts`
+  fails until a new one is added there, and `/your-data` is drawn from that list. Nothing may write an
+  error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
+  report is switched off in `lib/prisma.ts` because it quotes the values it was given.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 

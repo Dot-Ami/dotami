@@ -48,7 +48,7 @@ jump links, then five sections in this order:
    address and the version), and files the person saves themselves (DotAmi doesn't know where
    they are). Each says when, what, and whether it can be taken back.
 5. **Taking things out** — what the person can do today (retract an agreed figure, discard a
-   waiting one, unlink two ideas) and what nothing in DotAmi can do yet (erase a figure, a
+   waiting one, remove a link between two ideas) and what nothing in DotAmi can do yet (erase a figure, a
    statement or an idea).
 
 When the data file can't be read the page says so in one amber line and shows nothing else, and
@@ -80,11 +80,13 @@ fails when `prisma/schema.prisma` gains a model, or any code under `app/`, `comp
 uses a browser-storage key (or a new kind of storage, or a new request out of the computer), that
 the inventory doesn't list. `tests/privacy-holdings.spec.ts` checks the reader's counts, grouping
 and dates on a throwaway database. `tests/error-logging.spec.ts` checks the log claim in section 3
-for DotAmi's own routes.
+for DotAmi's own routes, and `tests/prisma-log.spec.ts` checks it for the database library: it runs a
+write built wrongly on purpose, in its own process, and fails if anything on stdout or stderr
+(which the desktop app copies into the log) holds the values the write carried.
 
-One gap the page words around instead of hiding: the database library prints its own error report
-to the same log, and for a request DotAmi built wrongly that report can quote the values in it.
-The log entry says so.
+The database library's own error report can quote those values, so `lib/prisma.ts` switches it off
+and prints one fixed line naming only the part of the database code that reported the error. The log
+entry says so.
 
 ## Covered by
 
