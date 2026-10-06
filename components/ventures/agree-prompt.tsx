@@ -285,7 +285,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
         aria-describedby={introId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg border border-rule bg-ink2 p-5 outline-none"
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg border border-rule bg-ink2 p-5 outline-hidden"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -302,7 +302,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
         </div>
 
         {error ? (
-          <p role="alert" className="mt-3 rounded border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
             {error}
           </p>
         ) : null}
@@ -327,7 +327,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
                     const isFirst = !firstFieldAssigned;
                     firstFieldAssigned = true;
                     return (
-                      <li key={row.id} className="rounded border border-rule-soft bg-ink px-3 py-2">
+                      <li key={row.id} className="rounded-sm border border-rule-soft bg-ink px-3 py-2">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
                           <span className="min-w-0 flex-1 text-paper">
                             {FIGURE_KIND_LABELS[row.kind]} <span className="text-stone">· {period}</span>
@@ -353,7 +353,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
                             }}
                             aria-invalid={problem ? true : undefined}
                             aria-describedby={problem ? `${inputId}-problem` : undefined}
-                            className="w-32 rounded border border-rule bg-ink2 px-2 py-1 text-right font-mono text-sm text-paper outline-none focus:border-maple-soft"
+                            className="w-32 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-sm text-paper outline-hidden focus:border-maple-soft"
                           />
                           <span className="font-mono text-[11px] text-stone">{row.currency}</span>
                           <button

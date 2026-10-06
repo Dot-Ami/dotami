@@ -138,7 +138,7 @@ export function PlaybookExportPanel({ scenario, onClose }: PlaybookExportPanelPr
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         {loading ? <p className="text-sm text-stone">Building playbook…</p> : null}
         {markdown ? (
-          <pre className="whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-stone">
+          <pre className="whitespace-pre-wrap wrap-break-word font-sans text-xs leading-relaxed text-stone">
             {markdown}
           </pre>
         ) : !loading && !error ? (

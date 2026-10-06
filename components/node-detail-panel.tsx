@@ -162,7 +162,7 @@ function ItemRow({ item }: { item: UnlockItem }) {
       >
         <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${STATE_DOT[item.state]}`} />
         <span className="min-w-0 flex-1">
-          <span className="mr-2 rounded border border-rule px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider text-stone">
+          <span className="mr-2 rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider text-stone">
             {item.typeChip}
           </span>
           <span className="text-sm font-semibold text-paper">{item.title}</span>
@@ -198,13 +198,13 @@ function ItemRow({ item }: { item: UnlockItem }) {
             <p className="font-mono text-[10px] text-amber">Time-boxed · in use before {item.expires.slice(0, 4)}</p>
           ) : null}
           {item.fork ? (
-            <div className="rounded border border-amber/40 bg-amber/5 p-2.5">
+            <div className="rounded-sm border border-amber/40 bg-amber/5 p-2.5">
               <p className="font-mono text-[9px] uppercase tracking-wider text-amber">{item.fork.label}</p>
               <p className="mt-1">{item.fork.note}</p>
             </div>
           ) : null}
           {item.risk ? (
-            <div className="rounded border border-maple-soft bg-maple/5 p-2.5">
+            <div className="rounded-sm border border-maple-soft bg-maple/5 p-2.5">
               <p className="font-mono text-[9px] uppercase tracking-wider text-maple">
                 {item.risk.level.replace("-", " ")}
                 {item.risk.gaar ? " · GAAR" : ""}
