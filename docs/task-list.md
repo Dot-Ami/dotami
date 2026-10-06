@@ -29,15 +29,18 @@ content and the project itself run alongside everything.
   - [x] The database file in the user's own app folder; created and migrated on first launch
   - [x] App menu: about, quit, open data folder
   - [x] A test: start → describe a venture → close → start again → it's still there
-  - [ ] An installer you double-click (packaging, with the database tools inside)
-  - [ ] A Windows build from CI (Mac and Linux after)
+  - [x] An installer you double-click (`npm run desktop:installer`; the same test runs on the packaged app)
+  - [x] A Windows build from CI, with the desktop test on the packaged app (Mac and Linux after)
 - ⬜ **[7c] Backup, restore, moving to a new computer.**
   - [ ] *Back up* copies the database file; optional passphrase encryption
   - [ ] *Restore* checks a backup before replacing anything
   - [ ] Setup suggests turning on disk encryption
-- ⬜ **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now).
-  - [ ] An installer per operating system on each release
-  - [ ] The app checks for and installs updates
+- 🔄 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
+  [how to release](architecture/desktop-app.md#releasing-an-update)).
+  - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after)
+  - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
+  - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
+  - [ ] Proven end to end: a published release reaches an installed app
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who

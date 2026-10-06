@@ -33,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -69,7 +69,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -83,6 +83,35 @@ jobs:
 
       - name: Browser tests
         run: npm run test:browser
+
+  # The desktop app packaged for Windows and driven like a person drives it (e2e-desktop/):
+  # start on an empty data folder → describe a venture → close → start again → still there.
+  # The same packaging the release workflow uses, minus the installer and the upload.
+  desktop:
+    name: Desktop app (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      CHECKPOINT_DISABLE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Package the app and test it
+        run: npm run desktop:package && npx playwright test -c playwright.desktop.config.ts
+        env:
+          DOTAMI_DESKTOP_EXE: ${{ github.workspace }}\dist-desktop\out\win-unpacked\DotAmi.exe
 
   # Fails a pull request that adds or upgrades to a dependency with a known high/critical
   # vulnerability, or one under a license the project cannot ship. Alerts on main are

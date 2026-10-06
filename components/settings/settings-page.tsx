@@ -182,16 +182,13 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           English.
         </p>
       );
-    case "privacy":
+    case "privacy": {
+      const sends = today.intake.sentTo === "anthropic" || today.updates === "github";
       return (
         <>
-          {today.intake.sentTo === "anthropic" ? (
+          {sends ? (
             <p>
-              <strong>One thing leaves this computer:</strong> the sentence you type to describe a
-              venture is sent to Anthropic to be read (model <Code>{today.intake.model}</Code>),
-              because a model key (<Code>ANTHROPIC_API_KEY</Code>) is set for this copy, usually in
-              its <Code>.env</Code> file. Empty the key and it&apos;s read here, by keyword matching,
-              instead.
+              <strong>What leaves this computer:</strong>
             </p>
           ) : (
             <p>
@@ -199,10 +196,27 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
               describe a venture is read here, by keyword matching — no model key is set.
             </p>
           )}
+          {today.intake.sentTo === "anthropic" ? (
+            <p>
+              The sentence you type to describe a venture is sent to Anthropic to be read (model{" "}
+              <Code>{today.intake.model}</Code>), because a model key (<Code>ANTHROPIC_API_KEY</Code>)
+              is set for this copy, usually in its <Code>.env</Code> file. Empty the key and it&apos;s
+              read here, by keyword matching, instead.
+            </p>
+          ) : null}
+          {today.updates === "github" ? (
+            <p>
+              When the app starts, it asks GitHub whether there&apos;s a newer version, and downloads
+              it if there is. GitHub sees this computer&apos;s internet address and which version it
+              runs — none of your data.
+              {today.intake.sentTo === "anthropic" ? null : " The sentence you type to describe a venture is read here, by keyword matching."}
+            </p>
+          ) : null}
           <p className="text-paper-dim">
             DotAmi has no server of its own and collects no usage data. Links to official sources
             and to GitHub open those sites only when you click them.
           </p>
+          {today.updates === "github" ? null : (
           <p className="text-paper-dim">
             If you run DotAmi from its source code: the Next.js framework it is built on sends
             Vercel anonymous counts when <Code>npm run dev</Code> or <Code>npm run build</Code> runs
@@ -216,13 +230,21 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             once on its own — set <Code>CHECKPOINT_DISABLE=1</Code> in your environment to stop that
             too.
           </p>
+          )}
         </>
       );
+    }
     case "updates":
-      return (
+      return today.updates === "github" ? (
         <p>
-          This is version <Code>{today.version}</Code>. DotAmi doesn&apos;t update itself yet: new
-          versions come from GitHub. Automatic updates arrive with [7d].
+          This is version <Code>{today.version}</Code>. Each time it starts, the app checks GitHub
+          for a newer version and downloads it, then asks before installing it — nothing installs
+          without your click. Help → Check for updates does it now.
+        </p>
+      ) : (
+        <p>
+          This is version <Code>{today.version}</Code>, run from DotAmi&apos;s source code: it updates
+          with git, not by itself. The installed app checks GitHub for new versions.
         </p>
       );
   }
