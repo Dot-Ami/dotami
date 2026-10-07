@@ -59,8 +59,8 @@ function SourceRow({ source }: { source: HeldSource }) {
       <details className="group">
         <summary className="cursor-pointer list-none px-4 py-3 [&::-webkit-details-marker]:hidden">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h3 className="min-w-0 break-words font-semibold text-paper">{source.sourceLabel}</h3>
-            <span className="rounded border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
+            <h3 className="min-w-0 wrap-break-word font-semibold text-paper">{source.sourceLabel}</h3>
+            <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
               {SOURCE_KIND_WORDS[source.sourceKind] ?? source.sourceKind}
             </span>
             <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-stone-dim group-open:hidden">
@@ -94,7 +94,7 @@ function FigureRow({ figure, showIdea }: { figure: HeldFigure; showIdea: boolean
         <span className={counting ? "font-semibold text-paper" : "font-semibold"}>{kindWords(figure.kind)}</span>
         <span>{periodWords(figure.periodStart, figure.periodEnd)}</span>
         <span className="font-mono">{amountWords(figure.amountCents, figure.currency)}</span>
-        <span className="rounded border border-rule px-1.5 py-px font-mono text-[9.5px] uppercase tracking-wider">
+        <span className="rounded-sm border border-rule px-1.5 py-px font-mono text-[9.5px] uppercase tracking-wider">
           {STATUS_WORDS[figure.status] ?? figure.status}
         </span>
         {figure.editedByPerson ? (

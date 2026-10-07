@@ -144,7 +144,7 @@ entry says so.
 
 ## Covered by
 
-`e2e/your-data.spec.ts` (written; it runs in CI and has not been run anywhere yet): a typed and
+`e2e/your-data.spec.ts` (5 tests; first run locally 2026-10-06, all passing): a typed and
 agreed figure appears under "typed by you" with its agreed day; the response is
 `Cache-Control: no-store`; no amount in any URL; every inventory table and window key is on the page;
 reached from Settings → Privacy; read-only (no form controls, no delete or forget button); no

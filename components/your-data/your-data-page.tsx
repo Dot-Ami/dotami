@@ -177,7 +177,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="break-all rounded bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
+  return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
 }
 
 /** What takes a record out, under the same words as the settings rows: a label, then the sentence. */
@@ -283,7 +283,7 @@ function WindowRow({ entry }: { entry: WindowStorageEntry }) {
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h4 className="font-semibold text-paper">{entry.name}</h4>
-        <span className="rounded border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
+        <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
           {entry.store === "localStorage" ? "Stays until cleared" : "Gone when the window closes"}
         </span>
       </div>
@@ -314,8 +314,8 @@ function SentRow({ facts }: { facts: SentFacts }) {
         <span
           className={
             facts.state === "active"
-              ? "rounded border border-amber/40 px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-amber"
-              : "rounded border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone"
+              ? "rounded-sm border border-amber/40 px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-amber"
+              : "rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone"
           }
         >
           {SENT_STATE_WORDS[facts.state]}

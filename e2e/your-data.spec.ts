@@ -1,9 +1,8 @@
 /**
  * [8d] "What DotAmi knows about you" (/your-data), in a real browser on the production build.
  *
- * Written for CI; not run on the machine that wrote it (another job holds the browser tests'
- * port). Runs after e2e/app.spec.ts in the same throwaway database, so it makes its own figure
- * and statement rather than relying on what the earlier tests left, and asserts only on those.
+ * Runs after e2e/app.spec.ts in the same throwaway database, so it makes its own figure and
+ * statement rather than relying on what the earlier tests left, and asserts only on those.
  */
 import { expect, test, type Page } from "@playwright/test";
 
