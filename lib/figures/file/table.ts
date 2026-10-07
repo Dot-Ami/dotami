@@ -93,8 +93,12 @@ function readsAsAmount(cell: Cell | undefined): boolean {
   return cellToCents(value, "point") !== null || cellToCents(value, "comma") !== null;
 }
 
-/** A row can be the header when it has two or more text cells and none of them is a date or an amount. */
-function looksLikeHeader(row: Cell[]): boolean {
+/**
+ * A row can be the header when it has two or more text cells and none of them is a date or an amount.
+ * Exported for [8c-2] (layout.ts): it is the guard that keeps a data row from being remembered as
+ * column names. Note it looks at text cells only — a number or Date cell is skipped, not refused.
+ */
+export function looksLikeHeader(row: Cell[]): boolean {
   let labels = 0;
   for (const cell of row) {
     if (typeof cell !== "string" || cell.trim() === "") continue;
