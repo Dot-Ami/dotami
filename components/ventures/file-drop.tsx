@@ -25,7 +25,9 @@ import { describePeriod, formatAmount, postJson } from "./agree-prompt";
 
 /**
  * [8c] "Add from a file": reads a spreadsheet inside this window and proposes one total per
- * month. The file's bytes are read in memory and dropped as soon as they are turned into rows;
+ * month. Before anything can be dropped or chosen, the person says where the file is from, every
+ * time; a bank or card file is turned away without being opened (the maintainer's decision, 2026-10-07).
+ * The file's bytes are read in memory and dropped as soon as they are turned into rows;
  * nothing from the file is sent anywhere, kept, or logged. Only the monthly totals leave this
  * component, through /api/figures/propose, and they wait in the agree prompt like every other
  * figure (docs/architecture/figures-privacy-review.md, rules 1-3).
@@ -38,6 +40,8 @@ const FIELD =
   "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
 const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
 const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
+/** The bank-file notice: the same amber look as ALERT, but it is the first thing in the panel, so no top margin. */
+const BANK_NOTICE = "rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
 
 /** Same limits as the screen spec: how far down the column names may be, and the route's cap. */
 const HEADER_ROW_CHOICES = 30;
@@ -47,9 +51,18 @@ const MAX_LABEL_CHARS = 120;
 
 const ACCEPT =
   ".xlsx,.csv,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const ACCOUNTING_LABEL = "Accounting software or a spreadsheet you keep";
+const BANK_LABEL = "A bank or credit card account";
 const READ_FAILED = "DotAmi couldn't read that file. Nothing was kept.";
 
 type Phase = "pick" | "reading" | "ready";
+
+/**
+ * Where the person says the file is from. Asked for every file and never remembered: it lives only
+ * in this component's state, so Cancel, a finished review and "Change" all bring the question back.
+ * Only "accounting" lets a file be read at all.
+ */
+type Origin = "ask" | "accounting" | "bank";
 
 /** Which row holds the column names and which columns hold the dates and amounts (null = not chosen). */
 interface Picks {
@@ -160,9 +173,14 @@ export function FileDrop({
 }) {
   const uid = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   // Bumped for every file picked and when the screen closes, so a slow read can't land on a newer file.
   const readToken = useRef(0);
+  // True from the moment a file is accepted until the question is asked again. The answer covers
+  // ONE file: a ref (not state) so two drops in the same instant can't both slip through.
+  const answerUsed = useRef(false);
 
+  const [origin, setOrigin] = useState<Origin>("ask");
   const [dragging, setDragging] = useState(false);
   const [phase, setPhase] = useState<Phase>("pick");
   const [fileName, setFileName] = useState("");
@@ -191,6 +209,18 @@ export function FileDrop({
     };
   }, []);
 
+  // Keyboard focus follows the screen: the button that was pressed (an answer, Choose a file, Back,
+  // Change) disappears, so focus moves to the first [data-autofocus] element of what replaced it.
+  // Compared with the last screen rather than counted, so the first render (and React's development
+  // double-run of effects) moves nothing.
+  const screen = `${origin}|${phase}|${readError ?? ""}`;
+  const lastScreen = useRef(screen);
+  useEffect(() => {
+    if (lastScreen.current === screen) return;
+    lastScreen.current = screen;
+    panelRef.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+  }, [screen]);
+
   const rows = useMemo(() => sheets[sheetIndex]?.rows ?? [], [sheets, sheetIndex]);
   const nonEmptySheets = useMemo(
     () =>
@@ -212,7 +242,37 @@ export function FileDrop({
     }
   }
 
+  /**
+   * Back to the question, forgetting everything about any file already read. Bumping the token also
+   * drops a read that is still in flight, so a late result can't land on the empty screen.
+   */
+  function askAgain() {
+    readToken.current += 1;
+    answerUsed.current = false;
+    setOrigin("ask");
+    setDragging(false);
+    setPhase("pick");
+    setFileName("");
+    setReadError(null);
+    setProposeError(null);
+    setSheets([]);
+    setSheetIndex(0);
+    setPicks({ headerRow: null, dateColumn: null, amountColumn: null });
+    setGuessed(false);
+    setDateAnswer(null);
+    setStyleAnswer(null);
+    setCurrency("CAD");
+  }
+
   async function openFile(file: File) {
+    // The one gate every read goes through: nothing about the file is touched (not its bytes, not a
+    // sniff, not its name) unless the person said it comes from accounting software or their own
+    // spreadsheet. A bank or card file therefore never reaches the parser.
+    if (origin !== "accounting") return;
+    // And the answer buys one file only: a second file (read, refused or still reading) goes back
+    // to the question, so a bank file can't ride in on an earlier "accounting software" answer.
+    if (answerUsed.current) return;
+    answerUsed.current = true;
     const token = ++readToken.current;
     setFileName(file.name);
     setReadError(null);
@@ -385,57 +445,140 @@ export function FileDrop({
   }, [preview]);
 
   return (
-    <div className="rounded-sm border border-rule-soft bg-ink px-3 py-3">
-      <div
-        role="group"
-        aria-label="Drop a spreadsheet here"
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        className={`rounded-sm border border-dashed px-3 py-3 transition ${
-          dragging
-            ? "border-maple bg-maple/10"
-            : "border-rule hover:border-maple-soft focus-within:border-maple-soft"
-        }`}
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs text-paper-dim">Drop a .xlsx or .csv file here, or</p>
-          <Pill variant="elev" size="small" onClick={() => inputRef.current?.click()}>
-            Choose a file
-          </Pill>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={ACCEPT}
-            aria-label="Choose a file"
-            tabIndex={-1}
-            onChange={onPicked}
-            className="sr-only"
-          />
+    <div
+      ref={panelRef}
+      role="group"
+      aria-label="Add from a file"
+      // A file let go anywhere on the panel must not make the browser open it. While the question
+      // or the bank warning is showing, the drop is simply ignored: it is never read.
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => e.preventDefault()}
+      className="rounded-sm border border-rule-soft bg-ink px-3 py-3"
+    >
+      {origin === "ask" ? (
+        <div>
+          <p id={`${uid}-origin`} className="text-xs text-paper">
+            Where is this file from?
+          </p>
+          <div
+            role="group"
+            aria-labelledby={`${uid}-origin`}
+            className="mt-2 flex flex-wrap items-center gap-2"
+          >
+            <Pill
+              data-autofocus
+              variant="elev"
+              size="small"
+              aria-describedby={`${uid}-origin-hint`}
+              onClick={() => setOrigin("accounting")}
+            >
+              {ACCOUNTING_LABEL}
+            </Pill>
+            <Pill variant="elev" size="small" onClick={() => setOrigin("bank")}>
+              {BANK_LABEL}
+            </Pill>
+          </div>
+          <p id={`${uid}-origin-hint`} className="mt-2 text-[11px] text-stone-dim">
+            Accounting software means QuickBooks, Xero, Wave, FreshBooks or similar; a spreadsheet
+            you keep is one in Excel. Nothing is opened until you answer.
+          </p>
         </div>
-        <p className="mt-2 text-[11px] text-stone-dim">
-          It&apos;s read here, on this computer, and never kept — only the monthly totals you agree
-          to are saved.
-        </p>
-      </div>
+      ) : null}
 
-      {phase === "reading" ? (
-        <p role="status" className="mt-2 text-[11px] text-stone-dim">
+      {origin === "bank" ? (
+        <div role="alert" className={BANK_NOTICE}>
+          <p className="font-medium">DotAmi can&apos;t add bank or card statements yet.</p>
+          <p className="mt-1">
+            When it can, you&apos;ll pick which deposits are business revenue, after a warning about
+            what DotAmi would keep. Nothing from your file was opened or kept.
+          </p>
+          <div className="mt-2">
+            <Pill data-autofocus variant="ghost" size="small" onClick={askAgain}>
+              Back
+            </Pill>
+          </div>
+        </div>
+      ) : null}
+
+      {origin === "accounting" ? (
+        <div>
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-stone-dim">
+            <span>
+              From: <span className="text-paper-dim">{ACCOUNTING_LABEL}</span>
+            </span>
+            <Pill variant="ghost" size="small" onClick={askAgain} disabled={busy}>
+              Change
+            </Pill>
+          </div>
+          {/* The drop area exists only until a file is accepted; for the next file the question comes back. */}
+          {fileName === "" ? (
+            <div
+              role="group"
+              aria-label="Drop a spreadsheet here"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+              className={`rounded-sm border border-dashed px-3 py-3 transition ${
+                dragging
+                  ? "border-maple bg-maple/10"
+                  : "border-rule hover:border-maple-soft focus-within:border-maple-soft"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs text-paper-dim">Drop a .xlsx or .csv file here, or</p>
+                <Pill
+                  data-autofocus
+                  variant="elev"
+                  size="small"
+                  onClick={() => inputRef.current?.click()}
+                >
+                  Choose a file
+                </Pill>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept={ACCEPT}
+                  aria-label="Choose a file"
+                  tabIndex={-1}
+                  onChange={onPicked}
+                  className="sr-only"
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-stone-dim">
+                It&apos;s read here, on this computer, and never kept — only the monthly totals you
+                agree to are saved.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {origin === "accounting" && phase === "reading" ? (
+        <p
+          data-autofocus
+          tabIndex={-1}
+          role="status"
+          className="mt-2 text-[11px] text-stone-dim outline-hidden"
+        >
           Reading {fileName}…
         </p>
       ) : null}
-      {readError ? (
+      {origin === "accounting" && readError ? (
         <p role="alert" className={ALERT}>
-          {readError} <span className="text-stone-dim">You can choose another file above.</span>
+          {readError}{" "}
+          <Pill data-autofocus variant="ghost" size="small" onClick={askAgain}>
+            Choose another file
+          </Pill>
         </p>
       ) : null}
 
-      {phase === "ready" ? (
+      {origin === "accounting" && phase === "ready" ? (
         <div className="mt-3">
-          <p className="text-xs text-paper-dim">
+          {/* Focus lands here once a file is read, since the Choose a file button it came from is gone. */}
+          <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
             File: <span className="text-paper">{fileName}</span>
           </p>
 
@@ -721,9 +864,11 @@ export function FileDrop({
         <Pill variant="ghost" size="small" onClick={onCancel} disabled={busy}>
           Cancel
         </Pill>
-        <p className="text-[11px] text-stone-dim">
-          You&apos;ll be asked to agree before anything counts.
-        </p>
+        {origin === "accounting" ? (
+          <p className="text-[11px] text-stone-dim">
+            You&apos;ll be asked to agree before anything counts.
+          </p>
+        ) : null}
       </div>
     </div>
   );

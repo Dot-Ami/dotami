@@ -7,7 +7,7 @@
  */
 import http from "node:http";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
@@ -254,6 +254,19 @@ async function openSalish(page: Page) {
   return { card, ventureId, figures };
 }
 
+/**
+ * Answers the panel's first question ("Where is this file from?") with accounting software. Every
+ * file starts here (the maintainer's decision of 2026-10-07), so every test that adds a file goes through this first.
+ */
+async function answerAccounting(card: Locator) {
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  await expect(panel.getByText("Where is this file from?")).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toBeVisible();
+}
+
 /** Every request the page makes from now on: where it went and what it carried. */
 function watchRequests(page: Page) {
   const seen: { path: string; url: string; method: string; body: string | null }[] = [];
@@ -309,6 +322,7 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   const secrets = ["Atelier", "Café", "Boulangerie", "Facturex", "1 234,56", "1234,56"];
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await expect(
     card.getByText(
       "It's read here, on this computer, and never kept — only the monthly totals you agree to are saved.",
@@ -428,6 +442,7 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
 
   // Dropping the same file again (a real drop this time): the months are already here.
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   const dropped = await page.evaluateHandle(
     ({ name, text }) => {
       const transfer = new DataTransfer();
@@ -468,6 +483,7 @@ test("dates that read two ways are asked about once, and nothing is totalled unt
     `${two(day + 1)}/${two(target.m)}/${target.y},Client B,50.00`,
   ];
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await card.getByLabel("Choose a file").setInputFiles({
     name: "two-ways.csv",
     mimeType: "text/csv",
@@ -513,6 +529,7 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
   ]);
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   const input = card.getByLabel("Choose a file");
   await input.setInputFiles({
     name: "invoices.xlsx",
@@ -534,6 +551,10 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
     "C · Amount",
   );
 
+  // The answer covered that one file: the next file starts from the question again.
+  await card.getByRole("button", { name: "Change" }).click();
+  await answerAccounting(card);
+
   // A picture's first bytes under a spreadsheet's name: turned away, no preview, nothing sent.
   const png = Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
@@ -547,6 +568,9 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
   await expect(card.getByRole("alert")).toContainText("That isn't a spreadsheet.");
   await expect(card.getByRole("table")).toHaveCount(0);
   await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  // After a refusal the way on is back to the question, not another file on the same answer.
+  await card.getByRole("button", { name: "Choose another file" }).click();
+  await answerAccounting(card);
 
   // A macro workbook: refused with the macros message.
   const macros = makeXlsx(
@@ -609,6 +633,7 @@ test("a large workbook reads without freezing", async ({ page }) => {
   const workbook = makeXlsx([{ name: "Invoices", rows }]);
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await card.getByLabel("Choose a file").setInputFiles({
     name: "big-year.xlsx",
     mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -624,6 +649,283 @@ test("a large workbook reads without freezing", async ({ page }) => {
   await expect(card.getByRole("button", { name: `Review these ${MONTHS} figures` })).toBeVisible();
   expect(problems.filter((p) => /worker|content security policy|refused/i.test(p))).toEqual([]);
   expect(workers.some((url) => url.startsWith("blob:"))).toBe(true);
+  expect(await figures()).toEqual(before);
+});
+
+// ---- [8c] ask where the file is from, before anything is read ---------------------
+// The panel's first screen is a question, asked for every file. These tests prove the question
+// comes first, that a "bank or credit card" answer opens nothing, and that the answer is never kept.
+
+const ORIGIN_QUESTION = "Where is this file from?";
+
+/** A one-month CSV that reads cleanly: day-first dates with a day above 12, so nothing is asked. */
+function tinyCsv(): string {
+  const month = monthsAgo(11);
+  return `Date,Customer,Amount\n20/${two(month.m)}/${month.y},Client A,100.00\n`;
+}
+
+/**
+ * Records every way the page could read a file's contents (Blob methods and FileReader). The
+ * recorder must be installed before the drop; `reads()` then says which methods were called.
+ */
+async function recordFileReads(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __fileReads: string[] };
+    w.__fileReads = [];
+    for (const name of ["arrayBuffer", "text", "stream", "slice"] as const) {
+      const original = Blob.prototype[name] as (...args: unknown[]) => unknown;
+      Blob.prototype[name] = function (this: Blob, ...args: unknown[]) {
+        w.__fileReads.push(`Blob.${name}`);
+        return original.apply(this, args);
+      } as never;
+    }
+    for (const name of [
+      "readAsArrayBuffer",
+      "readAsText",
+      "readAsBinaryString",
+      "readAsDataURL",
+    ] as const) {
+      const original = FileReader.prototype[name] as (...args: unknown[]) => unknown;
+      FileReader.prototype[name] = function (this: FileReader, ...args: unknown[]) {
+        w.__fileReads.push(`FileReader.${name}`);
+        return original.apply(this, args);
+      } as never;
+    }
+  });
+  return () =>
+    page.evaluate(() => (window as unknown as { __fileReads: string[] }).__fileReads.slice());
+}
+
+/** Lets a file go on `target` the way a person's drop would. */
+async function dropFile(page: Page, target: Locator, name: string, text: string) {
+  const transfer = await page.evaluateHandle(
+    ({ name, text }) => {
+      const t = new DataTransfer();
+      t.items.add(new File([text], name, { type: "text/csv" }));
+      return t;
+    },
+    { name, text },
+  );
+  await target.dispatchEvent("drop", { dataTransfer: transfer });
+}
+
+test("the first thing 'Add from a file' shows is a question, with nothing to drop or choose", async ({
+  page,
+}) => {
+  const { card } = await openSalish(page);
+  await card.getByRole("button", { name: "Add from a file" }).click();
+
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  const question = panel.getByRole("group", { name: ORIGIN_QUESTION });
+  await expect(
+    question.getByRole("button", { name: "Accounting software or a spreadsheet you keep" }),
+  ).toBeVisible();
+  await expect(
+    question.getByRole("button", { name: "A bank or credit card account" }),
+  ).toBeVisible();
+  await expect(panel.getByText(/QuickBooks, Xero, Wave, FreshBooks/)).toBeVisible();
+
+  // No way to pick or drop a file yet: no file input, no drop area, no "Choose a file".
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByLabel("Choose a file")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: "Choose a file" })).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+
+  // The question is the same after Cancel: the answer was never kept.
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await card.getByRole("button", { name: "Cancel" }).click();
+});
+
+/** Waits until anything a stray drop could have started (a chunk import, then a read) has had its turn. */
+async function settle(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 150))),
+      ),
+  );
+}
+
+test("a file dropped before answering, or after 'bank or credit card', is never read", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const reads = await recordFileReads(page);
+  const seen = watchRequests(page);
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  // A bank-looking file whose name carries account digits: neither the name nor the cell may appear anywhere afterwards.
+  const secrets = ["chequing-4829", "Payroll Deposit"];
+  const csv = tinyCsv().replace("Client A", "Payroll Deposit");
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+
+  // The control comes first: a drop after the "accounting" answer IS read. That proves the recorder
+  // can see a read, and it loads the reader code, so a stray read below could not hide behind a
+  // first-use download delay.
+  await answerAccounting(card);
+  await dropFile(
+    page,
+    card.getByRole("group", { name: "Drop a spreadsheet here" }),
+    "sales-control.csv",
+    tinyCsv(),
+  );
+  await expect(
+    card.getByRole("table", { name: "Monthly totals from sales-control.csv" }),
+  ).toBeVisible();
+  expect(await reads()).toContain("Blob.arrayBuffer");
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  const baseline = (await reads()).length;
+  const readsSince = async () => (await reads()).slice(baseline);
+
+  // 1. Dropped on the question itself (on its text, and on the panel): ignored, the question
+  // stays, nothing read.
+  await dropFile(page, panel.getByText(ORIGIN_QUESTION), "chequing-4829.csv", csv);
+  await dropFile(page, panel, "chequing-4829.csv", csv);
+  await settle(page);
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  expect(await readsSince()).toEqual([]);
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+
+  // 2. "A bank or credit card account": the warning, in plain English, with Back and Cancel.
+  await panel.getByRole("button", { name: "A bank or credit card account" }).click();
+  const warning = panel.getByRole("alert");
+  await expect(warning).toContainText("DotAmi can't add bank or card statements yet.");
+  await expect(warning).toContainText(
+    "When it can, you'll pick which deposits are business revenue, after a warning about what DotAmi would keep.",
+  );
+  await expect(warning).toContainText("Nothing from your file was opened or kept.");
+  await expect(warning).not.toContainText(/\[\d+[a-z]/); // no story codes in the screen
+  await expect(warning.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+
+  // 3. Dropped on the warning (and on the panel): still ignored. Nothing proposed, no figure, no
+  // name shown.
+  await dropFile(page, warning, "chequing-4829.csv", csv);
+  await dropFile(page, panel, "chequing-4829.csv", csv);
+  await settle(page);
+  expect(await readsSince()).toEqual([]);
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  expect(await figures()).toEqual(before);
+  expect(seen.filter((r) => r.path.startsWith("/api/figures/propose"))).toEqual([]);
+  expectNothingLeftThisPage(seen, secrets);
+
+  // Back returns to the question, and still nothing has been read.
+  await warning.getByRole("button", { name: "Back" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  await settle(page);
+  expect(await readsSince()).toEqual([]);
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("the answer covers one file: the next file brings the question back and is never read unasked", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const reads = await recordFileReads(page);
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  const month = monthsAgo(11);
+  const bankCsv = `Date,Customer,Amount\n20/${two(month.m)}/${month.y},Payroll Deposit,100.00\n`;
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "sales-first.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(tinyCsv(), "utf8"),
+  });
+  const firstTable = card.getByRole("table", { name: "Monthly totals from sales-first.csv" });
+  await expect(firstTable).toBeVisible();
+
+  // The first file used the answer up: no file input or drop area is left on the screen, and a
+  // second file dropped on the panel is ignored unread.
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+  const baseline = (await reads()).length;
+  await dropFile(page, panel, "chequing-4829.csv", bankCsv);
+  await settle(page);
+  expect((await reads()).slice(baseline)).toEqual([]);
+  await expect(firstTable).toBeVisible();
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+
+  // The way to another file is the question again.
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // A refused file uses the answer up too: "Choose another file" goes back to the question.
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "notes.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("", "utf8"),
+  });
+  await expect(panel.getByRole("alert")).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await panel.getByRole("button", { name: "Choose another file" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("'Change' returns to the question and forgets the file; the answer is never stored", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  const storageSize = () =>
+    page.evaluate(() => `${window.localStorage.length}/${window.sessionStorage.length}`);
+  const storageBefore = await storageSize();
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(
+    panel.getByText("From: Accounting software or a spreadsheet you keep"),
+  ).toBeVisible();
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "sales-change.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(tinyCsv(), "utf8"),
+  });
+  await expect(
+    card.getByRole("table", { name: "Monthly totals from sales-change.csv" }),
+  ).toBeVisible();
+
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByText("sales-change.csv")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+
+  // Answering again starts from an empty drop area: the earlier file is gone.
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toBeVisible();
+  await expect(card.getByText("sales-change.csv")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // The answer lives in the panel's state only: nothing in browser storage, nothing saved.
+  expect(await storageSize()).toBe(storageBefore);
+  await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
 });
 
