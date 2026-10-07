@@ -54,16 +54,22 @@ says where it is going.
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
-  browser-storage key, every package that ships (with whether it can reach the network) and every
-  request of the kinds the privacy test names (other than a literal `/api/…` path on DotAmi's own
-  server) is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts` fails until a
-  new one is added there, and `/your-data` is drawn from that list. The network check reads the
+  browser-storage key, every package that ships and that DotAmi names itself (in `package.json`
+  "dependencies", copied into the installer, or imported from `app/`, `components/` or `lib/`; with
+  whether it can reach the network; not the packages those pull in) and every request of the kinds
+  the privacy test names (other than a literal `/api/…` path on DotAmi's own server) is listed in
+  `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts` fails until a new one is added
+  there, and `/your-data` is drawn from that list. The network check reads the
   syntax tree of every `.ts`/`.tsx`/`.mts`/`.cts`/`.js`/`.jsx`/`.mjs`/`.cjs` file under `app/`,
   `components/`, `lib/` and `desktop/` and in the top folder, and names fetch-style calls, WebRTC,
   node's `net`/`child_process` calls one by one, electron's `net`/`autoUpdater`/`loadURL`/`loadFile`/
-  `downloadURL`, and imports of packages that make requests or that `package.json` doesn't declare.
+  `downloadURL`/`session.fetch`/`preconnect`/`resolveHost` and `crashReporter.start`, imports of the
+  packages on its own fixed network list or marked "yes" or "unverified" in the inventory's
+  dependency list, and imports of packages `package.json` doesn't declare.
   It is a safety net, not a proof: it does not see a request a package makes inside its own code,
-  deliberate disguises (a copy of `window` under another name, `eval`), anything that makes the page
+  a package on neither list, deliberate disguises (a copy of `window` under another name, code run
+  from a string by `eval` or `webContents.executeJavaScript`, an `XMLHttpRequest` opened in a
+  different file from the one that made it), anything that makes the page
   load an address (`<script src>`, `window.open`, `shell.openExternal`), folders it doesn't read
   (`scripts/`, `prisma/`, `tests/`, `e2e/`), or what a program the app starts then does. Behind it
   stand GitHub's Dependency review check (known vulnerabilities and licences only, and only while

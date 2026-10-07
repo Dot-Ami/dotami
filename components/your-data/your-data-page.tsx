@@ -27,12 +27,14 @@ const SECTIONS = [
  * claim), so the person can check DotAmi's word against the file itself.
  *
  * Every row is drawn from lib/privacy/inventory.ts, a list a test checks against the schema, the
- * package list and the code: a new table, a browser-storage key, a package that ships, or one of
- * the kinds of request the test names (fetch-style calls, WebRTC, node's net and child_process,
- * electron's loaders, imports of packages that make requests) fails that test until it is listed.
+ * package list and the code: a new table, a browser-storage key, a package that ships and that
+ * DotAmi names itself (not the ones those pull in), or one of the kinds of request the test names
+ * (fetch-style calls, WebRTC, node's net and child_process, electron's loaders, session lookups and
+ * crash reporter, imports of the packages on its network list) fails that test until it is listed.
  * That is a safety net, not a proof. The test does not see a request a package makes inside its own
- * code, deliberate disguises, anything that makes the page load an address, the folders it doesn't
- * read, or what a program the app starts then does (tests/helpers/source-scan.ts lists each). So this
+ * code, a package on neither of its lists, deliberate disguises, anything that makes the page load
+ * an address, the folders it doesn't read, or what a program the app starts then does
+ * (tests/helpers/source-scan.ts lists each). So this
  * page shows what the list says; GitHub's Dependency review check (known vulnerabilities and
  * licences only), the browser's Content-Security-Policy (connect-src, img-src, default-src,
  * form-action: not WebRTC or navigation) and code review cover the rest. This page changes

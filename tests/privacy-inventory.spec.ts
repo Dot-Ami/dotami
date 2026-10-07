@@ -58,9 +58,11 @@ import {
  *   - a table is added that the inventory doesn't list;
  *   - a browser-storage key is added that it doesn't list (this one reads TEXT, so a quote inside a
  *     regular expression can hide a key written after it);
- *   - a package ships (package.json "dependencies", or a package desktop/package.mjs copies into the
- *     installer) that DEPENDENCIES doesn't list with whether it can reach the network, or a file
- *     imports a package that package.json doesn't declare (a transitive one, say);
+ *   - a package ships WITHOUT AN ENTRY in DEPENDENCIES (network yes/no/unverified, and why): one in
+ *     package.json "dependencies", one desktop/package.mjs copies into the installer, or one
+ *     imported by a file under app/, components/ or lib/ (or middleware.* / instrumentation*.* in
+ *     the top folder), which Next bundles even when package.json calls it a devDependency. Or a
+ *     file imports a package that package.json doesn't declare (a transitive one, say);
  *   - a .ts, .tsx, .mts, .cts, .js, .jsx, .mjs or .cjs file under app/, components/, lib/ or
  *     desktop/, or in the repo's top folder, makes one of the kinds of request the header of
  *     lib/privacy/inventory.ts names, and the inventory doesn't list that call;
@@ -68,7 +70,9 @@ import {
  *     with a reason, or a scanned file imports code from one of the unread folders.
  *
  * That is a safety net, not a proof. It does NOT see: a request a package makes inside its own code
- * (only the import is seen); deliberate disguises (the "known gaps" test below pins each one);
+ * (only the import is seen); deliberate disguises and the other gaps (the "known gaps" test below
+ * pins each one, among them an XMLHttpRequest opened in another file than the one that made it, and
+ * code run from a string by webContents.executeJavaScript);
  * anything that makes the page load an address instead of calling a function (an image, a script
  * tag, a link, window.open, location, shell.openExternal); Next.js settings that make the server
  * fetch; HTML and CSS files; the code in the folders listed as unread (scripts/, prisma/, tests/,
@@ -432,7 +436,7 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     ["node's https.get", `import https from "node:https";\nhttps.get(TELEMETRY, () => {});`, "https.get(TELEMETRY"],
     ["importing node's https at all", `import { request } from "https";`, 'package "https"'],
     ["node's net.connect", `import net from "node:net";\nnet.connect(443, "example.invalid");`, "net.connect(443"],
-    ["a library that makes requests", `import axios from "axios";`, 'package "axios"'],
+    ["an HTTP client on the scan's own list", `import axios from "axios";`, 'package "axios"'],
     ["a library required rather than imported", `const got = require("got");`, 'package "got"'],
     ["a library loaded on demand", `const { default: ky } = await import("ky");`, 'package "ky"'],
     ["fetch handed on under another name", `const send = fetch;\nawait send(TELEMETRY);`, "fetch (used as a value)"],
@@ -513,7 +517,7 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     ],
     ["re-exporting from https", `export * from "https";`, 'package "https"'],
     ["importing a module from a web address", `const code = await import("https://example.invalid/x.js");`, 'package "https://example.invalid/x.js"'],
-    ["undici, a library that makes requests", `import { request } from "undici";`, 'package "undici"'],
+    ["undici, an HTTP client on the scan's own list", `import { request } from "undici";`, 'package "undici"'],
     // Other ways to send: another program, electron's own net. Each call into child_process is named with the program it starts.
     ["running curl with child_process", `import { execFile } from "node:child_process";\nexecFile("curl", [TELEMETRY]);`, 'child_process.execFile("curl"'],
     ["child_process required without node:", `const { spawn } = require("child_process");\nspawn("curl", [TELEMETRY]);`, 'child_process.spawn("curl"'],
@@ -633,7 +637,8 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
   // also stops most of them.)
   const EVAL = "ev" + "al";
   const FUNCTION_CONSTRUCTOR = "Func" + "tion";
-  const STILL_GETS_PAST: [string, string][] = [
+  // A third item names other files the code needs (read as new files beside the probe).
+  const STILL_GETS_PAST: [string, string, { file: string; code: string }[]?][] = [
     ["a copy of window under another name, then its fetch", `const w = window;\nconst send = w.fetch;\nawait send(TELEMETRY);`],
     ["fetch taken off document.defaultView", `const send = document.defaultView.fetch;\nawait send(TELEMETRY);`],
     ["an image whose address carries the data", `new Image().src = "https://example.invalid/p?d=" + data;`],
@@ -645,6 +650,14 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     ["a node internal binding", `process.binding("tcp_wrap");`],
     ["code built at run time", `${EVAL}("fetch(TELEMETRY)");`],
     ["code made by the Function constructor", `await ${FUNCTION_CONSTRUCTOR}("return fetch")()(TELEMETRY);`],
+    // Code run from a string by electron: the same class as eval. (The string is only a string to the scan.)
+    ["code run from a string by webContents.executeJavaScript", `await win.webContents.executeJavaScript("fetch('https://example.invalid/x')");`],
+    // The `.open` of an XMLHttpRequest is read only in a file that itself spells the word.
+    [
+      "an XMLHttpRequest made by a helper in one file and opened in another",
+      `import { makeRequest } from "@/lib/probe-xhr-helper";\nmakeRequest().open("POST", "https://example.invalid/x");`,
+      [{ file: "lib/probe-xhr-helper.ts", code: `export const makeRequest = () => new XMLHttpRequest();` }],
+    ],
     ["a property descriptor taken off the global object", `const d = Object.getOwnPropertyDescriptor(window, KEY);\nawait d?.value(TELEMETRY);`],
     // A wrapper (postJson) is followed by the names it is imported, renamed and re-exported under, but not through a computed lookup.
     ["a wrapper looked up on a module namespace by a variable key", `import * as agree from "@/components/ventures/agree-prompt";\nawait agree[HELPER]("https://example.invalid/x", {});`],
@@ -659,8 +672,9 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
 
   it.each(STILL_GETS_PAST)(
     "does not see %s (a known gap, written down in the helper's header)",
-    (_what, code) => {
-      expect(outside(code), "the scan now sees this: update the 'still gets past' lists in tests/helpers/source-scan.ts and lib/privacy/inventory.ts, then remove it from here").toEqual([]);
+    (_what, code, also = []) => {
+      const found = requestsOutside([{ file: PROBE_FILE, code }, ...also], ALLOWED).unlisted;
+      expect(found, "the scan now sees this: update the 'still gets past' lists in tests/helpers/source-scan.ts and lib/privacy/inventory.ts, then remove it from here").toEqual([]);
     },
   );
 
@@ -738,14 +752,42 @@ describe("the scan refuses what the final re-check found getting past it", () =>
 });
 
 // ---------------------------------------------------------------------------------------------
-// Packages. The inventory lists every package that ships, and the code imports only packages that
+// Packages. The inventory lists every package that ships and that DotAmi names itself, and the code imports only packages that
 // package.json declares.
 
-/** The packages that ship: package.json "dependencies", plus those desktop/package.mjs copies into the installed app. */
-function shippingPackages(manifest: { dependencies?: Record<string, string>; optionalDependencies?: Record<string, string> }, packageScript: string): string[] {
+/** The top-folder files Next runs inside the server (and so bundles): middleware and instrumentation. The tool configs (next.config.mjs, vitest.config.ts) are not. */
+const BUNDLED_ROOT_FILE = /^(?:middleware|instrumentation(?:-client)?)\.[cm]?[jt]sx?$/;
+
+/** The files whose imports end up inside the app: everything under app/, components/ and lib/, and the top folder's middleware and instrumentation. */
+function bundledSources<T extends { file: string }>(sources: readonly T[]): T[] {
+  return sources.filter(({ file }) => ["app/", "components/", "lib/"].some((folder) => file.startsWith(folder)) || BUNDLED_ROOT_FILE.test(file));
+}
+
+/** The packages these files import, by package name (a subpath is the package; node's own modules and our own files aren't packages). Type-only imports count. */
+function importedPackages(sources: readonly { file: string; code: string }[]): string[] {
+  const names = sources.flatMap(({ file, code }) =>
+    importedModules(code, file)
+      .map((spec) => moduleName(spec))
+      .filter((m) => m.kind === "package")
+      .map((m) => m.name),
+  );
+  return [...new Set(names)].sort();
+}
+
+/**
+ * The packages that ship: package.json "dependencies", plus those desktop/package.mjs copies into
+ * the installed app, plus `bundled`: the packages the code Next bundles imports (importedPackages of
+ * bundledSources), because a devDependency imported from app/, components/ or lib/ is inside the
+ * built app all the same.
+ */
+function shippingPackages(
+  manifest: { dependencies?: Record<string, string>; optionalDependencies?: Record<string, string> },
+  packageScript: string,
+  bundled: readonly string[] = [],
+): string[] {
   // `copyWithDependencies("electron-updater", stage)`; the function's own declaration has no quoted name.
   const copied = [...packageScript.matchAll(/copyWithDependencies\(\s*"([^"]+)"/g)].map((m) => m[1]);
-  return [...new Set([...Object.keys(manifest.dependencies ?? {}), ...Object.keys(manifest.optionalDependencies ?? {}), ...copied])].sort();
+  return [...new Set([...Object.keys(manifest.dependencies ?? {}), ...Object.keys(manifest.optionalDependencies ?? {}), ...copied, ...bundled])].sort();
 }
 
 /** The packages that ship with no entry in the list, and the entries for packages that don't ship. */
@@ -765,20 +807,25 @@ function undeclaredImports(sources: readonly { file: string; code: string }[], d
   });
 }
 
-describe("the privacy inventory lists every package that ships", () => {
+describe("the privacy inventory lists every package that ships and that DotAmi names", () => {
   const manifest = JSON.parse(readSource("package.json")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
   const packageScript = readSource("desktop/package.mjs");
-  const shipping = shippingPackages(manifest, packageScript);
+  const bundledImports = importedPackages(bundledSources(networkSources));
+  const shipping = shippingPackages(manifest, packageScript, bundledImports);
   const real = dependencyGaps(shipping, DEPENDENCIES);
 
-  it("reads package.json and the installer script (a guard against the check silently finding nothing)", () => {
+  it("reads package.json, the installer script and the bundled code (a guard against the check silently finding nothing)", () => {
     expect(shipping).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "@anthropic-ai/sdk", "electron-updater"]));
+    // What the bundled folders import today: the bundled-code half of the check really reads imports.
+    expect(bundledImports).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "read-excel-file", "papaparse", "fflate", "@anthropic-ai/sdk"]));
+    // Every one of those is in package.json "dependencies" today, so none is a devDependency that only this check would notice.
+    expect(bundledImports.filter((n) => !Object.keys(manifest.dependencies ?? {}).includes(n))).toEqual([]);
     // electron-updater is a development dependency that the installer copies in: it ships all the same.
     expect(Object.keys(manifest.dependencies ?? {})).not.toContain("electron-updater");
     expect(Object.keys(manifest.devDependencies ?? {})).toContain("electron-updater");
   });
 
-  it("has an entry in DEPENDENCIES for every package that ships", () => {
+  it("has an entry in DEPENDENCIES for every package in dependencies, the installer copy list or the bundled code", () => {
     expect(
       real.missing,
       `add these to DEPENDENCIES in lib/privacy/inventory.ts: read each package's README and search its files for fetch, XMLHttpRequest, WebSocket and node's http, https and net, then say whether it can reach the network and why: ${real.missing.join(", ")}`,
@@ -827,9 +874,47 @@ describe("the privacy inventory lists every package that ships", () => {
     expect(dependencyGaps(shippingPackages(shrunk, packageScript), DEPENDENCIES).stale).toEqual(["fflate"]);
   });
 
-  it("doesn't ask for an entry for a development-only package (tests, build tools)", () => {
+  it("doesn't ask for an entry for a development-only package that nothing bundled imports (tests, build tools)", () => {
     const withDev = { ...manifest, devDependencies: { ...manifest.devDependencies, "some-test-tool": "^1.0.0" } };
-    expect(dependencyGaps(shippingPackages(withDev, packageScript), DEPENDENCIES).missing).toEqual([]);
+    expect(dependencyGaps(shippingPackages(withDev, packageScript, bundledImports), DEPENDENCIES).missing).toEqual([]);
+    // Imported only from folders that aren't bundled into the app (tests, scripts, prisma, e2e, desktop, tool configs): not asked for either.
+    const elsewhere = [
+      { file: "tests/x.spec.ts", code: `import { Resend } from "resend";` },
+      { file: "scripts/tool.mjs", code: `import mixpanel from "mixpanel-browser";` },
+      { file: "prisma/seed.ts", code: `import x from "some-seed-tool";` },
+      { file: "e2e/x.ts", code: `import y from "some-e2e-tool";` },
+      { file: "desktop/extra.js", code: `import z from "some-desktop-tool";` },
+      { file: "next.config.mjs", code: `import w from "some-config-tool";` },
+    ];
+    expect(bundledSources(elsewhere)).toEqual([]);
+  });
+
+  // The check must be able to fail for a package that is only a devDependency: Next bundles whatever
+  // app/, components/ and lib/ import, so it ships whether or not package.json says "dependencies".
+  const DEV_BUNDLED: [string, string, string, string][] = [
+    ["an email SDK imported by an API route", "app/api/mail/route.ts", `import { Resend } from "resend";`, "resend"],
+    ["an analytics SDK imported by a component", "components/probe-track.tsx", `import mixpanel from "mixpanel-browser";`, "mixpanel-browser"],
+    ["a package required in a library file", "lib/probe-mail.ts", `const { Resend } = require("resend");`, "resend"],
+    ["a package loaded on demand by a page", "app/probe/page.tsx", `const mixpanel = await import("mixpanel-browser");`, "mixpanel-browser"],
+    ["a package imported by a subpath", "lib/probe-sub.ts", `import track from "mixpanel-browser/dist/mixpanel.cjs";`, "mixpanel-browser"],
+    ["a package imported by the middleware", "middleware.ts", `import { Resend } from "resend";`, "resend"],
+    ["a package imported only for its types", "components/probe-type.tsx", `import type { Mixpanel } from "mixpanel-browser";`, "mixpanel-browser"],
+  ];
+
+  it.each(DEV_BUNDLED)("fails on %s when it is only a devDependency and isn't listed", (_what, file, code, name) => {
+    const withDev = { ...manifest, devDependencies: { ...manifest.devDependencies, [name]: "^1.0.0" } };
+    const sources = [...networkSources, { file, code }];
+    const gaps = dependencyGaps(shippingPackages(withDev, packageScript, importedPackages(bundledSources(sources))), DEPENDENCIES);
+    expect(gaps.missing).toEqual([name]);
+  });
+
+  it("passes once the devDependency that bundled code imports has an entry (and goes stale when the import goes)", () => {
+    const listed: DependencyEntry[] = [...DEPENDENCIES, { name: "resend", network: "yes", why: "Probe entry: the email SDK, read from its own README and files for this test." }];
+    const sources = [...networkSources, { file: "app/api/mail/route.ts", code: `import { Resend } from "resend";` }];
+    const withDev = { ...manifest, devDependencies: { ...manifest.devDependencies, resend: "^1.0.0" } };
+    expect(dependencyGaps(shippingPackages(withDev, packageScript, importedPackages(bundledSources(sources))), listed)).toEqual({ missing: [], stale: [] });
+    // The entry stays on the list but nothing imports the package any more: stale.
+    expect(dependencyGaps(shippingPackages(withDev, packageScript, bundledImports), listed).stale).toEqual(["resend"]);
   });
 });
 

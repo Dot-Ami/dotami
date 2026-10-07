@@ -6,8 +6,11 @@
  * The point of the list is to make going stale loud. tests/privacy-inventory.spec.ts fails
  * when prisma/schema.prisma gains a model, or any code under app/, components/ or lib/ starts
  * using a browser-storage key that isn't listed here. It fails when a package that ships with the
- * app (package.json "dependencies", plus what desktop/package.mjs copies in) isn't in DEPENDENCIES
- * with whether it can reach the network. It fails when a file imports a package that package.json
+ * app isn't in DEPENDENCIES with whether it can reach the network: a package in package.json
+ * "dependencies", one that desktop/package.mjs copies in, or one imported by a file under app/,
+ * components/ or lib/ (or by middleware.* or instrumentation*.* in the top folder), which Next
+ * bundles even when package.json calls it a devDependency. (Only the packages DotAmi names itself:
+ * the ones those pull in are not listed.) It fails when a file imports a package that package.json
  * doesn't declare. And it fails when a source file makes a request of the kinds named below and
  * the request isn't listed here. So a new store (the Lens's conversation, a settings table, a
  * remembered file layout), a new request out or a new dependency has to say what it holds, sends
@@ -23,14 +26,20 @@
  * renamed, re-exported or reached through a namespace; RTCPeerConnection (WebRTC) always; those
  * functions handed on or looked up by a string or a computed key; node's http, https, http2, tls,
  * dgram and dns (any import) and each call into node's net and child_process, one by one;
- * electron's `net` and `autoUpdater`, every loadURL, loadFile and downloadURL, and session.fetch;
- * any import of an HTTP, update or analytics library, matched by package name so a subpath counts;
- * and any package DEPENDENCIES marks as able to reach the network or unverified.
+ * electron's `net` and `autoUpdater`, every loadURL, loadFile and downloadURL, session.fetch,
+ * session.preconnect and session.resolveHost, and crashReporter.start (it uploads crash dumps to an
+ * address); and any import of a package named in the scan's own fixed list of HTTP-client, update
+ * and analytics packages (NETWORK_PACKAGE in tests/helpers/source-scan.ts) or marked "yes" or
+ * "unverified" in DEPENDENCIES below, matched by package name so a subpath counts. A package on
+ * neither list is not refused for being imported: DEPENDENCIES is where a new one that ships has to
+ * say whether it reaches the network, and "no" there is only what its README and files showed.
  *
  * WHAT IT DOES NOT CATCH. A request a package makes inside its own code (Next.js, Prisma, React,
  * electron-updater and the packages they pull in: the check sees the import, never what happens
- * after it). Deliberate disguises: a copy of `window` under another name, the global eval and the
- * Function constructor, workers, node internals. Anything that makes the page load an address
+ * after it). Deliberate disguises: a copy of `window` under another name, code run from a string
+ * (the global eval, the Function constructor, electron's webContents.executeJavaScript), workers,
+ * node internals. An XMLHttpRequest made by a helper in one file and opened in another (the
+ * `.open` is read only in a file that spells XMLHttpRequest itself). Anything that makes the page load an address
  * instead of calling a function (an image, a script tag, a link, a form, window.open, location,
  * shell.openExternal). Next.js settings that make the server fetch for a page (`rewrites`,
  * NextResponse.rewrite). Files that aren't TypeScript or JavaScript (HTML, CSS). The folders
@@ -128,11 +137,13 @@ export interface AllowedCall {
 
 /**
  * One package that ships with the app: everything in package.json "dependencies", plus what
- * desktop/package.mjs copies into the installed app (electron-updater). For developers: the page
- * never shows these. tests/privacy-inventory.spec.ts fails until each is listed, and fails on one
- * listed that no longer ships. Only the packages DotAmi names itself are here: the packages those
- * pull in are not, which is why this list is a record of what was checked and not a guarantee about
- * the whole tree.
+ * desktop/package.mjs copies into the installed app (electron-updater), plus any package imported by
+ * a file under app/, components/ or lib/ (or middleware.* / instrumentation*.* in the top folder),
+ * even one package.json lists only under devDependencies, because Next bundles it. For developers:
+ * the page never shows these. tests/privacy-inventory.spec.ts fails until each is listed, and fails
+ * on one listed that no longer ships. Only the packages DotAmi names itself are here: the packages
+ * those pull in are not, which is why this list is a record of what was checked and not a guarantee
+ * about the whole tree.
  */
 export interface DependencyEntry {
   /** The package's name in package.json, exactly. */
@@ -142,6 +153,7 @@ export interface DependencyEntry {
    * "yes": it has code that makes requests, on its own or when asked. "no": none was found. "unverified": we
    * couldn't tell. Importing a package marked "yes" or "unverified" is refused by the scan until a line in
    * this file (SENT_ELSEWHERE or LIBRARY_IMPORTS) names the importing file and says why that is fine.
+   * "no" is only what the README and a search of the files showed: it is not a promise.
    */
   network: "yes" | "no" | "unverified";
   /** What was found and where it was read, when it applies to DotAmi, and what DotAmi does about it. */
@@ -393,7 +405,7 @@ export const BUILD_TIME_ONLY: readonly AllowedCall[] = [
 ];
 
 /**
- * The packages that ship, and whether each can reach the network. Checked 2026-10-06 against the
+ * The packages that ship (see DependencyEntry for what counts), and whether each can reach the network. Checked 2026-10-06 against the
  * versions installed in node_modules (the version is in package.json): each package's own README
  * and a search of its files for fetch, XMLHttpRequest, WebSocket and node's http, https, net, tls,
  * dgram, dns and child_process. Where a README doesn't speak to it, the reason says the answer

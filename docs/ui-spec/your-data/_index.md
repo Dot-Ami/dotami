@@ -78,10 +78,13 @@ logs only the error's name and code.
 `lib/privacy/inventory.ts` is the list the page is drawn from, and `tests/privacy-inventory.spec.ts`
 fails when `prisma/schema.prisma` gains a model, or any code under `app/`, `components/` or `lib/`
 uses a browser-storage key (or a new kind of storage) that the inventory doesn't list. It also
-fails when a package ships (`package.json` "dependencies", or a package `desktop/package.mjs`
-copies into the installer) that the inventory's dependency list doesn't name with whether it can
-reach the network, when a file imports a package `package.json` doesn't declare, and when a source
-file makes one of the requests below that the inventory doesn't list.
+fails when a package ships that the inventory's dependency list doesn't name with whether it can
+reach the network (a package in `package.json` "dependencies", one `desktop/package.mjs` copies into
+the installer, or one imported by a file under `app/`, `components/` or `lib/`, or by `middleware.*`
+or `instrumentation*.*` in the top folder, which Next bundles even when `package.json` lists it only
+under devDependencies; only the packages DotAmi names, not the ones those pull in), when a file
+imports a package `package.json` doesn't declare, and when a source file makes one of the requests
+below that the inventory doesn't list.
 
 **What the request check catches.** It reads the syntax tree of every `.ts`, `.tsx`, `.mts`,
 `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs` file under `app/`, `components/`, `lib/` and `desktop/` and
@@ -93,15 +96,20 @@ is imported, renamed, re-exported or reached through a namespace); `RTCPeerConne
 always; those names handed on or looked up by a string or a computed key; node's `http`, `https`,
 `http2`, `tls`, `dgram` and `dns` (any import) and every call into node's `net` and `child_process`
 (`child_process.spawn("python"` is one line, a second call is another); electron's `net` and
-`autoUpdater`, every `loadURL`, `loadFile` and `downloadURL`, and `session.fetch`; and any import,
-by package name (a subpath counts), of a library that makes requests or that the dependency list
-marks as able to, or as unverified. A name written with an escape, a module named by a template
-or by joined strings, `require` reached through `createRequire`, and `fetch` called through
-`.call`/`.bind` are read as what they are.
+`autoUpdater`, every `loadURL`, `loadFile` and `downloadURL`, `session.fetch`, `session.preconnect`
+and `session.resolveHost`, and `crashReporter.start` (it uploads crash dumps to an address); and any
+import, by package name (a subpath counts), of a package on the scan's own fixed list of HTTP-client,
+update and analytics packages or that the dependency list marks "yes" or "unverified". A package on
+neither list is not refused for being imported. A name written with an escape, a module named by a
+template or by joined strings, `require` reached through `createRequire`, and `fetch` called through
+`.call`/`.bind` are read as what they are. `XMLHttpRequest`'s `.open` is read only in a file that
+itself spells `XMLHttpRequest`.
 
 **What it does not catch.** A request a package makes inside its own code (Next.js, Prisma, React,
 electron-updater: only the import is seen). Deliberate disguises: a copy of `window` under another
-name, the global `eval`, workers, node internals. Anything that makes the page load an address
+name, code run from a string (the global `eval`, the `Function` constructor, electron's
+`webContents.executeJavaScript`), workers, node internals. An `XMLHttpRequest` made by a helper in
+one file and opened in another. Anything that makes the page load an address
 instead of calling a function: a `<script src>`, `new Image().src`, a link or form, `window.open`,
 `location`, `shell.openExternal`. Next.js settings that make the server fetch for a page
 (`rewrites`, `NextResponse.rewrite`). Folders outside those above (`scripts/`, `prisma/`, `tests/`,

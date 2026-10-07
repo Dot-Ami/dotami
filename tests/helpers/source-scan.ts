@@ -1,7 +1,8 @@
 /**
  * Helpers for the tests that read DotAmi's own source code to check a rule — "every browser-storage
- * key, every way out to the network and every package that ships is on the privacy inventory"
- * (tests/privacy-inventory.spec.ts), "no route logs an error object" (tests/error-logging.spec.ts).
+ * key is on the privacy inventory, so is every kind of request out the scan names, and so is every
+ * package DotAmi names that ships" (tests/privacy-inventory.spec.ts), "no route logs an error
+ * object" (tests/error-logging.spec.ts).
  * The tests that use them also check they still find the things they are meant to find, so a scan
  * that quietly sees nothing can't pass for a clean one.
  *
@@ -36,8 +37,9 @@
  * REFUSED as an unlisted network path (unless the allow-list in lib/privacy/inventory.ts names that
  * one call; each line covers one call, so a second call, or one with another address or program,
  * needs a line of its own):
- *   - an address taken by a call: fetch(…), fetchLater(…), sendBeacon(…), an XMLHttpRequest's
- *     open(…), new WebSocket(…), new EventSource(…), new WebTransport(…), new WebSocketStream(…),
+ *   - an address taken by a call: fetch(…), fetchLater(…), sendBeacon(…), `.open(method, address)`
+ *     read only in a file that itself spells the word XMLHttpRequest (see STILL GETS PAST for a
+ *     request made in one file and opened in another), new WebSocket(…), new EventSource(…), new WebTransport(…), new WebSocketStream(…),
  *     and any wrapper the allow-list names (postJson), however it is reached: imported, imported
  *     under another name, taken out of a dynamic import, called through a namespace, or
  *     re-exported under another name and called there. Fine only when the address is one literal
@@ -58,12 +60,17 @@
  *     calling it, or only naming its types, is not;
  *   - electron: its own `net` and `autoUpdater` however they are reached (the update library
  *     electron-updater is a package import, below), loadURL, loadFile and downloadURL on any
- *     object (each call named: `loadURL(origin`), and `fetch` on a session (the default session, a
- *     partition, or a name holding one), even with a path that looks relative;
- *   - importing or requiring a package that makes requests, however it is quoted or reached
+ *     object (each call named: `loadURL(origin`), `fetch`, `preconnect` and `resolveHost` on a
+ *     session (the default session, a partition, `win.webContents.session`, or a name holding one),
+ *     even with a path that looks relative, and `crashReporter.start(…)` (it uploads crash dumps to
+ *     the address it is given): each call named, the method taken off its object or `crashReporter`
+ *     handed on refused, `crashReporter`'s other methods left alone;
+ *   - importing or requiring a package on one of two lists, however it is quoted or reached
  *     (`import`, `import(…)`, `require`, `createRequire(…)(…)`, `process.getBuiltinModule(…)`; even an
- *     import only for its types): the HTTP, update and analytics libraries named here, and every
- *     package the inventory's DEPENDENCIES marks as able to reach the network or unverified. A
+ *     import only for its types): NETWORK_PACKAGE below (a fixed list of HTTP, update and analytics
+ *     packages, by name), and every package the inventory's DEPENDENCIES marks "yes" (can reach the
+ *     network) or "unverified". A package on neither list is NOT refused, however much it uses the
+ *     network (the dependency check below is what makes a new package that ships get an entry). A
  *     package is matched by its name, so "@anthropic-ai/sdk/index", "axios/dist/node/axios.cjs",
  *     "@vercel/analytics/next" and a path through node_modules are the package. Also anything
  *     loaded from a URL;
@@ -74,8 +81,14 @@
  *     Reflect.get on those. (A bare `parent`, `top` or `frames` is not read as a window here, so a
  *     tree node called `parent` can be indexed; `window.parent[k]` is.)
  * Two more checks sit beside it in the spec: a file importing a package that package.json doesn't
- * declare (a transitive one) fails, and so does a package that ships (package.json "dependencies"
- * or desktop/package.mjs's copy list) without an entry in DEPENDENCIES.
+ * declare (a transitive one) fails, and so does a package that ships WITHOUT AN ENTRY in
+ * DEPENDENCIES. "Ships" there means one of: package.json "dependencies"; a package
+ * desktop/package.mjs copies into the installed app; or a package imported (even type-only) by a
+ * file under app/, components/ or lib/, or by middleware.* or instrumentation*.* in the top folder,
+ * which is what Next bundles whether package.json calls it a dependency or a devDependency. An
+ * import from desktop/ is not counted on its own (the installer stages only what package.mjs
+ * copies), and the packages those packages pull in are not listed: the list is what DotAmi names
+ * itself, not the whole tree.
  *
  * STILL GETS PAST (the spec's "known gaps" test pins each of these, so the list can't go stale):
  *   - a request a package makes inside its own code. The scan sees the import, never what happens
@@ -86,7 +99,11 @@
  *     <script src>, <img>, <iframe>, <link> or <form action>, `window.open(url)`,
  *     `location.href = url`, `location.assign(url)`, and in the desktop app `shell.openExternal(url)`;
  *   - workers and their scripts: `new Worker(url)`, `importScripts(url)`, `serviceWorker.register(url)`;
- *   - code made at run time, by the global `eval` or the Function constructor;
+ *   - code made at run time, by the global `eval`, the Function constructor, or electron's
+ *     `webContents.executeJavaScript(…)`, which runs a string in the page the same way;
+ *   - an XMLHttpRequest made in one file and opened in another: a helper that returns
+ *     `new XMLHttpRequest()` in one file and `makeRequest().open("GET", address)` in a file that
+ *     never spells the word (the `.open` is read only where the file itself names XMLHttpRequest);
  *   - computed lookups other than the ones above: `Object.getOwnPropertyDescriptor(window, k)`; a
  *     wrapper looked up on a module by a variable key (`agree[k](url)`); loadURL and its kin looked
  *     up on a window by a variable key (`win[k](url)`); a `connect` called on an object the scan
@@ -546,9 +563,10 @@ const NETWORK_BUILTIN = /^(?:https?|http2|tls|dgram|dns)$/;
 /**
  * Packages whose job is to reach the network, or that DotAmi uses and that make requests of their
  * own: importing one is itself a way to reach out, so it is refused (unless the file is listed)
- * whether or not a call to it is visible. The two libraries DotAmi uses that make requests, and the
- * usual HTTP clients and trackers. The inventory's dependency list (DEPENDENCIES) adds to this every
- * package it marks as able to reach the network or as unverified.
+ * whether or not a call to it is visible. A fixed list by name: the two libraries DotAmi uses that
+ * make requests, and the usual HTTP clients and trackers. The inventory's dependency list
+ * (DEPENDENCIES) adds to this every package it marks as able to reach the network or as unverified.
+ * A package on neither list is not refused, whatever it does.
  */
 const NETWORK_PACKAGE =
   /^(?:@anthropic-ai\/sdk|electron-updater|axios|node-fetch|cross-fetch|isomorphic-fetch|undici|got|ky|superagent|ws|socket\.io-client|openai|posthog-js|@vercel\/analytics|@sentry\/[\w-]+|@segment\/[\w-]+)$/;
@@ -915,13 +933,15 @@ export interface ScanOptions {
 /**
  * Every place this code can reach the network, for the privacy inventory's scan. See the header of
  * this file for the full list of what is refused. In short: fetch, fetchLater, sendBeacon,
- * XMLHttpRequest's open, WebSocket, EventSource, WebTransport, WebSocketStream and RTCPeerConnection
+ * `.open(method, address)` in a file that spells XMLHttpRequest, WebSocket, EventSource, WebTransport, WebSocketStream and RTCPeerConnection
  * (also through the global object), any wrapper function named in `wrappers` however it is
  * imported, renamed, re-exported or reached through a namespace, node's http/https/http2/tls
  * request, get and connect, every call into node's net and child_process (named one by one:
  * `child_process.spawn("python"`), electron's net and autoUpdater, loadURL, loadFile and
- * downloadURL, the import of a module that makes requests (matched by its package name, so a
- * subpath such as "axios/dist/node/axios.cjs" counts), and the disguises listed in the header. A call
+ * downloadURL, session fetch, preconnect and resolveHost, crashReporter.start, the import of a
+ * package on NETWORK_PACKAGE or in `options.packages` (matched by its package name, so a subpath
+ * such as "axios/dist/node/axios.cjs" counts; a package on neither is not refused), and the
+ * disguises listed in the header. A call
  * is `relative` only when its address is a literal "/…" path, the app's own server (see
  * isRelativeLiteral); one whose address is a variable, a constant, built up from pieces or an
  * absolute URL is not, because the scan can't see where it goes.
@@ -1027,6 +1047,31 @@ function scan(source: string, wrappers: readonly string[], file: string, options
       return ["fromPartition", "fromPath"].includes(nameOf(callee) ?? "") && (ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee)) && isSession(callee.expression);
     }
     return false;
+  };
+
+  /** Whether `node` is electron's crashReporter (`crashReporter`, `electron.crashReporter`, `require("electron").crashReporter`, or a name holding one). */
+  const isCrashReporter = (node: ts.Node): boolean => {
+    const ref = resolve(node);
+    return ref !== null && ref.module === "electron" && ref.member === "crashReporter";
+  };
+
+  /**
+   * Judges electron's crashReporter itself being handed on (passed to a function, returned,
+   * re-exported): its `start` uploads crash dumps to an address, so the whole object going somewhere
+   * the scan can't follow is refused. Reading a member off it (`crashReporter.start(…)`,
+   * `crashReporter.getLastCrashReport()`) is judged where the member is written, and holding it
+   * under another name is followed.
+   */
+  const judgeCrashReporter = (node: ts.Expression) => {
+    if (!isCrashReporter(node)) return;
+    if (ts.isIdentifier(node) && !isUse(node)) return;
+    const ref = resolve(node)!;
+    if (inTypeOnlyPosition(node) || isStep(node, ref)) return;
+    const parent = node.parent;
+    if ((ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) && parent.expression === node) return;
+    if (ts.isVariableDeclaration(parent) && parent.initializer === node && isFollowable(parent.name)) return;
+    if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && parent.right === node && ts.isIdentifier(parent.left)) return;
+    refuse("crashReporter (used as a value)");
   };
 
   /**
@@ -1208,6 +1253,8 @@ function scan(source: string, wrappers: readonly string[], file: string, options
             if (named && ts.isNamedImports(named)) electronElements(named.elements);
           } else if (node.exportClause && ts.isNamedExports(node.exportClause)) {
             electronElements(node.exportClause.elements);
+            // `export { crashReporter } from "electron"` hands it on to files that read it as ordinary code.
+            if (node.exportClause.elements.some((el) => (el.propertyName ?? el.name).text === "crashReporter")) refuse("crashReporter (used as a value)");
           }
         }
         // `export { spawn } from "node:child_process"` would hand the function to files the scan reads as ordinary code.
@@ -1231,6 +1278,7 @@ function scan(source: string, wrappers: readonly string[], file: string, options
       ts.isSatisfiesExpression(node)
     ) {
       judgeModuleUse(node);
+      judgeCrashReporter(node);
     }
 
     if (ts.isCallExpression(node)) {
@@ -1300,6 +1348,13 @@ function scan(source: string, wrappers: readonly string[], file: string, options
       if (name !== null && ELECTRON_LOADERS.has(name)) refuse(called ? `${name}(${text(args?.[0])}` : `${name} (used as a value)`);
       // session.fetch / session.defaultSession.fetch: electron's own request from the main process. Called or not, never "relative".
       if (name === "fetch" && isSession(node.expression)) refuse(called ? `session.fetch(${text(args?.[0])}` : "session.fetch (used as a value)");
+      // session.preconnect(…) opens connections to an address; session.resolveHost(…) looks a host name up
+      // with the DNS server. Both are main-process calls the page's policy doesn't govern: each is named and listed.
+      if ((name === "preconnect" || name === "resolveHost") && isSession(node.expression)) {
+        refuse(called ? `session.${name}(${text(args?.[0])}` : `session.${name} (used as a value)`);
+      }
+      // crashReporter.start(…) sends crash dumps to the address it is given. Called or not, one at a time.
+      if (name === "start" && isCrashReporter(node.expression)) refuse(called ? `crashReporter.start(${text(args?.[0])}` : "crashReporter.start (used as a value)");
       // A wrapper helper handed on, or reached through an object and then not called.
       if (isWrapperProperty(node) && !called) refuse(`${text(node)} (used as a value)`);
       // electron.net, electron["autoUpdater"]
@@ -1340,6 +1395,9 @@ function scan(source: string, wrappers: readonly string[], file: string, options
         if ((ts.isIdentifier(key) || ts.isStringLiteral(key)) && isElectron(from)) electronMember(key.text);
         // const { loadURL } = win.webContents: the loader taken off its object.
         if ((ts.isIdentifier(key) || ts.isStringLiteral(key)) && ELECTRON_LOADERS.has(key.text)) refuse(`${key.text} (used as a value)`);
+        // const { preconnect } = session.defaultSession, const { start } = crashReporter: the method taken off its object.
+        if ((ts.isIdentifier(key) || ts.isStringLiteral(key)) && ["preconnect", "resolveHost"].includes(key.text) && isSession(from)) refuse(`session.${key.text} (used as a value)`);
+        if ((ts.isIdentifier(key) || ts.isStringLiteral(key)) && key.text === "start" && isCrashReporter(from)) refuse("crashReporter.start (used as a value)");
         // const { [k]: f } = globalThis
         if (node.propertyName && ts.isComputedPropertyName(node.propertyName) && plainString(node.propertyName.expression) === null && (isGlobalObject(from, false) || isElectron(from))) {
           refuse(`${text(from)}[${text(node.propertyName.expression)}] (key not a plain string)`);
