@@ -322,9 +322,18 @@ function destructured(pattern: string): { key: string; local: string }[] {
   });
 }
 
+/**
+ * Makes a name safe to put inside a RegExp. The names here are JavaScript identifiers, so `$` is the
+ * only special character they can hold today — escaping every one (backslash included) costs nothing
+ * and keeps the patterns right if a caller ever passes something else.
+ */
+function escapeForRegExp(text: string): string {
+  return text.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+}
+
 /** A pattern for the bare name `local` being called: `local(…)`, not `thing.local(…)`. */
 function callOf(local: string): RegExp {
-  return new RegExp(String.raw`(?<![\w$.])${local.replace(/\$/g, "\\$&")}${CALL}`, "g");
+  return new RegExp(String.raw`(?<![\w$.])${escapeForRegExp(local)}${CALL}`, "g");
 }
 
 /**
@@ -374,7 +383,7 @@ export function streamWrites(code: string, within: string = code): { method: str
     held.set(m[1], m[2] ?? LOOKED_UP);
   }
   for (const [local, stream] of held) {
-    const name = local.replace(/\$/g, "\\$&");
+    const name = escapeForRegExp(local);
     for (const m of code.matchAll(new RegExp(String.raw`(?<![\w$.])${name}\s*${WRITE}${CALL}`, "g"))) add(stream, m);
   }
   return writes;
@@ -438,7 +447,7 @@ export function catchScopes(code: string): CatchScope[] {
 const USUAL_ERROR_NAMES = ["error", "err", "e", "cause", "exception"];
 
 function namesPattern(names: readonly string[]): RegExp {
-  const escaped = names.map((n) => n.replace(/[$]/g, "\\$&"));
+  const escaped = names.map(escapeForRegExp);
   return new RegExp(`(?<![\\w$])(?:${escaped.join("|")})(?![\\w$])`);
 }
 

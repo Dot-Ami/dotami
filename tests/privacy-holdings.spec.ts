@@ -6,8 +6,7 @@
  * date shifted a day, a folder opened that should only have been counted.
  */
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -30,7 +29,8 @@ import { addTypedStatement } from "@/lib/person/statements";
 import { readSettingsToday, type SettingsToday } from "@/lib/settings/today";
 import { demoScenarios } from "../prisma/seed-data";
 
-const root = path.join(tmpdir(), `dotami-holdings-${randomUUID()}`);
+// mkdtempSync makes the folder itself, with a name no other program can guess or claim first.
+const root = mkdtempSync(path.join(tmpdir(), "dotami-holdings-"));
 const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
 
 /** A migrated, empty database in its own folder, like the desktop app's data folder. */
