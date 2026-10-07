@@ -54,12 +54,22 @@ says where it is going.
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
-  browser-storage key and every way the code can reach the network that the privacy test can see
-  (other than a literal `/api/…` path on DotAmi's own server) is listed in `lib/privacy/inventory.ts`;
-  `tests/privacy-inventory.spec.ts` fails until a new one is added there, and `/your-data` is drawn
-  from that list. The network check reads syntax trees: a safety net that catches ordinary requests
-  and the common disguises, not code written to hide one (the header of `tests/helpers/source-scan.ts`
-  says what gets past), so code review is still the cover. Nothing may write an
+  browser-storage key, every package that ships (with whether it can reach the network) and every
+  request of the kinds the privacy test names (other than a literal `/api/…` path on DotAmi's own
+  server) is listed in `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts` fails until a
+  new one is added there, and `/your-data` is drawn from that list. The network check reads the
+  syntax tree of every `.ts`/`.tsx`/`.mts`/`.cts`/`.js`/`.jsx`/`.mjs`/`.cjs` file under `app/`,
+  `components/`, `lib/` and `desktop/` and in the top folder, and names fetch-style calls, WebRTC,
+  node's `net`/`child_process` calls one by one, electron's `net`/`autoUpdater`/`loadURL`/`loadFile`/
+  `downloadURL`, and imports of packages that make requests or that `package.json` doesn't declare.
+  It is a safety net, not a proof: it does not see a request a package makes inside its own code,
+  deliberate disguises (a copy of `window` under another name, `eval`), anything that makes the page
+  load an address (`<script src>`, `window.open`, `shell.openExternal`), folders it doesn't read
+  (`scripts/`, `prisma/`, `tests/`, `e2e/`), or what a program the app starts then does. Behind it
+  stand GitHub's Dependency review check (known vulnerabilities and licences only, and only while
+  `DEPENDENCY_REVIEW` is `on`), the browser's Content-Security-Policy (`connect-src`, `img-src`,
+  `default-src`, `form-action`; not WebRTC, navigation, the server or the desktop main process), and
+  code review; the header of `tests/helpers/source-scan.ts` has the full lists. Nothing may write an
   error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
   report is switched off in `lib/prisma.ts` because it quotes the values it was given.
 

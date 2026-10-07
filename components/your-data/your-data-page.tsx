@@ -26,11 +26,16 @@ const SECTIONS = [
  * DotAmi keeps about the person, counted from the data file each time it opens (never a stored
  * claim), so the person can check DotAmi's word against the file itself.
  *
- * Every row is drawn from lib/privacy/inventory.ts, a list a test checks against the schema and the
- * code: a new table, a browser-storage key or a request out written in the ordinary way (or one of
- * the common disguises) fails that test until it is listed. That is a safety net, not a proof: the
- * test can't see code written to hide a request (tests/helpers/source-scan.ts lists what it
- * misses), so this page shows what the list says and code review covers the rest. This page changes
+ * Every row is drawn from lib/privacy/inventory.ts, a list a test checks against the schema, the
+ * package list and the code: a new table, a browser-storage key, a package that ships, or one of
+ * the kinds of request the test names (fetch-style calls, WebRTC, node's net and child_process,
+ * electron's loaders, imports of packages that make requests) fails that test until it is listed.
+ * That is a safety net, not a proof. The test does not see a request a package makes inside its own
+ * code, deliberate disguises, anything that makes the page load an address, the folders it doesn't
+ * read, or what a program the app starts then does (tests/helpers/source-scan.ts lists each). So this
+ * page shows what the list says; GitHub's Dependency review check (known vulnerabilities and
+ * licences only), the browser's Content-Security-Policy (connect-src, img-src, default-src,
+ * form-action: not WebRTC or navigation) and code review cover the rest. This page changes
  * nothing and has no forget or delete control; docs/ui-spec/your-data/_index.md says what it
  * deliberately leaves out.
  *

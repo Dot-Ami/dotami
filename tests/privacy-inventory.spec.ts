@@ -1,35 +1,86 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import {
   BUILD_TIME_ONLY,
+  DEPENDENCIES,
   FOLDERS,
+  LIBRARY_IMPORTS,
   LOCAL_REQUESTS,
   SENT_ELSEWHERE,
   STARTS_PROGRAMS,
   TABLES,
+  UNSCANNED_FOLDERS,
   WINDOW_STORAGE,
   type AllowedCall,
+  type DependencyEntry,
 } from "@/lib/privacy/inventory";
 
-import { JS_FILES, networkCalls, readSource, simplify, sourceFiles } from "./helpers/source-scan";
+import {
+  BROWSER_PROBES,
+  BROWSER_QUIET,
+  DECLARED_IMPORT_QUIET,
+  DESKTOP_PROBES,
+  DESKTOP_QUIET,
+  OUTSIDE_IMPORT_PROBES,
+  OUTSIDE_IMPORT_QUIET,
+  PROBE_FILE,
+  PROGRAM_PROBES,
+  SUBPATH_PROBES,
+  SUBPATH_QUIET,
+  UNLISTED_PACKAGE_PROBES,
+  WRAPPER_PROBES,
+  WRAPPER_QUIET,
+  type Probe,
+  type QuietProbe,
+} from "./helpers/network-probes";
+import {
+  SOURCE_FILES,
+  importedModules,
+  importsFromUnscannedCode,
+  moduleName,
+  networkCalls,
+  networkSourceFiles,
+  readSource,
+  rootSourceFiles,
+  simplify,
+  sourceFiles,
+  unscannedSourceFolders,
+  wrapperNamesAcross,
+} from "./helpers/source-scan";
 
 /**
  * The /your-data page is drawn from lib/privacy/inventory.ts, so the page is only as honest as
- * that list is complete. These tests read the schema and the source and fail the moment a table is
- * added, or a browser-storage key or an outgoing request written in the ordinary way (or one of the
- * common disguises) is added, that the inventory doesn't name.
+ * that list is complete. These tests read the schema, package.json and the source, and fail the
+ * moment any of these happens:
+ *   - a table is added that the inventory doesn't list;
+ *   - a browser-storage key is added that it doesn't list (this one reads TEXT, so a quote inside a
+ *     regular expression can hide a key written after it);
+ *   - a package ships (package.json "dependencies", or a package desktop/package.mjs copies into the
+ *     installer) that DEPENDENCIES doesn't list with whether it can reach the network, or a file
+ *     imports a package that package.json doesn't declare (a transitive one, say);
+ *   - a .ts, .tsx, .mts, .cts, .js, .jsx, .mjs or .cjs file under app/, components/, lib/ or
+ *     desktop/, or in the repo's top folder, makes one of the kinds of request the header of
+ *     lib/privacy/inventory.ts names, and the inventory doesn't list that call;
+ *   - a new top-level folder holds source that is neither scanned nor listed in UNSCANNED_FOLDERS
+ *     with a reason, or a scanned file imports code from one of the unread folders.
  *
- * That is a safety net, not a proof. The network scan can't see code written to hide a request (the
- * "known gaps" test below pins what it misses, and the header of tests/helpers/source-scan.ts says
- * why and what the page's Content-Security-Policy still stops), and the browser-storage scan still
- * reads text, so a quote inside a regular expression can hide a key written after it. Code review
- * covers what these don't.
+ * That is a safety net, not a proof. It does NOT see: a request a package makes inside its own code
+ * (only the import is seen); deliberate disguises (the "known gaps" test below pins each one);
+ * anything that makes the page load an address instead of calling a function (an image, a script
+ * tag, a link, window.open, location, shell.openExternal); Next.js settings that make the server
+ * fetch; HTML and CSS files; the code in the folders listed as unread (scripts/, prisma/, tests/,
+ * e2e/, e2e-desktop/); and what a program the app starts then does. What stands behind it:
+ * GitHub's Dependency review check (known vulnerabilities and licences only, and only while the
+ * repository variable DEPENDENCY_REVIEW is "on"), the Content-Security-Policy in the browser
+ * (connect-src, img-src, default-src and form-action: not WebRTC, not navigation, and only for the
+ * pages middleware.ts serves), and code review. tests/helpers/source-scan.ts has the full lists.
  */
 
 const SCAN = ["app", "components", "lib"];
-const files = sourceFiles(SCAN);
+const files = sourceFiles(SCAN, SOURCE_FILES);
 
 function schemaModels(): string[] {
   const schema = readFileSync(path.join(process.cwd(), "prisma", "schema.prisma"), "utf8");
@@ -166,21 +217,27 @@ describe("the privacy inventory lists what the desktop app writes beside the dat
   });
 });
 
-// Every file that can reach the network: the app's own code, the desktop app's (it runs the update
-// check and starts the server), and the two root files that configure the server.
-const NETWORK_FILES = [...files, ...sourceFiles(["desktop"], JS_FILES), "middleware.ts", "next.config.mjs"];
+// Every file the scan reads (tests/helpers/source-scan.ts, networkSourceFiles): all TypeScript and
+// JavaScript under app/, components/, lib/ and desktop/ (the desktop app runs the update check and
+// starts the server), and every such file in the repo's top folder (middleware.ts and
+// next.config.mjs configure the server; instrumentation.ts, if there is one, runs inside it).
+const NETWORK_FILES = networkSourceFiles();
 const networkSources = NETWORK_FILES.map((file) => ({ file, code: readSource(file) }));
 
 // The calls the inventory explains: each entry's own, the ones that stay on this computer, the
-// programs the app starts, and the build scripts (which never ship).
+// libraries imported without using their way out, the programs the app starts, and the build
+// scripts (which never ship).
 const ALLOWED: readonly AllowedCall[] = [
   ...SENT_ELSEWHERE.flatMap((s) => s.calls),
   ...LOCAL_REQUESTS,
+  ...LIBRARY_IMPORTS,
   ...STARTS_PROGRAMS,
   ...BUILD_TIME_ONLY,
 ];
-// Helper functions that wrap fetch: a call of one is judged like a fetch.
+// Helper functions that wrap fetch: a call of one is judged like a fetch, however it is reached.
 const WRAPPERS = ALLOWED.flatMap((c) => (c.wrapper ? [c.wrapper] : []));
+// Packages the dependency list says can reach the network, or couldn't be verified: importing one is refused.
+const NETWORK_PACKAGES: ReadonlySet<string> = new Set(DEPENDENCIES.filter((d) => d.network !== "no").map((d) => d.name));
 
 /** `list` without one copy of each of `remove`'s items (the same call can be listed, or made, twice). */
 function without(list: string[], remove: string[]): string[] {
@@ -193,25 +250,51 @@ function without(list: string[], remove: string[]): string[] {
   });
 }
 
+// What the scan said about a file, kept so a probe added to the real tree only re-reads its own file.
+const scanned = new Map<string, string[]>();
+
+/** The calls in one file that aren't a literal "/…" path on DotAmi's own server, as "file: call". */
+function outsideCallsIn(file: string, code: string, names: readonly string[]): string[] {
+  const key = `${file}\0${names.join(",")}\0${code}`;
+  let found = scanned.get(key);
+  if (!found) {
+    const aliases = names.filter((n) => !WRAPPERS.includes(n));
+    found = networkCalls(code, WRAPPERS, file, { packages: NETWORK_PACKAGES, aliases })
+      .filter((c) => !c.relative)
+      .map((c) => `${file}: ${c.call}`);
+    scanned.set(key, found);
+  }
+  return found;
+}
+
 /**
  * Every way the given files can reach the network other than a literal "/…" path on DotAmi's own
  * server, as "file: call": `unlisted` are the ones the allow-list doesn't name (a failure),
  * `stale` are allow-list entries that match nothing (also a failure: the list outlived the code).
+ * A wrapper helper is followed under every name the given files export it as.
  */
 function requestsOutside(sources: { file: string; code: string }[], allowed: readonly AllowedCall[]) {
-  const found = sources.flatMap(({ file, code }) =>
-    networkCalls(code, WRAPPERS, file)
-      .filter((c) => !c.relative)
-      .map((c) => `${file}: ${c.call}`),
-  );
+  const names = wrapperNamesAcross(sources, WRAPPERS);
+  const found = sources.flatMap(({ file, code }) => outsideCallsIn(file, code, names));
   const listed = allowed.map((a) => `${a.file}: ${a.call}`);
   return { unlisted: without(found, listed), stale: without(listed, found) };
+}
+
+/** The real tree with a probe added: its code at the end of a real file, or as new files. What the scan names for it. */
+function refusedFor(probe: Probe | QuietProbe): string[] {
+  const extra = [...(probe.also ?? []), ...(probe.appendTo ? [] : [{ file: probe.file, code: probe.code }])];
+  const sources = networkSources.map((s) => (probe.appendTo && s.file === probe.file ? { file: s.file, code: `${s.code}\n${probe.code}` } : s));
+  expect(probe.appendTo ? sources.some((s) => s.file === probe.file) : true, `${probe.file} should be a real file the scan reads`).toBe(true);
+  return requestsOutside([...sources.filter((s) => !extra.some((e) => e.file === s.file)), ...extra], ALLOWED).unlisted;
 }
 
 describe("the privacy inventory lists what can leave this computer", () => {
   // Where the app's own code talks to anything outside this computer. Each place must be one the
   // inventory describes, so a new request out can't be added without the page saying so.
-  const sdkUsers = files.filter((f) => /from\s+["']@anthropic-ai\/sdk["']/.test(simplify(readSource(f), true)));
+  // (By package name, so an import of a subpath, or by require, counts too.)
+  const sdkUsers = networkSources
+    .filter(({ file, code }) => importedModules(code, file).some((spec) => moduleName(spec).name === "@anthropic-ai/sdk"))
+    .map((s) => s.file);
   const found = requestsOutside(networkSources, ALLOWED);
 
   it("knows the only code that reaches Anthropic: the intake's sentence reader", () => {
@@ -220,18 +303,39 @@ describe("the privacy inventory lists what can leave this computer", () => {
   });
 
   it("sees the requests the app makes today (a guard against the scan silently finding nothing)", () => {
-    const calls = networkSources.flatMap(({ file, code }) => networkCalls(code, WRAPPERS, file).map((c) => ({ file, ...c })));
+    const names = wrapperNamesAcross(networkSources, WRAPPERS);
+    const aliases = names.filter((n) => !WRAPPERS.includes(n));
+    const calls = networkSources.flatMap(({ file, code }) =>
+      networkCalls(code, WRAPPERS, file, { packages: NETWORK_PACKAGES, aliases }).map((c) => ({ file, ...c })),
+    );
     expect(calls.filter((c) => c.relative).length).toBeGreaterThanOrEqual(15);
     expect(calls.filter((c) => !c.relative).map((c) => `${c.file}: ${c.call}`)).toEqual(
       expect.arrayContaining(ALLOWED.map((a) => `${a.file}: ${a.call}`)),
     );
-    expect(networkSources.map((s) => s.file)).toEqual(expect.arrayContaining(["desktop/main.mjs", "middleware.ts"]));
+    // The whole file list: every folder, the desktop app, and the top folder's own files.
+    expect(networkSources.map((s) => s.file)).toEqual(
+      expect.arrayContaining([
+        "app/layout.tsx",
+        "components/ventures/agree-prompt.tsx",
+        "lib/privacy/inventory.ts",
+        "desktop/main.mjs",
+        "desktop/passphrase.js",
+        "desktop/passphrase-preload.cjs",
+        "middleware.ts",
+        "next.config.mjs",
+      ]),
+    );
+  });
+
+  it("reads the files in the repo's top folder too, whatever they are called (instrumentation.ts runs inside the server)", () => {
+    expect(rootSourceFiles()).toEqual(expect.arrayContaining(["middleware.ts", "next.config.mjs"]));
+    expect(networkSources.map((s) => s.file)).toEqual(expect.arrayContaining(rootSourceFiles()));
   });
 
   it("finds no request leaving this computer that the inventory doesn't list", () => {
     expect(
       found.unlisted,
-      "describe it on an entry of SENT_ELSEWHERE (or in LOCAL_REQUESTS if it stays on this computer, STARTS_PROGRAMS if it starts another program, BUILD_TIME_ONLY if only a build script does it) in lib/privacy/inventory.ts",
+      "describe it on an entry of SENT_ELSEWHERE (or in LOCAL_REQUESTS if it stays on this computer, LIBRARY_IMPORTS if it is a package imported without using its way out, STARTS_PROGRAMS if it starts another program, BUILD_TIME_ONLY if only a build script does it) in lib/privacy/inventory.ts",
     ).toEqual([]);
   });
 
@@ -280,7 +384,6 @@ describe("the privacy inventory lists what can leave this computer", () => {
 // A safety net, not a proof (see the header of tests/helpers/source-scan.ts): these tests show what
 // the scan refuses and, in "known gaps", what it plainly does not see.
 describe("the scan for requests leaving this computer reads the syntax tree and refuses the common disguises", () => {
-  const PROBE_FILE = "components/probe.tsx";
   const BACKSLASH = String.fromCharCode(92);
   const outside = (code: string, file = PROBE_FILE) => requestsOutside([{ file, code }], ALLOWED).unlisted;
 
@@ -411,9 +514,9 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     ["re-exporting from https", `export * from "https";`, 'package "https"'],
     ["importing a module from a web address", `const code = await import("https://example.invalid/x.js");`, 'package "https://example.invalid/x.js"'],
     ["undici, a library that makes requests", `import { request } from "undici";`, 'package "undici"'],
-    // Other ways to send: another program, electron's own net.
-    ["running curl with child_process", `import { execFile } from "node:child_process";\nexecFile("curl", [TELEMETRY]);`, 'package "node:child_process"'],
-    ["child_process required without node:", `const { exec } = require("child_process");`, 'package "child_process"'],
+    // Other ways to send: another program, electron's own net. Each call into child_process is named with the program it starts.
+    ["running curl with child_process", `import { execFile } from "node:child_process";\nexecFile("curl", [TELEMETRY]);`, 'child_process.execFile("curl"'],
+    ["child_process required without node:", `const { spawn } = require("child_process");\nspawn("curl", [TELEMETRY]);`, 'child_process.spawn("curl"'],
     ["electron's net looked up by a string", `import electron from "electron";\nelectron["net"].request(TELEMETRY);`, 'package "electron" (net)'],
     ["electron's net looked up by a string, with no import in view", `electron["net"].request(TELEMETRY);`, 'package "electron" (net)'],
     ["electron's net taken off a namespace import", `import * as e from "electron";\ne.net.request(TELEMETRY);`, 'package "electron" (net)'],
@@ -543,7 +646,15 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     ["code built at run time", `${EVAL}("fetch(TELEMETRY)");`],
     ["code made by the Function constructor", `await ${FUNCTION_CONSTRUCTOR}("return fetch")()(TELEMETRY);`],
     ["a property descriptor taken off the global object", `const d = Object.getOwnPropertyDescriptor(window, KEY);\nawait d?.value(TELEMETRY);`],
-    ["a wrapper the allow-list names, handed on and called under another name", `const send = postJson;\nawait send("https://example.invalid/x", {});`],
+    // A wrapper (postJson) is followed by the names it is imported, renamed and re-exported under, but not through a computed lookup.
+    ["a wrapper looked up on a module namespace by a variable key", `import * as agree from "@/components/ventures/agree-prompt";\nawait agree[HELPER]("https://example.invalid/x", {});`],
+    // The names of electron's loaders are read when they are written out, not when they are looked up by a variable.
+    ["loadURL looked up on a window by a variable key", `win[LOADER]("https://example.invalid/x");`],
+    ["a program started by electron's own utilityProcess", `import { utilityProcess } from "electron";\nutilityProcess.fork("C:/somewhere/else.js");`],
+    ["a connect called on something the scan can't tell is node's net or tls (a function returned it)", `const lib = pick();\nlib.connect(443, "example.invalid");`],
+    // Next.js settings that make the SERVER fetch for a page are configuration, not a call.
+    ["a Next.js rewrite to another address (next.config.mjs)", `export async function rewrites() {\n  return [{ source: "/a", destination: "https://example.invalid/:path*" }];\n}`],
+    ["a middleware rewrite to another address", `export function middleware() {\n  return NextResponse.rewrite(new URL("https://example.invalid/x"));\n}`],
   ];
 
   it.each(STILL_GETS_PAST)(
@@ -559,4 +670,292 @@ describe("the scan for requests leaving this computer reads the syntax tree and 
     expect(outside("await fetch(url, init);")).toEqual([`${PROBE_FILE}: fetch(url`]);
     expect(outside("await fetch(url, init);\nawait fetch(url, other);", listed.file)).toEqual([`${listed.file}: fetch(url`]);
   });
+});
+
+// ---------------------------------------------------------------------------------------------
+// The final re-check of the scan: each thing it found getting past, written as code the scan must
+// now refuse. They are judged inside the REAL tree (a probe added to the end of a real file is read
+// with that file's own listed calls; a new file is read beside the real ones), so a listing that is
+// too wide shows up here. tests/helpers/network-probes.ts holds the code.
+describe("the scan refuses what the final re-check found getting past it", () => {
+  const MUST_REFUSE: [string, Probe[]][] = [
+    ["a package by a subpath", SUBPATH_PROBES],
+    ["a wrapper reached another way", WRAPPER_PROBES],
+    ["a browser way to send", BROWSER_PROBES],
+    ["a program started", PROGRAM_PROBES],
+    ["the desktop app's main process", DESKTOP_PROBES],
+  ];
+  for (const [group, probes] of MUST_REFUSE) {
+    it.each(probes.map((p) => [p.what, p] as const))(`refuses ${group}: %s`, (_what, probe) => {
+      expect(refusedFor(probe)).toContain(`${probe.file}: ${probe.call}`);
+    });
+  }
+
+  const MUST_STAY_QUIET: [string, QuietProbe[]][] = [
+    ["a package by a subpath", SUBPATH_QUIET],
+    ["a wrapper", WRAPPER_QUIET],
+    ["a browser way to send", BROWSER_QUIET],
+    ["a program or the desktop app", DESKTOP_QUIET],
+  ];
+  for (const [group, probes] of MUST_STAY_QUIET) {
+    it.each(probes.map((p) => [p.what, p] as const))(`stays quiet on ${group}: %s`, (_what, probe) => {
+      expect(refusedFor(probe)).toEqual([]);
+    });
+  }
+
+  it("lists each of the calls it names as often as they are made: a second call of the listed program needs its own line", () => {
+    const [listed] = STARTS_PROGRAMS;
+    const twice = refusedFor({ what: "", file: listed.file, appendTo: true, code: `spawn("python", ["another.py"]);` });
+    expect(twice).toEqual([`${listed.file}: ${listed.call}`]);
+  });
+
+  it("names the program of each call as written, so a different program is a different call", () => {
+    const names = (code: string) => networkCalls(code, [], "lib/x.ts").map((c) => c.call);
+    expect(names(`import { spawn } from "node:child_process";\nspawn("python", []);\nspawn("curl", []);`)).toEqual([
+      'child_process.spawn("python"',
+      'child_process.spawn("curl"',
+    ]);
+    // process.execPath is the Node that is already running DotAmi's own build.
+    expect(names(`import { execFileSync } from "node:child_process";\nexecFileSync(process.execPath, []);`)).toEqual([
+      "child_process.execFileSync(process.execPath",
+    ]);
+  });
+
+  it("names a long shell command in full, so two commands with the same start don't read alike", () => {
+    const first = 'cp.' + "ex" + 'ec("' + "a".repeat(80) + ' one")';
+    const second = 'cp.' + "ex" + 'ec("' + "a".repeat(80) + ' two")';
+    const calls = networkCalls(`import * as cp from "node:child_process";\n${first};\n${second};`, [], "lib/x.ts").map((c) => c.call);
+    expect(new Set(calls).size).toBe(2);
+  });
+
+  it("matches an import to its package: every subpath is the package, once per file", () => {
+    const names = (code: string) => networkCalls(code, [], "components/p.tsx", { packages: NETWORK_PACKAGES }).map((c) => c.call);
+    expect(names(`import a from "@anthropic-ai/sdk";\nimport b from "@anthropic-ai/sdk/resources";\nconst c = require("@anthropic-ai/sdk/index");`)).toEqual([
+      'package "@anthropic-ai/sdk"',
+    ]);
+    expect(names(`import https from "node:https";\nimport more from "https";`)).toEqual(['package "node:https"', 'package "https"']);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Packages. The inventory lists every package that ships, and the code imports only packages that
+// package.json declares.
+
+/** The packages that ship: package.json "dependencies", plus those desktop/package.mjs copies into the installed app. */
+function shippingPackages(manifest: { dependencies?: Record<string, string>; optionalDependencies?: Record<string, string> }, packageScript: string): string[] {
+  // `copyWithDependencies("electron-updater", stage)`; the function's own declaration has no quoted name.
+  const copied = [...packageScript.matchAll(/copyWithDependencies\(\s*"([^"]+)"/g)].map((m) => m[1]);
+  return [...new Set([...Object.keys(manifest.dependencies ?? {}), ...Object.keys(manifest.optionalDependencies ?? {}), ...copied])].sort();
+}
+
+/** The packages that ship with no entry in the list, and the entries for packages that don't ship. */
+function dependencyGaps(shipping: readonly string[], entries: readonly DependencyEntry[]) {
+  const listed = entries.map((e) => e.name);
+  return { missing: shipping.filter((n) => !listed.includes(n)), stale: listed.filter((n) => !shipping.includes(n)) };
+}
+
+/** "file: package" for each package a file imports that isn't in `declared` (node's own modules and our own files aren't packages). */
+function undeclaredImports(sources: readonly { file: string; code: string }[], declared: ReadonlySet<string>): string[] {
+  return sources.flatMap(({ file, code }) => {
+    const names = importedModules(code, file)
+      .map((spec) => moduleName(spec))
+      .filter((m) => m.kind === "package" && !declared.has(m.name))
+      .map((m) => m.name);
+    return [...new Set(names)].map((name) => `${file}: ${name}`);
+  });
+}
+
+describe("the privacy inventory lists every package that ships", () => {
+  const manifest = JSON.parse(readSource("package.json")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const packageScript = readSource("desktop/package.mjs");
+  const shipping = shippingPackages(manifest, packageScript);
+  const real = dependencyGaps(shipping, DEPENDENCIES);
+
+  it("reads package.json and the installer script (a guard against the check silently finding nothing)", () => {
+    expect(shipping).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "@anthropic-ai/sdk", "electron-updater"]));
+    // electron-updater is a development dependency that the installer copies in: it ships all the same.
+    expect(Object.keys(manifest.dependencies ?? {})).not.toContain("electron-updater");
+    expect(Object.keys(manifest.devDependencies ?? {})).toContain("electron-updater");
+  });
+
+  it("has an entry in DEPENDENCIES for every package that ships", () => {
+    expect(
+      real.missing,
+      `add these to DEPENDENCIES in lib/privacy/inventory.ts: read each package's README and search its files for fetch, XMLHttpRequest, WebSocket and node's http, https and net, then say whether it can reach the network and why: ${real.missing.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("lists no package that doesn't ship, and none twice", () => {
+    expect(real.stale, "remove it from DEPENDENCIES in lib/privacy/inventory.ts").toEqual([]);
+    expect(new Set(DEPENDENCIES.map((d) => d.name)).size).toBe(DEPENDENCIES.length);
+  });
+
+  it("says, for each, whether it can reach the network, and what that was read from", () => {
+    for (const d of DEPENDENCIES) {
+      expect(["yes", "no", "unverified"], `${d.name} needs network: "yes", "no" or "unverified"`).toContain(d.network);
+      expect(d.why.trim().length, `${d.name} needs to say what it found, and where`).toBeGreaterThan(40);
+    }
+  });
+
+  it("refuses an import of a package marked yes or unverified, by whatever path it is reached", () => {
+    const marked = DEPENDENCIES.filter((d) => d.network !== "no");
+    expect(marked.map((d) => d.name)).toEqual(expect.arrayContaining(["@anthropic-ai/sdk", "electron-updater", "papaparse"]));
+    for (const d of marked) {
+      for (const spec of [d.name, `${d.name}/some/file.js`]) {
+        const calls = networkCalls(`import x from "${spec}";`, [], "components/p.tsx", { packages: NETWORK_PACKAGES }).map((c) => c.call);
+        expect(calls, `${spec} should be refused`).toContain(`package "${d.name}"`);
+      }
+    }
+  });
+
+  // The check must be able to fail: each of these is a dependency (or a package the installer copies in)
+  // that is not in the list.
+  it("fails on a new dependency that isn't listed (an analytics, email or AI package, an HTTP client)", () => {
+    const added = ["posthog-js", "resend", "@sendgrid/mail", "@google/generative-ai", "axios", "nodemailer", "mixpanel-browser"];
+    const grown = { dependencies: { ...manifest.dependencies, ...Object.fromEntries(added.map((n) => [n, "^1.0.0"])) } };
+    const gaps = dependencyGaps(shippingPackages(grown, packageScript), DEPENDENCIES);
+    expect(gaps.missing).toEqual([...added].sort());
+  });
+
+  it("fails on a package the installer copies in that isn't listed", () => {
+    const script = `${packageScript}\ncopyWithDependencies("some-new-sdk", stage);`;
+    expect(dependencyGaps(shippingPackages(manifest, script), DEPENDENCIES).missing).toEqual(["some-new-sdk"]);
+  });
+
+  it("fails on an entry for a package that was removed", () => {
+    const shrunk = { dependencies: Object.fromEntries(Object.entries(manifest.dependencies ?? {}).filter(([n]) => n !== "fflate")) };
+    expect(dependencyGaps(shippingPackages(shrunk, packageScript), DEPENDENCIES).stale).toEqual(["fflate"]);
+  });
+
+  it("doesn't ask for an entry for a development-only package (tests, build tools)", () => {
+    const withDev = { ...manifest, devDependencies: { ...manifest.devDependencies, "some-test-tool": "^1.0.0" } };
+    expect(dependencyGaps(shippingPackages(withDev, packageScript), DEPENDENCIES).missing).toEqual([]);
+  });
+});
+
+describe("the app loads no code from a folder the scan doesn't read", () => {
+  it("finds no file under the scanned folders that imports from scripts/, prisma/, tests/, e2e/ or anywhere else unread", () => {
+    const outside = networkSources.flatMap(({ file, code }) => importsFromUnscannedCode(code, file).map((spec) => `${file}: ${spec}`));
+    expect(outside, "code the app loads from an unread folder runs without being scanned: move it into a scanned folder, or stop importing it").toEqual([]);
+  });
+
+  it.each(OUTSIDE_IMPORT_PROBES.map((p) => [p.what, p] as const))("refuses an import of %s", (_what, probe) => {
+    expect(importsFromUnscannedCode(probe.code, probe.file)).toEqual([probe.spec]);
+  });
+
+  it.each(OUTSIDE_IMPORT_QUIET.map((p) => [p.what, p] as const))("lets through an import of %s", (_what, probe) => {
+    expect(importsFromUnscannedCode(probe.code, probe.file)).toEqual([]);
+  });
+});
+
+describe("the scan refuses a package that package.json doesn't declare", () => {
+  const manifest = JSON.parse(readSource("package.json")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const declared: ReadonlySet<string> = new Set([...Object.keys(manifest.dependencies ?? {}), ...Object.keys(manifest.devDependencies ?? {})]);
+
+  it("finds no file that imports a package nobody declared", () => {
+    expect(undeclaredImports(networkSources, declared), "add it to package.json (and DEPENDENCIES in lib/privacy/inventory.ts if it ships), or stop importing it: a package that is only there because another one needs it can change or vanish with that one").toEqual([]);
+  });
+
+  it("reads the real imports (a guard against the check silently finding nothing)", () => {
+    const seen = new Set(networkSources.flatMap(({ file, code }) => importedModules(code, file).map((s) => moduleName(s).name)));
+    expect([...seen]).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "electron", "electron-updater", "electron-builder", "fs", "path"]));
+  });
+
+  it.each(UNLISTED_PACKAGE_PROBES.map((p) => [p.what, p] as const))("refuses %s", (_what, probe) => {
+    expect(undeclaredImports([{ file: probe.file, code: probe.code }], declared)).toEqual([`${probe.file}: ${probe.name}`]);
+  });
+
+  it.each(DECLARED_IMPORT_QUIET.map((p) => [p.what, p] as const))("lets through %s", (_what, probe) => {
+    expect(undeclaredImports([{ file: probe.file, code: probe.code }], declared)).toEqual([]);
+  });
+
+  it("reads a module name as its package: subpaths, scopes, node's own and our own files", () => {
+    expect(moduleName("next/server")).toEqual({ kind: "package", name: "next" });
+    expect(moduleName("react-dom/client")).toEqual({ kind: "package", name: "react-dom" });
+    expect(moduleName("@anthropic-ai/sdk")).toEqual({ kind: "package", name: "@anthropic-ai/sdk" });
+    expect(moduleName("@anthropic-ai/sdk/resources/messages")).toEqual({ kind: "package", name: "@anthropic-ai/sdk" });
+    expect(moduleName("axios/dist/node/axios.cjs")).toEqual({ kind: "package", name: "axios" });
+    // A path into node_modules is the package, however it is spelled.
+    expect(moduleName("../../node_modules/axios/index.js")).toEqual({ kind: "package", name: "axios" });
+    expect(moduleName("./node_modules/@sentry/browser/build/x.js")).toEqual({ kind: "package", name: "@sentry/browser" });
+    expect(moduleName("node:fs/promises")).toEqual({ kind: "builtin", name: "fs" });
+    expect(moduleName("fs/promises")).toEqual({ kind: "builtin", name: "fs" });
+    expect(moduleName("node:sqlite")).toEqual({ kind: "builtin", name: "sqlite" });
+    expect(moduleName("https")).toEqual({ kind: "builtin", name: "https" });
+    for (const own of ["./a", "../a", "../../a/b", "/abs/path", "@/lib/a", "#internal", ".", ".."]) expect(moduleName(own).kind, own).toBe("relative");
+    for (const address of ["https://example.invalid/x.js", "http://x", "//example.invalid/x", "data:text/javascript,1"]) expect(moduleName(address).kind, address).toBe("address");
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Which files the scan reads
+
+describe("the files the network scan reads", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "dotami-scan-"));
+  const FETCH = `await fetch("https://example.invalid/x");\n`;
+  const put = (file: string, text: string) => {
+    mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    writeFileSync(path.join(root, file), text);
+  };
+  // What must be read: every kind of source file in the four folders and in the top folder.
+  const READ = [
+    "app/deep/er/page.tsx",
+    "app/thing.cjs",
+    "components/legacy.js",
+    "components/legacy.jsx",
+    "components/new.ts",
+    "components/module-flavour.mts",
+    "components/common-flavour.cts",
+    "desktop/extra.js",
+    "desktop/main.mjs",
+    "instrumentation-client.ts",
+    "instrumentation.ts",
+    "lib/helper.mjs",
+    "middleware.ts",
+    "next.config.mjs",
+    "sentry.server.config.js",
+  ];
+  // What must not be: other folders, type declarations, build output, and files that aren't code.
+  const LEFT = ["scripts/tool.mjs", "prisma/seed.ts", "tests/x.spec.ts", "e2e/x.ts", "next-env.d.ts", "components/types.d.ts", "components/types.d.mts", "components/readme.md", "components/data.json", "desktop/page.html", "app/globals.css", "app/.next/x.js", "package.json"];
+  for (const file of [...READ, ...LEFT]) put(file, FETCH);
+
+  it("reads every .ts, .tsx, .mts, .cts, .js, .jsx, .mjs and .cjs file in app, components, lib and desktop, and in the top folder", () => {
+    expect(networkSourceFiles(root)).toEqual([...READ].sort());
+  });
+
+  it("finds the request in each of them", () => {
+    for (const file of networkSourceFiles(root)) {
+      const calls = networkCalls(readFileSync(path.join(root, file), "utf8"), [], file).filter((c) => !c.relative);
+      expect(calls.map((c) => c.call), file).toEqual([`fetch("https://example.invalid/x"`]);
+    }
+  });
+
+  it("reads the top folder's files by what they are, not by a list of names", () => {
+    expect(rootSourceFiles(root)).toEqual(["instrumentation-client.ts", "instrumentation.ts", "middleware.ts", "next.config.mjs", "sentry.server.config.js"]);
+  });
+
+  it("leaves out the files it should: the unscanned folders (named in the header of tests/helpers/source-scan.ts), declarations, build output, and what isn't code", () => {
+    for (const file of LEFT) expect(networkSourceFiles(root), file).not.toContain(file);
+  });
+
+  it("lists every top-level folder of source it doesn't read, with the reason", () => {
+    expect(unscannedSourceFolders()).toEqual(UNSCANNED_FOLDERS.map((f) => f.folder).sort());
+    for (const f of UNSCANNED_FOLDERS) expect(f.why.trim(), `${f.folder} needs a reason`).not.toBe("");
+  });
+
+  it("fails on a new top-level folder of source (a pages, src or public folder, which Next.js would serve) until it is scanned or listed", () => {
+    for (const file of ["pages/api/track.ts", "public/analytics.js", "src/app/page.tsx"]) put(file, FETCH);
+    const unaccounted = unscannedSourceFolders(root).filter((folder) => !UNSCANNED_FOLDERS.some((f) => f.folder === folder));
+    expect(unaccounted).toEqual(["pages", "public", "src"]);
+    // And the ones the inventory lists are the ones this tree has too, so the check isn't comparing nothing.
+    expect(unscannedSourceFolders(root)).toEqual(expect.arrayContaining(["scripts", "prisma", "tests", "e2e"]));
+  });
+
+  it("fails on a root-level or JavaScript file that isn't listed, once it is added to the real file list", () => {
+    const sources = READ.map((file) => ({ file, code: readFileSync(path.join(root, file), "utf8") }));
+    const outsideAll = requestsOutside(sources, ALLOWED).unlisted;
+    expect(outsideAll).toEqual(expect.arrayContaining(["instrumentation.ts", "instrumentation-client.ts", "components/legacy.js", "components/legacy.jsx", "lib/helper.mjs", "app/thing.cjs"].map((f) => `${f}: fetch("https://example.invalid/x"`)));
+  });
+
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
 });

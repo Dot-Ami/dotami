@@ -77,26 +77,52 @@ logs only the error's name and code.
 
 `lib/privacy/inventory.ts` is the list the page is drawn from, and `tests/privacy-inventory.spec.ts`
 fails when `prisma/schema.prisma` gains a model, or any code under `app/`, `components/` or `lib/`
-uses a browser-storage key (or a new kind of storage) that the inventory doesn't list. The same
-test fails on a network request (or a module that makes them) in `app/`, `components/`, `lib/`,
-`desktop/`, `middleware.ts` or `next.config.mjs` that the inventory doesn't list.
+uses a browser-storage key (or a new kind of storage) that the inventory doesn't list. It also
+fails when a package ships (`package.json` "dependencies", or a package `desktop/package.mjs`
+copies into the installer) that the inventory's dependency list doesn't name with whether it can
+reach the network, when a file imports a package `package.json` doesn't declare, and when a source
+file makes one of the requests below that the inventory doesn't list.
 
-**What the request check is, and is not.** A safety net, not a proof. It reads each file's syntax
-tree, so it catches requests written in ordinary code and refuses the common disguises (a name
-written with an escape or joined from strings, a module named by a template or by joined strings,
-`require` reached through `createRequire`, `fetch` handed on or called through `.call`/`.bind`, a
-lookup on the global object by a key that isn't a plain string, `child_process`, electron's `net`).
-It does **not** catch code written to hide a request: a copy of `window` under another name, a
-`<script src>` or `new Image().src`, `window.open`, the global `eval`, a request made inside a
-package in `node_modules`, or whatever a program the app starts does (the statute store's script).
-Code review covers those. In the browser, the Content-Security-Policy in `middleware.ts` blocks
-most of them while a page runs: `connect-src` stops fetch, XMLHttpRequest, sendBeacon, WebSocket
-and EventSource to another address, `img-src` stops images, and frames and media fall back to
-`default-src`. It does not stop navigation (`window.open`, links), nor a script that code adds
-(`script-src` carries `'strict-dynamic'`), and it covers nothing that runs on the server or in the
-desktop app's main process. The browser-storage check above still reads text, so a quote inside a
-regular expression could hide a key written after it. The full lists are in the header of
-`tests/helpers/source-scan.ts`, and a test there pins each thing the scan misses.
+**What the request check catches.** It reads the syntax tree of every `.ts`, `.tsx`, `.mts`,
+`.cts`, `.js`, `.jsx`, `.mjs` and `.cjs` file under `app/`, `components/`, `lib/` and `desktop/` and
+in the repo's top folder (`middleware.ts`, `next.config.mjs`, `instrumentation.ts` and the rest),
+and refuses, unless that one call is listed with a reason: `fetch`, `fetchLater`, `sendBeacon`,
+`XMLHttpRequest`, `WebSocket`, `EventSource`, `WebTransport` and `WebSocketStream` whose address
+isn't one literal `/…` path on DotAmi's own server (also through the helper `postJson`, however it
+is imported, renamed, re-exported or reached through a namespace); `RTCPeerConnection` (WebRTC)
+always; those names handed on or looked up by a string or a computed key; node's `http`, `https`,
+`http2`, `tls`, `dgram` and `dns` (any import) and every call into node's `net` and `child_process`
+(`child_process.spawn("python"` is one line, a second call is another); electron's `net` and
+`autoUpdater`, every `loadURL`, `loadFile` and `downloadURL`, and `session.fetch`; and any import,
+by package name (a subpath counts), of a library that makes requests or that the dependency list
+marks as able to, or as unverified. A name written with an escape, a module named by a template
+or by joined strings, `require` reached through `createRequire`, and `fetch` called through
+`.call`/`.bind` are read as what they are.
+
+**What it does not catch.** A request a package makes inside its own code (Next.js, Prisma, React,
+electron-updater: only the import is seen). Deliberate disguises: a copy of `window` under another
+name, the global `eval`, workers, node internals. Anything that makes the page load an address
+instead of calling a function: a `<script src>`, `new Image().src`, a link or form, `window.open`,
+`location`, `shell.openExternal`. Next.js settings that make the server fetch for a page
+(`rewrites`, `NextResponse.rewrite`). Folders outside those above (`scripts/`, `prisma/`, `tests/`,
+`e2e/`, `e2e-desktop/`: the inventory lists each with a reason, and the test fails on a new one such
+as `pages/` or `public/`, and on any file that imports code from one); HTML and CSS files; and what
+a program the app starts then does (the statute store's script). The browser-storage check above
+still reads text, so a quote inside a regular expression could hide a key written after it.
+
+**What stands behind it.** (1) GitHub's Dependency review check on a pull request: it fails a change
+that adds a package with a known high or critical vulnerability or a licence the project can't
+ship, it does not look at what a package does on the network, and it runs only while the repository
+variable `DEPENDENCY_REVIEW` is `on`. (2) In the browser, the Content-Security-Policy in
+`middleware.ts`: `connect-src 'self'` stops fetch, `fetchLater`, XMLHttpRequest, sendBeacon,
+WebSocket and EventSource reaching another address, `img-src 'self' blob: data:` stops images,
+`default-src 'self'` covers frames and media, and `form-action 'self'` stops a form posting
+elsewhere. It does not stop WebRTC (`connect-src` doesn't govern it and no `webrtc` directive is
+set), is not known to stop WebTransport or WebSocketStream, doesn't stop navigation (`window.open`,
+links), can't stop a script that a running script adds (`script-src` carries `'strict-dynamic'`),
+and covers nothing that runs on the server or in the desktop app's main process. (3) Code review.
+The full lists are in the header of `tests/helpers/source-scan.ts`, and a test there pins each
+thing the scan misses.
 
 `tests/privacy-holdings.spec.ts` checks the reader's counts, grouping
 and dates on a throwaway database. `tests/error-logging.spec.ts` checks the log claim in section 3
