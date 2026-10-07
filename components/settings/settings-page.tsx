@@ -99,7 +99,7 @@ function SettingRow({ setting }: { setting: SettingEntry }) {
         <h3 className="font-semibold text-paper">{setting.label}</h3>
         {status ? (
           // Not upper-cased: the story code must read exactly as the task list writes it ("[7b]").
-          <span className="rounded border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
+          <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
             {status}
           </span>
         ) : null}
@@ -120,7 +120,7 @@ function SettingRow({ setting }: { setting: SettingEntry }) {
         </dd>
       </dl>
       {setting.warning ? (
-        <p className="mt-2 rounded border border-amber/40 bg-amber/5 px-3 py-1.5 text-[12px] text-amber">
+        <p className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-1.5 text-[12px] text-amber">
           <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]">Warning · </span>
           {setting.warning}
         </p>
@@ -130,7 +130,7 @@ function SettingRow({ setting }: { setting: SettingEntry }) {
 }
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="break-all rounded bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
+  return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
 }
 
 /** The "Today" lines for one group. Every sentence here must stay true of the running app. */
