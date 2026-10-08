@@ -9,6 +9,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
+  you can delete: your ideas (with their notes, links and map progress), your figures, your expense
+  records, your statements ("In your words", all of them at once, never one by one) and your
+  settings. Each box says what else goes with it (deleting ideas also deletes their figures, expense
+  records and map progress) and has a Learn more. A cited line says Delete doesn't touch your own
+  books, and that the CRA says business records are generally kept six years. DotAmi asks twice,
+  refuses if anything changed in between, deletes in one step (a failure part-way deletes nothing),
+  then wipes the deleted records out of the data file so they can't be dug back out of it. Only
+  DotAmi's own window can do this, never an agent. The list says plainly what it doesn't reach yet:
+  the safety copies in the backups folder and what the desktop window stored in earlier launches.
+  "Remembered columns" has its place on the list, switched off until DotAmi remembers columns.
 - **Add from last year's return** ([8f], first step) — a new button under *Your figures*. Drop the
   PDF of last year's return that your tax software saved, and for each T2125 (Statement of Business
   or Professional Activities) in it DotAmi shows lines 8299, 9368, 9369 and 9946, the page each is

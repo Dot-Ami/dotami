@@ -46,12 +46,15 @@ says where it is going.
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
   this copy today; the settings marked live there, so far Figure reminders, can be changed and are
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
-  everything else, what sits outside the database and what leaves the computer; read-only, read
-  from the data file on every visit by `lib/privacy/holdings.ts`).
+  everything else, what sits outside the database and what leaves the computer, read from the data
+  file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
+  data from `lib/privacy/inventory.ts` `DELETE_MENU`, asked twice, then wiped from the file by
+  `lib/privacy/delete.ts`).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT
-  one saved setting; answers only DotAmi's own window, no agent access yet).
+  one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
+  (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;

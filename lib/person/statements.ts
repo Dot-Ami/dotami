@@ -6,8 +6,11 @@ const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
 
 /**
  * Database side of the person store (S2.5.4a). Two operations only — list and append.
- * There is deliberately no update and no delete: the charter's "never summarised, newer
- * beats older" rule is enforced by the absence of the code path, not by a check.
+ * There is deliberately no update and no way to delete one statement: the charter's "never
+ * summarised, newer beats older" rule is enforced by the absence of the code path, not by a check.
+ * The only delete is every statement at once, from the Delete menu on /your-data
+ * (lib/privacy/delete.ts; the maintainer's decision, 2026-10-07) — removing all of them is the
+ * person taking their words back, not editing an old one away.
  */
 
 function toIsoDate(d: Date): string {

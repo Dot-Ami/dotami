@@ -10,3 +10,7 @@ export const complianceCatalogV2026 = {
   lastVerified: "2026-06-08",
   entries: complianceRulesV2026,
 } as const;
+
+// [8d] The cited record-keeping line on the Delete menu; not a map rule, so not in `entries`.
+export { recordRetentionV2026 } from "./record-keeping";
+export type { RecordRetentionEntry } from "./record-keeping";
