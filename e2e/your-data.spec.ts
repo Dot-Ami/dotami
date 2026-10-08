@@ -153,3 +153,61 @@ test("what DotAmi knows doesn't scroll sideways on a phone-width window", async 
   for (const summary of await page.locator("summary").all()) await summary.click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+// [8i] The expense records store has no screen yet, so this drives its routes the way an outside
+// agent or script would, on the production build, and reads the result on /your-data.
+test("expense records: an agent can propose but not agree, and what DotAmi knows counts them without showing their words", async ({ page }) => {
+  const PAYEE = "Example Stationery Ltd for the your-data page test";
+  const today = new Date().toLocaleDateString("en-CA");
+
+  await page.goto("/ventures");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+    .first();
+  const href = await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href");
+  const ventureId = new URL(href!, "http://x").searchParams.get("venture")!;
+
+  const cardOnPage = async () => {
+    await page.goto("/your-data");
+    const file = page.getByRole("region", { name: "Everything else in the data file" });
+    return file.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Your expense records", level: 3, exact: true }) });
+  };
+
+  // The card says what a record holds and that nothing takes one back yet. (The count is read, not
+  // assumed to be zero, so a retried run, which finds the first run's record, still passes.)
+  const before = await cardOnPage();
+  await expect(before).toContainText("Never a bank or card number");
+  await expect(before).toContainText("Nothing in the app takes one back yet");
+
+  // A script proposes a record: it waits. It cannot name a status, and it cannot agree.
+  const body = { ventureId, source: { kind: "agent", label: "an agent" }, expenses: [{ date: today, amountCents: 4599, paidTo: PAYEE, whatFor: "printer paper" }] };
+  const countOf = async (c: Awaited<ReturnType<typeof cardOnPage>>) => {
+    const found = ((await c.textContent()) ?? "").match(/(\d+) records?/);
+    return found ? Number(found[1]) : 0;
+  };
+  const countBefore = await countOf(before);
+  expect((await page.request.post("/api/expenses/propose", { data: { ...body, expenses: [{ ...body.expenses[0], status: "confirmed" }] } })).status()).toBe(400);
+  const proposed = await page.request.post("/api/expenses/propose", { data: body });
+  expect(proposed.status()).toBe(201);
+  const [waiting] = ((await proposed.json()) as { expenses: { id: string; status: string }[] }).expenses;
+  expect(waiting.status).toBe("proposed");
+  expect((await page.request.post("/api/expenses/agree", { data: { ventureId, expenseIds: [waiting.id] } })).status()).toBe(403);
+
+  // A purchase dated after the computer's own day is refused.
+  const tomorrow = new Date(Date.now() + 36 * 60 * 60 * 1000).toLocaleDateString("en-CA");
+  const future = await page.request.post("/api/expenses/propose", { data: { ...body, expenses: [{ ...body.expenses[0], date: tomorrow }] } });
+  expect(future.status()).toBe(400);
+
+  // The page counts the waiting record and shows none of its words or its amount; the idea's id is the only thing in any URL.
+  const seen: string[] = [];
+  page.on("request", (r) => seen.push(r.url()));
+  const after = await cardOnPage();
+  expect(await countOf(after)).toBe(countBefore + 1);
+  await expect(page.locator("main")).not.toContainText(PAYEE);
+  await expect(page.locator("main")).not.toContainText("45.99");
+  for (const url of seen) {
+    expect(url, "a record's words in a URL").not.toContain("Stationery");
+    expect(url, "an amount in a URL").not.toContain("4599");
+  }
+});

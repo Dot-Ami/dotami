@@ -54,7 +54,8 @@ says where it is going.
   one saved setting; answers only DotAmi's own window, no agent access yet).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
-  the person agreed to; [8a]) · `Setting` (the person's saved choices, one row per setting: a
+  the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
+  the one place DotAmi holds single transactions, with no bank or card number and no receipt yet; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`

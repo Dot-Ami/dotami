@@ -44,6 +44,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
   window can read or change them. A database update adds the table without touching your ideas,
   figures, links or map progress (a test proves it).
+- **The store for expense records** ([8i], first slice; no screen yet) — DotAmi can now hold single
+  business expenses you agree to keep: the day, the amount and currency, who it was paid to and what
+  for (your words), a category only if you pick one, and the seller's address and GST/HST number if
+  you give them. Like figures, a record is only proposed until you agree to it in DotAmi's own
+  window; an agent or a script can only propose; agreeing, taking back and turning down answer only to DotAmi's own window.
+  There is no field for a bank or card number, DotAmi never picks a category or marks anything
+  deductible, and a purchase can't be dated after your computer's own day. The records are in the
+  data file's new expense table and counted on *What DotAmi knows about you*. A database update adds the
+  table without touching your ideas, figures, links, map progress or settings (a test proves it).
+  The screen to type a record, receipts and the other ways in come in later steps.
 - **The reminder banner** ([8e]) — for each idea whose *Remind me about this idea* switch is on,
   and each of monthly, quarterly and yearly you ticked, DotAmi checks the most recent month,
   calendar quarter or year that has ended. If your agreed figures for that idea don't cover it, the
@@ -65,8 +75,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Documented
 - **Business expense records** ([8i]) — a design and a proposed privacy review for keeping single
   business expenses and their receipts, with the options and what each costs, and the maintainer's
-  decisions of 2026-10-07 (single records with receipt files). Nothing is built yet
-  (`docs/architecture/expense-records.md`).
+  decisions of 2026-10-07 (single records with receipt files). The store for typed records is built
+  (see Added); receipts and the screens are not (`docs/architecture/expense-records.md`).
+- **"Totals, never single transactions" now says what is true.** Figures are still totals; the
+  privacy review, the figures roadmap, the use-cases plan, the contract and the *Your figures* entry
+  on *What DotAmi knows about you* now say that single business expense records are the one place
+  DotAmi keeps single transactions, and a record only counts as kept once you agree to it. Receipts are still proposed.
 
 ### Fixed
 - **"Add from a file" no longer pre-fills a price per item as the amount.** A column named

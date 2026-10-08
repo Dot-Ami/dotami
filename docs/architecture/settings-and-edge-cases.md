@@ -154,6 +154,20 @@ person agrees to figures from it; a statement in a currency other than CAD.
 **Books on disk [8h]** — the accounting program has the file open and locked; a file from a
 newer version of that program than the reader knows.
 
+### Expense records
+
+**The expense records store [8i]** (built 2026-10-07, the first slice; no screen yet; `tests/expenses-store.spec.ts`, `tests/desktop-migrate.spec.ts`)
+- An agent or a script tries to confirm, take back or turn down a record → refused. *`/api/expenses/agree`, `/retract` and `/discard` answer only to DotAmi's own page; `/propose` creates only "proposed" records and refuses a body that names a status, an agreed time, a taken-back time or "edited by you" (tested).*
+- A purchase dated tomorrow, late on the last evening of a month when the UTC day has already turned over → refused. *Measured against this computer's own calendar day, the same as figures; tested with the time zone forced to America/Vancouver at 11:30 p.m. on March 31. An edited date in the agree step is measured the same way.*
+- A batch with one bad record → none are created, and the refusal names the record's position, never its words. *All or nothing (tested).*
+- More than 500 records in one call → refused. *Exactly 500 is accepted (tested).*
+- The seller's GST/HST number typed as "123456789RT0001", "123456789-rt-0001" or just the nine digits → kept as the CRA writes it (123456789 RT 0001) or as nine digits; anything else is refused with the shape asked for, and the box can be left blank. *DotAmi checks the shape only and never looks the number up.*
+- A category: kept only when the person gave or picked it; a seller that sounds like a category does not get one. *Tested.*
+- A record typed over itself in the agree step (the same amount) → not "edited by you". *Only a field that really changed counts (tested).*
+- An idea is deleted → its records go with it, and no other idea's. *Database cascade, tested; there is no delete-an-idea control yet.*
+- A failing route → the log gets the error's name and code, never the amount or the words. *Tested.*
+- Amounts of zero or less, a refund or a credit → refused for now (an open question, expense-records.md § 6).
+
 ### The Lens
 
 **Pick your model [9a]**
@@ -312,5 +326,5 @@ committed by mistake (secret scanning).
 9. **An accessibility target** to test against (for example a published standard), not "as good as we can".
 10. **Business expense records and receipts** ([8i]) — decided 2026-10-07: single expenses and their
     receipt files (copied into the data folder, carried by backups). The design and what is still open
-    are in [expense-records.md](expense-records.md); the "totals, never single transactions" rule is
-    reworded for expenses when the first code lands.
+    are in [expense-records.md](expense-records.md); the "totals, never single transactions" rule was
+    reworded for expenses with the first code (the store for typed records, built 2026-10-07).

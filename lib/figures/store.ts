@@ -33,7 +33,7 @@ export class FigureInputError extends Error {
 }
 
 /** Throws unless the venture belongs to the stub user — same ownership rule as lib/db/ventures.ts. */
-async function requireVenture(prisma: PrismaClient, ventureId: string): Promise<void> {
+export async function requireVenture(prisma: PrismaClient, ventureId: string): Promise<void> {
   if (typeof ventureId !== "string" || ventureId.length === 0) throw new VentureNotFoundError();
   const user = await prisma.user.findUnique({ where: { email: STUB_EMAIL } });
   if (!user) throw new VentureNotFoundError();

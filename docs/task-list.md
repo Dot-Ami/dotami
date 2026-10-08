@@ -131,17 +131,20 @@ roadmap's build order.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
   - [ ] Proposing figures, the other formats
-- ⬜ **[8i] Business expense records** — a record of each business expense the person adds (date,
+- 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
-  deductible. Not started: **design written and decided** (2026-10-07, after the maintainer asked for a
-  record of every business expense).
+  deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
+  every business expense); the store for typed records is built, the screens are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
-  - [x] A proposed privacy review, marked PROPOSED:
-    [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
+  - [x] The privacy review (typed records as built; receipts still marked PROPOSED):
+    [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
   - [x] Decided: single records with their receipt files, copied into the data folder and carried
     by backups; every way in (typed, spreadsheet rows, bank rows, a receipt photo the Lens reads)
-  - [ ] Typed records with the agree prompt
+  - [x] The store for typed records: the `Expense` table (a new migration), the checks, the propose /
+    agree / retract / discard / list routes (agents can only propose; agree, retract and discard answer only to DotAmi's own page), the privacy list and
+    /your-data's count, and the "totals, never single transactions" wording reworded for expenses
+  - [ ] The screen to type a record and the agree prompt for expenses
   - [ ] Receipts as copies, and backups that carry them
   - [ ] The entries in the Delete menu ([8d])
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
