@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logRouteError } from "@/lib/api/log-error";
 import { evaluateProfile } from "@/lib/brain";
 import { NODE_ENGINE_HINTS } from "@/lib/brain/node-items";
 import { loadLatestVentureScenarioForStubUser } from "@/lib/db/load-latest-venture-for-stub-user";
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   try {
     ventures = await listVentures(prisma);
   } catch (error) {
-    console.error("[readout] ventures", error);
+    logRouteError("readout", error);
     return NextResponse.json({ error: "No database reachable." }, { status: 503 });
   }
 

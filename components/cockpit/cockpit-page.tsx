@@ -11,6 +11,7 @@ import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
 import { evaluateProfile, type ConfirmedFigure } from "@/lib/brain";
 import type { FigureView } from "@/lib/figures/types";
+import { useLocalToday } from "@/lib/figures/use-local-today";
 import { itemsForNode } from "@/lib/brain/node-items";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
@@ -131,7 +132,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   }, [scenarioId]);
 
   // S2.5.4e: the cockpit runs the same evaluator the intake preview runs — on this scenario.
-  const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
+  // [8e] Today is the person's own day and moves on with the clock: a window left open past
+  // midnight or a quarter end re-reads the figures against the new day instead of the old one.
+  const today = useLocalToday();
   const evaluation = useMemo(
     () =>
       currentScenario

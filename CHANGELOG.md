@@ -24,7 +24,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   when a date like 03/04/2026 could be read two ways, reads "1 234,56" and Windows-encoded French
   files, and lists every row it left out with the reason. Macro workbooks, old .xls or
   password-locked files, pictures renamed .xlsx and files over 10 MB are refused with what to do
-  instead. Months already waiting or agreed with the same total aren't proposed twice.
+  instead. Months already waiting or agreed with the same total aren't proposed twice. Every time,
+  it first asks where the file is from; a bank or credit card file is turned away without being
+  opened, since bank statements aren't supported yet.
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.

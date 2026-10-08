@@ -7,7 +7,7 @@
  */
 import http from "node:http";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
@@ -197,6 +197,159 @@ test("a confirmed figure decides the GST card, with its source — and only the 
   await expect(page.getByText(/From your records · 1 figure · from typed by you/).first()).toBeVisible();
 });
 
+// ---- [8e] How old each figure is ------------------------------------------------------------
+// Both use the invented venture "Demo — Chinook Sign Painting", through figures of their own, and
+// run in British Columbia with the browser's clock set by the test. The server keeps its real
+// clock, so a period that has ended for the server can still be after "today" for the page —
+// exactly what a computer with a wrong clock looks like.
+test.describe("how old each figure is", () => {
+  test.use({ timezoneId: "America/Vancouver" });
+
+  /** The Chinook card on /ventures, with its id-free helpers. */
+  async function openChinook(page: Page) {
+    await page.goto("/ventures");
+    const card = page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+      .first();
+    // The panel has loaded its figures once its add buttons are there.
+    await expect(card.getByRole("button", { name: "Add a figure" })).toBeVisible();
+    return card;
+  }
+
+  /** Types a figure into the add form and opens the agree prompt for it. */
+  async function typeFigure(card: Locator, from: string, to: string, amount: string) {
+    await card.getByRole("button", { name: "Add a figure" }).click();
+    await card.getByLabel("From", { exact: true }).fill(from);
+    await card.getByLabel("To", { exact: true }).fill(to);
+    await card.getByLabel("Amount", { exact: true }).fill(amount);
+    await card.getByRole("button", { name: "Review this figure" }).click();
+  }
+
+  test("each figure says how long ago it ended and the day you agreed, in your own day — 11:30 p.m. on March 31 in BC is still March", async ({
+    page,
+  }) => {
+    // 06:30 UTC on April 1 is 11:30 p.m. on March 31 in Vancouver. Time flows from here, so the
+    // test can run it past midnight below.
+    await page.clock.install({ time: "2026-04-01T06:30:00Z" });
+    // The agreed and retracted moments come from the server's clock, which is "now" for real.
+    // Pin them to the same evening so the test checks the day the page works out for them (March
+    // 31 in Vancouver) whatever hour it runs at — a UTC reading would say April 1.
+    await page.route(/\/api\/figures\?venture=/, async (route) => {
+      if (route.request().method() !== "GET") return route.continue();
+      const response = await route.fetch();
+      const body = (await response.json()) as { figures?: { confirmedAt: string | null; retractedAt: string | null }[] };
+      for (const f of body.figures ?? []) {
+        if (f.confirmedAt) f.confirmedAt = "2026-04-01T06:30:00.000Z";
+        if (f.retractedAt) f.retractedAt = "2026-04-01T06:30:00.000Z";
+      }
+      return route.fulfill({ status: response.status(), contentType: "application/json", body: JSON.stringify(body) });
+    });
+
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+    // A figure's row, found by its period written out in full ("March 2026"), so a quarter such as
+    // "January to March 2026" from another test never answers to it.
+    const row = (period: string) => card.getByRole("listitem").filter({ has: page.getByText(period, { exact: true }) });
+
+    // March ends today: the agree prompt says so, and flags nothing.
+    await typeFigure(card, "2026-03-01", "2026-03-31", "1,000");
+    await expect(prompt).toContainText("ends today");
+    await expect(prompt).not.toContainText("Check this date");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    await expect(row("March 2026")).toContainText("ends today · agreed 2026-03-31");
+
+    // April hasn't ended on this page's clock. The server accepts it (its clock is later), so it
+    // can be agreed to — and it is flagged, in the prompt and in the list.
+    await typeFigure(card, "2026-04-01", "2026-04-30", "500");
+    await expect(prompt).toContainText("Check this date. This period ends after today (2026-04-30 is later than 2026-03-31)");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    await expect(row("April 2026")).toContainText("ends next month · agreed 2026-03-31");
+    await expect(row("April 2026")).toContainText("This period ends after today (2026-04-30 is later than 2026-03-31)");
+
+    // The window stays open past midnight: nobody reloads, and "today" moves on by itself.
+    await page.clock.runFor(31 * 60 * 1000);
+    await expect(row("March 2026")).toContainText("ended yesterday · agreed 2026-03-31");
+    await expect(row("March 2026")).not.toContainText("ends today");
+    await expect(row("April 2026")).toContainText("This period ends after today (2026-04-30 is later than 2026-04-01)");
+
+    // Retracting shows the person's day, not the UTC day the timestamp starts with.
+    await row("March 2026").getByRole("button", { name: "Retract", exact: true }).click();
+    await row("March 2026").getByRole("button", { name: "Retract", exact: true }).click();
+    const retracted = card.getByRole("listitem").filter({ hasText: "retracted 2026-03-31" });
+    await expect(retracted).toBeVisible();
+    await expect(retracted).toContainText("ended yesterday · agreed 2026-03-31");
+    await expect(card).not.toContainText("retracted 2026-04-01");
+  });
+
+  test("a figure dated after today is never counted by the GST card, which says how recent its figures are", async ({ page }) => {
+    // Mid-February on the page's clock. A February figure of $31,200 sits in this quarter, and
+    // before [8e] it was read as the quarter's revenue, so the card said "over $30,000 in a
+    // single calendar quarter" from a figure that hadn't ended.
+    await page.clock.install({ time: "2026-02-15T20:00:00Z" });
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+
+    await typeFigure(card, "2026-02-01", "2026-02-28", "31,200");
+    await expect(prompt).toContainText("Check this date");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+
+    await card.getByRole("link", { name: /Open in cockpit/ }).click();
+    await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
+
+    // The card says what it left out and why, and what the figures it did read don't cover.
+    await expect(
+      page.getByText(/(One figure isn't|\d+ figures aren't) counted: it ends after today \(\d{4}-\d{2}-\d{2}\) — check its date/).first(),
+    ).toBeVisible();
+    await expect(page.getByText("October to December 2025 and 3 earlier quarters aren't fully covered yet.").first()).toBeVisible();
+    // ...and never reads the future-dated figure as this quarter's revenue.
+    await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
+  });
+
+  test("a map left open past midnight on a quarter's last day moves to the new four-quarter window without a reload", async ({
+    page,
+  }) => {
+    // A June 2025 figure is older than every window below, before and after midnight, so the card
+    // always lists it as "not read" and names the span it is reading. That span is the quarter
+    // wording this test watches. (No other figure in this shared database starts before 2026.)
+    // It is made on the real clock: it ended long ago for the server and the page alike.
+    const card = await openChinook(page);
+    const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+    await typeFigure(card, "2025-06-01", "2025-06-30", "1,200");
+    await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+    await expect(prompt).toBeHidden();
+    const cockpitPath = await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href");
+    expect(cockpitPath).toBeTruthy();
+
+    // 06:59 UTC on October 1 is 11:59 p.m. on September 30 in Vancouver (daylight time, UTC-7):
+    // the last minute of the third quarter. Installed after the figure is in, so the minute isn't
+    // spent typing it. Time flows from here, which leaves the page about a minute before midnight.
+    await page.clock.install({ time: "2026-10-01T06:59:00Z" });
+    await page.goto(cockpitPath!);
+    await page.getByRole("button", { name: /^Threshold: GST\/HST small-supplier threshold, / }).first().click();
+
+    // The quarter we're in is July to September, so the four complete ones before it run from
+    // July 2025 to June 2026.
+    const before = page.getByText(
+      /looks only at the last four complete calendar quarters \(July 2025 to June 2026\) and the current one/,
+    );
+    const after = page.getByText(
+      /looks only at the last four complete calendar quarters \(October 2025 to September 2026\) and the current one/,
+    );
+    await expect(before.first()).toBeVisible();
+    await expect(after).toHaveCount(0);
+
+    // Past local midnight, with no reload: October begins, the current quarter is now October to
+    // December, and the four complete quarters before it run from October 2025 to September 2026.
+    await page.clock.runFor(2 * 60 * 1000);
+    await expect(after.first()).toBeVisible();
+    await expect(before).toHaveCount(0);
+  });
+});
+
 // ---- [8c] Add from a file -------------------------------------------------------------------
 // All three use the invented venture "Demo — Salish Trail Maps" (the figures test above uses
 // Chinook). Only the first one proposes anything for it; the other two prove their refusals and
@@ -254,6 +407,19 @@ async function openSalish(page: Page) {
   return { card, ventureId, figures };
 }
 
+/**
+ * Answers the panel's first question ("Where is this file from?") with accounting software. Every
+ * file starts here (the maintainer's decision of 2026-10-07), so every test that adds a file goes through this first.
+ */
+async function answerAccounting(card: Locator) {
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  await expect(panel.getByText("Where is this file from?")).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toBeVisible();
+}
+
 /** Every request the page makes from now on: where it went and what it carried. */
 function watchRequests(page: Page) {
   const seen: { path: string; url: string; method: string; body: string | null }[] = [];
@@ -309,6 +475,7 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   const secrets = ["Atelier", "Café", "Boulangerie", "Facturex", "1 234,56", "1234,56"];
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await expect(
     card.getByText(
       "It's read here, on this computer, and never kept — only the monthly totals you agree to are saved.",
@@ -428,6 +595,7 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
 
   // Dropping the same file again (a real drop this time): the months are already here.
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   const dropped = await page.evaluateHandle(
     ({ name, text }) => {
       const transfer = new DataTransfer();
@@ -468,6 +636,7 @@ test("dates that read two ways are asked about once, and nothing is totalled unt
     `${two(day + 1)}/${two(target.m)}/${target.y},Client B,50.00`,
   ];
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await card.getByLabel("Choose a file").setInputFiles({
     name: "two-ways.csv",
     mimeType: "text/csv",
@@ -513,6 +682,7 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
   ]);
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   const input = card.getByLabel("Choose a file");
   await input.setInputFiles({
     name: "invoices.xlsx",
@@ -534,6 +704,10 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
     "C · Amount",
   );
 
+  // The answer covered that one file: the next file starts from the question again.
+  await card.getByRole("button", { name: "Change" }).click();
+  await answerAccounting(card);
+
   // A picture's first bytes under a spreadsheet's name: turned away, no preview, nothing sent.
   const png = Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
@@ -547,6 +721,9 @@ test("an .xlsx is read in the window; a renamed picture and a macro workbook are
   await expect(card.getByRole("alert")).toContainText("That isn't a spreadsheet.");
   await expect(card.getByRole("table")).toHaveCount(0);
   await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  // After a refusal the way on is back to the question, not another file on the same answer.
+  await card.getByRole("button", { name: "Choose another file" }).click();
+  await answerAccounting(card);
 
   // A macro workbook: refused with the macros message.
   const macros = makeXlsx(
@@ -609,6 +786,7 @@ test("a large workbook reads without freezing", async ({ page }) => {
   const workbook = makeXlsx([{ name: "Invoices", rows }]);
 
   await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
   await card.getByLabel("Choose a file").setInputFiles({
     name: "big-year.xlsx",
     mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -624,6 +802,283 @@ test("a large workbook reads without freezing", async ({ page }) => {
   await expect(card.getByRole("button", { name: `Review these ${MONTHS} figures` })).toBeVisible();
   expect(problems.filter((p) => /worker|content security policy|refused/i.test(p))).toEqual([]);
   expect(workers.some((url) => url.startsWith("blob:"))).toBe(true);
+  expect(await figures()).toEqual(before);
+});
+
+// ---- [8c] ask where the file is from, before anything is read ---------------------
+// The panel's first screen is a question, asked for every file. These tests prove the question
+// comes first, that a "bank or credit card" answer opens nothing, and that the answer is never kept.
+
+const ORIGIN_QUESTION = "Where is this file from?";
+
+/** A one-month CSV that reads cleanly: day-first dates with a day above 12, so nothing is asked. */
+function tinyCsv(): string {
+  const month = monthsAgo(11);
+  return `Date,Customer,Amount\n20/${two(month.m)}/${month.y},Client A,100.00\n`;
+}
+
+/**
+ * Records every way the page could read a file's contents (Blob methods and FileReader). The
+ * recorder must be installed before the drop; `reads()` then says which methods were called.
+ */
+async function recordFileReads(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __fileReads: string[] };
+    w.__fileReads = [];
+    for (const name of ["arrayBuffer", "text", "stream", "slice"] as const) {
+      const original = Blob.prototype[name] as (...args: unknown[]) => unknown;
+      Blob.prototype[name] = function (this: Blob, ...args: unknown[]) {
+        w.__fileReads.push(`Blob.${name}`);
+        return original.apply(this, args);
+      } as never;
+    }
+    for (const name of [
+      "readAsArrayBuffer",
+      "readAsText",
+      "readAsBinaryString",
+      "readAsDataURL",
+    ] as const) {
+      const original = FileReader.prototype[name] as (...args: unknown[]) => unknown;
+      FileReader.prototype[name] = function (this: FileReader, ...args: unknown[]) {
+        w.__fileReads.push(`FileReader.${name}`);
+        return original.apply(this, args);
+      } as never;
+    }
+  });
+  return () =>
+    page.evaluate(() => (window as unknown as { __fileReads: string[] }).__fileReads.slice());
+}
+
+/** Lets a file go on `target` the way a person's drop would. */
+async function dropFile(page: Page, target: Locator, name: string, text: string) {
+  const transfer = await page.evaluateHandle(
+    ({ name, text }) => {
+      const t = new DataTransfer();
+      t.items.add(new File([text], name, { type: "text/csv" }));
+      return t;
+    },
+    { name, text },
+  );
+  await target.dispatchEvent("drop", { dataTransfer: transfer });
+}
+
+test("the first thing 'Add from a file' shows is a question, with nothing to drop or choose", async ({
+  page,
+}) => {
+  const { card } = await openSalish(page);
+  await card.getByRole("button", { name: "Add from a file" }).click();
+
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  const question = panel.getByRole("group", { name: ORIGIN_QUESTION });
+  await expect(
+    question.getByRole("button", { name: "Accounting software or a spreadsheet you keep" }),
+  ).toBeVisible();
+  await expect(
+    question.getByRole("button", { name: "A bank or credit card account" }),
+  ).toBeVisible();
+  await expect(panel.getByText(/QuickBooks, Xero, Wave, FreshBooks/)).toBeVisible();
+
+  // No way to pick or drop a file yet: no file input, no drop area, no "Choose a file".
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByLabel("Choose a file")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: "Choose a file" })).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+
+  // The question is the same after Cancel: the answer was never kept.
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await card.getByRole("button", { name: "Cancel" }).click();
+});
+
+/** Waits until anything a stray drop could have started (a chunk import, then a read) has had its turn. */
+async function settle(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 150))),
+      ),
+  );
+}
+
+test("a file dropped before answering, or after 'bank or credit card', is never read", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const reads = await recordFileReads(page);
+  const seen = watchRequests(page);
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  // A bank-looking file whose name carries account digits: neither the name nor the cell may appear anywhere afterwards.
+  const secrets = ["chequing-4829", "Payroll Deposit"];
+  const csv = tinyCsv().replace("Client A", "Payroll Deposit");
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+
+  // The control comes first: a drop after the "accounting" answer IS read. That proves the recorder
+  // can see a read, and it loads the reader code, so a stray read below could not hide behind a
+  // first-use download delay.
+  await answerAccounting(card);
+  await dropFile(
+    page,
+    card.getByRole("group", { name: "Drop a spreadsheet here" }),
+    "sales-control.csv",
+    tinyCsv(),
+  );
+  await expect(
+    card.getByRole("table", { name: "Monthly totals from sales-control.csv" }),
+  ).toBeVisible();
+  expect(await reads()).toContain("Blob.arrayBuffer");
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  const baseline = (await reads()).length;
+  const readsSince = async () => (await reads()).slice(baseline);
+
+  // 1. Dropped on the question itself (on its text, and on the panel): ignored, the question
+  // stays, nothing read.
+  await dropFile(page, panel.getByText(ORIGIN_QUESTION), "chequing-4829.csv", csv);
+  await dropFile(page, panel, "chequing-4829.csv", csv);
+  await settle(page);
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  expect(await readsSince()).toEqual([]);
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+
+  // 2. "A bank or credit card account": the warning, in plain English, with Back and Cancel.
+  await panel.getByRole("button", { name: "A bank or credit card account" }).click();
+  const warning = panel.getByRole("alert");
+  await expect(warning).toContainText("DotAmi can't add bank or card statements yet.");
+  await expect(warning).toContainText(
+    "When it can, you'll pick which deposits are business revenue, after a warning about what DotAmi would keep.",
+  );
+  await expect(warning).toContainText("Nothing from your file was opened or kept.");
+  await expect(warning).not.toContainText(/\[\d+[a-z]/); // no story codes in the screen
+  await expect(warning.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+
+  // 3. Dropped on the warning (and on the panel): still ignored. Nothing proposed, no figure, no
+  // name shown.
+  await dropFile(page, warning, "chequing-4829.csv", csv);
+  await dropFile(page, panel, "chequing-4829.csv", csv);
+  await settle(page);
+  expect(await readsSince()).toEqual([]);
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  expect(await figures()).toEqual(before);
+  expect(seen.filter((r) => r.path.startsWith("/api/figures/propose"))).toEqual([]);
+  expectNothingLeftThisPage(seen, secrets);
+
+  // Back returns to the question, and still nothing has been read.
+  await warning.getByRole("button", { name: "Back" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  await settle(page);
+  expect(await readsSince()).toEqual([]);
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("the answer covers one file: the next file brings the question back and is never read unasked", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const reads = await recordFileReads(page);
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  const month = monthsAgo(11);
+  const bankCsv = `Date,Customer,Amount\n20/${two(month.m)}/${month.y},Payroll Deposit,100.00\n`;
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "sales-first.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(tinyCsv(), "utf8"),
+  });
+  const firstTable = card.getByRole("table", { name: "Monthly totals from sales-first.csv" });
+  await expect(firstTable).toBeVisible();
+
+  // The first file used the answer up: no file input or drop area is left on the screen, and a
+  // second file dropped on the panel is ignored unread.
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toHaveCount(0);
+  const baseline = (await reads()).length;
+  await dropFile(page, panel, "chequing-4829.csv", bankCsv);
+  await settle(page);
+  expect((await reads()).slice(baseline)).toEqual([]);
+  await expect(firstTable).toBeVisible();
+  await expect(card.getByText("chequing-4829")).toHaveCount(0);
+
+  // The way to another file is the question again.
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // A refused file uses the answer up too: "Choose another file" goes back to the question.
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "notes.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("", "utf8"),
+  });
+  await expect(panel.getByRole("alert")).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+  await panel.getByRole("button", { name: "Choose another file" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("'Change' returns to the question and forgets the file; the answer is never stored", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const panel = card.getByRole("group", { name: "Add from a file" });
+  const storageSize = () =>
+    page.evaluate(() => `${window.localStorage.length}/${window.sessionStorage.length}`);
+  const storageBefore = await storageSize();
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(
+    panel.getByText("From: Accounting software or a spreadsheet you keep"),
+  ).toBeVisible();
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "sales-change.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(tinyCsv(), "utf8"),
+  });
+  await expect(
+    card.getByRole("table", { name: "Monthly totals from sales-change.csv" }),
+  ).toBeVisible();
+
+  await panel.getByRole("button", { name: "Change" }).click();
+  await expect(panel.getByText(ORIGIN_QUESTION)).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByText("sales-change.csv")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await expect(card.locator('input[type="file"]')).toHaveCount(0);
+
+  // Answering again starts from an empty drop area: the earlier file is gone.
+  await panel
+    .getByRole("button", { name: "Accounting software or a spreadsheet you keep" })
+    .click();
+  await expect(card.getByRole("group", { name: "Drop a spreadsheet here" })).toBeVisible();
+  await expect(card.getByText("sales-change.csv")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // The answer lives in the panel's state only: nothing in browser storage, nothing saved.
+  expect(await storageSize()).toBe(storageBefore);
+  await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
 });
 

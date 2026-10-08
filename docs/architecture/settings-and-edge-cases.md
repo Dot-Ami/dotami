@@ -116,6 +116,7 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 - A password-protected Excel file → "open it in Excel and save a copy without a password". *Refused with that sentence; an old .xls gets the same one (same container) (tested).*
 - A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused before the file is read; a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested).*
 - The same file dropped twice → recognised (by fingerprint), not counted twice. *Recognised by its totals instead: a month already waiting or agreed with the same total and currency is listed as "already in DotAmi" and not proposed again (tested). A byte fingerprint would need a table — left for [8c-2] with the remembered column choice. Even a second, different total for the same month is never added: the map leaves that quarter out until the person chooses ([8a]).*
+- A bank or credit card file dropped in (its amounts, and a file name that can carry account digits) → *The panel asks "Where is this file from?" before reading anything, for every file: the answer covers one file only (a second file, or another try after a refusal, goes back to the question), and it is never remembered. "A bank or credit card account" shows a plain warning and opens nothing: no bytes, no name, no figure. A file dropped on the panel before the answer is ignored unread. The answer is only as good as the person's click — a bank file the person calls "accounting software" is read like any other spreadsheet; nothing checks the answer (browser-tested 2026-10-07).*
 - A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. Nothing in a workbook is ever run — only its XML text is read (tested).*
 - A "Total" column next to a tax column → the total probably includes the tax. *Never pre-filled; the person picks, with a note to check (tested).*
 
@@ -133,7 +134,7 @@ zones: a figure dated "March 31" stays March 31 for everyone.
 - A spouse's return in the same PDF → only the person's own figures are proposed.
 - A line number that changed between tax years → the year's own line list is used.
 
-**Bank and card records [8g]** — account numbers in a statement are never stored, even when the
+**Bank and card records [8g]** (not built; until it is, "Add from a file" turns a bank or card file away unread) — account numbers in a statement are never stored, even when the
 person agrees to figures from it; a statement in a currency other than CAD.
 
 **Books on disk [8h]** — the accounting program has the file open and locked; a file from a

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logRouteError } from "@/lib/api/log-error";
 import { listVentures } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +17,7 @@ export async function GET() {
     const ventures = await listVentures(prisma);
     return NextResponse.json({ ventures, db: { available: true } });
   } catch (error) {
-    console.error("[ventures] list failed", error);
+    logRouteError("ventures GET", error);
     return NextResponse.json(
       { ventures: [], db: { available: false, reason: "No database reachable." } },
       { status: 503 },

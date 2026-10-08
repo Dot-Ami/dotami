@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
+import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { linkVentures, unlinkVentures, VENTURE_LINK_KINDS, type VentureLinkKind } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
@@ -38,7 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const link = await linkVentures(prisma, id, toId, body.kind as VentureLinkKind, note);
     return NextResponse.json({ ok: true, id: link.id });
   } catch (error) {
-    console.error("[ventures/links]", error);
+    logRouteError("ventures/links POST", error);
     return NextResponse.json({ error: "Link failed — do both ids exist?" }, { status: 503 });
   }
 }
@@ -51,7 +52,7 @@ export async function DELETE(request: Request) {
     await unlinkVentures(prisma, linkId);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[ventures/links/delete]", error);
+    logRouteError("ventures/links DELETE", error);
     return NextResponse.json({ error: "Unlink failed" }, { status: 503 });
   }
 }

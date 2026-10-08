@@ -74,8 +74,9 @@ model User {
 
 /// What the person told DotAmi about themselves — verbatim, dated, append-only (S2.5.4a).
 /// Charter rule: never summarised into a profile; a newer row supersedes by `saidAt`, never by
-/// editing an older one. No UPDATE/DELETE path exists on purpose. Vault statements are NOT
-/// stored here — they are read live from disk (lib/person/vault-reader.ts).
+/// editing an older one. No UPDATE/DELETE path exists on purpose. Every statement DotAmi holds is a
+/// row here: nothing is read from anywhere else (the `vault` field in the statements API's response
+/// is a reserved slot that says no outside source is configured).
 model PersonStatement {
   id        String   @id @default(cuid())
   userId    String

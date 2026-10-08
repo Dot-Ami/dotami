@@ -1,3 +1,4 @@
+import { MONTH_NAMES, isFuture, lastDayOfMonth as lastDay } from "../figures/age";
 import type { ConfirmedFigure } from "./types";
 
 /**
@@ -12,6 +13,11 @@ import type { ConfirmedFigure } from "./types";
  * numbers. A figure in another currency isn't converted, so it isn't counted either. Two figures
  * covering the same month are never added together: that quarter is left out until the person
  * chooses which one counts.
+ *
+ * [8e] A figure whose period ends after today is never counted (a wrong clock when it was typed,
+ * a clock set back since, a restored backup): it is listed as not counted, with its date. And a
+ * figure from before the quarters this rule reads is listed in `outsideWindow` instead of
+ * silently disappearing.
  */
 
 export interface QuarterRead {
@@ -44,9 +50,9 @@ export interface RevenueRead {
   used: ConfirmedFigure[];
   /** Figures of this kind it couldn't count, and why — shown on the card, never silently dropped. */
   notCounted: { figure: ConfirmedFigure; reason: string }[];
+  /** Figures from before the first quarter this rule reads: listed so the card can say they exist. */
+  outsideWindow: ConfirmedFigure[];
 }
-
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 interface Day {
   y: number;
@@ -60,7 +66,6 @@ function parseDay(iso: string): Day {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
 const monthKey = (y: number, m: number) => `${y}-${pad(m)}`;
 
 /** Quarter index counted from year 0, so stepping back across a year is plain subtraction. */
@@ -96,11 +101,23 @@ export function readRevenue(
   const relevant = (figures ?? []).filter((f) => f.kind === kind);
   if (relevant.length === 0) return null;
 
+  // The quarters this read looks at: the last `consecutiveQuarters` complete ones, then today's.
+  const t = parseDay(options.today);
+  const currentIndex = quarterIndex(t.y, t.m);
+  const firstWindowIndex = currentIndex - options.consecutiveQuarters;
+
   const notCounted: RevenueRead["notCounted"] = [];
+  const outsideWindow: ConfirmedFigure[] = [];
   // month -> the figures covering it (a quarter figure is listed under each of its months).
   const byMonth = new Map<string, ConfirmedFigure[]>();
   const monthsByFigure = new Map<string, string[]>();
   for (const figure of relevant) {
+    // First, whatever else is true of it: a period that ends after today has no total yet. This
+    // is what keeps a wrong clock from deciding a card (an October figure typed on October 6).
+    if (isFuture(figure.periodEnd, options.today)) {
+      notCounted.push({ figure, reason: `it ends after today (${figure.periodEnd}) — check its date` });
+      continue;
+    }
     if (figure.currency !== currency) {
       notCounted.push({ figure, reason: `it's in ${figure.currency} — not converted, so not counted` });
       continue;
@@ -111,6 +128,14 @@ export function readRevenue(
         figure,
         reason: `it covers ${figure.periodStart} to ${figure.periodEnd}, which isn't one calendar month or quarter`,
       });
+      continue;
+    }
+    // A month or quarter sits wholly inside one quarter, so its first month says which. Older
+    // than the window: listed, and kept out of the month map so it can't raise a "two figures
+    // cover this month" notice about a quarter this rule never reads.
+    const first = parseDay(figure.periodStart);
+    if (quarterIndex(first.y, first.m) < firstWindowIndex) {
+      outsideWindow.push(figure);
       continue;
     }
     monthsByFigure.set(figure.id, months);
@@ -145,8 +170,6 @@ export function readRevenue(
     };
   };
 
-  const t = parseDay(options.today);
-  const currentIndex = quarterIndex(t.y, t.m);
   const window: QuarterRead[] = [];
   for (let i = options.consecutiveQuarters; i >= 1; i -= 1) window.push(readQuarter(currentIndex - i));
   const current = readQuarter(currentIndex);
@@ -161,6 +184,7 @@ export function readRevenue(
     conflictMonths,
     used: [...used.values()],
     notCounted,
+    outsideWindow,
   };
 }
 
@@ -179,4 +203,10 @@ export function formatCad(cents: number): string {
 export function monthName(key: string): string {
   const [y, m] = key.split("-").map(Number);
   return `${MONTH_NAMES[m - 1]} ${y}`;
+}
+
+/** "September 30, 2026" for a "2026-09-30" day — read as text, never through a Date and a time zone. */
+export function longDay(day: string): string {
+  const { y, m, d } = parseDay(day);
+  return `${MONTH_NAMES[m - 1]} ${d}, ${y}`;
 }

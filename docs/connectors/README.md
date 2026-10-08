@@ -46,7 +46,7 @@ person decides, and DotAmi warns.
 | Wave | No official server found | Yes — [GraphQL API][wave-api], free "but we reserve the right to charge" ([API terms][wave-tos]) | None found | [CSV / PDF per report][wave-export]; [XLS/CSV account export][wave-bulk] |
 | FreshBooks | No official server found | Yes — [OAuth app][fb-api]; app-store review applies to public listings ([requirements][fb-public]) | None found | [Excel / CSV][fb-export] |
 | Sage Accounting (cloud) | No — Sage's official MCP servers are for [Sage Intacct][sage-intacct-mcp] and [Sage Operations][sage-ops-mcp], different products | Yes — [Accounting API v3.1][sage-api] | None found | [PDF / CSV / Excel][sage-export] |
-| Sage 50 Canada (desktop) | No | [SDK][sage50-sdk]; a [read-only ODBC driver][sage50-odbc] | None found | CSV / Excel (not confirmed on a Sage page we could read) |
+| Sage 50 Canada (desktop) | No | [SDK][sage50-sdk]; reading through ODBC ([setup][sage50-odbc]), which can be limited per user to ["Read data"][sage50-rights] (read 2026-10-06) | None found | CSV / Excel (not confirmed on a Sage page we could read) |
 
 Notes, from the same pages:
 
@@ -56,6 +56,17 @@ Notes, from the same pages:
   Cash Flow reports.
 - **Xero command-line tool** logs in with OAuth 2.0 + PKCE (no client secret) and keeps tokens
   in the operating system's keychain.
+- **Sage 50 Canada ODBC (corrected 2026-10-06).** This row used to link an article on Sage's
+  United States knowledge base (solution 221924750012693). That article sets up
+  the Pervasive database engine and talks about state and federal tax, so it describes a
+  different product from the Canadian edition and has been removed. What Sage's own Canadian
+  2026 help says instead: other programs open the company data through ODBC, using a MySQL
+  Connector driver (version 3.51.14 or higher) and a Sage user name and password
+  ([setup][sage50-odbc]); each user's third-party access right is "No data access", "Read
+  data" or "Read and write data", and read and write isn't available for shared companies
+  ([rights][sage50-rights]). Sage strongly discourages changing the data from outside Sage 50.
+  Both pages are dated June 10, 2026 and were read 2026-10-06. Neither says whether Sage 50
+  has to be running while another program reads the data.
 - **Not confirmed in vendor docs:** whether the QuickBooks MCP server and command-line tool are
   supported for Canadian companies specifically (Intuit's [partner program][qbo-partner] names
   Canada, excluding Quebec); whether Xero's free tier needs certification before connecting your
@@ -127,7 +138,8 @@ tested · in the repo). Test files are invented — never a real person's export
 [sage-api]: https://developer.sage.com/accounting/apis/sagebusinesscloudaccounting/3.1.0/accounting
 [sage-export]: https://help.sbc.sage.com/en-us/accounting/reporting/financial-reports/the-profit-and-loss-report.html
 [sage50-sdk]: https://support.na.sage.com/selfservice/viewContent.do?externalId=13102&sliceId=1
-[sage50-odbc]: https://us-kb.sage.com/portal/app/portlets/results/viewsolution.jsp?solutionid=221924750012693
+[sage50-odbc]: https://help-sage50.na.sage.com/en-ca/core/2026/Content/System_Settings/Security/UseThirdPartySoftwareWithSage50Data.htm
+[sage50-rights]: https://help-sage50.na.sage.com/en-ca/core/2026/Content/System_Settings/Security/UserRightsThirdPartyProducts.htm
 [gazette]: https://gazette.gc.ca/rp-pr/p1/2026/2026-06-27/html/reg3-eng.html
 [fin-cdb]: https://www.canada.ca/en/department-finance/programs/financial-sector-policy/open-banking-implementation/budget-2025-canadas-framework-for-consumer-driven-banking.html
 [fcac-cdb]: https://www.canada.ca/en/financial-consumer-agency/news/2024/06/fcac-welcomes-new-mandate-to-oversee-canadas-consumer-driven-banking-framework.html

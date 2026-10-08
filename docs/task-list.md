@@ -82,42 +82,45 @@ content and the project itself run alongside everything.
     row count + the file name are what's stored (as proposed figures — the agree prompt decides)
   - [x] Map the date and amount columns (guessed only when the column names make it clear); the
     edge cases in [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md#your-figures)
+  - [x] Asks "Where is this file from?" before any file is read, for every file (maintainer's decision,
+    2026-10-07): a bank or credit card file is turned away unopened, with a plain warning, until [8g] exists
   - [ ] [8c-2] and [8c-3] below
 
-All of [8c-2] to [8h] were researched on 2026-10-06; the design, the shared data model and every open
-decision are in [architecture/figures-roadmap.md](architecture/figures-roadmap.md). Each story's first
-slice needs no decision; the rest waits on the maintainer's answers.
+All of [8c-2] to [8h] were researched on 2026-10-06; the design, the shared data model and the
+decisions are in [architecture/figures-roadmap.md](architecture/figures-roadmap.md). The maintainer
+answered the decisions on 2026-10-07. Each story's first slice is merged; the next slices follow the
+roadmap's build order.
 
 - 🔄 **[8c-2] Remember a file's columns, and recognise the same file dropped twice.**
-  - [x] First slice, in review (#81): the file's fingerprint and column-name matching, worked out in
-    the window; nothing stored
-  - [ ] Keeping the column choice and the fingerprint (needs a table — waits on decisions)
+  - [x] The file's fingerprint and column-name matching, worked out in the window; nothing stored (#81)
+  - [ ] Keeping the column choice (a setting that starts on)
+  - [ ] Recognising the same file twice (waits on where a figure's source is kept)
 - 🔄 **[8c-3] Practice files shaped like each accounting program's export** — never a real export.
-  - [x] Xero and QuickBooks Online, in review (#84), with today's known gaps pinned as "fails today" tests
+  - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
+  - [ ] Fix every gap they found, starting with QuickBooks' sales counted twice
   - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
-  - [x] First slice, in review: the read-only page, a test that fails when something DotAmi keeps
-    isn't listed on it, and logs that hold events only
-  - [ ] *Forget this source*, *delete everything* (wait on decisions)
+  - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
+    that hold events only (#86)
+  - [ ] *Delete*: pick what to delete and see what else it affects
+  - [ ] *Forget this source* (waits on where a figure's source is kept)
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
-  - [x] First slice, in review (#85): every figure's age; a figure dated after today is flagged and
-    never counted (it could make the GST/HST card say "over $30,000"); dates in the person's own day
-  - [ ] Reminders (wait on decisions)
-- 🔄 **[8f] Tax software, through the CRA's line numbers.** Researched; waits on the decision of who
-  reads the return first (plain code or the Lens).
+  - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
+    GST/HST card say "over $30,000"); dates in the person's own day (#85)
+  - [ ] Reminders: monthly, quarterly and/or yearly, per idea; a banner and an "add to my calendar" file
+- ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
-- 🔄 **[8g] Bank and card records** — opt-in, behind a warning.
-  - [x] First slice, in review (#82): ticked bank rows to complete-month totals; a row has no field for
-    an account or card number
-  - [ ] The warning, the screen, OFX files (wait on decisions). Until then "Add from a file" doesn't
-    ask whether a file is a bank download.
+- 🔄 **[8g] Bank and card records** — opt-in, behind a warning. (Until it is built, "Add from a
+  file" turns a bank or card file away unread — see [8c].)
+  - [x] Ticked bank rows to complete-month totals; a row has no field for an account or card number (#82)
+  - [ ] The warning, the switch, the screen, OFX files
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
-  - [x] First slice, in review (#83): GnuCash XML read in the window, revenue accounts to monthly
-    totals; refuses what it doesn't fully understand
-  - [ ] Proposing figures, the other formats (wait on decisions)
+  - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
+    fully understand (#83)
+  - [ ] Proposing figures, the other formats
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
