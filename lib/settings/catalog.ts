@@ -93,7 +93,7 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "figure-reminders",
     group: "figures",
     label: "Figure reminders",
-    does: "How often to be reminded to bring your figures up to date: tick monthly, quarterly and/or yearly, or none. Each idea has its own \"Remind me about this idea\" switch on the Ideas page. When a period you asked about has ended and an idea's agreed figures don't cover it, a banner on that idea's card and map says so, with \"Add figures\" and \"Not this time\". The \"add to my calendar\" file comes in a later step.",
+    does: "How often to be reminded to bring your figures up to date: tick monthly, quarterly and/or yearly, or none. Each idea has its own \"Remind me about this idea\" switch on the Ideas page. When a period you asked about has ended and an idea's agreed figures don't cover it, a banner on that idea's card and map says so, with \"Add figures\" and \"Not this time\". \"Add to my calendar\" saves a calendar file with one repeating event per ticked box; your calendar can't see DotAmi, so it reminds you whether or not your figures are in.",
     defaultValue: "none ticked",
     options: "monthly · quarterly · yearly (tick any, or none)",
     warning: null,
