@@ -76,6 +76,10 @@ describe("confirmed figures on the GST/HST card", () => {
       summary: "From your records · 1 figure · 412 rows",
       figureIds: [expect.any(String)],
       sources: [{ label: "sales-2026.xlsx", rows: 412 }],
+      // [8e] How recent the figures are, and what they leave out.
+      newestPeriodEnd: "2026-09-30",
+      uncoveredQuarters: ["April to June 2026", "January to March 2026", "October to December 2025"],
+      notes: ["Newest figure ends September 30, 2026.", "April to June 2026 and 2 earlier quarters aren't fully covered yet."],
     });
     expect(after.nodes["stage-2b-mandatory-gst-registration"]).toBe("green");
   });
@@ -162,5 +166,158 @@ describe("confirmed figures on the GST/HST card", () => {
 
   it("ignores figures of other kinds", () => {
     expect(readRevenue([fig(...QUARTERS[3], 99_000, { kind: "net-income" })], { today: TODAY, consecutiveQuarters: 4, thresholdCents: 3_000_000 })).toBeNull();
+  });
+});
+
+// ---- [8e] How old each figure is ------------------------------------------------------------
+const WINDOW = { today: TODAY, consecutiveQuarters: 4, thresholdCents: 3_000_000 };
+
+describe("a figure dated after today is never counted", () => {
+  // The bug this guards, reproduced on 2026-10-06: an October 2026 figure of $31,200, entered
+  // while the computer's clock was wrong, was read as this quarter's revenue and made the card
+  // say "over $30,000 in a single calendar quarter" for October to December 2026.
+  const future = fig("2026-10-01", "2026-10-31", 31_200);
+
+  it("moves it to 'not counted' with a plain reason, and the quarter stays at zero", () => {
+    const read = readRevenue([future], WINDOW)!;
+    expect(read.used).toEqual([]);
+    expect(read.overSingleQuarter).toBeNull();
+    expect(read.current.cents).toBe(0);
+    expect(read.notCounted).toEqual([{ figure: future, reason: "it ends after today (2026-10-31) — check its date" }]);
+  });
+
+  it("so the card does not say 'over $30,000', and says why the figure was left out", () => {
+    const { card, nodes } = gstCard(10_000, [future]);
+    expect(card.why).not.toContain("over $30,000 in a single calendar quarter");
+    expect(card.state).toBe("green");
+    // The picked GST stage is green only when something triggers it; the estimate ($10,000) doesn't.
+    expect(nodes["stage-2b-mandatory-gst-registration"]).toBe("yellow");
+    expect(card.why).toContain("One figure isn't counted: it ends after today (2026-10-31) — check its date.");
+  });
+
+  it("leaves the rest of the read standing", () => {
+    const read = readRevenue([future, ...QUARTERS.map(([s, e]) => fig(s, e, 6_850))], WINDOW)!;
+    expect(read.windowComplete).toBe(true);
+    expect(read.windowCents).toBe(2_740_000);
+    expect(read.used).toHaveLength(4);
+    expect(read.notCounted.map((x) => x.figure)).toEqual([future]);
+  });
+
+  it("counts a period whose last day is today — the day doesn't have to be over for it to have ended", () => {
+    const read = readRevenue([fig("2026-10-01", "2026-10-31", 31_200)], { ...WINDOW, today: "2026-10-31" })!;
+    expect(read.used).toHaveLength(1);
+    expect(read.overSingleQuarter?.label).toBe("October to December 2026");
+    expect(read.notCounted).toEqual([]);
+  });
+
+  it("gives the date as the reason even when the figure is also in another currency", () => {
+    const usd = fig("2026-10-01", "2026-10-31", 31_200, { currency: "USD" });
+    expect(readRevenue([usd], WINDOW)!.notCounted[0].reason).toBe("it ends after today (2026-10-31) — check its date");
+  });
+});
+
+describe("a figure older than the rule reads is listed, not dropped", () => {
+  // The rule reads the last four complete calendar quarters plus this one. Before [8e] a figure
+  // from October to December 2024 appeared in neither `used` nor `notCounted`.
+  const old = fig("2024-10-01", "2024-12-31", 31_200);
+
+  it("puts it in outsideWindow and counts nothing from it", () => {
+    const read = readRevenue([old, fig(...QUARTERS[3], 5_000)], WINDOW)!;
+    expect(read.outsideWindow).toEqual([old]);
+    expect(read.used).toHaveLength(1);
+    expect(read.notCounted).toEqual([]);
+    expect(read.overSingleQuarter).toBeNull();
+  });
+
+  it("draws the line at the first quarter that is read: October to December 2025 is inside, September 2025 is not", () => {
+    expect(readRevenue([fig(...QUARTERS[0], 5_000)], WINDOW)!.outsideWindow).toEqual([]);
+    expect(readRevenue([fig("2025-09-01", "2025-09-30", 1_000)], WINDOW)!.outsideWindow).toHaveLength(1);
+  });
+
+  it("says so on the card, naming the span the rule reads", () => {
+    const { card } = gstCard(10_000, [old, fig(...QUARTERS[3], 5_000)]);
+    expect(card.fromRecords?.notes).toContain(
+      "One older figure isn't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
+    );
+  });
+
+  it("counts several: '2 older figures aren't read'", () => {
+    const { card } = gstCard(10_000, [old, fig("2023-01-01", "2023-03-31", 100), fig(...QUARTERS[3], 5_000)]);
+    expect(card.fromRecords?.notes).toContain(
+      "2 older figures aren't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
+    );
+  });
+});
+
+describe("two overlapping figures that are both older than the rule reads", () => {
+  // The same month twice would normally be a conflict. But a month this rule never reads can't
+  // make a quarter ambiguous, so [8e] keeps older figures out of the month map: they are listed
+  // as older figures and raise no "two figures cover this month" sentence.
+  const first = fig("2024-03-01", "2024-03-31", 4_000);
+  const second = fig("2024-03-01", "2024-03-31", 9_000);
+
+  it("lists both as outside the window, with no conflict month and nothing counted", () => {
+    const read = readRevenue([first, second], WINDOW)!;
+    expect(read.outsideWindow).toEqual([first, second]);
+    expect(read.conflictMonths).toEqual([]);
+    expect(read.window.some((q) => q.conflict)).toBe(false);
+    expect(read.used).toEqual([]);
+    expect(read.notCounted).toEqual([]);
+  });
+
+  it("says nothing about two figures on the card, only that two older figures aren't read", () => {
+    const { card } = gstCard(10_000, [first, second]);
+    expect(card.why).not.toContain("Two figures cover");
+    expect(card.why).not.toContain("until you choose which one counts");
+    expect(card.fromRecords?.notes).toContain(
+      "2 older figures aren't read: this rule looks only at the last four complete calendar quarters (October 2025 to September 2026) and the current one.",
+    );
+  });
+});
+
+describe("the card says how recent its figures are", () => {
+  it("names the day its newest figure ends and the recent quarters it doesn't cover, newest first", () => {
+    const { card } = gstCard(10_000, [fig(...QUARTERS[3], 5_000)]);
+    expect(card.fromRecords).toMatchObject({
+      newestPeriodEnd: "2026-09-30",
+      uncoveredQuarters: ["April to June 2026", "January to March 2026", "October to December 2025"],
+      notes: ["Newest figure ends September 30, 2026.", "April to June 2026 and 2 earlier quarters aren't fully covered yet."],
+    });
+  });
+
+  it("says 'isn't fully covered' for one quarter, and counts a quarter with only some of its months in", () => {
+    const figures = [QUARTERS[0], QUARTERS[1], QUARTERS[2]].map(([s, e]) => fig(s, e, 5_000));
+    figures.push(fig("2026-07-01", "2026-07-31", 1_000));
+    const { card } = gstCard(10_000, figures);
+    expect(card.fromRecords?.newestPeriodEnd).toBe("2026-07-31");
+    expect(card.fromRecords?.uncoveredQuarters).toEqual(["July to September 2026"]);
+    expect(card.fromRecords?.notes).toEqual(["Newest figure ends July 31, 2026.", "July to September 2026 isn't fully covered yet."]);
+  });
+
+  it("with a whole year in, only the newest end date is named", () => {
+    const { card } = gstCard(45_000, QUARTERS.map(([s, e]) => fig(s, e, 6_850)));
+    expect(card.fromRecords?.uncoveredQuarters).toEqual([]);
+    expect(card.fromRecords?.notes).toEqual(["Newest figure ends September 30, 2026."]);
+  });
+
+  it("leaves a quarter out of 'not covered' when it is already explained as a conflict", () => {
+    const figures = [...QUARTERS.map(([s, e]) => fig(s, e, 7_000)), fig("2026-03-01", "2026-03-31", 9_000)];
+    const { card } = gstCard(0, figures);
+    expect(card.fromRecords?.uncoveredQuarters).toEqual([]);
+    expect(card.why).toContain("that quarter is left out until you choose which one counts.");
+  });
+
+  it("names the newest end among the figures it counted, this quarter's included", () => {
+    const figures = [fig(...QUARTERS[3], 5_000), fig("2026-10-01", "2026-10-31", 2_000)];
+    const result = evaluateProfile({ ...baseProfile, targetRevenueY1: 0 }, { today: "2026-11-02", figures });
+    const card = result.unlocks.find((u) => u.id === "compliance-gst-small-supplier")!;
+    expect(card.fromRecords?.newestPeriodEnd).toBe("2026-10-31");
+    expect(card.fromRecords?.notes[0]).toBe("Newest figure ends October 31, 2026.");
+  });
+
+  it("with nothing counted, names no newest figure", () => {
+    const { card } = gstCard(10_000, [fig("2026-10-01", "2026-10-31", 31_200)]);
+    expect(card.fromRecords?.newestPeriodEnd).toBeNull();
+    expect(card.fromRecords?.notes.some((n) => n.startsWith("Newest figure"))).toBe(false);
   });
 });

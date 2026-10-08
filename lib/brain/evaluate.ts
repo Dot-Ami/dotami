@@ -14,7 +14,7 @@ import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 
 import { GOAL_EFFECTS, REFINE_EFFECTS } from "./goal-effects";
 import { matchPredicate, tagsIntersect } from "./predicates";
-import { formatCad, monthName, readRevenue } from "./records";
+import { formatCad, longDay, monthName, readRevenue } from "./records";
 import type {
   ConfirmedFigure,
   EvaluationProfile,
@@ -274,6 +274,34 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
     why += ` ${k === 1 ? "One figure isn't" : `${k} figures aren't`} counted: ${read.notCounted[0].reason}${k > 1 ? ", and others" : ""}.`;
   }
 
+  // [8e] How recent the counted figures are, and what the read leaves out. A quarter already
+  // explained as a conflict is not listed again as uncovered.
+  const newestPeriodEnd = read.used.reduce<string | null>(
+    (newest, f) => (newest === null || f.periodEnd > newest ? f.periodEnd : newest),
+    null,
+  );
+  const uncoveredQuarters = read.window
+    .filter((q) => q.monthsCovered < 3 && !q.conflict)
+    .map((q) => q.label)
+    .reverse();
+  const notes: string[] = [];
+  if (newestPeriodEnd) notes.push(`Newest figure ends ${longDay(newestPeriodEnd)}.`);
+  if (uncoveredQuarters.length === 1) {
+    notes.push(`${uncoveredQuarters[0]} isn't fully covered yet.`);
+  } else if (uncoveredQuarters.length > 1) {
+    const earlier = uncoveredQuarters.length - 1;
+    notes.push(`${uncoveredQuarters[0]} and ${earlier} earlier ${earlier === 1 ? "quarter" : "quarters"} aren't fully covered yet.`);
+  }
+  if (read.outsideWindow.length > 0) {
+    const k = read.outsideWindow.length;
+    const readSpan = `${monthName(read.window[0].start.slice(0, 7))} to ${monthName(read.window[n - 1].end.slice(0, 7))}`;
+    // readRevenue also reads the quarter we're in (for the single-quarter test), so the sentence
+    // says "and the current one" instead of claiming the complete quarters are all it looks at.
+    notes.push(
+      `${k === 1 ? "One older figure isn't" : `${k} older figures aren't`} read: this rule looks only at the last ${NUMBER_WORDS[n] ?? n} complete calendar quarters (${readSpan}) and the current one.`,
+    );
+  }
+
   const rows = read.used.reduce((sum, f) => sum + (f.sourceRows ?? 0), 0);
   const labels = new Map<string, number | null>();
   for (const f of read.used) {
@@ -290,6 +318,9 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
       summary: `From your records · ${count} figure${count === 1 ? "" : "s"}${rows > 0 ? ` · ${rows} rows` : ""}`,
       figureIds: read.used.map((f) => f.id),
       sources: [...labels.entries()].map(([label, r]) => ({ label, rows: r })),
+      newestPeriodEnd,
+      uncoveredQuarters,
+      notes,
     },
   };
 }

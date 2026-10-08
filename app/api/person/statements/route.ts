@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
+import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { addTypedStatement, listTypedStatements } from "@/lib/person/statements";
 import {
@@ -36,7 +37,7 @@ export async function GET() {
   try {
     typed = await listTypedStatements(prisma);
   } catch (error) {
-    console.error("[person/statements] list failed", error);
+    logRouteError("person/statements GET", error);
     db = { available: false, reason: "No database reachable — nothing typed here will be saved." };
   }
 
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
     const statement = await addTypedStatement(prisma, { text, saidAt });
     return NextResponse.json({ ok: true as const, statement });
   } catch (error) {
-    console.error("[person/statements] save failed", error);
+    logRouteError("person/statements POST", error);
     return NextResponse.json(
       { error: "No database reachable — not saved. It stays in this tab only." },
       { status: 503 },

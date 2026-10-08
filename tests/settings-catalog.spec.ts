@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { FIGURE_STATUSES, type FigureStatus } from "@/lib/figures/types";
 import { SETTING_GROUPS, SETTINGS } from "@/lib/settings/catalog";
 
 /**
@@ -93,5 +94,46 @@ describe("settings catalog shape", () => {
       if (s.status === "asked") expect(s.where).toMatch(/\S/);
       else expect(s.where).toBeUndefined();
     }
+  });
+});
+
+describe("the settings page's Your figures line", () => {
+  // The text the page shows under "Your figures", read from the component (the repo's way of
+  // pinning wording: there is no render test setup, see tests/accessibility-contract.spec.ts).
+  const page = readFileSync(new URL("../components/settings/settings-page.tsx", import.meta.url), "utf8");
+  const start = page.indexOf('case "figures":');
+  const figuresLine = page.slice(start, page.indexOf('case "lens":'));
+
+  it("finds the line (a guard against the slice silently being empty)", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(figuresLine).toContain("<p>");
+  });
+
+  it("no longer says the figures store is yet to come, or names the story that built it", () => {
+    expect(figuresLine).not.toMatch(/no confirmed figures/i);
+    expect(figuresLine).not.toMatch(/arrives with/i);
+    expect(figuresLine).not.toMatch(/\[\d+[a-z]?\]/);
+  });
+
+  it("points to the page that lists every figure", () => {
+    expect(figuresLine).toContain('href="/your-data"');
+    expect(figuresLine).toContain("What DotAmi knows about you");
+  });
+
+  it("says every kind of figure the data file holds, not only the agreed and taken-back ones", () => {
+    // prisma/schema.prisma Figure.status stores all four of FIGURE_STATUSES, and the line has to be
+    // true of each. Record<FigureStatus, …> means a fifth status can't be added without a phrase here.
+    const SAYS: Record<FigureStatus, RegExp> = {
+      proposed: /still waiting for your answer/,
+      confirmed: /totals you agree to/,
+      retracted: /took back/,
+      discarded: /turned down/,
+    };
+    // The line is JSX text, so read it with the line breaks and the {" "} spacers folded away.
+    const text = figuresLine.replace(/\{" "\}/g, " ").replace(/\s+/g, " ");
+    for (const status of FIGURE_STATUSES) expect(text, `the line says nothing about "${status}" figures`).toMatch(SAYS[status]);
+    // Only the agreed ones count; the rest are kept, and the line says so.
+    expect(text).toMatch(/none of those count/i);
+    expect(text).toMatch(/every one stays in your data file/);
   });
 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
+import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { updateVenture, type VentureUpdate } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
@@ -57,7 +58,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const row = await updateVenture(prisma, id, patch);
     return NextResponse.json({ ok: true, id: row.id, updatedAt: row.updatedAt.toISOString() });
   } catch (error) {
-    console.error("[ventures/patch]", error);
+    logRouteError("ventures PATCH", error);
     return NextResponse.json({ error: "Update failed — is the database up and the id real?" }, { status: 503 });
   }
 }
