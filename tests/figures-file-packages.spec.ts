@@ -1,18 +1,18 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { decodeText } from "@/lib/figures/file/decode";
+import { previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
+import type { FileAnswers as Answers, FilePreview as ScreenRun } from "@/lib/figures/file/preview";
 import { isBlankRow } from "@/lib/figures/file/table";
 import { isRealCalendarDay } from "@/lib/figures/validate";
 import * as quickbooks from "./fixtures/packages/quickbooks-online";
 import type { PracticeFile } from "./fixtures/packages/types";
 import * as xero from "./fixtures/packages/xero";
 import { utf8, utf8Bom, windows1252 } from "./helpers/encode";
-import { runLikeTheScreen } from "./helpers/run-like-the-screen";
-import type { Answers, ScreenRun } from "./helpers/run-like-the-screen";
 
 // [8c-3] Practice files shaped like each accounting program's export, run through the same steps
 // the "Add from a file" screen runs (read, guess the columns, work out the date order and decimal
-// style, add up by month). Every file is INVENTED and built in code; see
+// style, add up by month): lib/figures/file/preview.ts, which the screen calls too. Every file is INVENTED and built in code; see
 // docs/connectors/practice-files.md. A passing test here means "DotAmi reads a file SHAPED like
 // this", never "a real export works": each guessed column title is marked `assumed` in its fixture.
 
@@ -281,23 +281,24 @@ describe("known gaps (fail today, by design)", () => {
 });
 
 describe("the practice files stay private and in step with the screen", () => {
-  it("the screen still takes the steps the test helper repeats", () => {
+  it("the screen takes its steps from lib/figures/file/preview.ts, the code these tests run", () => {
     const screen = readFileSync(
       new URL("../components/ventures/file-drop.tsx", import.meta.url),
       "utf8",
     );
-    // If this fails, file-drop.tsx changed how it guesses or adds up (or moved the steps into a
-    // shared function): update tests/helpers/run-like-the-screen.ts to match, or replace it.
+    // If this fails, file-drop.tsx stopped using the shared steps and has its own again, which is
+    // the copy that used to drift from what these tests check.
+    for (const piece of ["previewSheet(", "guessPicks(", "firstSheetWithRows("]) {
+      expect(screen, `file-drop.tsx no longer calls ${piece}`).toContain(piece);
+    }
+    // The steps themselves must not be repeated in the screen.
     for (const piece of [
+      "monthlyTotals(",
       "guessColumns(",
       "detectDateOrder(",
       "detectDecimalStyle(",
-      "monthlyTotals(",
-      "readSpreadsheet(",
-      "detectedOrder.ambiguous",
-      "detectedOrder.conflicting",
     ]) {
-      expect(screen, `file-drop.tsx no longer contains ${piece}`).toContain(piece);
+      expect(screen, `file-drop.tsx calls ${piece} itself`).not.toContain(piece);
     }
   });
 
@@ -305,7 +306,6 @@ describe("the practice files stay private and in step with the screen", () => {
     const names = [
       "../tests/figures-file-packages.spec.ts",
       "../tests/helpers/encode.ts",
-      "../tests/helpers/run-like-the-screen.ts",
       ...readdirSync(new URL("./fixtures/packages/", import.meta.url)).map(
         (name) => `../tests/fixtures/packages/${name}`,
       ),
