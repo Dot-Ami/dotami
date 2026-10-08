@@ -225,9 +225,17 @@ export const TABLES: readonly TableEntry[] = [
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself, and never individual transactions.",
+      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Nothing erases a figure yet.",
+  },
+  {
+    model: "Expense",
+    name: "Your expense records",
+    holds:
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
+    removedBy:
+      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Deleting an idea would remove its records with it, but nothing deletes an idea yet. Deleting the data file removes them all.",
   },
 ];
 

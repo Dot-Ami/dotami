@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-06 ([8d] — first slice: read-only)
+Last updated: 2026-10-07 ([8d] — first slice: read-only; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -39,7 +39,10 @@ jump links, then five sections in this order:
    Counts include everything, e.g. the turned-down figures no other screen shows. "Your settings"
    (added 2026-10-07, [8e]) counts the saved choices — one record per setting that has been
    changed, so 0 until the first tick or switch — and says that unticking or turning a switch off
-   overwrites the choice but leaves the record in the file.
+   overwrites the choice but leaves the record in the file. "Your expense records" (added 2026-10-07,
+   [8i]) counts every single business expense in the file (typed, or proposed by an agent; waiting,
+   agreed, taken-back and turned-down ones alike), 0 until the first one is proposed. It says what a record holds (never a bank or card
+   number, no receipt file) and that nothing in the app takes one back yet. Only the count is shown here: no payee, no words, no amount.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened; and the window's

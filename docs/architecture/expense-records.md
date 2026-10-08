@@ -1,12 +1,12 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day (section 0), not built yet.** It exists
+Status: design, 2026-10-07; **decided the same day (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list; no screen yet); receipts, the screens and the other ways in are not.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
-that came first. The privacy section to add to
-[figures-privacy-review.md](figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
-is written there as a PROPOSED draft. The costs are my rough estimates in working days, not
+that came first. The privacy review is the last section of
+[figures-privacy-review.md](figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i):
+typed records are reviewed there as built; receipts stay marked PROPOSED. The costs are my rough estimates in working days, not
 measurements.
 
 ## 0. Decided (the maintainer, 2026-10-07)
@@ -24,9 +24,9 @@ measurements.
   first; then receipts as copies together with the backup change; then the entries in the Delete
   menu; then the other ways in, each after what it needs.
 
-Rule 1 of section 3 ("totals, never single transactions") and rule 5 ("imported files are never
-kept") are reworded for expenses in the same change as the first code, as section 3 says. Still open:
-section 6.
+Rule 1 of section 3 ("totals, never single transactions") was reworded for expenses in the change
+that built the store (the first slice, 2026-10-07). Rule 5 ("imported files are never kept") is
+reworded with receipts, because the first slice keeps no file. Still open: section 6.
 
 ## 1. What a record would hold, and what it would not
 
@@ -38,7 +38,7 @@ section 6.
 | Date | a calendar day, never shifted by time zone (settings doc, Part 3) |
 | Amount and currency | whole cents, currency as given, never converted (same as figures) |
 | Paid to | the person's own words, short, e.g. "Staples" |
-| Seller's address, vendor's GST/HST number | **optional, to decide (section 5)**: the CRA lists both for a record (section 4); an address is more sensitive than a name |
+| Seller's address, vendor's GST/HST number | optional, typed by the person (decided, section 0): the CRA lists both for a record (section 4); an address is more sensitive than a name |
 | What for | the person's own words, e.g. "printer paper" |
 | Category | optional; the person's own pick (see section 4). Kept only when the person picked it, or agreed to one proposed to them (section 5, smaller choices); DotAmi never fills one in on its own |
 | Receipt | optional; one file the person adds (section 2) |
@@ -49,6 +49,16 @@ section 6.
 owner on purpose, a "this is deductible" flag, a deductible amount, a tax-saving estimate, or a
 category chosen by DotAmi from the seller's name. It never holds the spreadsheet or statement a
 record was read from (those stay read in the window, in memory, as the spreadsheet drop ([8c]) does today).
+
+**How the first slice checks a record** (`lib/expenses/validate.ts`; the limits are typo guards, not
+tax rules): the date is a real calendar day, not after the person's own day on the computer and not
+before 1970-01-01; the amount is whole cents, more than zero and at most ten billion dollars (a refund
+or credit is not a record yet, section 6); the currency is three capital letters, as given; "paid to"
+is 1 to 120 characters and "what for" 1 to 200; the category, when given, is up to 80, the address up
+to 300; none holds control characters. The GST/HST number is checked for shape only (nine digits,
+optionally RT and four more; the CRA's wording and the date it was read are in the privacy review).
+The ways in the store accepts are typed, a file and an agent; "bank" is appended with the bank and card
+statements story ([8g]).
 
 Two honest limits. "Paid to" can itself be sensitive (a clinic, a lawyer, a union), more so than
 an amount. And a receipt file is kept as the person gave it: receipts often print the last four
@@ -95,8 +105,8 @@ settings doc, Part 4 §6).
 
 ## 3. The recorded rules this would change
 
-Stated neutrally; each says where it is written today. Nothing is edited until the maintainer
-decides.
+Stated neutrally; each says where it is written today. Rule 1 was reworded with the store (the
+first slice); the others are reworded when what changes them is built.
 
 1. **"Totals, never single transactions."** Written in [figures-privacy-review.md:11](figures-privacy-review.md),
    [figures-roadmap.md:7](figures-roadmap.md), [use-cases.md:20 and 298](use-cases.md) ("Never kept:
@@ -233,7 +243,8 @@ the Delete menu entries. Leave the bank-statement route until the bank and card 
 Decided on 2026-10-07 (section 0): what is kept, where receipts live, whether backups carry them,
 the ways in, the seller's address and GST/HST number, and the Lens suggesting a category. Still open:
 
-- Whether a person can keep a record without an idea attached (today figures need one).
+- Whether a person can keep a record without an idea attached (today figures and records both need one).
+- Whether a refund or credit (a negative amount) may be a record; today an amount must be more than zero.
 - Whether a typed record needs the agree click when someone types many receipts in a row.
 - An optional "business share" for mixed-use purchases; the receipt size cap; whether a receipt
   opens inside the app or in the computer's own viewer.
