@@ -40,12 +40,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Figure reminders** ([8e]) — DotAmi's first setting you can change and keep. On the settings
   page, tick how often you'd like to be reminded to bring your figures up to date: monthly,
   quarterly and yearly, any combination or none. Each idea on the ideas page has a *Remind me about
-  this idea* switch, off until you turn it on. Both survive closing the app. Your choices are saved
-  now; the reminder itself (a banner and a calendar file) comes in a later step, so nothing
-  reminds you yet. The choices sit in the data file in a new small settings table that later
+  this idea* switch, off until you turn it on. Both survive closing the app. The choices sit in the data file in a new small settings table that later
   settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
   window can read or change them. A database update adds the table without touching your ideas,
   figures, links or map progress (a test proves it).
+- **The reminder banner** ([8e]) — for each idea whose *Remind me about this idea* switch is on,
+  and each of monthly, quarterly and yearly you ticked, DotAmi checks the most recent month,
+  calendar quarter or year that has ended. If your agreed figures for that idea don't cover it, the
+  ideas page and the idea's map say so: *"September 2026 ended and your figures for <idea> don't
+  cover it"*, with **Add figures** (opens the figure entry) and **Not this time** (hides it until the
+  next period of that cadence ends, and stays hidden after a restart). Only agreed figures count,
+  and only ones inside the period: a quarterly figure covers the quarter but not each month for a
+  monthly reminder, and three agreed monthly figures cover the quarter. Figures still waiting for
+  your agreement don't count, and the banner says how many are waiting. It is worked out from your
+  own day and your own figures on this computer, never shows an amount, and is left out when the
+  figures can't be read rather than guessing. Your *Not this time* answers are kept inside the
+  Figure reminders setting, so they are listed under *Your settings* on *What DotAmi knows about you*.
 
 ### Changed
 - **"Today" for figures is your computer's own day.** The server used to decide in UTC, so for a few

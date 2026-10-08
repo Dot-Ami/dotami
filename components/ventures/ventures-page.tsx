@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
+import type { ReminderState } from "@/components/ventures/figure-reminder-banners";
 import { FiguresPanel } from "@/components/ventures/figures-panel";
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
@@ -104,6 +105,7 @@ export function VenturesPage() {
                 remindMe={reminders.ids === null ? null : reminders.ids.includes(v.id)}
                 onRemindMe={(on) => reminders.setReminder(v.id, on)}
                 remindFailed={reminders.failed}
+                reminders={reminders}
               />
             ))}
           </ul>
@@ -120,6 +122,7 @@ function VentureCard({
   remindMe,
   onRemindMe,
   remindFailed,
+  reminders,
 }: {
   venture: VentureSummary;
   all: VentureSummary[];
@@ -128,8 +131,16 @@ function VentureCard({
   remindMe: boolean | null;
   onRemindMe: (on: boolean) => void;
   remindFailed: boolean;
+  /** The banners' side of the Figure reminders setting (cadences ticked, "Not this time" answers). */
+  reminders: ReminderState;
 }) {
   const [notes, setNotes] = useState(venture.notes);
+  // Goes up when something asks for this idea's "Add a figure" form to open: the "Add figures" button
+  // on a banner here, or the same button on the map, which arrives as /ventures#figures-<id>.
+  const [addSignal, setAddSignal] = useState(0);
+  useEffect(() => {
+    if (window.location.hash === `#figures-${venture.id}`) setAddSignal((n) => n + 1);
+  }, [venture.id]);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [linkTo, setLinkTo] = useState("");
   const [linkKind, setLinkKind] = useState<VentureLinkKind>("related");
@@ -253,12 +264,12 @@ function VentureCard({
           <Link href="/settings#figures" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
             Settings → Figure reminders
           </Link>
-          ; the reminder itself comes in a later step.
+          ; the reminder shows here, and on this idea&apos;s map, when a period has ended that your figures don&apos;t cover.
         </p>
         {remindFailed ? <p className="mt-1 text-[11px] text-amber">Couldn&apos;t save that — the switch is back where it was.</p> : null}
       </div>
 
-      <FiguresPanel ventureId={venture.id} />
+      <FiguresPanel ventureId={venture.id} ventureName={venture.name} reminders={reminders} openAddSignal={addSignal} />
 
       <div className="mt-3 border-t border-rule-soft pt-3">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Cross-references</p>

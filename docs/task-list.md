@@ -116,7 +116,9 @@ roadmap's build order.
   - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
     "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
     One small `Setting` table that every later setting reuses
-  - [ ] Reminders: a banner and an "add to my calendar" file (the choices above are saved; nothing reminds yet)
+  - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
+    figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
+  - [ ] Reminders: an "add to my calendar" file
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software

@@ -7,6 +7,8 @@ import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
+import { FigureReminderBanners } from "@/components/ventures/figure-reminder-banners";
+import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
 import { evaluateProfile, type ConfirmedFigure } from "@/lib/brain";
@@ -94,10 +96,15 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // estimate wherever they settle a rule. Proposed, retracted and discarded figures never reach
   // the evaluator. An unsaved venture (or no database) simply has none.
   const [confirmedFigures, setConfirmedFigures] = useState<ConfirmedFigure[]>([]);
+  // [8e] The same list, whole, for the reminder banner: it also needs to know what is still waiting
+  // for the person to agree. null = not read (yet, or couldn't be), and then no banner is drawn.
+  const [ideaFigures, setIdeaFigures] = useState<{ ideaId: string; figures: FigureView[] } | null>(null);
+  const reminders = useIdeaReminders();
   const scenarioId = currentScenario?.id ?? null;
   useEffect(() => {
     let cancelled = false;
     setConfirmedFigures([]);
+    setIdeaFigures(null);
     if (!scenarioId) return;
     (async () => {
       try {
@@ -121,7 +128,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             sourceLabel,
             sourceRows,
           }));
-        if (!cancelled) setConfirmedFigures(confirmed);
+        if (!cancelled) {
+          setConfirmedFigures(confirmed);
+          setIdeaFigures({ ideaId: venture.id, figures: body.figures ?? [] });
+        }
       } catch {
         // Offline or no database: the map runs on the estimates, as it always has.
       }
@@ -269,6 +279,19 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               {scenario.profile.type} · {scenario.profile.province}
             </p>
           </div>
+
+          {/* [8e] A period has ended that this idea's agreed figures don't cover. */}
+          {ideaFigures ? (
+            <FigureReminderBanners
+              ideaId={ideaFigures.ideaId}
+              ideaName={scenario.profile.name}
+              figures={ideaFigures.figures}
+              today={today}
+              reminders={reminders}
+              // The entry form lives on the ideas page; this opens it on this idea's card.
+              addFiguresHref={`/ventures#figures-${encodeURIComponent(ideaFigures.ideaId)}`}
+            />
+          ) : null}
 
           <FieldRow label="Type" value={scenario.profile.type} />
           <FieldRow label="Province" value={scenario.profile.province} />

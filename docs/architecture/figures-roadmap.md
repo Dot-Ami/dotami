@@ -175,7 +175,7 @@ Found today:
 - `lib/figures/age.ts` works on day strings plus `Intl` (no new library).
 - `readRevenue` moves future-dated figures to "not counted" and lists out-of-window ones.
 - A hook keeps "today" current while the window is open.
-- The `Setting` table; `GET/PUT /api/settings`; `GET /api/figures/reminder`; a banner.
+- The `Setting` table; `GET/PUT /api/settings`; a banner. (Built as a pure function in `lib/figures/reminder.ts` run by the page on figures it already loaded, so no `GET /api/figures/reminder` route exists.)
 - Optionally a Windows notification from the desktop main process, with generic text only.
 
 Reproduced today: a future October 2026 figure makes the card read "over $30,000", and a 2024 figure silently disappears.
@@ -333,7 +333,7 @@ Each is written out with options in the reconciliation output.
 
 - Three source tables merged into one `FigureSource` plus `SourceAccount`. One link column on Figure, not two.
 - Two or three remembered-choice tables merged into `ReaderPreset`.
-- 8e's reminder state key breaks its own catalog-only rule.
+- 8e's reminder state key breaks its own catalog-only rule. Resolved 2026-10-07 (banner slice): "Not this time" is a `dismissed` list inside the Figure reminders value, not a Setting key of its own.
 - The 8g routes moved under `/api/figures` so the browser privacy allow-list still holds.
 - 8e reminder coverage must filter by kind (8f yearly totals).
 - `splitAlreadyKnown` must be generalised by kind before 8f, 8g and 8h reuse it.

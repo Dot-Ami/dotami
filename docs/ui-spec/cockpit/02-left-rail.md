@@ -5,7 +5,7 @@
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
-Last updated: 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+Last updated: 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
 Workshop status: documented, sign-off pending
 
 ## What it is
@@ -25,6 +25,15 @@ spot in the product — it carries 6+ unrelated concerns.
   and the value came from the resolved archetype (`build-scenario-from-intake.ts:54`). Reason:
   the agent contract bars presenting the user as an archetype (`CLAUDE.md` § Product
   philosophy).
+- **Figure reminder banner (added 2026-10-07, [8e]).** Under the venture block, when the idea's
+  reminder switch is on, a cadence is ticked and the latest ended month / quarter / year has no
+  agreed figures covering it: "September 2026 ended and your figures for <idea> don't cover it",
+  with **Add figures** (a link to `/ventures#figures-<idea id>`, which opens the figure entry on
+  that idea's card) and **Not this time** (hides it until the next period of that cadence ends).
+  Same rules, text and saved answer as the ideas page's banner (see `docs/ui-spec/ventures/_index.md`).
+  Read from `GET /api/figures?venture=<id>` (the list the page already loads for the evaluator,
+  kept whole) and `GET /api/settings?id=figure-reminders`; drawn only once both are read. No amount
+  appears in it.
 - **Structure row is a control (S2.5.4d, 2026-09-13).** For intake-built ventures the row is a
   `<select>` — Not set / Sole prop / Corporation — writing `profile.structure` +
   `profile.structureSource` (`"user"`) into the local and session scenario
