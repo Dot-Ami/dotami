@@ -9,7 +9,7 @@ import type { ReminderCadence, ReminderDismissal } from "@/lib/settings/values";
 
 /**
  * [8e] "<September 2026> ended and your figures for <idea> don't cover it" — the reminder inside
- * DotAmi itself (the "add to my calendar" file is a later slice). One banner per ticked cadence
+ * DotAmi itself (the "Add to my calendar" file on the settings page is the outside one). One banner per ticked cadence
  * that is due for the idea; which ones are due is decided in lib/figures/reminder.ts, from data
  * the page has already loaded:
  *

@@ -7,7 +7,7 @@
  */
 import http from "node:http";
 
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Download, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
@@ -251,6 +251,70 @@ test("Figure reminders: tick monthly and yearly, reload, and they are still tick
   await expect(boxes.yearly).not.toBeChecked();
   expect(await savedReminders(page)).toMatchObject({ body: { value: { cadences: [] } } });
 });
+
+test("Add to my calendar: the ticked boxes become a calendar file made in the page, with nothing sent", async ({ page }) => {
+  // A fixed day, so the first event's date is known: October 8, 2026 (noon UTC is the 8th from
+  // UTC-11 to UTC+11).
+  await page.clock.install({ time: new Date("2026-10-08T12:00:00Z") });
+  await page.goto("/settings");
+  await resetReminders(page);
+  await page.reload();
+  const boxes = reminderBoxes(page);
+  const button = boxes.row.getByRole("button", { name: "Add to my calendar" });
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+
+  // Quarterly ticked: one repeating event, from the first day of the next quarter.
+  await setBox(page, boxes.quarterly, true);
+  await expect(button).toBeEnabled();
+  await expect(boxes.row).toContainText("can't see DotAmi, so it reminds you whether or not your figures are already in");
+  const seen = watchRequests(page);
+  const download = page.waitForEvent("download");
+  await button.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("DotAmi figure reminders.ics");
+  const text = (await readDownload(file)).toString("utf8");
+  expect(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
+  expect(text.endsWith("END:VCALENDAR\r\n")).toBe(true);
+  expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+  expect(text).toContain("\r\nUID:dotami-figure-reminder-quarterly\r\n");
+  expect(text).toContain("\r\nDTSTART;VALUE=DATE:20270101\r\n");
+  expect(text).toContain("\r\nRRULE:FREQ=MONTHLY;INTERVAL=3\r\n");
+  expect(text).toContain("\r\nSUMMARY:Bring your DotAmi figures up to date\r\n");
+  // Nothing left the page to make it: no request at all after the click.
+  expect(seen.map((r) => r.path)).toEqual([]);
+
+  // Monthly and yearly instead: two events, in that order.
+  await setBox(page, boxes.quarterly, false);
+  await setBox(page, boxes.monthly, true);
+  await setBox(page, boxes.yearly, true);
+  const second = page.waitForEvent("download");
+  await button.click();
+  const both = (await readDownload(await second)).toString("utf8");
+  expect([...both.matchAll(/\r\nUID:(\S+)\r\n/g)].map((m) => m[1])).toEqual([
+    "dotami-figure-reminder-monthly",
+    "dotami-figure-reminder-yearly",
+  ]);
+  expect(both).toContain("\r\nDTSTART;VALUE=DATE:20261101\r\n");
+
+  // Nothing ticked: there is nothing to put in a calendar, so the button is off.
+  await setBox(page, boxes.monthly, false);
+  await setBox(page, boxes.yearly, false);
+  for (const box of [boxes.monthly, boxes.quarterly, boxes.yearly]) await expect(box).not.toBeChecked();
+  await expect(button).toBeDisabled();
+  // Still off after a reload, where the line under the boxes says why.
+  await page.reload();
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+  await expect(boxes.row).toContainText("None ticked: no reminder.");
+  await expect(button).toBeDisabled();
+});
+
+/** A download's bytes, read from where Playwright put it. */
+async function readDownload(download: Download): Promise<Buffer> {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
 
 test("Remind me about this idea: off until turned on, per idea, and still on after a reload", async ({ page }) => {
   await page.goto("/ventures");

@@ -322,7 +322,7 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
   {
     id: "files-you-save",
     name: "Files you save yourself",
-    when: "Whenever you save a backup or download a playbook.",
+    when: "Whenever you save a backup, a playbook or the reminders calendar file.",
     what: "A copy of what you chose to save, in the place you chose.",
     canTakeBack: "DotAmi doesn't know where those files are, so it can't remove them.",
     // Saving writes a file where the person picks; nothing is requested over the network.

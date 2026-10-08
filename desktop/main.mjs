@@ -239,7 +239,7 @@ async function waitForServer(origin, timeoutMs) {
  * Electron's security checklist (electronjs.org/docs/latest/tutorial/security, read 2026-10-05):
  * the window may show only DotAmi's own pages; new windows are refused; an outside https link
  * opens in the person's own browser; the only permission granted is writing to the clipboard
- * (the settings page's Copy path button).
+ * (the settings page's Copy path button); a file the page saves goes through a Save dialog.
  */
 function lockDown(origin) {
   const openOutside = (url) => {
@@ -260,6 +260,47 @@ function lockDown(origin) {
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => {
     callback(permission === "clipboard-sanitized-write" && new URL(contents.getURL()).origin === origin);
   });
+  session.defaultSession.on("will-download", (_event, item, contents) => saveDownload(item, contents, origin));
+}
+
+/**
+ * A file made in the page ("Add to my calendar", a playbook, later the tax sheet's CSV) goes where
+ * the person picks in a Save dialog; Cancel cancels it. Nothing is ever written without asking.
+ *
+ * Without this, Electron falls back to its own built-in dialog (seen 2026-10-08: the download
+ * waited with no save path). That one can't be answered by a test, so it could break unseen, and
+ * it offers no file type. Only DotAmi's own pages may start a download (a blob: URL carries the
+ * page's origin); anything else is cancelled.
+ *
+ * The dialog is the synchronous one on purpose: Electron reads the save path only during this
+ * event, and the window is modal behind the dialog either way.
+ */
+function saveDownload(item, contents, origin) {
+  let ours = false;
+  try {
+    ours = new URL(item.getURL()).origin === origin;
+  } catch {
+    ours = false;
+  }
+  if (!ours) {
+    log?.write(`[download] refused one not started by DotAmi's own page\n`);
+    item.cancel();
+    return;
+  }
+  const name = item.getFilename();
+  const extension = path.extname(name).slice(1);
+  const parent = (contents && BrowserWindow.fromWebContents(contents)) ?? win;
+  const options = {
+    title: `Save ${name}`,
+    defaultPath: path.join(app.getPath("downloads"), name),
+    filters: extension ? [{ name: `.${extension} file`, extensions: [extension] }] : [],
+  };
+  const chosen = parent ? dialog.showSaveDialogSync(parent, options) : dialog.showSaveDialogSync(options);
+  if (!chosen) {
+    item.cancel();
+    return;
+  }
+  item.setSavePath(chosen);
 }
 
 function buildMenu(origin, dataDir) {

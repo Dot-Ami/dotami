@@ -8,6 +8,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Add to my calendar** ([8e]) — beside the Figure reminders tick-boxes on the settings page, a
+  button saves a calendar file (.ics) with one repeating event per ticked box: *"Bring your DotAmi
+  figures up to date"* on the first day after each month, quarter or year ends. Open it with Google
+  Calendar, Outlook or Apple Calendar to add the events. The file is made inside the page and
+  nothing is sent anywhere. It holds only general words (no amounts, no idea names), because a
+  calendar that syncs online shares its events with the company that runs it. The calendar can't
+  see DotAmi, so it reminds you whether or not your figures are already in, and the page says so.
+- **Saving a file in the desktop app asks where** — a file made in the page (the calendar file, a
+  playbook) now opens a Save dialog with the file's own name; Cancel saves nothing. Only DotAmi's
+  own pages can start a save.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV

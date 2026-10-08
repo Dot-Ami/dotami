@@ -21,7 +21,11 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
 5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
-   the clipboard (the settings page's *Copy path*). Electron's defaults stay on and are set
+   the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a
+   playbook) goes where the person picks in a Save dialog, and Cancel saves nothing; a download that
+   doesn't come from DotAmi's own page is cancelled (`saveDownload`, desktop-tested). Without that
+   handler Electron showed its own built-in dialog, which a test can't answer (checked 2026-10-08).
+   Electron's defaults stay on and are set
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
    2026-10-05).

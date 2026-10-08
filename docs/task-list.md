@@ -118,7 +118,9 @@ roadmap's build order.
     One small `Setting` table that every later setting reuses
   - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
     figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
-  - [ ] Reminders: an "add to my calendar" file
+  - [x] Reminders: an "add to my calendar" file: one repeating event per ticked box, made in the page
+    (RFC 5545 rules unit-tested in `tests/figures-calendar.spec.ts`; the download browser-tested; the desktop
+    app's Save dialog desktop-tested)
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
