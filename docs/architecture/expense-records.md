@@ -1,6 +1,6 @@
-# Business expense records and receipts — design for the maintainer to decide ([8i])
+# Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07. **Nothing here is built, and nothing here is decided.** It exists
+Status: design, 2026-10-07; **decided the same day (section 0), not built yet.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -8,6 +8,25 @@ that came first. The privacy section to add to
 [figures-privacy-review.md](figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
 is written there as a PROPOSED draft. The costs are my rough estimates in working days, not
 measurements.
+
+## 0. Decided (the maintainer, 2026-10-07)
+
+- **What is kept:** option C of question 1 — single expense records **and** their receipt files.
+- **Receipts:** a copy in the DotAmi data folder (option A of section 2), and backups carry them (the
+  backup change in section 2).
+- **Ways in:** all of them, so each person can use whichever feels most natural — typed, a
+  spreadsheet's rows, a bank statement's ticked rows (once the bank and card statements story,
+  [8g], is built) and a receipt photo read by the Lens (once the Lens, [9], is built).
+- **Smaller choices:** hold the seller's address and the vendor's GST/HST number (both optional,
+  typed by the person); the Lens may suggest a category, which waits for the person's click like
+  any proposal.
+- **Build order** (the recommendation in section 5, accepted): typed records with the agree prompt
+  first; then receipts as copies together with the backup change; then the entries in the Delete
+  menu; then the other ways in, each after what it needs.
+
+Rule 1 of section 3 ("totals, never single transactions") and rule 5 ("imported files are never
+kept") are reworded for expenses in the same change as the first code, as section 3 says. Still open:
+section 6.
 
 ## 1. What a record would hold, and what it would not
 
@@ -211,9 +230,13 @@ the Delete menu entries. Leave the bank-statement route until the bank and card 
 
 ## 6. Still open
 
-- Which question 1 option, and whether rule 1 is reworded for it.
-- Receipt storage and whether backups carry receipts.
+Decided on 2026-10-07 (section 0): what is kept, where receipts live, whether backups carry them,
+the ways in, the seller's address and GST/HST number, and the Lens suggesting a category. Still open:
+
 - Whether a person can keep a record without an idea attached (today figures need one).
-- Whether to hold the seller's address and the vendor's GST/HST number.
-- Whether the Lens may propose a category.
+- Whether a typed record needs the agree click when someone types many receipts in a row.
+- An optional "business share" for mixed-use purchases; the receipt size cap; whether a receipt
+  opens inside the app or in the computer's own viewer.
+- The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
+  story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.

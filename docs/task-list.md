@@ -121,17 +121,20 @@ roadmap's build order.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
   - [ ] Proposing figures, the other formats
-- ⏸ **[8i] Business expense records** — a record of each business expense the person adds (date,
+- ⬜ **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
-  deductible. Not started: **design written, waiting on the maintainer** (2026-10-07, after the
-  maintainer asked for a record of every business expense).
+  deductible. Not started: **design written and decided** (2026-10-07, after the maintainer asked for a
+  record of every business expense).
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
   - [x] A proposed privacy review, marked PROPOSED:
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
-  - [ ] ⏸ The maintainer chooses: totals or single records · where receipts live and whether backups
-    carry them · which ways a record can come in
-  - [ ] Records with the agree prompt · receipts · the entries in the Delete menu ([8d])
+  - [x] Decided: single records with their receipt files, copied into the data folder and carried
+    by backups; every way in (typed, spreadsheet rows, bank rows, a receipt photo the Lens reads)
+  - [ ] Typed records with the agree prompt
+  - [ ] Receipts as copies, and backups that carry them
+  - [ ] The entries in the Delete menu ([8d])
+  - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)
 

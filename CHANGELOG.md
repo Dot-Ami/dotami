@@ -30,8 +30,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Documented
 - **Business expense records** ([8i]) — a design and a proposed privacy review for keeping single
-  business expenses and their receipts, with the options and what each costs. Nothing is built or
-  decided: it would change the "totals, never single transactions" rule, so it waits on the maintainer
+  business expenses and their receipts, with the options and what each costs, and the maintainer's
+  decisions of 2026-10-07 (single records with receipt files). Nothing is built yet
   (`docs/architecture/expense-records.md`).
 
 ### Fixed

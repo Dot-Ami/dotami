@@ -45,8 +45,10 @@ details for anything. All of it in the one database file on the person's compute
 
 ## Privacy review — PROPOSED: expense records and receipts ([8i])
 
-**PROPOSED DRAFT, 2026-10-07. Not agreed, not built; nothing above this line changes until the
-maintainer decides.** The design and the options are in [expense-records.md](expense-records.md).
+**PROPOSED DRAFT, 2026-10-07 — the design was decided the same day (single records with receipt
+copies in the data folder, carried by backups; expense-records.md § 0), but nothing is built, so
+nothing above this line changes yet.** The design and the options are in
+[expense-records.md](expense-records.md).
 If expense records are built, this section replaces the "Not stored: individual transactions" line
 above for expenses, and the sentences listed in expense-records.md § 3 are reworded in the same
 change.
