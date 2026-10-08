@@ -79,6 +79,8 @@ content and the project itself run alongside everything.
     row count + the file name are what's stored (as proposed figures — the agree prompt decides)
   - [x] Map the date and amount columns (guessed only when the column names make it clear); the
     edge cases in [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md#your-figures)
+  - [x] Asks "Where is this file from?" before any file is read, for every file (maintainer's decision,
+    2026-10-07): a bank or credit card file is turned away unopened, with a plain warning, until [8g] exists
   - [ ] [8c-2] Remember the column choice per source, and recognise the same file by fingerprint
   - [ ] [8c-3] Invented test files shaped like each package's documented export (QuickBooks, Xero,
     Wave, FreshBooks, Sage) — never a real export
@@ -89,7 +91,8 @@ content and the project itself run alongside everything.
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
-- ⬜ **[8g] Bank and card records** — opt-in, behind a warning.
+- ⬜ **[8g] Bank and card records** — opt-in, behind a warning. (Until it is built, "Add from a
+  file" turns a bank or card file away unread — see [8c].)
 - ⬜ **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
 
 ## 9 — The Lens (DotAmi's built-in agent)
