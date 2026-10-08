@@ -28,6 +28,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   it first asks where the file is from; a bank or credit card file is turned away without being
   opened, since bank statements aren't supported yet.
 
+### Documented
+- **Business expense records** ([8i]) — a design and a proposed privacy review for keeping single
+  business expenses and their receipts, with the options and what each costs. Nothing is built or
+  decided: it would change the "totals, never single transactions" rule, so it waits on the maintainer
+  (`docs/architecture/expense-records.md`).
+
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
 - Releases: the workflow creates the draft first, so a release is one draft, not one per file — and

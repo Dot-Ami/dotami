@@ -296,3 +296,7 @@ committed by mistake (secret scanning).
 7. **Who DotAmi is for, by age** — a minimum age, given it handles money and tax.
 8. **Support** — where people ask for help (GitHub Discussions, email, nothing yet).
 9. **An accessibility target** to test against (for example a published standard), not "as good as we can".
+10. **Business expense records and receipts** ([8i]) — keep single expenses and their receipt files, not
+    only totals? The design, the options and what each costs are in
+    [expense-records.md](expense-records.md); it would change the "totals, never single
+    transactions" rule, so nothing is built until the maintainer decides.

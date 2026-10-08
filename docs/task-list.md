@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-06. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-07. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -121,6 +121,17 @@ roadmap's build order.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
   - [ ] Proposing figures, the other formats
+- ⏸ **[8i] Business expense records** — a record of each business expense the person adds (date,
+  amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
+  person has a record of what they spent and labelled; DotAmi never decides on its own that one is
+  deductible. Not started: **design written, waiting on the maintainer** (2026-10-07, after the
+  maintainer asked for a record of every business expense).
+  - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
+  - [x] A proposed privacy review, marked PROPOSED:
+    [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
+  - [ ] ⏸ The maintainer chooses: totals or single records · where receipts live and whether backups
+    carry them · which ways a record can come in
+  - [ ] Records with the agree prompt · receipts · the entries in the Delete menu ([8d])
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
