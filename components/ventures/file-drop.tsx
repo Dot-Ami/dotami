@@ -81,7 +81,7 @@ function localToday(): string {
 }
 
 /** The pickers' value for "nothing chosen yet". */
-const NO_PICKS: Picks = { headerRow: null, dateColumn: null, amountColumn: null };
+const NO_PICKS: Picks = { headerRow: null, dateColumn: null, amountColumn: null, typeColumn: null };
 
 function rowWord(n: number): string {
   return n === 1 ? "row" : "rows";
@@ -100,6 +100,13 @@ function leftOutText(reason: SkipReason, n: number): string {
       return `${n} ${rowWord(n)} with a date but no amount`;
     case "bad-amount":
       return `${n} ${rowWord(n)} with an amount DotAmi can't read`;
+    case "payment":
+      // DotAmi can't tell whether these rows are money for a sale listed elsewhere (QuickBooks) or
+      // the person's own sales (their own sheet, or a deposit straight to an income account), so
+      // the line says what was done and how to undo it rather than claiming a sale was counted.
+      return n === 1
+        ? "1 row typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks that is money received for a sale listed on another row; if it is a sale of yours, choose None)"
+        : `${n} rows typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks those are money received for sales listed on other rows; if they are sales of yours, choose None)`;
     case "not-over":
       return `${n} ${rowWord(n)} in a month that isn't over yet`;
   }
@@ -111,6 +118,7 @@ const LEFT_OUT_ORDER: SkipReason[] = [
   "no-amount",
   "bad-amount",
   "total",
+  "payment",
   "not-over",
   "blank",
 ];
@@ -602,6 +610,34 @@ export function FileDrop({
                   </select>
                   <p id={`${uid}-tax`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
                     If the file also has a tax column, check whether this one includes the tax.
+                  </p>
+                </div>
+                <div>
+                  <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
+                    Type column (optional)
+                  </label>
+                  <select
+                    id={`${uid}-type`}
+                    value={picks.typeColumn ?? ""}
+                    onChange={(e) => {
+                      setPicks({ ...picks, typeColumn: asNumber(e.target.value) });
+                      setGuessed(false);
+                    }}
+                    aria-describedby={`${uid}-type-hint`}
+                    className={`${FIELD} mt-1`}
+                  >
+                    <option value="">None — count every row</option>
+                    {columns.map((c) => (
+                      <option key={c.index} value={c.index}>
+                        {c.letter} · {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    Some files list a sale and the payment received for it as two rows. With a type
+                    column, rows typed Payment or Deposit are left out so the sale isn&apos;t
+                    counted twice. That also leaves out a Deposit that is the only record of a sale,
+                    so check the left-out list. Choose None to count every row.
                   </p>
                 </div>
               </>

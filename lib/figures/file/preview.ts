@@ -25,6 +25,11 @@ export interface Picks {
   headerRow: number | null;
   dateColumn: number | null;
   amountColumn: number | null;
+  /**
+   * The optional column of transaction types. Null leaves it unused, and then every row counts.
+   * Pre-filled only for a header that is exactly "Transaction Type" or "Type" (see guessColumns).
+   */
+  typeColumn: number | null;
 }
 
 /** What the date column says about how its dates are written (see detectDateOrder). */
@@ -60,7 +65,12 @@ export function guessPicks(
   rows: Cell[][],
   forcedHeader?: number,
 ): { guess: ColumnGuess | null; picks: Picks; guessed: boolean } {
-  const none: Picks = { headerRow: forcedHeader ?? null, dateColumn: null, amountColumn: null };
+  const none: Picks = {
+    headerRow: forcedHeader ?? null,
+    dateColumn: null,
+    amountColumn: null,
+    typeColumn: null,
+  };
   if (forcedHeader === undefined) {
     const guess = guessColumns(rows);
     if (!guess) return { guess, picks: none, guessed: false };
@@ -70,6 +80,7 @@ export function guessPicks(
         headerRow: guess.headerRow,
         dateColumn: guess.dateColumn,
         amountColumn: guess.amountColumn,
+        typeColumn: guess.typeColumn,
       },
       guessed: true,
     };
@@ -83,9 +94,10 @@ export function guessPicks(
       headerRow: forcedHeader,
       dateColumn: guess.dateColumn,
       amountColumn: guess.amountColumn,
+      typeColumn: guess.typeColumn,
     },
     // A forced row that gave no columns at all is not a guess worth announcing.
-    guessed: guess.dateColumn !== null || guess.amountColumn !== null,
+    guessed: guess.dateColumn !== null || guess.amountColumn !== null || guess.typeColumn !== null,
   };
 }
 
@@ -183,6 +195,7 @@ export function previewSheet(
     headerRow: picks.headerRow,
     dateColumn: picks.dateColumn,
     amountColumn: picks.amountColumn,
+    typeColumn: picks.typeColumn,
     dateOrder,
     decimalStyle,
   };
@@ -205,6 +218,8 @@ export interface FileAnswers extends PreviewAnswers {
   dateColumn?: number;
   /** 0-based column they pick for the amounts. */
   amountColumn?: number;
+  /** 0-based column they pick for the transaction types; null clears it (the select's empty choice). */
+  typeColumn?: number | null;
 }
 
 /** A whole file run through the screen's steps. */
@@ -240,6 +255,8 @@ export async function previewFile(
     headerRow: guessed.headerRow,
     dateColumn: answers.dateColumn ?? guessed.dateColumn,
     amountColumn: answers.amountColumn ?? guessed.amountColumn,
+    // Unlike the others, null here is an answer: the person cleared the select.
+    typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
   };
   const preview = previewSheet(rows, picks, answers, today);
   return { ...preview, rows, guess, picks };

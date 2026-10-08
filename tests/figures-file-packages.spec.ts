@@ -267,16 +267,26 @@ describe("known gaps (fail today, by design)", () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
     expect(run.picks.dateColumn).toBe(0);
   });
+});
 
-  // Open decision: what should happen when a transaction list mixes sales with the payments
-  // received for them? (pick a "type" column and skip Payment rows; or warn and name the report to
-  // export instead; or only add a line of help.) Today every row is added, so a $47.60 invoice and
-  // its $47.60 payment count as $95.20.
-  it.fails("QuickBooks: does not count a Payment row as a second sale", async () => {
+// The fourth gap, a Payment row counted as a second sale, was fixed by the optional Type column
+// (the maintainer's decision, 2026-10-07): the "Transaction Type" header pre-fills it and Payment and
+// Deposit rows are left out and listed. Tests of the rule itself: tests/figures-file-type-column.spec.ts.
+describe("QuickBooks Transaction List", () => {
+  it("does not count a Payment row as a second sale", async () => {
     const file = find("quickbooks-transaction-list");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.picks.typeColumn).toBe(1); // "Transaction Type"
     const july = run.result!.months.find((m) => m.periodStart === "2026-07-01");
     expect(july?.amountCents).toBe(10215); // invoice 47.60 + sales receipt 54.55
+    expect(run.result!.skipped).toContainEqual({ row: 7, reason: "payment" });
+  });
+
+  it("would count the payment too, as before, if the person cleared the Type column", async () => {
+    const file = find("quickbooks-transaction-list");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, { typeColumn: null });
+    const july = run.result!.months.find((m) => m.periodStart === "2026-07-01");
+    expect(july?.amountCents).toBe(14975); // 47.60 + 47.60 + 54.55
   });
 });
 
