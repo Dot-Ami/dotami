@@ -419,7 +419,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
   },
 ];
@@ -458,7 +458,7 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
   {
     id: "files-you-save",
     name: "Files you save yourself",
-    when: "Whenever you save a backup or download a playbook.",
+    when: "Whenever you save a backup, a playbook or the reminders calendar file.",
     what: "A copy of what you chose to save, in the place you chose.",
     canTakeBack: "DotAmi doesn't know where those files are, so it can't remove them.",
     // Saving writes a file where the person picks; nothing is requested over the network.
@@ -521,6 +521,16 @@ export const LIBRARY_IMPORTS: readonly AllowedCall[] = [
     call: 'package "papaparse"',
     why: "Papa.parse is only ever handed the file's text (guessDelimiter and readCsv). Its `download: true` option would fetch a web address, and is never passed. The scan can't see option values, so a new Papa.parse call is checked in review.",
   },
+  {
+    file: "lib/figures/return/extract.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The return reader's one call into pdf.js: getDocument is handed the PDF's bytes (`data`), never an address, and PDF_OPTIONS in the same file turns off both ways it fetches data files (useWorkerFetch false, and a BinaryDataFactory that refuses every request). tests/figures-return-read.spec.ts checks the options and that no request is made. The import here is for the module's type; the code is loaded by the worker below.",
+  },
+  {
+    file: "lib/figures/return/pdf-text.worker.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The return reader's worker loads pdf.js and its parser (the legacy build) and hands the parser to pdf.js as globalThis.pdfjsWorker, so pdf.js starts no worker and loads no script of its own. It only calls extractPageText (lib/figures/return/extract.ts). The worker runs under the static files' own policy in next.config.mjs (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/app.spec.ts checks that in a real browser.",
+  },
 ];
 
 /**
@@ -582,7 +592,7 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
   {
     name: "next",
     network: "no",
-    why: "Not while the built app runs. Next.js's anonymous usage reports (to Vercel) come from `next dev`, `next build` and `next lint`; the code that starts the built server (`next start`, and the standalone server the desktop app runs) creates its reporter only for a development server (node_modules/next/dist/server/lib/router-server.js, read 2026-10-06), and the settings page already cites nextjs.org/telemetry (read 2026-10-05). The desktop app, CI and the desktop build set NEXT_TELEMETRY_DISABLED=1. `next dev` also asks registry.npmjs.org for the newest Next.js version (hot-reloader-webpack.js). Next's image optimiser refuses hosts not allowed by `images.remotePatterns` (node_modules/next/dist/server/image-optimizer.js); next.config.mjs sets none, and no code imports next/image. Requests that DotAmi's own code makes through Next are the scan's business, not this entry's; so are Next settings that make the server fetch for a page, which the scan does not read (see the header).",
+    why: "Not while the built app runs. Next.js's anonymous usage reports (to Vercel) come from `next dev`, `next build` and `next lint`; the code that starts the built server (`next start`, and the standalone server the desktop app runs) creates its reporter only for a development server (node_modules/next/dist/server/lib/router-server.js, read 2026-10-06), and the settings page already cites nextjs.org/telemetry (read 2026-10-05). The desktop app, CI, the desktop build and the project's npm scripts (scripts/next.mjs) set NEXT_TELEMETRY_DISABLED=1. `next dev` also asks registry.npmjs.org for the newest Next.js version (hot-reloader-webpack.js). Next's image optimiser refuses hosts not allowed by `images.remotePatterns` (node_modules/next/dist/server/image-optimizer.js); next.config.mjs sets none, and no code imports next/image. Requests that DotAmi's own code makes through Next are the scan's business, not this entry's; so are Next settings that make the server fetch for a page, which the scan does not read (see the header).",
   },
   {
     name: "ofx-js",
@@ -593,6 +603,11 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
     name: "papaparse",
     network: "yes",
     why: "A CSV reader. Given an address with `download: true` it fetches it with XMLHttpRequest (its README and papaparse.js). DotAmi only calls Papa.parse with the file's text (lib/figures/file/read-csv.ts), never with `download`; that import is listed in LIBRARY_IMPORTS so a new use is looked at.",
+  },
+  {
+    name: "pdfjs-dist",
+    network: "yes",
+    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in the return reader's worker (lib/figures/return/), hands it the bytes of a file the person dropped, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
   },
   {
     name: "react",
@@ -631,7 +646,7 @@ export interface UnscannedFolder {
 export const UNSCANNED_FOLDERS: readonly UnscannedFolder[] = [
   {
     folder: "scripts",
-    why: "Developer scripts run by hand through npm scripts (scripts/prisma.mjs runs the Prisma command-line tool with its usage check-in switched off). Not staged into the desktop app and not part of the server build.",
+    why: "Developer scripts run by hand through npm scripts (scripts/next.mjs and scripts/prisma.mjs run Next.js and the Prisma command-line tool with their usage reports switched off). Not staged into the desktop app and not part of the server build.",
   },
   {
     folder: "prisma",
