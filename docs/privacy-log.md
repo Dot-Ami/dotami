@@ -27,7 +27,9 @@ person is asked).
   into that version's section, dated, and starts a new empty [Unreleased].
   [`tests/privacy-log.spec.ts`](../tests/privacy-log.spec.ts) fails while `package.json`'s version,
   or any version in [`CHANGELOG.md`](../CHANGELOG.md), has no section here, and while a section
-  lacks one of the seven parts above.
+  lacks one of the seven parts above or leaves one empty.
+- **A pre-release** (`0.2.2-dev.1`) is shipped to the people who opt into pre-releases, so it gets
+  its own full section too, listed below the final version of the same number once that ships.
 - **Facts only.** Every line is something the code or a dated document shows. Where nobody has
   checked, the line says *not checked*. Nothing here is a promise about a future version.
 
@@ -59,7 +61,9 @@ person is asked).
     2026-10-08). npm sees the computer's internet address; nothing of the person's is sent.
   - Installing (`npm ci`) downloads packages from npm's registry and Prisma's engine files from
     Prisma's server, as any install does.
-- None of this applies to the installed desktop app, which doesn't run these tools.
+- None of this applies to the installed desktop app: it runs Next.js's built server and the Prisma
+  client, but not `next dev`, `next build`, `next lint` or the Prisma command-line tool, and it
+  starts its server with `NEXT_TELEMETRY_DISABLED=1` ([`desktop/main.mjs`](../desktop/main.mjs)).
 
 ### Packages that ship
 
@@ -260,7 +264,9 @@ PostgreSQL to SQLite ([CHANGELOG](../CHANGELOG.md), [desktop-app.md](architectur
     2026-10-06; [figures-privacy-review.md](architecture/figures-privacy-review.md)).
   - The development server listens on `127.0.0.1` only (2026-09-20); before, anything on the same
     network could reach it.
-  - Write routes accept only same-origin JSON, within a size cap and a rate limit.
+  - Every write route now has a body-size cap and a rate limit (commit `4d1c18f`); in 0.1.0 only
+    the two routes that could call Anthropic (`/api/intent/parse`, `/api/playbook`) had them.
+  - Write routes accept only same-origin `application/json` bodies (commit `79a0082`, new in 0.2.0).
 
 ### Packages that ship
 
@@ -343,7 +349,9 @@ The first public snapshot: a web app run from source, on a PostgreSQL database
   `next lint`; Prisma's check-in on every Prisma command.
 - **Reachable from the network**: `next dev` listened on every network interface (fixed
   2026-09-20, after the snapshot), and nothing checked the Host a request was addressed to (fixed in
-  0.2.0). There was no sign-in.
+  0.2.0). There was no sign-in. The two routes that could call Anthropic (`/api/intent/parse`,
+  `/api/playbook`) had a body-size cap and a rate limit; the other write routes had neither
+  (`lib/api/body-limit.ts`, `lib/api/rate-limit.ts` at `v0.1.0`).
 
 ### Packages that ship
 

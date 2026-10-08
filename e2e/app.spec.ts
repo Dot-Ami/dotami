@@ -106,6 +106,8 @@ test("the settings page: every group, what's true today, every setting and its w
   await expect(privacy).toContainText("switch both off");
   await expect(privacy).toContainText("NEXT_TELEMETRY_DISABLED=1");
   await expect(privacy).toContainText("CHECKPOINT_DISABLE=1");
+  // The registry check is described like the update check: the address is seen, nothing else.
+  await expect(privacy).toContainText("npm sees this computer's internet address");
   await expect(privacy).not.toContainText("npx next telemetry disable");
 
   // Every setting is listed with its default, its warning when it has one, and the story that

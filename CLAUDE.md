@@ -140,7 +140,7 @@ under [Unreleased] in `docs/privacy-log.md` (the record the privacy policy and t
 written from); the release PR turns [Unreleased] into that version's section, and
 `tests/privacy-log.spec.ts` fails until `package.json`'s version has one. The npm scripts run
 Next.js and Prisma through `scripts/next.mjs` and `scripts/prisma.mjs`, which switch off their
-usage reports; never call `next` or `prisma` directly in a script (`tests/dev-telemetry.spec.ts`).
+usage reports; never call `next` or `prisma` directly in a `package.json` script (`tests/dev-telemetry.spec.ts`).
 
 ## Where things are decided
 

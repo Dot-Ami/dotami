@@ -108,7 +108,7 @@ project's npm scripts switch both off (`scripts/next.mjs`, `scripts/prisma.mjs`)
 Two things they can't reach: `npm ci` runs Prisma once on its own, and `npx next …` / `npx prisma …`
 typed by hand skip the scripts — set `CHECKPOINT_DISABLE=1` and `NEXT_TELEMETRY_DISABLED=1` in your
 environment for those. `npm run dev` also asks npm's registry which Next.js version is newest each
-time it starts; nothing turns that off. What each version keeps and sends is recorded in
+time it starts (npm sees the computer's internet address); nothing turns that off. What each version keeps and sends is recorded in
 [docs/privacy-log.md](docs/privacy-log.md).
 
 **Your data is the one file `DATABASE_URL` points at.** Back it up by copying it; start over

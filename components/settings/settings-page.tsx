@@ -274,7 +274,8 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             and <Code>npx next</Code> or <Code>npx prisma</Code> typed by hand skip the switch: set{" "}
             <Code>NEXT_TELEMETRY_DISABLED=1</Code> and <Code>CHECKPOINT_DISABLE=1</Code> in your
             environment for those. <Code>npm run dev</Code> also asks npm&apos;s registry which
-            Next.js version is newest each time it starts; nothing of yours is sent.
+            Next.js version is newest each time it starts; npm sees this computer&apos;s internet address
+            and nothing else.
           </p>
           )}
         </>

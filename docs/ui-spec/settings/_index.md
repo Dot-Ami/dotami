@@ -44,7 +44,8 @@ Each group:
      (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source
      only: Next.js telemetry and Prisma's check-in, that the project's own npm scripts switch both
      off (since 2026-10-08), what they can't reach (`npm ci`, `npx` by hand) and the two variables
-     for those, and that `npm run dev` asks npm's registry for the newest Next.js version. Includes a link, "What DotAmi
+     for those, and that `npm run dev` asks npm's registry for the newest Next.js version (npm sees the
+     computer's internet address and nothing else). Includes a link, "What DotAmi
      knows about you", to `/your-data` ([8d], docs/ui-spec/your-data/_index.md).
    - Updates: the version; the installed app checks GitHub at start and asks before installing;
      a copy run from source updates with git.
