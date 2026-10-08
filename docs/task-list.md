@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-07. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-08. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -43,8 +43,9 @@ content and the project itself run alongside everything.
   - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
+  - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
-  - [ ] Proven end to end: a published release reaches an installed app
+  - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -263,6 +264,12 @@ roadmap's build order.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
     privacy policy and terms
+  - [x] A privacy log ([privacy-log.md](privacy-log.md)): what each version keeps, sends, ships and
+    asks, the record the policy and terms will be written from; a test fails when a version has no section
+  - [x] Next.js telemetry off by default for people running from source (`npm run dev`, `build`,
+    `start`, `lint` through `scripts/next.mjs`; CI already had it off)
+  - [x] Prisma's check-in off by default for people running from source (the `prisma:*` scripts; CI
+    already had it off). Not reachable from a script: `npm ci`'s own Prisma run and `npx` by hand
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?

@@ -41,8 +41,11 @@ Each group:
    - Privacy: what leaves the computer — the sentence typed to describe a venture goes to
      Anthropic only when `ANTHROPIC_API_KEY` is set (the intake parser's own test); the installed
      app's update check shows GitHub the computer's internet address and version
-     (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source:
-     Next.js telemetry and Prisma's check-in, and how to stop them. Includes a link, "What DotAmi
+     (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source
+     only: Next.js telemetry and Prisma's check-in, that the project's own npm scripts switch both
+     off (since 2026-10-08), what they can't reach (`npm ci`, `npx` by hand) and the two variables
+     for those, and that `npm run dev` asks npm's registry for the newest Next.js version (npm sees the
+     computer's internet address and nothing else). Includes a link, "What DotAmi
      knows about you", to `/your-data` ([8d], docs/ui-spec/your-data/_index.md).
    - Updates: the version; the installed app checks GitHub at start and asks before installing;
      a copy run from source updates with git.
