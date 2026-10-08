@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseSync } from "ofx-js";
 import { describe, expect, it } from "vitest";
@@ -1890,11 +1890,13 @@ describe("the package underneath", () => {
   it("is imported by the wrapper alone, so every use of it goes through the filter", () => {
     const importers: string[] = [];
     const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = path.join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
+      // withFileTypes gives the kind with the listing itself, so there is no separate
+      // stat-then-read on the same path (CodeQL's js/file-system-race).
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
         else if (
-          /\.(ts|tsx|mts|js|jsx|mjs)$/.test(entry) &&
+          /\.(ts|tsx|mts|js|jsx|mjs)$/.test(entry.name) &&
           /from\s+["']ofx-js/.test(readFileSync(full, "utf8"))
         ) {
           importers.push(path.relative(process.cwd(), full).split(path.sep).join("/"));
