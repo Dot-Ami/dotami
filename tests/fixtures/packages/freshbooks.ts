@@ -23,8 +23,9 @@
  *  - the summary block's two titles are taken for the column names, and "Total Paid" is pre-filled as
  *    the amount over a column of invoice numbers (the person has to pick the right row);
  *  - the Draft invoice is counted as a sale;
- *  - dd.mm.yy dates (a two-digit year) are not read at all;
  *  - months across the top can't be added up.
+ * Fixed since: dd.mm.yy dates (a two-digit year) are read once the person says which century the
+ * year is in, and until then nothing is added up.
  */
 import { csv } from "./csv";
 import { utf8 } from "../../helpers/encode";
@@ -87,7 +88,6 @@ const INVOICE_COLUMNS: ColumnNote[] = [
   assumed("Paid"), // 7
 ];
 const ISSUE_DATE = 2;
-const SUBTOTAL = 4;
 /** 0-based row of the real column names, under the summary block (see invoiceDetailsText). */
 const INVOICE_HEADER_ROW = 4;
 
@@ -271,6 +271,7 @@ const invoiceFile = (
   id: string,
   format: DateFormat,
   dateOrder: PracticeFile["expected"]["dateOrder"],
+  century?: PracticeFile["expected"]["century"],
 ): PracticeFile => ({
   id,
   shape: `Invoice Details by Issue Date, a summary on top, dates written ${format}`,
@@ -281,6 +282,7 @@ const invoiceFile = (
     guess: SUMMARY_TAKEN_FOR_HEADER,
     picks: PICK_REAL_HEADER,
     dateOrder,
+    century,
     decimalStyle: "point",
     months: MONTHS_WITH_DRAFT,
     // Row 11 is 1 October, a month not over yet.
@@ -299,25 +301,14 @@ export const files: PracticeFile[] = [
     ambiguous: false,
     conflicting: false,
   }),
-  {
-    id: "freshbooks-invoices-two-digit-year",
-    shape: "Invoice Details with dates written dd.mm.yy, one of the six Date Format choices",
-    fileName: "invoice_details.csv",
-    bytes: () => utf8(invoiceDetailsText("dd.mm.yy")),
-    columns: INVOICE_COLUMNS,
-    expected: {
-      // WRONG TODAY: 06.07.26 has a two-digit year, which DotAmi refuses to guess, so no row has a
-      // date and no row of column names is found. The person picks the row and the columns, and
-      // every invoice is still "no date". True: the three months of ISSUED_NOT_DRAFT (with the
-      // Draft, until that is fixed too).
-      guess: null,
-      picks: { headerRow: INVOICE_HEADER_ROW, dateColumn: ISSUE_DATE, amountColumn: SUBTOTAL },
-      dateOrder: noOrder,
-      decimalStyle: "point",
-      months: [],
-      skipped: [5, 6, 7, 8, 9, 10].map((row) => ({ row: row + 1, reason: "no-date" as const })),
-    },
-  },
+  // dd.mm.yy, one of the six Date Format choices: 21.07.26 can only be day-first, and the person
+  // answers that 26 is 2026. Read like the others since; the summary and the Draft still are not.
+  invoiceFile(
+    "freshbooks-invoices-two-digit-year",
+    "dd.mm.yy",
+    { order: "dmy", ambiguous: false, conflicting: false },
+    2000,
+  ),
   {
     id: "freshbooks-revenue-by-client",
     shape: "the old Revenue by Client CSV, months across the top (assumed), one row per client",

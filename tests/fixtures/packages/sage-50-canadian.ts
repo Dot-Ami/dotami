@@ -23,10 +23,11 @@
  * day-first dates, semicolons, "1 134,56" amounts and windows-1252 bytes.
  *
  * Today's wrong answers, pinned as "fails today" tests:
- *  - dates written with a two-digit year, Sage's own short-date example, are not read at all;
  *  - the French file is split on its COMMAS, not its semicolons: with four comma-decimal columns on
  *    every line ("1 000,00;0,00;1 000,00;100,0") the comma wins the delimiter guess, so no column
  *    names are found and nothing can be added up. A French file with one amount column reads.
+ * Fixed since: dates written with a two-digit year, Sage's own short-date example, are read once
+ * the person says which century the year is in.
  */
 import { csv } from "./csv";
 import { utf8, windows1252 } from "../../helpers/encode";
@@ -296,7 +297,7 @@ const FRENCH_TITLE = "Rapport détaillé des ventes par client";
 const FRENCH_RANGE = "01-07-2026 au 06-10-2026";
 
 /** Every row under the column names left out: no date can be read, and the two Total rows. */
-const SKIPPED_TWO_DIGIT = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((row) => ({
+const SKIPPED_NO_DATE = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((row) => ({
   row,
   reason: row === 10 || row === 15 ? ("total" as const) : ("no-date" as const),
 }));
@@ -324,15 +325,14 @@ export const files: PracticeFile[] = [
     bytes: () => utf8(csv(reportRows(COLUMNS, SHORT_YEAR, ENGLISH_TITLE, "07-01-26 to 10-06-26"))),
     columns: COLUMNS,
     expected: {
-      // WRONG TODAY: a two-digit year is never guessed, so no row has a date and no row of column
-      // names is found. The person picks the row and the columns, and every line is still "no
-      // date". True: TRUE_MONTHS.
-      guess: null,
-      picks: { headerRow: 4, dateColumn: DATE, amountColumn: REVENUE },
-      dateOrder: { order: null, ambiguous: false, conflicting: false },
+      // Read like the four-digit file once the person answers that 26 is 2026: 07-14-26 can only
+      // be month-first, and nothing is added up until the century is answered.
+      guess: { headerRow: 4, dateColumn: DATE, amountColumn: REVENUE },
+      dateOrder: { order: "mdy", ambiguous: false, conflicting: false },
+      century: 2000,
       decimalStyle: "point",
-      months: [],
-      skipped: SKIPPED_TWO_DIGIT,
+      months: MONTHS_TODAY,
+      skipped: SKIPPED_TODAY,
     },
   },
   {
@@ -366,7 +366,7 @@ export const files: PracticeFile[] = [
       dateOrder: { order: null, ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: [],
-      skipped: SKIPPED_TWO_DIGIT,
+      skipped: SKIPPED_NO_DATE,
     },
   },
 ];

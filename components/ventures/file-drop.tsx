@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
 import {
+  datesReadSentence,
   firstSheetWithRows,
   guessPicks,
   previewSheet,
@@ -16,6 +17,7 @@ import { splitAlreadyKnown } from "@/lib/figures/file/totals";
 import {
   MAX_FILE_BYTES,
   type Cell,
+  type Century,
   type DateOrder,
   type DecimalStyle,
   type ReadResult,
@@ -155,6 +157,9 @@ export function FileDrop({
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const [guessed, setGuessed] = useState(false);
   const [dateAnswer, setDateAnswer] = useState<Answer<DateOrder | ""> | null>(null);
+  // "Is 05 the year 2005?": like the date order, kept only for the column it was given for and
+  // forgotten with the file, so the next file is asked again.
+  const [centuryAnswer, setCenturyAnswer] = useState<Answer<Century | ""> | null>(null);
   const [styleAnswer, setStyleAnswer] = useState<Answer<DecimalStyle> | null>(null);
   const [currency, setCurrency] = useState("CAD");
 
@@ -212,6 +217,7 @@ export function FileDrop({
     setPicks(NO_PICKS);
     setGuessed(false);
     setDateAnswer(null);
+    setCenturyAnswer(null);
     setStyleAnswer(null);
     setCurrency("CAD");
   }
@@ -260,6 +266,7 @@ export function FileDrop({
     setSheets(result.sheets);
     setSheetIndex(start);
     setDateAnswer(null);
+    setCenturyAnswer(null);
     setStyleAnswer(null);
     applyGuess(result.sheets[start]?.rows ?? []);
     setPhase("ready");
@@ -282,6 +289,7 @@ export function FileDrop({
   // The answers the person gave count only for the column they were given for.
   const dateKey = `${sheetIndex}:${picks.headerRow}:${picks.dateColumn}`;
   const dateOrderChoice: DateOrder | "" = dateAnswer?.key === dateKey ? dateAnswer.value : "";
+  const centuryChoice: Century | "" = centuryAnswer?.key === dateKey ? centuryAnswer.value : "";
   const styleKey = `${sheetIndex}:${picks.headerRow}:${picks.amountColumn}`;
   const styleChoice = styleAnswer?.key === styleKey ? styleAnswer.value : undefined;
 
@@ -295,14 +303,15 @@ export function FileDrop({
       previewSheet(
         rows,
         picks,
-        { dateOrder: dateOrderChoice, decimalStyle: styleChoice },
+        { dateOrder: dateOrderChoice, century: centuryChoice, decimalStyle: styleChoice },
         localToday(),
         !currencyOk,
       ),
-    [rows, picks, dateOrderChoice, styleChoice, currencyOk],
+    [rows, picks, dateOrderChoice, centuryChoice, styleChoice, currencyOk],
   );
-  const { detectedOrder, decimalStyle } = preview;
+  const { detectedOrder, decimalStyle, twoDigitYear } = preview;
   const needsDateQuestion = detectedOrder.ambiguous;
+  const datesRead = preview.result ? datesReadSentence(preview.result.datesRead) : null;
 
   const split = useMemo(
     () => (preview.result ? splitAlreadyKnown(preview.result.months, existing, code) : null),
@@ -517,6 +526,7 @@ export function FileDrop({
                   const next = Number(e.target.value);
                   setSheetIndex(next);
                   setDateAnswer(null);
+                  setCenturyAnswer(null);
                   setStyleAnswer(null);
                   applyGuess(sheets[next]?.rows ?? []);
                 }}
@@ -681,6 +691,37 @@ export function FileDrop({
             </div>
           ) : null}
 
+          {/* Asked once per file when a date has a two-digit year (12-03-05): DotAmi never picks
+              the century itself (the maintainer's decision, 2026-10-07). */}
+          {picks.headerRow !== null && picks.dateColumn !== null && twoDigitYear !== null ? (
+            <div className="mt-3">
+              <label htmlFor={`${uid}-century`} className={FIELD_LABEL}>
+                {`Is ${twoDigitYear} the year 20${twoDigitYear}?`}
+              </label>
+              <select
+                id={`${uid}-century`}
+                value={centuryChoice}
+                required
+                onChange={(e) =>
+                  setCenturyAnswer({
+                    key: dateKey,
+                    value: e.target.value === "" ? "" : (Number(e.target.value) as Century),
+                  })
+                }
+                aria-describedby={`${uid}-century-hint`}
+                className={`${FIELD} mt-1`}
+              >
+                <option value="">Pick one</option>
+                <option value="2000">{`Yes — ${twoDigitYear} is 20${twoDigitYear}`}</option>
+                <option value="1900">{`No — ${twoDigitYear} is 19${twoDigitYear}`}</option>
+              </select>
+              <p id={`${uid}-century-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                This file writes years with two digits. Your answer is used for every date written
+                that way in this column, for this file only.
+              </p>
+            </div>
+          ) : null}
+
           {picks.headerRow !== null && picks.amountColumn !== null ? (
             <div className="mt-3 flex flex-wrap items-start gap-3">
               <div>
@@ -733,6 +774,8 @@ export function FileDrop({
 
           {preview.state === "ready" && split ? (
             <div className="mt-3 border-t border-rule-soft pt-3">
+              {/* Every file: how the dates were read, in words, so a wrong order or century shows. */}
+              {datesRead ? <p className="mb-2 text-[11px] text-paper-dim">{datesRead}</p> : null}
               {split.fresh.length > 0 ? (
                 <table className="text-xs">
                   <caption className="mb-1 text-left font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">

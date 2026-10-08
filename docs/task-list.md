@@ -106,7 +106,9 @@ roadmap's build order.
     files checked to the cent, nine gaps they found pinned by eleven "fails today" tests; a line on "Add from a
     file" saying each program's export was only tested on files shaped from its help pages
   - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
-  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
+  - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
+    preview shows the earliest and latest date read, in words, to check against the file
+  - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
     months across the top, the FreshBooks summary block, French files with several comma-decimal
     columns, formulas saved with no value, a report with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;

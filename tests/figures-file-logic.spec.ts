@@ -69,6 +69,7 @@ describe("cellToDay", () => {
     expect(cellToDay("03/04/2026", "ymd")).toBeNull();
   });
 
+  // The person's answer is the only way a two-digit year is read: tests/figures-file-two-digit-years.spec.ts.
   it("never guesses a century for a two-digit year", () => {
     expect(cellToDay("03/04/26", "mdy")).toBeNull();
     expect(cellToDay("25/03/26", null)).toBeNull();
@@ -822,8 +823,14 @@ describe("monthlyTotals", () => {
       months: [],
       rowsCounted: 0,
       skipped: [],
+      datesRead: null,
     });
-    expect(monthlyTotals([], choice, TODAY)).toEqual({ months: [], rowsCounted: 0, skipped: [] });
+    expect(monthlyTotals([], choice, TODAY)).toEqual({
+      months: [],
+      rowsCounted: 0,
+      skipped: [],
+      datesRead: null,
+    });
   });
 
   it("throws, without putting an amount in the message, when a month is too big to hold exactly", () => {

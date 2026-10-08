@@ -6,9 +6,15 @@
  * we return null and the caller asks — a month filed under the wrong name is a wrong figure
  * about someone's income. The day is always the one WRITTEN in the cell; a time zone never
  * moves it ("2026-03-31T23:30:00-07:00" is March 31st).
+ *
+ * A two-digit year ("12-03-05") is read only once the person has said which century it is in
+ * (the screen asks "Is 05 the year 2005?"). Without that answer it is not a date. The year is
+ * always taken to be the LAST number of a numeric date, as in Sage 50's and FreshBooks' short
+ * dates; a file written yy-mm-dd would be misread, which is why the screen shows the earliest and
+ * latest date it read, in words, for the person to check.
  */
 import { isRealCalendarDay } from "../validate";
-import type { Cell, DateOrder } from "./types";
+import type { Cell, Century, DateOrder } from "./types";
 
 /** Excel's 1900 date system: serial 25569 is 1970-01-01 and 73050 is 2099-12-31. */
 const SERIAL_MIN = 25569;
@@ -80,12 +86,31 @@ const TRAILING_TIME =
 
 /** 2026-03-31, 2026/3/31, 2026.03.31 — the same separator twice. */
 const YEAR_FIRST = /^(\d{4})([-/.])(\d{1,2})\2(\d{1,2})$/;
-/** 03/04/2026, 3-4-2026, 03.04.2026 — which number is the month is the open question. */
-const NUMERIC_SHAPE = /^(\d{1,2})([-/.])(\d{1,2})\2(\d{4})$/;
-/** 5 March 2026, 5-Mar-2026, 1er mars 2026 */
-const DAY_MONTH_NAME = /^(\d{1,2}|1er)[\s-]+([a-z]+)\.?[\s-]+(\d{4})$/;
-/** March 5, 2026 / Mar 5 2026 */
-const MONTH_NAME_DAY = /^([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/;
+/**
+ * 03/04/2026, 3-4-2026, 03.04.2026 — which number is the month is the open question. The year has
+ * four digits or two (12-03-05, 06.07.26); two need the person's answer about the century.
+ */
+const NUMERIC_SHAPE = /^(\d{1,2})([-/.])(\d{1,2})\2(\d{4}|\d{2})$/;
+/** 5 March 2026, 5-Mar-2026, 1er mars 2026, and Excel's 5-Mar-05 */
+const DAY_MONTH_NAME = /^(\d{1,2}|1er)[\s-]+([a-z]+)\.?[\s-]+(\d{4}|\d{2})$/;
+/** March 5, 2026 / Mar 5 2026, and Sage 50's long date, Nov 12, 05 */
+const MONTH_NAME_DAY = /^([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4}|\d{2})$/;
+
+/** Month names as the preview writes them back to the person ("3 December 2005"). */
+const MONTH_WORDS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function stripTime(text: string): string {
   const match = text.trim().match(TRAILING_TIME);
@@ -96,20 +121,53 @@ function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+/**
+ * The year as a number: four digits as written, two digits in the century the person chose. Null
+ * for two digits with no answer — DotAmi never picks the century itself.
+ */
+function yearOf(written: string, century: Century | null): number | null {
+  if (written.length === 4) return Number(written);
+  return century === null ? null : century + Number(written);
+}
+
+/** Lower-cases text and drops accents, so "Août" and "AOUT" look the same. */
+function plainText(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 /** Builds YYYY-MM-DD and rejects days that don't exist ("2026-02-30"). */
 function makeDay(year: number, month: number, day: number): string | null {
   const text = `${String(year).padStart(4, "0")}-${pad(month)}-${pad(day)}`;
   return isRealCalendarDay(text) ? text : null;
 }
 
-/** The two numbers of an A/B/YYYY date, or null when the text isn't that shape. */
-function numericParts(text: string): { a: number; b: number; year: number } | null {
+/** The two numbers of an A/B/YYYY (or A/B/YY) date, or null when the text isn't that shape. */
+function numericParts(text: string): { a: number; b: number } | null {
   const match = stripTime(text).match(NUMERIC_SHAPE);
   if (!match) return null;
-  return { a: Number(match[1]), b: Number(match[3]), year: Number(match[4]) };
+  return { a: Number(match[1]), b: Number(match[3]) };
 }
 
-function stringToDay(raw: string, order: DateOrder | null): string | null {
+/**
+ * The year exactly as a date cell writes it ("2026", or "05" in 12-03-05), or null when the text
+ * isn't one of the shapes that put the year last. Says nothing about whether the day is real.
+ */
+function writtenYear(raw: string): string | null {
+  const text = stripTime(raw);
+  const numeric = text.match(NUMERIC_SHAPE);
+  if (numeric) return numeric[4];
+  const plain = plainText(text);
+  const dayFirst = plain.match(DAY_MONTH_NAME);
+  if (dayFirst && MONTHS[dayFirst[2]] !== undefined) return dayFirst[3];
+  const monthFirst = plain.match(MONTH_NAME_DAY);
+  if (monthFirst && MONTHS[monthFirst[1]] !== undefined) return monthFirst[3];
+  return null;
+}
+
+function stringToDay(raw: string, order: DateOrder | null, century: Century | null): string | null {
   const text = stripTime(raw);
   if (text.length === 0) return null;
 
@@ -120,7 +178,8 @@ function stringToDay(raw: string, order: DateOrder | null): string | null {
   if (numeric) {
     const a = Number(numeric[1]);
     const b = Number(numeric[3]);
-    const year = Number(numeric[4]);
+    const year = yearOf(numeric[4], century);
+    if (year === null) return null;
     if (order === "mdy") return makeDay(year, a, b);
     if (order === "dmy") return makeDay(year, b, a);
     // No order given: only a number above 12 (or two equal numbers) settles it.
@@ -131,35 +190,39 @@ function stringToDay(raw: string, order: DateOrder | null): string | null {
   }
 
   // Month names: lower-case and drop accents so "Août" and "AOUT" look the same.
-  const plain = text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  const plain = plainText(text);
 
   const dayFirst = plain.match(DAY_MONTH_NAME);
   if (dayFirst) {
     const month = MONTHS[dayFirst[2]];
-    if (month === undefined) return null;
-    return makeDay(Number(dayFirst[3]), month, parseInt(dayFirst[1], 10));
+    const year = yearOf(dayFirst[3], century);
+    if (month === undefined || year === null) return null;
+    return makeDay(year, month, parseInt(dayFirst[1], 10));
   }
 
   const monthFirst = plain.match(MONTH_NAME_DAY);
   if (monthFirst) {
     const month = MONTHS[monthFirst[1]];
-    if (month === undefined) return null;
-    return makeDay(Number(monthFirst[3]), month, Number(monthFirst[2]));
+    const year = yearOf(monthFirst[3], century);
+    if (month === undefined || year === null) return null;
+    return makeDay(year, month, Number(monthFirst[2]));
   }
 
-  // Two-digit years, bare numbers, anything else: not a date we can be sure of.
+  // Bare numbers, a two-digit year with no answer, anything else: not a date we can be sure of.
   return null;
 }
 
 /**
  * One cell as a calendar day (YYYY-MM-DD), or null if it isn't a date we can read with
  * certainty. `order` says how 03/04/2026 is written; null means "unknown", in which case only
- * unambiguous dates come back.
+ * unambiguous dates come back. `century` is the person's answer for a two-digit year; null (the
+ * default) leaves every two-digit year unread.
  */
-export function cellToDay(cell: Cell, order: DateOrder | null): string | null {
+export function cellToDay(
+  cell: Cell,
+  order: DateOrder | null,
+  century: Century | null = null,
+): string | null {
   if (cell instanceof Date) {
     // The readers hand over UTC midnight of the day Excel shows, so the UTC day is the day.
     if (Number.isNaN(cell.getTime())) return null;
@@ -167,14 +230,45 @@ export function cellToDay(cell: Cell, order: DateOrder | null): string | null {
     return isRealCalendarDay(day) ? day : null;
   }
   if (typeof cell === "number") return excelSerialToDay(cell);
-  if (typeof cell === "string") return stringToDay(cell, order);
+  if (typeof cell === "string") return stringToDay(cell, order, century);
   return null; // boolean, null
+}
+
+/**
+ * The first two-digit year in a date column, exactly as written ("05" for 12-03-05), or null when
+ * every date there has a four-digit year (or is an Excel date). The screen asks about this one
+ * year — "Is 05 the year 2005?" — and the answer is used for every two-digit year in the column.
+ * A cell counts only if it would be a real day in some order once the century is known, so
+ * "99-99-26" or a reference number never triggers the question.
+ */
+export function firstTwoDigitYear(cells: Cell[]): string | null {
+  for (const cell of cells) {
+    if (typeof cell !== "string") continue;
+    const year = writtenYear(cell);
+    if (year === null || year.length !== 2) continue;
+    const readable = ([null, "mdy", "dmy"] as const).some((order) =>
+      ([2000, 1900] as const).some((century) => stringToDay(cell, order, century) !== null),
+    );
+    if (readable) return year;
+  }
+  return null;
+}
+
+/**
+ * A day written the way a person says it: "2005-12-03" is "3 December 2005". Anything that isn't a
+ * real YYYY-MM-DD day comes back unchanged, so a bad value is shown as it is, never hidden.
+ */
+export function dayInWords(day: string): string {
+  if (!isRealCalendarDay(day)) return day;
+  const [year, month, date] = day.split("-").map(Number);
+  return `${date} ${MONTH_WORDS[month - 1]} ${year}`;
 }
 
 /**
  * Works out whether a column's A/B/YYYY dates are month-first or day-first from the dates
  * themselves: a first number above 12 can only be a day, a second number above 12 can only be a
- * day too. Never guesses — with no proof either way it says `ambiguous` so the caller asks the
+ * day too. A/B/YY dates (12-03-05) give the same proof, whatever century they turn out to be in,
+ * so the order is settled before the century is asked. Never guesses — with no proof either way it says `ambiguous` so the caller asks the
  * person once, and with proof both ways it says `conflicting`.
  */
 export function detectDateOrder(cells: Cell[]): {
