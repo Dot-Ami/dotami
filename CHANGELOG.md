@@ -52,6 +52,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   hours each Canadian evening it accepted a period ending "tomorrow". It now uses the day on this
   computer, which in the desktop app and a self-hosted copy is your day.
 
+### Documented
+- **Business expense records** ([8i]) — a design and a proposed privacy review for keeping single
+  business expenses and their receipts, with the options and what each costs, and the maintainer's
+  decisions of 2026-10-07 (single records with receipt files). Nothing is built yet
+  (`docs/architecture/expense-records.md`).
+
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
 - Releases: the workflow creates the draft first, so a release is one draft, not one per file — and
