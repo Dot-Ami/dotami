@@ -46,7 +46,7 @@ person decides, and DotAmi warns.
 | Wave | No official server found | Yes — [GraphQL API][wave-api], free "but we reserve the right to charge" ([API terms][wave-tos]) | None found | [CSV / PDF per report][wave-export]; [XLS/CSV account export][wave-bulk] |
 | FreshBooks | No official server found | Yes — [OAuth app][fb-api]; app-store review applies to public listings ([requirements][fb-public]) | None found | [Excel / CSV][fb-export] |
 | Sage Accounting (cloud) | No — Sage's official MCP servers are for [Sage Intacct][sage-intacct-mcp] and [Sage Operations][sage-ops-mcp], different products | Yes — [Accounting API v3.1][sage-api] | None found | [PDF / CSV / Excel][sage-export] |
-| Sage 50 Canada (desktop) | No | [SDK][sage50-sdk]; reading through ODBC ([setup][sage50-odbc]), which can be limited per user to ["Read data"][sage50-rights] (read 2026-10-06) | None found | CSV / Excel (not confirmed on a Sage page we could read) |
+| Sage 50 Canada (desktop) | No | [SDK][sage50-sdk]; reading through ODBC ([setup][sage50-odbc]), which can be limited per user to ["Read data"][sage50-rights] (read 2026-10-06) | None found | [.csv, .htm, .pdf, .xls or .txt][sage50-export]; the route DotAmi reads is .csv: [sage-50-canada.md](sage-50-canada.md) (read 2026-10-08) |
 
 Notes, from the same pages:
 
@@ -71,7 +71,7 @@ Notes, from the same pages:
   supported for Canadian companies specifically (Intuit's [partner program][qbo-partner] names
   Canada, excluding Quebec); whether Xero's free tier needs certification before connecting your
   own organisation; whether FreshBooks API registration is free; the Sage 50 Canada export
-  limits.
+  limits (its export file types are confirmed: [sage-50-canada.md](sage-50-canada.md), 2026-10-08).
 
 ## Browser automation — what each vendor's terms say
 
@@ -139,6 +139,7 @@ tested · in the repo). Test files are invented — never a real person's export
 [sage-api]: https://developer.sage.com/accounting/apis/sagebusinesscloudaccounting/3.1.0/accounting
 [sage-export]: https://help.sbc.sage.com/en-us/accounting/reporting/financial-reports/the-profit-and-loss-report.html
 [sage50-sdk]: https://support.na.sage.com/selfservice/viewContent.do?externalId=13102&sliceId=1
+[sage50-export]: https://help-sage50.na.sage.com/en-ca/core/2026/Content/Reports_Forms/ExportingReports.htm
 [sage50-odbc]: https://help-sage50.na.sage.com/en-ca/core/2026/Content/System_Settings/Security/UseThirdPartySoftwareWithSage50Data.htm
 [sage50-rights]: https://help-sage50.na.sage.com/en-ca/core/2026/Content/System_Settings/Security/UserRightsThirdPartyProducts.htm
 [gazette]: https://gazette.gc.ca/rp-pr/p1/2026/2026-06-27/html/reg3-eng.html

@@ -9,6 +9,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **"Add from a file" says how far it has been tested** — once a file is read, one line says that
+  each accounting program's export was tested on files shaped from that program's help pages, not
+  on real exports, so check the columns and totals.
 - **Add to my calendar** ([8e]) — beside the Figure reminders tick-boxes on the settings page, a
   button saves a calendar file (.ics) with one repeating event per ticked box: *"Bring your DotAmi
   figures up to date"* on the first day after each month, quarter or year ends. Open it with your
@@ -30,6 +33,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `npm ci` runs Prisma once on its own, and `npx next` / `npx prisma` typed by hand skip the scripts.
   `npm run dev` still asks npm's registry which Next.js version is newest; nothing turns that off.
   The settings page and README say so.
+- **Practice files for Wave, FreshBooks, Sage Accounting and Sage 50 Canadian** (behind the scenes,
+  nothing changes on screen beyond the "Add from a file" line under Added) — invented files laid out from each program's own
+  help pages, plus Xero's Receivable Invoice Detail, each checked to the cent. They found nine
+  things DotAmi gets wrong today, now written down as tests that fail the day each is fixed: a
+  refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
+  taken for the column names, two-digit years, months across the top, a Wave report with no dates,
+  a French Sage 50 file with several comma-decimal columns split on its commas, and a formula saved
+  with no value reported as an empty amount. See docs/connectors/practice-files.md.
 
 ### Documented
 - **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
