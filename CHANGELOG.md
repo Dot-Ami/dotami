@@ -9,6 +9,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **A "Status column" for invoice lists** ([8c-3]) — invoice lists from FreshBooks, Sage Accounting
+  and Xero can include void, deleted and draft invoices, which were added up as sales. "Add from a
+  file" now has an optional Status column, pre-filled only when a column is headed exactly "Status"
+  or "Statut". Rows marked Void, Voided, Deleted or Draft (and, assumed for French files, Annulé,
+  Supprimé or Brouillon) are left out of the totals and listed with the reason, beside the other
+  left-out rows; any other status counts as before, only the chosen column is read, and choosing
+  "None" counts every row. Nothing about the column is stored.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
@@ -83,6 +90,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   affects it adds a line under [Unreleased]; a test fails when a version has no section.
 
 ### Fixed
+- **A FreshBooks file with a summary on top opens on its real column names** ([8c-3]) — FreshBooks'
+  Invoice Details puts a short summary ("Total Invoiced, Total Paid" over two figures) above the
+  table, and "Add from a file" took the summary's two titles for the column names, with "Total
+  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading

@@ -67,6 +67,10 @@ person is asked).
   key. In the desktop app, a download refused because it didn't come from DotAmi's own page adds
   one line to `logs/server.log` naming nothing but the refusal
   ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
+- ***Add from a file*'s Status column ([8c-3]) keeps nothing.** It is a pick on the panel only,
+  like the Type column: no new table, column, file or browser-storage key, and only the monthly
+  totals the person agrees to are kept, as before
+  ([`lib/figures/file/totals.ts`](../lib/figures/file/totals.ts)).
 - **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe

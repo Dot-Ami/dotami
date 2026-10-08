@@ -30,6 +30,11 @@ export interface Picks {
    * Pre-filled only for a header that is exactly "Transaction Type" or "Type" (see guessColumns).
    */
   typeColumn: number | null;
+  /**
+   * The optional column of invoice statuses. Null leaves it unused, and then every row counts.
+   * Pre-filled only for a header that is exactly "Status" or "Statut" (see guessColumns).
+   */
+  statusColumn: number | null;
 }
 
 /** What the date column says about how its dates are written (see detectDateOrder). */
@@ -70,6 +75,7 @@ export function guessPicks(
     dateColumn: null,
     amountColumn: null,
     typeColumn: null,
+    statusColumn: null,
   };
   if (forcedHeader === undefined) {
     const guess = guessColumns(rows);
@@ -81,6 +87,7 @@ export function guessPicks(
         dateColumn: guess.dateColumn,
         amountColumn: guess.amountColumn,
         typeColumn: guess.typeColumn,
+        statusColumn: guess.statusColumn,
       },
       guessed: true,
     };
@@ -95,9 +102,14 @@ export function guessPicks(
       dateColumn: guess.dateColumn,
       amountColumn: guess.amountColumn,
       typeColumn: guess.typeColumn,
+      statusColumn: guess.statusColumn,
     },
     // A forced row that gave no columns at all is not a guess worth announcing.
-    guessed: guess.dateColumn !== null || guess.amountColumn !== null || guess.typeColumn !== null,
+    guessed:
+      guess.dateColumn !== null ||
+      guess.amountColumn !== null ||
+      guess.typeColumn !== null ||
+      guess.statusColumn !== null,
   };
 }
 
@@ -196,6 +208,7 @@ export function previewSheet(
     dateColumn: picks.dateColumn,
     amountColumn: picks.amountColumn,
     typeColumn: picks.typeColumn,
+    statusColumn: picks.statusColumn,
     dateOrder,
     decimalStyle,
   };
@@ -220,6 +233,8 @@ export interface FileAnswers extends PreviewAnswers {
   amountColumn?: number;
   /** 0-based column they pick for the transaction types; null clears it (the select's empty choice). */
   typeColumn?: number | null;
+  /** 0-based column they pick for the invoice statuses; null clears it (the select's empty choice). */
+  statusColumn?: number | null;
 }
 
 /** A whole file run through the screen's steps. */
@@ -257,6 +272,8 @@ export async function previewFile(
     amountColumn: answers.amountColumn ?? guessed.amountColumn,
     // Unlike the others, null here is an answer: the person cleared the select.
     typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
+    statusColumn:
+      answers.statusColumn === undefined ? guessed.statusColumn : answers.statusColumn,
   };
   const preview = previewSheet(rows, picks, answers, today);
   return { ...preview, rows, guess, picks };

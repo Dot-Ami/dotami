@@ -106,9 +106,11 @@ roadmap's build order.
     files checked to the cent, nine gaps they found pinned by eleven "fails today" tests; a line on "Add from a
     file" saying each program's export was only tested on files shaped from its help pages
   - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
-  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
-    months across the top, the FreshBooks summary block, French files with several comma-decimal
-    columns, formulas saved with no value, a report with no dates)
+  - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
+    summary block no longer taken for the column names
+  - [ ] Fix the other gaps those files found (follow-on slices: refunds, two-digit years, months across
+    the top, French files with several comma-decimal columns, formulas saved with no value, a report
+    with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
