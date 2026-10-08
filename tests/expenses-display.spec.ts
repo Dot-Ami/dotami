@@ -10,7 +10,9 @@ import {
   draftToForm,
   draftToProposal,
   EMPTY_FORM,
+  forAfterRefundShortcut,
   formToDraft,
+  keptText,
   nameTheRecord,
   readBusinessShare,
   recordFacts,
@@ -143,6 +145,23 @@ describe("recordFacts", () => {
     expect(facts.join(" ").toLowerCase()).not.toContain("deductible");
   });
 
+  it("calls a share 'your number' only when the person typed it; an agent's or a file's says who proposed it", () => {
+    const share = { ...base, businessSharePercent: 25 };
+    expect(recordFacts({ ...share, sourceKind: "typed", sourceLabel: "typed by you", status: "confirmed" }, null)).toEqual([
+      "Business share: 25% (your number) of the full $100.00",
+    ]);
+    expect(recordFacts({ ...share, sourceKind: "agent", sourceLabel: "an outside agent", status: "proposed" }, null)).toEqual([
+      "Business share: 25% (proposed by an outside agent) of the full $100.00",
+    ]);
+    expect(recordFacts({ ...share, sourceKind: "agent", sourceLabel: "an outside agent", status: "confirmed" }, null)).toEqual([
+      "Business share: 25% (proposed by an outside agent, agreed by you) of the full $100.00",
+    ]);
+    expect(recordFacts({ ...share, sourceKind: "file", sourceLabel: "expenses.xlsx", status: "proposed" }, null)[0]).toContain("(proposed by expenses.xlsx)");
+    for (const kind of ["agent", "file"] as const) {
+      expect(recordFacts({ ...share, sourceKind: kind, sourceLabel: "x", status: "proposed" }, null).join(" ")).not.toContain("your number");
+    }
+  });
+
   it("names how a refund is kept, its link, GST/HST part and credit note", () => {
     expect(recordFacts({ ...base, amountCents: -1_000, refundOfId: "p1", gstHstCents: 50, creditNote: "CN-1" }, "2026-09-30 · Example · $100.00")).toEqual([
       "Refund or credit kept as a negative amount, linked to 2026-09-30 · Example · $100.00",
@@ -160,5 +179,32 @@ describe("nameTheRecord", () => {
     );
     expect(nameTheRecord("No database reachable — nothing was changed.", ["a"])).toBe("No database reachable — nothing was changed.");
     expect(nameTheRecord("Expense 9: x", ["a"])).toBe("Expense 9: x");
+  });
+});
+
+describe("forAfterRefundShortcut", () => {
+  it("follows the purchase's idea only while the typed list is empty", () => {
+    expect(forAfterRefundShortcut("none", 0, "idea-a")).toBe("idea-a");
+    expect(forAfterRefundShortcut("idea-b", 0, "idea-a")).toBe("idea-a");
+  });
+
+  it("never moves records already on the typed list to another idea", () => {
+    expect(forAfterRefundShortcut("none", 3, "idea-a")).toBe("none");
+    expect(forAfterRefundShortcut("idea-b", 1, "idea-a")).toBe("idea-b");
+  });
+
+  it("leaves the choice alone for a purchase not attached to an idea", () => {
+    expect(forAfterRefundShortcut("idea-b", 0, null)).toBe("idea-b");
+  });
+});
+
+describe("keptText", () => {
+  it("counts what the server agreed to, not what was sent", () => {
+    expect(keptText({ expenses: [{}, {}], skipped: [] })).toBe("Kept 2 records.");
+    expect(keptText({ expenses: [{}], skipped: ["x"] })).toBe(
+      "Kept 1 record. 1 not kept: changed in another window or by another program since you opened the list.",
+    );
+    expect(keptText({ expenses: [], skipped: ["x", "y"] })).toMatch(/^Kept 0 records\. 2 not kept/);
+    expect(keptText(null)).toBe("Kept 0 records.");
   });
 });

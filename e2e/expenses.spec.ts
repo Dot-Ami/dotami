@@ -160,10 +160,47 @@ test("a record kept without an idea is attached later, and refunds are kept eith
   await expect(agreedRow(page, DESK).filter({ hasText: "a desk" })).toBeVisible();
 });
 
+test("recording a refund for a purchase under an idea leaves records already typed where the person put them", async ({ page }) => {
+  const LAMP = `Example Lamp Co shortcut test ${Date.now()}`;
+  const INK = `Example Ink shortcut test ${Date.now()}`;
+
+  // A purchase kept under the idea, from the idea's card.
+  await page.goto("/ventures");
+  const card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: CHINOOK, level: 2 }) }).first();
+  await card.getByRole("link", { name: "Expense records for this idea →" }).click();
+  await expect(page).toHaveURL(/\/expenses\?idea=/);
+  await typePurchase(page, { amount: "80.00", paidTo: LAMP, whatFor: "desk lamp" });
+  await reviewAndAgree(page, 1);
+  const lamp = agreedRow(page, LAMP).filter({ hasText: "desk lamp" });
+  await expect(lamp).toContainText(`For ${CHINOOK}`);
+
+  // Another purchase typed and set to "not attached yet", then the refund shortcut on the lamp.
+  await typePurchase(page, { amount: "9.00", paidTo: INK, whatFor: "ink" });
+  const forChoice = page.getByLabel("For", { exact: true });
+  await forChoice.selectOption({ label: "Not attached to an idea yet" });
+  await lamp.getByRole("button", { name: "Record a refund for this" }).click();
+  const form = page.getByRole("form", { name: "Type an expense" });
+  await expect(form.getByLabel("A refund or credit")).toBeChecked();
+  // "For" covers the whole list, so it stays as the person set it, and the page says why.
+  await expect(forChoice.locator("option:checked")).toHaveText("Not attached to an idea yet");
+  await expect(page.getByRole("status").filter({ hasText: "The typed list stays for" })).toContainText(`the purchase is for ${CHINOOK}`);
+
+  await form.getByRole("textbox", { name: "Amount that came back" }).fill("10");
+  await form.getByLabel("What for", { exact: true }).fill("lamp shortcut credit");
+  await form.getByRole("button", { name: "Add to the list" }).click();
+  await reviewAndAgree(page, 2);
+
+  // Both kept where the list's "For" said: not attached, the ink included.
+  await page.getByLabel("Show").selectOption({ label: "All your records" });
+  await expect(agreedRow(page, INK)).toContainText("Not attached to an idea yet");
+  await expect(agreedRow(page, "lamp shortcut credit")).toContainText("Not attached to an idea yet");
+  await expect(lamp).toContainText(`For ${CHINOOK}`);
+});
+
 test("an agent's proposal waits until the person agrees, and an outside caller can't agree or attach", async ({ page }) => {
   const PAYEE = `Example Courier agent test ${Date.now()}`;
   const proposed = await page.request.post("/api/expenses/propose", {
-    data: { ventureId: null, source: { kind: "agent", label: "an outside agent" }, expenses: [{ date: today(), amountCents: 1_850, paidTo: PAYEE, whatFor: "parcel" }] },
+    data: { ventureId: null, source: { kind: "agent", label: "an outside agent" }, expenses: [{ date: today(), amountCents: 1_850, paidTo: PAYEE, whatFor: "parcel", businessSharePercent: 25 }] },
   });
   expect(proposed.status()).toBe(201);
   const [waiting] = ((await proposed.json()) as { expenses: { id: string; status: string }[] }).expenses;
@@ -181,10 +218,14 @@ test("an agent's proposal waits until the person agrees, and an outside caller c
   const dialog = page.getByRole("dialog", { name: "Agree to these proposed records?" });
   await expect(dialog).toContainText(PAYEE);
   await expect(dialog).toContainText("From an outside agent · not attached to an idea");
+  // The agent's share is shown as the agent's, never as the person's own number.
+  await expect(dialog.getByRole("listitem").filter({ hasText: PAYEE })).toContainText("Business share: 25% (proposed by an outside agent) of the full $18.50");
+  await expect(dialog.getByRole("listitem").filter({ hasText: PAYEE })).not.toContainText("your number");
   // Leave everything else waiting: untick all but this one.
   for (const box of await dialog.getByRole("listitem").filter({ hasNotText: PAYEE }).getByRole("checkbox").all()) await box.uncheck();
   await dialog.getByRole("button", { name: "Agree to all 1" }).click();
   await expect(dialog).toBeHidden();
   await expect(agreedRow(page, PAYEE)).toContainText("$18.50");
   await expect(agreedRow(page, PAYEE)).toContainText("from an outside agent");
+  await expect(agreedRow(page, PAYEE)).toContainText("Business share: 25% (proposed by an outside agent, agreed by you) of the full $18.50");
 });

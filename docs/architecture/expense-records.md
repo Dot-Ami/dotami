@@ -56,13 +56,16 @@ Taken for the typing screen (the second slice), which builds the first four:
    advice:
    - Income Tax Act, s. 12(1)(x) and 12(2.2) (reimbursements and refunds of an outlay or expense, and
      the election to reduce the outlay instead): [section 12](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-12.html).
-   - CRA guide T4002: a refund is subtracted from the expense it applies to; it is income only if it
-     can't be applied that way: [T4002, chapter 4](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-4.html).
+   - CRA guide T4002, chapter 2 (Income), the note under line 8230 (Other income): a rebate, grant or
+     assistance is used to reduce the particular expense (or an asset's capital cost) it applies to, and
+     is included in income only when it can't be used that way:
+     [T4002, chapter 2](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-4.html).
    - Excise Tax Act, s. 232: the GST/HST adjustment for a refund or credit needs a credit note, and falls
      in the reporting period in which it is received: [section 232](https://laws-lois.justice.gc.ca/eng/acts/E-15/section-232.html).
-   - Income Tax Act, s. 230, and CRA IC78-10: records must be kept so the amounts can be supported; no
-     form is prescribed (so either way of keeping a refund is a record).
-     [Section 230](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-230.html).
+   - Income Tax Act, s. 230, and CRA IC78-10R5 (paragraph 6): records must let the amounts be
+     determined, and the CRA does not specify the books and records (so either way of keeping a refund
+     is a record). [Section 230](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-230.html);
+     [IC78-10R5](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/ic78-10/books-records-retention-destruction.html).
 5. **Receipts (not built in this slice; recorded here for the receipts slice).** A receipt file may be at
    most **10 MB**, the same cap as today's file reading. Receipts open **inside DotAmi** (the maintainer
    chose this over the computer's own viewer). Showing an outside file inside the window needs its own

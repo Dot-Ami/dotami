@@ -20,7 +20,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *Move* on each record).
 - **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
   beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
-  amount from it.
+  amount from it. A share an agent or a file proposed is shown as theirs ("proposed by …"), never as
+  your number.
 - **Refunds and credits, your way** — keep each one as a negative amount on a record, or as a
   separate refund record linked to the purchase it came from (*Record a refund for this*). Either way
   it keeps the refund's date, the purchase, the GST/HST part and the credit note's details when you

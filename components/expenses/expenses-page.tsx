@@ -8,6 +8,8 @@ import {
   draftToForm,
   draftToProposal,
   EMPTY_FORM,
+  forAfterRefundShortcut,
+  keptText,
   moneyText,
   nameTheRecord,
   purchaseLabel,
@@ -151,7 +153,15 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
 
   function recordRefundFor(purchase: ExpenseView) {
     setForm({ ...EMPTY_FORM, is: "refund", refundOfId: purchase.id, paidTo: purchase.paidTo, currency: purchase.currency, date: today });
-    if (purchase.ventureId !== null) setTarget(purchase.ventureId);
+    const nextTarget = forAfterRefundShortcut(target, drafts.length, purchase.ventureId);
+    setTarget(nextTarget);
+    // "For" covers the whole typed list, so with records already on it the shortcut leaves it alone and says so.
+    const purchaseFor = purchase.ventureId ?? NONE;
+    setNotice(
+      nextTarget === purchaseFor
+        ? null
+        : `The typed list stays for ${target === NONE ? "“not attached to an idea yet”" : ideaName(target)}; the purchase is ${purchase.ventureId === null ? "not attached to an idea" : `for ${ideaName(purchase.ventureId)}`}. Change “For” above the list if this refund should go there too.`,
+    );
     formBox.current?.scrollIntoView?.({ block: "nearest" });
     window.setTimeout(() => document.getElementById("expense-form")?.querySelector<HTMLElement>("input[type=radio]:checked")?.focus(), 0);
   }
@@ -182,7 +192,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
       setActionError(`They were saved as waiting, not agreed to: ${agreedResult.error} You can agree to them under “Waiting for you”.`);
     } else {
       setActionError(null);
-      setNotice(`Kept ${created.length} ${created.length === 1 ? "record" : "records"}.`);
+      setNotice(keptText(agreedResult.body));
     }
     await load();
   }
@@ -197,7 +207,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
       return;
     }
     setReviewing(null);
-    setNotice(`Kept ${ids.length} ${ids.length === 1 ? "record" : "records"}.`);
+    setNotice(keptText(result.body));
     await load();
   }
 

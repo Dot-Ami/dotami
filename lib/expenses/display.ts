@@ -198,11 +198,24 @@ export function moneyText(cents: number, currency: string): string {
 type Describable = Pick<
   ExpenseView,
   "amountCents" | "currency" | "recordKind" | "refundOfId" | "gstHstCents" | "creditNote" | "businessSharePercent" | "category"
->;
+> &
+  // A kept record says where it came from; a draft on the typed list has none of these (it is the person's own typing).
+  Partial<Pick<ExpenseView, "sourceKind" | "sourceLabel" | "status">>;
 
 /**
- * The small grey facts under a record, each the person's own: the share they typed beside the full
- * amount, the GST/HST part, the category, how a refund is kept and its credit note. `originalText`
+ * Whose number a record's business share is. The person's own when they typed it; otherwise an agent
+ * or a file proposed it, and the line says so (and that the person agreed, once they have) rather
+ * than calling someone else's number theirs.
+ */
+function shareOwner(record: Describable): string {
+  if (record.sourceKind === undefined || record.sourceKind === "typed") return "your number";
+  const from = `proposed by ${record.sourceLabel ?? (record.sourceKind === "agent" ? "an agent" : "a file")}`;
+  return record.status === "confirmed" || record.status === "retracted" ? `${from}, agreed by you` : from;
+}
+
+/**
+ * The small grey facts under a record: the business share beside the full amount (saying whose
+ * number it is), the GST/HST part, the category, how a refund is kept and its credit note. `originalText`
  * names the purchase a refund points to (or null when it has none, or it was deleted).
  */
 export function recordFacts(record: Describable, originalText: string | null): string[] {
@@ -213,7 +226,7 @@ export function recordFacts(record: Describable, originalText: string | null): s
     facts.push(originalText ? `Refund or credit kept as a negative amount, linked to ${originalText}` : "Refund or credit kept as a negative amount");
   }
   if (record.businessSharePercent !== null) {
-    facts.push(`Business share: ${record.businessSharePercent}% (your number) of the full ${moneyText(Math.abs(record.amountCents), record.currency)}`);
+    facts.push(`Business share: ${record.businessSharePercent}% (${shareOwner(record)}) of the full ${moneyText(Math.abs(record.amountCents), record.currency)}`);
   }
   if (record.gstHstCents !== null) facts.push(`GST/HST part: ${moneyText(record.gstHstCents, record.currency)}`);
   if (record.category !== null) facts.push(`Category: ${record.category}`);
@@ -236,4 +249,29 @@ export function nameTheRecord(error: string, titlesInOrder: string[]): string {
 /** One line naming a purchase, for a refund's link and the "came from" choice: day, who, amount. */
 export function purchaseLabel(record: Pick<ExpenseView, "date" | "paidTo" | "amountCents" | "currency">): string {
   return `${record.date} · ${record.paidTo} · ${moneyText(record.amountCents, record.currency)}`;
+}
+
+/**
+ * Which idea the typed list is "For" after "Record a refund for this". The For choice covers every
+ * record on the list, so the shortcut only follows the purchase's idea while the list is empty;
+ * otherwise records the person already typed would silently move to another idea. Returns the
+ * choice unchanged in that case, and the page says why.
+ */
+export function forAfterRefundShortcut(current: string, typedCount: number, purchaseIdea: string | null): string {
+  if (typedCount > 0 || purchaseIdea === null) return current;
+  return purchaseIdea;
+}
+
+/**
+ * The line after an agree click, counted from what /api/expenses/agree says it agreed to, not from
+ * what was sent: a record another window turned down or already agreed to in between comes back in
+ * `skipped`, and saying it was kept would be untrue.
+ */
+export function keptText(body: unknown): string {
+  const { expenses, skipped } = (body ?? {}) as { expenses?: unknown[]; skipped?: unknown[] };
+  const kept = Array.isArray(expenses) ? expenses.length : 0;
+  const left = Array.isArray(skipped) ? skipped.length : 0;
+  const line = `Kept ${kept} ${kept === 1 ? "record" : "records"}.`;
+  if (left === 0) return line;
+  return `${line} ${left} not kept: changed in another window or by another program since you opened the list.`;
 }
