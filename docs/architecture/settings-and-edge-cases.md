@@ -308,7 +308,13 @@ committed by mistake (secret scanning).
    2026-10-05: DotAmi's own code sends nothing, but the Next.js framework under it sends Vercel
    anonymous counts when `npm run dev` or `npm run build` runs, unless turned off —
    [nextjs.org/telemetry](https://nextjs.org/telemetry), read 2026-10-05. The settings page's
-   Privacy group says so. Whether to turn it off by default is open.) A proposal:
+   Privacy group says so. **Decided 2026-10-08, left to the builders by the maintainer: off by
+   default.** The project's npm scripts now start Next.js with `NEXT_TELEMETRY_DISABLED=1` and the
+   Prisma CLI with `CHECKPOINT_DISABLE=1` (`scripts/telemetry-off.mjs`), as CI already did;
+   `tests/dev-telemetry.spec.ts` keeps it so. Not reached: `npm ci`'s own Prisma run and `npx`
+   commands typed by hand; `npm run dev`'s check of npm's registry for the newest Next.js has no
+   switch. Each version's record of what is kept and sent is [docs/privacy-log.md](../privacy-log.md).)
+   A proposal:
    - **Off unless the person says yes**, asked once at first launch in plain words, changeable any time.
    - **Never sent:** figures, statements, venture names or notes, file contents, model
      conversations, anything typed.
