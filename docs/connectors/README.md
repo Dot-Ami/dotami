@@ -102,6 +102,9 @@ Bank and card records are the person's call (decision 4). This is where things s
 - **OFX** is maintained by the [Financial Data Exchange][fdx-ofx]; QFX is OFX plus Intuit-specific
   tags, so an OFX reader generally reads QFX. DotAmi's reader is built (no screen yet) on the free
   `ofx-js` package, read in full and pinned: [ofx-reader-review.md](ofx-reader-review.md).
+- **hledger and Ledger journals** are plain text. DotAmi has its own reader (no screen yet),
+  written from hledger's published manual rather than its GPL-3.0 code; what it reads and what it
+  refuses: [journal-reader.md](journal-reader.md).
 - **CRA has no public API.** Electronic GST/HST and income-tax filing goes through
   [CRA-certified software][cra-software] or [My Business Account][cra-mba]; an uncertified
   self-hosted app cannot transmit returns. DotAmi never files anyway.
