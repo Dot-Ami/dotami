@@ -351,7 +351,18 @@ export const files: PracticeFile[] = [
       // each line, not a date: nothing is added up. True: TRUE_MONTHS, read day-first in comma style.
       guess: null,
       picks: { headerRow: 4, dateColumn: 0, amountColumn: 1 },
-      columnsMisread: true,
+      // The whole header line stays one cell (it holds no comma to split on); the data lines split
+      // into five pieces on the commas of their four "1 000,00" amounts, so B to E get the screen's
+      // stand-in names.
+      columnsMisread: {
+        readAs: [
+          FRENCH_COLUMNS.map((c) => c.header).join(";"),
+          "Column B",
+          "Column C",
+          "Column D",
+          "Column E",
+        ],
+      },
       dateOrder: { order: null, ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: [],

@@ -57,24 +57,28 @@ files shaped from that program's help pages, not on real exports, so check the c
 
 ### Open, found 2026-10-08
 
-Each is a test in `tests/figures-file-packages.spec.ts`, under "gaps the newer practice files found,
-fails today", written with `it.fails`: it passes only while the gap is there, so the day a fix lands
-it errors until it is turned into a normal test. Eleven tests, nine gaps. They are fixed in follow-on
+Each is a test written to pass only while the gap is there, so the day a fix lands it errors until
+it is turned into a normal test. Ten are in `tests/figures-file-packages.spec.ts`, under "gaps the
+newer practice files found, fails today", written with `it.fails`. The eleventh, Wave's report with
+no dates, is a browser test in `e2e/app.spec.ts` written with `test.fail()`, because the sentence
+the screen should show is the screen's own. Eleven tests, nine gaps. They are fixed in follow-on
 slices, not in the one that found them.
 
 | Gap | What happens today | Practice file | Fixed by |
 | --- | --- | --- | --- |
 | A refund paid back sits in a ledger's Debit column | with Credit picked, the refund's row is listed as "no amount" and August reads 320.00 against a true 280.00 | `wave-account-transactions` | the refunds slice |
-| A report with no dates at all (Wave's Income by Customer) | "no row of column names found", and nothing says which report to export instead (Account Transactions) | `wave-income-by-customer` | the months-across slice |
+| A report with no dates at all (Wave's Income by Customer) | "no row of column names found", and nothing says which report to export instead (Account Transactions) | `wave-income-by-customer` (pinned in the browser) | the months-across slice |
 | A summary block above the table (FreshBooks' Invoice Details) | the summary's two titles are taken for the column names, and "Total Paid" is pre-filled as the amount over the invoice numbers; the person has to pick row 5 | every FreshBooks Invoice Details file | the void and draft slice |
 | A Draft invoice | counted as a sale: August 726.19 against a true 476.19 | `freshbooks-invoices-iso` | the void and draft slice |
 | A voided invoice | counted as a sale: Sage Accounting's August 150.00 against a true -50.00; Xero's Receivable Invoice Detail counts its Voided line | `sage-accounting-sales-list`, `xero-receivable-invoice-detail` | the void and draft slice |
 | Dates with a two-digit year (FreshBooks dd.mm.yy, Sage 50's own 12-03-05) | no date is read, so no column names are found and nothing is added up | `freshbooks-invoices-two-digit-year`, `sage50-two-digit-year` | the two-digit years slice |
 | Months across the top (FreshBooks' old Revenue by Client) | no column names found; nothing can be added up | `freshbooks-revenue-by-client` | the months-across slice |
-| **New:** a French semicolon file with several comma-decimal columns (Sage 50's revenue, cost, profit and margin) | the commas win the delimiter guess, every line is split on them, no column names are found and nothing is added up. A French file with one amount column still reads | `sage50-french` | not yet assigned |
-| **New:** a formula saved with no value (Xero: an Excel export with formulas can show 0.00 until Enable Editing) | the line is listed as "no amount", as if the cell were empty, and August is 60.00 short | `xero-receivable-invoice-detail` | not yet assigned |
+| **New:** a French semicolon file with several comma-decimal columns (Sage 50's revenue, cost, profit and margin) | the commas win the delimiter guess, every line is split on them, no column names are found and nothing is added up. A French file with one amount column still reads | `sage50-french` | a follow-on slice, to be named by the maintainer |
+| **New:** a formula saved with no value (Xero: an Excel export with formulas can show 0.00 until Enable Editing) | the line is listed as "no amount", as if the cell were empty, and August is 60.00 short | `xero-receivable-invoice-detail` | a follow-on slice, to be named by the maintainer |
 
-The two marked **New** were not foreseen when the slices were planned and have no slice yet. The
+The two marked **New** were not foreseen when the slices were planned. Like every gap here they are
+to be fixed, not left pinned (decision of 2026-10-07); which slice fixes each is the maintainer's
+call. The
 design pass on 2026-10-06 had read a smaller French Sage 50-shaped file correctly; with every
 money column of the report written "1 000,00" it no longer does.
 

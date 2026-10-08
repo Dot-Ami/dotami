@@ -198,6 +198,7 @@ describe.each(ALL_FILES)("$id", (file) => {
     expect(answered.picks.headerRow).not.toBeNull();
     const labels = columnsOf(answered.rows, answered.picks.headerRow!).map((c) => c.label);
     if (file.expected.columnsMisread) {
+      expect(labels).toEqual(file.expected.columnsMisread.readAs);
       expect(labels).not.toEqual(file.columns.map((c) => c.header));
     } else {
       expect(labels).toEqual(file.columns.map((c) => c.header));
@@ -374,13 +375,11 @@ describe("gaps the newer practice files found, fails today", () => {
     expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS);
   });
 
-  // Income by Customer has no dates at all. Today the screen says it found no column names and
-  // nothing more; it should name the report that does have dates.
-  it.fails("Wave: Income by Customer is met with the name of a report to export instead", async () => {
-    const file = find("wave-income-by-customer");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    expect(run.message ?? "").toMatch(/Account Transactions/);
-  });
+  // Wave's Income by Customer has no dates at all, and the screen should name the report that
+  // does (Account Transactions). That gap is pinned in the browser, in e2e/app.spec.ts ("fails
+  // today: Wave's Income by Customer..."), not here: the "no column names" sentence is written by
+  // components/ventures/file-drop.tsx, and previewFile's `message` is null for every file with no
+  // columns picked, so a check on it here would stay red whichever way the fix is built.
 
   // The summary's "Total Invoiced, Total Paid" titles are taken for the column names, and "Total
   // Paid" is pre-filled as the amount over the invoice numbers.

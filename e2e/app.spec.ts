@@ -11,6 +11,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { files as waveFiles } from "../tests/fixtures/packages/wave";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -805,6 +806,32 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await card.getByRole("button", { name: "Cancel" }).click();
   await expect(card.getByRole("button", { name: "Add from a file" })).toBeVisible();
   expect(await figures()).toHaveLength(3);
+});
+
+// A gap the practice files found (2026-10-08), pinned with test.fail: it passes only while the gap
+// is there, so the day the screen names the report to export instead, this goes red until it is
+// made a normal test. Pinned here, on the screen, because the "no column names" sentence is the
+// screen's own; where the fix puts its sentence is up to the fix. docs/connectors/practice-files.md
+// "Known gaps" lists it.
+test("fails today: Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
+  page,
+}) => {
+  test.fail();
+  const { card } = await openSalish(page);
+  const incomeByCustomer = waveFiles.find((f) => f.id === "wave-income-by-customer")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: incomeByCustomer.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(incomeByCustomer.bytes()),
+  });
+  // Today's screen, positively first: the file is read and no column names are found.
+  await expect(
+    card.getByText("DotAmi couldn't find a row of column names in the first 30 rows."),
+  ).toBeVisible();
+  // The gap: nothing names Account Transactions, the Wave report that has a date on every line.
+  await expect(card.getByText(/Account Transactions/)).toBeVisible({ timeout: 2_000 });
 });
 
 test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {

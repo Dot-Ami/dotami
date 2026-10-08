@@ -10,9 +10,7 @@ Sage 50 Canadian (formerly Simply Accounting) is a desktop accounting program: t
 sits in a file on the person's own computer or office network. There is no Sage MCP server or
 command-line tool for it ([the connectors research](README.md#the-five-packages-four-ways-in-read-2026-09-24)).
 
-The maintainer's decision (2026-10-07) keeps two routes open: an export the person makes themselves
-(this page), and, later, reading the company file directly with a Sage 50 password the person
-pastes from a password manager, used once and kept only in memory. Only the export route exists.
+Only the export route exists: the person exports a report themselves (this page).
 
 ## The export route
 
