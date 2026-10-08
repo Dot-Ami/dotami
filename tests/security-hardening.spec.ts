@@ -6,14 +6,14 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
-import nextConfig, { securityHeaders } from "../next.config.mjs";
+import nextConfig, { securityHeaders, workerPolicy } from "../next.config.mjs";
 
 afterEach(() => __resetRateLimitStateForTests());
 
 describe("response headers on every route", () => {
   it("sets the defence-in-depth headers and hides the framework banner", async () => {
     const rules = await nextConfig.headers();
-    expect(rules).toHaveLength(1);
+    expect(rules).toHaveLength(2);
     expect(rules[0].source).toBe("/(.*)");
     const keys = rules[0].headers.map((h) => h.key);
     for (const required of [
@@ -27,6 +27,22 @@ describe("response headers on every route", () => {
     }
     expect(securityHeaders.find((h) => h.key === "X-Frame-Options")?.value).toBe("DENY");
     expect(nextConfig.poweredByHeader).toBe(false);
+  });
+
+  it("gives Next's static files a policy that lets a worker started from one reach nothing ([8f])", async () => {
+    // A worker takes its policy from its own script's response, and those files skip middleware.ts,
+    // so without this the return reader's pdf.js worker could fetch freely (e2e/app.spec.ts proves the
+    // browser applies it: a fetch from inside that worker is refused).
+    const rules = await nextConfig.headers();
+    const statics = rules.find((r) => r.source === "/_next/static/:path*");
+    expect(statics?.headers).toEqual([{ key: "Content-Security-Policy", value: workerPolicy }]);
+    // Listed after the general rule, so Next sends it for these paths in place of frame-ancestors alone.
+    expect(rules.indexOf(statics!)).toBeGreaterThan(rules.findIndex((r) => r.source === "/(.*)"));
+    const directives = workerPolicy.split(";").map((d) => d.trim());
+    expect(directives).toContain("default-src 'none'");
+    expect(directives).toContain("script-src 'self'");
+    expect(directives).toContain("frame-ancestors 'none'");
+    expect(workerPolicy).not.toMatch(/connect-src|unsafe-eval|unsafe-inline|blob:|data:|\*/);
   });
 });
 

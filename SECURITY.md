@@ -31,7 +31,10 @@ advisory unless you ask not to be.
 - **The app:** every page carries a per-request **Content-Security-Policy** (`middleware.ts`):
   scripts only from this origin or carrying the request's nonce (`'strict-dynamic'`, no
   `'unsafe-inline'`), connections/images/fonts/frames/forms same-origin, `object-src 'none'`,
-  `frame-ancestors 'none'`. Every response also carries `X-Content-Type-Options`,
+  `frame-ancestors 'none'`. A worker started from one of DotAmi's own script files takes the
+  policy of that file instead, so the static files (`/_next/static/`, `next.config.mjs`) carry
+  `default-src 'none'; script-src 'self'`: such a worker can load DotAmi's scripts and connect
+  nowhere. Every response also carries `X-Content-Type-Options`,
   `X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive `Permissions-Policy`. Fonts
   are committed to the repo and served from this origin — no page view contacts a third
   party. Write routes accept only same-origin `application/json` bodies, with a byte cap and

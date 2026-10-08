@@ -194,7 +194,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 
 **Decisions:** an "old" label; reminder delivery; yearly; which ideas; ~~server clock (shared)~~ decided 2026-10-07 (the computer's own day); where settings live (shared). **Must count coverage per kind**, so yearly T2125 totals don't silence revenue reminders.
 
-**Decided 2026-10-07 (maintainer), built in the settings slice:** where settings live: one small `Setting` table, a name and a value per row, that every later setting reuses. Yearly: monthly, quarterly and yearly are tick-boxes, any combination or none. Which ideas: a switch per idea, off unless turned on. Reminder delivery is a banner plus a calendar file; that is a later slice, so for now the choices are saved and nothing reminds yet. The per-idea switches are a list of idea ids inside the reminders setting's value, not a column on `Venture`, so an idea that is later removed leaves nothing that can break (an id that matches no idea is ignored).
+**Decided 2026-10-07 (maintainer), built in the settings slice:** where settings live: one small `Setting` table, a name and a value per row, that every later setting reuses. Yearly: monthly, quarterly and yearly are tick-boxes, any combination or none. Which ideas: a switch per idea, off unless turned on. Reminder delivery is a banner plus a calendar file; that is a later slice, so for now the choices are saved and nothing reminds yet. (Since built: the banner on 2026-10-07, the calendar file, "Add to my calendar", on 2026-10-08.) The per-idea switches are a list of idea ids inside the reminders setting's value, not a column on `Venture`, so an idea that is later removed leaves nothing that can break (an id that matches no idea is ignored).
 
 ### [8f] Tax software, through the CRA's line numbers
 
@@ -284,12 +284,13 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 **Design.**
 - A shared books core (accounts in, monthly totals out, exact cents, per currency, scheduled transactions never counted).
 - GnuCash XML in the window first (fflate is already a dependency; a streaming XML parser or DOMParser).
-- GnuCash SQLite, hledger, Sage 50 (ODBC with a "Read data"-only Sage user) and QuickBooks Desktop (SDK, query requests only, pinned by a test) need desktop placement, a decision.
+- hledger and Ledger journals: DotAmi's own reader, in the window like GnuCash XML, written from hledger's manual rather than its GPL-3.0 code (decided 2026-10-07; the core is built: `docs/connectors/journal-reader.md`).
+- GnuCash SQLite, Sage 50 (ODBC with a "Read data"-only Sage user) and QuickBooks Desktop (SDK, query requests only, pinned by a test) need desktop placement, a decision.
 - A desktop-reader row goes into the privacy review before any of those merge.
 
 **Edge cases.**
 - The program has the book open: GnuCash saves through a temp file, so DotAmi reads the last save. A `.LCK` file is visible only to a desktop reader. QuickBooks single-user mode is never requested.
-- A book from a newer version: refused by the GnuCash features list or table versions; hledger's minimum version is checked.
+- A book from a newer version: refused by the GnuCash features list or table versions. A journal carries no version, so anything in it DotAmi doesn't read is refused by name and line number.
 - Income accounts can hold interest or GST/HST collected, so the person decides.
 - A read-only proof hashes the file before and after.
 
@@ -304,9 +305,10 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - developer.intuit.com QuickBooks Desktop SDK pages
 - QuickBooks Canada discontinuation and CSV export pages
 - nodejs.org/api/sqlite.html; sqlite.org/c3ref/open.html
+- hledger.org/1.50/hledger.html (Journal chapter) and hledger.org/ledger.html, retrieved 2026-10-08 for the journal reader (through a fetch-and-summarise tool; see docs/connectors/journal-reader.md)
 - MDN CSP script-src; github.com/sql-js/sql.js
 
-**Decisions:** desktop code; journals; GnuCash SQLite; the Sage password; remembered picks (shared); pre-ticking; size limit.
+**Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); pre-ticking; size limit.
 
 ---
 

@@ -15,6 +15,17 @@ export const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "off" },
 ];
 
+// A worker started from one of DotAmi's own script files (the return reader's pdf.js worker,
+// lib/figures/return/pdf-text.worker.ts) does NOT run under the page's policy: a worker takes its
+// Content-Security-Policy from the response that delivered its script, and Next's static files
+// skip middleware.ts. So the static files carry this policy of their own. It lets a worker load
+// DotAmi's own script chunks and nothing else: no fetch, XMLHttpRequest, WebSocket or import from
+// anywhere, DotAmi's own server included, and no eval. A policy on an ordinary script file, a
+// stylesheet or an image does nothing (browsers apply it only to pages and workers), so the rest of
+// the app is unaffected. Next's development server runs code through eval, so it keeps that there.
+const dev = process.env.NODE_ENV === "development";
+export const workerPolicy = `default-src 'none'; script-src 'self'${dev ? " 'unsafe-eval'" : ""}; frame-ancestors 'none'`;
+
 // The desktop app ([7b]) runs a self-contained build of this server inside Electron. It builds
 // into its own folder so a desktop build never overwrites the `.next` a running `npm run dev`
 // or `next start` is using; every other build is unchanged. Set by desktop/build.mjs.
@@ -28,7 +39,11 @@ const nextConfig = {
   // build script removes and checks for private files instead.
   ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop" } : {}),
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      // Same key as above: for these paths Next sends the later one (its documented rule).
+      { source: "/_next/static/:path*", headers: [{ key: "Content-Security-Policy", value: workerPolicy }] },
+    ];
   },
 };
 

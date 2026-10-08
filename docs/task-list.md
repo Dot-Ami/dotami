@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-07. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-08. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -43,8 +43,9 @@ content and the project itself run alongside everything.
   - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
+  - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
-  - [ ] Proven end to end: a published release reaches an installed app
+  - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -101,7 +102,13 @@ roadmap's build order.
   - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
     rows out and lists them; the screen's steps now live in one shared function the tests also call
   - [x] Fixed the other gaps they found: Xero's price-per-item column is no longer pre-filled, its invoice date wins over the due date, and one-line customers keep their Date guess
-  - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
+  - [x] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian, and Xero's Receivable Invoice Detail: practice
+    files checked to the cent, nine gaps they found pinned by eleven "fails today" tests; a line on "Add from a
+    file" saying each program's export was only tested on files shaped from its help pages
+  - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
+  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
+    months across the top, the FreshBooks summary block, French files with several comma-decimal
+    columns, formulas saved with no value, a report with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
@@ -121,8 +128,14 @@ roadmap's build order.
     One small `Setting` table that every later setting reuses
   - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
     figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
-  - [ ] Reminders: an "add to my calendar" file
-- ⬜ **[8f] Tax software, through the CRA's line numbers.**
+  - [x] Reminders: an "add to my calendar" file: one repeating event per ticked box, made in the page
+    (RFC 5545 rules unit-tested in `tests/figures-calendar.spec.ts`; the download browser-tested; the desktop
+    app's Save dialog desktop-tested)
+- 🔄 **[8f] Tax software, through the CRA's line numbers.**
+  - [x] Read last year's return PDF in the window and show each T2125's lines 8299, 9368, 9369 and 9946
+    with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
+    or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
+    ([review](connectors/pdf-reader-review.md))
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
@@ -137,7 +150,10 @@ roadmap's build order.
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
-  - [ ] Proposing figures, the other formats
+  - [x] hledger / Ledger journals: DotAmi's own reader, written from hledger's manual; accounts and
+    monthly totals through the same core; refuses what it doesn't read by name and line; no screen
+    yet ([journal-reader.md](connectors/journal-reader.md))
+  - [ ] Proposing figures, the screens, the other formats
 - 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
@@ -264,6 +280,12 @@ roadmap's build order.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
     privacy policy and terms
+  - [x] A privacy log ([privacy-log.md](privacy-log.md)): what each version keeps, sends, ships and
+    asks, the record the policy and terms will be written from; a test fails when a version has no section
+  - [x] Next.js telemetry off by default for people running from source (`npm run dev`, `build`,
+    `start`, `lint` through `scripts/next.mjs`; CI already had it off)
+  - [x] Prisma's check-in off by default for people running from source (the `prisma:*` scripts; CI
+    already had it off). Not reachable from a script: `npm ci`'s own Prisma run and `npx` by hand
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?

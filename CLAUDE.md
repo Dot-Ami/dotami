@@ -138,6 +138,12 @@ change those tables with hand-written SQL and a test that seeded data survives.
 Releases: tag `v<version>` → `.github/workflows/release.yml` → a DRAFT release the maintainer
 publishes by hand (docs/architecture/desktop-app.md § Releasing an update). Never publish a release
 or push a tag without the maintainer saying so.
+Privacy log: every PR that changes what DotAmi keeps, sends, ships or asks the person adds a line
+under [Unreleased] in `docs/privacy-log.md` (the record the privacy policy and terms will be
+written from); the release PR turns [Unreleased] into that version's section, and
+`tests/privacy-log.spec.ts` fails until `package.json`'s version has one. The npm scripts run
+Next.js and Prisma through `scripts/next.mjs` and `scripts/prisma.mjs`, which switch off their
+usage reports; never call `next` or `prisma` directly in a `package.json` script (`tests/dev-telemetry.spec.ts`).
 
 ## Where things are decided
 

@@ -18,7 +18,20 @@
  * export writes in a cell that has nothing (EmailAddress and the like are left empty here), and
  * how a comma-decimal export is quoted. There is no line-total column among the documented
  * fields, which is the point of the "UnitAmount" gap: a price per item is not what was sold.
+ *
+ * The Receivable Invoice Detail report (an Excel file, added 2026-10-08) rests on two more pages read
+ * in the same design pass on 2026-10-06. Xero's help pages are drawn by script and could not be
+ * read again on 2026-10-08, so those facts are as of 2026-10-06:
+ *  - the report lists sales invoices line by line and includes deleted and VOIDED invoices by
+ *    default; its named columns include Unit Price (ex), Due Date and Balance;
+ *  - a report exported to Excel with formulas may show 0.00 until Excel's Enable Editing is clicked,
+ *    so a sum can arrive with no saved value.
+ * Assumed: the title rows, the order of the columns, the Invoice Date, Invoice Number, Contact,
+ * Status, Description, Quantity and Line Amount (ex) titles, the word "Voided" in the Status
+ * column, and WHICH cells are formulas (one line amount and the Total here).
  */
+import { makeXlsx } from "../../helpers/make-xlsx";
+import type { XlsxCell } from "../../helpers/make-xlsx";
 import { windows1252, utf8 } from "../../helpers/encode";
 import { csv } from "./csv";
 import type { ColumnNote, PracticeFile, VendorSource } from "./types";
@@ -27,6 +40,8 @@ const READ = "2026-10-06";
 const EXPORT_PAGE = "https://central.xero.com/s/article/Export-invoices-and-bills";
 const IMPORT_GLOBAL = "https://central.xero.com/s/article/Import-customer-invoices-GL";
 const IMPORT_US = "https://central.xero.com/s/article/Import-customer-invoices-US";
+const INVOICE_DETAIL_PAGE = "https://central.xero.com/s/article/Receivable-Invoice-Detail-report-New";
+const EXPORT_REPORT_PAGE = "https://central.xero.com/s/article/Export-or-print-a-report";
 
 export const sources: VendorSource[] = [
   {
@@ -43,6 +58,16 @@ export const sources: VendorSource[] = [
     url: IMPORT_US,
     read: READ,
     says: "the US version of the same page: InvoiceDate and DueDate are MM/DD/YYYY",
+  },
+  {
+    url: INVOICE_DETAIL_PAGE,
+    read: READ,
+    says: "Receivable Invoice Detail: line by line, deleted and voided invoices included by default; columns include Unit Price (ex), Due Date, Balance",
+  },
+  {
+    url: EXPORT_REPORT_PAGE,
+    read: READ,
+    says: "reports export to PDF, Excel or Google Sheets; an Excel export with formulas may show 0.00 until Enable Editing",
   },
 ];
 
@@ -329,3 +354,82 @@ export const AMBIGUOUS_READ_MONTH_FIRST = {
   ],
   skipped: [{ row: 5, reason: "not-over" as const }],
 };
+
+// ---- Receivable Invoice Detail (Excel), added 2026-10-08 ----
+
+const detailDocumented = (header: string): ColumnNote => ({
+  header,
+  status: "documented",
+  basis: INVOICE_DETAIL_PAGE,
+});
+const detailAssumed = (header: string): ColumnNote => ({
+  header,
+  status: "assumed",
+  basis: INVOICE_DETAIL_PAGE,
+});
+
+const DETAIL_COLUMNS: ColumnNote[] = [
+  detailAssumed("Invoice Date"), // 0 (A)
+  detailAssumed("Invoice Number"), // 1 (B)
+  detailAssumed("Contact"), // 2 (C)
+  detailAssumed("Status"), // 3 (D): Paid, Awaiting Payment, Voided
+  detailAssumed("Description"), // 4 (E)
+  detailAssumed("Quantity"), // 5 (F)
+  detailDocumented("Unit Price (ex)"), // 6 (G): a price per item, never pre-filled
+  detailAssumed("Line Amount (ex)"), // 7 (H): what the line sold, before tax
+  detailDocumented("Due Date"), // 8 (I)
+  detailDocumented("Balance"), // 9 (J)
+];
+const DETAIL_LINE_AMOUNT = 7;
+
+/** 1-based rows of the two cells that matter below, named so the spec reads clearly. */
+export const DETAIL_VOIDED_ROW = 8;
+export const DETAIL_UNSAVED_FORMULA_ROW = 9;
+
+function invoiceDetailSheet(): XlsxCell[][] {
+  return [
+    ["Receivable Invoice Detail"],
+    ["Invented Shop Ltd."],
+    ["For the period 1 July 2026 to 30 September 2026"],
+    [],
+    DETAIL_COLUMNS.map((c) => c.header),
+    // Row 6 and 7: one invoice with two lines (3 x 100.00 and 1 x 50.00).
+    [{ date: "2026-07-15" }, "INV-0001", "Invented Client A", "Paid", "Design work", 3, 100, 300, { date: "2026-08-14" }, 0],
+    [{ date: "2026-07-15" }, "INV-0001", "Invented Client A", "Paid", "Printing", 1, 50, 50, { date: "2026-08-14" }, 0],
+    // Row 8: voided, so not a sale; included because the report includes voided invoices by default.
+    [{ date: "2026-08-03" }, "INV-0002", "Invented Client B", "Voided", "Design work", 3, 40, 120, { date: "2026-09-02" }, 0],
+    // Row 9: 2 x 30.00 = 60.00, but the line amount is a formula saved with no value.
+    [{ date: "2026-08-12" }, "INV-0003", "Invented Client B", "Awaiting Payment", "Hosting", 2, 30, { formula: "F9*G9" }, { date: "2026-09-11" }, 60],
+    [{ date: "2026-09-18" }, "INV-0004", "Invented Client C", "Paid", "Design work", 1, 75, 75, { date: "2026-10-18" }, 0],
+    // Row 11: the report's own sum, also a formula with no saved value.
+    ["Total", null, null, null, null, null, null, { formula: "SUM(H6:H10)" }],
+  ];
+}
+
+files.push({
+  id: "xero-receivable-invoice-detail",
+  shape:
+    "Receivable Invoice Detail.xlsx: a Voided invoice, and a line amount and a total saved as formulas with no value",
+  fileName: "Receivable Invoice Detail.xlsx",
+  bytes: () => makeXlsx([{ name: "Receivable Invoice Detail", rows: invoiceDetailSheet() }]),
+  columns: DETAIL_COLUMNS,
+  expected: {
+    // Invoice Date wins over Due Date; Line Amount (ex) is pre-filled, Unit Price (ex) is not.
+    guess: { headerRow: 4, dateColumn: 0, amountColumn: DETAIL_LINE_AMOUNT },
+    dateOrder: { order: null, ambiguous: false, conflicting: false },
+    decimalStyle: "point",
+    months: [
+      { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 35000, rows: 2 },
+      // WRONG TODAY: this is the voided invoice's 120.00, and INV-0003's 60.00 is missing because
+      // its formula has no saved value. True: 60.00.
+      { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 12000, rows: 1 },
+      { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 7500, rows: 1 },
+    ],
+    skipped: [
+      // WRONG TODAY, in its wording: the cell holds a formula Excel never worked out, and the
+      // person is told only that the amount is empty.
+      { row: DETAIL_UNSAVED_FORMULA_ROW, reason: "no-amount" },
+      { row: 11, reason: "total" },
+    ],
+  },
+});

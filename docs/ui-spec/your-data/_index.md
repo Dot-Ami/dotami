@@ -47,7 +47,10 @@ jump links, then five sections in this order:
    number, no receipt file) and that nothing in the app takes one back yet. Only the count is shown here: no payee, no words, no amount.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
-   newest, the path with **Copy path** — only counted and dated, never opened; and the window's
+   newest, the path with **Copy path** — only counted and dated, never opened (the log's row says
+   what it holds, including that a start that fails writes DotAmi's message, which can name the
+   data folder, with the error's name and code, and that a failed database update adds the
+   database's words about which update failed and what it objected to); and the window's
    own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A line
    pointing at disk encryption in Settings.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
@@ -142,7 +145,10 @@ WebSocket and EventSource reaching another address, `img-src 'self' blob: data:`
 elsewhere. It does not stop WebRTC (`connect-src` doesn't govern it and no `webrtc` directive is
 set), is not known to stop WebTransport or WebSocketStream, doesn't stop navigation (`window.open`,
 links), can't stop a script that a running script adds (`script-src` carries `'strict-dynamic'`),
-and covers nothing that runs on the server or in the desktop app's main process. (3) Code review.
+and covers nothing that runs on the server or in the desktop app's main process. A worker started
+from one of DotAmi's own script files (the return reader's) follows that file's policy instead,
+set in `next.config.mjs` on `/_next/static/`: `default-src 'none'; script-src 'self'`, so it
+connects nowhere at all. (3) Code review.
 The full lists are in the header of `tests/helpers/source-scan.ts`, and a test there pins each
 thing the scan misses.
 
