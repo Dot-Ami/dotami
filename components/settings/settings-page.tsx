@@ -262,17 +262,19 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           </p>
           {today.updates === "github" ? null : (
           <p className="text-paper-dim">
-            If you run DotAmi from its source code: the Next.js framework it is built on sends
-            Vercel anonymous counts when <Code>npm run dev</Code> or <Code>npm run build</Code> runs
-            — the command, versions, the kind of computer, the app&apos;s size (
+            If you run DotAmi from its source code: two tools it is built with report anonymous
+            counts unless told not to — the Next.js framework to Vercel when it builds or runs in
+            development mode (the command, versions, the kind of computer, the app&apos;s size;{" "}
             <a href={NEXT_TELEMETRY_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
               nextjs.org/telemetry
             </a>
-            , read 2026-10-05). <Code>npx next telemetry disable</Code> turns it off. The Prisma
-            database tool reports the same kind of counts to Prisma each time it runs; the
-            project&apos;s own scripts switch that off, but installing with <Code>npm ci</Code> runs it
-            once on its own — set <Code>CHECKPOINT_DISABLE=1</Code> in your environment to stop that
-            too.
+            , read 2026-10-05), and the Prisma database tool to Prisma each time it runs. The
+            project&apos;s own commands (<Code>npm run dev</Code>, <Code>npm run build</Code> and the
+            rest) switch both off. Installing with <Code>npm ci</Code> runs Prisma once on its own,
+            and <Code>npx next</Code> or <Code>npx prisma</Code> typed by hand skip the switch: set{" "}
+            <Code>NEXT_TELEMETRY_DISABLED=1</Code> and <Code>CHECKPOINT_DISABLE=1</Code> in your
+            environment for those. <Code>npm run dev</Code> also asks npm&apos;s registry which
+            Next.js version is newest each time it starts; nothing of yours is sent.
           </p>
           )}
         </>

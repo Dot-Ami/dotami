@@ -8,6 +8,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,
+  `npm run start` and `npm run lint` now start Next.js with its anonymous usage reports switched off, as
+  the Prisma scripts, CI and the desktop app already did; one small script switches both
+  (`scripts/telemetry-off.mjs`), and works the same from cmd, PowerShell and bash. Still to set by hand:
+  `npm ci` runs Prisma once on its own, and `npx next` / `npx prisma` typed by hand skip the scripts.
+  `npm run dev` still asks npm's registry which Next.js version is newest; nothing turns that off.
+  The settings page and README say so.
+
+### Documented
+- **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
+  agree to, from 0.1.0 on, and what the future privacy policy will need to say. Every change that
+  affects it adds a line under [Unreleased]; a test fails when a version has no section.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV
