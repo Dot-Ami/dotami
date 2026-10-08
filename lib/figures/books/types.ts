@@ -1,8 +1,8 @@
 /**
  * [8h] Books on the person's own computer — the shared shapes.
  *
- * A "book" is a set of accounts and the amounts posted to them, kept by a program (GnuCash today;
- * hledger journals, Sage 50 and QuickBooks Desktop later). Every reader turns its own format into
+ * A "book" is a set of accounts and the amounts posted to them, kept by a program (GnuCash and
+ * hledger / Ledger journals today; Sage 50 and QuickBooks Desktop later). Every reader turns its own format into
  * the same two lists — accounts and posted lines — and everything after that (which accounts count
  * as revenue, the monthly totals) is done once, in totals.ts, the same way for every kind of book.
  *
@@ -12,8 +12,11 @@
  * book — there is no way to.
  */
 
-/** Which kind of book a reader read. More are appended as their readers are built. */
-export type BookFormat = "gnucash-xml";
+/**
+ * Which kind of book a reader read. More are appended as their readers are built.
+ * "journal" is a plain-text hledger or Ledger journal (journal.ts).
+ */
+export type BookFormat = "gnucash-xml" | "journal";
 
 /**
  * An amount exactly as a book writes it, as a fraction. GnuCash writes "12500/100"; a journal's

@@ -1,0 +1,18 @@
+; An invented journal: a freelancer billing in euros, with a comma as the decimal mark.
+; Every name and amount here is made up.
+
+commodity 1.000,00 EUR
+
+account Revenues:Freelance
+
+2026-04-02 Kunde Eins
+    Revenues:Freelance      -1.234,56 EUR
+    Assets:Bank              1.234,56 EUR
+
+2026-04-20 Kunde Zwei
+    Revenues:Freelance      -1 000,50 EUR
+    Assets:Bank
+
+2026-05-03 Kunde Drei
+    Revenues:Freelance        -250 EUR
+    Assets:Bank                250 EUR

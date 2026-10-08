@@ -17,10 +17,76 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   plain sentence saying why and what to do instead. The PDF is read on your computer, inside the
   app's window, by Mozilla's PDF reader (pdf.js), which DotAmi pinned and reviewed and runs in a
   separate worker that can't connect to anything.
+- **A reader for hledger and Ledger journals** ([8h], core only; no screen yet, so nothing changes
+  for you today) — DotAmi's own code for the plain-text books hledger and Ledger keep. It turns a
+  journal into its accounts and their monthly totals: dates, transactions, postings, amounts with
+  the currency on either side, a point or a comma as the decimal mark, account declarations and
+  their types, and comments. Totals are exact cents, one list per currency, never rounded or
+  converted; a symbol like `$` counts as a currency only once you say which one it is. Anything it
+  doesn't fully understand (include files, periodic or automated transactions, balance assignments,
+  value expressions, unknown directives, an amount like `1,000` that one program reads as a
+  thousand and another as one) turns the journal away with what it was and its line number, never
+  quoting the line. So does a transaction that doesn't add up, including one paid in another
+  currency, and a comment block left open over dated lines, which would otherwise make months
+  quietly disappear. Descriptions, payees and comments are never kept. It was written from hledger's
+  published manual, not from hledger's code (`docs/connectors/journal-reader.md`). Tested on
+  invented journals only.
+- **"Add from a file" says how far it has been tested** — once a file is read, one line says that
+  each accounting program's export was tested on files shaped from that program's help pages, not
+  on real exports, so check the columns and totals.
+- **Add to my calendar** ([8e]) — beside the Figure reminders tick-boxes on the settings page, a
+  button saves a calendar file (.ics) with one repeating event per ticked box: *"Bring your DotAmi
+  figures up to date"* on the first day after each month, quarter or year ends. Open it with your
+  calendar app or use its Import menu; Google Calendar imports a file only on a computer, at
+  calendar.google.com (Settings, then Import & export). No real calendar import has been tested
+  yet. Importing the same file twice adds a second copy, and the page says so. The file is made
+  inside the page and nothing is sent anywhere. It holds only general words (no amounts, no idea names), because a
+  calendar that syncs online shares its events with the company that runs it. The calendar can't
+  see DotAmi, so it reminds you whether or not your figures are already in, and the page says so.
+- **Saving a file in the desktop app asks where** — a file made in the page (the calendar file, a
+  playbook) now opens a Save dialog with the file's own name; Cancel saves nothing. Only DotAmi's
+  own pages can start a save.
 
 ### Changed
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
   return*, instead of "That isn't a spreadsheet".
+- **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,
+  `npm run start` and `npm run lint` now start Next.js with its anonymous usage reports switched off, as
+  the Prisma scripts, CI and the desktop app already did; one small script switches both
+  (`scripts/telemetry-off.mjs`), and works the same from cmd, PowerShell and bash. Still to set by hand:
+  `npm ci` runs Prisma once on its own, and `npx next` / `npx prisma` typed by hand skip the scripts.
+  `npm run dev` still asks npm's registry which Next.js version is newest; nothing turns that off.
+  The settings page and README say so.
+- **Practice files for Wave, FreshBooks, Sage Accounting and Sage 50 Canadian** (behind the scenes,
+  nothing changes on screen beyond the "Add from a file" line under Added) — invented files laid out from each program's own
+  help pages, plus Xero's Receivable Invoice Detail, each checked to the cent. They found nine
+  things DotAmi gets wrong today, now written down as tests that fail the day each is fixed: a
+  refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
+  taken for the column names, two-digit years, months across the top, a Wave report with no dates,
+  a French Sage 50 file with several comma-decimal columns split on its commas, and a formula saved
+  with no value reported as an empty amount. See docs/connectors/practice-files.md.
+
+### Documented
+- **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
+  agree to, from 0.1.0 on, and what the future privacy policy will need to say. Every change that
+  affects it adds a line under [Unreleased]; a test fails when a version has no section.
+
+### Fixed
+- **The desktop app says an update is coming as soon as it finds one.** It used to download the
+  new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
+  update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading
+  now"* right away, without blocking the app, and the app's taskbar button fills up as it
+  downloads. When it's ready you're asked the same question as before, *Restart and update* or
+  *Later*; nothing installs without that click. If the download fails, you're told nothing was
+  installed. The version you're running is the one that shows this, so you'll first see it on the
+  update after the one that brings it.
+- **A start that stops part-way now leaves its reason in the log.** The desktop app's log
+  (`logs/server.log` in its data folder) was written in the background, so a start that was ended
+  or failed while it updated the database left no line at all, not even "starting DotAmi" (seen on
+  2026-10-08 during the update to 0.2.1; the data was unharmed). Every line is now written to the
+  disk straight away, including what stopped the start (DotAmi's message and the error's name and
+  code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
+  without it instead of refusing to start.
 
 ### Security
 - **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a
