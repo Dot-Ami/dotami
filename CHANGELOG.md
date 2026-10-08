@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-10-08
+
+Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV
+export, with reminders when a month, quarter or year ends without them. Behind the scenes, the
+store for business expense records and a bank-file (OFX) reader are in place; neither has a screen
+yet. Updating from 0.2.0 adds three small tables to your data file (figures, settings, expense
+records) without touching your ideas, links or map progress; the app backs the file up first.
+
 ### Added
 - **Your figures** ([8a]) — on the ideas page, totals you've agreed to (revenue for now), never
   your transactions. Where they settle a rule, the map uses them instead of your estimates: the
