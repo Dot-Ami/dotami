@@ -35,6 +35,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   undo it if they are the person's own sales ("choose None"); every other row counts as before, and
   choosing "None" counts every row. A Deposit made straight to an income account is also left out.
   Nothing about the column is stored.
+- **A reminder in the agree prompt**: before the buttons, every time it opens, *"Double-check what
+  DotAmi did, and how, before you agree."*
+
+### Changed
+- **"Today" for figures is your computer's own day.** The server used to decide in UTC, so for a few
+  hours each Canadian evening it accepted a period ending "tomorrow". It now uses the day on this
+  computer, which in the desktop app and a self-hosted copy is your day.
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.

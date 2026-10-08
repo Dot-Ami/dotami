@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { readBody, storeErrorResponse, throttle, todayUtc } from "@/lib/figures/http";
+import { localToday } from "@/lib/figures/age";
+import { readBody, storeErrorResponse, throttle } from "@/lib/figures/http";
 import { proposeFigures } from "@/lib/figures/store";
 import { prisma } from "@/lib/prisma";
 
@@ -57,7 +58,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const figures = await proposeFigures(prisma, body.ventureId, body.source, body.figures, todayUtc());
+    // "A period that has ended" is measured against the computer's own calendar day, which in the
+    // desktop app and a self-hosted copy is the person's day. The UTC day runs ahead of a Canadian
+    // evening, so it would accept a period ending "tomorrow" for the person.
+    const figures = await proposeFigures(prisma, body.ventureId, body.source, body.figures, localToday());
     return NextResponse.json({ figures }, { status: 201 });
   } catch (error) {
     return storeErrorResponse("propose", error);

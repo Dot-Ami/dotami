@@ -77,6 +77,7 @@ content and the project itself run alongside everything.
   - [x] The figures grouped by where they came from; amounts editable (stored as "edited by you"); discard one
   - [x] Close or Escape confirms nothing; more than 20 figures → *Agree* only after scrolling through them
   - [x] Only DotAmi's own page can confirm: the route agents and importers use can only propose (tested)
+  - [x] Every time it opens, one line above the buttons: "Double-check what DotAmi did, and how, before you agree."
 - 🟡 **[8c] Drop a file: Excel and CSV.** "Add from a file" on the ideas page.
   - [x] Read in the app's window, in memory, never sent or kept; one total per calendar month + its
     row count + the file name are what's stored (as proposed figures — the agree prompt decides)
@@ -110,6 +111,8 @@ roadmap's build order.
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
     GST/HST card say "over $30,000"); dates in the person's own day (#85)
+  - [x] The server measures "a period that has ended" against the computer's own day, not the UTC day
+    (a period ending "tomorrow" was accepted on Canadian evenings)
   - [ ] Reminders: monthly, quarterly and/or yearly, per idea; a banner and an "add to my calendar" file
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
