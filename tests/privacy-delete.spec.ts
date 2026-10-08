@@ -11,16 +11,21 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { PrismaClient } from "@prisma/client";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { addTypedStatement } from "@/lib/person/statements";
-import { DeleteInputError, affectedTables, deleteData, pickKinds } from "@/lib/privacy/delete";
+import { DeleteInputError, affectedTables, deleteData, pickKinds, wipeFreeSpace } from "@/lib/privacy/delete";
 import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES } from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
 import { demoScenarios } from "../prisma/seed-data";
+
+// Each database test migrates its own file (1.5-5 s on this machine, more on a busy runner), and
+// the locked-wipe tests wait out SQLite's 5-second busy timeout on purpose; vitest's 5-second
+// default made the suite fail at random.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
 
 const root = mkdtempSync(path.join(tmpdir(), "dotami-delete-"));
 const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
@@ -236,7 +241,7 @@ describe("deleteData", () => {
     expect(result.status).toBe("deleted");
     if (result.status !== "deleted") return;
     expect(result.deleted).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 2 });
-    expect(Object.values(result.left).every((n) => n === 0)).toBe(true);
+    expect(result.left).toEqual({ Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 });
 
     const after = await countAll(prisma);
     expect(after).toEqual({ ...before, Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 });
@@ -330,6 +335,73 @@ describe("the deleted words are gone from the file, not just hidden", () => {
   });
 });
 
+/**
+ * Makes the next VACUUM on `prisma` meet a real lock: just before it runs, a second connection
+ * starts a write transaction on the same file (what another DotAmi process mid-change looks like).
+ * The VACUUM itself is the real one and fails with SQLite's own "database is locked".
+ */
+function lockBeforeNextWipe(prisma: PrismaClient, url: string) {
+  const other = new PrismaClient({ datasourceUrl: url });
+  clients.push(other);
+  const real = prisma.$executeRawUnsafe.bind(prisma);
+  const spy = vi.spyOn(prisma, "$executeRawUnsafe").mockImplementationOnce((async (query: string, ...values: unknown[]) => {
+    await other.$executeRawUnsafe("BEGIN IMMEDIATE");
+    return real(query, ...values);
+  }) as typeof prisma.$executeRawUnsafe);
+  return {
+    release: async () => {
+      spy.mockRestore();
+      await other.$executeRawUnsafe("COMMIT");
+    },
+  };
+}
+
+/** Is this statement's text anywhere in the data file's bytes? */
+const statementInFile = (folder: string) => readFileSync(path.join(folder, "dotami.db")).includes(Buffer.from(`statement ${MARKER}`));
+
+describe("when the wipe can't run, the rows are still gone and the person is told", () => {
+  it("another connection mid-change: the wipe says false instead of throwing, and works once that finishes", async () => {
+    const { prisma, url } = makeDb("wipe-locked");
+    await seed(prisma);
+    await prisma.personStatement.deleteMany();
+    const lock = lockBeforeNextWipe(prisma, url);
+    expect(await wipeFreeSpace(prisma)).toBe(false);
+    await lock.release();
+    expect(await wipeFreeSpace(prisma)).toBe(true);
+  });
+
+  it("deleteData still deletes, answers wiped: false, and a later wipe finishes the job", async () => {
+    const { prisma, url, folder } = makeDb("wipe-owed");
+    await seed(prisma);
+    const lock = lockBeforeNextWipe(prisma, url);
+    const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) });
+    expect(result).toEqual({ status: "deleted", deleted: { PersonStatement: 2 }, left: { PersonStatement: 0 }, wiped: false });
+    await lock.release();
+    expect(await prisma.personStatement.count()).toBe(0);
+    // This is why the page says the space isn't wiped yet: the deleted words are still in the file.
+    await prisma.$disconnect();
+    expect(statementInFile(folder)).toBe(true);
+    expect(await wipeFreeSpace(prisma)).toBe(true);
+    await prisma.$disconnect();
+    expect(statementInFile(folder)).toBe(false);
+  });
+
+  it("when the file can't be read back after the delete, it says deleted with no count, not 'nothing was deleted'", async () => {
+    const { prisma } = makeDb("read-back");
+    await seed(prisma);
+    // Right after the wipe the table vanishes, so the read-back count fails for real.
+    const real = prisma.$executeRawUnsafe.bind(prisma);
+    const spy = vi.spyOn(prisma, "$executeRawUnsafe").mockImplementationOnce((async (query: string) => {
+      const n = await real(query);
+      await real(`ALTER TABLE "PersonStatement" RENAME TO "PersonStatementGone"`);
+      return n;
+    }) as typeof prisma.$executeRawUnsafe);
+    const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) });
+    spy.mockRestore();
+    expect(result).toEqual({ status: "deleted", deleted: { PersonStatement: 2 }, left: null, wiped: true });
+  });
+});
+
 // ---------------------------------------------------------------------------------------------
 // The route: page-only, body read through the shared guard, the right answer for each outcome.
 
@@ -398,6 +470,19 @@ describe("POST /api/your-data/delete", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: "deleted", deleted: { PersonStatement: 2 }, left: { PersonStatement: 0 }, wiped: true });
     expect(await db.prisma.personStatement.count()).toBe(0);
+  });
+
+  it("when the wipe meets a lock it still answers 200 'deleted' with wiped: false, and the retry finishes it", async () => {
+    const appPrisma = (await import("@/lib/prisma")).prisma;
+    const lock = lockBeforeNextWipe(appPrisma, db.url);
+    const res = await route.POST(post({ kinds: ["figures"], seen: await seenFor(db.prisma, ["figures"]) }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: "deleted", deleted: { Figure: 2 }, left: { Figure: 0 }, wiped: false });
+    await lock.release();
+    expect(await db.prisma.figure.count()).toBe(0);
+    const retry = await route.POST(post({ retryWipe: true }));
+    expect(retry.status).toBe(200);
+    expect(await retry.json()).toEqual({ wiped: true });
   });
 
   it("runs the wipe again on its own when asked, from the page only", async () => {

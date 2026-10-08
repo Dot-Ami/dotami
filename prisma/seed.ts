@@ -31,8 +31,9 @@ async function main() {
       console.log(`  linked: ${DEMO_LINK.kind} — ${DEMO_LINK.note}`);
     }
 
-    // A person's statements are append-only on purpose — nothing edits or removes them. So the
-    // seed checks before it writes; otherwise running it twice would say the same thing twice.
+    // A person's statements are append-only on purpose — nothing edits one or removes one on its
+    // own (the Delete menu on /your-data can only remove all of them at once). So the seed checks
+    // before it writes; otherwise running it twice would say the same thing twice.
     const existing = await listTypedStatements(prisma);
     if (existing.some((s) => s.text === DEMO_STATEMENT.text)) {
       console.log(`  statement already on record (${DEMO_STATEMENT.saidAt}) — left alone`);

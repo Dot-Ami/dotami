@@ -26,7 +26,8 @@ type Step = "closed" | "menu" | "first-ask" | "second-ask" | "working" | "done";
 
 interface Outcome {
   deleted: Record<string, number>;
-  left: Record<string, number>;
+  /** Null when the server deleted but couldn't read the file back to count what is left. */
+  left: Record<string, number> | null;
   wiped: boolean;
 }
 
@@ -310,10 +311,14 @@ function DoneNote({
       <ul className="mt-1 space-y-0.5 text-[12.5px] text-paper-dim">
         {rows.map((m) => (
           <li key={m}>
-            {tableNames[m] ?? m}: {plural(outcome.deleted[m], "record")} deleted, {outcome.left[m] ?? 0} left
+            {tableNames[m] ?? m}: {plural(outcome.deleted[m], "record")} deleted
+            {outcome.left ? `, ${outcome.left[m] ?? 0} left` : ""}
           </li>
         ))}
       </ul>
+      {outcome.left ? null : (
+        <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
+      )}
       {outcome.wiped ? (
         <p className="mt-2 text-[12.5px] text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
       ) : (

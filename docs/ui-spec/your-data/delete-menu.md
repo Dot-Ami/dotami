@@ -49,7 +49,9 @@ all at once only, and one cited line on keeping business records.
 5. **Result**: "Deleted." with each table's count deleted and left (0), and whether the file's
    space is wiped. When the wipe couldn't run, an amber note says the records are deleted but their
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
-   using it), with **Try the wipe again**. The page's counts are read again from the file.
+   using it), with **Try the wipe again**. If the server deleted but couldn't read the file back to
+   count what is left, the "left" counts are dropped and an amber line says to reload and check.
+   The page's counts are read again from the file.
 
 Escape, Cancel or a click on the dim backdrop at either ask deletes nothing. If the counts in the
 file differ from what the person was shown (an import or an agent added something), the server

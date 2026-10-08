@@ -43,8 +43,8 @@ export type DeleteResult =
       status: "deleted";
       /** Rows removed from each affected table. */
       deleted: TableCounts;
-      /** Rows left in each affected table, read back after the delete: all zero. */
-      left: TableCounts;
+      /** Rows left in each affected table, read back after the delete: all zero. Null when the read-back failed. */
+      left: TableCounts | null;
       /** True once the file's free space is wiped; false means the rows are gone but their space isn't wiped yet. */
       wiped: boolean;
     };
@@ -181,7 +181,15 @@ export async function deleteData(
   }
 
   const wiped = await wipeFreeSpace(prisma);
-  const left = await countTables(prisma, models);
+  // The rows are gone by now. If reading the file back fails, say that, rather than throw into
+  // the route's "nothing was deleted" answer, which would no longer be true.
+  let left: TableCounts | null;
+  try {
+    left = await countTables(prisma, models);
+  } catch (error) {
+    logRouteError("your-data/delete read-back", error);
+    left = null;
+  }
   return { status: "deleted", deleted, left, wiped };
 }
 

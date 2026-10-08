@@ -216,8 +216,8 @@ test("expense records: an agent can propose but not agree, and what DotAmi knows
   }
 });
 
-// [8d] Delete. These two run LAST in the last browser-test file (files run A to Z, one worker): the
-// second deletes every idea, which the earlier tests rely on. A new e2e file named after
+// [8d] Delete. These three run LAST in the last browser-test file (files run A to Z, one worker): the
+// last deletes every idea, which the earlier tests rely on. A new e2e file named after
 // "your-data" would run after them and find no demo ideas.
 
 /** Reads a table card's count on /your-data: "None" is 0. */
@@ -277,11 +277,44 @@ test("Delete: Escape or Cancel at either ask deletes nothing, and the last ask s
   expect(await tableCount(page, "Your statements")).toBe(statementsBefore);
 });
 
+test("Delete: when the wipe couldn't run, the page says the space isn't wiped yet, and Try the wipe again finishes it", async ({ page }) => {
+  await page.goto("/your-data");
+  const statements = await tableCount(page, "Your statements");
+  expect(statements).toBeGreaterThan(0);
+
+  // The server's answer when the rows are gone but the wipe met a lock (tests/privacy-delete.spec.ts
+  // makes that happen for real). Here the delete itself is answered by the test, so nothing is
+  // deleted; the retry goes to the real server.
+  await page.route("**/api/your-data/delete", async (route) => {
+    const body = route.request().postDataJSON() as { retryWipe?: boolean };
+    if (body.retryWipe) return route.continue();
+    return route.fulfill({
+      json: { status: "deleted", deleted: { PersonStatement: statements }, left: { PersonStatement: 0 }, wiped: false },
+    });
+  });
+
+  const removing = await openDeleteMenu(page);
+  await removing.getByLabel(STATEMENTS_BOX).check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
+
+  const done = removing.getByRole("status");
+  await expect(done).toContainText("Deleted.");
+  await expect(done).toContainText("their space in the data file isn't wiped yet");
+  await expect(done).not.toContainText("Their space in the data file is wiped");
+  await done.getByRole("button", { name: "Try the wipe again" }).click();
+  await expect(done).toContainText("Their space in the data file is wiped");
+  await expect(done.getByRole("button", { name: "Try the wipe again" })).toBeHidden();
+});
+
 test("Delete: tick ideas and statements, see what goes with them, say yes twice, and they are gone after a reload", async ({ page }) => {
   await page.goto("/your-data");
   const ideasBefore = await tableCount(page, "Your ideas");
   expect(ideasBefore).toBeGreaterThan(0);
-  expect(await tableCount(page, "Your statements")).toBeGreaterThan(0);
+  // Every table checked for 0 after the reload holds something now, so each 0 is a real change.
+  const goneAfter = ["Your statements", "Map progress", "Your figures", "Your expense records", "Links between ideas"];
+  for (const name of goneAfter) expect(await tableCount(page, name), name).toBeGreaterThan(0);
 
   // An agent or a script can't delete: the route answers only to DotAmi's own window.
   const agent = await page.request.post("/api/your-data/delete", { data: { kinds: ["statements"], seen: { PersonStatement: 1 } } });
@@ -323,7 +356,7 @@ test("Delete: tick ideas and statements, see what goes with them, say yes twice,
   // Gone after a reload, not just from the screen.
   await page.reload();
   await expect(page.getByRole("heading", { name: "What DotAmi knows about you", level: 1 })).toBeVisible();
-  for (const name of ["Your ideas", "Your statements", "Map progress", "Your figures", "Your expense records", "Links between ideas"]) {
+  for (const name of ["Your ideas", ...goneAfter]) {
     expect(await tableCount(page, name), name).toBe(0);
   }
   await expect(page.getByRole("region", { name: "Your figures, by source" })).toContainText("No figures are kept.");
