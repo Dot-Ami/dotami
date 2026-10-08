@@ -188,6 +188,9 @@ to the data.
 ### Releasing an update
 
 1. Bump `version` in `package.json` (e.g. `0.1.1`, or `0.2.0-dev.1` for a pre-release) in a PR.
+   The same PR turns [Unreleased] in [`docs/privacy-log.md`](../privacy-log.md) (what DotAmi keeps,
+   sends, ships and asks) into that version's dated section, as it does in `CHANGELOG.md`;
+   `tests/privacy-log.spec.ts` fails until the version has one.
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.

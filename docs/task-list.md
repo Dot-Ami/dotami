@@ -262,6 +262,12 @@ roadmap's build order.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
     privacy policy and terms
+  - [x] A privacy log ([privacy-log.md](privacy-log.md)): what each version keeps, sends, ships and
+    asks, the record the policy and terms will be written from; a test fails when a version has no section
+  - [x] Next.js telemetry off by default for people running from source (`npm run dev`, `build`,
+    `start`, `lint` through `scripts/next.mjs`; CI already had it off)
+  - [x] Prisma's check-in off by default for people running from source (the `prisma:*` scripts; CI
+    already had it off). Not reachable from a script: `npm ci`'s own Prisma run and `npx` by hand
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?
