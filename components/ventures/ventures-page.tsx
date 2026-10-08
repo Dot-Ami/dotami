@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
 import { FiguresPanel } from "@/components/ventures/figures-panel";
+import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
@@ -23,6 +24,7 @@ export function VenturesPage() {
   const { resetJourney } = useJourney();
   const [ventures, setVentures] = useState<VentureSummary[] | null>(null);
   const [dbDown, setDbDown] = useState<string | null>(null);
+  const reminders = useIdeaReminders();
 
   const load = useCallback(async () => {
     try {
@@ -93,7 +95,16 @@ export function VenturesPage() {
         ) : (
           <ul className="mt-8 space-y-4">
             {ventures.map((v) => (
-              <VentureCard key={v.id} venture={v} all={ventures} onChanged={load} />
+              <VentureCard
+                key={v.id}
+                venture={v}
+                all={ventures}
+                onChanged={load}
+                // null while the setting is being read (or couldn't be): the switch is shown off and can't be used.
+                remindMe={reminders.ids === null ? null : reminders.ids.includes(v.id)}
+                onRemindMe={(on) => reminders.setReminder(v.id, on)}
+                remindFailed={reminders.failed}
+              />
             ))}
           </ul>
         )}
@@ -106,10 +117,17 @@ function VentureCard({
   venture,
   all,
   onChanged,
+  remindMe,
+  onRemindMe,
+  remindFailed,
 }: {
   venture: VentureSummary;
   all: VentureSummary[];
   onChanged: () => Promise<void>;
+  /** The "Remind me about this idea" switch; null = not read yet, so the switch is off and disabled. */
+  remindMe: boolean | null;
+  onRemindMe: (on: boolean) => void;
+  remindFailed: boolean;
 }) {
   const [notes, setNotes] = useState(venture.notes);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -215,6 +233,29 @@ function VentureCard({
         <p className="mt-1 text-right font-mono text-[9px] uppercase tracking-wider text-stone-dim">
           {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved." : saving === "error" ? "Save failed." : `touched ${venture.updatedAt.slice(0, 10)}`}
         </p>
+      </div>
+
+      <div className="mt-4 border-t border-rule-soft pt-3">
+        <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-paper has-disabled:cursor-not-allowed has-disabled:opacity-60">
+          {/* A native checkbox drawn as a switch, so it keeps its keyboard and screen-reader behaviour. */}
+          <input
+            type="checkbox"
+            role="switch"
+            checked={remindMe === true}
+            disabled={remindMe === null}
+            onChange={(e) => onRemindMe(e.target.checked)}
+            className="relative h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full border border-rule bg-ink transition before:absolute before:left-0.5 before:top-0.5 before:size-3.5 before:rounded-full before:bg-stone before:transition checked:border-maple checked:bg-maple/30 checked:before:translate-x-4 checked:before:bg-maple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-maple disabled:cursor-not-allowed"
+          />
+          Remind me about this idea
+        </label>
+        <p className="mt-1 text-[11px] text-stone-dim">
+          Off until you turn it on. How often is your choice under{" "}
+          <Link href="/settings#figures" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+            Settings → Figure reminders
+          </Link>
+          ; the reminder itself comes in a later step.
+        </p>
+        {remindFailed ? <p className="mt-1 text-[11px] text-amber">Couldn&apos;t save that — the switch is back where it was.</p> : null}
       </div>
 
       <FiguresPanel ventureId={venture.id} />

@@ -12,8 +12,8 @@
  * bundles even when package.json calls it a devDependency. (Only the packages DotAmi names itself:
  * the ones those pull in are not listed.) It fails when a file imports a package that package.json
  * doesn't declare. And it fails when a source file makes a request of the kinds named below and
- * the request isn't listed here. So a new store (the Lens's conversation, a settings table, a
- * remembered file layout), a new request out or a new dependency has to say what it holds, sends
+ * the request isn't listed here. So a new store (the Lens's conversation, a remembered file
+ * layout), a new request out or a new dependency has to say what it holds, sends
  * or can reach, and how it is removed, before it can merge — and the page then shows it without
  * anyone remembering to.
  *
@@ -212,6 +212,14 @@ export const TABLES: readonly TableEntry[] = [
     name: "Map progress",
     holds: "Which steps on each idea's map you marked active, done or set aside, and which branches you took.",
     removedBy: "Nothing removes it on its own; saving the map again overwrites it.",
+  },
+  {
+    model: "Setting",
+    name: "Your settings",
+    holds:
+      "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, and which of your ideas have their reminder switch on (as idea numbers DotAmi made up, not names). Only the choices; never an amount or any of your words.",
+    removedBy:
+      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it; the row itself stays in the data file. Nothing deletes a setting yet.",
   },
   {
     model: "Figure",

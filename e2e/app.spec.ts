@@ -102,8 +102,9 @@ test("the settings page: every group, what's true today, every setting and its w
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");
 
-  // Every planned setting is listed with its default, its warning when it has one, and the story
-  // that brings it — and nothing on the page pretends to be a switch that works.
+  // Every setting is listed with its default, its warning when it has one, and the story that
+  // brings it — and nothing on the page pretends to be a control that works: the only controls are
+  // the live settings' own (the three Figure reminders tick-boxes, tested below).
   for (const s of SETTINGS) {
     const row = page
       .getByRole("listitem")
@@ -113,9 +114,18 @@ test("the settings page: every group, what's true today, every setting and its w
     if (s.status === "planned") await expect(row).toContainText(`Not built yet · [${s.story}]`);
     if (s.status === "asked") await expect(row).toContainText(`Asked each time · ${s.where}`);
   }
-  await expect(page.locator("main").locator("input, select, textarea")).toHaveCount(0);
+  await expect(page.locator("main").locator("select, textarea")).toHaveCount(0);
+  const liveRows = SETTINGS.filter((s) => s.status === "live");
+  expect(liveRows.map((s) => s.id)).toEqual(["figure-reminders"]);
+  await expect(page.locator("main").locator("input")).toHaveCount(3);
+  await expect(
+    page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: "Figure reminders", level: 3, exact: true }) })
+      .getByRole("checkbox"),
+  ).toHaveCount(3);
 
-  // The one control: the data file's path lands on the clipboard exactly as shown.
+  // The path button: the data file's path lands on the clipboard exactly as shown.
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await data.getByRole("button", { name: "Copy path" }).click();
   await expect(data.getByRole("button", { name: "Copied" })).toBeVisible();
@@ -130,6 +140,169 @@ test("the settings page: every group, what's true today, every setting and its w
   await page.goto("/ventures");
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page).toHaveURL(/\/settings$/);
+});
+
+/** The "Figure reminders" row on /settings, and its three tick-boxes. */
+function reminderBoxes(page: Page) {
+  const row = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Figure reminders", level: 3, exact: true }) });
+  return {
+    row,
+    monthly: row.getByRole("checkbox", { name: "Monthly" }),
+    quarterly: row.getByRole("checkbox", { name: "Quarterly" }),
+    yearly: row.getByRole("checkbox", { name: "Yearly" }),
+  };
+}
+
+/** Ticks or unticks one box and waits until the app has answered the save, so a reload straight after can't beat it. */
+async function setBox(page: Page, box: Locator, on: boolean) {
+  const answered = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/settings" && r.request().method() === "PUT");
+  if (on) await box.check();
+  else await box.uncheck();
+  expect((await answered).status()).toBe(200);
+}
+
+/**
+ * Puts the reminders setting back to "nothing ticked, no idea switched on", from inside the page. The
+ * browser tests share one database, and CI retries a failed test once, so each reminders test starts
+ * from a known state rather than from what an earlier attempt left behind.
+ */
+async function resetReminders(page: Page) {
+  const status = await page.evaluate(async () => {
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "figure-reminders", value: { cadences: [], ideaIds: [] } }),
+    });
+    return res.status;
+  });
+  expect(status).toBe(200);
+}
+
+/** What the app holds for the reminders setting, asked from inside the page (the routes answer only the app's own window). */
+async function savedReminders(page: Page) {
+  return page.evaluate(async () => {
+    const res = await fetch("/api/settings?id=figure-reminders", { cache: "no-store" });
+    return { status: res.status, body: await res.json() };
+  });
+}
+
+test("Figure reminders: tick monthly and yearly, reload, and they are still ticked", async ({ page }) => {
+  await page.goto("/settings");
+  await resetReminders(page);
+  await page.reload();
+  const boxes = reminderBoxes(page);
+
+  // Off until the person ticks something: nothing is ticked, and the row says so.
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+  await expect(boxes.monthly).not.toBeChecked();
+  await expect(boxes.quarterly).not.toBeChecked();
+  await expect(boxes.yearly).not.toBeChecked();
+  await expect(boxes.row).toContainText("None ticked: no reminder.");
+
+  // Any combination: the first and the last, not the one between.
+  await setBox(page, boxes.monthly, true);
+  await expect(boxes.row.getByRole("status")).toHaveText("Saved.");
+  await setBox(page, boxes.yearly, true);
+
+  // A reload reads the choice back from the data file, not from the page's memory.
+  await page.reload();
+  await expect(boxes.monthly).toBeChecked();
+  await expect(boxes.quarterly).not.toBeChecked();
+  await expect(boxes.yearly).toBeChecked();
+  expect(await savedReminders(page)).toMatchObject({ status: 200, body: { value: { cadences: ["monthly", "yearly"] } } });
+
+  // Another page, then back: still there.
+  await page.goto("/ventures");
+  await page.goto("/settings");
+  await expect(boxes.monthly).toBeChecked();
+  await expect(boxes.yearly).toBeChecked();
+
+  // Tick quarterly, leave by an in-app link and come back with the browser's Back button. Next can
+  // bring the page back from memory, built with the list it had before quarterly was ticked. The
+  // boxes must read what is saved, or the next tick would send that stale list and undo quarterly.
+  await setBox(page, boxes.quarterly, true);
+  await page.getByRole("link", { name: "← Back" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+  await expect(boxes.quarterly).toBeChecked();
+  // The next tick keeps quarterly: it is still saved after unticking yearly.
+  await setBox(page, boxes.yearly, false);
+  expect(await savedReminders(page)).toMatchObject({ body: { value: { cadences: ["monthly", "quarterly"] } } });
+  await setBox(page, boxes.yearly, true);
+  await setBox(page, boxes.quarterly, false);
+
+  // The settings can only be reached from DotAmi's own window — a program calling the route is refused.
+  expect((await page.request.get("/api/settings?id=figure-reminders")).status()).toBe(403);
+  expect(
+    (await page.request.put("/api/settings", { data: { id: "figure-reminders", value: { cadences: ["quarterly"] } } })).status(),
+  ).toBe(403);
+  await page.reload();
+  await expect(boxes.quarterly).not.toBeChecked();
+
+  // Unticking is a choice too, and survives the same way. "None" is allowed.
+  await setBox(page, boxes.monthly, false);
+  await setBox(page, boxes.yearly, false);
+  await page.reload();
+  await expect(boxes.monthly).not.toBeChecked();
+  await expect(boxes.yearly).not.toBeChecked();
+  expect(await savedReminders(page)).toMatchObject({ body: { value: { cadences: [] } } });
+});
+
+test("Remind me about this idea: off until turned on, per idea, and still on after a reload", async ({ page }) => {
+  await page.goto("/ventures");
+  await resetReminders(page);
+  await page.reload();
+  const chinook = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+    .first();
+  const salish = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: /^Demo — Salish/, level: 2 }) })
+    .first();
+  const switchOf = (card: Locator) => card.getByRole("switch", { name: "Remind me about this idea" });
+
+  // Off for every idea until turned on.
+  await expect(switchOf(chinook)).toBeEnabled();
+  await expect(switchOf(chinook)).not.toBeChecked();
+  await expect(switchOf(salish)).not.toBeChecked();
+
+  // Turn one on: only that idea's switch changes, and it survives a reload.
+  await switchOf(chinook).check();
+  await expect(switchOf(chinook)).toBeChecked();
+  await expect.poll(async () => (await savedReminders(page)).body.value.ideaIds.length).toBe(1);
+  await page.reload();
+  await expect(switchOf(chinook)).toBeChecked();
+  await expect(switchOf(salish)).not.toBeChecked();
+
+  // The ticks on the settings page and the switches on this page are one setting, and neither
+  // page undoes the other's half.
+  await page.goto("/settings");
+  const boxes = reminderBoxes(page);
+  await setBox(page, boxes.quarterly, true);
+  await page.goto("/ventures");
+  await expect(switchOf(chinook)).toBeChecked();
+  await switchOf(salish).check();
+  await expect.poll(async () => (await savedReminders(page)).body.value.ideaIds.length).toBe(2);
+  expect((await savedReminders(page)).body.value.cadences).toEqual(["quarterly"]);
+  await page.goto("/settings");
+  await expect(boxes.quarterly).toBeChecked();
+
+  // Turn them off again: both stay off after a reload, and the settings page's choice is untouched.
+  await page.goto("/ventures");
+  await switchOf(chinook).uncheck();
+  await switchOf(salish).uncheck();
+  await expect.poll(async () => (await savedReminders(page)).body.value.ideaIds.length).toBe(0);
+  await page.reload();
+  await expect(switchOf(chinook)).toBeEnabled(); // the saved value has been read
+  await expect(switchOf(chinook)).not.toBeChecked();
+  await expect(switchOf(salish)).not.toBeChecked();
+  await page.goto("/settings");
+  await setBox(page, boxes.quarterly, false);
 });
 
 test("a confirmed figure decides the GST card, with its source — and only the agree prompt confirms", async ({ page }) => {

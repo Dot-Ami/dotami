@@ -22,7 +22,7 @@ Change both together.
 | Where the data file lives | the app's own folder | any folder | moving it: "the app will close and reopen" | [7b] |
 | Backup passphrase | none | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
 | Automatic updates | on | on · ask first · off | off: "you won't get fixes, including security fixes" | [7d] |
-| Figure reminders | off | monthly · quarterly · off | — | [8e] |
+| Figure reminders | none ticked | monthly · quarterly · yearly (tick any, or none) | — | [8e] |
 | Bank and card records | off | on per source | yes, every new bank source | [8g] |
 | Model | none chosen | local model · own key per provider | own key: "what the Lens reads goes to that company" | [9a] |
 | Monthly spend limit for an own key | required when a key is added | an amount | — (see Part 4) | [9a] |
@@ -81,7 +81,10 @@ is read-only.
 - A model key is set → Privacy says the typed sentence goes to Anthropic, and to which model; the key itself is never shown. Unit-tested.
 - A long data-file path on a narrow window → wraps; no sideways scrolling. Tested at 390 px.
 - The clipboard is refused → "Copy failed — select it instead". Not tested (a browser grants it in tests).
-- Still to test when the first setting goes live: changed → survives a restart; a risky one can't be switched without its warning being shown.
+- The first setting is live (2026-10-07, [8e] Figure reminders): the choice survives a reload (browser-tested in `e2e/app.spec.ts`, including coming back with the Back button); the rules for what may be saved are in `tests/settings-store.spec.ts`. Saved in the `Setting` table: one row per setting, the catalog id as its key, a small JSON value as its text, so a later setting is a new row, never a new table. The id must be one the catalog marks live (an unknown or not-yet-built id is refused), and an unknown key or a wrong kind of value is refused with nothing saved. The routes (`GET`/`PUT /api/settings`) answer only DotAmi's own window; an outside agent can't read or change a setting yet (decision d10 is Later).
+- A setting whose value reads back wrong (a hand-edited file, a value from a newer version) → reads as its default instead of breaking the page; for the reminders that is "none ticked". Unit-tested.
+- Two saves landing together (the settings page in one window, the ideas page in another) → each changes only the keys it names, inside one database transaction, so neither loses the other's change. Unit-tested.
+- Still to test when a risky setting goes live: it can't be switched without its warning being shown.
 
 **Landing page [7e]** — every download link points at the latest release; works without
 JavaScript; readable on a phone; no tracking unless Part 4 decides otherwise.

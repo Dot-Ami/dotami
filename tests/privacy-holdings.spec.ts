@@ -26,6 +26,7 @@ import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario
 import { TABLES } from "@/lib/privacy/inventory";
 import { localCalendarDay, readHoldings } from "@/lib/privacy/holdings";
 import { addTypedStatement } from "@/lib/person/statements";
+import { writeSetting } from "@/lib/settings/store";
 import { readSettingsToday, type SettingsToday } from "@/lib/settings/today";
 import { demoScenarios } from "../prisma/seed-data";
 
@@ -73,6 +74,8 @@ beforeAll(async () => {
   await db.ventureLink.create({ data: { fromId: chinookId, toId: salishId, kind: "RELATED", note: "same customers" } });
   await addTypedStatement(db, { text: "I prefer to keep it small.", saidAt: "2026-09-01" });
   await addTypedStatement(db, { text: "No employees for now.", saidAt: "2026-09-15" });
+  // One saved setting, so the page's count of "Your settings" is proved to read the new table.
+  await writeSetting(db, "figure-reminders", { cadences: ["yearly"], ideaIds: [chinookId] });
 
   // One row per case the page has to get right. Dates are explicit so the expectations are exact.
   const base = { kind: "gross-revenue", currency: "CAD", periodStart: new Date("2026-01-01T00:00:00Z"), periodEnd: new Date("2026-01-31T00:00:00Z") };
@@ -128,6 +131,7 @@ describe("readHoldings on a seeded database", () => {
       Venture: 2,
       VentureLink: 1,
       ScenarioState: 2,
+      Setting: 1,
       Figure: 7,
     });
     expect(h.ideasWithNotes).toBe(1);

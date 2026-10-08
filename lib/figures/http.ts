@@ -24,11 +24,11 @@ export const AGREE_ONLY_MESSAGE = "Only the agree prompt in DotAmi's window can 
  * (docs/architecture/figures-privacy-review.md, "Another program on this computer") says such a
  * program already has the person's own trust — it can read the database file. What this does
  * stop is DotAmi's own agent paths confirming figures for the person, and anything that isn't
- * the app's page.
+ * the app's page. `message` is what a refused caller is told; the settings routes pass their own.
  */
-export function refuseUnlessFromAppPage(request: Request): Response | null {
+export function refuseUnlessFromAppPage(request: Request, message: string = AGREE_ONLY_MESSAGE): Response | null {
   if (request.headers.get("sec-fetch-site")?.trim().toLowerCase() === "same-origin") return null;
-  return NextResponse.json({ error: AGREE_ONLY_MESSAGE }, { status: 403 });
+  return NextResponse.json({ error: message }, { status: 403 });
 }
 
 /** Rate limit for one route; a 429 response to return, or null to carry on. */

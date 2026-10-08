@@ -27,6 +27,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instead. Months already waiting or agreed with the same total aren't proposed twice. Every time,
   it first asks where the file is from; a bank or credit card file is turned away without being
   opened, since bank statements aren't supported yet.
+- **Figure reminders** ([8e]) — DotAmi's first setting you can change and keep. On the settings
+  page, tick how often you'd like to be reminded to bring your figures up to date: monthly,
+  quarterly and yearly, any combination or none. Each idea on the ideas page has a *Remind me about
+  this idea* switch, off until you turn it on. Both survive closing the app. Your choices are saved
+  now; the reminder itself (a banner and a calendar file) comes in a later step, so nothing
+  reminds you yet. The choices sit in the data file in a new small settings table that later
+  settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
+  window can read or change them. A database update adds the table without touching your ideas,
+  figures, links or map progress (a test proves it).
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
