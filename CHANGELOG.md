@@ -59,6 +59,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`docs/architecture/expense-records.md`).
 
 ### Fixed
+- **"Add from a file" no longer pre-fills a price per item as the amount.** A column named
+  UnitAmount, Unit Price, Rate, Price each or Prix unitaire is the price of one item, not what was
+  sold: Xero's UnitAmount gave July $150 against a true $350. Those columns are left for you to
+  pick; a real line total (LineAmount, Amount, Total Price) is still pre-filled, unless the sheet also has a tax
+  column, when a "Total" may include the tax and is left for the person to pick, as before.
+- **It pre-fills the invoice date, not the due date.** Names written without spaces (InvoiceDate,
+  Invoice_Date) are now read as "date", and a due-date column (including the French
+  "échéance") is never chosen by its name; it is pre-filled only when it is the one column that is
+  mostly dates.
+- **It pre-fills Date in a grouped report with one line per customer.** Customer-name rows and
+  "Total for" rows no longer count against the date column. You still check every pick.
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
 - Releases: the workflow creates the draft first, so a release is one draft, not one per file — and
   the workflow file is valid again (that change had made it unreadable, so a version tag would have

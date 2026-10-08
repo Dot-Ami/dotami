@@ -461,6 +461,169 @@ describe("guessColumns", () => {
     expect(guess?.dateColumn).toBe(0);
     expect(guess?.amountColumn).toBe(1);
   });
+
+  describe("price-per-item columns", () => {
+    const sheet = (header: string): Cell[][] => [
+      ["Date", header],
+      ["2026-01-05", "10.00"],
+      ["2026-01-06", "20.00"],
+    ];
+
+    it("never pre-fills a price per item as the amount", () => {
+      for (const header of [
+        "UnitAmount",
+        "Unit Amount",
+        "unit_amount",
+        "Unit Price",
+        "UnitPrice",
+        "Unit Cost",
+        "Sales Price",
+        "Price each",
+        "Amount each",
+        "Amount per item",
+        "Prix unitaire",
+        "Montant unitaire",
+        "Rate",
+        "Amount (each)",
+        "Amount/unit",
+        "Price (per unit)",
+        "Montant (par unité)",
+      ]) {
+        expect(guessColumns(sheet(header))?.amountColumn, header).toBeNull();
+      }
+    });
+
+    it("still pre-fills a real line amount", () => {
+      for (const header of ["LineAmount", "Line Amount", "Amount", "Montant", "Net sales"]) {
+        expect(guessColumns(sheet(header))?.amountColumn, header).toBe(1);
+      }
+    });
+
+    it("pre-fills the line amount and not the price beside it", () => {
+      const guess = guessColumns([
+        ["InvoiceDate", "Quantity", "UnitAmount", "LineAmount"],
+        ["2026-01-05", "3", "10.00", "30.00"],
+        ["2026-01-06", "1", "20.00", "20.00"],
+      ]);
+      expect(guess?.amountColumn).toBe(3);
+    });
+
+    it("does not mistake a word that only contains 'unit' for a price per item", () => {
+      expect(guessColumns(sheet("Community sales"))?.amountColumn).toBe(1);
+    });
+
+    it("does not treat 'price', 'unit' or 'each' on their own as a price per item", () => {
+      for (const header of [
+        "Business Unit Revenue",
+        "Revenue by unit",
+        "Amount (Unit currency)",
+        "Sales each month",
+        "Montant (prix total)",
+      ]) {
+        expect(guessColumns(sheet(header))?.amountColumn, header).toBe(1);
+      }
+    });
+
+    it("pre-fills 'Total Price' on an invoice template and not the 'Unit Price' beside it", () => {
+      const guess = guessColumns([
+        ["Date", "Description", "Qty", "Unit Price", "Total Price"],
+        ["2026-01-05", "Invented widget", "3", "10.00", "30.00"],
+        ["2026-01-06", "Invented gadget", "1", "20.00", "20.00"],
+      ]);
+      expect(guess?.amountColumn).toBe(4);
+    });
+  });
+
+  describe("date headers written without spaces", () => {
+    it("reads InvoiceDate, Invoice_Date and Invoice.Date as a date header", () => {
+      for (const header of ["InvoiceDate", "Invoice_Date", "Invoice.Date", "Date"]) {
+        // "Start" is mostly dates too, so the "only column of dates" fallback cannot make this
+        // guess: only the header can.
+        const guess = guessColumns([
+          [header, "Start", "Amount"],
+          ["2026-01-05", "2026-01-01", "10.00"],
+          ["2026-01-06", "2026-01-02", "20.00"],
+          ["2026-01-07", "2026-01-03", "5.00"],
+        ]);
+        expect(guess?.dateColumn, header).toBe(0);
+      }
+    });
+
+    it("prefers the invoice date to the due date, whichever comes first", () => {
+      const dueFirst = guessColumns([
+        ["DueDate", "InvoiceDate", "Amount"],
+        ["2026-02-04", "2026-01-05", "10.00"],
+        ["2026-02-05", "2026-01-06", "20.00"],
+      ]);
+      expect(dueFirst?.dateColumn).toBe(1);
+      const issueDate = guessColumns([
+        ["Due date", "Issue date", "Amount"],
+        ["2026-02-04", "2026-01-05", "10.00"],
+        ["2026-02-05", "2026-01-06", "20.00"],
+      ]);
+      expect(issueDate?.dateColumn).toBe(1);
+      // French: "Date d'échéance" is the due date; the accented word must be seen as a word.
+      for (const dueHeader of ["Date d'échéance", "Échéance", "Date échéance", "Date d'echeance"]) {
+        const french = guessColumns([
+          [dueHeader, "Date de facture", "Montant"],
+          ["2026-02-04", "2026-01-05", "10.00"],
+          ["2026-02-05", "2026-01-06", "20.00"],
+        ]);
+        expect(french?.dateColumn, dueHeader).toBe(1);
+      }
+    });
+
+    it("still pre-fills a due date when it is the only date column", () => {
+      // No other column is dates, so the "only column that is mostly dates" fallback takes it.
+      const guess = guessColumns([
+        ["Name", "DueDate", "Amount"],
+        ["Invented A", "2026-02-04", "10.00"],
+        ["Invented B", "2026-02-05", "20.00"],
+      ]);
+      expect(guess?.dateColumn).toBe(1);
+    });
+
+    it("leaves Date empty when a due date competes with another date column we cannot name", () => {
+      // "Created" is the sale date, but its name says nothing; guessing the due date would file a
+      // July sale under August, so the person picks.
+      const guess = guessColumns([
+        ["Created", "DueDate", "Amount"],
+        ["2026-07-30", "2026-08-29", "10.00"],
+        ["2026-07-31", "2026-08-30", "20.00"],
+      ]);
+      expect(guess?.dateColumn).toBeNull();
+    });
+  });
+
+  describe("group names and total rows beside the dates", () => {
+    // One line per customer: a name row and a "Total for" row around every date, as in a grouped report.
+    const grouped = (): Cell[][] => [
+      ["Date", "Name", "Amount"],
+      ["Invented Client A"],
+      [new Date(Date.UTC(2026, 6, 14)), "Invented Client A", 375],
+      ["Total for Invented Client A", null, 375],
+      ["Invented Client B"],
+      [new Date(Date.UTC(2026, 7, 2)), "Invented Client B", 54.55],
+      ["Total for Invented Client B", null, 54.55],
+      ["TOTAL", null, 429.55],
+      [],
+      ["Accrual basis Tuesday, October 6, 2026"],
+    ];
+
+    it("pre-fills Date even though names and totals outnumber the dates", () => {
+      expect(guessColumns(grouped())?.dateColumn).toBe(0);
+    });
+
+    it("still refuses a text column whose cells sit beside other cells", () => {
+      const guess = guessColumns([
+        ["Date", "Amount"],
+        ["one", "10.00"],
+        ["two", "20.00"],
+        ["2026-01-05", "30.00"],
+      ]);
+      expect(guess?.dateColumn).toBeNull();
+    });
+  });
 });
 
 describe("TOTAL_ROW_LABEL", () => {
