@@ -39,7 +39,16 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
-- No change.
+- **The desktop app's log (`logs/server.log`) now keeps why a start stopped.** Every line is
+  written to the disk at once ([`desktop/log.mjs`](../desktop/log.mjs)), so a start that is ended
+  or fails part-way still leaves its lines. When the app can't start it writes the message it
+  showed the person, which can name the data folder, with the error's name and code; when an
+  update to the database file fails it also writes the database's own words about it (which
+  update failed and what it objected to, such as a table or a column), never what the person
+  typed or an amount. A start made by the updater says so on its first line. Listed on *What
+  DotAmi knows about you* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); tested by
+  [`tests/desktop-startup-log.spec.ts`](../tests/desktop-startup-log.spec.ts). If the log can't
+  be opened, the app starts without it.
 
 ### What leaves the computer, and to whom
 
@@ -75,7 +84,11 @@ person is asked).
 
 ### What the person must agree to
 
-- No change.
+- No change to what needs a click: an update still installs only after *Restart and update*.
+  What changed is when the person hears of it: a notice that a new version is downloading now
+  appears as soon as one is found, without blocking the app, and the taskbar button shows the
+  download's progress ([`desktop/update-notice.mjs`](../desktop/update-notice.mjs), tested by
+  [`tests/desktop-update-notice.spec.ts`](../tests/desktop-update-notice.spec.ts)).
 
 ### How to remove it
 
@@ -83,6 +96,8 @@ person is asked).
 
 ### What the policy will need to say
 
+- The desktop app's log can hold the location of the data folder and, after a failed database
+  update, the database's description of what failed; it holds nothing the person typed.
 - People who build DotAmi from its source code: the project's own commands switch off the usage
   reports of the tools it is built with; installing and the development server still contact
   npm's registry, and commands typed by hand report unless the person sets the two variables.
