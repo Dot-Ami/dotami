@@ -100,7 +100,7 @@ roadmap's build order.
   - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
   - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
     rows out and lists them; the screen's steps now live in one shared function the tests also call
-  - [ ] Fix the other gaps they found (Xero's price-per-item column, its invoice date, one-line customers)
+  - [x] Fixed the other gaps they found: Xero's price-per-item column is no longer pre-filled, its invoice date wins over the due date, and one-line customers keep their Date guess
   - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
@@ -116,7 +116,9 @@ roadmap's build order.
   - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
     "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
     One small `Setting` table that every later setting reuses
-  - [ ] Reminders: a banner and an "add to my calendar" file (the choices above are saved; nothing reminds yet)
+  - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
+    figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
+  - [ ] Reminders: an "add to my calendar" file
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software

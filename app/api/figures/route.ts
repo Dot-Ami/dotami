@@ -7,7 +7,10 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE_LIMIT = { limit: 120, windowMs: 60_000 };
+// A read of the person's own figures, on their own computer: the ideas page asks once per idea on
+// every load (and the map and the reminder banners ask too), so 120 a minute was reachable by someone
+// with many ideas reloading a few times. The cap is here to stop a runaway loop, not normal use.
+const RATE_LIMIT = { limit: 600, windowMs: 60_000 };
 
 /**
  * GET /api/figures?venture=<id> — the figures DotAmi holds for one idea (everything except the

@@ -217,9 +217,9 @@ export const TABLES: readonly TableEntry[] = [
     model: "Setting",
     name: "Your settings",
     holds:
-      "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, and which of your ideas have their reminder switch on (as idea numbers DotAmi made up, not names). Only the choices; never an amount or any of your words.",
+      "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, which of your ideas have their reminder switch on, and which reminder banners you answered \"Not this time\" (each as an idea number DotAmi made up, a how-often word and the last day of the month, quarter or year, not names). Only the choices; never an amount or any of your words.",
     removedBy:
-      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it; the row itself stays in the data file. Nothing deletes a setting yet.",
+      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it, and a \"Not this time\" answer is dropped from the file the next time one is saved after its period is no longer the latest; the row itself stays in the data file. Nothing deletes a setting yet.",
   },
   {
     model: "Figure",

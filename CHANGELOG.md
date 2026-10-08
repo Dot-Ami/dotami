@@ -40,9 +40,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Figure reminders** ([8e]) — DotAmi's first setting you can change and keep. On the settings
   page, tick how often you'd like to be reminded to bring your figures up to date: monthly,
   quarterly and yearly, any combination or none. Each idea on the ideas page has a *Remind me about
-  this idea* switch, off until you turn it on. Both survive closing the app. Your choices are saved
-  now; the reminder itself (a banner and a calendar file) comes in a later step, so nothing
-  reminds you yet. The choices sit in the data file in a new small settings table that later
+  this idea* switch, off until you turn it on. Both survive closing the app. The choices sit in the data file in a new small settings table that later
   settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
   window can read or change them. A database update adds the table without touching your ideas,
   figures, links or map progress (a test proves it).
@@ -56,6 +54,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   data file's new expense table and counted on *What DotAmi knows about you*. A database update adds the
   table without touching your ideas, figures, links, map progress or settings (a test proves it).
   The screen to type a record, receipts and the other ways in come in later steps.
+- **The reminder banner** ([8e]) — for each idea whose *Remind me about this idea* switch is on,
+  and each of monthly, quarterly and yearly you ticked, DotAmi checks the most recent month,
+  calendar quarter or year that has ended. If your agreed figures for that idea don't cover it, the
+  ideas page and the idea's map say so: *"September 2026 ended and your figures for <idea> don't
+  cover it"*, with **Add figures** (opens the figure entry) and **Not this time** (hides it until the
+  next period of that cadence ends, and stays hidden after a restart). Only agreed figures count,
+  and only ones inside the period: a quarterly figure covers the quarter but not each month for a
+  monthly reminder, and three agreed monthly figures cover the quarter. Figures still waiting for
+  your agreement don't count, and the banner says how many are waiting. It is worked out from your
+  own day and your own figures on this computer, never shows an amount, and is left out when the
+  figures can't be read rather than guessing. Your *Not this time* answers are kept inside the
+  Figure reminders setting, so they are listed under *Your settings* on *What DotAmi knows about you*.
 
 ### Changed
 - **"Today" for figures is your computer's own day.** The server used to decide in UTC, so for a few
@@ -73,6 +83,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   DotAmi keeps single transactions, and a record only counts as kept once you agree to it. Receipts are still proposed.
 
 ### Fixed
+- **"Add from a file" no longer pre-fills a price per item as the amount.** A column named
+  UnitAmount, Unit Price, Rate, Price each or Prix unitaire is the price of one item, not what was
+  sold: Xero's UnitAmount gave July $150 against a true $350. Those columns are left for you to
+  pick; a real line total (LineAmount, Amount, Total Price) is still pre-filled, unless the sheet also has a tax
+  column, when a "Total" may include the tax and is left for the person to pick, as before.
+- **It pre-fills the invoice date, not the due date.** Names written without spaces (InvoiceDate,
+  Invoice_Date) are now read as "date", and a due-date column (including the French
+  "échéance") is never chosen by its name; it is pre-filled only when it is the one column that is
+  mostly dates.
+- **It pre-fills Date in a grouped report with one line per customer.** Customer-name rows and
+  "Total for" rows no longer count against the date column. You still check every pick.
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
 - Releases: the workflow creates the draft first, so a release is one draft, not one per file — and
   the workflow file is valid again (that change had made it unreadable, so a version tag would have

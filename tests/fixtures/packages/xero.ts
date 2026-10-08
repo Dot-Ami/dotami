@@ -206,32 +206,32 @@ function exportText(
 }
 
 /**
- * What DotAmi adds up today for MAIN_LINES and AMBIGUOUS_LINES read day-first: the UnitAmount
- * column (a price per item) summed by month, because that column is the pre-filled amount. Where
- * a line sold more than one item the sum falls short of what was invoiced, and the entry says so.
+ * What is added up for MAIN_LINES and AMBIGUOUS_LINES read day-first once the person picks the
+ * UnitAmount column (a price per item; DotAmi no longer pre-fills it). Where a line sold more than
+ * one item the sum falls short of what was invoiced, and the entry says so.
  */
 const UNIT_AMOUNT_SUMS_DAY_FIRST = [
-  // WRONG TODAY: 100.00 + 50.00 = 150.00 is a sum of prices per item. Invoiced: 3 x 100.00 + 50.00
-  // = 350.00 (35000 cents). See the fails-today test "Xero: does not pre-fill UnitAmount".
+  // SHORT: 100.00 + 50.00 = 150.00 is a sum of prices per item. Invoiced: 3 x 100.00 + 50.00
+  // = 350.00 (35000 cents). This is why UnitAmount is no longer pre-filled.
   { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 15000, rows: 2 },
-  // WRONG TODAY: 40.00 + 60.00 = 100.00. Invoiced: 3 x 40.00 + 60.00 = 180.00 (18000 cents).
+  // SHORT: 40.00 + 60.00 = 100.00. Invoiced: 3 x 40.00 + 60.00 = 180.00 (18000 cents).
   { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 10000, rows: 2 },
   // Right only because the one line sold one item: 75.00 is both the price per item and the total.
   { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 7500, rows: 1 },
 ];
 
 /**
- * The guess today for any Xero export, and what is wrong with it:
- *  - dateColumn is null: InvoiceDate and DueDate both read as mostly dates, and neither header
- *    matches the "date" word test (no word boundary inside "InvoiceDate"), so nothing is pre-filled.
- *    WRONG TODAY: the date column should be InvoiceDate (column 3), the day the invoice was made
- *    out; the open decision is whether it beats DueDate. See the fails-today test
- *    "Xero: pre-fills InvoiceDate as the date column".
- *  - amountColumn is UnitAmount: it matches "amount" but is a price per item, so summing it
- *    leaves out the quantity. WRONG TODAY: no documented column holds a line total, so the true
- *    guess is none. See the fails-today test "Xero: does not pre-fill UnitAmount".
+ * The guess for any Xero export (the maintainer's decision, 2026-10-07):
+ *  - dateColumn is InvoiceDate (column 3): the camel-case name now reads as the word "date", and
+ *    DueDate loses to it.
+ *  - amountColumn is null: UnitAmount is a price per item and is never pre-filled, and no
+ *    documented column holds a line total. The person picks the column (PICKS below). UnitAmount
+ *    is the only money column, so the sums stay short of what was invoiced whenever a line sold
+ *    more than one item; choosing it is the person's call, not DotAmi's pre-fill.
  */
-const TODAYS_GUESS = { headerRow: 0, dateColumn: null, amountColumn: UNIT_AMOUNT };
+const TODAYS_GUESS = { headerRow: 0, dateColumn: INVOICE_DATE, amountColumn: null };
+/** What the person picks where nothing is pre-filled: the only money column the export has. */
+const PICKS = { amountColumn: UNIT_AMOUNT };
 
 export const files: PracticeFile[] = [
   {
@@ -242,7 +242,7 @@ export const files: PracticeFile[] = [
     columns: COLUMNS,
     expected: {
       guess: TODAYS_GUESS,
-      picks: { dateColumn: INVOICE_DATE },
+      picks: PICKS,
       dateOrder: { order: "dmy", ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: UNIT_AMOUNT_SUMS_DAY_FIRST,
@@ -258,7 +258,7 @@ export const files: PracticeFile[] = [
     columns: COLUMNS,
     expected: {
       guess: TODAYS_GUESS,
-      picks: { dateColumn: INVOICE_DATE },
+      picks: PICKS,
       // 07/15/2026 can only be month-first.
       dateOrder: { order: "mdy", ambiguous: false, conflicting: false },
       decimalStyle: "point",
@@ -274,7 +274,7 @@ export const files: PracticeFile[] = [
     columns: COLUMNS,
     expected: {
       guess: TODAYS_GUESS,
-      picks: { dateColumn: INVOICE_DATE },
+      picks: PICKS,
       dateOrder: { order: null, ambiguous: true, conflicting: false },
       // The file was written day-first, so that is the true answer.
       answer: "dmy",
@@ -292,13 +292,13 @@ export const files: PracticeFile[] = [
     columns: COLUMNS,
     expected: {
       guess: TODAYS_GUESS,
-      picks: { dateColumn: INVOICE_DATE },
+      picks: PICKS,
       dateOrder: { order: "dmy", ambiguous: false, conflicting: false },
       decimalStyle: "comma",
       months: [
-        // WRONG TODAY: 1100,00 + 80,50 = 1180,50 sums prices per item, and the second line sold two
-        // of them. Invoiced: 1 x 1100,00 + 2 x 80,50 = 1261,00 (126100 cents). See the fails-today
-        // test "Xero: does not pre-fill UnitAmount".
+        // SHORT: 1100,00 + 80,50 = 1180,50 sums prices per item, and the second line sold two
+        // of them. Invoiced: 1 x 1100,00 + 2 x 80,50 = 1261,00 (126100 cents). This is why UnitAmount is
+        // no longer pre-filled.
         { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 118050, rows: 2 },
         // Right only because the one line sold one item.
         { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 25000, rows: 1 },
@@ -313,15 +313,15 @@ export const files: PracticeFile[] = [
  * The ambiguous file read the other way round. Month-first, 02/07/2026 is 7 February, so the same
  * rows land in other months, and one (11/08/2026, read as 8 November) is a month not over yet.
  * Asking is what keeps a month filed under the right name. The amounts are the UnitAmount sums
- * again, so they carry the same WRONG TODAY gap as UNIT_AMOUNT_SUMS_DAY_FIRST.
+ * again, so they carry the same SHORT gap as UNIT_AMOUNT_SUMS_DAY_FIRST.
  */
 export const AMBIGUOUS_READ_MONTH_FIRST = {
   answer: "mdy" as const,
   months: [
-    // WRONG TODAY: 100.00 + 25.00 = 125.00 sums prices per item. Invoiced on these two lines:
+    // SHORT: 100.00 + 25.00 = 125.00 sums prices per item. Invoiced on these two lines:
     // 3 x 100.00 + 25.00 = 325.00 (32500 cents).
     { periodStart: "2026-02-01", periodEnd: "2026-02-28", amountCents: 12500, rows: 2 },
-    // WRONG TODAY: 40.00 is a price per item. Invoiced: 3 x 40.00 = 120.00 (12000 cents).
+    // SHORT: 40.00 is a price per item. Invoiced: 3 x 40.00 = 120.00 (12000 cents).
     { periodStart: "2026-03-01", periodEnd: "2026-03-31", amountCents: 4000, rows: 1 },
     // These two are right only because each line sold one item.
     { periodStart: "2026-05-01", periodEnd: "2026-05-31", amountCents: 7500, rows: 1 },
