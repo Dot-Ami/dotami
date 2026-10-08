@@ -119,7 +119,11 @@ roadmap's build order.
   - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
     figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
   - [ ] Reminders: an "add to my calendar" file
-- ⬜ **[8f] Tax software, through the CRA's line numbers.**
+- 🔄 **[8f] Tax software, through the CRA's line numbers.**
+  - [x] Read last year's return PDF in the window and show each T2125's lines 8299, 9368, 9369 and 9946
+    with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
+    or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
+    ([review](connectors/pdf-reader-review.md))
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax

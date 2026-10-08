@@ -9,7 +9,10 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs
 import os from "node:os";
 import path from "node:path";
 
-import { _electron as electron, expect, test, type ElectronApplication, type Page } from "@playwright/test";
+import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
+
+import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
+import { makePdf } from "../tests/helpers/make-pdf";
 
 const root = path.resolve(__dirname, "..");
 
@@ -172,4 +175,35 @@ test("back up on one computer → restore on another: the same ventures, locked 
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   // What B had before was kept, in its backups folder.
   expect(readdirSync(path.join(computerB, "backups")).some((f) => f.startsWith("dotami-before-restore-"))).toBe(true);
+});
+
+test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {
+  // The same invented PDF as the browser test (laid out like the CRA's T2125; every amount made up),
+  // read in the desktop app's own window: its server, its policy, its build of pdf.js.
+  const page = await launch();
+  await describeVenture(page);
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  await page.goto(new URL("/ventures", page.url()).toString());
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "My venture", level: 2 }) })
+    .first();
+  await card.getByRole("button", { name: "Add from last year's return" }).click();
+  await card.getByLabel("Choose a PDF").setInputFiles({
+    name: "invented-return-2025.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(
+      makePdf([otherFormPage("Income Tax and Benefit Return", "5000-R"), ...t2125Pages({ amounts: INVENTED_AMOUNTS })]),
+    ),
+  });
+  const table = card.getByRole("table", { name: "T2125 on pages 2 to 4" });
+  await expect(table).toBeVisible({ timeout: 30_000 });
+  await expect(table.getByRole("row", { name: "8299 Gross business or professional income 3 48,250.00", exact: true })).toBeVisible();
+  await expect(table.getByRole("row", { name: "9946 Your net income (loss) 4 33,019.55", exact: true })).toBeVisible();
+
+  const reader = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(reader, "the return reader's worker").toBeTruthy();
+  expect(await reader!.evaluate(() => fetch("/api/figures").then(() => "reached", () => "refused"))).toBe("refused");
+  await card.getByRole("button", { name: "Close" }).click();
 });

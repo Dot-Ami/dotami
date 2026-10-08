@@ -385,6 +385,16 @@ export const LIBRARY_IMPORTS: readonly AllowedCall[] = [
     call: 'package "papaparse"',
     why: "Papa.parse is only ever handed the file's text (guessDelimiter and readCsv). Its `download: true` option would fetch a web address, and is never passed. The scan can't see option values, so a new Papa.parse call is checked in review.",
   },
+  {
+    file: "lib/figures/return/extract.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The return reader's one call into pdf.js: getDocument is handed the PDF's bytes (`data`), never an address, and PDF_OPTIONS in the same file turns off both ways it fetches data files (useWorkerFetch false, and a BinaryDataFactory that refuses every request). tests/figures-return-read.spec.ts checks the options and that no request is made. The import here is for the module's type; the code is loaded by the worker below.",
+  },
+  {
+    file: "lib/figures/return/pdf-text.worker.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The return reader's worker loads pdf.js and its parser (the legacy build) and hands the parser to pdf.js as globalThis.pdfjsWorker, so pdf.js starts no worker and loads no script of its own. It only calls extractPageText (lib/figures/return/extract.ts). The worker runs under the static files' own policy in next.config.mjs (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/app.spec.ts checks that in a real browser.",
+  },
 ];
 
 /**
@@ -457,6 +467,11 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
     name: "papaparse",
     network: "yes",
     why: "A CSV reader. Given an address with `download: true` it fetches it with XMLHttpRequest (its README and papaparse.js). DotAmi only calls Papa.parse with the file's text (lib/figures/file/read-csv.ts), never with `download`; that import is listed in LIBRARY_IMPORTS so a new use is looked at.",
+  },
+  {
+    name: "pdfjs-dist",
+    network: "yes",
+    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in the return reader's worker (lib/figures/return/), hands it the bytes of a file the person dropped, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
   },
   {
     name: "react",

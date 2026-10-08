@@ -20,6 +20,9 @@ export const MACROS_MESSAGE =
 export const XLSB_MESSAGE =
   "That's an Excel binary workbook (.xlsb). Save a copy as .xlsx or .csv and drop that.";
 export const NOT_SHEET_MESSAGE = "That isn't a spreadsheet. DotAmi reads .xlsx and .csv files.";
+// A PDF here is most likely a tax return: point to the button that reads one ([8f]).
+export const PDF_MESSAGE =
+  "That's a PDF. This reads .xlsx and .csv files. For last year's tax return, press Cancel and use Add from last year's return.";
 
 const EMPTY_MESSAGE = "That file is empty.";
 const TOO_BIG_MESSAGE =
@@ -48,7 +51,6 @@ function looksLikeAnotherFormat(head: Uint8Array): boolean {
     hasBytes(head, [0x89, 0x50, 0x4e, 0x47]) || // PNG
     hasBytes(head, [0xff, 0xd8, 0xff]) || // JPEG
     hasAscii(head, "GIF8") || // GIF
-    hasAscii(head, "%PDF") || // PDF
     (hasAscii(head, "RIFF") && hasAscii(head, "WEBP", 8)) || // WEBP
     hasAscii(head, "ftyp", 4) || // HEIC / MP4 / MOV
     hasBytes(head, [0x50, 0x4b, 0x05, 0x06]) // a zip with nothing in it
@@ -77,6 +79,7 @@ export function sniffFile(name: string, size: number, head: Uint8Array): Sniffed
   // "PK\3\4": a zip. read-xlsx.ts looks inside to tell a workbook from any other zip.
   if (hasBytes(head, [0x50, 0x4b, 0x03, 0x04])) return { ok: true, format: "xlsx" };
 
+  if (hasAscii(head, "%PDF")) return refuse(PDF_MESSAGE);
   if (looksLikeAnotherFormat(head)) return refuse(NOT_SHEET_MESSAGE);
 
   // A UTF-16 text file (Excel's "Unicode Text") is full of NUL bytes, so check its byte-order mark
