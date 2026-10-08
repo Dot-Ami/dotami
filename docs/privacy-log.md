@@ -39,6 +39,14 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
+  file is read in memory inside the app's window, in a worker of DotAmi's own
+  ([`lib/figures/return/`](../lib/figures/return/)); its bytes move into that worker, pdf.js's
+  copy is destroyed after each read, and the worker stops when the panel closes. Only lines 8299,
+  9368, 9369 and 9946 of each T2125 and their pages are shown; nothing is proposed, written to the
+  database or the disk, or logged, and there is no new table, column or browser-storage key.
+  Tested by [`tests/figures-return-read.spec.ts`](../tests/figures-return-read.spec.ts).
+
 - **The desktop app's log (`logs/server.log`) now keeps why a start stopped.** Every line is
   written to the disk at once ([`desktop/log.mjs`](../desktop/log.mjs)), so a start that is ended
   or fails part-way still leaves its lines. When the app can't start it writes the message it
@@ -61,6 +69,13 @@ person is asked).
   ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
 
 ### What leaves the computer, and to whom
+
+- **The return reader sends nothing.** pdf.js is given the PDF's bytes, never an address, and
+  its own data-file fetches are switched off (`PDF_OPTIONS` in
+  [`lib/figures/return/extract.ts`](../lib/figures/return/extract.ts)). The worker it runs in
+  is served with its own policy that refuses every connection, DotAmi's own server included
+  ([`next.config.mjs`](../next.config.mjs), `workerPolicy`); the browser test tries a fetch from
+  inside the worker and the browser refuses it ([`e2e/app.spec.ts`](../e2e/app.spec.ts)).
 
 - **Nothing new is sent by DotAmi.** The calendar file is made in the page and saved by the
   browser or the desktop app; the browser test checks the click makes no request
@@ -91,9 +106,20 @@ person is asked).
 
 ### Packages that ship
 
-- No change.
+- **`pdfjs-dist` 6.4.299 (Mozilla's pdf.js), pinned exactly.** Apache-2.0. It can reach the
+  network (a PDF, character maps, fonts and decoders from addresses it is given, and its own
+  worker script); DotAmi gives it no address, turns its data-file fetches off and runs it in the
+  worker that can't connect. It is bundled into the page's own script files, not copied into the
+  desktop app's server. Reviewed 2026-10-08
+  ([`docs/connectors/pdf-reader-review.md`](connectors/pdf-reader-review.md)); listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`, `LIBRARY_IMPORTS`).
 
 ### New powers or permissions
+
+- **The page can start one worker of DotAmi's own, the return reader's.** It gets no new
+  reach: DotAmi's static script files now carry a policy (`default-src 'none'; script-src
+  'self'`) that lets such a worker load DotAmi's own scripts and connect nowhere
+  ([`next.config.mjs`](../next.config.mjs)). No worker loaded from those files before.
 
 - **The desktop app can save a file the page makes, where the person picks.** A file made in the
   page (the calendar file, a playbook) opens DotAmi's own Save dialog with the file's name and
@@ -103,6 +129,10 @@ person is asked).
   built-in dialog handled a playbook save.
 
 ### What the person must agree to
+
+- **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
+  year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
+  file.
 
 - **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
   file is written without the person choosing where. In a browser it is an ordinary download,
@@ -116,7 +146,7 @@ person is asked).
 
 ### How to remove it
 
-- No change.
+- Nothing new to remove: the return reader keeps nothing (above).
 
 ### What the policy will need to say
 
@@ -128,6 +158,9 @@ person is asked).
 - A calendar file the person saves and imports leaves DotAmi's hands: once in a calendar that
   syncs online, its general reminder text and dates are held by that calendar's company, and
   deleting it is done in that calendar, not in DotAmi.
+- A tax return the person drops is read on their computer, in memory, and not kept or sent; only
+  four T2125 lines and their pages are shown. The PDF reader is Mozilla's pdf.js, run so it
+  can't connect anywhere.
 
 ### Still open (carried forward until decided)
 
