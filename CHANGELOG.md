@@ -44,6 +44,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
   window can read or change them. A database update adds the table without touching your ideas,
   figures, links or map progress (a test proves it).
+- **An OFX/QFX bank-file reader** ([8g]) — the code that will read the download most Canadian banks
+  offer for Quicken and QuickBooks. Nothing on any screen uses it yet, so nothing changes for you
+  today; "Add from a file" still turns bank files away. It is built on `ofx-js`, a free package
+  someone else wrote, pinned at exactly 1.1.2 after it was read in full. The reader never lets
+  an account, branch or bank number out (they are blanked even where a bank printed one in a
+  memo, including the other account's number in a transfer between your own accounts), never counts a transaction that hasn't posted, applies the bank's corrections, counts a
+  repeated transaction id once, and turns away a file that declares its own document type, two
+  downloads pasted together (the package alone would silently keep only the first), a file with an
+  unreasonable number of entries, and one it can't read with certainty (an amount like "1,000",
+  which could be a thousand or one dollar, is kept as an unreadable row, never guessed). Tested on invented
+  statements only.
 - **The store for expense records** ([8i], first slice; no screen yet) — DotAmi can now hold single
   business expenses you agree to keep: the day, the amount and currency, who it was paid to and what
   for (your words), a category only if you pick one, and the seller's address and GST/HST number if
@@ -77,6 +88,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   business expenses and their receipts, with the options and what each costs, and the maintainer's
   decisions of 2026-10-07 (single records with receipt files). The store for typed records is built
   (see Added); receipts and the screens are not (`docs/architecture/expense-records.md`).
+- **A review of the OFX reader package** ([8g]) — what `ofx-js` 1.1.2 does line by line, what it
+  does with a document-type declaration, huge or damaged files, repeated ids, pending rows,
+  corrections, several accounts and character sets, the five things found and how each is handled,
+  a comparison with `ofx-data-extractor`, and how to switch to an edited copy if one is ever needed
+  (`docs/connectors/ofx-reader-review.md`).
 - **"Totals, never single transactions" now says what is true.** Figures are still totals; the
   privacy review, the figures roadmap, the use-cases plan, the contract and the *Your figures* entry
   on *What DotAmi knows about you* now say that single business expense records are the one place

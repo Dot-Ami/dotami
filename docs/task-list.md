@@ -126,7 +126,11 @@ roadmap's build order.
 - 🔄 **[8g] Bank and card records** — opt-in, behind a warning. (Until it is built, "Add from a
   file" turns a bank or card file away unread — see [8c].)
   - [x] Ticked bank rows to complete-month totals; a row has no field for an account or card number (#82)
-  - [ ] The warning, the switch, the screen, OFX files
+  - [x] OFX/QFX reader: the free `ofx-js` package read in full and pinned at 1.1.2, wrapped so
+    account numbers never leave it, pending rows and repeated ids are handled, and a file with its
+    own document type, two downloads joined together, or too many entries is refused; no screen
+    yet ([review](connectors/ofx-reader-review.md))
+  - [ ] The warning, the switch, the screen, the OFX files on the screen (run the reader in a Web Worker)
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)

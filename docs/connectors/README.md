@@ -100,7 +100,8 @@ Bank and card records are the person's call (decision 4). This is where things s
   (payments) follows 12 to 18 months of further consultation. An earlier [FCAC release][fcac-cdb]
   (2024) named FCAC as overseer — the two official pages disagree.
 - **OFX** is maintained by the [Financial Data Exchange][fdx-ofx]; QFX is OFX plus Intuit-specific
-  tags, so an OFX reader generally reads QFX.
+  tags, so an OFX reader generally reads QFX. DotAmi's reader is built (no screen yet) on the free
+  `ofx-js` package, read in full and pinned: [ofx-reader-review.md](ofx-reader-review.md).
 - **CRA has no public API.** Electronic GST/HST and income-tax filing goes through
   [CRA-certified software][cra-software] or [My Business Account][cra-mba]; an uncertified
   self-hosted app cannot transmit returns. DotAmi never files anyway.

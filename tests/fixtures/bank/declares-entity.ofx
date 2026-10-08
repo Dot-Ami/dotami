@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE OFX [
+  <!ENTITY repeated "SAMPLE CUSTOMER">
+]>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <CURDEF>CAD</CURDEF>
+        <BANKTRANLIST>
+          <DTSTART>20260101</DTSTART>
+          <DTEND>20260201</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260105</DTPOSTED>
+            <TRNAMT>10.00</TRNAMT>
+            <FITID>D0001</FITID>
+            <NAME>&repeated;</NAME>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
