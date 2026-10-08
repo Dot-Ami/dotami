@@ -23,6 +23,8 @@ export interface ColumnGuess {
   columns: ColumnInfo[];
   dateColumn: number | null;
   amountColumn: number | null;
+  /** The column of transaction types, pre-filled only for a header that is exactly that (see TYPE_HEADER). */
+  typeColumn: number | null;
 }
 
 /** Widest sheet we offer columns for; a real export never needs more, and a bad file can't make a huge list. */
@@ -129,6 +131,15 @@ const DATE_HEADER = /\b(date|day|jour|posted|issued)\b/i;
 const AMOUNT_HEADER_FIRST = /^\s*(amount|montant|sub[\s-]?total|sous[\s-]?total)\b/i;
 const AMOUNT_HEADER_ANY =
   /(amount|montant|revenue|revenu|sales|ventes|income|subtotal|sous-total)/i;
+/**
+ * The only header pre-filled as the transaction-type column: exactly "Transaction Type", in any case
+ * and with any spacing — the name QuickBooks' Transaction List uses. A bare "Type" is left for the
+ * person to pick: on someone's own sheet it can hold words like "Payment" for real sales, and a
+ * pre-filled pick would quietly leave those out. The cells are never read to guess the column, and a
+ * header that merely contains the word ("Type of work", "Account Type") is never pre-filled either.
+ */
+const TYPE_HEADER = /^transaction\s*type$/i;
+
 /** "Total" columns: in many invoice exports the total includes the sales tax collected. */
 const TOTAL_HEADER = /^\s*(total|grand[\s-]+total)\b/i;
 /** Columns that look like money but aren't the revenue figure: tax, running balances, counts, ids. */
@@ -196,5 +207,11 @@ export function guessColumns(rows: Cell[][]): ColumnGuess | null {
     if (amountColumn !== null) break;
   }
 
-  return { headerRow, columns, dateColumn, amountColumn };
+  // Type column: one header that is exactly a type header. Two of them and nothing is pre-filled.
+  const typeColumns = columns.filter(
+    (c) => c.index !== dateColumn && c.index !== amountColumn && TYPE_HEADER.test(c.label.trim()),
+  );
+  const typeColumn = typeColumns.length === 1 ? typeColumns[0].index : null;
+
+  return { headerRow, columns, dateColumn, amountColumn, typeColumn };
 }

@@ -664,6 +664,68 @@ test("dates that read two ways are asked about once, and nothing is totalled unt
   expect(await figures()).toEqual(before);
 });
 
+test("a QuickBooks-shaped list: the Type column is pre-filled and the payment is left out, not counted as a second sale", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // A Transaction List holds an invoice AND the payment received for it (invented numbers). Added
+  // up as it stands the month would read $1,200.00; the sales are $700.00.
+  const month = monthsAgo(3);
+  const day = (d: number) => `${month.y}-${two(month.m)}-${two(d)}`;
+  const lines = [
+    "Date,Transaction Type,Num,Name,Amount",
+    `${day(14)},Invoice,1040,Invented Client A,500.00`,
+    `${day(20)},Payment,3456,Invented Client A,500.00`,
+    `${day(28)},Sales Receipt,1046,Invented Client B,200.00`,
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "transaction-list.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The Type column is filled from its exact header, along with the date and the amount.
+  const type = card.getByLabel("Type column (optional)");
+  await expect(type.locator("option:checked")).toHaveText("B · Transaction Type");
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText("A · Date");
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "E · Amount",
+  );
+
+  // The month counts the invoice and the sales receipt; the payment is listed with its reason.
+  const table = card.getByRole("table", { name: "Monthly totals from transaction-list.csv" });
+  await expect(table.getByRole("row")).toHaveCount(1);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$700\\.00 2 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "1 row typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks that is money received for a sale listed on another row; if it is a sale of yours, choose None): row 3",
+    ),
+  ).toBeVisible();
+
+  // Clearing the select counts every row again, as before, and says nothing is left out.
+  await type.selectOption("");
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$1,200\\.00 3 rows$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/left out because a Type column is chosen/)).toHaveCount(0);
+  await expect(card.getByText("Left out", { exact: true })).toHaveCount(0);
+
+  // Choosing the column again leaves the payment out again.
+  await type.selectOption({ label: "B · Transaction Type" });
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$700\\.00 2 rows$`) }),
+  ).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
 test("an .xlsx is read in the window; a renamed picture and a macro workbook are refused", async ({
   page,
 }) => {

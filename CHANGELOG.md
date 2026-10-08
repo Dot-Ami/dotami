@@ -27,6 +27,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instead. Months already waiting or agreed with the same total aren't proposed twice. Every time,
   it first asks where the file is from; a bank or credit card file is turned away without being
   opened, since bank statements aren't supported yet.
+- **A "Type column" for files that list a sale and its payment** — QuickBooks' transaction lists
+  hold an invoice and then a Payment row for the same money, which was added up twice. "Add from a
+  file" now has an optional Type column, pre-filled only when a column is headed exactly
+  "Transaction Type" (a bare "Type" column is picked by hand). Rows typed Payment or Deposit are left out of the totals and listed,
+  with a note that in QuickBooks they are money received for a sale on another row and a way to
+  undo it if they are the person's own sales ("choose None"); every other row counts as before, and
+  choosing "None" counts every row. A Deposit made straight to an income account is also left out.
+  Nothing about the column is stored.
 - **A reminder in the agree prompt**: before the buttons, every time it opens, *"Double-check what
   DotAmi did, and how, before you agree."*
 
