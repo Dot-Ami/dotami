@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
+import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     const { ventureId } = await ensureVentureFromScenario(prisma, scenario);
     return NextResponse.json({ ok: true as const, ventureId });
   } catch (error) {
-    console.error("[scenario/save]", error);
+    logRouteError("scenario/save", error);
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
   }
 }
