@@ -38,7 +38,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
-- Releases: the workflow creates the draft first, so a release is one draft, not one per file.
+- Releases: the workflow creates the draft first, so a release is one draft, not one per file — and
+  the workflow file is valid again (that change had made it unreadable, so a version tag would have
+  built nothing).
 
 ## [0.2.0] — 2026-10-06
 
