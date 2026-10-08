@@ -112,12 +112,13 @@ the account link in row 13), plus a few smaller choices taken up as each slice s
 - `tests/helpers/encode.ts` writes windows-1252 bytes.
 - `make-xlsx` gains formulas saved without a value.
 - One table-driven `tests/figures-file-packages.spec.ts`.
-- Known gaps are pinned with `it.fails`.
+- Known gaps are pinned with `it.fails` until fixed, then become normal tests.
 
 Gaps already found by running the real code:
-- Xero `UnitAmount` is pre-filled (July $150 against a true $350).
-- A sparse QuickBooks grouped report gets no date guess.
-- An Invoice and its Payment are counted twice.
+- Xero `UnitAmount` is pre-filled (July $150 against a true $350). *Fixed 2026-10-07.*
+- A sparse QuickBooks grouped report gets no date guess. *Fixed 2026-10-07.*
+- Xero `InvoiceDate` is not pre-filled. *Fixed 2026-10-07.*
+- An Invoice and its Payment are counted twice. *Fixed 2026-10-07 (#89, the Type column).*
 - A FreshBooks summary row is taken as the header.
 - A Wave refund sits in a Debit column.
 - A Sage void invoice is counted.

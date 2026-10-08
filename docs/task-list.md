@@ -100,7 +100,7 @@ roadmap's build order.
   - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
   - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
     rows out and lists them; the screen's steps now live in one shared function the tests also call
-  - [ ] Fix the other gaps they found (Xero's price-per-item column, its invoice date, one-line customers)
+  - [x] Fixed the other gaps they found: Xero's price-per-item column is no longer pre-filled, its invoice date wins over the due date, and one-line customers keep their Date guess
   - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
