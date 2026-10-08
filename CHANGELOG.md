@@ -8,6 +8,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Add to my calendar** ([8e]) — beside the Figure reminders tick-boxes on the settings page, a
+  button saves a calendar file (.ics) with one repeating event per ticked box: *"Bring your DotAmi
+  figures up to date"* on the first day after each month, quarter or year ends. Open it with your
+  calendar app or use its Import menu; Google Calendar imports a file only on a computer, at
+  calendar.google.com (Settings, then Import & export). No real calendar import has been tested
+  yet. Importing the same file twice adds a second copy, and the page says so. The file is made
+  inside the page and nothing is sent anywhere. It holds only general words (no amounts, no idea names), because a
+  calendar that syncs online shares its events with the company that runs it. The calendar can't
+  see DotAmi, so it reminds you whether or not your figures are already in, and the page says so.
+- **Saving a file in the desktop app asks where** — a file made in the page (the calendar file, a
+  playbook) now opens a Save dialog with the file's own name; Cancel saves nothing. Only DotAmi's
+  own pages can start a save.
+
 ### Changed
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,
   `npm run start` and `npm run lint` now start Next.js with its anonymous usage reports switched off, as

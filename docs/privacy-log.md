@@ -49,8 +49,23 @@ person is asked).
   DotAmi knows about you* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); tested by
   [`tests/desktop-startup-log.spec.ts`](../tests/desktop-startup-log.spec.ts). If the log can't
   be opened, the app starts without it.
+- **A calendar file, only where the person saves it.** *Add to my calendar* on the settings page
+  builds a calendar file (`.ics`) inside the page from the ticked Figure reminders boxes
+  ([`lib/figures/calendar.ts`](../lib/figures/calendar.ts),
+  [`lib/utils/save-file.ts`](../lib/utils/save-file.ts)). It holds only general words (*"Bring
+  your DotAmi figures up to date"*) and one repeating date per box: no amounts, no idea names, no
+  figures. Each event's ID is a random UUID made new for every file, so nothing in it identifies
+  the person or the computer. DotAmi keeps no copy and no new table, column or browser-storage
+  key. In the desktop app, a download refused because it didn't come from DotAmi's own page adds
+  one line to `logs/server.log` naming nothing but the refusal
+  ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
 
 ### What leaves the computer, and to whom
+
+- **Nothing new is sent by DotAmi.** The calendar file is made in the page and saved by the
+  browser or the desktop app; the browser test checks the click makes no request
+  ([`e2e/app.spec.ts`](../e2e/app.spec.ts)). If the person imports it into a calendar that syncs
+  online, the event text and dates go to the company that runs that calendar; the page says so.
 
 - **Running DotAmi from its source code no longer reports to Next.js or Prisma through the
   project's own commands.** `npm run dev`, `npm run build`, `npm run start` and `npm run lint` now
@@ -80,9 +95,18 @@ person is asked).
 
 ### New powers or permissions
 
-- None.
+- **The desktop app can save a file the page makes, where the person picks.** A file made in the
+  page (the calendar file, a playbook) opens DotAmi's own Save dialog with the file's name and
+  type; only DotAmi's own pages can start a save, and any other download is cancelled without a
+  dialog ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`; tested by
+  [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Before this, Electron's
+  built-in dialog handled a playbook save.
 
 ### What the person must agree to
+
+- **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
+  file is written without the person choosing where. In a browser it is an ordinary download,
+  following the browser's own setting.
 
 - No change to what needs a click: an update still installs only after *Restart and update*.
   What changed is when the person hears of it: a notice that a new version is downloading now
@@ -101,6 +125,9 @@ person is asked).
 - People who build DotAmi from its source code: the project's own commands switch off the usage
   reports of the tools it is built with; installing and the development server still contact
   npm's registry, and commands typed by hand report unless the person sets the two variables.
+- A calendar file the person saves and imports leaves DotAmi's hands: once in a calendar that
+  syncs online, its general reminder text and dates are held by that calendar's company, and
+  deleting it is done in that calendar, not in DotAmi.
 
 ### Still open (carried forward until decided)
 
