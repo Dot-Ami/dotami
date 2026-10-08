@@ -1,9 +1,9 @@
 # Ideas page (`/ventures`) — page overview
 
-Last updated: 2026-10-07 (Add from a file gains the optional Type column, so a payment isn't counted as a second sale; Add from a file asks where the file is from first; 2026-10-06: how old each figure is, [8e] first slice; Add from a file, [8c]; Your figures + agree prompt, [8a]/[8b]; the rest S2.5.4i, verified in the pane 2026-09-16)
+Last updated: 2026-10-07 (a "Remind me about this idea" switch on each card, [8e]; Add from a file gains the optional Type column, so a payment isn't counted as a second sale; Add from a file asks where the file is from first; 2026-10-06: how old each figure is, [8e] first slice; Add from a file, [8c]; Your figures + agree prompt, [8a]/[8b]; the rest S2.5.4i, verified in the pane 2026-09-16)
 
 **Route:** `/ventures` · **Component:** `components/ventures/ventures-page.tsx` ·
-**API:** `GET /api/ventures` · `PATCH /api/ventures/[id]` · `POST|DELETE /api/ventures/[id]/links`
+**API:** `GET /api/ventures` · `PATCH /api/ventures/[id]` · `POST|DELETE /api/ventures/[id]/links` · `GET|PUT /api/settings` (the reminder switches; `components/ventures/use-idea-reminders.ts`)
 **Data:** `lib/db/ventures.ts` → Prisma `Venture` (+ `stage`, `notes`) and `VentureLink`; figures: `components/ventures/figures-panel.tsx` + `agree-prompt.tsx` + `file-drop.tsx` (reads files in the window via `lib/figures/file/`) → `/api/figures/*` → Prisma `Figure`. Ages and the person's-own-day dates: `lib/figures/age.ts` (pure, tested in `tests/figures-age.spec.ts`), kept current while the window is open by `lib/figures/use-local-today.ts`.
 
 **Decided 2026-09-14:** every business idea is labelled, saved and stored, and ideas can
@@ -23,6 +23,7 @@ venture becomes a card the first time "Save / resume" is pressed on its map.
 | **Stage** select (Idea · Prototype · First customers · Established) | `PATCH { stage }` on change | `Venture.stage` |
 | **Your notes** textarea | `PATCH { notes }` on blur, only if changed; "Saved." / "Save failed." under it | `Venture.notes` — their words, never summarised |
 | **Open in cockpit →** | `/cockpit?venture=<id>` — that venture wins over the session and becomes the session | — |
+| **Remind me about this idea** switch (added 2026-10-07, [8e]) | off for every idea until turned on. A native checkbox with `role="switch"` drawn as a switch, so the keyboard and screen readers treat it as one. It flips at once and saves (`PUT /api/settings { id: "figure-reminders", value: { ideaIds } }`, one save after another so quick flips on different cards can't overwrite each other); a failed save puts it back and says "Couldn't save that — the switch is back where it was." Disabled and off while the saved list is being read, or if it couldn't be. Under it: "Off until you turn it on. How often is your choice under Settings → Figure reminders; the reminder itself comes in a later step." (the link opens `/settings#figures`). Nothing reminds yet. Deleting an idea needs nothing from this switch: the list is kept inside the setting's value, an id that matches no idea is simply never drawn | `Setting` row `figure-reminders` → `ideaIds` (a list of idea ids; not a column on `Venture`) |
 | **Your figures** list | loads `GET /api/figures?venture=<id>` (only the idea's id is in the address; amounts travel in bodies). Confirmed totals, newest period first: kind · period · amount · "from <source> · N rows" · "edited by you" · **Retract**. Under each, a grey line, "ended 6 months ago · agreed 2026-10-06" ([8e]): whole calendar months from the period's last day to the person's own today (days under a month; "ends today", "ended yesterday", "ends next month"), and the day the person agreed in their own time zone, never the UTC day. A figure whose period ends after today also gets an amber line: "Check this date. This period ends after today (2026-10-31 is later than 2026-10-06), so no card counts it until it has ended." Retracted ones sit greyed under "Retracted" with the same age and "retracted <their own day>". Empty: "No figures yet." (added 2026-10-06, [8a]) | `Figure` rows (status `confirmed` / `retracted`) |
 | **Retract** (on a figure) | asks inline "Retract this figure? Cards go back to your estimate." **Retract** / **Keep** (no browser dialog); Retract → `POST /api/figures/retract` | `Figure.status` → `retracted`, `retractedAt` |
 | **N figures waiting for you to agree** + **Review** | amber banner when any figure is `proposed` (from an importer, the Lens, an outside agent, or typed here); Review opens the agree prompt | — |
@@ -69,3 +70,10 @@ Stage → Prototype and a note both landed in Postgres (`select name, stage, not
 idea created through the full intake → map → Save journey appeared with its tag,
 capital flag and `structureSource = assumed` (the S2.5.4h bug fix, proven end to end); a
 "Sister company" link showed on both cards and removed cleanly. Test data cleaned afterwards.
+
+## Browser-tested 2026-10-07 (run locally, 24/24)
+
+`e2e/app.spec.ts` › "Remind me about this idea: off until turned on, per idea, and still on after a
+reload": every switch is off at first; turning one on changes only that idea's and it survives a
+reload; the settings page's ticks and these switches are one setting and neither undoes the other;
+turning them off survives a reload.

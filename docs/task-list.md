@@ -113,7 +113,10 @@ roadmap's build order.
     GST/HST card say "over $30,000"); dates in the person's own day (#85)
   - [x] The server measures "a period that has ended" against the computer's own day, not the UTC day
     (a period ending "tomorrow" was accepted on Canadian evenings)
-  - [ ] Reminders: monthly, quarterly and/or yearly, per idea; a banner and an "add to my calendar" file
+  - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
+    "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
+    One small `Setting` table that every later setting reuses
+  - [ ] Reminders: a banner and an "add to my calendar" file (the choices above are saved; nothing reminds yet)
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software

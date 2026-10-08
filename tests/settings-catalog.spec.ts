@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { FIGURE_STATUSES, type FigureStatus } from "@/lib/figures/types";
 import { SETTING_GROUPS, SETTINGS } from "@/lib/settings/catalog";
+import { SETTING_DEFINITIONS } from "@/lib/settings/values";
 
 /**
  * The settings page is drawn from lib/settings/catalog.ts; the plan of record is Part 1 of
@@ -83,10 +84,17 @@ describe("settings catalog shape", () => {
     for (const g of SETTING_GROUPS) expect(SETTINGS.some((s) => s.group === g.id)).toBe(true);
   });
 
-  it("has no live setting yet — a live one needs its control and a test that it survives a restart", () => {
-    // When a story makes a setting live, it changes this expectation in the same pull request
-    // as the control, its storage and its browser test (story [7g]'s done-when).
-    expect(SETTINGS.filter((s) => s.status === "live")).toEqual([]);
+  it("has exactly the live settings listed here — a live one needs its control and a test that it survives a restart", () => {
+    // When a story makes a setting live, it adds its id to this list in the same pull request
+    // as the control, its storage and its browser test (story [7g]'s done-when). First: [8e].
+    expect(SETTINGS.filter((s) => s.status === "live").map((s) => s.id)).toEqual(["figure-reminders"]);
+  });
+
+  it("gives every live setting a definition of what it may hold, and every definition a live setting", () => {
+    // lib/settings/values.ts decides what can be saved; a live setting without one couldn't be
+    // saved at all, and a definition without a live setting would be saveable with no control.
+    const live = SETTINGS.filter((s) => s.status === "live").map((s) => s.id).sort();
+    expect(Object.keys(SETTING_DEFINITIONS).sort()).toEqual(live);
   });
 
   it("says where the app asks for every setting it asks for each time, and only those", () => {

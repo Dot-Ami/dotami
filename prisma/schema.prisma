@@ -182,3 +182,13 @@ model Figure {
 
   @@index([ventureId, status])
 }
+
+/// [8e] The person's saved choices — DotAmi's first settings table. One row per setting: `key` is a
+/// settings-catalog id (lib/settings/catalog.ts), `value` is that setting's JSON text. Which keys
+/// exist and what their values may look like is decided in code (lib/settings/values.ts), not here,
+/// so a later setting is a new key and never a new column or table.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

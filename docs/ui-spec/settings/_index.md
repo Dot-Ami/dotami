@@ -1,11 +1,13 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-05 ([7g] — the shell)
+Last updated: 2026-10-07 ([8e] — the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
-the one interactive control is `copy-path-button.tsx`) · **Rows:** `lib/settings/catalog.ts` ·
-**Today facts:** `lib/settings/today.ts` · **Reached from:** "Settings" on the landing page header
-and the ideas page nav.
+the interactive controls are `copy-path-button.tsx` and `figure-reminders-control.tsx`) ·
+**Rows:** `lib/settings/catalog.ts` · **Today facts:** `lib/settings/today.ts` · **Saved choices:**
+`lib/settings/store.ts` (read on the server on every visit; saved through `PUT /api/settings`,
+`lib/settings/client.ts`) · **Reached from:** "Settings" on the landing page header and the ideas
+page nav, and "Settings → Figure reminders" on each idea's card.
 
 ## What it is for
 
@@ -48,23 +50,29 @@ Each group:
    before switching on the risky option (amber) · a status chip: `Not built yet · [code]`,
    `Asked each time · <where>` (the backup passphrase — asked in the passphrase window, which
    shows the same warning), or `Waiting on a decision` (the usage-sharing row, whose Choices link
-   to Part 4).
+   to Part 4). A `live` setting (Figure reminders, so far) has no chip: its control sits at the
+   bottom of its card, under a rule.
 
 | Control | Behaviour | Persists to |
 |---|---|---|
 | Jump links | in-page anchors to each group | — |
 | **Copy path** | copies the data file path; says "Copied", or "Copy failed — select it instead" when the clipboard is refused | — |
+| **Monthly** · **Quarterly** · **Yearly** tick-boxes (Figure reminders, Your figures group; added 2026-10-07, [8e]) | any combination, or none. Each tick saves at once (`PUT /api/settings { id: "figure-reminders", value: { cadences } }`; no Save button) and the boxes then show what the app answered. A line under them: "None ticked: no reminder." until one is ticked, "Saving…", "Saved.", or "Save failed — nothing was changed." (the box goes back to what was last saved). When the saved choice couldn't be read at page load the boxes are switched off with "Couldn't read your saved choice, so it can't be changed right now." rather than claiming none are ticked. The choice is read from the data file on every visit, so a reload shows it; the boxes are also switched off until the control has asked for the saved value itself (the browser's Back/Forward buttons can bring the page back from memory with the value it had when it was built, and a tick sends the whole list). Nothing reminds yet: the card says the banner and calendar file come in a later step | `Setting` row `figure-reminders` → `cadences` |
 | Public task list / Part 4 / nextjs.org links | open in a new tab | — |
 | **What DotAmi knows about you** (Privacy group, and again in Your figures) | opens `/your-data` in the same tab | — |
 
 ## What it deliberately does not do
 
-- **No setting can be changed yet.** Every setting in Part 1 belongs to a feature that isn't
-  built; a switch that did nothing would be lying. The story that builds a setting flips its row
-  to `live` in the catalog and adds its control, its storage and a browser test that the change
-  survives a restart — `tests/settings-catalog.spec.ts` asserts there are no live rows until then.
-- No settings are stored, so there is no settings table or API yet. The data folder [7b] can't be
-  stored inside the database it points at; that story decides where app-level settings live.
+- **Only Figure reminders can be changed so far.** Every other setting in Part 1 belongs to a
+  feature that isn't built; a switch that did nothing would be lying. The story that builds a
+  setting flips its row to `live` in the catalog and adds its control, a definition of what its
+  value may hold (`lib/settings/values.ts`) and a browser test that the change survives a reload —
+  `tests/settings-catalog.spec.ts` lists the live rows and fails if one has no definition.
+- Saved choices live in one small table, `Setting` (a name and a JSON value per row; decided
+  2026-10-07), that every later setting reuses. The data folder [7b] can't be stored inside
+  the database it points at, so that one setting will need somewhere else.
+- No outside agent can read or change a setting: the routes answer only DotAmi's own window
+  (whether agents may is a later decision).
 - Never shows a key, only whether one is set.
 
 ## Kept in step
@@ -78,5 +86,15 @@ place. Change both in the same commit.
 `e2e/app.spec.ts` › "the settings page …" on the production build: reached from the landing
 page and the ideas page; all six groups; the data file shown is the run's throwaway `e2e.db`;
 Privacy says nothing is sent (no key in the test run); every setting shows its default, its
-warning when it has one, and its story; no form controls on the page; Copy path puts exactly the
-shown path on the clipboard; no sideways scroll at 390 px wide.
+warning when it has one, and its story; Copy path puts exactly the shown path on the clipboard; no sideways
+scroll at 390 px wide.
+
+## Browser-tested 2026-10-07 (run locally, 24/24)
+
+`e2e/app.spec.ts` › "Figure reminders: tick monthly and yearly, reload, and they are still
+ticked" (also: a program calling the route is refused, unticking all survives a reload, and
+a tick made after the browser's Back button brings the page back from memory doesn't undo the
+earlier one), the settings test's count of controls (none on the page but Copy path and the
+three Figure reminders tick-boxes), and
+"Remind me about this idea: …" (the settings page's ticks and the ideas page's switches are one
+setting and don't undo each other).
