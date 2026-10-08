@@ -169,6 +169,7 @@ describe("Xero", () => {
     const file = find("xero-ambiguous");
     const asked = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
       dateColumn: xero.INVOICE_DATE,
+      amountColumn: xero.UNIT_AMOUNT,
     });
     expect(asked.state).toBe("waiting");
     expect(asked.waitingFor).toBe("date-order-answer");
@@ -180,6 +181,7 @@ describe("Xero", () => {
     const other = xero.AMBIGUOUS_READ_MONTH_FIRST;
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
       dateColumn: xero.INVOICE_DATE,
+      amountColumn: xero.UNIT_AMOUNT,
       dateOrder: other.answer,
     });
     expect(run.result!.months).toEqual(other.months);
@@ -231,45 +233,38 @@ describe("Xero", () => {
 });
 
 /*
- * KNOWN GAPS. Each test below states what DotAmi SHOULD do and uses `it.fails`, so it passes only
- * while today's code gets it wrong. The day a fix lands the test errors, which is the signal to
- * turn it into a normal test (and update the matching "WRONG TODAY" value in its fixture). Each
- * names the open decision for the maintainer; nothing here changes lib/ or components/.
+ * The three gaps the practice files found, all fixed (the maintainer's decision, 2026-10-07). They
+ * were `it.fails` tests until the fix landed; each is now a normal test. The rules themselves have
+ * their own tests in tests/figures-file-logic.spec.ts ("guessColumns" blocks).
  */
-describe("known gaps (fail today, by design)", () => {
-  // Open decision: should price-per-item columns stop being pre-filled? lib/figures/file/table.ts
-  // already says "better an empty dropdown than a wrong income figure"; "UnitAmount" slips past
-  // its not-revenue test. Today the amount dropdown arrives pre-filled with UnitAmount.
-  it.fails(
-    "Xero: does not pre-fill UnitAmount as the amount (a price per item, not a total)",
-    async () => {
-      const file = find("xero-dmy");
-      const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-      expect(run.picks.amountColumn).toBeNull();
-    },
-  );
+describe("gaps the practice files found, now fixed", () => {
+  // Xero's UnitAmount is the price of ONE item. Pre-filled, it gave July $150 against a true $350.
+  it("Xero: does not pre-fill UnitAmount as the amount (a price per item, not a total)", async () => {
+    const file = find("xero-dmy");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.guess?.amountColumn).toBeNull();
+    expect(run.picks.amountColumn).toBeNull();
+    // Nothing is added up until the person picks a column.
+    expect(run.state).toBe("waiting");
+    expect(run.waitingFor).toBe("a-column");
+  });
 
-  // Open decision: should the date guess prefer the invoice date over the due date? Today neither
-  // is pre-filled, because "InvoiceDate" and "DueDate" have no word boundary for the "date" test
-  // and both columns are mostly dates.
-  it.fails("Xero: pre-fills InvoiceDate as the date column", async () => {
+  // InvoiceDate and DueDate both read as dates; the invoice date is the day of the sale and wins.
+  it("Xero: pre-fills InvoiceDate as the date column, not DueDate", async () => {
     const file = find("xero-dmy");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
     expect(run.picks.dateColumn).toBe(xero.INVOICE_DATE);
   });
 
-  // Open decision: should group names and "Total for" rows stop counting against a date column?
-  // With one line per customer they outnumber the dates, so the Date column is left unguessed.
-  // This depends on an ASSUMED layout (names and "Total for" rows in the Date column; no listed
-  // source documents it), so it is a gap in the practice file, not yet proven in a real export.
-  it.fails("QuickBooks: pre-fills Date when each customer has only one line", async () => {
+  // With one line per customer the names and "Total for" rows outnumber the dates in column A.
+  it("QuickBooks: pre-fills Date when each customer has only one line", async () => {
     const file = find("quickbooks-grouped-sparse");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
     expect(run.picks.dateColumn).toBe(0);
   });
 });
 
-// The fourth gap, a Payment row counted as a second sale, was fixed by the optional Type column
+// A fourth gap, a Payment row counted as a second sale, was fixed by the optional Type column
 // (the maintainer's decision, 2026-10-07): the "Transaction Type" header pre-fills it and Payment and
 // Deposit rows are left out and listed. Tests of the rule itself: tests/figures-file-type-column.spec.ts.
 describe("QuickBooks Transaction List", () => {

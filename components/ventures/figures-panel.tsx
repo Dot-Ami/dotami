@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
 import { describeFigureDates, localDay } from "@/lib/figures/age";
@@ -10,6 +10,7 @@ import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from "./agree-prompt";
 import { FigureDates, FutureDateNote } from "./figure-age";
+import { FigureReminderBanners, type ReminderState } from "./figure-reminder-banners";
 import { FileDrop } from "./file-drop";
 
 /**
@@ -17,6 +18,9 @@ import { FileDrop } from "./file-drop";
  * individual transactions. Anything proposed — by the person typing it here, by an importer or
  * by an agent — waits in the agree prompt; only "Agree" there confirms anything
  * (docs/architecture/figures-privacy-review.md, rule 3).
+ *
+ * [8e] The reminder banners for this idea sit at the top: they are worked out from the list this
+ * panel has just loaded, so agreeing a figure in the prompt below takes the banner away at once.
  *
  * The idea's id is the only thing that goes in a URL. Amounts travel in request and response
  * bodies, and nothing here logs them (rules 1 and 2).
@@ -31,7 +35,18 @@ function newestPeriodFirst(a: FigureView, b: FigureView): number {
   return b.periodEnd.localeCompare(a.periodEnd) || b.periodStart.localeCompare(a.periodStart);
 }
 
-export function FiguresPanel({ ventureId }: { ventureId: string }) {
+export function FiguresPanel({
+  ventureId,
+  ventureName,
+  reminders,
+  openAddSignal = 0,
+}: {
+  ventureId: string;
+  ventureName: string;
+  reminders: ReminderState;
+  /** Goes up by one each time something outside asks for the "Add a figure" form to open ("Add figures" on a banner). */
+  openAddSignal?: number;
+}) {
   // The person's own day, kept current while the window stays open ([8e]): every age below is
   // measured to it.
   const today = useLocalToday();
@@ -65,6 +80,31 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
     void load();
   }, [load]);
 
+  // "Add figures" on a banner (or the link from the map) asks for the form to open and come into view.
+  const top = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (openAddSignal === 0) return;
+    setAdding("typed");
+    top.current?.scrollIntoView?.({ block: "center" });
+  }, [openAddSignal]);
+
+  // The banner's own "Add figures": open the form, bring it into view and put the cursor in its
+  // first field. The form sits below the whole list of figures, so without this it could open
+  // off-screen and a keyboard or screen-reader user would never know anything had happened.
+  const formBox = useRef<HTMLDivElement>(null);
+  const [formFocusRequest, setFormFocusRequest] = useState(0);
+  useEffect(() => {
+    if (formFocusRequest === 0) return;
+    const box = formBox.current;
+    if (!box) return;
+    box.scrollIntoView?.({ block: "nearest" });
+    box.querySelector<HTMLElement>("select, input")?.focus({ preventScroll: true });
+  }, [formFocusRequest]);
+  function openAddForm() {
+    setAdding("typed");
+    setFormFocusRequest((n) => n + 1);
+  }
+
   async function retract(id: string) {
     if (retractBusy) return;
     setRetractBusy(true);
@@ -92,7 +132,16 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
   const retracted = (figures ?? []).filter((f) => f.status === "retracted").sort(newestPeriodFirst);
 
   return (
-    <div className="mt-3 border-t border-rule-soft pt-3">
+    <div ref={top} id={`figures-${ventureId}`} className="mt-3 scroll-mt-4 border-t border-rule-soft pt-3">
+      <FigureReminderBanners
+        ideaId={ventureId}
+        ideaName={ventureName}
+        // Not while loading, and not when the list couldn't be read: the banner would be guessing.
+        figures={loadError ? null : figures}
+        today={today}
+        reminders={reminders}
+        onAddFigures={openAddForm}
+      />
       <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Your figures</p>
       <p className="mt-1 text-[11px] text-stone-dim">
         Totals you&apos;ve agreed to — never your individual transactions. Where they settle a rule, cards use
@@ -199,7 +248,7 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
         </>
       )}
 
-      <div className="mt-3">
+      <div ref={formBox} className="mt-3">
         {adding === "typed" ? (
           <AddFigureForm ventureId={ventureId} onCancel={() => setAdding(null)} onProposed={handleProposed} />
         ) : adding === "file" ? (

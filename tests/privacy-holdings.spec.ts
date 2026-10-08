@@ -93,6 +93,23 @@ beforeAll(async () => {
     { ...base, ventureId: salishId, amountCents: 777700n, sourceKind: "agent", sourceLabel: "the Lens", status: "discarded", proposedAt: proposed },
   ];
   for (const data of figures) await db.figure.create({ data });
+
+  // One expense record (every name and number invented), so the page's count of "Your expense records"
+  // is proved to read the new table. Its amount and words are the person's and are only counted here.
+  await db.expense.create({
+    data: {
+      ventureId: chinookId,
+      date: new Date("2026-09-30T00:00:00Z"),
+      amountCents: 4599n,
+      paidTo: "Example Stationery Ltd",
+      whatFor: "printer paper",
+      sourceKind: "typed",
+      sourceLabel: "typed by you",
+      status: "confirmed",
+      proposedAt: proposed,
+      agreedAt: agreed,
+    },
+  });
 }, 180_000);
 
 afterAll(async () => {
@@ -133,8 +150,20 @@ describe("readHoldings on a seeded database", () => {
       ScenarioState: 2,
       Setting: 1,
       Figure: 7,
+      Expense: 1,
     });
     expect(h.ideasWithNotes).toBe(1);
+  });
+
+  it("counts expense records but carries none of their words or amounts (this page only counts them)", async () => {
+    const h = await readHoldings(seeded.prisma, seededToday);
+    const card = h.tables.find((t) => t.entry.model === "Expense")!;
+    expect(card.count).toBe(1);
+    expect(card.entry.name).toBe("Your expense records");
+    const everything = JSON.stringify(h);
+    expect(everything).not.toContain("Example Stationery");
+    expect(everything).not.toContain("printer paper");
+    expect(everything).not.toContain("4599");
   });
 
   it("counts every figure by status — turned-down ones included, which no other screen shows", async () => {

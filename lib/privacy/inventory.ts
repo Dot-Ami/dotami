@@ -217,17 +217,25 @@ export const TABLES: readonly TableEntry[] = [
     model: "Setting",
     name: "Your settings",
     holds:
-      "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, and which of your ideas have their reminder switch on (as idea numbers DotAmi made up, not names). Only the choices; never an amount or any of your words.",
+      "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, which of your ideas have their reminder switch on, and which reminder banners you answered \"Not this time\" (each as an idea number DotAmi made up, a how-often word and the last day of the month, quarter or year, not names). Only the choices; never an amount or any of your words.",
     removedBy:
-      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it; the row itself stays in the data file. Nothing deletes a setting yet.",
+      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it, and a \"Not this time\" answer is dropped from the file the next time one is saved after its period is no longer the latest; the row itself stays in the data file. Nothing deletes a setting yet.",
   },
   {
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself, and never individual transactions.",
+      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Nothing erases a figure yet.",
+  },
+  {
+    model: "Expense",
+    name: "Your expense records",
+    holds:
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
+    removedBy:
+      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Deleting an idea would remove its records with it, but nothing deletes an idea yet. Deleting the data file removes them all.",
   },
 ];
 

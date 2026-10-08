@@ -19,7 +19,8 @@ The back-end plan at the end is what those people add up to.
    stop there.
 2. **DotAmi keeps a few confirmed totals, not the records.** Revenue per quarter, net income,
    the date and price of a big purchase — each with its source and date, kept only after the
-   person confirms it. Individual transactions and the imported files are not kept.
+   person confirms it. Individual transactions are not kept, except single business expense records the
+   person agrees to keep (decided 2026-10-07, [expense-records.md](expense-records.md)); the imported files are not kept.
 3. **DotAmi holds no keys to anyone's accounting software by default.** A person who wants a
    live connection can add their own keys; that is their choice, made after a plain warning.
 4. **The Lens comes back, as a built-in agent.** It was removed on 2026-09-14; that removal
@@ -295,8 +296,8 @@ level: it always asks (decision 9).
 | Kept (in the person's own database, on their computer) | Never kept |
 |---|---|
 | Their answers and dated statements, verbatim | the files they import |
-| Ventures, branch picks, progress, tasks, questions | individual transactions |
-| Confirmed totals, each with source, period, date and row count | a copy of anyone's books |
+| Ventures, branch picks, progress, tasks, questions | individual transactions, apart from the expense records kept on the left |
+| Confirmed totals, each with source, period, date and row count; single business expense records, agreed or waiting for the person's click ([8i]) | a copy of anyone's books |
 | The Lens conversation, per venture (can be cleared) | anything sent to a server run by DotAmi — there is none |
 | Settings: model choice, permission levels, which folders the Lens may read | |
 | Keys the person chose to add — in the operating system's keychain, not the database | |

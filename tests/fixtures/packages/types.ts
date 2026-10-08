@@ -33,8 +33,8 @@ export interface ColumnNote {
 export interface Expected {
   /**
    * What guessColumns says for the whole sheet (0-based row and columns). Where this records a
-   * guess that is wrong today, the fixture says so beside the value and a "fails today" test in
-   * tests/figures-file-packages.spec.ts says what it should be.
+   * guess that is wrong, the fixture says so beside the value; a gap not yet fixed is pinned by an
+   * `it.fails` test in tests/figures-file-packages.spec.ts saying what it should be.
    */
   guess: { headerRow: number; dateColumn: number | null; amountColumn: number | null };
   /** The columns the person picks where the guess leaves one empty or wrong (0-based). */

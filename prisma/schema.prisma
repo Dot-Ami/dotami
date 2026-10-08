@@ -121,6 +121,7 @@ model Venture {
   linksFrom        VentureLink[]    @relation("VentureLinkFrom")
   linksTo          VentureLink[]    @relation("VentureLinkTo")
   figures          Figure[]
+  expenses         Expense[]
 
   @@index([userId])
 }
@@ -179,6 +180,46 @@ model Figure {
   confirmedAt    DateTime?
   retractedAt    DateTime?
   venture        Venture   @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+
+  @@index([ventureId, status])
+}
+
+/// [8i] One business expense — a single record, not a total: waiting for the person's click, agreed,
+/// turned down or taken back, like a Figure's states. Typed by the
+/// person now; a spreadsheet, a bank statement or the Lens may propose records later, and each waits
+/// for the person's click in the agree prompt, exactly like a Figure. Holds no bank or card number
+/// and no receipt yet (a later slice). docs/architecture/expense-records.md § 1;
+/// docs/architecture/figures-privacy-review.md.
+model Expense {
+  id              String    @id @default(cuid())
+  ventureId       String
+  /// The calendar day of the purchase; stored as midnight UTC of that day, like a Figure's period dates.
+  date            DateTime
+  /// Whole cents, never floating point. BigInt like Figure.amountCents.
+  amountCents     BigInt
+  /// ISO 4217, stored as given — never converted.
+  currency        String    @default("CAD")
+  /// Who it was paid to, in the person's own words ("Staples").
+  paidTo          String
+  /// What it was for, in the person's own words ("printer paper").
+  whatFor         String
+  /// Only what the person picked or agreed to; DotAmi never fills one in from the seller's name.
+  category        String?
+  /// Optional, typed by the person (the CRA lists the seller's address for a record).
+  sellerAddress   String?
+  /// Optional, typed by the person; lib/expenses/validate.ts says what shape is accepted.
+  vendorGstNumber String?
+  /// "typed" | "file" | "agent" (lib/expenses/types.ts EXPENSE_SOURCE_KINDS)
+  sourceKind      String
+  /// What the person sees as the source, e.g. "typed by you", "the Lens".
+  sourceLabel     String
+  /// "proposed" | "confirmed" | "retracted" | "discarded"
+  status          String    @default("proposed")
+  editedByPerson  Boolean   @default(false)
+  proposedAt      DateTime  @default(now())
+  agreedAt        DateTime?
+  retractedAt     DateTime?
+  venture         Venture   @relation(fields: [ventureId], references: [id], onDelete: Cascade)
 
   @@index([ventureId, status])
 }

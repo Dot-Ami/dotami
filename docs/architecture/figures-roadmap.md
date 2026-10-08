@@ -4,7 +4,7 @@ Status: proposal, read-only reconciliation of seven story designs, 2026-10-06, a
 Scope: [8c-2], [8c-3], [8d], [8e], [8f], [8g], [8h]. These are the not-started stories after [8a] (figures store), [8b] (agree prompt) and [8c] (Excel/CSV drop), which are merged in #77 and #78.
 Rules that bind every story (from `CLAUDE.md`, `docs/architecture/figures-privacy-review.md`):
 
-- Figures are **totals, never transactions**. A file's bytes are read in the window, in memory, and never sent or kept.
+- Figures are **totals, never transactions** (a single business expense is not a figure: it is an expense record, [8i], [expense-records.md](expense-records.md)). A file's bytes are read in the window, in memory, and never sent or kept.
 - **Only the person's click in the agree prompt confirms a figure.** No permission level skips it (ruling 2026-09-28).
 - IDs are forever: figure kinds, source kinds and any new id list can only be appended to.
 - Every rule, rate or threshold shown is cited and dated. DotAmi never invents a number, never says "you should", and never files anything.
@@ -112,12 +112,13 @@ the account link in row 13), plus a few smaller choices taken up as each slice s
 - `tests/helpers/encode.ts` writes windows-1252 bytes.
 - `make-xlsx` gains formulas saved without a value.
 - One table-driven `tests/figures-file-packages.spec.ts`.
-- Known gaps are pinned with `it.fails`.
+- Known gaps are pinned with `it.fails` until fixed, then become normal tests.
 
 Gaps already found by running the real code:
-- Xero `UnitAmount` is pre-filled (July $150 against a true $350).
-- A sparse QuickBooks grouped report gets no date guess.
-- An Invoice and its Payment are counted twice.
+- Xero `UnitAmount` is pre-filled (July $150 against a true $350). *Fixed 2026-10-07.*
+- A sparse QuickBooks grouped report gets no date guess. *Fixed 2026-10-07.*
+- Xero `InvoiceDate` is not pre-filled. *Fixed 2026-10-07.*
+- An Invoice and its Payment are counted twice. *Fixed 2026-10-07 (#89, the Type column).*
 - A FreshBooks summary row is taken as the header.
 - A Wave refund sits in a Debit column.
 - A Sage void invoice is counted.
@@ -175,7 +176,7 @@ Found today:
 - `lib/figures/age.ts` works on day strings plus `Intl` (no new library).
 - `readRevenue` moves future-dated figures to "not counted" and lists out-of-window ones.
 - A hook keeps "today" current while the window is open.
-- The `Setting` table; `GET/PUT /api/settings`; `GET /api/figures/reminder`; a banner.
+- The `Setting` table; `GET/PUT /api/settings`; a banner. (Built as a pure function in `lib/figures/reminder.ts` run by the page on figures it already loaded, so no `GET /api/figures/reminder` route exists.)
 - Optionally a Windows notification from the desktop main process, with generic text only.
 
 Reproduced today: a future October 2026 figure makes the card read "over $30,000", and a 2024 figure silently disappears.
@@ -339,7 +340,7 @@ Each is written out with options in the reconciliation output.
 
 - Three source tables merged into one `FigureSource` plus `SourceAccount`. One link column on Figure, not two.
 - Two or three remembered-choice tables merged into `ReaderPreset`.
-- 8e's reminder state key breaks its own catalog-only rule.
+- 8e's reminder state key breaks its own catalog-only rule. Resolved 2026-10-07 (banner slice): "Not this time" is a `dismissed` list inside the Figure reminders value, not a Setting key of its own.
 - The 8g routes moved under `/api/figures` so the browser privacy allow-list still holds.
 - 8e reminder coverage must filter by kind (8f yearly totals).
 - `splitAlreadyKnown` must be generalised by kind before 8f, 8g and 8h reuse it.

@@ -110,17 +110,22 @@ export function looksLikeHeader(row: Cell[]): boolean {
   return labels >= 2;
 }
 
-/** Share (0 to 1) of a column's non-blank cells that `reads` accepts; 0 when the column is empty. */
+/**
+ * Share (0 to 1) of a column's non-blank cells that `reads` accepts; 0 when the column is empty.
+ * Cells for which `ignore` says true are left out of the count altogether (neither for nor against).
+ */
 function columnScore(
   dataRows: Cell[][],
   column: number,
   reads: (cell: Cell | undefined) => boolean,
+  ignore?: (row: Cell[], cell: Cell) => boolean,
 ): number {
   let filled = 0;
   let readable = 0;
   for (const row of dataRows) {
     const cell = row[column];
     if (isEmptyCell(cell)) continue;
+    if (ignore?.(row, cell)) continue;
     filled += 1;
     if (reads(cell)) readable += 1;
   }
@@ -128,6 +133,36 @@ function columnScore(
 }
 
 const DATE_HEADER = /\b(date|day|jour|posted|issued)\b/i;
+/**
+ * A date column that says when money is DUE, not when the sale happened. It is never chosen by its
+ * header, so a Xero export's DueDate never beats its InvoiceDate. A sheet whose only date column is
+ * a due date still gets it through the "only column that is mostly dates" fallback below, but a
+ * sheet with some OTHER date column we could not name gets nothing: an empty dropdown beats filing
+ * a July sale under August. The words are matched with a letter-aware boundary because the word-edge marker only
+ * knows ASCII letters and would never see the start of "échéance".
+ */
+const DUE_DATE_HEADER = /(?<![\p{L}\p{N}])(due|échéance|echeance)(?![\p{L}\p{N}])/iu;
+/**
+ * Header text with word breaks put back where a program wrote its names without spaces:
+ * "InvoiceDate" and "Invoice_Date" become "Invoice Date", so the \b in DATE_HEADER can see the word
+ * "date". Only the date test uses it; the amount patterns already match inside a word.
+ */
+function spacedLabel(label: string): string {
+  return label.replace(/([a-zà-ÿ0-9])([A-ZÀ-Þ])/g, "$1 $2").replace(/[_.]+/g, " ");
+}
+/**
+ * A cell that is not a date because it names a group or a total, not a transaction: a customer name
+ * sitting alone on its row, or a "Total for ..." line. Grouped reports (QuickBooks' Sales by
+ * Customer Detail) put these in the same column as the dates, and with one line per customer they
+ * would outnumber the dates and sink the date column's score, so the date test skips them.
+ */
+const TOTAL_LABEL = /^\s*(grand[\s-]+total|total|subtotal|sub-total|sous-total)\b/i;
+function isGroupOrTotalLabel(row: Cell[], cell: Cell): boolean {
+  if (typeof cell !== "string") return false;
+  // Alone on its row: a group's heading, a title or a footer note. No transaction is one cell wide.
+  if (row.filter((c) => !isEmptyCell(c)).length === 1) return true;
+  return TOTAL_LABEL.test(cell);
+}
 const AMOUNT_HEADER_FIRST = /^\s*(amount|montant|sub[\s-]?total|sous[\s-]?total)\b/i;
 const AMOUNT_HEADER_ANY =
   /(amount|montant|revenue|revenu|sales|ventes|income|subtotal|sous-total)/i;
@@ -142,7 +177,20 @@ const TYPE_HEADER = /^transaction\s*type$/i;
 
 /** "Total" columns: in many invoice exports the total includes the sales tax collected. */
 const TOTAL_HEADER = /^\s*(total|grand[\s-]+total)\b/i;
-/** Columns that look like money but aren't the revenue figure: tax, running balances, counts, ids. */
+/**
+ * Columns that look like money but aren't the revenue figure: tax, running balances, counts, ids,
+ * and the price of ONE item. A price per item ("UnitAmount", "Unit Price", "Rate", "Price each",
+ * "Prix unitaire") is not what was sold when more than one item was: Xero's UnitAmount gave July
+ * $150 against a true $350. The per-item words only count as a phrase ("unit price", "price each",
+ * "per item"), never alone: "Total Price" beside a "Unit Price" is the line total and stays
+ * pre-fillable, and "Community sales" or "Business Unit Revenue" are not per-item either.
+ *
+ * The price-per-item phrases, in order: "unit amount/price/cost" (UnitAmount, Unit_Price), "unitaire"
+ * (Prix unitaire), "price each", "amount per item", "sales price", a bare "Price", and a money word
+ * followed by "(each)", "/unit" or "(per unit)" at the end ("Amount (each)", "Amount/unit").
+ */
+const PER_ITEM_HEADER =
+  /\bunit[\s_-]*(amount|price|cost|rate|value)|unitaire|(price|amount|cost|prix|montant)[\s_-]*(each|ea\b)|per[\s_-]+(item|unit)|(sales|selling|list|retail)[\s_-]*price|^\s*(price|prix)\s*$|(price|amount|cost|prix|montant)\s*[(/]\s*((per|par)\s+)?(each|ea|unit|unité|unite|item)\s*\)?\s*$/i;
 const NOT_REVENUE_HEADER =
   /(tax|gst|hst|pst|qst|tps|tvq|tvh|balance|solde|qty|quantity|quantité|rate|taux|\bid\b|number|\bno\.|#)/i;
 
@@ -171,12 +219,18 @@ export function guessColumns(rows: Cell[][]): ColumnGuess | null {
     .slice(0, SAMPLE_ROWS);
 
   // Date column: a header that says "date" and mostly dates beneath it, else the only column that is mostly dates.
-  const dateScores = columns.map((c) => columnScore(dataRows, c.index, readsAsDate));
+  // Group names and "Total for" rows don't count against a column (see isGroupOrTotalLabel).
+  const dateScores = columns.map((c) =>
+    columnScore(dataRows, c.index, readsAsDate, isGroupOrTotalLabel),
+  );
+  // A header that says "date" and is mostly dates; the best score wins. Due-date headers are skipped.
   let dateColumn: number | null = null;
-  let best = -1;
+  let bestDate = -1;
   for (const c of columns) {
-    if (DATE_HEADER.test(c.label) && dateScores[c.index] >= 0.5 && dateScores[c.index] > best) {
-      best = dateScores[c.index];
+    const label = spacedLabel(c.label);
+    if (!DATE_HEADER.test(label) || DUE_DATE_HEADER.test(label)) continue;
+    if (dateScores[c.index] >= 0.5 && dateScores[c.index] > bestDate) {
+      bestDate = dateScores[c.index];
       dateColumn = c.index;
     }
   }
@@ -197,7 +251,8 @@ export function guessColumns(rows: Cell[][]): ColumnGuess | null {
     let bestScore = -1;
     for (const c of columns) {
       if (c.index === dateColumn) continue;
-      if (NOT_REVENUE_HEADER.test(c.label) || !pattern.test(c.label)) continue;
+      if (NOT_REVENUE_HEADER.test(c.label) || PER_ITEM_HEADER.test(c.label)) continue;
+      if (!pattern.test(c.label)) continue;
       const score = columnScore(dataRows, c.index, readsAsAmount);
       if (score >= 0.5 && score > bestScore) {
         bestScore = score;

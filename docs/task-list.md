@@ -100,7 +100,7 @@ roadmap's build order.
   - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
   - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
     rows out and lists them; the screen's steps now live in one shared function the tests also call
-  - [ ] Fix the other gaps they found (Xero's price-per-item column, its invoice date, one-line customers)
+  - [x] Fixed the other gaps they found: Xero's price-per-item column is no longer pre-filled, its invoice date wins over the due date, and one-line customers keep their Date guess
   - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
@@ -116,7 +116,9 @@ roadmap's build order.
   - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
     "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
     One small `Setting` table that every later setting reuses
-  - [ ] Reminders: a banner and an "add to my calendar" file (the choices above are saved; nothing reminds yet)
+  - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
+    figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
+  - [ ] Reminders: an "add to my calendar" file
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
@@ -133,17 +135,20 @@ roadmap's build order.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
   - [ ] Proposing figures, the other formats
-- ⬜ **[8i] Business expense records** — a record of each business expense the person adds (date,
+- 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
-  deductible. Not started: **design written and decided** (2026-10-07, after the maintainer asked for a
-  record of every business expense).
+  deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
+  every business expense); the store for typed records is built, the screens are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
-  - [x] A proposed privacy review, marked PROPOSED:
-    [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review--proposed-expense-records-and-receipts-8i)
+  - [x] The privacy review (typed records as built; receipts still marked PROPOSED):
+    [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
   - [x] Decided: single records with their receipt files, copied into the data folder and carried
     by backups; every way in (typed, spreadsheet rows, bank rows, a receipt photo the Lens reads)
-  - [ ] Typed records with the agree prompt
+  - [x] The store for typed records: the `Expense` table (a new migration), the checks, the propose /
+    agree / retract / discard / list routes (agents can only propose; agree, retract and discard answer only to DotAmi's own page), the privacy list and
+    /your-data's count, and the "totals, never single transactions" wording reworded for expenses
+  - [ ] The screen to type a record and the agree prompt for expenses
   - [ ] Receipts as copies, and backups that carry them
   - [ ] The entries in the Delete menu ([8d])
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])

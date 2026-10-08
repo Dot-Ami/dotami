@@ -341,12 +341,10 @@ export const files: PracticeFile[] = [
     bytes: () => makeXlsx([{ name: "Sales by Customer Detail", rows: groupedSheet(SPARSE) }]),
     columns: GROUPED_COLUMNS,
     expected: {
-      // WRONG TODAY, on the ASSUMED layout (names and "Total for" rows in column A, see
-      // GROUPED_COLUMNS): 3 dates against 8 other cells in column A is under half, so the date
-      // column is left empty and the person picks "Date". See the fails-today test "QuickBooks:
-      // pre-fills Date when each customer has only one line".
-      guess: { headerRow: 4, dateColumn: null, amountColumn: GROUPED_AMOUNT },
-      picks: { dateColumn: 0 },
+      // On the ASSUMED layout (names and "Total for" rows in column A, see GROUPED_COLUMNS): the
+      // 3 dates stand against 8 name, total and footer cells, which no longer count against the
+      // date column (the maintainer's decision, 2026-10-07), so "Date" is pre-filled.
+      guess: { headerRow: 4, dateColumn: 0, amountColumn: GROUPED_AMOUNT },
       dateOrder: { order: null, ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: [
