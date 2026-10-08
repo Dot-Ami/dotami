@@ -17,7 +17,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    line is written straight to the disk (`desktop/log.mjs`, `writeSync` on a file opened for
    appending): the start line (with *"started by the updater"* when the installer started it), the
    migrator's lines, *"database ready"*, the server's own output, and whatever stopped a start
-   (*"[desktop] stopped: …"*, written before the error dialog). Until 0.2.1 the log was a stream that
+   (*"[desktop] stopped: …"*, written before the error dialog: DotAmi's message and the error's
+   name and code only). A log that can't be opened (a read-only file, a full disk) is skipped, never
+   a reason not to start. Until 0.2.1 the log was a stream that
    wrote in the background while start-up ran synchronously, so a start killed or failed before the
    server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
    brought up to date by `desktop/migrate.mjs` (below).
@@ -173,8 +175,12 @@ version; the start that was killed was the new one (its safety copy is named aft
 0.2.1 has: `dotami-before-20261006180658_figures-…`), and the installer starts that one last and
 leaves it alone. What's left: the start was ended from outside (by the person or another program),
 or it failed and its message was lost with the rest of that run's log. The log is now written
-straight to the disk, so the next time it says which: a failure leaves *"[desktop] stopped: …"*; a
-start line followed by nothing was ended from outside. Not changed, listed: the installer gives the
+straight to the disk, so the next time it says more: a failure DotAmi catches leaves *"[desktop]
+stopped: …"*; a start line followed by nothing was ended or crashed outside DotAmi's own error
+handling (closed from the task manager, another program, or a crash in Electron or the database
+engine). A launch turned away because another copy still holds the one-copy lock (for example a
+new copy started while the old one is still quitting) writes no line at all, since the lock is
+taken before the log is opened. Not changed, listed: the installer gives the
 old version 1.3 s to quit before ending it outright (electron-builder's `customCheckAppRunning` macro
 could lengthen that); with the database migrator's transactions and safety copy that is not a risk
 to the data.

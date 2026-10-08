@@ -44,6 +44,8 @@ export function showUpdateProgress({ updater, dialog, window, log }) {
     bar(2);
     log(`[update] DotAmi ${info.version} is available; downloading`);
     // Not awaited and not attached to the window: the app stays usable while the message is up.
+    // Windows only for now. On macOS a message box without a parent runs synchronously (Electron's
+    // showMessageBox docs) and would block the app; give it the window there when a Mac build comes.
     void dialog
       .showMessageBox({
         type: "info",

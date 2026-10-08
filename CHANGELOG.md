@@ -21,7 +21,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`logs/server.log` in its data folder) was written in the background, so a start that was ended
   or failed while it updated the database left no line at all, not even "starting DotAmi" (seen on
   2026-10-08 during the update to 0.2.1; the data was unharmed). Every line is now written to the
-  disk straight away, including what stopped the start, and a start made by the updater says so.
+  disk straight away, including what stopped the start (DotAmi's message and the error's name and
+  code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
+  without it instead of refusing to start.
 
 ## [0.2.1] — 2026-10-08
 

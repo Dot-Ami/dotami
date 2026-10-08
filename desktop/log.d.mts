@@ -6,3 +6,5 @@ export interface DesktopLog {
 }
 
 export function openLog(file: string): DesktopLog;
+
+export function describeError(error: unknown): string;

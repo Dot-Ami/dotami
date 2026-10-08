@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
 import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
-import { openLog } from "./log.mjs";
+import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 
@@ -98,6 +98,9 @@ async function start() {
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
   } catch (error) {
     if (error instanceof MigrationRefused) return fail(error.message);
+    // The one error whose words the log keeps: which update failed and what the database objected
+    // to (a table or a column), which is what a failed update needs to be fixed. The privacy
+    // inventory's entry for the log says so.
     log.write(`[desktop] ${error}\n`);
     return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
@@ -459,9 +462,10 @@ function fail(message, error) {
   if (quitting) return;
   quitting = true;
   // Into the log before the dialog: the dialog waits for a click, and the person may end the app
-  // from the task manager instead. These are DotAmi's own messages and start-up errors (paths,
-  // ports, a migration's SQL error), never figures.
-  log?.write(`[desktop] stopped: ${message.replace(/\s*\n+\s*/g, " ")}${error ? ` (${error})` : ""}\n`);
+  // from the task manager instead. DotAmi's own message (it can name the data folder) and only the
+  // error's name and code, as everywhere else in the log; a failed database update has already
+  // written what the database objected to, in start().
+  log?.write(`[desktop] stopped: ${message.replace(/\s*\n+\s*/g, " ")}${error ? ` (${describeError(error)})` : ""}\n`);
   dialog.showErrorBox("DotAmi", message);
   server?.kill();
   app.quit();

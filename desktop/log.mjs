@@ -9,19 +9,28 @@ import { mkdirSync, openSync, writeSync } from "node:fs";
 import path from "node:path";
 
 /**
- * Opens (or creates) the log file for appending.
+ * Opens (or creates) the log file for appending. Never throws: if the file can't be opened (a
+ * read-only server.log, a "logs" that is a file, a full disk) the log it gives does nothing, and
+ * the app starts anyway. The log is a note, not the data.
  * @param {string} file
  * @returns {{ file: string, write: (text: string | Uint8Array) => void, follow: (stream: NodeJS.ReadableStream | null | undefined) => void }}
  */
 export function openLog(file) {
-  mkdirSync(path.dirname(file), { recursive: true });
-  const fd = openSync(file, "a");
+  let fd = -1;
+  try {
+    mkdirSync(path.dirname(file), { recursive: true });
+    fd = openSync(file, "a");
+  } catch (error) {
+    // Only the name and code: the message would carry the path, which the caller already has.
+    console.error(`[desktop] the log can't be opened (${describeError(error)}); starting without it`);
+  }
 
   const write = (text) => {
+    if (fd < 0) return;
     try {
       writeSync(fd, text);
     } catch {
-      // A full disk or a vanished folder must not stop the app; the log is a note, not the data.
+      // A full disk or a vanished folder must not stop the app.
     }
   };
 
@@ -33,4 +42,17 @@ export function openLog(file) {
       stream?.on("data", (chunk) => write(chunk));
     },
   };
+}
+
+/**
+ * "Error, EPERM": an error's name and code, never its message, which can quote what it was given.
+ * The same rule as lib/api/log-error.ts describeError, for the desktop side (plain JavaScript, so it
+ * can't import the TypeScript one).
+ * @param {unknown} error
+ * @returns {string}
+ */
+export function describeError(error) {
+  const name = error instanceof Error ? error.name : "unknown";
+  const code = typeof error?.code === "string" ? error.code : "-";
+  return `${name}, ${code}`;
 }

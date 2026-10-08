@@ -9,7 +9,7 @@
  * backup, the point where the real one stopped. The log must still hold every line.
  */
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -114,11 +114,53 @@ describe("a start killed right after its safety copy", () => {
   });
 });
 
+// The log is a note, not the data: a log that can't be opened must not stop DotAmi from starting.
+// Before this, openLog threw and main.mjs's start() ended in "DotAmi couldn't start."
+describe("a log that can't be opened", () => {
+  it("gives a log that does nothing when the logs folder is really a file", async () => {
+    const { openLog } = await import("../desktop/log.mjs");
+    writeFileSync(path.join(dir, "logs"), "not a folder");
+    const log = openLog(path.join(dir, "logs", "server.log"));
+    expect(log.file).toBe(path.join(dir, "logs", "server.log"));
+    expect(() => log.write("still running\n")).not.toThrow();
+    expect(() => log.follow(null)).not.toThrow();
+    expect(readFileSync(path.join(dir, "logs"), "utf8")).toBe("not a folder");
+  });
+
+  // Root can write to a read-only file, so this case only means something for an ordinary user.
+  it.skipIf(process.getuid?.() === 0)("gives a log that does nothing when server.log is read-only", async () => {
+    const { openLog } = await import("../desktop/log.mjs");
+    const logFile = path.join(dir, "logs", "server.log");
+    mkdirSync(path.dirname(logFile));
+    writeFileSync(logFile, "kept\n");
+    chmodSync(logFile, 0o444);
+    try {
+      const log = openLog(logFile);
+      expect(log.file).toBe(logFile);
+      expect(() => log.write("still running\n")).not.toThrow();
+      expect(readFileSync(logFile, "utf8")).toBe("kept\n");
+    } finally {
+      chmodSync(logFile, 0o644);
+    }
+  });
+});
+
+describe("describeError", () => {
+  it("gives the error's name and code, never its message", async () => {
+    const { describeError } = await import("../desktop/log.mjs");
+    const error = Object.assign(new Error("secret words 1234"), { code: "EPERM" });
+    expect(describeError(error)).toBe("Error, EPERM");
+    expect(describeError(new TypeError("x"))).toBe("TypeError, -");
+    expect(describeError("a string")).toBe("unknown, -");
+    expect(describeError(null)).toBe("unknown, -");
+  });
+});
+
 describe("desktop/main.mjs", () => {
   const main = readFileSync(path.join(root, "desktop", "main.mjs"), "utf8");
 
   it("writes its log through desktop/log.mjs, never a stream that writes later", () => {
-    expect(main).toContain('import { openLog } from "./log.mjs";');
+    expect(main).toMatch(/import \{[^}]*\bopenLog\b[^}]*\} from "\.\/log\.mjs";/);
     expect(main).toMatch(/log = openLog\(path\.join\(logDir, "server\.log"\)\)/);
     expect(main).not.toMatch(/createWriteStream|\.pipe\(log/);
   });
@@ -129,6 +171,14 @@ describe("desktop/main.mjs", () => {
     const failBody = main.slice(main.indexOf("function fail("));
     expect(failBody.indexOf("log?.write(`[desktop] stopped:")).toBeGreaterThan(-1);
     expect(failBody.indexOf("log?.write(`[desktop] stopped:")).toBeLessThan(failBody.indexOf("dialog.showErrorBox"));
+  });
+
+  it("fail() logs only the error's name and code, never the error itself", () => {
+    const start = main.indexOf("function fail(");
+    const failBody = main.slice(start, main.indexOf("dialog.showErrorBox", start));
+    const line = failBody.slice(failBody.indexOf("log?.write(`[desktop] stopped:"));
+    expect(line).toContain("describeError(error)");
+    expect(line).not.toMatch(/\$\{error\}|String\(error\)/);
   });
 
   it("ships every file of its own that it imports (desktop/package.mjs copies a fixed list)", () => {
