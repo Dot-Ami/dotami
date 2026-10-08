@@ -13,9 +13,12 @@ import { strToU8, zipSync } from "fflate";
 /**
  * One cell: text, a number, a calendar date ("YYYY-MM-DD", stored as Excel's serial number with the
  * date format), a formula with the value Excel last calculated for it, or null for an empty cell.
+ * A formula with no `value` is written with no saved value at all, the way a file looks when the
+ * program that wrote it left the sums for Excel to work out on opening (Xero's help says an Excel
+ * export with formulas can show 0.00 until Enable Editing is clicked).
  */
 export type XlsxCell =
-  string | number | { date: string } | { formula: string; value: number } | null;
+  string | number | { date: string } | { formula: string; value?: number } | null;
 
 export interface XlsxSheetSpec {
   name: string;
@@ -110,7 +113,9 @@ export function makeXlsx(sheets: XlsxSheetSpec[], opts: XlsxOptions = {}): Uint8
           // s="1" is the date format in styles.xml below.
           cellXml.push(`<c r="${ref}" s="1"><v>${dateSerial(cell.date, date1904)}</v></c>`);
         } else {
-          cellXml.push(`<c r="${ref}"><f>${esc(cell.formula)}</f><v>${cell.value}</v></c>`);
+          // No <v> element at all when there is no saved value: an empty <v></v> is not the same.
+          const saved = cell.value === undefined ? "" : `<v>${cell.value}</v>`;
+          cellXml.push(`<c r="${ref}"><f>${esc(cell.formula)}</f>${saved}</c>`);
         }
       });
 

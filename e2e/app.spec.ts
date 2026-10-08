@@ -7,10 +7,11 @@
  */
 import http from "node:http";
 
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Download, type Locator, type Page } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { files as waveFiles } from "../tests/fixtures/packages/wave";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -101,6 +102,14 @@ test("the settings page: every group, what's true today, every setting and its w
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");
+  // Run from source: the tools' own usage reports, which of them the project's commands switch off,
+  // and the two that no script reaches.
+  await expect(privacy).toContainText("switch both off");
+  await expect(privacy).toContainText("NEXT_TELEMETRY_DISABLED=1");
+  await expect(privacy).toContainText("CHECKPOINT_DISABLE=1");
+  // The registry check is described like the update check: the address is seen, nothing else.
+  await expect(privacy).toContainText("npm sees this computer's internet address");
+  await expect(privacy).not.toContainText("npx next telemetry disable");
 
   // Every setting is listed with its default, its warning when it has one, and the story that
   // brings it — and nothing on the page pretends to be a control that works: the only controls are
@@ -251,6 +260,75 @@ test("Figure reminders: tick monthly and yearly, reload, and they are still tick
   await expect(boxes.yearly).not.toBeChecked();
   expect(await savedReminders(page)).toMatchObject({ body: { value: { cadences: [] } } });
 });
+
+test("Add to my calendar: the ticked boxes become a calendar file made in the page, with nothing sent", async ({ page }) => {
+  // A fixed day, so the first event's date is known: October 8, 2026 (noon UTC is the 8th from
+  // UTC-11 to UTC+11).
+  await page.clock.install({ time: new Date("2026-10-08T12:00:00Z") });
+  await page.goto("/settings");
+  await resetReminders(page);
+  await page.reload();
+  const boxes = reminderBoxes(page);
+  const button = boxes.row.getByRole("button", { name: "Add to my calendar" });
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+
+  // Quarterly ticked: one repeating event, from the first day of the next quarter.
+  await setBox(page, boxes.quarterly, true);
+  await expect(button).toBeEnabled();
+  await expect(boxes.row).toContainText("can't see DotAmi, so it reminds you whether or not your figures are already in");
+  // Google Calendar takes a file only through its website's import page, not by opening the file.
+  await expect(boxes.row).toContainText("Google Calendar: import it on a computer at calendar.google.com");
+  await expect(boxes.row).toContainText("Importing the same file again adds a second copy");
+  const seen = watchRequests(page);
+  const download = page.waitForEvent("download");
+  await button.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("DotAmi figure reminders.ics");
+  const text = (await readDownload(file)).toString("utf8");
+  expect(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
+  expect(text.endsWith("END:VCALENDAR\r\n")).toBe(true);
+  expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+  // The UID is a random UUID (RFC 7986 §5.3), new for every file.
+  const firstUid = text.match(/\r\nUID:(\S+)\r\n/)?.[1];
+  expect(firstUid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  expect(text).toContain("\r\nDTSTART;VALUE=DATE:20270101\r\n");
+  expect(text).toContain("\r\nRRULE:FREQ=MONTHLY;INTERVAL=3\r\n");
+  expect(text).toContain("\r\nSUMMARY:Bring your DotAmi figures up to date\r\n");
+  // Nothing left the page to make it: no request at all after the click.
+  expect(seen.map((r) => r.path)).toEqual([]);
+
+  // Monthly and yearly instead: two events, in that order.
+  await setBox(page, boxes.quarterly, false);
+  await setBox(page, boxes.monthly, true);
+  await setBox(page, boxes.yearly, true);
+  const second = page.waitForEvent("download");
+  await button.click();
+  const both = (await readDownload(await second)).toString("utf8");
+  expect([...both.matchAll(/\r\nRRULE:(\S+)\r\n/g)].map((m) => m[1])).toEqual(["FREQ=MONTHLY", "FREQ=YEARLY"]);
+  // Three events across two files, three different UIDs: a second file never reuses one.
+  const bothUids = [...both.matchAll(/\r\nUID:(\S+)\r\n/g)].map((m) => m[1]);
+  expect(new Set([firstUid, ...bothUids]).size).toBe(3);
+  expect(both).toContain("\r\nDTSTART;VALUE=DATE:20261101\r\n");
+
+  // Nothing ticked: there is nothing to put in a calendar, so the button is off.
+  await setBox(page, boxes.monthly, false);
+  await setBox(page, boxes.yearly, false);
+  for (const box of [boxes.monthly, boxes.quarterly, boxes.yearly]) await expect(box).not.toBeChecked();
+  await expect(button).toBeDisabled();
+  // Still off after a reload, where the line under the boxes says why.
+  await page.reload();
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+  await expect(boxes.row).toContainText("None ticked: no reminder.");
+  await expect(button).toBeDisabled();
+});
+
+/** A download's bytes, read from where Playwright put it. */
+async function readDownload(download: Download): Promise<Buffer> {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
 
 test("Remind me about this idea: off until turned on, per idea, and still on after a reload", async ({ page }) => {
   await page.goto("/ventures");
@@ -665,6 +743,12 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await expect(
     card.getByText("DotAmi guessed these from the column names — check them."),
   ).toBeVisible();
+  // Every file: DotAmi has only been tried on invented files shaped from each program's help pages.
+  await expect(
+    card.getByText(
+      "Each accounting program's export was tested on files shaped from that program's help pages, not on real exports, so check the columns and totals.",
+    ),
+  ).toBeVisible();
   await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
     "Row 1",
   );
@@ -799,6 +883,32 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await card.getByRole("button", { name: "Cancel" }).click();
   await expect(card.getByRole("button", { name: "Add from a file" })).toBeVisible();
   expect(await figures()).toHaveLength(3);
+});
+
+// A gap the practice files found (2026-10-08), pinned with test.fail: it passes only while the gap
+// is there, so the day the screen names the report to export instead, this goes red until it is
+// made a normal test. Pinned here, on the screen, because the "no column names" sentence is the
+// screen's own; where the fix puts its sentence is up to the fix. docs/connectors/practice-files.md
+// "Known gaps" lists it.
+test("fails today: Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
+  page,
+}) => {
+  test.fail();
+  const { card } = await openSalish(page);
+  const incomeByCustomer = waveFiles.find((f) => f.id === "wave-income-by-customer")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: incomeByCustomer.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(incomeByCustomer.bytes()),
+  });
+  // Today's screen, positively first: the file is read and no column names are found.
+  await expect(
+    card.getByText("DotAmi couldn't find a row of column names in the first 30 rows."),
+  ).toBeVisible();
+  // The gap: nothing names Account Transactions, the Wave report that has a date on every line.
+  await expect(card.getByText(/Account Transactions/)).toBeVisible({ timeout: 2_000 });
 });
 
 test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {
