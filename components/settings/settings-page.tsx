@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { GhostLink, WordMark } from "@/components/ui";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
 import type { SettingsToday } from "@/lib/settings/today";
+import type { FigureRemindersValue } from "@/lib/settings/values";
 
 import { CopyPathButton } from "./copy-path-button";
+import { FigureRemindersControl } from "./figure-reminders-control";
 
 const TASK_LIST_URL = "https://github.com/Dot-Ami/dotami/blob/main/docs/task-list.md";
 const PART_4_URL =
@@ -20,8 +22,11 @@ const NEXT_TELEMETRY_URL = "https://nextjs.org/telemetry";
  * environment), then lists the settings planned for it with their default and the warning shown
  * before switching on anything risky. A setting whose story isn't built has no control — it
  * says which story brings it. The story that builds a setting adds its control here.
+ *
+ * `reminders` is the saved "Figure reminders" value, read on the server (the first setting
+ * that is live); null when the data file couldn't be read.
  */
-export function SettingsPage({ today }: { today: SettingsToday }) {
+export function SettingsPage({ today, reminders }: { today: SettingsToday; reminders: FigureRemindersValue | null }) {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
@@ -40,8 +45,9 @@ export function SettingsPage({ today }: { today: SettingsToday }) {
           <p className="mt-2 max-w-xl text-sm text-paper-dim">
             Each group starts with what this copy of DotAmi does right now. Below that is every
             setting planned for it: its default, its choices, and the warning you&apos;ll see
-            before switching on anything risky. None can be changed yet — each one arrives with
-            the feature it controls, named by its code on the{" "}
+            before switching on anything risky. Only the ones with a tick-box below can be
+            changed so far; each of the others arrives with the feature it controls, named by its
+            code on the{" "}
             <a href={TASK_LIST_URL} target="_blank" rel="noreferrer" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
               public task list
             </a>
@@ -72,7 +78,7 @@ export function SettingsPage({ today }: { today: SettingsToday }) {
 
               <ul className="mt-3 space-y-3">
                 {settingsInGroup(g.id).map((s) => (
-                  <SettingRow key={s.id} setting={s} />
+                  <SettingRow key={s.id} setting={s} reminders={reminders} />
                 ))}
               </ul>
             </section>
@@ -83,7 +89,7 @@ export function SettingsPage({ today }: { today: SettingsToday }) {
   );
 }
 
-function SettingRow({ setting }: { setting: SettingEntry }) {
+function SettingRow({ setting, reminders }: { setting: SettingEntry; reminders: FigureRemindersValue | null }) {
   const status =
     setting.status === "undecided"
       ? "Waiting on a decision"
@@ -124,6 +130,11 @@ function SettingRow({ setting }: { setting: SettingEntry }) {
           <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]">Warning · </span>
           {setting.warning}
         </p>
+      ) : null}
+      {setting.id === "figure-reminders" && setting.status === "live" ? (
+        <div className="mt-3 border-t border-rule-soft pt-3">
+          <FigureRemindersControl initial={reminders ? reminders.cadences : null} />
+        </div>
       ) : null}
     </li>
   );

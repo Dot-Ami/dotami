@@ -19,6 +19,23 @@ import type { Cell, ColumnChoice, MonthTotal, SkippedRow, TotalsResult } from ".
 export const TOTAL_ROW_LABEL =
   /^\s*(?:grand[\s-]+total|sub[\s-]?total|sous[\s-]?total|totals|totaux|total)(?!\p{L})/iu;
 
+/**
+ * What a transaction's type cell says when the row is the money arriving for a sale the file
+ * already lists as a separate row (so adding it would count the sale twice). Matched on the whole
+ * cell, trimmed and ignoring case; "Payment received" or "Deposit slip" is not one.
+ *
+ * "payment" and "deposit" are the words Intuit's Transaction List documents for QuickBooks Online.
+ * "paiement" and "dépôt" are ASSUMED: no French QuickBooks export has been seen, so they are the
+ * obvious translations, nothing more. Every other type (Invoice, Sales Receipt, Credit Memo...)
+ * counts as a sale or a refund, exactly as it does without a type column.
+ */
+const PAYMENT_TYPES = new Set(["payment", "deposit", "paiement", "dépôt"]);
+
+/** True when a type cell names a payment or deposit (see PAYMENT_TYPES). */
+export function isPaymentType(cell: Cell | undefined): boolean {
+  return typeof cell === "string" && PAYMENT_TYPES.has(cell.trim().toLowerCase());
+}
+
 function isEmpty(cell: Cell | undefined): boolean {
   return cell === null || cell === undefined || (typeof cell === "string" && cell.trim() === "");
 }
@@ -51,6 +68,14 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
 
     if (isBlankRow(row)) {
       skip("blank");
+      continue;
+    }
+
+    // In QuickBooks a Payment or Deposit is usually money received for a sale on another row (a
+    // Deposit can also be the only record of a sale — the screen's hint says so). Leave it out,
+    // whatever else is wrong with the row, so the person is told why rather than "no date".
+    if (choice.typeColumn != null && isPaymentType(row[choice.typeColumn])) {
+      skip("payment");
       continue;
     }
 

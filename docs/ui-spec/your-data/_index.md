@@ -36,7 +36,10 @@ jump links, then five sections in this order:
 2. **Everything else in the data file** — one card per table in the inventory: its plain name,
    how many records, what it holds, and **what takes a record out today** (including "nothing, by
    design" for statements and "nothing in the app yet" for ideas). Ideas add "N with your notes".
-   Counts include everything, e.g. the turned-down figures no other screen shows.
+   Counts include everything, e.g. the turned-down figures no other screen shows. "Your settings"
+   (added 2026-10-07, [8e]) counts the saved choices — one record per setting that has been
+   changed, so 0 until the first tick or switch — and says that unticking or turning a switch off
+   overwrites the choice but leaves the record in the file.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened; and the window's

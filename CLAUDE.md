@@ -44,15 +44,18 @@ says where it is going.
   detail; playbook export) · `/ventures` (every saved venture, its stage, notes,
   cross-references) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
-  this copy today) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
+  this copy today; the settings marked live there, so far Figure reminders, can be changed and are
+  saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
   everything else, what sits outside the database and what leaves the computer; read-only, read
   from the data file on every visit by `lib/privacy/holdings.ts`).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
-  `law/provision` (a provision's words from an optional local statute store).
+  `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT
+  one saved setting; answers only DotAmi's own window, no agent access yet).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
-  the person agreed to; [8a]). SQLite has no list columns: list fields are JSON arrays, read back
+  the person agreed to; [8a]) · `Setting` (the person's saved choices, one row per setting: a
+  catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`
   "dependencies", copied into the installer, or imported from `app/`, `components/` or `lib/`; with
@@ -124,7 +127,10 @@ weeks) — browser tests run the real build for that reason.
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
 the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
 A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
-migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee.
+migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee. Read
+the SQL Prisma generates: the migrator runs with foreign keys on, so a migration that rebuilds
+`Venture` (copy, drop, rename) would cascade-delete every idea's figures, links and map progress —
+change those tables with hand-written SQL and a test that seeded data survives.
 Releases: tag `v<version>` → `.github/workflows/release.yml` → a DRAFT release the maintainer
 publishes by hand (docs/architecture/desktop-app.md § Releasing an update). Never publish a release
 or push a tag without the maintainer saying so.

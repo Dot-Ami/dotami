@@ -27,6 +27,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instead. Months already waiting or agreed with the same total aren't proposed twice. Every time,
   it first asks where the file is from; a bank or credit card file is turned away without being
   opened, since bank statements aren't supported yet.
+- **A "Type column" for files that list a sale and its payment** — QuickBooks' transaction lists
+  hold an invoice and then a Payment row for the same money, which was added up twice. "Add from a
+  file" now has an optional Type column, pre-filled only when a column is headed exactly
+  "Transaction Type" (a bare "Type" column is picked by hand). Rows typed Payment or Deposit are left out of the totals and listed,
+  with a note that in QuickBooks they are money received for a sale on another row and a way to
+  undo it if they are the person's own sales ("choose None"); every other row counts as before, and
+  choosing "None" counts every row. A Deposit made straight to an income account is also left out.
+  Nothing about the column is stored.
+- **A reminder in the agree prompt**: before the buttons, every time it opens, *"Double-check what
+  DotAmi did, and how, before you agree."*
+- **Figure reminders** ([8e]) — DotAmi's first setting you can change and keep. On the settings
+  page, tick how often you'd like to be reminded to bring your figures up to date: monthly,
+  quarterly and yearly, any combination or none. Each idea on the ideas page has a *Remind me about
+  this idea* switch, off until you turn it on. Both survive closing the app. Your choices are saved
+  now; the reminder itself (a banner and a calendar file) comes in a later step, so nothing
+  reminds you yet. The choices sit in the data file in a new small settings table that later
+  settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
+  window can read or change them. A database update adds the table without touching your ideas,
+  figures, links or map progress (a test proves it).
+
+### Changed
+- **"Today" for figures is your computer's own day.** The server used to decide in UTC, so for a few
+  hours each Canadian evening it accepted a period ending "tomorrow". It now uses the day on this
+  computer, which in the desktop app and a self-hosted copy is your day.
 
 ### Documented
 - **Business expense records** ([8i]) — a design and a proposed privacy review for keeping single

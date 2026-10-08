@@ -7,7 +7,8 @@
  * A setting stays `planned` until the story that builds it lands: the page shows it with its
  * default and its warning, says which story brings it, and offers no control — a switch that
  * did nothing would be lying. The story that builds a setting flips it to `live` and gives it
- * its control. `undecided` means the maintainer hasn't ruled yet (Part 4 of the same doc).
+ * its control, and gives lib/settings/values.ts a definition of what its saved value may look
+ * like (a test fails if a live setting has none). `undecided` means the maintainer hasn't ruled yet (Part 4 of the same doc).
  */
 
 export type SettingGroupId = "data" | "figures" | "lens" | "map" | "privacy" | "updates";
@@ -92,12 +93,12 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "figure-reminders",
     group: "figures",
     label: "Figure reminders",
-    does: "A reminder to bring your figures up to date.",
-    defaultValue: "off",
-    options: "monthly · quarterly · off",
+    does: "How often to be reminded to bring your figures up to date: tick monthly, quarterly and/or yearly, or none. Each idea has its own \"Remind me about this idea\" switch on the Ideas page. Your choices are saved now; the reminder itself (a banner and a calendar file) comes in a later step.",
+    defaultValue: "none ticked",
+    options: "monthly · quarterly · yearly (tick any, or none)",
     warning: null,
     story: "8e",
-    status: "planned",
+    status: "live",
   },
   {
     id: "bank-records",

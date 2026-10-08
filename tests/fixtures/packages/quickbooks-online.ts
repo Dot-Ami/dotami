@@ -379,11 +379,13 @@ export const files: PracticeFile[] = [
       dateOrder: { order: null, ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: [
-        // WRONG TODAY: 47.60 (invoice) + 47.60 (its payment) + 54.55 = 149.75. The sales are
-        // 47.60 + 54.55 = 102.15. See the fails-today test "QuickBooks Payment".
-        { ...GROUPED_TOTALS.july, amountCents: 14975, rows: 3 },
+        // The "Transaction Type" header pre-fills the Type column, so the Payment row is left out:
+        // 47.60 (invoice) + 54.55 (sales receipt) = 102.15. Without a type column the payment
+        // would be added as well, 149.75, and the sale counted twice.
+        { ...GROUPED_TOTALS.july, amountCents: 10215, rows: 2 },
       ],
       skipped: [
+        { row: 7, reason: "payment" }, // the $47.60 received for invoice 1040
         { row: 9, reason: "blank" },
         { row: 10, reason: "no-date" }, // the footer
       ],

@@ -191,7 +191,9 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - RFC 5545
 - playwright.dev emulation and clock
 
-**Decisions:** an "old" label; reminder delivery; yearly; which ideas; server clock (shared); where settings live (shared). **Must count coverage per kind**, so yearly T2125 totals don't silence revenue reminders.
+**Decisions:** an "old" label; reminder delivery; yearly; which ideas; ~~server clock (shared)~~ decided 2026-10-07 (the computer's own day); where settings live (shared). **Must count coverage per kind**, so yearly T2125 totals don't silence revenue reminders.
+
+**Decided 2026-10-07 (maintainer), built in the settings slice:** where settings live: one small `Setting` table, a name and a value per row, that every later setting reuses. Yearly: monthly, quarterly and yearly are tick-boxes, any combination or none. Which ideas: a switch per idea, off unless turned on. Reminder delivery is a banner plus a calendar file; that is a later slice, so for now the choices are saved and nothing reminds yet. The per-idea switches are a list of idea ids inside the reminders setting's value, not a column on `Venture`, so an idea that is later removed leaves nothing that can break (an id that matches no idea is ignored).
 
 ### [8f] Tax software, through the CRA's line numbers
 
@@ -311,7 +313,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - One idea or all.
 - What is kept about column names and picks.
 - Where settings live.
-- Which clock sets "today" on the server.
+- ~~Which clock sets "today" on the server.~~ Decided by the maintainer 2026-10-07: the computer's own local day.
 - What agents may do.
 - How today's file drop catches bank files.
 

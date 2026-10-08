@@ -38,6 +38,12 @@ export interface ColumnChoice {
   headerRow: number;
   dateColumn: number;
   amountColumn: number;
+  /**
+   * The column holding each row's transaction type (QuickBooks' "Transaction Type"), if the person
+   * picked one. Rows typed Payment or Deposit are left out so a sale isn't counted again as the
+   * money arriving. Unset or null: every row counts.
+   */
+  typeColumn?: number | null;
   /** Needed only for dates like 03/01/2026; null when every date in the column is unambiguous. */
   dateOrder: DateOrder | null;
   decimalStyle: DecimalStyle;
@@ -64,9 +70,11 @@ export interface MonthTotal {
  * no-date    — no date DotAmi can read with certainty (notes, headings, a merged cell's empty half)
  * no-amount  — a date but an empty amount cell
  * bad-amount — a date but an amount DotAmi can't read with certainty
+ * payment    — the type column says Payment or Deposit: money received for a sale the file already lists
  * not-over   — its month hasn't ended yet, so there's no total for it yet
  */
-export type SkipReason = "blank" | "total" | "no-date" | "no-amount" | "bad-amount" | "not-over";
+export type SkipReason =
+  "blank" | "total" | "no-date" | "no-amount" | "bad-amount" | "payment" | "not-over";
 
 export interface SkippedRow {
   /** 1-based, as the person sees it in Excel. */
