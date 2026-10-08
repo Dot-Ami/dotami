@@ -29,6 +29,7 @@ import { REPLY_LABEL, type ExtractResult, type WorkerReply } from "./types";
 interface WorkerScope {
   onmessage: ((event: MessageEvent<{ bytes: Uint8Array }>) => void) | null;
   postMessage(message: WorkerReply): void;
+  location: { origin: string };
 }
 
 const scope = globalThis as unknown as WorkerScope;
@@ -36,6 +37,9 @@ const scope = globalThis as unknown as WorkerScope;
 const reply = (result: ExtractResult) => scope.postMessage({ label: REPLY_LABEL, result });
 
 scope.onmessage = (event) => {
+  // A dedicated worker only hears from the page that started it, and those messages carry an
+  // empty origin. Anything that names a different origin isn't from DotAmi's page: ignore it.
+  if (event.origin && event.origin !== scope.location.origin) return;
   const bytes = event.data?.bytes;
   // Anything else on the channel is pdf.js's own traffic, not a file to read.
   if (!(bytes instanceof Uint8Array)) return;
