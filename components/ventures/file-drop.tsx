@@ -3,21 +3,24 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
-import { detectDecimalStyle } from "@/lib/figures/file/amounts";
-import { detectDateOrder } from "@/lib/figures/file/dates";
+import {
+  firstSheetWithRows,
+  guessPicks,
+  previewSheet,
+  sheetHasRows,
+  type Picks,
+} from "@/lib/figures/file/preview";
 import { sniffFile } from "@/lib/figures/file/sniff";
-import { columnsOf, guessColumns, isBlankRow } from "@/lib/figures/file/table";
-import { monthlyTotals, splitAlreadyKnown } from "@/lib/figures/file/totals";
+import { columnsOf } from "@/lib/figures/file/table";
+import { splitAlreadyKnown } from "@/lib/figures/file/totals";
 import {
   MAX_FILE_BYTES,
   type Cell,
-  type ColumnChoice,
   type DateOrder,
   type DecimalStyle,
   type ReadResult,
   type Sheet,
   type SkipReason,
-  type TotalsResult,
 } from "@/lib/figures/file/types";
 import type { FigureView } from "@/lib/figures/types";
 
@@ -64,13 +67,6 @@ type Phase = "pick" | "reading" | "ready";
  */
 type Origin = "ask" | "accounting" | "bank";
 
-/** Which row holds the column names and which columns hold the dates and amounts (null = not chosen). */
-interface Picks {
-  headerRow: number | null;
-  dateColumn: number | null;
-  amountColumn: number | null;
-}
-
 /** An answer the person gave about one column, remembered only for the column it was given for. */
 interface Answer<T> {
   key: string;
@@ -84,43 +80,8 @@ function localToday(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-/** True when a sheet has at least one row with something in it. */
-function sheetHasRows(sheet: Sheet): boolean {
-  return sheet.rows.some((row) => !isBlankRow(row));
-}
-
-/**
- * A first guess at the table's columns. With `forcedHeader`, the person has said which row holds
- * the column names, so the guess only counts if that very row reads as column names; otherwise
- * nothing is pre-filled and they pick.
- */
-function guessPicks(rows: Cell[][], forcedHeader?: number): Picks | null {
-  if (forcedHeader === undefined) {
-    const guess = guessColumns(rows);
-    return (
-      guess && {
-        headerRow: guess.headerRow,
-        dateColumn: guess.dateColumn,
-        amountColumn: guess.amountColumn,
-      }
-    );
-  }
-  // Looking from the chosen row down keeps every column index the same as in the whole sheet.
-  const guess = guessColumns(rows.slice(forcedHeader));
-  if (!guess || guess.headerRow !== 0) return null;
-  return {
-    headerRow: forcedHeader,
-    dateColumn: guess.dateColumn,
-    amountColumn: guess.amountColumn,
-  };
-}
-
-/** The cells under the column names in one column (all of them, blank or not; callers skip what they don't need). */
-function columnCells(rows: Cell[][], headerRow: number, column: number): Cell[] {
-  const cells: Cell[] = [];
-  for (let i = headerRow + 1; i < rows.length; i += 1) cells.push(rows[i][column] ?? null);
-  return cells;
-}
+/** The pickers' value for "nothing chosen yet". */
+const NO_PICKS: Picks = { headerRow: null, dateColumn: null, amountColumn: null, typeColumn: null };
 
 function rowWord(n: number): string {
   return n === 1 ? "row" : "rows";
@@ -139,6 +100,13 @@ function leftOutText(reason: SkipReason, n: number): string {
       return `${n} ${rowWord(n)} with a date but no amount`;
     case "bad-amount":
       return `${n} ${rowWord(n)} with an amount DotAmi can't read`;
+    case "payment":
+      // DotAmi can't tell whether these rows are money for a sale listed elsewhere (QuickBooks) or
+      // the person's own sales (their own sheet, or a deposit straight to an income account), so
+      // the line says what was done and how to undo it rather than claiming a sale was counted.
+      return n === 1
+        ? "1 row typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks that is money received for a sale listed on another row; if it is a sale of yours, choose None)"
+        : `${n} rows typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks those are money received for sales listed on other rows; if they are sales of yours, choose None)`;
     case "not-over":
       return `${n} ${rowWord(n)} in a month that isn't over yet`;
   }
@@ -150,15 +118,10 @@ const LEFT_OUT_ORDER: SkipReason[] = [
   "no-amount",
   "bad-amount",
   "total",
+  "payment",
   "not-over",
   "blank",
 ];
-
-/** What the preview works out from the person's choices: totals, or the one reason there are none yet. */
-type Preview =
-  | { state: "waiting"; message: string | null }
-  | { state: "failed"; message: string }
-  | { state: "ready"; result: TotalsResult };
 
 export function FileDrop({
   ventureId,
@@ -189,11 +152,7 @@ export function FileDrop({
   // Only the rows are kept from the file; its bytes are gone once they are turned into rows.
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [sheetIndex, setSheetIndex] = useState(0);
-  const [picks, setPicks] = useState<Picks>({
-    headerRow: null,
-    dateColumn: null,
-    amountColumn: null,
-  });
+  const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const [guessed, setGuessed] = useState(false);
   const [dateAnswer, setDateAnswer] = useState<Answer<DateOrder | ""> | null>(null);
   const [styleAnswer, setStyleAnswer] = useState<Answer<DecimalStyle> | null>(null);
@@ -231,15 +190,8 @@ export function FileDrop({
   /** Fills the pickers for a sheet from a guess; `forcedHeader` when the person chose the header row. */
   function applyGuess(sheetRows: Cell[][], forcedHeader?: number) {
     const guess = guessPicks(sheetRows, forcedHeader);
-    if (guess) {
-      setPicks(guess);
-      setGuessed(
-        guess.dateColumn !== null || guess.amountColumn !== null || forcedHeader === undefined,
-      );
-    } else {
-      setPicks({ headerRow: forcedHeader ?? null, dateColumn: null, amountColumn: null });
-      setGuessed(false);
-    }
+    setPicks(guess.picks);
+    setGuessed(guess.guessed);
   }
 
   /**
@@ -257,7 +209,7 @@ export function FileDrop({
     setProposeError(null);
     setSheets([]);
     setSheetIndex(0);
-    setPicks({ headerRow: null, dateColumn: null, amountColumn: null });
+    setPicks(NO_PICKS);
     setGuessed(false);
     setDateAnswer(null);
     setStyleAnswer(null);
@@ -304,8 +256,7 @@ export function FileDrop({
       return;
     }
 
-    const first = result.sheets.findIndex(sheetHasRows);
-    const start = first === -1 ? 0 : first;
+    const start = firstSheetWithRows(result.sheets);
     setSheets(result.sheets);
     setSheetIndex(start);
     setDateAnswer(null);
@@ -328,68 +279,33 @@ export function FileDrop({
     if (file) void openFile(file);
   }
 
-  // The dates in the chosen column, and what they say about how they're written.
-  const dateCells = useMemo(
-    () =>
-      picks.headerRow !== null && picks.dateColumn !== null
-        ? columnCells(rows, picks.headerRow, picks.dateColumn)
-        : [],
-    [rows, picks.headerRow, picks.dateColumn],
-  );
-  const detectedOrder = useMemo(() => detectDateOrder(dateCells), [dateCells]);
+  // The answers the person gave count only for the column they were given for.
   const dateKey = `${sheetIndex}:${picks.headerRow}:${picks.dateColumn}`;
   const dateOrderChoice: DateOrder | "" = dateAnswer?.key === dateKey ? dateAnswer.value : "";
-
-  // The amounts in the chosen column, and the style they're mostly written in.
-  const amountCells = useMemo(
-    () =>
-      picks.headerRow !== null && picks.amountColumn !== null
-        ? columnCells(rows, picks.headerRow, picks.amountColumn)
-        : [],
-    [rows, picks.headerRow, picks.amountColumn],
-  );
-  const detectedStyle = useMemo(() => detectDecimalStyle(amountCells), [amountCells]);
   const styleKey = `${sheetIndex}:${picks.headerRow}:${picks.amountColumn}`;
-  const decimalStyle: DecimalStyle =
-    styleAnswer?.key === styleKey ? styleAnswer.value : detectedStyle;
+  const styleChoice = styleAnswer?.key === styleKey ? styleAnswer.value : undefined;
 
   const code = currency.trim().toUpperCase();
   const currencyOk = /^[A-Z]{3}$/.test(code);
 
+  // Everything the screen works out from the sheet and the picks lives in lib/figures/file/preview.ts,
+  // the same function the practice-file tests run. The currency only holds the totals back.
+  const preview = useMemo(
+    () =>
+      previewSheet(
+        rows,
+        picks,
+        { dateOrder: dateOrderChoice, decimalStyle: styleChoice },
+        localToday(),
+        !currencyOk,
+      ),
+    [rows, picks, dateOrderChoice, styleChoice, currencyOk],
+  );
+  const { detectedOrder, decimalStyle } = preview;
   const needsDateQuestion = detectedOrder.ambiguous;
-  // Asked (or conflicting) dates follow the person's answer; otherwise whatever the dates themselves prove.
-  const dateOrder: DateOrder | null =
-    needsDateQuestion || detectedOrder.conflicting ? dateOrderChoice || null : detectedOrder.order;
-
-  const preview = useMemo<Preview>(() => {
-    if (picks.headerRow === null || picks.dateColumn === null || picks.amountColumn === null) {
-      return { state: "waiting", message: null };
-    }
-    if (picks.dateColumn === picks.amountColumn) {
-      return { state: "waiting", message: "The date and the amount can't be the same column." };
-    }
-    if (needsDateQuestion && dateOrder === null) {
-      return { state: "waiting", message: "Say how the dates are written to see the totals." };
-    }
-    if (!currencyOk) return { state: "waiting", message: null };
-    const choice: ColumnChoice = {
-      headerRow: picks.headerRow,
-      dateColumn: picks.dateColumn,
-      amountColumn: picks.amountColumn,
-      dateOrder,
-      decimalStyle,
-    };
-    try {
-      return { state: "ready", result: monthlyTotals(rows, choice, localToday()) };
-    } catch (error) {
-      // The only throw is the "too large" sentence, which carries no amount.
-      return { state: "failed", message: error instanceof Error ? error.message : READ_FAILED };
-    }
-  }, [rows, picks, needsDateQuestion, dateOrder, decimalStyle, currencyOk]);
 
   const split = useMemo(
-    () =>
-      preview.state === "ready" ? splitAlreadyKnown(preview.result.months, existing, code) : null,
+    () => (preview.result ? splitAlreadyKnown(preview.result.months, existing, code) : null),
     [preview, existing, code],
   );
 
@@ -433,9 +349,10 @@ export function FileDrop({
 
   // Skipped rows grouped by reason, each with its count and the first few row numbers.
   const leftOut = useMemo(() => {
-    if (preview.state !== "ready") return [];
+    const result = preview.result;
+    if (!result) return [];
     return LEFT_OUT_ORDER.map((reason) => {
-      const hits = preview.result.skipped.filter((s) => s.reason === reason);
+      const hits = result.skipped.filter((s) => s.reason === reason);
       return {
         reason,
         count: hits.length,
@@ -630,7 +547,7 @@ export function FileDrop({
                 onChange={(e) => {
                   const next = asNumber(e.target.value);
                   if (next === null) {
-                    setPicks({ headerRow: null, dateColumn: null, amountColumn: null });
+                    setPicks(NO_PICKS);
                     setGuessed(false);
                     return;
                   }
@@ -693,6 +610,34 @@ export function FileDrop({
                   </select>
                   <p id={`${uid}-tax`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
                     If the file also has a tax column, check whether this one includes the tax.
+                  </p>
+                </div>
+                <div>
+                  <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
+                    Type column (optional)
+                  </label>
+                  <select
+                    id={`${uid}-type`}
+                    value={picks.typeColumn ?? ""}
+                    onChange={(e) => {
+                      setPicks({ ...picks, typeColumn: asNumber(e.target.value) });
+                      setGuessed(false);
+                    }}
+                    aria-describedby={`${uid}-type-hint`}
+                    className={`${FIELD} mt-1`}
+                  >
+                    <option value="">None — count every row</option>
+                    {columns.map((c) => (
+                      <option key={c.index} value={c.index}>
+                        {c.letter} · {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    Some files list a sale and the payment received for it as two rows. With a type
+                    column, rows typed Payment or Deposit are left out so the sale isn&apos;t
+                    counted twice. That also leaves out a Deposit that is the only record of a sale,
+                    so check the left-out list. Choose None to count every row.
                   </p>
                 </div>
               </>
