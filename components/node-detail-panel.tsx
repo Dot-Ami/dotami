@@ -186,6 +186,11 @@ function ItemRow({ item }: { item: UnlockItem }) {
           </Link>
         </p>
       ) : null}
+      {item.fromRecords && item.fromRecords.notes.length > 0 ? (
+        // [8e] How recent those figures are and what the read leaves out: whole sentences
+        // written by the rule (lib/brain), shown as they are.
+        <p className="mt-0.5 pl-3.5 font-mono text-[10px] leading-4 text-stone">{item.fromRecords.notes.join(" ")}</p>
+      ) : null}
       {open ? (
         <div className="mt-3 space-y-2.5 border-t border-rule-soft pt-3 text-xs leading-5 text-stone">
           <p className="text-paper-dim">{item.payoff}</p>
