@@ -665,6 +665,12 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await expect(
     card.getByText("DotAmi guessed these from the column names — check them."),
   ).toBeVisible();
+  // Every file: DotAmi has only been tried on invented files shaped from each program's help pages.
+  await expect(
+    card.getByText(
+      "Each accounting program's export was tested on files shaped from that program's help pages, not on real exports, so check the columns and totals.",
+    ),
+  ).toBeVisible();
   await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
     "Row 1",
   );

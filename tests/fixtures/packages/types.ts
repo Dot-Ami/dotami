@@ -36,9 +36,19 @@ export interface Expected {
    * guess that is wrong, the fixture says so beside the value; a gap not yet fixed is pinned by an
    * `it.fails` test in tests/figures-file-packages.spec.ts saying what it should be.
    */
-  guess: { headerRow: number; dateColumn: number | null; amountColumn: number | null };
-  /** The columns the person picks where the guess leaves one empty or wrong (0-based). */
-  picks?: { dateColumn?: number; amountColumn?: number };
+  guess: { headerRow: number; dateColumn: number | null; amountColumn: number | null } | null;
+  /**
+   * What the person picks where the guess leaves one empty or wrong (0-based). `headerRow` is the
+   * screen's "Column names are in row" select, set when DotAmi found no column names (guess null)
+   * or took the wrong row for them.
+   */
+  picks?: { headerRow?: number; dateColumn?: number; amountColumn?: number };
+  /**
+   * WRONG TODAY when set: the reader splits the rows on the wrong character, so the file's column
+   * titles never come out as columns. The spec then checks they DON'T match `columns`, and an
+   * `it.fails` test says what they should be.
+   */
+  columnsMisread?: true;
   /** What the date column says about how its dates are written, and the answer asked of the person if it can't say. */
   dateOrder: { order: DateOrder | null; ambiguous: boolean; conflicting: boolean };
   answer?: DateOrder;

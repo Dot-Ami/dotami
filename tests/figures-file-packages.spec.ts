@@ -3,12 +3,18 @@ import { describe, expect, it } from "vitest";
 import { decodeText } from "@/lib/figures/file/decode";
 import { previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
 import type { FileAnswers as Answers, FilePreview as ScreenRun } from "@/lib/figures/file/preview";
-import { isBlankRow } from "@/lib/figures/file/table";
+import { readSpreadsheet } from "@/lib/figures/file/read-file";
+import { columnsOf, isBlankRow } from "@/lib/figures/file/table";
 import { isRealCalendarDay } from "@/lib/figures/validate";
+import * as freshbooks from "./fixtures/packages/freshbooks";
 import * as quickbooks from "./fixtures/packages/quickbooks-online";
+import * as sageAccounting from "./fixtures/packages/sage-accounting";
+import * as sage50 from "./fixtures/packages/sage-50-canadian";
 import type { PracticeFile } from "./fixtures/packages/types";
+import * as wave from "./fixtures/packages/wave";
 import * as xero from "./fixtures/packages/xero";
 import { utf8, utf8Bom, windows1252 } from "./helpers/encode";
+import { makeXlsx } from "./helpers/make-xlsx";
 
 // [8c-3] Practice files shaped like each accounting program's export, run through the same steps
 // the "Add from a file" screen runs (read, guess the columns, work out the date order and decimal
@@ -23,12 +29,17 @@ const TODAY = "2026-10-06";
 const PACKAGES = {
   xero: { sources: xero.sources, files: xero.files },
   "quickbooks-online": { sources: quickbooks.sources, files: quickbooks.files },
+  wave: { sources: wave.sources, files: wave.files },
+  freshbooks: { sources: freshbooks.sources, files: freshbooks.files },
+  "sage-accounting": { sources: sageAccounting.sources, files: sageAccounting.files },
+  "sage-50-canadian": { sources: sage50.sources, files: sage50.files },
 };
 const ALL_FILES: PracticeFile[] = Object.values(PACKAGES).flatMap((p) => p.files);
 
 /** The answers a person gives on the screen for a file: the columns they pick, and how dates are written. */
 function answersFor(file: PracticeFile): Answers {
   return {
+    headerRow: file.expected.picks?.headerRow,
     dateColumn: file.expected.picks?.dateColumn,
     amountColumn: file.expected.picks?.amountColumn,
     dateOrder: file.expected.answer,
@@ -39,6 +50,19 @@ function find(id: string): PracticeFile {
   const file = ALL_FILES.find((f) => f.id === id);
   if (!file) throw new Error(`no practice file called ${id}`);
   return file;
+}
+
+/** One month's total, without the row count: for the "fails today" tests, which only pin the amount. */
+function amountsOf(run: ScreenRun): { periodStart: string; amountCents: number }[] {
+  return (run.result?.months ?? []).map((m) => ({
+    periodStart: m.periodStart,
+    amountCents: m.amountCents,
+  }));
+}
+
+/** The reason a 1-based row is listed as left out, or undefined when it was counted. */
+function reasonFor(run: ScreenRun, row: number): string | undefined {
+  return run.result?.skipped.find((s) => s.row === row)?.reason;
 }
 
 /** Rows from just below the column names to the last row with anything in it. */
@@ -81,6 +105,28 @@ describe("encode helpers", () => {
   });
 });
 
+describe("the workbook helper", () => {
+  // Xero's help: an Excel report with formulas can show 0.00 until Enable Editing. A formula with no
+  // `value` is written with no saved value, and the reader then has nothing to give for that cell.
+  it("writes a formula with no saved value, which reads back as an empty cell", async () => {
+    const bytes = makeXlsx([
+      {
+        name: "Sheet1",
+        rows: [
+          ["Qty", "Price", "Line"],
+          [2, 30, { formula: "A2*B2" }],
+          [1, 5, { formula: "A3*B3", value: 5 }],
+        ],
+      },
+    ]);
+    const read = await readSpreadsheet("formulas.xlsx", bytes);
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.sheets[0].rows[2]).toEqual([1, 5, 5]); // a saved value is read
+    expect(read.sheets[0].rows[1][2] ?? null).toBeNull(); // no saved value: nothing
+  });
+});
+
 describe("every package says where its layout came from", () => {
   it("has a fixture module registered here for every file in tests/fixtures/packages", () => {
     const modules = readdirSync(new URL("./fixtures/packages/", import.meta.url))
@@ -95,7 +141,10 @@ describe("every package says where its layout came from", () => {
       expect(pkg.sources.length).toBeGreaterThan(0);
       for (const source of pkg.sources) {
         expect(source.url).toMatch(/^https:\/\/[^\s]+$/);
-        expect(source.url).not.toMatch(/[?#]/); // an address, never a query that could carry a figure
+        // An address, never a query that could carry a figure. The one exception is how Sage's
+        // Canadian knowledge base names an article: "?solutionid=" and the article's number.
+        const url = source.url.replace(/^(https:\/\/ca-kb\.sage\.com\/[^?#]+)\?solutionid=\d+$/, "$1");
+        expect(url).not.toMatch(/[?#]/);
         expect(source.read).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(isRealCalendarDay(source.read)).toBe(true);
         expect(source.says.length).toBeGreaterThan(10);
@@ -135,15 +184,24 @@ describe("every package says where its layout came from", () => {
 describe.each(ALL_FILES)("$id", (file) => {
   it("finds the column names row and guesses the columns as recorded", async () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    expect(run.guess).not.toBeNull();
-    const guess = run.guess!;
-    expect({
-      headerRow: guess.headerRow,
-      dateColumn: guess.dateColumn,
-      amountColumn: guess.amountColumn,
-    }).toEqual(file.expected.guess);
-    // The titles the file really holds are the ones the fixture marks documented or assumed.
-    expect(guess.columns.map((c) => c.label)).toEqual(file.columns.map((c) => c.header));
+    const guess = run.guess;
+    expect(
+      guess && {
+        headerRow: guess.headerRow,
+        dateColumn: guess.dateColumn,
+        amountColumn: guess.amountColumn,
+      },
+    ).toEqual(file.expected.guess);
+    // The titles the file really holds, on the row the person ends up using, are the ones the
+    // fixture marks documented or assumed.
+    const answered = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(answered.picks.headerRow).not.toBeNull();
+    const labels = columnsOf(answered.rows, answered.picks.headerRow!).map((c) => c.label);
+    if (file.expected.columnsMisread) {
+      expect(labels).not.toEqual(file.columns.map((c) => c.header));
+    } else {
+      expect(labels).toEqual(file.columns.map((c) => c.header));
+    }
   });
 
   it("reads the dates and the amounts the way the file writes them", async () => {
@@ -282,6 +340,155 @@ describe("QuickBooks Transaction List", () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, { typeColumn: null });
     const july = run.result!.months.find((m) => m.periodStart === "2026-07-01");
     expect(july?.amountCents).toBe(14975); // 47.60 + 47.60 + 54.55
+  });
+});
+
+describe("Sage 50 Canadian's export route", () => {
+  // Sage 50 offers .csv, .htm, .pdf, .xls and .txt. Its Excel choice is the old .xls format, which
+  // DotAmi refuses with a sentence saying what to do; the practice files above prove the .csv route.
+  it("refuses an old .xls export with a sentence saying to save it as .xlsx, and reads the .csv", async () => {
+    // D0 CF 11 E0 A1 B1 1A E1: the first bytes of every old-format Excel file.
+    const oldXls = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0, 0, 0]);
+    const refused = await readSpreadsheet("Customer Sales Detail.xls", oldXls);
+    expect(refused.ok).toBe(false);
+    expect(refused.ok ? "" : refused.error).toMatch(
+      /older Excel file \(\.xls\).*save a copy as \.xlsx/,
+    );
+    const csvFile = find("sage50-customer-sales-detail");
+    expect((await readSpreadsheet(csvFile.fileName, csvFile.bytes())).ok).toBe(true);
+  });
+});
+
+/*
+ * Gaps the Wave, FreshBooks, Sage and Xero Receivable Invoice Detail files found (2026-10-08). Each
+ * is written as an `it.fails` test: it passes only while the gap is there, so the day a fix lands it
+ * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
+ * docs/connectors/practice-files.md "Known gaps" lists each one.
+ */
+describe("gaps the newer practice files found, fails today", () => {
+  // Wave's ledger keeps sales in Credit and a refund in Debit. With Credit picked, the refund's row
+  // is listed as "no amount" and August stays 40.00 too high.
+  it.fails("Wave: a refund in the Debit column lowers the month it was paid back", async () => {
+    const file = find("wave-account-transactions");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS);
+  });
+
+  // Income by Customer has no dates at all. Today the screen says it found no column names and
+  // nothing more; it should name the report that does have dates.
+  it.fails("Wave: Income by Customer is met with the name of a report to export instead", async () => {
+    const file = find("wave-income-by-customer");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.message ?? "").toMatch(/Account Transactions/);
+  });
+
+  // The summary's "Total Invoiced, Total Paid" titles are taken for the column names, and "Total
+  // Paid" is pre-filled as the amount over the invoice numbers.
+  it.fails("FreshBooks: finds the real column names under the summary block", async () => {
+    const file = find("freshbooks-invoices-iso");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.picks.headerRow).toBe(4);
+  });
+
+  it.fails("FreshBooks: a Draft invoice is left out", async () => {
+    const file = find("freshbooks-invoices-iso");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
+  });
+
+  // dd.mm.yy is one of FreshBooks' six date formats; a two-digit year is never read today.
+  it.fails("FreshBooks: dates written dd.mm.yy are read once the century is known", async () => {
+    const file = find("freshbooks-invoices-two-digit-year");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run).map((m) => m.periodStart)).toEqual(
+      freshbooks.ISSUED_NOT_DRAFT.map((m) => m.periodStart),
+    );
+  });
+
+  it.fails("FreshBooks: Revenue by Client, months across the top, gives one total per month", async () => {
+    const file = find("freshbooks-revenue-by-client");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
+  });
+
+  it.fails("Sage Accounting: a voided invoice is left out", async () => {
+    const file = find("sage-accounting-sales-list");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(sageAccounting.SALES_NOT_VOID);
+  });
+
+  // 12-03-05 is Sage 50's own example of a short date.
+  it.fails("Sage 50: dates with a two-digit year are read once the century is known", async () => {
+    const file = find("sage50-two-digit-year");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
+  });
+
+  // Four comma-decimal columns per line win the delimiter guess over the semicolons: every line
+  // splits on its commas and no column names are found. One amount column reads fine.
+  it.fails("Sage 50 French: a semicolon file with several comma-decimal columns is split on its semicolons", async () => {
+    const file = find("sage50-french");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.detectedStyle).toBe("comma");
+    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
+  });
+
+  // Receivable Invoice Detail includes voided invoices by default.
+  it.fails("Xero Receivable Invoice Detail: the Voided invoice is left out", async () => {
+    const file = find("xero-receivable-invoice-detail");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(reasonFor(run, xero.DETAIL_VOIDED_ROW)).toBeDefined();
+  });
+
+  // The cell holds a formula Excel never worked out; "no amount" sends the person looking for an
+  // empty cell. It should say the sum wasn't saved (open the file in Excel, let it calculate, save).
+  it.fails("Xero Receivable Invoice Detail: a formula with no saved value is told apart from an empty cell", async () => {
+    const file = find("xero-receivable-invoice-detail");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    // Positive first: the row is listed, not counted and not lost.
+    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).toBeDefined();
+    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).not.toBe("no-amount");
+  });
+
+  it("the true figures those tests pin add up from the fixtures' own line data", () => {
+    /** Cents per month (YYYY-MM-01), September and before only: October is not over on TODAY. */
+    const byMonth = (items: { day: string; cents: number }[]) => {
+      const out: Record<string, number> = {};
+      for (const { day, cents } of items) {
+        if (day >= "2026-10") continue;
+        const month = `${day.slice(0, 7)}-01`;
+        out[month] = (out[month] ?? 0) + cents;
+      }
+      return Object.entries(out)
+        .sort()
+        .map(([periodStart, amountCents]) => ({ periodStart, amountCents }));
+    };
+    expect(sage50.TRUE_MONTHS).toEqual(
+      byMonth(
+        sage50.CUSTOMERS.flatMap((c) => c.sales.map((s) => ({ day: s.date, cents: s.revenueCents }))),
+      ),
+    );
+    expect(freshbooks.ISSUED_NOT_DRAFT).toEqual(
+      byMonth(
+        freshbooks.INVOICES.filter((i) => i.status !== "Draft").map((i) => ({
+          day: i.issued,
+          cents: i.subtotalCents,
+        })),
+      ),
+    );
+    expect(sageAccounting.SALES_NOT_VOID).toEqual(
+      byMonth(
+        sageAccounting.SALES.filter((d) => d.status !== "Void").map((d) => ({
+          day: d.date,
+          cents: d.netCents,
+        })),
+      ),
+    );
+    expect(wave.LEDGER_NET_OF_REFUNDS).toEqual(
+      byMonth(
+        wave.SALES_LINES.map((l) => ({ day: l.date, cents: l.side === "credit" ? l.cents : -l.cents })),
+      ),
+    );
   });
 });
 

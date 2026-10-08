@@ -101,7 +101,13 @@ roadmap's build order.
   - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
     rows out and lists them; the screen's steps now live in one shared function the tests also call
   - [x] Fixed the other gaps they found: Xero's price-per-item column is no longer pre-filled, its invoice date wins over the due date, and one-line customers keep their Date guess
-  - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
+  - [x] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian, and Xero's Receivable Invoice Detail: practice
+    files checked to the cent, eleven gaps they found pinned as "fails today" tests; a line on "Add from a
+    file" saying each program's export was only tested on files shaped from its help pages
+  - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
+  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
+    months across the top, the FreshBooks summary block, French files with several comma-decimal
+    columns, formulas saved with no value, a report with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs

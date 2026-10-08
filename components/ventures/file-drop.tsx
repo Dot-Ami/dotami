@@ -498,6 +498,12 @@ export function FileDrop({
           <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
             File: <span className="text-paper">{fileName}</span>
           </p>
+          {/* Shown for every file: DotAmi was only ever tried on invented files laid out from each
+              program's help pages (tests/fixtures/packages/), never on a real export. */}
+          <p className="mt-1 text-[11px] text-stone-dim">
+            Each accounting program&apos;s export was tested on files shaped from that program&apos;s
+            help pages, not on real exports, so check the columns and totals.
+          </p>
 
           {nonEmptySheets.length > 1 ? (
             <div className="mt-2">
