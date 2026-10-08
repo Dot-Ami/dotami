@@ -41,6 +41,11 @@ Every migration must pass `tests/desktop-migrate.spec.ts` plus a drift check tha
 
 ## 2. Build order
 
+*Status 2026-10-07:* rows 2-6, 8 and 10 are merged (#81-#87; row 10 is the "Where is this file from?"
+question). The maintainer answered the decisions on 2026-10-07, so the "Blocked by" column below is the
+original plan; what still waits is the shared question of where a figure's source is kept (row 11, and
+the account link in row 13), plus a few smaller choices taken up as each slice starts.
+
 | # | Work | Blocked by |
 |---|---|---|
 | 1 | Record fixes: the Sage 50 Canada row in `docs/connectors/README.md:49` (links a US-edition article), the Figure table missing from `CLAUDE.md:51`, the stale comment at `prisma/schema.prisma:78`, the stale settings line | nothing |
