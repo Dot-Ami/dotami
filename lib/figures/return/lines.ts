@@ -32,5 +32,19 @@ export const T2125_LINES: readonly ReturnLine[] = [
 /** Printed at the top of the form's first page, and how the reader tells one copy from the next. */
 export const T2125_TITLE = "Statement of Business or Professional Activities";
 
-/** The form's code, printed at the foot of every page ("T2125 E (25)"). */
-export const T2125_CODE = /\bT2125\b/;
+/**
+ * The form's code as the CRA prints it at the foot of every page: "T2125 E (25)" (or "F" on the
+ * French form), as a run of its own. A run may carry more after the version ("T2125 E (25) Page 2
+ * of 9"), and the bare code "T2125" alone also counts. A sentence that only NAMES the form ("attach
+ * Form T2125", printed on the T1 and Schedule 8) does not: that page isn't a T2125.
+ */
+export const T2125_CODE = /^T2125(?:\s+[EF]\s*\(\d{2}\)(?:\s.*)?)?$/;
+
+/** "8299, 9368, 9369 and 9946": the lines as they read in a sentence. */
+const LINE_LIST = (() => {
+  const numbers = T2125_LINES.map((l) => l.line);
+  return `${numbers.slice(0, -1).join(", ")} and ${numbers[numbers.length - 1]}`;
+})();
+
+/** The sentence under "Choose a PDF" saying what the reader looks for. Built here so it can't drift from the list. */
+export const T2125_HINT = `For each T2125 (${T2125_TITLE}) in it, DotAmi shows lines ${LINE_LIST} and the page each is on.`;

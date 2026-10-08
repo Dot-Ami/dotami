@@ -21,7 +21,7 @@ export interface PageText {
   items: TextItem[];
 }
 
-/** Why a PDF could not be read. Each code has one plain sentence (REFUSALS in read-pdf.ts). */
+/** Why a PDF could not be read. Each code has one plain sentence (REFUSALS in refusals.ts). */
 export type RefusalCode =
   | "empty"
   | "too-big"

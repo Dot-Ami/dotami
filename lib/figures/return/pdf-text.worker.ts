@@ -5,8 +5,9 @@
  * given. Here both halves run in THIS worker instead: handing pdf.js its parser module as
  * `globalThis.pdfjsWorker` makes it use that copy in place (its "fake worker"), so it starts no
  * worker and loads no script of its own. All of pdf.js, the parser included, therefore lives in
- * this one thread, away from the page: it can't touch the window, and the window never freezes on a
- * big file. The script itself is served by DotAmi from /_next/static, under a Content-Security-Policy
+ * this one thread, away from the page: it can't touch the window, and parsing a big file never
+ * freezes it (finding the lines in the text afterwards runs in the window; find-lines.ts keeps that
+ * close to linear). The script itself is served by DotAmi from /_next/static, under a Content-Security-Policy
  * of its own that refuses every connection (next.config.mjs, workerPolicy).
  *
  * The page sends one message per file and gets one labelled reply back; the answer is never an

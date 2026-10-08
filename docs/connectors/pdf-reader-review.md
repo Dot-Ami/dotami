@@ -122,6 +122,18 @@ Known limits, documented rather than fixed in this slice:
 - **Layouts other than the CRA's form.** Wealthsimple Tax's and TurboTax's printed layouts aren't
   documented. Until a person describes theirs, the reader is tested only on invented PDFs laid out
   like the CRA's 2025 T2125, and anything it doesn't recognise shows as "not found", never a guess.
+- **What the reader takes for a T2125, and for an amount.** A page counts only when the form's code
+  is printed as its own run, as the CRA's footer is ("T2125 E (25)"); a sentence that names the form
+  ("attach Form T2125", on the T1 and Schedule 8) doesn't make a page a T2125. Software that prints
+  the code only inside a longer heading would show "no T2125". A copy ends at a page without the
+  code. A whole-dollar amount with no thousands comma ("4500") is read only when its cents follow in
+  their own box ("4500" then "00"); printed alone, a four- or five-digit number can't be told from
+  the next line's number, so the line shows "nothing DotAmi can read beside it".
+- **Time in the window.** pdf.js runs in the worker, under the 60-second limit. Finding the four
+  lines in the text it returns runs in the window afterwards; it looks up a run's row only for runs
+  that are one of the four line numbers, at most 10 times per line per page, so it stays about
+  linear (a one-page test PDF with 40,000 text runs takes a few milliseconds; the first version took
+  about 21 seconds).
 - **Hidden text.** Text drawn in white, or off the page, is still text to pdf.js. In this slice it
   can only make a line show twice (every place a line is printed is listed); deciding between two
   amounts is the next slice's job.

@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
-import { T2125_LINES } from "@/lib/figures/return/lines";
+import { T2125_HINT, T2125_LINES } from "@/lib/figures/return/lines";
 import type { ReturnReader } from "@/lib/figures/return/read-pdf";
 import type { ReturnReadResult, T2125Copy } from "@/lib/figures/return/types";
 
@@ -152,9 +152,8 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
             />
           </div>
           <p id={`${uid}-hint`} className="mt-2 text-[11px] text-stone-dim">
-            For each T2125 (Statement of Business or Professional Activities) in it, DotAmi shows
-            lines 8299, 9368, 9369 and 9946 and the page each is on. It&apos;s read here, on this
-            computer, and never kept. Nothing is added to your figures.
+            {T2125_HINT} It&apos;s read here, on this computer, and never kept. Nothing is added to
+            your figures.
           </p>
         </div>
       ) : null}

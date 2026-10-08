@@ -17,7 +17,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { extractPageText, PDF_OPTIONS, type PdfJs } from "@/lib/figures/return/extract";
 import { findT2125Copies } from "@/lib/figures/return/find-lines";
-import { T2125_LINES } from "@/lib/figures/return/lines";
+import { T2125_HINT, T2125_LINES } from "@/lib/figures/return/lines";
 import { interpret } from "@/lib/figures/return/read-pdf";
 import { REFUSALS } from "@/lib/figures/return/refusals";
 import { sniffPdf } from "@/lib/figures/return/sniff";
@@ -179,6 +179,14 @@ describe("plain refusals", () => {
     expect(REFUSALS["no-t2125"]).toContain("Save PDF on the Submit page");
   });
 
+  it("another form that names the T2125 in a sentence is not taken for one", async () => {
+    // Schedule 8 and the T1 tell you to attach a T2125; that sentence must not make a phantom copy.
+    const schedule = otherFormPage("Schedule 8", "5000-S8 E (25)");
+    schedule.texts?.push({ x: 27, y: 560, text: "Net self-employment income (attach Form T2125)" });
+    const result = await read([otherFormPage("Income Tax and Benefit Return", "5000-R"), schedule]);
+    expect(result).toEqual({ ok: false, code: "no-t2125", error: REFUSALS["no-t2125"] });
+  });
+
   it("line numbers on a page that isn't a T2125 are not read as one", async () => {
     const page: PdfPage = { texts: [{ x: 484.2, y: 274, text: "8299" }, { x: 520, y: 274, text: "1.00" }] };
     expect(await read([page])).toMatchObject({ ok: false, code: "no-t2125" });
@@ -249,6 +257,57 @@ describe("finding the lines, from text runs alone", () => {
   it("a word in the box is not an amount, and nothing further right is taken instead", () => {
     const copies = findT2125Copies([{ page: 1, items: [code, run("8299", 484.2, 274), run("see note", 505, 274), run("5.00", 560, 274)] }]);
     expect(copies[0].lines[0].occurrences[0]).toEqual({ page: 1, printed: null, cents: null });
+  });
+
+  it("the form's code counts only as the footer, not inside a sentence", () => {
+    const line = run("8299", 484.2, 274);
+    const named = run("Business income: complete Form T2125 first", 27, 600);
+    expect(findT2125Copies([{ page: 1, items: [named, line] }])).toEqual([]);
+    // The footer with more printed after it, or the code alone, still counts.
+    for (const footer of ["T2125 E (25) Page 2 of 9", "T2125 F (25)", "T2125"]) {
+      expect(findT2125Copies([{ page: 1, items: [run(footer, 21, 23.6), line] }]), footer).toHaveLength(1);
+    }
+  });
+
+  it("dollars printed without a comma, with the cents in their own box, are read as the amount", () => {
+    const copies = findT2125Copies([
+      { page: 1, items: [code, run("8299", 484.2, 274), run("4500", 520, 274), run("00", 545, 274)] },
+    ]);
+    expect(copies[0].lines[0].occurrences).toEqual([{ page: 1, printed: "4500.00", cents: 450000 }]);
+  });
+
+  it("a big page is read in a moment, not in seconds (the window waits on this)", () => {
+    // 40,000 one-letter runs over 200 rows, plus a few hundred copies of a line number on one row:
+    // a hostile shape, far under the file-size limit. The first version took about 21 s here.
+    const items: TextItem[] = [code];
+    for (let k = 0; k < 40_000; k += 1) items.push(run("x", (k % 200) * 3, 40 + Math.floor(k / 200) * 3.5, 2));
+    for (let k = 0; k < 500; k += 1) items.push(run("8299", k, 300));
+    items.push(run("9946", 484.2, 500), run("1.00", 520, 500));
+    const started = performance.now();
+    const copies = findT2125Copies([{ page: 1, items }]);
+    const took = performance.now() - started;
+    expect(copies[0].lines.find((l) => l.line === "9946")?.occurrences[0].printed).toBe("1.00");
+    expect(took).toBeLessThan(1500);
+  });
+
+  it("a form title printed at the top of every page doesn't split one T2125 in two", async () => {
+    const header = { x: 21, y: 780, text: "T2125 Statement of Business or Professional Activities" };
+    const withHeader = (pages: PdfPage[]) => pages.map((p) => ({ ...p, texts: [...(p.texts ?? []), header] }));
+    const one = await read(withHeader(t2125Pages({ amounts: INVENTED_AMOUNTS })));
+    expect(one).toMatchObject({ ok: true, copies: [{ firstPage: 1, lastPage: 3 }] });
+    expect(summary(one)).toEqual([["8299 p2 48,250.00", "9368 p3 12,730.45", "9369 p3 35,519.55", "9946 p3 33,019.55"]]);
+    // Two businesses printed that way are still two.
+    const two = await read(withHeader([...t2125Pages({ amounts: INVENTED_AMOUNTS }), ...t2125Pages({ amounts: INVENTED_AMOUNTS })]));
+    expect(two).toMatchObject({ ok: true, copies: [{ firstPage: 1, lastPage: 3 }, { firstPage: 4, lastPage: 6 }] });
+  });
+
+  it("the panel's sentence names the same lines the reader looks for, and the screen spec quotes it", () => {
+    expect(T2125_HINT).toBe(
+      "For each T2125 (Statement of Business or Professional Activities) in it, DotAmi shows lines 8299, 9368, 9369 and 9946 and the page each is on.",
+    );
+    expect(T2125_HINT).toContain(T2125_LINES.map((l) => l.line).slice(0, -1).join(", "));
+    const spec = readFileSync(path.join(root, "docs/ui-spec/ventures/_index.md"), "utf8");
+    expect(spec).toContain(T2125_HINT);
   });
 
   it("the four lines are 8299, 9368, 9369 and 9946, in that order, with the CRA's words", () => {

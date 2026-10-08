@@ -134,7 +134,10 @@ WebSocket and EventSource reaching another address, `img-src 'self' blob: data:`
 elsewhere. It does not stop WebRTC (`connect-src` doesn't govern it and no `webrtc` directive is
 set), is not known to stop WebTransport or WebSocketStream, doesn't stop navigation (`window.open`,
 links), can't stop a script that a running script adds (`script-src` carries `'strict-dynamic'`),
-and covers nothing that runs on the server or in the desktop app's main process. (3) Code review.
+and covers nothing that runs on the server or in the desktop app's main process. A worker started
+from one of DotAmi's own script files (the return reader's) follows that file's policy instead,
+set in `next.config.mjs` on `/_next/static/`: `default-src 'none'; script-src 'self'`, so it
+connects nowhere at all. (3) Code review.
 The full lists are in the header of `tests/helpers/source-scan.ts`, and a test there pins each
 thing the scan misses.
 
