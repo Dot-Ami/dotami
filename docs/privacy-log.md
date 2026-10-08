@@ -67,6 +67,10 @@ person is asked).
   key. In the desktop app, a download refused because it didn't come from DotAmi's own page adds
   one line to `logs/server.log` naming nothing but the refusal
   ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
+- **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
+  deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
+  of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
+  adds one line to the log with only the error's name and code, never what was deleted.
 
 ### What leaves the computer, and to whom
 
@@ -81,6 +85,10 @@ person is asked).
   browser or the desktop app; the browser test checks the click makes no request
   ([`e2e/app.spec.ts`](../e2e/app.spec.ts)). If the person imports it into a calendar that syncs
   online, the event text and dates go to the company that runs that calendar; the page says so.
+
+- **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
+  (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
+  ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
 
 - **Running DotAmi from its source code no longer reports to Next.js or Prisma through the
   project's own commands.** `npm run dev`, `npm run build`, `npm run start` and `npm run lint` now
@@ -128,6 +136,14 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Before this, Electron's
   built-in dialog handled a playbook save.
 
+- **DotAmi can now erase data from its own file.** The Delete button on *What DotAmi knows about
+  you* empties the ticked kinds (ideas with their links, map progress, figures and expense records;
+  figures; expense records; every statement at once; settings). Only DotAmi's own page can ask for
+  it: the route refuses any other caller, an agent included
+  ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts),
+  `refuseUnlessFromAppPage`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)).
+  Statements still can't be edited or deleted one at a time.
+
 ### What the person must agree to
 
 - **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
@@ -138,6 +154,12 @@ person is asked).
   file is written without the person choosing where. In a browser it is an ordinary download,
   following the browser's own setting.
 
+- **Deleting needs two answers.** The person ticks what to delete, then *Delete these?* lists
+  every count and *Delete them now?* says it can't be undone, with focus on Cancel. If anything
+  changed in the file since the person looked, nothing is deleted
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
+  [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
+
 - No change to what needs a click: an update still installs only after *Restart and update*.
   What changed is when the person hears of it: a notice that a new version is downloading now
   appears as soon as one is found, without blocking the app, and the taskbar button shows the
@@ -147,6 +169,13 @@ person is asked).
 ### How to remove it
 
 - Nothing new to remove: the return reader keeps nothing (above).
+- **The Delete button on *What DotAmi knows about you*** removes ideas, figures, expense records,
+  statements and settings from the data file, then wipes the file's free space; if the wipe can't
+  run, the page says so and offers to try again. **What it doesn't reach yet**, and the page says
+  each (`NOT_CLEARED_BY_DELETE` in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)): the
+  safety copies in `backups/`, what the desktop window stored in earlier launches, the log,
+  anything that already left the computer, and the disk under the data file. The placeholder
+  account (`User`) stays (`KEPT_BY_DELETE`).
 
 ### What the policy will need to say
 
@@ -161,6 +190,9 @@ person is asked).
 - A tax return the person drops is read on their computer, in memory, and not kept or sent; only
   four T2125 lines and their pages are shown. The PDF reader is Mozilla's pdf.js, run so it
   can't connect anywhere.
+- Delete removes DotAmi's own copy only: backups the person made, the safety copies in the
+  backups folder and anything already shared still hold what was deleted, and the CRA generally
+  expects business records to be kept six years, which Delete doesn't change.
 
 ### Still open (carried forward until decided)
 
@@ -181,9 +213,9 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
-- **Deleting things.** Nothing in the app erases an idea, a statement, a figure, a setting or an
-  expense record yet; the Delete menu is planned with *What DotAmi knows about you* ([8d] in
-  [task-list.md](task-list.md)).
+- **Deleting things.** The Delete menu is built ([8d], above). Still open: clearing the backups
+  folder from it, clearing what the desktop window stored in earlier launches, and whether an
+  agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
 - Found while writing this log, not yet raised as decisions: the desktop app's log
   (`logs/server.log`) is appended to and never trimmed, and nothing removes old safety copies in
   `backups/` ([`desktop/main.mjs`](../desktop/main.mjs), [`desktop/migrate.mjs`](../desktop/migrate.mjs));
