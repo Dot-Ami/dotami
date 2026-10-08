@@ -163,6 +163,9 @@ test("a confirmed figure decides the GST card, with its source — and only the 
   await card.getByRole("button", { name: "Review this figure" }).click();
   const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
   await expect(prompt).toBeVisible();
+  // The reminder to check the work sits in the prompt, next to the Agree button.
+  const checkFirst = prompt.getByText("Double-check what DotAmi did, and how, before you agree.", { exact: true });
+  await expect(checkFirst).toBeVisible();
 
   // Closing the prompt confirms nothing.
   await page.keyboard.press("Escape");
@@ -186,6 +189,8 @@ test("a confirmed figure decides the GST card, with its source — and only the 
 
   // The person agrees.
   await card.getByRole("button", { name: "Review" }).click();
+  // ...and it is there every time the prompt opens, not only the first.
+  await expect(checkFirst).toBeVisible();
   await prompt.getByRole("button", { name: "Agree", exact: true }).click();
   await expect(prompt).toBeHidden();
   expect((await listed()).map((f) => f.status)).toEqual(["confirmed"]);
