@@ -5,7 +5,7 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { mkdirSync, accessSync, constants, createWriteStream, existsSync, rmSync } from "node:fs";
+import { mkdirSync, accessSync, constants, existsSync, rmSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +13,9 @@ import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
 import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
+import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused } from "./migrate.mjs";
+import { showUpdateProgress } from "./update-notice.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
@@ -33,7 +35,7 @@ let win = null;
 /** @type {Electron.UtilityProcess | null} */
 let server = null;
 let quitting = false;
-/** @type {import("node:fs").WriteStream | null} */
+/** @type {import("./log.mjs").DesktopLog | null} */
 let log = null;
 let dataDir = "";
 let dbFile = "";
@@ -72,14 +74,18 @@ async function start() {
   } catch (error) {
     return fail(`DotAmi can't write to its data folder:\n${dataDir}\n\nCheck that the folder exists and that you're allowed to change it.`, error);
   }
+  // Opened as soon as the data folder is known to be writable, and written straight to the disk
+  // (desktop/log.mjs): a start that stops anywhere after this line leaves its reason in the log.
+  const logDir = path.join(dataDir, "logs");
+  log = openLog(path.join(logDir, "server.log"));
+  // --updated: the installer started this copy after an update (electron-builder's NSIS
+  // StartApp; docs/architecture/desktop-app.md § Updating on Windows).
+  const how = process.argv.includes("--updated") ? " (started by the updater)" : "";
+  log.write(`\n--- ${new Date().toISOString()} starting DotAmi ${app.getVersion()}${how}\n`);
+
   if (!existsSync(serverEntry)) {
     return fail("This copy of DotAmi hasn't been built yet. Run `npm run desktop:build`, then start it again.");
   }
-
-  const logDir = path.join(dataDir, "logs");
-  mkdirSync(logDir, { recursive: true });
-  log = createWriteStream(path.join(logDir, "server.log"), { flags: "a" });
-  log.write(`\n--- ${new Date().toISOString()} starting DotAmi ${app.getVersion()}\n`);
 
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
@@ -92,6 +98,9 @@ async function start() {
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
   } catch (error) {
     if (error instanceof MigrationRefused) return fail(error.message);
+    // The one error whose words the log keeps: which update failed and what the database objected
+    // to (a table or a column), which is what a failed update needs to be fixed. The privacy
+    // inventory's entry for the log says so.
     log.write(`[desktop] ${error}\n`);
     return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
@@ -103,8 +112,8 @@ async function start() {
     serviceName: "DotAmi server",
     env: serverEnv({ PORT: String(port), HOSTNAME: "127.0.0.1", DATABASE_URL: databaseUrl }),
   });
-  server.stdout?.pipe(log, { end: false });
-  server.stderr?.pipe(log, { end: false });
+  log.follow(server.stdout);
+  log.follow(server.stderr);
   server.on("exit", (code) => {
     if (!quitting) fail(`DotAmi's server stopped unexpectedly (code ${code}). Details are in ${path.join(logDir, "server.log")}.`);
   });
@@ -166,25 +175,15 @@ async function checkForUpdates(byHand) {
       error: (m) => log?.write(`[update] ${m}\n`),
       debug: () => {},
     };
-    autoUpdater.on("update-downloaded", async (info) => {
-      const { response } = await dialog.showMessageBox(win ?? undefined, {
-        type: "info",
-        title: "Update ready",
-        buttons: ["Restart and update", "Later"],
-        defaultId: 0,
-        cancelId: 1,
-        message: `DotAmi ${info.version} is ready to install.`,
-        detail: "Your data stays in its folder, and the app copies it to backups/ before any change to how it's stored.",
-      });
-      if (response === 0) autoUpdater.quitAndInstall();
-    });
+    // "Downloading now" the moment a newer version is found, the taskbar button as progress, then
+    // "Restart and update" / "Later" once it's downloaded and checked (desktop/update-notice.mjs).
+    // The same for the check at start and for Help → Check for updates.
+    showUpdateProgress({ updater: autoUpdater, dialog, window: () => win, log: (line) => log?.write(`${line}\n`) });
   }
   try {
     const result = await autoUpdater.checkForUpdates();
     if (byHand && !result?.isUpdateAvailable) {
       void dialog.showMessageBox({ type: "info", title: "Updates", message: `You have the latest version (${app.getVersion()}).` });
-    } else if (byHand) {
-      void dialog.showMessageBox({ type: "info", title: "Updates", message: `Downloading DotAmi ${result.updateInfo.version}…`, detail: "You'll be asked before it installs." });
     }
   } catch (error) {
     log?.write(`[update] check failed: ${error}\n`);
@@ -310,7 +309,6 @@ function buildMenu(origin, dataDir) {
   );
 }
 
-/** Says what went wrong in plain words, then quits — never a blank window. */
 /**
  * File → Back up…: one file holding the whole database, locked with a passphrase if the person
  * chooses one (desktop/backup.mjs). Meant to be kept somewhere other than this computer.
@@ -458,10 +456,16 @@ function askPassphrase(mode, message = "") {
   });
 }
 
+/** Says what went wrong in plain words, then quits — never a blank window. */
 function fail(message, error) {
   if (error) console.error(error);
   if (quitting) return;
   quitting = true;
+  // Into the log before the dialog: the dialog waits for a click, and the person may end the app
+  // from the task manager instead. DotAmi's own message (it can name the data folder) and only the
+  // error's name and code, as everywhere else in the log; a failed database update has already
+  // written what the database objected to, in start().
+  log?.write(`[desktop] stopped: ${message.replace(/\s*\n+\s*/g, " ")}${error ? ` (${describeError(error)})` : ""}\n`);
   dialog.showErrorBox("DotAmi", message);
   server?.kill();
   app.quit();

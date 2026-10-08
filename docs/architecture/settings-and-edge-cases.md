@@ -68,7 +68,9 @@ is read-only.
 - The app crashes mid-backup → no half-written file under the real name. *Built (write then rename); tested that no `.partial` is left.*
 
 **Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
-- An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); not tested.*
+- An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); the progress is cleared and the person is told nothing was installed, and the next start tries again. Tested with a fake updater (`tests/desktop-update-notice.spec.ts`), not over a real connection.*
+- An update is found at start-up → the person is told at once, not only when the download is done. *Built 2026-10-08: a message that doesn't block the app, and the download's progress on the taskbar button; installing is still only their click. Tested with a fake updater.*
+- The app is killed or fails while starting (during the database update, say) → the log still says how far it got and why. *Built 2026-10-08: the log is written straight to the disk; tested by killing a start the moment its safety copy is made (`tests/desktop-startup-log.spec.ts`).*
 - An update fails to install → roll back to the version that worked. *Not built or tested.*
 - An update includes a database change → back up first, then upgrade. *Built and tested (`tests/desktop-migrate.spec.ts`): a full copy in `backups/` first; a failing change is undone.*
 - No internet at all → the app works fully; it just doesn't update. *The check failing is logged and ignored; not tested.*
