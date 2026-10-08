@@ -93,7 +93,7 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "figure-reminders",
     group: "figures",
     label: "Figure reminders",
-    does: "How often to be reminded to bring your figures up to date: tick monthly, quarterly and/or yearly, or none. Each idea has its own \"Remind me about this idea\" switch on the Ideas page. Your choices are saved now; the reminder itself (a banner and a calendar file) comes in a later step.",
+    does: "How often to be reminded to bring your figures up to date: tick monthly, quarterly and/or yearly, or none. Each idea has its own \"Remind me about this idea\" switch on the Ideas page. When a period you asked about has ended and an idea's agreed figures don't cover it, a banner on that idea's card and map says so, with \"Add figures\" and \"Not this time\". The \"add to my calendar\" file comes in a later step.",
     defaultValue: "none ticked",
     options: "monthly · quarterly · yearly (tick any, or none)",
     warning: null,

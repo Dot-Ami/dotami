@@ -164,7 +164,7 @@ async function setBox(page: Page, box: Locator, on: boolean) {
 }
 
 /**
- * Puts the reminders setting back to "nothing ticked, no idea switched on", from inside the page. The
+ * Puts the reminders setting back to "nothing ticked, no idea switched on, nothing dismissed", from inside the page. The
  * browser tests share one database, and CI retries a failed test once, so each reminders test starts
  * from a known state rather than from what an earlier attempt left behind.
  */
@@ -173,7 +173,7 @@ async function resetReminders(page: Page) {
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "figure-reminders", value: { cadences: [], ideaIds: [] } }),
+      body: JSON.stringify({ id: "figure-reminders", value: { cadences: [], ideaIds: [], dismissed: [] } }),
     });
     return res.status;
   });

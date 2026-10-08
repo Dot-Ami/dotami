@@ -14,6 +14,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { SettingInputError, readSetting, writeSetting } from "@/lib/settings/store";
 import {
+  MAX_DISMISSALS,
   MAX_REMINDED_IDEAS,
   SETTING_DEFINITIONS,
   isLiveSettingId,
@@ -91,6 +92,37 @@ describe("what a figure-reminders value may be", () => {
     expect(parse({ ideaIds: tooMany.slice(0, MAX_REMINDED_IDEAS) })).not.toBeNull();
   });
 
+  it("takes the 'Not this time' answers: an idea, a cadence and the last day of the period, each once", () => {
+    const one = { ideaId: "idea-1", cadence: "monthly", periodEnd: "2026-09-30" };
+    expect(parse({ dismissed: [] })).toEqual({ dismissed: [] });
+    expect(parse({ dismissed: [one] })).toEqual({ dismissed: [one] });
+    expect(parse({ dismissed: [one, { ...one }, { ...one, cadence: "quarterly" }] })).toEqual({
+      dismissed: [one, { ...one, cadence: "quarterly" }],
+    });
+    // A leap day is a real day.
+    expect(parse({ dismissed: [{ ...one, periodEnd: "2028-02-29" }] })).not.toBeNull();
+  });
+
+  it("refuses a dismissal that is malformed, rather than dropping it", () => {
+    const one = { ideaId: "idea-1", cadence: "monthly", periodEnd: "2026-09-30" };
+    expect(parse({ dismissed: "idea-1" })).toBeNull();
+    expect(parse({ dismissed: [null] })).toBeNull();
+    expect(parse({ dismissed: [["idea-1", "monthly", "2026-09-30"]] })).toBeNull();
+    expect(parse({ dismissed: [{ ...one, ideaId: "" }] })).toBeNull();
+    expect(parse({ dismissed: [{ ...one, ideaId: "x".repeat(101) }] })).toBeNull();
+    expect(parse({ dismissed: [{ ...one, cadence: "weekly" }] })).toBeNull();
+    // Not a day on the calendar, or not written the plain way.
+    for (const periodEnd of ["2026-02-30", "2026-9-30", "2026-09-30T00:00:00Z", "30/09/2026", "", 20260930]) {
+      expect(parse({ dismissed: [{ ...one, periodEnd }] }), String(periodEnd)).toBeNull();
+    }
+    // An extra key, or a missing one.
+    expect(parse({ dismissed: [{ ...one, amount: 5 }] })).toBeNull();
+    expect(parse({ dismissed: [{ ideaId: "idea-1", cadence: "monthly" }] })).toBeNull();
+    const tooMany = Array.from({ length: MAX_DISMISSALS + 1 }, (_, i) => ({ ...one, ideaId: `idea-${i}` }));
+    expect(parse({ dismissed: tooMany })).toBeNull();
+    expect(parse({ dismissed: tooMany.slice(0, MAX_DISMISSALS) })).not.toBeNull();
+  });
+
   it("refuses a key it doesn't know, and anything that isn't an object", () => {
     expect(parse({ cadences: [], extra: true })).toBeNull();
     expect(parse({ nope: 1 })).toBeNull();
@@ -108,38 +140,39 @@ describe("what a figure-reminders value may be", () => {
 
 describe("reading a setting back", () => {
   it("is 'none ticked, no ideas' before anything is saved, and saves nothing by being read", async () => {
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: [] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
     expect(await rows()).toBe(0);
   });
 
   it("reads a damaged stored value as the default instead of failing", () => {
-    expect(valueFromStored("figure-reminders", "not json at all")).toEqual({ cadences: [], ideaIds: [] });
-    expect(valueFromStored("figure-reminders", '{"cadences":["weekly"]}')).toEqual({ cadences: [], ideaIds: [] });
+    expect(valueFromStored("figure-reminders", "not json at all")).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
+    expect(valueFromStored("figure-reminders", '{"cadences":["weekly"]}')).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
     expect(valueFromStored("figure-reminders", '{"cadences":["monthly"],"fromAFutureVersion":1}')).toEqual({
       cadences: [],
       ideaIds: [],
+      dismissed: [],
     });
-    expect(valueFromStored("figure-reminders", "[]")).toEqual({ cadences: [], ideaIds: [] });
-    expect(valueFromStored("figure-reminders", "null")).toEqual({ cadences: [], ideaIds: [] });
+    expect(valueFromStored("figure-reminders", "[]")).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
+    expect(valueFromStored("figure-reminders", "null")).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
   });
 
   it("reads a half-written stored value with the default for the missing part", () => {
-    expect(valueFromStored("figure-reminders", '{"cadences":["yearly"]}')).toEqual({ cadences: ["yearly"], ideaIds: [] });
+    expect(valueFromStored("figure-reminders", '{"cadences":["yearly"]}')).toEqual({ cadences: ["yearly"], ideaIds: [], dismissed: [] });
   });
 
   it("does not hand out the shared default, so changing a result can't change the next read", async () => {
     const first = await readSetting(prisma, "figure-reminders");
     first.cadences.push("monthly");
     first.ideaIds.push("x");
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: [] });
-    expect(SETTING_DEFINITIONS["figure-reminders"].fallback).toEqual({ cadences: [], ideaIds: [] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
+    expect(SETTING_DEFINITIONS["figure-reminders"].fallback).toEqual({ cadences: [], ideaIds: [], dismissed: [] });
   });
 });
 
 describe("saving a setting", () => {
   it("round-trips: what was saved is what is read", async () => {
     const saved = await writeSetting(prisma, "figure-reminders", { cadences: ["monthly", "yearly"] });
-    expect(saved).toEqual({ cadences: ["monthly", "yearly"], ideaIds: [] });
+    expect(saved).toEqual({ cadences: ["monthly", "yearly"], ideaIds: [], dismissed: [] });
     expect(await readSetting(prisma, "figure-reminders")).toEqual(saved);
     // A different client on the same file (as a restart would be) sees it too.
     const again = new PrismaClient({ datasourceUrl: url });
@@ -156,7 +189,7 @@ describe("saving a setting", () => {
     const all = await prisma.setting.findMany();
     expect(all).toHaveLength(1);
     expect(all[0].key).toBe("figure-reminders");
-    expect(JSON.parse(all[0].value)).toEqual({ cadences: ["monthly"], ideaIds: [] });
+    expect(JSON.parse(all[0].value)).toEqual({ cadences: ["monthly"], ideaIds: [], dismissed: [] });
     expect(all[0].updatedAt).toBeInstanceOf(Date);
   });
 
@@ -166,12 +199,26 @@ describe("saving a setting", () => {
     expect(await readSetting(prisma, "figure-reminders")).toEqual({
       cadences: ["monthly", "yearly"],
       ideaIds: ["idea-1", "idea-2"],
+      dismissed: [],
     });
     await writeSetting(prisma, "figure-reminders", { ideaIds: ["idea-2"] });
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["monthly", "yearly"], ideaIds: ["idea-2"] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["monthly", "yearly"], ideaIds: ["idea-2"], dismissed: [] });
     // Unticking everything is a real choice, and is kept as one.
     await writeSetting(prisma, "figure-reminders", { cadences: [] });
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: ["idea-2"] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: [], ideaIds: ["idea-2"], dismissed: [] });
+  });
+
+  it("keeps a dismissal when a tick or a switch is saved, and the ticks when a dismissal is saved", async () => {
+    const dismissed = [{ ideaId: "idea-1", cadence: "monthly" as const, periodEnd: "2026-09-30" }];
+    await writeSetting(prisma, "figure-reminders", { cadences: ["monthly"], ideaIds: ["idea-1"] });
+    await writeSetting(prisma, "figure-reminders", { dismissed });
+    await writeSetting(prisma, "figure-reminders", { cadences: ["monthly", "yearly"] });
+    await writeSetting(prisma, "figure-reminders", { ideaIds: ["idea-1", "idea-2"] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({
+      cadences: ["monthly", "yearly"],
+      ideaIds: ["idea-1", "idea-2"],
+      dismissed,
+    });
   });
 
   it("loses neither change when two saves arrive together", async () => {
@@ -179,7 +226,7 @@ describe("saving a setting", () => {
       writeSetting(prisma, "figure-reminders", { cadences: ["quarterly"] }),
       writeSetting(prisma, "figure-reminders", { ideaIds: ["idea-9"] }),
     ]);
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["quarterly"], ideaIds: ["idea-9"] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["quarterly"], ideaIds: ["idea-9"], dismissed: [] });
   });
 
   it("keeps an id for an idea that no longer exists without complaint (readers ignore ids they don't know)", async () => {
@@ -187,6 +234,7 @@ describe("saving a setting", () => {
     expect(await readSetting(prisma, "figure-reminders")).toEqual({
       cadences: [],
       ideaIds: ["an-idea-that-was-removed"],
+      dismissed: [],
     });
   });
 
@@ -195,7 +243,7 @@ describe("saving a setting", () => {
     for (const bad of [{ cadences: ["weekly"] }, { extra: 1 }, { ideaIds: [3] }, "monthly", null, [], undefined]) {
       await expect(writeSetting(prisma, "figure-reminders", bad)).rejects.toBeInstanceOf(SettingInputError);
     }
-    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["monthly"], ideaIds: [] });
+    expect(await readSetting(prisma, "figure-reminders")).toEqual({ cadences: ["monthly"], ideaIds: [], dismissed: [] });
     expect(await rows()).toBe(1);
   });
 
@@ -254,11 +302,11 @@ describe("the /api/settings routes", () => {
   it("saves through PUT and reads it back through GET", async () => {
     const saved = await put({ id: "figure-reminders", value: { cadences: ["quarterly", "monthly"] } });
     expect(saved.status).toBe(200);
-    expect(await saved.json()).toEqual({ id: "figure-reminders", value: { cadences: ["monthly", "quarterly"], ideaIds: [] } });
+    expect(await saved.json()).toEqual({ id: "figure-reminders", value: { cadences: ["monthly", "quarterly"], ideaIds: [], dismissed: [] } });
 
     const read = await get("?id=figure-reminders");
     expect(read.status).toBe(200);
-    expect(await read.json()).toEqual({ id: "figure-reminders", value: { cadences: ["monthly", "quarterly"], ideaIds: [] } });
+    expect(await read.json()).toEqual({ id: "figure-reminders", value: { cadences: ["monthly", "quarterly"], ideaIds: [], dismissed: [] } });
   });
 
   it("answers only DotAmi's own page: no header, a cross-site header or a script's request is refused, and nothing is read or saved", async () => {
