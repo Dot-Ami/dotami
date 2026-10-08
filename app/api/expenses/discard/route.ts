@@ -18,7 +18,7 @@ const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 const MAX_BODY_BYTES = 64 * 1024;
 
 /**
- * POST /api/expenses/discard { ventureId, expenseIds } — turns proposed records down. Answers only
+ * POST /api/expenses/discard { ventureId?, expenseIds } (ventureId as in agree) — turns proposed records down. Answers only
  * to DotAmi's own page, like agree and retract. Unlike figures' discard it is NOT open to any
  * caller: nothing records who proposed a row, so an open route would let a script hide a record
  * the person typed while it waits for their click. Only "proposed" records move.

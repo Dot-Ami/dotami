@@ -1,6 +1,6 @@
 # Ideas page (`/ventures`) — page overview
 
-Last updated: 2026-10-07 (the figure reminder banner at the top of each card's figures, [8e]; a "Remind me about this idea" switch on each card, [8e]; Add from a file gains the optional Type column, so a payment isn't counted as a second sale; Add from a file asks where the file is from first; 2026-10-06: how old each figure is, [8e] first slice; Add from a file, [8c]; Your figures + agree prompt, [8a]/[8b]; the rest S2.5.4i, verified in the pane 2026-09-16)
+Last updated: 2026-10-08 (the **Your expenses** link in the nav and **Expense records for this idea** on each card, [8i]; 2026-10-07: the figure reminder banner at the top of each card's figures, [8e]; a "Remind me about this idea" switch on each card, [8e]; Add from a file gains the optional Type column, so a payment isn't counted as a second sale; Add from a file asks where the file is from first; 2026-10-06: how old each figure is, [8e] first slice; Add from a file, [8c]; Your figures + agree prompt, [8a]/[8b]; the rest S2.5.4i, verified in the pane 2026-09-16)
 
 **Route:** `/ventures` · **Component:** `components/ventures/ventures-page.tsx` ·
 **API:** `GET /api/ventures` · `PATCH /api/ventures/[id]` · `POST|DELETE /api/ventures/[id]/links` · `GET|PUT /api/settings` (the reminder switches; `components/ventures/use-idea-reminders.ts`)
@@ -19,6 +19,7 @@ venture becomes a card the first time "Save / resume" is pressed on its map.
 | Control | Behaviour | Persists to |
 |---|---|---|
 | **Settings** (nav, right) | opens `/settings` (added 2026-10-05, [7g]) | — |
+| **Your expenses** (nav, right; added 2026-10-08, [8i]) | opens `/expenses` showing every expense record ([ui-spec](../expenses/_index.md)) | — |
 | **New idea →** | resets the session journey, opens `/intake` | — |
 | **Stage** select (Idea · Prototype · First customers · Established) | `PATCH { stage }` on change | `Venture.stage` |
 | **Your notes** textarea | `PATCH { notes }` on blur, only if changed; "Saved." / "Save failed." under it | `Venture.notes` — their words, never summarised |
@@ -46,6 +47,7 @@ venture becomes a card the first time "Save / resume" is pressed on its map.
 | **Review these N figures** | `POST /api/figures/propose` with source kind "file", the file name as its label and the rows counted, one figure per month carrying its own row count; then **the agree prompt opens**. Dropping a file confirms nothing | `Figure` rows, status `proposed` |
 | **Cancel** | forgets the file and everything read from it, and the answer to the question | — |
 | **Agree prompt** (dialog, [8b]) | "Agree to these figures?" Figures grouped "From <source>"; each row has its kind, period, an editable amount, currency and **Discard**, with the same "ended …" line and "Check this date" flag under it, so a mistyped year stands out before the person agrees ([8e]; no "agreed" day yet, because nothing is agreed). **Agree** → `POST /api/figures/agree` (edited amounts sent as `edits`); **No, I'll do it myself** → `POST /api/figures/discard` for everything shown. **Only Agree confirms a figure.** **Close**, Escape and a click outside confirm nothing — the proposals stay waiting. Over 20 figures: Agree stays off until the list has been scrolled to the end ("Scroll through all N to agree"). Above the buttons, every time the prompt opens, one plain line: "Double-check what DotAmi did, and how, before you agree." Errors show inside the prompt and nothing closes | `Figure.status` → `confirmed` (`editedByPerson` + new amount when edited) or `discarded` |
+| **Expense records** (under Your figures on each card; added 2026-10-08, [8i]) | the line "Single business expenses you keep for this idea, typed and agreed to one list at a time." and the link **Expense records for this idea →**, which opens `/expenses?idea=<id>` (only the idea's id in the address): the Expenses page shown on this idea, with typed records going to it | — |
 | **Cross-references** list | one line per link: kind · other idea (link to its cockpit) · their reason · remove | `VentureLink` |
 | **+ Link** (kind · other idea · why) | `POST /links { toId, kind, note }`; one row per pair (re-linking updates it) | `VentureLink` |
 

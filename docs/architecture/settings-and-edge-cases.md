@@ -161,7 +161,7 @@ newer version of that program than the reader knows.
 
 ### Expense records
 
-**The expense records store [8i]** (built 2026-10-07, the first slice; no screen yet; `tests/expenses-store.spec.ts`, `tests/desktop-migrate.spec.ts`)
+**The expense records store [8i]** (built 2026-10-07, the first slice; the typing screen 2026-10-08; `tests/expenses-store.spec.ts`, `tests/expenses-typed.spec.ts`, `tests/expenses-display.spec.ts`, `tests/desktop-migrate.spec.ts`, `e2e/expenses.spec.ts`)
 - An agent or a script tries to confirm, take back or turn down a record → refused. *`/api/expenses/agree`, `/retract` and `/discard` answer only to DotAmi's own page; `/propose` creates only "proposed" records and refuses a body that names a status, an agreed time, a taken-back time or "edited by you" (tested).*
 - A purchase dated tomorrow, late on the last evening of a month when the UTC day has already turned over → refused. *Measured against this computer's own calendar day, the same as figures; tested with the time zone forced to America/Vancouver at 11:30 p.m. on March 31. An edited date in the agree step is measured the same way.*
 - A batch with one bad record → none are created, and the refusal names the record's position, never its words. *All or nothing (tested).*
@@ -169,9 +169,17 @@ newer version of that program than the reader knows.
 - The seller's GST/HST number typed as "123456789RT0001", "123456789-rt-0001" or just the nine digits → kept as the CRA writes it (123456789 RT 0001) or as nine digits; anything else is refused with the shape asked for, and the box can be left blank. *DotAmi checks the shape only and never looks the number up.*
 - A category: kept only when the person gave or picked it; a seller that sounds like a category does not get one. *Tested.*
 - A record typed over itself in the agree step (the same amount) → not "edited by you". *Only a field that really changed counts (tested).*
-- An idea is deleted → its records go with it, and no other idea's. *Database cascade, tested; there is no delete-an-idea control yet.*
+- An idea is deleted → the records attached to it go with it, and no other idea's; records not attached to an idea stay. *Database cascade, tested; there is no delete-an-idea control yet. Whether they should stay as "not attached yet" instead is open, expense-records.md § 6.*
 - A failing route → the log gets the error's name and code, never the amount or the words. *Tested.*
-- Amounts of zero or less, a refund or a credit → refused for now (an open question, expense-records.md § 6).
+- An amount of zero → refused. A negative amount → kept only as a refund or credit "kept as a negative amount"; a separate refund record holds the amount that came back, above zero. *The maintainer's decision (2026-10-08); tested.*
+- A refund pointing at a record that isn't the person's, was turned down, or is itself a refund or credit → refused, nothing created. *Tested.*
+- The purchase a refund points to is later deleted → the refund record stays, its link cleared. *Database "set null", tested at the store and in the migration test.*
+- A GST/HST part bigger than the amount, or a credit note on a plain purchase → refused, at proposing and at an edit in the agree step (which then agrees to nothing in that call). *Tested.*
+- A business share of 0, over 100 or with a fraction → refused with the limits; blank is "none". *Tested.*
+- An agent proposes records with no idea named at all → refused; it has to say an idea or null ("not attached yet"), so a forgetful caller can't create unattached records by accident. *Tested.*
+- Records typed on the Expenses page and the window closed or reloaded before agreeing → gone; nothing was sent or kept. *By design (the typed list lives only in the window); browser-tested.*
+- Agreeing to a typed batch fails after it was proposed → the records wait under "Waiting for you" and the page says so. *Not tested by a forced failure.*
+- Attaching or moving a record from outside DotAmi's page → refused (403). *Tested.*
 
 ### The Lens
 

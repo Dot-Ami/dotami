@@ -154,8 +154,8 @@ test("what DotAmi knows doesn't scroll sideways on a phone-width window", async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-// [8i] The expense records store has no screen yet, so this drives its routes the way an outside
-// agent or script would, on the production build, and reads the result on /your-data.
+// [8i] This drives the expense routes the way an outside agent or script would, on the production
+// build, and reads the result on /your-data. The typing screen has its own tests (e2e/expenses.spec.ts).
 test("expense records: an agent can propose but not agree, and what DotAmi knows counts them without showing their words", async ({ page }) => {
   const PAYEE = "Example Stationery Ltd for the your-data page test";
   const today = new Date().toLocaleDateString("en-CA");
@@ -174,11 +174,11 @@ test("expense records: an agent can propose but not agree, and what DotAmi knows
     return file.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Your expense records", level: 3, exact: true }) });
   };
 
-  // The card says what a record holds and that nothing takes one back yet. (The count is read, not
+  // The card says what a record holds and that nothing erases one yet. (The count is read, not
   // assumed to be zero, so a retried run, which finds the first run's record, still passes.)
   const before = await cardOnPage();
   await expect(before).toContainText("Never a bank or card number");
-  await expect(before).toContainText("Nothing in the app takes one back yet");
+  await expect(before).toContainText("Nothing in the app erases a single record yet");
 
   // A script proposes a record: it waits. It cannot name a status, and it cannot agree.
   const body = { ventureId, source: { kind: "agent", label: "an agent" }, expenses: [{ date: today, amountCents: 4599, paidTo: PAYEE, whatFor: "printer paper" }] };

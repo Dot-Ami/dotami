@@ -27,13 +27,30 @@ export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 export const EXPENSE_SOURCE_KINDS = ["typed", "file", "agent"] as const;
 export type ExpenseSourceKind = (typeof EXPENSE_SOURCE_KINDS)[number];
 
+/**
+ * What kind of record it is (the maintainer's decision, 2026-10-08, on refunds and credits: the
+ * person chooses how each one is kept).
+ * expense — a purchase. Its amount is usually more than zero; a refund or credit the person keeps
+ *           "as a negative amount" is an expense record with an amount below zero, optionally
+ *           pointing at the expense it came from.
+ * refund  — a separate refund record: the amount that came back (more than zero), always pointing at
+ *           the expense it came from.
+ * Either way DotAmi only keeps what the person typed; it never says how a refund is taxed.
+ */
+export const EXPENSE_RECORD_KINDS = ["expense", "refund"] as const;
+export type ExpenseRecordKind = (typeof EXPENSE_RECORD_KINDS)[number];
+
 /** What the routes and the screens see. The date is a calendar day; the amount is whole cents. */
 export interface ExpenseView {
   id: string;
-  ventureId: string;
-  /** The calendar day of the purchase, YYYY-MM-DD. */
+  /** The idea it is attached to, or null while it is "not attached yet". */
+  ventureId: string | null;
+  /** The calendar day of the purchase (of the refund, for a refund), YYYY-MM-DD. */
   date: string;
-  /** Integer cents; always more than zero (a refund is not modelled yet). */
+  /**
+   * Integer cents, never zero. Below zero only on an "expense" record that keeps a refund or credit
+   * as a negative amount; a "refund" record holds the amount that came back, above zero.
+   */
   amountCents: number;
   /** ISO 4217, as given. */
   currency: string;
@@ -43,6 +60,15 @@ export interface ExpenseView {
   category: string | null;
   sellerAddress: string | null;
   vendorGstNumber: string | null;
+  recordKind: ExpenseRecordKind;
+  /** The expense a refund or credit came from, when there is one (and it hasn't been deleted). */
+  refundOfId: string | null;
+  /** The GST/HST part of the amount as the person gave it, whole cents, never negative; null if not given. */
+  gstHstCents: number | null;
+  /** A refund's credit note details as typed (its number, its date); null if not given. */
+  creditNote: string | null;
+  /** The person's own business share, a whole percent 1-100, kept beside the full amount; null if not given. */
+  businessSharePercent: number | null;
   sourceKind: ExpenseSourceKind;
   sourceLabel: string;
   status: ExpenseStatus;

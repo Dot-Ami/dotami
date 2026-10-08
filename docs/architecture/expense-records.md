@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list; no screen yet); receipts, the screens and the other ways in are not.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts and the other ways in are not.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -28,19 +28,62 @@ Rule 1 of section 3 ("totals, never single transactions") was reworded for expen
 that built the store (the first slice, 2026-10-07). Rule 5 ("imported files are never kept") is
 reworded with receipts, because the first slice keeps no file. Still open: section 6.
 
+### The maintainer's decisions (2026-10-08)
+
+Taken for the typing screen (the second slice), which builds the first four:
+
+1. **Not attached yet.** A record can be saved without an idea attached and attached to an idea later,
+   so a record's link to an idea is optional. The database change rebuilds the `Expense` table only
+   (SQLite can't make a column optional in place); `Venture` is never copied, dropped or renamed, and a
+   test seeds ideas, figures, links, map progress, settings and expense records and checks that every
+   one survives the update (`tests/desktop-migrate.spec.ts`). Attaching, moving and detaching answer
+   only to DotAmi's own page (`POST /api/expenses/attach`). Deleting an idea still deletes the records
+   attached to it; a record not attached to any idea stays.
+2. **Type many, agree once.** The person types as many records as they like; a review list shows them
+   all, ticked, with **Agree to all N**, and lets them untick any first (the unticked ones stay on the
+   typed list). Typed records are not sent or kept until that click. Anything an agent or a file
+   proposes still waits for the agree click, as before.
+3. **Business share.** An optional "business share %" per record: the person's own number, a whole
+   percent from 1 to 100, kept as typed beside the full amount. DotAmi shows both and never decides the
+   share, never multiplies it out, and never says what is deductible. The limits are typo guards: whole
+   numbers only, so it reads back exactly as typed; 0 is refused (a record with no business share is
+   left blank, or not kept); over 100 is a typo.
+4. **Refunds and credits.** The person chooses how each one is kept: a negative amount on a record (which
+   may point to the purchase it came from), or a separate refund record holding the amount that came
+   back and linked to the original purchase. Whichever way, the record keeps the refund's date, the link
+   to the original (when there is one), the GST/HST part if given, and the credit note's details if
+   given. DotAmi never says how a refund is taxed. Sources read on 2026-10-08, cited as sources, not as
+   advice:
+   - Income Tax Act, s. 12(1)(x) and 12(2.2) (reimbursements and refunds of an outlay or expense, and
+     the election to reduce the outlay instead): [section 12](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-12.html).
+   - CRA guide T4002: a refund is subtracted from the expense it applies to; it is income only if it
+     can't be applied that way: [T4002, chapter 4](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-4.html).
+   - Excise Tax Act, s. 232: the GST/HST adjustment for a refund or credit needs a credit note, and falls
+     in the reporting period in which it is received: [section 232](https://laws-lois.justice.gc.ca/eng/acts/E-15/section-232.html).
+   - Income Tax Act, s. 230, and CRA IC78-10: records must be kept so the amounts can be supported; no
+     form is prescribed (so either way of keeping a refund is a record).
+     [Section 230](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-230.html).
+5. **Receipts (not built in this slice; recorded here for the receipts slice).** A receipt file may be at
+   most **10 MB**, the same cap as today's file reading. Receipts open **inside DotAmi** (the maintainer
+   chose this over the computer's own viewer). Showing an outside file inside the window needs its own
+   security design and tests in the receipts slice (section 6).
+
 ## 1. What a record would hold, and what it would not
 
 **One expense record, in the person's own database on their computer, holds:**
 
 | Field | Notes |
 |---|---|
-| Which idea (venture) | same link as a figure has today; deleting the idea deletes its records, asked first |
+| Which idea (venture) | optional since 2026-10-08: a record can be "not attached yet" and attached later; deleting an idea deletes the records attached to it, not the unattached ones |
 | Date | a calendar day, never shifted by time zone (settings doc, Part 3) |
 | Amount and currency | whole cents, currency as given, never converted (same as figures) |
 | Paid to | the person's own words, short, e.g. "Staples" |
 | Seller's address, vendor's GST/HST number | optional, typed by the person (decided, section 0): the CRA lists both for a record (section 4); an address is more sensitive than a name |
 | What for | the person's own words, e.g. "printer paper" |
 | Category | optional; the person's own pick (see section 4). Kept only when the person picked it, or agreed to one proposed to them (section 5, smaller choices); DotAmi never fills one in on its own |
+| Business share | optional; the person's own whole percent, 1 to 100, kept beside the full amount (decided 2026-10-08); DotAmi never sets it or multiplies it out |
+| GST/HST part | optional; the GST/HST included in the amount, as the person gives it, whole cents, never more than the amount |
+| Refund or credit | the person's choice (decided 2026-10-08): a negative amount on a record, or a separate refund record; the purchase it came from (optional for a negative amount, needed for a refund record) and the credit note's details, when given |
 | Receipt | optional; one file the person adds (section 2) |
 | Where it came from | typed by the person · a spreadsheet · a bank statement's ticked rows · the Lens · the file name or source label, as figures already do |
 | State | waiting · agreed · taken back · turned down, with the days; "edited by you" |
@@ -50,12 +93,17 @@ owner on purpose, a "this is deductible" flag, a deductible amount, a tax-saving
 category chosen by DotAmi from the seller's name. It never holds the spreadsheet or statement a
 record was read from (those stay read in the window, in memory, as the spreadsheet drop ([8c]) does today).
 
-**How the first slice checks a record** (`lib/expenses/validate.ts`; the limits are typo guards, not
+**How a record is checked** (`lib/expenses/validate.ts`; the limits are typo guards, not
 tax rules): the date is a real calendar day, not after the person's own day on the computer and not
-before 1970-01-01; the amount is whole cents, more than zero and at most ten billion dollars (a refund
-or credit is not a record yet, section 6); the currency is three capital letters, as given; "paid to"
-is 1 to 120 characters and "what for" 1 to 200; the category, when given, is up to 80, the address up
-to 300; none holds control characters. The GST/HST number is checked for shape only (nine digits,
+before 1970-01-01; the amount is whole cents, never zero and at most ten billion dollars either way; it
+is below zero only on a refund or credit kept as a negative amount, and a refund record holds the amount
+that came back, above zero, with the purchase it came from; that purchase must be one of the person's
+records, not turned down, kept as a purchase (never another refund); only a refund or credit may carry a
+credit note (up to 200 characters) or point to a purchase; the GST/HST part is whole cents, zero or more,
+at most the amount; the business share is a whole percent from 1 to 100; the currency is three capital
+letters, as given; "paid to" is 1 to 120 characters and "what for" 1 to 200; the category, when given,
+is up to 80, the address up to 300; none holds control characters. Not checked: that a refund is dated
+after its purchase, or in the same currency (the person's own record says what happened). The GST/HST number is checked for shape only (nine digits,
 optionally RT and four more; the CRA's wording and the date it was read are in the privacy review).
 The ways in the store accepts are typed, a file and an agent; "bank" is appended with the bank and card
 statements story ([8g]).
@@ -224,7 +272,7 @@ inventory and `/your-data` entry.
 **Question 4: the Delete menu** is part of the delete slice of the "What DotAmi knows about you"
 page ([8d]); records and receipts add about 2 days to it, plus 1 for the orphan sweep.
 
-**Smaller choices:** whether a typed record needs the agree click when the person is typing forty
+**Smaller choices** (the first four were decided on 2026-10-08, section 0): whether a typed record needs the agree click when the person is typing forty
 receipts in a row (today's rule says a typed figure does); an optional "business share" for
 mixed-use purchases; the file size cap (10 MB matches today's reading cap); whether a receipt is
 shown inside the app or opened in the computer's own viewer; whether to hold the optional seller's
@@ -241,13 +289,19 @@ the Delete menu entries. Leave the bank-statement route until the bank and card 
 ## 6. Still open
 
 Decided on 2026-10-07 (section 0): what is kept, where receipts live, whether backups carry them,
-the ways in, the seller's address and GST/HST number, and the Lens suggesting a category. Still open:
+the ways in, the seller's address and GST/HST number, and the Lens suggesting a category. Decided on
+2026-10-08 (section 0): a record without an idea, type many and agree once, the business share, refunds
+and credits kept either way, the receipt size cap (10 MB) and receipts opening inside DotAmi. Still open:
 
-- Whether a person can keep a record without an idea attached (today figures and records both need one).
-- Whether a refund or credit (a negative amount) may be a record; today an amount must be more than zero.
-- Whether a typed record needs the agree click when someone types many receipts in a row.
-- An optional "business share" for mixed-use purchases; the receipt size cap; whether a receipt
-  opens inside the app or in the computer's own viewer.
+- **Showing a receipt inside DotAmi's window** (decided, not built): a photo or PDF the person added
+  is an outside file, and showing it in the window needs its own security design and tests in the
+  receipts slice: how the bytes are served (a route that only DotAmi's page can read, with the right
+  content type and no guessing), what the page's Content-Security-Policy allows for images and PDFs,
+  that a PDF can't run script or reach the network, and what happens to a file that claims one type
+  and is another.
+- Whether deleting an idea should keep its records as "not attached yet" instead of deleting them,
+  now that a record can exist without an idea (today it deletes them, as before; the Delete menu's
+  wording depends on the answer).
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.

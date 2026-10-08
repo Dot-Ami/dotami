@@ -47,15 +47,19 @@ says where it is going.
   this copy today; the settings marked live there, so far Figure reminders, can be changed and are
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
   everything else, what sits outside the database and what leaves the computer; read-only, read
-  from the data file on every visit by `lib/privacy/holdings.ts`).
+  from the data file on every visit by `lib/privacy/holdings.ts`) · `/expenses[?idea=<id>]` ("Your expenses":
+  typing business expense records and agreeing to them all at once, records not attached to an idea
+  yet, refunds kept either way; [8i]).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
-  `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT
+  `law/provision` (a provision's words from an optional local statute store) · `expenses` (list, `propose`, and the
+  page-only `agree` / `retract` / `discard` / `attach`) · `settings` (GET/PUT
   one saved setting; answers only DotAmi's own window, no agent access yet).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
-  the one place DotAmi holds single transactions, with no bank or card number and no receipt yet; [8i]) · `Setting` (the person's saved choices, one row per setting: a
+  the one place DotAmi holds single transactions, with no bank or card number and no receipt yet; its idea is
+  optional, a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`

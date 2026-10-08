@@ -42,7 +42,7 @@ jump links, then five sections in this order:
    overwrites the choice but leaves the record in the file. "Your expense records" (added 2026-10-07,
    [8i]) counts every single business expense in the file (typed, or proposed by an agent; waiting,
    agreed, taken-back and turned-down ones alike), 0 until the first one is proposed. It says what a record holds (never a bank or card
-   number, no receipt file) and that nothing in the app takes one back yet. Only the count is shown here: no payee, no words, no amount.
+   number, no receipt file; since 2026-10-08 also the idea or none, the person's own business share, the GST/HST part and how a refund is kept), that taking one back or turning one down keeps the row, and that nothing in the app erases a single record yet. Only the count is shown here: no payee, no words, no amount.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened; and the window's

@@ -233,9 +233,9 @@ export const TABLES: readonly TableEntry[] = [
     model: "Expense",
     name: "Your expense records",
     holds:
-      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, the idea it is attached to (or none yet), a category only if one was given, your own business share if you gave one, the GST/HST part if you gave it, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. A refund or credit is kept the way you chose: a negative amount, or a refund record linked to the purchase, with its credit note if you gave one. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible, sets a business share or chooses a category. Records you type on the Expenses page stay in that window until you agree; only then are they written here.",
     removedBy:
-      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Deleting an idea would remove its records with it, but nothing deletes an idea yet. Deleting the data file removes them all.",
+      "Take back (an agreed record) and Turn down (a waiting one) on the Expenses page stop it counting, but the row, with its amount and words, stays in the data file and is counted here. Deleting an idea removes the records attached to it; records not attached to an idea stay. Nothing in the app erases a single record yet. Deleting the data file removes them all.",
   },
 ];
 

@@ -139,7 +139,8 @@ roadmap's build order.
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
-  every business expense); the store for typed records is built, the screens are not.
+  every business expense); the store for typed records and the screen to type them are built
+  (2026-10-08, with the maintainer's decisions of that day); receipts and the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
   - [x] The privacy review (typed records as built; receipts still marked PROPOSED):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
@@ -148,7 +149,11 @@ roadmap's build order.
   - [x] The store for typed records: the `Expense` table (a new migration), the checks, the propose /
     agree / retract / discard / list routes (agents can only propose; agree, retract and discard answer only to DotAmi's own page), the privacy list and
     /your-data's count, and the "totals, never single transactions" wording reworded for expenses
-  - [ ] The screen to type a record and the agree prompt for expenses
+  - [x] The screen to type records, *Your expenses* (`/expenses`, from the ideas page and each idea):
+    type many and agree once in a review list that lets you untick any; a record "not attached yet"
+    attached to an idea later; the person's own business share; refunds kept as a negative amount or
+    as a refund record linked to the purchase; agent and file proposals wait there for the agree click
+    ([ui-spec](ui-spec/expenses/_index.md))
   - [ ] Receipts as copies, and backups that carry them
   - [ ] The entries in the Delete menu ([8d])
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])

@@ -46,7 +46,8 @@ details for anything. All of it in the one database file on the person's compute
 ## Privacy review: expense records and receipts ([8i])
 
 **Typed expense records are reviewed here and built (2026-10-07, the store: the table, the checks and
-the routes; no screen yet). Receipt files are still PROPOSED: nothing of them is built.** The
+the routes; 2026-10-08, the screen to type and agree to them, with the maintainer's decisions of that
+day). Receipt files are still PROPOSED: nothing of them is built.** The
 maintainer decided on 2026-10-07 to keep single expense records and their receipt files, copied into
 the data folder and carried by backups, with every way in. The design and the options are in
 [expense-records.md](expense-records.md). For expense records this section replaces the "Not stored:
@@ -55,14 +56,21 @@ reworded in the same change as the code.
 
 ### What is stored (typed records: built)
 
-Per expense: the idea, the date, the amount and currency, who it was paid to and what for (the
+Per expense: the idea it is attached to, or none ("not attached yet", the maintainer's decision of
+2026-10-08), the date, the amount and currency, who it was paid to and what for (the
 words typed by the person, or proposed by an agent and still waiting for the person's click), an
 optional category the person picked, an optional seller's address and
-vendor's GST/HST number (both typed by the person), where it came from (typed, a file, or an agent),
+vendor's GST/HST number (both typed by the person), the person's own optional business share (a whole
+percent, 1 to 100, kept beside the full amount), the optional GST/HST part, and for a refund or credit
+the way the person chose to keep it (a negative amount, or a refund record), the purchase it came from
+and the credit note's details when given; where it came from (typed, a file, or an agent),
 and its state with the days it was proposed, agreed to and taken back. Held in the `Expense` table of
 the one database file, nowhere else. **Not stored:** a bank or card number (the table has no column
 for one, and a test lists the columns), a login, the spreadsheet or statement a record was read from,
-a category or "deductible" mark chosen by DotAmi, and any receipt (there is no column for a file).
+a category, business share or "deductible" mark chosen by DotAmi, an amount worked out from the
+share, and any receipt (there is no column for a file). Records typed on the Expenses page are held
+only in that window (not in browser storage) until the person agrees to them; closing the window
+forgets them.
 Figures stay totals; only expense records are single transactions.
 
 ### What is more sensitive than a total
@@ -81,7 +89,7 @@ Figures stay totals; only expense records are single transactions.
 | Someone with the computer or its disk | reads the database file | the operating system's disk encryption, as for everything above | the person's choice; DotAmi says so |
 | Someone with a backup file | opens it | the backup passphrase, as above; a backup copies the whole database, expense records included | the person's choice |
 | A website the person visits | writes or reads through DotAmi's local address | the same guards as the figures: cross-site and non-JSON writes refused (`lib/api/body-limit.ts`), the Host check (`middleware.ts`) | in place |
-| DotAmi's own agent paths, or any program that calls the API | tries to confirm, take back or turn down a record | `/api/expenses/agree`, `/retract` and `/discard` answer only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); `/propose` can create nothing but "proposed" and refuses a body that names a status; `tests/expenses-store.spec.ts` proves each | in place |
+| DotAmi's own agent paths, or any program that calls the API | tries to confirm, take back, turn down or move a record | `/api/expenses/agree`, `/retract`, `/discard` and `/attach` answer only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); `/propose` can create nothing but "proposed" and refuses a body that names a status; `tests/expenses-store.spec.ts` and `tests/expenses-typed.spec.ts` prove each | in place |
 | Another program on this computer | reads the file, or sets the page header itself | **nothing in DotAmi**: same trust as the person's own account, as above | by design for a single-user app |
 | A model the Lens ([9]) uses | reads records to answer or to propose | the person's chosen model and permission level | when the Lens exists |
 
@@ -93,8 +101,9 @@ Figures stay totals; only expense records are single transactions.
    else (`logRouteError`), and a refusal names a record's position, never its words. *Built and tested.*
 7. **Confirming stays the person's click** (rule 3). A typed record, one from a spreadsheet, a
    statement or the Lens is *waiting* until the agree prompt; no caller can name a status. *Built and
-   tested at the routes; the agree prompt for expenses is the next slice.* Whether a person typing many
-   receipts in a row may skip the click is still the maintainer's open choice.
+   tested.* The maintainer decided (2026-10-08) "type many, agree once": records the person types stay
+   in the window until one click agrees to all of them, minus any the person unticked in the review
+   list; anything an agent or a file proposes still waits for that click.
 8. **A receipt's bytes** reach the server only for storing, which is never parsing, opening or running
    them, and no receipt leaves the computer except by the person's own act or through a model they
    allowed. This changes the rule above that imported files are never sent to the server or kept

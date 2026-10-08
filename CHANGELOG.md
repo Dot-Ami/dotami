@@ -8,6 +8,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
+  (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
+  expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
+  part, the seller's address and GST/HST number if you like) and add it to a list; type as many as
+  you like, then *Review* them and *Agree to all* at once. Untick any you want to leave out: they stay
+  on your typed list. Nothing is kept until you agree, and closing the window forgets the typed list.
+  There is no box for a bank or card number.
+- **Not attached yet** — a record can be kept without an idea and attached to one later (*Attach* /
+  *Move* on each record).
+- **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
+  beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
+  amount from it.
+- **Refunds and credits, your way** — keep each one as a negative amount on a record, or as a
+  separate refund record linked to the purchase it came from (*Record a refund for this*). Either way
+  it keeps the refund's date, the purchase, the GST/HST part and the credit note's details when you
+  give them. DotAmi doesn't say how a refund is taxed.
+- **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
+  (or turn them down), exactly as before.
+
+### Changed
+- **A database update** rebuilds the expense records table only, so a record's idea can be empty and
+  the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
+  are kept as they are (a test seeds each and checks it after the update), and the app backs the
+  file up first.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV

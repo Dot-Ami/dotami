@@ -88,8 +88,9 @@ const good = {
   paidTo: "Example Stationery Ltd",
   whatFor: "printer paper",
 };
-/** What a minimal valid record comes out as: optional fields null, currency defaulted. */
-const goodChecked = { ...good, currency: "CAD", category: null, sellerAddress: null, vendorGstNumber: null };
+/** What a minimal valid record comes out as: optional fields null, currency defaulted, a plain expense. */
+const NEW_FIELDS_EMPTY = { recordKind: "expense", refundOfId: null, gstHstCents: null, creditNote: null, businessSharePercent: null };
+const goodChecked = { ...good, currency: "CAD", category: null, sellerAddress: null, vendorGstNumber: null, ...NEW_FIELDS_EMPTY };
 
 describe("validateExpenseInput", () => {
   it("accepts a minimal record: optional fields become null and the currency defaults to CAD", () => {
@@ -113,6 +114,7 @@ describe("validateExpenseInput", () => {
         category: "Office supplies",
         sellerAddress: "1 Example Street\nExampleville",
         vendorGstNumber: "123456789 RT 0001",
+        ...NEW_FIELDS_EMPTY,
       },
     });
   });
@@ -149,8 +151,8 @@ describe("validateExpenseInput", () => {
     ["no date", { date: undefined }, /real day/],
     ["tomorrow", { date: "2026-10-08" }, /hasn't happened yet/],
     ["a day before 1970", { date: "1969-12-31" }, /before 1970-01-01/],
-    ["zero dollars", { amountCents: 0 }, /more than zero/],
-    ["a negative amount", { amountCents: -500 }, /more than zero/],
+    ["zero dollars", { amountCents: 0 }, /can't be zero/],
+    ["a negative amount past the typo guard", { amountCents: -MAX_EXPENSE_CENTS - 1 }, /too large/],
     ["a fractional amount", { amountCents: 10.5 }, /whole number of cents/],
     ["an amount as text", { amountCents: "45.99" }, /whole number of cents/],
     ["an amount past the safe range", { amountCents: Number.MAX_SAFE_INTEGER + 2 }, /whole number of cents/],
@@ -368,7 +370,7 @@ describe("POST /api/expenses/propose", () => {
     );
     expect(res.status).toBe(400);
     const { error } = (await res.json()) as { error: string };
-    expect(error).toMatch(/^Expense 2: .*more than zero/);
+    expect(error).toMatch(/^Expense 2: .*can't be zero/);
     expect(error).not.toContain("Secret Clinic");
     expect(await expenseCount()).toBe(before);
   });
@@ -469,9 +471,10 @@ describe("GET /api/expenses", () => {
     expect(other.some((e) => e.id === mine.id)).toBe(false);
   });
 
-  it("answers 404 for an idea that isn't the person's, and 400 with no idea named", async () => {
+  it("answers 404 for an idea that isn't the person's, and 400 for an empty idea or two scopes at once", async () => {
     expect((await routes.list.GET!(new Request("http://localhost/api/expenses?venture=nope"))).status).toBe(404);
-    expect((await routes.list.GET!(new Request("http://localhost/api/expenses"))).status).toBe(400);
+    expect((await routes.list.GET!(new Request("http://localhost/api/expenses?venture="))).status).toBe(400);
+    expect((await routes.list.GET!(new Request(`http://localhost/api/expenses?venture=${ventureId}&unattached`))).status).toBe(400);
   });
 
   it("an idea belonging to someone else is a 404 even when the id exists", async () => {
@@ -587,8 +590,11 @@ describe("POST /api/expenses/agree — only the app's own page", () => {
     expect(await statusOf(elsewhere.id)).toBe("proposed");
   });
 
-  it("needs an idea and a list of ids", async () => {
-    expect((await routes.agree.POST(post("agree", { expenseIds: ["x"] }, FROM_APP))).status).toBe(400);
+  it("needs a list of ids, and an idea named properly when one is named", async () => {
+    // Leaving the idea out is allowed since 2026-10-08 (any of the person's records); naming one badly is not.
+    expect((await routes.agree.POST(post("agree", { ventureId: 5, expenseIds: ["x"] }, FROM_APP))).status).toBe(400);
+    expect((await routes.agree.POST(post("agree", { ventureId: "", expenseIds: ["x"] }, FROM_APP))).status).toBe(400);
+    expect((await routes.agree.POST(post("agree", { expenseIds: [] }, FROM_APP))).status).toBe(400);
     expect((await routes.agree.POST(post("agree", { ventureId, expenseIds: [] }, FROM_APP))).status).toBe(400);
     expect((await routes.agree.POST(post("agree", { ventureId, expenseIds: [5] }, FROM_APP))).status).toBe(400);
     expect((await routes.agree.POST(post("agree", { ventureId: "nope", expenseIds: ["x"] }, FROM_APP))).status).toBe(404);
@@ -681,13 +687,18 @@ describe("what is stored", () => {
       [
         "agreedAt",
         "amountCents",
+        "businessSharePercent",
         "category",
+        "creditNote",
         "currency",
         "date",
         "editedByPerson",
+        "gstHstCents",
         "id",
         "paidTo",
         "proposedAt",
+        "recordKind",
+        "refundOfId",
         "retractedAt",
         "sellerAddress",
         "sourceKind",
