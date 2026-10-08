@@ -141,7 +141,12 @@ zones: a figure dated "March 31" stays March 31 for everyone.
 - A line number that changed between tax years → the year's own line list is used.
 
 **Bank and card records [8g]** (not built; until it is, "Add from a file" turns a bank or card file away unread) — account numbers in a statement are never stored, even when the
-person agrees to figures from it; a statement in a currency other than CAD.
+person agrees to figures from it; a statement in a currency other than CAD. The OFX/QFX reader exists
+without a screen ([review](../connectors/ofx-reader-review.md)): it refuses a file that declares its own
+document type or puts attributes on a tag, two downloads joined into one file, a file with an unreasonable number of entries, a
+statement that doesn't say its currency, and one it cannot read with certainty. It marks pending rows
+(never counted), passes the bank's corrections on (applied by the totals), passes a repeated bank id on
+(counted once by the totals) and blanks every account number the file names (a transfer's memo names the other account) out of descriptions and ids.
 
 **Books on disk [8h]** — the accounting program has the file open and locked; a file from a
 newer version of that program than the reader knows.

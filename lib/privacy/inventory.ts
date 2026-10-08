@@ -413,7 +413,7 @@ export const BUILD_TIME_ONLY: readonly AllowedCall[] = [
 ];
 
 /**
- * The packages that ship (see DependencyEntry for what counts), and whether each can reach the network. Checked 2026-10-06 against the
+ * The packages that ship (see DependencyEntry for what counts), and whether each can reach the network. Checked 2026-10-06 (ofx-js: 2026-10-07) against the
  * versions installed in node_modules (the version is in package.json): each package's own README
  * and a search of its files for fetch, XMLHttpRequest, WebSocket and node's http, https, net, tls,
  * dgram, dns and child_process. Where a README doesn't speak to it, the reason says the answer
@@ -439,6 +439,11 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
     name: "next",
     network: "no",
     why: "Not while the built app runs. Next.js's anonymous usage reports (to Vercel) come from `next dev`, `next build` and `next lint`; the code that starts the built server (`next start`, and the standalone server the desktop app runs) creates its reporter only for a development server (node_modules/next/dist/server/lib/router-server.js, read 2026-10-06), and the settings page already cites nextjs.org/telemetry (read 2026-10-05). The desktop app, CI and the desktop build set NEXT_TELEMETRY_DISABLED=1. `next dev` also asks registry.npmjs.org for the newest Next.js version (hot-reloader-webpack.js). Next's image optimiser refuses hosts not allowed by `images.remotePatterns` (node_modules/next/dist/server/image-optimizer.js); next.config.mjs sets none, and no code imports next/image. Requests that DotAmi's own code makes through Next are the scan's business, not this entry's; so are Next settings that make the server fetch for a page, which the scan does not read (see the header).",
+  },
+  {
+    name: "ofx-js",
+    network: "no",
+    why: "Reads an OFX or QFX bank download: text in, a plain object out. Version 1.1.2, pinned exactly, was read in full on 2026-10-07 (docs/connectors/ofx-reader-review.md): its package.json lists no dependencies, the code it ships (ofx.js, 192 lines) imports nothing, and a search finds no fetch, XMLHttpRequest, WebSocket, eval or Function, and no use of node's http, https, net, tls, dgram, dns or child_process. DotAmi imports it in one file, lib/figures/bank/read-ofx.ts, and hands it only the file's text; a test fails if its code changes without a new reading.",
   },
   {
     name: "papaparse",

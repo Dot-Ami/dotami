@@ -240,6 +240,11 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 
 **Design.**
 - `lib/figures/bank/*` (totals, CSV columns, OFX reader).
+- **OFX reader (built, no screen yet):** `lib/figures/bank/read-ofx.ts` wraps the free `ofx-js` package,
+  pinned at exactly 1.1.2 after the maintainer's decision (2026-10-07) to use one someone else built and read it
+  first. The reading, what was found and how each finding is handled:
+  [connectors/ofx-reader-review.md](../connectors/ofx-reader-review.md). Run it in a Web Worker
+  from the screen: the package cannot be interrupted once it starts.
 - Source kind `bank`; `SourceAccount` (the warning agreed once per account, or per file).
 - Routes under `/api/figures/bank-sources`, so the browser privacy check still covers them.
 - The server replaces any client label with the account's name.
@@ -253,8 +258,9 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - Other currencies aren't converted.
 - Overlapping CSVs are refused.
 - Transfers, loans, refunds and equipment sales start unticked. The CRA excludes capital-property sales from the $30,000 test.
-- A DOCTYPE or entity declaration in OFX is refused.
-- 10 MB crafted files have a time limit.
+- A DOCTYPE or entity declaration in OFX is refused (built: `readOfx`).
+- Two OFX downloads pasted into one file are refused, not read as the first only (built; `ofx-js` alone drops the second without a word).
+- 10 MB crafted files are capped before parsing (10 MB, 500,000 tags, no tag attributes, 100,000 transactions) and checked against a clock (the worst crafted file built so far took a few seconds); the wait is bounded, not removed, until the screen runs the reader in a Web Worker.
 
 **Sources (read 2026-10-06):**
 - financialdataexchange.org OFX work group and OFX Banking 2.3 PDF
@@ -268,7 +274,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - CRA Folio S5-F4-C1
 - npm and GitHub advisories for ofx-js, ofx-data-extractor, node-ofx-parser, fast-xml-parser, xml2js
 
-**Decisions:** warning frequency; a separate switch; same or new kind; OFX reader; last four digits; currency; refunds (shared with 8c-3); catching bank files in today's file drop (urgent: today's drop reads bank CSVs with no warning; this is on main since #78 and in no release).
+**Decisions:** warning frequency; a separate switch; same or new kind; ~~OFX reader~~ (decided 2026-10-07: a free package, read first; see the review above); last four digits; currency; refunds (shared with 8c-3); catching bank files in today's file drop (urgent: today's drop reads bank CSVs with no warning; this is on main since #78 and in no release).
 
 ### [8h] Books on your computer, read only
 

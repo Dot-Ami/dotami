@@ -46,6 +46,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   settings will share, they are listed on *What DotAmi knows about you*, and only DotAmi's own
   window can read or change them. A database update adds the table without touching your ideas,
   figures, links or map progress (a test proves it).
+- **An OFX/QFX bank-file reader** ([8g]) — the code that will read the download most Canadian banks
+  offer for Quicken and QuickBooks. Nothing on any screen uses it yet, so nothing changes for you
+  today; "Add from a file" still turns bank files away. It is built on `ofx-js`, a free package
+  someone else wrote, pinned at exactly 1.1.2 after it was read in full. The reader never lets
+  an account, branch or bank number out (they are blanked even where a bank printed one in a
+  memo, including the other account's number in a transfer between your own accounts), never counts a transaction that hasn't posted, applies the bank's corrections, counts a
+  repeated transaction id once, and turns away a file that declares its own document type, two
+  downloads pasted together (the package alone would silently keep only the first), a file with an
+  unreasonable number of entries, and one it can't read with certainty (an amount like "1,000",
+  which could be a thousand or one dollar, is kept as an unreadable row, never guessed). Tested on invented
+  statements only.
 
 ### Changed
 - **"Today" for figures is your computer's own day.** The server used to decide in UTC, so for a few
@@ -57,6 +68,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   business expenses and their receipts, with the options and what each costs, and the maintainer's
   decisions of 2026-10-07 (single records with receipt files). Nothing is built yet
   (`docs/architecture/expense-records.md`).
+- **A review of the OFX reader package** ([8g]) — what `ofx-js` 1.1.2 does line by line, what it
+  does with a document-type declaration, huge or damaged files, repeated ids, pending rows,
+  corrections, several accounts and character sets, the five things found and how each is handled,
+  a comparison with `ofx-data-extractor`, and how to switch to an edited copy if one is ever needed
+  (`docs/connectors/ofx-reader-review.md`).
 
 ### Fixed
 - The GST/HST card's CRA source had moved (the old page answered 404); it links to the new page.
