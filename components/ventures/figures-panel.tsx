@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useId, useState } from "react";
 
 import { Pill } from "@/components/ui";
+import { describeFigureDates, localDay } from "@/lib/figures/age";
 import { FIGURE_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureView } from "@/lib/figures/types";
 import { parseMoneyToCents } from "@/lib/figures/money";
+import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from "./agree-prompt";
+import { FigureDates, FutureDateNote } from "./figure-age";
 import { FileDrop } from "./file-drop";
 
 /**
@@ -29,6 +32,9 @@ function newestPeriodFirst(a: FigureView, b: FigureView): number {
 }
 
 export function FiguresPanel({ ventureId }: { ventureId: string }) {
+  // The person's own day, kept current while the window stays open ([8e]): every age below is
+  // measured to it.
+  const today = useLocalToday();
   const [figures, setFigures] = useState<FigureView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -151,6 +157,8 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
                       </button>
                     ) : null}
                   </div>
+                  <FigureDates figure={f} today={today} />
+                  <FutureDateNote periodEnd={f.periodEnd} today={today} />
                   {confirmingId === f.id ? (
                     <div className="mt-1 flex flex-wrap items-center gap-2 rounded-sm border border-rule-soft bg-ink px-3 py-1.5">
                       <span className="text-[11px] text-paper-dim">Retract this figure? Cards go back to your estimate.</span>
@@ -171,15 +179,20 @@ export function FiguresPanel({ ventureId }: { ventureId: string }) {
             <div className="mt-3">
               <p className="font-mono text-[9px] uppercase tracking-wider text-stone-dim">Retracted</p>
               <ul className="mt-1 space-y-1">
-                {retracted.map((f) => (
-                  <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-stone-dim opacity-70">
-                    <span>{FIGURE_KIND_LABELS[f.kind]}</span>
-                    <span>{describePeriod(f.periodStart, f.periodEnd)}</span>
-                    <span className="font-mono">{formatAmount(f.amountCents, f.currency)}</span>
-                    <span>from {f.sourceLabel}</span>
-                    {f.retractedAt ? <span className="ml-auto">retracted {f.retractedAt.slice(0, 10)}</span> : null}
-                  </li>
-                ))}
+                {retracted.map((f) => {
+                  // The person's own day, not the UTC day the timestamp starts with.
+                  const retractedDay = f.retractedAt ? localDay(f.retractedAt) : null;
+                  return (
+                    <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-stone-dim opacity-70">
+                      <span>{FIGURE_KIND_LABELS[f.kind]}</span>
+                      <span>{describePeriod(f.periodStart, f.periodEnd)}</span>
+                      <span className="font-mono">{formatAmount(f.amountCents, f.currency)}</span>
+                      <span>from {f.sourceLabel}</span>
+                      <span>{describeFigureDates(f.periodEnd, today, f.confirmedAt)}</span>
+                      {retractedDay ? <span className="ml-auto">retracted {retractedDay}</span> : null}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ) : null}
