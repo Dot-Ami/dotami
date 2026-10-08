@@ -8,6 +8,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **The desktop app says an update is coming as soon as it finds one.** It used to download the
+  new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
+  update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading
+  now"* right away, without blocking the app, and the app's taskbar button fills up as it
+  downloads. When it's ready you're asked the same question as before, *Restart and update* or
+  *Later*; nothing installs without that click. If the download fails, you're told nothing was
+  installed. The version you're running is the one that shows this, so you'll first see it on the
+  update after the one that brings it.
+- **A start that stops part-way now leaves its reason in the log.** The desktop app's log
+  (`logs/server.log` in its data folder) was written in the background, so a start that was ended
+  or failed while it updated the database left no line at all, not even "starting DotAmi" (seen on
+  2026-10-08 during the update to 0.2.1; the data was unharmed). Every line is now written to the
+  disk straight away, including what stopped the start, and a start made by the updater says so.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV

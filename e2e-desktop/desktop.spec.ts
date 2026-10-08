@@ -5,7 +5,7 @@
  * app itself on first launch. Native file dialogs are answered by replacing them in the app's
  * main process; the passphrase window is the real one, filled in like a person would.
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -80,6 +80,11 @@ test("start → describe a venture → close → start again: the venture is sti
   let page = await launch();
   await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
   expect(existsSync(path.join(dataDir, "dotami.db"))).toBe(true);
+  // The start is in the log, written by desktop/log.mjs: the start line and the database step.
+  const startLog = readFileSync(path.join(dataDir, "logs", "server.log"), "utf8");
+  expect(startLog).toMatch(/--- \S+ starting DotAmi \d+\.\d+\.\d+/);
+  expect(startLog).toContain("[desktop] database ready");
+  expect(startLog).not.toContain("[desktop] stopped:");
 
   await describeVenture(page);
 

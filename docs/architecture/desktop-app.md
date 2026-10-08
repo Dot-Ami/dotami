@@ -1,8 +1,8 @@
 # The desktop app — how it runs, installs and updates ([7b], [7d])
 
-Status: 2026-10-05. Runs from a checkout (`npm run desktop`), packages into a Windows installer
-(`npm run desktop:installer`), and updates itself from GitHub Releases. Not yet released: the
-first release is the maintainer's call. Plan of record:
+Status: 2026-10-08. Runs from a checkout (`npm run desktop`), packages into a Windows installer
+(`npm run desktop:installer`), and updates itself from GitHub Releases. Released as 0.2.0
+(2026-10-06) and 0.2.1 (2026-10-08). Plan of record:
 [use-cases.md § The desktop app](use-cases.md#the-desktop-app--database-and-shell-go-given-2026-09-29).
 Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-cases.md#the-desktop-app).
 
@@ -13,8 +13,14 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
 1. **Data folder.** The app's own folder (`%APPDATA%\DotAmi` on Windows), or `DOTAMI_DATA_DIR`
    if set. It must be writable, or the app says so and stops.
 2. **One copy per data folder.** A second launch brings the first window forward.
-3. **The database.** `dotami.db` in that folder, created or brought up to date by
-   `desktop/migrate.mjs` (below). Output goes to `logs/server.log` in the data folder.
+3. **The log, then the database.** `logs/server.log` in the data folder is opened first and every
+   line is written straight to the disk (`desktop/log.mjs`, `writeSync` on a file opened for
+   appending): the start line (with *"started by the updater"* when the installer started it), the
+   migrator's lines, *"database ready"*, the server's own output, and whatever stopped a start
+   (*"[desktop] stopped: …"*, written before the error dialog). Until 0.2.1 the log was a stream that
+   wrote in the background while start-up ran synchronously, so a start killed or failed before the
+   server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
+   brought up to date by `desktop/migrate.mjs` (below).
 4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
@@ -108,6 +114,20 @@ person's click ("Restart and update"). A copy run from the source code never che
 with git. The settings page says which kind of copy it is, and its Privacy group says what the
 check reveals: GitHub sees the computer's internet address and which version it runs.
 
+**What the person sees** (`desktop/update-notice.mjs`; the app that is running shows it, so it first
+appears on the update after the release that brings it): the moment a newer version is found, a
+message — *"DotAmi <version> is available, downloading now"*, and that nothing changes until they
+click *Restart and update* — and the app's taskbar button fills up as the download goes.
+When the download is checked, that message closes itself and the usual question appears:
+*Restart and update* or *Later*. A failed download clears the progress and says nothing was
+installed. Until 0.2.1 the app said nothing until the whole download (about 130 MB) had finished,
+so at start-up an update looked slow to appear (the maintainer, 2026-10-08).
+
+Why a message plus the taskbar, and not something quieter: the message has no parent window, so it
+doesn't block the app (the person can close it or just keep working); the taskbar progress alone
+is what's easy to miss. A Windows notification can be silenced by *Do not disturb*, and a banner
+inside the page would need a bridge from the app into its pages, which they don't have today.
+
 - **Only published releases count.** CI uploads every build as a **draft**; a draft is invisible to
   installed apps until the maintainer publishes it.
 - **Pre-releases for work in progress.** A version with a pre-release tag (`0.2.0-dev.1`) published
@@ -118,6 +138,46 @@ check reveals: GitHub sees the computer's internet address and which version it 
   (a corrupted or swapped download is refused). Both come from the same release, so the real lock
   is **who can publish a release on `Dot-Ami/dotami`** — the maintainer's GitHub account (keep
   two-factor sign-in on). Code signing would add a second, independent check; it's deferred.
+
+### Updating on Windows: what runs when
+
+Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, electron-builder's
+`app-builder-lib` 26.15.3), for the one-click installer DotAmi builds (`desktop/package.mjs`:
+`oneClick: true`, per user):
+
+1. **The click.** *Restart and update* calls `autoUpdater.quitAndInstall()` with no arguments
+   (`desktop/update-notice.mjs:79`). That means not silent, and "run the app afterwards" taken from
+   `autoRunAppAfterInstall`, which defaults to true
+   (`node_modules/electron-updater/out/BaseUpdater.js:13-16`, `AppUpdater.js:119`).
+2. **The installer starts, the app quits.** The downloaded installer is started on its own
+   (detached) with `--updated --force-run` (`NsisUpdater.js:107-113`, `BaseUpdater.js:129-140`);
+   then, on the next turn of the event loop, the app quits normally (`BaseUpdater.js:17-22`), which
+   stops DotAmi's server (`desktop/main.mjs`, `before-quit`).
+3. **The installer closes any DotAmi still running — first, and only then.** Its first step
+   (`node_modules/app-builder-lib/templates/nsis/installSection.nsh:33`) looks for any process
+   started from the install folder; after an update it waits 0.3 s, then 1 s more if one is still
+   there, then ends it — with PowerShell's `Stop-Process`, which ends a process outright (no chance
+   to tidy up), or, without PowerShell, `taskkill`, which asks first and forces after another
+   second (`include/allowOnlyOneInstallerInstance.nsh:105-160`, `:81-103`). The old version's
+   uninstaller, which the installer runs and waits for next, does the same check at its own start
+   (`uninstaller.nsh:2`, run from `include/installUtil.nsh:224`).
+4. **Files, shortcuts, then the app.** It installs the new files and shortcuts, then — last —
+   starts DotAmi once, through its Start-menu shortcut, with `--updated`
+   (`installSection.nsh:66-75`, `:91-97`; `common.nsh:123-131`; `RUN_AFTER_FINISH` is on because
+   DotAmi doesn't set `runAfterFinish: false`, `out/targets/nsis/NsisTarget.js:408`), and exits. It
+   doesn't wait for the app or touch it afterwards.
+
+**Does that explain the start of 2026-10-08,** killed right after its safety copy? Not by itself.
+The installer ends DotAmi processes only before it installs, so the copy it ends is always the old
+version; the start that was killed was the new one (its safety copy is named after a migration only
+0.2.1 has: `dotami-before-20261006180658_figures-…`), and the installer starts that one last and
+leaves it alone. What's left: the start was ended from outside (by the person or another program),
+or it failed and its message was lost with the rest of that run's log. The log is now written
+straight to the disk, so the next time it says which: a failure leaves *"[desktop] stopped: …"*; a
+start line followed by nothing was ended from outside. Not changed, listed: the installer gives the
+old version 1.3 s to quit before ending it outright (electron-builder's `customCheckAppRunning` macro
+could lengthen that); with the database migrator's transactions and safety copy that is not a risk
+to the data.
 
 ### Releasing an update
 
@@ -139,10 +199,21 @@ check reveals: GitHub sees the computer's internet address and which version it 
   "Desktop app (Windows)").
 - `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
   refuse / back up / undo cases.
+- `tests/desktop-startup-log.spec.ts` — replays a start in its own process and kills it the moment
+  the migrator reports its safety copy (the 2026-10-08 case): the log must still hold the start
+  line and the backup line, and the database must be unchanged. (Checked that it bites: with the
+  old background stream the log file isn't even there.) Also that `main.mjs` ships every file of
+  its own that it imports.
+- `tests/desktop-update-notice.spec.ts` — the update messages and taskbar progress, driven by a fake
+  updater sending electron-updater's events: told at once, progress, the same *Restart and update* /
+  *Later* question, installing only on that click, a failed download. (Checked that it bites: with
+  the old code, 6 of its 7 cases fail; the one that passes is "installs only on the click".)
 
 ## Not done yet
 
-- An update actually released on GitHub reaching an installed app (needs the first two releases).
+- An automated test of a released update reaching an installed app. (It has happened by hand: the
+  maintainer's computer went from 0.2.0 to 0.2.1 on 2026-10-08.)
 - Not tested: a second launch while the first runs; an unwritable data folder; the app killed
-  mid-save; a server that never answers; the update dialog itself.
+  mid-save; a server that never answers; the update dialogs in the real app (they're tested with a
+  fake updater, not against a release).
 - An app icon (the default Electron icon is used); Mac and Linux builds.
