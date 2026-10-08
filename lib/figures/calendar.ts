@@ -19,8 +19,13 @@
  *   - TEXT values escape backslash, semicolon, comma and line breaks (§3.3.11).
  *   - The events are all-day (DATE values), which are "floating": they fall on that calendar day
  *     wherever the person is, so the file needs no time zone section (§3.3.4, §3.6.1).
- *   - UID is fixed per cadence. Importing the file again then updates the same event in a calendar
- *     that matches by UID, instead of adding a second copy.
+ *   - Each event's UID is a fresh random UUID, made anew every time the file is saved. RFC 5545
+ *     (§3.8.4.7) wants a UID that is unique everywhere, and RFC 7986 (§5.3) recommends a random
+ *     UUID and forbids anything that could identify a person, computer or domain. A fixed UID
+ *     would be the same for every DotAmi user, so two people importing into one shared calendar
+ *     would overwrite each other's events. The price: importing the file a second time adds a
+ *     second copy, and the page says so. (A UID kept per install would need a stored id that
+ *     every synced calendar then carries; not worth it for a file you import once.)
  */
 
 import { parseDay } from "./age";
@@ -105,6 +110,20 @@ function dayAfterFirst(day: string): string {
   return `${day.slice(0, 8)}02`;
 }
 
+/**
+ * A random version 4 UUID (RFC 4122 §4.4), lower-case hex. Built on getRandomValues rather than
+ * crypto.randomUUID because randomUUID exists only on secure pages (https or localhost), and a
+ * self-hosted DotAmi reached over plain http on a home network is not one.
+ */
+export function randomUuid(): string {
+  const b = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // the RFC 4122 variant
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 /** A UTC DATE-TIME, for DTSTAMP: 20261008T143005Z. */
 function utcStamp(now: Date): string {
   return now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -117,10 +136,12 @@ export interface ReminderCalendarInput {
   today: string;
   /** When the file is made; becomes each event's DTSTAMP. */
   now: Date;
+  /** Makes each event's UID; a random UUID unless a test pins it. */
+  newUid?: () => string;
 }
 
 /** The whole .ics file as text, CRLF line endings, one VEVENT per ticked choice. */
-export function reminderCalendar({ cadences, today, now }: ReminderCalendarInput): string {
+export function reminderCalendar({ cadences, today, now, newUid = randomUuid }: ReminderCalendarInput): string {
   // Each choice once, in the settings page's order, whatever order they arrived in.
   const chosen = REMINDER_CADENCES.filter((c) => cadences.includes(c));
   if (chosen.length === 0) throw new Error("reminderCalendar needs at least one ticked choice.");
@@ -138,7 +159,7 @@ export function reminderCalendar({ cadences, today, now }: ReminderCalendarInput
     ].join(" ");
     lines.push(
       "BEGIN:VEVENT",
-      `UID:dotami-figure-reminder-${cadence}`,
+      `UID:${newUid()}`,
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${dateValue(start)}`,
       `DTEND;VALUE=DATE:${dateValue(dayAfterFirst(start))}`,

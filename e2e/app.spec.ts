@@ -267,6 +267,9 @@ test("Add to my calendar: the ticked boxes become a calendar file made in the pa
   await setBox(page, boxes.quarterly, true);
   await expect(button).toBeEnabled();
   await expect(boxes.row).toContainText("can't see DotAmi, so it reminds you whether or not your figures are already in");
+  // Google Calendar takes a file only through its website's import page, not by opening the file.
+  await expect(boxes.row).toContainText("Google Calendar: import it on a computer at calendar.google.com");
+  await expect(boxes.row).toContainText("Importing the same file again adds a second copy");
   const seen = watchRequests(page);
   const download = page.waitForEvent("download");
   await button.click();
@@ -276,7 +279,9 @@ test("Add to my calendar: the ticked boxes become a calendar file made in the pa
   expect(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
   expect(text.endsWith("END:VCALENDAR\r\n")).toBe(true);
   expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(1);
-  expect(text).toContain("\r\nUID:dotami-figure-reminder-quarterly\r\n");
+  // The UID is a random UUID (RFC 7986 §5.3), new for every file.
+  const firstUid = text.match(/\r\nUID:(\S+)\r\n/)?.[1];
+  expect(firstUid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   expect(text).toContain("\r\nDTSTART;VALUE=DATE:20270101\r\n");
   expect(text).toContain("\r\nRRULE:FREQ=MONTHLY;INTERVAL=3\r\n");
   expect(text).toContain("\r\nSUMMARY:Bring your DotAmi figures up to date\r\n");
@@ -290,10 +295,10 @@ test("Add to my calendar: the ticked boxes become a calendar file made in the pa
   const second = page.waitForEvent("download");
   await button.click();
   const both = (await readDownload(await second)).toString("utf8");
-  expect([...both.matchAll(/\r\nUID:(\S+)\r\n/g)].map((m) => m[1])).toEqual([
-    "dotami-figure-reminder-monthly",
-    "dotami-figure-reminder-yearly",
-  ]);
+  expect([...both.matchAll(/\r\nRRULE:(\S+)\r\n/g)].map((m) => m[1])).toEqual(["FREQ=MONTHLY", "FREQ=YEARLY"]);
+  // Three events across two files, three different UIDs: a second file never reuses one.
+  const bothUids = [...both.matchAll(/\r\nUID:(\S+)\r\n/g)].map((m) => m[1]);
+  expect(new Set([firstUid, ...bothUids]).size).toBe(3);
   expect(both).toContain("\r\nDTSTART;VALUE=DATE:20261101\r\n");
 
   // Nothing ticked: there is nothing to put in a calendar, so the button is off.

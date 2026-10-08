@@ -6,6 +6,7 @@ import {
   escapeText,
   firstReminderDay,
   foldLine,
+  randomUuid,
   reminderCalendar,
 } from "@/lib/figures/calendar";
 import type { ReminderCadence } from "@/lib/settings/values";
@@ -18,6 +19,8 @@ import type { ReminderCadence } from "@/lib/settings/values";
 
 const NOW = new Date("2026-10-08T14:30:05.123Z");
 const octets = (s: string) => new TextEncoder().encode(s).length;
+/** A random version 4 UUID, lower-case (RFC 4122 §4.4); RFC 7986 §5.3 recommends one as the UID. */
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 /** RFC 5545 §3.1: a CRLF followed by one space or tab is removed before the line is read. */
 function unfold(text: string): string {
@@ -162,12 +165,12 @@ describe("reminderCalendar — the whole file", () => {
   });
 
   it("repeats monthly, every three months from a quarter's start, and yearly on January 1", () => {
-    const byRule = Object.fromEntries(events(all).map((e) => [one(e, "UID").value, [one(e, "DTSTART").value, one(e, "RRULE").value]]));
-    expect(byRule).toEqual({
-      "dotami-figure-reminder-monthly": ["20261101", "FREQ=MONTHLY"],
-      "dotami-figure-reminder-quarterly": ["20270101", "FREQ=MONTHLY;INTERVAL=3"],
-      "dotami-figure-reminder-yearly": ["20270101", "FREQ=YEARLY"],
-    });
+    // In the page's order: monthly, quarterly, yearly.
+    expect(events(all).map((e) => [one(e, "DTSTART").value, one(e, "RRULE").value])).toEqual([
+      ["20261101", "FREQ=MONTHLY"],
+      ["20270101", "FREQ=MONTHLY;INTERVAL=3"],
+      ["20270101", "FREQ=YEARLY"],
+    ]);
   });
 
   it("says the calendar can't see DotAmi, and holds nothing but generic words", () => {
@@ -182,14 +185,35 @@ describe("reminderCalendar — the whole file", () => {
 
   it("only the ticked choices, each once, in the page's order", () => {
     const text = reminderCalendar({ cadences: ["yearly", "monthly", "yearly"], today: "2026-10-08", now: NOW });
-    expect(events(text).map((e) => one(e, "UID").value)).toEqual(["dotami-figure-reminder-monthly", "dotami-figure-reminder-yearly"]);
+    expect(events(text).map((e) => one(e, "RRULE").value)).toEqual(["FREQ=MONTHLY", "FREQ=YEARLY"]);
   });
 
-  it("the same UID whatever day the file is made, so importing it again updates rather than duplicates", () => {
-    const later = reminderCalendar({ cadences: ["quarterly"], today: "2027-05-02", now: new Date("2027-05-02T09:00:00Z") });
-    const e = events(later)[0];
-    expect(one(e, "UID").value).toBe("dotami-figure-reminder-quarterly");
-    expect(one(e, "DTSTART").value).toBe("20270701");
+  it("gives every event a random UUID as its UID, new each time the file is made", () => {
+    // RFC 5545 §3.8.4.7: unique everywhere, so two people importing into one shared calendar never
+    // overwrite each other's events. RFC 7986 §5.3: a random UUID, with nothing in it that could
+    // identify a person, a computer or a domain.
+    const first = events(all).map((e) => one(e, "UID").value);
+    const again = events(reminderCalendar({ cadences: ["monthly", "quarterly", "yearly"], today: "2026-10-08", now: NOW })).map(
+      (e) => one(e, "UID").value,
+    );
+    for (const uid of [...first, ...again]) {
+      expect(uid).toMatch(UUID_V4);
+      expect(uid).not.toMatch(/dotami|@/i);
+    }
+    // Same ticks, same day, same moment: still six different UIDs.
+    expect(new Set([...first, ...again]).size).toBe(6);
+  });
+
+  it("randomUuid makes version 4 UUIDs that don't repeat", () => {
+    const many = Array.from({ length: 500 }, randomUuid);
+    for (const uid of many) expect(uid).toMatch(UUID_V4);
+    expect(new Set(many).size).toBe(500);
+  });
+
+  it("uses the UID maker it is handed, one call per event", () => {
+    let n = 0;
+    const text = reminderCalendar({ cadences: ["monthly", "yearly"], today: "2026-10-08", now: NOW, newUid: () => `uid-${++n}` });
+    expect(events(text).map((e) => one(e, "UID").value)).toEqual(["uid-1", "uid-2"]);
   });
 
   it("refuses an empty list (a calendar file must hold at least one event) and a bad moment", () => {

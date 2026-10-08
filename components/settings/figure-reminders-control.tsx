@@ -115,7 +115,10 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
         </button>
         <p className="min-w-0 flex-1 text-xs leading-relaxed text-stone">
           Saves a calendar file (.ics) with one repeating event per ticked box, on the first day after
-          each month, quarter or year ends. Open it with your calendar to add the events. Your calendar
+          each month, quarter or year ends. Open it with your calendar app, or use its Import menu.
+          Google Calendar: import it on a computer at calendar.google.com (Settings, then Import &amp;
+          export). Importing the same file again adds a second copy, so after changing your ticks,
+          delete the old events first. Your calendar
           can&apos;t see DotAmi, so it reminds you whether or not your figures are already in. The file
           holds only those general words: no amounts and no idea names. A calendar that syncs online
           shares them with the company that runs it.
