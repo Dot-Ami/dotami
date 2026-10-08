@@ -128,7 +128,11 @@ roadmap's build order.
   - [x] Reminders: an "add to my calendar" file: one repeating event per ticked box, made in the page
     (RFC 5545 rules unit-tested in `tests/figures-calendar.spec.ts`; the download browser-tested; the desktop
     app's Save dialog desktop-tested)
-- ⬜ **[8f] Tax software, through the CRA's line numbers.**
+- 🔄 **[8f] Tax software, through the CRA's line numbers.**
+  - [x] Read last year's return PDF in the window and show each T2125's lines 8299, 9368, 9369 and 9946
+    with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
+    or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
+    ([review](connectors/pdf-reader-review.md))
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax

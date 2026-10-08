@@ -12,6 +12,7 @@ import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from
 import { FigureDates, FutureDateNote } from "./figure-age";
 import { FigureReminderBanners, type ReminderState } from "./figure-reminder-banners";
 import { FileDrop } from "./file-drop";
+import { ReturnDrop } from "./return-drop";
 
 /**
  * [8a]/[8b] "Your figures" on an idea's card: the totals the person has agreed to, never
@@ -56,8 +57,9 @@ export function FiguresPanel({
   const [reviewing, setReviewing] = useState<FigureView[] | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [retractBusy, setRetractBusy] = useState(false);
-  // Which add form is open: typing one figure, or reading a file. Never both at once.
-  const [adding, setAdding] = useState<"typed" | "file" | null>(null);
+  // Which add form is open: typing one figure, reading a file, or looking at last year's return.
+  // Never more than one at once.
+  const [adding, setAdding] = useState<"typed" | "file" | "return" | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -258,6 +260,8 @@ export function FiguresPanel({
             onCancel={() => setAdding(null)}
             onProposed={handleProposed}
           />
+        ) : adding === "return" ? (
+          <ReturnDrop onClose={() => setAdding(null)} />
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <Pill variant="ghost" size="small" onClick={() => setAdding("typed")}>
@@ -265,6 +269,9 @@ export function FiguresPanel({
             </Pill>
             <Pill variant="ghost" size="small" onClick={() => setAdding("file")}>
               Add from a file
+            </Pill>
+            <Pill variant="ghost" size="small" onClick={() => setAdding("return")}>
+              Add from last year&apos;s return
             </Pill>
           </div>
         )}

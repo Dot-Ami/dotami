@@ -9,6 +9,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Add from last year's return** ([8f], first step) — a new button under *Your figures*. Drop the
+  PDF of last year's return that your tax software saved, and for each T2125 (Statement of Business
+  or Professional Activities) in it DotAmi shows lines 8299, 9368, 9369 and 9946, the page each is
+  printed on and the amount beside it. Nothing is added to your figures or kept yet: you look, and
+  Close forgets the file. A scan or photo, a password-locked PDF, or a return without a T2125 gets a
+  plain sentence saying why and what to do instead. The PDF is read on your computer, inside the
+  app's window, by Mozilla's PDF reader (pdf.js), which DotAmi pinned and reviewed and runs in a
+  separate worker that can't connect to anything.
 - **A reader for hledger and Ledger journals** ([8h], core only; no screen yet, so nothing changes
   for you today) — DotAmi's own code for the plain-text books hledger and Ledger keep. It turns a
   journal into its accounts and their monthly totals: dates, transactions, postings, amounts with
@@ -40,6 +48,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   own pages can start a save.
 
 ### Changed
+- **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
+  return*, instead of "That isn't a spreadsheet".
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,
   `npm run start` and `npm run lint` now start Next.js with its anonymous usage reports switched off, as
   the Prisma scripts, CI and the desktop app already did; one small script switches both
@@ -77,6 +87,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   disk straight away, including what stopped the start (DotAmi's message and the error's name and
   code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
   without it instead of refusing to start.
+
+### Security
+- **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a
+  worker's own response policy, not the page's, so Next's static files now carry one that allows
+  DotAmi's scripts and nothing else. No worker before the return reader loaded from those files.
 
 ## [0.2.1] — 2026-10-08
 
