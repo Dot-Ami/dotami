@@ -16,9 +16,13 @@ reading or translating hledger's or Ledger's source code:
   delimiter, Account names, Amounts, Decimal marks, Digit group marks, Commodity, Costs, Balance
   assertions, Posting comments, Transaction balancing, Tags, and Directives (account and account
   types, alias, commodity, decimal-mark, D, include, P, payee, tag, Y, apply account, periodic
-  transactions, auto postings, balance assignments, other Ledger directives). Read 2026-10-08.
+  transactions, auto postings, balance assignments, other Ledger directives). Retrieved
+  2026-10-08 by the agent that wrote the reader, through a fetch-and-summarise tool; the balancing
+  rule, the cost-inference text and the account-type name table were re-checked against the
+  manual's own wording the same day. No person has read these sections for this reader yet.
 - "hledger and Ledger", [hledger.org/ledger.html](https://hledger.org/ledger.html): value
-  expressions, lot annotations, secondary dates, Ledger-only directives. Read 2026-10-08.
+  expressions, lot annotations, secondary dates, Ledger-only directives. Retrieved 2026-10-08 the
+  same way.
 
 No code, comment or test text was copied from either project, and DotAmi adds no dependency on
 them. The separate question of offering hledger itself in the installer is still the
@@ -36,8 +40,13 @@ exact cents, one list per currency.
   transaction's date in both programs unless asked otherwise.
 - **Postings**: account (ends at two spaces or a tab), amount, cost (`@`, `@@`), balance assertion
   (skipped: only hledger checks it). One posting per transaction may leave its amount out; it is
-  worked out exactly when the rest is in one commodity, costs converted. A transaction with no
-  cost and one commodity must add up to exactly zero.
+  worked out exactly when the rest is in one commodity, costs converted. Every other transaction
+  must add up, by hledger 1.50's rule: costs are converted, then each commodity's sum must be zero
+  when rounded to the most decimals the entry writes for that commodity (cost amounts left out).
+  DotAmi is a little stricter: exactly half of the last decimal is not zero, and a commodity that
+  only appears in costs must add up exactly. An entry in exactly two commodities with no cost is
+  accepted when the two sums run opposite ways, because hledger works out the rate for that case;
+  each side is still its own account to tick, never converted.
 - **Posting dates**: a `date:` tag in the posting's comment moves that posting to its own day
   (a yearless one takes the transaction's year). `date2:` is skipped.
 - **Amounts**: commodity on the left or the right, quoted when it isn't letters or a currency sign,
@@ -45,10 +54,13 @@ exact cents, one list per currency.
   points or spaces (including no-break and thin spaces) between groups of three, `1E3` notation.
   Nothing is rounded; an amount that isn't whole cents is left out of the totals and listed.
 - **Directives**: `account` (with a `type:` tag, by letter or name; children take their nearest
-  declared parent's type, otherwise the type comes from the top-level name: assets, liabilities or
-  debts, equity, income or revenue, expenses), `commodity` (its sample amount and `format` line say
-  which mark is that commodity's decimal mark), `decimal-mark`, `P`, `payee`, `tag`, comment lines
-  (`;`, `#`, `*`) and `comment` … `end comment` blocks.
+  declared parent's type, otherwise the type comes from the name by the manual's table: a bank,
+  cash, chequing, savings or current account under assets is Cash, other assets are Asset,
+  liabilities or debts, equity, `equity:trade`/`trading`/`conversion` (and plurals) is Conversion,
+  income or revenue, expenses), `commodity` (its sample amount and `format` line say which mark is
+  that commodity's decimal mark), `decimal-mark`, `P`, `payee`, `tag`, comment lines (`;`, `#`,
+  `*`) and `comment` … `end comment` blocks. A block may run to the end of the file, as the manual
+  allows, unless it swallowed lines that start with a date (see below).
 - **Accounts and currencies**: a journal account can hold several commodities, so each
   account-and-commodity pair is its own account to tick, never added together. A commodity written
   as an ISO 4217 code (`CAD`) is that currency. A symbol such as `$` could be several currencies, so
@@ -68,15 +80,20 @@ and indented lines it can't place · dates without a year · a `date:` tag on a 
 account (the manual doesn't say what it does there) · Ledger's `[date]` posting dates · an amount
 like `1,000` or `1.000` that hledger reads as one and other programs as a thousand, unless a
 `decimal-mark` or `commodity` line above it settles it · digit groups other than threes · a
-transaction that doesn't add up · an account name with a semicolon, an unusual space or a hidden
-character · an account more than 100 levels deep · control characters, files that aren't UTF-8
+transaction that doesn't add up, with or without costs · a `comment` line with words after it
+(it would hide everything below) · a comment block that never reaches a line saying exactly
+`end comment` and has lines starting with a date inside it (refused at the line that opened it,
+because those transactions would silently go missing) · an account name with a semicolon, an
+unusual space or a hidden character (zero-width, soft hyphen, variation selector and the like) ·
+an account more than 100 levels deep · control characters (C0 and C1), files that aren't UTF-8
 text, and files over 10 MB.
 
 ## Not done yet
 
 - The screen, and proposing the totals into the agree prompt.
 - Virtual postings: refused for now, because whether they count is the person's choice.
-- Transactions with costs or several commodities are not checked for balancing (hledger balances
-  those at a display precision and may infer costs; DotAmi doesn't redo that).
+- An account name that ends in something shaped like an amount after a single space
+  (`income:sales -500 CAD`) is read as a name, as hledger reads it. Flagging it would also refuse
+  real names such as `assets:savings 2026`.
 - The Ledger reading of `1,50` (a decimal comma) has not been checked against Ledger's own
   documentation; the reader follows hledger's manual there.

@@ -244,6 +244,57 @@ describe("transactions", () => {
     expect([r.refusal, r.line]).toEqual(["unbalanced", 5]);
   });
 
+  // hledger 1.50 (manual, "Transaction balancing"): costs are converted first, then each
+  // commodity's sum must be zero at the highest precision the entry writes for it, cost amounts
+  // left out. A cost doesn't excuse a transaction from adding up.
+  it("refuses a transaction with a cost that doesn't add up once the cost is converted", () => {
+    // 740.00 USD at 1.35 is 999.00 CAD, not the 10,000.00 typed on the revenue line.
+    const r = refusal(
+      `${sale("2026-03-01", "1.00")}\n2026-03-10 consulting paid in USD\n    income:consulting  -10000.00 CAD\n    assets:usd  740.00 USD @ 1.35 CAD\n`,
+    );
+    expect([r.refusal, r.line]).toEqual(["unbalanced", 5]);
+  });
+
+  it("reads a cost transaction that adds up at the precision the entry writes, and refuses one a cent off", () => {
+    // 740.00 × 1.3514 = 1000.036: 0.004 from 1000.04, which is zero at two decimals.
+    const ok = read("2026-03-10 x\n    assets:usd  740.00 USD @ 1.3514 CAD\n    income:consulting  -1000.04 CAD\n");
+    expect(ok.book.lines).toHaveLength(2);
+    // 1000.03 is 0.006 away: not zero at two decimals.
+    const off = refusal("2026-03-10 x\n    assets:usd  740.00 USD @ 1.3514 CAD\n    income:consulting  -1000.03 CAD\n");
+    expect([off.refusal, off.line]).toEqual(["unbalanced", 1]);
+    // Exactly half a cent off could round either way, so it is refused rather than rounded.
+    const half = refusal("2026-03-10 x\n    assets:usd  10.00 USD @ 1.0005 CAD\n    income:consulting  -10.00 CAD\n");
+    expect(half.refusal).toBe("unbalanced");
+  });
+
+  it("asks a commodity that only appears in costs to add up exactly", () => {
+    const ok = read("2026-01-05 x\n    assets:a  10 X @ 2 Y\n    assets:b  -5 X @ 4 Y\n");
+    expect(ok.book.lines).toHaveLength(2);
+    const r = refusal("2026-01-05 x\n    assets:a  10 X @ 2 Y\n    assets:b  -5 X @ 4.0001 Y\n");
+    expect(r.refusal).toBe("unbalanced");
+  });
+
+  it("refuses a cost transaction with another commodity left over", () => {
+    const r = refusal("2026-01-05 x\n    assets:usd  10 USD @ 1.35 CAD\n    assets:cad  -13.50 CAD\n    income:sales  -5 EUR\n");
+    expect([r.refusal, r.line]).toEqual(["unbalanced", 1]);
+  });
+
+  it("reads two commodities with no cost only when they run opposite ways (hledger works out the rate)", () => {
+    const ok = read("2026-01-05 x\n    income:sales  -1000 CAD\n    assets:bank  740 USD\n");
+    expect(ok.book.lines).toHaveLength(2);
+    // Both negative: no rate could balance it.
+    const same = refusal("2026-01-05 x\n    income:sales  -1000 CAD\n    assets:bank  -1000 USD\n");
+    expect([same.refusal, same.line]).toEqual(["unbalanced", 1]);
+    // One commodity left over while the other adds up.
+    const leftOver = refusal("2026-01-05 x\n    income:sales  -1000 CAD\n    assets:bank  5 USD\n    assets:cash  -5 USD\n");
+    expect(leftOver.refusal).toBe("unbalanced");
+    // Three commodities: hledger only works out a rate between two.
+    const three = refusal("2026-01-05 x\n    income:sales  -1000 CAD\n    assets:bank  500 USD\n    assets:eur  300 EUR\n");
+    expect(three.refusal).toBe("unbalanced");
+    // Several commodities that each add up are fine.
+    expect(read("2026-01-05 x\n    assets:a  5 USD\n    assets:b  -5 USD\n    assets:c  7 CAD\n    assets:d  -7 CAD\n").book.lines).toHaveLength(4);
+  });
+
   it("refuses two postings without an amount, at the second", () => {
     const r = refusal("2026-01-05 x\n    income:sales  -10.00\n    assets:bank\n    assets:cash\n");
     expect([r.refusal, r.line]).toEqual(["blank-amounts", 4]);
@@ -340,7 +391,7 @@ describe("account types", () => {
       "biz:sales:online": ["Revenue", "credit"],
       "Revenue:x": ["Revenue", "credit"],
       "misc:other": ["", null],
-      "assets:bank": ["Asset", "debit"],
+      "assets:bank": ["Cash", "debit"], // the manual's name table makes a bank account Cash
     });
   });
 
@@ -353,6 +404,28 @@ describe("account types", () => {
   it("treats equity:conversion as having no side", () => {
     const { book } = read(sale("2026-01-05", "1.00").replace("income:sales", "equity:conversion"));
     expect(book.accounts[1]).toMatchObject({ bookType: "Conversion", side: null });
+  });
+
+  it("follows the manual's name table for conversion and cash accounts, singular and plural, in any case", () => {
+    const typeOfName = (name: string) => {
+      const { book } = read(sale("2026-01-05", "1.00").replace("income:sales", name));
+      const account = book.accounts.find((a) => a.fullName === name)!;
+      return [account.bookType, account.side];
+    };
+    for (const name of ["equity:trade", "equity:trades", "Equity:Trading", "equity:tradings", "equity:conversions:usd"]) {
+      expect(typeOfName(name)).toEqual(["Conversion", null]);
+    }
+    for (const name of ["equity:opening", "equity:trader", "equity"]) {
+      expect(typeOfName(name)).toEqual(["Equity", "credit"]);
+    }
+    for (const name of ["assets:bank", "asset:cash", "Assets:RBC:Chequing", "assets:checking", "assets:cheque", "assets:savings:tfsa", "assets:current"]) {
+      expect(typeOfName(name)).toEqual(["Cash", "debit"]);
+    }
+    for (const name of ["assets:bankruptcy", "assets:receivable", "assets"]) {
+      expect(typeOfName(name)).toEqual(["Asset", "debit"]);
+    }
+    expect(typeOfName("incomes:x")).toEqual(["Revenue", "credit"]);
+    expect(typeOfName("debt:card")).toEqual(["Liability", "credit"]);
   });
 
   it("ignores a type: tag in a posting's comment, in any case", () => {
@@ -479,7 +552,13 @@ describe("what it refuses, by name and line, never quoting the line", () => {
     ["a text-direction override in an account name", "2026-01-05 x\n    income:\u202eZorblax  -1\n    assets:y\n", "account-name", 2],
     ["a zero-width space in an account name", "2026-01-05 x\n    income:Zor\u200bblax  -1\n    assets:y\n", "account-name", 2],
     ["a line separator in an account name", "2026-01-05 x\n    income:\u2028Zorblax  -1\n    assets:y\n", "account-name", 2],
+    ["a soft hyphen in an account name", "2026-01-05 x\n    income:Zor\u00adblax  -1\n    assets:y\n", "account-name", 2],
+    ["a combining grapheme joiner in an account name", "2026-01-05 x\n    income:Zor\u034fblax  -1\n    assets:y\n", "account-name", 2],
+    ["a variation selector in an account name", "2026-01-05 x\n    income:Zorblax\ufe0f  -1\n    assets:y\n", "account-name", 2],
+    ["a soft hyphen in a quoted commodity", '2026-01-05 x\n    income:Zorblax  -1 "AP\u00adPL"\n    assets:y\n', "bad-amount", 2],
     ["a control character", "; fine\n2026-01-05 Zorblax\u0007\n", "control-character", 2],
+    ["a C1 control character (next line) in an account name", "2026-01-05 x\n    income:Zor\u0085blax  -1\n    assets:y\n", "control-character", 2],
+    ["a C1 control character in a description", "; fine\n2026-01-05 Zorblax\u009b\n", "control-character", 2],
     ["a lone carriage return", "; fine\r; Zorblax\n", "control-character", 1],
   ];
   for (const keyword of ["assert", "bucket", "A", "capture", "check", "define", "eval", "expr", "python", "value", "test"]) {
@@ -521,8 +600,25 @@ describe("the file as a whole", () => {
     }
   });
 
-  it("reads a comment block that runs to the end of the file", () => {
+  it("reads a comment block that runs to the end of the file when nothing in it looks like a transaction", () => {
     expect(read(sale("2026-01-05", "1.00") + "comment\ninclude x\n~ monthly\n").book.lines).toHaveLength(2);
+  });
+
+  it("refuses a comment block left open over dated lines, at the line that opened it", () => {
+    // A close that isn't exactly "end comment" doesn't close the block, so February would vanish.
+    for (const close of ["end  comment", "  end comment", "end comments"]) {
+      const r = refusal(sale("2026-01-05", "10.00") + `comment\nold notes\n${close}\n` + sale("2026-02-05", "5.00"));
+      expect([r.refusal, r.line]).toEqual(["unclosed-comment", 4]);
+      expect(r.error).not.toContain("old notes");
+    }
+    // A properly closed block lets the transactions after it through.
+    const { book } = read(sale("2026-01-05", "10.00") + "comment\nold notes\nend comment\n" + sale("2026-02-05", "5.00"));
+    expect(book.lines).toHaveLength(4);
+  });
+
+  it("refuses a comment line with words after the keyword, rather than starting a block", () => {
+    const r = refusal(sale("2026-01-05", "10.00") + "comment this month was slow\n" + sale("2026-02-05", "5.00"));
+    expect([r.refusal, r.line]).toEqual(["unknown-directive", 4]);
   });
 
   it("reads unusual but ordinary unicode in names and commodities, and keeps names exactly as written", () => {
@@ -589,6 +685,9 @@ describe("never throws, never quotes", () => {
     const original = fixture("design-studio.journal").replace(/Northwind/g, "Zorblax");
     const rand = random(20261008);
     const pieces = ["Zorblax", "(", ")", "{", "[", "=", "@", ";", "~", "  ", "\t", ",", ".", "-", "\n", "1", "\u00a0", "\r", "include", "date: x"];
+    // Counted so the test can't pass by never reaching either branch.
+    let refused = 0;
+    let readOk = 0;
     for (let i = 0; i < 400; i += 1) {
       let text = original;
       for (let k = 0; k < 3; k += 1) {
@@ -598,9 +697,14 @@ describe("never throws, never quotes", () => {
       }
       const result = readJournal(bytes(text));
       if (!result.ok) {
+        refused += 1;
         expect(result.error).not.toContain("Zorblax");
         expect(result.refusal).not.toBe("reader-fault");
+      } else {
+        readOk += 1;
       }
     }
+    expect(refused).toBeGreaterThan(50);
+    expect(readOk).toBeGreaterThan(0);
   });
 });

@@ -9,8 +9,8 @@
  * assertions, Posting comments, Transaction balancing, Tags, and Directives (account, alias,
  * commodity, decimal-mark, D, include, P, payee, tag, Y, apply account, periodic transactions, auto
  * postings, balance assignments, and the Ledger directives hledger skips); and hledger.org/ledger.html
- * ("hledger and Ledger": value expressions, lot annotations, secondary dates). Both read
- * 2026-10-08. It was NOT written by reading or translating hledger's or Ledger's source code:
+ * ("hledger and Ledger": value expressions, lot annotations, secondary dates). Both retrieved
+ * 2026-10-08 (see docs/connectors/journal-reader.md for how). It was NOT written by reading or translating hledger's or Ledger's source code:
  * hledger is GPL-3.0 and DotAmi is Apache-2.0.
  *
  * Like the GnuCash reader it runs in memory, keeps nothing and logs nothing. The journal's
@@ -30,8 +30,9 @@
  * include files, periodic (~) and automated (=) transactions, balance assignments, value
  * expressions and lot annotations, virtual postings, account aliases and apply account, D and Y
  * defaults, the Ledger-only directives (which hledger skips but Ledger obeys), unknown directives,
- * dates without a year, an amount like "1,000" whose decimal mark the file doesn't settle, and a
- * transaction whose amounts don't add up to zero.
+ * dates without a year, an amount like "1,000" whose decimal mark the file doesn't settle, a
+ * comment block left open over dated lines, and a transaction whose amounts don't add up to zero
+ * (costs converted, at the precision the entry itself writes).
  *
  * A journal's account can hold several commodities, while a book account here has one currency. So
  * each account-and-commodity pair becomes its own book account: "income:consulting" in CAD and in
@@ -78,6 +79,7 @@ export type JournalRefusal =
   | "unknown-line"
   | "stray-indent"
   | "control-character"
+  | "unclosed-comment"
   // Dates
   | "date-without-year"
   | "bad-date"
@@ -226,6 +228,8 @@ const LINE_PHRASES: Record<JournalRefusal, string> = {
     "is indented but isn't part of a transaction or a directive above it (a blank line ends one)",
   "control-character":
     "has an invisible control character in it (something other than a tab or a line break)",
+  "unclosed-comment":
+    'starts a comment block that never ends with an "end comment" line, so the dated lines inside it would be skipped. A line that says exactly "end comment" ends the block',
   "date-without-year": "has a date without a year. DotAmi only reads dates that carry their year",
   "bad-date": "has a date DotAmi can't read as a real day (dates look like 2026-03-31)",
   "transaction-date-tag":
@@ -323,12 +327,15 @@ function nameEnd(text: string): number {
 }
 
 /**
- * Spaces and line separators other than a plain space, zero-width characters, text-direction controls and a stray
- * byte-order mark. In an account name they make two names that look the same different, or hide
- * where the name ends.
+ * Spaces and line separators other than a plain space, zero-width and invisible joining characters
+ * (soft hyphen, combining grapheme joiner, Mongolian vowel separator, variation selectors),
+ * text-direction controls and a stray byte-order mark. In an account name they make two names
+ * that look the same different, or hide where the name ends.
  */
-const ODD_NAME_CHARS = /[\p{Z}\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/u;
-const CONTROL_CHARS = /[\u0000-\u0008\u000b-\u001f\u007f]/;
+const ODD_NAME_CHARS =
+  /[\p{Z}\u00ad\u034f\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufe00-\ufe0f\ufeff]/u;
+/** C0 and C1 controls other than tab; C1 includes U+0085, which Unicode also counts as a line end. */
+const CONTROL_CHARS = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/;
 
 function checkAccountName(name: string, line: number): void {
   if (name === "" || name.includes(";") || ODD_NAME_CHARS.test(name.replace(/ /g, ""))) {
@@ -391,6 +398,18 @@ function readTags(comment: string, line: number, readType = false): CommentTags 
   return tags;
 }
 
+/**
+ * Whether a transaction's sum in one commodity is zero at `decimals` places. It counts as zero only
+ * when it is less than half of the last place: exactly half could round either way depending on
+ * the rounding rule, so that is treated as not zero. With no decimals to go on (a commodity seen
+ * only in costs) it has to be exactly zero.
+ */
+function roundsToZero(sum: BookAmount, decimals: number | null): boolean {
+  if (decimals === null) return sum.num === 0n;
+  const size = sum.num < 0n ? -sum.num : sum.num;
+  return 2n * size * 10n ** BigInt(decimals) < sum.den;
+}
+
 // ---------------------------------------------------------------------------------------------
 // The reader
 
@@ -400,6 +419,8 @@ interface PostingDraft {
   /** Null for the one posting that leaves its amount out. */
   commodity: string | null;
   amount: BookAmount | null;
+  /** How many decimals the amount is written with (0 when left out), for the balancing check. */
+  decimals: number;
   /** The posting's value in the cost's commodity, when it has a cost. */
   cost: { commodity: string; amount: BookAmount } | null;
   day: string | null;
@@ -418,7 +439,8 @@ type Context =
   | { kind: "account"; name: string; line: number }
   | { kind: "commodity"; symbol: string }
   | { kind: "loose-directive" } // payee, tag: whatever is under them changes no amount
-  | { kind: "comment-block" };
+  /** From a "comment" line to "end comment"; `dated` notes a line inside that starts with a digit. */
+  | { kind: "comment-block"; line: number; dated: boolean };
 
 interface AccountDeclaration {
   type: AccountType | null;
@@ -442,6 +464,7 @@ class JournalParser {
 
     if (this.context.kind === "comment-block") {
       if (raw.trimEnd() === "end comment") this.context = { kind: "none" };
+      else if (/^\d/.test(raw)) this.context.dated = true;
       return;
     }
 
@@ -469,6 +492,12 @@ class JournalParser {
   }
 
   end(): void {
+    // The manual lets a comment block run to the end of the file. But one that swallowed lines
+    // starting with a date is most likely a mistyped "end comment", and reading on would leave
+    // those transactions out while looking complete, so that is refused.
+    if (this.context.kind === "comment-block" && this.context.dated) {
+      throw new Refusal("unclosed-comment", this.context.line);
+    }
     this.endContext();
   }
 
@@ -561,6 +590,7 @@ class JournalParser {
       account,
       commodity: null,
       amount: null,
+      decimals: 0,
       cost: null,
       day: null,
     };
@@ -596,6 +626,9 @@ class JournalParser {
     const amount = this.amount(amountText, n);
     posting.commodity = amount.commodity;
     posting.amount = amount.amount;
+    // readAmount's denominator is still the power of ten the digits were written with
+    // ("1.50" → 150/100), so its length gives the decimals.
+    posting.decimals = amount.amount.den.toString().length - 1;
 
     if (at >= 0) {
       const total = main[at + 1] === "@";
@@ -622,21 +655,25 @@ class JournalParser {
   /**
    * Checks a finished transaction and hands its postings on. One posting may leave its amount out;
    * it is then exactly what balances the rest, provided the rest is in one commodity (costs
-   * converted). A transaction with no amount left out, no cost and one commodity must add up to
-   * exactly zero, as hledger requires; with costs or several commodities hledger balances at a
-   * display precision and may infer costs, which DotAmi doesn't redo, so those are not checked.
+   * converted). Otherwise the transaction must add up, by hledger 1.50's rule (manual: "Transaction
+   * balancing"): costs are converted, then each commodity's sum must be zero when rounded to the
+   * most decimals the entry writes for that commodity, cost amounts left out. hledger also works
+   * out a rate itself for an entry in exactly two commodities with no cost (manual: "Costs"); that
+   * is accepted only when the two sums run opposite ways, since a rate is never negative here.
    */
   private finishTransaction(tx: TransactionDraft): void {
     const blanks = tx.postings.filter((p) => p.amount === null);
     if (blanks.length > 1) throw new Refusal("blank-amounts", blanks[1].line);
 
     const sums = new Map<string, BookAmount>();
+    // Per commodity, the most decimals any posting's own amount is written with (costs excluded).
+    const precision = new Map<string, number>();
     let hasCost = false;
     for (const p of tx.postings) {
       if (p.amount === null) continue;
-      const [commodity, value] = p.cost
-        ? [p.cost.commodity, p.cost.amount]
-        : [p.commodity as string, p.amount];
+      const own = p.commodity as string;
+      precision.set(own, Math.max(precision.get(own) ?? 0, p.decimals));
+      const [commodity, value] = p.cost ? [p.cost.commodity, p.cost.amount] : [own, p.amount];
       if (p.cost) hasCost = true;
       const before = sums.get(commodity);
       sums.set(commodity, reduceAmount(before ? addAmounts(before, value) : value));
@@ -648,9 +685,16 @@ class JournalParser {
       const [commodity, sum] = [...sums.entries()][0] ?? ["", { num: 0n, den: 1n }];
       blank.commodity = commodity;
       blank.amount = { num: -sum.num, den: sum.den };
-    } else if (!hasCost && sums.size === 1) {
-      const [sum] = [...sums.values()];
-      if (sum.num !== 0n) throw new Refusal("unbalanced", tx.line);
+    } else {
+      const left = [...sums.entries()].filter(
+        ([commodity, sum]) => !roundsToZero(sum, precision.get(commodity) ?? null),
+      );
+      const inferredRate =
+        !hasCost &&
+        sums.size === 2 &&
+        left.length === 2 &&
+        left[0][1].num < 0n !== left[1][1].num < 0n;
+      if (left.length > 0 && !inferredRate) throw new Refusal("unbalanced", tx.line);
     }
 
     for (const p of tx.postings) {
@@ -689,7 +733,10 @@ class JournalParser {
         return;
       }
       case "comment":
-        this.context = { kind: "comment-block" };
+        // Only "comment" on its own starts a block; "comment some words" would otherwise hide
+        // everything after it, so it is refused like any directive DotAmi doesn't know.
+        if (raw.trimEnd() !== "comment") throw new Refusal("unknown-directive", n);
+        this.context = { kind: "comment-block", line: n, dated: false };
         return;
       case "P": // a market price; only used for valuation reports, never changes a posted amount
         return;
@@ -797,22 +844,22 @@ function accountType(value: string): AccountType | null {
 
 /**
  * The type hledger's manual says an account gets from its name when no account directive gives one
- * ("account types" — inferred from the top-level name, in any case). DotAmi's own wording of that
- * rule; an account matching none has no type, so it can't be ticked.
+ * (the table under "account types": case-insensitive patterns on the name, the first that matches
+ * wins). DotAmi's own wording of that table, in the manual's order; an account matching none has
+ * no type, so it can't be ticked.
  */
+const TYPE_FROM_NAME: [RegExp, AccountType][] = [
+  [/^assets?(:.+)?:(cash|bank|che(ck|que?)(ing)?|savings?|current)(:|$)/i, "Cash"],
+  [/^assets?(:|$)/i, "Asset"],
+  [/^(debts?|liabilit(y|ies))(:|$)/i, "Liability"],
+  [/^equity:(trad(e|ing)|conversion)s?(:|$)/i, "Conversion"],
+  [/^equity(:|$)/i, "Equity"],
+  [/^(income|revenue)s?(:|$)/i, "Revenue"],
+  [/^expenses?(:|$)/i, "Expense"],
+];
+
 function typeFromName(name: string): AccountType | null {
-  const parts = name.toLowerCase().split(":");
-  const top = parts[0];
-  if (top === "asset" || top === "assets") return "Asset";
-  if (top === "liability" || top === "liabilities" || top === "debt" || top === "debts") {
-    return "Liability";
-  }
-  if (top === "equity") {
-    return parts[1] === "trading" || parts[1] === "conversion" ? "Conversion" : "Equity";
-  }
-  if (top === "income" || top === "revenue" || top === "revenues") return "Revenue";
-  if (top === "expense" || top === "expenses") return "Expense";
-  return null;
+  return TYPE_FROM_NAME.find(([pattern]) => pattern.test(name))?.[1] ?? null;
 }
 
 /** An account's type: its own declaration, else the nearest declared parent's, else from its name. */

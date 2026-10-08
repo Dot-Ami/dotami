@@ -3,7 +3,7 @@
  * "-12 CAD", "\"green apples\" 3" → a commodity and an exact fraction, or a named refusal.
  *
  * Written from hledger's published manual (hledger.org/1.50/hledger.html, sections "Amounts",
- * "Decimal marks", "Digit group marks", "Commodity" and "Costs", read 2026-10-08), never from
+ * "Decimal marks", "Digit group marks", "Commodity" and "Costs", retrieved 2026-10-08), never from
  * hledger's or Ledger's source code: hledger is GPL-3.0 and DotAmi is Apache-2.0.
  *
  * Where the manual leaves a reading open, DotAmi refuses instead of picking one:
@@ -161,10 +161,12 @@ function findDecimalMark(
 }
 
 /**
- * Zero-width characters, text-direction controls and line separators: inside a quoted commodity
- * they would let a symbol show on screen as something it isn't, so such a symbol isn't read.
+ * Zero-width and invisible joining characters (the same set the journal reader refuses in account
+ * names), text-direction controls and line separators: inside a quoted commodity they would let a
+ * symbol show on screen as something it isn't, so such a symbol isn't read.
  */
-const HIDDEN_CHARS = /[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff\p{Zl}\p{Zp}]/u;
+const HIDDEN_CHARS =
+  /[\u00ad\u034f\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufe00-\ufe0f\ufeff\p{Zl}\p{Zp}]/u;
 
 /** Where a quoted or bare commodity symbol ends, starting at `at`; null when there is none there. */
 function readSymbol(text: string, at: number): { symbol: string; end: number } | null {

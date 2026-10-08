@@ -305,7 +305,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - developer.intuit.com QuickBooks Desktop SDK pages
 - QuickBooks Canada discontinuation and CSV export pages
 - nodejs.org/api/sqlite.html; sqlite.org/c3ref/open.html
-- hledger.org/1.50/hledger.html (Journal chapter) and hledger.org/ledger.html, re-read 2026-10-08 for the journal reader
+- hledger.org/1.50/hledger.html (Journal chapter) and hledger.org/ledger.html, retrieved 2026-10-08 for the journal reader (through a fetch-and-summarise tool; see docs/connectors/journal-reader.md)
 - MDN CSP script-src; github.com/sql-js/sql.js
 
 **Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); pre-ticking; size limit.

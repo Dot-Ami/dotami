@@ -18,7 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   doesn't fully understand (include files, periodic or automated transactions, balance assignments,
   value expressions, unknown directives, an amount like `1,000` that one program reads as a
   thousand and another as one) turns the journal away with what it was and its line number, never
-  quoting the line. Descriptions, payees and comments are never kept. It was written from hledger's
+  quoting the line. So does a transaction that doesn't add up, including one paid in another
+  currency, and a comment block left open over dated lines, which would otherwise make months
+  quietly disappear. Descriptions, payees and comments are never kept. It was written from hledger's
   published manual, not from hledger's code (`docs/connectors/journal-reader.md`). Tested on
   invented journals only.
 
