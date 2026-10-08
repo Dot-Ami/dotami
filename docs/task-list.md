@@ -134,7 +134,10 @@ roadmap's build order.
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
-  - [ ] Proposing figures, the other formats
+  - [x] hledger / Ledger journals: DotAmi's own reader, written from hledger's manual; accounts and
+    monthly totals through the same core; refuses what it doesn't read by name and line; no screen
+    yet ([journal-reader.md](connectors/journal-reader.md))
+  - [ ] Proposing figures, the screens, the other formats
 - 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is

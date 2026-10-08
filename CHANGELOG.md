@@ -8,6 +8,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **A reader for hledger and Ledger journals** ([8h], core only; no screen yet, so nothing changes
+  for you today) — DotAmi's own code for the plain-text books hledger and Ledger keep. It turns a
+  journal into its accounts and their monthly totals: dates, transactions, postings, amounts with
+  the currency on either side, a point or a comma as the decimal mark, account declarations and
+  their types, and comments. Totals are exact cents, one list per currency, never rounded or
+  converted; a symbol like `$` counts as a currency only once you say which one it is. Anything it
+  doesn't fully understand (include files, periodic or automated transactions, balance assignments,
+  value expressions, unknown directives, an amount like `1,000` that one program reads as a
+  thousand and another as one) turns the journal away with what it was and its line number, never
+  quoting the line. Descriptions, payees and comments are never kept. It was written from hledger's
+  published manual, not from hledger's code (`docs/connectors/journal-reader.md`). Tested on
+  invented journals only.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV

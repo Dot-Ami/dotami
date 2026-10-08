@@ -1,0 +1,73 @@
+; An invented journal for DotAmi's tests: a small design studio in Canada.
+; Every name, client and amount here is made up.
+# hash comments are comments too
+* and so are star lines (org-mode headings)
+
+decimal-mark .
+
+account assets:bank:chequing        ; type: C
+account assets:receivable
+account income                      ; type: R
+account income:design
+account income:interest
+account liabilities:gst-hst
+account expenses:software
+account equity:opening
+
+commodity CAD 1,000.00
+commodity USD 1,000.00
+
+P 2026-02-01 USD CAD 1.35
+payee Northwind Client
+
+comment
+Everything in a comment block is skipped, even lines that look like directives:
+include other.journal
+~ monthly
+end comment
+
+2026-01-03 Opening balances
+    assets:bank:chequing        CAD 5,000.00
+    equity:opening
+
+2026-01-15 * (INV-001) Northwind Client | logo design
+    ; an indented comment on the transaction
+    assets:receivable           CAD 1,130.00
+    income:design              CAD -1,000.00
+    liabilities:gst-hst         CAD -130.00   ; GST/HST collected
+
+2026/01/28 ! Northwind Client pays INV-001
+    assets:bank:chequing        1,130.00 CAD = CAD 6,130.00
+    assets:receivable
+
+2026.2.5 Harbour Corp (US client) website
+    assets:bank:chequing        CAD 2,700.00
+    income:design               USD -2,000.00 @ CAD 1.35
+
+2026-02-27 Paid at the end of February, earned in March
+    income:design               CAD -500.00   ; date: 2026-03-02
+    assets:bank:chequing         CAD 500.00
+
+2026-03-10=2026-03-12 Software subscription
+    expenses:software              CAD 25.00
+    assets:bank:chequing
+
+2026-03-15 A fraction of a cent, which DotAmi never rounds
+    income:design                 CAD -0.005
+    assets:bank:chequing           CAD 0.005
+
+2026-03-20 Part refund to Northwind Client
+    income:design                 CAD 200.00
+    assets:bank:chequing         CAD -200.00
+
+2026-03-31 Bank interest
+    assets:bank:chequing             CAD 1.23
+    income:interest
+
+2026-04-02 Exchange US dollars
+    assets:bank:chequing        CAD 135.00
+    assets:bank:chequing        USD -100.00 @@ CAD 135.00
+
+2026-10-02 A sale in a month that hasn't ended
+    assets:receivable           CAD 400.00
+    income:design              CAD -400.00
