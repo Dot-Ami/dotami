@@ -6,7 +6,8 @@ order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
 brackets match.
 
-**Status:** ✅ done · 🔄 in progress · ⬜ not started · ⏸ waiting on a decision or another story.
+**Status:** ✅ done · 🟡 partly done (what's left is listed) · 🔄 in progress · ⬜ not started ·
+⏸ waiting on a decision or another story.
 
 **To pick something up:** comment on the linked issue, or open one naming the code (e.g. "[8c]")
 and the first pull request you'd send. Every commit is signed off (`git commit -s`, see
@@ -39,15 +40,17 @@ content and the project itself run alongside everything.
   - [x] A test: back up on one computer → restore on another → the same ventures
 - 🔄 **[7d] Installers and automatic updates** (unsigned, through GitHub releases, for now;
   [how to release](architecture/desktop-app.md#releasing-an-update)).
-  - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after)
+  - [x] A Windows installer built on each version tag, uploaded to a draft release (Mac and Linux after) —
+    the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [ ] Proven end to end: a published release reaches an installed app
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
-- ⏸ **[7f] Move an existing PostgreSQL install into the app** — a copy script for anyone who
-  self-hosted before the SQLite switch; runs on their own computer; waits for [7b].
-- 🔄 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
+- ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
+  starts fresh in the app rather than moving data (decided 2026-10-05). If you self-hosted on
+  PostgreSQL before the SQLite switch and need your data moved, open an issue.
+- 🟡 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
   each story adds its own rows.
   - [x] One screen (`/settings`), grouped: data and backups · your figures · the Lens · the map ·
     privacy · updates — each group opens with what is true of this copy today
@@ -81,19 +84,43 @@ content and the project itself run alongside everything.
     edge cases in [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md#your-figures)
   - [x] Asks "Where is this file from?" before any file is read, for every file (maintainer's decision,
     2026-10-07): a bank or credit card file is turned away unopened, with a plain warning, until [8g] exists
-  - [ ] [8c-2] Remember the column choice per source, and recognise the same file by fingerprint
-  - [ ] [8c-3] Invented test files shaped like each package's documented export (QuickBooks, Xero,
-    Wave, FreshBooks, Sage) — never a real export
-- ⬜ **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
+  - [ ] [8c-2] and [8c-3] below
+
+All of [8c-2] to [8h] were researched on 2026-10-06; the design, the shared data model and the
+decisions are in [architecture/figures-roadmap.md](architecture/figures-roadmap.md). The maintainer
+answered the decisions on 2026-10-07. Each story's first slice is merged; the next slices follow the
+roadmap's build order.
+
+- 🔄 **[8c-2] Remember a file's columns, and recognise the same file dropped twice.**
+  - [x] The file's fingerprint and column-name matching, worked out in the window; nothing stored (#81)
+  - [ ] Keeping the column choice (a setting that starts on)
+  - [ ] Recognising the same file twice (waits on where a figure's source is kept)
+- 🔄 **[8c-3] Practice files shaped like each accounting program's export** — never a real export.
+  - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
+  - [ ] Fix every gap they found, starting with QuickBooks' sales counted twice
+  - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
+- 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
-- ⬜ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
+  - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
+    that hold events only (#86)
+  - [ ] *Delete*: pick what to delete and see what else it affects
+  - [ ] *Forget this source* (waits on where a figure's source is kept)
+- 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
+  - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
+    GST/HST card say "over $30,000"); dates in the person's own day (#85)
+  - [ ] Reminders: monthly, quarterly and/or yearly, per idea; a banner and an "add to my calendar" file
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
-- ⬜ **[8g] Bank and card records** — opt-in, behind a warning. (Until it is built, "Add from a
+- 🔄 **[8g] Bank and card records** — opt-in, behind a warning. (Until it is built, "Add from a
   file" turns a bank or card file away unread — see [8c].)
-- ⬜ **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
+  - [x] Ticked bank rows to complete-month totals; a row has no field for an account or card number (#82)
+  - [ ] The warning, the switch, the screen, OFX files
+- 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
+  - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
+    fully understand (#83)
+  - [ ] Proposing figures, the other formats
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -178,9 +205,16 @@ content and the project itself run alongside everything.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
-- ⬜ **[13b] Releases** — tags, changelog, release notes.
+- 🔄 **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
+  - [x] Version tags (v0.1.0, v0.2.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
+  - [ ] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d])
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
+  - [ ] Newer advisories (checked 2026-10-06): `source-map-js` 1.2.1 (build-time; a patch — Dependabot
+    #71) · `sprintf-js` (build-time, under the installer builder; no fix published)
+  - [x] `sharp` 0.35.5 — its SVG reader's advisory (#73) · `postcss-selector-parser` — gone with
+    Tailwind 4 (#80)
   - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces` stack-exhaustion). **No fixed
     version exists yet** — it covers every `braces` release up to 3.0.3, the newest (checked
     2026-10-06). Since Tailwind 4 it reaches DotAmi only through Next's ESLint plugin
@@ -192,8 +226,10 @@ content and the project itself run alongside everything.
 - ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
   every pull request (#64); `npm run test:browser`. Each new screen adds its own test. A required
   check on `main` since 2026-10-05: nothing merges with them failing.
-- ⬜ **[13f] Privacy policy, terms, and the usage-sharing decision** ⏸ maintainer's decision;
-  needed before the first download.
+- ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
+  - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
+  - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
+    privacy policy and terms
 - ⬜ **[13g] Screen-by-screen review.** For every screen, five questions answered with evidence:
   - [ ] **Useful:** what does a first-time person learn here that they didn't know?
   - [ ] **Guides:** is the next step obvious, and does it go somewhere that helps?

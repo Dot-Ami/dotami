@@ -48,9 +48,14 @@ jobs:
       # electron-builder uploads its files in parallel and each upload made its own draft when none
       # existed yet — v0.2.0 came out as two drafts (installer + latest.yml in one, the blockmap in
       # the other). Making the one draft first gives every upload the same place to land.
+      # A block (`run: |`), not a one-line value: the ": " in "Changes: CHANGELOG.md" made the
+      # one-liner invalid YAML, and GitHub could not read this file at all (2026-10-06, #77).
       - name: Create the draft release first
         shell: bash
-        run: gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --draft --title "DotAmi ${GITHUB_REF_NAME#v}" --notes "Release notes are written before this draft is published. Changes: CHANGELOG.md."
+        run: |
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" --draft --title "DotAmi ${GITHUB_REF_NAME#v}" \
+              --notes "Release notes are written before this draft is published. Changes: CHANGELOG.md."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
