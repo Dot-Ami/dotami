@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { PrismaClient } from "@prisma/client";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
@@ -304,6 +304,41 @@ describe("POST /api/figures/propose", () => {
     expect(res.status).toBe(400);
     expect(((await res.json()) as { error: string }).error).toMatch(/Figure 2.*hasn't ended yet/);
     expect(await figureCount()).toBe(before);
+  });
+
+  describe("on the computer's own day, not the UTC day", () => {
+    const originalZone = process.env.TZ;
+    afterEach(() => {
+      vi.useRealTimers();
+      if (originalZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalZone;
+    });
+
+    // 06:30 UTC on April 1 is 11:30 p.m. on March 31 in Vancouver (PDT, UTC-7): the last evening of
+    // a month, when the UTC day has already turned over but the person's has not.
+    function atVancouverLateEvening() {
+      process.env.TZ = "America/Vancouver";
+      // Only the clock is faked; timers stay real so the database calls still complete.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-04-01T06:30:00Z"));
+    }
+    const march = { ...good, periodStart: "2026-03-01", periodEnd: "2026-03-31" };
+    const april = { ...good, periodStart: "2026-04-01", periodEnd: "2026-04-01" };
+
+    it("refuses a period that ends tomorrow in Vancouver, and creates nothing", async () => {
+      atVancouverLateEvening();
+      const before = await figureCount();
+      const res = await routes.propose.POST(post("propose", { ventureId, source: SOURCE, figures: [april] }));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toMatch(/hasn't ended yet/);
+      expect(await figureCount()).toBe(before);
+    });
+
+    it("accepts a period that ends today in Vancouver", async () => {
+      atVancouverLateEvening();
+      const res = await routes.propose.POST(post("propose", { ventureId, source: SOURCE, figures: [march] }));
+      expect(res.status).toBe(201);
+    });
   });
 
   it("answers 404 for an idea that isn't there", async () => {

@@ -20,6 +20,9 @@ import { FigureDates, FutureDateNote } from "./figure-age";
 
 export const AMOUNT_HELP = "Write it like 12,500 or 12500.50.";
 
+/** The line above the buttons, every time the prompt opens. */
+export const CHECK_FIRST_LINE = "Double-check what DotAmi did, and how, before you agree.";
+
 /** More figures than this and "Agree" waits until the person has scrolled to the end of the list. */
 const MUST_SCROLL_ABOVE = 20;
 
@@ -382,6 +385,8 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-rule-soft pt-3">
+          {/* Always shown, so the person is asked to check the work before the button that confirms. */}
+          <p className="basis-full text-sm text-paper-dim">{CHECK_FIRST_LINE}</p>
           {waitingToScroll ? (
             <p className="mr-auto text-[11px] text-stone" role="status">
               Scroll through all {rows.length} to agree

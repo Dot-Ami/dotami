@@ -77,6 +77,7 @@ content and the project itself run alongside everything.
   - [x] The figures grouped by where they came from; amounts editable (stored as "edited by you"); discard one
   - [x] Close or Escape confirms nothing; more than 20 figures → *Agree* only after scrolling through them
   - [x] Only DotAmi's own page can confirm: the route agents and importers use can only propose (tested)
+  - [x] Every time it opens, one line above the buttons: "Double-check what DotAmi did, and how, before you agree."
 - 🟡 **[8c] Drop a file: Excel and CSV.** "Add from a file" on the ideas page.
   - [x] Read in the app's window, in memory, never sent or kept; one total per calendar month + its
     row count + the file name are what's stored (as proposed figures — the agree prompt decides)
@@ -97,7 +98,9 @@ roadmap's build order.
   - [ ] Recognising the same file twice (waits on where a figure's source is kept)
 - 🔄 **[8c-3] Practice files shaped like each accounting program's export** — never a real export.
   - [x] Xero and QuickBooks Online, with today's known gaps pinned as "fails today" tests (#84)
-  - [ ] Fix every gap they found, starting with QuickBooks' sales counted twice
+  - [x] QuickBooks' sales no longer counted twice: an optional Type column leaves Payment and Deposit
+    rows out and lists them; the screen's steps now live in one shared function the tests also call
+  - [ ] Fix the other gaps they found (Xero's price-per-item column, its invoice date, one-line customers)
   - [ ] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
@@ -108,8 +111,10 @@ roadmap's build order.
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
     GST/HST card say "over $30,000"); dates in the person's own day (#85)
+  - [x] The server measures "a period that has ended" against the computer's own day, not the UTC day
+    (a period ending "tomorrow" was accepted on Canadian evenings)
   - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
-    "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (checked by hand; the browser tests are written, not yet run).
+    "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
     One small `Setting` table that every later setting reuses
   - [ ] Reminders: a banner and an "add to my calendar" file (the choices above are saved; nothing reminds yet)
 - ⬜ **[8f] Tax software, through the CRA's line numbers.**

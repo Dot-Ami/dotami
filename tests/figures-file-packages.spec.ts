@@ -1,18 +1,18 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { decodeText } from "@/lib/figures/file/decode";
+import { previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
+import type { FileAnswers as Answers, FilePreview as ScreenRun } from "@/lib/figures/file/preview";
 import { isBlankRow } from "@/lib/figures/file/table";
 import { isRealCalendarDay } from "@/lib/figures/validate";
 import * as quickbooks from "./fixtures/packages/quickbooks-online";
 import type { PracticeFile } from "./fixtures/packages/types";
 import * as xero from "./fixtures/packages/xero";
 import { utf8, utf8Bom, windows1252 } from "./helpers/encode";
-import { runLikeTheScreen } from "./helpers/run-like-the-screen";
-import type { Answers, ScreenRun } from "./helpers/run-like-the-screen";
 
 // [8c-3] Practice files shaped like each accounting program's export, run through the same steps
 // the "Add from a file" screen runs (read, guess the columns, work out the date order and decimal
-// style, add up by month). Every file is INVENTED and built in code; see
+// style, add up by month): lib/figures/file/preview.ts, which the screen calls too. Every file is INVENTED and built in code; see
 // docs/connectors/practice-files.md. A passing test here means "DotAmi reads a file SHAPED like
 // this", never "a real export works": each guessed column title is marked `assumed` in its fixture.
 
@@ -267,37 +267,48 @@ describe("known gaps (fail today, by design)", () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
     expect(run.picks.dateColumn).toBe(0);
   });
+});
 
-  // Open decision: what should happen when a transaction list mixes sales with the payments
-  // received for them? (pick a "type" column and skip Payment rows; or warn and name the report to
-  // export instead; or only add a line of help.) Today every row is added, so a $47.60 invoice and
-  // its $47.60 payment count as $95.20.
-  it.fails("QuickBooks: does not count a Payment row as a second sale", async () => {
+// The fourth gap, a Payment row counted as a second sale, was fixed by the optional Type column
+// (the maintainer's decision, 2026-10-07): the "Transaction Type" header pre-fills it and Payment and
+// Deposit rows are left out and listed. Tests of the rule itself: tests/figures-file-type-column.spec.ts.
+describe("QuickBooks Transaction List", () => {
+  it("does not count a Payment row as a second sale", async () => {
     const file = find("quickbooks-transaction-list");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.picks.typeColumn).toBe(1); // "Transaction Type"
     const july = run.result!.months.find((m) => m.periodStart === "2026-07-01");
     expect(july?.amountCents).toBe(10215); // invoice 47.60 + sales receipt 54.55
+    expect(run.result!.skipped).toContainEqual({ row: 7, reason: "payment" });
+  });
+
+  it("would count the payment too, as before, if the person cleared the Type column", async () => {
+    const file = find("quickbooks-transaction-list");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, { typeColumn: null });
+    const july = run.result!.months.find((m) => m.periodStart === "2026-07-01");
+    expect(july?.amountCents).toBe(14975); // 47.60 + 47.60 + 54.55
   });
 });
 
 describe("the practice files stay private and in step with the screen", () => {
-  it("the screen still takes the steps the test helper repeats", () => {
+  it("the screen takes its steps from lib/figures/file/preview.ts, the code these tests run", () => {
     const screen = readFileSync(
       new URL("../components/ventures/file-drop.tsx", import.meta.url),
       "utf8",
     );
-    // If this fails, file-drop.tsx changed how it guesses or adds up (or moved the steps into a
-    // shared function): update tests/helpers/run-like-the-screen.ts to match, or replace it.
+    // If this fails, file-drop.tsx stopped using the shared steps and has its own again, which is
+    // the copy that used to drift from what these tests check.
+    for (const piece of ["previewSheet(", "guessPicks(", "firstSheetWithRows("]) {
+      expect(screen, `file-drop.tsx no longer calls ${piece}`).toContain(piece);
+    }
+    // The steps themselves must not be repeated in the screen.
     for (const piece of [
+      "monthlyTotals(",
       "guessColumns(",
       "detectDateOrder(",
       "detectDecimalStyle(",
-      "monthlyTotals(",
-      "readSpreadsheet(",
-      "detectedOrder.ambiguous",
-      "detectedOrder.conflicting",
     ]) {
-      expect(screen, `file-drop.tsx no longer contains ${piece}`).toContain(piece);
+      expect(screen, `file-drop.tsx calls ${piece} itself`).not.toContain(piece);
     }
   });
 
@@ -305,7 +316,6 @@ describe("the practice files stay private and in step with the screen", () => {
     const names = [
       "../tests/figures-file-packages.spec.ts",
       "../tests/helpers/encode.ts",
-      "../tests/helpers/run-like-the-screen.ts",
       ...readdirSync(new URL("./fixtures/packages/", import.meta.url)).map(
         (name) => `../tests/fixtures/packages/${name}`,
       ),

@@ -7,11 +7,6 @@ import { FigureInputError, VentureNotFoundError } from "./store";
 
 /** Shared plumbing for the /api/figures routes, so each route file reads as its own rule. */
 
-/** Today's date as YYYY-MM-DD in UTC — what "a period that has ended" is measured against. */
-export function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export const AGREE_ONLY_MESSAGE = "Only the agree prompt in DotAmi's window can confirm figures.";
 
 /**
