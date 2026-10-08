@@ -183,7 +183,8 @@ export const TABLES: readonly TableEntry[] = [
     name: "Placeholder account",
     holds:
       "One record that owns your ideas and statements, so DotAmi can tell whose they are. There is no sign-in; the name and address on it are placeholders DotAmi makes up, not yours. A copy you host yourself can set its own address (STUB_USER_EMAIL); either way it is only a label DotAmi uses to find this one record.",
-    removedBy: "Nothing in the app removes it. Deleting the data file removes it along with everything else.",
+    removedBy:
+      "Nothing in the app removes it; Delete leaves it, because it holds nothing of yours. Deleting the data file removes it along with everything else.",
   },
   {
     model: "PersonStatement",
@@ -191,7 +192,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Things you told DotAmi about yourself, word for word, each with the day you say you said it. They are never summarised or used to rank anything.",
     removedBy:
-      "Nothing removes one, by design: a newer statement beats an older one by its date, and old ones are never edited away.",
+      "Delete, at the bottom of this page, with “Your statements” ticked: all of them at once, wiped from the file. Nothing removes one by itself, by design: a newer statement beats an older one by its date, and old ones are never edited away.",
   },
   {
     model: "Venture",
@@ -199,19 +200,20 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags you picked, how far along it is, and your notes on it.",
     removedBy:
-      "Nothing in the app deletes an idea yet. Deleting the data file removes them all.",
+      "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress, figures and expense records, wiped from the file. Nothing deletes a single idea yet.",
   },
   {
     model: "VentureLink",
     name: "Links between ideas",
     holds: "Which of your ideas relate to which, the kind of link, and your reason for it in your own words.",
-    removedBy: "The “remove” button beside a link, under Cross-references on an idea's card on the Ideas page.",
+    removedBy:
+      "The “remove” button beside a link, under Cross-references on an idea's card on the Ideas page. Deleting your ideas (Delete, at the bottom of this page) deletes every link with them.",
   },
   {
     model: "ScenarioState",
     name: "Map progress",
     holds: "Which steps on each idea's map you marked active, done or set aside, and which branches you took.",
-    removedBy: "Nothing removes it on its own; saving the map again overwrites it.",
+    removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
     model: "Setting",
@@ -219,7 +221,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "The choices you made on the Settings page and the Ideas page: how often you asked to be reminded about your figures, which of your ideas have their reminder switch on, and which reminder banners you answered \"Not this time\" (each as an idea number DotAmi made up, a how-often word and the last day of the month, quarter or year, not names). Only the choices; never an amount or any of your words.",
     removedBy:
-      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it, and a \"Not this time\" answer is dropped from the file the next time one is saved after its period is no longer the latest; the row itself stays in the data file. Nothing deletes a setting yet.",
+      "Changing the choice on the page (unticking a box, turning a switch off) overwrites it, and a \"Not this time\" answer is dropped from the file the next time one is saved after its period is no longer the latest; the row itself stays in the data file. Delete, at the bottom of this page, with “Your settings” ticked, deletes every one.",
   },
   {
     model: "Figure",
@@ -227,7 +229,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
-      "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Nothing erases a figure yet.",
+      "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Delete, at the bottom of this page, erases every figure from the file (tick “Your figures”, or “Your ideas”, which takes their figures with them). Nothing erases a single figure yet.",
   },
   {
     model: "Expense",
@@ -235,7 +237,141 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
     removedBy:
-      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Deleting an idea would remove its records with it, but nothing deletes an idea yet. Deleting the data file removes them all.",
+      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”, or “Your ideas”, which takes their records with them).",
+  },
+];
+
+/** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
+export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "remembered-columns";
+
+/**
+ * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
+ * saying what else goes with it, because deleting one kind can take another with it (an idea's
+ * figures belong to the idea). tests/privacy-delete.spec.ts fails until every table above is on
+ * the menu or in KEPT_BY_DELETE, and until `alsoDeletes` says exactly what the schema's
+ * onDelete: Cascade takes with `tables` — so a new table, or a new link to an idea, has to say
+ * here whether Delete takes it before it can merge.
+ */
+export interface DeleteMenuEntry {
+  id: DeleteKindId;
+  /** The tick-box's label. */
+  label: string;
+  /** The tables whose every row this deletes. Empty for a kind DotAmi doesn't keep yet. */
+  tables: readonly string[];
+  /** Tables the database empties along with `tables` (onDelete: Cascade in prisma/schema.prisma). */
+  alsoDeletes: readonly string[];
+  /** What else goes with it, in one or two sentences, shown under the tick-box. */
+  goesWithIt: string;
+  /** The longer explanation behind "Learn more". */
+  learnMore: string;
+  /** False while DotAmi doesn't keep this kind yet: the box shows switched off and says so. */
+  built: boolean;
+}
+
+/**
+ * The Delete menu, in the order it shows (and the order the tables are emptied in). The maintainer
+ * decided on 2026-10-07 that it is one button named "Delete" with a menu of what can be deleted
+ * and what else goes with each, and that the statements can be deleted all at once only.
+ */
+export const DELETE_MENU: readonly DeleteMenuEntry[] = [
+  {
+    id: "ideas",
+    label: "Your ideas, with their notes, links and map progress",
+    tables: ["Venture"],
+    alsoDeletes: ["VentureLink", "ScenarioState", "Figure", "Expense"],
+    goesWithIt:
+      "Deleting your ideas also deletes their notes, the links between them, their map progress, and every figure and expense record that belongs to them, even if those boxes aren't ticked.",
+    learnMore:
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Figures and expense records always belong to an idea, so they go with it. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+    built: true,
+  },
+  {
+    id: "figures",
+    label: "Your figures",
+    tables: ["Figure"],
+    alsoDeletes: [],
+    goesWithIt:
+      "Every figure goes, whether agreed, waiting, taken back or turned down. Cards that used an agreed figure go back to your estimates.",
+    learnMore:
+      "This is every total you typed, read from a file or had an agent propose, on every idea. Nothing else is deleted with them, and your ideas stay. If you asked to be reminded about an idea's figures, its reminder banner can show again, because nothing covers that period any more. To get a figure back you would add it again and agree to it.",
+    built: true,
+  },
+  {
+    id: "expenses",
+    label: "Your expense records",
+    tables: ["Expense"],
+    alsoDeletes: [],
+    goesWithIt: "Every expense record goes, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
+    learnMore:
+      "This is every single business expense you typed or an agent proposed, on every idea: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+    built: true,
+  },
+  {
+    id: "statements",
+    label: "Your statements (“In your words”)",
+    tables: ["PersonStatement"],
+    alsoDeletes: [],
+    goesWithIt:
+      "All of them go at once. DotAmi never deletes one statement by itself: a newer statement is how you change an older one.",
+    learnMore:
+      "These are the things you told DotAmi about yourself, word for word, with their dates. Nothing else uses them to decide anything, so nothing else changes, but the “In your words” panel is empty afterwards and there is no record that you said them. A statement you kept in this tab only, because it couldn't be saved, isn't in the data file and stays until the tab closes.",
+    built: true,
+  },
+  {
+    id: "settings",
+    label: "Your settings",
+    tables: ["Setting"],
+    alsoDeletes: [],
+    goesWithIt:
+      "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show.",
+    learnMore:
+      "This is every saved choice from the Settings page and the Ideas page: how often to be reminded about your figures, which ideas have their reminder switch on, and which banners you answered “Not this time”. Choices that aren't saved yet (the ones Settings marks as coming later) aren't affected.",
+    built: true,
+  },
+  {
+    id: "remembered-columns",
+    label: "Remembered columns",
+    tables: [],
+    alsoDeletes: [],
+    goesWithIt: "DotAmi doesn't remember a file's columns yet, so there is nothing to delete. Once it does, they will be deleted here.",
+    learnMore:
+      "A later step lets DotAmi remember which columns of a spreadsheet you picked, so the same kind of file is read the same way next time. Only the column names would be kept, never the file. When that is built, this box will delete them.",
+    built: false,
+  },
+];
+
+/** Tables Delete doesn't empty, and why. The test fails on a table that is in neither list. */
+export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
+  {
+    model: "User",
+    why: "The placeholder account stays. It holds nothing of yours (its name and address are placeholders DotAmi made up), and your next idea or statement needs it.",
+  },
+];
+
+/**
+ * What Delete can't reach, said on the menu itself so the word "Delete" doesn't promise more than
+ * it does. Each line is true of the app today; when a later step clears one, it changes here.
+ */
+export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
+  {
+    name: "Safety copies in the backups folder",
+    why: "Not touched. Each is a whole copy of the data file from before an update or a restore, so it still holds what you delete here. To remove them, close DotAmi and delete the folder (its path is above). A copy you saved elsewhere could bring everything back.",
+  },
+  {
+    name: "What the window stored in earlier launches",
+    why: "Not cleared yet. The job descriptions you typed under “Other…” on the intake stay in the desktop app's own folder; clearing them is a later step.",
+  },
+  {
+    name: "The log",
+    why: "Not cleared. It holds events (starting up, updates, backups), never your words or an amount.",
+  },
+  {
+    name: "Anything that already left this computer",
+    why: "DotAmi can't take back a sentence sent to a model, or a file you saved somewhere else.",
+  },
+  {
+    name: "The disk under the data file",
+    why: "Delete wipes the deleted records out of the data file itself. The drive can still hold older copies of the file's pieces in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
 

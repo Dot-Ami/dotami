@@ -128,12 +128,16 @@ test("what DotAmi knows lists every table and window key the inventory names, an
   await expect(leaves).toContainText("Not happening in this copy");
 });
 
-test("what DotAmi knows only shows: no form control, no delete or forget button", async ({ page }) => {
+test("what DotAmi knows changes nothing until Delete is opened: no form control, no forget button", async ({ page }) => {
   await page.goto("/your-data");
+  // The one control that can change anything is the Delete button; its menu is closed.
+  const removing = page.getByRole("region", { name: "Taking things out" });
+  await expect(removing.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+  await expect(removing.getByRole("button", { name: "Delete", exact: true })).toHaveAttribute("aria-expanded", "false");
+  await expect(removing).toContainText("can't pick out a single figure, statement or idea");
   await expect(page.locator("main").locator("input, select, textarea")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /delete|forget|erase|remove/i })).toHaveCount(0);
-  // The one kind of button is Copy path, and the page says plainly that it can't remove anything.
-  await expect(page.getByRole("region", { name: "Taking things out" })).toContainText("This page can't remove anything");
+  await expect(page.getByRole("button", { name: /delete/i })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /forget|erase|remove/i })).toHaveCount(0);
 });
 
 test("what DotAmi knows is reachable from the Privacy group on Settings", async ({ page }) => {
@@ -210,4 +214,119 @@ test("expense records: an agent can propose but not agree, and what DotAmi knows
     expect(url, "a record's words in a URL").not.toContain("Stationery");
     expect(url, "an amount in a URL").not.toContain("4599");
   }
+});
+
+// [8d] Delete. These two run LAST in the last browser-test file (files run A to Z, one worker): the
+// second deletes every idea, which the earlier tests rely on. A new e2e file named after
+// "your-data" would run after them and find no demo ideas.
+
+/** Reads a table card's count on /your-data: "None" is 0. */
+async function tableCount(page: Page, name: string): Promise<number> {
+  const card = page
+    .getByRole("region", { name: "Everything else in the data file" })
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name, level: 3, exact: true }) });
+  await expect(card).toBeVisible();
+  const found = ((await card.textContent()) ?? "").match(/(\d+) records?/);
+  return found ? Number(found[1]) : 0;
+}
+
+async function openDeleteMenu(page: Page) {
+  await page.goto("/your-data");
+  const removing = page.getByRole("region", { name: "Taking things out" });
+  await removing.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(removing.getByRole("group", { name: "What do you want to delete?" })).toBeVisible();
+  return removing;
+}
+
+const STATEMENTS_BOX = "Your statements (“In your words”)";
+const IDEAS_BOX = "Your ideas, with their notes, links and map progress";
+
+test("Delete: Escape or Cancel at either ask deletes nothing, and the last ask starts on Cancel", async ({ page }) => {
+  expect((await page.request.post("/api/person/statements", { data: { text: "a statement Escape must keep" } })).status()).toBe(200);
+  await page.goto("/your-data");
+  const statementsBefore = await tableCount(page, "Your statements");
+  expect(statementsBefore).toBeGreaterThan(0);
+
+  const removing = await openDeleteMenu(page);
+  await removing.getByLabel(STATEMENTS_BOX).check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+  // First ask: Escape goes back to the menu with the box still ticked.
+  const first = page.getByRole("dialog", { name: "Delete these?" });
+  await expect(first).toContainText(`Your statements: ${statementsBefore} record`);
+  await page.keyboard.press("Escape");
+  await expect(first).toBeHidden();
+  await expect(removing.getByLabel(STATEMENTS_BOX)).toBeChecked();
+
+  // Second ask: focus starts on Cancel, so Enter cancels; Escape cancels too.
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
+  const second = page.getByRole("dialog", { name: "Delete them now?" });
+  await expect(second).toContainText("This can't be undone");
+  await expect(second.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(second).toBeHidden();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
+  await expect(page.getByRole("dialog", { name: "Delete them now?" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Delete them now?" })).toBeHidden();
+
+  await page.reload();
+  expect(await tableCount(page, "Your statements")).toBe(statementsBefore);
+});
+
+test("Delete: tick ideas and statements, see what goes with them, say yes twice, and they are gone after a reload", async ({ page }) => {
+  await page.goto("/your-data");
+  const ideasBefore = await tableCount(page, "Your ideas");
+  expect(ideasBefore).toBeGreaterThan(0);
+  expect(await tableCount(page, "Your statements")).toBeGreaterThan(0);
+
+  // An agent or a script can't delete: the route answers only to DotAmi's own window.
+  const agent = await page.request.post("/api/your-data/delete", { data: { kinds: ["statements"], seen: { PersonStatement: 1 } } });
+  expect(agent.status()).toBe(403);
+
+  const removing = await openDeleteMenu(page);
+  // Every box says what goes with it; the ideas box names the figures and map progress.
+  const ideasBox = removing.getByRole("listitem").filter({ has: page.getByLabel(IDEAS_BOX) });
+  await expect(ideasBox).toContainText("also deletes their notes, the links between them, their map progress, and every figure and expense record");
+  await expect(ideasBox).toContainText(`Your ideas: ${ideasBefore}`);
+  await ideasBox.getByText("Learn more").click();
+  await expect(ideasBox).toContainText("Figures and expense records always belong to an idea");
+  await expect(removing.getByRole("listitem").filter({ has: page.getByLabel("Remembered columns") })).toContainText("Not kept yet");
+  await expect(removing.getByLabel("Remembered columns")).toBeDisabled();
+  await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(STATEMENTS_BOX) })).toContainText("All of them go at once");
+
+  // The cited records line, and what Delete doesn't reach, said plainly.
+  await expect(removing).toContainText("generally kept for six years");
+  await expect(removing.getByRole("link", { name: /^CRA: Where to keep your records/ })).toHaveAttribute("href", /canada\.ca\/en\/revenue-agency/);
+  await expect(removing).toContainText("What the window stored in earlier launches. Not cleared yet.");
+  await expect(removing).toContainText("Safety copies in the backups folder. Not touched.");
+
+  await removing.getByLabel(IDEAS_BOX).check();
+  await removing.getByLabel(STATEMENTS_BOX).check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+  const first = page.getByRole("dialog", { name: "Delete these?" });
+  await expect(first).toContainText(`Your ideas: ${ideasBefore} record`);
+  await expect(first).toContainText("Map progress:");
+  await expect(first).toContainText("Your figures:");
+  await first.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
+
+  const done = removing.getByRole("status");
+  await expect(done).toContainText("Deleted.");
+  await expect(done).toContainText(`Your ideas: ${ideasBefore} record${ideasBefore === 1 ? "" : "s"} deleted, 0 left`);
+  await expect(done).toContainText("Their space in the data file is wiped");
+
+  // Gone after a reload, not just from the screen.
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "What DotAmi knows about you", level: 1 })).toBeVisible();
+  for (const name of ["Your ideas", "Your statements", "Map progress", "Your figures", "Your expense records", "Links between ideas"]) {
+    expect(await tableCount(page, name), name).toBe(0);
+  }
+  await expect(page.getByRole("region", { name: "Your figures, by source" })).toContainText("No figures are kept.");
+  await page.goto("/ventures");
+  await expect(page.getByText("Nothing saved yet.")).toBeVisible();
 });

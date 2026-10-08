@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { CopyPathButton } from "@/components/settings/copy-path-button";
 import { GhostLink, WordMark } from "@/components/ui";
 import type { FolderFacts, Holdings, SentFacts, SentState, TableCount } from "@/lib/privacy/holdings";
-import type { WindowStorageEntry } from "@/lib/privacy/inventory";
+import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { DELETE_MENU, NOT_CLEARED_BY_DELETE, type WindowStorageEntry } from "@/lib/privacy/inventory";
 
+import { DeleteMenu } from "./delete-menu";
 import { FiguresBySource } from "./figures-by-source";
 import { plural, sizeWords } from "./format";
 
@@ -22,7 +24,7 @@ const SECTIONS = [
 ] as const;
 
 /**
- * [8d] "What DotAmi knows about you" — the read-only first slice. One page that lists everything
+ * [8d] "What DotAmi knows about you". One page that lists everything
  * DotAmi keeps about the person, counted from the data file each time it opens (never a stored
  * claim), so the person can check DotAmi's word against the file itself.
  *
@@ -37,9 +39,9 @@ const SECTIONS = [
  * (tests/helpers/source-scan.ts lists each). So this
  * page shows what the list says; GitHub's Dependency review check (known vulnerabilities and
  * licences only), the browser's Content-Security-Policy (connect-src, img-src, default-src,
- * form-action: not WebRTC or navigation) and code review cover the rest. This page changes
- * nothing and has no forget or delete control; docs/ui-spec/your-data/_index.md says what it
- * deliberately leaves out.
+ * form-action: not WebRTC or navigation) and code review cover the rest. The one control that
+ * changes anything is Delete, in the last section (components/your-data/delete-menu.tsx); there is
+ * no forget-a-source control yet. docs/ui-spec/your-data/_index.md says what it deliberately leaves out.
  *
  * `holdings` is null when the data file couldn't be read: the page says so instead of failing.
  */
@@ -61,7 +63,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
           </h1>
           <p className="mt-2 max-w-xl text-sm text-paper-dim">
             Everything DotAmi keeps, counted from your data file each time you open this page — not a saved
-            summary. This page only shows what&apos;s there; it changes nothing.
+            summary. Nothing here changes anything unless you use Delete, at the bottom.
           </p>
         </header>
 
@@ -146,16 +148,22 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
               <Section id="removing" title="Taking things out">
                 <div className="mt-3 max-w-2xl space-y-2 text-sm text-paper-dim">
                   <p>
-                    This page can&apos;t remove anything. What you can do today: on an idea&apos;s card, retract
-                    an agreed figure or discard a waiting one (it stops counting, and its amount stays in the file,
-                    listed above), and remove a link between two ideas.
+                    On an idea&apos;s card you can retract an agreed figure or discard a waiting one (it stops
+                    counting, and its amount stays in the file, listed above), and remove a link between two ideas.
                   </p>
                   <p>
-                    Nothing in DotAmi erases a figure, a statement or an idea yet. The only way to remove everything
-                    is by hand: close DotAmi, delete the data file, its safety copies and the log, and any backup you
-                    saved elsewhere. What the window stores (above) stays until its site data is cleared.
+                    Delete erases whole kinds of data from the file: you pick which, see what else goes with each,
+                    and DotAmi asks twice. It can&apos;t pick out a single figure, statement or idea.
                   </p>
                 </div>
+                <DeleteMenu
+                  menu={DELETE_MENU}
+                  counts={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count]))}
+                  tableNames={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name]))}
+                  notCleared={NOT_CLEARED_BY_DELETE}
+                  retention={recordRetentionV2026}
+                  desktop={holdings.desktop}
+                />
               </Section>
             </div>
           </>

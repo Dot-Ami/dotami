@@ -8,6 +8,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
+  you can delete: your ideas (with their notes, links and map progress), your figures, your expense
+  records, your statements ("In your words", all of them at once, never one by one) and your
+  settings. Each box says what else goes with it (deleting ideas also deletes their figures, expense
+  records and map progress) and has a Learn more. A cited line says Delete doesn't touch your own
+  books, and that the CRA says business records are generally kept six years. DotAmi asks twice,
+  refuses if anything changed in between, deletes in one step (a failure part-way deletes nothing),
+  then wipes the deleted records out of the data file so they can't be dug back out of it. Only
+  DotAmi's own window can do this, never an agent. The list says plainly what it doesn't reach yet:
+  the safety copies in the backups folder and what the desktop window stored in earlier launches.
+  "Remembered columns" has its place on the list, switched off until DotAmi remembers columns.
+
 ## [0.2.1] — 2026-10-08
 
 Your figures arrive: totals you agree to on the ideas page, added by hand or from an Excel or CSV

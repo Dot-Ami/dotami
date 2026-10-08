@@ -103,7 +103,7 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 **The figures store [8a]** (built 2026-10-06; `tests/figures.spec.ts`, `tests/brain-records.spec.ts`, `e2e/app.spec.ts`)
 - A figure for a period that overlaps another source's figure for the same thing → show both, ask which one counts; never add them silently. *Never added: the card names the month and leaves that quarter out "until you choose which one counts" (tested). Choosing = retracting one; there's no dedicated chooser yet.*
 - A retracted figure that a card was using → the card falls back to the estimate and says so. *Falls back (retracted figures never reach the rules engine); the card doesn't yet say a figure was retracted.*
-- A venture is deleted → its figures go with it (asked first). *They go with it (database cascade, tested); there's no delete-a-venture control yet, so nothing to ask.*
+- A venture is deleted → its figures go with it (asked first). *They go with it (database cascade, tested). Delete on /your-data deletes all ideas at once, asking twice, and its "Your ideas" box says their figures go too (tested); there's no delete-one-idea control.*
 - Fiscal year ≠ calendar year → periods stored as exact dates, never "Q3" alone. *Exact first and last day stored. A figure that isn't one calendar month or quarter isn't counted toward the GST quarters, and the card says why (tested).*
 - A partial year (business started in June) → the card says it's a partial year. *The card says how many of the last four quarters the figures cover, or "at least" when they're already over (tested).*
 - Negative figures (a loss) and zero → shown as they are, never dropped. *Tested.*
@@ -137,6 +137,24 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 **Sources and "what DotAmi knows about me" [8d]** — forgetting a source with 0 figures; forgetting
 one that a confirmed figure on a card depends on (the card updates); *delete everything* asks twice
 and can't be undone (but a backup can restore it).
+- **Delete** (built 2026-10-08; `tests/privacy-delete.spec.ts`, `e2e/your-data.spec.ts`): a menu of
+  kinds of data, each saying what else goes with it; statements all at once, never one. *Asks twice;
+  Escape, Cancel or a click outside at either ask deletes nothing, and focus starts on Cancel at the
+  second (browser-tested).*
+- Something changed between the asks (an import, an agent's proposal) → *refused, nothing deleted,
+  the counts are read again (tested).*
+- The database fails part-way → *one transaction: nothing is deleted (tested with a failure on the
+  second table).*
+- Deleted rows left readable in the file → *VACUUM after the delete; a byte scan finds the deleted
+  words before and not after (tested). The wipe can't run (another connection busy, not enough
+  disk): the rows are deleted and the page says their space isn't wiped yet, with "Try the wipe
+  again". Finishing it at the next start of the desktop app is the next step.*
+- An agent, a script or another site calls Delete → *403 (tested).*
+- After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
+  on the map can't bring the idea back.*
+- Nothing stored → *the button is off: "Nothing to delete".*
+- Not reached yet, and the menu says so: the backups folder, what the desktop window stored in
+  earlier launches, the log, anything already sent elsewhere.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.

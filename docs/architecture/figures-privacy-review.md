@@ -32,10 +32,26 @@ details for anything. All of it in the one database file on the person's compute
 3. **Confirming is the person's click** — only the agree prompt ([8b]) turns a proposed figure into
    a confirmed one; the server refuses confirmation from anything else, and a test proves it.
 4. **Deleting a venture deletes its figures** (asked first); *forget this source* retracts its figures ([8d]).
+   *As built (2026-10-08):* the Delete menu on /your-data deletes whole kinds of data (ideas, which
+   take their figures and expense records with them; figures; expense records; statements, all at
+   once; settings). It asks twice, refuses if the counts changed in between, deletes in one
+   transaction, then runs VACUUM so the deleted rows are gone from the file's bytes, not only marked
+   free (`tests/privacy-delete.spec.ts` scans the file for a marker string; a plain delete leaves it
+   there). Only DotAmi's own page can call it (`refuseUnlessFromAppPage`), and its body goes through
+   `readJsonWithLimit`. *Forget this source* isn't built.
 5. **Every write route** goes through `readJsonWithLimit` (cross-site, JSON-only and size checks).
 
 ## Open
 
+- What still holds deleted data after Delete, said on the menu itself: the safety copies in the
+  backups folder (whole copies of the file; clearing them from the menu is the next step), what the
+  desktop window stored in earlier launches (a later decision), and the drive under the data file
+  (SQLite's journal is deleted, not overwritten, and a drive keeps its own spare copies; disk
+  encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
+  its amount in the file, and the page lists it.
+- The wipe needs free disk space about the size of the file and no other connection mid-change. When
+  it can't run, the rows are still deleted and the page says their space isn't wiped yet, with a
+  button to try again.
 - Other programs on the computer can read everything — a per-launch secret for the local server
   wouldn't change that (they can read the file directly), so it isn't proposed.
 - An unlocked backup is readable by whoever holds it; the default stays "no passphrase" because a

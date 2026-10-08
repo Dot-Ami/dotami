@@ -106,7 +106,10 @@ roadmap's build order.
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
     that hold events only (#86)
-  - [ ] *Delete*: pick what to delete and see what else it affects
+  - [x] *Delete*: pick what to delete and see what else it affects — one button, tick-boxes per kind
+    of data, asked twice, wiped from the file (a byte-scan test proves it); statements all at once only
+  - [ ] *Delete* can also clear the backups folder, and a wipe that didn't finish completes at the next start
+  - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
@@ -150,7 +153,7 @@ roadmap's build order.
     /your-data's count, and the "totals, never single transactions" wording reworded for expenses
   - [ ] The screen to type a record and the agree prompt for expenses
   - [ ] Receipts as copies, and backups that carry them
-  - [ ] The entries in the Delete menu ([8d])
+  - [x] The entries in the Delete menu ([8d]): expense records have their own box, and go with their idea
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)
