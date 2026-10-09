@@ -9,6 +9,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
+  compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
+  account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
+  since an income account can also hold interest or GST/HST you collected. The monthly totals of
+  the ticked accounts follow, one list per currency, exact to the cent, with what was left out and
+  why, and the note "DotAmi read your last save" (changes not yet saved in GnuCash aren't in it).
+  Review sends only those totals to the agree prompt; nothing counts until you agree. Books up to
+  50 MB are read in the background, so the window stays usable, and a read is stopped after a
+  minute. A book from a newer GnuCash, with a feature, account type or part DotAmi doesn't know,
+  is turned away with that thing's name. Figures from a book are listed under **Books / file**.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your

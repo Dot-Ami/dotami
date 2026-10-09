@@ -227,7 +227,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
+      "Totals about your business that you typed, read from a file or from your GnuCash book, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file or the book itself, and never which accounts you ticked. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Delete, at the bottom of this page, erases every figure from the file (tick “Your figures”, or “Your ideas”, which takes their figures with them). Nothing erases a single figure yet.",
   },
@@ -587,7 +587,7 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
   {
     name: "fflate",
     network: "no",
-    why: "Compression in pure JavaScript (its README). A search of its files finds no request call. DotAmi uses it to look inside a spreadsheet's zip (lib/figures/file/read-xlsx.ts). Its README's own examples use fetch to get data; that is the example's code, not the package's.",
+    why: "Compression in pure JavaScript (its README). A search of its files finds no request call. DotAmi uses it to look inside a spreadsheet's zip (lib/figures/file/read-xlsx.ts) and to unpack a compressed GnuCash book inside the books worker, which runs under the static files' policy that refuses every connection (lib/figures/books/gnucash-xml.ts, worker.ts). Its README's own examples use fetch to get data; that is the example's code, not the package's.",
   },
   {
     name: "next",

@@ -139,6 +139,58 @@ describe("sniffFile", () => {
     expect(sniffFile("export.xlsx", 100, plain)).toEqual({ ok: true, format: "csv" });
     expect(sniffFile("export.txt", 100, plain)).toEqual({ ok: true, format: "csv" });
   });
+
+  // [8h] A GnuCash book goes to the books reader, with a 50 MB limit of its own.
+  describe("a GnuCash book", () => {
+    const gzipHead = bytesOf(0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00);
+    const xmlHead = text(
+      [
+        '<?xml version="1.0" encoding="utf-8" ?>',
+        "<gnc-v2",
+        '     xmlns:gnc="http://www.gnucash.org/XML/gnc"',
+      ].join("\n"),
+    );
+
+    it("is told by its content, compressed (GnuCash's default) or plain XML, whatever its name", () => {
+      for (const name of ["books.gnucash", "books.gnucash.20261001120000.gnucash", "export.xml", "x.csv"]) {
+        expect(sniffFile(name, 1000, gzipHead), name).toEqual({ ok: true, format: "gnucash" });
+        expect(sniffFile(name, 1000, xmlHead), name).toEqual({ ok: true, format: "gnucash" });
+      }
+    });
+
+    it("may be bigger than a spreadsheet, up to 50 MB, and is refused unread past that", () => {
+      expect(sniffFile("big.gnucash", 30 * MB, gzipHead)).toEqual({ ok: true, format: "gnucash" });
+      expect(sniffFile("big.gnucash", 50 * MB, xmlHead)).toEqual({ ok: true, format: "gnucash" });
+      expect(sniffFile("huge.gnucash", 50 * MB + 1, gzipHead)).toEqual({
+        ok: false,
+        error: "That GnuCash book is over 50 MB, more than DotAmi reads.",
+      });
+      // A spreadsheet keeps its own limit.
+      expect(sniffFile("big.csv", 30 * MB, plain).ok).toBe(false);
+    });
+
+    it("XML of another kind is not a book", () => {
+      expect(sniffFile("page.xml", 100, text('<?xml version="1.0"?><html></html>'))).toEqual({
+        ok: true,
+        format: "csv",
+      });
+    });
+
+    it("a book saved as a database gets the sentence that says how to save it as XML; any other database is not a spreadsheet", () => {
+      const sqlite = new Uint8Array(100);
+      sqlite.set(text("SQLite format 3\u0000"));
+      const book = sniffFile("books.gnucash", 100, sqlite);
+      expect(book.ok).toBe(false);
+      if (!book.ok) expect(book.error).toContain("saved as a database (SQLite)");
+      expect(sniffFile("app.db", 100, sqlite)).toEqual({ ok: false, error: NOT_SHEET_MESSAGE });
+    });
+
+    it("is never handed to the spreadsheet readers", async () => {
+      const r = await readSpreadsheet("books.gnucash", xmlHead);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.error).toContain("GnuCash book");
+    });
+  });
 });
 
 describe("decodeText", () => {

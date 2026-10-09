@@ -1,8 +1,10 @@
 /**
  * [8h] GnuCash books saved as XML (the default; compressed or not) → accounts and posted lines.
  *
- * Runs inside the app's window, in memory. The book's bytes are never sent anywhere or stored, and
- * nothing here logs an account, a line or an amount; only the monthly totals the person later
+ * Runs in the books worker (worker.ts, started by read-book.ts), in memory, so a big book never
+ * freezes the window, and the worker is stopped if it takes too long. The book's bytes are never
+ * sent anywhere or stored, and nothing here logs an account, a line or an amount; only the monthly
+ * totals the person later
  * agrees to leave the page, through /api/figures/propose. No library error text is ever shown (it
  * could quote the book), and no message carries an account's name or an amount.
  *
@@ -26,9 +28,16 @@
  * gnc:template-transactions; their lines are marked `scheduled` so totals.ts never counts them.
  */
 import { Gunzip } from "fflate";
-import { MAX_FILE_BYTES } from "../file/types";
 import { isRealCalendarDay } from "../validate";
 import { parseFraction } from "./amount";
+import {
+  BOOK_TOO_BIG_MESSAGE,
+  GNUCASH_SQLITE_MESSAGE,
+  isGzip,
+  isSqlite,
+  MAX_BOOK_BYTES,
+  startsLikeXml,
+} from "./detect";
 import { TransactionShape } from "./gnucash-shape";
 import type { AccountSide, BookAccount, BookLine, BookReadResult } from "./types";
 import { walkXml, XmlRefusal, type XmlAttributes, type XmlHandlers } from "./xml";
@@ -36,7 +45,9 @@ import { walkXml, XmlRefusal, type XmlAttributes, type XmlHandlers } from "./xml
 /**
  * The most a compressed book may unpack to. Checked while unpacking, so a zip bomb is stopped on
  * the way out rather than after it has filled the window's memory. Matches the spreadsheet reader's
- * limit on unpacked XML; a real 10 MB compressed book unpacks to far less.
+ * limit on unpacked XML. GnuCash's XML takes roughly a kilobyte per transaction, so 200 MB is well
+ * over a hundred thousand transactions; a compressed book near the 50 MB file limit can pass it,
+ * and is then refused with a sentence that says so (docs/connectors/gnucash.md).
  */
 export const MAX_UNPACKED_BYTES = 200 * 1024 * 1024;
 
@@ -100,12 +111,12 @@ const ACCOUNT_SIDES: Readonly<Record<string, AccountSide | null>> = {
 
 // Every message below is a fixed sentence, written for the person.
 const EMPTY = "That file is empty.";
-const TOO_BIG = "That file is over 10 MB, more than DotAmi reads yet.";
-const TOO_BIG_INSIDE = "Opened up, that book is too large for DotAmi to read safely.";
+const TOO_BIG = BOOK_TOO_BIG_MESSAGE;
+const TOO_BIG_INSIDE =
+  "Opened up, that book is over 200 MB, too large for DotAmi to read safely. Nothing was kept.";
 const NOT_GNUCASH =
   "That doesn't look like a GnuCash book. DotAmi reads books saved in GnuCash's XML format (the default), compressed or not.";
-const SQLITE =
-  "That's a GnuCash book saved as a database (SQLite), which DotAmi can't read yet. If you have GnuCash, File > Save As lets you save a copy in the XML format, and DotAmi reads that.";
+const SQLITE = GNUCASH_SQLITE_MESSAGE;
 const DAMAGED =
   "DotAmi couldn't read that GnuCash file. It may be damaged or cut short. Nothing was kept.";
 const NOT_UTF8 =
@@ -464,41 +475,9 @@ class Collector implements XmlHandlers {
   }
 }
 
-/** True for a text file whose first real character is "<". */
-function startsLikeXml(bytes: Uint8Array): boolean {
-  let i = 0;
-  // Skip a UTF-8 byte-order mark and any leading whitespace.
-  if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) i = 3;
-  while (
-    i < bytes.length &&
-    (bytes[i] === 0x20 || bytes[i] === 0x09 || bytes[i] === 0x0a || bytes[i] === 0x0d)
-  ) {
-    i += 1;
-  }
-  return bytes[i] === 0x3c;
-}
-
-const isGzip = (bytes: Uint8Array) => bytes.length >= 3 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-
-/** "SQLite format 3" and a NUL: how every SQLite database file begins. */
-function isSqlite(bytes: Uint8Array): boolean {
-  const magic = "SQLite format 3\u0000";
-  return (
-    bytes.length >= magic.length && Array.from(magic).every((c, i) => bytes[i] === c.charCodeAt(0))
-  );
-}
-
-/**
- * Could these first bytes be a GnuCash XML book? True for a gzip file (it can only be told for sure
- * once opened, and readGnuCashBook then says plainly if it isn't a book) and for XML that opens a
- * gnc-v2 element early on. The window uses it to send a dropped file here rather than to the
- * spreadsheet reader.
- */
-export function looksLikeGnuCash(head: Uint8Array): boolean {
-  if (isGzip(head)) return true;
-  if (!startsLikeXml(head)) return false;
-  return new TextDecoder("utf-8").decode(head.subarray(0, 2048)).includes("<gnc-v2");
-}
+// The spreadsheet drop asks "is this a GnuCash book?" too, without loading this file: the test lives
+// in detect.ts and is passed on from here for the tests and callers that already import it.
+export { looksLikeGnuCash } from "./detect";
 
 /** Unpacks a gzip file to text in slices, stopping the moment it would pass `maxBytes`. */
 function gunzipToText(bytes: Uint8Array, maxBytes: number): string {
@@ -608,7 +587,7 @@ export function readGnuCashBook(
 ): BookReadResult {
   try {
     if (bytes.length === 0) return { ok: false, error: EMPTY };
-    if (bytes.length > MAX_FILE_BYTES) return { ok: false, error: TOO_BIG };
+    if (bytes.length > MAX_BOOK_BYTES) return { ok: false, error: TOO_BIG };
     if (isSqlite(bytes)) return { ok: false, error: SQLITE };
 
     let text: string;
