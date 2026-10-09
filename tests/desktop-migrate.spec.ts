@@ -360,3 +360,111 @@ describe("desktop migrator — the expenses table", () => {
     expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
   }, 60_000);
 });
+
+describe("desktop migrator — a T2125 total's tax year and form line on Figure ([8f])", () => {
+  const taxLineMigration = localNames.find((name) => name.endsWith("_figure_tax_line"));
+
+  it("is two plain ADD COLUMNs on Figure, so no table is copied, dropped or renamed", () => {
+    expect(taxLineMigration, "no migration ending in _figure_tax_line").toBeDefined();
+    const statements = statementsOf(taxLineMigration!);
+    // Prisma "redefines" a SQLite table (new table, copy, drop, rename) for most column changes. With
+    // foreign keys on, that on Figure is survivable, but the same pattern on Venture would delete
+    // every idea's figures, links and progress, so this migration is held to the plain form.
+    expect(statements).toEqual([
+      `ALTER TABLE "Figure" ADD COLUMN "formLine" TEXT`,
+      `ALTER TABLE "Figure" ADD COLUMN "taxYear" INTEGER`,
+    ]);
+  });
+
+  it("keeps every idea's figures, links, map progress, settings and expense records, and old figures get no tax year", () => {
+    // Everything before this migration, as a person on the last release has it.
+    const before = path.join(dir, "migrations-before-tax-line");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= taxLineMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(columns(dbFile, "Figure")).not.toContain("taxYear");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // One of every table with a parent, with invented values.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'in my words', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'my note', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, sourceRows, status, editedByPerson, confirmedAt)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', NULL, 'confirmed', 1, 5),
+               ('f2', 'v1', 'gross-revenue', 2, 3, -50, 'file', 'sales.xlsx', 12, 'proposed', 0, NULL),
+               ('f3', 'v2', 'gross-revenue', 4, 5, 99, 'typed', 'typed by you', NULL, 'retracted', 0, 6);
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status)
+        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed');
+    `,
+    );
+    // Every column of every figure, so a column the migration lost or changed shows up here.
+    const everything = () => ({
+      users: query(dbFile, `SELECT * FROM "User" ORDER BY id`),
+      statements: query(dbFile, `SELECT * FROM "PersonStatement" ORDER BY id`),
+      ventures: query(dbFile, `SELECT * FROM "Venture" ORDER BY id`),
+      links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
+      progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
+      settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      expenses: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, paidTo, status FROM "Expense" ORDER BY id`),
+      // The amount is read back as text so a BigInt column can't trip the comparison.
+      figures: query(
+        dbFile,
+        `SELECT id, ventureId, kind, periodStart, periodEnd, CAST(amountCents AS TEXT) AS amount, currency, sourceKind, sourceLabel,
+                sourceRows, status, editedByPerson, proposedAt, confirmedAt, retractedAt FROM "Figure" ORDER BY id`,
+      ),
+    });
+    const held = everything();
+    expect(held.figures).toHaveLength(3);
+
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 11 });
+    expect(applied).toContain(taxLineMigration);
+    expect(backup).not.toBeNull();
+
+    // Every row is still there, unchanged, and the figures that were there have no tax year or line.
+    expect(everything()).toEqual(held);
+    expect(columns(dbFile, "Figure")).toEqual(expect.arrayContaining(["taxYear", "formLine"]));
+    expect(query(dbFile, `SELECT id, taxYear, formLine FROM "Figure" ORDER BY id`)).toEqual([
+      { id: "f1", taxYear: null, formLine: null },
+      { id: "f2", taxYear: null, formLine: null },
+      { id: "f3", taxYear: null, formLine: null },
+    ]);
+
+    // A T2125 total can now be kept with both.
+    runSql(
+      dbFile,
+      `INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status, taxYear, formLine)
+         VALUES ('f4', 'v2', 'business-gross-income', 6, 7, 4825000, 'tax-return', 'return-2025.pdf', 'proposed', 2025, 'T2125 8299')`,
+    );
+    expect(query(dbFile, `SELECT kind, taxYear, formLine FROM "Figure" WHERE id = 'f4'`)).toEqual([
+      { kind: "business-gross-income", taxYear: 2025, formLine: "T2125 8299" },
+    ]);
+
+    // The safety copy taken first holds the same figures, without the new columns.
+    expect(query<{ n: number }>(backup!, `SELECT count(*) AS n FROM "Figure"`)).toEqual([{ n: 3 }]);
+    expect(columns(backup!, "Figure")).not.toContain("taxYear");
+
+    // Prisma's own referee agrees the file matches the schema.
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // Deleting an idea still cascades to its own figures (old and new), links, progress and expense
+    // records, and to nothing else.
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v2'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f1" }, { id: "f2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Expense" ORDER BY id`)).toEqual([{ id: "e1" }]);
+    expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "ScenarioState"`)).toEqual([{ id: "p1" }]);
+  }, 60_000);
+});

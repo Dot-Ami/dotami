@@ -62,6 +62,8 @@ export function rowToFigure(row: Figure): FigureView {
     sourceKind: row.sourceKind as FigureSourceKind,
     sourceLabel: row.sourceLabel,
     sourceRows: row.sourceRows,
+    taxYear: row.taxYear,
+    formLine: row.formLine,
     status: row.status as FigureStatus,
     editedByPerson: row.editedByPerson,
     proposedAt: row.proposedAt.toISOString(),
@@ -123,6 +125,9 @@ export async function proposeFigures(
           sourceLabel: checkedSource.value.label,
           // A figure's own row count (one month of a file) wins over the batch's.
           sourceRows: v.rows ?? checkedSource.value.rows,
+          // [8f] Only a T2125 total has these; validateFigureInput refuses them on any other kind.
+          taxYear: v.taxYear ?? null,
+          formLine: v.formLine ?? null,
           // Not left to the column default: proposing never confirms, and this line says so.
           status: "proposed",
         },

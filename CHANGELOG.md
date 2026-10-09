@@ -9,6 +9,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The four T2125 totals in "Add a figure"** ([8f]) — the list of what you can add gains business
+  gross income (T2125 line 8299), business total expenses (9368), business net income before
+  adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and
+  says which line of the CRA's form it goes on that year. DotAmi has read the CRA's 2025 form so far;
+  for any other year it says "not read yet" instead of guessing the number, and still keeps the
+  figure with its year. Each figure remembers its tax year, and, once figures can be read from a
+  return, the form and line printed on it. Every line is cited to the CRA's own 2025 T2125 and
+  Guide T4002, read 2026-10-08 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
+  collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your

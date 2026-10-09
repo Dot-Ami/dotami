@@ -160,7 +160,7 @@ model ScenarioState {
 model Figure {
   id             String    @id @default(cuid())
   ventureId      String
-  /// lib/figures/types.ts FIGURE_KINDS — "gross-revenue" for now.
+  /// lib/figures/types.ts FIGURE_KINDS — "gross-revenue" and the four T2125 totals ([8f]).
   kind           String
   /// First and last calendar day the total covers, inclusive; stored as midnight UTC of that day.
   periodStart    DateTime
@@ -175,6 +175,10 @@ model Figure {
   sourceLabel    String
   /// How many rows were summed, when it came from a file.
   sourceRows     Int?
+  /// [8f] The tax year a T2125 total is for; null for every other kind.
+  taxYear        Int?
+  /// [8f] The form and line as printed on the return it was read from, e.g. "T2125 8299"; null when typed.
+  formLine       String?
   /// "proposed" | "confirmed" | "retracted" | "discarded"
   status         String    @default("proposed")
   editedByPerson Boolean   @default(false)

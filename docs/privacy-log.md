@@ -39,6 +39,14 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Two more facts on a figure** ([8f]): `Figure.taxYear`, the tax year a T2125 total is for, and
+  `Figure.formLine`, the form and line it was read from ("T2125 8299"). Both are empty for every
+  figure that existed before, and for revenue figures; a typed T2125 total has a tax year and no form
+  line. Four new kinds of figure: business gross income, total expenses, net income before
+  adjustments and net income. They sit in the same table, are shown on the same pages and are removed
+  the same way as every other figure ([`prisma/migrations/20261008130000_figure_tax_line`](../prisma/migrations/20261008130000_figure_tax_line/migration.sql),
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). Nothing new leaves the computer.
+
 - **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
   file is read in memory inside the app's window, in a worker of DotAmi's own
   ([`lib/figures/return/`](../lib/figures/return/)); its bytes move into that worker, pdf.js's

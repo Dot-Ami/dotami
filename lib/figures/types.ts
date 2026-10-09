@@ -4,12 +4,27 @@
  * and docs/architecture/figures-privacy-review.md for the rules the store is built under.
  *
  * Kinds are IDs and IDs are forever: add to this list, never rename or reuse one.
+ *
+ * [8f] The four "business-" kinds are the T2125 totals. They are named for what the amount means,
+ * not for a line number, because the CRA can renumber a line (the maintainer's decision,
+ * 2026-10-07); the line each goes on, year by year, is in lib/engines/taxlines/. Line 8299 is not
+ * "gross-revenue": it leaves out the GST/HST collected, so the GST/HST card never reads it.
  */
-export const FIGURE_KINDS = ["gross-revenue"] as const;
+export const FIGURE_KINDS = [
+  "gross-revenue",
+  "business-gross-income",
+  "business-total-expenses",
+  "business-net-income-before-adjustments",
+  "business-net-income",
+] as const;
 export type FigureKind = (typeof FIGURE_KINDS)[number];
 
 export const FIGURE_KIND_LABELS: Record<FigureKind, string> = {
   "gross-revenue": "Revenue (gross, before expenses)",
+  "business-gross-income": "Business gross income (T2125)",
+  "business-total-expenses": "Business total expenses (T2125)",
+  "business-net-income-before-adjustments": "Business net income before adjustments (T2125)",
+  "business-net-income": "Business net income (T2125)",
 };
 
 /**
@@ -41,6 +56,14 @@ export interface FigureView {
   sourceKind: FigureSourceKind;
   sourceLabel: string;
   sourceRows: number | null;
+  /** [8f] The tax year a tax-form total is for; null for every other kind. */
+  taxYear: number | null;
+  /**
+   * [8f] The form and line as printed on the return it was read from ("T2125 8299"); null when it
+   * wasn't read from a return (typed, say). Kept as read so a line the CRA later renumbers still
+   * shows what the person's own form said.
+   */
+  formLine: string | null;
   status: FigureStatus;
   editedByPerson: boolean;
   /** ISO timestamp. */

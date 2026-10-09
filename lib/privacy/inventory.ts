@@ -227,7 +227,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
+      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. For a tax-form total (such as business net income from a T2125), also the tax year it is for and, when it was read from a return, the form and line printed there. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Delete, at the bottom of this page, erases every figure from the file (tick “Your figures”, or “Your ideas”, which takes their figures with them). Nothing erases a single figure yet.",
   },
