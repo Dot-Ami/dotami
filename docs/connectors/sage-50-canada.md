@@ -39,8 +39,10 @@ Things to check, from the same pages:
 - **Dates follow the company's date setting.** Short dates look like 12-03-05 in Sage's own example
   and the order of month, day and year can be changed ([dates, 2016 help][dates-2016]); the setting is
   used on screen and in reports ([date format][date-format], Release 2024). DotAmi reads a four-digit
-  year; **a two-digit year is not read today** (a known gap, pinned by a test). Whether the setting
-  offers a four-digit year is not said on the pages read.
+  year as it is. A two-digit year (12-03-05) is read once the person answers one question, "Is 05
+  the year 2005?"; DotAmi never picks the century itself, and the preview shows the first and last
+  date read, in words, to check against the file. Whether the setting offers a four-digit year is
+  not said on the pages read.
 - **French.** Sage 50 switches between English and French ([switch language][language], 2023); what
   the report's column titles become in French is not documented. **A French export with several
   comma-decimal columns ("1 000,00") is not read today** (a known gap, pinned by a test: the commas

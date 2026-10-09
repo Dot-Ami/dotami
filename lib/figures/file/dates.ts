@@ -268,8 +268,9 @@ export function dayInWords(day: string): string {
  * Works out whether a column's A/B/YYYY dates are month-first or day-first from the dates
  * themselves: a first number above 12 can only be a day, a second number above 12 can only be a
  * day too. A/B/YY dates (12-03-05) give the same proof, whatever century they turn out to be in,
- * so the order is settled before the century is asked. Never guesses — with no proof either way it says `ambiguous` so the caller asks the
- * person once, and with proof both ways it says `conflicting`.
+ * so the order is settled before the century is asked. Never guesses — with no proof either way
+ * it says `ambiguous` so the caller asks the person once, and with proof both ways it says
+ * `conflicting`.
  */
 export function detectDateOrder(cells: Cell[]): {
   order: DateOrder | null;
