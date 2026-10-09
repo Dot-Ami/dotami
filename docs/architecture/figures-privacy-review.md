@@ -230,3 +230,38 @@ most 50 megapixels and 20,000 pixels on a side, read from its header before anyt
   "older than six years" must not be the rule.
 - Whether a refund or credit (a negative amount) may be a record. Today an amount must be more than
   zero.
+
+## Privacy review: encrypting the database file (design, 2026-10-09; not built)
+
+The maintainer said yes (2026-10-09) to encrypting the data file itself. The design is
+[database-encryption.md](database-encryption.md), written before any code; the build waits for the
+maintainer's choice of how (its § 12). **Nothing changes yet**: the data file still relies on the
+computer's disk encryption, as the first row of the table at the top says.
+
+**What would be stored that isn't today:** one file, `database.key`, beside the data file: 32 random
+bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI), and the key's id
+(not secret). Nothing else new is kept; the data file holds the same rows, encrypted.
+
+| Who | How | What would stop it | Status |
+|---|---|---|---|
+| Another account on the computer, a copied or synced data folder, a stolen disk without disk encryption | reads `dotami.db` or a safety copy in `backups/` | the file encrypted page by page (ChaCha20-Poly1305), with a key only this Windows account can open; as strong as the account's password | designed |
+| The same, for the plain file the first start replaces | reads the disk's free space | the plain file overwritten and removed; on a solid-state disk that doesn't promise the bytes are physically gone, which DotAmi says; disk encryption covers it | designed |
+| Someone with a backup without a passphrase | opens it | nothing: it holds the data decrypted so it restores on another computer, and DotAmi says so; with a passphrase, AES-256-GCM as today | designed (a question: require a passphrase?) |
+| A program running as the person | asks Windows for the key, or asks DotAmi's server | nothing in DotAmi: the same trust as today, stated, not defended | by design |
+| The person, after losing the key | opens DotAmi | nothing can open the file; a backup restores it under a new key; nothing on the disk is changed or replaced | designed (a question: a recovery key, or "start fresh"?) |
+
+**Rules for building it:**
+
+1. The key is never in the clear on the disk, in a backup, in the log or in an address, and is never
+   sent anywhere; the server takes it out of its environment when it first reads it.
+2. With the key open, the data file is never written to the disk in plain text: not by a backup, a
+   restore, a safety copy or the migrator. The one plain file is the one that already exists before the
+   first encrypting start, and it is wiped once the encrypted copy is checked.
+3. A key is never replaced automatically while an encrypted file exists.
+4. The log gets events and counts, never a value, a name or the key; the database adapter's debug
+   output (which prints query values) is switched off in the desktop server by removing `DEBUG`.
+5. A copy run from source has no key store, keeps its data file unencrypted, and says so on Settings
+   and *What DotAmi knows about you*.
+6. Each candidate package is reviewed before use ([better-sqlite3-multiple-ciphers](../connectors/better-sqlite3-multiple-ciphers-review.md),
+   [libsql](../connectors/libsql-review.md), [SQLCipher](../connectors/sqlcipher-review.md)); the one
+   chosen goes on the inventory's list of packages that ship, with network "no".
