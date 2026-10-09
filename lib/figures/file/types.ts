@@ -18,6 +18,19 @@ export type Cell = string | number | boolean | Date | null;
 export interface Sheet {
   name: string;
   rows: Cell[][];
+  /**
+   * Excel only: the cells holding a formula saved with no value (read-xlsx.ts). The reader can only
+   * give such a cell as empty, since DotAmi never works a formula out itself, so this says which
+   * "empty" cells are really sums Excel never calculated, and the person is told so rather than
+   * "no amount". Absent for a CSV, which has no formulas.
+   */
+  unsavedFormulas?: CellPlace[];
+}
+
+/** Where a cell is in a sheet, 0-based: `rows[row][column]`. */
+export interface CellPlace {
+  row: number;
+  column: number;
 }
 
 export type ReadResult =
@@ -28,6 +41,12 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 /** How a date like 03/01/2026 is written: year first (2026-03-01), month first, or day first. */
 export type DateOrder = "ymd" | "mdy" | "dmy";
+
+/**
+ * Which hundred years a two-digit year is read in: 2000 reads "05" as 2005, 1900 reads it as 1905.
+ * Only ever the person's own answer, for one file ("Is 05 the year 2005?"); DotAmi never picks it.
+ */
+export type Century = 1900 | 2000;
 
 /** How an amount is written: 1,234.56 ("point") or 1 234,56 ("comma", French and most of Europe). */
 export type DecimalStyle = "point" | "comma";
@@ -59,6 +78,11 @@ export interface ColumnChoice {
   refundColumn?: number | null;
   /** Needed only for dates like 03/01/2026; null when every date in the column is unambiguous. */
   dateOrder: DateOrder | null;
+  /**
+   * The person's answer about a two-digit year (12-03-05). Unset or null: a date written with a
+   * two-digit year is not read, and its row is listed as "no date".
+   */
+  century?: Century | null;
   decimalStyle: DecimalStyle;
 }
 
@@ -89,6 +113,8 @@ export interface MonthTotal {
  * no-date    — no date DotAmi can read with certainty (notes, headings, a merged cell's empty half)
  * no-amount  — a date but an empty amount cell
  * bad-amount — a date but an amount DotAmi can't read with certainty
+ * unsaved-formula — the amount (or the date) is an Excel formula saved with no value: the cell
+ *              looks empty, but it is a sum Excel never worked out, and DotAmi never guesses it
  * payment    — the type column says Payment or Deposit: money received for a sale the file already lists
  * void-or-draft — the status column says void, voided, deleted or draft: an invoice that was never a sale
  * not-over   — its month hasn't ended yet, so there's no total for it yet
@@ -99,6 +125,7 @@ export type SkipReason =
   | "no-date"
   | "no-amount"
   | "bad-amount"
+  | "unsaved-formula"
   | "payment"
   | "void-or-draft"
   | "not-over";
@@ -115,4 +142,58 @@ export interface TotalsResult {
   /** Rows added into `months`. */
   rowsCounted: number;
   skipped: SkippedRow[];
+  /**
+   * The earliest and latest day read from the date column (YYYY-MM-DD), over every row whose date
+   * was read, whether it was added up or not (a month not over yet, no amount). Shown to the person
+   * in words so a date read the wrong way stands out. Null when no row had a date DotAmi could read.
+   */
+  datesRead: { first: string; last: string } | null;
+}
+
+/**
+ * [8c-3] Months across the top: a report with one column per month (FreshBooks' Revenue by Client)
+ * instead of one row per sale with a date. `month` is the month a column's name was read as.
+ */
+export interface MonthColumn {
+  /** 0-based position in a row. */
+  column: number;
+  /** YYYY-MM */
+  month: string;
+}
+
+/**
+ * Why a whole row under the month names wasn't read, when every row is added up.
+ *
+ * blank     — every cell empty
+ * total     — a cell outside the month columns says "Total", "Grand total"…: the report's own sum
+ * no-amount — nothing at all under any month (a heading, a note, a client with no figures)
+ */
+export type AcrossRowReason = "blank" | "total" | "no-amount";
+
+/**
+ * Why one cell under a month wasn't added, in a row that was otherwise read.
+ *
+ * empty           — nothing in the cell
+ * bad-amount      — something DotAmi can't read as an amount with certainty
+ * unsaved-formula — an Excel formula saved with no value (see SkipReason)
+ */
+export type AcrossCellReason = "empty" | "bad-amount" | "unsaved-formula";
+
+/** What adding up a months-across table gives. Every cell under a month is accounted for. */
+export interface AcrossResult {
+  /** Oldest first; only months that have ended. `rows` is how many rows' cells were added into the month. */
+  months: MonthTotal[];
+  /** Rows with at least one cell added into a month. */
+  rowsCounted: number;
+  /** Whole rows left out, 1-based as the person sees them in Excel. */
+  skippedRows: { row: number; reason: AcrossRowReason }[];
+  /** Single cells left out: 1-based row, 0-based column (the screen writes it "C6", as Excel does). */
+  skippedCells: { row: number; column: number; reason: AcrossCellReason }[];
+  /** Month columns left out whole because the month hasn't ended yet. */
+  notOver: MonthColumn[];
+  /**
+   * The earliest and latest month read from the column names (YYYY-MM), over every month column,
+   * a month not over yet included. Shown in words so a column read as the wrong month stands out.
+   */
+  monthsRead: { first: string; last: string } | null;
 }

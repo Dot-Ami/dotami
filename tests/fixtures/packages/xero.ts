@@ -421,15 +421,15 @@ files.push({
     decimalStyle: "point",
     months: [
       { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 35000, rows: 2 },
-      // WRONG TODAY: no August at all. The voided invoice's 120.00 is rightly left out, but
-      // INV-0003's 60.00 is missing because its formula has no saved value. True: 60.00.
+      // No August: the voided invoice's 120.00 is rightly left out, and INV-0003's 60.00 is left
+      // out because its formula has no saved value, and the person is told so (DotAmi never works
+      // it out). Once the file is saved again in Excel, August is 60.00.
       { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 7500, rows: 1 },
     ],
     skipped: [
       { row: DETAIL_VOIDED_ROW, reason: "void-or-draft" },
-      // WRONG TODAY, in its wording: the cell holds a formula Excel never worked out, and the
-      // person is told only that the amount is empty.
-      { row: DETAIL_UNSAVED_FORMULA_ROW, reason: "no-amount" },
+      // The cell holds a formula Excel never worked out: told apart from an empty amount.
+      { row: DETAIL_UNSAVED_FORMULA_ROW, reason: "unsaved-formula" },
       { row: 11, reason: "total" },
     ],
   },

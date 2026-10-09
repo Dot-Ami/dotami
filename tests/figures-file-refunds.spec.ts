@@ -233,6 +233,35 @@ describe("monthlyTotals with a refunds column", () => {
       expect(august.refunds).toBeUndefined();
     }
   });
+
+  it("lists a formula saved with no value, in either column, as one and guesses nothing for it", () => {
+    const rows: Cell[][] = [
+      HEADER,
+      ["2026-08-01", "Invoice", "", "200.00"],
+      ["2026-08-10", "Refund, formula", null, ""], // the refunds cell is a formula with no value
+      ["2026-08-12", "Sale, formula", "", null], // the amount cell is a formula with no value
+      ["2026-08-20", "Refund", "40.00", ""],
+    ];
+    const unsaved = [
+      { row: 2, column: 2 },
+      { row: 3, column: 3 },
+    ];
+    const result = monthlyTotals(rows, CHOICE, TODAY, unsaved);
+    // Positive first: the readable sale and refund are counted.
+    expect(result.months).toEqual([
+      {
+        periodStart: "2026-08-01",
+        periodEnd: "2026-08-31",
+        amountCents: 16000,
+        rows: 2,
+        refunds: { rows: 1, cents: 4000 },
+      },
+    ]);
+    expect(result.skipped).toEqual([
+      { row: 3, reason: "unsaved-formula" },
+      { row: 4, reason: "unsaved-formula" },
+    ]);
+  });
 });
 
 describe("the preview with a refunds column", () => {

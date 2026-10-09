@@ -23,7 +23,7 @@ Change both together.
 | Backup passphrase | none | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
 | Automatic updates | on | on · ask first · off | off: "you won't get fixes, including security fixes" | [7d] |
 | Figure reminders | none ticked | monthly · quarterly · yearly (tick any, or none) | — | [8e] |
-| Bank and card records | off | on per source | yes, every new bank source | [8g] |
+| Bank and card records | off | on · then, for each statement: allow once · always allow this account · always allow every account | turning it on: "a statement holds every purchase and payment, the names of people, balances and account numbers; DotAmi reads it in this window, keeps only the monthly totals you agree to and never keeps an account or card number"; then, before each statement from an account not always allowed: "Before DotAmi reads a bank or card statement" (below) | [8g] |
 | Model | none chosen | local model · own key per provider | own key: "what the Lens reads goes to that company" | [9a] |
 | Monthly spend limit for an own key | required when a key is added | an amount | — (see Part 4) | [9a] |
 | Permission level, per venture | Propose | Read · Propose · Act asking first · Act freely | Act freely: "it changes things without asking; everything is logged and can be undone" | [9f] |
@@ -38,6 +38,44 @@ Change both together.
 | Tax year shown | the current one | any year with catalogs | — | [11i] |
 | Language | English | English · French (when it exists) | — | [11j] |
 | Share anonymous usage | **off until you say yes** | see Part 4 | — | Part 4 |
+
+**Bank and card records — the statement warning, word for word** (`BANK_STATEMENT_WARNING` in
+`lib/settings/catalog.ts`; `tests/bank-sources.spec.ts` fails if this and the catalog differ). The
+maintainer's decision (2026-10-07): a separate switch, off to start, with its own warning (the
+table above); then this warning before a statement, with three buttons, and Settings lists each
+account and can take it back. It is not shown for an account the person chose "Always allow this
+account" for, nor for any account while "Always allow every account" stands. The switch stays
+`planned` until the statement screen that shows this warning is built; the accounts list is built
+(`lib/figures/source-accounts.ts`) and shows in Settings once it holds an account.
+
+- Title: Before DotAmi reads a bank or card statement
+- The DotAmi project doesn't recommend this. It's your choice.
+- A statement holds much more than your business totals: every purchase and payment, the names of
+  people who paid you or whom you paid, balances, and account or card numbers.
+- If you go ahead:
+  - The file is read in this window, on this computer. DotAmi doesn't send it anywhere or save
+    it, and never asks for your online banking login.
+  - Nothing counts as revenue until you tick it. Money in isn't always revenue: transfers between
+    your own accounts, loans, refunds, and money from selling something you own are examples to
+    look out for.
+  - DotAmi keeps only the monthly totals you agree to, under the name you give this account.
+    Account and card numbers are never kept.
+- What DotAmi can't protect:
+  - The file stays wherever you saved it. DotAmi doesn't move or delete it.
+  - Anyone who can open DotAmi's data on this computer can see the totals you agreed to, and the
+    names you gave your accounts. Settings says how to turn on your computer's disk encryption,
+    which covers a lost or stolen computer.
+  - DotAmi could misread your bank's file. Check every total before you agree to it.
+- The buttons (and Cancel, which adds nothing and reads nothing):
+  - **Allow once** — This statement only. You'll see this warning again next time.
+  - **Always allow this account** — No warning for this account's statements until you take it
+    back in Settings.
+  - **Always allow every account** — No warning for any account, including ones you add later,
+    until you take it back in Settings.
+- The account's name is the person's own words. Four digits are allowed only as "ending" plus
+  exactly four digits at the end ("Visa ending 1234"); any other run of four or more digits is
+  refused, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks) as one run and
+  digits of any script, and so is a name with hidden characters.
 
 ## Part 2 — Edge cases, story by story
 
@@ -65,6 +103,7 @@ is read-only.
 - A corrupted or truncated backup file → detected before anything is replaced. *Tested: cut short, a changed byte (plain and locked), an edited header, random bytes, a raw database, an empty file.*
 - Restore over existing data → "this replaces everything on this computer" + keep a safety copy. *Tested: the safety copy holds the old data.*
 - A backup written while the app is busy → a consistent copy (`VACUUM INTO`). *Built; not tested under load.*
+- A receipt added or removed while a backup is written ([8i]) → the receipts folder is listed before the data file is copied, so a receipt removed in between is in neither; one the copy describes but the folder doesn't have is left out, counted, and named in the message afterwards; a receipt file that changes between the writer's two reads (measuring, then writing) stops the backup with nothing saved. *Built; the missing receipt is tested (`tests/desktop-backup.spec.ts`); the file changing mid-backup is not, since it needs a file to change between two reads.*
 - The app crashes mid-backup → no half-written file under the real name. *Built (write then rename); tested that no `.partial` is left.*
 
 **Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
@@ -123,15 +162,16 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 
 **Drop a file: Excel and CSV [8c]** (built 2026-10-06; the file is read in the app's window and never sent or kept — `lib/figures/file/`, `tests/figures-file-read.spec.ts`, `tests/figures-file-logic.spec.ts`)
 - Money written as `$1,234.56`, `1 234,56` (French), `(1,234.56)` for negatives, `1234.5-`. *All read; the column's style is preset from the file and the person can switch it. More than two decimals, or any currency but a "$" sign (US$, €, EUR…), is left out as "an amount DotAmi can't read" — never rounded, never converted (tested).*
-- Dates written as `2026-03-01`, `03/01/2026`, `01/03/2026` (ambiguous → ask once), Excel serial dates. *All read, plus month names in English and French. 03/01/2026 is asked once per file unless another date in the column settles it; two-digit years are never guessed; a time after the date never moves the day (tested).*
-- A CSV with a byte-order mark, semicolons instead of commas, or French accents in headers. *Read, including Windows-1252 files from Excel on Windows and UTF-16 "Unicode text" (tested).*
-- Merged cells, totals rows, blank rows and notes in an Excel report. *Every row below the column names is either counted or listed with its reason and row number: blank, the file's own totals row, no date, a date but no amount, an unreadable amount, a month not over yet. A merged cell's value sits in its first row only; the rows under it show as "no date" — never filled down (tested).*
+- Dates written as `2026-03-01`, `03/01/2026`, `01/03/2026` (ambiguous → ask once), Excel serial dates. *All read, plus month names in English and French. 03/01/2026 is asked once per file unless another date in the column settles it; a time after the date never moves the day (tested). Every preview shows the earliest and latest date read, in words ("Dates read: 3 December 2005 to 28 February 2006"), for the person to check, counting rows in a month not over yet too, so a year read wrong can't hide there (tested, browser-tested). The person ticks "These dates are right" beside it before Review opens the agree prompt; another file, date column, date order or century answer empties the box (tested, browser-tested).*
+- Dates with a two-digit year: Sage 50's short date `12-03-05`, FreshBooks' `dd.mm.yy`, `Nov 12, 05`, Excel's `5-Mar-05` → *used to be refused as "no date" on every row, so no column names were found. Now the panel asks once per file, "Is 05 the year 2005?" (Yes, 2005 / No, 1905), and adds nothing up until it is answered; DotAmi never picks the century (the maintainer's decision, 2026-10-07). The answer covers every two-digit year in that date column, for that file only, and is not stored. The year is always the last number of a numeric date; a file written year-first with two digits (26-03-05) would be misread, and the dates line above the totals is what shows it. One answer for the whole column: a file spanning 1999 and 2000 written with two digits can't be read right, and the dates line shows that too (tested in `tests/figures-file-two-digit-years.spec.ts`, the FreshBooks and Sage 50 practice files, and browser-tested).*
+- A CSV with a byte-order mark, semicolons instead of commas, or French accents in headers. *Read, including Windows-1252 files from Excel on Windows and UTF-16 "Unicode text" (tested). A semicolon file whose lines hold more decimal commas than semicolons ("1 000,00" in several columns) is read on its semicolons when the commas on its split lines sit mostly inside amounts, so a description like "Design, impressions" is allowed (tested).*
+- Merged cells, totals rows, blank rows and notes in an Excel report. *Every row below the column names is either counted or listed with its reason and row number: blank, the file's own totals row, no date, a date but no amount, an unreadable amount, a formula Excel didn't save a value for (a program left the sum for Excel to work out; the person is told to open the file in Excel, save it and drop it again, and nothing is guessed), a month not over yet. A merged cell's value sits in its first row only; the rows under it show as "no date" — never filled down (tested).*
 - A transaction list that holds a sale and the payment received for it (QuickBooks' Transaction List: an Invoice row, then a Payment row for the same money) → *used to be added twice, so a month of $700 in sales read $1,200. Now an optional "Type column" on the panel is pre-filled only when a column header is exactly "Transaction Type" (QuickBooks' name; a bare "Type" is left for the person to pick, and the cells are never used to guess); rows whose type is exactly Payment or Deposit (whole cell, any case; the French "Paiement" and "Dépôt" are assumed, no French export has been seen) are left out of the totals and listed as "typed Payment or Deposit, left out because a Type column is chosen", with a note that in QuickBooks these are money received for a sale on another row and "if they are sales of yours, choose None" (DotAmi cannot tell which they are, so the line does not claim a sale was already counted). Invoice, Sales Receipt and a negative Credit Memo count as before, and a "Type" column holding other words changes nothing. The person can clear the select to count every row. **Known limit, kept as the maintainer chose it (Payment and Deposit are both left out):** a Deposit made straight to an income account in QuickBooks (the only record of that sale, not a payment on an invoice) is left out too, and the hint under the select says so. Nothing about the column is stored, and only monthly totals are proposed (tested in `tests/figures-file-type-column.spec.ts`, the QuickBooks practice file, and browser-tested). A Payment row is left out whatever else is wrong with it; a file with no type column at all still counts every row, so the person has to know to pick one.*
 - Void, deleted and draft invoices in an invoice list (FreshBooks' Draft, Sage Accounting's Void, Xero's Voided in Receivable Invoice Detail, which includes them by default) → *used to be counted as sales (FreshBooks' August read 726.19 against a true 476.19; Sage's 150.00 against -50.00). Now an optional "Status column" on the panel is pre-filled only when a column header is exactly "Status" or "Statut" (the cells are never used to guess); rows whose status is exactly Void, Voided, Deleted or Draft (whole cell, any case; the French "Annulé(e)", "Supprimé(e)" and "Brouillon", accents or not, are assumed, no French export has been seen) are left out and listed as "marked void, deleted or draft, left out because a Status column is chosen", with "if they are sales of yours, choose None". Only the chosen column is read, so a memo saying "Draft" can't hide a sale; a longer status ("Draft sent to client") counts. Such a row is left out whatever else is wrong with it, and before the Type column's rule, so a voided payment is listed as void. The person can clear the select to count every row. Nothing about the column is stored (tested in `tests/figures-file-status-column.spec.ts`, the FreshBooks, Sage Accounting and Xero practice files, and browser-tested). The maintainer's decision, 2026-10-07.*
 - A refund paid back that sits in its own column (a ledger export such as Wave's Account Transactions: sales in Credit, refunds in Debit) → *only one column was ever added up, so with Credit picked the refund's row was listed as "no amount" and its month read too high (the Wave practice file's August 320.00 against a true 280.00). Now an optional "Refunds / money out" column on the panel, never pre-filled (not for "Debit", which is money in on a bank account's ledger, nor for "Refunds"): the person picks it. Each amount in it is money out whichever sign it is written with (40.00, -40.00 and (40.00) all take 40.00 off), and lowers the month of its own row's date, the month the money left, never the month of the sale it refunds; the preview shows "N refunds taken off ($X)" beside the month and says refunds are taken off the month they were paid back. A month can go below zero, and is proposed that way (the agree prompt accepts a negative amount). A row with amounts in both columns is netted; 0.00 in the unused one is ignored; a row with only 0.00 in the refunds column is "no amount"; an unreadable refund is "an amount DotAmi can't read". The Status and Type columns apply first, so a voided refund is left out. The refunds column can't be the date or the amount column (a sentence says so, and no totals are shown). The rule (money out counts only when the person said refunds count, in the month it left) is `lib/figures/refunds.ts`, the one the bank statement totals ([8g]) use too. Choosing None takes nothing off. Nothing about the column is stored (tested in `tests/figures-file-refunds.spec.ts`, the Wave practice file, and browser-tested). The maintainer's decision, 2026-10-07.*
 - A summary block above the table (FreshBooks' Invoice Details for all clients: "Total Invoiced, Total Paid" over two figures) → *its two titles used to be taken for the column names, with "Total Paid" pre-filled as the amount over the invoice numbers. Now, when the first row of names found names no date column, a wider row below it that does name one wins, if it comes before the first row with a date; once the dates start, a text row is just a row. A first row that already names its date column ("Date, Amount" with a note row under it) is kept, and a row the person picks in "Column names are in row" is never moved (tested in `tests/figures-file-status-column.spec.ts` and the FreshBooks practice files, and browser-tested).*
 - A password-protected Excel file → "open it in Excel and save a copy without a password". *Refused with that sentence; an old .xls gets the same one (same container) (tested).*
-- A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused before the file is read; a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested).*
+- A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused after only its first 8 KB is looked at (to tell a GnuCash book apart); a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested). A GnuCash book may be up to 50 MB and 200 MB unpacked, read in a background worker that is stopped after a minute (tested, 2026-10-08).*
 - The same file dropped twice → recognised (by fingerprint), not counted twice. *Recognised by its totals instead: a month already waiting or agreed with the same total and currency is listed as "already in DotAmi" and not proposed again (tested). A byte fingerprint would need a table — left for [8c-2] with the remembered column choice. Even a second, different total for the same month is never added: the map leaves that quarter out until the person chooses ([8a]).*
 - A bank or credit card file dropped in (its amounts, and a file name that can carry account digits) → *The panel asks "Where is this file from?" before reading anything, for every file: the answer covers one file only (a second file, or another try after a refusal, goes back to the question), and it is never remembered. "A bank or credit card account" shows a plain warning and opens nothing: no bytes, no name, no figure. A file dropped on the panel before the answer is ignored unread. The answer is only as good as the person's click — a bank file the person calls "accounting software" is read like any other spreadsheet; nothing checks the answer (browser-tested 2026-10-07).*
 - A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. A PDF gets its own sentence pointing to **Add from last year's return** ([8f]). Nothing in a workbook is ever run — only its XML text is read (tested).*
@@ -139,7 +179,9 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 - Two date columns, an invoice date and a due date (Xero's `InvoiceDate` and `DueDate`) → *the invoice date is pre-filled: names written without spaces (InvoiceDate, Invoice_Date) are read as "date", and a due-date column (due, échéance) is never chosen by its name and is pre-filled only when it is the one column that is mostly dates, so a sheet with only a due date still gets one while a due date beside an unnamed sale-date column is left for the person to pick. The person checks the pick (tested).*
 - A grouped report with one line per customer (QuickBooks' Sales by Customer Detail) → *customer-name rows and "Total for" rows sit in the date column too and used to outnumber the dates, leaving Date unguessed. A text cell alone on its row, or one that starts "Total", is no longer counted against the date column. The layout is assumed, not read from a real export (tested on the practice file).*
 - A "Total" column next to a tax column → the total probably includes the tax. *Never pre-filled; the person picks, with a note to check (tested).*
-- Exports from Wave, FreshBooks, Sage Accounting and Sage 50 Canadian (practice files, 2026-10-08; `docs/connectors/practice-files.md`) → *read where the layout is plain; every column title but a few is assumed, and the screen says each program's export was tested on files shaped from its help pages, not real exports. Known gaps, each pinned by a "fails today" test, not handled yet: two-digit years, months across the top, a report with no dates, a French semicolon file with several comma-decimal columns split on its commas, and a formula saved with no value listed as "no amount".*
+- Exports from Wave, FreshBooks, Sage Accounting and Sage 50 Canadian (practice files, 2026-10-08; `docs/connectors/practice-files.md`) → *read where the layout is plain; every column title but a few is assumed, and the screen says each program's export was tested on files shaped from its help pages, not real exports. Every gap those files found is fixed: void and draft invoices are left out by the Status column, a summary block above the table is no longer taken for the column names, a French semicolon file with several comma-decimal columns is read on its semicolons, an Excel formula saved with no value is listed as one (open the file in Excel and save it again), never as "no amount" and never guessed, and a refund in a ledger's Debit column is taken off the month it was paid back once the person picks it as the refunds column.*
+- A report with the months across the top (FreshBooks' Revenue by Client: a client per row, a column per month) → *used to find no column names and add up nothing. Now "The file has" offers "Months across the top, one column per month", pre-filled only when no row of column names sits above a date and a row of month names sits above an amount (a file with a date on its rows keeps its usual reading). The person picks the row of month names and where the totals come from: every row added down each month's column, leaving out the file's own totals rows (a total word alone, or a label starting with one whose amounts are exactly the rows above it, so a client called "Total Wine & More" is still counted), or one row only (the file's Total row). A column counts as a month only when its name says the month and a four-digit year, in English or French (Jul 2026, juillet 2026, Sept 2026, 2026-07, 07/2026, or an Excel date on the 1st); Client and Total columns are listed as "not months, so not added". A name that only looks like a month (Jul, Jul 26, 07/26, a whole day such as 2026-07-15) stops the whole table with a sentence naming the column by its letter, never guessed (a builder default; the maintainer decided only that these reports are read, 2026-10-07); so does the same month named by two columns. Every cell under a month is added or listed: empty cells and unreadable amounts by cell (C6), the file's own totals rows, blank rows and rows with nothing under any month by row, and a month not over yet as a whole column. Each month's row count is how many rows went into it; no row count is sent with these figures, since one client row goes into every month and the agree prompt would add the counts up. Two-digit years in month names are not read yet (tested in `tests/figures-file-months-across.spec.ts`, the FreshBooks practice file, and browser-tested).*
+- A report with no dates at all (Wave's Income by Customer: one total per customer for a date range) → *can't be split into months. Recognised by the three column names Wave's help page gives it, it gets a sentence naming Wave's Account Transactions report instead. Any other file with no readable date, no month name in a row of names, and no date-shaped text inside a cell gets a general sentence to export a report with a date on every sale; a file whose dates are only split in the wrong places (a French Sage 50 file today) is not told it has none (tested, browser-tested).*
 
 **Sources and "what DotAmi knows about me" [8d]** — forgetting a source with 0 figures; forgetting
 one that a confirmed figure on a card depends on (the card updates); *delete everything* asks twice
@@ -155,13 +197,21 @@ and can't be undone (but a backup can restore it).
 - Deleted rows left readable in the file → *VACUUM after the delete; a byte scan finds the deleted
   words before and not after (tested). The wipe can't run (another connection busy, not enough
   disk): the rows are deleted and the page says their space isn't wiped yet, with "Try the wipe
-  again". Finishing it at the next start of the desktop app is the next step.*
+  again". A "wipe pending" note goes beside the data file before the delete, and the desktop app
+  finishes the wipe at its next start, only when that note is there (desktop-tested; an ordinary
+  start without it leaves the file alone, tested too).*
+- The safety copies in the backups folder still hold what was deleted → *their own box, warning that
+  afterwards only a backup saved elsewhere could bring anything back. Only DotAmi's own copies go;
+  anything else in the folder stays, and a folder or file that is a link is never followed (tested).
+  A copy another program holds open is left, said on the page, and finished later like the wipe
+  (tested).*
+- The number of safety copies changed between the asks → *refused, nothing deleted (tested).*
 - An agent, a script or another site calls Delete → *403 (tested).*
 - After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
   on the map can't bring the idea back.*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: the backups folder, what the desktop window stored in
-  earlier launches, the log, anything already sent elsewhere.
+- Not reached yet, and the menu says so: what the desktop window stored in earlier launches, the
+  log, anything already sent elsewhere, the disk under the data file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.
@@ -186,12 +236,22 @@ statement that doesn't say its currency, and one it cannot read with certainty. 
 (never counted), passes the bank's corrections on (applied by the totals), passes a repeated bank id on
 (counted once by the totals) and blanks every account number the file names (a transfer's memo names the other account) out of descriptions and ids.
 
+*The accounts list* (built 2026-10-08, no screen adds to it yet; `tests/bank-sources.spec.ts`)
+- An account number typed as the account's name → *refused with "Leave the account number out…"; nothing is written, and the number is in no answer, log or byte of the file (tested). "ending" plus exactly four digits at the end is the one place digits may stand ("Visa ending 1234"); "Visa 1234", "Visa ending 12345", "Spending 1234", digits split by spaces, hyphens, en dashes, dots, slashes, commas, brackets or accent marks, full-width, Arabic-Indic, superscript or circled digits, and hidden characters between digits are all refused. A year in a name ("Business 2026") is refused too, by the same rule.*
+- The same account named twice → *refused while the first is in use; names that differ only in case or spaces are the same account (tested).*
+- An agent or a script tries to list, add or take back an account → *refused; the routes answer only DotAmi's own page (tested).*
+- An account added while the switch is off, or before the switch exists → *refused (409), nothing written; the setting reads as off while it is planned, whatever the file says (tested).*
+- Taking an account back, or "Always allow every account", with the switch off → *works: taking a permission back is never blocked (tested).* A taken-back account's next statement starts over as a new account, with the warning; its row stays in the file until Delete.
+- "Always allow every account" taken back → *each account's warning comes back, except those allowed with "Always allow this account" (tested).*
+- Figures read from an account's statements when the account is taken back → *left alone: nothing links a figure to its account yet (a later decision on where sources are kept).*
+- More than 100 accounts in use → *refused (tested).*
+
 **Books on disk [8h]** — the accounting program has the file open and locked; a file from a
 newer version of that program than the reader knows.
 
 ### Expense records
 
-**The expense records store [8i]** (built 2026-10-07, the first slice; no screen yet; `tests/expenses-store.spec.ts`, `tests/desktop-migrate.spec.ts`)
+**The expense records store [8i]** (built 2026-10-07, the first slice; the typing screen 2026-10-08; `tests/expenses-store.spec.ts`, `tests/expenses-typed.spec.ts`, `tests/expenses-display.spec.ts`, `tests/desktop-migrate.spec.ts`, `e2e/expenses.spec.ts`)
 - An agent or a script tries to confirm, take back or turn down a record → refused. *`/api/expenses/agree`, `/retract` and `/discard` answer only to DotAmi's own page; `/propose` creates only "proposed" records and refuses a body that names a status, an agreed time, a taken-back time or "edited by you" (tested).*
 - A purchase dated tomorrow, late on the last evening of a month when the UTC day has already turned over → refused. *Measured against this computer's own calendar day, the same as figures; tested with the time zone forced to America/Vancouver at 11:30 p.m. on March 31. An edited date in the agree step is measured the same way.*
 - A batch with one bad record → none are created, and the refusal names the record's position, never its words. *All or nothing (tested).*
@@ -199,9 +259,17 @@ newer version of that program than the reader knows.
 - The seller's GST/HST number typed as "123456789RT0001", "123456789-rt-0001" or just the nine digits → kept as the CRA writes it (123456789 RT 0001) or as nine digits; anything else is refused with the shape asked for, and the box can be left blank. *DotAmi checks the shape only and never looks the number up.*
 - A category: kept only when the person gave or picked it; a seller that sounds like a category does not get one. *Tested.*
 - A record typed over itself in the agree step (the same amount) → not "edited by you". *Only a field that really changed counts (tested).*
-- An idea is deleted → its records go with it, and no other idea's. *Database cascade, tested; there is no delete-an-idea control yet.*
+- An idea is deleted → its records stay, "not attached yet", with their refund links; no other idea's records change. *The maintainer's decision (2026-10-08): the database clears the record's idea instead of deleting it (onDelete: SetNull), tested. Delete on /your-data deletes all ideas at once and, before the person confirms, says how many expense records stay, where they are kept and how to delete them (tested); there is no delete-one-idea control.*
 - A failing route → the log gets the error's name and code, never the amount or the words. *Tested.*
-- Amounts of zero or less, a refund or a credit → refused for now (an open question, expense-records.md § 6).
+- An amount of zero → refused. A negative amount → kept only as a refund or credit "kept as a negative amount"; a separate refund record holds the amount that came back, above zero. *The maintainer's decision (2026-10-08); tested.*
+- A refund pointing at a record that isn't the person's, was turned down, or is itself a refund or credit → refused, nothing created. *Tested.*
+- The purchase a refund points to is later deleted → the refund record stays, its link cleared. *Database "set null", tested at the store and in the migration test.*
+- A GST/HST part bigger than the amount, or a credit note on a plain purchase → refused, at proposing and at an edit in the agree step (which then agrees to nothing in that call). *Tested.*
+- A business share of 0, over 100 or with a fraction → refused with the limits; blank is "none". *Tested.*
+- An agent proposes records with no idea named at all → refused; it has to say an idea or null ("not attached yet"), so a forgetful caller can't create unattached records by accident. *Tested.*
+- Records typed on the Expenses page and the window closed or reloaded before agreeing → gone; nothing was sent or kept. *By design (the typed list lives only in the window); browser-tested.*
+- Agreeing to a typed batch fails after it was proposed → the records wait under "Waiting for you" and the page says so. *Not tested by a forced failure.*
+- Attaching or moving a record from outside DotAmi's page → refused (403). *Tested.*
 
 ### The Lens
 

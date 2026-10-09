@@ -251,9 +251,10 @@ export const files: PracticeFile[] = [
     bytes: () => utf8(incomeByCustomerText()),
     columns: INCOME_COLUMNS,
     expected: {
-      // No row of column names has a date under it, so DotAmi finds none. The person picks row 5,
-      // and with no date column at all, every row is "no date": nothing can be added up by month.
-      // Fails today: the screen should say which report to export instead (Account Transactions).
+      // No row of column names has a date under it, so DotAmi finds none, and the screen names
+      // the report to export instead (Account Transactions; exportInsteadSentence in
+      // lib/figures/file/preview.ts). A person who picks row 5 anyway gets every row as "no date":
+      // with no date column at all, nothing can be added up by month.
       guess: null,
       picks: { headerRow: 4, dateColumn: 0, amountColumn: 1 },
       dateOrder: { order: null, ambiguous: false, conflicting: false },

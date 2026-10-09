@@ -110,6 +110,24 @@ beforeAll(async () => {
       agreedAt: agreed,
     },
   });
+  // And one not attached to any idea yet, so the count of records attached to an idea (what the
+  // Delete menu says stays when ideas are deleted) is shown to differ from the whole table.
+  await db.expense.create({
+    data: {
+      ventureId: null,
+      date: new Date("2026-09-29T00:00:00Z"),
+      amountCents: 1250n,
+      paidTo: "Example Cafe",
+      whatFor: "client coffee",
+      sourceKind: "typed",
+      sourceLabel: "typed by you",
+    },
+  });
+
+  // [8g] Two bank and card accounts, one taken back. The page counts them (both rows are in the
+  // file) and shows no name: the names are the person's words, and Settings is where they're listed.
+  await db.sourceAccount.create({ data: { name: "Example business chequing", allowance: "always", agreedAt: agreed } });
+  await db.sourceAccount.create({ data: { name: "Example Visa ending 4321", allowance: "once", agreedAt: agreed, retiredAt: agreed } });
 }, 180_000);
 
 afterAll(async () => {
@@ -126,6 +144,7 @@ describe("readHoldings on a database with nothing in it", () => {
     expect(h.figures.total).toBe(0);
     expect(h.figures.sources).toEqual([]);
     expect(h.figures.byStatus).toEqual({ proposed: 0, confirmed: 0, retracted: 0, discarded: 0 });
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 0 });
   });
 
   it("says there is no safety-copy folder and no log, rather than a count of zero files", async () => {
@@ -150,15 +169,32 @@ describe("readHoldings on a seeded database", () => {
       ScenarioState: 2,
       Setting: 1,
       Figure: 7,
-      Expense: 1,
+      Expense: 2,
+      SourceAccount: 2,
+      Receipt: 0,
     });
     expect(h.ideasWithNotes).toBe(1);
+  });
+
+  it("counts the records the Delete menu would keep with their link cleared: only those attached to an idea", async () => {
+    const h = await readHoldings(seeded.prisma, seededToday);
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 1 });
+  });
+
+  it("counts bank and card accounts, the taken-back ones too, but carries none of their names", async () => {
+    const h = await readHoldings(seeded.prisma, seededToday);
+    const card = h.tables.find((t) => t.entry.model === "SourceAccount")!;
+    expect(card.count).toBe(2);
+    expect(card.entry.name).toBe("Your bank and card accounts");
+    const everything = JSON.stringify(h);
+    expect(everything).not.toContain("Example business chequing");
+    expect(everything).not.toContain("4321");
   });
 
   it("counts expense records but carries none of their words or amounts (this page only counts them)", async () => {
     const h = await readHoldings(seeded.prisma, seededToday);
     const card = h.tables.find((t) => t.entry.model === "Expense")!;
-    expect(card.count).toBe(1);
+    expect(card.count).toBe(2);
     expect(card.entry.name).toBe("Your expense records");
     const everything = JSON.stringify(h);
     expect(everything).not.toContain("Example Stationery");
@@ -282,14 +318,39 @@ describe("the folders beside the data file", () => {
     const log = h.folders.find((f) => f.entry.id === "log")!;
     expect(log).toMatchObject({ exists: true, files: null });
 
+    // Both are DotAmi's own safety copies, so the Delete menu's box would delete both.
+    expect(h.safetyCopies).toBe(2);
+    expect(h.wipePending).toBe(false);
+
     // What came back is names, counts, sizes and dates: none of what was inside.
     expect(JSON.stringify(h)).not.toContain(secret);
+  });
+
+  it("counts only DotAmi's own safety copies for Delete, and sees the note an unfinished wipe leaves", async () => {
+    const folder = path.join(root, "with-a-note");
+    mkdirSync(path.join(folder, "backups"), { recursive: true });
+    writeFileSync(path.join(folder, "backups", "dotami-before-restore-1760000000000.db"), "a copy");
+    writeFileSync(path.join(folder, "backups", "my own notes.txt"), "the person's own file");
+    // Named after whatever the data file is called, beside it.
+    writeFileSync(path.join(folder, "mine.db.wipe-pending"), JSON.stringify({ format: 1, backups: [] }));
+    const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "mine.db"), exists: true }, desktop: true };
+    const h = await readHoldings(seeded.prisma, today);
+
+    expect(h.safetyCopies).toBe(1);
+    expect(h.folders.find((f) => f.entry.id === "backups")).toMatchObject({ files: 2 });
+    expect(h.wipePending).toBe(true);
+    expect(h.folders.find((f) => f.entry.id === "wipe-pending")).toMatchObject({
+      exists: true,
+      path: path.join(folder, "mine.db.wipe-pending"),
+    });
   });
 
   it("has no folders to describe when the database setting isn't a file", async () => {
     const today: SettingsToday = { ...seededToday, dataFile: { path: null, exists: false } };
     const h = await readHoldings(seeded.prisma, today);
     expect(h.folders.every((f) => f.path === null && !f.exists)).toBe(true);
+    expect(h.safetyCopies).toBe(0);
+    expect(h.wipePending).toBe(false);
     expect(h.dataFile.path).toBeNull();
   });
 });

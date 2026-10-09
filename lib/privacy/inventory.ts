@@ -93,15 +93,23 @@ export interface WindowStorageEntry {
   lasts: string;
 }
 
-/** A file or folder beside the database that DotAmi's desktop app writes. */
+/** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log";
-  /** Path relative to the folder holding the data file. */
+  id: "backups" | "log" | "wipe-pending" | "receipts";
+  /**
+   * Path relative to the folder holding the data file. The wipe-pending note is named after the
+   * data file itself, so this shows the desktop app's name for it (lib/privacy/holdings.ts finds it
+   * beside whichever data file this copy uses).
+   */
   relativePath: string;
   name: string;
   holds: string;
-  /** A piece of text that must appear in the desktop code that writes it (a guard against a rename). */
+  /** A piece of text that must appear in the code that writes it (a guard against a rename). */
   writtenBy: { file: string; mentions: string };
+  /** True when only the desktop app writes it; a copy run from source then has none of its own. */
+  desktopOnly: boolean;
+  /** What the page says when it isn't there. Without one: "None yet", or, for a desktop-only entry in a copy run from source, that only the desktop app makes it. */
+  whenAbsent?: string;
 }
 
 /**
@@ -200,7 +208,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags you picked, how far along it is, and your notes on it.",
     removedBy:
-      "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress, figures and expense records, wiped from the file. Nothing deletes a single idea yet.",
+      "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
   {
     model: "VentureLink",
@@ -227,7 +235,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file itself. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
+      "Totals about your business that you typed, read from a file or from your GnuCash book, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. Never the file or the book itself, and never which accounts you ticked. A single purchase is not a figure: if you agree to keep one, it is an expense record (the next entry).",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Delete, at the bottom of this page, erases every figure from the file (tick “Your figures”, or “Your ideas”, which takes their figures with them). Nothing erases a single figure yet.",
   },
@@ -235,22 +243,69 @@ export const TABLES: readonly TableEntry[] = [
     model: "Expense",
     name: "Your expense records",
     holds:
-      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, the idea it is attached to (or none yet), a category only if one was given, your own business share if you gave one, the GST/HST part if you gave it, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. A refund or credit is kept the way you chose: a negative amount, or a refund record linked to the purchase, with its credit note if you gave one. Never a bank or card number. A receipt file you add is not in this table: it is the next entry. These are individual transactions, kept as your own record; DotAmi never marks one as deductible, sets a business share or chooses a category. Records you type on the Expenses page stay in that window until you agree; only then are they written here.",
     removedBy:
-      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”, or “Your ideas”, which takes their records with them).",
+      "Take back (an agreed record) and Turn down (a waiting one) on the Expenses page stop it counting, but the row, with its amount and words, stays in the data file and is counted here. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”), with its receipt. Deleting your ideas does not: their records stay, as “not attached yet”, with their receipts. Nothing in the app erases a single record yet.",
+  },
+  {
+    model: "Receipt",
+    name: "Your receipts",
+    holds:
+      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG or WebP picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”). A program on this computer that lists your expense records (an agent, for one) sees whether a record has a receipt, its kind, its size and the day it was added; never the file itself, its fingerprint or where it is.",
+    removedBy:
+      "“Remove receipt” on a record on the Expenses page removes that one, file included; the record stays. Delete, at the bottom of this page, with “Your receipts” ticked removes every one and its file, keeping the records; with “Your expense records” ticked, the records go and their receipts with them.",
+  },
+  {
+    model: "SourceAccount",
+    name: "Your bank and card accounts",
+    holds:
+      "The bank and card accounts you allowed DotAmi to read statements from, each under the name you gave it (like “Business chequing” or “Visa ending 1234”), which button you pressed on the warning (allow once, always allow this account, or always allow every account), and the days you agreed and took it back. Never an account or card number, a bank or transit number, a file name, or a scrambled copy of any of them: a name with four or more digits in a row is refused (spaces, dashes, commas or other marks between them don't help), apart from “ending” and four digits at the end. Nothing adds one yet: the statement screen that asks is the next step.",
+    removedBy:
+      "“Take back” beside the account in Settings stops it being used, but the row (its name and days) stays in the data file. Delete, at the bottom of this page, with “Your bank and card accounts” ticked, erases every one from the file. Figures read from an account's statements are not deleted with it.",
   },
 ];
 
 /** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
-export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "remembered-columns";
+export type DeleteKindId =
+  | "ideas"
+  | "figures"
+  | "expenses"
+  | "receipts"
+  | "bank-accounts"
+  | "statements"
+  | "settings"
+  | "backups"
+  | "remembered-columns";
+
+/**
+ * Records in another table that point at what a box deletes but are KEPT: the database only clears
+ * their link (onDelete: SetNull in prisma/schema.prisma). The menu counts them and, before the
+ * person confirms, says how many stay, what they become, where they are kept and how to delete them.
+ */
+export interface KeptLink {
+  /** The table the kept rows are in, and the link column the database clears. */
+  model: string;
+  field: string;
+  /** One row, as a sentence counts it: "expense record". */
+  one: string;
+  /** What the kept rows become, in the words the rest of the app uses for it. */
+  becomes: string;
+  /** Where they are kept and how to delete them, said before the person confirms. */
+  whereAndHow: string;
+}
+
+/** The key a kept link's count travels under, on the page and in the delete request: "Expense.ventureId". */
+export { keptLinkKey } from "./kept-links";
 
 /**
  * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
  * saying what else goes with it, because deleting one kind can take another with it (an idea's
  * figures belong to the idea). tests/privacy-delete.spec.ts fails until every table above is on
- * the menu or in KEPT_BY_DELETE, and until `alsoDeletes` says exactly what the schema's
- * onDelete: Cascade takes with `tables` — so a new table, or a new link to an idea, has to say
- * here whether Delete takes it before it can merge.
+ * the menu or in KEPT_BY_DELETE, until `alsoDeletes` says exactly what the schema's
+ * onDelete: Cascade takes with `tables`, and until `keeps` names every link onDelete: SetNull
+ * clears — so a new table, or a new link to an idea, has to say here whether Delete takes it
+ * before it can merge. The same test fails when a table in `alsoDeletes` would only be partly
+ * emptied (an optional link), because the menu shows whole-table counts for those.
  */
 export interface DeleteMenuEntry {
   id: DeleteKindId;
@@ -258,31 +313,53 @@ export interface DeleteMenuEntry {
   label: string;
   /** The tables whose every row this deletes. Empty for a kind DotAmi doesn't keep yet. */
   tables: readonly string[];
-  /** Tables the database empties along with `tables` (onDelete: Cascade in prisma/schema.prisma). */
+  /**
+   * Tables the database empties along with `tables` (onDelete: Cascade in prisma/schema.prisma).
+   * Every row goes, so the menu counts the whole table.
+   */
   alsoDeletes: readonly string[];
+  /** Rows elsewhere that stay, with their link to what this deletes cleared (onDelete: SetNull). */
+  keeps: readonly KeptLink[];
   /** What else goes with it, in one or two sentences, shown under the tick-box. */
   goesWithIt: string;
   /** The longer explanation behind "Learn more". */
   learnMore: string;
   /** False while DotAmi doesn't keep this kind yet: the box shows switched off and says so. */
   built: boolean;
+  /**
+   * A folder beside the data file whose files this deletes instead of rows: only "backups", where
+   * only DotAmi's own safety copies go (desktop/wipe-pending.mjs says which files those are).
+   */
+  folder?: "backups";
 }
 
 /**
  * The Delete menu, in the order it shows (and the order the tables are emptied in). The maintainer
  * decided on 2026-10-07 that it is one button named "Delete" with a menu of what can be deleted
- * and what else goes with each, and that the statements can be deleted all at once only.
+ * and what else goes with each, and that the statements can be deleted all at once only. On
+ * 2026-10-08 he decided that deleting an idea keeps its expense records ("not attached yet"), and
+ * that people are told so, and where they are kept, so they can delete them if they want to.
  */
 export const DELETE_MENU: readonly DeleteMenuEntry[] = [
   {
     id: "ideas",
     label: "Your ideas, with their notes, links and map progress",
     tables: ["Venture"],
-    alsoDeletes: ["VentureLink", "ScenarioState", "Figure", "Expense"],
+    alsoDeletes: ["VentureLink", "ScenarioState", "Figure"],
+    keeps: [
+      {
+        model: "Expense",
+        field: "ventureId",
+        one: "expense record",
+        becomes: "not attached yet",
+        whereAndHow:
+          "They are kept in DotAmi's data file on this computer: this page counts them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”, where you can attach them to another idea. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too. DotAmi can't delete a single record yet.",
+      },
+    ],
     goesWithIt:
-      "Deleting your ideas also deletes their notes, the links between them, their map progress, and every figure and expense record that belongs to them, even if those boxes aren't ticked.",
+      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too.",
     learnMore:
-      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Figures and expense records always belong to an idea, so they go with it. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
   },
   {
@@ -290,6 +367,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your figures",
     tables: ["Figure"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "Every figure goes, whether agreed, waiting, taken back or turned down. Cards that used an agreed figure go back to your estimates.",
     learnMore:
@@ -300,10 +378,36 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     id: "expenses",
     label: "Your expense records",
     tables: ["Expense"],
-    alsoDeletes: [],
-    goesWithIt: "Every expense record goes, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
+    alsoDeletes: ["Receipt"],
+    keeps: [],
+    goesWithIt:
+      "Every expense record goes, attached to an idea or not, whether waiting, agreed, taken back or turned down, and every receipt file added to one goes with it. Your ideas and figures stay.",
     learnMore:
-      "This is every single business expense you typed or an agent proposed, on every idea: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+      "This is every single business expense you typed or an agent proposed, attached to an idea or not, refunds included: the day, the amount, who it was paid to and what for, and anything else you gave. The receipts you added go too, files included, because a receipt with no record means nothing. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+    built: true,
+  },
+  {
+    id: "receipts",
+    label: "Your receipts",
+    tables: ["Receipt"],
+    alsoDeletes: [],
+    keeps: [],
+    goesWithIt:
+      "Every receipt file you added goes from the receipts folder. The expense records stay, each marked as having no receipt.",
+    learnMore:
+      "This removes DotAmi's copy of every receipt you added, the pictures and PDFs in the receipts folder beside the data file, and what DotAmi noted about each (its kind, size and fingerprint). Your expense records stay as they are, with no receipt. A receipt you also keep elsewhere (the paper, a photo on your phone, an email) is not touched. The disk can still hold a deleted file's bytes until they are written over; disk encryption is what protects those.",
+    built: true,
+  },
+  {
+    id: "bank-accounts",
+    label: "Your bank and card accounts",
+    tables: ["SourceAccount"],
+    alsoDeletes: [],
+    keeps: [],
+    goesWithIt:
+      "Every account name goes, including the ones you took back, with the days you agreed to their warnings. Figures read from their statements stay: tick “Your figures” to delete those too. “Always allow every account” stays until “Your settings” is ticked as well.",
+    learnMore:
+      "This is the list Settings shows under Bank and card records, plus the accounts you took back, which stay in the data file until they are deleted here. Afterwards the next statement shows the warning again and asks for the account's name, as the first time, unless “Always allow every account” is still on. “Always allow every account” is a saved choice, so it goes with “Your settings”, not with this box. Nothing links a figure to the account it came from yet, so no figure changes. Your bank statements themselves, wherever you saved them, are not touched.",
     built: true,
   },
   {
@@ -311,6 +415,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your statements (“In your words”)",
     tables: ["PersonStatement"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "All of them go at once. DotAmi never deletes one statement by itself: a newer statement is how you change an older one.",
     learnMore:
@@ -322,6 +427,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your settings",
     tables: ["Setting"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show.",
     learnMore:
@@ -329,10 +435,24 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     built: true,
   },
   {
+    id: "backups",
+    label: "Safety copies in the backups folder",
+    tables: [],
+    alsoDeletes: [],
+    keeps: [],
+    folder: "backups",
+    goesWithIt:
+      "Deletes the whole copies of the data file DotAmi made before each update and restore. Afterwards, only a backup you saved somewhere else could bring anything back.",
+    learnMore:
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. If a copy can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+    built: true,
+  },
+  {
     id: "remembered-columns",
     label: "Remembered columns",
     tables: [],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt: "DotAmi doesn't remember a file's columns yet, so there is nothing to delete. Once it does, they will be deleted here.",
     learnMore:
       "A later step lets DotAmi remember which columns of a spreadsheet you picked, so the same kind of file is read the same way next time. Only the column names would be kept, never the file. When that is built, this box will delete them.",
@@ -354,8 +474,8 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
  */
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
-    name: "Safety copies in the backups folder",
-    why: "Not touched. Each is a whole copy of the data file from before an update or a restore, so it still holds what you delete here. To remove them, close DotAmi and delete the folder (its path is above). A copy you saved elsewhere could bring everything back.",
+    name: "Receipts folders a restore moved into the backups folder",
+    why: "Not touched, even with “Safety copies in the backups folder” ticked: that box deletes only DotAmi's copies of the data file. Before a restore, the receipts folder is moved into the backups folder whole, as it was (receipts-before-restore-…), so it still holds the receipt files you had then. To remove them, close DotAmi and delete those folders (the backups folder's path is above).",
   },
   {
     name: "What the window stored in earlier launches",
@@ -371,7 +491,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The disk under the data file",
-    why: "Delete wipes the deleted records out of the data file itself. The drive can still hold older copies of the file's pieces in its free space until they are overwritten; disk encryption is what protects those.",
+    why: "Delete wipes the deleted records out of the data file itself, removes deleted receipt files from the receipts folder, and deletes the safety copies you tick. The drive can still hold older copies of the file's pieces, a removed receipt's bytes and deleted safety copies in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
 
@@ -404,23 +524,50 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
   },
 ];
 
-/** Files beside the database. Only the desktop app writes these; a copy run from source has none of its own. */
+/**
+ * Files and folders beside the database. The safety copies and the log are the desktop app's own (a
+ * copy run from source has none); the receipts folder is written by every copy that keeps a receipt,
+ * and the wipe-pending note by Delete in any copy.
+ * A new folder isn't caught by any scan: it has to be added here by hand (the receipts folder was,
+ * with the code that writes it), and tests/privacy-inventory.spec.ts then checks the code still names it.
+ */
 export const FOLDERS: readonly FolderEntry[] = [
+  {
+    id: "receipts",
+    relativePath: "receipts",
+    name: "Your receipt files",
+    holds:
+      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG or WebP picture, or a PDF, at most 10 MB each. DotAmi names each file itself with a random string, never with your file's name, and never changes what is in it, so anything printed on a receipt (the last digits of a card, your name and address) is in the copy too. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
+    writtenBy: { file: "lib/expenses/receipts/store.ts", mentions: 'RECEIPTS_FOLDER = "receipts"' },
+    desktopOnly: false,
+  },
   {
     id: "backups",
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
+    desktopOnly: true,
   },
   {
     id: "log",
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
+    desktopOnly: true,
+  },
+  {
+    id: "wipe-pending",
+    relativePath: "dotami.db.wipe-pending",
+    name: "A note that a wipe is still owed",
+    holds:
+      "Written by Delete just before it wipes the data file, and removed once the wipe has worked. It holds the time the Delete started and the names of safety copies still to be deleted, nothing of yours. While it is there, the desktop app finishes the wipe the next time it starts; it does nothing of the kind on an ordinary start.",
+    writtenBy: { file: "desktop/wipe-pending.mjs", mentions: ".wipe-pending" },
+    desktopOnly: false,
+    whenAbsent: "None: no wipe is owed.",
   },
 ];
 
@@ -500,7 +647,7 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "loadURL(`${origin}${pathname}`",
-    why: "The Go menu (Home, Your ideas, Settings): a path on the same local origin as above. pathname is one of three fixed strings in buildMenu.",
+    why: "The Go menu (Home, Your ideas, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
   },
   {
     file: "desktop/main.mjs",
@@ -530,6 +677,11 @@ export const LIBRARY_IMPORTS: readonly AllowedCall[] = [
     file: "lib/figures/return/pdf-text.worker.ts",
     call: 'package "pdfjs-dist"',
     why: "The return reader's worker loads pdf.js and its parser (the legacy build) and hands the parser to pdf.js as globalThis.pdfjsWorker, so pdf.js starts no worker and loads no script of its own. It only calls extractPageText (lib/figures/return/extract.ts). The worker runs under the static files' own policy in next.config.mjs (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/app.spec.ts checks that in a real browser.",
+  },
+  {
+    file: "lib/expenses/receipts/viewer/pdf-pages.worker.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The receipt viewer's worker ([8i]) loads pdf.js and its parser the same way as the return reader's worker, and only calls drawPdfPages (lib/expenses/receipts/viewer/draw-pdf.ts), which hands getDocument the receipt's bytes (`data`), never an address, with the return reader's PDF_OPTIONS (no data-file fetches). It draws pages onto OffscreenCanvases and hands back pictures. It runs under the same static-file policy (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/receipt-viewer.spec.ts and the desktop test check that in a real browser and in the app.",
   },
 ];
 
@@ -587,12 +739,12 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
   {
     name: "fflate",
     network: "no",
-    why: "Compression in pure JavaScript (its README). A search of its files finds no request call. DotAmi uses it to look inside a spreadsheet's zip (lib/figures/file/read-xlsx.ts). Its README's own examples use fetch to get data; that is the example's code, not the package's.",
+    why: "Compression in pure JavaScript (its README). A search of its files finds no request call. DotAmi uses it to look inside a spreadsheet's zip (lib/figures/file/read-xlsx.ts) and to unpack a compressed GnuCash book inside the books worker, which runs under the static files' policy that refuses every connection (lib/figures/books/gnucash-xml.ts, worker.ts). Its README's own examples use fetch to get data; that is the example's code, not the package's.",
   },
   {
     name: "next",
     network: "no",
-    why: "Not while the built app runs. Next.js's anonymous usage reports (to Vercel) come from `next dev`, `next build` and `next lint`; the code that starts the built server (`next start`, and the standalone server the desktop app runs) creates its reporter only for a development server (node_modules/next/dist/server/lib/router-server.js, read 2026-10-06), and the settings page already cites nextjs.org/telemetry (read 2026-10-05). The desktop app, CI, the desktop build and the project's npm scripts (scripts/next.mjs) set NEXT_TELEMETRY_DISABLED=1. `next dev` also asks registry.npmjs.org for the newest Next.js version (hot-reloader-webpack.js). Next's image optimiser refuses hosts not allowed by `images.remotePatterns` (node_modules/next/dist/server/image-optimizer.js); next.config.mjs sets none, and no code imports next/image. Requests that DotAmi's own code makes through Next are the scan's business, not this entry's; so are Next settings that make the server fetch for a page, which the scan does not read (see the header).",
+    why: "Not while the built app runs. Next.js's anonymous usage reports (to Vercel) come from `next dev`, `next build` and `next lint`; the code that starts the built server (`next start`, and the standalone server the desktop app runs) creates its reporter only for a development server (node_modules/next/dist/server/lib/router-server.js, read 2026-10-06), and the settings page already cites nextjs.org/telemetry (read 2026-10-05). The desktop app, CI, the desktop build and the project's npm scripts (scripts/next.mjs) set NEXT_TELEMETRY_DISABLED=1. `next dev` also asks registry.npmjs.org for the newest Next.js version (hot-reloader-webpack.js). Next's image optimiser refuses hosts not allowed by `images.remotePatterns` (node_modules/next/dist/server/image-optimizer.js); next.config.mjs sets none, and no code imports next/image. In the desktop app the optimiser is switched off (`images.unoptimized`, so /_next/image answers 404) and its image library, sharp, is left out of the server (desktop/left-out.mjs). Requests that DotAmi's own code makes through Next are the scan's business, not this entry's; so are Next settings that make the server fetch for a page, which the scan does not read (see the header).",
   },
   {
     name: "ofx-js",
@@ -607,7 +759,7 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
   {
     name: "pdfjs-dist",
     network: "yes",
-    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in the return reader's worker (lib/figures/return/), hands it the bytes of a file the person dropped, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
+    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in two workers of its own, the return reader's (lib/figures/return/) and the receipt viewer's (lib/expenses/receipts/viewer/), hands it the bytes of a file the person dropped or a receipt they kept, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
   },
   {
     name: "react",

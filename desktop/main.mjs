@@ -5,17 +5,28 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { mkdirSync, accessSync, constants, existsSync, rmSync } from "node:fs";
+import { mkdirSync, accessSync, constants, existsSync, readdirSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
-import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
+import {
+  applyRestore,
+  BACKUP_EXTENSION,
+  BackupError,
+  backupReceiptsNote,
+  discardRestore,
+  prepareRestore,
+  RECEIPTS_FOLDER,
+  restoreReceiptsNote,
+  writeBackup,
+} from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
-import { migrate, MigrationRefused } from "./migrate.mjs";
+import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
+import { finishPendingWipe } from "./wipe-pending.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
@@ -90,9 +101,18 @@ async function start() {
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
 
+  // A Delete whose wipe couldn't finish (the computer was busy, the disk full, or it was switched
+  // off part-way) left a "wipe pending" note beside the data file: finish it now, before the server
+  // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
+  // the file is normal after any edit, and rebuilding it on every start would only slow it down.
+  // It never stops the start: what still can't be done stays owed for the next one.
+  const wipe = finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (line) => log.write(`${line}\n`) });
+  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
-  // untouched.
+  // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
+  // the file has already been rebuilt, with the same contents, before these checks run).
   try {
     const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
@@ -196,7 +216,8 @@ async function checkForUpdates(byHand) {
 /**
  * The server's environment: what Node needs to run, plus the app's own settings — and never a
  * model key from the shell it was started from. DotAmi ships no key; the person's model comes
- * from the app's settings once the Lens exists ([9a]).
+ * from the app's settings once the Lens exists ([9a]). Nor the browser tests' rate-limit switch:
+ * the desktop app always runs with the real limits (lib/api/rate-limit.ts, E2E_RATE_LIMITS_ENV).
  */
 function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
@@ -205,6 +226,7 @@ function serverEnv(own) {
   const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
+  delete env.DOTAMI_E2E_RATE_LIMITS;
   return env;
 }
 
@@ -343,6 +365,8 @@ function buildMenu(origin, dataDir) {
               }),
           },
           { label: "Check for updates…", click: () => void checkForUpdates(true) },
+          // The third-party notices the build wrote (desktop/notices.mjs), shown by the /licences page.
+          { id: "licences", label: "Licences", click: go("/licences") },
           { label: "Source on GitHub", click: () => void shell.openExternal("https://github.com/Dot-Ami/dotami") },
         ],
       },
@@ -351,8 +375,9 @@ function buildMenu(origin, dataDir) {
 }
 
 /**
- * File → Back up…: one file holding the whole database, locked with a passphrase if the person
- * chooses one (desktop/backup.mjs). Meant to be kept somewhere other than this computer.
+ * File → Back up…: one file holding the whole database and the receipt files it describes, locked
+ * with a passphrase if the person chooses one (desktop/backup.mjs). Meant to be kept somewhere other
+ * than this computer.
  */
 async function backUp() {
   const passphrase = await askPassphrase("backup");
@@ -365,14 +390,15 @@ async function backUp() {
   });
   if (canceled || !filePath) return;
   try {
-    const { encrypted } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
-    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"})\n`);
+    const { encrypted, receipts, missingReceipts } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
+    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing)\n`);
     await dialog.showMessageBox(win ?? undefined, {
       type: "info",
       title: "Backed up",
       message: `Backed up to ${filePath}`,
       detail:
         (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
+        backupReceiptsNote(receipts, missingReceipts) +
         "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
     });
   } catch (error) {
@@ -397,9 +423,10 @@ async function restore() {
   const staging = path.join(dataDir, "restore-staging.db");
   let passphrase = "";
   let header;
+  let receipts = 0;
   for (;;) {
     try {
-      ({ header } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
+      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
       break;
     } catch (error) {
       if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
@@ -426,10 +453,12 @@ async function restore() {
     defaultId: 1,
     cancelId: 1,
     message: "This replaces everything in DotAmi on this computer with the backup.",
-    detail: `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.`,
+    detail:
+      `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
+      restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)),
   });
   if (response !== 0) {
-    rmSync(staging, { force: true });
+    discardRestore(staging);
     return;
   }
 
@@ -441,8 +470,10 @@ async function restore() {
     await stopped;
   }
   try {
-    const { safetyCopy } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
-    log?.write(`[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}\n`);
+    const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
+    log?.write(
+      `[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}; ${receiptsRestored} receipt files restored${receiptsMovedTo ? `; receipts folder moved to ${receiptsMovedTo}` : ""}\n`,
+    );
   } catch (error) {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
     // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
@@ -495,6 +526,18 @@ function askPassphrase(mode, message = "") {
     prompt.on("closed", () => finish(null));
     void prompt.loadFile(path.join(root, "desktop", "passphrase.html"), { query: { mode, message } });
   });
+}
+
+/**
+ * How many receipt files DotAmi keeps in the data folder ([8i]): files named the way DotAmi names
+ * them (lib/expenses/receipts/store.ts), counted from their names only. 0 when there is no folder.
+ */
+function receiptFileCount(folder) {
+  try {
+    return readdirSync(path.join(folder, RECEIPTS_FOLDER)).filter((name) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(name)).length;
+  } catch {
+    return 0;
+  }
 }
 
 /** Says what went wrong in plain words, then quits — never a blank window. */

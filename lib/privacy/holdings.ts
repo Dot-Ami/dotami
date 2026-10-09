@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
 
+import { listSafetyCopies, wipePendingFile } from "@/desktop/wipe-pending.mjs";
+
 import {
   FIGURE_SOURCE_KINDS,
   FIGURE_STATUSES,
@@ -11,7 +13,9 @@ import {
 } from "@/lib/figures/types";
 import type { SettingsToday } from "@/lib/settings/today";
 
+import { countKeptLinks } from "./delete";
 import {
+  DELETE_MENU,
   FOLDERS,
   SENT_ELSEWHERE,
   TABLES,
@@ -102,6 +106,12 @@ export interface Holdings {
   desktop: boolean;
   /** One per table the inventory lists, in its order. */
   tables: TableCount[];
+  /**
+   * For each link the Delete menu clears while keeping the row (DELETE_MENU `keeps`), how many rows
+   * it still holds, keyed "Expense.ventureId": the expense records that would stay, "not attached
+   * yet", if the ideas were deleted.
+   */
+  keptLinks: Record<string, number>;
   /** How many ideas carry a note of the person's. */
   ideasWithNotes: number;
   figures: {
@@ -111,6 +121,13 @@ export interface Holdings {
   };
   dataFile: { path: string | null; exists: boolean; bytes: number | null };
   folders: FolderFacts[];
+  /**
+   * How many of the files in the backups folder are DotAmi's own safety copies: what the Delete
+   * menu's "Safety copies" box would delete (desktop/wipe-pending.mjs decides which files count).
+   */
+  safetyCopies: number;
+  /** True while an earlier Delete's wipe is still owed (its note sits beside the data file). */
+  wipePending: boolean;
   windowStorage: readonly WindowStorageEntry[];
   sentElsewhere: SentFacts[];
 }
@@ -151,7 +168,7 @@ function emptyStatusCounts(): Record<FigureStatus, number> {
   return Object.fromEntries(FIGURE_STATUSES.map((s) => [s, 0])) as Record<FigureStatus, number>;
 }
 
-/** Source order: typed, file, agent, tax return (the order lib/figures/types.ts lists them), then A to Z by name. */
+/** Source order: typed, file, agent, tax return, books (the order lib/figures/types.ts lists them), then A to Z by name. */
 function sourceOrder(a: HeldSource, b: HeldSource): number {
   const rank = (k: string) => {
     const i = (FIGURE_SOURCE_KINDS as readonly string[]).indexOf(k);
@@ -242,6 +259,15 @@ function inspect(target: string): Pick<FolderFacts, "exists" | "files" | "bytes"
   }
 }
 
+/** DotAmi's own safety copies beside this data file; 0 when the folder can't be read (the folder row says so). */
+function safetyCopiesIn(dataPath: string): number {
+  try {
+    return listSafetyCopies(dataPath).names.length;
+  } catch {
+    return 0;
+  }
+}
+
 function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
   switch (entry.id) {
     case "intake-sentence":
@@ -265,6 +291,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
   const tables: TableCount[] = [];
   for (const entry of TABLES) tables.push({ entry, count: await countTable(prisma, entry.model) });
 
+  const keptLinks = await countKeptLinks(prisma, DELETE_MENU.flatMap((e) => e.keeps));
   const ideasWithNotes = await prisma.venture.count({ where: { notes: { not: "" } } });
   const figures = await readFigures(prisma);
 
@@ -272,7 +299,13 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
   const dataFolder = dataPath ? path.dirname(dataPath) : null;
   const dataInfo = dataPath ? inspect(dataPath) : null;
   const folders: FolderFacts[] = FOLDERS.map((entry) => {
-    const target = dataFolder ? path.join(dataFolder, ...entry.relativePath.split("/")) : null;
+    // The wipe-pending note is named after the data file, whatever that file is called.
+    const target =
+      dataPath && entry.id === "wipe-pending"
+        ? wipePendingFile(dataPath)
+        : dataFolder
+          ? path.join(dataFolder, ...entry.relativePath.split("/"))
+          : null;
     const facts = target
       ? inspect(target)
       : { exists: false, files: null, bytes: null, newestOn: null, readable: true };
@@ -282,10 +315,13 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
   return {
     desktop: today.desktop,
     tables,
+    keptLinks,
     ideasWithNotes,
     figures,
     dataFile: { path: dataPath, exists: today.dataFile.exists, bytes: dataInfo?.bytes ?? null },
     folders,
+    safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
+    wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
     windowStorage: WINDOW_STORAGE,
     sentElsewhere: SENT_ELSEWHERE.map((entry) => sentFacts(entry, today)),
   };

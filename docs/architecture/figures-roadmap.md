@@ -4,7 +4,7 @@ Status: proposal, read-only reconciliation of seven story designs, 2026-10-06, a
 Scope: [8c-2], [8c-3], [8d], [8e], [8f], [8g], [8h]. These are the not-started stories after [8a] (figures store), [8b] (agree prompt) and [8c] (Excel/CSV drop), which are merged in #77 and #78.
 Rules that bind every story (from `CLAUDE.md`, `docs/architecture/figures-privacy-review.md`):
 
-- Figures are **totals, never transactions** (a single business expense is not a figure: it is an expense record, [8i], [expense-records.md](expense-records.md)). A file's bytes are read in the window, in memory, and never sent or kept.
+- Figures are **totals, never transactions** (a single business expense is not a figure: it is an expense record, [8i], [expense-records.md](expense-records.md)). A file's bytes are read in the window, in memory, and never sent or kept (the one exception: a receipt file the person adds to an expense record is copied into DotAmi's data folder, [8i]).
 - **Only the person's click in the agree prompt confirms a figure.** No permission level skips it (ruling 2026-09-28).
 - IDs are forever: figure kinds, source kinds and any new id list can only be appended to.
 - Every rule, rate or threshold shown is cited and dated. DotAmi never invents a number, never says "you should", and never files anything.
@@ -26,7 +26,7 @@ Several designs invented separate tables for the same thing. This is the single 
 | `Setting` | DotAmi's first stored settings: key (a catalog id) and value. | 8e, maybe 8g and 8c-2 |
 | `Figure.taxYear`, `Figure.formLine` | Optional; only if 8f decision 3 says yes. | 8f |
 
-New permanent ids, named once: source kind `bank` (8g); maybe `books` (8h, decided before 8h proposes anything); the 8f T2125 kinds; maybe one 8g kind; `SourceAccount.kind` values; `ReaderPreset.reader` values; `Setting` keys = catalog ids.
+New permanent ids, named once: source kind `bank` (8g); `books` (8h; named by the maintainer 2026-10-08, shown to people as "Books / file"); the 8f T2125 kinds; maybe one 8g kind; `SourceAccount.kind` values; `ReaderPreset.reader` values; `Setting` keys = catalog ids.
 
 ### Migration order
 
@@ -122,8 +122,8 @@ Gaps already found by running the real code:
 - A FreshBooks summary row is taken as the header. *Fixed 2026-10-08 (the Status column slice).*
 - A Wave refund sits in a Debit column. *Fixed 2026-10-08 (the refunds slice: an optional refunds column, the rule shared with 8g).*
 - A Sage void invoice is counted (and a FreshBooks Draft, and a Xero Voided line). *Fixed 2026-10-08 (the Status column).*
-- Two-digit years are refused.
-- Months-across reports can't be read.
+- Two-digit years are refused. *Fixed 2026-10-08 ([8c-3]): one question per file, "Is 05 the year 2005?".*
+- Months-across reports can't be read. *Fixed 2026-10-08 ([8c-3]): the person picks the row of month names and where the totals come from; Wave's Income by Customer names Account Transactions instead.*
 
 **Sources (read 2026-10-06):**
 - central.xero.com/s/article/ Export-invoices-and-bills, Import-customer-invoices-GL, Import-customer-invoices-US, Receivable-Invoice-Detail-report-New, Export-or-print-a-report
@@ -308,7 +308,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - hledger.org/1.50/hledger.html (Journal chapter) and hledger.org/ledger.html, retrieved 2026-10-08 for the journal reader (through a fetch-and-summarise tool; see docs/connectors/journal-reader.md)
 - MDN CSP script-src; github.com/sql-js/sql.js
 
-**Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); pre-ticking; size limit.
+**Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); ~~pre-ticking~~ (decided 2026-10-07: income accounts pre-ticked, any can be changed; built 2026-10-08); ~~size limit~~ (decided 2026-10-07: a larger limit, read in a background worker; built as 50 MB, `docs/connectors/gnucash.md`); ~~source kind~~ (`books`, 2026-10-08).
 
 ---
 
@@ -347,7 +347,7 @@ Each is written out with options in the reconciliation output.
 - 8e reminder coverage must filter by kind (8f yearly totals).
 - `splitAlreadyKnown` must be generalised by kind before 8f, 8g and 8h reuse it.
 - 8f kind names: a "self-employment" prefix is broader than T2125.
-- The 8h source kind must be named before any books figure is stored.
+- ~~The 8h source kind must be named before any books figure is stored.~~ Named `books` (2026-10-08).
 - Fingerprint scope for PDFs, statements and books is undecided.
 - 8d forgets per batch while 8g forgets per account.
 - Four designs edit `file-drop.tsx`: the pipeline is moved out first.

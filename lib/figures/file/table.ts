@@ -5,7 +5,7 @@
  * misstate someone's income, so an unsure guess leaves the dropdown empty for the person to pick.
  */
 import { cellToCents } from "./amounts";
-import { cellToDay } from "./dates";
+import { cellToDay, firstTwoDigitYear } from "./dates";
 import type { Cell } from "./types";
 
 export interface ColumnInfo {
@@ -88,8 +88,23 @@ function readsAsDate(cell: Cell | undefined): boolean {
   return (
     cellToDay(value, null) !== null ||
     cellToDay(value, "mdy") !== null ||
-    cellToDay(value, "dmy") !== null
+    cellToDay(value, "dmy") !== null ||
+    // A date with a two-digit year (12-03-05) is still a date for finding the columns; which
+    // century it is in is asked of the person later, never guessed here.
+    firstTwoDigitYear([value]) !== null
   );
+}
+
+/** Rows looked through for a date by sheetHasDates; a report with no date in these has none to find. */
+const DATE_SEARCH_ROWS = 5000;
+
+/**
+ * True when any cell in the sheet's first 5,000 rows reads as a date (in any order, or with a
+ * two-digit year still to be asked about). A sheet with none can't be split into months by its
+ * rows; the screen then names a report to export instead (preview.ts, exportInsteadSentence).
+ */
+export function sheetHasDates(rows: Cell[][]): boolean {
+  return rows.slice(0, DATE_SEARCH_ROWS).some((row) => row.some((cell) => readsAsDate(cell)));
 }
 
 function readsAsAmount(cell: Cell | undefined): boolean {

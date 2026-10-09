@@ -12,6 +12,7 @@ import { cellToDay } from "./dates";
 import { isBlankRow } from "./table";
 import type {
   Cell,
+  CellPlace,
   ColumnChoice,
   MonthTotal,
   SkippedRow,
@@ -107,8 +108,8 @@ function isEmpty(cell: Cell | undefined): boolean {
   return cell === null || cell === undefined || (typeof cell === "string" && cell.trim() === "");
 }
 
-/** The last day of a YYYY-MM month, written YYYY-MM-DD (leap years included). */
-function lastDayOfMonth(month: string): string {
+/** The last day of a YYYY-MM month, written YYYY-MM-DD (leap years included). Shared with across.ts. */
+export function lastDayOfMonth(month: string): string {
   const year = Number(month.slice(0, 4));
   const m = Number(month.slice(5, 7));
   // Day 0 of the next month is the last day of this one.
@@ -126,10 +127,31 @@ function exactCents(cents: bigint): number {
 }
 
 /**
+ * A lookup for the cells of an Excel sheet that hold a formula saved with no value (the reader's
+ * `unsavedFormulas`, 0-based). Such a cell reads as empty; this tells it apart. Shared with across.ts.
+ */
+export function unsavedFormulaLookup(
+  places: readonly CellPlace[],
+): (row: number, column: number) => boolean {
+  if (places.length === 0) return () => false;
+  const keys = new Set(places.map((p) => `${p.row}:${p.column}`));
+  return (row, column) => keys.has(`${row}:${column}`);
+}
+
+/**
  * Walks every row after the column names and totals the amounts by month. Only months that have
  * ended by `today` (YYYY-MM-DD) are totalled: a month still running has no total yet.
+ * `unsavedFormulas` (Excel only) are the cells holding a formula saved with no value: a row whose
+ * date or amount is one is listed as "unsaved-formula", never as an empty cell, and nothing is
+ * guessed for it.
  */
-export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: string): TotalsResult {
+export function monthlyTotals(
+  rows: Cell[][],
+  choice: ColumnChoice,
+  today: string,
+  unsavedFormulas: readonly CellPlace[] = [],
+): TotalsResult {
+  const isUnsavedFormula = unsavedFormulaLookup(unsavedFormulas);
   // Blank rows after the last real row are just the sheet's trailing space, not part of the table.
   let lastRow = rows.length - 1;
   while (lastRow > choice.headerRow && isBlankRow(rows[lastRow])) lastRow -= 1;
@@ -140,6 +162,8 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
   >();
   const skipped: SkippedRow[] = [];
   let rowsCounted = 0;
+  let firstDay: string | null = null;
+  let lastDay: string | null = null;
 
   for (let i = choice.headerRow + 1; i <= lastRow; i += 1) {
     const row = rows[i];
@@ -160,18 +184,35 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
       continue;
     }
 
-    const day = cellToDay(row[choice.dateColumn] ?? null, choice.dateOrder);
+    const day = cellToDay(row[choice.dateColumn] ?? null, choice.dateOrder, choice.century ?? null);
     if (day === null) {
       const isSumRow = row.some((cell) => typeof cell === "string" && TOTAL_ROW_LABEL.test(cell));
-      skip(isSumRow ? "total" : "no-date");
+      if (isSumRow) skip("total");
+      else skip(isUnsavedFormula(i, choice.dateColumn) ? "unsaved-formula" : "no-date");
       continue;
     }
+
+    // Every date read counts towards the range shown to the person, even on a row that adds
+    // nothing (no amount, a month not over): a year read wrong (2099 for 99) shows up there.
+    // ISO days compare correctly as text.
+    if (firstDay === null || day < firstDay) firstDay = day;
+    if (lastDay === null || day > lastDay) lastDay = day;
 
     // The amount column counts as written, a negative credit note included, as it always has.
     // With a refunds column picked, a ledger row holds its money in one of the two: the sale in
     // the amount column (Credit), a refund in the refunds column (Debit).
     const amountCell = row[choice.amountColumn];
     const refundCell = choice.refundColumn != null ? row[choice.refundColumn] : undefined;
+    // A formula Excel never worked out looks empty, but the person needs to hear that it is a sum
+    // to recalculate in Excel, not a gap in their records. In either column nothing is guessed for
+    // it, so the row is left out rather than read as a zero.
+    const unsavedAmount = isEmpty(amountCell) && isUnsavedFormula(i, choice.amountColumn);
+    const unsavedRefund =
+      choice.refundColumn != null && isEmpty(refundCell) && isUnsavedFormula(i, choice.refundColumn);
+    if (unsavedAmount || unsavedRefund) {
+      skip("unsaved-formula");
+      continue;
+    }
     if (isEmpty(amountCell) && isEmpty(refundCell)) {
       skip("no-amount");
       continue;
@@ -229,7 +270,9 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
     months.push(total);
   }
 
-  return { months, rowsCounted, skipped };
+  const datesRead =
+    firstDay !== null && lastDay !== null ? { first: firstDay, last: lastDay } : null;
+  return { months, rowsCounted, skipped, datesRead };
 }
 
 /**

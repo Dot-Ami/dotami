@@ -26,6 +26,13 @@ export const securityHeaders = [
 const dev = process.env.NODE_ENV === "development";
 export const workerPolicy = `default-src 'none'; script-src 'self'${dev ? " 'unsafe-eval'" : ""}; frame-ancestors 'none'`;
 
+// The answer with a receipt's bytes (app/api/expenses/receipt/file/route.ts, [8i]). The route sets this
+// policy itself, but Next applies the headers below over a route's own, so the general rule's
+// "frame-ancestors 'none'" would replace it. Were that answer ever loaded as a page, this lets nothing
+// in it run or load (docs/architecture/expense-records.md § 8, rule 2). Must equal the route's
+// RECEIPT_FILE_HEADERS policy (tests/security-hardening.spec.ts checks it).
+export const receiptFilePolicy = "default-src 'none'; frame-ancestors 'none'; sandbox";
+
 // The desktop app ([7b]) runs a self-contained build of this server inside Electron. It builds
 // into its own folder so a desktop build never overwrites the `.next` a running `npm run dev`
 // or `next start` is using; every other build is unchanged. Set by desktop/build.mjs.
@@ -37,12 +44,24 @@ const nextConfig = {
   // Not `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
   // Windows they never match (node_modules/next/dist/build/collect-build-traces.js:503). The
   // build script removes and checks for private files instead.
-  ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop" } : {}),
+  //
+  // `images.unoptimized` turns Next's image optimiser off in the desktop build: its route
+  // (/_next/image) then answers 404 instead of loading sharp, the image library the desktop
+  // server leaves out (desktop/left-out.mjs). DotAmi uses no next/image and serves no images.
+  ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop", images: { unoptimized: true } } : {}),
+  experimental: {
+    // middleware.ts makes Next copy every request body, and the copy is cut at this size (10 MiB by
+    // default). A receipt of the maintainer's 10 MB cap travels as base64 in JSON, about 14 MB, so the
+    // default cut it short and the route saw broken JSON. 16 MB lets it through whole. Each route
+    // still caps its own body (readJsonWithLimit), so this raises no route's limit.
+    middlewareClientMaxBodySize: "16mb",
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
       // Same key as above: for these paths Next sends the later one (its documented rule).
       { source: "/_next/static/:path*", headers: [{ key: "Content-Security-Policy", value: workerPolicy }] },
+      { source: "/api/expenses/receipt/file", headers: [{ key: "Content-Security-Policy", value: receiptFilePolicy }] },
     ];
   },
 };

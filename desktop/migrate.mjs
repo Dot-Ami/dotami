@@ -121,3 +121,22 @@ export function migrate(dbFile, migrationsDir, options = {}) {
 function sha256(file) {
   return createHash("sha256").update(readFileSync(file)).digest("hex");
 }
+
+/**
+ * Rebuilds the database file (VACUUM) so the space of deleted rows, and the words in it, is gone
+ * from the file. Used only to finish a wipe that Delete left owed (desktop/wipe-pending.mjs), before
+ * the server opens the file. Returns true when the file has no free pages left; throws when SQLite
+ * can't do it (not enough disk, the file busy).
+ * @param {string} dbFile
+ * @returns {boolean}
+ */
+export function vacuumFile(dbFile) {
+  const db = new DatabaseSync(dbFile);
+  try {
+    runSql(db, "VACUUM");
+    const row = db.prepare("PRAGMA freelist_count").get();
+    return Number(row?.freelist_count ?? 1) === 0;
+  } finally {
+    db.close();
+  }
+}
