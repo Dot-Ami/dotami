@@ -96,11 +96,16 @@ export async function waitForLocalState(dataDir, { platform = process.platform, 
  * Opens the receipts' key for the data folder `dataDir`, making one the first time. Returns:
  *   { state: "on", key, keyId, made, setAside }  the key is open; `made` when it was just made,
  *       `setAside` the path an unreadable old key file was moved to (nothing it locked was lost)
- *   { state: "no-key-store" }  the operating system's protection isn't available: receipts stay
- *       unencrypted, and no key file is made (a key beside the files it locks would protect nothing)
- *   { state: "key-unreadable", keyId, locked }  a key file is there but this account can't open it,
- *       and `locked` receipt files are encrypted with it. Nothing on the disk is changed: the key may
- *       come back (a Keychain prompt answered "Deny", a profile that loads later).
+ *   { state: "no-key-store" }  the operating system's protection isn't available and no receipt is
+ *       encrypted yet: receipts stay unencrypted, and no key file is made (a key beside the files it
+ *       locks would protect nothing)
+ *   { state: "key-unreadable", keyId, locked, missing }  `locked` receipt files are encrypted, and no
+ *       key here can open them: the key file is there but this account can't open it (or it holds
+ *       another key), it is `missing`, or the operating system's protection isn't available right now.
+ *       Nothing on the disk is changed: the key may come back (a Keychain prompt answered "Deny", a
+ *       profile that loads later, a receipts.key put back from the Recycle Bin).
+ * "locked" counts every encrypted receipt, whatever key it names: a new key would open none of them,
+ * so making one while they are there would leave them behind a green "encrypted" line.
  * A new key is saved only once the operating system's own key is on the disk (`keyStoreSaved`, by
  * default waitForLocalState); if it never gets there, nothing is saved: "no-key-store" for a new
  * folder (receipts stay as they are), "key-unreadable" for a replacement; the next start tries again.
@@ -109,10 +114,23 @@ export async function waitForLocalState(dataDir, { platform = process.platform, 
  * @param {{ platform?: string, now?: () => number, keyStoreSaved?: () => Promise<boolean> }} [options]
  */
 export async function openReceiptKey(dataDir, store, { platform = process.platform, now = Date.now, keyStoreSaved } = {}) {
-  if (!keyStoreAvailable(store, platform)) return { state: "no-key-store" };
-  const waitForStore = keyStoreSaved ?? (() => waitForLocalState(dataDir, { platform }));
   const file = path.join(dataDir, RECEIPT_KEY_FILE);
-  if (!existsSync(file)) {
+  const receiptsDir = path.join(dataDir, RECEIPTS_FOLDER);
+  const missing = !existsSync(file);
+  if (!keyStoreAvailable(store, platform)) {
+    // Receipts already encrypted (by a key store that worked before) can't be "kept unencrypted", and
+    // plain ones mustn't be added beside them: treated as a key that can't be opened until it's back.
+    const locked = countLockedReceipts(receiptsDir, null);
+    if (locked > 0) return { state: "key-unreadable", keyId: missing ? null : readKeyFile(file).keyId, locked, missing };
+    return { state: "no-key-store" };
+  }
+  const waitForStore = keyStoreSaved ?? (() => waitForLocalState(dataDir, { platform }));
+  if (missing) {
+    // The key file is gone (deleted, moved, or the folder copied without it) but receipts are
+    // encrypted: a new key would open none of them, and a receipts.key put back from the Recycle Bin
+    // afterwards would then lock out everything added under the new one. So nothing is written.
+    const locked = countLockedReceipts(receiptsDir, null);
+    if (locked > 0) return { state: "key-unreadable", keyId: null, locked, missing: true };
     const key = newReceiptKey();
     try {
       await saveReceiptKey(dataDir, store, key, { now, keyStoreSaved: waitForStore });
@@ -126,16 +144,16 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
   const { keyId, key } = unwrap(file, store);
   if (key) return { state: "on", key, keyId: keyIdOf(key), made: false, setAside: null };
 
-  // Can't be opened. If nothing is locked with it, nothing can be lost by starting a new key; the
-  // old file is kept in backups/ all the same.
-  const locked = countLockedReceipts(path.join(dataDir, RECEIPTS_FOLDER), keyId);
-  if (locked > 0) return { state: "key-unreadable", keyId, locked };
+  // Can't be opened. If no receipt is encrypted (with it or any other key), nothing can be lost by
+  // starting a new key; the old file is kept in backups/ all the same.
+  const locked = countLockedReceipts(receiptsDir, null);
+  if (locked > 0) return { state: "key-unreadable", keyId, locked, missing: false };
   const fresh = newReceiptKey();
   let setAside;
   try {
     ({ setAside } = await saveReceiptKey(dataDir, store, fresh, { now, keyStoreSaved: waitForStore }));
   } catch (error) {
-    if (error instanceof KeyStoreNotSaved) return { state: "key-unreadable", keyId, locked: 0 };
+    if (error instanceof KeyStoreNotSaved) return { state: "key-unreadable", keyId, locked: 0, missing: false };
     throw error;
   }
   return { state: "on", key: fresh, keyId: keyIdOf(fresh), made: true, setAside };
@@ -182,15 +200,42 @@ export async function saveReceiptKey(dataDir, store, key, { now = Date.now, keyS
   return { setAside };
 }
 
-/** The key file's key id (null if the file isn't readable as one) and its key (null if it can't be opened). */
-function unwrap(file, store) {
+/**
+ * Undoes saveReceiptKey for a restore whose swap failed after the new key was saved (desktop/main.mjs
+ * restore()): applyRestore puts the old receipts folder back, and those receipts need the old key
+ * file, not the new one, or the next start would say "on" over receipts it can't open. So the key file
+ * set aside goes back (or, when there was none, the new key file is removed: nothing on the disk but
+ * the abandoned staging copy is locked with it). Unless a receipt in the folder is already locked with
+ * the new key (the restored receipts stayed in place): then the new key stays, and the old key file
+ * stays in backups/. Returns "reverted" or "kept".
+ * @param {string} dataDir
+ * @param {string} newKeyId
+ * @param {string | null} setAside what saveReceiptKey returned
+ */
+export function revertReceiptKey(dataDir, newKeyId, setAside) {
+  if (countLockedReceipts(path.join(dataDir, RECEIPTS_FOLDER), newKeyId) > 0) return "kept";
+  const file = path.join(dataDir, RECEIPT_KEY_FILE);
+  // One rename over the new file, so a crash leaves one key file or the other in place, never neither.
+  if (setAside) renameSync(setAside, file);
+  else rmSync(file, { force: true });
+  return "reverted";
+}
+
+/** The key file as parsed: its key id (null if it isn't readable as one), and the parsed JSON. */
+function readKeyFile(file) {
   let parsed;
   try {
     parsed = JSON.parse(readFileSync(file, "utf8"));
   } catch {
-    return { keyId: null, key: null };
+    return { keyId: null, parsed: null };
   }
   const keyId = typeof parsed?.keyId === "string" && KEY_ID.test(parsed.keyId) ? parsed.keyId : null;
+  return { keyId, parsed };
+}
+
+/** The key file's key id (null if the file isn't readable as one) and its key (null if it can't be opened). */
+function unwrap(file, store) {
+  const { keyId, parsed } = readKeyFile(file);
   if (parsed?.format !== 1 || keyId === null || typeof parsed.wrapped !== "string") return { keyId, key: null };
   try {
     const key = Buffer.from(store.decryptString(Buffer.from(parsed.wrapped, "base64")), "base64");

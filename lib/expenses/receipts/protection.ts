@@ -40,14 +40,18 @@ export function receiptProtectionText(state: ReceiptLockState): ReceiptProtectio
       return {
         headline: "Receipts in this copy aren't encrypted.",
         detail:
-          "The key store Windows keeps for your account isn't available to DotAmi on this computer, so receipt files are kept exactly as you gave them, readable by anyone who can read the folder.",
+          // Also what a first start says when Windows' own key didn't reach the disk in time
+          // (desktop/receipt-key.mjs waitForLocalState): hence "right now" and "tries again".
+          "The key store Windows keeps for your account isn't available to DotAmi right now, so receipt files are kept exactly as you gave them, readable by anyone who can read the folder. DotAmi tries again each time it starts.",
         tone: "plain",
       };
     case "key-unreadable":
+      // Covers every way the key can be out of reach while receipts are encrypted: Windows won't open
+      // it, the key store isn't available, or the file receipts.key is gone (desktop/receipt-key.mjs).
       return {
         headline: "DotAmi can't open the key to your receipts.",
         detail:
-          "Windows won't open it for this account. That happens when the Windows profile is reset, or when the data folder came from another account or computer. Until it can, receipts can't be shown or added. Nothing was changed or deleted. To get them back, restore a backup (File → Restore from a backup…). Or delete them (Delete on What DotAmi knows about you, “Your receipts”) and restart DotAmi, which then starts a new key.",
+          "Windows won't open it for this account, or the key file (receipts.key, beside DotAmi's data file) is missing. That happens when the Windows profile is reset, when the data folder came from another account or computer, or when that file was deleted or moved. Until the key is back, receipts can't be shown or added. Nothing was changed or deleted. If you deleted or moved receipts.key, put it back (it may be in the Recycle Bin) and restart DotAmi. Otherwise, to get the receipts back, restore a backup (File → Restore from a backup…). Or delete them (Delete on What DotAmi knows about you, “Your receipts”) and restart DotAmi, which then starts a new key.",
         tone: "problem",
       };
   }

@@ -206,7 +206,9 @@ receipt files itself. The design, written before the code, is
   `safeStorage` (DPAPI on Windows, the Keychain on a Mac). Never in the database, a backup, the log or
   anything sent. Losing it (a Windows profile reset, the folder moved to another account) loses the
   receipts except those in a backup; Settings, *What DotAmi knows about you*, the note before adding a
-  receipt and the backup message say so.
+  receipt and the backup message say so. While receipts are encrypted, a key that can't be opened, a
+  deleted `receipts.key` or a key store that isn't available never leads to a new key or a green
+  "encrypted" line: nothing on the disk changes and the pages say so in amber.
 - **A copy run from source has no key store**, so its receipts stay unencrypted, and Settings and *What
   DotAmi knows about you* say so; it never makes a key file of its own.
 - **Backups** decrypt the receipts so a backup restores on another computer; restoring encrypts them

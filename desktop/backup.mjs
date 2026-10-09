@@ -12,8 +12,9 @@
 //              ciphertext as one stream
 //   16 bytes   the GCM tag (locked backups only)
 //
-// Every file is read and written in pieces of CHUNK bytes, never whole, so a backup of a big data
-// file and a few hundred receipts needs no more memory than a small one. The header lists each
+// The data file is read and written in pieces of CHUNK bytes, never whole, and receipts one at a
+// time (each at most 10 MB, held whole while it is decrypted or encrypted: see [8i] below), so a
+// backup of a big data file and a few hundred receipts needs no more memory than a small one. The header lists each
 // file's size and SHA-256, so the writer reads each file twice: once to measure it, once to write
 // it (and a file that changed in between stops the backup rather than writing a wrong one).
 //

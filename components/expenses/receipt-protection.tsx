@@ -22,7 +22,7 @@ export function receiptNoteSentence(state: ReceiptLockState): string {
     case "source":
       return "In this copy, run from source, the copy isn't encrypted: anyone who can read the receipts folder can open it. The desktop app encrypts receipts.";
     case "no-key-store":
-      return "On this computer the copy isn't encrypted (the key store Windows keeps for your account isn't available to DotAmi): anyone who can read the receipts folder can open it.";
+      return "On this computer the copy isn't encrypted (the key store Windows keeps for your account isn't available to DotAmi right now): anyone who can read the receipts folder can open it.";
     case "key-unreadable":
       return receiptProtectionText(state).detail;
   }

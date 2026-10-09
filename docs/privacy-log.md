@@ -127,8 +127,10 @@ person is asked).
   ten seconds after start), so the very first start of a new data folder waits about that long.
   Receipts kept before this version are encrypted at the first start, crash-safe, including the
   receipts folders earlier restores moved into `backups/`. A key file Windows can't open, when no
-  receipt is locked with it, is moved to `backups/receipts-key-unreadable-<time>.key` (never deleted)
-  and a new one made. **Not encrypted:** the data file itself (every expense record, and each
+  receipt is encrypted, is moved to `backups/receipts-key-unreadable-<time>.key` (never deleted)
+  and a new one made; while any receipt is encrypted, a key file that can't be opened, a missing
+  `receipts.key` or a key store that isn't available changes nothing on the disk and makes no key, and
+  the pages say so in amber. A restore whose last step fails puts the old key file back. **Not encrypted:** the data file itself (every expense record, and each
   receipt's kind, size, fingerprint and day added), the safety copies, the log, and a copy run from
   source, which has no key store and keeps receipts plain; Settings and *What DotAmi knows about you*
   say each. Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `FOLDERS`

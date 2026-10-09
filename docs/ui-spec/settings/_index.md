@@ -33,10 +33,13 @@ Each group:
      desktop app with its key open, "Your receipt files are encrypted on this computer." with what that
      protects, that anything running as the person can still open them, that losing the key (a Windows
      profile reset, the folder moved to another account or computer) loses the receipts except those in
-     a backup, and that the data file itself isn't encrypted; from source (or with no key store),
-     "Receipts in this copy aren't encrypted." and why (the desktop app encrypts them); when the key
-     can't be opened, in amber, "DotAmi can't open the key to your receipts." with what happened and the
-     two ways forward (restore a backup, or delete the receipts and restart). In the desktop
+     a backup, and that the data file itself isn't encrypted; from source (or with no key store and no
+     receipt encrypted yet), "Receipts in this copy aren't encrypted." and why (the desktop app encrypts
+     them; with no key store, that DotAmi tries again at each start); when the key can't be opened
+     (Windows won't open it, `receipts.key` is missing, or the key store is gone while receipts are
+     encrypted), in amber, "DotAmi can't open the key to your receipts." with what happened, to put
+     `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup, or
+     delete the receipts and restart). In the desktop
      app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), and that a backup holds
      the receipt files too; from source: copying the file and the receipts folder together
      is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,

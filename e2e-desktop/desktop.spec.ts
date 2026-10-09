@@ -418,7 +418,37 @@ test("a receipts key this Windows account can't open: nothing is changed, and th
   // Nothing on the disk was changed: the key file and the locked receipt are as they were.
   expect(readFileSync(path.join(dataDir, "receipts.key")).equals(keyBefore)).toBe(true);
   expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
-  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("1 receipt file(s) are locked with it; nothing was changed");
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
+    "the key file can't be opened by this account (or the key store isn't available); 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
+  );
+});
+
+test("a deleted receipts.key with encrypted receipts: no new key is made, and Settings and Expenses say so in amber ([8i])", async () => {
+  // The first start makes the key; a receipt encrypted with it (its header is all the start reads);
+  // then receipts.key is deleted, as in Explorer, where it would sit in the Recycle Bin.
+  const first = await launch();
+  await first.goto(new URL("/expenses", first.url()).toString());
+  await quit();
+  const keyId = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId as string;
+  const lockedName = `${"8".repeat(32)}.png`;
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  const locked = Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from(keyId, "hex"), Buffer.alloc(40, 2)]);
+  writeFileSync(path.join(dataDir, "receipts", lockedName), locked);
+  rmSync(path.join(dataDir, "receipts.key"));
+
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  const data = page.getByRole("region", { name: "Data and backups" });
+  await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+  await expect(data).toContainText("put it back (it may be in the Recycle Bin)");
+  await page.goto(new URL("/expenses", page.url()).toString());
+  await expect(page.getByRole("status").filter({ hasText: "DotAmi can't open the key to your receipts." })).toBeVisible();
+  // No new key was made over the receipt it can't open, and the receipt is as it was.
+  expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
+    "the key file is missing; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
+  );
 });
 
 test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {

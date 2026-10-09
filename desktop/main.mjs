@@ -26,8 +26,8 @@ import {
 } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused } from "./migrate.mjs";
-import { encryptReceiptsIn } from "./receipt-crypto.mjs";
-import { newReceiptKey, openReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
+import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
+import { newReceiptKey, openReceiptKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -258,7 +258,8 @@ function describeReceiptKey(opened) {
     return `key open${opened.made ? " (made now)" : ""}${opened.setAside ? "; a key file this account couldn't open was moved to the backups folder" : ""}`;
   }
   if (opened.state === "no-key-store") return "the operating system's key store isn't available, so receipts are kept unencrypted";
-  return `the key file can't be opened by this account; ${opened.locked} receipt file(s) are locked with it; nothing was changed`;
+  const why = opened.missing ? "the key file is missing" : "the key file can't be opened by this account (or the key store isn't available)";
+  return `${why}; ${opened.locked} receipt file(s) are encrypted and can't be opened; nothing was changed`;
 }
 
 /**
@@ -536,7 +537,9 @@ async function restore() {
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
       restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
       (keyLost
-        ? " The key to the receipts here can't be opened on this Windows account: it goes to the backups folder with them, and the restored receipts get a new key."
+        ? receiptKey.missing
+          ? " The key to the receipts here is missing: they go to the backups folder as they are, and the restored receipts get a new key."
+          : " The key to the receipts here can't be opened on this Windows account: it goes to the backups folder with them, and the restored receipts get a new key."
         : ""),
   });
   if (response !== 0) {
@@ -551,11 +554,13 @@ async function restore() {
     server.kill();
     await stopped;
   }
+  /** Where the unreadable key file went when a new key was saved below (null: there was none). */
+  let newKeySaved = null;
   if (keyLost) {
     // Saved before the swap: the staged receipts are encrypted with this key, so without it saved they
     // would be lost. The unreadable key file moves into backups/, never deleted.
     try {
-      await saveReceiptKey(dataDir, safeStorage, restoreKey);
+      newKeySaved = await saveReceiptKey(dataDir, safeStorage, restoreKey);
       log?.write(`[restore] a new receipts key was saved; the one this account couldn't open went to the backups folder\n`);
     } catch (error) {
       log?.write(`[restore] the new receipts key couldn't be saved: ${describeError(error)}\n`);
@@ -575,7 +580,21 @@ async function restore() {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
     // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
     log?.write(`[restore] failed to replace the data: ${error}\n`);
-    dialog.showErrorBox("DotAmi", `The restore didn't finish: ${error?.message ?? error}\n\nYour data was copied to the backups folder first. DotAmi will restart.`);
+    let keyNote = "";
+    if (newKeySaved) {
+      // The old receipts are back in place (applyRestore undoes its moves), and they need the old key
+      // file, not the one saved for the restored receipts: otherwise the next start says "encrypted"
+      // over receipts it can't open.
+      try {
+        const outcome = revertReceiptKey(dataDir, keyIdOf(restoreKey), newKeySaved.setAside);
+        log?.write(`[restore] the new receipts key was ${outcome === "reverted" ? "taken back; the old key file is in place again" : "kept: restored receipts are locked with it"}\n`);
+        if (outcome === "kept" && newKeySaved.setAside) keyNote = `\n\nThe key file this Windows account couldn't open was moved to:\n${newKeySaved.setAside}`;
+      } catch (revertError) {
+        log?.write(`[restore] the new receipts key couldn't be taken back: ${describeError(revertError)}\n`);
+        if (newKeySaved.setAside) keyNote = `\n\nThe key file this Windows account couldn't open was moved to:\n${newKeySaved.setAside}`;
+      }
+    }
+    dialog.showErrorBox("DotAmi", `The restore didn't finish: ${error?.message ?? error}\n\nYour data was copied to the backups folder first.${keyNote ? `${keyNote}\n\n` : " "}DotAmi will restart.`);
   }
   app.relaunch();
   app.exit(0);

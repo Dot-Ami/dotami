@@ -67,7 +67,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   computer; without a passphrase the receipts in a backup aren't encrypted, and the backup window
   says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses
   the receipts except those in a backup; Settings, *What DotAmi knows about you* and the note before
-  adding a receipt say so. The data file itself is **not** encrypted, and Settings says that too. A
+  adding a receipt say so. If the key can't be opened, or the key file `receipts.key` is deleted while
+  receipts are encrypted, DotAmi changes nothing and never makes a new key over them: Settings, *What
+  DotAmi knows about you* and the Expenses page say so in amber, and what to do (put the file back,
+  restore a backup, or delete the receipts). The data file itself is **not** encrypted, and Settings says that too. A
   copy run from source has no key store, so its receipts stay unencrypted, and it says so. The very
   first start of a new data folder takes about ten seconds longer: the key is saved only once Windows
   has saved its own part of it.

@@ -69,9 +69,11 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
   receipts except those in a backup (File → Back up…); from source, "In this copy, run from source, the
   copy isn't encrypted" and that the desktop app encrypts receipts; with no key store, that it isn't
   encrypted and why.
-- **When the key can't be opened**, an amber line under the page's heading (`ReceiptKeyProblem`, role
-  status) says so, what usually causes it, that nothing was changed, and the two ways forward (restore
-  a backup; or delete the receipts on *What DotAmi knows about you* and restart). Adding a receipt then
+- **When the key can't be opened** (Windows won't open it, the key store isn't available while
+  receipts are encrypted, or `receipts.key` is missing), an amber line under the page's heading
+  (`ReceiptKeyProblem`, role status) says so, what usually causes it, that nothing was changed, to put
+  `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup; or delete
+  the receipts on *What DotAmi knows about you* and restart). Adding a receipt then
   answers 409 with the same advice.
 - **The viewer** shows, in amber like its other refusals, a receipt encrypted with a key this account
   can no longer open ("…A backup made before then still holds it: File → Restore from a backup…"), or,

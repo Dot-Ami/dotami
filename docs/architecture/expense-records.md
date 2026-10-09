@@ -627,7 +627,11 @@ files it locks protects nothing). So:
   hidden: Settings → Data and backups and *What DotAmi knows about you* (under the receipts folder) both
   say "Receipts in this copy aren't encrypted", why, and that the desktop app encrypts them.
 - **The same if the desktop app finds no key store** (`safeStorage` not available, or Linux's
-  `basic_text`), with that reason instead.
+  `basic_text`), with that reason instead, and that DotAmi tries again at each start (the same words
+  cover a first start whose wait for `Local State` ran out). **But not when receipts are already
+  encrypted** (a key store that worked before and doesn't now): those can't honestly be called "kept
+  unencrypted", and plain ones mustn't be added beside them, so that is treated as a key that can't be
+  opened (below).
 - **A receipt the desktop app encrypted, opened by a copy that can't open it** (a copy from source
   pointed at the desktop app's data folder): refused with a plain sentence saying which copy can open
   it. It is never shown garbled and never encrypted a second time.
@@ -642,13 +646,19 @@ under the new key. This is said where the person will see it: on Settings → Da
 DotAmi knows about you* under the receipts folder, in the note before adding a receipt, and in the
 message after File → Back up….
 
-When the app starts and can't open the key:
+When the app starts and can't open the key (Windows won't open `receipts.key`, the key store isn't
+available, or `receipts.key` is **missing**):
 
 - **It changes nothing on the disk**: `receipts.key` and every receipt stay as they are, because the key
-  may come back (a Mac Keychain prompt answered "Deny", a profile that loads later).
-- **If no receipt is locked with that key** (the folder is empty, or holds only plain files), nothing
-  can be lost: the unreadable key file is moved to `backups/receipts-key-unreadable-<time>.key` and a
-  new key is made.
+  may come back (a Mac Keychain prompt answered "Deny", a profile that loads later, a `receipts.key`
+  put back from the Recycle Bin). A missing key file is **not** quietly replaced while encrypted
+  receipts are there: a new key would open none of them, Settings would show the green "encrypted"
+  line over them, and putting the old file back later would lock out everything added under the new
+  key. Settings says to put the file back if it was deleted or moved.
+- **If no receipt in the folder is encrypted** (with that key or any other: the folder is empty, or
+  holds only plain files), nothing can be lost: the unreadable key file is moved to
+  `backups/receipts-key-unreadable-<time>.key` and a new key is made (or, with the file missing, a new
+  key is simply made).
 - **Otherwise** receipts can't be added or shown while the key can't be opened, and Settings, *What
   DotAmi knows about you* and the Expenses page say so, with the two ways forward that need no new
   decision: **restore a backup** (File → Restore from a backup… brings the receipts back under a new
@@ -656,6 +666,12 @@ When the app starts and can't open the key:
   the receipts** (the Delete menu's *Your receipts*), after which the next start makes a new key.
   A button to start a new key while keeping the unreadable receipts is a question for the maintainer
   (below), not built.
+- **A restore that saves a new key and then can't swap the data in** (the last step of a restore
+  fails, and the old receipts folder goes back where it was) takes the new key back: the old key file
+  returns from `backups/` (or, if there was none, the new one is removed), so the next start says the
+  key can't be opened instead of "encrypted" over receipts it can't open. If restored receipts already
+  sit in the folder, locked with the new key, the new key stays and the message names where the old
+  key file went.
 
 ### The encrypted file
 
@@ -724,7 +740,10 @@ counts only, never a name. After the first start of this version there is normal
   DotAmi didn't name never touched, the receipts folders in `backups/` too; a crash between any two
   steps (a real process ended part-way) leaves every receipt readable, and the next start finishes.
 - The key: made and wrapped once, never stored unwrapped, opened again at the next start; an
-  unreadable key with no locked receipts set aside and replaced; with locked receipts, nothing touched;
+  unreadable key with no locked receipts set aside and replaced; with locked receipts (by any key),
+  nothing touched; a deleted `receipts.key` with encrypted receipts never replaced, and putting it back
+  opens them; no key store with encrypted receipts reported as a key that can't be opened; a failed
+  restore's new key taken back;
   no key store (and Linux's `basic_text`) meaning "not encrypted"; never saved before `Local State`
   holds Electron's key (`tests/receipt-key.spec.ts`, with a stand-in for `safeStorage`; and in the real
   app, where `Local State` must hold the key whenever `receipts.key` exists).
@@ -737,7 +756,9 @@ counts only, never a name. After the first start of this version there is normal
   the staging folder (`tests/desktop-backup.spec.ts`).
 - The real app (`e2e-desktop/desktop.spec.ts`): a receipt added in the app is encrypted on the disk,
   `receipts.key` holds no copy of the key, and the record's receipt opens; back up on one computer,
-  restore on another, and it opens there.
+  restore on another, and it opens there; a key file it can't open, and a deleted `receipts.key`, each
+  with an encrypted receipt: nothing on the disk changes, no new key is made, and Settings (and, for
+  the deleted file, the Expenses page) say so in amber.
 
 ### Built by (2026-10-09, in the same change, after this section)
 
@@ -760,7 +781,10 @@ fails the "kept only wrapped" tests; a key replaced although receipts are locked
 key open fails five store tests; a receipt from another key dropped by the sweep fails its test; a
 backup that copies the encrypted bytes, or a restore that stages receipts plain, fails the backup tests;
 the wait for `Local State` ignored fails its unit test, and removed from the app fails the desktop test
-(the key file was there while `Local State` wasn't).
+(the key file was there while `Local State` wasn't). Added after review: a missing `receipts.key`
+replaced although receipts are encrypted fails the deleted-key test; no key store always called "not
+encrypted" fails its test; an unreadable key counting only its own receipts fails three; a failed
+restore's key never taken back fails two, and taken back over restored receipts fails one.
 
 ### Still open (for the maintainer)
 

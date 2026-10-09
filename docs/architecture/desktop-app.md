@@ -95,9 +95,11 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   neither, and one the copy describes but the folder doesn't have is counted and named in the
   message afterwards ("1 receipt file DotAmi has a record of wasn't in the receipts folder"). Files
   in the folder that no row describes, and files DotAmi didn't name, are left out.
-- **It streams.** Every file is read, hashed, encrypted and written in 1 MB pieces, never whole, so
-  memory use doesn't grow with the data file or the number of receipts (format 1 read the whole
-  database into memory). The writer reads each file twice (once to measure it for the header, once
+- **It streams.** The data file is read, hashed, encrypted and written in 1 MB pieces, never whole,
+  so memory use doesn't grow with the data file or the number of receipts (format 1 read the whole
+  database into memory). Each receipt (at most 10 MB) is read whole, one at a time, because it is
+  decrypted with this computer's key in memory on the way in, and encrypted with it on the way out
+  at a restore ([8i], below); it is still written to the backup in 1 MB pieces. The writer reads each file twice (once to measure it for the header, once
   to write it) and stops, with nothing saved, if a file changed in between. Written beside its real
   name and renamed, so a crash never leaves a half-written file that looks finished.
 - **Old backups still restore.** A format-1 backup (`DOTAMI-BACKUP` + a header with the database's
