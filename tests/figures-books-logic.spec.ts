@@ -396,9 +396,23 @@ describe("books code keeps to its privacy rules", () => {
     expect(files.length).toBeGreaterThanOrEqual(5);
   });
 
+  /**
+   * The two places books code may name an address, each allowed as this exact text and nowhere
+   * else: starting the books worker from DotAmi's own script file (the bundler needs this form),
+   * and the worker checking that a message came from DotAmi's own page.
+   */
+  const ALLOWED: Record<string, string[]> = {
+    "read-book.ts": ['new URL("./worker.ts", import.meta.url)'],
+    "worker.ts": ["event.origin !== scope.location.origin"],
+  };
+
   it("never logs, never calls the network, never stores anything, never builds a URL", () => {
     for (const file of files) {
-      const source = code(file);
+      let source = code(file);
+      for (const allowed of ALLOWED[path.basename(file)] ?? []) {
+        expect(source, `${path.basename(file)} still has ${allowed}`).toContain(allowed);
+        source = source.split(allowed).join("");
+      }
       for (const forbidden of [
         /\bconsole\s*\./,
         /\bfetch\s*\(/,

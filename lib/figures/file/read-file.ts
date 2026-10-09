@@ -15,10 +15,16 @@ import type { ReadResult } from "./types";
 /** How much of the file the format check looks at. */
 const HEAD_BYTES = 8192;
 
+const GNUCASH_NOT_HERE =
+  "That's a GnuCash book, which is read with the books reader, not as a spreadsheet.";
+
 export async function readSpreadsheet(name: string, bytes: Uint8Array): Promise<ReadResult> {
   try {
     const sniffed = sniffFile(name, bytes.length, bytes.subarray(0, HEAD_BYTES));
     if (!sniffed.ok) return sniffed;
+    // A GnuCash book is read by the books reader, never as a spreadsheet. The window sends it there
+    // before this is called; this only stops a book reaching the CSV reader by mistake.
+    if (sniffed.format === "gnucash") return { ok: false, error: GNUCASH_NOT_HERE };
 
     if (sniffed.format === "csv") return readCsv(decodeText(bytes), name);
     return await readXlsx(bytes);
