@@ -158,6 +158,15 @@ person is asked).
   the earliest and latest date read, for the person to check before they review the figures;
   agreeing is unchanged.
 
+- **The dates must be confirmed before Review** ([8c-3]): on *Add from a file*, the person ticks
+  *These dates are right* (or *These months are right*, for a report with the months across the
+  top) beside the line saying which dates were read; until then *Review* can't be pressed. The tick
+  is emptied whenever another file, date column, date order or century answer changes the dates
+  read. It is held in the panel only, never stored, sent or remembered for the next file
+  ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/preview.ts`](../lib/figures/file/preview.ts) `followDatesCheck`). Nothing new
+  is kept or sent; the agree prompt that follows is unchanged.
+
 - **A report with the months across the top asks how it is laid out** ([8c-3]): on *Add from a
   file*, "The file has" (one row per sale, or months across the top), "Month names are in row"
   and "Totals come from" (every row, or one row). Like the other pickers, the answers only say how
