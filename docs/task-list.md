@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-08. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-09. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -111,10 +111,22 @@ roadmap's build order.
   - [x] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian, and Xero's Receivable Invoice Detail: practice
     files checked to the cent, nine gaps they found pinned by eleven "fails today" tests; a line on "Add from a
     file" saying each program's export was only tested on files shaped from its help pages
-  - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
-  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
-    months across the top, the FreshBooks summary block, French files with several comma-decimal
-    columns, formulas saved with no value, a report with no dates)
+  - [x] Ask on GitHub for the column-names row of real exports: posted 2026-10-09 as
+    [issue #124](https://github.com/Dot-Ami/dotami/issues/124)
+  - [ ] Check each row pasted in reply (no figures, client or company names), then mark those titles
+    "documented" in their practice files, citing the issue
+  - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
+    preview shows the earliest and latest date read, in words, to check against the file
+  - [x] "These dates are right": a tick-box beside that line, needed before Review; another file, date
+    column, date order or century answer empties it ("These months are right" for months across)
+  - [x] Months across the top (FreshBooks' Revenue by Client): pick the row of month names and where
+    the totals come from, one total per month; a report with no dates (Wave's Income by Customer)
+    names the report to export instead
+  - [x] A French semicolon file with several comma-decimal columns (Sage 50) reads on its
+    semicolons; an Excel formula saved with no value is listed as one, with what to do, never as
+    "no amount" and never guessed
+  - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
+    the FreshBooks summary block)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
@@ -302,6 +314,10 @@ roadmap's build order.
 - ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
   every pull request (#64); `npm run test:browser`. Each new screen adds its own test. A required
   check on `main` since 2026-10-05: nothing merges with them failing.
+  - [x] The suite never trips the app's rate limits by accident — 2026-10-09; on the test server
+    only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
+    `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
+  - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a

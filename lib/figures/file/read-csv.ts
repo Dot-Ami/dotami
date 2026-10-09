@@ -7,6 +7,7 @@
  */
 
 import Papa from "papaparse";
+import { cellToCents } from "./amounts";
 import type { ReadResult } from "./types";
 
 // Commas, semicolons (French and most European Excel), tabs and pipes.
@@ -25,7 +26,56 @@ function guessDelimiter(text: string): string {
     .filter((line) => line.trim() !== "")
     .slice(0, 50)
     .join("\n");
+  if (semicolonsAroundCommaAmounts(sample)) return ";";
   return Papa.parse(sample, { delimitersToGuess: DELIMITERS, preview: 50 }).meta.delimiter;
+}
+
+/**
+ * A cell holding an amount written with a decimal comma: "1 000,00", "-12,50", "100,0",
+ * "1 000,00 $", or a percentage like "12,5 %". A cell holding a tab is never one: cellToCents
+ * trims the tab away, so a tab file's "Vu;\t1 000,00" would otherwise pass for a semicolon line.
+ */
+function isCommaAmount(cell: string): boolean {
+  return (
+    cell.includes(",") &&
+    !cell.includes("\t") &&
+    cellToCents(cell.replace(/\s*%$/, ""), "comma") !== null
+  );
+}
+
+/**
+ * True when the sample is a semicolon file whose commas all sit inside amounts. French and most
+ * European Excel save a CSV with semicolons because the comma is their decimal mark, but Papa
+ * counts every comma as a possible delimiter: with several amount columns on a line
+ * ("14-07-2026;1001;Design;1;1 000,00;0,00;1 000,00;100,0") the commas can look like the more
+ * regular split and win the guess, which cuts every line into pieces (Sage 50 Canadian in French;
+ * docs/connectors/practice-files.md).
+ *
+ * So read the sample on its semicolons first. When at least two lines split into two or more cells,
+ * and the cells holding a comma on those lines are mostly amounts, the commas are decimal marks and
+ * the file is a semicolon file. A line that doesn't split (a title, a customer's name) has no say.
+ *
+ * "Mostly" means at least twice as many amount cells as cells with a comma in text. French item
+ * descriptions often hold a comma ("Design, impressions"), and one of them used to hand the file
+ * back to Papa, which split it on its commas again. A comma file with a stray semicolon doesn't get
+ * there: the semicolon cuts a line like "2026-01-05,Hosting;2,30" into one amount-looking piece and
+ * one piece of comma-separated text, which is one of each, not two to one.
+ */
+function semicolonsAroundCommaAmounts(sample: string): boolean {
+  const lines = Papa.parse<string[]>(sample, { delimiter: ";", preview: 50 }).data;
+  let splitLines = 0;
+  let amounts = 0;
+  let textCommas = 0;
+  for (const cells of lines) {
+    if (cells.length < 2) continue;
+    splitLines += 1;
+    for (const cell of cells) {
+      if (!cell.includes(",")) continue;
+      if (isCommaAmount(cell)) amounts += 1;
+      else textCommas += 1;
+    }
+  }
+  return splitLines >= 2 && amounts > 0 && amounts >= 2 * textCommas;
 }
 
 export function readCsv(text: string, name: string): ReadResult {

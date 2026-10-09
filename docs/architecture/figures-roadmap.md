@@ -122,8 +122,8 @@ Gaps already found by running the real code:
 - A FreshBooks summary row is taken as the header.
 - A Wave refund sits in a Debit column.
 - A Sage void invoice is counted.
-- Two-digit years are refused.
-- Months-across reports can't be read.
+- Two-digit years are refused. *Fixed 2026-10-08 ([8c-3]): one question per file, "Is 05 the year 2005?".*
+- Months-across reports can't be read. *Fixed 2026-10-08 ([8c-3]): the person picks the row of month names and where the totals come from; Wave's Income by Customer names Account Transactions instead.*
 
 **Sources (read 2026-10-06):**
 - central.xero.com/s/article/ Export-invoices-and-bills, Import-customer-invoices-GL, Import-customer-invoices-US, Receivable-Invoice-Detail-report-New, Export-or-print-a-report

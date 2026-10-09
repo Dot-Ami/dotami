@@ -137,6 +137,15 @@ its test first. Never claim green without the command and its output.
 Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path.
 Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
 weeks) — browser tests run the real build for that reason.
+Its server starts with `DOTAMI_E2E_RATE_LIMITS=opt-in`, set only in `playwright.config.ts`: every
+browser test reaches it as one client, so there a request counts toward a rate limit only when it
+names its own bucket in the `x-dotami-e2e-rate-limit` header (`lib/api/rate-limit.ts`), and the
+suite's size can't trip a limit. Don't raise a route's limit to make a test pass; a test about a
+limit names a bucket (`e2e/rate-limit.spec.ts`). Never set the switch anywhere else: the desktop app
+removes it from its server's environment (`desktop/main.mjs` `serverEnv`) and
+`e2e-desktop/desktop.spec.ts` checks. A run waits for its own server's "Ready", not just an answer
+on port 3123, and stops if the port is taken (`e2e/port-free.mjs`): one run's tests must never
+reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against

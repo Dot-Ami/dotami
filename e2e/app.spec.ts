@@ -16,7 +16,10 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
+import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadian";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
+import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -888,6 +891,13 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await expect(
     table.getByRole("row", { name: new RegExp(`^${c.name} \\$100\\.00 2 rows$`) }),
   ).toBeVisible();
+  // How the dates were read, in words, for the person to check: the row in a month not over yet
+  // adds nothing but its date was read, so it is the latest.
+  await expect(
+    card.getByText(
+      `Dates read: 15 ${a.name} to 15 ${next.name}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
   await expect(card.getByText(`1 blank row: row ${blankRow}`)).toBeVisible();
   await expect(
     card.getByText(`1 row without a date DotAmi can read: row ${noteRow}`),
@@ -904,7 +914,10 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   expect(seen.filter((r) => r.body !== null)).toEqual([]);
   expect(await figures()).toEqual([]);
 
-  // Review: only the totals go to the server — no cell, no client name, no file content.
+  // Review: only the totals go to the server — no cell, no client name, no file content. The
+  // dates are confirmed first; ticking the box sends nothing either.
+  await card.getByRole("checkbox", { name: "These dates are right" }).check();
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
   await card.getByRole("button", { name: "Review these 3 figures" }).click();
   const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
   await expect(prompt).toBeVisible();
@@ -995,16 +1008,13 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   expect(await figures()).toHaveLength(3);
 });
 
-// A gap the practice files found (2026-10-08), pinned with test.fail: it passes only while the gap
-// is there, so the day the screen names the report to export instead, this goes red until it is
-// made a normal test. Pinned here, on the screen, because the "no column names" sentence is the
-// screen's own; where the fix puts its sentence is up to the fix. docs/connectors/practice-files.md
-// "Known gaps" lists it.
-test("fails today: Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
+// A gap the practice files found (2026-10-08), now fixed: this was a test.fail() pin until the
+// screen named the report to export instead (the maintainer's decision, 2026-10-07).
+test("Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
   page,
 }) => {
-  test.fail();
-  const { card } = await openSalish(page);
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
   const incomeByCustomer = waveFiles.find((f) => f.id === "wave-income-by-customer")!;
   await card.getByRole("button", { name: "Add from a file" }).click();
   await answerAccounting(card);
@@ -1017,8 +1027,214 @@ test("fails today: Wave's Income by Customer, which has no dates, is met with th
   await expect(
     card.getByText("DotAmi couldn't find a row of column names in the first 30 rows."),
   ).toBeVisible();
-  // The gap: nothing names Account Transactions, the Wave report that has a date on every line.
-  await expect(card.getByText(/Account Transactions/)).toBeVisible({ timeout: 2_000 });
+  // The screen names Account Transactions, the Wave report that has a date on every line.
+  await expect(
+    card.getByText(
+      "This looks like Wave's Income by Customer report: one total per customer, with no dates, so DotAmi can't split it into months. In Wave, export the Account Transactions report for your income account instead (Reports, Account Transactions, Export, as CSV): it has a date on every line.",
+    ),
+  ).toBeVisible();
+  // The layout stays "one row per sale", and nothing can be reviewed.
+  await expect(card.getByLabel("The file has").locator("option:checked")).toHaveText(
+    "One row per sale, with a date",
+  );
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+// Two gaps the practice files found (2026-10-08), now fixed (the maintainer's decision, 2026-10-07:
+// every gap is fixed). Both files are invented, shaped from the vendors' help pages.
+test("a French Sage 50 file with several amount columns reads on its semicolons", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const french = sage50Files.find((f) => f.id === "sage50-french")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: french.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(french.bytes()),
+  });
+  // The French column names are found and Revenu is the amount: the lines were split on their
+  // semicolons, not on the commas inside "1 000,00".
+  await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
+    "Row 5",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "E · Revenu",
+  );
+  await expect(card.getByLabel("Amounts are written").locator("option:checked")).toHaveText(
+    "1 234,56",
+  );
+  const table = card.getByRole("table", { name: `Monthly totals from ${french.fileName}` });
+  await expect(table.getByRole("row", { name: /^July 2026 \$1,134\.56 2 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$420\.00 2 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^September 2026 \$75\.25 1 row$/ })).toBeVisible();
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("an Excel formula with no saved value is named as one, not as an empty amount", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const detail = xeroFiles.find((f) => f.id === "xero-receivable-invoice-detail")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: detail.fileName,
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: Buffer.from(detail.bytes()),
+  });
+  const table = card.getByRole("table", { name: `Monthly totals from ${detail.fileName}` });
+  await expect(table.getByRole("row", { name: /^July 2026 \$350\.00 2 rows$/ })).toBeVisible();
+  // Row 9's line amount is a formula Excel never worked out: said so, with what to do.
+  await expect(
+    card.getByText(
+      "1 row with a formula Excel didn't save a value for (open the file in Excel, click Enable Editing if it asks, save it, then drop it here again): row 9",
+    ),
+  ).toBeVisible();
+  await expect(card.getByText(/with a date but no amount/)).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a report with the months across the top: one total per month column, from every row or the Total row", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+
+  // The invented FreshBooks-shaped Revenue by Client: clients down the side, July to September
+  // 2026 across the top, a Total column and the report's own Total row.
+  const revenue = freshbooksFiles.find((f) => f.id === "freshbooks-revenue-by-client")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: revenue.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(revenue.bytes()),
+  });
+
+  // The screen starts on months across, with the row of month names guessed for the person to check.
+  await expect(card.getByLabel("The file has").locator("option:checked")).toHaveText(
+    "Months across the top, one column per month",
+  );
+  await expect(card.getByText("DotAmi guessed the row of month names — check it.")).toBeVisible();
+  await expect(card.getByLabel("Month names are in row").locator("option:checked")).toHaveText(
+    "Row 4",
+  );
+  await expect(card.getByText("B · July 2026")).toBeVisible();
+  await expect(card.getByText("D · September 2026")).toBeVisible();
+  await expect(card.getByText("Not months, so not added: A · Client, E · Total")).toBeVisible();
+  // The row-per-sale pickers are not on screen in this layout.
+  await expect(card.getByLabel("Date column")).toHaveCount(0);
+
+  // Every row added down each month: three rows a month, and the Total row left out.
+  const totalsFrom = card.getByLabel("Totals come from");
+  await expect(totalsFrom.locator("option:checked")).toHaveText("Every row, added down each month");
+  const table = card.getByRole("table", { name: `Monthly totals from ${revenue.fileName}` });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$476\.19 3 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^September 2026 \$300\.00 3 rows$/ })).toBeVisible();
+  await expect(
+    card.getByText(
+      "Months read from the column names: July 2026 to September 2026. Check these against the file.",
+    ),
+  ).toBeVisible();
+  await expect(
+    card.getByText("1 row that is a totals row (the file's own sum): row 8"),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: "Review these 3 figures" })).toBeVisible();
+
+  // Only the report's Total row: the same months, one row each, and nothing left out.
+  await totalsFrom.selectOption({ label: "Row 8 only · Total" });
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 1 row$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$476\.19 1 row$/ })).toBeVisible();
+  await expect(card.getByText("Left out", { exact: true })).toHaveCount(0);
+
+  // The wrong row of month names says so, and adds nothing up.
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 1" });
+  await expect(
+    card.getByText(
+      "No column in row 1 is named like a month and year (Jul 2026, juillet 2026, 2026-07 or 07/2026). Pick the row with the month names.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // Reading the file sent nothing.
+  expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+
+  // Back to the right row: every row again, and Review proposes the three months.
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 4" });
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  // Across the top, the months are what the person confirms.
+  const monthsRight = card.getByRole("checkbox", { name: "These months are right" });
+  await expect(monthsRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: "Review these 3 figures" })).toBeDisabled();
+  await monthsRight.check();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  const fromFile = prompt.getByRole("region", { name: `From ${revenue.fileName}` });
+  await expect(fromFile).toContainText("July 2026");
+  await expect(fromFile).toContainText("September 2026");
+  // One client row goes into every month, so adding the months' row counts would say "9 rows"
+  // for a file of 3 clients. No row count is sent for this layout, so none is shown.
+  const proposals = seen.filter((r) => r.path === "/api/figures/propose");
+  expect(proposals).toHaveLength(1);
+  const sent = JSON.parse(proposals[0].body!) as {
+    source: Record<string, unknown>;
+    figures: Record<string, unknown>[];
+  };
+  expect(sent.source).toEqual({ kind: "file", label: revenue.fileName });
+  expect(sent.figures.map((f) => [f.periodStart, f.amountCents, "rows" in f])).toEqual([
+    ["2026-07-01", 50000, false],
+    ["2026-08-01", 47619, false],
+    ["2026-09-01", 30000, false],
+  ]);
+  await expect(fromFile.getByText(`From ${revenue.fileName}`, { exact: true })).toBeVisible();
+  await expect(prompt.getByText(/\d+ rows?/)).toHaveCount(0);
+  expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
+
+  // Turning them down keeps nothing.
+  await prompt.getByRole("button", { name: "No, I'll do it myself" }).click();
+  await expect(prompt).toBeHidden();
+  expect(await figures()).toEqual(before);
+});
+
+test("a month name DotAmi can't be sure of stops the table, naming the column", async ({ page }) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  // "Aug 26" could be August 2026 or the 26th of August: never guessed. Invented amounts.
+  const lines = ["Client,Jul 2026,Aug 26", "Client A,100.00,50.00"];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "short-month.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+  // No row is guessed (its names aren't all clear), so the person switches and picks the row.
+  await card.getByLabel("The file has").selectOption("across");
+  await expect(
+    card.getByText("DotAmi couldn't find a row of month names in the first 30 rows."),
+  ).toBeVisible();
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 1" });
+  await expect(
+    card.getByText(
+      "The name of column C looks like a month, but DotAmi can't be sure which month and year it is, so nothing is added up. It reads names like Jul 2026, juillet 2026, 2026-07 or 07/2026.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
 });
 
 test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {
@@ -1054,6 +1270,189 @@ test("dates that read two ways are asked about once, and nothing is totalled unt
   await expect(table.getByRole("row", { name: new RegExp(`^${target.name} \\$150\\.00 2 rows$`) })).toBeVisible();
 
   await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a file with two-digit years asks once which century, then shows how the dates were read", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // dd.mm.yy, one of FreshBooks' date formats. 18 can only be a day, so the order needs no
+  // question; the century does. Invented clients and amounts.
+  const [a, b] = [monthsAgo(3), monthsAgo(2)];
+  const yy = (y: number) => String(y).slice(2);
+  const lines = [
+    "Invoice Date,Client,Amount",
+    `18.${two(a.m)}.${yy(a.y)},Client A,100.00`,
+    `18.${two(b.m)}.${yy(b.y)},Client B,50.00`,
+  ];
+  const file = {
+    name: "short-years.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  };
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+
+  // The columns are still found, and the one question is asked instead of refusing the file.
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "A · Invoice Date",
+  );
+  const century = card.getByLabel(`Is ${yy(a.y)} the year 20${yy(a.y)}?`);
+  await expect(century).toBeVisible();
+  await expect(century).toHaveValue("");
+  await expect(
+    card.getByText("This file writes years with two digits. Your answer is used for every date written that way in this column, for this file only."),
+  ).toBeVisible();
+  await expect(card.getByText(`Say which year ${yy(a.y)} is to see the totals.`)).toBeVisible();
+  await expect(card.getByLabel("Dates are written")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+
+  // Yes: the dates are read in the 2000s, and the screen says how, in words.
+  await century.selectOption("2000");
+  const table = card.getByRole("table", { name: "Monthly totals from short-years.csv" });
+  await expect(table.getByRole("row", { name: new RegExp(`^${a.name} \\$100\\.00 1 row$`) })).toBeVisible();
+  await expect(table.getByRole("row", { name: new RegExp(`^${b.name} \\$50\\.00 1 row$`) })).toBeVisible();
+  await expect(
+    card.getByText(
+      `Dates read: 18 ${a.name} to 18 ${b.name}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeVisible();
+  const datesRight = card.getByRole("checkbox", { name: "These dates are right" });
+  await datesRight.check();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeEnabled();
+
+  // No: the same rows land a hundred years earlier, and the sentence shows it at once. The dates
+  // changed, so the tick is taken away.
+  await century.selectOption("1900");
+  const old = (m: { y: number; m: number }) => `${MONTH_NAMES[m.m - 1]} ${m.y - 100}`;
+  await expect(table.getByRole("row", { name: new RegExp(`^${old(a)} \\$100\\.00 1 row$`) })).toBeVisible();
+  await expect(
+    card.getByText(
+      `Dates read: 18 ${old(a)} to 18 ${old(b)}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeDisabled();
+
+  // The answer covers this file only: the same file again is asked again.
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  await expect(century).toBeVisible();
+  await expect(century).toHaveValue("");
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("Review waits for 'These dates are right', and changing the date order or the file takes the tick away", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+
+  // 04/08/2025 and 05/08/2025 read two ways, and nothing in the file settles it. Over a year ago,
+  // so both readings land in months that are over and both show totals. Invented clients.
+  const target = monthsAgo(14);
+  const day = target.m === 4 ? 5 : 4;
+  const lines = [
+    "Date,Customer,Amount",
+    `${two(day)}/${two(target.m)}/${target.y},Client A,100.00`,
+    `${two(day + 1)}/${two(target.m)}/${target.y},Client B,50.00`,
+  ];
+  const file = {
+    name: "confirm-dates.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  };
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  const order = card.getByLabel("Dates are written");
+  await order.selectOption("dmy");
+
+  // Day first: the totals and how the dates were read are on screen, with the box beside them,
+  // empty, and Review can't be pressed until it is ticked.
+  const table = card.getByRole("table", { name: "Monthly totals from confirm-dates.csv" });
+  await expect(table.getByRole("row", { name: new RegExp(`^${target.name} \\$150\\.00 2 rows$`) })).toBeVisible();
+  const dayFirst = `Dates read: ${day} ${target.name} to ${day + 1} ${target.name}. Check these against the file's earliest and latest dates.`;
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  const datesRight = card.getByRole("checkbox", { name: "These dates are right" });
+  await expect(datesRight).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  // The box is described by the sentence it confirms.
+  await expect(datesRight).toHaveAccessibleDescription(dayFirst);
+  // Both rows are in one month day first, so one figure.
+  const review = card.getByRole("button", { name: "Review this figure" });
+  await expect(review).toBeVisible();
+  await expect(review).toBeDisabled();
+  await expect(card.getByText(`Tick "These dates are right" once they match the file.`)).toBeVisible();
+  await expect(review).toHaveAccessibleDescription(`Tick "These dates are right" once they match the file.`);
+
+  // Ticked: Review can be pressed, and the reminder goes.
+  await datesRight.check();
+  await expect(review).toBeEnabled();
+  await expect(card.getByText(`Tick "These dates are right" once they match the file.`)).toHaveCount(0);
+
+  // The currency never moves a date, so retyping it leaves the tick alone, even though the totals
+  // (and the "Dates read" line with them) go away while it is only "U" or "US".
+  const currency = card.getByLabel("Currency");
+  for (const code of ["USD", "CAD"]) {
+    await currency.fill("");
+    await currency.pressSequentially(code);
+    await expect(currency).toHaveValue(code);
+    await expect(card.getByText(dayFirst)).toBeVisible();
+    await expect(datesRight).toBeChecked();
+    await expect(review).toBeEnabled();
+  }
+
+  // Month first: other dates, so the tick is taken away and Review is shut again.
+  await order.selectOption("mdy");
+  const monthFirst = `Dates read: ${target.m} ${MONTH_NAMES[day - 1]} ${target.y} to ${target.m} ${MONTH_NAMES[day]} ${target.y}. Check these against the file's earliest and latest dates.`;
+  await expect(card.getByText(monthFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: /^Review these \d+ figures$/ })).toBeDisabled();
+
+  // Back to day first: the box stays empty; the dates changed on screen, so they are looked at again.
+  await order.selectOption("dmy");
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(review).toBeDisabled();
+
+  // Nothing was sent while the box went on and off.
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+
+  // The same file again, after Cancel, starts with the box empty: the tick was for that reading of
+  // that file. (Cancel forgets the tick by itself; the file counter in the key covers the same case
+  // in the unit tests.)
+  await datesRight.check();
+  await expect(review).toBeEnabled();
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  await order.selectOption("dmy");
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(review).toBeDisabled();
+
+  // Ticked, Review opens the agree prompt; turning it down keeps nothing.
+  await datesRight.check();
+  await review.click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  expect(seen.filter((r) => r.path === "/api/figures/propose")).toHaveLength(1);
+  await prompt.getByRole("button", { name: "No, I'll do it myself" }).click();
+  await expect(prompt).toBeHidden();
   expect(await figures()).toEqual(before);
 });
 
