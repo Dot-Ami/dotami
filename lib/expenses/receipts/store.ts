@@ -20,7 +20,7 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, open, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
@@ -270,9 +270,15 @@ async function finishAbandonedAdd(
   const partialPath = path.join(folder, partialName);
   let matches: boolean;
   try {
-    // The size first, so a file far larger than any receipt is never read whole.
-    const size = (await stat(partialPath)).size;
-    matches = size === row.bytes && sha256(await readFile(partialPath)) === row.sha256;
+    // One open file for both the size and the bytes, so they are of the same file. The size first,
+    // so a file far larger than any receipt is never read whole.
+    const handle = await open(partialPath, "r");
+    try {
+      const size = (await handle.stat()).size;
+      matches = size === row.bytes && sha256(await handle.readFile()) === row.sha256;
+    } finally {
+      await handle.close();
+    }
   } catch {
     return "failed";
   }
