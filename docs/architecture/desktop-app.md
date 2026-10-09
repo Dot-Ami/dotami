@@ -47,7 +47,12 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    Electron's defaults stay on and are set
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
-   2026-10-05).
+   2026-10-05). No switch may turn off Chromium's sandboxes or run the graphics process inside the
+   browser process (`tests/desktop-sandbox.spec.ts`), a condition of drawing HEIC receipts on the
+   graphics chip ([8i], 2026-10-09). The window's one preload (`desktop/window-preload.cjs`) gives
+   DotAmi's pages two calls about HEIC receipts and nothing else; the main process believes them only
+   from DotAmi's own window, and stops HEIC drawing for the session once the graphics process stops
+   (`child-process-gone`, type `GPU`) or a HEIC fails (desktop-tested).
 6. **Updates** (installed app only) — see below.
 7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
    ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·

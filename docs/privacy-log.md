@@ -39,6 +39,18 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **HEIC photos as receipts ([8i], 2026-10-09).** A receipt may now also be a HEIC photo (what
+  iPhones save), kept exactly as given under a `.heic` name in the same `receipts/` folder, with the
+  same 10 MB and pixel caps, backed up, removed and deleted like every receipt. DotAmi keeps no
+  converted or decoded copy: the picture exists in the window only while it is shown. No new table,
+  column or browser-storage key (the `Receipt` row's type is `image/heic`). In the desktop app,
+  `logs/server.log` gains at most one line a session when the graphics process stops, or a HEIC can't be
+  drawn, saying HEIC receipts won't be drawn until restart (with Electron's one-word reason, such as
+  `crashed`; nothing about the receipt). [`lib/expenses/receipts/heic/`](../lib/expenses/receipts/heic/),
+  [`desktop/main.mjs`](../desktop/main.mjs); tested by
+  [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts) and
+  [`tests/heic-container.spec.ts`](../tests/heic-container.spec.ts).
+
 - **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
   file is read in memory inside the app's window, in a worker of DotAmi's own
   ([`lib/figures/return/`](../lib/figures/return/)); its bytes move into that worker, pdf.js's
@@ -151,6 +163,15 @@ person is asked).
 
 ### What leaves the computer, and to whom
 
+- **Showing a HEIC receipt sends nothing off the computer.** DotAmi's own reader opens the photo in a
+  worker under the same no-connection policy as the PDF viewer's, and the picture data inside goes,
+  through the browser's video decoder, to this computer's graphics driver (or, on a Mac, the operating
+  system's decoder), which decodes it on the graphics chip
+  ([`lib/expenses/receipts/viewer/draw-heic.ts`](../lib/expenses/receipts/viewer/draw-heic.ts); the
+  path in full is in [the decoder review](connectors/heic-decoder-review.md#corrections-from-the-double-check-2026-10-09)).
+  The worker's policy is unchanged; the browser tests check the viewer makes one request, to DotAmi's
+  own server ([`e2e/receipt-viewer.spec.ts`](../e2e/receipt-viewer.spec.ts)).
+
 - **The return reader sends nothing.** pdf.js is given the PDF's bytes, never an address, and
   its own data-file fetches are switched off (`PDF_OPTIONS` in
   [`lib/figures/return/extract.ts`](../lib/figures/return/extract.ts)). The worker it runs in
@@ -228,6 +249,12 @@ person is asked).
 
 ### Packages that ship
 
+- **HEIC photos add no package.** The container reader is DotAmi's own code; the decoder is the
+  graphics driver's, reached through Chromium's WebCodecs, which Electron already ships. Not new: the
+  Electron build DotAmi has always shipped includes Chromium's HEVC parser and hardware-assist decoding
+  code, and ffmpeg with H.264 and AAC; whether that raises a patent question before DotAmi is sold is
+  listed for a lawyer in [the decoder review](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold).
+
 - **`pdfjs-dist` 6.4.299 (Mozilla's pdf.js), pinned exactly.** Apache-2.0. It can reach the
   network (a PDF, character maps, fonts and decoders from addresses it is given, and its own
   worker script); DotAmi gives it no address, turns its data-file fetches off and runs it in the
@@ -260,6 +287,16 @@ person is asked).
   still installs sharp with Next, as before.
 
 ### New powers or permissions
+
+- **The receipt viewer can start a third worker of DotAmi's own, for HEIC photos**, under the same
+  no-connection policy ([`lib/expenses/receipts/viewer/heic-picture.worker.ts`](../lib/expenses/receipts/viewer/heic-picture.worker.ts)),
+  and through it ask the computer's graphics chip to decode the photo, only when the person clicks
+  *Show receipt*. The desktop window gains a preload ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs))
+  that gives DotAmi's pages two calls and nothing else ("has a HEIC failed, or the graphics process
+  stopped, since DotAmi started?" and "a HEIC just failed"), believed only from DotAmi's own window; the
+  main process now listens for the graphics process stopping (`child-process-gone`). The window stays
+  sandboxed, and a test fails if anything turns a sandbox off
+  ([`tests/desktop-sandbox.spec.ts`](../tests/desktop-sandbox.spec.ts)).
 
 - **The page can start one worker of DotAmi's own, the return reader's.** It gets no new
   reach: DotAmi's static script files now carry a policy (`default-src 'none'; script-src
@@ -303,6 +340,9 @@ person is asked).
   Statements still can't be edited or deleted one at a time.
 
 ### What the person must agree to
+
+- **Adding a HEIC receipt** asks nothing new: the note before *Choose the receipt file* now names HEIC,
+  and says some computers can't show one, and that it is kept either way.
 
 - **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
@@ -387,6 +427,9 @@ person is asked).
 
 ### How to remove it
 
+- **HEIC receipts** are removed like every receipt (*Remove receipt*, or Delete's *Your receipts* /
+  *Your expense records*); there is no decoded copy to remove.
+
 - Nothing new to remove: the return reader keeps nothing (above).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
   keep the row. Deleting ideas keeps them too, as "not attached yet". Only the Delete menu's *Your
@@ -424,6 +467,11 @@ person is asked).
   account" goes with *Your settings*.
 
 ### What the policy will need to say
+
+- A HEIC photo added as a receipt is kept as given. Showing it hands the picture data to the person's
+  own graphics driver or operating system to decode, on their computer; nothing is sent elsewhere, and
+  DotAmi keeps no decoded copy. Keeping graphics drivers and the operating system up to date is part of
+  keeping that safe, and is the person's (or their computer maker's) to do.
 
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot

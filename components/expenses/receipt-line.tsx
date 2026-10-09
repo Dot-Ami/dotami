@@ -140,8 +140,9 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
         <div className="rounded-sm border border-rule bg-ink px-2.5 py-2 text-[11px] text-paper-dim">
           <p>
             DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and
-            address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is
-            your own record; it says nothing about whether you can stop keeping the original.
+            address) is kept too. A JPEG, PNG, WebP or HEIC (iPhone) picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its
+            name. A HEIC photo is shown with this computer&apos;s graphics chip, and some computers can&apos;t show one (it is kept either way). The copy is your
+            own record; it says nothing about whether you can stop keeping the original.
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label htmlFor={inputId} className="cursor-pointer rounded-sm border border-rule px-2 py-0.5 text-paper hover:border-maple-soft">
@@ -152,7 +153,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
               id={inputId}
               type="file"
               // A hint for the file picker only; the bytes decide.
-              accept="image/jpeg,image/png,image/webp,application/pdf"
+              accept="image/jpeg,image/png,image/webp,image/heic,.heic,application/pdf"
               className="sr-only"
               disabled={busy}
               onChange={(e) => {

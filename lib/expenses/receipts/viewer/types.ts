@@ -40,3 +40,23 @@ export interface DrawReply {
   label: typeof DRAW_REPLY_LABEL;
   result: PdfDrawResult;
 }
+
+/**
+ * Why a HEIC receipt wasn't drawn ([8i], option D):
+ *   - "unsupported": this computer's (or browser's) video decoder can't decode it; nothing went wrong;
+ *   - "not-shown": a HEIC of a kind DotAmi doesn't draw (10-bit, an overlay, a second layer…);
+ *   - "damaged" / "too-many-pixels": DotAmi's own reader refused it before any decoding;
+ *   - "failed": the decoder reported an error (or drew something other than asked); the page then
+ *     doesn't try HEIC again until DotAmi restarts.
+ */
+export type HeicDrawFailure = "unsupported" | "not-shown" | "damaged" | "too-many-pixels" | "failed";
+
+/** What the HEIC worker hands back: the finished picture, or why there is none. */
+export type HeicDrawResult = { ok: true; picture: ImageBitmap; width: number; height: number } | { ok: false; code: HeicDrawFailure };
+
+/** The HEIC worker's reply, labelled like the PDF worker's. */
+export const HEIC_REPLY_LABEL = "dotami-receipt-heic";
+export interface HeicReply {
+  label: typeof HEIC_REPLY_LABEL;
+  result: HeicDrawResult;
+}

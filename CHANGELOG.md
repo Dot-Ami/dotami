@@ -83,6 +83,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself with a random string; your file's name is never sent or kept. You are told first that the copy
   is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
   DotAmi's copy and keeps the record.
+- **iPhone (HEIC) photos as receipts** ([8i]) — a HEIC photo is kept exactly as you give it, like any
+  receipt, and *Show receipt* shows it: DotAmi reads the photo's container with its own code, in a
+  worker that can't connect anywhere, and the computer's graphics chip decodes the picture (option D
+  of `docs/connectors/heic-decoder-review.md`, chosen by the maintainer after a double-check). It works
+  on computers whose graphics driver decodes HEVC; where it can't, the photo is still kept and DotAmi
+  says so, and how to see it. A HEIC is decoded only when you click *Show receipt*, and after one fails
+  DotAmi doesn't try another until it restarts. Bursts, animations and layered HEIF pictures are
+  refused. Not tried on a Mac yet.
 - **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
   Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
   is fetched from the internet, and DotAmi checks the file is the one you added before showing it;

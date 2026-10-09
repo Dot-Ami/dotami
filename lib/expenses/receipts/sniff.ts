@@ -6,15 +6,23 @@
  * server when a receipt is added (the server is the one that decides). Pure: a byte array in, an
  * answer out, nothing kept.
  *
- * Accepted: JPEG, PNG, WebP and PDF, each only when its signature is at the very first byte. A file
+ * Accepted: JPEG, PNG, WebP, HEIC and PDF, each only when its signature is at the very first byte. A file
  * that is two things at once (a "polyglot": a JPEG whose later bytes are also a web page) is taken as
  * what its first bytes say, and the stored type is that one, so whatever shows it later picks its
  * reader from that type and never from anything in the file's other half.
  *
  * For a picture, the width and height are read from its header and checked against the pixel limits
  * BEFORE anything decodes it, so a small file that claims a huge picture is refused unopened.
+ *
+ * HEIC (the maintainer's choice of option D, 2026-10-09; docs/connectors/heic-decoder-review.md): the
+ * first box must be `ftyp` with a major brand of `heic`, `heix` or `mif1` (and `mif1` only with a HEIC
+ * brand among the compatible ones), and DotAmi's own container reader (heic/picture.ts, heicHeader)
+ * must find one still picture whose size is inside the caps and whose data is inside the file. A file
+ * with a HEIC brand that isn't one (the brand, then a JPEG or nothing) is refused as damaged; a burst,
+ * animation or layered picture is refused as not one photo. Nothing here decodes the picture.
  */
 
+import { heicHeader } from "./heic/picture";
 import { MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE, MAX_RECEIPT_BYTES, type ReceiptRefusalCode, type ReceiptType } from "./types";
 
 export type SniffResult =
@@ -99,7 +107,11 @@ function webpSize(b: Uint8Array): Size {
   return null;
 }
 
-/** Brands an ISO media file ("ftyp" box) uses for HEIC/HEIF photos, which is what iPhones save by default. */
+/**
+ * Every brand an ISO media file ("ftyp" box) uses for HEIF files, still or not. Only for naming a
+ * refusal: what is ACCEPTED is decided by heic/picture.ts (heicBrands, from heic/limits.ts), which
+ * runs first, so a file reaching this list is a HEIF DotAmi doesn't keep.
+ */
 const HEIF_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1", "msf1"]);
 
 /**
@@ -110,7 +122,8 @@ function refusalFor(b: Uint8Array): ReceiptRefusalCode {
   if (startsWith(b, [0x47, 0x49, 0x46, 0x38])) return "gif"; // GIF8
   if (ascii(b, 4, 8) === "ftyp") {
     const brand = ascii(b, 8, 12);
-    return HEIF_BRANDS.has(brand) ? "heic" : "other-picture";
+    // `mif1` alone is the general image brand (an AVIF carries it too): another kind of picture.
+    return HEIF_BRANDS.has(brand) && brand !== "mif1" ? "heif-sequence" : "other-picture";
   }
   if (startsWith(b, [0x42, 0x4d]) || startsWith(b, [0x49, 0x49, 0x2a, 0x00]) || startsWith(b, [0x4d, 0x4d, 0x00, 0x2a])) {
     return "other-picture"; // BMP, TIFF
@@ -149,5 +162,12 @@ export function sniffReceipt(bytes: Uint8Array): SniffResult {
   // Readers accept "%PDF-" anywhere in the first 1024 bytes; DotAmi only at the start, so nothing
   // else (a web page with a PDF tucked inside) can pass as one.
   if (startsWith(bytes, PDF)) return { ok: true, type: "application/pdf", width: null, height: null };
+  if (ascii(bytes, 4, 8) === "ftyp") {
+    const heic = heicHeader(bytes);
+    if (heic.ok) return picture("image/heic", { width: heic.width, height: heic.height });
+    if (heic.code === "sequence") return { ok: false, code: "heif-sequence" };
+    if (heic.code === "damaged" || heic.code === "too-many-pixels") return { ok: false, code: heic.code };
+    // "not-heic": some other ISO media file (AVIF, a video); refusalFor names it.
+  }
   return { ok: false, code: refusalFor(bytes) };
 }

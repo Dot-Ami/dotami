@@ -251,7 +251,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Receipt",
     name: "Your receipts",
     holds:
-      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG or WebP picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”). A program on this computer that lists your expense records (an agent, for one) sees whether a record has a receipt, its kind, its size and the day it was added; never the file itself, its fingerprint or where it is.",
+      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG, WebP or HEIC picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”). A program on this computer that lists your expense records (an agent, for one) sees whether a record has a receipt, its kind, its size and the day it was added; never the file itself, its fingerprint or where it is.",
     removedBy:
       "“Remove receipt” on a record on the Expenses page removes that one, file included; the record stays. Delete, at the bottom of this page, with “Your receipts” ticked removes every one and its file, keeping the records; with “Your expense records” ticked, the records go and their receipts with them.",
   },
@@ -537,7 +537,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "receipts",
     name: "Your receipt files",
     holds:
-      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG or WebP picture, or a PDF, at most 10 MB each. DotAmi names each file itself with a random string, never with your file's name, and never changes what is in it, so anything printed on a receipt (the last digits of a card, your name and address) is in the copy too. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
+      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG, WebP or HEIC picture, or a PDF, at most 10 MB each. DotAmi never keeps a converted copy: a HEIC photo is drawn by this computer's graphics chip only while it is shown. DotAmi names each file itself with a random string, never with your file's name, and never changes what is in it, so anything printed on a receipt (the last digits of a card, your name and address) is in the copy too. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
     writtenBy: { file: "lib/expenses/receipts/store.ts", mentions: 'RECEIPTS_FOLDER = "receipts"' },
     desktopOnly: false,
   },
