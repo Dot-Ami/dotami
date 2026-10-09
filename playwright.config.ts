@@ -3,12 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Browser tests: the app built and started for real, driven like a person would drive it.
  *
- * Each run gets a fresh SQLite file (`prisma/e2e.db`) with the two demo ventures, made by
+ * Each run gets a fresh SQLite file (`prisma/e2e/dotami.db`, in a folder of its own so its receipts folder is its own too) with the two demo ventures, made by
  * `e2e/prepare-db.mjs` before the server starts. The intake parser runs on its keyword
  * fallback (no model key), so results are the same on every machine.
  */
 const PORT = 3123;
-const DATABASE_URL = "file:./e2e.db";
+const DATABASE_URL = "file:./e2e/dotami.db";
 
 export default defineConfig({
   testDir: "e2e",

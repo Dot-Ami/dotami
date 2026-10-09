@@ -37,9 +37,27 @@ export function storeErrorResponse(route: string, error: unknown): Response {
   return NextResponse.json({ error: "No database reachable — nothing was changed." }, { status: 503 });
 }
 
-/** Pulls `ventureId` and a list of ids out of an agree/discard/retract body, or says what is wrong. */
-export function parseIdsBody(body: unknown): { ventureId: string; expenseIds: unknown } | { error: string } {
-  const b = (typeof body === "object" && body !== null ? body : {}) as { ventureId?: unknown; expenseIds?: unknown };
-  if (typeof b.ventureId !== "string" || b.ventureId.length === 0) return { error: "Say which idea this is for." };
-  return { ventureId: b.ventureId, expenseIds: b.expenseIds };
+/**
+ * Reads the idea a body names, the expense store's scope (lib/expenses/store.ts): an idea's id, null
+ * for the records not attached to any idea, or absent for any of the person's records. Anything else
+ * (a number, an empty string) is refused rather than read as "any".
+ */
+export function parseScope(body: unknown): { scope: string | null | undefined } | { error: string } {
+  const b = (typeof body === "object" && body !== null ? body : {}) as { ventureId?: unknown };
+  if (!Object.hasOwn(b, "ventureId") || b.ventureId === undefined) return { scope: undefined };
+  if (b.ventureId === null) return { scope: null };
+  if (typeof b.ventureId === "string" && b.ventureId.length > 0) return { scope: b.ventureId };
+  return { error: "Name an idea by its id, or null for records not attached to an idea." };
+}
+
+/**
+ * Pulls the scope and a list of ids out of an agree/discard/retract body, or says what is wrong.
+ * `ventureId` is optional since records may be "not attached yet" (the maintainer's decision,
+ * 2026-10-08): absent means any of the person's records.
+ */
+export function parseIdsBody(body: unknown): { ventureId: string | null | undefined; expenseIds: unknown } | { error: string } {
+  const scope = parseScope(body);
+  if ("error" in scope) return scope;
+  const b = (typeof body === "object" && body !== null ? body : {}) as { expenseIds?: unknown };
+  return { ventureId: scope.scope, expenseIds: b.expenseIds };
 }

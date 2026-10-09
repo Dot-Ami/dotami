@@ -9,7 +9,8 @@ import {
 } from "@/desktop/wipe-pending.mjs";
 import { logRouteError } from "@/lib/api/log-error";
 
-import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry } from "./inventory";
+import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry, type KeptLink } from "./inventory";
+import { affectedTables, keptLinkKey, keptLinks } from "./kept-links";
 
 /**
  * [8d] The "Delete" menu on /your-data, the server side. The person ticks kinds of data
@@ -79,6 +80,12 @@ export type DeleteResult =
        * read-back failed.
        */
       left: TableCounts | null;
+      /**
+       * Rows that stayed with their link cleared, per table (an idea's expense records, now "not
+       * attached yet"): how many lost the link, and how many rows the table holds afterwards (null
+       * when the read-back failed). Absent when the ticked kinds keep nothing.
+       */
+      kept?: Record<string, { unlinked: number; total: number | null }>;
       /** True once the file's free space is wiped; false means the rows are gone but their space isn't wiped yet. */
       wiped: boolean;
     };
@@ -86,7 +93,7 @@ export type DeleteResult =
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 type TableDelegate = {
-  count(): Promise<number>;
+  count(args?: { where: Record<string, unknown> }): Promise<number>;
   deleteMany(): Promise<{ count: number }>;
 };
 
@@ -120,14 +127,9 @@ export function pickKinds(kinds: unknown): DeleteMenuEntry[] {
   return DELETE_MENU.filter((e) => wanted.has(e.id));
 }
 
-/** Every table a set of menu entries touches: the ones they empty and the ones the database empties with them. */
-export function affectedTables(entries: readonly DeleteMenuEntry[]): string[] {
-  const out: string[] = [];
-  for (const e of entries) {
-    for (const m of [...e.tables, ...e.alsoDeletes]) if (!out.includes(m)) out.push(m);
-  }
-  return out;
-}
+// affectedTables and keptLinks live in ./kept-links, shared with the menu in the window, so both
+// sides work out the same tables and kept links. Re-exported here for the route and the tests.
+export { affectedTables, keptLinks };
 
 /** The counts a set of menu entries needs from the page: every table it touches, then the safety copies if ticked. */
 export function affectedKeys(entries: readonly DeleteMenuEntry[]): string[] {
@@ -142,7 +144,21 @@ async function countTables(client: PrismaClient | Prisma.TransactionClient, mode
   return counts;
 }
 
-/** Reads `seen` from a request: a count per table, as the page showed them. Anything else is refused. */
+/**
+ * How many rows each kept link still points somewhere, keyed by keptLinkKey ("Expense.ventureId"):
+ * the records that would lose their link, which is the number the menu warns about. The page reads
+ * these (lib/privacy/holdings.ts) and the delete checks them again, like the table counts.
+ */
+export async function countKeptLinks(client: PrismaClient | Prisma.TransactionClient, links: readonly KeptLink[]): Promise<TableCounts> {
+  const counts: TableCounts = {};
+  for (const k of links) counts[keptLinkKey(k)] = await table(client, k.model).count({ where: { [k.field]: { not: null } } });
+  return counts;
+}
+
+/**
+ * Reads `seen` from a request: a count per key (a table, a kept link, or the safety copies), as the
+ * page showed them. Anything else is refused.
+ */
 function readSeen(seen: unknown, keys: readonly string[]): TableCounts {
   if (typeof seen !== "object" || seen === null || Array.isArray(seen)) {
     throw new DeleteInputError("Say how many records you saw, so DotAmi can check nothing changed since.");
@@ -221,8 +237,11 @@ function settleNote(dataFile: string, since: string | undefined, wiped: boolean,
  * so nothing can slip in between, and a failure part-way deletes nothing.
  *
  * Ideas are deleted by deleting their rows: the schema's onDelete: Cascade takes their links, map
- * progress, figures and expense records with them (DELETE_MENU's `alsoDeletes`, which a test
- * keeps equal to the schema), so this needs no list of an idea's children of its own.
+ * progress and figures with them (DELETE_MENU's `alsoDeletes`, which a test keeps equal to the
+ * schema), so this needs no list of an idea's children of its own. Their expense records are kept:
+ * onDelete: SetNull clears each record's idea (the maintainer's decision of 2026-10-08). The page
+ * told the person how many would stay, so that number is in `seen` and checked like the rest: a
+ * record attached to an idea since they looked makes the warning untrue, and nothing is deleted.
  *
  * The safety copies are files, so they can't be in the transaction: their count is checked first,
  * and they are deleted only once the rows are. Without `files.dataFile` there is no folder to look
@@ -235,17 +254,27 @@ export async function deleteData(
 ): Promise<DeleteResult> {
   const entries = pickKinds(request.kinds);
   const models = affectedTables(entries);
+  const links = keptLinks(entries);
+  // What the transaction checks: every affected table and every kept link's count.
+  const keys = [...models, ...links.map(keptLinkKey)];
   const withCopies = entries.some((e) => e.folder === "backups");
   const dataFile = files.dataFile ?? null;
   if (withCopies && !dataFile) {
     throw new DeleteInputError("This copy of DotAmi has no data folder, so it has no safety copies to delete.");
   }
-  const seen = readSeen(request.seen, affectedKeys(entries));
+  const seen = readSeen(request.seen, [...affectedKeys(entries), ...links.map(keptLinkKey)]);
 
   // The safety copies being deleted: listed once, and checked against what the person saw.
   const copies = withCopies && dataFile ? listSafetyCopies(dataFile).names : [];
   if (withCopies && copies.length !== seen[SAFETY_COPIES_KEY]) {
-    return { status: "changed", counts: { ...(await countTables(prisma, models)), [SAFETY_COPIES_KEY]: copies.length } };
+    return {
+      status: "changed",
+      counts: {
+        ...(await countTables(prisma, models)),
+        ...(await countKeptLinks(prisma, links)),
+        [SAFETY_COPIES_KEY]: copies.length,
+      },
+    };
   }
 
   // The note goes down before anything is deleted, so a wipe the computer cuts short from here on
@@ -264,16 +293,16 @@ export async function deleteData(
     }
   }
 
-  let deleted: TableCounts;
+  let before: TableCounts;
   try {
-    deleted = await prisma.$transaction(
+    before = await prisma.$transaction(
       async (tx) => {
-        const before = await countTables(tx, models);
-        if (models.some((m) => before[m] !== seen[m])) throw new CountsChanged(before);
+        const now = { ...(await countTables(tx, models)), ...(await countKeptLinks(tx, links)) };
+        if (keys.some((k) => now[k] !== seen[k])) throw new CountsChanged(now);
         for (const e of entries) {
           for (const m of e.tables) await table(tx, m).deleteMany();
         }
-        return before;
+        return now;
       },
       // A big file takes longer than Prisma's 5-second default; the person is waiting on this one.
       { timeout: 60_000, maxWait: 10_000 },
@@ -290,24 +319,37 @@ export async function deleteData(
     throw error;
   }
 
+  // Only the tables go in `deleted`: the kept links' counts in `before` aren't deletions.
+  const deleted: TableCounts = Object.fromEntries(models.map((m) => [m, before[m]]));
+
   // The rows are gone. Now the copies (one another program holds open stays owed), then the wipe.
   const copiesLeft = dataFile ? deleteSafetyCopies(dataFile, owedCopies, { remove: files.remove }).left : [];
-  if (withCopies) deleted = { ...deleted, [SAFETY_COPIES_KEY]: copies.filter((n) => !copiesLeft.includes(n)).length };
+  if (withCopies) deleted[SAFETY_COPIES_KEY] = copies.filter((n) => !copiesLeft.includes(n)).length;
   // Deleting only safety copies leaves nothing in the data file to wipe, unless an earlier wipe is owed.
   const wiped = models.length > 0 || previous ? await wipeFreeSpace(prisma) : true;
   if (noted && dataFile) settleNote(dataFile, since, wiped, copiesLeft);
 
   // The rows are gone by now. If reading the file back fails, say that, rather than throw into
   // the route's "nothing was deleted" answer, which would no longer be true.
+  const keptModels = [...new Set(links.map((k) => k.model))];
   let left: TableCounts | null;
+  let keptTotals: TableCounts | null;
   try {
     left = await countTables(prisma, models);
     if (withCopies) left[SAFETY_COPIES_KEY] = copies.filter((n) => copiesLeft.includes(n)).length;
+    keptTotals = await countTables(prisma, keptModels);
   } catch (error) {
     logRouteError("your-data/delete read-back", error);
     left = null;
+    keptTotals = null;
   }
-  return { status: "deleted", deleted, left, wiped };
+  if (links.length === 0) return { status: "deleted", deleted, left, wiped };
+  const kept: Record<string, { unlinked: number; total: number | null }> = {};
+  for (const k of links) {
+    const prev = kept[k.model]?.unlinked ?? 0;
+    kept[k.model] = { unlinked: prev + before[keptLinkKey(k)], total: keptTotals ? keptTotals[k.model] : null };
+  }
+  return { status: "deleted", deleted, left, kept, wiped };
 }
 
 /**

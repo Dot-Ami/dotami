@@ -163,6 +163,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                     // The safety-copies box counts files, under its folder's name.
                     backups: holdings.safetyCopies,
                   }}
+                  keptCounts={holdings.keptLinks}
                   tableNames={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
                     backups: "Safety copies",
@@ -258,7 +259,9 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
     status = (
       <p className="mt-2 text-[12px] text-stone">
         {entry.whenAbsent ??
-          (desktop ? "None yet." : "None here. This copy runs from source; the desktop app is what makes it.")}
+          (desktop || !entry.desktopOnly
+            ? "None yet."
+            : "None here. This copy runs from source; the desktop app is what makes it.")}
       </p>
     );
   } else if (!facts.readable) {

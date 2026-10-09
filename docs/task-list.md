@@ -115,11 +115,19 @@ roadmap's build order.
     [issue #124](https://github.com/Dot-Ami/dotami/issues/124)
   - [ ] Check each row pasted in reply (no figures, client or company names), then mark those titles
     "documented" in their practice files, citing the issue
+  - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
+    preview shows the earliest and latest date read, in words, to check against the file
+  - [x] "These dates are right": a tick-box beside that line, needed before Review; another file, date
+    column, date order or century answer empties it ("These months are right" for months across)
+  - [x] Months across the top (FreshBooks' Revenue by Client): pick the row of month names and where
+    the totals come from, one total per month; a report with no dates (Wave's Income by Customer)
+    names the report to export instead
+  - [x] A French semicolon file with several comma-decimal columns (Sage 50) reads on its
+    semicolons; an Excel formula saved with no value is listed as one, with what to do, never as
+    "no amount" and never guessed
   - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
     summary block no longer taken for the column names
-  - [ ] Fix the other gaps those files found (follow-on slices: refunds, two-digit years, months across
-    the top, French files with several comma-decimal columns, formulas saved with no value, a report
-    with no dates)
+  - [ ] Fix the other gap those files found (follow-on slice: refunds)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
@@ -181,18 +189,40 @@ roadmap's build order.
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
-  every business expense); the store for typed records is built, the screens are not.
+  every business expense); the store for typed records and the screen to type them are built
+  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies, carried by backups and shown inside DotAmi (2026-10-08); the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
-  - [x] The privacy review (typed records as built; receipts still marked PROPOSED):
+  - [x] The privacy review (typed records and receipts as built):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
   - [x] Decided: single records with their receipt files, copied into the data folder and carried
     by backups; every way in (typed, spreadsheet rows, bank rows, a receipt photo the Lens reads)
   - [x] The store for typed records: the `Expense` table (a new migration), the checks, the propose /
     agree / retract / discard / list routes (agents can only propose; agree, retract and discard answer only to DotAmi's own page), the privacy list and
     /your-data's count, and the "totals, never single transactions" wording reworded for expenses
-  - [ ] The screen to type a record and the agree prompt for expenses
-  - [ ] Receipts as copies, and backups that carry them
-  - [x] The entries in the Delete menu ([8d]): expense records have their own box, and go with their idea
+  - [x] The screen to type records, *Your expenses* (`/expenses`, from the ideas page and each idea):
+    type many and agree once in a review list that lets you untick any; a record "not attached yet"
+    attached to an idea later; the person's own business share; refunds kept as a negative amount or
+    as a refund record linked to the purchase; agent and file proposals wait there for the agree click
+    ([ui-spec](ui-spec/expenses/_index.md))
+  - [x] Receipts as copies: a `receipts/` folder beside the data file, the type read from the bytes
+    (JPEG, PNG, WebP, PDF), 10 MB and a pixel cap, random names, a SHA-256; *Add a receipt* / *Remove
+    receipt* on the Expenses page (agreed records only; page-only routes); a *Your receipts* box on the
+    Delete menu, receipts going with *Your expense records*; a sweep for files no record describes
+    ([expense-records.md § 7](architecture/expense-records.md))
+  - [x] Backups that carry the receipts: backup format 2 streams the data file and every receipt it
+    describes in 1 MB pieces, the passphrase covering both; old (format 1) backups still restore
+    ([desktop-app.md § Backup and restore](architecture/desktop-app.md))
+  - [x] Showing a receipt inside DotAmi: the security design first
+    ([expense-records.md § 8](architecture/expense-records.md)), then **Show receipt**: pictures from a
+    `blob:` address, PDFs drawn by pdf.js in a no-network worker, every file checked again before it
+    is drawn; browser tests with hostile files
+  - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
+    record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
+    2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
+    the person confirms (the count includes turned-down records, which no list shows, and it says so)
+  - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
+    none clean on every count, the options and their costs waiting for the maintainer's choice
+    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

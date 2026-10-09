@@ -20,6 +20,7 @@ import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices
 import { parseNotices } from "../lib/licences/notices";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
+import { pdf, png } from "../tests/helpers/receipt-files";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
 const root = path.resolve(__dirname, "..");
@@ -114,6 +115,9 @@ test("start → describe a venture → close → start again: the venture is sti
     path.join(dataDir, "dotami.db"),
   );
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("File → Back up…");
+  // Backups carry the receipts folder now, and the page says so.
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("with your receipt files in it");
+  await expect(page.getByRole("region", { name: "Data and backups" })).not.toContainText("doesn't hold the receipts folder");
   await expect(page.getByRole("region", { name: "Privacy" })).toContainText("DotAmi sends nothing off this computer.");
 
   // An outside link opens in the person's own browser, never inside the app's window.
@@ -304,17 +308,45 @@ test("Add to my calendar asks where to save with a Save dialog, writes the file 
   expect(new URL(page.url()).pathname).toBe("/settings");
 });
 
-test("back up on one computer → restore on another: the same ventures, locked with a passphrase", async () => {
+test("back up on one computer → restore on another: the same ventures and receipt files, locked with a passphrase", async () => {
   test.setTimeout(180_000);
   const backupFile = path.join(tmp, "DotAmi backup.dotami-backup");
   const passphrase = "correct horse battery staple";
+  const receipt = png(5, 3);
 
-  // Computer A: describe a venture, then File → Back up… with a passphrase.
+  // Computer A: describe a venture, then keep an expense record with a receipt ([8i]), the way the
+  // Expenses page does it (from DotAmi's own page, so the page-only routes answer).
   let page = await launch();
   await describeVenture(page);
+  const kept = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) => {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, body: (await res.json()) as { expenses?: { id: string }[] } };
+    };
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 4_599, paidTo: "Example Stationery desktop test", whatFor: "paper" }],
+    });
+    const id = proposed.body.expenses![0].id;
+    const agreed = await post("/api/expenses/agree", { expenseIds: [id] });
+    const added = await post("/api/expenses/receipt", { expenseId: id, file });
+    return [proposed.status, agreed.status, added.status];
+  }, receipt.toString("base64"));
+  expect(kept).toEqual([201, 200, 200]);
+  const receiptsA = readdirSync(path.join(dataDir, "receipts"));
+  expect(receiptsA).toHaveLength(1);
+  expect(readFileSync(path.join(dataDir, "receipts", receiptsA[0])).equals(receipt)).toBe(true);
+
+  // File → Back up… with a passphrase; the message afterwards says the receipt is in it.
   await app!.evaluate(({ dialog }, file) => {
     dialog.showSaveDialog = (async () => ({ canceled: false, filePath: file })) as typeof dialog.showSaveDialog;
-    dialog.showMessageBox = (async () => ({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
+    dialog.showMessageBox = (async (...args: unknown[]) => {
+      const options = (args.length > 1 ? args[1] : args[0]) as { detail?: string };
+      (globalThis as { lastDetail?: string }).lastDetail = options.detail;
+      return { response: 0, checkboxChecked: false };
+    }) as typeof dialog.showMessageBox;
   }, backupFile);
   const backupPrompt = app!.waitForEvent("window");
   await clickMenu("backup");
@@ -325,6 +357,11 @@ test("back up on one computer → restore on another: the same ventures, locked 
   await prompt.locator("#confirm").fill(passphrase);
   await prompt.getByRole("button", { name: "Back up" }).click();
   await expect.poll(() => existsSync(backupFile), { timeout: 30_000 }).toBe(true);
+  await expect
+    .poll(() => app!.evaluate(() => (globalThis as { lastDetail?: string }).lastDetail ?? ""), { timeout: 30_000 })
+    .toContain("It holds your 1 receipt file too.");
+  // Locked: the receipt's bytes aren't readable in the file.
+  expect(readFileSync(backupFile).indexOf(receipt.subarray(0, 16))).toBe(-1);
   await quit();
 
   // Computer B: a fresh, empty app.
@@ -361,6 +398,13 @@ test("back up on one computer → restore on another: the same ventures, locked 
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   // What B had before was kept, in its backups folder.
   expect(readdirSync(path.join(computerB, "backups")).some((f) => f.startsWith("dotami-before-restore-"))).toBe(true);
+  // The receipt came with it: the same name and the same bytes, and the record shows it.
+  expect(readdirSync(path.join(computerB, "receipts"))).toEqual(receiptsA);
+  expect(readFileSync(path.join(computerB, "receipts", receiptsA[0])).equals(receipt)).toBe(true);
+  await page.goto(new URL("/expenses", page.url()).toString());
+  await expect(
+    page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Stationery desktop test" }),
+  ).toContainText(`Receipt: PNG picture · ${receipt.length} bytes`);
 });
 
 test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {
@@ -392,6 +436,52 @@ test("last year's return is read inside the app, in a worker that can reach noth
   expect(reader, "the return reader's worker").toBeTruthy();
   expect(await reader!.evaluate(() => fetch("/api/figures").then(() => "reached", () => "refused"))).toBe("refused");
   await card.getByRole("button", { name: "Close" }).click();
+});
+
+test("a PDF receipt is drawn inside the app, in a worker that can reach nothing ([8i])", async () => {
+  // The desktop window's own build of pdf.js, worker and policy, as in the browser test
+  // (e2e/receipt-viewer.spec.ts): the receipt's pages come back as pictures, and the worker can't connect.
+  const page = await launch();
+  await page.goto(new URL("/expenses", page.url()).toString());
+  const id = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) =>
+      (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<{
+        expenses?: { id: string }[];
+      }>;
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 2_500, paidTo: "Example Print Shop desktop viewer", whatFor: "toner" }],
+    });
+    const expenseId = proposed.expenses![0].id;
+    await post("/api/expenses/agree", { expenseIds: [expenseId] });
+    await post("/api/expenses/receipt", { expenseId, file });
+    return expenseId;
+  }, pdf({ text: "Example Print Shop receipt" }).toString("base64"));
+  expect(id).toBeTruthy();
+  await page.reload();
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const row = page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Print Shop desktop viewer" });
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const drawn = page.getByRole("dialog", { name: /^Receipt: / }).getByRole("img", { name: "Page 1 of 1" });
+  await expect(drawn).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(() =>
+      drawn.evaluate((el) => {
+        const c = el as HTMLCanvasElement;
+        const data = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+        for (let i = 0; i < data.length; i += 4) if (data[i] < 100 && data[i + 1] < 100 && data[i + 2] < 100) return true;
+        return false;
+      }),
+    )
+    .toBe(true);
+  const viewerWorker = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(viewerWorker, "the receipt viewer's worker").toBeTruthy();
+  expect(await viewerWorker!.evaluate(() => fetch("/api/expenses").then(() => "reached", () => "refused"))).toBe("refused");
+  // The window is still DotAmi's Expenses page: nothing in the receipt moved it.
+  expect(new URL(page.url()).pathname).toBe("/expenses");
 });
 
 /** Text no real data holds, so finding it in a file's bytes can only mean the deleted statement. */

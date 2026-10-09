@@ -13,7 +13,9 @@ import {
 } from "@/lib/figures/types";
 import type { SettingsToday } from "@/lib/settings/today";
 
+import { countKeptLinks } from "./delete";
 import {
+  DELETE_MENU,
   FOLDERS,
   SENT_ELSEWHERE,
   TABLES,
@@ -104,6 +106,12 @@ export interface Holdings {
   desktop: boolean;
   /** One per table the inventory lists, in its order. */
   tables: TableCount[];
+  /**
+   * For each link the Delete menu clears while keeping the row (DELETE_MENU `keeps`), how many rows
+   * it still holds, keyed "Expense.ventureId": the expense records that would stay, "not attached
+   * yet", if the ideas were deleted.
+   */
+  keptLinks: Record<string, number>;
   /** How many ideas carry a note of the person's. */
   ideasWithNotes: number;
   figures: {
@@ -283,6 +291,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
   const tables: TableCount[] = [];
   for (const entry of TABLES) tables.push({ entry, count: await countTable(prisma, entry.model) });
 
+  const keptLinks = await countKeptLinks(prisma, DELETE_MENU.flatMap((e) => e.keeps));
   const ideasWithNotes = await prisma.venture.count({ where: { notes: { not: "" } } });
   const figures = await readFigures(prisma);
 
@@ -306,6 +315,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
   return {
     desktop: today.desktop,
     tables,
+    keptLinks,
     ideasWithNotes,
     figures,
     dataFile: { path: dataPath, exists: today.dataFile.exists, bytes: dataInfo?.bytes ?? null },

@@ -4,7 +4,7 @@ Status: proposal, read-only reconciliation of seven story designs, 2026-10-06, a
 Scope: [8c-2], [8c-3], [8d], [8e], [8f], [8g], [8h]. These are the not-started stories after [8a] (figures store), [8b] (agree prompt) and [8c] (Excel/CSV drop), which are merged in #77 and #78.
 Rules that bind every story (from `CLAUDE.md`, `docs/architecture/figures-privacy-review.md`):
 
-- Figures are **totals, never transactions** (a single business expense is not a figure: it is an expense record, [8i], [expense-records.md](expense-records.md)). A file's bytes are read in the window, in memory, and never sent or kept.
+- Figures are **totals, never transactions** (a single business expense is not a figure: it is an expense record, [8i], [expense-records.md](expense-records.md)). A file's bytes are read in the window, in memory, and never sent or kept (the one exception: a receipt file the person adds to an expense record is copied into DotAmi's data folder, [8i]).
 - **Only the person's click in the agree prompt confirms a figure.** No permission level skips it (ruling 2026-09-28).
 - IDs are forever: figure kinds, source kinds and any new id list can only be appended to.
 - Every rule, rate or threshold shown is cited and dated. DotAmi never invents a number, never says "you should", and never files anything.
@@ -122,8 +122,8 @@ Gaps already found by running the real code:
 - A FreshBooks summary row is taken as the header. *Fixed 2026-10-08 (the Status column slice).*
 - A Wave refund sits in a Debit column.
 - A Sage void invoice is counted (and a FreshBooks Draft, and a Xero Voided line). *Fixed 2026-10-08 (the Status column).*
-- Two-digit years are refused.
-- Months-across reports can't be read.
+- Two-digit years are refused. *Fixed 2026-10-08 ([8c-3]): one question per file, "Is 05 the year 2005?".*
+- Months-across reports can't be read. *Fixed 2026-10-08 ([8c-3]): the person picks the row of month names and where the totals come from; Wave's Income by Customer names Account Transactions instead.*
 
 **Sources (read 2026-10-06):**
 - central.xero.com/s/article/ Export-invoices-and-bills, Import-customer-invoices-GL, Import-customer-invoices-US, Receivable-Invoice-Detail-report-New, Export-or-print-a-report

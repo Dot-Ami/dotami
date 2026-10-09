@@ -20,7 +20,10 @@ const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 const MAX_BODY_BYTES = 512 * 1024;
 
 /**
- * POST /api/expenses/agree { ventureId, expenseIds, edits?: { [id]: { amountCents?, date?, paidTo?, whatFor?, category?, sellerAddress?, vendorGstNumber? } } }
+ * POST /api/expenses/agree { ventureId?, expenseIds, edits?: { [id]: { amountCents?, date?, paidTo?, whatFor?, category?, sellerAddress?, vendorGstNumber?, gstHstCents?, creditNote?, businessSharePercent? } } }
+ *
+ * `ventureId` narrows which records may be agreed to: an idea's id, null for the records not attached
+ * to an idea, or left out for any of the person's (the Expenses screen agrees to a typed batch at once).
  *
  * THE PERSON'S CLICK. This is the only way a proposed record becomes a confirmed one, and it
  * answers only to DotAmi's own page (`Sec-Fetch-Site: same-origin`); see `refuseUnlessFromAppPage`

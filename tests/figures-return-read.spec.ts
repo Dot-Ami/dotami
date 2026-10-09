@@ -407,7 +407,7 @@ describe("the package underneath: pdfjs-dist, as reviewed", () => {
     }
   });
 
-  it("is imported only by the return reader's own two files", () => {
+  it("is imported only by the return reader's own two files and the receipt viewer's worker", () => {
     const importers: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -421,6 +421,12 @@ describe("the package underneath: pdfjs-dist, as reviewed", () => {
       }
     };
     for (const dir of ["app", "components", "lib", "desktop"]) walk(path.join(root, dir));
-    expect(importers.sort()).toEqual(["lib/figures/return/extract.ts", "lib/figures/return/pdf-text.worker.ts"]);
+    // The receipt viewer ([8i]) draws PDFs with the same setup (lib/expenses/receipts/viewer/draw-pdf.ts
+    // takes PDF_OPTIONS and the PdfJs type from extract.ts); its worker is the only other importer.
+    expect(importers.sort()).toEqual([
+      "lib/expenses/receipts/viewer/pdf-pages.worker.ts",
+      "lib/figures/return/extract.ts",
+      "lib/figures/return/pdf-text.worker.ts",
+    ]);
   });
 });

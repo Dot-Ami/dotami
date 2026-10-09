@@ -6,7 +6,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
-import type { DeleteKindId, DeleteMenuEntry } from "@/lib/privacy/inventory";
+import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
+import { keptLinkKey, keptLinks } from "@/lib/privacy/kept-links";
 
 import { numberWords, plural } from "./format";
 
@@ -14,6 +15,11 @@ export interface DeleteMenuProps {
   menu: readonly DeleteMenuEntry[];
   /** Rows per table, read from the file when the page was drawn. */
   counts: Record<string, number>;
+  /**
+   * For each link a box clears while keeping the rows (DELETE_MENU `keeps`), how many rows it holds
+   * now, keyed "Expense.ventureId": the expense records that stay, "not attached yet", when ideas go.
+   */
+  keptCounts: Record<string, number>;
   /** The page's name for each table ("Your ideas"), from the inventory. */
   tableNames: Record<string, string>;
   notCleared: readonly { name: string; why: string }[];
@@ -30,7 +36,14 @@ interface Outcome {
   deleted: Record<string, number>;
   /** Null when the server deleted but couldn't read the file back to count what is left. */
   left: Record<string, number> | null;
+  /** Rows that stayed with their link cleared, per table; absent when nothing was kept (lib/privacy/delete.ts). */
+  kept?: Record<string, { unlinked: number; total: number | null }>;
   wiped: boolean;
+  /**
+   * Present when receipts were deleted: how many files went from the receipts folder and how many
+   * couldn't go yet (app/api/your-data/delete/route.ts). Null when the folder couldn't be read.
+   */
+  receiptFiles?: { removed: number; failed: number } | null;
 }
 
 /** The key the safety copies' count goes under: the box's folder, beside the tables' names. */
@@ -45,6 +58,14 @@ const countWords = (key: string, n: number) => (key === COPIES ? plural(n, "file
 /** Safety copies the server couldn't delete (another program had them open); 0 when none were ticked. */
 const copiesLeftOf = (o: Outcome) => o.left?.[COPIES] ?? 0;
 
+// The key a kept link's count travels under ("Expense.ventureId") and the links the ticked boxes
+// clear while keeping the rows come from lib/privacy/kept-links, the same code the server runs, so
+// the warning's number and the server's check can't drift apart.
+const keyOf = keptLinkKey;
+const keptLinksOf = keptLinks;
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /**
  * [8d] The "Delete" button on "What DotAmi knows about you". It opens a menu of kinds of data, each
  * with what else goes with it and a Learn more; then DotAmi asks twice, in two dialogs, before
@@ -54,7 +75,7 @@ const copiesLeftOf = (o: Outcome) => o.left?.[COPIES] ?? 0;
  * Escape, Cancel or a click outside a dialog at either ask deletes nothing. Focus starts on Cancel
  * at the final ask, so a stray Enter can't delete.
  */
-export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, desktop, wipePending }: DeleteMenuProps) {
+export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, retention, desktop, wipePending }: DeleteMenuProps) {
   const router = useRouter();
   const { resetJourney } = useJourney();
   const panelId = useId();
@@ -74,6 +95,9 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
   const copiesTicked = chosen.some((e) => e.folder === COPIES);
   const affected: string[] = [];
   for (const e of chosen) for (const m of tablesOf(e)) if (!affected.includes(m)) affected.push(m);
+  // What stays with its link cleared, and how many: said before the person confirms.
+  const keptLinks = keptLinksOf(chosen);
+  const kept = keptLinks.filter((k) => (keptCounts[keyOf(k)] ?? 0) > 0);
 
   function toggle(id: DeleteKindId, on: boolean) {
     setTicked((prev) => (on ? [...prev.filter((k) => k !== id), id] : prev.filter((k) => k !== id)));
@@ -87,7 +111,11 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
     setStep("working");
     setError(null);
     // What the person was shown; the server refuses (409) if the file holds anything else now.
-    const seen = Object.fromEntries(affected.map((m) => [m, counts[m] ?? 0]));
+    // The number of records the warning said would stay is checked too, like the table counts.
+    const seen = {
+      ...Object.fromEntries(affected.map((m) => [m, counts[m] ?? 0])),
+      ...Object.fromEntries(keptLinks.map((k) => [keyOf(k), keptCounts[keyOf(k)] ?? 0])),
+    };
     const result = await postJson("/api/your-data/delete", { kinds: ticked, seen });
     if (!result.ok) {
       setError(result.error);
@@ -97,7 +125,7 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
       return;
     }
     const body = result.body as Outcome;
-    setOutcome({ deleted: body.deleted, left: body.left, wiped: body.wiped });
+    setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped, receiptFiles: body.receiptFiles });
     // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
     if (ticked.includes("ideas")) resetJourney();
     setTicked([]);
@@ -156,7 +184,14 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
         <PendingNote desktop={desktop} retrying={retrying} result={pendingResult} onFinish={() => void finishPending()} />
       ) : null}
       {step === "done" && outcome ? (
-        <DoneNote outcome={outcome} tableNames={tableNames} desktop={desktop} retrying={retrying} onRetry={() => void retryWipe()} />
+        <DoneNote
+          outcome={outcome}
+          tableNames={tableNames}
+          keeps={menu.flatMap((e) => e.keeps)}
+          desktop={desktop}
+          retrying={retrying}
+          onRetry={() => void retryWipe()}
+        />
       ) : null}
       {error && step !== "menu" ? (
         <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
@@ -205,8 +240,23 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
                                   .map((m) => `${tableNames[m] ?? m}: ${counts[m] ?? 0}`)
                                   .join(" · ")}
                         </p>
+                        {e.built && total > 0
+                          ? e.keeps.map((k) => (
+                              <p key={keyOf(k)} className="font-mono text-[11px] text-stone">
+                                {capitalise(k.one)}s attached to them: {keptCounts[keyOf(k)] ?? 0}{" "}
+                                {affected.includes(k.model)
+                                  ? `(they go too: “${tableNames[k.model] ?? k.model}” is ticked)`
+                                  : `(they stay, as “${k.becomes}”)`}
+                              </p>
+                            ))
+                          : null}
                         {/* The safety copies are the last way back, so their sentence reads as the warning it is. */}
                         <p className={`mt-1 text-[12.5px] ${e.folder ? "text-amber" : "text-paper-dim"}`}>{e.goesWithIt}</p>
+                        {on
+                          ? kept
+                              .filter((k) => e.keeps.some((own) => keyOf(own) === keyOf(k)))
+                              .map((k) => <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />)
+                          : null}
                         <details className="mt-1">
                           <summary className="cursor-pointer text-[12px] text-stone underline decoration-rule underline-offset-4 hover:text-paper">
                             Learn more
@@ -296,6 +346,14 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
               </li>
             ))}
           </ul>
+          {kept.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-sm font-semibold text-paper">Kept, not deleted</p>
+              {kept.map((k) => (
+                <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />
+              ))}
+            </div>
+          ) : null}
           {copiesTicked ? (
             <p className="mt-3 text-[12.5px] text-amber">
               The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
@@ -339,20 +397,40 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
   );
 }
 
+/**
+ * Said before the person confirms: how many rows stay, what they become, where they are kept and
+ * how to delete them (the maintainer's decision of 2026-10-08, for an idea's expense records).
+ */
+function KeptWarning({ link, count }: { link: KeptLink; count: number }) {
+  return (
+    <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-paper">
+      <span className="font-semibold">
+        {plural(count, link.one)} {count === 1 ? "stays" : "stay"}, as “{link.becomes}”.
+      </span>{" "}
+      {link.whereAndHow}
+    </p>
+  );
+}
+
 function DoneNote({
   outcome,
   tableNames,
+  keeps,
   desktop,
   retrying,
   onRetry,
 }: {
   outcome: Outcome;
   tableNames: Record<string, string>;
+  keeps: readonly KeptLink[];
   desktop: boolean;
   retrying: boolean;
   onRetry: () => void;
 }) {
   const rows = Object.keys(outcome.deleted);
+  // A kept line only when something was kept: ticking ideas with no expense records attached would
+  // otherwise say "0 records kept".
+  const keptRows = Object.entries(outcome.kept ?? {}).filter(([, k]) => k.unlinked > 0);
   const copiesLeft = copiesLeftOf(outcome);
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
@@ -364,7 +442,22 @@ function DoneNote({
             {outcome.left ? `, ${outcome.left[m] ?? 0} left` : ""}
           </li>
         ))}
+        {keptRows.map(([m, k]) => (
+          <li key={m}>
+            {tableNames[m] ?? m}: {plural(k.unlinked, "record")} kept, now “{keeps.find((x) => x.model === m)?.becomes ?? "kept"}”
+            {k.total === null ? "" : `; ${plural(k.total, "record")} in all`}
+          </li>
+        ))}
+        {outcome.receiptFiles ? <li>Receipt files: {plural(outcome.receiptFiles.removed, "file")} removed from the receipts folder</li> : null}
       </ul>
+      {outcome.receiptFiles === null || (outcome.receiptFiles && outcome.receiptFiles.failed > 0) ? (
+        <p className="mt-2 text-[12.5px] text-amber">
+          {outcome.receiptFiles === null
+            ? "DotAmi couldn't open the receipts folder to remove the receipt files."
+            : `${plural(outcome.receiptFiles.failed, "receipt file")} couldn't be removed yet (another program may have it open).`}{" "}
+          No record points to them any more; DotAmi removes them the next time you add or delete a receipt.
+        </p>
+      ) : null}
       {outcome.left ? null : (
         <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
       )}

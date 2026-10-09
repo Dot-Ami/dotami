@@ -18,7 +18,7 @@ const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 const MAX_BODY_BYTES = 64 * 1024;
 
 /**
- * POST /api/expenses/retract { ventureId, expenseIds } — takes confirmed records back. Like
+ * POST /api/expenses/retract { ventureId?, expenseIds } (ventureId as in agree) — takes confirmed records back. Like
  * agreeing, it is the person's call and answers only to DotAmi's own page (see
  * `refuseUnlessFromAppPage`).
  */

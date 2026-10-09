@@ -51,12 +51,16 @@ says where it is going.
   data from `lib/privacy/inventory.ts` `DELETE_MENU` (the safety copies in `backups/` among them),
   asked twice, then wiped from the file by `lib/privacy/delete.ts`; a wipe that couldn't finish is
   finished at the desktop app's next start, only when Delete left its note: `desktop/wipe-pending.mjs`)
+  · `/expenses[?idea=<id>]` ("Your expenses": typing business expense records and agreeing to them
+  all at once, records not attached to an idea yet, refunds kept either way; [8i])
   · `/licences` (the third-party notices: every package that ships, its version and licence text,
   read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes at build time; packaging
   the installer stops if a package that ships has no entry).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
-  `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT
+  `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
+  `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
+  `receipt/remove` / `receipt/file`, the last returning a receipt's bytes only after its size and SHA-256 match) · `settings` (GET/PUT
   one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
@@ -64,7 +68,10 @@ says where it is going.
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
-  the one place DotAmi holds single transactions, with no bank or card number and no receipt yet; [8i]) · `Setting` (the person's saved choices, one row per setting: a
+  the one place DotAmi holds single transactions, with no bank or card number; its idea is
+  optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed
+  record, described: its type read from the bytes, size and SHA-256; the file itself is a copy in `receipts/` beside the data file,
+  named by DotAmi with a random id, never the person's file name; `lib/expenses/receipts/`; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]) · `SourceAccount` (the bank and card
   accounts the person allowed, under their own name for each, with the warning button and the days; never a number; nothing links to it yet; [8g]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every

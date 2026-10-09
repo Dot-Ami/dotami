@@ -192,7 +192,8 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
       }
       return (
         <>
-          <p>All of your data is one file on this computer:</p>
+          {/* Receipt files ([8i]) live in a receipts folder beside the data file, not inside it. */}
+          <p>Your data is one file on this computer, plus the copies of your receipts in a folder named receipts beside it:</p>
           <div className="flex flex-wrap items-center gap-2">
             <Code>{path}</Code>
             <CopyPathButton path={path} />
@@ -200,15 +201,17 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you
-              can keep somewhere else, locked with a passphrase if you choose.{" "}
+              can keep somewhere else, locked with a passphrase if you choose, with your receipt
+              files in it.{" "}
               <strong className="font-semibold text-paper">File → Restore from a backup…</strong> puts
               one back — on this computer or a new one — after checking it, and keeps a copy of
               what was here in the backups folder.
             </p>
           ) : (
             <p className="text-paper-dim">
-              Copying that file while DotAmi is stopped is a complete backup; deleting it starts
-              over. The desktop app has Back up and Restore in its File menu.
+              Copying that file and the receipts folder beside it while DotAmi is stopped is a
+              complete backup; deleting both starts over. The desktop app has Back up and Restore in
+              its File menu.
             </p>
           )}
           <p className="text-paper-dim">
