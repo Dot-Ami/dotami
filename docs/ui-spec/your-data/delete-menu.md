@@ -24,7 +24,10 @@ with where they are kept, before confirming.
      records **stay**, as "not attached yet": the database clears each record's idea instead
      (`keeps` in `DELETE_MENU`).
    - **Your figures** — every figure, in every state; cards go back to the estimates.
-   - **Your expense records** — every record, attached to an idea or not, in every state.
+   - **Your expense records** — every record, attached to an idea or not, in every state, and every
+     receipt added to one (the `Receipt` rows by the schema's cascade, the files by the sweep).
+   - **Your receipts** — every receipt file in the receipts folder and its `Receipt` row; the records
+     stay, with no receipt ([8i], expense-records.md § 7).
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
    - **Your settings** — every saved choice goes back to its default.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
@@ -73,6 +76,9 @@ with where they are kept, before confirming.
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
    using it), with **Try the wipe again**. If the server deleted but couldn't read the file back to
    count what is left, the "left" counts are dropped and an amber line says to reload and check.
+   When receipts were deleted, a line "Receipt files: N files removed from the receipts folder";
+   if some couldn't be removed yet (another program had one open), or the folder couldn't be read,
+   an amber note says so and that DotAmi removes them the next time a receipt is added or deleted.
    The page's counts are read again from the file.
 
 Escape, Cancel or a click on the dim backdrop at either ask deletes nothing. If the counts in the
@@ -96,7 +102,11 @@ sentences are in `DELETE_MENU`.
 ## State touched (field names only)
 
 Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`;
-`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense`, `PersonStatement`, `Setting`. Never `User`
+`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense` (and,
+by the cascade, `Receipt`), `Receipt`, `PersonStatement`, `Setting`. When receipts were deleted, the
+files in `receipts/` beside the data file that no row describes any more are removed
+(`sweepOrphanReceipts` in `lib/expenses/receipts/store.ts`); a file not named the way DotAmi names
+receipts is never touched. Never `User`
 (`KEPT_BY_DELETE`). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
 is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
 

@@ -165,6 +165,7 @@ describe("readHoldings on a seeded database", () => {
       Setting: 1,
       Figure: 7,
       Expense: 2,
+      Receipt: 0,
     });
     expect(h.ideasWithNotes).toBe(1);
   });

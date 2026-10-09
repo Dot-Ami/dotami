@@ -88,7 +88,7 @@ place. Change both in the same commit.
 ## Verified 2026-10-05
 
 `e2e/app.spec.ts` › "the settings page …" on the production build: reached from the landing
-page and the ideas page; all six groups; the data file shown is the run's throwaway `e2e.db`;
+page and the ideas page; all six groups; the data file shown is the run's throwaway `prisma/e2e/dotami.db`;
 Privacy says nothing is sent (no key in the test run); every setting shows its default, its
 warning when it has one, and its story; Copy path puts exactly the shown path on the clipboard; no sideways
 scroll at 390 px wide.

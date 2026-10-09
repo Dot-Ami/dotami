@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
+import { receiptsFolder, sweepOrphanReceipts, type SweepResult } from "@/lib/expenses/receipts/store";
 import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/figures/http";
 import { prisma } from "@/lib/prisma";
 import { DeleteInputError, deleteData, wipeFreeSpace } from "@/lib/privacy/delete";
@@ -47,6 +48,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ wiped: await wipeFreeSpace(prisma) });
     }
     const result = await deleteData(prisma, { kinds: body.kinds, seen: body.seen });
+    if (result.status === "deleted" && "Receipt" in result.deleted) {
+      // The rows are gone (deleted, or taken with their records); now the files they described. A
+      // file that can't go yet is counted, said on the page, and removed by the next sweep. Null when
+      // the folder couldn't be read at all.
+      let receiptFiles: SweepResult | null;
+      try {
+        receiptFiles = await sweepOrphanReceipts(prisma, receiptsFolder());
+      } catch (error) {
+        logRouteError("your-data/delete receipt files", error);
+        receiptFiles = null;
+      }
+      return NextResponse.json({ ...result, receiptFiles });
+    }
     if (result.status === "changed") {
       return NextResponse.json(
         {

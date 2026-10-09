@@ -8,6 +8,8 @@
  * Status and source ids are forever: add to these lists, never rename or reuse one.
  */
 
+import type { ReceiptView } from "./receipts/types";
+
 /**
  * Same four states, with the same meaning, as a figure's (lib/figures/types.ts):
  * proposed  — the person typed it into the agree prompt, or an importer / the Lens / an outside
@@ -77,4 +79,10 @@ export interface ExpenseView {
   proposedAt: string;
   agreedAt: string | null;
   retractedAt: string | null;
+  /**
+   * The receipt file the person added, described (its type as DotAmi read it from the bytes, its
+   * size, when it was added), or null. Never the file itself, its id or its hash: the bytes answer
+   * only DotAmi's own page (lib/expenses/receipts/).
+   */
+  receipt: ReceiptView | null;
 }

@@ -99,7 +99,7 @@ test("the settings page: every group, what's true today, every setting and its w
   // "Today" is read from the running app: its data file is this run's throwaway database, and
   // with no model key (playwright.config.ts) the typed sentence never leaves the computer.
   const data = page.getByRole("region", { name: "Data and backups" });
-  const filePath = data.locator("code").filter({ hasText: /e2e\.db$/ });
+  const filePath = data.locator("code").filter({ hasText: /e2e[\\/]dotami\.db$/ });
   await expect(filePath).toBeVisible();
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");

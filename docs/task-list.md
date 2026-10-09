@@ -159,9 +159,9 @@ roadmap's build order.
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
   every business expense); the store for typed records and the screen to type them are built
-  (2026-10-08, with the maintainer's decisions of that day); receipts and the other ways in are not.
+  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies (2026-10-08); backups that carry them, the in-app viewer and the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
-  - [x] The privacy review (typed records as built; receipts still marked PROPOSED):
+  - [x] The privacy review (typed records and receipts as built):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
   - [x] Decided: single records with their receipt files, copied into the data folder and carried
     by backups; every way in (typed, spreadsheet rows, bank rows, a receipt photo the Lens reads)
@@ -173,7 +173,13 @@ roadmap's build order.
     attached to an idea later; the person's own business share; refunds kept as a negative amount or
     as a refund record linked to the purchase; agent and file proposals wait there for the agree click
     ([ui-spec](ui-spec/expenses/_index.md))
-  - [ ] Receipts as copies, and backups that carry them
+  - [x] Receipts as copies: a `receipts/` folder beside the data file, the type read from the bytes
+    (JPEG, PNG, WebP, PDF), 10 MB and a pixel cap, random names, a SHA-256; *Add a receipt* / *Remove
+    receipt* on the Expenses page (agreed records only; page-only routes); a *Your receipts* box on the
+    Delete menu, receipts going with *Your expense records*; a sweep for files no record describes
+    ([expense-records.md § 7](architecture/expense-records.md))
+  - [ ] Backups that carry the receipts (a format that streams; old backups still restore)
+  - [ ] Showing a receipt inside DotAmi (its security design first)
   - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before

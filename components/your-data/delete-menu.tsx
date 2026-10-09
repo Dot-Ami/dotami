@@ -37,6 +37,11 @@ interface Outcome {
   /** Rows that stayed with their link cleared, per table; absent when nothing was kept (lib/privacy/delete.ts). */
   kept?: Record<string, { unlinked: number; total: number | null }>;
   wiped: boolean;
+  /**
+   * Present when receipts were deleted: how many files went from the receipts folder and how many
+   * couldn't go yet (app/api/your-data/delete/route.ts). Null when the folder couldn't be read.
+   */
+  receiptFiles?: { removed: number; failed: number } | null;
 }
 
 /** Every table a box touches: its own, then the ones that go with it. */
@@ -106,7 +111,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
       return;
     }
     const body = result.body as Outcome;
-    setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped });
+    setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped, receiptFiles: body.receiptFiles });
     // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
     if (ticked.includes("ideas")) resetJourney();
     setTicked([]);
@@ -395,7 +400,16 @@ function DoneNote({
             {k.total === null ? "" : `; ${plural(k.total, "record")} in all`}
           </li>
         ))}
+        {outcome.receiptFiles ? <li>Receipt files: {plural(outcome.receiptFiles.removed, "file")} removed from the receipts folder</li> : null}
       </ul>
+      {outcome.receiptFiles === null || (outcome.receiptFiles && outcome.receiptFiles.failed > 0) ? (
+        <p className="mt-2 text-[12.5px] text-amber">
+          {outcome.receiptFiles === null
+            ? "DotAmi couldn't open the receipts folder to remove the receipt files."
+            : `${plural(outcome.receiptFiles.failed, "receipt file")} couldn't be removed yet (another program may have it open).`}{" "}
+          No record points to them any more; DotAmi removes them the next time you add or delete a receipt.
+        </p>
+      ) : null}
       {outcome.left ? null : (
         <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
       )}

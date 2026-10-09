@@ -84,6 +84,25 @@ person is asked).
   `keeps`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)). Records
   the person turned down are kept and counted the same way but, as before, no list shows them; the
   Delete menu's warning says so, because its "N stay" count includes them.
+- **Receipt files ([8i], *Add a receipt* on the Expenses page).** A copy of each receipt the
+  person adds to an agreed expense record, exactly as given (whatever is printed on it, such as the
+  last digits of a card or a name and address, is in the copy), in a new `receipts/` folder beside the
+  data file: `<data folder>/receipts/` in the desktop app, `prisma/receipts/` beside a copy run from
+  source. DotAmi names each file itself (32 random hex characters and the extension of the type it
+  read from the bytes); the person's file name is never sent or kept. Only JPEG, PNG, WebP and PDF,
+  decided from the file's first bytes; at most 10 MB; a picture at most 50 megapixels. A new `Receipt`
+  table describes each file: its record, type, size, SHA-256 and the day it was added
+  ([`lib/expenses/receipts/`](../lib/expenses/receipts/),
+  [`prisma/migrations/20261008180000_receipts`](../prisma/migrations/20261008180000_receipts/migration.sql),
+  which adds that one table and touches no other, tested by
+  [`tests/desktop-migrate.spec.ts`](../tests/desktop-migrate.spec.ts)). Both are listed on *What
+  DotAmi knows about you* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `TABLES`,
+  `FOLDERS`; the folder was added by hand, since no test finds a new folder on its own). DotAmi does
+  not encrypt the copies; the disk's own encryption is what protects them, as for the data file.
+  **Backups don't hold receipts yet**: *File → Back up…* says so when there are any, and *Restore*
+  moves the receipts folder whole into `backups/` (`receipts-before-restore-<time>`) instead of
+  leaving it to be removed ([`desktop/backup.mjs`](../desktop/backup.mjs) `applyRestore`, tested by
+  [`tests/desktop-backup.spec.ts`](../tests/desktop-backup.spec.ts)).
 - **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
@@ -114,6 +133,10 @@ person is asked).
   figures list route still answers one idea at a time
   ([`docs/architecture/figures-privacy-review.md`](architecture/figures-privacy-review.md), "Any
   program on the computer that calls the API").
+- **A receipt goes nowhere but DotAmi's own server.** The window sends its bytes as base64 to
+  `POST /api/expenses/receipt` on this computer; no address carries anything about it, the file's
+  name is not sent, and no route sends a receipt's bytes back out
+  ([`app/api/expenses/receipt/route.ts`](../app/api/expenses/receipt/route.ts)).
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
@@ -167,6 +190,12 @@ person is asked).
 - **Attaching an expense record to an idea, or moving it, answers only to DotAmi's own page**
   (`POST /api/expenses/attach`, like agree, take back and turn down), never an agent
   ([`app/api/expenses/attach/route.ts`](../app/api/expenses/attach/route.ts)).
+- **DotAmi's server can now write files beside the data file, and delete them**, but only the
+  receipt files it named itself: adding and removing a receipt answer only DotAmi's own page, never an
+  agent (`refuseUnlessFromAppPage`), and the sweep that removes receipt files no record describes
+  never touches a file it didn't name ([`lib/expenses/receipts/store.ts`](../lib/expenses/receipts/store.ts),
+  tested by [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts)). The server stores
+  a receipt's bytes and never decodes, parses or runs them.
 - **DotAmi can now erase data from its own file.** The Delete button on *What DotAmi knows about
   you* empties the ticked kinds (ideas with their links, map progress and figures, keeping their
   expense records as "not attached yet"; figures; expense records; every statement at once;
@@ -197,6 +226,9 @@ person is asked).
   attached to an idea since, nothing is deleted
   ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
   [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
+- **Adding a receipt needs the person to choose the file**, after a note that the copy is kept
+  exactly as given and what is accepted; a file DotAmi doesn't keep is refused in the window and
+  nothing is sent. *Remove receipt* asks once ([`components/expenses/receipt-line.tsx`](../components/expenses/receipt-line.tsx)).
 - **Deleting needs two answers.** The person ticks what to delete, then *Delete these?* lists
   every count and *Delete them now?* says it can't be undone, with focus on Cancel. If anything
   changed in the file since the person looked, nothing is deleted
@@ -215,6 +247,12 @@ person is asked).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
   keep the row. Deleting ideas keeps them too, as "not attached yet". Only the Delete menu's *Your
   expense records* box removes them, all at once; nothing removes a single record yet.
+- **Receipts:** *Remove receipt* on a record (agreed or taken back) deletes its row and its file; the
+  Delete menu's *Your receipts* box removes them all and keeps the records, and *Your expense records*
+  takes the receipts with the records. Deleting ideas keeps both. A file that couldn't be removed at
+  once is removed the next time a receipt is added or deleted. A removed file's bytes can stay on the
+  disk until written over, which the menu says. The receipts folder a restore moved into `backups/` is
+  not touched by Delete.
 - **The Delete button on *What DotAmi knows about you*** removes ideas, figures, expense records,
   statements and settings from the data file, then wipes the file's free space; if the wipe can't
   run, the page says so and offers to try again. **What it doesn't reach yet**, and the page says
@@ -225,6 +263,9 @@ person is asked).
 
 ### What the policy will need to say
 
+- A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
+  the last digits of a card or another person's details, which DotAmi never asks for and cannot
+  remove. It stays on the computer, unencrypted by DotAmi, and today's backups don't carry it.
 - The desktop app's log can hold the location of the data folder and, after a failed database
   update, the database's description of what failed; it holds nothing the person typed.
 - People who build DotAmi from its source code: the project's own commands switch off the usage

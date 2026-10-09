@@ -250,7 +250,7 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
   } else if (!facts.exists) {
     status = (
       <p className="mt-2 text-[12px] text-stone">
-        {desktop
+        {desktop || !entry.desktopOnly
           ? "None yet."
           : "None here. This copy runs from source; the desktop app is what makes it."}
       </p>

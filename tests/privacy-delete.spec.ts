@@ -6,7 +6,7 @@
  * through Prisma, because the wipe has to be proven with the database library the app really uses.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -393,13 +393,14 @@ describe("deleteData", () => {
     await unattachedExpense(prisma);
     const kinds = ["ideas", "expenses"];
     const seen = await seenFor(prisma, kinds);
-    // The expense records are counted whole, once, and no "kept" count is asked for.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3 });
+    // The expense records are counted whole, once, and no "kept" count is asked for. Their receipts
+    // (none here) go with them.
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3 },
-      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0, Receipt: 0 },
       wiped: true,
     });
   });
@@ -671,5 +672,48 @@ describe("POST /api/your-data/delete", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ wiped: true });
     expect((await route.POST(post({ retryWipe: true }, {}))).status).toBe(403);
+  });
+
+  it("“Your receipts” removes every receipt and its file and keeps the records; “Your expense records” takes receipts with them", async () => {
+    const { addReceipt } = await import("@/lib/expenses/receipts/store");
+    const folder = path.join(db.folder, "receipts");
+    const files = () => (existsSync(folder) ? readdirSync(folder).sort() : []);
+    const agreed = async () => {
+      const e = await unattachedExpense(db.prisma);
+      return db.prisma.expense.update({ where: { id: e.id }, data: { status: "confirmed", agreedAt: new Date() } });
+    };
+    const first = await agreed();
+    const second = await agreed();
+    const pdfBytes = new Uint8Array(Buffer.from("%PDF-1.4\n% a receipt\n", "latin1"));
+    await addReceipt(db.prisma, folder, first.id, pdfBytes);
+    await addReceipt(db.prisma, folder, second.id, pdfBytes);
+    // The person's own file in the folder is never DotAmi's to delete.
+    writeFileSync(path.join(folder, "mine.txt"), "mine");
+    expect(files()).toHaveLength(3);
+    const expensesBefore = await db.prisma.expense.count();
+
+    const res = await route.POST(post({ kinds: ["receipts"], seen: await seenFor(db.prisma, ["receipts"]) }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      status: "deleted",
+      deleted: { Receipt: 2 },
+      left: { Receipt: 0 },
+      wiped: true,
+      receiptFiles: { removed: 2, failed: 0, kept: 0 },
+    });
+    expect(files()).toEqual(["mine.txt"]);
+    expect(await db.prisma.expense.count()).toBe(expensesBefore);
+
+    // Deleting the expense records takes their receipts, rows and files, with them.
+    await addReceipt(db.prisma, folder, first.id, pdfBytes);
+    expect(files()).toHaveLength(2);
+    const kinds = ["expenses"];
+    const seen = await seenFor(db.prisma, kinds);
+    expect(seen.Receipt).toBe(1);
+    const gone = await route.POST(post({ kinds, seen }));
+    expect(gone.status).toBe(200);
+    expect(((await gone.json()) as { receiptFiles: unknown }).receiptFiles).toEqual({ removed: 1, failed: 0, kept: 0 });
+    expect(files()).toEqual(["mine.txt"]);
+    expect(await db.prisma.receipt.count()).toBe(0);
   });
 });

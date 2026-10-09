@@ -5,7 +5,13 @@
  * later, refunds kept both ways, and an agent's proposal waiting for the agree click. Names are
  * invented; each test uses its own so a retried run (which finds the first run's rows) still passes.
  */
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { RECEIPT_REFUSALS } from "../lib/expenses/receipts/refusals";
+import { png } from "../tests/helpers/receipt-files";
 
 const CHINOOK = "Demo — Chinook Sign Painting";
 
@@ -228,4 +234,59 @@ test("an agent's proposal waits until the person agrees, and an outside caller c
   await expect(agreedRow(page, PAYEE)).toContainText("$18.50");
   await expect(agreedRow(page, PAYEE)).toContainText("from an outside agent");
   await expect(agreedRow(page, PAYEE)).toContainText("Business share: 25% (proposed by an outside agent, agreed by you) of the full $18.50");
+});
+
+test("a receipt: the bytes decide what is kept, under a name DotAmi makes up, and Remove receipt deletes the copy", async ({ page }) => {
+  const PRINTER = `Example Printer Shop receipt test ${Date.now()}`;
+  // The browser tests' data file is prisma/e2e/dotami.db (playwright.config.ts); receipts sit beside it.
+  const receipts = path.join(process.cwd(), "prisma", "e2e", "receipts");
+  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(n)) : []);
+  const receiptPosts: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().includes("/api/expenses/receipt")) receiptPosts.push(r.postData() ?? "");
+  });
+
+  await page.goto("/expenses");
+  await typePurchase(page, { amount: "64.00", paidTo: PRINTER, whatFor: "toner" });
+  await reviewAndAgree(page, 1);
+  const row = agreedRow(page, PRINTER);
+  await expect(row).toBeVisible();
+
+  await row.getByRole("button", { name: "Add a receipt" }).click();
+  // Told first that the copy is kept exactly as given, and what is accepted.
+  await expect(row).toContainText("anything printed on it (the last digits of a card, your name and address) is kept too");
+  await expect(row).toContainText("A JPEG, PNG or WebP picture, or a PDF, up to 10 MB");
+
+  // An SVG with a script, named like a picture: refused in the window by its bytes, nothing sent.
+  await row.getByLabel("Choose the receipt file").setInputFiles({
+    name: "receipt.png",
+    mimeType: "image/png",
+    buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>'),
+  });
+  await expect(row.getByRole("alert")).toHaveText(RECEIPT_REFUSALS.svg);
+  expect(receiptPosts).toEqual([]);
+  const before = ourFiles();
+
+  // A real PNG under a name that would say something about the person: kept, named by DotAmi.
+  const picture = png(6, 4);
+  await row.getByLabel("Choose the receipt file").setInputFiles({ name: "Jane Example card 4242.png", mimeType: "image/png", buffer: picture });
+  await expect(row).toContainText(`Receipt: PNG picture · ${picture.length} bytes · added ${today()}`);
+  expect(receiptPosts).toHaveLength(1);
+  expect(receiptPosts[0]).toContain(picture.toString("base64"));
+  expect(receiptPosts[0], "the file's own name never leaves the window").not.toContain("Jane");
+  const added = ourFiles().filter((n) => !before.includes(n));
+  expect(added).toHaveLength(1);
+  expect(added[0]).toMatch(/^[0-9a-f]{32}\.png$/);
+  expect(readFileSync(path.join(receipts, added[0])).equals(picture)).toBe(true);
+
+  // It survives a reload; Remove receipt asks, then deletes DotAmi's copy and keeps the record.
+  await page.reload();
+  await expect(row).toContainText("Receipt: PNG picture");
+  await row.getByRole("button", { name: "Remove receipt" }).click();
+  await expect(row).toContainText("Remove this receipt? DotAmi deletes its copy of the file; the record stays.");
+  await row.getByRole("button", { name: "Remove receipt" }).click();
+  await expect(row.getByRole("button", { name: "Add a receipt" })).toBeVisible();
+  await expect(row).toContainText("$64.00");
+  await expect(row).not.toContainText("Receipt: PNG picture");
+  expect(ourFiles()).not.toContain(added[0]);
 });

@@ -1,5 +1,6 @@
 // Types for desktop/backup.mjs, so the TypeScript tests can import it.
 export const BACKUP_EXTENSION: "dotami-backup";
+export const RECEIPTS_FOLDER: "receipts";
 
 export type BackupErrorKind = "not-a-backup" | "damaged" | "needs-passphrase" | "cannot-decrypt" | "newer-app";
 
@@ -44,4 +45,4 @@ export function applyRestore(
   stagingFile: string,
   dbFile: string,
   options: { backupDir: string; now?: () => number },
-): { safetyCopy: string | null };
+): { safetyCopy: string | null; receiptsMovedTo: string | null };

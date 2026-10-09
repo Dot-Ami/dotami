@@ -25,6 +25,9 @@ import { DatabaseSync } from "node:sqlite";
 /** The file extension (without the dot) the app gives its backups. */
 export const BACKUP_EXTENSION = "dotami-backup";
 
+/** The receipts folder beside the database: the same name as RECEIPTS_FOLDER in lib/expenses/receipts/store.ts. */
+export const RECEIPTS_FOLDER = "receipts";
+
 const MAGIC = Buffer.from("DOTAMI-BACKUP\n", "ascii");
 const FIXED_BYTES = MAGIC.length + 4; // magic + header length
 const SCRYPT = { N: 131072, r: 8, p: 1 };
@@ -222,16 +225,22 @@ export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFi
 /**
  * Swaps a prepared database in as the live one. The caller must have closed its own connection to
  * `dbFile` first. An existing database is copied to `backupDir` before it is replaced.
+ *
+ * The receipts folder beside the database ([8i]) is moved into `backupDir` too, whole, because the
+ * restored database doesn't describe those files: left in place, DotAmi's sweep would take them for
+ * leftovers and remove them. This kind of backup holds no receipt files, so the restored data has
+ * no receipts; the moved folder is the person's copy of the ones they had.
  * @param {string} stagingFile the file prepareRestore() wrote
  * @param {string} dbFile the live database path
  * @param {{ backupDir: string, now?: () => number }} options
- * @returns {{ safetyCopy: string | null }}
+ * @returns {{ safetyCopy: string | null, receiptsMovedTo: string | null }}
  */
 export function applyRestore(stagingFile, dbFile, { backupDir, now = Date.now }) {
+  const stamp = now();
   let safetyCopy = null;
   if (existsSync(dbFile)) {
     mkdirSync(backupDir, { recursive: true });
-    safetyCopy = path.join(backupDir, `dotami-before-restore-${now()}.db`);
+    safetyCopy = path.join(backupDir, `dotami-before-restore-${stamp}.db`);
     const live = new DatabaseSync(dbFile);
     try {
       live.prepare("VACUUM INTO ?").run(safetyCopy);
@@ -243,8 +252,23 @@ export function applyRestore(stagingFile, dbFile, { backupDir, now = Date.now })
   // to it and corrupt it.
   for (const suffix of ["-journal", "-wal", "-shm"]) rmSync(`${dbFile}${suffix}`, { force: true });
   mkdirSync(path.dirname(dbFile), { recursive: true });
-  renameSync(stagingFile, dbFile);
-  return { safetyCopy };
+
+  // Moved before the database is swapped: if the move fails, nothing has changed yet; if the swap
+  // then fails, the folder goes back where it was.
+  const receipts = path.join(path.dirname(dbFile), RECEIPTS_FOLDER);
+  let receiptsMovedTo = null;
+  if (existsSync(receipts)) {
+    mkdirSync(backupDir, { recursive: true });
+    receiptsMovedTo = path.join(backupDir, `receipts-before-restore-${stamp}`);
+    renameSync(receipts, receiptsMovedTo);
+  }
+  try {
+    renameSync(stagingFile, dbFile);
+  } catch (error) {
+    if (receiptsMovedTo) renameSync(receiptsMovedTo, receipts);
+    throw error;
+  }
+  return { safetyCopy, receiptsMovedTo };
 }
 
 /** scrypt, sized as the header says (a header that asks for anything else is refused by isHeader). */

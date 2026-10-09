@@ -295,9 +295,9 @@ level: it always asks (decision 9).
 
 | Kept (in the person's own database, on their computer) | Never kept |
 |---|---|
-| Their answers and dated statements, verbatim | the files they import |
+| Their answers and dated statements, verbatim | the files they import (the one exception: a receipt file the person adds to an expense record, kept as a copy beside the database, [8i]) |
 | Ventures, branch picks, progress, tasks, questions | individual transactions, apart from the expense records kept on the left |
-| Confirmed totals, each with source, period, date and row count; single business expense records, agreed or waiting for the person's click ([8i]) | a copy of anyone's books |
+| Confirmed totals, each with source, period, date and row count; single business expense records, agreed or waiting for the person's click, and the receipt files the person adds to agreed ones ([8i]) | a copy of anyone's books |
 | The Lens conversation, per venture (can be cleared) | anything sent to a server run by DotAmi — there is none |
 | Settings: model choice, permission levels, which folders the Lens may read | |
 | Keys the person chose to add — in the operating system's keychain, not the database | |

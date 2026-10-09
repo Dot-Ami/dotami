@@ -8,7 +8,7 @@ income, the price of a big purchase) are the most sensitive thing DotAmi will ho
 
 Confirmed totals only, each with: what it is, the period or date, the amount and currency, where it
 came from (a source name, the file name, how many rows were summed), who confirmed it and when.
-**Not stored:** individual transactions (apart from the business expense records the person agrees to keep, reviewed in the last section), the imported files (not even sent to the local server — [8c] reads them in the app's window), bank or card numbers ([8g]), login
+**Not stored:** individual transactions (apart from the business expense records the person agrees to keep, reviewed in the last section), the imported files (not even sent to the local server — [8c] reads them in the app's window; the one file DotAmi keeps is a receipt the person adds to an expense record, reviewed in the last section), bank or card numbers ([8g]), login
 details for anything. All of it in the one database file on the person's computer.
 
 ## Who could reach it, and what stops them
@@ -66,7 +66,9 @@ details for anything. All of it in the one database file on the person's compute
 
 **Typed expense records are reviewed here and built (2026-10-07, the store: the table, the checks and
 the routes; 2026-10-08, the screen to type and agree to them, with the maintainer's decisions of that
-day). Receipt files are still PROPOSED: nothing of them is built.** The
+day). Receipt files are kept too (2026-10-08: the store, adding and removing one, the Delete menu and
+the sweep; reviewed under "Receipts" below, the design as built in expense-records.md § 7); backups
+that carry them and showing one inside DotAmi are not built yet.** The
 maintainer decided on 2026-10-07 to keep single expense records and their receipt files, copied into
 the data folder and carried by backups, with every way in. The design and the options are in
 [expense-records.md](expense-records.md). For expense records this section replaces the "Not stored:
@@ -87,7 +89,8 @@ and its state with the days it was proposed, agreed to and taken back. Held in t
 the one database file, nowhere else. **Not stored:** a bank or card number (the table has no column
 for one, and a test lists the columns), a login, the spreadsheet or statement a record was read from,
 a category, business share or "deductible" mark chosen by DotAmi, an amount worked out from the
-share, and any receipt (there is no column for a file). Records typed on the Expenses page are held
+share, and any receipt (there is no column for a file: a receipt is a file of its own, described by
+its own table, below). Records typed on the Expenses page are held
 only in that window (not in browser storage) until the person agrees to them; closing the window
 forgets them.
 Figures stay totals; only expense records are single transactions.
@@ -127,9 +130,11 @@ Figures stay totals; only expense records are single transactions.
 8. **A receipt's bytes** reach the server only for storing, which is never parsing, opening or running
    them, and no receipt leaves the computer except by the person's own act or through a model they
    allowed. This changes the rule above that imported files are never sent to the server or kept
-   (expense-records.md § 3, rule 5). *PROPOSED: no receipt is stored yet.*
+   (expense-records.md § 3, rule 5). *Built: the server reads a few header bytes for the type and size, hashes
+   the file and writes it; adding and removing answer only DotAmi's own page (tests/expenses-receipts.spec.ts).*
 9. **Delete removes the file with the record**, and the Delete menu names what it cannot remove.
-   *PROPOSED with receipts and the Delete menu ([8d]).*
+   *Built: “Your expense records” takes the receipts, rows and files; “Your receipts” removes every
+   receipt and keeps the records; the menu names the disk under a removed file (tests/privacy-delete.spec.ts).*
 10. **No account or card number is kept.** There is no field for one. For a "paid to" taken from a
     bank row (not built; the bank and card statements story, [8g]), a run of four or more digits would
     be refused or cleaned; that is new, not part of [8g] today, and taking any "paid to" from a bank
@@ -138,7 +143,8 @@ Figures stay totals; only expense records are single transactions.
     is. *Built: the `Expense` table is listed, and /your-data counts it.* **A new `receipts/` folder is
     not caught by that test**: the folder check only confirms the folders already listed are still
     written. It has to be added by hand to `FOLDERS` there, or the test extended to fail on an unlisted
-    folder (expense-records.md § 3, rule 4), so /your-data shows it. *PROPOSED with receipts.*
+    folder (expense-records.md § 3, rule 4), so /your-data shows it. *Built: added by hand, with the
+    `Receipt` table; the test checks the store still names the folder.*
 
 ### The vendor's GST/HST number
 
@@ -152,32 +158,37 @@ the stored form uses the CRA's spacing. DotAmi does not look the number up (that
 the CRA) and does not say whether it is real; a seller outside Canada has none, so the field can stay
 blank. A person should re-read the CRA page before any sentence of it is copied into a catalog.
 
-### Receipts: still PROPOSED
+### Receipts: built (the store, 2026-10-08)
 
-Nothing below is built; it is what the design (expense-records.md § 2) would change.
+Built as option A of expense-records.md § 2; the design as built is § 7 there. Backups that carry the
+receipts, and showing one inside DotAmi, are the next two changes.
 
-What would be stored: optionally one receipt file per record, as the person gave it, in a
-`receipts/` folder beside the database (named by DotAmi, never by the person's file name), plus its
-size, type and a SHA-256 on the record.
+What is stored: optionally one receipt file per agreed record, exactly as the person gave it, in a
+`receipts/` folder beside the database, named by DotAmi (32 random hex characters and the extension of
+the type it read from the bytes), never by the person's file name, which is not sent or kept. The
+`Receipt` table holds which record it belongs to, the type, the size, a SHA-256 and the day it was
+added. Only JPEG, PNG, WebP and PDF are kept, decided from the first bytes; at most 10 MB; a picture at
+most 50 megapixels and 20,000 pixels on a side, read from its header before anything decodes it.
 
 - **A receipt can carry what DotAmi would never ask for**: the last digits of a card, the buyer's
   name and address, another person's details on a client invoice. DotAmi cannot remove them from a
-  photo; the person is told on screen when adding one.
+  photo; the person is told on screen before choosing the file.
 - **Files, not rows**: deleting a row in the database and deleting a file on a disk are different
-  acts, and a deleted file can stay readable on the disk until it is overwritten.
+  acts, and a deleted file can stay readable on the disk until it is overwritten. The Delete menu says
+  so under *What Delete doesn't reach*.
 
-| Who | How | What would stop it | Status |
+| Who | How | What stops it | Status |
 |---|---|---|---|
 | Someone with the computer or its disk | reads `receipts/` | the operating system's disk encryption; a receipt copy is not encrypted by DotAmi | the person's choice; DotAmi says so |
-| Someone with a backup | opens it | the backup passphrase, which must also cover the receipts if they are carried | needs the backup change (expense-records.md § 2) |
-| A receipt file crafted to attack whatever opens it | the person adds or opens it | type decided by its first bytes (not its name), a size cap before reading, DotAmi never parses it on the server, and never runs it; how it is shown (in the window or the computer's own viewer) is an open choice | proposed |
-| A web page or program naming a file | tries `../` or a drive path through a receipt route | DotAmi names every stored file itself (a random id); the person's file name is kept as text only, never used as a path; the route takes an id, checks it against the database, and sits behind the Host check like every route | proposed; a test would try `../`, a drive letter and a long name |
+| Someone with a backup | opens it | today's backup doesn't hold the receipts at all, and *File → Back up…* says so when there are any; once backups carry them, the backup passphrase covers them | the backup change is next |
+| A receipt file crafted to attack whatever opens it | the person adds it | type decided by its first bytes (not its name or the browser's type), SVG and web pages refused, a size cap checked before the file is read, a pixel cap read from the header; the server never decodes, parses or runs it. No screen shows a receipt yet; the viewer's own security design comes first, in its own change | built for adding; the viewer is next |
+| A web page or program naming a file | tries `../` or a drive path through a receipt route | DotAmi names every stored file itself (a random id); the person's file name is never sent; the routes take a record's id, look it up in the database and build the name from the row; they answer only DotAmi's own page and sit behind the Host check like every route | built; `tests/expenses-receipts.spec.ts` tries `../`, a drive path and a type that isn't one of the four |
+| An agent or another program | adds, removes or reads a receipt | adding and removing answer only DotAmi's own page (`Sec-Fetch-Site: same-origin`); no route returns a receipt's bytes | built |
 | A model the Lens uses | reads receipts to propose records | the person's chosen model and permission level; a hosted model's company sees what it reads | when the Lens exists |
-| Someone who finds the data after "delete" | reads leftover bytes | the database is wiped (`VACUUM`) as the "What DotAmi knows about you" page and its Delete menu ([8d]) plan; DotAmi cannot promise it for files on the disk, and says so in the Delete menu's "what I can't reach" list | proposed |
+| Someone who finds the data after "delete" | reads leftover bytes | the database is wiped (`VACUUM`); a removed receipt file is deleted, and DotAmi cannot promise its bytes are gone from the disk, which the Delete menu says | built |
 
 ### Open (for the maintainer)
 
-- Whether a copy of the receipt is kept at all, or only a pointer (expense-records.md § 2).
 - Whether DotAmi should offer to encrypt the `receipts/` folder itself; today it relies on disk
   encryption, as it does for the database.
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the

@@ -93,15 +93,17 @@ export interface WindowStorageEntry {
   lasts: string;
 }
 
-/** A file or folder beside the database that DotAmi's desktop app writes. */
+/** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log";
+  id: "backups" | "log" | "receipts";
   /** Path relative to the folder holding the data file. */
   relativePath: string;
   name: string;
   holds: string;
-  /** A piece of text that must appear in the desktop code that writes it (a guard against a rename). */
+  /** A piece of text that must appear in the code that writes it (a guard against a rename). */
   writtenBy: { file: string; mentions: string };
+  /** True when only the desktop app writes it; a copy run from source then has none of its own. */
+  desktopOnly: boolean;
 }
 
 /**
@@ -235,14 +237,22 @@ export const TABLES: readonly TableEntry[] = [
     model: "Expense",
     name: "Your expense records",
     holds:
-      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, the idea it is attached to (or none yet), a category only if one was given, your own business share if you gave one, the GST/HST part if you gave it, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. A refund or credit is kept the way you chose: a negative amount, or a refund record linked to the purchase, with its credit note if you gave one. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible, sets a business share or chooses a category. Records you type on the Expenses page stay in that window until you agree; only then are they written here.",
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, the idea it is attached to (or none yet), a category only if one was given, your own business share if you gave one, the GST/HST part if you gave it, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. A refund or credit is kept the way you chose: a negative amount, or a refund record linked to the purchase, with its credit note if you gave one. Never a bank or card number. A receipt file you add is not in this table: it is the next entry. These are individual transactions, kept as your own record; DotAmi never marks one as deductible, sets a business share or chooses a category. Records you type on the Expenses page stay in that window until you agree; only then are they written here.",
     removedBy:
-      "Take back (an agreed record) and Turn down (a waiting one) on the Expenses page stop it counting, but the row, with its amount and words, stays in the data file and is counted here. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”). Deleting your ideas does not: their records stay, as “not attached yet”. Nothing in the app erases a single record yet.",
+      "Take back (an agreed record) and Turn down (a waiting one) on the Expenses page stop it counting, but the row, with its amount and words, stays in the data file and is counted here. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”), with its receipt. Deleting your ideas does not: their records stay, as “not attached yet”, with their receipts. Nothing in the app erases a single record yet.",
+  },
+  {
+    model: "Receipt",
+    name: "Your receipts",
+    holds:
+      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG or WebP picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”).",
+    removedBy:
+      "“Remove receipt” on a record on the Expenses page removes that one, file included; the record stays. Delete, at the bottom of this page, with “Your receipts” ticked removes every one and its file, keeping the records; with “Your expense records” ticked, the records go and their receipts with them.",
   },
 ];
 
 /** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
-export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "remembered-columns";
+export type DeleteKindId = "ideas" | "figures" | "expenses" | "receipts" | "statements" | "settings" | "remembered-columns";
 
 /**
  * Records in another table that point at what a box deletes but are KEPT: the database only clears
@@ -319,7 +329,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
       },
     ],
     goesWithIt:
-      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, unless you tick “Your expense records” too.",
+      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too.",
     learnMore:
       "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
@@ -340,12 +350,24 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     id: "expenses",
     label: "Your expense records",
     tables: ["Expense"],
+    alsoDeletes: ["Receipt"],
+    keeps: [],
+    goesWithIt:
+      "Every expense record goes, attached to an idea or not, whether waiting, agreed, taken back or turned down, and every receipt file added to one goes with it. Your ideas and figures stay.",
+    learnMore:
+      "This is every single business expense you typed or an agent proposed, attached to an idea or not, refunds included: the day, the amount, who it was paid to and what for, and anything else you gave. The receipts you added go too, files included, because a receipt with no record means nothing. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+    built: true,
+  },
+  {
+    id: "receipts",
+    label: "Your receipts",
+    tables: ["Receipt"],
     alsoDeletes: [],
     keeps: [],
     goesWithIt:
-      "Every expense record goes, attached to an idea or not, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
+      "Every receipt file you added goes from the receipts folder. The expense records stay, each marked as having no receipt.",
     learnMore:
-      "This is every single business expense you typed or an agent proposed, attached to an idea or not, refunds included: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+      "This removes DotAmi's copy of every receipt you added, the pictures and PDFs in the receipts folder beside the data file, and what DotAmi noted about each (its kind, size and fingerprint). Your expense records stay as they are, with no receipt. A receipt you also keep elsewhere (the paper, a photo on your phone, an email) is not touched. The disk can still hold a deleted file's bytes until they are written over; disk encryption is what protects those.",
     built: true,
   },
   {
@@ -400,7 +422,7 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
     name: "Safety copies in the backups folder",
-    why: "Not touched. Each is a whole copy of the data file from before an update or a restore, so it still holds what you delete here. To remove them, close DotAmi and delete the folder (its path is above). A copy you saved elsewhere could bring everything back.",
+    why: "Not touched. Each is a whole copy of the data file from before an update or a restore (and, from before a restore, the receipts folder as it was), so it still holds what you delete here. To remove them, close DotAmi and delete the folder (its path is above). A copy you saved elsewhere could bring everything back.",
   },
   {
     name: "What the window stored in earlier launches",
@@ -416,7 +438,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The disk under the data file",
-    why: "Delete wipes the deleted records out of the data file itself. The drive can still hold older copies of the file's pieces in its free space until they are overwritten; disk encryption is what protects those.",
+    why: "Delete wipes the deleted records out of the data file itself, and removes deleted receipt files from the receipts folder. The drive can still hold older copies of the file's pieces, and a removed receipt's bytes, in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
 
@@ -449,15 +471,30 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
   },
 ];
 
-/** Files beside the database. Only the desktop app writes these; a copy run from source has none of its own. */
+/**
+ * Files and folders beside the database. The safety copies and the log are the desktop app's own (a
+ * copy run from source has none); the receipts folder is written by every copy that keeps a receipt.
+ * A new folder isn't caught by any scan: it has to be added here by hand (the receipts folder was,
+ * with the code that writes it), and tests/privacy-inventory.spec.ts then checks the code still names it.
+ */
 export const FOLDERS: readonly FolderEntry[] = [
+  {
+    id: "receipts",
+    relativePath: "receipts",
+    name: "Your receipt files",
+    holds:
+      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG or WebP picture, or a PDF, at most 10 MB each. DotAmi names each file itself with a random string, never with your file's name, and never changes what is in it, so anything printed on a receipt (the last digits of a card, your name and address) is in the copy too. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
+    writtenBy: { file: "lib/expenses/receipts/store.ts", mentions: 'RECEIPTS_FOLDER = "receipts"' },
+    desktopOnly: false,
+  },
   {
     id: "backups",
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
+    desktopOnly: true,
   },
   {
     id: "log",
@@ -466,6 +503,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     holds:
       "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
+    desktopOnly: true,
   },
 ];
 

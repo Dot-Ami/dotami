@@ -113,8 +113,8 @@ test("what DotAmi knows lists every table and window key the inventory names, an
   }
 
   const computer = page.getByRole("region", { name: "On this computer, outside the data file" });
-  // This run's data file is the throwaway e2e.db, the same one Settings shows.
-  await expect(computer.locator("code").filter({ hasText: /e2e\.db$/ })).toBeVisible();
+  // This run's data file is the throwaway prisma/e2e/dotami.db, the same one Settings shows.
+  await expect(computer.locator("code").filter({ hasText: /e2e[\\/]dotami\.db$/ })).toBeVisible();
   for (const w of WINDOW_STORAGE) {
     await expect(computer.getByText(w.key, { exact: true })).toBeVisible();
   }
