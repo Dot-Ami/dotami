@@ -16,6 +16,7 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 
 import { migrate } from "../desktop/migrate.mjs";
 import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
+import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { pdf, png } from "../tests/helpers/receipt-files";
@@ -135,6 +136,9 @@ test("start → describe a venture → close → start again: the venture is sti
   expect(startLog).toContain("[desktop] receipts: key open (made now)");
   const keyFile = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8"));
   expect(Object.keys(keyFile).sort()).toEqual(["format", "keyId", "wrapped"]);
+  // The key file was written only once Windows' own key for it was on the disk (Electron's Local
+  // State), so a crash in the first seconds can't leave a receipts key nothing can open.
+  expect(localStateHoldsKey(dataDir)).toBe(true);
   await expect(page.getByRole("region", { name: "Privacy" })).toContainText("DotAmi sends nothing off this computer.");
 
   // An outside link opens in the person's own browser, never inside the app's window.

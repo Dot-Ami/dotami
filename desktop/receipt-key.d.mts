@@ -15,8 +15,25 @@ export type OpenedReceiptKey =
   | { state: "no-key-store" }
   | { state: "key-unreadable"; keyId: string | null; locked: number };
 
+/** Thrown by saveReceiptKey when the operating system's own key never reached the disk: nothing was saved. */
+export class KeyStoreNotSaved extends Error {}
+
 export function keyStoreAvailable(store: KeyStore, platform?: string): boolean;
 export function newReceiptKey(): Buffer;
-export function openReceiptKey(dataDir: string, store: KeyStore, options?: { platform?: string; now?: () => number }): OpenedReceiptKey;
-export function saveReceiptKey(dataDir: string, store: KeyStore, key: Buffer, options?: { now?: () => number }): { setAside: string | null };
+export function localStateHoldsKey(dataDir: string): boolean;
+export function waitForLocalState(
+  dataDir: string,
+  options?: { platform?: string; timeoutMs?: number; now?: () => number; sleep?: (ms: number) => Promise<unknown> },
+): Promise<boolean>;
+export function openReceiptKey(
+  dataDir: string,
+  store: KeyStore,
+  options?: { platform?: string; now?: () => number; keyStoreSaved?: () => Promise<boolean> },
+): Promise<OpenedReceiptKey>;
+export function saveReceiptKey(
+  dataDir: string,
+  store: KeyStore,
+  key: Buffer,
+  options?: { now?: () => number; keyStoreSaved?: () => Promise<boolean> },
+): Promise<{ setAside: string | null }>;
 export function countLockedReceipts(receiptsDir: string, keyId: string | null): number;

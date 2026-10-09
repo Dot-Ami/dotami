@@ -123,6 +123,8 @@ person is asked).
   anywhere else: not in the data file, not in a backup, not in the log. While the app runs it is in
   the memory of its main process and its server, which gets it in its environment and removes it
   from there on first read ([`lib/expenses/receipts/lock.ts`](../lib/expenses/receipts/lock.ts)).
+  The key file is written only once Electron's own key is in `Local State` (Chromium writes it about
+  ten seconds after start), so the very first start of a new data folder waits about that long.
   Receipts kept before this version are encrypted at the first start, crash-safe, including the
   receipts folders earlier restores moved into `backups/`. A key file Windows can't open, when no
   receipt is locked with it, is moved to `backups/receipts-key-unreadable-<time>.key` (never deleted)

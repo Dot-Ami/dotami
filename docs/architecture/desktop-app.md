@@ -25,7 +25,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    brought up to date by `desktop/migrate.mjs` (below).
 4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
    `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
-   account), or made the first time (`desktop/receipt-key.mjs`); then any receipt file not encrypted
+   account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's
+   own key is in the data folder's `Local State`, which Chromium writes about ten seconds after start:
+   so the very first start of a new data folder waits about that long; then any receipt file not encrypted
    yet, in `receipts/` and in the receipts folders earlier restores moved into `backups/`, is
    encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
    state and counts only. A key this account can't open changes nothing on the disk when receipts are

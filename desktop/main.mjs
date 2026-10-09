@@ -127,7 +127,9 @@ async function start() {
   // [8i] The receipts' key, then any receipt file not encrypted yet (docs/architecture/expense-records.md
   // § 9). Before the server starts, so nothing else has the files open. The log gets counts only.
   try {
-    receiptKey = openReceiptKey(dataDir, safeStorage);
+    // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
+    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs).
+    receiptKey = await openReceiptKey(dataDir, safeStorage);
   } catch (error) {
     return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
@@ -553,7 +555,7 @@ async function restore() {
     // Saved before the swap: the staged receipts are encrypted with this key, so without it saved they
     // would be lost. The unreadable key file moves into backups/, never deleted.
     try {
-      saveReceiptKey(dataDir, safeStorage, restoreKey);
+      await saveReceiptKey(dataDir, safeStorage, restoreKey);
       log?.write(`[restore] a new receipts key was saved; the one this account couldn't open went to the backups folder\n`);
     } catch (error) {
       log?.write(`[restore] the new receipts key couldn't be saved: ${describeError(error)}\n`);

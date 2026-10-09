@@ -605,6 +605,17 @@ either is worth it.
   locks.
 - **On Linux** Electron can fall back to a fixed, built-in password when no keyring is running
   (`basic_text`); DotAmi treats that as no key store (below). There is no Linux build yet.
+- **Never saved before Windows' own key is on the disk** (found while building, measured 2026-10-09 on
+  Electron 44 and Windows 11): Electron makes its own key when the app starts but writes it to
+  `Local State` only about ten seconds later (9.98 s in a fresh folder, whether or not `safeStorage`
+  was called). A receipts key wrapped in those seconds could not be opened after a crash, and nor could
+  a receipt encrypted with it. So `receipts.key` is written, and the key used, only once `Local State`
+  holds Electron's key. Every data folder an earlier DotAmi ran in for ten seconds has it already;
+  the very first start of a new data folder waits about ten seconds before its window opens. If it
+  never comes (30 seconds), no key is saved and receipts stay as they are for that start. One narrow
+  case remains: after a Windows profile reset, `Local State` still holds the old, unopenable key until
+  Chromium rewrites it, so a crash in the first ten seconds of that start could still lose a receipt
+  added in those seconds.
 
 ### A copy run from source has no key store
 
@@ -714,8 +725,9 @@ counts only, never a name. After the first start of this version there is normal
   steps (a real process ended part-way) leaves every receipt readable, and the next start finishes.
 - The key: made and wrapped once, never stored unwrapped, opened again at the next start; an
   unreadable key with no locked receipts set aside and replaced; with locked receipts, nothing touched;
-  no key store (and Linux's `basic_text`) meaning "not encrypted" (`tests/receipt-key.spec.ts`, with a
-  stand-in for `safeStorage`).
+  no key store (and Linux's `basic_text`) meaning "not encrypted"; never saved before `Local State`
+  holds Electron's key (`tests/receipt-key.spec.ts`, with a stand-in for `safeStorage`; and in the real
+  app, where `Local State` must hold the key whenever `receipts.key` exists).
 - The store: added receipts are encrypted on the disk and shown as the bytes that were added; a
   tampered or swapped file refused; a file from another key refused with its own sentence; from source,
   plain as before, and an encrypted file refused with its sentence; a half-finished encrypted add
@@ -746,7 +758,9 @@ file removed before the encrypted one is in place fails the three crash tests en
 fails the "kept only wrapped" tests; a key replaced although receipts are locked by it fails the
 "nothing changes" tests; Linux's `basic_text` accepted fails its test; a receipt written plain with the
 key open fails five store tests; a receipt from another key dropped by the sweep fails its test; a
-backup that copies the encrypted bytes, or a restore that stages receipts plain, fails the backup tests.
+backup that copies the encrypted bytes, or a restore that stages receipts plain, fails the backup tests;
+the wait for `Local State` ignored fails its unit test, and removed from the app fails the desktop test
+(the key file was there while `Local State` wasn't).
 
 ### Still open (for the maintainer)
 

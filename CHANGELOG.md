@@ -68,7 +68,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses
   the receipts except those in a backup; Settings, *What DotAmi knows about you* and the note before
   adding a receipt say so. The data file itself is **not** encrypted, and Settings says that too. A
-  copy run from source has no key store, so its receipts stay unencrypted, and it says so.
+  copy run from source has no key store, so its receipts stay unencrypted, and it says so. The very
+  first start of a new data folder takes about ten seconds longer: the key is saved only once Windows
+  has saved its own part of it.
   Design: [expense-records.md § 9](docs/architecture/expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense

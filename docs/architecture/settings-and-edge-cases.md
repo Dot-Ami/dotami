@@ -217,6 +217,7 @@ newer version of that program than the reader knows.
 - The Windows profile is reset, or the data folder comes from another account → the key can't be opened; nothing on the disk is changed, receipts can't be shown or added, and Settings, What DotAmi knows about you and the Expenses page say to restore a backup or delete the receipts. With no receipt locked by it, the old key file is moved to the backups folder and a new key is made. *Tested with a stand-in for Windows' protection, and in the real app with a key file it can't open.*
 - A copy run from source → receipts kept unencrypted, and the settings page and What DotAmi knows about you say so; a receipt the desktop app encrypted is refused there with a sentence saying the desktop app can open it. *Tested (unit and browser).*
 - No key store on the computer (Linux without a keyring, which Electron would answer with a fixed password) → treated as no key store: kept unencrypted, said so. *Tested with a stand-in; there is no Linux build.*
+- The app killed in the first seconds of a brand-new data folder → Electron writes its own key to `Local State` only about ten seconds after start (measured), so the receipts' key is saved, and used, only after that: the first start of a new folder waits about ten seconds. *Tested (unit, and the desktop test checks `Local State` holds the key whenever `receipts.key` exists; it fails without the wait). Not covered: right after a Windows profile reset, `Local State` still holds the old key for those seconds.*
 
 ### The Lens
 
