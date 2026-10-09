@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts and the other ways in are not.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups that carry the receipts and showing a receipt inside DotAmi come next; the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -25,8 +25,9 @@ measurements.
   menu; then the other ways in, each after what it needs.
 
 Rule 1 of section 3 ("totals, never single transactions") was reworded for expenses in the change
-that built the store (the first slice, 2026-10-07). Rule 5 ("imported files are never kept") is
-reworded with receipts, because the first slice keeps no file. Still open: section 6.
+that built the store (the first slice, 2026-10-07). Rule 5 ("imported files are never kept") was
+reworded in the change that keeps receipts (§ 7): a receipt file the person adds is the one file
+DotAmi keeps. Still open: section 6.
 
 ### The maintainer's decisions (2026-10-08)
 
@@ -99,6 +100,8 @@ can delete them. Built in the same change as the typing screen:
 - **The counts are true.** The *Your ideas* box no longer counts expense records as deleted, and the
   *Your expense records* box counts every record, attached or not. A test fails if a box would show
   a whole-table count for a table it only partly empties (`tests/privacy-delete.spec.ts`).
+- **Their receipts stay too** (built with receipts, § 7): a receipt belongs to its record, not to the
+  idea, so deleting an idea leaves both the receipt's row and its file.
 - **Not built:** deleting a single expense record. *Take back* and *Turn down* keep the row; only the
   Delete menu's *Your expense records* box removes records, all at once.
 
@@ -334,6 +337,89 @@ deleting an idea keeps its records "not attached yet", with people told so first
   content type and no guessing), what the page's Content-Security-Policy allows for images and PDFs,
   that a PDF can't run script or reach the network, and what happens to a file that claims one type
   and is another.
+- **Backups that carry the receipts** (decided, not built): today's backup holds the data file only,
+  and a restore moves the receipts folder aside whole (§ 7). The next change gives backups a format
+  that streams, carries the folder and still restores an older backup.
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.
+
+## 7. Receipts as built: the store, the Delete menu and the sweep (2026-10-08)
+
+The third slice: option A of section 2, as the maintainer decided. Backups that carry the receipts
+and showing a receipt inside DotAmi are the next two changes; until the second is built, DotAmi keeps
+a receipt but has no way to show it, and no route returns its bytes.
+
+**Where a receipt lives.** A copy of the file in a `receipts/` folder beside the data file
+(`<data folder>/receipts/` in the desktop app; `prisma/receipts/` beside a copy run from source,
+ignored by git). The folder is listed by hand in `FOLDERS` in `lib/privacy/inventory.ts` (rule 4 of
+section 3: no test finds a new folder on its own), so *What DotAmi knows about you* shows its path,
+its file count and its size. A `Receipt` table describes each file: which record it belongs to, the
+type DotAmi read from its bytes, its size and its SHA-256, and the day it was added. One receipt per
+record (a unique index). The table is new; its migration is one `CREATE TABLE` and its index, and
+touches no other table (`tests/desktop-migrate.spec.ts` checks every statement and that seeded ideas,
+figures, links, map progress, settings and expense records survive it).
+
+**What DotAmi checks when a receipt is added** (`lib/expenses/receipts/`):
+
+1. **The type comes from the bytes, never the name or what the browser says.** `sniff.ts` reads the
+   first bytes: JPEG (`FF D8 FF`), PNG (its 8-byte signature), WebP (`RIFF....WEBP`) or PDF (`%PDF-`),
+   each only at the very first byte. Anything else is refused, with a sentence that names what it
+   most likely is: SVG and web pages (they can carry a script), GIF, HEIC (no safe decoder in the
+   window yet), BMP, TIFF, AVIF, text, archives, programs. A file that is two things at once (a JPEG
+   whose later bytes are a web page) is taken as what its first bytes say.
+2. **At most 10 MB** (the maintainer's cap), checked from the size before the window reads the file
+   and again on the server, whose body limit is the base64 of 10 MB.
+3. **A picture's size is read from its header and checked before anything decodes it:** at most
+   50 megapixels and 20,000 pixels on a side, so a few hundred bytes that claim a 30,000 × 30,000
+   picture (a "decompression bomb") are refused unopened. A picture whose header has no readable
+   size is refused as damaged.
+4. **DotAmi names the file itself:** 32 random hex characters and the extension of the type it read
+   (`3f9c….png`). The person's file name is never sent to the server and never kept; nothing a caller
+   sends becomes part of a path.
+5. **The server stores the bytes and never opens them:** it reads a few header bytes to learn the
+   type and size, hashes the file, and writes it. It never decodes, renders, parses or runs it.
+6. **Only an agreed record takes a receipt**, and only DotAmi's own page can add or remove one
+   (`POST /api/expenses/receipt`, `POST /api/expenses/receipt/remove`, both `Sec-Fetch-Site:
+   same-origin` only, like agree and attach). An agent can propose records but never add, remove or
+   read a receipt, and nothing sends a receipt off the computer.
+7. **Nothing about a receipt goes in an address or the log.** A failing route logs the error's name
+   and code only.
+
+**Order of writes.** The bytes go to `<name>.partial` (opened with "never overwrite"), then the
+`Receipt` row is written, then the file is renamed to its final name. If the app stops before the
+row, the `.partial` file has no row and the sweep removes it once it is ten minutes old. If it stops
+after the row and before the rename, the `.partial` file is the only copy of a receipt the record
+says it has: the sweep does not remove it, it finishes the rename once the file is ten minutes old,
+after checking its size and SHA-256 against the row. If those don't match (the write itself was cut
+short), the sweep removes the row and the file, so the record shows no receipt rather than one
+DotAmi can't show.
+
+**Removing.** *Remove receipt* on a record (agreed or taken back) asks once, then deletes the row,
+then the file; the record stays. The Delete menu gets a box, *Your receipts*: every receipt row and
+file goes, the records stay. *Your expense records* takes the receipts with the records (the row by
+`ON DELETE CASCADE`, the file by the sweep). Deleting ideas keeps the records and so their receipts.
+The Delete menu's *What Delete doesn't reach* now says a removed file's bytes can stay on the disk
+until overwritten.
+
+**The sweep.** `sweepOrphanReceipts` removes every file in the folder that DotAmi named and no
+row describes: a deleted record's file, a file that couldn't be removed at once (another program had
+it open), a write abandoned for more than ten minutes that no row describes (one a row describes is
+finished instead, as above). A file not named the way DotAmi names files is
+never touched, so something the person put in the folder stays. It runs before every receipt is added
+and after every delete that removed receipts; the Delete menu says how many files went, and how many
+couldn't go yet.
+
+**Backups, until the next change.** A backup still holds the data file only. *File → Back up…* says,
+when there are receipt files, that the backup doesn't hold them and to copy the receipts folder too. A
+restore moves the receipts folder whole into `backups/` (`receipts-before-restore-<time>`) before it
+swaps the data file in, because the restored file doesn't describe those files and the sweep would
+otherwise remove them; the restore dialog says so first, and if the swap fails the folder goes back.
+
+**Tested by** `tests/expenses-receipts.spec.ts` (the sniffing, hostile files, the pixel and size
+limits, random names, the hash, only agreed records, one per record, removing, the sweep, the routes
+answering only DotAmi's page, nothing in the log), `tests/privacy-delete.spec.ts` (both Delete menu
+boxes, rows and files), `tests/desktop-backup.spec.ts` (the restore moving the folder aside, and back
+when the swap fails), `tests/desktop-migrate.spec.ts` and `e2e/expenses.spec.ts` (adding a receipt in
+a real browser: an SVG named `.png` refused in the window with nothing sent, a PNG kept under a name
+DotAmi made up and never the file's own, then removed).

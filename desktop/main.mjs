@@ -5,14 +5,14 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { mkdirSync, accessSync, constants, existsSync, rmSync } from "node:fs";
+import { mkdirSync, accessSync, constants, existsSync, readdirSync, rmSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
-import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
+import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, RECEIPTS_FOLDER, writeBackup } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
@@ -381,12 +381,18 @@ async function backUp() {
   try {
     const { encrypted } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
     log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"})\n`);
+    // This backup holds the data file only. Receipts ([8i]) are files beside it, so the person is
+    // told, in plain words, that they need copying too (docs/architecture/expense-records.md § 2).
+    const receipts = receiptFileCount(dataDir);
     await dialog.showMessageBox(win ?? undefined, {
       type: "info",
       title: "Backed up",
       message: `Backed up to ${filePath}`,
       detail:
         (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
+        (receipts > 0
+          ? `It doesn't hold your ${receipts === 1 ? "receipt file" : `${receipts} receipt files`}: copy the receipts folder too (File → Open data folder) and keep it with the backup. `
+          : "") +
         "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
     });
   } catch (error) {
@@ -440,7 +446,11 @@ async function restore() {
     defaultId: 1,
     cancelId: 1,
     message: "This replaces everything in DotAmi on this computer with the backup.",
-    detail: `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.`,
+    detail:
+      `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
+      (receiptFileCount(dataDir) > 0
+        ? " Your receipt files aren't in the backup: the receipts folder is moved into the backups folder as it is, and the restored records have no receipts."
+        : ""),
   });
   if (response !== 0) {
     rmSync(staging, { force: true });
@@ -455,8 +465,10 @@ async function restore() {
     await stopped;
   }
   try {
-    const { safetyCopy } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
-    log?.write(`[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}\n`);
+    const { safetyCopy, receiptsMovedTo } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
+    log?.write(
+      `[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}${receiptsMovedTo ? `; receipts folder moved to ${receiptsMovedTo}` : ""}\n`,
+    );
   } catch (error) {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
     // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
@@ -509,6 +521,18 @@ function askPassphrase(mode, message = "") {
     prompt.on("closed", () => finish(null));
     void prompt.loadFile(path.join(root, "desktop", "passphrase.html"), { query: { mode, message } });
   });
+}
+
+/**
+ * How many receipt files DotAmi keeps in the data folder ([8i]): files named the way DotAmi names
+ * them (lib/expenses/receipts/store.ts), counted from their names only. 0 when there is no folder.
+ */
+function receiptFileCount(folder) {
+  try {
+    return readdirSync(path.join(folder, RECEIPTS_FOLDER)).filter((name) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(name)).length;
+  } catch {
+    return 0;
+  }
 }
 
 /** Says what went wrong in plain words, then quits — never a blank window. */

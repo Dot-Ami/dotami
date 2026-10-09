@@ -105,7 +105,7 @@ test("the settings page: every group, what's true today, every setting and its w
   // "Today" is read from the running app: its data file is this run's throwaway database, and
   // with no model key (playwright.config.ts) the typed sentence never leaves the computer.
   const data = page.getByRole("region", { name: "Data and backups" });
-  const filePath = data.locator("code").filter({ hasText: /e2e\.db$/ });
+  const filePath = data.locator("code").filter({ hasText: /e2e[\\/]dotami\.db$/ });
   await expect(filePath).toBeVisible();
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
@@ -141,6 +141,11 @@ test("the settings page: every group, what's true today, every setting and its w
       .filter({ has: page.getByRole("heading", { name: "Figure reminders", level: 3, exact: true }) })
       .getByRole("checkbox"),
   ).toHaveCount(3);
+
+  // The receipt copies live beside the data file, so a copy of the file alone isn't all of it.
+  await expect(data).toContainText("plus the copies of your receipts in a folder named receipts beside it");
+  await expect(data).toContainText("Copying that file and the receipts folder beside it while DotAmi is stopped is a complete backup");
+  await expect(data).not.toContainText("All of your data is one file");
 
   // The path button: the data file's path lands on the clipboard exactly as shown.
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -426,7 +431,7 @@ test("Remind me about this idea: off until turned on, per idea, and still on aft
  * setting is planned), so the test puts one in the file the way that screen will.
  */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
-  const file = path.join(process.cwd(), "prisma", "e2e.db").replace(/\\/g, "/");
+  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").replace(/\\/g, "/");
   const db = new PrismaClient({ datasourceUrl: `file:${file}` });
   try {
     return await fn(db);

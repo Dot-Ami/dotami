@@ -1,12 +1,12 @@
 # Your expenses page (`/expenses`) — page overview
 
-Last updated: 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet)
+Last updated: 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
 
 **Route:** `/expenses` · `/expenses?idea=<idea id>` (opened on one idea) · **Component:**
 `components/expenses/expenses-page.tsx` (+ `expense-form.tsx`, `expense-review.tsx`) ·
 **API:** `GET /api/expenses` (every record of the person's; `?venture=<id>` one idea; `?unattached` the
 ones not attached) · `POST /api/expenses/propose` · `/agree` · `/discard` · `/retract` · `/attach` ·
-`GET /api/ventures` (the ideas' names) ·
+`POST /api/expenses/receipt` · `/receipt/remove` · `GET /api/ventures` (the ideas' names) ·
 **Data:** Prisma `Expense` (`lib/expenses/store.ts`, checks in `lib/expenses/validate.ts`); the screen's own
 logic (typed boxes to a record, the lines under a record) in `lib/expenses/display.ts`, tested in
 `tests/expenses-display.spec.ts`. Design: `docs/architecture/expense-records.md` (section 0 has the
@@ -53,12 +53,15 @@ record's words or amounts: only an idea's id, in `?idea=`.
 | **Attach to** / **Move to** select + **Attach** / **Move** (on each agreed record) | moves the record to an idea, or back to not attached (`POST /api/expenses/attach`, page-only); the button is off until a different choice is picked. The record keeps its state, values and agreed day | `ventureId` |
 | **Record a refund for this** (on an agreed purchase) | fills the form as a refund of that purchase: **A refund or credit**, the purchase chosen, its payee and currency, and today's date; the person picks the way and types the rest. The **For** select follows the purchase's idea only while the typed list is empty: it covers every record on the list, so with records already typed it stays as it was and the page says so ("The typed list stays for …; the purchase is for …. Change “For” above the list if this refund should go there too.") | — |
 | **Take back** (on each agreed record) | asks inline "Take this record back? It stays listed as taken back." **Take back** / **Keep**; Take back → `POST /api/expenses/retract` | `status` → `retracted`, `retractedAt` |
-| **Taken back** list | greyed, with "taken back <day>" | — |
+| **Taken back** list | greyed, with "taken back <day>"; a record with a receipt shows the receipt line and **Remove receipt** (below), because taking a record back keeps its receipt | — |
+| **Add a receipt** (on each agreed record with none; `components/expenses/receipt-line.tsx`) | opens a note first: "DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is your own record; it says nothing about whether you can stop keeping the original." Then **Choose the receipt file** (a file picker; its type list is a hint only) and **Not now**. The window checks the size first (over 10 MB is refused without reading the file), then reads the file's first bytes (`lib/expenses/receipts/sniff.ts`): anything that isn't a JPEG, PNG, WebP or PDF, or a picture over 50 megapixels or 20,000 pixels a side, is refused in amber with what to do instead, and nothing is sent. Otherwise the bytes go as base64 to `POST /api/expenses/receipt` (page-only), which checks them again and keeps the copy under a name it makes up; the file's own name is never sent. Not shown on a waiting, turned-down record | a file in `receipts/`; a `Receipt` row |
+| Receipt line (on a record with one) | "Receipt: PNG picture · 2.1 MB · added <day>" (the type DotAmi read from the bytes, never the file's name) and **Remove receipt**, which asks inline "Remove this receipt? DotAmi deletes its copy of the file; the record stays." **Remove receipt** / **Keep it**; Remove → `POST /api/expenses/receipt/remove`. No control opens the receipt yet | `Receipt` row and its file deleted |
 
 ## What it deliberately does not do
 
-- No bank or card number field, no receipt yet (the receipts slice: 10 MB cap, shown inside DotAmi,
-  with its own security design first; `expense-records.md` sections 0 and 6).
+- No bank or card number field. No way to look at a receipt yet: it opens inside DotAmi in the next
+  change, with its own security design first (`expense-records.md` sections 0 and 6). Backups don't
+  hold receipts yet (§ 7 there).
 - No category, business share or "deductible" mark chosen by DotAmi, and no deduction or tax total.
 - No ranking or ordering by amount: newest day first, nothing else.
 - No delete here: taking back and turning down keep the row. The Delete menu on *What DotAmi knows
@@ -67,7 +70,7 @@ record's words or amounts: only an idea's id, in `?idea=`.
 
 ## Browser-tested (`e2e/expenses.spec.ts`)
 
-Four tests on the production build: from an idea's card, type two purchases (one with a 40% share),
+Five tests on the production build: from an idea's card, type two purchases (one with a 40% share),
 untick one in the review, **Agree to all 1** — the kept one shows the share beside the full amount on the
 idea, the unticked one stays typed, a reload keeps the record and forgets the typed list, and no address
 holds a typed word or amount; a record kept not attached, attached later, then a separate refund record
@@ -75,4 +78,7 @@ and a negative-amount refund, each linked to the purchase, with the purchase lis
 refund for this** on a purchase under an idea, with a record already typed and set to not attached,
 leaves **For** alone and both are kept not attached; an agent's proposal with a 25% share waits (an
 outside caller gets 403 from agree and attach), its share shown as "(proposed by an outside agent)",
-until **Agree to all 1** in the waiting review.
+until **Agree to all 1** in the waiting review; and a receipt: an SVG named `.png` refused in the
+window by its bytes with nothing sent, then a PNG named after a person kept under a 32-character name
+DotAmi made up (the request never carries the file's name), shown as "Receipt: PNG picture · … · added
+<today>", kept over a reload, and **Remove receipt** deleting the file and keeping the record.

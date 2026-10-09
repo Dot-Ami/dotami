@@ -28,9 +28,11 @@ Each group:
    environment on every visit (never a stored claim):
    - Data and backups: the absolute path of the database file (from `DATABASE_URL`, relative
      paths read from `prisma/` as Prisma does) with a **Copy path** button; "no file there yet"
-     when it's missing; a plain line when the URL isn't a SQLite file. In the desktop app
-     (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu); from source: copying the
-     file is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,
+     when it's missing; a plain line when the URL isn't a SQLite file. The line above the path
+     says the receipt copies ([8i]) are in a folder named receipts beside the file. In the desktop
+     app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), and that a backup doesn't
+     hold the receipts folder yet; from source: copying the file and the receipts folder together
+     is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,
      BitLocker on Pro — Microsoft's page, read 2026-10-06; FileVault on a Mac).
    - Your figures: DotAmi keeps the totals the person agrees to, each with its source and the day
      agreed, and also the ones still waiting for an answer and the ones turned down or taken back;
@@ -97,7 +99,7 @@ place. Change both in the same commit.
 ## Verified 2026-10-05
 
 `e2e/app.spec.ts` › "the settings page …" on the production build: reached from the landing
-page and the ideas page; all six groups; the data file shown is the run's throwaway `e2e.db`;
+page and the ideas page; all six groups; the data file shown is the run's throwaway `prisma/e2e/dotami.db`;
 Privacy says nothing is sent (no key in the test run); every setting shows its default, its
 warning when it has one, and its story; Copy path puts exactly the shown path on the clipboard; no sideways
 scroll at 390 px wide.

@@ -24,7 +24,10 @@ with where they are kept, before confirming.
      records **stay**, as "not attached yet": the database clears each record's idea instead
      (`keeps` in `DELETE_MENU`).
    - **Your figures** — every figure, in every state; cards go back to the estimates.
-   - **Your expense records** — every record, attached to an idea or not, in every state.
+   - **Your expense records** — every record, attached to an idea or not, in every state, and every
+     receipt added to one (the `Receipt` rows by the schema's cascade, the files by the sweep).
+   - **Your receipts** — every receipt file in the receipts folder and its `Receipt` row; the records
+     stay, with no receipt ([8i], expense-records.md § 7).
    - **Your bank and card accounts** (added 2026-10-08, [8g]) — every account name, in use or taken
      back, with its days. Figures read from their statements stay; "Always allow every account" goes
      with Your settings, and the tick-box line says so.
@@ -62,9 +65,11 @@ with where they are kept, before confirming.
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
    last tax year they relate to, with exceptions, linked to the CRA's page with the day it was read.
-   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): what the window stored in earlier
-   launches ("Not cleared yet"), the log, anything that already left the computer, and the disk
-   under the data file (which can still hold older pieces of the file and of deleted safety copies).
+   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): the receipts folders a restore
+   moved into the backups folder (the safety-copies box deletes only DotAmi's copies of the data
+   file), what the window stored in earlier launches ("Not cleared yet"), the log, anything that
+   already left the computer, and the disk under the data file (which can still hold older pieces
+   of the file, a removed receipt's bytes and deleted safety copies).
 
    **Delete what's ticked…** (off until a box is ticked) goes to the first ask. **Cancel** closes
    the menu and unticks everything.
@@ -88,7 +93,11 @@ with where they are kept, before confirming.
    deleted, 0 left"); a copy another program holds open is left, and an amber line says so, with
    the same button. In the desktop app a line adds that it finishes the next time the app starts. If
    the server deleted but couldn't read the file back to count what is left, the "left" counts are
-   dropped and an amber line says to reload and check. The page's counts are read again from the file.
+   dropped and an amber line says to reload and check.
+   When receipts were deleted, a line "Receipt files: N files removed from the receipts folder";
+   if some couldn't be removed yet (another program had one open), or the folder couldn't be read,
+   an amber note says so and that DotAmi removes them the next time a receipt is added or deleted.
+   The page's counts are read again from the file.
 6. **An earlier Delete that hasn't finished.** When the "wipe pending" note is beside the data file
    (an earlier wipe couldn't finish, or a safety copy couldn't be deleted), an amber note under the
    button says so ("An earlier Delete hasn't finished…"; in the desktop app, that it finishes the
@@ -118,10 +127,14 @@ and their sentences are in `DELETE_MENU`.
 ## State touched (field names only)
 
 Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`;
-`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
-(`KEPT_BY_DELETE`). On disk: the safety copies DotAmi made in `backups/` beside the data file (when
-ticked), and the "wipe pending" note beside the data file (`<data file>.wipe-pending`, written before
-the wipe and removed once it has worked; it holds a time and safety-copy file names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
+`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense` (and,
+by the cascade, `Receipt`), `Receipt`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
+(`KEPT_BY_DELETE`). On disk: when receipts were deleted, the files in `receipts/` beside the data
+file that no row describes any more (`sweepOrphanReceipts` in `lib/expenses/receipts/store.ts`; a
+file not named the way DotAmi names receipts is never touched); the safety copies DotAmi made in
+`backups/` beside the data file (when ticked); and the "wipe pending" note beside the data file
+(`<data file>.wipe-pending`, written before the wipe and removed once it has worked; it holds a time
+and safety-copy file names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
 is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
 
 ## Downstream consumers (where the data goes today)

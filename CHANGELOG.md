@@ -76,6 +76,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   data file and the desktop app finishes the wipe the next time it starts. It does this only when
   that note is there, never on an ordinary start. The page also says when an earlier Delete hasn't
   finished, with "Finish it now".
+- **Receipts** ([8i]) — *Add a receipt* on a record you agreed to keeps a copy of the file in a
+  `receipts` folder beside DotAmi's data file: a JPEG, PNG or WebP picture or a PDF, up to 10 MB.
+  DotAmi decides what a file is from what is inside it, not its name, refuses anything else (an SVG
+  or a web page can carry a script), and refuses a picture too large to show safely. It names the copy
+  itself with a random string; your file's name is never sent or kept. You are told first that the copy
+  is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
+  DotAmi's copy and keeps the record. There is no way to look at a receipt inside DotAmi yet, and
+  backups don't hold receipts yet: *File → Back up…* says so, and *Restore* moves the receipts folder
+  into the backups folder, whole, instead of losing it.
+- **Your receipts on the Delete menu** — a box of its own that removes every receipt, files
+  included, and keeps the records. *Your expense records* now takes their receipts with them.
+  Deleting your ideas keeps their records and so their receipts. A receipt file left behind (another
+  program had it open) is removed the next time you add or delete one; a file you put in the
+  folder yourself is never touched. If DotAmi stopped half-way through adding a receipt, the next
+  add or delete finishes it (after checking the file is the one it started with) instead of
+  throwing the only copy away. The Settings page now says the receipts folder sits beside the data
+  file, and that copying both is a backup when running from source.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
@@ -158,6 +175,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   export a report that has a date on every sale.
 
 ### Changed
+- **Requests up to 16 MB reach DotAmi's routes whole** (`next.config.mjs`,
+  `middlewareClientMaxBodySize`). Next cut every request body at 10 MiB on its way through
+  `middleware.ts`, so a receipt near the 10 MB cap (sent as base64, about 14 MB) arrived broken and
+  was refused with "Invalid JSON". Each route still has its own, smaller limit.
+- **A database update** adds one table, `Receipt`, describing each receipt file; nothing else in
+  the data file is touched (a test seeds ideas, figures, links, map progress, settings and expense
+  records and checks each after the update), and the app backs the file up first.
 - **A database update** rebuilds the expense records table only, so a record's idea can be empty
   (and is emptied, not deleted, when its idea is deleted) and the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
   are kept as they are (a test seeds each and checks it after the update), and the app backs the

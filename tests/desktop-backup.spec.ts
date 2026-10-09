@@ -98,7 +98,7 @@ describe("desktop backup — round trips", () => {
     expect(header.appVersion).toBe("1.2.3");
 
     const target = path.join(dir, "new", "dotami.db");
-    expect(applyRestore(staging, target, { backupDir: path.join(dir, "new", "backups") })).toEqual({ safetyCopy: null });
+    expect(applyRestore(staging, target, { backupDir: path.join(dir, "new", "backups") })).toEqual({ safetyCopy: null, receiptsMovedTo: null });
     expect(users(target)).toEqual(["someone"]);
     expect(existsSync(staging)).toBe(false);
   });
@@ -219,6 +219,39 @@ describe("desktop backup — restoring safely", () => {
     expect(users(safetyCopy!)).toEqual(["from-live"]);
     expect(users(live)).toEqual(["from-backup"]);
     expect(allFiles(dir).filter((f) => f.endsWith(".partial"))).toEqual([]);
+  });
+
+  it("moves the receipts folder into the backups folder whole, so a restore can never lose a receipt file", () => {
+    // A backup of this kind holds the data file only. The restored data file doesn't describe the
+    // receipt files beside the live one, so DotAmi's sweep would remove them if they stayed.
+    const backup = path.join(dir, "mine.dotami-backup");
+    writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" });
+    const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
+    const receipts = path.join(dir, "live", "receipts");
+    mkdirSync(receipts);
+    writeFileSync(path.join(receipts, `${"a".repeat(32)}.pdf`), "%PDF-1.4 a receipt");
+    const backupDir = path.join(dir, "live", "backups");
+    const staging = path.join(dir, "live", "dotami.db.restoring");
+    prepareRestore(backup, { migrationsDir: migrations, stagingFile: staging });
+
+    const { receiptsMovedTo } = applyRestore(staging, live, { backupDir, now: () => 43 });
+    expect(receiptsMovedTo).toBe(path.join(backupDir, "receipts-before-restore-43"));
+    expect(existsSync(receipts)).toBe(false);
+    expect(readFileSync(path.join(receiptsMovedTo!, `${"a".repeat(32)}.pdf`), "utf8")).toBe("%PDF-1.4 a receipt");
+    expect(users(live)).toEqual(["from-backup"]);
+  });
+
+  it("puts the receipts folder back when the data file can't be swapped", () => {
+    const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
+    const receipts = path.join(dir, "live", "receipts");
+    mkdirSync(receipts);
+    writeFileSync(path.join(receipts, `${"b".repeat(32)}.png`), "a picture");
+    // A staging file that isn't there makes the final swap fail.
+    const missing = path.join(dir, "live", "nothing-staged.db");
+    expect(() => applyRestore(missing, live, { backupDir: path.join(dir, "live", "backups"), now: () => 44 })).toThrow();
+    expect(readFileSync(path.join(receipts, `${"b".repeat(32)}.png`), "utf8")).toBe("a picture");
+    expect(existsSync(path.join(dir, "live", "backups", "receipts-before-restore-44"))).toBe(false);
+    expect(users(live)).toEqual(["from-live"]);
   });
 
   it("never leaves a .partial file beside a finished backup", () => {

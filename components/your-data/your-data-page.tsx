@@ -259,7 +259,9 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
     status = (
       <p className="mt-2 text-[12px] text-stone">
         {entry.whenAbsent ??
-          (desktop ? "None yet." : "None here. This copy runs from source; the desktop app is what makes it.")}
+          (desktop || !entry.desktopOnly
+            ? "None yet."
+            : "None here. This copy runs from source; the desktop app is what makes it.")}
       </p>
     );
   } else if (!facts.readable) {

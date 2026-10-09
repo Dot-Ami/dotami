@@ -1,7 +1,8 @@
-import type { Expense, Prisma, PrismaClient } from "@prisma/client";
+import type { Expense, Prisma, PrismaClient, Receipt } from "@prisma/client";
 
 import { personUserId, requireVenture } from "@/lib/figures/store";
 
+import { isReceiptType } from "./receipts/types";
 import type { ExpenseRecordKind, ExpenseSourceKind, ExpenseStatus, ExpenseView } from "./types";
 import {
   checkRecordRules,
@@ -58,8 +59,14 @@ function exactNumber(value: bigint): number {
   return n;
 }
 
-/** Row to view. */
-export function rowToExpense(row: Expense): ExpenseView {
+/**
+ * What every read that returns records asks the database for alongside each row: the description of
+ * its receipt file, if it has one (never the file).
+ */
+export const WITH_RECEIPT = { receipt: true } as const;
+
+/** Row to view. A row read without its receipt (a record just created has none) shows none. */
+export function rowToExpense(row: Expense & { receipt?: Receipt | null }): ExpenseView {
   return {
     id: row.id,
     ventureId: row.ventureId,
@@ -83,6 +90,9 @@ export function rowToExpense(row: Expense): ExpenseView {
     proposedAt: row.proposedAt.toISOString(),
     agreedAt: row.agreedAt ? row.agreedAt.toISOString() : null,
     retractedAt: row.retractedAt ? row.retractedAt.toISOString() : null,
+    receipt: row.receipt && isReceiptType(row.receipt.type)
+      ? { type: row.receipt.type, bytes: row.receipt.bytes, addedAt: row.receipt.addedAt.toISOString() }
+      : null,
   };
 }
 
@@ -108,8 +118,19 @@ export async function listExpenses(prisma: PrismaClient, ventureId: ExpenseScope
   const rows = await prisma.expense.findMany({
     where: { AND: [scope, { status: { not: "discarded" } }] },
     orderBy: BY_DAY,
+    include: WITH_RECEIPT,
   });
   return rows.map(rowToExpense);
+}
+
+/**
+ * One of the person's records by its id (any of their ideas, or not attached), with its receipt's
+ * description, or null when there is no such record of theirs. For the receipts store
+ * (lib/expenses/receipts/store.ts), which decides itself what each state allows.
+ */
+export async function findPersonExpense(prisma: PrismaClient, id: string) {
+  const scope = await scopeWhere(prisma, undefined);
+  return prisma.expense.findFirst({ where: { AND: [scope, { id }] }, include: WITH_RECEIPT });
 }
 
 /**
@@ -324,7 +345,7 @@ export async function agreeToExpenses(
       if (count === 1) confirmedIds.push(id);
       else skipped.push(id);
     }
-    const rows = await tx.expense.findMany({ where: { id: { in: confirmedIds } }, orderBy: BY_DAY });
+    const rows = await tx.expense.findMany({ where: { id: { in: confirmedIds } }, orderBy: BY_DAY, include: WITH_RECEIPT });
     return { changed: rows.map(rowToExpense), skipped };
   });
 }
@@ -346,7 +367,7 @@ async function moveExpenses(
       const { count } = await tx.expense.updateMany({ where: { AND: [scope, { id, status: from }] }, data });
       (count === 1 ? moved : skipped).push(id);
     }
-    const rows = await tx.expense.findMany({ where: { id: { in: moved } }, orderBy: BY_DAY });
+    const rows = await tx.expense.findMany({ where: { id: { in: moved } }, orderBy: BY_DAY, include: WITH_RECEIPT });
     return { changed: rows.map(rowToExpense), skipped };
   });
 }
@@ -386,7 +407,7 @@ export async function attachExpenses(prisma: PrismaClient, ids: unknown, target:
       });
       (count === 1 ? moved : skipped).push(id);
     }
-    const rows = await tx.expense.findMany({ where: { id: { in: moved } }, orderBy: BY_DAY });
+    const rows = await tx.expense.findMany({ where: { id: { in: moved } }, orderBy: BY_DAY, include: WITH_RECEIPT });
     return { changed: rows.map(rowToExpense), skipped };
   });
 }

@@ -189,8 +189,9 @@ model Figure {
 /// [8i] One business expense — a single record, not a total: waiting for the person's click, agreed,
 /// turned down or taken back, like a Figure's states. Typed by the
 /// person now; a spreadsheet, a bank statement or the Lens may propose records later, and each waits
-/// for the person's click in the agree prompt, exactly like a Figure. Holds no bank or card number
-/// and no receipt yet (a later slice). docs/architecture/expense-records.md § 1;
+/// for the person's click in the agree prompt, exactly like a Figure. Holds no bank or card number.
+/// A receipt file the person adds is described by its own Receipt row (below), never stored in this
+/// table. docs/architecture/expense-records.md § 1;
 /// docs/architecture/figures-privacy-review.md.
 ///
 /// Since the maintainer's decisions (2026-10-08): the idea is optional (a record can wait "not
@@ -247,9 +248,34 @@ model Expense {
   venture         Venture?  @relation(fields: [ventureId], references: [id], onDelete: SetNull)
   refundOf        Expense?  @relation("ExpenseRefunds", fields: [refundOfId], references: [id], onDelete: SetNull)
   refunds         Expense[] @relation("ExpenseRefunds")
+  receipt         Receipt?
 
   @@index([ventureId, status])
   @@index([refundOfId])
+}
+
+/// [8i] The receipt file the person added to one expense record. The file itself is NOT in the
+/// database: it is a copy in the receipts/ folder beside the data file, named by DotAmi
+/// "<id>.<ext>" (the random id below, and the extension of the type DotAmi read from the bytes),
+/// never by the person's own file name, which is not kept. This row says which file belongs to
+/// which record and what DotAmi checked when it was added. lib/expenses/receipts/ reads and writes
+/// both; docs/architecture/expense-records.md § 7 is the design.
+///
+/// One receipt per record. Deleting the record deletes this row (onDelete: Cascade) and DotAmi's
+/// sweep then removes the file; deleting an idea keeps the record, so its receipt stays too.
+model Receipt {
+  /// 32 lowercase hex characters from a random source; also the file's name in receipts/.
+  id        String   @id
+  expenseId String   @unique
+  /// "image/jpeg" | "image/png" | "image/webp" | "application/pdf", decided from the file's first
+  /// bytes (lib/expenses/receipts/sniff.ts), never from its name or the type the browser reported.
+  type      String
+  /// The file's size in bytes, at most 10 MB (the maintainer's cap, 2026-10-08).
+  bytes     Int
+  /// SHA-256 of the file's bytes, lowercase hex, so DotAmi can tell a file that changed on the disk.
+  sha256    String
+  addedAt   DateTime @default(now())
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
 }
 
 /// [8e] The person's saved choices — DotAmi's first settings table. One row per setting: `key` is a

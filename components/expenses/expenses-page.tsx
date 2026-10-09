@@ -22,6 +22,7 @@ import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { ExpenseForm } from "./expense-form";
 import { ExpenseReview, type ReviewRow } from "./expense-review";
+import { ReceiptLine } from "./receipt-line";
 
 /**
  * [8i] "Your expenses" (/expenses, or /expenses?idea=<id> from an idea's card): typing business
@@ -420,6 +421,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
                   onTakeBack={() => void takeBack(r.id)}
                   onAttach={(to) => void attach(r.id, to)}
                   onRecordRefund={r.recordKind === "expense" && r.amountCents > 0 ? () => recordRefundFor(r) : null}
+                  onReceiptChanged={load}
                 />
               ))}
             </ul>
@@ -433,6 +435,8 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
                   <li key={r.id} className="text-xs text-stone">
                     <span className="text-paper-dim">{titleOf(r)}</span> <span className="font-mono">{moneyText(r.amountCents, r.currency)}</span>
                     {r.retractedAt ? ` · taken back ${r.retractedAt.slice(0, 10)}` : ""}
+                    {/* Taking a record back keeps its receipt; this is where that one receipt can still be removed. */}
+                    {r.receipt ? <ReceiptLine record={r} onChanged={load} /> : null}
                   </li>
                 ))}
               </ul>
@@ -480,6 +484,7 @@ function RecordRow({
   onTakeBack,
   onAttach,
   onRecordRefund,
+  onReceiptChanged,
 }: {
   record: ExpenseView;
   facts: string[];
@@ -492,6 +497,7 @@ function RecordRow({
   onTakeBack: () => void;
   onAttach: (to: string) => void;
   onRecordRefund: (() => void) | null;
+  onReceiptChanged: () => Promise<void>;
 }) {
   const current = record.ventureId ?? NONE;
   const [moveTo, setMoveTo] = useState(current);
@@ -513,6 +519,7 @@ function RecordRow({
           {refunds.map((x) => `${moneyText(Math.abs(x.amountCents), x.currency)} on ${x.date}${x.status === "proposed" ? " (waiting)" : x.status === "retracted" ? " (taken back)" : ""}`).join("; ")}
         </p>
       ) : null}
+      <ReceiptLine record={record} onChanged={onReceiptChanged} />
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <label htmlFor={selectId} className="text-[10.5px] text-stone">
           {record.ventureId === null ? "Attach to" : "Move to"}
