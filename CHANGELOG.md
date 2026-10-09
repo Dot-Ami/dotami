@@ -242,6 +242,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
   agree to, from 0.1.0 on, and what the future privacy policy will need to say. Every change that
   affects it adds a line under [Unreleased]; a test fails when a version has no section.
+- **A review of the ways to show iPhone (HEIC) photos as receipts** ([8i]) — every decoder found
+  (libheif in WebAssembly, the packages labelled MIT that carry it, two new permissive decoders, the
+  graphics chip through Chromium's WebCodecs, Windows' own codec), with its licence, security, size
+  and which computers it works on (including that DotAmi's worker policy blocks WebAssembly today, so
+  every WebAssembly decoder needs that policy opened first), and a list of options with their costs
+  for the maintainer to choose from. Nothing changes in the app: HEIC is still refused
+  (`docs/connectors/heic-decoder-review.md`).
 
 ### Fixed
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
