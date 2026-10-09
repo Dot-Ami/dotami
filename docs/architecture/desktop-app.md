@@ -114,7 +114,8 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   in the server's `node_modules`, per package in DotAmi's dependencies (what the page code bundles,
   such as pdf.js and ofx-js), per package the app itself carries (electron-updater and what it pulls
   in), the code Next.js carries inside itself, Tailwind's base styles, the two fonts and Electron —
-  each with its version, licence and the licence and notice files from the package, word for word.
+  each with its version, licence and the licence and notice files from the package, word for word
+  (third-party notice files such as TypeScript's `ThirdPartyNoticeText.txt` included).
   A package with no licence file stops the build until `LICENCE_ELSEWHERE` in that file says where
   its terms are. `desktop:package` then refuses to package if any package in the app's or the
   server's `node_modules` has no entry for its exact version, copies the file beside `DotAmi.exe`,

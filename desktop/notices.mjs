@@ -114,11 +114,19 @@ export function readmeLicensing(dir) {
 /** LICENSE, LICENCE.md, license-mit, COPYING, NOTICE, NOTICE.txt… but not "licenses.d.ts" or a folder. */
 const LICENCE_FILE = /^(licen[cs]e|copying|notice)(?:[-._][a-z0-9-]+)?(?:\.(?:md|txt|markdown))?$/i;
 
+/**
+ * The files where a package keeps the notices for other people's code it carries, or its own
+ * copyright notice, under names the pattern above doesn't catch: TypeScript's ThirdPartyNoticeText.txt,
+ * tslib's CopyrightNotice.txt, THIRD-PARTY-NOTICES.md, THIRD-PARTY-LICENSE. Apache-2.0 (section 4)
+ * asks for these to be passed on too.
+ */
+const NOTICE_FILE = /^(?:third[-_]?party[-_]?(?:notice|licen[cs]e)s?(?:[-_]?text)?|copyright[-_]?notice)(?:\.(?:md|txt|markdown))?$/i;
+
 /** The licence and notice files directly in a package's folder, in a fixed order. */
 export function licenceFiles(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => LICENCE_FILE.test(f) && statSync(path.join(dir, f)).isFile())
+    .filter((f) => (LICENCE_FILE.test(f) || NOTICE_FILE.test(f)) && statSync(path.join(dir, f)).isFile())
     .sort((a, b) => a.localeCompare(b, "en"))
     .map((file) => ({ file, text: readFileSync(path.join(dir, file), "utf8").replace(/\r\n?/g, "\n").trimEnd() }));
 }
@@ -246,7 +254,9 @@ function bundledInside(root, owner, shipped) {
       const pkg = existsSync(manifest) ? readJson(manifest) : {};
       out.push({
         name: typeof pkg.name === "string" ? pkg.name : d,
-        version: typeof pkg.version === "string" ? pkg.version : `not recorded (inside ${owner.name} ${owner.version})`,
+        // With no version, the folder tells two copies of one package apart (Next carries
+        // loader-utils twice, as dist/compiled/loader-utils2 and loader-utils3).
+        version: typeof pkg.version === "string" ? pkg.version : `not recorded (${owner.name}/dist/compiled/${d}, inside ${owner.name} ${owner.version})`,
         licence: existsSync(manifest) ? licenceId(pkg) : "not stated",
         inside: `${owner.name} ${owner.version}`,
         texts: licenceFiles(dir),
@@ -405,8 +415,15 @@ export function writeNotices(root, out, { standalone } = {}) {
 export function missingFromNotices(noticesText, nodeModulesDirs) {
   const listed = new Set();
   let name = null;
+  // Only an entry's own field lines count: between its SEPARATOR line and its RULE line. A licence
+  // text below the RULE can hold a line that starts "Name: " and must not list anything.
+  let inFields = false;
   for (const line of noticesText.split(/\r?\n/)) {
-    if (line === SEPARATOR) name = null;
+    if (line === SEPARATOR) {
+      name = null;
+      inFields = true;
+    } else if (line === RULE) inFields = false;
+    else if (!inFields) continue;
     else if (line.startsWith("Name: ")) name = line.slice(6);
     else if (line.startsWith("Version: ") && name !== null) listed.add(`${name}@${line.slice(9)}`);
   }

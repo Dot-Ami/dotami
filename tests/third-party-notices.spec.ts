@@ -10,7 +10,9 @@
  *   - a package the bundled code imports (app/, components/, lib/, middleware) or the style sheet
  *     imports isn't in the list, even one package.json calls a development tool: Next bundles it;
  *   - desktop/package.mjs copies a package into the installed app that the notices don't follow;
- *   - the file the generator writes can't be read back by the /licences page.
+ *   - a package's third-party notice file (TypeScript's ThirdPartyNoticeText.txt) is left out;
+ *   - the file the generator writes can't be read back by the /licences page, or two entries in one
+ *     section of it share a name and version.
  * The installer's real list (the built server's node_modules) is checked by e2e-desktop/desktop.spec.ts
  * on the build it starts, and again by desktop/package.mjs on every package.
  */
@@ -32,7 +34,7 @@ import {
   productionPackages,
   SEPARATOR,
 } from "../desktop/notices.mjs";
-import { parseNotices } from "@/lib/licences/notices";
+import { NOTICES_FILE, parseNotices, readNotices } from "@/lib/licences/notices";
 
 import { importedModules, moduleName, readSource, rootSourceFiles, sourceFiles, SOURCE_FILES } from "./helpers/source-scan";
 
@@ -97,6 +99,26 @@ describe("missingFromNotices: a package that ships with no entry stops the insta
     writeFileSync(path.join(modules, ".prisma", "client", "package.json"), JSON.stringify({ name: ".prisma/client", version: "0.0.0" }));
     expect(missingFromNotices(notices(["listed@1.0.0", "@scope/listed@2.0.0", "nested@3.0.0"]), [modules])).toEqual([]);
   });
+
+  it("reads only an entry's own Name and Version lines, never ones inside a licence text", () => {
+    const text = formatNotices(
+      [
+        {
+          kind: "package" as const,
+          name: "listed",
+          version: "1.0.0",
+          licence: "MIT",
+          ships: new Set(["the test"]),
+          texts: [{ file: "LICENSE", text: "Some licence\nName: nested\nVersion: 3.0.0\nName: @scope/listed\nVersion: 2.0.0" }],
+        },
+      ],
+      { version: "0.0.0", desktop: true },
+    );
+    // The entry itself is read (listed is not missing)…
+    expect(missingFromNotices(text, [modules])).not.toContain("listed@1.0.0");
+    // …and the two packages named only inside its licence text still are.
+    expect(missingFromNotices(text, [modules])).toEqual(["@scope/listed@2.0.0", "nested@3.0.0"]);
+  });
 });
 
 describe("collectNotices: what the generator lists, and what stops it", () => {
@@ -119,6 +141,17 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "font:JetBrains Mono (font)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
+  });
+
+  it("takes a package's third-party notice and copyright notice files as well as its licence", () => {
+    const { root, modules } = fakeCheckout("third-party", { compiler: "1.0.0" });
+    const dir = fakePackage(modules, "compiler", "1.0.0", { licence: "Apache License 2.0" });
+    writeFileSync(path.join(dir, "ThirdPartyNoticeText.txt"), "Third party notices: code from others, with their copyright lines");
+    writeFileSync(path.join(dir, "CopyrightNotice.txt"), "Copyright (c) the compiler authors");
+    writeFileSync(path.join(dir, "THIRD-PARTY-NOTICES.md"), "More notices");
+    writeFileSync(path.join(dir, "notices.d.ts"), "export {}"); // code, not a notice
+    const entry = collectNotices(root).find((e) => e.name === "compiler")!;
+    expect(entry.texts.map((t: { file: string }) => t.file)).toEqual(["CopyrightNotice.txt", "LICENSE", "THIRD-PARTY-NOTICES.md", "ThirdPartyNoticeText.txt"]);
   });
 
   it("refuses a package that ships with no licence file, naming it", () => {
@@ -187,6 +220,21 @@ describe("the list for this checkout", () => {
     expect([...imported].filter((n) => !listed.has(n)).sort(), "add it to desktop/notices.mjs (collectNotices)").toEqual([]);
   });
 
+  it("carries TypeScript's and tslib's notice files: both ship in the desktop app's server", () => {
+    // TypeScript (Apache-2.0) keeps the notices for the code it carries in ThirdPartyNoticeText.txt,
+    // and tslib its copyright notice in CopyrightNotice.txt; LICENSE.txt alone isn't the whole notice.
+    expect(licenceFiles(path.join(ROOT, "node_modules", "typescript")).map((t: { file: string }) => t.file)).toEqual(["LICENSE.txt", "ThirdPartyNoticeText.txt"]);
+    expect(licenceFiles(path.join(ROOT, "node_modules", "tslib")).map((t: { file: string }) => t.file)).toEqual(["CopyrightNotice.txt", "LICENSE.txt"]);
+  });
+
+  it("gives each entry of one kind its own name and version, so two copies of one package can be told apart", () => {
+    // The /licences page lists each kind in its own section, keyed by name@version. A package and
+    // Next's copy of it (client-only 0.0.1 is both) sit in different sections, so kind is part of the key.
+    const keys = entries.map((e) => `${e.kind}:${e.name}@${e.version}`);
+    expect(keys.length).toBeGreaterThan(20);
+    expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
+  });
+
   it("follows what desktop/package.mjs copies into the installed app", () => {
     const script = readSource("desktop/package.mjs");
     const copied = [...script.matchAll(/copyWithDependencies\(\s*"([^"]+)"/g)].map((m) => m[1]);
@@ -206,6 +254,27 @@ describe("the list for this checkout", () => {
     // The page's split lines can't occur inside a licence: the writer refuses one that holds them.
     const bad = [{ ...entries[0], texts: [{ file: "LICENSE", text: `before\n${SEPARATOR}\nafter` }] }];
     expect(() => formatNotices(bad, { version: "0", desktop: false })).toThrow(/separator/);
+  });
+});
+
+describe("readNotices: what the /licences page gets from the folder the server runs in", () => {
+  it("reads a file the generator wrote, says 'missing' with no file and 'unreadable' for a malformed one", () => {
+    const good = path.join(temp, "read-good");
+    mkdirSync(good, { recursive: true });
+    const one = { kind: "package" as const, name: "only", version: "1.0.0", licence: "MIT", ships: new Set(["the test"]), texts: [{ file: "LICENSE", text: "MIT" }] };
+    writeFileSync(path.join(good, NOTICES_FILE), formatNotices([one], { version: "0.0.0", desktop: false }));
+    const read = readNotices(good);
+    expect(typeof read === "object" && read.entries.map((e) => e.name)).toEqual(["only"]);
+
+    const none = path.join(temp, "read-none");
+    mkdirSync(none, { recursive: true });
+    expect(readNotices(none)).toBe("missing");
+
+    const bad = path.join(temp, "read-bad");
+    mkdirSync(bad, { recursive: true });
+    // An entry with no rule line between its fields and its licence text.
+    writeFileSync(path.join(bad, NOTICES_FILE), `header\n${SEPARATOR}\nName: only\nVersion: 1.0.0\nKind: package\n`);
+    expect(readNotices(bad)).toBe("unreadable");
   });
 });
 
