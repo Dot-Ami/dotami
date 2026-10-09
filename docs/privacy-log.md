@@ -76,7 +76,8 @@ person is asked).
   `logs/server.log` saying how many safety copies it deleted, or that the wipe is still owed with
   the error's code only. Listed on *What DotAmi knows about you*
   ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)).
-- **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
+- **Delete ([8d]) keeps nothing else new.** No new table, column or browser-storage key; its one
+  new file is the "wipe pending" note above, and only while a wipe is unfinished. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
   adds one line to the log with only the error's name and code, never what was deleted.

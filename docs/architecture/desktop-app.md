@@ -67,7 +67,9 @@ which is about 146 MB of engines for five kinds of database and reports usage to
   migrated must need nothing from the app. (Checked that the referee bites: with the migrator
   not marking a migration finished, Prisma's check fails the test on its own.)
 - **Refuses, untouched:** a database a newer DotAmi has migrated ("update the app first"), and one
-  where an update was left half-done.
+  where an update was left half-done. One exception: when a Delete left a "wipe pending" note, the
+  start finishes that wipe first (`VACUUM`, which keeps the contents and frees the deleted space), so
+  such a file is rebuilt before these checks refuse it.
 - **Backs up first:** before changing a database that already has data, a full copy goes to
   `backups/` in the data folder (`VACUUM INTO`, consistent even if the file is open).
 - **All or nothing per migration:** each runs in a transaction; SQLite undoes schema changes too,

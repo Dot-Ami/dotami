@@ -108,6 +108,16 @@ settings page read empty or default afterwards.
   reach it.
 - Whether an agent (the Lens, or an outside one) may ever delete: a later decision. Until then the
   route answers only to DotAmi's own page.
+- Known limit: the "wipe pending" note is written just before the rows are deleted. If the computer
+  is switched off in that moment, the rows are kept (the delete never committed) but the ticked
+  safety copies are deleted at the next desktop start, as the person confirmed, with no message
+  saying the rows are still there; the page's counts show them.
+- Known limit: on a completely full disk even the note may not be written. The delete still happens
+  and **Try the wipe again** is offered, but the line saying the desktop app finishes it at the next
+  start can then be wrong: that start can't know the wipe is owed.
+- Known limit: a safety copy that can never be deleted (for example, no permission) keeps the note,
+  so each desktop start rebuilds the data file again and the page keeps showing the amber note until
+  the copy is removed by hand.
 
 ## Backend wiring
 

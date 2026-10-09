@@ -101,7 +101,8 @@ async function start() {
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
-  // untouched.
+  // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
+  // the file has already been rebuilt, with the same contents, before these checks run).
   try {
     const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
