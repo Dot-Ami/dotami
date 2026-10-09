@@ -189,6 +189,9 @@ roadmap's build order.
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
     the person confirms (the count includes turned-down records, which no list shows, and it says so)
+  - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
+    none clean on every count, the options and their costs waiting for the maintainer's choice
+    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)
