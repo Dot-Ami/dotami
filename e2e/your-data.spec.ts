@@ -247,11 +247,11 @@ const STATEMENTS_BOX = "Your statements (“In your words”)";
 const IDEAS_BOX = "Your ideas, with their notes, links and map progress";
 const BACKUPS_BOX = "Safety copies in the backups folder";
 
-// This run's data file is prisma/e2e.db (playwright.config.ts), so its backups folder and its
-// wipe-pending note sit beside it in prisma/. Tests that put files there remove them again.
-const PRISMA_DIR = path.join(process.cwd(), "prisma");
-const BACKUPS_DIR = path.join(PRISMA_DIR, "backups");
-const WIPE_NOTE = path.join(PRISMA_DIR, "e2e.db.wipe-pending");
+// This run's data file is prisma/e2e/dotami.db (playwright.config.ts), so its backups folder and its
+// wipe-pending note sit beside it in prisma/e2e/. Tests that put files there remove them again.
+const DATA_DIR = path.join(process.cwd(), "prisma", "e2e");
+const BACKUPS_DIR = path.join(DATA_DIR, "backups");
+const WIPE_NOTE = path.join(DATA_DIR, "dotami.db.wipe-pending");
 
 test("Delete: Escape or Cancel at either ask deletes nothing, and the last ask starts on Cancel", async ({ page }) => {
   expect((await page.request.post("/api/person/statements", { data: { text: "a statement Escape must keep" } })).status()).toBe(200);
@@ -325,7 +325,7 @@ test("Delete: when the wipe couldn't run, the page says the space isn't wiped ye
  * that screen will.
  */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
-  const file = path.join(process.cwd(), "prisma", "e2e.db").split(path.sep).join("/");
+  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
   const db = new PrismaClient({ datasourceUrl: `file:${file}` });
   try {
     return await fn(db);

@@ -431,7 +431,7 @@ test("Remind me about this idea: off until turned on, per idea, and still on aft
  * setting is planned), so the test puts one in the file the way that screen will.
  */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
-  const file = path.join(process.cwd(), "prisma", "e2e.db").replace(/\\/g, "/");
+  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").replace(/\\/g, "/");
   const db = new PrismaClient({ datasourceUrl: `file:${file}` });
   try {
     return await fn(db);
