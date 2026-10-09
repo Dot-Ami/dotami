@@ -62,8 +62,8 @@ export interface RateLimitResult {
 export const E2E_RATE_LIMITS_ENV = "DOTAMI_E2E_RATE_LIMITS";
 export const E2E_RATE_LIMIT_HEADER = "x-dotami-e2e-rate-limit";
 // What clientKeyFromRequest answers for an unlabelled request while the switch is on. A label
-// becomes "e2e:<label>", so no label can produce this.
-const E2E_UNCOUNTED = "e2e-uncounted";
+// becomes "e2e:<label>" and keeps no spaces, so no label can end a key with this.
+const E2E_UNCOUNTED = "e2e uncounted";
 
 function e2eOptIn(): boolean {
   // Read on every call rather than once at start-up, so the unit tests can switch it per test.

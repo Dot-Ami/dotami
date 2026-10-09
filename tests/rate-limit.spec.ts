@@ -100,6 +100,16 @@ describe("the browser-test switch", () => {
     for (let i = 0; i < 5; i++) expect(check(onlyPunctuation).allowed).toBe(true);
   });
 
+  it("on: no label can pass itself off as an unlabelled request", () => {
+    vi.stubEnv("DOTAMI_E2E_RATE_LIMITS", "opt-in");
+    // Each becomes a different bucket ("e2e uncounted" is kept as "e2euncounted").
+    for (const label of ["e2e-uncounted", "e2e uncounted", "uncounted"]) {
+      expect(check(labelled(label)).allowed).toBe(true);
+      expect(check(labelled(label)).allowed).toBe(true);
+      expect(check(labelled(label)).allowed, label).toBe(false);
+    }
+  });
+
   it("off again: a key that happens to end like the uncounted marker is counted as usual", () => {
     const opts = { limit: 1, windowMs: 60_000 };
     expect(checkRateLimit("settings:e2e-uncounted", opts).allowed).toBe(true);
