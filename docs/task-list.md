@@ -169,6 +169,8 @@ roadmap's build order.
     limit), its accounts listed with the income ones ticked, monthly totals proposed under the
     source kind "books" ("Books / file"); unknown GnuCash features refused by name
     ([gnucash.md](connectors/gnucash.md))
+  - [x] A ticked account the book doesn't mark as income gets a note that a sale may be counted
+    twice; information only, nothing unticked or blocked
   - [ ] Journals on the screen, GnuCash database (SQLite) books, Sage 50, QuickBooks Desktop
 - 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the

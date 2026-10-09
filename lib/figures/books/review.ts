@@ -29,6 +29,25 @@ export function tickable(account: BookAccount): string | null {
   return null;
 }
 
+/**
+ * The note shown beside a ticked account the book doesn't mark as income. A sale is posted on two
+ * sides (the income account and the bank, say), so ticking the bank or an expense account next to
+ * the income ones can add the same sale up twice. Information only, never a verdict: the tick is
+ * the person's and stays as they left it; nothing is unticked or blocked.
+ */
+export const NOT_INCOME_NOTE =
+  "This isn't an income account in your book. If a sale also lands here, it may be counted twice.";
+
+/**
+ * NOT_INCOME_NOTE for an account that can be ticked but isn't marked as income; null otherwise.
+ * The screen shows it only while the account is ticked. An account that can't be ticked already
+ * has its own reason beside it (tickable), so it gets no second note.
+ */
+export function notIncomeNote(account: BookAccount): string | null {
+  if (account.markedAsRevenue || tickable(account) !== null) return null;
+  return NOT_INCOME_NOTE;
+}
+
 /** GnuCash's account types in plain words. An unknown type never reaches here (the reader refuses it). */
 const TYPE_WORDS: Readonly<Record<string, string>> = {
   INCOME: "Income",

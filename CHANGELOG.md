@@ -19,6 +19,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   50 MB are read in the background, so the window stays usable, and a read is stopped after a
   minute. A book from a newer GnuCash, with a feature, account type or part DotAmi doesn't know,
   is turned away with that thing's name. Figures from a book are listed under **Books / file**.
+- **A note beside a ticked book account that isn't income** ([8h]) — tick a bank, expense or other
+  account GnuCash doesn't mark as income, and a plain note appears under it: "This isn't an income
+  account in your book. If a sale also lands here, it may be counted twice." A sale is posted to
+  both the income account and the bank, so ticking both adds it up twice. The note is all it does:
+  the tick stays yours, the account is still counted, and nothing is blocked.
 - **Bank and card accounts, the groundwork** ([8g]; nothing new to see until the statement screen
   arrives) — DotAmi can now keep a list of the bank and card accounts you allow it to read
   statements from, each under your own name for it ("Business chequing", "Visa ending 1234"), with
