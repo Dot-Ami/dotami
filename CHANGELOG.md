@@ -74,6 +74,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   own pages can start a save.
 
 ### Changed
+- **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
+  server no longer carries the image library sharp (with libvips, LGPL-3.0-or-later) or the
+  TypeScript compiler, which Next.js's build copied in although DotAmi never resizes an image and
+  never compiles code while it runs, nor the small packages only those two needed. Next's image
+  optimiser is switched off in the desktop app, so its address answers "not found" instead of
+  reaching for the missing library. Their entries leave the app's licence list; nothing changes on
+  screen otherwise. A copy run from the source code is unchanged.
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
   return*, instead of "That isn't a spreadsheet".
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,

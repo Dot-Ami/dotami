@@ -34,9 +34,11 @@ export interface NoticeSource {
 
 export function licenceFiles(dir: string): { file: string; text: string }[];
 export function packagesIn(nodeModules: string, prefix?: string): FoundPackage[];
-export function dependencyClosure(root: string, names: readonly string[], options?: { copied?: boolean }): FoundPackage[];
-export function productionPackages(root: string): FoundPackage[];
-export function collectNotices(root: string, options?: { standalone?: string }): NoticeSource[];
+/** A test on a package name: true for one that doesn't ship (desktop/left-out.mjs's isLeftOut). */
+export type LeaveOut = (name: string) => boolean;
+export function dependencyClosure(root: string, names: readonly string[], options?: { copied?: boolean; leaveOut?: LeaveOut }): FoundPackage[];
+export function productionPackages(root: string, options?: { leaveOut?: LeaveOut }): FoundPackage[];
+export function collectNotices(root: string, options?: { standalone?: string; leaveOut?: LeaveOut }): NoticeSource[];
 export function formatNotices(entries: readonly NoticeSource[], options: { version: string; desktop: boolean }): string;
-export function writeNotices(root: string, out: string, options?: { standalone?: string }): NoticeSource[];
+export function writeNotices(root: string, out: string, options?: { standalone?: string; leaveOut?: LeaveOut }): NoticeSource[];
 export function missingFromNotices(noticesText: string, nodeModulesDirs: readonly string[]): string[];

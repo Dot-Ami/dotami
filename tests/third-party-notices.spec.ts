@@ -220,7 +220,7 @@ describe("the list for this checkout", () => {
     expect([...imported].filter((n) => !listed.has(n)).sort(), "add it to desktop/notices.mjs (collectNotices)").toEqual([]);
   });
 
-  it("carries TypeScript's and tslib's notice files: both ship in the desktop app's server", () => {
+  it("reads TypeScript's and tslib's notice files as well as their licences", () => {
     // TypeScript (Apache-2.0) keeps the notices for the code it carries in ThirdPartyNoticeText.txt,
     // and tslib its copyright notice in CopyrightNotice.txt; LICENSE.txt alone isn't the whole notice.
     expect(licenceFiles(path.join(ROOT, "node_modules", "typescript")).map((t: { file: string }) => t.file)).toEqual(["LICENSE.txt", "ThirdPartyNoticeText.txt"]);

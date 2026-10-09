@@ -139,6 +139,21 @@ person is asked).
   about the person, nothing is sent, and the page asks nothing. The list also shows what the
   installer already carried without being named before, among them TypeScript and the image
   library sharp (with libvips, LGPL-3.0-or-later) that Next's file tracer copies into the server.
+- **Ten packages removed from the desktop app's server; nothing added.** The build now deletes
+  sharp, its prebuilt builds with libvips (`@img/sharp-win32-x64`, `@img/sharp-wasm32` and, on other
+  systems, `@img/sharp-libvips-*`), `@img/colour`, `detect-libc`, `@emnapi/runtime`, `typescript`,
+  `source-map-support`, `buffer-from` and `source-map` from the server it ships
+  ([`desktop/left-out.mjs`](../desktop/left-out.mjs), [`desktop/build.mjs`](../desktop/build.mjs)):
+  Next's file tracer copied them in, but only Next's image optimiser loads sharp and only Next's
+  build loads TypeScript, and the rest are what those two pull in. The desktop build switches the
+  image optimiser off ([`next.config.mjs`](../next.config.mjs)), so `/_next/image` answers 404. The
+  server is 89.1 MB → 59.4 MB, the installed app 476.7 MB → 446.8 MB and the installer
+  133.8 MB → 126.1 MB (0.2.1 built on Windows, 2026-10-08). The notices file drops their entries
+  (183 → 172, semver with them: only sharp named it), and with them the only LGPL-licensed code it
+  listed. The build stops if the app's own server code or a
+  package that stays needs one of them; `e2e-desktop/desktop.spec.ts` fails if one comes back into
+  the built or packaged server, and drives the app without them. A copy run from the source code
+  still installs sharp with Next, as before.
 
 ### New powers or permissions
 
