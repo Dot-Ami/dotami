@@ -5,7 +5,7 @@
   "main": "desktop/main.mjs",
   "scripts": {
     "dev": "node scripts/next.mjs dev -H 127.0.0.1",
-    "build": "node scripts/next.mjs build",
+    "build": "node desktop/notices.mjs && node scripts/next.mjs build",
     "start": "node scripts/next.mjs start",
     "lint": "node scripts/next.mjs lint",
     "typecheck": "tsc --noEmit",
@@ -17,6 +17,7 @@
     "desktop:build": "node desktop/build.mjs",
     "desktop:package": "node desktop/package.mjs",
     "desktop:installer": "node desktop/package.mjs --installer",
+    "notices": "node desktop/notices.mjs",
     "prisma:generate": "node scripts/prisma.mjs generate",
     "prisma:migrate": "node scripts/prisma.mjs migrate dev",
     "prisma:deploy": "node scripts/prisma.mjs migrate deploy",

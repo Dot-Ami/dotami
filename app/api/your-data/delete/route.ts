@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { logRouteError } from "@/lib/api/log-error";
 import { readBody, refuseUnlessFromAppPage, throttle } from "@/lib/figures/http";
 import { prisma } from "@/lib/prisma";
-import { DeleteInputError, deleteData, wipeFreeSpace } from "@/lib/privacy/delete";
+import { DeleteInputError, deleteData, finishWipe } from "@/lib/privacy/delete";
+import { databaseFilePath } from "@/lib/settings/today";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,8 @@ const PAGE_ONLY_MESSAGE =
  * POST /api/your-data/delete
  *
  *   { kinds: ["statements", ...], seen: { PersonStatement: 3, ... } }  deletes the ticked kinds
- *   { retryWipe: true }                                                 runs the wipe again
+ *   { retryWipe: true }                                                 finishes the wipe (and any safety
+ *                                                                       copies an earlier Delete still owes)
  *
  * Answers only to DotAmi's own page: whether an agent may ever delete is a later decision, so like
  * agreeing to a figure it is the person's click and nothing else's (refuseUnlessFromAppPage). The
@@ -42,11 +44,13 @@ export async function POST(request: Request) {
     retryWipe?: unknown;
   };
 
+  // The data file this server uses: the safety copies and the wipe-pending note sit beside it.
+  const files = { dataFile: databaseFilePath(process.env.DATABASE_URL) };
   try {
     if (body.retryWipe === true) {
-      return NextResponse.json({ wiped: await wipeFreeSpace(prisma) });
+      return NextResponse.json(await finishWipe(prisma, files));
     }
-    const result = await deleteData(prisma, { kinds: body.kinds, seen: body.seen });
+    const result = await deleteData(prisma, { kinds: body.kinds, seen: body.seen }, files);
     if (result.status === "changed") {
       return NextResponse.json(
         {

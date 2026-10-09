@@ -3,11 +3,31 @@ import { NextResponse } from "next/server";
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse, type RateLimitOptions } from "@/lib/api/rate-limit";
 
+import { logRouteError } from "@/lib/api/log-error";
+
+import { AccountInputError, AccountNotFoundError, BankRecordsOffError } from "./source-accounts";
 import { FigureInputError, VentureNotFoundError } from "./store";
 
 /** Shared plumbing for the /api/figures routes, so each route file reads as its own rule. */
 
 export const AGREE_ONLY_MESSAGE = "Only the agree prompt in DotAmi's window can confirm figures.";
+
+/** What a caller other than DotAmi's own page is told by the [8g] bank-sources routes. */
+export const BANK_SOURCES_PAGE_ONLY =
+  "Bank and card accounts can only be listed, allowed or taken back from DotAmi's own window. An outside agent can't reach them.";
+
+/**
+ * [8g] Turns a bank-sources store error into the answer. Anything unexpected logs only the error's
+ * name and code: a database error can quote what was being written, and an account's name is the
+ * person's own words.
+ */
+export function bankSourcesFailure(route: string, error: unknown): Response {
+  if (error instanceof AccountInputError) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error instanceof AccountNotFoundError) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error instanceof BankRecordsOffError) return NextResponse.json({ error: error.message }, { status: 409 });
+  logRouteError(route, error);
+  return NextResponse.json({ error: "No database reachable — nothing was changed." }, { status: 503 });
+}
 
 /**
  * Returns a 403 unless this request comes from DotAmi's own page, else null.
