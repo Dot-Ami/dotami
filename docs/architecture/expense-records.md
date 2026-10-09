@@ -224,8 +224,9 @@ first slice); the others are reworded when what changes them is built.
    have to reach the local server to be stored. A pointer only (option C) does not.
 
 Unchanged: the rules engine reads agreed figures only; records feed no card; DotAmi files
-nothing; the server stores a receipt's bytes (options A and B) but never parses, opens or runs
-them.
+nothing; the server stores a receipt's bytes (options A and B) but never decodes, opens or runs
+them. The one thing it parses is a HEIC photo's container structure, with DotAmi's own bounded
+reader, to learn the picture's size (section 7, rule 5).
 
 ## 4. How this connects to write-offs
 
@@ -367,12 +368,24 @@ figures, links, map progress, settings and expense records survive it).
 3. **A picture's size is read from its header and checked before anything decodes it:** at most
    50 megapixels and 20,000 pixels on a side, so a few hundred bytes that claim a 30,000 × 30,000
    picture (a "decompression bomb") are refused unopened. A picture whose header has no readable
-   size is refused as damaged. For a HEIC, the size is the primary picture's own size box (`ispe`).
+   size is refused as damaged. For a HEIC, the size is the primary picture's own size box (`ispe`);
+   each of its tiles' size boxes must be within the same caps, and all the tiles together at most
+   64 Mi pixels.
 4. **DotAmi names the file itself:** 32 random hex characters and the extension of the type it read
    (`3f9c….png`). The person's file name is never sent to the server and never kept; nothing a caller
    sends becomes part of a path.
-5. **The server stores the bytes and never opens them:** it reads a few header bytes to learn the
-   type and size, hashes the file, and writes it. It never decodes, renders, parses or runs it.
+5. **The server stores the bytes and never decodes them:** it reads a few header bytes to learn the
+   type and size, hashes the file, and writes it. It never decodes, renders or runs it. For a HEIC
+   photo (2026-10-09), learning the size means reading the file's container structure: which item
+   is the picture, its size box, its tiles' sizes and where their data sit. DotAmi's own reader
+   ([`lib/expenses/receipts/heic/container.ts`](../../lib/expenses/receipts/heic/container.ts)) does
+   that on the server when the receipt is added, and in the page when it is added and again when it
+   is shown; only then does the viewer's no-network worker read it a last time and hand the picture
+   data to the decoder. That is the one parse of a receipt's hostile bytes outside a no-network
+   worker. The reader never decodes the picture; it refuses anything it would have to trust, caps
+   every count, and reads no more item data than the file holds, so a small file can't make it copy
+   the same bytes over and over (tested with truncated, oversized, looping, overlapping and randomly
+   corrupted files in [`tests/heic-container.spec.ts`](../../tests/heic-container.spec.ts)).
 6. **Only an agreed record takes a receipt**, and only DotAmi's own page can add or remove one
    (`POST /api/expenses/receipt`, `POST /api/expenses/receipt/remove`, both `Sec-Fetch-Site:
    same-origin` only, like agree and attach). An agent can propose records but never add, remove or
@@ -511,8 +524,9 @@ committed on its own before any viewer code; "Built by" below names the files).
      reaches the decoder: one still picture (not a sequence); HEVC Main or Main Still Picture, 8-bit
      4:2:0, with the record and its SPS agreeing; exactly one VPS, SPS and PPS; every tile a key
      picture with no parameter set of its own; the declared tile size; no more tiles than the picture
-     needs; the pixel caps. Thumbnails, depth and gain maps, alpha, Exif and every other item in the
-     file are never handed to the decoder;
+     needs; the pixel caps, for the picture, every tile, the coded size its SPS gives the decoder and
+     all tiles together; no more item data than the file holds. Thumbnails, depth and gain maps,
+     alpha, Exif and every other item in the file are never handed to the decoder;
    - `isConfigSupported` is asked first; where it says no (or there is no `VideoDecoder`), the viewer
      says this computer can't show HEIC photos and that the photo is kept, with how to see it;
    - one decoder per picture, every tile a key chunk, every decoded frame drawn onto an

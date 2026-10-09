@@ -36,6 +36,15 @@ export const MAX_PROPERTIES = 1024;
 /** Tiles in one grid: a 48-megapixel iPhone photo has 192 tiles of 512 × 512. */
 export const MAX_TILES = 1024;
 
+/**
+ * Pixels the graphics chip may be asked to decode for one picture, all tiles together. Each tile is
+ * also held to the receipt caps on its own (50 megapixels, 20,000 a side, types.ts). The total is a
+ * little over the 50-megapixel cap because a grid's last row and column of tiles run past the
+ * picture's edge: a 48-megapixel iPhone photo (8064 × 6048) is 16 × 12 tiles of 512 × 512, which is
+ * 50.3 megapixels decoded.
+ */
+export const MAX_DECODED_PIXELS = 64 * 1024 * 1024;
+
 /** HEVC parameter-set and SEI lists in a decoder configuration record (`hvcC`). */
 export const MAX_HVCC_ARRAYS = 8;
 

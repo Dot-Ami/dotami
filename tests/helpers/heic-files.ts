@@ -63,13 +63,17 @@ export const ftyp = (major: string, compatible: string[]) => box("ftyp", Buffer.
 
 export const ispe = (width: number, height: number) => fullBox("ispe", 0, 0, u32(width), u32(height));
 
-/** One item's place: in this file's mdat (method 0) or in idat (method 1), one extent. */
+/** A piece of an item's data: offset into the mdat content (or the idat content) and length. */
+export interface Extent {
+  offset: number;
+  length: number;
+}
+
+/** One item's place: in this file's mdat (method 0) or in idat (method 1), one or more extents. */
 interface Placed {
   id: number;
   method: 0 | 1;
-  /** Offset into the mdat content or the idat content. */
-  offset: number;
-  length: number;
+  extents: Extent[];
   dataReference?: number;
 }
 
@@ -104,6 +108,11 @@ export interface HeicOptions {
   tileType?: string;
   /** The primary item's type, if not `grid` / `hvc1`. */
   primaryType?: string;
+  /**
+   * Where each tile's data is said to be, if not its own bytes in one piece: given the tile's index,
+   * its own place and the whole mdat content's length. For split, shared and overlapping data.
+   */
+  tileExtents?: (index: number, own: Extent, mdatLength: number) => Extent[];
 }
 
 /** A HEIC file, laid out the way an iPhone writes one: ftyp, meta (with the grid descriptor in idat), mdat. */
@@ -123,7 +132,7 @@ export function heic(options: HeicOptions = {}): Buffer {
   const placed: Placed[] = [];
   let at = 0;
   const putMdat = (id: number, data: Buffer) => {
-    placed.push({ id, method: 0, offset: at, length: data.length, dataReference: options.dataInAnotherFile && tileIds.includes(id) ? 1 : 0 });
+    placed.push({ id, method: 0, extents: [{ offset: at, length: data.length }], dataReference: options.dataInAnotherFile && tileIds.includes(id) ? 1 : 0 });
     mdatParts.push(data);
     at += data.length;
   };
@@ -137,7 +146,13 @@ export function heic(options: HeicOptions = {}): Buffer {
 
   // idat: the grid descriptor (version 0, 16-bit sizes).
   const descriptor = Buffer.concat([u8(0), u8(0), u8(grid.rows - 1), u8(grid.columns - 1), u16(grid.width), u16(grid.height)]);
-  if (layout === "grid") placed.push({ id: primaryId, method: 1, offset: 0, length: descriptor.length });
+  if (layout === "grid") placed.push({ id: primaryId, method: 1, extents: [{ offset: 0, length: descriptor.length }] });
+  if (options.tileExtents) {
+    for (const p of placed) {
+      const index = tileIds.indexOf(p.id);
+      if (p.method === 0 && index >= 0) p.extents = options.tileExtents(index, p.extents[0], at);
+    }
+  }
 
   // Items.
   const infe = (id: number, type: string, hidden = false) => fullBox("infe", 2, hidden ? 1 : 0, u16(id), u16(0), Buffer.from(type, "latin1"), Buffer.from("\0", "latin1"));
@@ -211,7 +226,13 @@ export function heic(options: HeicOptions = {}): Buffer {
   // iloc offsets are absolute in the file, so the meta box is built once to learn its size, then for real.
   const build = (mdatStart: number) => {
     const ilocEntries = placed.map((p) =>
-      Buffer.concat([u16(p.id), u16(p.method), u16(p.dataReference ?? 0), u16(1), u32(p.method === 0 ? mdatStart + p.offset : p.offset), u32(p.length)]),
+      Buffer.concat([
+        u16(p.id),
+        u16(p.method),
+        u16(p.dataReference ?? 0),
+        u16(p.extents.length),
+        ...p.extents.flatMap((e) => [u32(p.method === 0 ? mdatStart + e.offset : e.offset), u32(e.length)]),
+      ]),
     );
     const iloc = fullBox("iloc", 1, 0, u8(0x44), u8(0x00), u16(placed.length), ...ilocEntries);
     return fullBox("meta", 0, 0, hdlr, pitm, iloc, iinf, iref, iprp, idat);

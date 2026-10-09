@@ -90,7 +90,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   on computers whose graphics driver decodes HEVC; where it can't, the photo is still kept and DotAmi
   says so, and how to see it. A HEIC is decoded only when you click *Show receipt*, and after one fails
   DotAmi doesn't try another until it restarts. Bursts, animations and layered HEIF pictures are
-  refused. Not tried on a Mac yet.
+  refused, and so is a HEIC whose tiles would ask the graphics chip to decode more than the pixel
+  caps allow. Not tried on a Mac yet.
 - **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
   Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
   is fetched from the internet, and DotAmi checks the file is the one you added before showing it;

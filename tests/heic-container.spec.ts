@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import { parseHeif } from "@/lib/expenses/receipts/heic/container";
 import { checkTileData, readHvcc } from "@/lib/expenses/receipts/heic/hevc";
-import { MAX_BOXES, MAX_ITEMS, MAX_TILES } from "@/lib/expenses/receipts/heic/limits";
+import { MAX_BOXES, MAX_DECODED_PIXELS, MAX_ITEMS, MAX_TILES } from "@/lib/expenses/receipts/heic/limits";
 import { heicBrands, heicHeader, heicPicture } from "@/lib/expenses/receipts/heic/picture";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE } from "@/lib/expenses/receipts/types";
@@ -20,6 +20,68 @@ import { box, ftyp, fullBox, heic, INVENTED_HVCC, INVENTED_TILES, TILE } from ".
 import { jpegHeader } from "./helpers/receipt-files";
 
 const bytes = (b: Buffer) => new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+
+/** Writes bits most significant first, with HEVC's exp-Golomb codes; for building an SPS by hand. */
+class BitWriter {
+  bits: number[] = [];
+  u(n: number, v: number) {
+    for (let i = n - 1; i >= 0; i -= 1) this.bits.push(Math.floor(v / 2 ** i) % 2);
+  }
+  ue(v: number) {
+    const x = v + 1;
+    const length = Math.floor(Math.log2(x));
+    this.u(length, 0);
+    this.u(length + 1, x);
+  }
+  /** With the stop bit and zero padding to a whole byte. */
+  bytes(): number[] {
+    const b = [...this.bits, 1];
+    while (b.length % 8) b.push(0);
+    const out: number[] = [];
+    for (let i = 0; i < b.length; i += 8) out.push(parseInt(b.slice(i, i + 8).join(""), 2));
+    return out;
+  }
+}
+
+/**
+ * An `hvcC` record like the invented one (Main, 8-bit 4:2:0, one VPS, SPS and PPS) whose SPS codes a
+ * `coded` × `coded` picture, optionally cropped by its conformance window to `shown` × `shown`.
+ * The size is the only thing that changes: what a hostile file would lie about to ask the graphics
+ * chip for a huge decode while its declared sizes look small.
+ */
+function hvccCoding(coded: number, shown = coded): Buffer {
+  const w = new BitWriter();
+  w.u(4, 0); // VPS id
+  w.u(3, 0); // no sub-layers
+  w.u(1, 1); // temporal id nesting
+  w.u(2, 0); // profile space
+  w.u(1, 0); // tier
+  w.u(5, 1); // Main
+  w.u(32, 0x60000000); // compatibility flags
+  w.u(48, 0x900000000000); // progressive, frame-only
+  w.u(8, 93); // level
+  w.ue(0); // SPS id
+  w.ue(1); // 4:2:0
+  w.ue(coded);
+  w.ue(coded);
+  if (shown === coded) w.u(1, 0);
+  else {
+    // The conformance window, in pairs of pixels for 4:2:0: all of the crop on the right and bottom.
+    w.u(1, 1);
+    w.ue(0);
+    w.ue((coded - shown) / 2);
+    w.ue(0);
+    w.ue((coded - shown) / 2);
+  }
+  w.ue(0); // 8-bit luma
+  w.ue(0); // 8-bit chroma
+  const sps = Buffer.from([0x42, 0x01, ...w.bytes()]);
+  const head = Buffer.from(INVENTED_HVCC.subarray(0, 22));
+  const vps = Buffer.from([0x40, 0x01, 0x0c, 0x01]);
+  const pps = Buffer.from([0x44, 0x01, 0xc1, 0x72]);
+  const list = (type: number, nal: Buffer) => Buffer.concat([Buffer.from([0x80 | type, 0, 1, nal.length >> 8, nal.length & 0xff]), nal]);
+  return Buffer.concat([head, Buffer.from([3]), list(32, vps), list(33, sps), list(34, pps)]);
+}
 
 /** The plan, or the test fails with the refusal code. */
 function plan(file: Buffer) {
@@ -108,6 +170,69 @@ describe("hostile and broken files", () => {
     expect(sniffReceipt(bytes(heic({ primarySize: { width: MAX_IMAGE_SIDE + 1, height: 1 } })))).toEqual({ ok: false, code: "too-many-pixels" });
     const side = Math.floor(Math.sqrt(MAX_IMAGE_PIXELS)) + 1;
     expect(sniffReceipt(bytes(heic({ primarySize: { width: side, height: side } })))).toEqual({ ok: false, code: "too-many-pixels" });
+  });
+
+  it("holds every tile, and what the graphics chip is asked to decode, to the pixel caps too", () => {
+    // The builder makes an honest record: the invented 128 × 128 tiles read through it plan as usual.
+    expect(plan(heic({ hvcc: hvccCoding(TILE) })).config).toMatchObject({ codedWidth: TILE, codedHeight: TILE });
+    // A 1 × 1 grid of one 8192 × 8192 tile (67 megapixels) for a 100 × 100 picture, in a 458-byte file:
+    // the picture's own size is small, so only the tile's size can catch it. Refused when added.
+    for (const side of [8192, 16_384, 60_000]) {
+      const file = heic({ hvcc: hvccCoding(side), grid: { rows: 1, columns: 1, width: 100, height: 100, tiles: [0] }, tileSize: { width: side, height: side } });
+      expect(file.length).toBeLessThan(1_000);
+      expect(sniffReceipt(bytes(file)), `tile of ${side}`).toEqual({ ok: false, code: "too-many-pixels" });
+      expect(heicPicture(bytes(file)), `tile of ${side}`).toEqual({ ok: false, code: "too-many-pixels" });
+    }
+    // Tiles each inside the caps (49 megapixels) whose four together are far over what one picture may decode.
+    const side = 7_000;
+    expect(side * side).toBeLessThan(MAX_IMAGE_PIXELS);
+    const four = heic({ grid: { rows: 2, columns: 2, width: side + 1, height: side + 1, tiles: [0, 1, 2, 3] }, tileSize: { width: side, height: side } });
+    expect(sniffReceipt(bytes(four))).toEqual({ ok: false, code: "too-many-pixels" });
+    // Declared sizes all honest (128 × 128 tiles), but the SPS codes 16,000 × 16,000 pixels and crops
+    // them to 128 × 128: the decoder would be asked for 256 megapixels. Kept when added (the store
+    // doesn't read the HEVC), refused before the decoder sees a byte.
+    const hidden = heic({ hvcc: hvccCoding(16_000, TILE) });
+    expect(sniffReceipt(bytes(hidden))).toMatchObject({ ok: true, type: "image/heic" });
+    expect(heicPicture(bytes(hidden))).toEqual({ ok: false, code: "too-many-pixels" });
+    // A 48-megapixel iPhone photo (8064 × 6048, 16 × 12 tiles of 512) decodes 50.3 megapixels: accepted.
+    const iphone = heic({
+      grid: { rows: 12, columns: 16, width: 8064, height: 6048, tiles: Array.from({ length: 192 }, (_, i) => i % 4) },
+      tileSize: { width: 512, height: 512 },
+    });
+    expect(192 * 512 * 512).toBeLessThanOrEqual(MAX_DECODED_PIXELS);
+    expect(sniffReceipt(bytes(iphone))).toEqual({ ok: true, type: "image/heic", width: 8064, height: 6048 });
+  });
+
+  it("refuses tile data that overlaps or is shared, instead of copying the same bytes over and over", () => {
+    // A tile 64 KB long, so overlapping copies would add up fast.
+    const big = (i: number, d: Buffer) => (i === 0 ? Buffer.concat([d, Buffer.alloc(64 * 1024, 0x11)]) : d);
+    // Every tile is the whole mdat, twice over: two overlapping pieces each.
+    const overlapping = heic({
+      tileData: big,
+      tileExtents: (_, __, all) => [
+        { offset: 0, length: all },
+        { offset: 0, length: all },
+      ],
+    });
+    // Every tile is the same one piece: shared, not overlapping within an item.
+    const shared = heic({ tileData: big, tileExtents: (_, __, all) => [{ offset: 0, length: all }] });
+    for (const [name, file] of [
+      ["overlapping", overlapping],
+      ["shared", shared],
+    ] as const) {
+      expect(sniffReceipt(bytes(file)), name).toEqual({ ok: false, code: "damaged" });
+      expect(heicPicture(bytes(file)), name).toEqual({ ok: false, code: "damaged" });
+    }
+    // Data split into two pieces that don't overlap is fine, and joined back exactly.
+    const split = heic({
+      tileExtents: (_, own) => [
+        { offset: own.offset, length: 10 },
+        { offset: own.offset + 10, length: own.length - 10 },
+      ],
+    });
+    const p = plan(split);
+    expect(p.tiles.map((t) => Buffer.from(t).toString("hex"))).toEqual(INVENTED_TILES.map((t) => t.toString("hex")));
+    expect(p.tiles.reduce((sum, t) => sum + t.length, 0)).toBeLessThanOrEqual(split.length);
   });
 
   it("refuses a box that claims to be larger than the file, or than the box around it", () => {
@@ -378,6 +503,12 @@ describe("random corruption (a property test)", () => {
       expect(p.tiles.length).toBeLessThanOrEqual(MAX_TILES);
       expect(p.shownWidth * p.shownHeight).toBeLessThanOrEqual(MAX_IMAGE_PIXELS);
       expect(Math.max(p.width, p.height, p.shownWidth, p.shownHeight)).toBeLessThanOrEqual(MAX_IMAGE_SIDE);
+      // What the decoder is asked for: each tile's coded size, and all of them together.
+      expect(Math.max(p.tileWidth, p.tileHeight, p.config.codedWidth, p.config.codedHeight)).toBeLessThanOrEqual(MAX_IMAGE_SIDE);
+      expect(p.config.codedWidth * p.config.codedHeight).toBeLessThanOrEqual(MAX_IMAGE_PIXELS);
+      expect(p.tiles.length * p.config.codedWidth * p.config.codedHeight).toBeLessThanOrEqual(MAX_DECODED_PIXELS);
+      // Never more data handed over than the file holds.
+      expect(p.tiles.reduce((sum, t) => sum + t.length, 0)).toBeLessThanOrEqual(view.length);
       for (const t of p.tiles) {
         expect(t.length).toBeGreaterThan(0);
         expect(checkTileData(t, p.config.lengthSize)).toBe("ok");

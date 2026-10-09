@@ -173,7 +173,7 @@ async function start() {
     // The preload gives DotAmi's pages two calls and nothing else (desktop/window-preload.cjs); the
     // window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
     // switch may turn off Chromium's sandboxes or run the graphics process inside the browser process
-    // (tests/security-hardening.spec.ts lists the switches and fails if one appears).
+    // (tests/desktop-sandbox.spec.ts lists the switches and fails if one appears).
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(root, "desktop", "window-preload.cjs") },
   });
   win.once("ready-to-show", () => win?.show());

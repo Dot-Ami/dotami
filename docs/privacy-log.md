@@ -112,8 +112,8 @@ person is asked).
   last digits of a card or a name and address, is in the copy), in a new `receipts/` folder beside the
   data file: `<data folder>/receipts/` in the desktop app, `prisma/receipts/` beside a copy run from
   source. DotAmi names each file itself (32 random hex characters and the extension of the type it
-  read from the bytes); the person's file name is never sent or kept. Only JPEG, PNG, WebP and PDF,
-  decided from the file's first bytes; at most 10 MB; a picture at most 50 megapixels. A new `Receipt`
+  read from the bytes); the person's file name is never sent or kept. Only JPEG, PNG, WebP and PDF
+  (and HEIC, since the HEIC entry at the top of this section), decided from the file's first bytes; at most 10 MB; a picture at most 50 megapixels. A new `Receipt`
   table describes each file: its record, type, size, SHA-256 and the day it was added
   ([`lib/expenses/receipts/`](../lib/expenses/receipts/),
   [`prisma/migrations/20261008180000_receipts`](../prisma/migrations/20261008180000_receipts/migration.sql),
@@ -323,7 +323,8 @@ person is asked).
   agent (`refuseUnlessFromAppPage`), and the sweep that removes receipt files no record describes
   never touches a file it didn't name ([`lib/expenses/receipts/store.ts`](../lib/expenses/receipts/store.ts),
   tested by [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts)). The server stores
-  a receipt's bytes and never decodes, parses or runs them.
+  a receipt's bytes and never decodes or runs them; for a HEIC photo it reads the container's
+  structure with DotAmi's own bounded reader to learn the picture's size, and nothing more.
 - **The page can start a second worker of DotAmi's own, the receipt viewer's**, which runs pdf.js
   to draw a PDF receipt's pages, under the same no-connection policy as the return reader's
   ([`lib/expenses/receipts/viewer/pdf-pages.worker.ts`](../lib/expenses/receipts/viewer/pdf-pages.worker.ts),

@@ -8,9 +8,10 @@
  * (picture.ts, to pull out the HEVC data for the graphics chip).
  *
  * The bytes are hostile until proven otherwise. Every read is bounds-checked against the box it sits
- * in, every box must lie inside its parent, every count is capped (limits.ts), and every loop moves
- * forward by at least a box header, so no file can make it read outside the bytes, loop forever or
- * allocate more than the file itself. Anything it doesn't understand is either skipped (an unknown
+ * in, every box must lie inside its parent, every count is capped (limits.ts), every loop moves
+ * forward by at least a box header, and all the item data read from one file shares one budget the
+ * size of the file (ByteBudget), so no file can make it read outside the bytes, loop forever or
+ * copy more than the file itself. Anything it doesn't understand is either skipped (an unknown
  * box) or refused (a structure it would have to trust). It never throws for a bad file: it answers
  * `{ ok: false }`, and a thrown error is caught at the edge and treated the same way.
  */
@@ -419,12 +420,21 @@ export function sizeOf(bytes: Uint8Array, heif: Heif, id: number): { width: numb
 export const referencesFrom = (heif: Heif, type: string, from: number): number[] => heif.references.get(type)?.get(from) ?? [];
 
 /**
- * An item's bytes, joined from its extents: only data in this file (or its `idat` box), every extent
- * inside the bytes it points into, the whole no longer than `maxBytes`. A length of 0 means "to the
- * end", as the format allows. null for anything else: data in another file, data built from other
- * items, an extent past the end (a truncated file), or an item with no location.
+ * How many bytes of item data may still be read from one file. Every item read from the same file
+ * spends from the same budget, which starts at the file's own size. Without it, a small file could
+ * point many items (or many pieces of one item) at the same bytes and make the reader copy the same
+ * megabytes over and over: a 5 MB file with 64 tiles that all overlap the same data would otherwise
+ * cost nearly 2 GB of copying. Real photos never read a byte twice, so they never run out.
  */
-export function itemData(bytes: Uint8Array, heif: Heif, id: number, maxBytes: number): Uint8Array | null {
+export class ByteBudget {
+  constructor(public left: number) {}
+  static forFile(bytes: Uint8Array, cap: number): ByteBudget {
+    return new ByteBudget(Math.min(bytes.length, cap));
+  }
+}
+
+/** Where an item's bytes are, checked against the file and charged to `budget`, without copying them. */
+export function itemExtents(bytes: Uint8Array, heif: Heif, id: number, budget: ByteBudget): { from: number; to: number }[] | null {
   const location = heif.locations.get(id);
   if (!location || location.dataReference !== 0 || location.extents.length === 0) return null;
   let source: { start: number; end: number };
@@ -433,16 +443,30 @@ export function itemData(bytes: Uint8Array, heif: Heif, id: number, maxBytes: nu
   else return null;
 
   const pieces: { from: number; to: number }[] = [];
-  let total = 0;
   for (const { offset, length } of location.extents) {
     const from = source.start + offset;
     const to = length === 0 ? source.end : from + length;
     if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < source.start || to > source.end || to <= from) return null;
-    total += to - from;
-    if (total > maxBytes) return null;
+    // Charged before anything is copied: overlapping pieces or items run the budget out and are refused.
+    budget.left -= to - from;
+    if (budget.left < 0) return null;
     pieces.push({ from, to });
   }
+  return pieces;
+}
+
+/**
+ * An item's bytes, joined from its extents: only data in this file (or its `idat` box), every extent
+ * inside the bytes it points into, and the whole charged to `budget` (shared by every item read from
+ * this file, so the reader never copies more than the file holds). A length of 0 means "to the end",
+ * as the format allows. null for anything else: data in another file, data built from other items,
+ * an extent past the end (a truncated file), an item with no location, or a budget run out.
+ */
+export function itemData(bytes: Uint8Array, heif: Heif, id: number, budget: ByteBudget): Uint8Array | null {
+  const pieces = itemExtents(bytes, heif, id, budget);
+  if (!pieces) return null;
   if (pieces.length === 1) return bytes.subarray(pieces[0].from, pieces[0].to);
+  const total = pieces.reduce((sum, p) => sum + (p.to - p.from), 0);
   const joined = new Uint8Array(total);
   let at = 0;
   for (const { from, to } of pieces) {

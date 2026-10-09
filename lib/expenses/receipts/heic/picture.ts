@@ -14,7 +14,11 @@
  *   - HEVC Main or Main Still Picture, 8-bit 4:2:0, exactly one VPS, SPS and PPS (hevc.ts).
  *   - Every tile the size the grid's tiles declare, each tile exactly as big as its SPS says, and no
  *     more tiles than the picture's size needs.
- *   - The picture at most 50 megapixels and 20,000 pixels a side (types.ts), before anything decodes.
+ *   - The picture at most 50 megapixels and 20,000 pixels a side (types.ts), before anything decodes;
+ *     every tile, at its declared size and at the coded size its SPS gives the decoder, within the
+ *     same caps; and all the tiles together at most MAX_DECODED_PIXELS (limits.ts).
+ *   - All the picture's data together no more than the file holds (container.ts, ByteBudget): tiles
+ *     that point at the same bytes are refused, not copied over and over.
  *
  * heicHeader is what the store and the window check when a receipt is added: the brands, a container
  * that reads, the picture's size within the caps, and its data inside the file. heicPicture is what the
@@ -22,9 +26,9 @@
  */
 
 import { MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE, MAX_RECEIPT_BYTES } from "../types";
-import { brandsOf, itemData, parseHeif, propertiesOf, propertyReader, referencesFrom, sizeOf, type Association, type Heif } from "./container";
+import { brandsOf, ByteBudget, itemData, itemExtents, parseHeif, propertiesOf, propertyReader, referencesFrom, sizeOf, type Association, type Heif } from "./container";
 import { checkTileData, readHvcc, type HevcConfig } from "./hevc";
-import { HEIC_FAMILY_BRANDS, HEIC_MAJOR_BRANDS, HEIF_SEQUENCE_BRANDS, MAX_TILES } from "./limits";
+import { HEIC_FAMILY_BRANDS, HEIC_MAJOR_BRANDS, HEIF_SEQUENCE_BRANDS, MAX_DECODED_PIXELS, MAX_TILES } from "./limits";
 
 /**
  * Why a HEIC is refused or not drawn:
@@ -83,14 +87,18 @@ function layoutOf(bytes: Uint8Array, heif: Heif): LayoutResult {
   const size = sizeOf(bytes, heif, primary.id);
   if (!size || size.width <= 0 || size.height <= 0) return { ok: false, code: "damaged" };
   if (overCaps(size.width, size.height)) return { ok: false, code: "too-many-pixels" };
+  // All the picture's data together may be no more than the file holds (container.ts, ByteBudget).
+  // Only checked here, never copied: this runs on the server and in the window when a receipt is added.
+  const budget = ByteBudget.forFile(bytes, MAX_RECEIPT_BYTES);
 
   if (primary.type === "hvc1") {
-    if (!itemData(bytes, heif, primary.id, MAX_RECEIPT_BYTES)) return { ok: false, code: "damaged" };
+    if (!itemExtents(bytes, heif, primary.id, budget)) return { ok: false, code: "damaged" };
     return { ok: true, layout: { primary: primary.id, width: size.width, height: size.height, tiles: [primary.id], grid: null } };
   }
   if (primary.type !== "grid") return { ok: false, code: "not-shown" };
 
-  const descriptor = itemData(bytes, heif, primary.id, 16);
+  // The descriptor is 8 or 12 bytes; its own small budget means it can never copy more than 16.
+  const descriptor = itemData(bytes, heif, primary.id, new ByteBudget(16));
   const grid = descriptor ? readGrid(descriptor) : null;
   if (!grid) return { ok: false, code: "damaged" };
   // The grid's output size is the picture's size; its own `ispe` must agree.
@@ -102,7 +110,14 @@ function layoutOf(bytes: Uint8Array, heif: Heif): LayoutResult {
     if (!tile) return { ok: false, code: "damaged" };
     // A tile is a coded picture: never the grid itself, another grid, or anything derived (no loops).
     if (tile.type !== "hvc1") return { ok: false, code: "not-shown" };
-    if (!itemData(bytes, heif, id, MAX_RECEIPT_BYTES)) return { ok: false, code: "damaged" };
+    // Each tile within the caps on its own, and all of them together within what the chip may decode.
+    // Checked when the receipt is added, so a file that would ask for a huge decode is never kept.
+    const tileSize = sizeOf(bytes, heif, id);
+    if (!tileSize || tileSize.width <= 0 || tileSize.height <= 0) return { ok: false, code: "damaged" };
+    if (overCaps(tileSize.width, tileSize.height) || tiles.length * tileSize.width * tileSize.height > MAX_DECODED_PIXELS) {
+      return { ok: false, code: "too-many-pixels" };
+    }
+    if (!itemExtents(bytes, heif, id, budget)) return { ok: false, code: "damaged" };
   }
   return { ok: true, layout: { primary: primary.id, width: size.width, height: size.height, tiles, grid: { rows: grid.rows, columns: grid.columns } } };
 }
@@ -212,6 +227,8 @@ export function heicPicture(bytes: Uint8Array): PlanResult {
     if (unknownEssential(primaryProps, PRIMARY_PROPERTIES)) return { ok: false, code: "not-shown" };
 
     // The tiles (a single picture is its own one tile): one shared configuration, one tile size.
+    // A fresh budget the size of the file: layoutOf already proved the tiles fit in it.
+    const budget = ByteBudget.forFile(bytes, MAX_RECEIPT_BYTES);
     let record: Uint8Array | null = null;
     let tileSize: { width: number; height: number } | null = null;
     const tiles: Uint8Array[] = [];
@@ -230,7 +247,9 @@ export function heicPicture(bytes: Uint8Array): PlanResult {
       else if (!sameBytes(record, own)) return { ok: false, code: "not-shown" };
       if (tileSize === null) tileSize = size;
       else if (size.width !== tileSize.width || size.height !== tileSize.height) return { ok: false, code: "damaged" };
-      tiles.push(itemData(bytes, heif, id, MAX_RECEIPT_BYTES)!);
+      const data = itemData(bytes, heif, id, budget);
+      if (!data) return { ok: false, code: "damaged" };
+      tiles.push(data);
     }
     const tw = tileSize!.width;
     const th = tileSize!.height;
@@ -243,6 +262,12 @@ export function heicPicture(bytes: Uint8Array): PlanResult {
 
     const hevc = readHvcc(record!);
     if (!hevc.ok) return hevc;
+    // The caps hold for what the decoder is actually asked for: the coded size in the SPS (which a
+    // file could set far above its declared tile size), each tile on its own and all tiles together.
+    const coded = hevc.config;
+    if (overCaps(coded.codedWidth, coded.codedHeight) || layout.tiles.length * coded.codedWidth * coded.codedHeight > MAX_DECODED_PIXELS) {
+      return { ok: false, code: "too-many-pixels" };
+    }
     // What the decoder will make of each tile must be the tile size the file declares.
     if (hevc.config.width !== tw || hevc.config.height !== th) return { ok: false, code: "damaged" };
     for (const data of tiles) {

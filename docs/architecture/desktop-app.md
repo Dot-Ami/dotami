@@ -116,8 +116,9 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   (`receipts-before-restore-<time>`, beside the safety copy that describes it), the staged folder
   becomes the receipts folder, then the database is swapped in; if the swap fails, both folders go
   back. The file list may name only `dotami.db` and DotAmi's own receipt names (32 hex characters
-  and `.jpg`/`.png`/`.webp`/`.pdf`), each once and at most 10 MB, so no backup can write anywhere
-  else.
+  and `.jpg`/`.png`/`.webp`/`.pdf`/`.heic`), each once and at most 10 MB, so no backup can write
+  anywhere else. A DotAmi from before HEIC receipts doesn't have `.heic` in its list, so it refuses a
+  backup that holds one; restore it with this version or later.
 - **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
   header is authenticated too (its exact bytes are GCM's additional data), so editing any of it,
   the file list included, makes the backup refuse to open. A header that asks for different scrypt
