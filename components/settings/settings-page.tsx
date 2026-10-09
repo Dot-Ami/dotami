@@ -171,8 +171,8 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you
-              can keep somewhere else, locked with a passphrase if you choose. It doesn&apos;t hold the
-              receipts folder yet.{" "}
+              can keep somewhere else, locked with a passphrase if you choose, with your receipt
+              files in it.{" "}
               <strong className="font-semibold text-paper">File → Restore from a backup…</strong> puts
               one back — on this computer or a new one — after checking it, and keeps a copy of
               what was here in the backups folder.
