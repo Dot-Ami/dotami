@@ -13,6 +13,7 @@ import {
 } from "@/lib/figures/books/gnucash-xml";
 import { booksMonthlyTotals } from "@/lib/figures/books/totals";
 import type { BookData } from "@/lib/figures/books/types";
+import { MAX_BOOK_BYTES } from "@/lib/figures/books/detect";
 import { MAX_FILE_BYTES } from "@/lib/figures/file/types";
 import {
   GOLDEN_BOOK_XML,
@@ -429,9 +430,37 @@ describe("features and versions: a book it doesn't fully understand is refused",
 });
 
 describe("inputs that aren't a readable book", () => {
-  it("refuses an empty file and a file over 10 MB without looking inside", () => {
+  it("refuses an empty file and a file over 50 MB without looking inside", () => {
     expect(refusalOf(new Uint8Array())).toBe("That file is empty.");
-    expect(refusalOf(new Uint8Array(MAX_FILE_BYTES + 1))).toContain("over 10 MB");
+    // A book has a limit of its own, above a spreadsheet's (the maintainer's decision, 2026-10-07).
+    expect(refusalOf(new Uint8Array(MAX_BOOK_BYTES + 1))).toBe(
+      "That GnuCash book is over 50 MB, more than DotAmi reads.",
+    );
+  });
+
+  it("reads a book bigger than a spreadsheet may be (over 10 MB, under 50 MB), plain or compressed", () => {
+    // About 12,000 invented sales of $10.01: roughly 13 MB of XML, past the 10 MB spreadsheet limit.
+    const transactions = Array.from({ length: 12_000 }, (_, i) => ({
+      date: `2025-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+      splits: [
+        { account: "bank", quantity: "1001/100" },
+        { account: "sales", quantity: "-1001/100" },
+      ],
+    }));
+    const xml = gnucashXml(smallBook({ transactions }));
+    const plain = text(xml);
+    expect(plain.length).toBeGreaterThan(MAX_FILE_BYTES);
+    expect(plain.length).toBeLessThan(MAX_BOOK_BYTES);
+    for (const bytes of [plain, gnucashGz(xml)]) {
+      const book = bookOf(bytes);
+      const id = book.accounts.find((a) => a.fullName === "Income:Sales")!.id;
+      const result = booksMonthlyTotals(book, [id], "2026-10-08");
+      if (!result.ok) throw new Error(result.error);
+      expect(result.currencies[0].linesCounted).toBe(12_000);
+      expect(result.currencies[0].months.reduce((sum, m) => sum + m.amountCents, 0)).toBe(
+        12_000 * 1001,
+      );
+    }
   });
 
   it("recognises a GnuCash book saved as a database and says what to do instead", () => {
@@ -463,7 +492,14 @@ describe("inputs that aren't a readable book", () => {
   });
 
   it("refuses a gzip file that isn't a GnuCash book", () => {
-    expect(refusalOf(gzipSync(text("just some words, not xml")))).toContain("damaged or cut short");
+    // Any gzip file now reaches the books reader (its first bytes say "gzip", not "GnuCash"), so a
+    // compressed CSV or text file is told it isn't a book, not that its book may be damaged.
+    expect(refusalOf(gzipSync(text("just some words, not xml")))).toContain(
+      "doesn't look like a GnuCash book",
+    );
+    expect(refusalOf(gzipSync(text("date,amount\n2025-01-01,10\n")))).toContain(
+      "doesn't look like a GnuCash book",
+    );
     expect(refusalOf(gzipSync(text(`<?xml version="1.0"?><html/>`)))).toContain(
       "doesn't look like a GnuCash book",
     );

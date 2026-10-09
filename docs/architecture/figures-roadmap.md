@@ -26,7 +26,7 @@ Several designs invented separate tables for the same thing. This is the single 
 | `Setting` | DotAmi's first stored settings: key (a catalog id) and value. | 8e, maybe 8g and 8c-2 |
 | `Figure.taxYear`, `Figure.formLine` | Optional; only if 8f decision 3 says yes. | 8f |
 
-New permanent ids, named once: source kind `bank` (8g); maybe `books` (8h, decided before 8h proposes anything); the 8f T2125 kinds; maybe one 8g kind; `SourceAccount.kind` values; `ReaderPreset.reader` values; `Setting` keys = catalog ids.
+New permanent ids, named once: source kind `bank` (8g); `books` (8h; named by the maintainer 2026-10-08, shown to people as "Books / file"); the 8f T2125 kinds; maybe one 8g kind; `SourceAccount.kind` values; `ReaderPreset.reader` values; `Setting` keys = catalog ids.
 
 ### Migration order
 
@@ -308,7 +308,7 @@ Reproduced today: a future October 2026 figure makes the card read "over $30,000
 - hledger.org/1.50/hledger.html (Journal chapter) and hledger.org/ledger.html, retrieved 2026-10-08 for the journal reader (through a fetch-and-summarise tool; see docs/connectors/journal-reader.md)
 - MDN CSP script-src; github.com/sql-js/sql.js
 
-**Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); pre-ticking; size limit.
+**Decisions:** desktop code; ~~journals~~ (decided 2026-10-07: DotAmi's own reader); GnuCash SQLite; the Sage password; remembered picks (shared); ~~pre-ticking~~ (decided 2026-10-07: income accounts pre-ticked, any can be changed; built 2026-10-08); ~~size limit~~ (decided 2026-10-07: a larger limit, read in a background worker; built as 50 MB, `docs/connectors/gnucash.md`); ~~source kind~~ (`books`, 2026-10-08).
 
 ---
 
@@ -347,7 +347,7 @@ Each is written out with options in the reconciliation output.
 - 8e reminder coverage must filter by kind (8f yearly totals).
 - `splitAlreadyKnown` must be generalised by kind before 8f, 8g and 8h reuse it.
 - 8f kind names: a "self-employment" prefix is broader than T2125.
-- The 8h source kind must be named before any books figure is stored.
+- ~~The 8h source kind must be named before any books figure is stored.~~ Named `books` (2026-10-08).
 - Fingerprint scope for PDFs, statements and books is undecided.
 - 8d forgets per batch while 8g forgets per account.
 - Four designs edit `file-drop.tsx`: the pipeline is moved out first.
