@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-07 ([8d] — first slice: read-only; a card for expense records, [8i])
+Last updated: 2026-10-08 ([8d] — the Delete menu; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -14,12 +14,14 @@ time it opens — so the person can check DotAmi's word against the file instead
 shows every figure by where it came from, counts of everything else in the file, what sits outside
 the file, and what leaves the computer.
 
-This first slice only **shows**. There is no forget button and no delete button, no write route
-and no database change; the page says so itself (the last section) so it never implies one exists.
+It **shows**, and it has one control that changes anything: **Delete**, in the last section, which
+erases whole kinds of data from the file after asking twice ([delete-menu.md](delete-menu.md)). There
+is no forget-a-source button yet.
 
 ## Layout
 
-A heading, a one-paragraph note that the page counts from the file and changes nothing, a row of
+A heading, a one-paragraph note that the page counts from the file and changes nothing unless Delete
+is used, a row of
 jump links, then five sections in this order:
 
 1. **Your figures, by source** — a one-line total ("7 figures in the data file: 4 agreed · 1
@@ -45,7 +47,10 @@ jump links, then five sections in this order:
    number, no receipt file; since 2026-10-08 also the idea or none, the person's own business share, the GST/HST part and how a refund is kept), that taking one back or turning one down keeps the row, and that nothing in the app erases a single record yet. Only the count is shown here: no payee, no words, no amount.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
-   newest, the path with **Copy path** — only counted and dated, never opened; and the window's
+   newest, the path with **Copy path** — only counted and dated, never opened (the log's row says
+   what it holds, including that a start that fails writes DotAmi's message, which can name the
+   data folder, with the error's name and code, and that a failed database update adds the
+   database's words about which update failed and what it objected to); and the window's
    own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A line
    pointing at disk encryption in Settings.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
@@ -53,9 +58,11 @@ jump links, then five sections in this order:
    is, and that DotAmi can't take it back), the desktop update check (GitHub sees the computer's
    address and the version), and files the person saves themselves (DotAmi doesn't know where
    they are). Each says when, what, and whether it can be taken back.
-5. **Taking things out** — what the person can do today (retract an agreed figure, discard a
-   waiting one, remove a link between two ideas) and what nothing in DotAmi can do yet (erase a figure, a
-   statement or an idea).
+5. **Taking things out** — what the person can do elsewhere (retract an agreed figure, discard a
+   waiting one, remove a link between two ideas), a line saying Delete erases whole kinds of data and
+   can't pick out a single one, then the **Delete** button and its menu
+   ([delete-menu.md](delete-menu.md)). The table cards in section 2 say, in "What takes it out", which
+   box on the menu removes them.
 
 When the data file can't be read the page says so in one amber line and shows nothing else, and
 logs only the error's name and code.
@@ -66,13 +73,17 @@ logs only the error's name and code.
 | A source row (`<details>`) | opens and closes with Enter/Space or a click; no script | — |
 | **Copy path** (data file, safety copies, log) | copies the path; "Copied", or "Copy failed — select it instead" | — |
 | ← Settings, the Settings → links | plain links | — |
+| **Delete** and its menu, two asks, result | see [delete-menu.md](delete-menu.md) | deletes rows from the data file and wipes it (`POST /api/your-data/delete`) |
 
 ## What it deliberately does not do
 
-- **No forget, no delete, no write.** "Forget this source" and "Delete everything" come in later
-  slices; each needs maintainer rulings first (what "everything" covers, whether statements may
-  be deleted — `prisma/schema.prisma` `PersonStatement` says they can't — and where the wipe
-  runs). This page must not grow a control for either without them.
+- **No forget, and no delete of a single thing.** "Forget this source" waits on where a figure's
+  source is kept (a later decision). Delete works on whole kinds of data only: statements are
+  deleted all at once or not at all (the maintainer's decision, 2026-10-07), and there is no
+  delete-one-idea or delete-one-figure control here.
+- **Delete doesn't clear the backups folder or the window's earlier leftovers yet.** The menu says
+  so in plain words; clearing the backups folder is the next step, and how to reach what the
+  desktop window stored in earlier launches is a later decision.
 - **No query string, no amounts in a URL** (privacy review, rule 1): the page takes none, and the
   source names it shows are text on the page, never links.
 - **No figure value in any log** (rule 2): a failed read logs the error's name and code only.
@@ -134,7 +145,10 @@ WebSocket and EventSource reaching another address, `img-src 'self' blob: data:`
 elsewhere. It does not stop WebRTC (`connect-src` doesn't govern it and no `webrtc` directive is
 set), is not known to stop WebTransport or WebSocketStream, doesn't stop navigation (`window.open`,
 links), can't stop a script that a running script adds (`script-src` carries `'strict-dynamic'`),
-and covers nothing that runs on the server or in the desktop app's main process. (3) Code review.
+and covers nothing that runs on the server or in the desktop app's main process. A worker started
+from one of DotAmi's own script files (the return reader's) follows that file's policy instead,
+set in `next.config.mjs` on `/_next/static/`: `default-src 'none'; script-src 'self'`, so it
+connects nowhere at all. (3) Code review.
 The full lists are in the header of `tests/helpers/source-scan.ts`, and a test there pins each
 thing the scan misses.
 
@@ -150,11 +164,12 @@ entry says so.
 
 ## Covered by
 
-`e2e/your-data.spec.ts` (5 tests; first run locally 2026-10-06, all passing): a typed and
-agreed figure appears under "typed by you" with its agreed day; the response is
-`Cache-Control: no-store`; no amount in any URL; every inventory table and window key is on the page;
-reached from Settings → Privacy; read-only (no form controls, no delete or forget button); no
-sideways scroll at 390 px wide.
+`e2e/your-data.spec.ts`: a typed and agreed figure appears under "typed by you" with its agreed day;
+the response is `Cache-Control: no-store`; no amount in any URL; every inventory table and window key
+is on the page; reached from Settings → Privacy; until Delete is opened there are no form controls and
+no forget button; no sideways scroll at 390 px wide; and the Delete menu's main path (see
+[delete-menu.md](delete-menu.md)). `tests/privacy-delete.spec.ts` covers what each box deletes, the
+one transaction, the count check and the wipe (a byte scan of the file).
 
 Checked by hand on 2026-10-06 against the production build and a scratch database (seven invented
 figures across two ideas): the response header is `Cache-Control: private, no-cache, no-store,

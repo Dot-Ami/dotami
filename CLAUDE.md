@@ -46,15 +46,18 @@ says where it is going.
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
   this copy today; the settings marked live there, so far Figure reminders, can be changed and are
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
-  everything else, what sits outside the database and what leaves the computer; read-only, read
-  from the data file on every visit by `lib/privacy/holdings.ts`) · `/expenses[?idea=<id>]` ("Your expenses":
-  typing business expense records and agreeing to them all at once, records not attached to an idea
-  yet, refunds kept either way; [8i]).
+  everything else, what sits outside the database and what leaves the computer, read from the data
+  file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
+  data from `lib/privacy/inventory.ts` `DELETE_MENU`, asked twice, then wiped from the file by
+  `lib/privacy/delete.ts`) · `/expenses[?idea=<id>]` ("Your expenses": typing business expense
+  records and agreeing to them all at once, records not attached to an idea yet, refunds kept
+  either way; [8i]).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
-  `law/provision` (a provision's words from an optional local statute store) · `expenses` (list, `propose`, and the
-  page-only `agree` / `retract` / `discard` / `attach`) · `settings` (GET/PUT
-  one saved setting; answers only DotAmi's own window, no agent access yet).
+  `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
+  `propose`, and the page-only `agree` / `retract` / `discard` / `attach`) · `settings` (GET/PUT
+  one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
+  (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
@@ -139,6 +142,12 @@ change those tables with hand-written SQL and a test that seeded data survives.
 Releases: tag `v<version>` → `.github/workflows/release.yml` → a DRAFT release the maintainer
 publishes by hand (docs/architecture/desktop-app.md § Releasing an update). Never publish a release
 or push a tag without the maintainer saying so.
+Privacy log: every PR that changes what DotAmi keeps, sends, ships or asks the person adds a line
+under [Unreleased] in `docs/privacy-log.md` (the record the privacy policy and terms will be
+written from); the release PR turns [Unreleased] into that version's section, and
+`tests/privacy-log.spec.ts` fails until `package.json`'s version has one. The npm scripts run
+Next.js and Prisma through `scripts/next.mjs` and `scripts/prisma.mjs`, which switch off their
+usage reports; never call `next` or `prisma` directly in a `package.json` script (`tests/dev-telemetry.spec.ts`).
 
 ## Where things are decided
 

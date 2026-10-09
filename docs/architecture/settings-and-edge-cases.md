@@ -68,7 +68,9 @@ is read-only.
 - The app crashes mid-backup → no half-written file under the real name. *Built (write then rename); tested that no `.partial` is left.*
 
 **Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
-- An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); not tested.*
+- An update downloads halfway and the connection drops → resume or retry; the old version still runs. *The old version keeps running (installing needs a finished download and the person's click); the progress is cleared and the person is told nothing was installed, and the next start tries again. Tested with a fake updater (`tests/desktop-update-notice.spec.ts`), not over a real connection.*
+- An update is found at start-up → the person is told at once, not only when the download is done. *Built 2026-10-08: a message that doesn't block the app, and the download's progress on the taskbar button; installing is still only their click. Tested with a fake updater.*
+- The app is killed or fails while starting (during the database update, say) → the log still says how far it got and why. *Built 2026-10-08: the log is written straight to the disk; tested by killing a start the moment its safety copy is made (`tests/desktop-startup-log.spec.ts`).*
 - An update fails to install → roll back to the version that worked. *Not built or tested.*
 - An update includes a database change → back up first, then upgrade. *Built and tested (`tests/desktop-migrate.spec.ts`): a full copy in `backups/` first; a failing change is undone.*
 - No internet at all → the app works fully; it just doesn't update. *The check failing is logged and ignored; not tested.*
@@ -87,6 +89,7 @@ is read-only.
 - What covers a period: agreed figures of the reminder's own kind (counted per kind, so a later yearly tax total can't silence a revenue reminder), each inside the period or equal to it, with no uncovered day between them. A quarterly figure covers the quarter but not each month for a monthly reminder; a yearly figure covers neither; one month of a quarter does not cover the quarter; a figure waiting in the agree prompt, a retracted one or a discarded one never covers. Proposals inside the period are counted on the banner, with no amount. Unit-tested.
 - The figures or the saved setting can't be read → no banner is drawn (it would be guessing), and the ideas page says nothing new. A removed idea's switch or answer lingers in the setting and is ignored. A computer with a wrong clock is the person's own day for the banner too (see the age rules above).
 - The window left open past a month, quarter or year end → the banner moves on without a reload (`useLocalToday`); the saved choices are read again when the window is focused or comes back from the browser's memory. A fixed-clock browser test (`e2e/figure-reminders.spec.ts`) covers the day moving on while the map is open; re-reading the saved choices on focus or from the browser's memory is not browser-tested.
+- "Add to my calendar" ([8e], 2026-10-08): the calendar can't see DotAmi, so its event comes whether or not the figures are in, and the page says so. The first event is the first day after today that starts a month, quarter or year (on October 1 the quarterly one starts January 1; the banner covers the quarter that just ended). All-day events with no time zone, so they fall on that day wherever the person is. Each event's UID is a random UUID, new every time the file is saved: RFC 5545 §3.8.4.7 wants a UID that is unique everywhere, and RFC 7986 §5.3 recommends a random UUID with nothing in it that identifies a person, computer or domain. A fixed UID would be the same for every DotAmi user, so two people importing into one shared calendar would overwrite each other's events. The cost: importing the file again adds a second copy (there is no SEQUENCE and no shared UID to update), and the page says to delete the old events first after changing the ticks. Unticking a box later doesn't remove an event already imported; that is the person's calendar. RFC 5545 rules (CRLF, 75-octet folding by bytes, escaping, UID, DTSTAMP, RRULE) unit-tested in `tests/figures-calendar.spec.ts`; one throwaway check with Mozilla's ical.js 2.1.0 parsed the file and expanded each rule to the right dates. **Not imported into any real calendar.** Calendar help pages, read 2026-10-08: Google imports an .ics file only on a computer, through calendar.google.com Settings, Import & export (support.google.com/calendar/answer/37118); Outlook on the web imports a one-time snapshot through Add calendar, Upload from file (support.microsoft.com, "Import or subscribe to a calendar in Outlook.com or Outlook on the web"); Apple Calendar on a Mac takes File, Import or a dragged file (support.apple.com/guide/calendar/icl1023/mac). None of the three pages says what a second import of the same events does.
 - A setting whose value reads back wrong (a hand-edited file, a value from a newer version) → reads as its default instead of breaking the page; for the reminders that is "none ticked". Unit-tested.
 - Two saves landing together (the settings page in one window, the ideas page in another) → each changes only the keys it names, inside one database transaction, so neither loses the other's change. Unit-tested.
 - Still to test when a risky setting goes live: it can't be switched without its warning being shown.
@@ -103,7 +106,7 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 **The figures store [8a]** (built 2026-10-06; `tests/figures.spec.ts`, `tests/brain-records.spec.ts`, `e2e/app.spec.ts`)
 - A figure for a period that overlaps another source's figure for the same thing → show both, ask which one counts; never add them silently. *Never added: the card names the month and leaves that quarter out "until you choose which one counts" (tested). Choosing = retracting one; there's no dedicated chooser yet.*
 - A retracted figure that a card was using → the card falls back to the estimate and says so. *Falls back (retracted figures never reach the rules engine); the card doesn't yet say a figure was retracted.*
-- A venture is deleted → its figures go with it (asked first). *They go with it (database cascade, tested); there's no delete-a-venture control yet, so nothing to ask.*
+- A venture is deleted → its figures go with it (asked first). *They go with it (database cascade, tested). Delete on /your-data deletes all ideas at once, asking twice, and its "Your ideas" box says their figures go too (tested); there's no delete-one-idea control.*
 - Fiscal year ≠ calendar year → periods stored as exact dates, never "Q3" alone. *Exact first and last day stored. A figure that isn't one calendar month or quarter isn't counted toward the GST quarters, and the card says why (tested).*
 - A partial year (business started in June) → the card says it's a partial year. *The card says how many of the last four quarters the figures cover, or "at least" when they're already over (tested).*
 - Negative figures (a loss) and zero → shown as they are, never dropped. *Tested.*
@@ -128,21 +131,45 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 - A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused before the file is read; a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested).*
 - The same file dropped twice → recognised (by fingerprint), not counted twice. *Recognised by its totals instead: a month already waiting or agreed with the same total and currency is listed as "already in DotAmi" and not proposed again (tested). A byte fingerprint would need a table — left for [8c-2] with the remembered column choice. Even a second, different total for the same month is never added: the map leaves that quarter out until the person chooses ([8a]).*
 - A bank or credit card file dropped in (its amounts, and a file name that can carry account digits) → *The panel asks "Where is this file from?" before reading anything, for every file: the answer covers one file only (a second file, or another try after a refusal, goes back to the question), and it is never remembered. "A bank or credit card account" shows a plain warning and opens nothing: no bytes, no name, no figure. A file dropped on the panel before the answer is ignored unread. The answer is only as good as the person's click — a bank file the person calls "accounting software" is read like any other spreadsheet; nothing checks the answer (browser-tested 2026-10-07).*
-- A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. Nothing in a workbook is ever run — only its XML text is read (tested).*
+- A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. A PDF gets its own sentence pointing to **Add from last year's return** ([8f]). Nothing in a workbook is ever run — only its XML text is read (tested).*
 - A price-per-item column (Xero's `UnitAmount`, "Unit Price", "Rate", "Price each", "Prix unitaire") → *used to be pre-filled as the amount, so a line that sold 3 items at $100 added $100 (July read $150 against a true $350). Now never pre-filled: the person picks the amount column. A real line total ("LineAmount", "Amount", "Total Price") is still pre-filled, and a header that only contains the words "unit", "price" or "each" outside a per-item phrase ("Community sales", "Business Unit Revenue", "Total Price") is not caught. If the export has no line-total column the person may pick the price column themselves; DotAmi does not do the quantity multiplication (tested in `tests/figures-file-logic.spec.ts` and the Xero practice files).*
 - Two date columns, an invoice date and a due date (Xero's `InvoiceDate` and `DueDate`) → *the invoice date is pre-filled: names written without spaces (InvoiceDate, Invoice_Date) are read as "date", and a due-date column (due, échéance) is never chosen by its name and is pre-filled only when it is the one column that is mostly dates, so a sheet with only a due date still gets one while a due date beside an unnamed sale-date column is left for the person to pick. The person checks the pick (tested).*
 - A grouped report with one line per customer (QuickBooks' Sales by Customer Detail) → *customer-name rows and "Total for" rows sit in the date column too and used to outnumber the dates, leaving Date unguessed. A text cell alone on its row, or one that starts "Total", is no longer counted against the date column. The layout is assumed, not read from a real export (tested on the practice file).*
 - A "Total" column next to a tax column → the total probably includes the tax. *Never pre-filled; the person picks, with a note to check (tested).*
+- Exports from Wave, FreshBooks, Sage Accounting and Sage 50 Canadian (practice files, 2026-10-08; `docs/connectors/practice-files.md`) → *read where the layout is plain; every column title but a few is assumed, and the screen says each program's export was tested on files shaped from its help pages, not real exports. Known gaps, each pinned by a "fails today" test, not handled yet: a refund in a ledger's Debit column, void and draft invoices counted as sales, a summary block above the table taken for the column names, two-digit years, months across the top, a report with no dates, a French semicolon file with several comma-decimal columns split on its commas, and a formula saved with no value listed as "no amount".*
 
 **Sources and "what DotAmi knows about me" [8d]** — forgetting a source with 0 figures; forgetting
 one that a confirmed figure on a card depends on (the card updates); *delete everything* asks twice
 and can't be undone (but a backup can restore it).
+- **Delete** (built 2026-10-08; `tests/privacy-delete.spec.ts`, `e2e/your-data.spec.ts`): a menu of
+  kinds of data, each saying what else goes with it; statements all at once, never one. *Asks twice;
+  Escape, Cancel or a click outside at either ask deletes nothing, and focus starts on Cancel at the
+  second (browser-tested).*
+- Something changed between the asks (an import, an agent's proposal) → *refused, nothing deleted,
+  the counts are read again (tested).*
+- The database fails part-way → *one transaction: nothing is deleted (tested with a failure on the
+  second table).*
+- Deleted rows left readable in the file → *VACUUM after the delete; a byte scan finds the deleted
+  words before and not after (tested). The wipe can't run (another connection busy, not enough
+  disk): the rows are deleted and the page says their space isn't wiped yet, with "Try the wipe
+  again". Finishing it at the next start of the desktop app is the next step.*
+- An agent, a script or another site calls Delete → *403 (tested).*
+- After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
+  on the map can't bring the idea back.*
+- Nothing stored → *the button is off: "Nothing to delete".*
+- Not reached yet, and the menu says so: the backups folder, what the desktop window stored in
+  earlier launches, the log, anything already sent elsewhere.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.
 
-**Tax software [8f]**
-- A scanned (image-only) return PDF → needs a model that reads images; otherwise "this PDF is a picture of text".
+**Tax software [8f]** (the first step is built: **Add from last year's return** reads the PDF in the window and only shows what it found; nothing is proposed or kept yet — [review](../connectors/pdf-reader-review.md))
+- A scanned (image-only) return PDF → needs a model that reads images; otherwise "this PDF is a picture of text". *Refused with a sentence when no page has any text ("pictures of pages, with no text DotAmi can read: a scan or a photo"), pointing to the PDF the tax software saves; reading pictures waits for the Lens (tested, browser-tested).*
+- A password-locked return PDF → *refused; DotAmi never asks for the password: "open it with its password, save or print a copy as a PDF without one" (tested, browser-tested).*
+- A PDF with no T2125 in it (a T1-only return, or a program's short summary) → *"DotAmi found no T2125 … If your tax software saved a short summary, save the full return instead (in Wealthsimple Tax, Save PDF on the Submit page)". A page counts as a T2125 only if it carries the form's code; line numbers anywhere else are ignored (tested).*
+- Two businesses, two T2125s in one return → *each is shown on its own, with its pages; a new copy starts at the form's title (tested).*
+- A sentence that mentions a line ("line 8299 of Part 3C") → *never read as the line: only a line number printed on its own counts, with the amount on its own row to its right; an empty box shows as nothing beside it, never as zero (tested on invented PDFs laid out like the CRA's 2025 form).*
+- A fillable CRA PDF filled in by hand and saved without flattening → *its amounts sit in form fields, which aren't read; those lines show "nothing DotAmi can read beside it". Known limit.*
 - A return for a different tax year than expected → ask which year it's for.
 - Quebec returns (a separate provincial return) → not mapped yet; say so.
 - A spouse's return in the same PDF → only the person's own figures are proposed.
@@ -316,7 +343,13 @@ committed by mistake (secret scanning).
    2026-10-05: DotAmi's own code sends nothing, but the Next.js framework under it sends Vercel
    anonymous counts when `npm run dev` or `npm run build` runs, unless turned off —
    [nextjs.org/telemetry](https://nextjs.org/telemetry), read 2026-10-05. The settings page's
-   Privacy group says so. Whether to turn it off by default is open.) A proposal:
+   Privacy group says so. **Decided 2026-10-08, left to the builders by the maintainer: off by
+   default.** The project's npm scripts now start Next.js with `NEXT_TELEMETRY_DISABLED=1` and the
+   Prisma CLI with `CHECKPOINT_DISABLE=1` (`scripts/telemetry-off.mjs`), as CI already did;
+   `tests/dev-telemetry.spec.ts` keeps it so. Not reached: `npm ci`'s own Prisma run and `npx`
+   commands typed by hand; `npm run dev`'s check of npm's registry for the newest Next.js has no
+   switch. Each version's record of what is kept and sent is [docs/privacy-log.md](../privacy-log.md).)
+   A proposal:
    - **Off unless the person says yes**, asked once at first launch in plain words, changeable any time.
    - **Never sent:** figures, statements, venture names or notes, file contents, model
      conversations, anything typed.

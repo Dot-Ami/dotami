@@ -12,6 +12,7 @@ import { checkWorkbookEntries, readXlsx } from "@/lib/figures/file/read-xlsx";
 import {
   MACROS_MESSAGE,
   NOT_SHEET_MESSAGE,
+  PDF_MESSAGE,
   XLSB_MESSAGE,
   sniffFile,
 } from "@/lib/figures/file/sniff";
@@ -90,12 +91,18 @@ describe("sniffFile", () => {
     });
   });
 
-  it("refuses pictures, PDFs and video even when renamed .xlsx or .csv", () => {
+  it("turns a PDF away with a pointer to the return button, however it is named", () => {
+    for (const n of ["sales.xlsx", "sales.csv", "return.pdf"]) {
+      expect(sniffFile(n, 5000, text("%PDF-1.7\n")), n).toEqual({ ok: false, error: PDF_MESSAGE });
+    }
+    expect(PDF_MESSAGE).toContain("Add from last year's return");
+  });
+
+  it("refuses pictures and video even when renamed .xlsx or .csv", () => {
     const heads: Record<string, Uint8Array> = {
       png: bytesOf(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a),
       jpeg: bytesOf(0xff, 0xd8, 0xff, 0xe0),
       gif: text("GIF89a......"),
-      pdf: text("%PDF-1.7\n"),
       webp: new Uint8Array([...text("RIFF"), 1, 2, 3, 4, ...text("WEBP")]),
       heic: new Uint8Array([0, 0, 0, 0x18, ...text("ftypheic")]),
       emptyZip: bytesOf(0x50, 0x4b, 0x05, 0x06, 0, 0, 0, 0),

@@ -158,6 +158,18 @@ run `npm run format` before you commit, or let your editor pick them up. Formatt
 part of the gate yet — it joins `ci:quality` once the open pull requests have landed, so
 that nobody's branch is invalidated by a whitespace commit.
 
+**The privacy log.** If your PR changes what DotAmi keeps (a table, a file, a browser-storage
+key), sends (any request out), ships (a package in the app) or asks the person to agree to, add a
+line under [Unreleased] in [docs/privacy-log.md](docs/privacy-log.md), under the heading it belongs
+to, with a link to the code. That log is what the privacy policy and terms will be written from.
+The release PR turns [Unreleased] into that version's section; a test fails until the version in
+`package.json` has one.
+
+The npm scripts start Next.js and Prisma with their own usage reports switched off
+(`scripts/next.mjs`, `scripts/prisma.mjs`). Running `npx next …` or `npx prisma …` by hand
+skips that: set `NEXT_TELEMETRY_DISABLED=1` and `CHECKPOINT_DISABLE=1` in your shell for those, and
+before `npm ci`, which runs Prisma once on its own.
+
 ## Sign-off (DCO) and licenses
 
 Every commit is signed off with the [Developer Certificate of Origin](DCO.md):

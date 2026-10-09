@@ -4,10 +4,10 @@
   "private": true,
   "main": "desktop/main.mjs",
   "scripts": {
-    "dev": "next dev -H 127.0.0.1",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "node scripts/next.mjs dev -H 127.0.0.1",
+    "build": "node scripts/next.mjs build",
+    "start": "node scripts/next.mjs start",
+    "lint": "node scripts/next.mjs lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -35,6 +35,7 @@
     "next": "^15.5.27",
     "ofx-js": "1.1.2",
     "papaparse": "^5.7.0",
+    "pdfjs-dist": "6.4.299",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "read-excel-file": "^9.3.10"

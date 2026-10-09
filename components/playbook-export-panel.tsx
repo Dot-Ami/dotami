@@ -5,6 +5,7 @@ import { Pill } from "@/components/ui";
 import type { PlaybookSkeleton } from "@/lib/playbook/types";
 import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
 import type { Scenario } from "@/lib/scenarios/types";
+import { saveTextFile } from "@/lib/utils/save-file";
 
 interface PlaybookExportPanelProps {
   scenario: Scenario;
@@ -85,13 +86,7 @@ export function PlaybookExportPanel({ scenario, onClose }: PlaybookExportPanelPr
 
   function handleSaveMarkdown() {
     if (!markdown || !skeleton) return;
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${slugifyFileStem(skeleton.profile.name)}-playbook.md`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    saveTextFile(`${slugifyFileStem(skeleton.profile.name)}-playbook.md`, "text/markdown;charset=utf-8", markdown);
   }
 
   return (

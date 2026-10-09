@@ -7,10 +7,13 @@
  */
 import http from "node:http";
 
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Download, type Locator, type Page, type Worker } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
+import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
+import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { files as waveFiles } from "../tests/fixtures/packages/wave";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -101,6 +104,14 @@ test("the settings page: every group, what's true today, every setting and its w
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");
+  // Run from source: the tools' own usage reports, which of them the project's commands switch off,
+  // and the two that no script reaches.
+  await expect(privacy).toContainText("switch both off");
+  await expect(privacy).toContainText("NEXT_TELEMETRY_DISABLED=1");
+  await expect(privacy).toContainText("CHECKPOINT_DISABLE=1");
+  // The registry check is described like the update check: the address is seen, nothing else.
+  await expect(privacy).toContainText("npm sees this computer's internet address");
+  await expect(privacy).not.toContainText("npx next telemetry disable");
 
   // Every setting is listed with its default, its warning when it has one, and the story that
   // brings it — and nothing on the page pretends to be a control that works: the only controls are
@@ -251,6 +262,75 @@ test("Figure reminders: tick monthly and yearly, reload, and they are still tick
   await expect(boxes.yearly).not.toBeChecked();
   expect(await savedReminders(page)).toMatchObject({ body: { value: { cadences: [] } } });
 });
+
+test("Add to my calendar: the ticked boxes become a calendar file made in the page, with nothing sent", async ({ page }) => {
+  // A fixed day, so the first event's date is known: October 8, 2026 (noon UTC is the 8th from
+  // UTC-11 to UTC+11).
+  await page.clock.install({ time: new Date("2026-10-08T12:00:00Z") });
+  await page.goto("/settings");
+  await resetReminders(page);
+  await page.reload();
+  const boxes = reminderBoxes(page);
+  const button = boxes.row.getByRole("button", { name: "Add to my calendar" });
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+
+  // Quarterly ticked: one repeating event, from the first day of the next quarter.
+  await setBox(page, boxes.quarterly, true);
+  await expect(button).toBeEnabled();
+  await expect(boxes.row).toContainText("can't see DotAmi, so it reminds you whether or not your figures are already in");
+  // Google Calendar takes a file only through its website's import page, not by opening the file.
+  await expect(boxes.row).toContainText("Google Calendar: import it on a computer at calendar.google.com");
+  await expect(boxes.row).toContainText("Importing the same file again adds a second copy");
+  const seen = watchRequests(page);
+  const download = page.waitForEvent("download");
+  await button.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("DotAmi figure reminders.ics");
+  const text = (await readDownload(file)).toString("utf8");
+  expect(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
+  expect(text.endsWith("END:VCALENDAR\r\n")).toBe(true);
+  expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+  // The UID is a random UUID (RFC 7986 §5.3), new for every file.
+  const firstUid = text.match(/\r\nUID:(\S+)\r\n/)?.[1];
+  expect(firstUid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  expect(text).toContain("\r\nDTSTART;VALUE=DATE:20270101\r\n");
+  expect(text).toContain("\r\nRRULE:FREQ=MONTHLY;INTERVAL=3\r\n");
+  expect(text).toContain("\r\nSUMMARY:Bring your DotAmi figures up to date\r\n");
+  // Nothing left the page to make it: no request at all after the click.
+  expect(seen.map((r) => r.path)).toEqual([]);
+
+  // Monthly and yearly instead: two events, in that order.
+  await setBox(page, boxes.quarterly, false);
+  await setBox(page, boxes.monthly, true);
+  await setBox(page, boxes.yearly, true);
+  const second = page.waitForEvent("download");
+  await button.click();
+  const both = (await readDownload(await second)).toString("utf8");
+  expect([...both.matchAll(/\r\nRRULE:(\S+)\r\n/g)].map((m) => m[1])).toEqual(["FREQ=MONTHLY", "FREQ=YEARLY"]);
+  // Three events across two files, three different UIDs: a second file never reuses one.
+  const bothUids = [...both.matchAll(/\r\nUID:(\S+)\r\n/g)].map((m) => m[1]);
+  expect(new Set([firstUid, ...bothUids]).size).toBe(3);
+  expect(both).toContain("\r\nDTSTART;VALUE=DATE:20261101\r\n");
+
+  // Nothing ticked: there is nothing to put in a calendar, so the button is off.
+  await setBox(page, boxes.monthly, false);
+  await setBox(page, boxes.yearly, false);
+  for (const box of [boxes.monthly, boxes.quarterly, boxes.yearly]) await expect(box).not.toBeChecked();
+  await expect(button).toBeDisabled();
+  // Still off after a reload, where the line under the boxes says why.
+  await page.reload();
+  await expect(boxes.monthly).toBeEnabled(); // the saved value has been read
+  await expect(boxes.row).toContainText("None ticked: no reminder.");
+  await expect(button).toBeDisabled();
+});
+
+/** A download's bytes, read from where Playwright put it. */
+async function readDownload(download: Download): Promise<Buffer> {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
 
 test("Remind me about this idea: off until turned on, per idea, and still on after a reload", async ({ page }) => {
   await page.goto("/ventures");
@@ -665,6 +745,12 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await expect(
     card.getByText("DotAmi guessed these from the column names — check them."),
   ).toBeVisible();
+  // Every file: DotAmi has only been tried on invented files shaped from each program's help pages.
+  await expect(
+    card.getByText(
+      "Each accounting program's export was tested on files shaped from that program's help pages, not on real exports, so check the columns and totals.",
+    ),
+  ).toBeVisible();
   await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
     "Row 1",
   );
@@ -799,6 +885,32 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await card.getByRole("button", { name: "Cancel" }).click();
   await expect(card.getByRole("button", { name: "Add from a file" })).toBeVisible();
   expect(await figures()).toHaveLength(3);
+});
+
+// A gap the practice files found (2026-10-08), pinned with test.fail: it passes only while the gap
+// is there, so the day the screen names the report to export instead, this goes red until it is
+// made a normal test. Pinned here, on the screen, because the "no column names" sentence is the
+// screen's own; where the fix puts its sentence is up to the fix. docs/connectors/practice-files.md
+// "Known gaps" lists it.
+test("fails today: Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
+  page,
+}) => {
+  test.fail();
+  const { card } = await openSalish(page);
+  const incomeByCustomer = waveFiles.find((f) => f.id === "wave-income-by-customer")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: incomeByCustomer.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(incomeByCustomer.bytes()),
+  });
+  // Today's screen, positively first: the file is read and no column names are found.
+  await expect(
+    card.getByText("DotAmi couldn't find a row of column names in the first 30 rows."),
+  ).toBeVisible();
+  // The gap: nothing names Account Transactions, the Wave report that has a date on every line.
+  await expect(card.getByText(/Account Transactions/)).toBeVisible({ timeout: 2_000 });
 });
 
 test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {
@@ -1318,6 +1430,156 @@ test("'Change' returns to the question and forgets the file; the answer is never
 
   // The answer lives in the panel's state only: nothing in browser storage, nothing saved.
   expect(await storageSize()).toBe(storageBefore);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+// ---- [8f] read last year's return: look only, nothing proposed or kept --------------
+// The PDFs are invented and built in code, laid out like the CRA's own T2125
+// (tests/fixtures/returns/cra-layout.ts); no real return and no real figure is used.
+
+function inventedReturn(): Buffer {
+  return Buffer.from(
+    makePdf([
+      otherFormPage("Income Tax and Benefit Return", "5000-R"),
+      ...t2125Pages({ amounts: INVENTED_AMOUNTS }),
+      otherFormPage("Schedule 8", "5000-S8"),
+    ]),
+  );
+}
+
+test("a return PDF: each T2125's four lines and their pages, read in a worker that can reach nothing", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const problems: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") problems.push(m.text());
+  });
+  page.on("pageerror", (e) => problems.push(e.message));
+  // The reader's worker and the response that delivered its script (its policy comes from there).
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const scriptHeaders = new Map<string, string | undefined>();
+  page.on("response", (r) => {
+    if (new URL(r.url()).pathname.startsWith("/_next/static/")) {
+      scriptHeaders.set(r.url(), r.headers()["content-security-policy"]);
+    }
+  });
+  const seen = watchRequests(page);
+
+  await card.getByRole("button", { name: "Add from last year's return" }).click();
+  const panel = card.getByRole("group", { name: "Add from last year's return" });
+  await expect(panel.getByText(/DotAmi shows lines 8299, 9368, 9369 and 9946/)).toBeVisible();
+  await expect(panel.getByText(/It's read here, on this computer, and never kept/)).toBeVisible();
+  await card.getByLabel("Choose a PDF").setInputFiles({
+    name: "invented-return-2025.pdf",
+    mimeType: "application/pdf",
+    buffer: inventedReturn(),
+  });
+
+  // What the person sees: the file, the T2125's pages, and each line with its page and amount.
+  await expect(panel.getByText("invented-return-2025.pdf")).toBeVisible({ timeout: 20_000 });
+  await expect(panel.getByText(/5 pages · 1 T2125/)).toBeVisible();
+  const table = panel.getByRole("table", { name: "T2125 on pages 2 to 4" });
+  await expect(table).toBeVisible();
+  for (const row of [
+    "8299 Gross business or professional income 3 48,250.00",
+    "9368 Total expenses 4 12,730.45",
+    "9369 Net income (loss) before adjustments 4 35,519.55",
+    "9946 Your net income (loss) 4 33,019.55",
+  ]) {
+    await expect(table.getByRole("row", { name: row, exact: true })).toBeVisible();
+  }
+  await expect(panel.getByText(/DotAmi only shows them: nothing is added to your figures or kept/)).toBeVisible();
+  // Nothing to review or agree: this slice only looks.
+  await expect(card.getByRole("button", { name: /^Review/ })).toHaveCount(0);
+
+  // The reader ran in its own worker, from DotAmi's own static files, under the policy
+  // next.config.mjs gives those files...
+  const reader = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(reader, "the return reader's worker").toBeTruthy();
+  expect(scriptHeaders.get(reader!.url())).toContain("default-src 'none'");
+  // ...and the browser holds it to that policy: from inside the worker, even DotAmi's own server
+  // can't be reached. (Proves the header is applied, not just sent.)
+  const attempt = await reader!.evaluate(() =>
+    fetch("/api/figures").then(
+      () => "reached",
+      () => "refused",
+    ),
+  );
+  expect(attempt).toBe("refused");
+
+  // Privacy: the page fetched only its own code chunks (and /api/figures for the list it already
+  // shows); no amount went anywhere, and nothing was posted.
+  expectNothingLeftThisPage(seen, ["48,250.00", "4825000", "12,730.45", "33,019.55", "invented-return"]);
+  expect(seen.filter((r) => r.method !== "GET")).toEqual([]);
+  expect(problems.filter((p) => /worker|content security policy/i.test(p))).toEqual([]);
+
+  // Close stops the worker and forgets the file; nothing was saved.
+  const stopped = new Promise<void>((resolve) => reader!.once("close", () => resolve()));
+  await panel.getByRole("button", { name: "Close" }).click();
+  await stopped;
+  await expect(card.getByRole("group", { name: "Add from last year's return" })).toHaveCount(0);
+  expect(await figures()).toEqual(before);
+});
+
+test("a return PDF that can't be read gets a plain sentence: locked, pictures only, no T2125, not a PDF", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  await card.getByRole("button", { name: "Add from last year's return" }).click();
+  const panel = card.getByRole("group", { name: "Add from last year's return" });
+
+  const cases: { name: string; buffer: Buffer; says: string }[] = [
+    {
+      name: "locked.pdf",
+      buffer: Buffer.from(makePdf(t2125Pages({ amounts: INVENTED_AMOUNTS }), { userPassword: "invented" })),
+      says: "That PDF is locked with a password, and DotAmi never asks for one.",
+    },
+    {
+      name: "scan.pdf",
+      buffer: Buffer.from(makePdf([{ picture: true }, { picture: true }])),
+      says: "That PDF is pictures of pages, with no text DotAmi can read",
+    },
+    {
+      name: "summary.pdf",
+      buffer: Buffer.from(makePdf([otherFormPage("Income Tax and Benefit Return", "5000-R")])),
+      says: "DotAmi found no T2125 (Statement of Business or Professional Activities) in that PDF.",
+    },
+    {
+      name: "photo.pdf",
+      buffer: Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 7)]),
+      says: "That isn't a PDF.",
+    },
+  ];
+  for (const c of cases) {
+    await card.getByLabel("Choose a PDF").setInputFiles({ name: c.name, mimeType: "application/pdf", buffer: c.buffer });
+    await expect(panel.getByRole("alert")).toContainText(c.says, { timeout: 20_000 });
+    await expect(panel.getByRole("alert")).toContainText("Nothing from it was kept.");
+    await expect(panel.getByRole("table")).toHaveCount(0);
+    await panel.getByRole("button", { name: "Choose another file" }).click();
+    await expect(card.getByLabel("Choose a PDF")).toHaveCount(1);
+  }
+  await panel.getByRole("button", { name: "Close" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a PDF dropped on 'Add from a file' is pointed to the return button, unread", async ({ page }) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "invented-return-2025.pdf",
+    mimeType: "application/pdf",
+    buffer: inventedReturn(),
+  });
+  await expect(card.getByRole("alert")).toContainText("That's a PDF.");
+  await expect(card.getByRole("alert")).toContainText("use Add from last year's return");
+  await expect(card.getByRole("table")).toHaveCount(0);
   await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
 });

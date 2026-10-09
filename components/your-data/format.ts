@@ -80,3 +80,10 @@ export function sizeWords(bytes: number): string {
 export function plural(count: number, one: string, many: string = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
+
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/** "six" for 6, as a sentence writes a small number; digits from 11 up. */
+export function numberWords(n: number): string {
+  return Number.isInteger(n) && n >= 0 && n < NUMBER_WORDS.length ? NUMBER_WORDS[n] : String(n);
+}
