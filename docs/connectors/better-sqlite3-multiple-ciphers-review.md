@@ -12,6 +12,7 @@ installed into DotAmi, imported or run.** Nothing here is added to the app by th
 | [`better-sqlite3-multiple-ciphers`](https://github.com/m4heshd/better-sqlite3-multiple-ciphers) | 13.0.3 (2026-08-07) | MIT | `better-sqlite3` (the synchronous SQLite package for Node) built with [SQLite3 Multiple Ciphers](https://github.com/utelle/SQLite3MultipleCiphers), an encryption extension for SQLite |
 | [`@prisma/adapter-better-sqlite3`](https://github.com/prisma/prisma/tree/main/packages/adapter-better-sqlite3) | 6.19.3 (matches DotAmi's Prisma) | Apache-2.0 | Prisma's own adapter that lets Prisma Client run its queries through `better-sqlite3` |
 | `@prisma/driver-adapter-utils` (pulled in by the adapter) | 6.19.3 | Apache-2.0 | Prisma's shared adapter types and its debug logger |
+| [`node-addon-api`](https://github.com/nodejs/node-addon-api) (the package's only dependency, `^8.0.0`) | 8.9.2 (latest in that range, `npm view`) | MIT | The Node.js project's C++ headers for writing Node-API add-ons: used to compile the binary, not loaded when it runs (below) |
 
 ## The short version
 
@@ -70,6 +71,15 @@ SHA-256 of the tarballs read: `better-sqlite3-multiple-ciphers-13.0.3.tgz`
   numbers come back as `BigInt`, so nothing over 2^53 is rounded). It loads the package by the name
   `better-sqlite3`; an npm `overrides` entry would point that name at
   `better-sqlite3-multiple-ciphers`, whose interface is the same.
+- **The override needs a guard.** The adapter's own dependency is `better-sqlite3 ^11.9.0`
+  (`npm view @prisma/adapter-better-sqlite3@6.19.3 dependencies`). The real `better-sqlite3` 11.10.0
+  runs `prebuild-install || node-gyp rebuild --release` when it installs, which downloads a binary
+  from the internet, and it has no encryption. If the override ever stopped applying (a lockfile that
+  drifted, a nested version range), that package, unreviewed, would be installed and shipped, and an
+  install-time download is a network call DotAmi's source scan can't see. So the pull request that
+  adds the packages adds a test that resolves `better-sqlite3` from the adapter's folder and checks it
+  is `better-sqlite3-multiple-ciphers` at the pinned version, and fails if `package-lock.json` has a
+  `node_modules/better-sqlite3` entry or any `prebuild-install`.
 - **No key setting.** Neither 6.19.3 nor 7.10.0 (also read) has one. The connection it makes is an
   ordinary property (`client`) of the object its factory returns, so DotAmi's own factory can ask
   Prisma's to connect, run `PRAGMA key` on `client` before any query, check the file opens, and only
@@ -99,6 +109,13 @@ SHA-256 of the tarballs read: `better-sqlite3-multiple-ciphers-13.0.3.tgz`
   process, which loads packages from the app itself, not from the server's folder (the way
   `electron-updater` is copied today: `DESKTOP_APP_PACKAGES` in `desktop/notices.mjs`).
 - Keep it current with SQLite's security releases.
+- `node-addon-api` (MIT, 420 KB of C++ headers and a small `index.js` that gives their folder) comes
+  in as the package's only dependency. Nothing in the package's JavaScript requires it (its
+  `require` calls, listed from `lib/` on 2026-10-09, are `fs`, `path`, `util` and its own files), so
+  it is only for compiling; the desktop server is built in Next's standalone mode, which copies only
+  the files the server loads, so it shouldn't reach the installer. Expected, not checked: the pull
+  request that adds the package lists the installer's files to confirm, and if it is there, it goes on
+  the inventory and the notices like any shipped package.
 
 ## Not checked
 

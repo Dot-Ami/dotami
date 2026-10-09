@@ -12,9 +12,10 @@ how; everything else is read from code or documentation, and says so.
 
 ## The short version
 
-- **What it protects:** the data file (`dotami.db`) and its safety copies, against another Windows
-  account on the same computer, a copied or synced data folder, and a stolen disk without disk
-  encryption. **Not** against anything running as the person (§ 1).
+- **What it protects:** the data file (`dotami.db`) and its safety copies, against an administrator
+  account on the same computer while the person is signed out (a standard account can't open the
+  folder even today), a copied or synced data folder, and a stolen disk without disk encryption.
+  **Not** against anything running as the person (§ 1).
 - **The key:** 32 random bytes, kept only wrapped by Windows' per-user protection (Electron's
   `safeStorage`, DPAPI on Windows), in a `database.key` file beside the data file, the same way #128
   keeps the receipts key. Never in the clear on the disk, never in a backup, never in the log (§ 2).
@@ -32,7 +33,8 @@ how; everything else is read from code or documentation, and says so.
 - **Why it stops here:** replacing how Prisma reaches the database, and adding a native package,
   are the maintainer's calls; the performance cost can't be measured until he allows the package to
   be installed and run (the review only reads it, as the HEIC review did); and what happens when
-  the key is lost is a product choice (§ 10). The questions are in § 12.
+  the key is lost, and whether a person may decline, are product choices (§ 10, § 6). The questions
+  are in § 12, each option in one plain sentence first.
 
 ## 1. What it protects, and what it doesn't
 
@@ -40,8 +42,13 @@ The same threat model as the receipts (#128). Encryption at rest means the data 
 unreadable without one key, and the key is kept so that only the person's own Windows account on
 this computer can open it. It protects the data file and its safety copies against:
 
-- **Another account on the same computer** (a family member's, a guest's) that can read the data
-  folder: it finds a file it can't read.
+- **An administrator account on the same computer, while the person isn't signed in.** A standard
+  account (a family member's, a guest's) already can't open the data folder: Windows gives only the
+  person's own account, `SYSTEM` and the Administrators group access to it (read with `icacls` on
+  `%APPDATA%`). So what encryption adds here is against an administrator account, and only while the
+  person is signed out: an administrator can run a program as the person while they are signed in,
+  which is the case below that isn't defended. And it is only as strong as the person's Windows
+  password, as for a stolen disk.
 - **A copied or synced data folder**: a copy of `%APPDATA%\DotAmi` on a USB stick, in a folder a
   cloud service syncs, or inside another computer's backup. The data file and `database.key` travel,
   but the key can't be opened on another computer or account. (One exception, said plainly: Windows
@@ -151,6 +158,13 @@ adapter for files on a disk.
 
 - `@prisma/adapter-better-sqlite3` loads the package named `better-sqlite3`; an npm `overrides`
   entry points that name at `better-sqlite3-multiple-ciphers` (same author line, same interface).
+  **The override is guarded.** The adapter asks for `better-sqlite3 ^11.9.0` (`npm view`), and the
+  real `better-sqlite3` has no encryption and downloads its binary when it installs
+  (`prebuild-install || node-gyp rebuild`), a network call nothing in DotAmi's source scan would see.
+  If the override ever lapsed (a drifted lockfile, a nested range), that unreviewed package would
+  ship. So a test resolves `better-sqlite3` from the adapter's own folder and checks it is
+  `better-sqlite3-multiple-ciphers` at the pinned version, and fails if `package-lock.json` has a
+  `node_modules/better-sqlite3` entry or any `prebuild-install`.
 - The adapter has no setting for a key. Its connection is a plain property on the object it returns
   (`client`), so DotAmi's own small adapter factory (about 30 lines, `lib/db/`) asks Prisma's factory
   to connect, then sets the key with `PRAGMA key` before any query, checks that the file opens
@@ -168,7 +182,16 @@ adapter for files on a disk.
   key and the rate-limit switch today. `lib/prisma.ts`'s rule (no error text in the log) stays as it is.
 - **One way of opening, everywhere.** The adapter is used in every copy, the desktop app and a copy
   run from source alike, with a key only where there is one (§ 9). Two ways of opening would mean two
-  sets of behaviour to test.
+  sets of behaviour to test. That includes the tests: today 15 places outside `lib/prisma.ts` build
+  their own Prisma Client on the built-in engine (found with `grep -rn "new PrismaClient"`:
+  `prisma/seed.ts`, `e2e/app.spec.ts`, `e2e/your-data.spec.ts`, and `tests/bank-sources`,
+  `db-roundtrip`, `expenses-receipt-viewer`, `expenses-receipts`, `expenses-store`, `expenses-typed`,
+  `figures` (twice), `privacy-delete`, `privacy-holdings` and `settings-store` (twice)). Left there,
+  they would pass while the adapter, the date format and the wipe on an encrypted file went untested.
+  So every one of them moves to the same factory (keyed, or plain where a test needs a plain file),
+  and a test fails if `new PrismaClient` appears anywhere but the factory. `tests/prisma-log.spec.ts` and
+  `tests/error-logging.spec.ts` (no error text in the log) run on the adapter, so that rule is proved
+  on the path the app uses, not assumed. This adds about a day to the first pull request (§ 12).
 - **The package goes on the privacy inventory's list of packages that ship** (network: no), the
   licence notices, and `desktop/left-out.mjs` drops the seven platform binaries the installer never uses.
 
@@ -178,7 +201,12 @@ adapter for files on a disk.
   SQLite writes it, and is designed to encrypt the rollback journal's pages too (not measured: a test
   in § 11 scans a journal caught mid-transaction); nothing in the file is plain except what the cipher
   needs (a random 16-byte salt at the start). The file no longer begins with `SQLite format 3`,
-  which is how DotAmi tells an encrypted file from a plain one.
+  which is how DotAmi tells an encrypted file from a plain one. **The check, exactly:** no file, or a
+  file of 0 bytes, is a new database; a file whose first 16 bytes are `SQLite format 3` and a zero
+  byte is plain; anything else is treated as encrypted and must open with the key. A plain file
+  damaged at its start therefore reaches the "can't open with this computer's key" path, which
+  changes nothing on the disk (§ 10) and says the file may be damaged as well as locked. Settings
+  says "encrypted" only when this check says so, never because the feature exists.
 - **Cipher: the library's default, ChaCha20-Poly1305** (its "sqleet" scheme): a 16-byte
   authentication tag per page, so a page changed on the disk fails to open instead of being read as
   something else; 32 bytes reserved on each 4 KB page (under 1 % more space). Raw key, so no key
@@ -204,8 +232,18 @@ adapter for files on a disk.
   source's encryption, or the backup API into a keyed copy) isn't in the library's documentation, so
   it is measured first in the build, and a test scans the copy for a marker string.
 - **The Delete wipe** (`vacuumFile`, and `VACUUM` through Prisma in `lib/privacy/delete.ts`) runs on
-  the encrypted file; the existing test that scans the file's bytes for a deleted marker string
-  then proves both that the rows are gone and that nothing is plain.
+  the encrypted file, and it still matters: deleted words stay in the file's free pages until
+  `VACUUM` (`lib/privacy/delete.ts`), and anything that later reads the file with the key (a program
+  running as the person, or a backup made from its image, § 8) would find them there. **The existing proof stops working on an encrypted
+  file.** `tests/privacy-delete.spec.ts` and `tests/desktop-wipe-pending.spec.ts` look for a deleted
+  marker string in the file's raw bytes; once the file is encrypted the marker is never visible
+  there, wiped or not, so those checks would pass even with the wipe removed, and the control ("a
+  plain delete leaves the words in the file's bytes") would fail. So on an encrypted file the scan
+  runs on the **decrypted page image**: the file opened with the key and its whole image read with
+  `serialize()` (every page, free pages included), then searched for the marker. The tests keep the
+  raw-byte scan on a plain file and the `freelist_count == 0` check, and gain a fail-first control:
+  on an encrypted file, Delete with the `VACUUM` switched off must leave the marker in the decrypted
+  image.
 - **The referee.** `tests/desktop-migrate.spec.ts` uses `prisma migrate status` to check the
   migrator; Prisma's schema engine can't open an encrypted file, so that comparison keeps running on
   a plain file (the migrator works the same with or without a key), and new tests run every
@@ -214,38 +252,83 @@ adapter for files on a disk.
 
 ## 6. Encrypting an existing plain file, once, at the first start
 
-The desktop app, at a start where the key is open and the data file is still plain, encrypts it
-before the migrator runs and before the server starts. **It never loses data:** at every moment
-either the whole plain file or a whole, checked encrypted file is in place, and a note says which
-step comes next.
+**A new data folder** never has a plain file: its database is created encrypted from its first byte.
+With #128's key code (§ 2; not merged yet), the very first start of a new folder waits about ten
+seconds for Electron to save its own key in `Local State` before any key is used, and the migrator, which creates `dotami.db`, runs after that
+wait, with the key. Only if no key store comes (#128 gives up after 30 seconds, or there is none) is
+the file created plain; Settings then says it isn't encrypted (§ 4's check), and a later start with a
+key encrypts it as below.
 
+**An existing plain file** (anyone who used DotAmi before this version) is encrypted at the first
+start where the key is open, before the migrator runs and before the server starts. **The person is
+told first, and offered a backup** (below). **It never loses data:** at every moment either the
+whole plain file or a whole, checked encrypted file is in place, and a note says which step comes
+next.
+
+0. **Tell the person, before anything changes.** A window before the main one says, in a few plain
+   lines: the data file is about to be locked with a key only this Windows account can open; what
+   that protects and what it doesn't (§ 1); that if the key is ever lost, everything not in a backup
+   is lost (§ 10); and that an older DotAmi can't open the file afterwards (§ 7). It offers **Back up
+   first…** (today's File → Back up… on the still-plain file, then back to this window) and
+   **Encrypt now**. Whether it also offers **Not now** (keep the file unencrypted, and ask again
+   later or never) is the maintainer's call (§ 12, question 4); until he decides, the build offers
+   only the two. The log records that the window was shown and which button was pressed, nothing else.
 1. **Check the plain file first**: open it (which lets SQLite finish or undo a transaction an
    earlier crash left), `PRAGMA integrity_check` must say `ok`. If not, nothing is changed and the
    start says so, as the migrator does for a half-done update.
 2. **Write the encrypted copy** to `dotami.db.encrypting` (never overwriting anything), with the key,
    then flush it to the disk. How it is made is measured first in the build: a single SQLite copy
    into a keyed new file if the library supports it; otherwise a plain copy encrypted in place with
-   `PRAGMA rekey` (documented), whose plain bytes are then wiped like the original's.
+   `PRAGMA rekey` (documented). That fallback makes a second plain file for a moment, so: the copy is
+   disposable (a crash just means it is wiped and made again), the rekey runs with
+   `journal_mode = OFF` so no plain journal of it is written, and any leftover
+   `dotami.db.encrypting-journal` is overwritten with zeros before it is deleted.
 3. **Check the copy**: open it with the key; `integrity_check` says `ok`; every table has the same
    rows as the plain file (counted, and a SHA-256 over each table's rows in key order); Prisma's
    bookkeeping table is identical; and the copy does **not** open without the key.
-4. **Write the note** `database-encrypting.json` (the step and the copy's size and SHA-256), flushed.
+4. **Write the note** `database-encrypting.json` saying step `swap`, with the copy's size and
+   SHA-256. **Written so it is never half there:** to `database-encrypting.json.tmp`, flushed, then
+   renamed into place (one step for the file system).
 5. **Swap**: rename `dotami.db` to `dotami.db.plain-to-wipe`, then `dotami.db.encrypting` to
-   `dotami.db`. Each rename is one step for the file system.
-6. **Wipe the plain file**: overwrite `dotami.db.plain-to-wipe` with zeros, its whole length,
-   flush, delete. Then delete the note.
+   `dotami.db`. Each rename is one step for the file system. If the first rename fails (on Windows,
+   another program holding `dotami.db` open gives `EPERM` or `EBUSY`), nothing has moved: the start
+   says which file is busy and stops, and the next start redoes this step.
+6. **Rewrite the note** (the same `.tmp`-then-rename way) to step `wipe`. From here the note no
+   longer depends on `dotami.db`'s bytes, which change as soon as the app runs.
+7. **Wipe the plain file**: overwrite `dotami.db.plain-to-wipe` with zeros, its whole length,
+   flush, delete; the same for a `dotami.db.plain-to-wipe-journal` if one exists. Then delete the
+   note.
 
-**After a crash**, the next start reads the note: with no note, a leftover `.encrypting` is removed
-(the plain file is still whole) and the encryption starts again; with the note, a missing `dotami.db`
-and an `.encrypting` whose size and SHA-256 match the note mean "finish the swap"; an encrypted
-`dotami.db` matching the note and a `.plain-to-wipe` mean "finish the wipe". A file that doesn't match
-the note is never removed: the start stops with a plain sentence and the files stay for help.
+**At every start, the files decide what happens next.** Every state the steps above can leave, and
+its action:
+
+| What is on the disk | How it got there | What the start does |
+|---|---|---|
+| No note; `dotami.db` plain; maybe a `.encrypting`, a `.encrypting-journal` or a `.tmp` note | a crash in steps 1 to 4 | zero-fill and delete the leftovers (a leftover copy may hold plain bytes, step 2), delete the `.tmp`, start again from step 1 |
+| A note that can't be read, `dotami.db` plain | can't happen with step 4's rename, but handled | as the row above |
+| Note `swap`; `dotami.db` plain; `.encrypting` matching the note | a crash between steps 4 and 5, or step 5's first rename failed | redo step 3's comparison against the plain file (something, such as a copy run from source, could have written to it since); if they still agree, redo from step 5; if not, zero-fill and delete the copy and the note and start again from step 1 |
+| Note `swap`; no `dotami.db`; `.encrypting` matching the note | a crash between the two renames | finish step 5, then 6 and 7 |
+| Note `swap`; `dotami.db` encrypted and matching the note; no `.encrypting` | a crash between steps 5 and 6 | do steps 6 and 7 |
+| Note `wipe`; `dotami.db` encrypted (opens with the key); `.plain-to-wipe` present | a crash in step 7, or the wipe couldn't finish | finish step 7 |
+| Note `wipe`; `dotami.db` encrypted; no `.plain-to-wipe` | a crash after the delete, before the note went | delete the note |
+| Anything else (a copy that doesn't match the note, `dotami.db` missing with no copy, a note `wipe` with a `dotami.db` that won't open) | something outside DotAmi changed the files | remove nothing; stop with a plain sentence naming the files, which stay for help |
+
+**When the wipe can't finish** (antivirus or a sync program holding `dotami.db.plain-to-wipe` open):
+the start goes on, on the encrypted file; the note stays at `wipe`; the wipe is tried again at every
+start; and while the plain copy exists, Settings says so in a line, as the Delete menu's
+"wipe pending" note does today.
+
+**A journal SQLite rolls back itself.** If an earlier crash left a plain `dotami.db-journal`, step 1's
+open lets SQLite undo the half-done transaction, and SQLite deletes that journal, it doesn't
+overwrite it. Its old bytes are then in the disk's free space, the same as anything DotAmi deleted
+before this version (§ 1, "what was on the disk before"); disk encryption covers that.
 
 **The plain safety copies already in `backups/`** (the migrator's `dotami-before-….db`, restore's
 safety copy, a leftover `restore-staging.db`) hold everything the data file held. Each is encrypted the
 same way, file by file (crash-safe the same way), then its plain bytes wiped. A file another program
-has open stays as it is, still restorable, and is tried again at the next start. The log gets counts
-only, never a name or a value.
+has open stays as it is, still restorable, and is tried again at the next start; Settings says so
+while it exists, as for the data file's own leftover. The log gets counts only, never a name or a
+value.
 
 **What it can't promise**, said in Settings: the overwrite makes the plain bytes unreadable through
 the file system, not necessarily on the physical disk (§ 1).
@@ -257,11 +340,18 @@ the file system, not necessarily on the physical disk (§ 1).
   (§ 1, in a few lines); that losing the key loses the data except what a backup holds (§ 10); and
   that a backup without a passphrase isn't encrypted. In a copy run from source: "This copy's data
   file isn't encrypted", and why (§ 9).
+- **Going back to an older DotAmi.** An older release opens the data file with `node:sqlite` and
+  Prisma's built-in engine, so it can't open the encrypted file, nor the encrypted safety copies made
+  before an update (§ 5): it stops with SQLite's own error and changes nothing. Settings, the window
+  before the first encryption (§ 6, step 0) and the privacy log say so in one line: going back to an
+  older version needs a backup (which holds the data decrypted, § 8), restored in that version.
 - ***What DotAmi knows about you*** says the same in one line beside the data file's path, and lists
   `database.key` among the files kept in the data folder (`lib/privacy/inventory.ts`, `FOLDERS` and the
   files list), with what removes it.
-- The settings catalog gains no switch: encryption is on wherever there is a key store, as for the
-  receipts. Whether people should be able to turn it off is not proposed.
+- The settings catalog gains no switch as designed: encryption is on wherever there is a key store,
+  as for the receipts, and the person is told and offered a backup before an existing file is first
+  encrypted (§ 6, step 0). Whether people may decline is the maintainer's question 4 (§ 12); if he
+  says yes, the switch goes in the settings catalog and Part 1 of [settings-and-edge-cases.md](settings-and-edge-cases.md).
 
 ## 8. Backups and restore
 
@@ -276,6 +366,16 @@ the file system, not necessarily on the physical disk (§ 1).
   encrypted connection gives the plain page image is not in its documentation, so it is the first
   thing measured in the backups slice; if no way keeps the plain bytes off the disk, the build stops
   and says so.
+- **Rebuilt before it is written, so deleted words stay out of backups.** A page image is the whole
+  file, free pages included, and free pages hold words that were deleted or edited over since the
+  last `VACUUM` (`tests/privacy-delete.spec.ts`'s control shows them there after an ordinary delete).
+  Today's `VACUUM INTO` builds the copy from the live rows only, so they never reach a backup, and
+  that must stay true. So the image is loaded into a second, in-memory connection (the package's
+  `new Database(image)`, which opens a serialized image in memory, read in its `lib/database.js`),
+  `VACUUM` runs there, and only that rebuilt image is serialized into the backup.
+  (`VACUUM INTO` an in-memory address isn't available: the package is built with `SQLITE_USE_URI=0`,
+  per its review.) A test: a marker removed with an ordinary delete, no wipe, must not appear in a
+  backup made without a passphrase, and the control (the image before the rebuild) must hold it.
 - **Restoring** reads the backup's data file into memory, runs today's checks there (that it is
   whole, which migrations it has, that a newer DotAmi didn't make it), and writes it to the staging
   file **encrypted with this computer's key**; the swap is as today. Formats 1 and 2 restore the same
@@ -300,7 +400,16 @@ changes the file.
 
 The key can't be opened if the Windows profile is reset, an administrator resets the account's
 password (Windows then can't open what DPAPI protected), the data folder is moved to another account
-or computer, or `database.key` or Electron's `Local State` file is deleted.
+or computer, or `database.key` or Electron's `Local State` file is deleted. **Or, with nobody doing
+anything, if `Local State` is damaged:** it is a Chromium settings file that Chromium rewrites while
+running, and makes again, with a new key, if it finds it damaged (a crash or an antivirus program
+cutting a write short). Everything wrapped with the old key then can't be opened.
+
+Two cheap checks, part of the build: right after `database.key` is written, it is read back from the
+disk and opened before the key is used for anything (so a key that couldn't be opened is never used
+to lock the file); and at every start the key is opened before anything else, so a key that worked
+last time and doesn't now is found at once and said plainly (below), never in the middle of a page.
+Neither check can bring a lost key back; only a backup or a recovery key (§ 12, question 2) can.
 
 **Then everything in the data file is lost, except what a backup holds.** This is the real cost of
 the feature, and bigger than for receipts: the data file is everything (ideas, figures, expense
@@ -322,32 +431,66 @@ When the app starts and can't open the key:
 
 - The file on the disk doesn't contain a marker string written through the app, in the data file,
   its journal mid-transaction, the safety copy and the staging file; a plain file does (the control).
+  (This raw scan proves only that nothing is plain; whether deleted words are gone is proved on the
+  decrypted image, below.)
 - Prisma reads and writes through the adapter with the key; without the key, opening fails with
   DotAmi's sentence and nothing is changed.
 - Dates: one written by the built-in engine before the move and one written after are stored the same
   way (an integer of milliseconds) and read back equal.
-- The first-start encryption, killed at every step (after the copy, after the note, between the two
-  renames, during the wipe): the next start finishes it, every seeded idea, figure, link, map
+- The first-start encryption, killed at every step (after the copy; after the note, before the
+  first rename; with the first rename refused because the file is held open; between the two
+  renames; after the swap, before the note says `wipe`; during the wipe; after the plain file is
+  deleted, before the note is): the next start finishes it, every seeded idea, figure, link, map
   progress, setting, expense record and receipt row survives, and the plain bytes are gone from the
-  data folder.
+  data folder (a raw scan for the marker over every file there, journals included). Plus a note that
+  can't be read, and a plain file written to after the copy was made (the copy is thrown away and
+  made again, never swapped in).
+- A new data folder: its database is encrypted from the first byte (the raw scan never finds the
+  marker in any file, at any moment the test looks); with no key store, it is plain and Settings
+  doesn't say "encrypted".
+- The window before the first encryption: shown once for an existing plain file, never for a new
+  folder or an already-encrypted file; **Back up first…** makes a backup of the still-plain file
+  that restores.
+- The Delete wipe on an encrypted file: the marker is gone from the **decrypted** page image
+  (`serialize()`) and `freelist_count` is 0; the control, Delete with `VACUUM` switched off, leaves
+  the marker in that image. The raw-byte scan and its control stay for a plain file.
+- A backup of an encrypted file made without a passphrase doesn't contain a marker removed with an
+  ordinary delete (no wipe); the image before the rebuild does (the control).
+- Every Prisma Client is made by the one factory: a test fails on `new PrismaClient` anywhere else.
+- `better-sqlite3` resolved from the adapter's folder is `better-sqlite3-multiple-ciphers` at the
+  pinned version; `package-lock.json` has no `node_modules/better-sqlite3` and no `prebuild-install`.
 - The migrator on an encrypted file: every migration applies, `Venture` and its children survive,
   the safety copy is encrypted.
 - A backup of an encrypted file restores on a "second computer" (another data folder with another
   key), locked and not; real format-1 and format-2 backups still restore; no plain copy is written to
   the disk while backing up (a scan of the temporary folder).
-- A lost key (a deleted `database.key`, a key file from another data folder): the app changes nothing
-  and says so; restoring a backup works.
+- A lost key (a deleted `database.key`, a key file from another data folder, a damaged
+  `Local State`): the app changes nothing and says so; restoring a backup works. A key file that
+  can't be read back right after it is written is never used.
 - `DEBUG` never reaches the server's environment.
 - `e2e-desktop/desktop.spec.ts`: the real app encrypts a seeded plain folder at its first start and
   then shows the data; Settings says the file is encrypted.
 
 ## 12. For the maintainer: the choices, with what each costs
 
-**Question 1 — how to encrypt** (the build can't start without it):
+**Question 1 — how to encrypt** (the build can't start without it). Each option in one plain
+sentence first; the package names and details are in the table and the linked reviews.
+
+- **A (recommended).** Add one small, free library that locks the data file, and change how DotAmi's
+  database layer talks to the file so it can use it (a change Prisma, the database layer, will
+  require anyway at its next major version). About 10 to 12 days; the installer grows by 2.4 MB;
+  whether pages get slower is not known until it is measured.
+- **B.** The same with a different library. Not recommended: it carries code for talking to the
+  internet inside it, an older SQLite, and a lock that can't tell if the file was tampered with.
+- **C.** The same with the best-known locking library. Not recommended: DotAmi would have to write
+  and maintain its own connection to it, and every machine that builds DotAmi would need a compiler.
+- **D.** No new library: DotAmi scrambles the words and amounts itself, column by column. Weeks of
+  work, and the shape of the data (dates, counts, sizes) stays readable.
+- **E.** Not now: the data file keeps relying on the computer's disk encryption, as today.
 
 | Option | What changes for a person | What it costs | What it asks of DotAmi |
 |---|---|---|---|
-| **A. Prisma's driver adapter with `better-sqlite3-multiple-ciphers`** | The data file and its safety copies are unreadable without this Windows account; backups restore anywhere | About **9 to 11 days** in three pull requests (below); 2.4 MB in the installer; performance **not measured yet** | A native package (MIT, reviewed by reading, not yet run) in the app and the migrator; Prisma talking to the database through an adapter (Prisma's own, which Prisma 7 requires anyway) |
+| **A. Prisma's driver adapter with `better-sqlite3-multiple-ciphers`** | The data file and its safety copies are unreadable without this Windows account; backups restore anywhere | About **10 to 12 days** in three pull requests (below); 2.4 MB in the installer; performance **not measured yet** | A native package (MIT, reviewed by reading, not yet run) in the app and the migrator; Prisma talking to the database through an adapter (Prisma's own, which Prisma 7 requires anyway) |
 | **B. `libsql`** | Same | About the same days; 8.9 MB | A native binary with a network stack inside it, an older SQLite, and encryption that can't detect a changed page. **Not recommended** |
 | **C. SQLCipher through `@journeyapps/sqlcipher`** | Same | Several more days to write and own a Prisma adapter; a compiler, Python and OpenSSL on every build machine | Owning a database adapter. **Not recommended** |
 | **D. Encrypt columns in the app** | Most words and amounts unreadable; table names, counts, dates and sizes readable | Weeks; every sort, search and total moved out of the database | No new package |
@@ -360,11 +503,14 @@ wipe and a backup, each with today's engine, with the adapter on a plain file, a
 on an encrypted file. The numbers go in the pull request; a difference a person would notice is
 reported, and the build stops for your word.
 
-**Question 2 — when the key is lost** (§ 10), for the build of A:
+**Question 2 — when the key is lost** (§ 10), for the build of A. The key can be lost without the
+person doing anything (a damaged Windows settings file, an administrator resetting the password), so
+"backups only" is safe only for someone who has a recent backup; the window before the first
+encryption offers one (§ 6), but nothing makes people keep backing up.
 
 | Option | What it gives | What it costs |
 |---|---|---|
-| **Backups only** (as receipts) | Restore a backup; anything since is lost | Nothing more; DotAmi says it in Settings and when it can't open the key |
+| **Backups only** (as receipts) | Restore a backup; anything since is lost | Nothing more; DotAmi says it in Settings, in the window before the first encryption, and when it can't open the key |
 | **A recovery key** | DotAmi shows a code once, for the person to write down or print; typing it in opens the data file anywhere | About +1.5 days; anyone who has the code and a copy of the data folder can read everything, so where it is kept matters |
 | **Start fresh, keeping the locked file** | A button that moves the locked file and its key into `backups/` and starts empty | About +0.5 day; the old file can still be opened if the key comes back |
 
@@ -372,21 +518,35 @@ reported, and the build stops for your word.
 restore on another computer). Keep it optional with today's warning, or require a passphrase from
 now on.
 
+**Question 4 — may a person say no?** Someone who already uses DotAmi is shown a window before their
+existing file is first encrypted, with **Back up first…** and **Encrypt now** (§ 6, step 0). Should it
+also offer **Not now**, keeping the file unencrypted?
+
+| Option | What it gives | What it costs |
+|---|---|---|
+| **No: tell and offer a backup, then encrypt** (what the build does until you decide) | Everyone's file is encrypted; nobody is surprised, and everyone is offered a backup first | Nothing more; someone who would rather not risk losing the key can't decline |
+| **Yes, "Not now", asked again at a later start** | The person decides when | About +0.5 day; a switch in Settings (in the settings catalog), and Settings saying the file isn't encrypted while it isn't |
+| **Yes, "Never", with a switch in Settings to turn it on later** | The person decides whether | About +1 day; the same, plus encrypting from Settings at any later start |
+
 **My recommendation** (mine, not a fact): A, measured first; backups only plus *start fresh*, with
-the warnings; the passphrase kept optional. Not a reason to prefer A on its own: the adapter is the
-direction Prisma itself is going.
+the warnings; the passphrase kept optional; question 4 is yours alone, since it is about what people
+are asked. Not a reason to prefer A on its own: the adapter is the direction Prisma itself is going.
 
 **The build, if A** (stacked pull requests, each reviewable on its own):
 
-1. **The packages and the Prisma connection** (about 3 days): the measurements above; the two
-   packages, reviewed, pinned and on the inventory, the notices and the left-out list; DotAmi's keyed
-   adapter factory; the date format; `DEBUG` out of the server's environment; the key file (built on
-   #128's key code once that merges); the server opening an encrypted file in the desktop app.
-2. **The migrator and the first-start encryption** (about 3 to 4 days): `migrate.mjs` and the wipe on
-   the new package; encrypting an existing file and the safety copies, crash-safe; the lost-key start;
-   Settings and *What DotAmi knows about you*.
-3. **Backups and restore** (about 2 to 3 days): no plain copy on the disk; restore writing the
-   encrypted staging file; formats 1 and 2.
+1. **The packages and the Prisma connection** (about 4 days): the measurements above; the two
+   packages, reviewed, pinned and on the inventory, the notices and the left-out list, with the test
+   that the override holds; DotAmi's keyed adapter factory, and every place that builds a Prisma
+   Client today (15, § 3) moved to it; the date format; `DEBUG` out of the server's environment; the
+   key file (built on #128's key code once that merges); the server opening an encrypted file in the
+   desktop app.
+2. **The migrator and the first-start encryption** (about 3.5 to 4.5 days): `migrate.mjs` and the
+   wipe on the new package, with the wipe's proof moved to the decrypted image; a new folder created
+   encrypted; the window before the first encryption; encrypting an existing file and the safety
+   copies, crash-safe in every state of § 6's table; the lost-key start; Settings and *What DotAmi
+   knows about you*.
+3. **Backups and restore** (about 2.5 to 3 days): no plain copy on the disk; the image rebuilt before
+   it is written; restore writing the encrypted staging file; formats 1 and 2.
 
 ## 13. Not checked
 

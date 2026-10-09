@@ -244,8 +244,10 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
 
 | Who | How | What would stop it | Status |
 |---|---|---|---|
-| Another account on the computer, a copied or synced data folder, a stolen disk without disk encryption | reads `dotami.db` or a safety copy in `backups/` | the file encrypted page by page (ChaCha20-Poly1305), with a key only this Windows account can open; as strong as the account's password | designed |
-| The same, for the plain file the first start replaces | reads the disk's free space | the plain file overwritten and removed; on a solid-state disk that doesn't promise the bytes are physically gone, which DotAmi says; disk encryption covers it | designed |
+| A standard account on the computer (a family member's, a guest's) | tries to open the data folder | Windows already: only the person's own account, `SYSTEM` and administrators can open it, with or without this design | already true today |
+| An administrator account while the person is signed out, a copied or synced data folder, a stolen disk without disk encryption | reads `dotami.db` or a safety copy in `backups/` | the file encrypted page by page (ChaCha20-Poly1305), with a key only this Windows account can open; as strong as the account's password. An administrator while the person is signed in can act as the person (the "program running as the person" row) | designed |
+| The same, for the plain files the first start replaces | reads the disk's free space | the plain files overwritten with zeros and removed; on a solid-state disk that doesn't promise the bytes are physically gone, which DotAmi says; disk encryption covers it | designed |
+| Someone who later has the key, or a backup | reads words deleted or edited over | the Delete wipe still runs `VACUUM`, proved on the decrypted image; a backup is rebuilt from the live rows before it is written, as `VACUUM INTO` does today | designed |
 | Someone with a backup without a passphrase | opens it | nothing: it holds the data decrypted so it restores on another computer, and DotAmi says so; with a passphrase, AES-256-GCM as today | designed (a question: require a passphrase?) |
 | A program running as the person | asks Windows for the key, or asks DotAmi's server | nothing in DotAmi: the same trust as today, stated, not defended | by design |
 | The person, after losing the key | opens DotAmi | nothing can open the file; a backup restores it under a new key; nothing on the disk is changed or replaced | designed (a question: a recovery key, or "start fresh"?) |
@@ -255,8 +257,12 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
 1. The key is never in the clear on the disk, in a backup, in the log or in an address, and is never
    sent anywhere; the server takes it out of its environment when it first reads it.
 2. With the key open, the data file is never written to the disk in plain text: not by a backup, a
-   restore, a safety copy or the migrator. The one plain file is the one that already exists before the
-   first encrypting start, and it is wiped once the encrypted copy is checked.
+   restore, a safety copy or the migrator. The plain files are the ones that already exist before the
+   first encrypting start (the data file, the plain safety copies in `backups/`, any journal beside
+   them), plus, only if the library can't encrypt while copying, one temporary plain copy made during
+   that start (its in-place encryption runs with no journal). Each is overwritten with zeros before it
+   is deleted, once its encrypted copy is checked. One exception, stated: a journal an earlier crash
+   left is rolled back and deleted by SQLite itself, not overwritten.
 3. A key is never replaced automatically while an encrypted file exists.
 4. The log gets events and counts, never a value, a name or the key; the database adapter's debug
    output (which prints query values) is switched off in the desktop server by removing `DEBUG`.
@@ -264,4 +270,9 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
    and *What DotAmi knows about you*.
 6. Each candidate package is reviewed before use ([better-sqlite3-multiple-ciphers](../connectors/better-sqlite3-multiple-ciphers-review.md),
    [libsql](../connectors/libsql-review.md), [SQLCipher](../connectors/sqlcipher-review.md)); the one
-   chosen goes on the inventory's list of packages that ship, with network "no".
+   chosen goes on the inventory's list of packages that ship, with network "no", and a test fails if
+   the unencrypted `better-sqlite3` it stands in for is ever installed.
+7. The person is told before an existing file is first encrypted, and offered a backup first; a new
+   data folder's file is encrypted from its first byte. Settings says "encrypted" only when the file is.
+8. Deleted words stay out of reach as today: the Delete wipe's proof runs on the decrypted image, and
+   a backup is rebuilt from the live rows before it is written.
