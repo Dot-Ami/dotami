@@ -40,8 +40,8 @@ function isEmpty(cell: Cell | undefined): boolean {
   return cell === null || cell === undefined || (typeof cell === "string" && cell.trim() === "");
 }
 
-/** The last day of a YYYY-MM month, written YYYY-MM-DD (leap years included). */
-function lastDayOfMonth(month: string): string {
+/** The last day of a YYYY-MM month, written YYYY-MM-DD (leap years included). Shared with across.ts. */
+export function lastDayOfMonth(month: string): string {
   const year = Number(month.slice(0, 4));
   const m = Number(month.slice(5, 7));
   // Day 0 of the next month is the last day of this one.

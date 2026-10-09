@@ -6,9 +6,11 @@
  * every cell in the diff. No real export, no real person and no real figure is used anywhere.
  */
 import type {
+  AcrossResult,
   Century,
   DateOrder,
   DecimalStyle,
+  MonthColumn,
   MonthTotal,
   SkippedRow,
 } from "@/lib/figures/file/types";
@@ -66,6 +68,19 @@ export interface Expected {
   months: MonthTotal[];
   /** Every row the totals leave out: 1-based row number and the reason. */
   skipped: SkippedRow[];
+  /**
+   * Set for a report with the months across the top (one column per month): the screen starts on
+   * "months across" and these are what it reads. `months` and `skipped` above are then empty, and
+   * `guess` is null (no row of column names sits above a date).
+   */
+  across?: {
+    /** 0-based row of the month names, as guessed. */
+    monthsRow: number;
+    monthColumns: MonthColumn[];
+    months: MonthTotal[];
+    skippedRows: AcrossResult["skippedRows"];
+    skippedCells: AcrossResult["skippedCells"];
+  };
 }
 
 export interface PracticeFile {

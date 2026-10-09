@@ -93,6 +93,18 @@ function readsAsDate(cell: Cell | undefined): boolean {
   );
 }
 
+/** Rows looked through for a date by sheetHasDates; a report with no date in these has none to find. */
+const DATE_SEARCH_ROWS = 5000;
+
+/**
+ * True when any cell in the sheet's first 5,000 rows reads as a date (in any order, or with a
+ * two-digit year still to be asked about). A sheet with none can't be split into months by its
+ * rows; the screen then names a report to export instead (preview.ts, exportInsteadSentence).
+ */
+export function sheetHasDates(rows: Cell[][]): boolean {
+  return rows.slice(0, DATE_SEARCH_ROWS).some((row) => row.some((cell) => readsAsDate(cell)));
+}
+
 function readsAsAmount(cell: Cell | undefined): boolean {
   const value = cell ?? null;
   return cellToCents(value, "point") !== null || cellToCents(value, "comma") !== null;

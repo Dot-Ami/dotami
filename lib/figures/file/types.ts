@@ -106,3 +106,50 @@ export interface TotalsResult {
    */
   datesRead: { first: string; last: string } | null;
 }
+
+/**
+ * [8c-3] Months across the top: a report with one column per month (FreshBooks' Revenue by Client)
+ * instead of one row per sale with a date. `month` is the month a column's name was read as.
+ */
+export interface MonthColumn {
+  /** 0-based position in a row. */
+  column: number;
+  /** YYYY-MM */
+  month: string;
+}
+
+/**
+ * Why a whole row under the month names wasn't read, when every row is added up.
+ *
+ * blank     — every cell empty
+ * total     — a cell outside the month columns says "Total", "Grand total"…: the report's own sum
+ * no-amount — nothing at all under any month (a heading, a note, a client with no figures)
+ */
+export type AcrossRowReason = "blank" | "total" | "no-amount";
+
+/**
+ * Why one cell under a month wasn't added, in a row that was otherwise read.
+ *
+ * empty      — nothing in the cell
+ * bad-amount — something DotAmi can't read as an amount with certainty
+ */
+export type AcrossCellReason = "empty" | "bad-amount";
+
+/** What adding up a months-across table gives. Every cell under a month is accounted for. */
+export interface AcrossResult {
+  /** Oldest first; only months that have ended. `rows` is how many rows' cells were added into the month. */
+  months: MonthTotal[];
+  /** Rows with at least one cell added into a month. */
+  rowsCounted: number;
+  /** Whole rows left out, 1-based as the person sees them in Excel. */
+  skippedRows: { row: number; reason: AcrossRowReason }[];
+  /** Single cells left out: 1-based row, 0-based column (the screen writes it "C6", as Excel does). */
+  skippedCells: { row: number; column: number; reason: AcrossCellReason }[];
+  /** Month columns left out whole because the month hasn't ended yet. */
+  notOver: MonthColumn[];
+  /**
+   * The earliest and latest month read from the column names (YYYY-MM), over every month column,
+   * a month not over yet included. Shown in words so a column read as the wrong month stands out.
+   */
+  monthsRead: { first: string; last: string } | null;
+}

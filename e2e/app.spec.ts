@@ -16,6 +16,7 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
 
 /**
@@ -1002,16 +1003,13 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   expect(await figures()).toHaveLength(3);
 });
 
-// A gap the practice files found (2026-10-08), pinned with test.fail: it passes only while the gap
-// is there, so the day the screen names the report to export instead, this goes red until it is
-// made a normal test. Pinned here, on the screen, because the "no column names" sentence is the
-// screen's own; where the fix puts its sentence is up to the fix. docs/connectors/practice-files.md
-// "Known gaps" lists it.
-test("fails today: Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
+// A gap the practice files found (2026-10-08), now fixed: this was a test.fail() pin until the
+// screen named the report to export instead (the maintainer's decision, 2026-10-07).
+test("Wave's Income by Customer, which has no dates, is met with the report to export instead", async ({
   page,
 }) => {
-  test.fail();
-  const { card } = await openSalish(page);
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
   const incomeByCustomer = waveFiles.find((f) => f.id === "wave-income-by-customer")!;
   await card.getByRole("button", { name: "Add from a file" }).click();
   await answerAccounting(card);
@@ -1024,8 +1022,149 @@ test("fails today: Wave's Income by Customer, which has no dates, is met with th
   await expect(
     card.getByText("DotAmi couldn't find a row of column names in the first 30 rows."),
   ).toBeVisible();
-  // The gap: nothing names Account Transactions, the Wave report that has a date on every line.
-  await expect(card.getByText(/Account Transactions/)).toBeVisible({ timeout: 2_000 });
+  // The screen names Account Transactions, the Wave report that has a date on every line.
+  await expect(
+    card.getByText(
+      "This looks like Wave's Income by Customer report: one total per customer, with no dates, so DotAmi can't split it into months. In Wave, export the Account Transactions report for your income account instead (Reports, Account Transactions, Export, as CSV): it has a date on every line.",
+    ),
+  ).toBeVisible();
+  // The layout stays "one row per sale", and nothing can be reviewed.
+  await expect(card.getByLabel("The file has").locator("option:checked")).toHaveText(
+    "One row per sale, with a date",
+  );
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a report with the months across the top: one total per month column, from every row or the Total row", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+
+  // The invented FreshBooks-shaped Revenue by Client: clients down the side, July to September
+  // 2026 across the top, a Total column and the report's own Total row.
+  const revenue = freshbooksFiles.find((f) => f.id === "freshbooks-revenue-by-client")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: revenue.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(revenue.bytes()),
+  });
+
+  // The screen starts on months across, with the row of month names guessed for the person to check.
+  await expect(card.getByLabel("The file has").locator("option:checked")).toHaveText(
+    "Months across the top, one column per month",
+  );
+  await expect(card.getByText("DotAmi guessed the row of month names — check it.")).toBeVisible();
+  await expect(card.getByLabel("Month names are in row").locator("option:checked")).toHaveText(
+    "Row 4",
+  );
+  await expect(card.getByText("B · July 2026")).toBeVisible();
+  await expect(card.getByText("D · September 2026")).toBeVisible();
+  await expect(card.getByText("Not months, so not added: A · Client, E · Total")).toBeVisible();
+  // The row-per-sale pickers are not on screen in this layout.
+  await expect(card.getByLabel("Date column")).toHaveCount(0);
+
+  // Every row added down each month: three rows a month, and the Total row left out.
+  const totalsFrom = card.getByLabel("Totals come from");
+  await expect(totalsFrom.locator("option:checked")).toHaveText("Every row, added down each month");
+  const table = card.getByRole("table", { name: `Monthly totals from ${revenue.fileName}` });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$476\.19 3 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^September 2026 \$300\.00 3 rows$/ })).toBeVisible();
+  await expect(
+    card.getByText(
+      "Months read from the column names: July 2026 to September 2026. Check these against the file.",
+    ),
+  ).toBeVisible();
+  await expect(
+    card.getByText("1 row that is a totals row (the file's own sum): row 8"),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: "Review these 3 figures" })).toBeVisible();
+
+  // Only the report's Total row: the same months, one row each, and nothing left out.
+  await totalsFrom.selectOption({ label: "Row 8 only · Total" });
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 1 row$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$476\.19 1 row$/ })).toBeVisible();
+  await expect(card.getByText("Left out", { exact: true })).toHaveCount(0);
+
+  // The wrong row of month names says so, and adds nothing up.
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 1" });
+  await expect(
+    card.getByText(
+      "No column in row 1 is named like a month and year (Jul 2026, juillet 2026, 2026-07 or 07/2026). Pick the row with the month names.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+
+  // Reading the file sent nothing.
+  expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+
+  // Back to the right row: every row again, and Review proposes the three months.
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 4" });
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  const fromFile = prompt.getByRole("region", { name: `From ${revenue.fileName}` });
+  await expect(fromFile).toContainText("July 2026");
+  await expect(fromFile).toContainText("September 2026");
+  // One client row goes into every month, so adding the months' row counts would say "9 rows"
+  // for a file of 3 clients. No row count is sent for this layout, so none is shown.
+  const proposals = seen.filter((r) => r.path === "/api/figures/propose");
+  expect(proposals).toHaveLength(1);
+  const sent = JSON.parse(proposals[0].body!) as {
+    source: Record<string, unknown>;
+    figures: Record<string, unknown>[];
+  };
+  expect(sent.source).toEqual({ kind: "file", label: revenue.fileName });
+  expect(sent.figures.map((f) => [f.periodStart, f.amountCents, "rows" in f])).toEqual([
+    ["2026-07-01", 50000, false],
+    ["2026-08-01", 47619, false],
+    ["2026-09-01", 30000, false],
+  ]);
+  await expect(fromFile.getByText(`From ${revenue.fileName}`, { exact: true })).toBeVisible();
+  await expect(prompt.getByText(/\d+ rows?/)).toHaveCount(0);
+  expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
+
+  // Turning them down keeps nothing.
+  await prompt.getByRole("button", { name: "No, I'll do it myself" }).click();
+  await expect(prompt).toBeHidden();
+  expect(await figures()).toEqual(before);
+});
+
+test("a month name DotAmi can't be sure of stops the table, naming the column", async ({ page }) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  // "Aug 26" could be August 2026 or the 26th of August: never guessed. Invented amounts.
+  const lines = ["Client,Jul 2026,Aug 26", "Client A,100.00,50.00"];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "short-month.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+  // No row is guessed (its names aren't all clear), so the person switches and picks the row.
+  await card.getByLabel("The file has").selectOption("across");
+  await expect(
+    card.getByText("DotAmi couldn't find a row of month names in the first 30 rows."),
+  ).toBeVisible();
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 1" });
+  await expect(
+    card.getByText(
+      "The name of column C looks like a month, but DotAmi can't be sure which month and year it is, so nothing is added up. It reads names like Jul 2026, juillet 2026, 2026-07 or 07/2026.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
 });
 
 test("dates that read two ways are asked about once, and nothing is totalled until then", async ({ page }) => {

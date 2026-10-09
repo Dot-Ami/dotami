@@ -117,9 +117,12 @@ roadmap's build order.
     "documented" in their practice files, citing the issue
   - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
     preview shows the earliest and latest date read, in words, to check against the file
+  - [x] Months across the top (FreshBooks' Revenue by Client): pick the row of month names and where
+    the totals come from, one total per month; a report with no dates (Wave's Income by Customer)
+    names the report to export instead
   - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
-    months across the top, the FreshBooks summary block, French files with several comma-decimal
-    columns, formulas saved with no value, a report with no dates)
+    the FreshBooks summary block, French files with several comma-decimal columns, formulas saved
+    with no value)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs

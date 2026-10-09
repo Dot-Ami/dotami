@@ -80,6 +80,14 @@ const MONTHS: Record<string, number> = {
   decembre: 12,
 };
 
+/**
+ * A month name or abbreviation (already lower-cased and without accents: "aout", "janv") as its
+ * number, 1 to 12; null for any other word. The same English and French list the dates use.
+ */
+export function monthNumber(word: string): number | null {
+  return Object.prototype.hasOwnProperty.call(MONTHS, word) ? MONTHS[word] : null;
+}
+
 /** A time written after the date (and an optional zone / AM-PM): dropped, never applied. */
 const TRAILING_TIME =
   /^(.*?\d)[ T]+\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:\s?(?:Z|[+-]\d{2}:?\d{2}|[AP]M))?$/i;
@@ -130,8 +138,11 @@ function yearOf(written: string, century: Century | null): number | null {
   return century === null ? null : century + Number(written);
 }
 
-/** Lower-cases text and drops accents, so "Août" and "AOUT" look the same. */
-function plainText(text: string): string {
+/**
+ * Lower-cases text and drops accents, so "Août" and "AOUT" look the same. Exported for the
+ * months-across reader (across.ts), which reads month names the same way.
+ */
+export function plainText(text: string): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -262,6 +273,15 @@ export function dayInWords(day: string): string {
   if (!isRealCalendarDay(day)) return day;
   const [year, month, date] = day.split("-").map(Number);
   return `${date} ${MONTH_WORDS[month - 1]} ${year}`;
+}
+
+/**
+ * A month written the way a person says it: "2026-07" is "July 2026". Anything that isn't a real
+ * YYYY-MM month comes back unchanged, so a bad value is shown as it is, never hidden.
+ */
+export function monthInWords(month: string): string {
+  if (!/^\d{4}-\d{2}$/.test(month) || !isRealCalendarDay(`${month}-01`)) return month;
+  return `${MONTH_WORDS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`;
 }
 
 /**

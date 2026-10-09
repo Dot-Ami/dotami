@@ -1,10 +1,16 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { decodeText } from "@/lib/figures/file/decode";
-import { datesReadSentence, previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
+import {
+  datesReadSentence,
+  monthsReadSentence,
+  previewFile as runLikeTheScreen,
+  WAVE_INCOME_BY_CUSTOMER_SENTENCE,
+} from "@/lib/figures/file/preview";
 import type { FileAnswers as Answers, FilePreview as ScreenRun } from "@/lib/figures/file/preview";
 import { readSpreadsheet } from "@/lib/figures/file/read-file";
 import { columnsOf, isBlankRow } from "@/lib/figures/file/table";
+import type { MonthTotal } from "@/lib/figures/file/types";
 import { isRealCalendarDay } from "@/lib/figures/validate";
 import * as freshbooks from "./fixtures/packages/freshbooks";
 import * as quickbooks from "./fixtures/packages/quickbooks-online";
@@ -54,8 +60,11 @@ function find(id: string): PracticeFile {
 }
 
 /** One month's total, without the row count: for the "fails today" tests, which only pin the amount. */
-function amountsOf(run: ScreenRun): { periodStart: string; amountCents: number }[] {
-  return (run.result?.months ?? []).map((m) => ({
+function amountsOf(
+  runOrMonths: ScreenRun | MonthTotal[],
+): { periodStart: string; amountCents: number }[] {
+  const months = Array.isArray(runOrMonths) ? runOrMonths : (runOrMonths.result?.months ?? []);
+  return months.map((m) => ({
     periodStart: m.periodStart,
     amountCents: m.amountCents,
   }));
@@ -68,7 +77,11 @@ function reasonFor(run: ScreenRun, row: number): string | undefined {
 
 /** Rows from just below the column names to the last row with anything in it. */
 function rowsBelowHeader(run: ScreenRun): number {
-  const header = run.picks.headerRow ?? 0;
+  return rowsBelow(run, run.picks.headerRow ?? 0);
+}
+
+/** Rows from just below a 0-based row to the last row with anything in it. */
+function rowsBelow(run: ScreenRun, header: number): number {
   let last = run.rows.length - 1;
   while (last > header && isBlankRow(run.rows[last])) last -= 1;
   return last - header;
@@ -194,10 +207,18 @@ describe.each(ALL_FILES)("$id", (file) => {
       },
     ).toEqual(file.expected.guess);
     // The titles the file really holds, on the row the person ends up using, are the ones the
-    // fixture marks documented or assumed.
+    // fixture marks documented or assumed. Months across the top: the row of month names.
     const answered = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(answered.picks.headerRow).not.toBeNull();
-    const labels = columnsOf(answered.rows, answered.picks.headerRow!).map((c) => c.label);
+    const across = file.expected.across;
+    if (across) {
+      expect(answered.layout).toBe("across");
+      expect(answered.acrossPicks.monthsRow).toBe(across.monthsRow);
+    } else {
+      expect(answered.layout).toBe("rows");
+    }
+    const usedRow = across ? answered.acrossPicks.monthsRow : answered.picks.headerRow;
+    expect(usedRow).not.toBeNull();
+    const labels = columnsOf(answered.rows, usedRow!).map((c) => c.label);
     if (file.expected.columnsMisread) {
       expect(labels).toEqual(file.expected.columnsMisread.readAs);
       expect(labels).not.toEqual(file.columns.map((c) => c.header));
@@ -209,11 +230,25 @@ describe.each(ALL_FILES)("$id", (file) => {
   it("reads the dates and the amounts the way the file writes them", async () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
     expect(run.detectedOrder).toEqual(file.expected.dateOrder);
-    expect(run.detectedStyle).toBe(file.expected.decimalStyle);
+    expect(run.across?.detectedStyle ?? run.detectedStyle).toBe(file.expected.decimalStyle);
   });
 
   it("adds up each month to the cent and lists every row it leaves out", async () => {
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    const across = file.expected.across;
+    if (across) {
+      // Months across the top: each month column read from its name, every cell under it added or
+      // listed. Each month's row count is how many rows' cells went into it.
+      expect(run.across?.state).toBe("ready");
+      expect(run.across!.monthColumns).toEqual(across.monthColumns);
+      const result = run.across!.result!;
+      expect(result.months).toEqual(across.months);
+      expect(result.skippedRows).toEqual(across.skippedRows);
+      expect(result.skippedCells).toEqual(across.skippedCells);
+      // Every row under the month names is either read or listed, none dropped.
+      expect(result.rowsCounted + result.skippedRows.length).toBe(rowsBelow(run, across.monthsRow));
+      return;
+    }
     expect(run.state).toBe("ready");
     const result = run.result!;
     expect(result.months).toEqual(file.expected.months);
@@ -417,6 +452,71 @@ describe("two-digit years, read once the person says the century", () => {
 });
 
 /*
+ * Two gaps the newer practice files found, now fixed (the maintainer's decision, 2026-10-07: teach
+ * DotAmi to read months-across tables). The FreshBooks one was an `it.fails` test here and the Wave
+ * one a `test.fail()` browser test in e2e/app.spec.ts, which is now a normal test too. The rules
+ * have their own tests in tests/figures-file-months-across.spec.ts.
+ */
+describe("months across the top, and a report with no dates", () => {
+  it("FreshBooks: Revenue by Client, months across the top, gives one total per month", async () => {
+    const file = find("freshbooks-revenue-by-client");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    // Positive first: the screen starts on months across, with row 4 as the month names.
+    expect(run.layout).toBe("across");
+    expect(run.acrossPicks).toEqual({ monthsRow: 3, addUp: "every-row" });
+    expect(amountsOf(run.across!.result!.months)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
+    expect(monthsReadSentence(run.across!.result!.monthsRead)).toBe(
+      "Months read from the column names: July 2026 to September 2026. Check these against the file.",
+    );
+  });
+
+  it("FreshBooks: taking only the report's own Total row gives the same three months, one row each", async () => {
+    const file = find("freshbooks-revenue-by-client");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
+      addUp: freshbooks.REVENUE_TOTAL_ROW,
+    });
+    const result = run.across!.result!;
+    expect(result.months.map((m) => [m.periodStart, m.amountCents, m.rows])).toEqual(
+      freshbooks.ISSUED_NOT_DRAFT.map((m) => [m.periodStart, m.amountCents, 1]),
+    );
+    // Taken on purpose, the Total row is not left out as "the file's own sum".
+    expect(result.skippedRows).toEqual([]);
+  });
+
+  it("FreshBooks: read as one row per sale instead, it still adds up nothing, as before", async () => {
+    const file = find("freshbooks-revenue-by-client");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
+      layout: "rows",
+      headerRow: 3,
+      dateColumn: 0,
+      amountColumn: 4,
+    });
+    expect(run.across).toBeNull();
+    expect(run.state).toBe("ready");
+    expect(run.result!.months).toEqual([]);
+  });
+
+  it("Wave: Income by Customer, which has no dates, is met with the report to export instead", async () => {
+    const file = find("wave-income-by-customer");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    // Positive first: no row of column names, no months, and the sentence names Wave's report.
+    expect(run.guess).toBeNull();
+    expect(run.layout).toBe("rows");
+    expect(run.exportInstead).toBe(WAVE_INCOME_BY_CUSTOMER_SENTENCE);
+    expect(run.exportInstead).toContain("Account Transactions");
+  });
+
+  it("no other practice file is told to export a different report", async () => {
+    const others = ALL_FILES.filter((f) => f.id !== "wave-income-by-customer");
+    expect(others.length).toBeGreaterThan(10);
+    for (const file of others) {
+      const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+      expect(run.exportInstead, file.id).toBeNull();
+    }
+  });
+});
+
+/*
  * Gaps the Wave, FreshBooks, Sage and Xero Receivable Invoice Detail files found (2026-10-08). Each
  * is written as an `it.fails` test: it passes only while the gap is there, so the day a fix lands it
  * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
@@ -431,12 +531,6 @@ describe("gaps the newer practice files found, fails today", () => {
     expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS);
   });
 
-  // Wave's Income by Customer has no dates at all, and the screen should name the report that
-  // does (Account Transactions). That gap is pinned in the browser, in e2e/app.spec.ts ("fails
-  // today: Wave's Income by Customer..."), not here: the "no column names" sentence is written by
-  // components/ventures/file-drop.tsx, and previewFile's `message` is null for every file with no
-  // columns picked, so a check on it here would stay red whichever way the fix is built.
-
   // The summary's "Total Invoiced, Total Paid" titles are taken for the column names, and "Total
   // Paid" is pre-filled as the amount over the invoice numbers.
   it.fails("FreshBooks: finds the real column names under the summary block", async () => {
@@ -447,12 +541,6 @@ describe("gaps the newer practice files found, fails today", () => {
 
   it.fails("FreshBooks: a Draft invoice is left out", async () => {
     const file = find("freshbooks-invoices-iso");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
-  });
-
-  it.fails("FreshBooks: Revenue by Client, months across the top, gives one total per month", async () => {
-    const file = find("freshbooks-revenue-by-client");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
     expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
   });
@@ -539,7 +627,14 @@ describe("the practice files stay private and in step with the screen", () => {
     );
     // If this fails, file-drop.tsx stopped using the shared steps and has its own again, which is
     // the copy that used to drift from what these tests check.
-    for (const piece of ["previewSheet(", "guessPicks(", "firstSheetWithRows("]) {
+    for (const piece of [
+      "previewSheet(",
+      "guessPicks(",
+      "firstSheetWithRows(",
+      "previewAcross(",
+      "guessLayout(",
+      "guessAcrossPicks(",
+    ]) {
       expect(screen, `file-drop.tsx no longer calls ${piece}`).toContain(piece);
     }
     // The steps themselves must not be repeated in the screen.
@@ -548,6 +643,9 @@ describe("the practice files stay private and in step with the screen", () => {
       "guessColumns(",
       "detectDateOrder(",
       "detectDecimalStyle(",
+      "acrossTotals(",
+      "readMonthsRow(",
+      "guessMonthsRow(",
     ]) {
       expect(screen, `file-drop.tsx calls ${piece} itself`).not.toContain(piece);
     }
