@@ -384,8 +384,13 @@ figures, links, map progress, settings and expense records survive it).
    and code only.
 
 **Order of writes.** The bytes go to `<name>.partial` (opened with "never overwrite"), then the
-`Receipt` row is written, then the file is renamed to its final name. A crash at any point leaves
-either nothing that looks finished, or a row whose file is in place.
+`Receipt` row is written, then the file is renamed to its final name. If the app stops before the
+row, the `.partial` file has no row and the sweep removes it once it is ten minutes old. If it stops
+after the row and before the rename, the `.partial` file is the only copy of a receipt the record
+says it has: the sweep does not remove it, it finishes the rename once the file is ten minutes old,
+after checking its size and SHA-256 against the row. If those don't match (the write itself was cut
+short), the sweep removes the row and the file, so the record shows no receipt rather than one
+DotAmi can't show.
 
 **Removing.** *Remove receipt* on a record (agreed or taken back) asks once, then deletes the row,
 then the file; the record stays. The Delete menu gets a box, *Your receipts*: every receipt row and
@@ -396,7 +401,8 @@ until overwritten.
 
 **The sweep.** `sweepOrphanReceipts` removes every file in the folder that DotAmi named and no
 row describes: a deleted record's file, a file that couldn't be removed at once (another program had
-it open), a write abandoned for more than ten minutes. A file not named the way DotAmi names files is
+it open), a write abandoned for more than ten minutes that no row describes (one a row describes is
+finished instead, as above). A file not named the way DotAmi names files is
 never touched, so something the person put in the folder stays. It runs before every receipt is added
 and after every delete that removed receipts; the Delete menu says how many files went, and how many
 couldn't go yet.

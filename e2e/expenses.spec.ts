@@ -11,6 +11,7 @@ import path from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { RECEIPT_REFUSALS } from "../lib/expenses/receipts/refusals";
+import { MAX_RECEIPT_BYTES } from "../lib/expenses/receipts/types";
 import { png } from "../tests/helpers/receipt-files";
 
 const CHINOOK = "Demo — Chinook Sign Painting";
@@ -289,4 +290,52 @@ test("a receipt: the bytes decide what is kept, under a name DotAmi makes up, an
   await expect(row).toContainText("$64.00");
   await expect(row).not.toContainText("Receipt: PNG picture");
   expect(ourFiles()).not.toContain(added[0]);
+});
+
+// The cap is the maintainer's 10 MB, through the real server: the unit tests call the route
+// directly, but here the request passes Next's middleware, which copies the body and cuts it at
+// its own limit (10 MiB by default, less than a 10 MB file sent as base64).
+test("a receipt of exactly 10 MB is kept through the real server, and one byte more is refused in plain words", async ({ page }) => {
+  // Two 10 MB files go through the window and the server: more than the default 30 s on a slow machine.
+  test.setTimeout(120_000);
+  const SHOP = `Example Big Scan Shop ${Date.now()}`;
+  const receipts = path.join(process.cwd(), "prisma", "e2e", "receipts");
+  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(n)) : []);
+
+  await page.goto("/expenses");
+  await typePurchase(page, { amount: "12.00", paidTo: SHOP, whatFor: "a scanned receipt" });
+  await reviewAndAgree(page, 1);
+  const row = agreedRow(page, SHOP);
+  await expect(row).toBeVisible();
+  const before = ourFiles();
+
+  // A whole PNG followed by padding up to exactly 10 MB (a picture with data after its end, as
+  // some phones and scanners write).
+  const head = png(6, 4);
+  const exactly = Buffer.concat([head, Buffer.alloc(MAX_RECEIPT_BYTES - head.length, 0x20)]);
+  expect(exactly.length).toBe(MAX_RECEIPT_BYTES);
+  await row.getByRole("button", { name: "Add a receipt" }).click();
+  await row.getByLabel("Choose the receipt file").setInputFiles({ name: "scan.png", mimeType: "image/png", buffer: exactly });
+  await expect(row).toContainText("Receipt: PNG picture", { timeout: 30_000 });
+  const added = ourFiles().filter((n) => !before.includes(n));
+  expect(added).toHaveLength(1);
+  expect(readFileSync(path.join(receipts, added[0])).equals(exactly)).toBe(true);
+
+  // One byte more never leaves the window; sent anyway from the page, the server answers with the
+  // same plain sentence, not a parser's words.
+  const expenseId = await page.evaluate(async (shop) => {
+    const listed = (await (await fetch("/api/expenses")).json()) as { expenses: { id: string; paidTo: string }[] };
+    return listed.expenses.find((e) => e.paidTo === shop)!.id;
+  }, SHOP);
+  const over = Buffer.concat([exactly, Buffer.from(" ")]).toString("base64");
+  const answer = await page.evaluate(
+    async ({ id, file }) => {
+      const r = await fetch("/api/expenses/receipt", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ expenseId: id, file }) });
+      return { status: r.status, body: await r.text() };
+    },
+    { id: expenseId, file: over },
+  );
+  expect(answer.body).toContain("over 10 MB");
+  expect(answer.status).toBe(413);
+  expect(answer.body).not.toContain("Invalid JSON");
 });
