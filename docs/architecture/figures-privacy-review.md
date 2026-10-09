@@ -41,6 +41,15 @@ details for anything. All of it in the one database file on the person's compute
    free (`tests/privacy-delete.spec.ts` scans the file for a marker string; a plain delete leaves it
    there). Only DotAmi's own page can call it (`refuseUnlessFromAppPage`), and its body goes through
    `readJsonWithLimit`. *Forget this source* isn't built.
+   *Added 2026-10-08:* a box for the safety copies in the backups folder (whole copies of the file,
+   so they still hold what was deleted), warning that afterwards only a backup saved elsewhere could
+   bring anything back. It deletes only DotAmi's own `dotami-before-….db` files directly in
+   `backups/`, never through a link (`desktop/wipe-pending.mjs`). A wipe that can't finish leaves a
+   "wipe pending" note (written before the delete, removed once the wipe and the copies are done),
+   and the desktop app finishes it at its next start, only when the note is there
+   (`tests/desktop-wipe-pending.spec.ts`, `e2e-desktop/desktop.spec.ts`: the marker string is gone
+   from `dotami.db` and `backups/` after the restart, and an ordinary start without the note leaves
+   it).
 5. **Every write route** goes through `readJsonWithLimit` (cross-site, JSON-only and size checks).
 
 ## Bank and card accounts ([8g], built 2026-10-08, no screen adds one yet)
@@ -65,14 +74,15 @@ with a test that seeded data survives.
 ## Open
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the
-  backups folder (whole copies of the file; clearing them from the menu is the next step), what the
-  desktop window stored in earlier launches (a later decision), and the drive under the data file
-  (SQLite's journal is deleted, not overwritten, and a drive keeps its own spare copies; disk
-  encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
+  backups folder unless that box is ticked, what the desktop window stored in earlier launches (a
+  later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
+  removed, not overwritten, and a drive keeps its own spare copies; disk encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
   its amount in the file, and the page lists it.
 - The wipe needs free disk space about the size of the file and no other connection mid-change. When
   it can't run, the rows are still deleted and the page says their space isn't wiped yet, with a
-  button to try again.
+  button to try again; the desktop app also finishes it at its next start. If even the small "wipe
+  pending" note can't be written (a completely full disk), the next start can't know: the page's
+  retry is then the only way.
 - Other programs on the computer can read everything — a per-launch secret for the local server
   wouldn't change that (they can read the file directly), so it isn't proposed.
 - An unlocked backup is readable by whoever holds it; the default stays "no passphrase" because a

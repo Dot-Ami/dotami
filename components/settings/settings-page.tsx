@@ -312,17 +312,30 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
       );
     }
     case "updates":
-      return today.updates === "github" ? (
-        <p>
-          This is version <Code>{today.version}</Code>. Each time it starts, the app checks GitHub
-          for a newer version and downloads it, then asks before installing it — nothing installs
-          without your click. Help → Check for updates does it now.
-        </p>
-      ) : (
-        <p>
-          This is version <Code>{today.version}</Code>, run from DotAmi&apos;s source code: it updates
-          with git, not by itself. The installed app checks GitHub for new versions.
-        </p>
+      return (
+        <>
+          {today.updates === "github" ? (
+            <p>
+              This is version <Code>{today.version}</Code>. Each time it starts, the app checks GitHub
+              for a newer version and downloads it, then asks before installing it — nothing installs
+              without your click. Help → Check for updates does it now.
+            </p>
+          ) : (
+            <p>
+              This is version <Code>{today.version}</Code>, run from DotAmi&apos;s source code: it updates
+              with git, not by itself. The installed app checks GitHub for new versions.
+            </p>
+          )}
+          {/* The third-party notices (/licences): the licences of everything DotAmi ships with. */}
+          <p>
+            DotAmi is open source under the Apache License 2.0, and ships with work by many other people.
+            Each piece, its version and its licence, word for word:{" "}
+            <Link href="/licences" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
+              Licences
+            </Link>
+            {today.desktop ? " (also under Help → Licences)" : ""}.
+          </p>
+        </>
       );
   }
 }

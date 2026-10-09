@@ -298,14 +298,39 @@ describe("the folders beside the data file", () => {
     const log = h.folders.find((f) => f.entry.id === "log")!;
     expect(log).toMatchObject({ exists: true, files: null });
 
+    // Both are DotAmi's own safety copies, so the Delete menu's box would delete both.
+    expect(h.safetyCopies).toBe(2);
+    expect(h.wipePending).toBe(false);
+
     // What came back is names, counts, sizes and dates: none of what was inside.
     expect(JSON.stringify(h)).not.toContain(secret);
+  });
+
+  it("counts only DotAmi's own safety copies for Delete, and sees the note an unfinished wipe leaves", async () => {
+    const folder = path.join(root, "with-a-note");
+    mkdirSync(path.join(folder, "backups"), { recursive: true });
+    writeFileSync(path.join(folder, "backups", "dotami-before-restore-1760000000000.db"), "a copy");
+    writeFileSync(path.join(folder, "backups", "my own notes.txt"), "the person's own file");
+    // Named after whatever the data file is called, beside it.
+    writeFileSync(path.join(folder, "mine.db.wipe-pending"), JSON.stringify({ format: 1, backups: [] }));
+    const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "mine.db"), exists: true }, desktop: true };
+    const h = await readHoldings(seeded.prisma, today);
+
+    expect(h.safetyCopies).toBe(1);
+    expect(h.folders.find((f) => f.entry.id === "backups")).toMatchObject({ files: 2 });
+    expect(h.wipePending).toBe(true);
+    expect(h.folders.find((f) => f.entry.id === "wipe-pending")).toMatchObject({
+      exists: true,
+      path: path.join(folder, "mine.db.wipe-pending"),
+    });
   });
 
   it("has no folders to describe when the database setting isn't a file", async () => {
     const today: SettingsToday = { ...seededToday, dataFile: { path: null, exists: false } };
     const h = await readHoldings(seeded.prisma, today);
     expect(h.folders.every((f) => f.path === null && !f.exists)).toBe(true);
+    expect(h.safetyCopies).toBe(0);
+    expect(h.wipePending).toBe(false);
     expect(h.dataFile.path).toBeNull();
   });
 });

@@ -67,7 +67,17 @@ person is asked).
   key. In the desktop app, a download refused because it didn't come from DotAmi's own page adds
   one line to `logs/server.log` naming nothing but the refusal
   ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
-- **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
+- **A "wipe pending" note beside the data file, only while a Delete's wipe is unfinished ([8d]).**
+  Delete writes `dotami.db.wipe-pending` (named after the data file) just before it deletes and
+  wipes, and removes it once the wipe and any safety copies it was deleting are done. It holds the
+  time the Delete started and the file names of safety copies still to delete, nothing the person
+  typed and no amount ([`desktop/wipe-pending.mjs`](../desktop/wipe-pending.mjs)). While it is
+  there, the desktop app finishes the wipe at its next start and writes one or two lines to
+  `logs/server.log` saying how many safety copies it deleted, or that the wipe is still owed with
+  the error's code only. Listed on *What DotAmi knows about you*
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)).
+- **Delete ([8d]) keeps nothing else new.** No new table, column or browser-storage key; its one
+  new file is the "wipe pending" note above, and only while a wipe is unfinished. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
   adds one line to the log with only the error's name and code, never what was deleted.
@@ -141,6 +151,29 @@ person is asked).
   desktop app's server. Reviewed 2026-10-08
   ([`docs/connectors/pdf-reader-review.md`](connectors/pdf-reader-review.md)); listed in
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`, `LIBRARY_IMPORTS`).
+- **No package added or removed; the installer now carries a list of them.** `THIRD-PARTY-NOTICES.txt`
+  (beside `DotAmi.exe`, and in the server's folder) names every package, font and piece of bundled
+  code by others that ships, with its version, licence and licence text, written from the packages
+  at build time ([`desktop/notices.mjs`](../desktop/notices.mjs)); the new `/licences` page and
+  Help → Licences show it. It is a text file the app reads from its own folder: nothing is kept
+  about the person, nothing is sent, and the page asks nothing. The list also shows what the
+  installer already carried without being named before, among them TypeScript and the image
+  library sharp (with libvips, LGPL-3.0-or-later) that Next's file tracer copies into the server.
+- **Ten packages removed from the desktop app's server; nothing added.** The build now deletes
+  sharp, its prebuilt builds with libvips (`@img/sharp-win32-x64`, `@img/sharp-wasm32` and, on other
+  systems, `@img/sharp-libvips-*`), `@img/colour`, `detect-libc`, `@emnapi/runtime`, `typescript`,
+  `source-map-support`, `buffer-from` and `source-map` from the server it ships
+  ([`desktop/left-out.mjs`](../desktop/left-out.mjs), [`desktop/build.mjs`](../desktop/build.mjs)):
+  Next's file tracer copied them in, but only Next's image optimiser loads sharp and only Next's
+  build loads TypeScript, and the rest are what those two pull in. The desktop build switches the
+  image optimiser off ([`next.config.mjs`](../next.config.mjs)), so `/_next/image` answers 404. The
+  server is 89.1 MB → 59.4 MB, the installed app 476.7 MB → 446.8 MB and the installer
+  133.8 MB → 126.1 MB (0.2.1 built on Windows, 2026-10-08). The notices file drops their entries
+  (183 → 172, semver with them: only sharp named it), and with them the only LGPL-licensed code it
+  listed. The build stops if the app's own server code or a
+  package that stays needs one of them; `e2e-desktop/desktop.spec.ts` fails if one comes back into
+  the built or packaged server, and drives the app without them. A copy run from the source code
+  still installs sharp with Next, as before.
 
 ### New powers or permissions
 
@@ -174,6 +207,10 @@ person is asked).
   file is written without the person choosing where. In a browser it is an ordinary download,
   following the browser's own setting.
 
+- **Deleting the safety copies is its own tick-box, with a warning.** It is never ticked for the
+  person; the box, the first ask and the second ask each say that afterwards only a backup saved
+  somewhere else could bring anything back
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx)).
 - **Deleting needs two answers.** The person ticks what to delete, then *Delete these?* lists
   every count and *Delete them now?* says it can't be undone, with focus on Cancel. If anything
   changed in the file since the person looked, nothing is deleted
@@ -206,6 +243,16 @@ person is asked).
   safety copies in `backups/`, what the desktop window stored in earlier launches, the log,
   anything that already left the computer, and the disk under the data file. The placeholder
   account (`User`) stays (`KEPT_BY_DELETE`).
+- **Delete can now remove the safety copies in `backups/`** (the tick-box *Safety copies in the
+  backups folder*). It removes only the files DotAmi names its own copies (`dotami-before-….db`)
+  directly in that folder, never a file through a link, and leaves anything else the person put
+  there. A deleted copy's file is removed, not overwritten, so the disk can still hold its pieces
+  (the menu says so). A wipe or a copy that couldn't be finished is finished at the desktop app's
+  next start, and only then: an ordinary start does nothing here
+  ([`desktop/main.mjs`](../desktop/main.mjs), tested by
+  [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Still not reached: what the
+  desktop window stored in earlier launches, the log, anything that already left the computer, and
+  the disk under the data file.
 - **Bank and card accounts:** *Take back* beside an account in Settings stops it being used, but
   its row (the name and days) stays in the data file. Delete, with *Your bank and card accounts*
   ticked, erases every account, taken back or not. Figures read from an account's statements are
@@ -225,8 +272,9 @@ person is asked).
 - A tax return the person drops is read on their computer, in memory, and not kept or sent; only
   four T2125 lines and their pages are shown. The PDF reader is Mozilla's pdf.js, run so it
   can't connect anywhere.
-- Delete removes DotAmi's own copy only: backups the person made, the safety copies in the
-  backups folder and anything already shared still hold what was deleted, and the CRA generally
+- Delete removes DotAmi's own copy only: backups the person made and anything already shared
+  still hold what was deleted, and so do the safety copies in the backups folder unless the person
+  ticks them, and the CRA generally
   expects business records to be kept six years, which Delete doesn't change.
 - The names people give their bank and card accounts are kept in the data file, with the day
   they agreed to the warning and the day they took the account back; "ending" and four digits is
@@ -251,12 +299,13 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
-- **Deleting things.** The Delete menu is built ([8d], above). Still open: clearing the backups
-  folder from it, clearing what the desktop window stored in earlier launches, and whether an
-  agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
+- **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
+  the backups folder. Still open: clearing what the desktop window stored in earlier launches, and
+  whether an agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
 - Found while writing this log, not yet raised as decisions: the desktop app's log
   (`logs/server.log`) is appended to and never trimmed, and nothing removes old safety copies in
-  `backups/` ([`desktop/main.mjs`](../desktop/main.mjs), [`desktop/migrate.mjs`](../desktop/migrate.mjs));
+  `backups/` by itself, only the person through Delete ([`desktop/main.mjs`](../desktop/main.mjs),
+  [`desktop/migrate.mjs`](../desktop/migrate.mjs));
   and nobody has yet checked what the browser engine inside the desktop app (Electron's Chromium)
   writes to the data folder or requests on its own.
 

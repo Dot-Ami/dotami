@@ -190,13 +190,21 @@ and can't be undone (but a backup can restore it).
 - Deleted rows left readable in the file → *VACUUM after the delete; a byte scan finds the deleted
   words before and not after (tested). The wipe can't run (another connection busy, not enough
   disk): the rows are deleted and the page says their space isn't wiped yet, with "Try the wipe
-  again". Finishing it at the next start of the desktop app is the next step.*
+  again". A "wipe pending" note goes beside the data file before the delete, and the desktop app
+  finishes the wipe at its next start, only when that note is there (desktop-tested; an ordinary
+  start without it leaves the file alone, tested too).*
+- The safety copies in the backups folder still hold what was deleted → *their own box, warning that
+  afterwards only a backup saved elsewhere could bring anything back. Only DotAmi's own copies go;
+  anything else in the folder stays, and a folder or file that is a link is never followed (tested).
+  A copy another program holds open is left, said on the page, and finished later like the wipe
+  (tested).*
+- The number of safety copies changed between the asks → *refused, nothing deleted (tested).*
 - An agent, a script or another site calls Delete → *403 (tested).*
 - After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
   on the map can't bring the idea back.*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: the backups folder, what the desktop window stored in
-  earlier launches, the log, anything already sent elsewhere.
+- Not reached yet, and the menu says so: what the desktop window stored in earlier launches, the
+  log, anything already sent elsewhere, the disk under the data file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.

@@ -155,6 +155,35 @@ test("the settings page: every group, what's true today, every setting and its w
   await expect(page).toHaveURL(/\/settings$/);
 });
 
+test("Licences: reached from the settings page, every package with its licence word for word", async ({ page }) => {
+  await page.goto("/settings");
+  await page.getByRole("region", { name: "Updates" }).getByRole("link", { name: "Licences", exact: true }).click();
+  await expect(page).toHaveURL(/\/licences$/);
+  await expect(page.getByRole("heading", { name: /^Licences/, level: 1 })).toBeVisible();
+
+  // The list `npm run build` wrote (desktop/notices.mjs) for this copy: DotAmi's dependencies with
+  // their licences, the fonts, and the code bundled inside Next.js.
+  const packages = page.getByRole("region", { name: "Packages" });
+  const react = packages.getByRole("listitem").filter({ has: page.getByText("react", { exact: true }) });
+  await expect(react).toContainText("MIT");
+  // Closed until opened; opened, it shows where it ships and the licence's own words.
+  await expect(react.getByText(/Permission is hereby granted/)).toBeHidden();
+  await react.getByText("react", { exact: true }).click();
+  await expect(react.getByText(/Permission is hereby granted/)).toBeVisible();
+  await expect(react).toContainText("Ships in DotAmi's dependencies");
+  for (const name of ["next", "pdfjs-dist", "ofx-js", "@prisma/client", "tailwindcss"]) {
+    await expect(packages.getByText(name, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole("region", { name: "Fonts" })).toContainText("Inter (font)");
+  await expect(page.getByRole("region", { name: "Copied inside other packages" })).toBeVisible();
+  // A copy run from source doesn't carry Electron, so there is no runtime section.
+  await expect(page.getByRole("region", { name: "The desktop app's runtime" })).toHaveCount(0);
+
+  // Phone width: a long licence line wraps instead of pushing the page sideways.
+  await page.setViewportSize({ width: 390, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 /** The "Figure reminders" row on /settings, and its three tick-boxes. */
 function reminderBoxes(page: Page) {
   const row = page

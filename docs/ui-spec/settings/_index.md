@@ -1,6 +1,6 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-08 ([8g] — the bank and card accounts list; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-08 ([8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
 the interactive controls are `copy-path-button.tsx`, `figure-reminders-control.tsx` and
@@ -49,7 +49,9 @@ Each group:
      computer's internet address and nothing else). Includes a link, "What DotAmi
      knows about you", to `/your-data` ([8d], docs/ui-spec/your-data/_index.md).
    - Updates: the version; the installed app checks GitHub at start and asks before installing;
-     a copy run from source updates with git.
+     a copy run from source updates with git. Then: DotAmi is open source under the Apache License
+     2.0 and ships with others' work, with a link, "Licences", to `/licences` (and, in the desktop
+     app, "also under Help → Licences"; added 2026-10-08, docs/ui-spec/licences/_index.md).
 2. **One card per setting** — label · what it controls · Default · Choices · the warning shown
    before switching on the risky option (amber) · a status chip: `Not built yet · [code]`,
    `Asked each time · <where>` (the backup passphrase — asked in the passphrase window, which
@@ -66,6 +68,7 @@ Each group:
 | **Your bank and card accounts** list, with **Take back** per account (Bank and card records card, Your figures group; added 2026-10-08, [8g]) | Shown only when the data file holds an account in use or "Always allow every account" (read on the server, then read again by the control when it appears, since Back can show the page from memory). Each account: the person's own name for it, then which warning button was pressed and the day (`describeAllowance` in `lib/figures/source-account-name.ts`: "Always allowed since 2026-10-08", "Allowed once, on 2026-10-08; the warning shows again next time", "Allowed on 2026-10-08 with “Always allow every account”"); "Every account: always allowed since …" sits first when it applies. **Take back** opens an inline ask under the item ("Take back “name”? It leaves this list, and its next statement shows the warning again as a new account. Figures already read from it stay.") with **Keep it** and **Yes, take it back**; yes sends `POST /api/figures/bank-sources/retire { id }` (or `{ every: true }`), then the list shows what the app answered, a status line "Taken back: name.", and "No accounts in your list." once empty. Works with the switch off. A refusal (the account was already taken back elsewhere) shows the app's sentence and reads the list again. Today nothing can add an account (the statement screen is the next step), so the list shows only on a file that already holds one | `SourceAccount.retiredAt`; `Setting` row `bank-records` → `everyAccountSince` |
 | Public task list / Part 4 / nextjs.org links | open in a new tab | — |
 | **What DotAmi knows about you** (Privacy group, and again in Your figures) | opens `/your-data` in the same tab | — |
+| **Licences** (Updates group; added 2026-10-08) | opens `/licences`, the third-party notices, in the same tab | — |
 
 ## What it deliberately does not do
 

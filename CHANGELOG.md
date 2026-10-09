@@ -22,6 +22,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   until then nothing can add an account. The words of both warnings are written and reviewed now,
   in the settings list. Only DotAmi's own window can list, allow or take back an account, never an
   agent.
+- **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
+  package, its version, its licence, where it ships, and the licence's own words (open an entry to
+  read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The
+  installer now carries the same list as `THIRD-PARTY-NOTICES.txt` beside DotAmi.exe, next to
+  Electron's licence and Chromium's notices. The list is written from the packages themselves each
+  time the app is built, and building the installer stops if a package that ships has no entry, so
+  the minified app no longer drops the notices its packages' licences ask to be kept.
+- **Delete can clear the safety copies, and finishes a wipe that was cut short** ([8d]) — the Delete
+  list gets one more tick-box, "Safety copies in the backups folder", warning that afterwards only a
+  backup you saved somewhere else could bring anything back. Only the copies DotAmi made itself are
+  deleted; anything else in that folder stays, and a link out of the folder is never followed. If a
+  wipe can't finish (the computer is busy, the disk is full), DotAmi leaves a small note beside the
+  data file and the desktop app finishes the wipe the next time it starts. It does this only when
+  that note is there, never on an ordinary start. The page also says when an earlier Delete hasn't
+  finished, with "Finish it now".
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
@@ -72,6 +87,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   own pages can start a save.
 
 ### Changed
+- **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
+  server no longer carries the image library sharp (with libvips, LGPL-3.0-or-later) or the
+  TypeScript compiler, which Next.js's build copied in although DotAmi never resizes an image and
+  never compiles code while it runs, nor the small packages only those two needed. Next's image
+  optimiser is switched off in the desktop app, so its address answers "not found" instead of
+  reaching for the missing library. Their entries leave the app's licence list; nothing changes on
+  screen otherwise. A copy run from the source code is unchanged.
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
   return*, instead of "That isn't a spreadsheet".
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,

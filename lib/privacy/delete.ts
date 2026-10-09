@@ -1,5 +1,12 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
+import {
+  clearWipePending,
+  deleteSafetyCopies,
+  listSafetyCopies,
+  readWipePending,
+  writeWipePending,
+} from "@/desktop/wipe-pending.mjs";
 import { logRouteError } from "@/lib/api/log-error";
 
 import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry } from "./inventory";
@@ -17,9 +24,18 @@ import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry } from "./inventor
  * can't run while another connection is in the middle of a transaction; when it fails, the rows
  * are still deleted and the page says their space isn't wiped yet, with a way to try again.
  *
+ * The safety copies in the backups folder are whole copies of the file, so they still hold what
+ * was deleted. They have their own box: ticked, DotAmi's own copies there are deleted too
+ * (desktop/wipe-pending.mjs says which files those are, and never follows a link out of the folder).
+ *
+ * A wipe that can't finish now is finished later. Before anything is deleted, a "wipe pending" note
+ * goes beside the data file, naming the safety copies still to delete; it is removed once the wipe
+ * and those deletions have worked. The desktop app finishes what the note owes the next time it
+ * starts (desktop/main.mjs), and "Try the wipe again" finishes it now (finishWipe).
+ *
  * What this can't reach: the disk under the file (the journal SQLite writes during a change is
- * deleted afterwards, not overwritten, and a drive keeps its own spare copies), the safety copies
- * in the backups folder, and what the window stored in earlier launches. The page says each.
+ * deleted afterwards, not overwritten; a deleted safety copy isn't overwritten either; and a drive
+ * keeps its own spare copies) and what the window stored in earlier launches. The page says each.
  */
 
 /** A request this can't carry out as asked; the message is said to the person as is. */
@@ -30,8 +46,22 @@ export class DeleteInputError extends Error {
   }
 }
 
-/** How many rows each table holds, keyed by the model's name in prisma/schema.prisma. */
+/**
+ * How many rows each table holds, keyed by the model's name in prisma/schema.prisma — and, when the
+ * safety-copies box is ticked, how many safety copies, under SAFETY_COPIES_KEY.
+ */
 export type TableCounts = Record<string, number>;
+
+/** The key the safety copies' count goes under, beside the tables' names (which all start with a capital). */
+export const SAFETY_COPIES_KEY = "backups";
+
+/** Where the data file is, for the safety copies and the wipe-pending note. */
+export interface DeleteFiles {
+  /** The data file's path; null or missing when the database setting isn't a file. */
+  dataFile?: string | null;
+  /** Deletes one file: unlinkSync, unless a test needs one that fails. */
+  remove?: (file: string) => void;
+}
 
 export type DeleteResult =
   | {
@@ -41,9 +71,13 @@ export type DeleteResult =
     }
   | {
       status: "deleted";
-      /** Rows removed from each affected table. */
+      /** Rows removed from each affected table (and safety copies, under SAFETY_COPIES_KEY, when ticked). */
       deleted: TableCounts;
-      /** Rows left in each affected table, read back after the delete: all zero. Null when the read-back failed. */
+      /**
+       * Rows left in each affected table, read back after the delete: all zero. Safety copies left
+       * are ones another program held open; the wipe-pending note keeps them owed. Null when the
+       * read-back failed.
+       */
       left: TableCounts | null;
       /** True once the file's free space is wiped; false means the rows are gone but their space isn't wiped yet. */
       wiped: boolean;
@@ -95,6 +129,13 @@ export function affectedTables(entries: readonly DeleteMenuEntry[]): string[] {
   return out;
 }
 
+/** The counts a set of menu entries needs from the page: every table it touches, then the safety copies if ticked. */
+export function affectedKeys(entries: readonly DeleteMenuEntry[]): string[] {
+  const keys = affectedTables(entries);
+  if (entries.some((e) => e.folder === "backups")) keys.push(SAFETY_COPIES_KEY);
+  return keys;
+}
+
 async function countTables(client: PrismaClient | Prisma.TransactionClient, models: readonly string[]): Promise<TableCounts> {
   const counts: TableCounts = {};
   for (const m of models) counts[m] = await table(client, m).count();
@@ -102,12 +143,12 @@ async function countTables(client: PrismaClient | Prisma.TransactionClient, mode
 }
 
 /** Reads `seen` from a request: a count per table, as the page showed them. Anything else is refused. */
-function readSeen(seen: unknown, models: readonly string[]): TableCounts {
+function readSeen(seen: unknown, keys: readonly string[]): TableCounts {
   if (typeof seen !== "object" || seen === null || Array.isArray(seen)) {
     throw new DeleteInputError("Say how many records you saw, so DotAmi can check nothing changed since.");
   }
   const out: TableCounts = {};
-  for (const m of models) {
+  for (const m of keys) {
     const n = (seen as Record<string, unknown>)[m];
     if (typeof n !== "number" || !Number.isInteger(n) || n < 0) {
       throw new DeleteInputError("Say how many records you saw, so DotAmi can check nothing changed since.");
@@ -141,8 +182,38 @@ export async function wipeFreeSpace(prisma: PrismaClient): Promise<boolean> {
   }
 }
 
+/** `a`, then whatever of `b` isn't in it already. */
+const union = (a: readonly string[], b: readonly string[]) => [...a, ...b.filter((x) => !a.includes(x))];
+
+type Note = ReturnType<typeof readWipePending>;
+
 /**
- * Deletes every row of the tables the ticked kinds name, then wipes the file.
+ * Puts the wipe-pending note back the way it was before this Delete, because nothing was deleted
+ * after all: the earlier note if there was one, none if not. A note owing safety copies the person
+ * didn't end up deleting would delete them at the next start, so this matters.
+ */
+function restoreNote(dataFile: string, previous: Note) {
+  try {
+    if (previous) writeWipePending(dataFile, { backups: previous.backups, since: previous.since ?? undefined });
+    else clearWipePending(dataFile);
+  } catch (error) {
+    logRouteError("your-data/delete wipe note", error);
+  }
+}
+
+/** After the wipe: no note when everything is done, otherwise a note owing what is left. */
+function settleNote(dataFile: string, since: string | undefined, wiped: boolean, copiesLeft: readonly string[]) {
+  try {
+    if (wiped && copiesLeft.length === 0) clearWipePending(dataFile);
+    else writeWipePending(dataFile, { backups: copiesLeft, since });
+  } catch (error) {
+    logRouteError("your-data/delete wipe note", error);
+  }
+}
+
+/**
+ * Deletes every row of the tables the ticked kinds name (and, when that box is ticked, DotAmi's
+ * safety copies in the backups folder), then wipes the file.
  *
  * `seen` is the count of each affected table as the person saw it when they confirmed. If any
  * differs from the file now, nothing is deleted and the fresh counts come back, so the person
@@ -152,14 +223,46 @@ export async function wipeFreeSpace(prisma: PrismaClient): Promise<boolean> {
  * Ideas are deleted by deleting their rows: the schema's onDelete: Cascade takes their links, map
  * progress, figures and expense records with them (DELETE_MENU's `alsoDeletes`, which a test
  * keeps equal to the schema), so this needs no list of an idea's children of its own.
+ *
+ * The safety copies are files, so they can't be in the transaction: their count is checked first,
+ * and they are deleted only once the rows are. Without `files.dataFile` there is no folder to look
+ * in and no note to leave: the safety-copies box is refused, and the rest works as before.
  */
 export async function deleteData(
   prisma: PrismaClient,
   request: { kinds: unknown; seen: unknown },
+  files: DeleteFiles = {},
 ): Promise<DeleteResult> {
   const entries = pickKinds(request.kinds);
   const models = affectedTables(entries);
-  const seen = readSeen(request.seen, models);
+  const withCopies = entries.some((e) => e.folder === "backups");
+  const dataFile = files.dataFile ?? null;
+  if (withCopies && !dataFile) {
+    throw new DeleteInputError("This copy of DotAmi has no data folder, so it has no safety copies to delete.");
+  }
+  const seen = readSeen(request.seen, affectedKeys(entries));
+
+  // The safety copies being deleted: listed once, and checked against what the person saw.
+  const copies = withCopies && dataFile ? listSafetyCopies(dataFile).names : [];
+  if (withCopies && copies.length !== seen[SAFETY_COPIES_KEY]) {
+    return { status: "changed", counts: { ...(await countTables(prisma, models)), [SAFETY_COPIES_KEY]: copies.length } };
+  }
+
+  // The note goes down before anything is deleted, so a wipe the computer cuts short from here on
+  // is finished later. It owes what an earlier Delete still owed plus the copies ticked now. If it
+  // can't be written (a full disk), the delete goes ahead and the page offers the retry instead.
+  const previous = dataFile ? readWipePending(dataFile) : null;
+  const owedCopies = union(previous?.backups ?? [], copies);
+  const since = previous?.since ?? new Date().toISOString();
+  let noted = false;
+  if (dataFile) {
+    try {
+      writeWipePending(dataFile, { backups: owedCopies, since });
+      noted = true;
+    } catch (error) {
+      logRouteError("your-data/delete wipe note", error);
+    }
+  }
 
   let deleted: TableCounts;
   try {
@@ -176,21 +279,49 @@ export async function deleteData(
       { timeout: 60_000, maxWait: 10_000 },
     );
   } catch (error) {
-    if (error instanceof CountsChanged) return { status: "changed", counts: error.counts };
+    // Nothing was deleted, so nothing new is owed.
+    if (noted && dataFile) restoreNote(dataFile, previous);
+    if (error instanceof CountsChanged) {
+      return {
+        status: "changed",
+        counts: withCopies ? { ...error.counts, [SAFETY_COPIES_KEY]: copies.length } : error.counts,
+      };
+    }
     throw error;
   }
 
-  const wiped = await wipeFreeSpace(prisma);
+  // The rows are gone. Now the copies (one another program holds open stays owed), then the wipe.
+  const copiesLeft = dataFile ? deleteSafetyCopies(dataFile, owedCopies, { remove: files.remove }).left : [];
+  if (withCopies) deleted = { ...deleted, [SAFETY_COPIES_KEY]: copies.filter((n) => !copiesLeft.includes(n)).length };
+  // Deleting only safety copies leaves nothing in the data file to wipe, unless an earlier wipe is owed.
+  const wiped = models.length > 0 || previous ? await wipeFreeSpace(prisma) : true;
+  if (noted && dataFile) settleNote(dataFile, since, wiped, copiesLeft);
+
   // The rows are gone by now. If reading the file back fails, say that, rather than throw into
   // the route's "nothing was deleted" answer, which would no longer be true.
   let left: TableCounts | null;
   try {
     left = await countTables(prisma, models);
+    if (withCopies) left[SAFETY_COPIES_KEY] = copies.filter((n) => copiesLeft.includes(n)).length;
   } catch (error) {
     logRouteError("your-data/delete read-back", error);
     left = null;
   }
   return { status: "deleted", deleted, left, wiped };
+}
+
+/**
+ * "Try the wipe again": finishes what an earlier Delete still owes — the safety copies its note
+ * names, then the wipe — and removes the note once both have worked. With no note it just wipes,
+ * as before. `backupsLeft` counts the copies still owed (another program holds them open).
+ */
+export async function finishWipe(prisma: PrismaClient, files: DeleteFiles = {}): Promise<{ wiped: boolean; backupsLeft: number }> {
+  const dataFile = files.dataFile ?? null;
+  const owed = dataFile ? readWipePending(dataFile) : null;
+  const left = dataFile && owed ? deleteSafetyCopies(dataFile, owed.backups, { remove: files.remove }).left : [];
+  const wiped = await wipeFreeSpace(prisma);
+  if (dataFile && owed) settleNote(dataFile, owed.since ?? undefined, wiped, left);
+  return { wiped, backupsLeft: left.length };
 }
 
 /** The ids on the menu, for the route's own checks and the tests. */
