@@ -48,17 +48,23 @@ says where it is going.
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
   everything else, what sits outside the database and what leaves the computer, read from the data
   file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
-  data from `lib/privacy/inventory.ts` `DELETE_MENU`, asked twice, then wiped from the file by
-  `lib/privacy/delete.ts`) · `/expenses[?idea=<id>]` ("Your expenses": typing business expense
-  records and agreeing to them all at once, records not attached to an idea yet, refunds kept
-  either way; [8i]).
+  data from `lib/privacy/inventory.ts` `DELETE_MENU` (the safety copies in `backups/` among them),
+  asked twice, then wiped from the file by `lib/privacy/delete.ts`; a wipe that couldn't finish is
+  finished at the desktop app's next start, only when Delete left its note: `desktop/wipe-pending.mjs`)
+  · `/expenses[?idea=<id>]` ("Your expenses": typing business expense records and agreeing to them
+  all at once, records not attached to an idea yet, refunds kept either way; [8i])
+  · `/licences` (the third-party notices: every package that ships, its version and licence text,
+  read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes at build time; packaging
+  the installer stops if a package that ships has no entry).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
   `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
   `receipt/remove` / `receipt/file`, the last returning a receipt's bytes only after its size and SHA-256 match) · `settings` (GET/PUT
   one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
-  (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window).
+  (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
+  `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
+  only DotAmi's own window; adding is refused until the bank-records setting is live).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
@@ -66,7 +72,8 @@ says where it is going.
   optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed
   record, described: its type read from the bytes, size and SHA-256; the file itself is a copy in `receipts/` beside the data file,
   named by DotAmi with a random id, never the person's file name; `lib/expenses/receipts/`; [8i]) · `Setting` (the person's saved choices, one row per setting: a
-  catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]). SQLite has no list columns: list fields are JSON arrays, read back
+  catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]) · `SourceAccount` (the bank and card
+  accounts the person allowed, under their own name for each, with the warning button and the days; never a number; nothing links to it yet; [8g]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`
   "dependencies", copied into the installer, or imported from `app/`, `components/` or `lib/`; with
@@ -133,6 +140,15 @@ its test first. Never claim green without the command and its output.
 Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path.
 Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
 weeks) — browser tests run the real build for that reason.
+Its server starts with `DOTAMI_E2E_RATE_LIMITS=opt-in`, set only in `playwright.config.ts`: every
+browser test reaches it as one client, so there a request counts toward a rate limit only when it
+names its own bucket in the `x-dotami-e2e-rate-limit` header (`lib/api/rate-limit.ts`), and the
+suite's size can't trip a limit. Don't raise a route's limit to make a test pass; a test about a
+limit names a bucket (`e2e/rate-limit.spec.ts`). Never set the switch anywhere else: the desktop app
+removes it from its server's environment (`desktop/main.mjs` `serverEnv`) and
+`e2e-desktop/desktop.spec.ts` checks. A run waits for its own server's "Ready", not just an answer
+on port 3123, and stops if the port is taken (`e2e/port-free.mjs`): one run's tests must never
+reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
