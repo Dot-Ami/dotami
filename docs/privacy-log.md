@@ -188,6 +188,12 @@ person is asked).
   whether a record has a receipt, and its kind, size and day added; never its bytes, its
   fingerprint, its id or where it is ([`lib/expenses/store.ts`](../lib/expenses/store.ts)
   `rowToExpense`).
+- **Showing a receipt sends nothing out.** *Show receipt* asks DotAmi's own server for the bytes
+  (`POST /api/expenses/receipt/file`, page-only), shows a picture from a `blob:` address of the page's
+  own, and draws a PDF in a worker whose policy refuses every connection; nothing a PDF asks for (a
+  link, a form submit, a font, a picture) is fetched, and its JavaScript never runs
+  ([`lib/expenses/receipts/viewer/`](../lib/expenses/receipts/viewer/), tested with hostile files by
+  [`e2e/receipt-viewer.spec.ts`](../e2e/receipt-viewer.spec.ts)).
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
@@ -281,6 +287,12 @@ person is asked).
   never touches a file it didn't name ([`lib/expenses/receipts/store.ts`](../lib/expenses/receipts/store.ts),
   tested by [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts)). The server stores
   a receipt's bytes and never decodes, parses or runs them.
+- **The page can start a second worker of DotAmi's own, the receipt viewer's**, which runs pdf.js
+  to draw a PDF receipt's pages, under the same no-connection policy as the return reader's
+  ([`lib/expenses/receipts/viewer/pdf-pages.worker.ts`](../lib/expenses/receipts/viewer/pdf-pages.worker.ts),
+  listed in `LIBRARY_IMPORTS`). Reading a receipt's bytes answers only DotAmi's own page, never an
+  agent, and the page's policy now refuses frames (`frame-src 'none'` in
+  [`middleware.ts`](../middleware.ts)), so no receipt can reach Chromium's built-in PDF viewer.
 - **DotAmi can now erase data from its own file.** The Delete button on *What DotAmi knows about
   you* empties the ticked kinds (ideas with their links, map progress and figures, keeping their
   expense records as "not attached yet"; figures; expense records; every statement at once;

@@ -55,13 +55,16 @@ record's words or amounts: only an idea's id, in `?idea=`.
 | **Take back** (on each agreed record) | asks inline "Take this record back? It stays listed as taken back." **Take back** / **Keep**; Take back → `POST /api/expenses/retract` | `status` → `retracted`, `retractedAt` |
 | **Taken back** list | greyed, with "taken back <day>"; a record with a receipt shows the receipt line and **Remove receipt** (below), because taking a record back keeps its receipt | — |
 | **Add a receipt** (on each agreed record with none; `components/expenses/receipt-line.tsx`) | opens a note first: "DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is your own record; it says nothing about whether you can stop keeping the original." Then **Choose the receipt file** (a file picker; its type list is a hint only) and **Not now**. The window checks the size first (over 10 MB is refused without reading the file), then reads the file's first bytes (`lib/expenses/receipts/sniff.ts`): anything that isn't a JPEG, PNG, WebP or PDF, or a picture over 50 megapixels or 20,000 pixels a side, is refused in amber with what to do instead, and nothing is sent. Otherwise the bytes go as base64 to `POST /api/expenses/receipt` (page-only), which checks them again and keeps the copy under a name it makes up; the file's own name is never sent. Not shown on a waiting, turned-down record | a file in `receipts/`; a `Receipt` row |
-| Receipt line (on a record with one) | "Receipt: PNG picture · 2.1 MB · added <day>" (the type DotAmi read from the bytes, never the file's name) and **Remove receipt**, which asks inline "Remove this receipt? DotAmi deletes its copy of the file; the record stays." **Remove receipt** / **Keep it**; Remove → `POST /api/expenses/receipt/remove`. No control opens the receipt yet | `Receipt` row and its file deleted |
+| Receipt line (on a record with one) | "Receipt: PNG picture · 2.1 MB · added <day>" (the type DotAmi read from the bytes, never the file's name) and **Remove receipt**, which asks inline "Remove this receipt? DotAmi deletes its copy of the file; the record stays." **Remove receipt** / **Keep it**; Remove → `POST /api/expenses/receipt/remove`. **Show receipt** opens the viewer (below) | `Receipt` row and its file deleted |
+| **Receipt viewer** (dialog "Receipt: <day> · <paid to>"; `components/expenses/receipt-viewer.tsx`) | "<PNG picture / PDF>, shown inside DotAmi from its copy on this computer. Nothing in it can be clicked or run." The bytes come from `POST /api/expenses/receipt/file` (page-only), and are checked again in the window: they must be the type DotAmi stored, and a picture within 50 megapixels and 20,000 pixels a side, before anything decodes them. A picture is shown by the browser's image decoder from a `blob:` address (alt "The receipt picture (W × H pixels)"); a PDF is drawn page by page by pdf.js in a worker of DotAmi's own that can reach nothing, each page a picture in a canvas ("Page 1 of N"), at most 20 pages and at most 80 megapixels of pages in all; when fewer pages are drawn than the PDF has, it says so ("DotAmi shows the first 20 pages; this PDF has N. The rest are kept in the file.", with the number drawn, or "the first page" for one). A file changed on the disk since it was added, missing, of another type than kept, or too large to show says so in amber with what to do (remove the receipt and add it again). **Close**, Escape or a click outside closes it and lets go of everything it held. Security design: `expense-records.md` § 8 | — |
 
 ## What it deliberately does not do
 
-- No bank or card number field. No way to look at a receipt yet: it opens inside DotAmi in the next
-  change, with its own security design first (`expense-records.md` sections 0 and 6). Backups don't
-  hold receipts yet (§ 7 there).
+- No bank or card number field.
+- No receipt opens anywhere but inside DotAmi: never the computer's own viewer, never Chromium's PDF
+  viewer, never a frame (the maintainer's decision of 2026-10-08; `expense-records.md` § 8). Nothing
+  in a receipt can be clicked: a PDF's links and form fields aren't drawn as controls, and its
+  JavaScript never runs.
 - No category, business share or "deductible" mark chosen by DotAmi, and no deduction or tax total.
 - No ranking or ordering by amount: newest day first, nothing else.
 - No delete here: taking back and turning down keep the row. The Delete menu on *What DotAmi knows
@@ -70,7 +73,7 @@ record's words or amounts: only an idea's id, in `?idea=`.
 
 ## Browser-tested (`e2e/expenses.spec.ts`)
 
-Five tests on the production build: from an idea's card, type two purchases (one with a 40% share),
+Five tests on the production build (and three more in `e2e/receipt-viewer.spec.ts`, below): from an idea's card, type two purchases (one with a 40% share),
 untick one in the review, **Agree to all 1** — the kept one shows the share beside the full amount on the
 idea, the unticked one stays typed, a reload keeps the record and forgets the typed list, and no address
 holds a typed word or amount; a record kept not attached, attached later, then a separate refund record
@@ -82,3 +85,13 @@ until **Agree to all 1** in the waiting review; and a receipt: an SVG named `.pn
 window by its bytes with nothing sent, then a PNG named after a person kept under a 32-character name
 DotAmi made up (the request never carries the file's name), shown as "Receipt: PNG picture · … · added
 <today>", kept over a reload, and **Remove receipt** deleting the file and keeping the record.
+
+`e2e/receipt-viewer.spec.ts`: **Show receipt** on a PNG shows it from a `blob:` address with one
+request (the bytes, by POST) and on a PDF draws page 1 with ink on it in a worker from DotAmi's own
+files; hostile files: a PDF with JavaScript in its OpenAction and a URI action, a PNG with a web page
+after its end and a PDF with one appended, all drawn with no dialog, no popup, no request off DotAmi's
+own address and the window not moved; a PNG header claiming 30,000 × 30,000, an SVG under a PNG row and
+a PDF under a PNG row (put in the folder directly) refused in the window with no picture; a PNG changed
+on the disk refused by the server; and the route answering only DotAmi's page, as octet-stream with
+nosniff, with no GET. The desktop test draws a PDF receipt in the app's own window and checks its
+worker can't reach DotAmi's server.

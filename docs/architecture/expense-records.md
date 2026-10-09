@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Showing a receipt inside DotAmi comes next; the other ways in are not built.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first); the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -331,12 +331,6 @@ the ways in, the seller's address and GST/HST number, and the Lens suggesting a 
 and credits kept either way, the receipt size cap (10 MB), receipts opening inside DotAmi, and that
 deleting an idea keeps its records "not attached yet", with people told so first. Still open:
 
-- **Showing a receipt inside DotAmi's window** (decided, not built): a photo or PDF the person added
-  is an outside file, and showing it in the window needs its own security design and tests in the
-  receipts slice: how the bytes are served (a route that only DotAmi's page can read, with the right
-  content type and no guessing), what the page's Content-Security-Policy allows for images and PDFs,
-  that a PDF can't run script or reach the network, and what happens to a file that claims one type
-  and is another.
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.
@@ -344,8 +338,7 @@ deleting an idea keeps its records "not attached yet", with people told so first
 ## 7. Receipts as built: the store, the Delete menu and the sweep (2026-10-08)
 
 The third slice: option A of section 2, as the maintainer decided, and backups that carry the
-receipts (the backup change of section 2). Showing a receipt inside DotAmi is the next change; until
-it is built, DotAmi keeps a receipt but has no way to show it, and no route returns its bytes.
+receipts (the backup change of section 2). Showing a receipt inside DotAmi is § 8.
 
 **Where a receipt lives.** A copy of the file in a `receipts/` folder beside the data file
 (`<data folder>/receipts/` in the desktop app; `prisma/receipts/` beside a copy run from source,
@@ -428,3 +421,110 @@ format-1 backups restored), `e2e-desktop/desktop.spec.ts` (a receipt carried fro
 another through File → Back up… and Restore), `tests/desktop-migrate.spec.ts` and `e2e/expenses.spec.ts` (adding a receipt in
 a real browser: an SVG named `.png` refused in the window with nothing sent, a PNG kept under a name
 DotAmi made up and never the file's own, then removed).
+
+## 8. Showing a receipt inside DotAmi: the security design (2026-10-08)
+
+Written before any viewer code, as the maintainer asked when choosing (2026-10-08) to open receipts
+inside DotAmi rather than in the computer's own viewer. A receipt is an outside file, and it may have
+been made to attack whatever opens it. This section is what the viewer must do, and the tests that
+hold it to that. Status: **designed first, then built in the same change** (the section was
+committed on its own before any viewer code; "Built by" below names the files).
+
+**What could go wrong**, and what each rule below answers:
+
+| Threat | Example | Rules |
+|---|---|---|
+| Script in the file runs in DotAmi's page | an SVG or web page with `<script>`; a PDF's own JavaScript | 1, 3, 4, 5 |
+| The file reaches the network | a PDF link, form submit, remote font or image; a picture's address | 2, 4, 7 |
+| The file moves the window | Chromium's built-in PDF viewer, a `file:` address, a link in the PDF | 5 |
+| A crafted picture or PDF exhausts memory | a few hundred bytes claiming 30,000 × 30,000 pixels; a PDF with a huge page or image | 3, 4, 6 |
+| The file is two things at once (a polyglot) | a PNG whose tail is a web page; a PDF that is also HTML | 1, 3, 4 |
+| The file on the disk is not the one that was added | another program replaced or edited it; a row and a file that disagree | 1, 2 |
+
+**The rules.**
+
+1. **The bytes decide the type, every time.** When a receipt is added, DotAmi reads its first bytes
+   (§ 7): JPEG, PNG, WebP or PDF, nothing else; the name and the browser's type are ignored. When it
+   is shown, the window reads the bytes it was sent again with the same check and compares the answer
+   with the type the row stored; any disagreement (or a refusal) and nothing is drawn. SVG, HTML, XML,
+   GIF and the rest are refused at both points. **HEIC stays refused** until there is a decoder that
+   runs the same way (no script, no network, in a worker or the browser's own decoder): Chromium can't
+   decode HEIC itself, and a WebAssembly decoder would be a new package to review first.
+2. **How the bytes reach the page.** `POST /api/expenses/receipt/file { expenseId }`, answering only
+   DotAmi's own page (`Sec-Fetch-Site: same-origin`), like adding and removing. Being a POST that
+   reads a JSON body, it can't be an address that a link, an `<img>`, a frame or the window itself can
+   load, and no other site or program can read it through the browser. The server builds the file's
+   path from the row (never from the request), reads at most 10 MB, and checks the size and the
+   SHA-256 against the row before answering: a file changed or replaced on the disk is refused with a
+   plain sentence, and a missing one is named as missing. The answer is `application/octet-stream`
+   with `X-Content-Type-Options: nosniff`, `Content-Disposition: attachment`, `Cache-Control: no-store`
+   and a Content-Security-Policy of its own (`default-src 'none'; frame-ancestors 'none'; sandbox`),
+   so even if it were ever loaded as a page, nothing in it could run. Next applies the headers in
+   `next.config.mjs` over a route's own, so that file sets this policy for this one path too
+   (`receiptFilePolicy`; otherwise the general `frame-ancestors 'none'` would replace it).
+3. **Pictures** are shown by the browser's own image decoder and nothing else: the bytes become a
+   `Blob` with the type DotAmi read (never one taken from the file), a `blob:` address of that blob is
+   the `src` of an `<img>`, and the address is revoked when the viewer closes. An `<img>` never runs a
+   script, whatever the bytes hold. The page's Content-Security-Policy already allows pictures only
+   from DotAmi itself, `data:` and `blob:` (`img-src 'self' blob: data:` in `middleware.ts`); nothing
+   is widened for this. Before the picture is decoded, its width and height are read from its header
+   (the same code as at adding) and checked again: at most 50 megapixels and 20,000 pixels a side.
+4. **PDFs** are drawn by pdf.js onto a canvas, in a worker of DotAmi's own, with the return reader's
+   setup ([8f], `lib/figures/return/`): pdf.js's parser and renderer both run in that one worker (no
+   second worker, no script loaded by address), which is served from DotAmi's own files under a policy
+   that refuses every connection, DotAmi's server included (`workerPolicy` in `next.config.mjs`), and
+   with the same options (`PDF_OPTIONS`: no `eval`, no XFA, no font loaded into the page, no data
+   files fetched, no WebAssembly). pdf.js runs a PDF's JavaScript only through its separate scripting
+   sandbox, which DotAmi never loads; it builds no annotation layer (so no link or form field in the
+   PDF can be clicked or submitted) and no text layer. Each page is drawn on an `OffscreenCanvas` in
+   the worker and handed to the page as a finished picture (`ImageBitmap`), shown in a `<canvas>`.
+   Limits: at most 20 pages drawn (the viewer says how many more there are), a page drawn at most
+   16 megapixels (the scale is lowered to fit), all drawn pages together at most 80 megapixels (about
+   320 MB; twenty Letter or A4 pages fit, pages at the per-page cap stop after five, and the viewer
+   says how many it shows), pictures inside the PDF at most 50 megapixels (pdf.js's `maxImageSize`),
+   and the worker is stopped if a file takes longer than 20 seconds. Closing the viewer ends its
+   worker, and a viewer closed while the bytes are still arriving starts none.
+5. **Never Chromium's PDF viewer, never a navigation.** No `<iframe>`, `<embed>` or `<object>` is
+   ever given a receipt; the page's policy already has `object-src 'none'`, and gains `frame-src 'none'`
+   (DotAmi has no frames), so not even a mistake could put one in a frame. The desktop app leaves
+   Electron's plugins off (the PDF viewer is one), its window already refuses to navigate anywhere but
+   DotAmi's own pages, and DotAmi never opens a receipt with `shell.openPath` or a `file:` address.
+6. **Size limits** are those above: 10 MB a file (checked by the server before it reads further), the
+   picture limits read from the header before decoding, and the PDF page, canvas, image and time limits.
+7. **Nothing leaves the computer.** The viewer makes one request, to DotAmi's own server; the PDF
+   worker can't connect anywhere; a picture is never given an address outside the page. Agents can't
+   read a receipt: the route answers only DotAmi's page.
+
+**Tests with hostile files** (each must fail when its rule is removed):
+
+- A PDF with JavaScript (an `OpenAction` that would show an alert and one that would open an
+  address): drawn, with no dialog, no request beyond the receipt's own, and the window not moved.
+- Polyglots: a valid PNG with a web page and a script after its end, and a PDF with a web page
+  appended: each shown by its own type's reader, no script runs.
+- A picture whose header claims 30,000 × 30,000 pixels, put in the receipts folder with a matching row
+  (as a file from elsewhere could be): refused in the window before it is decoded, nothing drawn.
+- A row and a file that disagree: an SVG under a `.png` row, and a PDF under a picture row: refused in
+  the window, nothing drawn.
+- A file changed on the disk after it was added: refused by the server.
+- A PDF of 20 pages, each drawn at the per-page cap (100 × 625 points, 1600 × 10,000 pixels): five
+  pages drawn, and the viewer says so.
+- The route itself: only DotAmi's page gets the bytes; the answer's headers are the ones above, read
+  from the built server (not only from the route's code); the path comes from the row.
+
+**Built by** (2026-10-08, in the same change, after this section): rule 1, `lib/expenses/receipts/sniff.ts`
+and `checkShownBytes` in `lib/expenses/receipts/viewer/open.ts`; rule 2, `app/api/expenses/receipt/file/route.ts`,
+`readReceiptFile` in `lib/expenses/receipts/store.ts`, `lib/expenses/receipts/file-headers.ts` and
+`receiptFilePolicy` in `next.config.mjs`; rule 3,
+`lib/expenses/receipts/viewer/open.ts` and `components/expenses/receipt-viewer.tsx`; rule 4,
+`lib/expenses/receipts/viewer/draw-pdf.ts` and `pdf-pages.worker.ts` beside it; rule 5, `frame-src 'none'`
+in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/security-hardening.spec.ts`,
+`e2e/receipt-viewer.spec.ts` (every hostile file above, in a real browser on the production build) and
+`e2e-desktop/desktop.spec.ts` (a PDF receipt drawn in the app's own window, its worker unable to reach
+DotAmi's server).
+
+**Known limits.** The server's size check before reading is a cheap first look; the SHA-256 check after
+it catches the same files, so no test tells the two apart. The drawn pages have a total cap, but pdf.js
+itself has no overall memory cap while it reads a file: a crafted PDF can still unpack a stream far
+larger than the file and crash the worker (or the window) before the 20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
+`docs/connectors/pdf-reader-review.md`). A drawn page is a picture: its text can't be selected or
+searched, and there is no zoom beyond the window's own.

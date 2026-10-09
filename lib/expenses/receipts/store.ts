@@ -10,8 +10,9 @@
  *   - At most 10 MB, and a picture no larger than the pixel limits (types.ts).
  *   - The server stores the bytes and never opens, decodes or runs them: sniff.ts reads a few header
  *     bytes to learn the type and size, and that is all.
- *   - A receipt is added only to a record the person agreed to; removing one works on any of their
- *     records. Agents can do neither: the routes answer only DotAmi's own page.
+ *   - A receipt is added only to a record the person agreed to; removing and reading one (for the
+ *     viewer, readReceiptFile) work on any of their records. Agents can do none of the three: the
+ *     routes answer only DotAmi's own page.
  *   - Nothing here logs a word, an amount, a file name or a path.
  *
  * Files and rows can drift apart (the app stops between the two writes, a record's row is deleted
@@ -31,7 +32,7 @@ import { findPersonExpense, rowToExpense } from "../store";
 import type { ExpenseView } from "../types";
 import { RECEIPT_REFUSALS } from "./refusals";
 import { sniffReceipt } from "./sniff";
-import { extensionOf, isReceiptType, RECEIPT_ID, RECEIPT_TYPES, type ReceiptType } from "./types";
+import { extensionOf, isReceiptType, MAX_RECEIPT_BYTES, RECEIPT_ID, RECEIPT_TYPES, type ReceiptType } from "./types";
 
 /** The folder's name beside the data file. lib/privacy/inventory.ts FOLDERS lists it under this name. */
 export const RECEIPTS_FOLDER = "receipts";
@@ -297,4 +298,57 @@ async function finishAbandonedAdd(
 /** The stored type of a receipt row, narrowed; exported for the viewer route and the tests. */
 export function storedType(type: string): ReceiptType | null {
   return isReceiptType(type) ? type : null;
+}
+
+/**
+ * Reads one record's receipt file for the viewer (expense-records.md § 8, rule 2): the path is built
+ * from the row, never from the request; at most 10 MB is read; and the size and SHA-256 must match
+ * what the row says, so a file changed or replaced on the disk since it was added is refused, not
+ * shown. Works on any of the person's records that has a receipt (agreed or taken back). Returns the
+ * type DotAmi stored and the bytes; the window checks the bytes again before drawing anything.
+ */
+export async function readReceiptFile(
+  prisma: PrismaClient,
+  folder: string | null,
+  expenseId: unknown,
+): Promise<{ type: ReceiptType; bytes: Buffer }> {
+  if (!folder) throw noFolder();
+  if (typeof expenseId !== "string" || expenseId.length === 0) throw new ReceiptError("Say which expense record you mean.", 400);
+  const record = await findPersonExpense(prisma, expenseId);
+  if (!record || record.status === "discarded") throw new ReceiptError("That expense record isn't in DotAmi.", 404);
+  const receipt = record.receipt;
+  const type = receipt ? storedType(receipt.type) : null;
+  if (!receipt || !type || !RECEIPT_ID.test(receipt.id)) throw new ReceiptError("This record has no receipt.", 404);
+
+  const changed = () =>
+    new ReceiptError(
+      "The receipt file changed on this computer since you added it, so DotAmi won't show it. Remove the receipt and add it again.",
+      409,
+    );
+  const file = path.join(folder, receiptFileName(receipt.id, type));
+  let handle;
+  try {
+    handle = await open(file, "r");
+  } catch (error) {
+    if ((error as { code?: unknown })?.code === "ENOENT") {
+      throw new ReceiptError("The receipt file isn't in the receipts folder any more. Remove the receipt, and add it again if you have it.", 404);
+    }
+    throw error;
+  }
+  try {
+    // The size first, from the file system: a file that grew is refused before it is read.
+    const { size } = await handle.stat();
+    if (size !== receipt.bytes || size > MAX_RECEIPT_BYTES) throw changed();
+    const bytes = Buffer.alloc(size);
+    let read = 0;
+    while (read < size) {
+      const { bytesRead } = await handle.read(bytes, read, size - read, read);
+      if (bytesRead === 0) break;
+      read += bytesRead;
+    }
+    if (read !== size || sha256(bytes) !== receipt.sha256) throw changed();
+    return { type, bytes };
+  } finally {
+    await handle.close();
+  }
 }
