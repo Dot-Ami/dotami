@@ -49,6 +49,9 @@ content and the project itself run alongside everything.
   - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
     ships, its version and licence text, written at build time; packaging stops if one is missing), shown
     at Help → Licences and from Settings → Updates
+  - [x] The server leaves out what it never loads: sharp with libvips (LGPL) and the TypeScript compiler,
+    with what only they pull in (about 30 MB; the build stops if something still needs one, a desktop
+    test fails if one comes back)
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer

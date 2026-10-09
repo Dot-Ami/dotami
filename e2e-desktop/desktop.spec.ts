@@ -12,7 +12,9 @@ import path from "node:path";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
+import { LEFT_OUT, leftOutIn } from "../desktop/left-out.mjs";
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
+import { parseNotices } from "../lib/licences/notices";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 
@@ -154,6 +156,36 @@ test("Help → Licences shows the notices for what this app ships, and every pac
       expect(existsSync(path.join(path.dirname(packagedExe), f)), f).toBe(true);
     }
   }
+});
+
+test("the server leaves out what it never loads (sharp with libvips, TypeScript), and the image route answers 404 instead of reaching for them", async () => {
+  const page = await launch();
+  // The app the person uses works without them: describe a venture and its map opens.
+  await describeVenture(page);
+
+  // The server's node_modules still has what it runs on…
+  const server = packagedExe ? path.join(path.dirname(packagedExe), "resources", "server") : path.join(root, ".next-desktop", "standalone");
+  const modules = path.join(server, "node_modules");
+  expect(packagesIn(modules).map((p) => p.name)).toEqual(expect.arrayContaining(["next", "react", "react-dom", "@prisma/client"]));
+  // …and none of what desktop/left-out.mjs names, at any depth.
+  expect(LEFT_OUT.map((p) => p.name)).toEqual(expect.arrayContaining(["sharp", "@img/*", "typescript"]));
+  expect(leftOutIn(modules).map((p) => `${p.name} ${p.version} (node_modules/${p.rel})`)).toEqual([]);
+
+  // The notices follow what ships: entries for the server's packages, none for the left-out ones,
+  // and so nothing under the LGPL (libvips was the only one).
+  const notices = parseNotices(readFileSync(path.join(server, NOTICES_FILE), "utf8"));
+  const names = notices.entries.map((e) => e.name);
+  expect(names).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "electron"]));
+  expect(names.filter((n) => n === "sharp" || n === "typescript" || n.startsWith("@img/"))).toEqual([]);
+  expect(notices.entries.filter((e) => /LGPL/i.test(e.licence)).map((e) => `${e.name} ${e.licence}`)).toEqual([]);
+
+  // Next's image optimiser is the only code that would load sharp. The desktop build turns it off,
+  // so its route answers "not found" before it gets that far. A page of the app answers first, to
+  // show the requests themselves reach the server.
+  const origin = new URL(page.url()).origin;
+  expect((await page.request.get(`${origin}/settings`)).status()).toBe(200);
+  const image = await page.request.get(`${origin}/_next/image?url=${encodeURIComponent("/settings")}&w=64&q=75`);
+  expect(image.status()).toBe(404);
 });
 
 test("Add to my calendar asks where to save with a Save dialog, writes the file there, and writes nothing when cancelled", async () => {

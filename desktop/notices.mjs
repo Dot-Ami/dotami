@@ -13,10 +13,11 @@
 //   plus the fonts and the styles Tailwind writes into the page. Written to the top folder, where
 //   `next start` reads it (it's in .gitignore: it's made, never edited).
 // - desktop/build.mjs (the installer): the same, plus every package actually inside the built
-//   server's node_modules (Next's file tracer copies some that package-lock.json calls development
-//   tools, such as typescript), the desktop app's own packages (electron-updater and what it pulls
-//   in) and Electron itself. Written beside server.js. desktop/package.mjs then refuses to package
-//   an app with a package in it that this file doesn't list.
+//   server's node_modules (Next's file tracer can copy ones package-lock.json calls development
+//   tools), the desktop app's own packages (electron-updater and what it pulls in) and Electron
+//   itself; minus what the desktop server leaves out (desktop/left-out.mjs: sharp and typescript,
+//   and what only they pull in). Written beside server.js. desktop/package.mjs then refuses to
+//   package an app with a package in it that this file doesn't list.
 //
 // A package whose folder holds no licence file stops the build, unless LICENCE_ELSEWHERE below says
 // where its terms are. Nothing here reaches the network: it reads files in node_modules.
@@ -68,7 +69,7 @@ export const LICENCE_ELSEWHERE = {
   "@next/swc-*":
     { why: "This build of Next.js's compiler for one kind of computer holds no licence file; its package.json names MIT and its repository is github.com/vercel/next.js (crates/napi). It is used while building." },
   "@img/sharp-libvips-*":
-    { readme: true, why: "Prebuilt libvips and the libraries it uses, for sharp on one kind of computer. The package holds no licence file; its package.json names LGPL-3.0-or-later and its README lists each library and its licence (below). sharp is Next.js's image library; DotAmi doesn't use Next's image optimiser." },
+    { readme: true, why: "Prebuilt libvips and the libraries it uses, for sharp on one kind of computer. The package holds no licence file; its package.json names LGPL-3.0-or-later and its README lists each library and its licence (below). sharp is Next.js's image library, installed with Next; DotAmi doesn't use Next's image optimiser, and the desktop app leaves sharp out (desktop/left-out.mjs)." },
   "client-only":
     { why: "The published package holds no licence file and no README; its package.json names MIT and gives reactjs.org as its homepage. It is an empty marker module that stops code meant for the page being used on the server." },
   standardwebhooks:
@@ -195,12 +196,16 @@ function resolveRel(root, fromRel, dep) {
  *
  * `copied` adds every package nested inside a listed package's folder, the way desktop/package.mjs's
  * copyWithDependencies copies whole folders: those ship whether or not anything loads them.
+ *
+ * `leaveOut` (a test on a package name) skips a package and what only it pulls in: the desktop
+ * build passes desktop/left-out.mjs's isLeftOut, for the packages its server doesn't carry.
  */
-export function dependencyClosure(root, names, { copied = false } = {}) {
+export function dependencyClosure(root, names, { copied = false, leaveOut = () => false } = {}) {
   const found = new Map();
   const visit = (rel) => {
     if (found.has(rel)) return;
     const pkg = readJson(path.join(root, "node_modules", rel, "package.json"));
+    if (leaveOut(pkg.name)) return;
     found.set(rel, { name: pkg.name, version: pkg.version, licence: licenceId(pkg), rel });
     if (copied) {
       for (const nested of packagesIn(path.join(root, "node_modules", rel, "node_modules"), `${rel}/node_modules/`)) {
@@ -224,9 +229,9 @@ export function dependencyClosure(root, names, { copied = false } = {}) {
 }
 
 /** What DotAmi's own package.json "dependencies" need to run (see dependencyClosure). */
-export function productionPackages(root) {
+export function productionPackages(root, { leaveOut } = {}) {
   const manifest = readJson(path.join(root, "package.json"));
-  return dependencyClosure(root, Object.keys({ ...manifest.dependencies, ...manifest.optionalDependencies }));
+  return dependencyClosure(root, Object.keys({ ...manifest.dependencies, ...manifest.optionalDependencies }), { leaveOut });
 }
 
 /**
@@ -269,8 +274,10 @@ function bundledInside(root, owner, shipped) {
 /**
  * Everything that ships, as entries ready to write. `standalone` is the built server's folder
  * (desktop/build.mjs's .next-desktop/standalone); with it, the list is the installer's.
+ * `leaveOut` names packages that don't ship although DotAmi's dependencies name them: the desktop
+ * server leaves sharp out though next names it as an optional dependency (desktop/left-out.mjs).
  */
-export function collectNotices(root, { standalone } = {}) {
+export function collectNotices(root, { standalone, leaveOut } = {}) {
   /** @type {Map<string, any>} */
   const byKey = new Map();
   const rootModules = path.join(root, "node_modules");
@@ -291,7 +298,7 @@ export function collectNotices(root, { standalone } = {}) {
     entry.ships.add(where);
   };
 
-  for (const p of productionPackages(root)) add(p, SHIPS.dependency);
+  for (const p of productionPackages(root, { leaveOut })) add(p, SHIPS.dependency);
   const shippedModules = standalone ? path.join(standalone, "node_modules") : null;
   if (shippedModules) {
     for (const p of packagesIn(shippedModules)) add(p, SHIPS.server, shippedModules);
@@ -401,8 +408,8 @@ export function formatNotices(entries, { version, desktop }) {
 }
 
 /** Collects, formats and writes the file; returns the entries written. */
-export function writeNotices(root, out, { standalone } = {}) {
-  const entries = collectNotices(root, { standalone });
+export function writeNotices(root, out, { standalone, leaveOut } = {}) {
+  const entries = collectNotices(root, { standalone, leaveOut });
   const version = readJson(path.join(root, "package.json")).version;
   writeFileSync(out, formatNotices(entries, { version, desktop: Boolean(standalone) }));
   return entries;
