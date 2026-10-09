@@ -24,8 +24,9 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
-import { migrate, MigrationRefused } from "./migrate.mjs";
+import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
+import { finishPendingWipe } from "./wipe-pending.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
@@ -100,9 +101,18 @@ async function start() {
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
 
+  // A Delete whose wipe couldn't finish (the computer was busy, the disk full, or it was switched
+  // off part-way) left a "wipe pending" note beside the data file: finish it now, before the server
+  // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
+  // the file is normal after any edit, and rebuilding it on every start would only slow it down.
+  // It never stops the start: what still can't be done stays owed for the next one.
+  const wipe = finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (line) => log.write(`${line}\n`) });
+  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
-  // untouched.
+  // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
+  // the file has already been rebuilt, with the same contents, before these checks run).
   try {
     const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
@@ -206,7 +216,8 @@ async function checkForUpdates(byHand) {
 /**
  * The server's environment: what Node needs to run, plus the app's own settings — and never a
  * model key from the shell it was started from. DotAmi ships no key; the person's model comes
- * from the app's settings once the Lens exists ([9a]).
+ * from the app's settings once the Lens exists ([9a]). Nor the browser tests' rate-limit switch:
+ * the desktop app always runs with the real limits (lib/api/rate-limit.ts, E2E_RATE_LIMITS_ENV).
  */
 function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
@@ -215,6 +226,7 @@ function serverEnv(own) {
   const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
+  delete env.DOTAMI_E2E_RATE_LIMITS;
   return env;
 }
 
@@ -353,6 +365,8 @@ function buildMenu(origin, dataDir) {
               }),
           },
           { label: "Check for updates…", click: () => void checkForUpdates(true) },
+          // The third-party notices the build wrote (desktop/notices.mjs), shown by the /licences page.
+          { id: "licences", label: "Licences", click: go("/licences") },
           { label: "Source on GitHub", click: () => void shell.openExternal("https://github.com/Dot-Ami/dotami") },
         ],
       },

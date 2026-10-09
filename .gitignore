@@ -20,6 +20,12 @@ coverage
 playwright-report
 test-results
 
+# Delete leaves this note beside a data file while its wipe is unfinished (desktop/wipe-pending.mjs).
+*.db.wipe-pending
+
+# third-party notices, written by desktop/notices.mjs on every build
+/THIRD-PARTY-NOTICES.txt
+
 # Receipt files copied in by a copy run from source ([8i]): they sit beside the data file.
 prisma/receipts/
 # The browser tests' throwaway data folder (e2e/prepare-db.mjs).

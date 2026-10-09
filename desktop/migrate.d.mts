@@ -6,3 +6,5 @@ export function migrate(
   migrationsDir: string,
   options?: { backupDir?: string; now?: () => number; log?: (line: string) => void },
 ): { applied: string[]; backup: string | null };
+
+export function vacuumFile(dbFile: string): boolean;
