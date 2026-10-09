@@ -110,10 +110,16 @@ person is asked).
   DotAmi knows about you* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `TABLES`,
   `FOLDERS`; the folder was added by hand, since no test finds a new folder on its own). DotAmi does
   not encrypt the copies; the disk's own encryption is what protects them, as for the data file.
-  **Backups don't hold receipts yet**: *File → Back up…* says so when there are any, and *Restore*
-  moves the receipts folder whole into `backups/` (`receipts-before-restore-<time>`) instead of
-  leaving it to be removed ([`desktop/backup.mjs`](../desktop/backup.mjs) `applyRestore`, tested by
-  [`tests/desktop-backup.spec.ts`](../tests/desktop-backup.spec.ts)).
+  **Backups hold the receipts** (a new backup format, 2): every receipt file the data file describes
+  goes into the backup with it, under the same passphrase when the backup is locked (AES-256-GCM over
+  the whole stream, the header and its file list included). A restore brings them back, and moves the
+  receipts folder that was here into `backups/` (`receipts-before-restore-<time>`) beside the safety
+  copy, so it stays on the computer until the person deletes it. Backups made before this (format 1)
+  still restore; they hold no receipts ([`desktop/backup.mjs`](../desktop/backup.mjs), tested by
+  [`tests/desktop-backup.spec.ts`](../tests/desktop-backup.spec.ts) and
+  [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). While a restore is being checked,
+  the backup's receipts are unpacked into a staging folder beside the data file
+  (`restore-staging.db-receipts`), removed if the person cancels or the backup is refused.
 - **A "wipe pending" note beside the data file, only while a Delete's wipe is unfinished ([8d]).**
   Delete writes `dotami.db.wipe-pending` (named after the data file) just before it deletes and
   wipes, and removes it once the wipe and any safety copies it was deleting are done. It holds the
@@ -409,7 +415,8 @@ person is asked).
 
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot
-  remove. It stays on the computer, unencrypted by DotAmi, and today's backups don't carry it.
+  remove. It stays on the computer, unencrypted by DotAmi; a backup carries it, locked only if the
+  person set a passphrase for that backup.
 - The desktop app's log can hold the location of the data folder and, after a failed database
   update, the database's description of what failed; it holds nothing the person typed.
 - People who build DotAmi from its source code: the project's own commands switch off the usage

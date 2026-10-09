@@ -189,7 +189,7 @@ roadmap's build order.
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
   every business expense); the store for typed records and the screen to type them are built
-  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies (2026-10-08); backups that carry them, the in-app viewer and the other ways in are not.
+  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies and carried by backups (2026-10-08); the in-app viewer and the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
   - [x] The privacy review (typed records and receipts as built):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
@@ -208,7 +208,9 @@ roadmap's build order.
     receipt* on the Expenses page (agreed records only; page-only routes); a *Your receipts* box on the
     Delete menu, receipts going with *Your expense records*; a sweep for files no record describes
     ([expense-records.md § 7](architecture/expense-records.md))
-  - [ ] Backups that carry the receipts (a format that streams; old backups still restore)
+  - [x] Backups that carry the receipts: backup format 2 streams the data file and every receipt it
+    describes in 1 MB pieces, the passphrase covering both; old (format 1) backups still restore
+    ([desktop-app.md § Backup and restore](architecture/desktop-app.md))
   - [ ] Showing a receipt inside DotAmi (its security design first)
   - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of

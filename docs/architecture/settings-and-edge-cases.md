@@ -103,6 +103,7 @@ is read-only.
 - A corrupted or truncated backup file → detected before anything is replaced. *Tested: cut short, a changed byte (plain and locked), an edited header, random bytes, a raw database, an empty file.*
 - Restore over existing data → "this replaces everything on this computer" + keep a safety copy. *Tested: the safety copy holds the old data.*
 - A backup written while the app is busy → a consistent copy (`VACUUM INTO`). *Built; not tested under load.*
+- A receipt added or removed while a backup is written ([8i]) → the receipts folder is listed before the data file is copied, so a receipt removed in between is in neither; one the copy describes but the folder doesn't have is left out, counted, and named in the message afterwards; a receipt file that changes between the writer's two reads (measuring, then writing) stops the backup with nothing saved. *Built; the missing receipt is tested (`tests/desktop-backup.spec.ts`); the file changing mid-backup is not, since it needs a file to change between two reads.*
 - The app crashes mid-backup → no half-written file under the real name. *Built (write then rename); tested that no `.partial` is left.*
 
 **Installers and updates [7d]** (built 2026-10-05; [desktop-app.md § Updates](desktop-app.md#updates))
