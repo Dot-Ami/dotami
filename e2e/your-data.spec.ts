@@ -4,6 +4,9 @@
  * Runs after e2e/app.spec.ts in the same throwaway database, so it makes its own figure and
  * statement rather than relying on what the earlier tests left, and asserts only on those.
  */
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import { SENT_ELSEWHERE, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
@@ -241,6 +244,13 @@ async function openDeleteMenu(page: Page) {
 
 const STATEMENTS_BOX = "Your statements (“In your words”)";
 const IDEAS_BOX = "Your ideas, with their notes, links and map progress";
+const BACKUPS_BOX = "Safety copies in the backups folder";
+
+// This run's data file is prisma/e2e.db (playwright.config.ts), so its backups folder and its
+// wipe-pending note sit beside it in prisma/. Tests that put files there remove them again.
+const PRISMA_DIR = path.join(process.cwd(), "prisma");
+const BACKUPS_DIR = path.join(PRISMA_DIR, "backups");
+const WIPE_NOTE = path.join(PRISMA_DIR, "e2e.db.wipe-pending");
 
 test("Delete: Escape or Cancel at either ask deletes nothing, and the last ask starts on Cancel", async ({ page }) => {
   expect((await page.request.post("/api/person/statements", { data: { text: "a statement Escape must keep" } })).status()).toBe(200);
@@ -335,7 +345,10 @@ test("Delete: tick ideas and statements, see what goes with them, say yes twice,
   await expect(removing).toContainText("generally kept for six years");
   await expect(removing.getByRole("link", { name: /^CRA: Where to keep your records/ })).toHaveAttribute("href", /canada\.ca\/en\/revenue-agency/);
   await expect(removing).toContainText("What the window stored in earlier launches. Not cleared yet.");
-  await expect(removing).toContainText("Safety copies in the backups folder. Not touched.");
+  // The safety copies have their own box; this run has none, so there is nothing to tick.
+  const backupsBox = removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) });
+  await expect(backupsBox).toContainText("Nothing to delete");
+  await expect(removing.getByLabel(BACKUPS_BOX)).toBeDisabled();
 
   await removing.getByLabel(IDEAS_BOX).check();
   await removing.getByLabel(STATEMENTS_BOX).check();
@@ -345,6 +358,8 @@ test("Delete: tick ideas and statements, see what goes with them, say yes twice,
   await expect(first).toContainText(`Your ideas: ${ideasBefore} record`);
   await expect(first).toContainText("Map progress:");
   await expect(first).toContainText("Your figures:");
+  // This run has no safety copies, so the ask doesn't talk about leaving them.
+  await expect(first).not.toContainText("safety copies");
   await first.getByRole("button", { name: "Yes, continue" }).click();
   await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
 
@@ -362,4 +377,65 @@ test("Delete: tick ideas and statements, see what goes with them, say yes twice,
   await expect(page.getByRole("region", { name: "Your figures, by source" })).toContainText("No figures are kept.");
   await page.goto("/ventures");
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
+});
+
+test("Delete: the safety-copies box warns, then deletes DotAmi's own copies in the backups folder and nothing else there", async ({ page }) => {
+  const copies = ["dotami-before-20261008005701_settings-1760000000001.db", "dotami-before-restore-1760000000000.db"];
+  mkdirSync(BACKUPS_DIR, { recursive: true });
+  for (const c of copies) writeFileSync(path.join(BACKUPS_DIR, c), "a safety copy made for the browser test");
+  writeFileSync(path.join(BACKUPS_DIR, "my own notes.txt"), "the person's own file");
+  try {
+    const removing = await openDeleteMenu(page);
+    const box = removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) });
+    // Only DotAmi's own copies are counted: the notes file isn't one.
+    await expect(box).toContainText("Safety copies: 2");
+    await expect(box).toContainText("Afterwards, only a backup you saved somewhere else could bring anything back.");
+    await removing.getByLabel(BACKUPS_BOX).check();
+    await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+    const first = page.getByRole("dialog", { name: "Delete these?" });
+    await expect(first).toContainText("Safety copies: 2 files");
+    await expect(first).toContainText("The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.");
+    await first.getByRole("button", { name: "Yes, continue" }).click();
+    const second = page.getByRole("dialog", { name: "Delete them now?" });
+    await expect(second).toContainText("Afterwards, only a backup you saved somewhere else could bring anything back.");
+    await expect(second.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await second.getByRole("button", { name: "Delete now" }).click();
+
+    const done = removing.getByRole("status");
+    await expect(done).toContainText("Deleted.");
+    await expect(done).toContainText("Safety copies: 2 files deleted, 0 left");
+    expect(readdirSync(BACKUPS_DIR)).toEqual(["my own notes.txt"]);
+    expect(existsSync(WIPE_NOTE)).toBe(false);
+
+    await page.reload();
+    await removing.getByRole("button", { name: "Delete", exact: true }).click();
+    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Nothing to delete");
+  } finally {
+    rmSync(BACKUPS_DIR, { recursive: true, force: true });
+  }
+});
+
+test("Delete: a wipe an earlier Delete left owed is said on the page, and Finish it now finishes it", async ({ page }) => {
+  writeFileSync(WIPE_NOTE, `${JSON.stringify({ format: 1, since: "2026-10-08T12:00:00.000Z", backups: [] })}\n`);
+  try {
+    await page.goto("/your-data");
+    // The note is listed beside the data file, with what it holds.
+    const outside = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "A note that a wipe is still owed", level: 3 }) });
+    await expect(outside).toContainText("nothing of yours");
+    await expect(outside).not.toContainText("None: no wipe is owed.");
+
+    const removing = page.getByRole("region", { name: "Taking things out" });
+    const pending = removing.getByRole("status");
+    await expect(pending).toContainText("An earlier Delete hasn't finished");
+    await pending.getByRole("button", { name: "Finish it now" }).click();
+    await expect(removing.getByRole("status")).toContainText("Finished: the earlier Delete's wipe is done.");
+    expect(existsSync(WIPE_NOTE)).toBe(false);
+
+    await page.reload();
+    await expect(outside).toContainText("None: no wipe is owed.");
+    await expect(removing.getByRole("button", { name: "Finish it now" })).toHaveCount(0);
+  } finally {
+    rmSync(WIPE_NOTE, { force: true });
+  }
 });
