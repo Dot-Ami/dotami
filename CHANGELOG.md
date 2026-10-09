@@ -148,6 +148,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   disk straight away, including what stopped the start (DotAmi's message and the error's name and
   code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
   without it instead of refusing to start.
+- **The browser tests no longer trip the app's own rate limits** (developers only; the app's limits
+  are unchanged). Every browser test reaches the test server as the same client, so as the suite
+  grew it made more settings calls in a minute than a person would, and on a fast computer tests
+  failed with "Too many requests" (429). The test server now starts with
+  `DOTAMI_E2E_RATE_LIMITS=opt-in` (set only in `playwright.config.ts`; the desktop app removes it
+  from its server): a request counts toward a limit only when it names its own bucket in the
+  `x-dotami-e2e-rate-limit` header. `e2e/rate-limit.spec.ts` does, and shows the settings limit of
+  120 a minute still refusing the 121st request, and that the suite's other requests aren't counted;
+  the desktop test shows the switch never reaches the desktop app.
+- **A browser-test run can no longer use another run's server.** The run used to start testing as
+  soon as anything answered on its port, so when runs from two checkouts overlapped, the second
+  one's tests reached the first one's server and database, and the two tests that put bank and card
+  accounts straight into the test database found their lists missing. A run now waits for its own
+  server to say it is ready, and stops with a plain message when the port is already taken
+  (`e2e/port-free.mjs`).
 
 ### Security
 - **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a

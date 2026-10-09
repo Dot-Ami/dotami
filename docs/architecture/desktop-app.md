@@ -35,6 +35,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
    DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
+   Nor does it carry the browser tests' rate-limit switch (`DOTAMI_E2E_RATE_LIMITS` is removed in
+   `serverEnv`, `desktop/main.mjs`), so the real rate limits always apply in the app, even when the
+   shell that started it set the switch (desktop-tested in `e2e-desktop/desktop.spec.ts`).
 5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a

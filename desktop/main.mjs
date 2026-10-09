@@ -206,7 +206,8 @@ async function checkForUpdates(byHand) {
 /**
  * The server's environment: what Node needs to run, plus the app's own settings — and never a
  * model key from the shell it was started from. DotAmi ships no key; the person's model comes
- * from the app's settings once the Lens exists ([9a]).
+ * from the app's settings once the Lens exists ([9a]). Nor the browser tests' rate-limit switch:
+ * the desktop app always runs with the real limits (lib/api/rate-limit.ts, E2E_RATE_LIMITS_ENV).
  */
 function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
@@ -215,6 +216,7 @@ function serverEnv(own) {
   const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
+  delete env.DOTAMI_E2E_RATE_LIMITS;
   return env;
 }
 
