@@ -145,8 +145,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **A review of the ways to show iPhone (HEIC) photos as receipts** ([8i]) — every decoder found
   (libheif in WebAssembly, the packages labelled MIT that carry it, two new permissive decoders, the
   graphics chip through Chromium's WebCodecs, Windows' own codec), with its licence, security, size
-  and which computers it works on, and a list of options with their costs for the maintainer to
-  choose from. Nothing changes in the app: HEIC is still refused (`docs/connectors/heic-decoder-review.md`).
+  and which computers it works on (including that DotAmi's worker policy blocks WebAssembly today, so
+  every WebAssembly decoder needs that policy opened first), and a list of options with their costs
+  for the maintainer to choose from. Nothing changes in the app: HEIC is still refused
+  (`docs/connectors/heic-decoder-review.md`).
 
 ### Fixed
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the

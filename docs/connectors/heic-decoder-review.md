@@ -29,10 +29,12 @@ gave** (a copy kept as given), and any conversion exists only to show it.
      or **Windows' own HEIC codec**, which the window can't reach, so the desktop app would have to
      run a program outside the browser's sandbox to use it.
 - **The graphics-chip route is the only one with no licence cost and no new package**, and on this
-  computer it works (measured below). Its costs: it works only where the computer's graphics chip
-  can decode HEVC (it did not with the graphics chip switched off, so a machine without one, many
-  virtual machines and GitHub's test machines can't show HEIC); the test browser DotAmi's browser
-  tests use has no HEVC at all, so no automatic test could ever see a HEIC drawn; and the hostile
+  computer it works (measured below). It is also the only one that needs no change to the worker's
+  security policy, which today blocks WebAssembly (measured below). Its costs: it works only where
+  the computer's graphics chip can decode HEVC (it did not with the graphics chip switched off, so a
+  machine without one and many virtual machines can't show HEIC, and GitHub's test machines are
+  expected not to); the test browser DotAmi's browser tests use has no HEVC at all, so no automatic
+  test is expected to see a HEIC drawn; and the hostile
   bytes reach the graphics driver, not only a sandboxed worker. Those are choices for the
   maintainer, not facts this review can settle, so it stops here.
 - **Patents are a separate question from licences**, and not one this review can answer. HEVC is
@@ -51,7 +53,8 @@ gave** (a copy kept as given), and any conversion exists only to show it.
 | Known vulnerabilities                | GitHub security advisories of `strukturag/libheif` and `strukturag/libde265`, counted by year on 2026-10-09; GitHub's advisory database for `libheif-js`  | libheif: 73 published in 2026 (4 critical, 24 high), 1 in 2025. libde265: 13 in 2026 (5 high). `libheif-js`: none of its own |
 | Maintenance                          | GitHub repository data (created, last push, stars)                                                                                                        | Table under each candidate                                                                                                   |
 | Can this Electron decode HEVC?       | A probe (below) in DotAmi's own Electron 44.5.1 (Chromium 152), in the page and in a worker; again with `--disable-gpu`; and in Playwright's Chromium 153 | Yes with the graphics chip, in the page and in a worker; no without it; no software decoder; Playwright's Chromium: no       |
-| Windows' own codecs on this computer | `Get-AppxPackage`                                                                                                                                         | _HEIF Image Extensions_ 1.2.48.0 and _HEVC Video Extensions_ 2.5.33.0 are installed here                                     |
+| Windows' own codecs on this computer | `Get-AppxPackage`                                                                                                                                         | Microsoft's _HEIF Image Extensions_ and _HEVC Video Extensions_ are both installed here                                      |
+| Can DotAmi's worker run WebAssembly? | A second probe (below): a worker served with the exact `workerPolicy` from `next.config.mjs`, then with `'wasm-unsafe-eval'` added                        | No: today's policy blocks compiling WebAssembly. Asking WebCodecs about HEVC still works under it                            |
 
 Nothing was installed into DotAmi and nothing downloaded was run: the packages were unpacked and
 read, never imported.
@@ -85,13 +88,34 @@ $ node pw-probe.mjs        (Playwright's Chromium, what e2e/ runs in)
 playwright chromium 153.0.8010.12 hevc false
 ```
 
-The first run is on an Intel UHD Graphics 630. WebCodecs needs a secure page: from a `data:` address
-`VideoDecoder` didn't exist at all, from a file it did (DotAmi's own pages are secure). **Not
-checked:** whether Chromium needs Microsoft's HEVC extension installed to use the graphics chip;
-this computer has it, so the probe can't tell, and removing it is a system change this review didn't
-make. **Not checked either:** a Mac (none here), and decoding an actual HEIC file (no HEIC file or
-HEIC encoder on this computer; `isConfigSupported` says the decoder is there, not that a given file
-decodes).
+The first run is on a computer with an integrated Intel graphics chip. WebCodecs needs a secure
+page: from a `data:` address `VideoDecoder` didn't exist at all, from a file it did (DotAmi's own
+pages are secure). **Not checked:** whether Chromium needs Microsoft's HEVC extension installed to
+use the graphics chip; this computer has it, so the probe can't tell, and removing it is a system
+change this review didn't make. **Not checked either:** a Mac (none here); decoding an actual HEIC
+file (no HEIC file or HEIC encoder on this computer; `isConfigSupported` says the decoder is there,
+not that a given file decodes); which other graphics chips decode HEVC, and whether GitHub's test
+machines have one (option D below says what is expected, not what was measured).
+
+A second throwaway probe asked whether DotAmi's worker may run WebAssembly at all. A small local
+server sent a worker script with the `Content-Security-Policy` that DotAmi's `/_next/static` files
+carry (the `workerPolicy` string imported from `next.config.mjs`, as the production build sends it),
+and then the same policy with `'wasm-unsafe-eval'` added. The worker compiled the smallest valid
+WebAssembly module and asked WebCodecs about HEVC:
+
+```text
+$ electron csp-probe/main.js next.config.mjs
+electron 44.5.1 chrome 152.0.7977.130
+today "default-src 'none'; script-src 'self'; frame-ancestors 'none'"
+  {"wasm":"blocked: WebAssembly.instantiate(): Compiling or instantiating WebAssembly module violates the following Content Security policy ","hevc":true}
+withWasm "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; frame-ancestors 'none'"
+  {"wasm":"ok","hevc":true}
+```
+
+So **every WebAssembly option (A, B, C) needs the worker policy changed first**, and option D does
+not. The development server adds `'unsafe-eval'` to that policy (Next runs code through eval there),
+which also allows WebAssembly, so a WebAssembly decoder would work in `npm run dev` and fail in the
+production build and the desktop app.
 
 ## The candidates
 
@@ -111,6 +135,14 @@ since #119 that the desktop app ships no LGPL code (its licence notices list non
 `e2e-desktop/desktop.spec.ts` fails if one appears): choosing A means the maintainer changing that
 rule, and that test, for this one library.
 
+It also asks for a change to the worker's security policy. Today's `workerPolicy`
+(`next.config.mjs`) blocks compiling WebAssembly (the second probe above), so it would need
+`'wasm-unsafe-eval'`. That policy covers every DotAmi worker, the two pdf.js workers included, unless
+the HEIC worker is served from a fixed address with a header rule of its own (Next names its worker
+files by content hash, so that is extra work, not tried here). And `tests/security-hardening.spec.ts`
+forbids any `unsafe-eval` in that policy, which matches `'wasm-unsafe-eval'` too, so the test would
+change with it. `'wasm-unsafe-eval'` allows compiling WebAssembly only, not JavaScript's `eval`.
+
 **Security.** WebAssembly runs inside the worker's own memory: a bug in the decoder can corrupt that
 memory and crash or confuse the worker, but it can't reach the rest of the window or the computer
 the way a bug in native code can. DotAmi's worker would refuse every connection, as the PDF worker
@@ -120,7 +152,8 @@ address (one `fetch(` and `XMLHttpRequest` in the glue code); DotAmi would hand 
 since the worker can't fetch anything.
 
 **Coverage.** Every computer: it is software, no graphics chip or operating-system codec needed.
-Browser tests can draw a HEIC in Playwright's Chromium.
+Once the worker policy allows WebAssembly, browser tests could draw a HEIC in Playwright's Chromium;
+under today's policy the production build can't run the decoder at all.
 
 ### B. Packages labelled MIT that carry libheif inside
 
@@ -147,6 +180,12 @@ decoder is not something one review can read the way `ofx-js` (221 lines) was re
 use" here would mean trusting conformance claims rather than reading the code. Both state that HEVC
 is under patents and that they grant no rights to them.
 
+**Size:** unknown, because no WebAssembly build of either exists to measure. A Go build carries Go's
+own runtime and its `wasm_exec.js` loader, which usually comes to several megabytes; a Rust build
+carries no runtime of that kind. Both are estimates, not measurements. **Security policy:** the same
+change as A, since this is WebAssembly too: `'wasm-unsafe-eval'` in the worker policy and the
+security-hardening test changed with it.
+
 ### D. The graphics chip, through Chromium's WebCodecs
 
 No new package. DotAmi would write the container reader itself (the HEIC "boxes": which item is the
@@ -156,7 +195,8 @@ decoded tiles come back as frames, are drawn onto an `OffscreenCanvas` in the wo
 page as a finished picture, as PDF pages do now.
 
 - **Licence:** none to ship. The decoder is the graphics chip's and the operating system's.
-- **Network:** none. The worker's policy already refuses every connection.
+- **Network:** none. The worker's policy already refuses every connection, and it needs no change:
+  under it a worker can still ask WebCodecs about HEVC (the second probe above).
 - **Reviewable:** the container reader is DotAmi's own code, a few hundred lines, with its own tests.
   The decoder is not reviewable at all: it is the graphics driver.
 - **Security:** the container reader runs in the worker; the HEVC bytes go through Chromium's GPU
@@ -165,13 +205,16 @@ page as a finished picture, as PDF pages do now.
   than a WebAssembly bug. Microsoft's own HEVC extension had a code-execution fix as recently as
   September 2026 (CVE-2026-58599); whether Chromium goes through that extension at all is in the
   "not checked" list above.
-- **Coverage:** Windows computers whose graphics chip decodes HEVC (Intel since about 2015, and
-  NVIDIA and AMD chips of similar age), and probably Macs, since macOS has decoded HEVC since 2017
-  (not tried: no Mac here, and no Mac build of DotAmi yet).
+- **Coverage:** Windows computers whose graphics chip decodes HEVC (expected, not measured: Intel
+  chips since about 2015, and NVIDIA and AMD chips of similar age; only one Intel chip was tried),
+  and probably Macs, since macOS has decoded HEVC since 2017 (not tried: no Mac here, and no Mac
+  build of DotAmi yet). DotAmi run from source in a browser shows HEIC only if that browser's
+  WebCodecs offers HEVC (not checked beyond Chromium).
   **Not** a computer without one, many virtual machines, or with graphics acceleration turned off:
-  there, a HEIC receipt is kept and can't be shown. The desktop test machines on GitHub have no
-  graphics chip, and Playwright's Chromium has no HEVC, so **no automatic test can ever see a HEIC
-  drawn**; only the container checks and the refusals can be tested, and the drawing only by hand.
+  there, a HEIC receipt is kept and can't be shown. GitHub's test machines are expected to have no
+  graphics chip that decodes HEVC (not checked on them), and Playwright's Chromium has no HEVC
+  (measured), so **no automatic test is expected to see a HEIC drawn**; only the container checks
+  and the refusals can be tested, and the drawing by hand.
 - **Size:** a few hundred lines of DotAmi's own code; nothing added to the installer.
 
 ### E. The operating system's own codec, from the desktop side
@@ -208,15 +251,15 @@ receipt the person can't see inside DotAmi, which is the thing they asked for.
 
 ## The options for the maintainer
 
-| Option                                                            | What changes for a person                                                        | What it costs                                                                             | What it asks of DotAmi                                                                                                                                  |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. libheif in WebAssembly** (`libheif-js`)                      | HEIC receipts shown on every computer                                            | 1.5 MB in the installer; keeping up with a library that had 73 advisories this year       | LGPL code in the desktop app again: the #119 rule and its test changed for this library; licence and source shipped; the patent question answered first |
-| **C. A new permissive decoder** compiled to WebAssembly by DotAmi | Same as A                                                                        | Building and owning a WebAssembly build of a weeks-old decoder no one can fully read      | Trusting its conformance claims instead of a reading; the patent question answered first                                                                |
-| **D. The graphics chip** (WebCodecs)                              | HEIC shown on most Windows and Mac computers; on others it is kept and not shown | A few hundred lines of DotAmi's own container reader; drawing tested only by hand         | Accepting the graphics driver as the decoder, and no automatic test of the drawing                                                                      |
-| **E. Windows' own codec** from the desktop app                    | HEIC shown where Microsoft's two extensions are installed, desktop app only      | A PowerShell call or a native add-on to build and sign                                    | Decoding a hostile file outside every sandbox, with the person's rights                                                                                 |
-| **F. Convert at adding** (on top of A, C, D or E)                 | Shown afterwards on any computer                                                 | A second file per receipt in the store, backups, Delete and the sweep; a privacy-log line | Keeping a made copy beside the file as given                                                                                                            |
-| **G. Keep without showing** (alone, or first)                     | HEIC receipts kept and backed up, not shown                                      | The store's checks and tests; a sentence in the viewer                                    | Nothing new                                                                                                                                             |
-| **None of these yet**                                             | As today: HEIC refused, with the advice to export a JPEG                         | Nothing                                                                                   | Nothing                                                                                                                                                 |
+| Option                                                            | What changes for a person                                                        | What it costs                                                                                                                               | What it asks of DotAmi                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. libheif in WebAssembly** (`libheif-js`)                      | HEIC receipts shown on every computer                                            | 1.5 MB in the installer; keeping up with a library that had 73 advisories this year                                                         | LGPL code in the desktop app again: the #119 rule and its test changed for this library; licence and source shipped; the worker policy opened to WebAssembly (`'wasm-unsafe-eval'`) and its test changed; the patent question answered first |
+| **C. A new permissive decoder** compiled to WebAssembly by DotAmi | Same as A                                                                        | Building and owning a WebAssembly build of a weeks-old decoder no one can fully read; size unknown until built (several MB expected for Go) | Trusting its conformance claims instead of a reading; the worker policy opened to WebAssembly and its test changed, as for A; the patent question answered first                                                                             |
+| **D. The graphics chip** (WebCodecs)                              | HEIC shown on most Windows and Mac computers; on others it is kept and not shown | A few hundred lines of DotAmi's own container reader; drawing tested only by hand                                                           | Accepting the graphics driver as the decoder, and no automatic test of the drawing                                                                                                                                                           |
+| **E. Windows' own codec** from the desktop app                    | HEIC shown where Microsoft's two extensions are installed, desktop app only      | A PowerShell call or a native add-on to build and sign                                                                                      | Decoding a hostile file outside every sandbox, with the person's rights                                                                                                                                                                      |
+| **F. Convert at adding** (on top of A, C, D or E)                 | Shown afterwards on any computer                                                 | A second file per receipt in the store, backups, Delete and the sweep; a privacy-log line                                                   | Keeping a made copy beside the file as given                                                                                                                                                                                                 |
+| **G. Keep without showing** (alone, or first)                     | HEIC receipts kept and backed up, not shown                                      | The store's checks and tests; a sentence in the viewer                                                                                      | Nothing new                                                                                                                                                                                                                                  |
+| **None of these yet**                                             | As today: HEIC refused, with the advice to export a JPEG                         | Nothing                                                                                                                                     | Nothing                                                                                                                                                                                                                                      |
 
 G can come first and any of A, C, D or E later; F goes on top of whichever is chosen.
 
@@ -226,7 +269,12 @@ Whichever decoder, the same hostile-file tests as the viewer's (§ 8), plus HEIC
 
 - The brand check reads the bytes: `ftyp` with a major brand of `heic`, `heix` or `mif1` (and `mif1`
   only with a `heic`-family compatible brand), at the very first box; a file with a HEIC brand that
-  isn't a HEIC (the brand followed by a JPEG, or by nothing) is refused as damaged.
+  isn't a HEIC (the brand followed by a JPEG, or by nothing) is refused as damaged. Today's sniffer
+  (`lib/expenses/receipts/sniff.ts`, `HEIF_BRANDS`) only refuses, so it reads the major brand
+  alone and a wider list (`heic`, `heix`, `hevc`, `hevx`, `heim`, `heis`, `hevm`, `hevs`, `mif1`,
+  `msf1`, which includes the brands for HEIC image sequences). Accepting needs the narrower rule
+  above: the wider list stays for the refusal, and the build says which brands it accepts so the
+  two don't drift.
 - A truncated HEIC (cut off inside its item table, and inside its picture data) is refused or shown
   as damaged, nothing drawn, nothing hangs.
 - Huge claimed dimensions in the picture's size box (`ispe`), and a tile grid whose tiles add up to
