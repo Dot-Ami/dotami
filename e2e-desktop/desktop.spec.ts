@@ -4,17 +4,21 @@
  * on another. Each run gets
  * its own empty data folders (DOTAMI_DATA_DIR), so the database is created and migrated by the
  * app itself on first launch. Native file dialogs are answered by replacing them in the app's
- * main process; the passphrase window is the real one, filled in like a person would.
+ * main process; the passphrase window is the real one, filled in like a person would. Delete
+ * ([8d]) is driven from its menu, and the bytes of the data file and the backups folder are read
+ * afterwards to prove the deleted words are gone, not just hidden.
  */
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
+import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
 const root = path.resolve(__dirname, "..");
 
@@ -324,4 +328,154 @@ test("last year's return is read inside the app, in a worker that can reach noth
   expect(reader, "the return reader's worker").toBeTruthy();
   expect(await reader!.evaluate(() => fetch("/api/figures").then(() => "reached", () => "refused"))).toBe("refused");
   await card.getByRole("button", { name: "Close" }).click();
+});
+
+/** Text no real data holds, so finding it in a file's bytes can only mean the deleted statement. */
+const MARKER = "zq-desktop-delete-marker-5813";
+
+/** Does this file's raw bytes hold the marker? */
+const holdsMarker = (file: string) => readFileSync(file).includes(Buffer.from(MARKER));
+
+/** DotAmi's own safety copies in a data folder's backups/ (the names desktop/wipe-pending.mjs deletes). */
+const safetyCopies = (dir: string) =>
+  existsSync(path.join(dir, "backups")) ? readdirSync(path.join(dir, "backups")).filter((f) => /^dotami-before-.+\.db$/.test(f)) : [];
+
+/** File → Back up… with a passphrase, answered like the backup test above; the file lands at `file`. */
+async function backUpTo(file: string, passphrase: string) {
+  await app!.evaluate(({ dialog }, target) => {
+    dialog.showSaveDialog = (async () => ({ canceled: false, filePath: target })) as typeof dialog.showSaveDialog;
+    dialog.showMessageBox = (async () => ({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
+  }, file);
+  const opened = app!.waitForEvent("window");
+  await clickMenu("backup");
+  const prompt = await opened;
+  await prompt.locator("#pass").fill(passphrase);
+  await prompt.locator("#confirm").fill(passphrase);
+  await prompt.getByRole("button", { name: "Back up" }).click();
+  await expect.poll(() => existsSync(file), { timeout: 30_000 }).toBe(true);
+}
+
+/** File → Restore from a backup…, then the app closes itself to restart (the test starts it again). */
+async function restoreFrom(file: string, passphrase: string) {
+  await app!.evaluate(({ dialog, app: electronApp }, source) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [source] })) as typeof dialog.showOpenDialog;
+    dialog.showMessageBox = (async () => ({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
+    electronApp.relaunch = () => {};
+  }, file);
+  const opened = app!.waitForEvent("window");
+  await clickMenu("restore");
+  const prompt = await opened;
+  await prompt.locator("#pass").fill(passphrase);
+  const closed = app!.waitForEvent("close");
+  await prompt.getByRole("button", { name: "Open" }).click();
+  await closed;
+  app = null;
+}
+
+test("Delete with the safety copies ticked: the words are gone from dotami.db and backups/, and a backup saved elsewhere still restores", async () => {
+  test.setTimeout(300_000);
+  const elsewhere = path.join(tmp, "saved elsewhere", "DotAmi backup.dotami-backup");
+  mkdirSync(path.dirname(elsewhere));
+  const passphrase = "correct horse battery staple";
+  const dbFile = path.join(dataDir, "dotami.db");
+
+  // An idea and a statement holding the marker, a backup saved elsewhere, then a restore of it,
+  // which leaves a safety copy of the data in backups/ the way the app really makes one.
+  let page = await launch();
+  await describeVenture(page);
+  const status = await page.evaluate(
+    async (text) =>
+      (await fetch("/api/person/statements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) }))
+        .status,
+    `statement ${MARKER}`,
+  );
+  expect(status).toBe(200);
+  await backUpTo(elsewhere, passphrase);
+  await restoreFrom(elsewhere, passphrase);
+
+  // The "before": the words are in the data file and in the safety copy.
+  expect(holdsMarker(dbFile)).toBe(true);
+  expect(safetyCopies(dataDir)).toHaveLength(1);
+  expect(holdsMarker(path.join(dataDir, "backups", safetyCopies(dataDir)[0]))).toBe(true);
+
+  page = await launch();
+  await page.goto(new URL("/your-data", page.url()).toString());
+  const removing = page.getByRole("region", { name: "Taking things out" });
+  await removing.getByRole("button", { name: "Delete", exact: true }).click();
+  const box = removing.getByRole("listitem").filter({ has: page.getByLabel("Safety copies in the backups folder") });
+  await expect(box).toContainText("Safety copies: 1");
+  await expect(box).toContainText("Afterwards, only a backup you saved somewhere else could bring anything back.");
+  await removing.getByLabel("Your ideas, with their notes, links and map progress").check();
+  await removing.getByLabel("Your statements (“In your words”)").check();
+  await removing.getByLabel("Safety copies in the backups folder").check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
+  const second = page.getByRole("dialog", { name: "Delete them now?" });
+  await expect(second).toContainText("The safety copies in the backups folder go too.");
+  await second.getByRole("button", { name: "Delete now" }).click();
+  const done = removing.getByRole("status");
+  await expect(done).toContainText("Safety copies: 1 file deleted, 0 left");
+  await expect(done).toContainText("Their space in the data file is wiped");
+  await quit();
+
+  // The "after": in no byte of the data file, no safety copy left, no journal, no wipe still owed.
+  expect(holdsMarker(dbFile)).toBe(false);
+  expect(safetyCopies(dataDir)).toEqual([]);
+  for (const f of readdirSync(path.join(dataDir, "backups"))) expect(holdsMarker(path.join(dataDir, "backups", f)), f).toBe(false);
+  expect(existsSync(`${dbFile}-journal`)).toBe(false);
+  expect(existsSync(wipePendingFile(dbFile))).toBe(false);
+
+  // The backup saved elsewhere still brings it all back.
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByText("Nothing saved yet.")).toBeVisible();
+  await restoreFrom(elsewhere, passphrase);
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+  expect(holdsMarker(dbFile)).toBe(true);
+});
+
+test("a wipe Delete couldn't finish is finished at the next start, and only when Delete left its note", async () => {
+  test.setTimeout(180_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  const logFile = path.join(dataDir, "logs", "server.log");
+
+  // The app makes its database; then what an unfinished wipe leaves behind is set up by hand: a
+  // statement deleted without the wipe (its words still in the file's free space) and a safety copy
+  // made before that delete (holding them as a live row).
+  let page = await launch();
+  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await quit();
+  mkdirSync(path.join(dataDir, "backups"));
+  const copyName = "dotami-before-restore-1760000000000.db";
+  const db = new DatabaseSync(dbFile);
+  db.prepare(`INSERT OR IGNORE INTO "User" (id, updatedAt) VALUES ('wipe-test', 0)`).run();
+  db.prepare(`INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('wipe-test', 'wipe-test', ?, 0)`).run(`statement ${MARKER}`);
+  db.prepare("VACUUM INTO ?").run(path.join(dataDir, "backups", copyName));
+  db.prepare(`DELETE FROM "PersonStatement" WHERE id = 'wipe-test'`).run();
+  db.close();
+  expect(holdsMarker(dbFile)).toBe(true);
+
+  // An ordinary start, with no note: nothing is wiped or deleted. (This is also the test's control:
+  // without the note, the words would stay.)
+  page = await launch();
+  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await quit();
+  expect(holdsMarker(dbFile)).toBe(true);
+  expect(safetyCopies(dataDir)).toEqual([copyName]);
+  expect(readFileSync(logFile, "utf8")).not.toContain("[wipe]");
+
+  // The note Delete leaves when its wipe can't finish: the next start finishes it.
+  writeWipePending(dbFile, { backups: [copyName] });
+  page = await launch();
+  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await quit();
+  expect(holdsMarker(dbFile)).toBe(false);
+  expect(safetyCopies(dataDir)).toEqual([]);
+  expect(existsSync(wipePendingFile(dbFile))).toBe(false);
+  const log = readFileSync(logFile, "utf8");
+  expect(log).toContain("[wipe] finished the wipe an earlier Delete left owed (1 safety copy deleted)");
+  expect(log).toContain("[desktop] wipe-pending note cleared");
+  expect(log).not.toContain(MARKER);
 });

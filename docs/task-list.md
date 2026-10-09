@@ -118,7 +118,9 @@ roadmap's build order.
     that hold events only (#86)
   - [x] *Delete*: pick what to delete and see what else it affects — one button, tick-boxes per kind
     of data, asked twice, wiped from the file (a byte-scan test proves it); statements all at once only
-  - [ ] *Delete* can also clear the backups folder, and a wipe that didn't finish completes at the next start
+  - [x] *Delete* can also clear the backups folder (only DotAmi's own safety copies, never through a
+    link), and a wipe that didn't finish completes at the next start of the desktop app, only when
+    Delete left its "wipe pending" note
   - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
