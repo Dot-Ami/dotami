@@ -1,6 +1,6 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-08 ([8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-09 ([8i] — whether the receipt files are encrypted; 2026-10-08: [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
 the interactive controls are `copy-path-button.tsx` and `figure-reminders-control.tsx`) ·
@@ -28,7 +28,15 @@ Each group:
    - Data and backups: the absolute path of the database file (from `DATABASE_URL`, relative
      paths read from `prisma/` as Prisma does) with a **Copy path** button; "no file there yet"
      when it's missing; a plain line when the URL isn't a SQLite file. The line above the path
-     says the receipt copies ([8i]) are in a folder named receipts beside the file. In the desktop
+     says the receipt copies ([8i]) are in a folder named receipts beside the file. Under the path, one
+     line from `today.receipts` (`lib/expenses/receipts/protection.ts`, expense-records.md § 9): in the
+     desktop app with its key open, "Your receipt files are encrypted on this computer." with what that
+     protects, that anything running as the person can still open them, that losing the key (a Windows
+     profile reset, the folder moved to another account or computer) loses the receipts except those in
+     a backup, and that the data file itself isn't encrypted; from source (or with no key store),
+     "Receipts in this copy aren't encrypted." and why (the desktop app encrypts them); when the key
+     can't be opened, in amber, "DotAmi can't open the key to your receipts." with what happened and the
+     two ways forward (restore a backup, or delete the receipts and restart). In the desktop
      app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), and that a backup holds
      the receipt files too; from source: copying the file and the receipts folder together
      is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,

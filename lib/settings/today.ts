@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+import { receiptLockState, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import pkg from "@/package.json";
 import { DEFAULT_INTENT_ANTHROPIC_MODEL } from "@/lib/providers/llm/constants";
 
@@ -22,6 +23,12 @@ export interface SettingsToday {
   updates: "github" | "manual";
   /** The desktop app (DOTAMI_DESKTOP from desktop/main.mjs): it has Back up and Restore in its File menu. */
   desktop: boolean;
+  /**
+   * [8i] How this copy keeps receipt files (lib/expenses/receipts/lock.ts): "on" encrypted with the
+   * desktop app's key; "source" or "no-key-store" kept unencrypted; "key-unreadable" the key can't be
+   * opened. Only the state: the key never reaches a page.
+   */
+  receipts: ReceiptLockState;
   /** The tax year the catalogs cover (lib/engines/<engine>/v2026). Becomes a setting with [11i]. */
   taxYear: number;
 }
@@ -55,6 +62,7 @@ export function readSettingsToday(
     version: pkg.version,
     updates: env.DOTAMI_UPDATES === "github" ? "github" : "manual",
     desktop: env.DOTAMI_DESKTOP === "1",
+    receipts: receiptLockState(env),
     taxYear: 2026,
   };
 }

@@ -55,15 +55,15 @@ export type BackupHeader = BackupHeaderV1 | BackupHeaderV2;
 export function writeBackup(
   dbFile: string,
   outFile: string,
-  options: { passphrase?: string; appVersion: string; now?: () => number },
-): { encrypted: boolean; bytes: number; migrations: string[]; receipts: number; missingReceipts: number };
+  options: { passphrase?: string; appVersion: string; now?: () => number; receiptKey?: Buffer | null },
+): { encrypted: boolean; bytes: number; migrations: string[]; receipts: number; missingReceipts: number; unreadableReceipts: number };
 
 export function readBackup(
   file: string,
-  options?: { passphrase?: string; unpackTo?: { dbFile: string; receiptsDir: string } | null },
+  options?: { passphrase?: string; unpackTo?: { dbFile: string; receiptsDir: string } | null; receiptKey?: Buffer | null },
 ): { header: BackupHeader; files: { path: string; bytes: number }[] };
 
-export function backupReceiptsNote(receipts: number, missingReceipts: number): string;
+export function backupReceiptsNote(receipts: number, missingReceipts: number, options?: { unreadable?: number; locked?: boolean }): string;
 
 export function restoreReceiptsNote(format: 1 | 2, receiptsInBackup: number, receiptsHere: number): string;
 
@@ -73,7 +73,7 @@ export function discardRestore(stagingFile: string): void;
 
 export function prepareRestore(
   file: string,
-  options: { passphrase?: string; migrationsDir: string; stagingFile: string },
+  options: { passphrase?: string; migrationsDir: string; stagingFile: string; receiptKey?: Buffer | null },
 ): { header: BackupHeader; receipts: number };
 
 export function applyRestore(

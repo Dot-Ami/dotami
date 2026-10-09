@@ -6,12 +6,16 @@
  * app itself on first launch. Native file dialogs are answered by replacing them in the app's
  * main process; the passphrase window is the real one, filled in like a person would.
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
+import { migrate } from "../desktop/migrate.mjs";
+import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { pdf, png } from "../tests/helpers/receipt-files";
@@ -53,6 +57,27 @@ async function describeVenture(page: Page) {
   await page.getByText("Current employment", { exact: true }).locator("xpath=following-sibling::select").selectOption("self-employed");
   await page.getByRole("button", { name: "Open my map →" }).click();
   await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toBeVisible();
+}
+
+/**
+ * The bytes DotAmi's own page gets back for a record's receipt (the viewer's request), as base64: the
+ * receipt decrypted by the app's server. Found by the record's "paid to".
+ */
+async function receiptBytesShown(page: Page, paidTo: string): Promise<string> {
+  return page.evaluate(async (who) => {
+    const list = (await (await fetch("/api/expenses")).json()) as { expenses: { id: string; paidTo: string }[] };
+    const expenseId = list.expenses.find((e) => e.paidTo === who)!.id;
+    const res = await fetch("/api/expenses/receipt/file", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expenseId }),
+    });
+    if (!res.ok) return `refused ${res.status}: ${await res.text()}`;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    let text = "";
+    for (const b of bytes) text += String.fromCharCode(b);
+    return btoa(text);
+  }, paidTo);
 }
 
 /** Clicks one of the app's own menu items, as the person would. */
@@ -103,6 +128,13 @@ test("start → describe a venture → close → start again: the venture is sti
   // Backups carry the receipts folder now, and the page says so.
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("with your receipt files in it");
   await expect(page.getByRole("region", { name: "Data and backups" })).not.toContainText("doesn't hold the receipts folder");
+  // [8i] The receipts are encrypted in the desktop app, with a key kept only wrapped by Windows; the
+  // page says so, and what losing that key means.
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("except those in a backup");
+  expect(startLog).toContain("[desktop] receipts: key open (made now)");
+  const keyFile = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8"));
+  expect(Object.keys(keyFile).sort()).toEqual(["format", "keyId", "wrapped"]);
   await expect(page.getByRole("region", { name: "Privacy" })).toContainText("DotAmi sends nothing off this computer.");
 
   // An outside link opens in the person's own browser, never inside the app's window.
@@ -237,7 +269,13 @@ test("back up on one computer → restore on another: the same ventures and rece
   expect(kept).toEqual([201, 200, 200]);
   const receiptsA = readdirSync(path.join(dataDir, "receipts"));
   expect(receiptsA).toHaveLength(1);
-  expect(readFileSync(path.join(dataDir, "receipts", receiptsA[0])).equals(receipt)).toBe(true);
+  // [8i] On A's disk the receipt is encrypted with A's key: none of the picture's bytes are in the file.
+  const onDiskA = readFileSync(path.join(dataDir, "receipts", receiptsA[0]));
+  expect(onDiskA.subarray(0, 14).toString("latin1")).toBe("DOTAMI-RECEIPT");
+  expect(onDiskA.indexOf(receipt.subarray(0, 16))).toBe(-1);
+  expect(onDiskA.length).toBe(receipt.length + ENCRYPTED_OVERHEAD);
+  // ...and it opens as exactly the bytes that were added.
+  expect(await receiptBytesShown(page, "Example Stationery desktop test")).toEqual(receipt.toString("base64"));
 
   // File → Back up… with a passphrase; the message afterwards says the receipt is in it.
   await app!.evaluate(({ dialog }, file) => {
@@ -298,13 +336,85 @@ test("back up on one computer → restore on another: the same ventures and rece
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   // What B had before was kept, in its backups folder.
   expect(readdirSync(path.join(computerB, "backups")).some((f) => f.startsWith("dotami-before-restore-"))).toBe(true);
-  // The receipt came with it: the same name and the same bytes, and the record shows it.
+  // The receipt came with it under the same name, encrypted with B's own key (B's key file is not A's),
+  // and it opens on B as exactly the bytes added on A.
   expect(readdirSync(path.join(computerB, "receipts"))).toEqual(receiptsA);
-  expect(readFileSync(path.join(computerB, "receipts", receiptsA[0])).equals(receipt)).toBe(true);
+  const onDiskB = readFileSync(path.join(computerB, "receipts", receiptsA[0]));
+  expect(onDiskB.subarray(0, 14).toString("latin1")).toBe("DOTAMI-RECEIPT");
+  expect(onDiskB.indexOf(receipt.subarray(0, 16))).toBe(-1);
+  const keyIdA = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId;
+  const keyIdB = JSON.parse(readFileSync(path.join(computerB, "receipts.key"), "utf8")).keyId;
+  expect(keyIdB).not.toBe(keyIdA);
+  expect(encryptedKeyId(onDiskB)).toBe(keyIdB);
   await page.goto(new URL("/expenses", page.url()).toString());
   await expect(
     page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Stationery desktop test" }),
   ).toContainText(`Receipt: PNG picture · ${receipt.length} bytes`);
+  expect(await receiptBytesShown(page, "Example Stationery desktop test")).toEqual(receipt.toString("base64"));
+});
+
+test("receipts kept before this version are encrypted at the first start, and still open ([8i])", async () => {
+  // A data folder as an earlier DotAmi left it: a migrated database with an agreed record and its
+  // receipt, the file kept plain, and no key yet.
+  const dbFile = path.join(dataDir, "dotami.db");
+  migrate(dbFile, path.join(root, "prisma", "migrations"));
+  const receipt = png(4, 4, { rgb: [20, 120, 60] });
+  const id = "8".repeat(32);
+  const db = new DatabaseSync(dbFile);
+  try {
+    db.prepare(
+      `INSERT INTO "Expense" (id, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status) VALUES ('e8', ?, 1500, 'Example Hardware desktop first start', 'screws', 'typed', 'typed by you', 'confirmed')`,
+    ).run(Date.parse("2026-10-01T00:00:00Z"));
+    db.prepare(`INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES (?, 'e8', 'image/png', ?, ?)`).run(
+      id,
+      receipt.length,
+      createHash("sha256").update(receipt).digest("hex"),
+    );
+  } finally {
+    db.close();
+  }
+  mkdirSync(path.join(dataDir, "receipts"));
+  writeFileSync(path.join(dataDir, "receipts", `${id}.png`), receipt);
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+
+  const page = await launch();
+  // Encrypted at the start, before the window opened.
+  const onDisk = readFileSync(path.join(dataDir, "receipts", `${id}.png`));
+  expect(onDisk.subarray(0, 14).toString("latin1")).toBe("DOTAMI-RECEIPT");
+  expect(onDisk.indexOf(receipt.subarray(0, 16))).toBe(-1);
+  expect(readdirSync(path.join(dataDir, "receipts"))).toEqual([`${id}.png`]);
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[desktop] receipts: 1 file(s) encrypted now, 0 couldn't be yet");
+  await page.goto(new URL("/expenses", page.url()).toString());
+  expect(await receiptBytesShown(page, "Example Hardware desktop first start")).toEqual(receipt.toString("base64"));
+  // What DotAmi knows about you counts it as encrypted.
+  await page.goto(new URL("/your-data", page.url()).toString());
+  await expect(page.getByText("1 of 1 receipt file encrypted with this computer's key.")).toBeVisible();
+});
+
+test("a receipts key this Windows account can't open: nothing is changed, and the app says what to do ([8i])", async () => {
+  // A key file wrapped for some other account (here: bytes Windows can't open at all), and a receipt
+  // locked with that key.
+  const first = await launch();
+  await first.goto(new URL("/expenses", first.url()).toString());
+  await quit();
+  writeFileSync(
+    path.join(dataDir, "receipts.key"),
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  const lockedName = `${"9".repeat(32)}.pdf`;
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  const locked = Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from("0011223344556677", "hex"), Buffer.alloc(40, 1)]);
+  writeFileSync(path.join(dataDir, "receipts", lockedName), locked);
+  const keyBefore = readFileSync(path.join(dataDir, "receipts.key"));
+
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("DotAmi can't open the key to your receipts.");
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("File → Restore from a backup…");
+  // Nothing on the disk was changed: the key file and the locked receipt are as they were.
+  expect(readFileSync(path.join(dataDir, "receipts.key")).equals(keyBefore)).toBe(true);
+  expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("1 receipt file(s) are locked with it; nothing was changed");
 });
 
 test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {

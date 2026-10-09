@@ -101,6 +101,11 @@ test("the settings page: every group, what's true today, every setting and its w
   const data = page.getByRole("region", { name: "Data and backups" });
   const filePath = data.locator("code").filter({ hasText: /e2e[\\/]dotami\.db$/ });
   await expect(filePath).toBeVisible();
+  // [8i] Run from source there is no operating-system key store: the receipts aren't encrypted, and
+  // the page says so rather than staying quiet (docs/architecture/expense-records.md § 9).
+  await expect(data).toContainText("Receipts in this copy aren't encrypted.");
+  await expect(data).toContainText("The desktop app encrypts them.");
+  await expect(data).not.toContainText("Your receipt files are encrypted");
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");

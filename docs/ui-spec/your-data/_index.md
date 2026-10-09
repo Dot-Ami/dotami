@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-08 ([8d] — the Delete menu; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-09 ([8i] — how the receipt files are kept, and the key's file; 2026-10-08: [8d] — the Delete menu; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -52,7 +52,15 @@ jump links, then five sections in this order:
    data folder, with the error's name and code, and that a failed database update adds the
    database's words about which update failed and what it objected to); and the window's
    own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A line
-   pointing at disk encryption in Settings.
+   pointing at disk encryption in Settings. The receipts folder's row ([8i], 2026-10-09) also says
+   whether this copy encrypts receipt files (the same sentences as Settings,
+   `lib/expenses/receipts/protection.ts`, amber when the key can't be opened) and counts the files by
+   how they are kept, read from the first few bytes of each and nothing more ("N of M receipt files
+   encrypted with this computer's key.", any not encrypted yet, any locked with a key this computer
+   can't open); its footnote says those first bytes were read. A row for **the key to your receipt
+   files** (`receipts.key`, desktop app only): what it is, that the key itself is written nowhere else,
+   and that losing it, or the Windows profile that opens it, loses the receipts except those in a
+   backup.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
    is, and that DotAmi can't take it back), the desktop update check (GitHub sees the computer's

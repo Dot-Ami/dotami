@@ -343,7 +343,8 @@ receipts (the backup change of section 2). Showing a receipt inside DotAmi is §
 
 **Where a receipt lives.** A copy of the file in a `receipts/` folder beside the data file
 (`<data folder>/receipts/` in the desktop app; `prisma/receipts/` beside a copy run from source,
-ignored by git). The folder is listed by hand in `FOLDERS` in `lib/privacy/inventory.ts` (rule 4 of
+ignored by git). Since 2026-10-09 the desktop app encrypts each file (§ 9); a copy run from source
+keeps them plain. The folder is listed by hand in `FOLDERS` in `lib/privacy/inventory.ts` (rule 4 of
 section 3: no test finds a new folder on its own), so *What DotAmi knows about you* shows its path,
 its file count and its size. A `Receipt` table describes each file: which record it belongs to, the
 type DotAmi read from its bytes, its size and its SHA-256, and the day it was added. One receipt per
@@ -725,6 +726,27 @@ counts only, never a name. After the first start of this version there is normal
 - The real app (`e2e-desktop/desktop.spec.ts`): a receipt added in the app is encrypted on the disk,
   `receipts.key` holds no copy of the key, and the record's receipt opens; back up on one computer,
   restore on another, and it opens there.
+
+### Built by (2026-10-09, in the same change, after this section)
+
+The file format and the first-start pass, `desktop/receipt-crypto.mjs` (one file, imported by both the
+desktop app and the server, so the format exists once); the key, `desktop/receipt-key.mjs`; the start,
+the backup and the restore, `desktop/main.mjs` and `desktop/backup.mjs`; the server's side,
+`lib/expenses/receipts/lock.ts` (the key from the desktop app, taken out of the server's environment on
+first read) and `lib/expenses/receipts/store.ts` (encrypting at adding, decrypting to show, the sweep's
+check, `describeReceiptFiles`); the sentences, `lib/expenses/receipts/protection.ts`, shown by
+`components/settings/settings-page.tsx`, `components/your-data/your-data-page.tsx` and
+`components/expenses/receipt-protection.tsx`. Backups made before this change by the earlier writer are
+kept as `tests/fixtures/backups/format-2-{plain,locked}.dotami-backup` and restored by the tests.
+
+**Checked that the tests bite** (each rule broken on purpose, then put back): the file's id left out of
+the associated data fails the renamed-file test (and, in the store, the swapped-file test); the plain
+file removed before the encrypted one is in place fails the three crash tests ended after
+"temp-written"; leftovers not removed fail the leftover test and those three; the key written unwrapped
+fails the "kept only wrapped" tests; a key replaced although receipts are locked by it fails the
+"nothing changes" tests; Linux's `basic_text` accepted fails its test; a receipt written plain with the
+key open fails five store tests; a receipt from another key dropped by the sweep fails its test; a
+backup that copies the encrypted bytes, or a restore that stages receipts plain, fails the backup tests.
 
 ### Still open (for the maintainer)
 

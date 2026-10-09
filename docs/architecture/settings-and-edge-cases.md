@@ -209,6 +209,15 @@ newer version of that program than the reader knows.
 - Agreeing to a typed batch fails after it was proposed → the records wait under "Waiting for you" and the page says so. *Not tested by a forced failure.*
 - Attaching or moving a record from outside DotAmi's page → refused (403). *Tested.*
 
+**Receipt files encrypted at rest [8i]** (built 2026-10-09; [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09); `tests/receipt-crypto.spec.ts`, `tests/receipt-key.spec.ts`, `tests/expenses-receipts.spec.ts`, `tests/desktop-backup.spec.ts`, the desktop test)
+- Receipts kept before this version, at the first start → each encrypted, file by file, a temp file flushed then renamed over the plain one. *Tested, including a real process ended after each step of each file: every receipt still opens, and the next start finishes; and in the real app.*
+- A receipt file changed, cut short, or another receipt's encrypted file put in its place → refused as changed, even when both hold the very same picture (the file's id is authenticated). *Tested.*
+- A backup made on one computer restored on another, whose key differs → the receipts come back, encrypted with the new computer's key, never written there unencrypted. *Tested (unit and the desktop test).*
+- A backup made before this version (format 2 with plain receipts, or format 1) → restores the same way. *Tested with backups the earlier writer made.*
+- The Windows profile is reset, or the data folder comes from another account → the key can't be opened; nothing on the disk is changed, receipts can't be shown or added, and Settings, What DotAmi knows about you and the Expenses page say to restore a backup or delete the receipts. With no receipt locked by it, the old key file is moved to the backups folder and a new key is made. *Tested with a stand-in for Windows' protection, and in the real app with a key file it can't open.*
+- A copy run from source → receipts kept unencrypted, and the settings page and What DotAmi knows about you say so; a receipt the desktop app encrypted is refused there with a sentence saying the desktop app can open it. *Tested (unit and browser).*
+- No key store on the computer (Linux without a keyring, which Electron would answer with a fixed password) → treated as no key store: kept unencrypted, said so. *Tested with a stand-in; there is no Linux build.*
+
 ### The Lens
 
 **Pick your model [9a]**

@@ -97,8 +97,8 @@ person is asked).
   which adds that one table and touches no other, tested by
   [`tests/desktop-migrate.spec.ts`](../tests/desktop-migrate.spec.ts)). Both are listed on *What
   DotAmi knows about you* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `TABLES`,
-  `FOLDERS`; the folder was added by hand, since no test finds a new folder on its own). DotAmi does
-  not encrypt the copies; the disk's own encryption is what protects them, as for the data file.
+  `FOLDERS`; the folder was added by hand, since no test finds a new folder on its own). The desktop
+  app encrypts the copies (the next entry); a copy run from source doesn't, and says so.
   **Backups hold the receipts** (a new backup format, 2): every receipt file the data file describes
   goes into the backup with it, under the same passphrase when the backup is locked (AES-256-GCM over
   the whole stream, the header and its file list included). A restore brings them back, and moves the
@@ -113,6 +113,29 @@ person is asked).
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
   adds one line to the log with only the error's name and code, never what was deleted.
+- **Receipt files are encrypted in the desktop app ([8i], decided 2026-10-09).** Each file in
+  `receipts/` is AES-256-GCM-encrypted with one random key per data folder, the file's id
+  authenticated with it ([`desktop/receipt-crypto.mjs`](../desktop/receipt-crypto.mjs)). The key is
+  kept only in a new file beside the data file, `receipts.key`, wrapped by Electron's `safeStorage`
+  (DPAPI for the person's Windows account; Electron keeps its own DPAPI-protected key in the data
+  folder's `Local State` file); the file also holds the key's id (the first 8 bytes of its SHA-256,
+  not secret) ([`desktop/receipt-key.mjs`](../desktop/receipt-key.mjs)). The key is never written
+  anywhere else: not in the data file, not in a backup, not in the log. While the app runs it is in
+  the memory of its main process and its server, which gets it in its environment and removes it
+  from there on first read ([`lib/expenses/receipts/lock.ts`](../lib/expenses/receipts/lock.ts)).
+  Receipts kept before this version are encrypted at the first start, crash-safe, including the
+  receipts folders earlier restores moved into `backups/`. A key file Windows can't open, when no
+  receipt is locked with it, is moved to `backups/receipts-key-unreadable-<time>.key` (never deleted)
+  and a new one made. **Not encrypted:** the data file itself (every expense record, and each
+  receipt's kind, size, fingerprint and day added), the safety copies, the log, and a copy run from
+  source, which has no key store and keeps receipts plain; Settings and *What DotAmi knows about you*
+  say each. Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `FOLDERS`
+  (`receipts-key`). *What DotAmi knows about you* now reads the first few bytes of each receipt file
+  (never more) to count how they are kept. Design and threat model:
+  [expense-records.md § 9](architecture/expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09).
+  **Backups** hold each receipt's own bytes, decrypted, so they restore on another computer; a
+  restore encrypts them with that computer's key as they are unpacked, so nothing is staged
+  unencrypted. The backup format is unchanged.
 
 ### What leaves the computer, and to whom
 
@@ -178,6 +201,9 @@ person is asked).
 - None of this applies to the installed desktop app: it runs Next.js's built server and the Prisma
   client, but not `next dev`, `next build`, `next lint` or the Prisma command-line tool, and it
   starts its server with `NEXT_TELEMETRY_DISABLED=1` ([`desktop/main.mjs`](../desktop/main.mjs)).
+- **Encrypting the receipts sends nothing anywhere ([8i]).** The key is made with Node's own
+  `crypto.randomBytes` and wrapped by Windows on this computer; nothing about it, or any receipt, is
+  sent. The privacy scan finds no new request.
 
 ### Packages that ship
 
@@ -188,6 +214,8 @@ person is asked).
   desktop app's server. Reviewed 2026-10-08
   ([`docs/connectors/pdf-reader-review.md`](connectors/pdf-reader-review.md)); listed in
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`, `LIBRARY_IMPORTS`).
+- **No new package for encrypting the receipts ([8i]).** It uses Node's own `crypto` (AES-256-GCM,
+  SHA-256, random bytes) and Electron's own `safeStorage`, both already in the app.
 
 ### New powers or permissions
 
@@ -226,6 +254,10 @@ person is asked).
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts),
   `refuseUnlessFromAppPage`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)).
   Statements still can't be edited or deleted one at a time.
+- **The desktop app uses Windows' per-account protection for one secret ([8i]).** `safeStorage`
+  (DPAPI) wraps the receipts' key at the first start and unwraps it at each start. On Windows this
+  asks nothing of the person. (On a Mac, Electron uses the Keychain, which can ask the person to allow
+  it; there is no Mac build.) No other new power: the server still can't reach anything new.
 
 ### What the person must agree to
 
@@ -262,6 +294,8 @@ person is asked).
   appears as soon as one is found, without blocking the app, and the taskbar button shows the
   download's progress ([`desktop/update-notice.mjs`](../desktop/update-notice.mjs), tested by
   [`tests/desktop-update-notice.spec.ts`](../tests/desktop-update-notice.spec.ts)).
+- **Nothing new to agree to for encrypted receipts ([8i]).** It is on in the desktop app with no
+  choice to make (the maintainer's decision of 2026-10-09); there is no setting.
 
 ### How to remove it
 
@@ -282,13 +316,17 @@ person is asked).
   safety copies in `backups/`, what the desktop window stored in earlier launches, the log,
   anything that already left the computer, and the disk under the data file. The placeholder
   account (`User`) stays (`KEPT_BY_DELETE`).
+- **The receipts' key file (`receipts.key`) is never removed by DotAmi ([8i]),** not by Delete and
+  not by uninstalling (the data folder stays). Deleting it, or `Local State`, by hand loses every
+  receipt encrypted with it, except those in a backup; Delete's *Your receipts* removes the receipts
+  themselves.
 
 ### What the policy will need to say
 
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot
-  remove. It stays on the computer, unencrypted by DotAmi; a backup carries it, locked only if the
-  person set a passphrase for that backup.
+  remove. It stays on the computer, encrypted by the desktop app (not by a copy run from source); a
+  backup carries it, locked only if the person set a passphrase for that backup.
 - The desktop app's log can hold the location of the data folder and, after a failed database
   update, the database's description of what failed; it holds nothing the person typed.
 - People who build DotAmi from its source code: the project's own commands switch off the usage
@@ -306,6 +344,11 @@ person is asked).
 - Delete removes DotAmi's own copy only: backups the person made, the safety copies in the
   backups folder and anything already shared still hold what was deleted, and the CRA generally
   expects business records to be kept six years, which Delete doesn't change.
+- In the desktop app, receipt files are encrypted on the computer with a key only the person's
+  Windows account can open; this protects them from other accounts, copies of the folder and a disk
+  read on its own, not from programs the person runs. The data file is not encrypted. A backup
+  without a passphrase holds the receipts unencrypted. Losing the key (a Windows profile reset) loses
+  the receipts except those in a backup. A copy run from source doesn't encrypt them.
 
 ### Still open (carried forward until decided)
 

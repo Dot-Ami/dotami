@@ -10,6 +10,7 @@ import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_RECEIPT_BYTES, typeName } from "@/lib/expenses/receipts/types";
 import type { ExpenseView } from "@/lib/expenses/types";
 
+import { receiptNoteSentence, useReceiptProtection } from "./receipt-protection";
 import { ReceiptViewer } from "./receipt-viewer";
 
 /**
@@ -38,6 +39,7 @@ function base64Of(file: Blob): Promise<string> {
 }
 
 export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChanged: () => Promise<void> | void }) {
+  const protection = useReceiptProtection();
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
   const [adding, setAdding] = useState(false);
@@ -143,6 +145,8 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
             address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is
             your own record; it says nothing about whether you can stop keeping the original.
           </p>
+          {/* [8i] Whether the copy is encrypted here, and what losing the key means (expense-records.md § 9). */}
+          <p className="mt-1.5">{receiptNoteSentence(protection)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label htmlFor={inputId} className="cursor-pointer rounded-sm border border-rule px-2 py-0.5 text-paper hover:border-maple-soft">
               {busy ? "Adding…" : "Choose the receipt file"}

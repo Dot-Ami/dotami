@@ -95,7 +95,7 @@ export interface WindowStorageEntry {
 
 /** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log" | "receipts";
+  id: "backups" | "log" | "receipts" | "receipts-key";
   /** Path relative to the folder holding the data file. */
   relativePath: string;
   name: string;
@@ -483,9 +483,18 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "receipts",
     name: "Your receipt files",
     holds:
-      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG or WebP picture, or a PDF, at most 10 MB each. DotAmi names each file itself with a random string, never with your file's name, and never changes what is in it, so anything printed on a receipt (the last digits of a card, your name and address) is in the copy too. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
+      "A copy of each receipt you added to an expense record, as you gave it: a JPEG, PNG or WebP picture, or a PDF, at most 10 MB each. DotAmi names each file itself with a random string, never with your file's name, and never changes the receipt itself, so anything printed on it (the last digits of a card, your name and address) is in the copy too. In the desktop app each file is encrypted, with the key described below; a copy run from source keeps them unencrypted. Only DotAmi's own window can open one. “Remove receipt” on the Expenses page removes one; Delete, at the bottom of this page, removes them all (“Your receipts”) or with their records (“Your expense records”). A file DotAmi didn't name is never touched.",
     writtenBy: { file: "lib/expenses/receipts/store.ts", mentions: 'RECEIPTS_FOLDER = "receipts"' },
     desktopOnly: false,
+  },
+  {
+    id: "receipts-key",
+    relativePath: "receipts.key",
+    name: "The key to your receipt files",
+    holds:
+      "The key that encrypts your receipt files, itself encrypted by Windows for your Windows account only (with the protection Windows gives each account's secrets; Electron, which the desktop app is built on, keeps its own part of that in a file named Local State in the same folder). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses the receipts except those in a backup. Made the first time the desktop app starts; never removed by DotAmi. If Windows can't open it and no receipt is locked with it, it is moved to the safety copies folder and a new one is made.",
+    writtenBy: { file: "desktop/receipt-key.mjs", mentions: 'RECEIPT_KEY_FILE = "receipts.key"' },
+    desktopOnly: true,
   },
   {
     id: "backups",

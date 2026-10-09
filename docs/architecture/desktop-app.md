@@ -23,11 +23,22 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    wrote in the background while start-up ran synchronously, so a start killed or failed before the
    server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
    brought up to date by `desktop/migrate.mjs` (below).
-4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
+4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
+   `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
+   account), or made the first time (`desktop/receipt-key.mjs`); then any receipt file not encrypted
+   yet, in `receipts/` and in the receipts folders earlier restores moved into `backups/`, is
+   encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
+   state and counts only. A key this account can't open changes nothing on the disk when receipts are
+   locked with it; with none locked, it is moved to `backups/` and a new one made. No key store: the
+   receipts stay unencrypted, and the settings page says so.
+5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
-   DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
-5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
+   DotAmi ships no key, and the person's model will come from the app's own settings ([9a]). It is
+   told the receipts' key state (`DOTAMI_RECEIPT_LOCK`) and, when the key is open, the key itself
+   (`DOTAMI_RECEIPT_KEY`), which it takes out of its own environment the first time it reads it; a
+   receipt key in the shell that started the app is never passed on.
+6. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a
    playbook) goes where the person picks in a Save dialog, and Cancel saves nothing; a download that
@@ -37,8 +48,8 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
    2026-10-05).
-6. **Updates** (installed app only) — see below.
-7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
+7. **Updates** (installed app only) — see below.
+8. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
    ideas · Settings; View; Help → About · Check for updates · Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
@@ -107,11 +118,22 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   database SQLite's `integrity_check` rejects) · locked and the passphrase is wrong (GCM can't tell
   a wrong passphrase from a damaged file, so the message says both) · made by a newer DotAmi. All
   checks run on a temporary copy; the live data is untouched until the person confirms.
+- **Receipts encrypted at rest** ([8i], 2026-10-09; [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
+  The format doesn't change. Back up decrypts each receipt in memory with this computer's key and
+  writes its own bytes (the size and SHA-256 the file list gives), so the backup restores on a computer
+  whose key differs; one this computer can't open is left out and named in the message. An unlocked
+  backup's receipts are readable by whoever has it, and the passphrase window and the message say so.
+  Restore encrypts each receipt with this computer's key as it is unpacked, after its SHA-256 is
+  checked, so nothing is staged unencrypted. When this computer's key file can't be opened, a restore
+  makes a new key, saves it only once the person confirms (the old key file goes to `backups/`), and
+  encrypts the restored receipts with it. Format 2 backups made before this change (by the earlier
+  writer, kept as fixtures) and format 1 backups restore as before.
 - **The passphrase window** is a local page with no network access (its own CSP) that can send
   back only the passphrase or "cancel"; the app checks the message came from that window.
-- **Tests:** `tests/desktop-backup.spec.ts` (23 cases: receipts round-trip plain and locked, a
+- **Tests:** `tests/desktop-backup.spec.ts` (28 cases: receipts round-trip plain and locked, a
   changed tag, file list or receipt byte refused, hostile file lists, the put-back, both format-1
-  fixtures; checked that it bites — without header authentication, the edited-header case fails, and
+  fixtures; since 2026-10-09 receipts encrypted on one computer restored with another's key, one this
+  computer can't open left out, and two format-2 fixtures made by the earlier writer; checked that it bites — without header authentication, the edited-header case fails, and
   each receipt case fails with its line of the code removed) and the desktop test "back up on one
   computer → restore on another", through the real passphrase window, a wrong passphrase first, now
   carrying a receipt from computer A to computer B byte for byte (checked: with the swap skipped it
@@ -243,6 +265,11 @@ to the data.
   line and the backup line, and the database must be unchanged. (Checked that it bites: with the
   old background stream the log file isn't even there.) Also that `main.mjs` ships every file of
   its own that it imports.
+- `tests/receipt-crypto.spec.ts` and `tests/receipt-key.spec.ts` ([8i]) — the encrypted receipt file
+  (tamper, wrong key, a renamed file), the first-start pass with a real process ended after each step
+  of each file, and the key: made once, kept only wrapped, what happens when it can't be opened, no key
+  store. The desktop test also starts the real app on a folder an earlier DotAmi left (a plain receipt,
+  no key) and on one whose key file this account can't open.
 - `tests/desktop-update-notice.spec.ts` — the update messages and taskbar progress, driven by a fake
   updater sending electron-updater's events: told at once, progress, the same *Restart and update* /
   *Later* question, installing only on that click, a failed download. (Checked that it bites: with

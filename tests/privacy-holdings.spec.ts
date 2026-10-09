@@ -6,6 +6,7 @@
  * date shifted a day, a folder opened that should only have been counted.
  */
 import { execFileSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -22,7 +23,9 @@ import {
   plural,
   sizeWords,
 } from "@/components/your-data/format";
+import { encryptReceipt, keyIdOf } from "@/desktop/receipt-crypto.mjs";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
+import type { ReceiptLock } from "@/lib/expenses/receipts/lock";
 import { TABLES } from "@/lib/privacy/inventory";
 import { localCalendarDay, readHoldings } from "@/lib/privacy/holdings";
 import { addTypedStatement } from "@/lib/person/statements";
@@ -304,6 +307,29 @@ describe("the folders beside the data file", () => {
 
     // What came back is names, counts, sizes and dates: none of what was inside.
     expect(JSON.stringify(h)).not.toContain(secret);
+  });
+
+  it("says how the receipt files are kept, from their first bytes only, and lists the key file without its key ([8i])", async () => {
+    const folder = path.join(root, "with-receipts");
+    const receipts = path.join(folder, "receipts");
+    mkdirSync(receipts, { recursive: true });
+    const key = randomBytes(32);
+    const lock: ReceiptLock = { state: "on", key, keyId: keyIdOf(key) };
+    const secret = "marker-inside-a-receipt";
+    writeFileSync(path.join(receipts, `${"a".repeat(32)}.pdf`), encryptReceipt(Buffer.from(`%PDF-1.4 ${secret}`), { key, id: "a".repeat(32) }));
+    writeFileSync(path.join(receipts, `${"b".repeat(32)}.pdf`), `%PDF-1.4 ${secret} kept plain`);
+    writeFileSync(path.join(folder, "receipts.key"), JSON.stringify({ format: 1, keyId: keyIdOf(key), wrapped: "d3JhcHBlZA==" }));
+    const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
+
+    const h = await readHoldings(seeded.prisma, today, lock);
+    expect(h.receiptFiles).toEqual({ state: "on", encrypted: 1, plain: 1, locked: 0 });
+    expect(h.folders.find((f) => f.entry.id === "receipts-key")).toMatchObject({ exists: true, files: null });
+    // From source, the same encrypted file is one this copy can't open.
+    expect((await readHoldings(seeded.prisma, today, { state: "source" })).receiptFiles).toEqual({ state: "source", encrypted: 0, plain: 1, locked: 1 });
+    // Counts and states only: nothing from inside a receipt, and never the key.
+    expect(JSON.stringify(h)).not.toContain(secret);
+    expect(JSON.stringify(h)).not.toContain(key.toString("base64"));
+    expect(JSON.stringify(h)).not.toContain(key.toString("hex"));
   });
 
   it("has no folders to describe when the database setting isn't a file", async () => {

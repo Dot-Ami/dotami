@@ -59,6 +59,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   add or delete finishes it (after checking the file is the one it started with) instead of
   throwing the only copy away. The Settings page now says the receipts folder sits beside the data
   file, and that copying both is a backup when running from source.
+- **Your receipts are encrypted in the desktop app** ([8i], the maintainer's decision of 2026-10-09)
+  — each receipt file is locked (AES-256-GCM) with a key that Windows keeps for your Windows account
+  only, so another account on the computer, a copy of the data folder, or the disk on its own can't
+  read them. Receipts you already have are encrypted the first time this version starts, one at a
+  time, without ever risking one. Backups still hold your receipts and still restore on another
+  computer; without a passphrase the receipts in a backup aren't encrypted, and the backup window
+  says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses
+  the receipts except those in a backup; Settings, *What DotAmi knows about you* and the note before
+  adding a receipt say so. The data file itself is **not** encrypted, and Settings says that too. A
+  copy run from source has no key store, so its receipts stay unencrypted, and it says so.
+  Design: [expense-records.md § 9](docs/architecture/expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
