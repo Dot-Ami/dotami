@@ -22,10 +22,10 @@
  * Today's wrong answers, pinned as "fails today" tests in tests/figures-file-packages.spec.ts:
  *  - the summary block's two titles are taken for the column names, and "Total Paid" is pre-filled as
  *    the amount over a column of invoice numbers (the person has to pick the right row);
- *  - the Draft invoice is counted as a sale;
- *  - months across the top can't be added up.
+ *  - the Draft invoice is counted as a sale.
  * Fixed since: dd.mm.yy dates (a two-digit year) are read once the person says which century the
- * year is in, and until then nothing is added up.
+ * year is in, and until then nothing is added up; and months across the top are read, one total
+ * per month column (lib/figures/file/across.ts).
  */
 import { csv } from "./csv";
 import { utf8 } from "../../helpers/encode";
@@ -241,7 +241,8 @@ function revenueByClientText(): string {
 
 /**
  * What the invoices add up to with the Draft left out: July 500.00, August 476.19 (not 726.19),
- * September 300.00. The months-across file holds the same three figures in its Total row.
+ * September 300.00. The months-across file holds the same three figures in its Total row, and its
+ * client rows add up to them too.
  */
 export const ISSUED_NOT_DRAFT = [
   { periodStart: "2026-07-01", amountCents: 50000 },
@@ -316,20 +317,34 @@ export const files: PracticeFile[] = [
     bytes: () => utf8(revenueByClientText()),
     columns: REVENUE_COLUMNS,
     expected: {
-      // WRONG TODAY: no date sits under any column, so no column names are found, and the person
-      // has nothing to pick as a date: every row is left out. True: July 500.00, August 476.19,
-      // September 300.00, one total per month column.
+      // No date sits under any column, so no row of column names is found for the usual reading.
+      // The screen starts on "months across" instead: row 4 holds the month names, and Client and
+      // Total are not months, so they are not added.
       guess: null,
-      picks: { headerRow: 3, dateColumn: 0, amountColumn: 4 },
       dateOrder: noOrder,
       decimalStyle: "point",
       months: [],
-      skipped: [
-        { row: 5, reason: "no-date" },
-        { row: 6, reason: "no-date" },
-        { row: 7, reason: "no-date" },
-        { row: 8, reason: "total" },
-      ],
+      skipped: [],
+      across: {
+        monthsRow: 3,
+        monthColumns: [
+          { column: 1, month: "2026-07" },
+          { column: 2, month: "2026-08" },
+          { column: 3, month: "2026-09" },
+        ],
+        // Every client row added down each month's column; a 0.00 cell is read and counted.
+        months: [
+          { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 50000, rows: 3 },
+          { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 47619, rows: 3 },
+          { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 30000, rows: 3 },
+        ],
+        // The report's own Total row would count everything twice.
+        skippedRows: [{ row: 8, reason: "total" }],
+        skippedCells: [],
+      },
     },
   },
 ];
+
+/** 0-based row of the Revenue by Client file's own Total row, which the person can take instead. */
+export const REVENUE_TOTAL_ROW = 7;

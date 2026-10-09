@@ -3,19 +3,29 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
+import { monthInWords } from "@/lib/figures/file/dates";
 import {
   datesReadSentence,
+  exportInsteadSentence,
   firstSheetWithRows,
+  guessAcrossPicks,
+  guessLayout,
   guessPicks,
+  monthsReadSentence,
+  previewAcross,
   previewSheet,
   sheetHasRows,
+  type AcrossPicks,
+  type AddUp,
+  type Layout,
   type Picks,
 } from "@/lib/figures/file/preview";
 import { sniffFile } from "@/lib/figures/file/sniff";
-import { columnsOf } from "@/lib/figures/file/table";
+import { columnLetter, columnsOf, isBlankRow } from "@/lib/figures/file/table";
 import { splitAlreadyKnown } from "@/lib/figures/file/totals";
 import {
   MAX_FILE_BYTES,
+  type AcrossResult,
   type Cell,
   type Century,
   type DateOrder,
@@ -84,9 +94,85 @@ function localToday(): string {
 
 /** The pickers' value for "nothing chosen yet". */
 const NO_PICKS: Picks = { headerRow: null, dateColumn: null, amountColumn: null, typeColumn: null };
+const NO_ACROSS_PICKS: AcrossPicks = { monthsRow: null, addUp: "every-row" };
+
+/** The most rows offered as "take only this row" for a months-across table. */
+const MAX_TOTAL_ROW_CHOICES = 200;
+/** How much of a row's label the "take only this row" choice shows. */
+const MAX_ROW_LABEL_CHARS = 40;
 
 function rowWord(n: number): string {
   return n === 1 ? "row" : "rows";
+}
+
+/** "1 row 7" / "2 rows 3, 9" / "6 rows 3, 4, 5, 6, 7, …": the first few row numbers or cell names. */
+function placesText(word: string, plural: string, places: string[]): string {
+  const shown = places.slice(0, MAX_ROW_NUMBERS_SHOWN);
+  const more = places.length > shown.length ? ", …" : "";
+  return `${shown.length === 1 ? word : plural} ${shown.join(", ")}${more}`;
+}
+
+/**
+ * The left-out lines for a months-across table. In this layout what is left out can be a whole row
+ * (the file's own totals row, a blank row, a row with nothing under any month), a single cell under
+ * a month (empty, or an amount DotAmi can't read), or a whole month column that isn't over yet, so
+ * the wording names cells as Excel does ("C6") and month columns by letter.
+ */
+function acrossLeftOut(result: AcrossResult): string[] {
+  const lines: string[] = [];
+  const cellsFor = (reason: "bad-amount" | "empty") =>
+    result.skippedCells
+      .filter((c) => c.reason === reason)
+      .map((c) => `${columnLetter(c.column)}${c.row}`);
+  const rowsFor = (reason: "blank" | "total" | "no-amount") =>
+    result.skippedRows.filter((r) => r.reason === reason).map((r) => String(r.row));
+
+  const bad = cellsFor("bad-amount");
+  if (bad.length > 0) {
+    lines.push(
+      `${bad.length} ${bad.length === 1 ? "cell" : "cells"} under a month with an amount DotAmi can't read: ${placesText("cell", "cells", bad)}`,
+    );
+  }
+  const empty = cellsFor("empty");
+  if (empty.length > 0) {
+    lines.push(
+      `${empty.length} empty ${empty.length === 1 ? "cell" : "cells"} under a month: ${placesText("cell", "cells", empty)}`,
+    );
+  }
+  const totals = rowsFor("total");
+  if (totals.length > 0) {
+    lines.push(`${leftOutText("total", totals.length)}: ${placesText("row", "rows", totals)}`);
+  }
+  const nothing = rowsFor("no-amount");
+  if (nothing.length > 0) {
+    lines.push(
+      `${nothing.length} ${rowWord(nothing.length)} with nothing under any month: ${placesText("row", "rows", nothing)}`,
+    );
+  }
+  if (result.notOver.length > 0) {
+    const n = result.notOver.length;
+    const columns = result.notOver.map((m) => `${columnLetter(m.column)} (${monthInWords(m.month)})`);
+    lines.push(
+      `${n} ${n === 1 ? "month that isn't over yet" : "months that aren't over yet"}: ${placesText("column", "columns", columns)}`,
+    );
+  }
+  const blank = rowsFor("blank");
+  if (blank.length > 0) {
+    lines.push(`${leftOutText("blank", blank.length)}: ${placesText("row", "rows", blank)}`);
+  }
+  return lines;
+}
+
+/** A row's first cell outside the month columns that has something in it, cut short: "Total", "Client A". */
+function rowLabel(row: Cell[] | undefined, monthColumns: Set<number>): string {
+  for (const [index, cell] of (row ?? []).entries()) {
+    if (monthColumns.has(index) || cell === null || cell === undefined) continue;
+    const text = cell instanceof Date ? cell.toISOString().slice(0, 10) : String(cell).trim();
+    if (text !== "") {
+      return text.length > MAX_ROW_LABEL_CHARS ? `${text.slice(0, MAX_ROW_LABEL_CHARS)}…` : text;
+    }
+  }
+  return "";
 }
 
 /** Sentence for rows the totals leave out, e.g. "2 rows without a date DotAmi can read". */
@@ -156,6 +242,11 @@ export function FileDrop({
   const [sheetIndex, setSheetIndex] = useState(0);
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const [guessed, setGuessed] = useState(false);
+  // One row per sale with a date, or months across the top ([8c-3]); guessed per sheet, the
+  // person's to change. The months-across pickers are filled whichever layout the sheet starts on.
+  const [layout, setLayout] = useState<Layout>("rows");
+  const [acrossPicks, setAcrossPicks] = useState<AcrossPicks>(NO_ACROSS_PICKS);
+  const [acrossGuessed, setAcrossGuessed] = useState(false);
   const [dateAnswer, setDateAnswer] = useState<Answer<DateOrder | ""> | null>(null);
   // "Is 05 the year 2005?": like the date order, kept only for the column it was given for and
   // forgotten with the file, so the next file is asked again.
@@ -199,6 +290,15 @@ export function FileDrop({
     setGuessed(guess.guessed);
   }
 
+  /** A sheet just opened: guess its layout, its columns and its row of month names. */
+  function startSheet(sheetRows: Cell[][]) {
+    applyGuess(sheetRows);
+    setLayout(guessLayout(sheetRows).layout);
+    const across = guessAcrossPicks(sheetRows);
+    setAcrossPicks(across);
+    setAcrossGuessed(across.monthsRow !== null);
+  }
+
   /**
    * Back to the question, forgetting everything about any file already read. Bumping the token also
    * drops a read that is still in flight, so a late result can't land on the empty screen.
@@ -216,6 +316,9 @@ export function FileDrop({
     setSheetIndex(0);
     setPicks(NO_PICKS);
     setGuessed(false);
+    setLayout("rows");
+    setAcrossPicks(NO_ACROSS_PICKS);
+    setAcrossGuessed(false);
     setDateAnswer(null);
     setCenturyAnswer(null);
     setStyleAnswer(null);
@@ -268,7 +371,7 @@ export function FileDrop({
     setDateAnswer(null);
     setCenturyAnswer(null);
     setStyleAnswer(null);
-    applyGuess(result.sheets[start]?.rows ?? []);
+    startSheet(result.sheets[start]?.rows ?? []);
     setPhase("ready");
   }
 
@@ -290,7 +393,11 @@ export function FileDrop({
   const dateKey = `${sheetIndex}:${picks.headerRow}:${picks.dateColumn}`;
   const dateOrderChoice: DateOrder | "" = dateAnswer?.key === dateKey ? dateAnswer.value : "";
   const centuryChoice: Century | "" = centuryAnswer?.key === dateKey ? centuryAnswer.value : "";
-  const styleKey = `${sheetIndex}:${picks.headerRow}:${picks.amountColumn}`;
+  // The amounts' style answer is kept per amount column, or per row of month names when across.
+  const styleKey =
+    layout === "across"
+      ? `${sheetIndex}:across:${acrossPicks.monthsRow}`
+      : `${sheetIndex}:${picks.headerRow}:${picks.amountColumn}`;
   const styleChoice = styleAnswer?.key === styleKey ? styleAnswer.value : undefined;
 
   const code = currency.trim().toUpperCase();
@@ -309,13 +416,39 @@ export function FileDrop({
       ),
     [rows, picks, dateOrderChoice, centuryChoice, styleChoice, currencyOk],
   );
-  const { detectedOrder, decimalStyle, twoDigitYear } = preview;
+  const { detectedOrder, twoDigitYear } = preview;
   const needsDateQuestion = detectedOrder.ambiguous;
-  const datesRead = preview.result ? datesReadSentence(preview.result.datesRead) : null;
+
+  // Months across the top: the same kind of preview from lib/figures/file/preview.ts.
+  const acrossPreview = useMemo(
+    () =>
+      layout === "across"
+        ? previewAcross(rows, acrossPicks, { decimalStyle: styleChoice }, localToday(), !currencyOk)
+        : null,
+    [layout, rows, acrossPicks, styleChoice, currencyOk],
+  );
+
+  // What the bottom of the screen shows, from whichever layout is in use.
+  const shown = acrossPreview
+    ? {
+        state: acrossPreview.state,
+        message: acrossPreview.message,
+        months: acrossPreview.result?.months ?? null,
+        readSentence: acrossPreview.result
+          ? monthsReadSentence(acrossPreview.result.monthsRead)
+          : null,
+      }
+    : {
+        state: preview.state,
+        message: preview.message,
+        months: preview.result?.months ?? null,
+        readSentence: preview.result ? datesReadSentence(preview.result.datesRead) : null,
+      };
+  const decimalStyle = acrossPreview ? acrossPreview.decimalStyle : preview.decimalStyle;
 
   const split = useMemo(
-    () => (preview.result ? splitAlreadyKnown(preview.result.months, existing, code) : null),
-    [preview, existing, code],
+    () => (shown.months ? splitAlreadyKnown(shown.months, existing, code) : null),
+    [shown.months, existing, code],
   );
 
   async function review() {
@@ -353,22 +486,52 @@ export function FileDrop({
     [rows, picks.headerRow],
   );
   const headerChoices = Math.min(HEADER_ROW_CHOICES, rows.length);
-  const noGuess = phase === "ready" && picks.headerRow === null;
+  const noGuess = phase === "ready" && layout === "rows" && picks.headerRow === null;
+  // With no column names found, the report to export instead (Wave's Income by Customer has no dates).
+  const exportInstead = useMemo(
+    () => (noGuess ? exportInsteadSentence(rows) : null),
+    [noGuess, rows],
+  );
+
+  // Months across: which columns are months, which aren't, and the rows that can be taken alone.
+  const monthSet = useMemo(
+    () => new Set(acrossPreview?.monthColumns.map((m) => m.column) ?? []),
+    [acrossPreview],
+  );
+  const notMonths = useMemo(
+    () =>
+      layout === "across" && acrossPicks.monthsRow !== null && monthSet.size > 0
+        ? columnsOf(rows, acrossPicks.monthsRow).filter((c) => !monthSet.has(c.index))
+        : [],
+    [layout, rows, acrossPicks.monthsRow, monthSet],
+  );
+  const totalRowChoices = useMemo(() => {
+    if (layout !== "across" || acrossPicks.monthsRow === null) return [];
+    const choices: { index: number; label: string }[] = [];
+    for (let i = acrossPicks.monthsRow + 1; i < rows.length; i += 1) {
+      if (choices.length >= MAX_TOTAL_ROW_CHOICES) break;
+      if (isBlankRow(rows[i])) continue;
+      choices.push({ index: i, label: rowLabel(rows[i], monthSet) });
+    }
+    return choices;
+  }, [layout, rows, acrossPicks.monthsRow, monthSet]);
   const asNumber = (value: string): number | null => (value === "" ? null : Number(value));
 
-  // Skipped rows grouped by reason, each with its count and the first few row numbers.
+  // Skipped rows grouped by reason, each with its count and the first few row numbers; for months
+  // across, rows, cells and month columns (acrossLeftOut).
   const leftOut = useMemo(() => {
+    if (acrossPreview) return acrossPreview.result ? acrossLeftOut(acrossPreview.result) : [];
     const result = preview.result;
     if (!result) return [];
     return LEFT_OUT_ORDER.map((reason) => {
       const hits = result.skipped.filter((s) => s.reason === reason);
-      return {
-        reason,
-        count: hits.length,
-        shown: hits.slice(0, MAX_ROW_NUMBERS_SHOWN).map((s) => s.row),
-      };
-    }).filter((group) => group.count > 0);
-  }, [preview]);
+      const rowsHit = hits.slice(0, MAX_ROW_NUMBERS_SHOWN).map((s) => s.row);
+      if (hits.length === 0) return null;
+      return `${leftOutText(reason, hits.length)}: ${rowWord(rowsHit.length)} ${rowsHit.join(", ")}${
+        hits.length > rowsHit.length ? ", …" : ""
+      }`;
+    }).filter((line): line is string => line !== null);
+  }, [acrossPreview, preview]);
 
   return (
     <div
@@ -528,7 +691,7 @@ export function FileDrop({
                   setDateAnswer(null);
                   setCenturyAnswer(null);
                   setStyleAnswer(null);
-                  applyGuess(sheets[next]?.rows ?? []);
+                  startSheet(sheets[next]?.rows ?? []);
                 }}
                 className={`${FIELD} mt-1`}
               >
@@ -541,126 +704,234 @@ export function FileDrop({
             </div>
           ) : null}
 
+          <div className="mt-2">
+            <label htmlFor={`${uid}-layout`} className={FIELD_LABEL}>
+              The file has
+            </label>
+            <select
+              id={`${uid}-layout`}
+              value={layout}
+              onChange={(e) => setLayout(e.target.value as Layout)}
+              className={`${FIELD} mt-1`}
+            >
+              <option value="rows">One row per sale, with a date</option>
+              <option value="across">Months across the top, one column per month</option>
+            </select>
+          </div>
+
           {noGuess ? (
             <p className="mt-2 text-[11px] text-amber">
               DotAmi couldn&apos;t find a row of column names in the first 30 rows.
             </p>
           ) : null}
-          {guessed ? (
+          {exportInstead ? (
+            <p className="mt-1 max-w-prose text-[11px] text-amber">{exportInstead}</p>
+          ) : null}
+          {layout === "rows" && guessed ? (
             <p className="mt-2 text-[11px] text-stone-dim">
               DotAmi guessed these from the column names — check them.
             </p>
           ) : null}
 
-          <div className="mt-2 flex flex-wrap items-start gap-3">
-            <div>
-              <label htmlFor={`${uid}-header`} className={FIELD_LABEL}>
-                Column names are in row
-              </label>
-              <select
-                id={`${uid}-header`}
-                value={picks.headerRow ?? ""}
-                onChange={(e) => {
-                  const next = asNumber(e.target.value);
-                  if (next === null) {
-                    setPicks(NO_PICKS);
-                    setGuessed(false);
-                    return;
-                  }
-                  applyGuess(rows, next);
-                }}
-                className={`${FIELD} mt-1`}
-              >
-                <option value="">Pick a row</option>
-                {Array.from({ length: headerChoices }, (_, i) => (
-                  <option key={i} value={i}>
-                    Row {i + 1}
-                  </option>
-                ))}
-              </select>
+          {layout === "across" ? (
+            <div className="mt-2">
+              {acrossPicks.monthsRow === null ? (
+                <p className="text-[11px] text-amber">
+                  DotAmi couldn&apos;t find a row of month names in the first 30 rows.
+                </p>
+              ) : null}
+              {acrossGuessed ? (
+                <p className="text-[11px] text-stone-dim">
+                  DotAmi guessed the row of month names — check it.
+                </p>
+              ) : null}
+              <div className="mt-2 flex flex-wrap items-start gap-3">
+                <div>
+                  <label htmlFor={`${uid}-months-row`} className={FIELD_LABEL}>
+                    Month names are in row
+                  </label>
+                  <select
+                    id={`${uid}-months-row`}
+                    value={acrossPicks.monthsRow ?? ""}
+                    onChange={(e) => {
+                      // A new row of month names: rows above it can't hold their totals.
+                      setAcrossPicks({ monthsRow: asNumber(e.target.value), addUp: "every-row" });
+                      setAcrossGuessed(false);
+                    }}
+                    className={`${FIELD} mt-1`}
+                  >
+                    <option value="">Pick a row</option>
+                    {Array.from({ length: headerChoices }, (_, i) => (
+                      <option key={i} value={i}>
+                        Row {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {acrossPicks.monthsRow !== null ? (
+                  <div>
+                    <label htmlFor={`${uid}-add-up`} className={FIELD_LABEL}>
+                      Totals come from
+                    </label>
+                    <select
+                      id={`${uid}-add-up`}
+                      value={String(acrossPicks.addUp)}
+                      onChange={(e) => {
+                        const addUp: AddUp =
+                          e.target.value === "every-row" ? "every-row" : Number(e.target.value);
+                        setAcrossPicks({ ...acrossPicks, addUp });
+                        setAcrossGuessed(false);
+                      }}
+                      aria-describedby={`${uid}-add-up-hint`}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="every-row">Every row, added down each month</option>
+                      {totalRowChoices.map((choice) => (
+                        <option key={choice.index} value={choice.index}>
+                          {`Row ${choice.index + 1} only${choice.label ? ` · ${choice.label}` : ""}`}
+                        </option>
+                      ))}
+                    </select>
+                    <p id={`${uid}-add-up-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                      Every row leaves out the file&apos;s own totals rows. Pick one row to take only
+                      its figures, such as the file&apos;s Total row.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+              {acrossPreview && acrossPreview.monthColumns.length > 0 ? (
+                <div className="mt-2 text-[11px] text-stone-dim">
+                  <p className="font-mono text-[9px] uppercase tracking-wider">Read as months</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {acrossPreview.monthColumns.map((m) => (
+                      <li key={m.column}>
+                        {columnLetter(m.column)} · {monthInWords(m.month)}
+                      </li>
+                    ))}
+                  </ul>
+                  {notMonths.length > 0 ? (
+                    <p className="mt-1">
+                      Not months, so not added:{" "}
+                      {notMonths.map((c) => `${c.letter} · ${c.label}`).join(", ")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
+          ) : null}
 
-            {picks.headerRow !== null ? (
-              <>
-                <div>
-                  <label htmlFor={`${uid}-date`} className={FIELD_LABEL}>
-                    Date column
-                  </label>
-                  <select
-                    id={`${uid}-date`}
-                    value={picks.dateColumn ?? ""}
-                    onChange={(e) => {
-                      setPicks({ ...picks, dateColumn: asNumber(e.target.value) });
+          {layout === "rows" ? (
+            <div className="mt-2 flex flex-wrap items-start gap-3">
+              <div>
+                <label htmlFor={`${uid}-header`} className={FIELD_LABEL}>
+                  Column names are in row
+                </label>
+                <select
+                  id={`${uid}-header`}
+                  value={picks.headerRow ?? ""}
+                  onChange={(e) => {
+                    const next = asNumber(e.target.value);
+                    if (next === null) {
+                      setPicks(NO_PICKS);
                       setGuessed(false);
-                    }}
-                    className={`${FIELD} mt-1`}
-                  >
-                    <option value="">Pick a column</option>
-                    {columns.map((c) => (
-                      <option key={c.index} value={c.index}>
-                        {c.letter} · {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor={`${uid}-amount`} className={FIELD_LABEL}>
-                    Amount column (revenue)
-                  </label>
-                  <select
-                    id={`${uid}-amount`}
-                    value={picks.amountColumn ?? ""}
-                    onChange={(e) => {
-                      setPicks({ ...picks, amountColumn: asNumber(e.target.value) });
-                      setGuessed(false);
-                    }}
-                    aria-describedby={`${uid}-tax`}
-                    className={`${FIELD} mt-1`}
-                  >
-                    <option value="">Pick a column</option>
-                    {columns.map((c) => (
-                      <option key={c.index} value={c.index}>
-                        {c.letter} · {c.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p id={`${uid}-tax`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
-                    If the file also has a tax column, check whether this one includes the tax.
-                  </p>
-                </div>
-                <div>
-                  <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
-                    Type column (optional)
-                  </label>
-                  <select
-                    id={`${uid}-type`}
-                    value={picks.typeColumn ?? ""}
-                    onChange={(e) => {
-                      setPicks({ ...picks, typeColumn: asNumber(e.target.value) });
-                      setGuessed(false);
-                    }}
-                    aria-describedby={`${uid}-type-hint`}
-                    className={`${FIELD} mt-1`}
-                  >
-                    <option value="">None — count every row</option>
-                    {columns.map((c) => (
-                      <option key={c.index} value={c.index}>
-                        {c.letter} · {c.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
-                    Some files list a sale and the payment received for it as two rows. With a type
-                    column, rows typed Payment or Deposit are left out so the sale isn&apos;t
-                    counted twice. That also leaves out a Deposit that is the only record of a sale,
-                    so check the left-out list. Choose None to count every row.
-                  </p>
-                </div>
-              </>
-            ) : null}
-          </div>
+                      return;
+                    }
+                    applyGuess(rows, next);
+                  }}
+                  className={`${FIELD} mt-1`}
+                >
+                  <option value="">Pick a row</option>
+                  {Array.from({ length: headerChoices }, (_, i) => (
+                    <option key={i} value={i}>
+                      Row {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+  
+              {picks.headerRow !== null ? (
+                <>
+                  <div>
+                    <label htmlFor={`${uid}-date`} className={FIELD_LABEL}>
+                      Date column
+                    </label>
+                    <select
+                      id={`${uid}-date`}
+                      value={picks.dateColumn ?? ""}
+                      onChange={(e) => {
+                        setPicks({ ...picks, dateColumn: asNumber(e.target.value) });
+                        setGuessed(false);
+                      }}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="">Pick a column</option>
+                      {columns.map((c) => (
+                        <option key={c.index} value={c.index}>
+                          {c.letter} · {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor={`${uid}-amount`} className={FIELD_LABEL}>
+                      Amount column (revenue)
+                    </label>
+                    <select
+                      id={`${uid}-amount`}
+                      value={picks.amountColumn ?? ""}
+                      onChange={(e) => {
+                        setPicks({ ...picks, amountColumn: asNumber(e.target.value) });
+                        setGuessed(false);
+                      }}
+                      aria-describedby={`${uid}-tax`}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="">Pick a column</option>
+                      {columns.map((c) => (
+                        <option key={c.index} value={c.index}>
+                          {c.letter} · {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p id={`${uid}-tax`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                      If the file also has a tax column, check whether this one includes the tax.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
+                      Type column (optional)
+                    </label>
+                    <select
+                      id={`${uid}-type`}
+                      value={picks.typeColumn ?? ""}
+                      onChange={(e) => {
+                        setPicks({ ...picks, typeColumn: asNumber(e.target.value) });
+                        setGuessed(false);
+                      }}
+                      aria-describedby={`${uid}-type-hint`}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="">None — count every row</option>
+                      {columns.map((c) => (
+                        <option key={c.index} value={c.index}>
+                          {c.letter} · {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                      Some files list a sale and the payment received for it as two rows. With a type
+                      column, rows typed Payment or Deposit are left out so the sale isn&apos;t
+                      counted twice. That also leaves out a Deposit that is the only record of a sale,
+                      so check the left-out list. Choose None to count every row.
+                    </p>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
 
-          {picks.headerRow !== null &&
+          {layout === "rows" &&
+          picks.headerRow !== null &&
           picks.dateColumn !== null &&
           (needsDateQuestion || detectedOrder.conflicting) ? (
             <div className="mt-3">
@@ -693,7 +964,10 @@ export function FileDrop({
 
           {/* Asked once per file when a date has a two-digit year (12-03-05): DotAmi never picks
               the century itself (the maintainer's decision, 2026-10-07). */}
-          {picks.headerRow !== null && picks.dateColumn !== null && twoDigitYear !== null ? (
+          {layout === "rows" &&
+          picks.headerRow !== null &&
+          picks.dateColumn !== null &&
+          twoDigitYear !== null ? (
             <div className="mt-3">
               <label htmlFor={`${uid}-century`} className={FIELD_LABEL}>
                 {`Is ${twoDigitYear} the year 20${twoDigitYear}?`}
@@ -722,7 +996,8 @@ export function FileDrop({
             </div>
           ) : null}
 
-          {picks.headerRow !== null && picks.amountColumn !== null ? (
+          {(layout === "rows" && picks.headerRow !== null && picks.amountColumn !== null) ||
+          (acrossPreview !== null && acrossPreview.monthColumns.length > 0) ? (
             <div className="mt-3 flex flex-wrap items-start gap-3">
               <div>
                 <label htmlFor={`${uid}-style`} className={FIELD_LABEL}>
@@ -763,19 +1038,22 @@ export function FileDrop({
             ) : null}
           </div>
 
-          {preview.state === "waiting" && preview.message ? (
-            <p className="mt-3 text-[11px] text-stone-dim">{preview.message}</p>
+          {shown.state === "waiting" && shown.message ? (
+            <p className="mt-3 text-[11px] text-stone-dim">{shown.message}</p>
           ) : null}
-          {preview.state === "failed" ? (
+          {shown.state === "failed" ? (
             <p role="alert" className={ALERT}>
-              {preview.message}
+              {shown.message}
             </p>
           ) : null}
 
-          {preview.state === "ready" && split ? (
+          {shown.state === "ready" && split ? (
             <div className="mt-3 border-t border-rule-soft pt-3">
-              {/* Every file: how the dates were read, in words, so a wrong order or century shows. */}
-              {datesRead ? <p className="mb-2 text-[11px] text-paper-dim">{datesRead}</p> : null}
+              {/* Every file: how the dates (or, across the top, the months) were read, in words, so
+                  a wrong order, century or month shows. */}
+              {shown.readSentence ? (
+                <p className="mb-2 text-[11px] text-paper-dim">{shown.readSentence}</p>
+              ) : null}
               {split.fresh.length > 0 ? (
                 <table className="text-xs">
                   <caption className="mb-1 text-left font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
@@ -818,13 +1096,8 @@ export function FileDrop({
                     Left out
                   </p>
                   <ul className="mt-1 space-y-0.5 text-[11px] text-stone-dim">
-                    {leftOut.map((group) => (
-                      <li key={group.reason}>
-                        {leftOutText(group.reason, group.count)}
-                        {`: ${rowWord(group.shown.length)} ${group.shown.join(", ")}${
-                          group.count > group.shown.length ? ", …" : ""
-                        }`}
-                      </li>
+                    {leftOut.map((line) => (
+                      <li key={line}>{line}</li>
                     ))}
                   </ul>
                 </div>

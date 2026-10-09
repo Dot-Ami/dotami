@@ -158,6 +158,14 @@ person is asked).
   the earliest and latest date read, for the person to check before they review the figures;
   agreeing is unchanged.
 
+- **A report with the months across the top asks how it is laid out** ([8c-3]): on *Add from a
+  file*, "The file has" (one row per sale, or months across the top), "Month names are in row"
+  and "Totals come from" (every row, or one row). Like the other pickers, the answers only say how
+  to read that file; they are held in the panel and never stored, sent or remembered for the next
+  file ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/across.ts`](../lib/figures/file/across.ts)). Only the monthly totals the
+  person reviews and agrees to are kept, exactly as before; nothing new is kept or sent.
+
 - **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
   file is written without the person choosing where. In a browser it is an ordinary download,
   following the browser's own setting.

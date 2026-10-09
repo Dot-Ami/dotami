@@ -65,6 +65,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Every file's preview says how its dates were read** — above the monthly totals, the earliest
   and latest date in words ("Dates read: 3 December 2005 to 28 February 2006"), to check against
   the file. A date in a month that isn't over yet is included, so a year read wrong can't hide there.
+- **Reports with the months across the top on "Add from a file"** ([8c-3]) — a report with one
+  column per month, like FreshBooks' Revenue by Client, used to find no column names and add up
+  nothing. A new "The file has" choice says whether the file has one row per sale with a date, or
+  the months across the top; DotAmi starts on months across only when it finds no dates on the
+  rows and a row of month names above some amounts, and says to check it. You pick the row holding
+  the month names and where the totals come from: every row added down each month (the file's own
+  totals rows left out), or one row only, such as the file's Total row. The screen lists the
+  columns it read as months and the ones it didn't add (Client, Total). Month names are read in
+  English and French with a four-digit year (Jul 2026, juillet 2026, 2026-07, 07/2026); a name
+  that only looks like a month (Jul, Jul 26, a whole date) stops the table and the screen names
+  the column, rather than guess the year. Left-out cells are listed the way Excel names them (C6).
+- **A report with no dates says which report to export instead** — Wave's Income by Customer (one
+  total per customer, no dates) now gets a sentence naming Wave's Account Transactions report,
+  which has a date on every line. Any other file with no date and no month at all is told to
+  export a report that has a date on every sale.
 
 ### Changed
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
@@ -81,8 +96,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   help pages, plus Xero's Receivable Invoice Detail, each checked to the cent. They found nine
   things DotAmi gets wrong today, now written down as tests that fail the day each is fixed: a
   refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
-  taken for the column names, two-digit years (since fixed, under Added), months across the top, a
-  Wave report with no dates, a French Sage 50 file with several comma-decimal columns split on its
+  taken for the column names, two-digit years, months across the top and a Wave report with no
+  dates (those three since fixed, under Added), a French Sage 50 file with several comma-decimal columns split on its
   commas, and a formula saved with no value reported as an empty amount. See
   docs/connectors/practice-files.md.
 
