@@ -73,23 +73,49 @@ can't be opened — nobody can recover it"* is shown first), then where to save,
 locked, checks it, asks for confirmation, keeps a safety copy of the current data in `backups/`,
 swaps it in and restarts the app (an older backup is then upgraded by the migrator).
 
-- **The file:** `DOTAMI-BACKUP` + a JSON header (format, app version, date, the migrations it
-  holds, the SHA-256 of the database) + the database — made with `VACUUM INTO`, consistent even
-  while the app has it open. Written beside its real name and renamed, so a crash never leaves a
-  half-written file that looks finished.
+- **The file (format 2, since receipts are kept, [8i]):** `DOTAMI-BACKUP` + a JSON header (format 2,
+  app version, date, the migrations it holds, and a list of the files it holds, each with its size
+  and SHA-256: `dotami.db` first, then `receipts/<DotAmi's own name>` for every receipt file the
+  database describes) + those files' bytes one after another + for a locked backup, the 16-byte GCM
+  tag. The database is copied with `VACUUM INTO`, consistent even while the app has it open; the
+  receipts folder is listed before that copy is taken, so a receipt removed in between is in
+  neither, and one the copy describes but the folder doesn't have is counted and named in the
+  message afterwards ("1 receipt file DotAmi has a record of wasn't in the receipts folder"). Files
+  in the folder that no row describes, and files DotAmi didn't name, are left out.
+- **It streams.** Every file is read, hashed, encrypted and written in 1 MB pieces, never whole, so
+  memory use doesn't grow with the data file or the number of receipts (format 1 read the whole
+  database into memory). The writer reads each file twice (once to measure it for the header, once
+  to write it) and stops, with nothing saved, if a file changed in between. Written beside its real
+  name and renamed, so a crash never leaves a half-written file that looks finished.
+- **Old backups still restore.** A format-1 backup (`DOTAMI-BACKUP` + a header with the database's
+  SHA-256 and the GCM tag inside it + the database) is still read, the old way. It holds no receipts:
+  restoring one moves the receipts folder here into `backups/` as it is, and the question before the
+  restore says so. Two real format-1 backups (plain and locked), made by the earlier writer, are
+  kept in `tests/fixtures/backups/` and restored by the tests.
+- **Restoring the receipts:** the backup's receipts are unpacked, checked, into a staging folder
+  beside the staged database. On confirm, the receipts folder here moves into `backups/`
+  (`receipts-before-restore-<time>`, beside the safety copy that describes it), the staged folder
+  becomes the receipts folder, then the database is swapped in; if the swap fails, both folders go
+  back. The file list may name only `dotami.db` and DotAmi's own receipt names (32 hex characters
+  and `.jpg`/`.png`/`.webp`/`.pdf`), each once and at most 10 MB, so no backup can write anywhere
+  else.
 - **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
-  header is authenticated too, so editing any of it makes the backup refuse to open. A header that
-  asks for different scrypt settings is refused, so a hostile file can't make the app hang.
+  header is authenticated too (its exact bytes are GCM's additional data), so editing any of it,
+  the file list included, makes the backup refuse to open. A header that asks for different scrypt
+  settings is refused, so a hostile file can't make the app hang.
 - **Checked before anything changes:** not a backup · damaged (cut short, a changed byte, or a
   database SQLite's `integrity_check` rejects) · locked and the passphrase is wrong (GCM can't tell
   a wrong passphrase from a damaged file, so the message says both) · made by a newer DotAmi. All
   checks run on a temporary copy; the live data is untouched until the person confirms.
 - **The passphrase window** is a local page with no network access (its own CSP) that can send
   back only the passphrase or "cancel"; the app checks the message came from that window.
-- **Tests:** `tests/desktop-backup.spec.ts` (9 cases; checked that it bites — without header
-  authentication, the edited-header case fails) and the desktop test "back up on one computer →
-  restore on another", through the real passphrase window, a wrong passphrase first (checked: with
-  the swap skipped it fails).
+- **Tests:** `tests/desktop-backup.spec.ts` (23 cases: receipts round-trip plain and locked, a
+  changed tag, file list or receipt byte refused, hostile file lists, the put-back, both format-1
+  fixtures; checked that it bites — without header authentication, the edited-header case fails, and
+  each receipt case fails with its line of the code removed) and the desktop test "back up on one
+  computer → restore on another", through the real passphrase window, a wrong passphrase first, now
+  carrying a receipt from computer A to computer B byte for byte (checked: with the swap skipped it
+  fails).
 
 ## Building and packaging
 

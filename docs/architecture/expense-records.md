@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups that carry the receipts and showing a receipt inside DotAmi come next; the other ways in are not built.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Showing a receipt inside DotAmi comes next; the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -337,18 +337,15 @@ deleting an idea keeps its records "not attached yet", with people told so first
   content type and no guessing), what the page's Content-Security-Policy allows for images and PDFs,
   that a PDF can't run script or reach the network, and what happens to a file that claims one type
   and is another.
-- **Backups that carry the receipts** (decided, not built): today's backup holds the data file only,
-  and a restore moves the receipts folder aside whole (§ 7). The next change gives backups a format
-  that streams, carries the folder and still restores an older backup.
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.
 
 ## 7. Receipts as built: the store, the Delete menu and the sweep (2026-10-08)
 
-The third slice: option A of section 2, as the maintainer decided. Backups that carry the receipts
-and showing a receipt inside DotAmi are the next two changes; until the second is built, DotAmi keeps
-a receipt but has no way to show it, and no route returns its bytes.
+The third slice: option A of section 2, as the maintainer decided, and backups that carry the
+receipts (the backup change of section 2). Showing a receipt inside DotAmi is the next change; until
+it is built, DotAmi keeps a receipt but has no way to show it, and no route returns its bytes.
 
 **Where a receipt lives.** A copy of the file in a `receipts/` folder beside the data file
 (`<data folder>/receipts/` in the desktop app; `prisma/receipts/` beside a copy run from source,
@@ -404,16 +401,24 @@ never touched, so something the person put in the folder stays. It runs before e
 and after every delete that removed receipts; the Delete menu says how many files went, and how many
 couldn't go yet.
 
-**Backups, until the next change.** A backup still holds the data file only. *File → Back up…* says,
-when there are receipt files, that the backup doesn't hold them and to copy the receipts folder too. A
-restore moves the receipts folder whole into `backups/` (`receipts-before-restore-<time>`) before it
-swaps the data file in, because the restored file doesn't describe those files and the sweep would
-otherwise remove them; the restore dialog says so first, and if the swap fails the folder goes back.
+**Backups carry the receipts** (the backup change of section 2; the format is in
+[desktop-app.md § Backup and restore](desktop-app.md#backup-and-restore-7c-desktopbackupmjs)). A backup
+now holds the data file and every receipt file it describes, in a format that streams: each file is
+read, hashed, encrypted and written in 1 MB pieces, so a few hundred receipts need no more memory than
+one. A locked backup's passphrase covers the receipts too. *File → Back up…* says how many receipt
+files went in, and names any DotAmi has a record of but couldn't find. A restore unpacks the receipts,
+checked, beside the staged data file; on confirm the receipts folder here moves whole into `backups/`
+(`receipts-before-restore-<time>`, beside the safety copy that describes it) and the backup's own
+receipts take its place; if the swap fails both go back. **Old backups (format 1) still restore**;
+they hold no receipts, so the receipts folder here is moved aside the same way and the question before
+the restore says the restored records have no receipt files.
 
 **Tested by** `tests/expenses-receipts.spec.ts` (the sniffing, hostile files, the pixel and size
 limits, random names, the hash, only agreed records, one per record, removing, the sweep, the routes
 answering only DotAmi's page, nothing in the log), `tests/privacy-delete.spec.ts` (both Delete menu
-boxes, rows and files), `tests/desktop-backup.spec.ts` (the restore moving the folder aside, and back
-when the swap fails), `tests/desktop-migrate.spec.ts` and `e2e/expenses.spec.ts` (adding a receipt in
+boxes, rows and files), `tests/desktop-backup.spec.ts` (receipts round-trip plain and locked, a changed
+tag, file list or receipt refused, hostile file lists, the folders put back when the swap fails, real
+format-1 backups restored), `e2e-desktop/desktop.spec.ts` (a receipt carried from one computer to
+another through File → Back up… and Restore), `tests/desktop-migrate.spec.ts` and `e2e/expenses.spec.ts` (adding a receipt in
 a real browser: an SVG named `.png` refused in the window with nothing sent, a PNG kept under a name
 DotAmi made up and never the file's own, then removed).

@@ -1,6 +1,7 @@
 /**
  * The desktop app's backups (desktop/backup.mjs): a backup restores to the same data, on a new
- * computer too; a locked one stays unreadable without the passphrase; and every kind of bad file
+ * computer too, receipt files included ([8i], format 2); a backup made before receipts were carried
+ * (format 1) still restores; a locked one stays unreadable without the passphrase; and every kind of bad file
  * is refused, with the live database left exactly as it was.
  */
 import { createHash } from "node:crypto";
@@ -10,7 +11,18 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { applyRestore, BackupError, prepareRestore, readBackup, writeBackup } from "../desktop/backup.mjs";
+import {
+  applyRestore,
+  BackupError,
+  backupReceiptsNote,
+  prepareRestore,
+  readBackup,
+  RECEIPT_EXTENSIONS,
+  restoreReceiptsNote,
+  stagedReceiptsFolder,
+  writeBackup,
+} from "../desktop/backup.mjs";
+import { RECEIPT_TYPES } from "../lib/expenses/receipts/types";
 import { migrate } from "../desktop/migrate.mjs";
 
 const migrations = path.join(path.resolve(__dirname, ".."), "prisma", "migrations");
@@ -98,7 +110,11 @@ describe("desktop backup — round trips", () => {
     expect(header.appVersion).toBe("1.2.3");
 
     const target = path.join(dir, "new", "dotami.db");
-    expect(applyRestore(staging, target, { backupDir: path.join(dir, "new", "backups") })).toEqual({ safetyCopy: null, receiptsMovedTo: null });
+    expect(applyRestore(staging, target, { backupDir: path.join(dir, "new", "backups") })).toEqual({
+      safetyCopy: null,
+      receiptsMovedTo: null,
+      receiptsRestored: 0,
+    });
     expect(users(target)).toEqual(["someone"]);
     expect(existsSync(staging)).toBe(false);
   });
@@ -169,7 +185,7 @@ describe("desktop backup — damaged and foreign files", () => {
 
     expect(kindOf(() => readBackup(cut))).toBe("damaged");
     expect(kindOf(() => readBackup(flipped))).toBe("damaged");
-    expect(readBackup(backup).db.length).toBeGreaterThan(0);
+    expect(readBackup(backup).files[0].bytes).toBeGreaterThan(0);
   });
 
   it("refuses files that aren't backups: random bytes, a raw database, an empty file", () => {
@@ -221,9 +237,9 @@ describe("desktop backup — restoring safely", () => {
     expect(allFiles(dir).filter((f) => f.endsWith(".partial"))).toEqual([]);
   });
 
-  it("moves the receipts folder into the backups folder whole, so a restore can never lose a receipt file", () => {
-    // A backup of this kind holds the data file only. The restored data file doesn't describe the
-    // receipt files beside the live one, so DotAmi's sweep would remove them if they stayed.
+  it("moves the live receipts folder into the backups folder whole, so a restore can never lose a receipt file", () => {
+    // The restored data file doesn't describe the receipt files beside the live one, so DotAmi's
+    // sweep would remove them if they stayed; the safety copy beside them does describe them.
     const backup = path.join(dir, "mine.dotami-backup");
     writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" });
     const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
@@ -259,5 +275,314 @@ describe("desktop backup — restoring safely", () => {
     writeBackup(makeDb(path.join(dir, "dotami.db")), out, { appVersion: "1" });
     expect(existsSync(out)).toBe(true);
     expect(existsSync(`${out}.partial`)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// [8i] Receipts in backups (format 2), and backups made before them (format 1).
+
+const fixtures = path.join(path.resolve(__dirname, ".."), "tests", "fixtures", "backups");
+const id = (c: string) => c.repeat(32);
+
+/**
+ * Adds an expense record with a receipt row to a migrated database, and writes the file the row
+ * describes into the receipts folder beside it (unless `onDisk` is false). Returns the file's name.
+ */
+function addReceipt(dbFile: string, idChar: string, type: keyof typeof RECEIPT_EXTENSIONS, content: Buffer | string, onDisk = true): string {
+  const bytes = Buffer.isBuffer(content) ? content : Buffer.from(content, "latin1");
+  const expenseId = `e-${idChar}`;
+  query(
+    dbFile,
+    `INSERT INTO "Expense" (id, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status) VALUES (?, 10, 4599, 'Example Stationery Ltd', 'paper', 'typed', 'typed by you', 'confirmed') RETURNING id`,
+    expenseId,
+  );
+  query(
+    dbFile,
+    `INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES (?, ?, ?, ?, ?) RETURNING id`,
+    id(idChar),
+    expenseId,
+    type,
+    bytes.length,
+    createHash("sha256").update(bytes).digest("hex"),
+  );
+  const name = `${id(idChar)}.${RECEIPT_EXTENSIONS[type]}`;
+  if (onDisk) {
+    const folder = path.join(path.dirname(dbFile), "receipts");
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(path.join(folder, name), bytes);
+  }
+  return name;
+}
+
+/** The receipts folder beside a database: each file's name and bytes, sorted by name. */
+function receiptFiles(dbFile: string): Record<string, string> {
+  const folder = path.join(path.dirname(dbFile), "receipts");
+  if (!existsSync(folder)) return {};
+  return Object.fromEntries(
+    readdirSync(folder)
+      .sort()
+      .map((n) => [n, createHash("sha256").update(readFileSync(path.join(folder, n))).digest("hex")]),
+  );
+}
+
+describe("desktop backup — receipts travel with the data (format 2)", () => {
+  it("holds every receipt the data file describes, and a restore on another computer brings each back byte for byte", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"), "with-receipts");
+    const pdfName = addReceipt(source, "a", "application/pdf", "%PDF-1.4 an invented receipt\n%%EOF\n");
+    // Bigger than one piece the writer reads at a time (1 MB), so it crosses a boundary.
+    const big = Buffer.alloc(2_500_000, 7);
+    big.write("\x89PNG\r\n\x1a\n", 0, "latin1");
+    const pngName = addReceipt(source, "b", "image/png", big);
+    // A file DotAmi named that no row describes (a leftover), and one the person put there: neither goes in.
+    const folder = path.join(dir, "old", "receipts");
+    writeFileSync(path.join(folder, `${id("c")}.jpg`), "a leftover");
+    writeFileSync(path.join(folder, "my notes.txt"), "mine");
+    const expected = { [pdfName]: receiptFiles(source)[pdfName], [pngName]: receiptFiles(source)[pngName] };
+
+    for (const passphrase of ["", PASSPHRASE]) {
+      const backup = path.join(dir, `with-receipts${passphrase ? "-locked" : ""}.dotami-backup`);
+      const info = writeBackup(source, backup, { appVersion: "1.2.3", passphrase });
+      expect(info).toMatchObject({ encrypted: passphrase !== "", receipts: 2, missingReceipts: 0 });
+      expect(info.bytes).toBe(readFileSync(backup).length);
+      if (passphrase) expect(readFileSync(backup).indexOf("an invented receipt")).toBe(-1);
+      else expect(readFileSync(backup).indexOf("an invented receipt")).toBeGreaterThan(-1);
+
+      const computer = path.join(dir, `new-${passphrase ? "locked" : "plain"}`);
+      const staging = path.join(computer, "dotami.db.restoring");
+      const prepared = prepareRestore(backup, { passphrase, migrationsDir: migrations, stagingFile: staging });
+      expect(prepared.header.format).toBe(2);
+      expect(prepared.receipts).toBe(2);
+      expect(prepared.header.format === 2 && prepared.header.files.map((f) => f.path)).toEqual([
+        "dotami.db",
+        `receipts/${pdfName}`,
+        `receipts/${pngName}`,
+      ]);
+
+      const target = path.join(computer, "dotami.db");
+      expect(applyRestore(staging, target, { backupDir: path.join(computer, "backups") })).toEqual({
+        safetyCopy: null,
+        receiptsMovedTo: null,
+        receiptsRestored: 2,
+      });
+      expect(users(target)).toEqual(["with-receipts"]);
+      expect(receiptFiles(target)).toEqual(expected);
+      expect(existsSync(staging)).toBe(false);
+      expect(existsSync(stagedReceiptsFolder(staging))).toBe(false);
+    }
+  }, 120_000);
+
+  it("replaces the receipts here with the backup's, keeping the ones here beside the safety copy", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"), "from-backup");
+    const fromBackup = addReceipt(source, "a", "application/pdf", "%PDF-1.4 from the backup");
+    const backup = path.join(dir, "mine.dotami-backup");
+    writeBackup(source, backup, { appVersion: "1" });
+
+    const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
+    const fromLive = addReceipt(live, "d", "image/png", "a picture kept here");
+    const backupDir = path.join(dir, "live", "backups");
+    const staging = path.join(dir, "live", "dotami.db.restoring");
+    prepareRestore(backup, { migrationsDir: migrations, stagingFile: staging });
+    const result = applyRestore(staging, live, { backupDir, now: () => 45 });
+
+    expect(result.receiptsRestored).toBe(1);
+    expect(Object.keys(receiptFiles(live))).toEqual([fromBackup]);
+    expect(readdirSync(path.join(backupDir, "receipts-before-restore-45"))).toEqual([fromLive]);
+    expect(users(result.safetyCopy!)).toEqual(["from-live"]);
+  });
+
+  it("counts a receipt the data file describes but the folder doesn't have, instead of inventing one", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"));
+    addReceipt(source, "a", "application/pdf", "%PDF-1.4 here");
+    addReceipt(source, "b", "image/webp", "RIFF....WEBP gone", false);
+    const backup = path.join(dir, "missing.dotami-backup");
+    expect(writeBackup(source, backup, { appVersion: "1" })).toMatchObject({ receipts: 1, missingReceipts: 1 });
+    const { header } = readBackup(backup);
+    expect(header.format === 2 && header.files.map((f) => f.path)).toEqual(["dotami.db", `receipts/${id("a")}.pdf`]);
+  });
+
+  it("refuses a locked backup whose tag, file list or a receipt's bytes changed, and stages nothing", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"));
+    addReceipt(source, "a", "application/pdf", "%PDF-1.4 a receipt that will be changed");
+    const locked = path.join(dir, "locked.dotami-backup");
+    writeBackup(source, locked, { appVersion: "1", passphrase: PASSPHRASE });
+    const original = readFileSync(locked);
+
+    const tag = path.join(dir, "tag.dotami-backup");
+    writeFileSync(tag, original);
+    flipLastByte(tag);
+    const listed = path.join(dir, "listed.dotami-backup");
+    writeFileSync(listed, original);
+    rewriteHeader(listed, (header) => {
+      (header.files as { path: string }[])[1].path = `receipts/${id("f")}.pdf`;
+    });
+    const inside = path.join(dir, "inside.dotami-backup");
+    const changed = Buffer.from(original);
+    changed[changed.length - 20] ^= 0x01; // a byte of the receipt's ciphertext, just before the tag
+    writeFileSync(inside, changed);
+
+    const staging = path.join(dir, "staging", "dotami.db.restoring");
+    for (const file of [tag, listed, inside]) {
+      expect(kindOf(() => prepareRestore(file, { passphrase: PASSPHRASE, migrationsDir: migrations, stagingFile: staging })), file).toBe(
+        "cannot-decrypt",
+      );
+      expect(existsSync(staging)).toBe(false);
+      expect(existsSync(stagedReceiptsFolder(staging))).toBe(false);
+    }
+    expect(kindOf(() => prepareRestore(locked, { migrationsDir: migrations, stagingFile: staging }))).toBe("needs-passphrase");
+    expect(kindOf(() => prepareRestore(locked, { passphrase: "wrong", migrationsDir: migrations, stagingFile: staging }))).toBe("cannot-decrypt");
+    // The untouched original still restores, so each refusal above is about its change.
+    expect(prepareRestore(locked, { passphrase: PASSPHRASE, migrationsDir: migrations, stagingFile: staging }).receipts).toBe(1);
+  }, 120_000);
+
+  it("refuses a plain backup with a receipt's byte changed or cut short", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"));
+    addReceipt(source, "a", "application/pdf", "%PDF-1.4 a receipt that will be changed");
+    const plain = path.join(dir, "plain.dotami-backup");
+    writeBackup(source, plain, { appVersion: "1" });
+    const original = readFileSync(plain);
+    const flipped = path.join(dir, "flipped.dotami-backup");
+    writeFileSync(flipped, original);
+    flipLastByte(flipped);
+    const cut = path.join(dir, "cut.dotami-backup");
+    writeFileSync(cut, original.subarray(0, original.length - 5));
+
+    const staging = path.join(dir, "staging", "dotami.db.restoring");
+    for (const file of [flipped, cut]) {
+      expect(kindOf(() => prepareRestore(file, { migrationsDir: migrations, stagingFile: staging })), file).toBe("damaged");
+      expect(existsSync(staging)).toBe(false);
+      expect(existsSync(stagedReceiptsFolder(staging))).toBe(false);
+    }
+  });
+
+  it("refuses a file list that names anything but the data file and DotAmi's own receipt names, and writes nothing outside the staging folder", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"));
+    addReceipt(source, "a", "application/pdf", "%PDF-1.4 a receipt");
+    const plain = path.join(dir, "plain.dotami-backup");
+    writeBackup(source, plain, { appVersion: "1" });
+
+    type Entry = { path: string; bytes: number; sha256: string };
+    const hostile: [string, (files: Entry[]) => void][] = [
+      ["a path out of the folder", (f) => (f[1].path = "receipts/../../escaped.pdf")],
+      ["a path to the data file's own name", (f) => (f[1].path = "dotami.db")],
+      ["an absolute path", (f) => (f[1].path = "C:/Windows/escaped.pdf")],
+      ["a name DotAmi doesn't make", (f) => (f[1].path = "receipts/receipt.pdf")],
+      ["a script's extension", (f) => (f[1].path = `receipts/${id("a")}.html`)],
+      ["the same receipt twice", (f) => f.push({ ...f[1] })],
+      ["a receipt over 10 MB", (f) => (f[1].bytes = 10 * 1024 * 1024 + 1)],
+      ["the data file not first", (f) => f.reverse()],
+      ["no files at all", (f) => f.splice(0)],
+      ["a negative size", (f) => (f[1].bytes = -1)],
+    ];
+    const staging = path.join(dir, "staging", "dotami.db.restoring");
+    for (const [what, change] of hostile) {
+      const file = path.join(dir, "hostile.dotami-backup");
+      writeFileSync(file, readFileSync(plain));
+      rewriteHeader(file, (header) => change(header.files as Entry[]));
+      expect(kindOf(() => prepareRestore(file, { migrationsDir: migrations, stagingFile: staging })), what).toBe("not-a-backup");
+    }
+    expect(allFiles(dir).filter((f) => f.includes("escaped"))).toEqual([]);
+    expect(existsSync(path.join(dir, "staging"))).toBe(false);
+  });
+
+  it("puts both receipts folders back when the data file can't be swapped", () => {
+    const source = makeDb(path.join(dir, "old", "dotami.db"));
+    addReceipt(source, "a", "application/pdf", "%PDF-1.4 from the backup");
+    const backup = path.join(dir, "mine.dotami-backup");
+    writeBackup(source, backup, { appVersion: "1" });
+    const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
+    const fromLive = addReceipt(live, "d", "image/png", "kept here");
+    const staging = path.join(dir, "live", "dotami.db.restoring");
+    prepareRestore(backup, { migrationsDir: migrations, stagingFile: staging });
+    // The staged data file goes missing, so the last step (the swap) fails.
+    rmSync(staging);
+
+    expect(() => applyRestore(staging, live, { backupDir: path.join(dir, "live", "backups"), now: () => 46 })).toThrow();
+    expect(Object.keys(receiptFiles(live))).toEqual([fromLive]);
+    expect(readdirSync(stagedReceiptsFolder(staging))).toEqual([`${id("a")}.pdf`]);
+    expect(existsSync(path.join(dir, "live", "backups", "receipts-before-restore-46"))).toBe(false);
+    expect(users(live)).toEqual(["from-live"]);
+  });
+
+  it("names receipt files the way the app does", () => {
+    expect(Object.entries(RECEIPT_EXTENSIONS).sort()).toEqual(RECEIPT_TYPES.map((t) => [t.type, t.extension]).sort());
+  });
+
+  it("reads and writes in pieces: no whole-file read in the format-2 writer or reader", () => {
+    // A guard against a return to reading everything into memory (format 1 did, and still does for
+    // the old backups it reads). The two functions that handle format 2 must not read a file whole.
+    const code = readFileSync(path.join(path.resolve(__dirname, ".."), "desktop", "backup.mjs"), "utf8");
+    const body = (name: string) => {
+      const start = code.indexOf(`function ${name}(`);
+      expect(start, name).toBeGreaterThan(-1);
+      const next = code.indexOf("\nfunction ", start + 1);
+      const nextExport = code.indexOf("\nexport function ", start + 1);
+      const end = Math.min(...[next, nextExport].filter((i) => i > 0));
+      return code.slice(start, end);
+    };
+    for (const name of ["writeBackup", "readFormat2", "measure"]) {
+      expect(body(name), name).not.toMatch(/readFileSync|writeFileSync\(|Buffer\.concat/);
+    }
+  });
+});
+
+describe("desktop backup — backups made before receipts were carried (format 1)", () => {
+  it("restores a plain and a locked one made by the earlier version, then the update adds the receipts table", () => {
+    for (const [file, passphrase] of [
+      ["format-1-plain.dotami-backup", ""],
+      ["format-1-locked.dotami-backup", PASSPHRASE],
+    ] as const) {
+      const computer = path.join(dir, file);
+      const staging = path.join(computer, "dotami.db.restoring");
+      const backup = path.join(fixtures, file);
+      if (passphrase) {
+        expect(kindOf(() => prepareRestore(backup, { migrationsDir: migrations, stagingFile: staging }))).toBe("needs-passphrase");
+        expect(kindOf(() => prepareRestore(backup, { passphrase: "wrong", migrationsDir: migrations, stagingFile: staging }))).toBe(
+          "cannot-decrypt",
+        );
+      }
+      const prepared = prepareRestore(backup, { passphrase, migrationsDir: migrations, stagingFile: staging });
+      expect(prepared.header).toMatchObject({ format: 1, appVersion: "0.2.1" });
+      expect(prepared.receipts).toBe(0);
+
+      const target = path.join(computer, "dotami.db");
+      // Receipts here already: moved aside whole, since the old backup has none.
+      mkdirSync(path.join(computer, "receipts"), { recursive: true });
+      writeFileSync(path.join(computer, "receipts", `${id("e")}.pdf`), "%PDF-1.4 kept");
+      const result = applyRestore(staging, target, { backupDir: path.join(computer, "backups"), now: () => 47 });
+      expect(result.receiptsRestored).toBe(0);
+      expect(readdirSync(path.join(computer, "backups", "receipts-before-restore-47"))).toEqual([`${id("e")}.pdf`]);
+      expect(users(target)).toEqual(["made-before-receipts"]);
+      expect(query(target, `SELECT name FROM sqlite_master WHERE name = 'Receipt'`)).toEqual([]);
+
+      // Starting the app runs the update: the receipts table is added; the old data stays.
+      const { applied } = migrate(target, migrations);
+      expect(applied.some((n) => n.endsWith("_receipts"))).toBe(true);
+      expect(query(target, `SELECT id, paidTo FROM "Expense"`)).toEqual([{ id: "e1", paidTo: "Example Stationery Ltd" }]);
+      expect(query(target, `SELECT name FROM "Venture"`)).toEqual([{ name: "An idea from an old backup" }]);
+      expect(query(target, `SELECT count(*) AS n FROM "Receipt"`)).toEqual([{ n: 0 }]);
+    }
+  }, 120_000);
+});
+
+describe("desktop backup — what the dialogs say about receipts", () => {
+  it("Back up says how many receipts it holds, and names the ones it couldn't find", () => {
+    expect(backupReceiptsNote(0, 0)).toBe("");
+    expect(backupReceiptsNote(1, 0)).toBe("It holds your 1 receipt file too. ");
+    expect(backupReceiptsNote(3, 0)).toBe("It holds your 3 receipt files too. ");
+    expect(backupReceiptsNote(2, 1)).toBe(
+      "It holds your 2 receipt files too. 1 receipt file DotAmi has a record of wasn't in the receipts folder, so it isn't in the backup. ",
+    );
+    expect(backupReceiptsNote(0, 2)).toBe("2 receipt files DotAmi has a record of weren't in the receipts folder, so they aren't in the backup. ");
+  });
+
+  it("Restore says what the backup brings and where the receipts here go, and an old backup says it has none", () => {
+    expect(restoreReceiptsNote(2, 0, 0)).toBe("");
+    expect(restoreReceiptsNote(2, 4, 0)).toBe(" It holds 4 receipt files.");
+    expect(restoreReceiptsNote(2, 1, 1)).toBe(" It holds 1 receipt file. The 1 receipt file here now goes to the backups folder too, with the safety copy.");
+    expect(restoreReceiptsNote(2, 0, 3)).toBe(" The 3 receipt files here now go to the backups folder too, with the safety copy.");
+    expect(restoreReceiptsNote(1, 0, 0)).toBe("");
+    expect(restoreReceiptsNote(1, 0, 2)).toBe(
+      " This backup was made before backups held receipt files: your receipts folder is moved into the backups folder as it is, and the restored records have no receipt files.",
+    );
   });
 });

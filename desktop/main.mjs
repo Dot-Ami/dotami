@@ -5,14 +5,24 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
-import { mkdirSync, accessSync, constants, existsSync, readdirSync, rmSync } from "node:fs";
+import { mkdirSync, accessSync, constants, existsSync, readdirSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
 
-import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, RECEIPTS_FOLDER, writeBackup } from "./backup.mjs";
+import {
+  applyRestore,
+  BACKUP_EXTENSION,
+  BackupError,
+  backupReceiptsNote,
+  discardRestore,
+  prepareRestore,
+  RECEIPTS_FOLDER,
+  restoreReceiptsNote,
+  writeBackup,
+} from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
@@ -351,8 +361,9 @@ function buildMenu(origin, dataDir) {
 }
 
 /**
- * File → Back up…: one file holding the whole database, locked with a passphrase if the person
- * chooses one (desktop/backup.mjs). Meant to be kept somewhere other than this computer.
+ * File → Back up…: one file holding the whole database and the receipt files it describes, locked
+ * with a passphrase if the person chooses one (desktop/backup.mjs). Meant to be kept somewhere other
+ * than this computer.
  */
 async function backUp() {
   const passphrase = await askPassphrase("backup");
@@ -365,20 +376,15 @@ async function backUp() {
   });
   if (canceled || !filePath) return;
   try {
-    const { encrypted } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
-    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"})\n`);
-    // This backup holds the data file only. Receipts ([8i]) are files beside it, so the person is
-    // told, in plain words, that they need copying too (docs/architecture/expense-records.md § 2).
-    const receipts = receiptFileCount(dataDir);
+    const { encrypted, receipts, missingReceipts } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
+    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing)\n`);
     await dialog.showMessageBox(win ?? undefined, {
       type: "info",
       title: "Backed up",
       message: `Backed up to ${filePath}`,
       detail:
         (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
-        (receipts > 0
-          ? `It doesn't hold your ${receipts === 1 ? "receipt file" : `${receipts} receipt files`}: copy the receipts folder too (File → Open data folder) and keep it with the backup. `
-          : "") +
+        backupReceiptsNote(receipts, missingReceipts) +
         "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
     });
   } catch (error) {
@@ -403,9 +409,10 @@ async function restore() {
   const staging = path.join(dataDir, "restore-staging.db");
   let passphrase = "";
   let header;
+  let receipts = 0;
   for (;;) {
     try {
-      ({ header } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
+      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
       break;
     } catch (error) {
       if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
@@ -434,12 +441,10 @@ async function restore() {
     message: "This replaces everything in DotAmi on this computer with the backup.",
     detail:
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
-      (receiptFileCount(dataDir) > 0
-        ? " Your receipt files aren't in the backup: the receipts folder is moved into the backups folder as it is, and the restored records have no receipts."
-        : ""),
+      restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)),
   });
   if (response !== 0) {
-    rmSync(staging, { force: true });
+    discardRestore(staging);
     return;
   }
 
@@ -451,9 +456,9 @@ async function restore() {
     await stopped;
   }
   try {
-    const { safetyCopy, receiptsMovedTo } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
+    const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
     log?.write(
-      `[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}${receiptsMovedTo ? `; receipts folder moved to ${receiptsMovedTo}` : ""}\n`,
+      `[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}; ${receiptsRestored} receipt files restored${receiptsMovedTo ? `; receipts folder moved to ${receiptsMovedTo}` : ""}\n`,
     );
   } catch (error) {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the

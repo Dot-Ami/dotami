@@ -39,9 +39,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or a web page can carry a script), and refuses a picture too large to show safely. It names the copy
   itself with a random string; your file's name is never sent or kept. You are told first that the copy
   is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
-  DotAmi's copy and keeps the record. There is no way to look at a receipt inside DotAmi yet, and
-  backups don't hold receipts yet: *File → Back up…* says so, and *Restore* moves the receipts folder
-  into the backups folder, whole, instead of losing it.
+  DotAmi's copy and keeps the record. There is no way to look at a receipt inside DotAmi yet.
+- **Backups hold your receipts** — *File → Back up…* now puts every receipt file in the backup with
+  the data, locked by the same passphrase if you chose one, and says how many went in. *Restore*
+  brings them back; the receipts already on this computer go to the backups folder beside the safety
+  copy. Backups are now written and read a piece at a time, so a big data file or many receipts
+  don't need more memory. Backups made by earlier versions still restore (they hold no receipts,
+  and the question before restoring says so).
 - **Your receipts on the Delete menu** — a box of its own that removes every receipt, files
   included, and keeps the records. *Your expense records* now takes their receipts with them.
   Deleting your ideas keeps their records and so their receipts. A receipt file left behind (another
