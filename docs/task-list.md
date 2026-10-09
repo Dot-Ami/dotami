@@ -294,6 +294,10 @@ roadmap's build order.
 - ✅ **[13e] Tests that use the app like a person** — Playwright on the real build, a CI job on
   every pull request (#64); `npm run test:browser`. Each new screen adds its own test. A required
   check on `main` since 2026-10-05: nothing merges with them failing.
+  - [x] The suite never trips the app's rate limits by accident — 2026-10-09; on the test server
+    only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
+    `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
+  - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
