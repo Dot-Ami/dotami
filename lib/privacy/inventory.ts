@@ -206,7 +206,7 @@ export const TABLES: readonly TableEntry[] = [
     holds:
       "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags you picked, how far along it is, and your notes on it.",
     removedBy:
-      "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress, figures and expense records, wiped from the file. Nothing deletes a single idea yet.",
+      "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
   {
     model: "VentureLink",
@@ -241,9 +241,9 @@ export const TABLES: readonly TableEntry[] = [
     model: "Expense",
     name: "Your expense records",
     holds:
-      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, a category only if one was given, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible or chooses its category.",
+      "Single business expenses that you typed or an agent proposed, whether waiting, agreed to, taken back or turned down: the day, the amount and currency, who it was paid to and what for, the idea it is attached to (or none yet), a category only if one was given, your own business share if you gave one, the GST/HST part if you gave it, the seller's address and GST/HST number if you gave them, and where it came from, with the days it was proposed, agreed to and taken back. A refund or credit is kept the way you chose: a negative amount, or a refund record linked to the purchase, with its credit note if you gave one. Never a bank or card number, and no receipt file yet. These are individual transactions, kept as your own record; DotAmi never marks one as deductible, sets a business share or chooses a category. Records you type on the Expenses page stay in that window until you agree; only then are they written here.",
     removedBy:
-      "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”, or “Your ideas”, which takes their records with them).",
+      "Take back (an agreed record) and Turn down (a waiting one) on the Expenses page stop it counting, but the row, with its amount and words, stays in the data file and is counted here. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”). Deleting your ideas does not: their records stay, as “not attached yet”. Nothing in the app erases a single record yet.",
   },
   {
     model: "SourceAccount",
@@ -267,12 +267,34 @@ export type DeleteKindId =
   | "remembered-columns";
 
 /**
+ * Records in another table that point at what a box deletes but are KEPT: the database only clears
+ * their link (onDelete: SetNull in prisma/schema.prisma). The menu counts them and, before the
+ * person confirms, says how many stay, what they become, where they are kept and how to delete them.
+ */
+export interface KeptLink {
+  /** The table the kept rows are in, and the link column the database clears. */
+  model: string;
+  field: string;
+  /** One row, as a sentence counts it: "expense record". */
+  one: string;
+  /** What the kept rows become, in the words the rest of the app uses for it. */
+  becomes: string;
+  /** Where they are kept and how to delete them, said before the person confirms. */
+  whereAndHow: string;
+}
+
+/** The key a kept link's count travels under, on the page and in the delete request: "Expense.ventureId". */
+export { keptLinkKey } from "./kept-links";
+
+/**
  * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
  * saying what else goes with it, because deleting one kind can take another with it (an idea's
  * figures belong to the idea). tests/privacy-delete.spec.ts fails until every table above is on
- * the menu or in KEPT_BY_DELETE, and until `alsoDeletes` says exactly what the schema's
- * onDelete: Cascade takes with `tables` — so a new table, or a new link to an idea, has to say
- * here whether Delete takes it before it can merge.
+ * the menu or in KEPT_BY_DELETE, until `alsoDeletes` says exactly what the schema's
+ * onDelete: Cascade takes with `tables`, and until `keeps` names every link onDelete: SetNull
+ * clears — so a new table, or a new link to an idea, has to say here whether Delete takes it
+ * before it can merge. The same test fails when a table in `alsoDeletes` would only be partly
+ * emptied (an optional link), because the menu shows whole-table counts for those.
  */
 export interface DeleteMenuEntry {
   id: DeleteKindId;
@@ -280,8 +302,13 @@ export interface DeleteMenuEntry {
   label: string;
   /** The tables whose every row this deletes. Empty for a kind DotAmi doesn't keep yet. */
   tables: readonly string[];
-  /** Tables the database empties along with `tables` (onDelete: Cascade in prisma/schema.prisma). */
+  /**
+   * Tables the database empties along with `tables` (onDelete: Cascade in prisma/schema.prisma).
+   * Every row goes, so the menu counts the whole table.
+   */
   alsoDeletes: readonly string[];
+  /** Rows elsewhere that stay, with their link to what this deletes cleared (onDelete: SetNull). */
+  keeps: readonly KeptLink[];
   /** What else goes with it, in one or two sentences, shown under the tick-box. */
   goesWithIt: string;
   /** The longer explanation behind "Learn more". */
@@ -298,18 +325,30 @@ export interface DeleteMenuEntry {
 /**
  * The Delete menu, in the order it shows (and the order the tables are emptied in). The maintainer
  * decided on 2026-10-07 that it is one button named "Delete" with a menu of what can be deleted
- * and what else goes with each, and that the statements can be deleted all at once only.
+ * and what else goes with each, and that the statements can be deleted all at once only. On
+ * 2026-10-08 he decided that deleting an idea keeps its expense records ("not attached yet"), and
+ * that people are told so, and where they are kept, so they can delete them if they want to.
  */
 export const DELETE_MENU: readonly DeleteMenuEntry[] = [
   {
     id: "ideas",
     label: "Your ideas, with their notes, links and map progress",
     tables: ["Venture"],
-    alsoDeletes: ["VentureLink", "ScenarioState", "Figure", "Expense"],
+    alsoDeletes: ["VentureLink", "ScenarioState", "Figure"],
+    keeps: [
+      {
+        model: "Expense",
+        field: "ventureId",
+        one: "expense record",
+        becomes: "not attached yet",
+        whereAndHow:
+          "They are kept in DotAmi's data file on this computer: this page counts them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”, where you can attach them to another idea. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too. DotAmi can't delete a single record yet.",
+      },
+    ],
     goesWithIt:
-      "Deleting your ideas also deletes their notes, the links between them, their map progress, and every figure and expense record that belongs to them, even if those boxes aren't ticked.",
+      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, unless you tick “Your expense records” too.",
     learnMore:
-      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Figures and expense records always belong to an idea, so they go with it. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
   },
   {
@@ -317,6 +356,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your figures",
     tables: ["Figure"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "Every figure goes, whether agreed, waiting, taken back or turned down. Cards that used an agreed figure go back to your estimates.",
     learnMore:
@@ -328,9 +368,11 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your expense records",
     tables: ["Expense"],
     alsoDeletes: [],
-    goesWithIt: "Every expense record goes, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
+    keeps: [],
+    goesWithIt:
+      "Every expense record goes, attached to an idea or not, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
     learnMore:
-      "This is every single business expense you typed or an agent proposed, on every idea: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+      "This is every single business expense you typed or an agent proposed, attached to an idea or not, refunds included: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
     built: true,
   },
   {
@@ -338,6 +380,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your bank and card accounts",
     tables: ["SourceAccount"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "Every account name goes, including the ones you took back, with the days you agreed to their warnings. Figures read from their statements stay: tick “Your figures” to delete those too. “Always allow every account” stays until “Your settings” is ticked as well.",
     learnMore:
@@ -349,6 +392,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your statements (“In your words”)",
     tables: ["PersonStatement"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "All of them go at once. DotAmi never deletes one statement by itself: a newer statement is how you change an older one.",
     learnMore:
@@ -360,6 +404,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Your settings",
     tables: ["Setting"],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt:
       "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show.",
     learnMore:
@@ -371,6 +416,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Safety copies in the backups folder",
     tables: [],
     alsoDeletes: [],
+    keeps: [],
     folder: "backups",
     goesWithIt:
       "Deletes the whole copies of the data file DotAmi made before each update and restore. Afterwards, only a backup you saved somewhere else could bring anything back.",
@@ -383,6 +429,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     label: "Remembered columns",
     tables: [],
     alsoDeletes: [],
+    keeps: [],
     goesWithIt: "DotAmi doesn't remember a file's columns yet, so there is nothing to delete. Once it does, they will be deleted here.",
     learnMore:
       "A later step lets DotAmi remember which columns of a spreadsheet you picked, so the same kind of file is read the same way next time. Only the column names would be kept, never the file. When that is built, this box will delete them.",

@@ -163,6 +163,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                     // The safety-copies box counts files, under its folder's name.
                     backups: holdings.safetyCopies,
                   }}
+                  keptCounts={holdings.keptLinks}
                   tableNames={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
                     backups: "Safety copies",

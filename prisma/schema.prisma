@@ -192,9 +192,18 @@ model Figure {
 /// for the person's click in the agree prompt, exactly like a Figure. Holds no bank or card number
 /// and no receipt yet (a later slice). docs/architecture/expense-records.md § 1;
 /// docs/architecture/figures-privacy-review.md.
+///
+/// Since the maintainer's decisions (2026-10-08): the idea is optional (a record can wait "not
+/// attached yet" and be attached later), a record may carry the person's own business share, and a
+/// refund or credit is kept either as a negative amount or as a separate "refund" record linked to
+/// the expense it came from. The migration that made this change rebuilds this table only
+/// (prisma/migrations/20261008120000_expenses_typed/migration.sql), never Venture.
+/// Deleting an idea keeps its records: their idea is cleared and they wait "not attached yet" (the
+/// maintainer's decision of 2026-10-08), so nothing the person typed is lost with an idea.
 model Expense {
   id              String    @id @default(cuid())
-  ventureId       String
+  /// The idea it is attached to, or null while it is "not attached yet" (including after that idea is deleted).
+  ventureId       String?
   /// The calendar day of the purchase; stored as midnight UTC of that day, like a Figure's period dates.
   date            DateTime
   /// Whole cents, never floating point. BigInt like Figure.amountCents.
@@ -211,6 +220,20 @@ model Expense {
   sellerAddress   String?
   /// Optional, typed by the person; lib/expenses/validate.ts says what shape is accepted.
   vendorGstNumber String?
+  /// "expense" | "refund" (lib/expenses/types.ts EXPENSE_RECORD_KINDS). A refund record holds the amount
+  /// that came back and points at the expense it came from; a refund kept as a negative amount is an
+  /// "expense" record with an amount below zero.
+  recordKind      String    @default("expense")
+  /// The expense a refund or credit came from, when there is one. Cleared, not deleted, if that
+  /// expense is ever deleted, so the refund's own record survives.
+  refundOfId      String?
+  /// The GST/HST part of the amount, if the person gave it: whole cents, never negative, at most the amount.
+  gstHstCents     BigInt?
+  /// A refund's credit note, as the person typed it (its number, its date). Refunds only.
+  creditNote      String?
+  /// The person's own business share of a mixed-use purchase, a whole percent from 1 to 100, kept
+  /// beside the full amount. DotAmi never sets it and never works out a "deductible" amount from it.
+  businessSharePercent Int?
   /// "typed" | "file" | "agent" (lib/expenses/types.ts EXPENSE_SOURCE_KINDS)
   sourceKind      String
   /// What the person sees as the source, e.g. "typed by you", "the Lens".
@@ -221,9 +244,12 @@ model Expense {
   proposedAt      DateTime  @default(now())
   agreedAt        DateTime?
   retractedAt     DateTime?
-  venture         Venture   @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  venture         Venture?  @relation(fields: [ventureId], references: [id], onDelete: SetNull)
+  refundOf        Expense?  @relation("ExpenseRefunds", fields: [refundOfId], references: [id], onDelete: SetNull)
+  refunds         Expense[] @relation("ExpenseRefunds")
 
   @@index([ventureId, status])
+  @@index([refundOfId])
 }
 
 /// [8e] The person's saved choices — DotAmi's first settings table. One row per setting: `key` is a

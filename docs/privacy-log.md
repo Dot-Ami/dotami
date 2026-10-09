@@ -78,6 +78,23 @@ person is asked).
   key. In the desktop app, a download refused because it didn't come from DotAmi's own page adds
   one line to `logs/server.log` naming nothing but the refusal
   ([`desktop/main.mjs`](../desktop/main.mjs), `saveDownload`).
+- **Typed expense records ([8i], the *Your expenses* page, `/expenses`).** The `Expense` table
+  gains: an idea that may be empty ("not attached yet"), the person's own business share (a whole
+  percent, kept beside the full amount), a refund's link to the purchase it came from, the GST/HST
+  part and a credit note's details. Records the person types stay in that window only (not in the
+  data file, not in browser storage) until *Agree to all*; closing the window forgets them. There
+  is no field for a bank or card number. The database update rebuilds this one table and nothing
+  else ([`prisma/migrations/20261008120000_expenses_typed`](../prisma/migrations/20261008120000_expenses_typed/migration.sql),
+  tested by [`tests/desktop-migrate.spec.ts`](../tests/desktop-migrate.spec.ts)).
+- **Deleting an idea keeps its expense records** (the maintainer's decision of 2026-10-08). The
+  database clears each record's idea instead of deleting the record (`onDelete: SetNull` in
+  [`prisma/schema.prisma`](../prisma/schema.prisma)), so the records stay in DotAmi's data file
+  on this computer as "not attached yet", with their refund links. *What DotAmi knows about you*
+  keeps counting them under *Your expense records*, and the Expenses page lists them under *Not
+  attached to an idea yet* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`
+  `keeps`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)). Records
+  the person turned down are kept and counted the same way but, as before, no list shows them; the
+  Delete menu's warning says so, because its "N stay" count includes them.
 - **A "wipe pending" note beside the data file, only while a Delete's wipe is unfinished ([8d]).**
   Delete writes `dotami.db.wipe-pending` (named after the data file) just before it deletes and
   wipes, and removes it once the wipe and any safety copies it was deleting are done. It holds the
@@ -127,6 +144,17 @@ person is asked).
   ([`e2e/app.spec.ts`](../e2e/app.spec.ts)). If the person imports it into a calendar that syncs
   online, the event text and dates go to the company that runs that calendar; the page says so.
 
+- **The Expenses page sends nothing out.** Its requests go to DotAmi's own server; only an idea's
+  id goes in an address, never who was paid, what for or an amount
+  ([`app/api/expenses/route.ts`](../app/api/expenses/route.ts)).
+- **The expense list can now be read whole.** `GET /api/expenses` with no idea named returns every
+  record the page would list (all except turned-down ones), attached to an idea or not: who was
+  paid, what for, the amount, the address and GST/HST number. Before, it needed `?venture=<id>`
+  and returned one idea's records. Like the other read routes, it answers any program on this
+  computer that passes the Host check; that is the same trust as the data file itself, and the
+  figures list route still answers one idea at a time
+  ([`docs/architecture/figures-privacy-review.md`](architecture/figures-privacy-review.md), "Any
+  program on the computer that calls the API").
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
@@ -211,9 +239,13 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Before this, Electron's
   built-in dialog handled a playbook save.
 
+- **Attaching an expense record to an idea, or moving it, answers only to DotAmi's own page**
+  (`POST /api/expenses/attach`, like agree, take back and turn down), never an agent
+  ([`app/api/expenses/attach/route.ts`](../app/api/expenses/attach/route.ts)).
 - **DotAmi can now erase data from its own file.** The Delete button on *What DotAmi knows about
-  you* empties the ticked kinds (ideas with their links, map progress, figures and expense records;
-  figures; expense records; every statement at once; settings). Only DotAmi's own page can ask for
+  you* empties the ticked kinds (ideas with their links, map progress and figures, keeping their
+  expense records as "not attached yet"; figures; expense records; every statement at once;
+  settings). Only DotAmi's own page can ask for
   it: the route refuses any other caller, an agent included
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts),
   `refuseUnlessFromAppPage`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)).
@@ -262,6 +294,17 @@ person is asked).
   file is written without the person choosing where. In a browser it is an ordinary download,
   following the browser's own setting.
 
+- **Keeping typed expense records needs *Agree to all N*.** The review lists every typed record,
+  ticked; unticked ones stay on the typed list. Records an agent or a file proposes still wait for
+  the same click ([`components/expenses/expenses-page.tsx`](../components/expenses/expenses-page.tsx)).
+- **Before ideas are deleted, the person is told their expense records stay.** Ticking *Your
+  ideas* shows, under the box and again in *Delete these?*, how many expense records stay, that
+  they stay as "not attached yet", where they are kept (DotAmi's data file on this computer,
+  counted on that page) and how to delete them (tick *Your expense records* too; no single record
+  can be deleted yet). That number is checked again when the person confirms: if a record was
+  attached to an idea since, nothing is deleted
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
+  [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
 - **Deleting the safety copies is its own tick-box, with a warning.** It is never ticked for the
   person; the box, the first ask and the second ask each say that afterwards only a backup saved
   somewhere else could bring anything back
@@ -291,6 +334,9 @@ person is asked).
 ### How to remove it
 
 - Nothing new to remove: the return reader keeps nothing (above).
+- **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
+  keep the row. Deleting ideas keeps them too, as "not attached yet". Only the Delete menu's *Your
+  expense records* box removes them, all at once; nothing removes a single record yet.
 - Figures agreed from a GnuCash book are ordinary figures: *Retract* on the ideas page and the
   Delete button's "figures" box remove them like any other. Nothing else from the book is kept.
 - **The Delete button on *What DotAmi knows about you*** removes ideas, figures, expense records,
@@ -329,6 +375,9 @@ person is asked).
 - A tax return the person drops is read on their computer, in memory, and not kept or sent; only
   four T2125 lines and their pages are shown. The PDF reader is Mozilla's pdf.js, run so it
   can't connect anywhere.
+- Deleting an idea in DotAmi does not delete the business expense records attached to it: they
+  stay on the person's computer, in DotAmi's data file, as "not attached yet", until the person
+  deletes the expense records themselves. DotAmi says so before the idea is deleted.
 - Delete removes DotAmi's own copy only: backups the person made and anything already shared
   still hold what was deleted, and so do the safety copies in the backups folder unless the person
   ticks them, and the CRA generally

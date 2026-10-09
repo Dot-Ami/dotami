@@ -9,6 +9,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
+  (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
+  expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
+  part, the seller's address and GST/HST number if you like) and add it to a list; type as many as
+  you like, then *Review* them and *Agree to all* at once. Untick any you want to leave out: they stay
+  on your typed list. Nothing is kept until you agree, and closing the window forgets the typed list.
+  There is no box for a bank or card number.
+- **Not attached yet** — a record can be kept without an idea and attached to one later (*Attach* /
+  *Move* on each record).
+- **Deleting an idea keeps its expense records** (the maintainer's decision of 2026-10-08) — they
+  stay in DotAmi's data file on your computer as "not attached yet", refund links included, and you
+  can attach them to another idea. Before you delete, the Delete menu says how many stay, where they
+  are kept and how to delete them too (tick *Your expense records*). The count includes records you
+  turned down, which are kept but not listed on the Expenses page, and the warning says so.
+- **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
+  beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
+  amount from it. A share an agent or a file proposed is shown as theirs ("proposed by …"), never as
+  your number.
+- **Refunds and credits, your way** — keep each one as a negative amount on a record, or as a
+  separate refund record linked to the purchase it came from (*Record a refund for this*). Either way
+  it keeps the refund's date, the purchase, the GST/HST part and the credit note's details when you
+  give them. DotAmi doesn't say how a refund is taxed.
+- **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
+  (or turn them down), exactly as before.
 - **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
   compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
   account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
@@ -55,8 +79,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
-  settings. Each box says what else goes with it (deleting ideas also deletes their figures, expense
-  records and map progress) and has a Learn more. A cited line says Delete doesn't touch your own
+  settings. Each box says what else goes with it (deleting ideas also deletes their figures and map
+  progress; their expense records stay, counted, as "not attached yet") and has a Learn more. A cited line says Delete doesn't touch your own
   books, and that the CRA says business records are generally kept six years. DotAmi asks twice,
   refuses if anything changed in between, deletes in one step (a failure part-way deletes nothing),
   then wipes the deleted records out of the data file so they can't be dug back out of it. Only
@@ -134,6 +158,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   export a report that has a date on every sale.
 
 ### Changed
+- **A database update** rebuilds the expense records table only, so a record's idea can be empty
+  (and is emptied, not deleted, when its idea is deleted) and the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
+  are kept as they are (a test seeds each and checks it after the update), and the app backs the
+  file up first.
 - **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
   server no longer carries the image library sharp (with libvips, LGPL-3.0-or-later) or the
   TypeScript compiler, which Next.js's build copied in although DotAmi never resizes an image and

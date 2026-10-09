@@ -9,7 +9,9 @@ One button named **Delete**, in the last section of the page ("Taking things out
 of the kinds of data DotAmi keeps, one tick-box each, and erases the ticked kinds from the data file
 after asking twice. The maintainer decided its shape on 2026-10-07: one button named "Delete", a
 menu of what can be deleted with what else goes with each and a Learn more, statements deletable
-all at once only, and one cited line on keeping business records.
+all at once only, and one cited line on keeping business records. On 2026-10-08 he decided that
+deleting ideas keeps their expense records, as "not attached yet", and that the person is told so,
+with where they are kept, before confirming.
 
 ## What it does (behavior on interact)
 
@@ -18,9 +20,11 @@ all at once only, and one cited line on keeping business records.
 2. **The menu** (`What do you want to delete?`) lists `DELETE_MENU` from `lib/privacy/inventory.ts`,
    in its order:
    - **Your ideas, with their notes, links and map progress** — also takes every link, map
-     progress, figure and expense record (they belong to an idea; the database deletes them with it).
+     progress and figure (they belong to an idea; the database deletes them with it). Its expense
+     records **stay**, as "not attached yet": the database clears each record's idea instead
+     (`keeps` in `DELETE_MENU`).
    - **Your figures** — every figure, in every state; cards go back to the estimates.
-   - **Your expense records** — every record, in every state.
+   - **Your expense records** — every record, attached to an idea or not, in every state.
    - **Your bank and card accounts** (added 2026-10-08, [8g]) — every account name, in use or taken
      back, with its days. Figures read from their statements stay; "Always allow every account" goes
      with Your settings, and the tick-box line says so.
@@ -36,8 +40,23 @@ all at once only, and one cited line on keeping business records.
      file's columns yet. This is its place on the menu when it does.
 
    Each box shows the count of every table it touches ("Your ideas: 2 · Links between ideas: 1 ·
-   …"), the sentence on what else goes with it, and **Learn more** (a `<details>`, no script). A box
-   with nothing in it is switched off ("Nothing to delete").
+   …"); each of those tables is emptied completely, so these are whole-table counts and true (a
+   test fails if a table a box goes with could be only partly emptied). The ideas box adds a line
+   for what it keeps: "Expense records attached to them: 2 (they stay, as “not attached yet”)". The
+   expense records box counts every record. Then the sentence on what else goes with it, and
+   **Learn more** (a `<details>`, no script). A box with nothing in it is switched off ("Nothing
+   to delete").
+
+   **Ticking "Your ideas"** (while "Your expense records" isn't ticked, and some records are
+   attached) shows a warning under the box at once: "2 expense records stay, as “not attached
+   yet”." then where they are kept and how to delete them: in DotAmi's data file on this computer,
+   counted on this page under "Your expense records", and, except the ones the person turned down,
+   listed on the Expenses page under "Not attached to an idea yet" (where they can be attached to
+   another idea); records turned down are kept and counted too, but no list shows them (the count
+   covers them, so the warning says so); to delete them as well, tick "Your expense records" too;
+   no single record can be deleted yet. Ticking both boxes
+   deletes every record: the warning goes, and the ideas box's line ends "(they go too: “Your
+   expense records” is ticked)".
 
    Under the boxes: the cited line (from `lib/engines/compliance/v2026/record-keeping.ts`): Delete
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
@@ -50,17 +69,20 @@ all at once only, and one cited line on keeping business records.
    **Delete what's ticked…** (off until a box is ticked) goes to the first ask. **Cancel** closes
    the menu and unticks everything.
 3. **First ask** (dialog, "Delete these?"): every ticked box with the count of each table it
-   touches (and of safety copies, as files), and a line that everything not ticked stays, as does
-   what Delete doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards
-   only a backup saved somewhere else could bring anything back. Without them, when there are any, a
-   line that the safety copies aren't ticked and still hold what is deleted. **Yes, continue** or **Cancel** (back to the
-   menu, boxes still ticked).
+   touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
+   expense records that stay; and a line that everything not ticked stays, as does what Delete
+   doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
+   backup saved somewhere else could bring anything back. Without them, when there are any, a line
+   that the safety copies aren't ticked and still hold what is deleted. **Yes, continue** or
+   **Cancel** (back to the menu, boxes still ticked).
 4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
    ticked, the amber warning again. In the desktop app it points to File → Back up… first and File →
    Restore; from source, to copying the data file. Focus starts on **Cancel**, so Enter can't delete
    by accident. **Delete now** sends the request.
-5. **Result**: "Deleted." with each table's count deleted and left (0), and whether the file's
-   space is wiped. When the wipe couldn't run, an amber note says the records are deleted but their
+5. **Result**: "Deleted." with each table's count deleted and left (0), a line for what was kept
+   ("Your expense records: 2 records kept, now “not attached yet”; 3 records in all"; left out when
+   none was kept, so ticking ideas with no records attached says nothing about expenses), and whether
+   the file's space is wiped. When the wipe couldn't run, an amber note says the records are deleted but their
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
    using it), with **Try the wipe again**. Safety copies are counted as files ("Safety copies: 2 files
    deleted, 0 left"); a copy another program holds open is left, and an amber line says so, with
@@ -76,7 +98,9 @@ all at once only, and one cited line on keeping business records.
 
 Escape, Cancel or a click on the dim backdrop at either ask deletes nothing. If the counts in the
 file differ from what the person was shown (an import or an agent added something), the server
-refuses, nothing is deleted, the menu shows the message and the page reads its counts again.
+refuses, nothing is deleted, the menu shows the message and the page reads its counts again. The
+number of expense records the warning said would stay is checked the same way, so a record
+attached to an idea in between (the total unchanged) also stops the delete.
 
 ## Why it exists (user purpose)
 
@@ -93,8 +117,8 @@ and their sentences are in `DELETE_MENU`.
 
 ## State touched (field names only)
 
-Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`,
-`Expense` rows of those ideas), `Figure`, `Expense`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
+Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`;
+`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
 (`KEPT_BY_DELETE`). On disk: the safety copies DotAmi made in `backups/` beside the data file (when
 ticked), and the "wipe pending" note beside the data file (`<data file>.wipe-pending`, written before
 the wipe and removed once it has worked; it holds a time and safety-copy file names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
