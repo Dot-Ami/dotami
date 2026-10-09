@@ -93,15 +93,21 @@ export interface WindowStorageEntry {
   lasts: string;
 }
 
-/** A file or folder beside the database that DotAmi's desktop app writes. */
+/** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log";
-  /** Path relative to the folder holding the data file. */
+  id: "backups" | "log" | "wipe-pending";
+  /**
+   * Path relative to the folder holding the data file. The wipe-pending note is named after the
+   * data file itself, so this shows the desktop app's name for it (lib/privacy/holdings.ts finds it
+   * beside whichever data file this copy uses).
+   */
   relativePath: string;
   name: string;
   holds: string;
-  /** A piece of text that must appear in the desktop code that writes it (a guard against a rename). */
+  /** A piece of text that must appear in the code that writes it (a guard against a rename). */
   writtenBy: { file: string; mentions: string };
+  /** What the page says when it isn't there. Without one: "None yet" (desktop) or that only the desktop app makes it. */
+  whenAbsent?: string;
 }
 
 /**
@@ -242,7 +248,7 @@ export const TABLES: readonly TableEntry[] = [
 ];
 
 /** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
-export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "remembered-columns";
+export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "backups" | "remembered-columns";
 
 /**
  * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
@@ -266,6 +272,11 @@ export interface DeleteMenuEntry {
   learnMore: string;
   /** False while DotAmi doesn't keep this kind yet: the box shows switched off and says so. */
   built: boolean;
+  /**
+   * A folder beside the data file whose files this deletes instead of rows: only "backups", where
+   * only DotAmi's own safety copies go (desktop/wipe-pending.mjs says which files those are).
+   */
+  folder?: "backups";
 }
 
 /**
@@ -329,6 +340,18 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     built: true,
   },
   {
+    id: "backups",
+    label: "Safety copies in the backups folder",
+    tables: [],
+    alsoDeletes: [],
+    folder: "backups",
+    goesWithIt:
+      "Deletes the whole copies of the data file DotAmi made before each update and restore. Afterwards, only a backup you saved somewhere else could bring anything back.",
+    learnMore:
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. If a copy can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+    built: true,
+  },
+  {
     id: "remembered-columns",
     label: "Remembered columns",
     tables: [],
@@ -354,10 +377,6 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
  */
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
-    name: "Safety copies in the backups folder",
-    why: "Not touched. Each is a whole copy of the data file from before an update or a restore, so it still holds what you delete here. To remove them, close DotAmi and delete the folder (its path is above). A copy you saved elsewhere could bring everything back.",
-  },
-  {
     name: "What the window stored in earlier launches",
     why: "Not cleared yet. The job descriptions you typed under “Other…” on the intake stay in the desktop app's own folder; clearing them is a later step.",
   },
@@ -371,7 +390,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The disk under the data file",
-    why: "Delete wipes the deleted records out of the data file itself. The drive can still hold older copies of the file's pieces in its free space until they are overwritten; disk encryption is what protects those.",
+    why: "Delete wipes the deleted records out of the data file itself, and deletes the safety copies you tick. The drive can still hold older copies of the file's pieces, and of deleted safety copies, in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
 
@@ -404,7 +423,10 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
   },
 ];
 
-/** Files beside the database. Only the desktop app writes these; a copy run from source has none of its own. */
+/**
+ * Files beside the database. Only the desktop app writes the safety copies and the log; a copy run
+ * from source has none of its own. The wipe-pending note is written by Delete in any copy.
+ */
 export const FOLDERS: readonly FolderEntry[] = [
   {
     id: "backups",
@@ -419,8 +441,17 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, and backups and restores (with the location of the file you chose). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
+  },
+  {
+    id: "wipe-pending",
+    relativePath: "dotami.db.wipe-pending",
+    name: "A note that a wipe is still owed",
+    holds:
+      "Written by Delete just before it wipes the data file, and removed once the wipe has worked. It holds the time the Delete started and the names of safety copies still to be deleted, nothing of yours. While it is there, the desktop app finishes the wipe the next time it starts; it does nothing of the kind on an ordinary start.",
+    writtenBy: { file: "desktop/wipe-pending.mjs", mentions: ".wipe-pending" },
+    whenAbsent: "None: no wipe is owed.",
   },
 ];
 

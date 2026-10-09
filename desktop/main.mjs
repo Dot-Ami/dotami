@@ -14,8 +14,9 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProce
 
 import { applyRestore, BACKUP_EXTENSION, BackupError, prepareRestore, writeBackup } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
-import { migrate, MigrationRefused } from "./migrate.mjs";
+import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
+import { finishPendingWipe } from "./wipe-pending.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
@@ -90,9 +91,18 @@ async function start() {
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
 
+  // A Delete whose wipe couldn't finish (the computer was busy, the disk full, or it was switched
+  // off part-way) left a "wipe pending" note beside the data file: finish it now, before the server
+  // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
+  // the file is normal after any edit, and rebuilding it on every start would only slow it down.
+  // It never stops the start: what still can't be done stays owed for the next one.
+  const wipe = finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (line) => log.write(`${line}\n`) });
+  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
-  // untouched.
+  // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
+  // the file has already been rebuilt, with the same contents, before these checks run).
   try {
     const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
