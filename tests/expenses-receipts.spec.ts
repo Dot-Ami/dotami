@@ -332,6 +332,71 @@ describe("the sweep: DotAmi's own files that no record describes", () => {
     expect(files()).not.toContain(old);
   });
 
+  // The app stopped after the row was written but before the file got its final name. The .partial
+  // file is then the only copy of a receipt the record says it has: the sweep must finish the
+  // rename, not delete it.
+  it("finishes an add the app stopped half-way: a row describes the abandoned file, so it gets its final name", async () => {
+    const e = await record();
+    const file = pdf();
+    const id = "e".repeat(32);
+    await prisma.receipt.create({
+      data: { id, expenseId: e.id, type: "application/pdf", bytes: file.length, sha256: createHash("sha256").update(file).digest("hex") },
+    });
+    mkdirSync(folder, { recursive: true });
+    const partial = path.join(folder, `${id}.pdf.partial`);
+    writeFileSync(partial, file);
+    const elevenMinutesAgo = new Date(Date.now() - 11 * 60_000);
+    utimesSync(partial, elevenMinutesAgo, elevenMinutesAgo);
+
+    const result = await sweepOrphanReceipts(prisma, folder);
+    expect(files()).toContain(`${id}.pdf`);
+    expect(files()).not.toContain(`${id}.pdf.partial`);
+    expect(readFileSync(path.join(folder, `${id}.pdf`)).equals(file)).toBe(true);
+    expect(result).toMatchObject({ removed: 0, failed: 0 });
+    // The record still has its receipt, and the file is the one it describes.
+    expect(await prisma.receipt.count({ where: { id } })).toBe(1);
+    // A later sweep keeps it like any other described file.
+    expect((await sweepOrphanReceipts(prisma, folder)).kept).toBeGreaterThanOrEqual(1);
+    expect(files()).toContain(`${id}.pdf`);
+  });
+
+  it("drops a half-finished add whose bytes don't match its row: the file and the row both go", async () => {
+    const e = await record();
+    const file = pdf();
+    const id = "f".repeat(32);
+    await prisma.receipt.create({
+      data: { id, expenseId: e.id, type: "application/pdf", bytes: file.length, sha256: createHash("sha256").update(file).digest("hex") },
+    });
+    mkdirSync(folder, { recursive: true });
+    const partial = path.join(folder, `${id}.pdf.partial`);
+    // Cut short: the write itself never finished.
+    writeFileSync(partial, file.subarray(0, file.length - 3));
+    const elevenMinutesAgo = new Date(Date.now() - 11 * 60_000);
+    utimesSync(partial, elevenMinutesAgo, elevenMinutesAgo);
+
+    await sweepOrphanReceipts(prisma, folder);
+    expect(files().filter((n) => n.startsWith(id))).toEqual([]);
+    expect(await prisma.receipt.count({ where: { id } })).toBe(0);
+    // The record is kept and can take a receipt again.
+    await addReceipt(prisma, folder, e.id, bytes(png(2, 2)));
+    expect(await prisma.receipt.count({ where: { expenseId: e.id } })).toBe(1);
+  });
+
+  it("leaves a young unfinished write alone even when its row is already there", async () => {
+    const e = await record();
+    const file = pdf();
+    const id = "9".repeat(32);
+    await prisma.receipt.create({
+      data: { id, expenseId: e.id, type: "application/pdf", bytes: file.length, sha256: createHash("sha256").update(file).digest("hex") },
+    });
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(path.join(folder, `${id}.pdf.partial`), file);
+    await sweepOrphanReceipts(prisma, folder);
+    expect(files()).toContain(`${id}.pdf.partial`);
+    expect(files()).not.toContain(`${id}.pdf`);
+    expect(await prisma.receipt.count({ where: { id } })).toBe(1);
+  });
+
   it("has nothing to do without a folder", async () => {
     expect(await sweepOrphanReceipts(prisma, path.join(root, "no-such-folder"))).toEqual({ removed: 0, failed: 0, kept: 0 });
     expect(await sweepOrphanReceipts(prisma, null)).toEqual({ removed: 0, failed: 0, kept: 0 });
@@ -388,6 +453,10 @@ describe("the receipt routes answer only DotAmi's own page", () => {
       body: JSON.stringify({ expenseId: e.id, file: b64(pdf()) }),
     });
     expect((await addRoute.POST(text)).status).toBe(415);
+    // A body cut short on the way (JSON that doesn't parse): a plain sentence, not "Invalid JSON".
+    const cut = await addRoute.POST(post("receipt", null, FROM_APP, `{"expenseId":"${e.id}","file":"iVBORw0K`));
+    expect(cut.status).toBe(400);
+    expect(((await cut.json()) as { error: string }).error).toBe("The receipt didn't arrive whole, so nothing was kept. Try adding it again.");
     for (const file of ["not base64!", "abc", 42, null]) {
       expect((await addRoute.POST(post("receipt", { expenseId: e.id, file }, FROM_APP))).status, String(file)).toBe(400);
     }

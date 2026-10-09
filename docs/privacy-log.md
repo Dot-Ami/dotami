@@ -136,7 +136,11 @@ person is asked).
 - **A receipt goes nowhere but DotAmi's own server.** The window sends its bytes as base64 to
   `POST /api/expenses/receipt` on this computer; no address carries anything about it, the file's
   name is not sent, and no route sends a receipt's bytes back out
-  ([`app/api/expenses/receipt/route.ts`](../app/api/expenses/receipt/route.ts)).
+  ([`app/api/expenses/receipt/route.ts`](../app/api/expenses/receipt/route.ts)). The record list
+  (`GET /api/expenses`, which any program on the computer can call, agents included) does say
+  whether a record has a receipt, and its kind, size and day added; never its bytes, its
+  fingerprint, its id or where it is ([`lib/expenses/store.ts`](../lib/expenses/store.ts)
+  `rowToExpense`).
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).

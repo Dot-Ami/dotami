@@ -44,6 +44,10 @@ export async function POST(request: Request) {
     if (read.refusal.status === 413) {
       return NextResponse.json({ error: "That file is over 10 MB, the most a receipt can be." }, { status: 413 });
     }
+    // A body that isn't JSON from the window means it didn't arrive whole; say that, not a parser's words.
+    if (read.refusal.status === 400) {
+      return NextResponse.json({ error: "The receipt didn't arrive whole, so nothing was kept. Try adding it again." }, { status: 400 });
+    }
     return read.refusal;
   }
   const body = (typeof read.body === "object" && read.body !== null ? read.body : {}) as { expenseId?: unknown; file?: unknown };

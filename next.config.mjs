@@ -38,6 +38,13 @@ const nextConfig = {
   // Windows they never match (node_modules/next/dist/build/collect-build-traces.js:503). The
   // build script removes and checks for private files instead.
   ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop" } : {}),
+  experimental: {
+    // middleware.ts makes Next copy every request body, and the copy is cut at this size (10 MiB by
+    // default). A receipt of the maintainer's 10 MB cap travels as base64 in JSON, about 14 MB, so the
+    // default cut it short and the route saw broken JSON. 16 MB lets it through whole. Each route
+    // still caps its own body (readJsonWithLimit), so this raises no route's limit.
+    middlewareClientMaxBodySize: "16mb",
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
