@@ -1,6 +1,12 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests, checkRateLimit, clientKeyFromRequest } from "@/lib/api/rate-limit";
+
+// Start every test from the shipped default (switch off), even if the shell running the tests
+// has DOTAMI_E2E_RATE_LIMITS exported.
+beforeEach(() => {
+  vi.stubEnv("DOTAMI_E2E_RATE_LIMITS", "");
+});
 
 afterEach(() => {
   __resetRateLimitStateForTests();
@@ -110,9 +116,15 @@ describe("the browser-test switch", () => {
     }
   });
 
-  it("off again: a key that happens to end like the uncounted marker is counted as usual", () => {
+  it("off: a client that spoofs the uncounted marker as its address is still counted", () => {
+    // With the switch off the client key comes from x-forwarded-for, which anyone can send. A
+    // client claiming to be "e2e uncounted" ends its key with the marker, so only the switch
+    // check in checkRateLimit stops the shipped app from letting it through uncounted.
     const opts = { limit: 1, windowMs: 60_000 };
-    expect(checkRateLimit("settings:e2e-uncounted", opts).allowed).toBe(true);
-    expect(checkRateLimit("settings:e2e-uncounted", opts).allowed).toBe(false);
+    const spoofed = new Request("https://example.com", { headers: { "x-forwarded-for": "e2e uncounted" } });
+    const key = `settings:${clientKeyFromRequest(spoofed)}`;
+    expect(key).toBe("settings:e2e uncounted");
+    expect(checkRateLimit(key, opts).allowed).toBe(true);
+    expect(checkRateLimit(key, opts).allowed).toBe(false);
   });
 });
