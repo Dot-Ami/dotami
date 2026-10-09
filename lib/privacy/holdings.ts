@@ -160,7 +160,7 @@ function emptyStatusCounts(): Record<FigureStatus, number> {
   return Object.fromEntries(FIGURE_STATUSES.map((s) => [s, 0])) as Record<FigureStatus, number>;
 }
 
-/** Source order: typed, file, agent, tax return (the order lib/figures/types.ts lists them), then A to Z by name. */
+/** Source order: typed, file, agent, tax return, books (the order lib/figures/types.ts lists them), then A to Z by name. */
 function sourceOrder(a: HeldSource, b: HeldSource): number {
   const rank = (k: string) => {
     const i = (FIGURE_SOURCE_KINDS as readonly string[]).indexOf(k);

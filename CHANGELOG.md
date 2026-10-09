@@ -9,6 +9,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
+  compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
+  account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
+  since an income account can also hold interest or GST/HST you collected. The monthly totals of
+  the ticked accounts follow, one list per currency, exact to the cent, with what was left out and
+  why, and the note "DotAmi read your last save" (changes not yet saved in GnuCash aren't in it).
+  Review sends only those totals to the agree prompt; nothing counts until you agree. Books up to
+  50 MB are read in the background, so the window stays usable, and a read is stopped after a
+  minute. A book from a newer GnuCash, with a feature, account type or part DotAmi doesn't know,
+  is turned away with that thing's name. Figures from a book are listed under **Books / file**.
+- **A note beside a ticked book account that isn't income** ([8h]) — tick a bank, expense or other
+  account GnuCash doesn't mark as income, and a plain note appears under it: "This isn't an income
+  account in your book. If a sale also lands here, it may be counted twice." A sale is posted to
+  both the income account and the bank, so ticking both adds it up twice. The note is all it does:
+  the tick stays yours, the account is still counted, and nothing is blocked.
 - **Bank and card accounts, the groundwork** ([8g]; nothing new to see until the statement screen
   arrives) — DotAmi can now keep a list of the bank and card accounts you allow it to read
   statements from, each under your own name for it ("Business chequing", "Visa ending 1234"), with
@@ -142,6 +157,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   disk straight away, including what stopped the start (DotAmi's message and the error's name and
   code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
   without it instead of refusing to start.
+- **The browser tests no longer trip the app's own rate limits** (developers only; the app's limits
+  are unchanged). Every browser test reaches the test server as the same client, so as the suite
+  grew it made more settings calls in a minute than a person would, and on a fast computer tests
+  failed with "Too many requests" (429). The test server now starts with
+  `DOTAMI_E2E_RATE_LIMITS=opt-in` (set only in `playwright.config.ts`; the desktop app removes it
+  from its server): a request counts toward a limit only when it names its own bucket in the
+  `x-dotami-e2e-rate-limit` header. `e2e/rate-limit.spec.ts` does, and shows the settings limit of
+  120 a minute still refusing the 121st request, and that the suite's other requests aren't counted;
+  the desktop test shows the switch never reaches the desktop app.
+- **A browser-test run can no longer use another run's server.** The run used to start testing as
+  soon as anything answered on its port, so when runs from two checkouts overlapped, the second
+  one's tests reached the first one's server and database, and the two tests that put bank and card
+  accounts straight into the test database found their lists missing. A run now waits for its own
+  server to say it is ready, and stops with a plain message when the port is already taken
+  (`e2e/port-free.mjs`).
 
 ### Security
 - **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a

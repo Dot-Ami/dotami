@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-08 ([8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-08 ([8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -29,7 +29,8 @@ jump links, then five sections in this order:
    has its amount stored, then one collapsed row per **source**. A source is the pair *(kind,
    name)*: a file someone named "typed by you" stays apart from the figures that were typed
    (the agree prompt groups by name alone; this page doesn't). A row shows the source's name, its
-   kind (Typed by you · Read from a file · Proposed by an agent · Read from a tax return), counts
+   kind (Typed by you · Read from a file · Proposed by an agent · Read from a tax return ·
+   Books / file), counts
    by state, the idea or ideas it touched and the days it was proposed. Opening it lists every
    figure: what it is, the exact period, the amount, its state, "edited by you", the rows summed,
    and the days it was **proposed**, **agreed** and **taken back** (only those that happened;

@@ -47,6 +47,17 @@ person is asked).
   database or the disk, or logged, and there is no new table, column or browser-storage key.
   Tested by [`tests/figures-return-read.spec.ts`](../tests/figures-return-read.spec.ts).
 
+- **A GnuCash book the person drops ([8h], *Add from a file*): only the totals they agree to are
+  kept.** The book's bytes move into the books worker, which holds on to nothing once it has
+  answered and is stopped when the panel closes
+  ([`lib/figures/books/read-book.ts`](../lib/figures/books/read-book.ts)); its accounts and posted
+  lines live only in the open panel, and which accounts were ticked is not remembered. The
+  monthly totals the person reviews and agrees to are stored as figures (the existing `Figure`
+  table) with the new source kind `books`, the book's file name as the source's name and how many
+  lines were added. No new table, column or browser-storage key; nothing from the book is logged.
+  Tested by [`tests/figures-books-review.spec.ts`](../tests/figures-books-review.spec.ts) and the
+  browser test in [`e2e/app.spec.ts`](../e2e/app.spec.ts).
+
 - **The desktop app's log (`logs/server.log`) now keeps why a start stopped.** Every line is
   written to the disk at once ([`desktop/log.mjs`](../desktop/log.mjs)), so a start that is ended
   or fails part-way still leaves its lines. When the app can't start it writes the message it
@@ -104,6 +115,12 @@ person is asked).
   is served with its own policy that refuses every connection, DotAmi's own server included
   ([`next.config.mjs`](../next.config.mjs), `workerPolicy`); the browser test tries a fetch from
   inside the worker and the browser refuses it ([`e2e/app.spec.ts`](../e2e/app.spec.ts)).
+
+- **The books reader sends nothing out.** Its worker runs under the same policy, and the browser
+  test checks a fetch from inside it is refused. The one request is from DotAmi's page to
+  DotAmi's own server, `POST /api/figures/propose`, carrying only the monthly totals, the file's
+  name and line counts: never an account name, a transaction or the book
+  ([`e2e/app.spec.ts`](../e2e/app.spec.ts) checks every request the page makes).
 
 - **Nothing new is sent by DotAmi.** The calendar file is made in the page and saved by the
   browser or the desktop app; the browser test checks the click makes no request
@@ -182,6 +199,11 @@ person is asked).
   'self'`) that lets such a worker load DotAmi's own scripts and connect nowhere
   ([`next.config.mjs`](../next.config.mjs)). No worker loaded from those files before.
 
+- **A second worker, the books reader's ([8h]),** under the same policy, so it connects nowhere
+  either (the browser test tries a fetch from inside it and the browser refuses it,
+  [`e2e/app.spec.ts`](../e2e/app.spec.ts)). It reads a GnuCash book and is stopped after a
+  minute, or when the panel closes ([`lib/figures/books/read-book.ts`](../lib/figures/books/read-book.ts)).
+
 - **The desktop app can save a file the page makes, where the person picks.** A file made in the
   page (the calendar file, a playbook) opens DotAmi's own Save dialog with the file's name and
   type; only DotAmi's own pages can start a save, and any other download is cancelled without a
@@ -210,6 +232,12 @@ person is asked).
   [`lib/figures/file/preview.ts`](../lib/figures/file/preview.ts)). Every preview now also shows
   the earliest and latest date read, for the person to check before they review the figures;
   agreeing is unchanged.
+
+- **A figure from a GnuCash book needs the same three steps as one from a spreadsheet**: the
+  person answers *Accounting software or a spreadsheet you keep*, picks or drops the book, and
+  presses *Agree* in the agree prompt after *Review*. The accounts GnuCash marks as income start
+  ticked, and every tick is the person's to change before anything is proposed
+  ([`components/ventures/books-drop.tsx`](../components/ventures/books-drop.tsx)).
 
 - **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
   file is written without the person choosing where. In a browser it is an ordinary download,
@@ -244,6 +272,8 @@ person is asked).
 ### How to remove it
 
 - Nothing new to remove: the return reader keeps nothing (above).
+- Figures agreed from a GnuCash book are ordinary figures: *Retract* on the ideas page and the
+  Delete button's "figures" box remove them like any other. Nothing else from the book is kept.
 - **The Delete button on *What DotAmi knows about you*** removes ideas, figures, expense records,
   statements and settings from the data file, then wipes the file's free space; if the wipe can't
   run, the page says so and offers to try again. **What it doesn't reach yet**, and the page says
@@ -284,6 +314,9 @@ person is asked).
   still hold what was deleted, and so do the safety copies in the backups folder unless the person
   ticks them, and the CRA generally
   expects business records to be kept six years, which Delete doesn't change.
+- A GnuCash book the person drops is read on their computer, in memory, in a worker that can't
+  connect anywhere, and is not kept or sent; only the monthly totals of the accounts they tick,
+  and agree to, are stored, as figures from "Books / file".
 - The names people give their bank and card accounts are kept in the data file, with the day
   they agreed to the warning and the day they took the account back; "ending" and four digits is
   the most of a number a name may hold. DotAmi never keeps the account or card number itself.

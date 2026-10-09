@@ -35,10 +35,18 @@ const packagedExe = process.env.DOTAMI_DESKTOP_EXE;
 async function launch(dir = dataDir): Promise<Page> {
   // ANTHROPIC_API_KEY is set here on purpose: the app must not pass a key from the shell it was
   // started from to its server (desktop/main.mjs serverEnv) — the settings page proves it didn't.
+  // DOTAMI_E2E_RATE_LIMITS is set on purpose too: the browser tests' rate-limit switch must never
+  // reach the desktop server either (the rate-limit test below proves it didn't).
   // DOTAMI_NO_UPDATE_CHECK keeps a packaged app from asking GitHub for updates during the test.
   app = await electron.launch({
     ...(packagedExe ? { executablePath: packagedExe, args: [] } : { args: [root] }),
-    env: { ...process.env, DOTAMI_DATA_DIR: dir, ANTHROPIC_API_KEY: "sk-from-the-shell", DOTAMI_NO_UPDATE_CHECK: "1" },
+    env: {
+      ...process.env,
+      DOTAMI_DATA_DIR: dir,
+      ANTHROPIC_API_KEY: "sk-from-the-shell",
+      DOTAMI_E2E_RATE_LIMITS: "opt-in",
+      DOTAMI_NO_UPDATE_CHECK: "1",
+    },
   });
   const page = await app.firstWindow();
   await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\//);
@@ -190,6 +198,30 @@ test("the server leaves out what it never loads (sharp with libvips, TypeScript)
   expect((await page.request.get(`${origin}/settings`)).status()).toBe(200);
   const image = await page.request.get(`${origin}/_next/image?url=${encodeURIComponent("/settings")}&w=64&q=75`);
   expect(image.status()).toBe(404);
+});
+
+test("the rate limits are the real ones, even when the shell sets the browser tests' switch", async () => {
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
+
+  // launch() starts the app with DOTAMI_E2E_RATE_LIMITS=opt-in in its environment. With the switch
+  // on, these unlabelled requests would never be counted; the desktop server never gets it
+  // (desktop/main.mjs serverEnv), so the settings limit, 120 a minute, holds as shipped.
+  const statuses = await page.evaluate(async () => {
+    const out: number[] = [];
+    for (let i = 0; i < 125; i++) {
+      out.push((await fetch("/api/settings?id=figure-reminders", { cache: "no-store" })).status);
+    }
+    return out;
+  });
+  // The page itself may have asked for the setting once or twice as it opened, so the refusals can
+  // start a little before the 121st of these; everything before them was answered.
+  const firstRefused = statuses.indexOf(429);
+  expect(firstRefused).toBeGreaterThan(110);
+  expect(firstRefused).toBeLessThanOrEqual(120);
+  expect(statuses.slice(0, firstRefused).every((s) => s === 200)).toBe(true);
+  expect(statuses.slice(firstRefused).every((s) => s === 429)).toBe(true);
 });
 
 test("Add to my calendar asks where to save with a Save dialog, writes the file there, and writes nothing when cancelled", async () => {
