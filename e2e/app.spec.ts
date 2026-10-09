@@ -1662,7 +1662,8 @@ test("a GnuCash book: income accounts ticked, read in a worker that can reach no
   await expect(table.getByRole("row", { name: "March 2024 $1,762.34 3 lines", exact: true })).toBeVisible();
   await expect(table.getByRole("row", { name: "April 2024 $1,910.00 3 lines", exact: true })).toBeVisible();
   await expect(card.getByText("1 line in a month that isn't over yet")).toBeVisible();
-  await expect(card.getByText(/scheduled transactions \(1 line\) are plans GnuCash hasn't posted/)).toBeVisible();
+  // The planned retainer's two sides (bank and commissions): counted for the note, never added.
+  await expect(card.getByText(/scheduled transactions \(2 lines\) are plans GnuCash hasn't posted/)).toBeVisible();
   await accounts.getByRole("checkbox", { name: "Income:Bank Interest" }).uncheck();
   await expect(table.getByRole("row", { name: "March 2024 $1,750.00 2 lines", exact: true })).toBeVisible();
   await expect(table.getByRole("row", { name: "April 2024 $1,900.00 2 lines", exact: true })).toBeVisible();
