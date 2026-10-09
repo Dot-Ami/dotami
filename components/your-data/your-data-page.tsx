@@ -158,11 +158,19 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                 </div>
                 <DeleteMenu
                   menu={DELETE_MENU}
-                  counts={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count]))}
-                  tableNames={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name]))}
+                  counts={{
+                    ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count])),
+                    // The safety-copies box counts files, under its folder's name.
+                    backups: holdings.safetyCopies,
+                  }}
+                  tableNames={{
+                    ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
+                    backups: "Safety copies",
+                  }}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}
                   desktop={holdings.desktop}
+                  wipePending={holdings.wipePending}
                 />
               </Section>
             </div>
@@ -249,9 +257,8 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
   } else if (!facts.exists) {
     status = (
       <p className="mt-2 text-[12px] text-stone">
-        {desktop
-          ? "None yet."
-          : "None here. This copy runs from source; the desktop app is what makes it."}
+        {entry.whenAbsent ??
+          (desktop ? "None yet." : "None here. This copy runs from source; the desktop app is what makes it.")}
       </p>
     );
   } else if (!facts.readable) {
