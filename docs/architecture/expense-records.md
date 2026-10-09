@@ -449,7 +449,11 @@ committed on its own before any viewer code; "Built by" below names the files).
    with the type the row stored; any disagreement (or a refusal) and nothing is drawn. SVG, HTML, XML,
    GIF and the rest are refused at both points. **HEIC stays refused** until there is a decoder that
    runs the same way (no script, no network, in a worker or the browser's own decoder): Chromium can't
-   decode HEIC itself, and a WebAssembly decoder would be a new package to review first.
+   decode HEIC itself, and a WebAssembly decoder would be a new package to review first. The
+   maintainer said yes (2026-10-09) to HEIC receipts; the decoders were reviewed the same day
+   ([connectors/heic-decoder-review.md](../connectors/heic-decoder-review.md)) and none is clean on
+   every count (licence, network, reviewable, works on Windows), so HEIC stays refused until the
+   maintainer picks one of the options listed there.
 2. **How the bytes reach the page.** `POST /api/expenses/receipt/file { expenseId }`, answering only
    DotAmi's own page (`Sec-Fetch-Site: same-origin`), like adding and removing. Being a POST that
    reads a JSON body, it can't be an address that a link, an `<img>`, a frame or the window itself can
