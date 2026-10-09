@@ -121,8 +121,9 @@ describe("encode helpers", () => {
 
 describe("the workbook helper", () => {
   // Xero's help: an Excel report with formulas can show 0.00 until Enable Editing. A formula with no
-  // `value` is written with no saved value, and the reader then has nothing to give for that cell.
-  it("writes a formula with no saved value, which reads back as an empty cell", async () => {
+  // `value` is written with no saved value: the reader has no number to give for that cell, and
+  // says where it is.
+  it("writes a formula with no saved value, which reads back as an empty cell the reader names", async () => {
     const bytes = makeXlsx([
       {
         name: "Sheet1",
@@ -138,6 +139,7 @@ describe("the workbook helper", () => {
     if (!read.ok) return;
     expect(read.sheets[0].rows[2]).toEqual([1, 5, 5]); // a saved value is read
     expect(read.sheets[0].rows[1][2] ?? null).toBeNull(); // no saved value: nothing
+    expect(read.sheets[0].unsavedFormulas).toEqual([{ row: 1, column: 2 }]); // and named
   });
 });
 
@@ -219,12 +221,7 @@ describe.each(ALL_FILES)("$id", (file) => {
     const usedRow = across ? answered.acrossPicks.monthsRow : answered.picks.headerRow;
     expect(usedRow).not.toBeNull();
     const labels = columnsOf(answered.rows, usedRow!).map((c) => c.label);
-    if (file.expected.columnsMisread) {
-      expect(labels).toEqual(file.expected.columnsMisread.readAs);
-      expect(labels).not.toEqual(file.columns.map((c) => c.header));
-    } else {
-      expect(labels).toEqual(file.columns.map((c) => c.header));
-    }
+    expect(labels).toEqual(file.columns.map((c) => c.header));
   });
 
   it("reads the dates and the amounts the way the file writes them", async () => {
@@ -517,6 +514,41 @@ describe("months across the top, and a report with no dates", () => {
 });
 
 /*
+ * Two gaps the 2026-10-08 files found, now fixed (the maintainer's decision, 2026-10-07: every gap
+ * is fixed, not left pinned). Both were `it.fails` tests in the "fails today" block until the fix
+ * landed.
+ */
+describe("a French semicolon file with several amount columns, and a formula with no saved value", () => {
+  // Four comma-decimal columns per line ("1 000,00;0,00;1 000,00;100,0") used to win the delimiter
+  // guess for the comma: every line split on its commas and no column names were found.
+  it("Sage 50 French: a semicolon file with several comma-decimal columns is split on its semicolons", async () => {
+    const file = find("sage50-french");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    // Positive first: the French column names are found on row 5, and Revenu is the amount.
+    expect(run.picks.headerRow).toBe(4);
+    expect(columnsOf(run.rows, 4).map((c) => c.label)).toEqual(file.columns.map((c) => c.header));
+    expect(run.picks.amountColumn).toBe(4);
+    expect(run.detectedStyle).toBe("comma");
+    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
+  });
+
+  // The cell holds a formula Excel never worked out; "no amount" sent the person looking for an
+  // empty cell. Now the row says it is a formula with no saved value, and nothing is guessed for it.
+  it("Xero Receivable Invoice Detail: a formula with no saved value is told apart from an empty cell", async () => {
+    const file = find("xero-receivable-invoice-detail");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    // Positive first: the row is listed, not counted and not lost.
+    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).toBe("unsaved-formula");
+    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).not.toBe("no-amount");
+    // The report's own Total, also an unsaved formula, is still its sum row.
+    expect(reasonFor(run, 11)).toBe("total");
+    // Nothing is worked out for the formula: August holds no 60.00 from it.
+    const august = run.result!.months.find((m) => m.periodStart === "2026-08-01");
+    expect(august?.rows).toBe(1);
+  });
+});
+
+/*
  * Gaps the Wave, FreshBooks, Sage and Xero Receivable Invoice Detail files found (2026-10-08). Each
  * is written as an `it.fails` test: it passes only while the gap is there, so the day a fix lands it
  * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
@@ -551,30 +583,11 @@ describe("gaps the newer practice files found, fails today", () => {
     expect(amountsOf(run)).toEqual(sageAccounting.SALES_NOT_VOID);
   });
 
-  // Four comma-decimal columns per line win the delimiter guess over the semicolons: every line
-  // splits on its commas and no column names are found. One amount column reads fine.
-  it.fails("Sage 50 French: a semicolon file with several comma-decimal columns is split on its semicolons", async () => {
-    const file = find("sage50-french");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    expect(run.detectedStyle).toBe("comma");
-    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
-  });
-
   // Receivable Invoice Detail includes voided invoices by default.
   it.fails("Xero Receivable Invoice Detail: the Voided invoice is left out", async () => {
     const file = find("xero-receivable-invoice-detail");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
     expect(reasonFor(run, xero.DETAIL_VOIDED_ROW)).toBeDefined();
-  });
-
-  // The cell holds a formula Excel never worked out; "no amount" sends the person looking for an
-  // empty cell. It should say the sum wasn't saved (open the file in Excel, let it calculate, save).
-  it.fails("Xero Receivable Invoice Detail: a formula with no saved value is told apart from an empty cell", async () => {
-    const file = find("xero-receivable-invoice-detail");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    // Positive first: the row is listed, not counted and not lost.
-    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).toBeDefined();
-    expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).not.toBe("no-amount");
   });
 
   it("the true figures those tests pin add up from the fixtures' own line data", () => {

@@ -18,7 +18,8 @@
  *    j+1; only trailing empty rows and columns are cut off;
  *  - a merged range gives its value in the top-left cell only, the rest come back empty (DotAmi
  *    never fills down);
- *  - a formula gives its cached value (the number Excel last saved); one with none is empty;
+ *  - a formula gives its cached value (the number Excel last saved); one with none is empty, and
+ *    findUnsavedFormulas below says where each such cell is, so it isn't taken for an empty one;
  *  - an error cell (#DIV/0!) is empty;
  *  - the 1904 date system (some old Mac files) is honoured.
  */
@@ -26,7 +27,8 @@
 import { unzipSync } from "fflate";
 import readXlsxFile from "read-excel-file/universal";
 import { MACROS_MESSAGE, XLSB_MESSAGE } from "./sniff";
-import type { Cell, ReadResult } from "./types";
+import type { Cell, CellPlace, ReadResult } from "./types";
+import { sheetPartPaths, unsavedFormulaPlaces } from "./unsaved-formulas";
 
 const NOT_A_WORKBOOK_ZIP =
   "That looks like a compressed file, but DotAmi can't open it as an Excel workbook. Save it again as .xlsx or .csv and drop that.";
@@ -88,6 +90,42 @@ function toUtcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
+const WORKBOOK_PART = "xl/workbook.xml";
+const WORKBOOK_RELS_PART = "xl/_rels/workbook.xml.rels";
+
+/** Unpacks only the named parts (the rest are listed by the zip and skipped, never inflated). */
+function unpack(bytes: Uint8Array, names: Set<string>): Record<string, string> {
+  const parts = unzipSync(bytes, { filter: (f) => names.has(f.name) });
+  const decoder = new TextDecoder();
+  return Object.fromEntries(
+    Object.entries(parts).map(([name, data]) => [name, decoder.decode(data)]),
+  );
+}
+
+/**
+ * Where each sheet holds a formula saved with no value (unsaved-formulas.ts), one list per sheet in
+ * the workbook's order; null when that can't be worked out. Only the workbook's sheet list, its
+ * relationships and the sheets themselves are unpacked, all inside the limits checkWorkbookEntries
+ * has already applied. Null leaves the sheets as the library read them: such a cell is then
+ * "no amount", as before, and still never counted.
+ */
+function findUnsavedFormulas(bytes: Uint8Array): CellPlace[][] | null {
+  try {
+    const index = unpack(bytes, new Set([WORKBOOK_PART, WORKBOOK_RELS_PART]));
+    const workbook = index[WORKBOOK_PART];
+    const rels = index[WORKBOOK_RELS_PART];
+    if (workbook === undefined || rels === undefined) return null;
+    const paths = sheetPartPaths(workbook, rels);
+    const sheets = unpack(bytes, new Set(paths.filter((p): p is string => p !== null)));
+    return paths.map((path) => {
+      const xml = path === null ? undefined : sheets[path];
+      return xml === undefined ? [] : unsavedFormulaPlaces(xml);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function readXlsx(bytes: Uint8Array): Promise<ReadResult> {
   // 1. Look inside first. fflate calls the filter once per entry with the entry's details taken
   //    from the zip's directory, and only unpacks entries the filter accepts. Ours rejects them
@@ -117,11 +155,13 @@ export async function readXlsx(bytes: Uint8Array): Promise<ReadResult> {
 
     // trim: false keeps text exactly as written, like the CSV reader does.
     const sheets = await readXlsxFile(buffer, { trim: false });
+    // 3. Which of the empty cells are formulas Excel never worked out (see findUnsavedFormulas).
+    const unsaved = findUnsavedFormulas(bytes);
 
     return {
       ok: true,
       format: "xlsx",
-      sheets: sheets.map((s) => ({
+      sheets: sheets.map((s, index) => ({
         name: s.sheet,
         rows: s.data.map((row) =>
           row.map((value): Cell => {
@@ -131,6 +171,8 @@ export async function readXlsx(bytes: Uint8Array): Promise<ReadResult> {
             return cell instanceof Date ? toUtcMidnight(cell) : cell;
           }),
         ),
+        // The library returns the sheets in the workbook's order, the order these were found in.
+        ...(unsaved ? { unsavedFormulas: unsaved[index] ?? [] } : {}),
       })),
     };
   } catch {

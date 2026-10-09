@@ -17,7 +17,9 @@ import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash"
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
 import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
+import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadian";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
+import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
 /**
  * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
@@ -1033,6 +1035,66 @@ test("Wave's Income by Customer, which has no dates, is met with the report to e
     "One row per sale, with a date",
   );
   await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+// Two gaps the practice files found (2026-10-08), now fixed (the maintainer's decision, 2026-10-07:
+// every gap is fixed). Both files are invented, shaped from the vendors' help pages.
+test("a French Sage 50 file with several amount columns reads on its semicolons", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const french = sage50Files.find((f) => f.id === "sage50-french")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: french.fileName,
+    mimeType: "text/csv",
+    buffer: Buffer.from(french.bytes()),
+  });
+  // The French column names are found and Revenu is the amount: the lines were split on their
+  // semicolons, not on the commas inside "1 000,00".
+  await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
+    "Row 5",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "E · Revenu",
+  );
+  await expect(card.getByLabel("Amounts are written").locator("option:checked")).toHaveText(
+    "1 234,56",
+  );
+  const table = card.getByRole("table", { name: `Monthly totals from ${french.fileName}` });
+  await expect(table.getByRole("row", { name: /^July 2026 \$1,134\.56 2 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^August 2026 \$420\.00 2 rows$/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /^September 2026 \$75\.25 1 row$/ })).toBeVisible();
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("an Excel formula with no saved value is named as one, not as an empty amount", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const detail = xeroFiles.find((f) => f.id === "xero-receivable-invoice-detail")!;
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: detail.fileName,
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: Buffer.from(detail.bytes()),
+  });
+  const table = card.getByRole("table", { name: `Monthly totals from ${detail.fileName}` });
+  await expect(table.getByRole("row", { name: /^July 2026 \$350\.00 2 rows$/ })).toBeVisible();
+  // Row 9's line amount is a formula Excel never worked out: said so, with what to do.
+  await expect(
+    card.getByText(
+      "1 row with a formula Excel didn't save a value for (open the file in Excel, click Enable Editing if it asks, save it, then drop it here again): row 9",
+    ),
+  ).toBeVisible();
+  await expect(card.getByText(/with a date but no amount/)).toHaveCount(0);
   await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
 });

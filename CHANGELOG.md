@@ -151,8 +151,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
   taken for the column names, two-digit years, months across the top and a Wave report with no
   dates (those three since fixed, under Added), a French Sage 50 file with several comma-decimal columns split on its
-  commas, and a formula saved with no value reported as an empty amount. See
-  docs/connectors/practice-files.md.
+  commas, and a formula saved with no value reported as an empty amount (those two since fixed,
+  under Fixed). See docs/connectors/practice-files.md.
 
 ### Documented
 - **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
@@ -160,6 +160,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   affects it adds a line under [Unreleased]; a test fails when a version has no section.
 
 ### Fixed
+- **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
+  with semicolons and amounts like "1 000,00" in several columns (Sage 50 Canadian in French) was
+  split on its commas, so no column names were found and nothing was added up. When the commas on
+  the lines that split on semicolons sit mostly inside amounts, DotAmi now reads the file on its
+  semicolons, also when a description holds a comma ("Design, impressions"). A comma file whose
+  commas sit in its text still reads on its commas when a semicolon turns up in it.
+- **An Excel formula with no saved value is no longer called an empty amount** ([8c-3]) — some
+  programs (Xero says so for its Excel reports) leave a sum for Excel to work out when the file is
+  opened, so the cell holds a formula and no number until the file is saved again in Excel. Such a
+  row was listed as "a date but no amount". Now it is listed as a formula Excel didn't save a value
+  for, with what to do: open the file in Excel, click Enable Editing if it asks, save it, and drop
+  it again. DotAmi still never works a formula out itself, so nothing is guessed for that row. The
+  same goes for a cell under a month in a report with the months across the top.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading

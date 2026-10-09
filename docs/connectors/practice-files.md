@@ -47,22 +47,23 @@ files shaped from that program's help pages, not on real exports, so check the c
 | Package | Files | What each one tests |
 | --- | --- | --- |
 | Xero invoice export (CSV, one row per invoice line) | day-first dates, month-first dates, dates that can't say which, a French file | the date question is asked only when needed; comma decimals and Windows-1252 bytes read; a month still running is left out |
-| Xero Receivable Invoice Detail (Excel) | title rows, a Voided invoice, a line amount and the Total saved as formulas with no value | Invoice Date wins over Due Date; "Line Amount (ex)" is pre-filled and "Unit Price (ex)" is not; the voided invoice and the unsaved formula are pinned as gaps |
+| Xero Receivable Invoice Detail (Excel) | title rows, a Voided invoice, a line amount and the Total saved as formulas with no value | Invoice Date wins over Due Date; "Line Amount (ex)" is pre-filled and "Unit Price (ex)" is not; the line whose formula has no saved value is listed as such, never as empty; the voided invoice is pinned as a gap |
 | QuickBooks Online (Excel) | Sales by Customer Detail with many lines per customer, with one line per customer, and a Transaction List | title rows, customer-name rows and "Total for" rows are listed as left out, not added; a list with no totals rows; the Transaction List's Payment row is left out through the pre-filled Type column |
 | Wave (CSV) | Account Transactions for the Sales account; Income by Customer | the account's name and the Starting Balance, Totals, Balance Change and Ending Balance rows are listed, not added; Debit and Credit are never pre-filled (the person picks Credit); Income by Customer, with no dates, names Account Transactions instead; a refund in Debit is pinned as a gap |
 | FreshBooks (CSV) | Invoice Details with a summary on top, dates written yyyy-mm-dd, mmm d, yyyy, dd/mm/yyyy and dd.mm.yy; the old Revenue by Client with months across | once the person picks the real row of column names, every date shape reads (dd.mm.yy once the person says the century) and Issue Date and Subtotal are pre-filled; Revenue by Client starts on months across and gives July, August and September to the cent, from every client row or from its Total row; the summary taken for column names and the Draft are pinned as gaps |
 | Sage Accounting, Canada (CSV) | the Sales list (Invoice Number first, a Void and a credit note); the Sales Day Book with a Type column and a totals row | "Total" beside a tax column is never pre-filled (the person picks Net); a negative credit note lowers its month; a bare "Type" is not pre-filled; the void is pinned as a gap |
-| Sage 50 Canadian (CSV) | Customer Sales Detail grouped by customer, dates 07-14-2026; the same with 07-14-26; the same in French, semicolons, windows-1252 | the grouped report reads and "Revenue" is pre-filled; the old .xls export is refused with a sentence saying what to do, so the route is .csv ([sage-50-canada.md](sage-50-canada.md)); the two-digit years read once the person says the century; the French file is pinned as a gap |
+| Sage 50 Canadian (CSV) | Customer Sales Detail grouped by customer, dates 07-14-2026; the same with 07-14-26; the same in French, semicolons, windows-1252 | the grouped report reads and "Revenue" is pre-filled; the old .xls export is refused with a sentence saying what to do, so the route is .csv ([sage-50-canada.md](sage-50-canada.md)); the two-digit years read once the person says the century; the French file, four "1 000,00" columns a line, reads on its semicolons |
 
 ## Known gaps
 
 ### Open, found 2026-10-08
 
 Each is a test written to pass only while the gap is there, so the day a fix lands it errors until
-it is turned into a normal test. Seven are in `tests/figures-file-packages.spec.ts`, under "gaps
-the newer practice files found, fails today", written with `it.fails`: seven tests, six gaps.
-(Two-digit years, months across the top and a report with no dates, three more gaps found, are
-fixed: see below.) They are fixed in follow-on slices, not in the one that found them.
+it is turned into a normal test. Five are in `tests/figures-file-packages.spec.ts`, under "gaps
+the newer practice files found, fails today", written with `it.fails`: five tests, four gaps.
+(Two-digit years, months across the top, a report with no dates, a French semicolon file with
+several amount columns and a formula saved with no value, five more gaps found, are fixed: see
+below.) They are fixed in follow-on slices, not in the one that found them.
 
 | Gap | What happens today | Practice file | Fixed by |
 | --- | --- | --- | --- |
@@ -70,16 +71,37 @@ fixed: see below.) They are fixed in follow-on slices, not in the one that found
 | A summary block above the table (FreshBooks' Invoice Details) | the summary's two titles are taken for the column names, and "Total Paid" is pre-filled as the amount over the invoice numbers; the person has to pick row 5 | every FreshBooks Invoice Details file | the void and draft slice |
 | A Draft invoice | counted as a sale: August 726.19 against a true 476.19 | `freshbooks-invoices-iso` | the void and draft slice |
 | A voided invoice | counted as a sale: Sage Accounting's August 150.00 against a true -50.00; Xero's Receivable Invoice Detail counts its Voided line | `sage-accounting-sales-list`, `xero-receivable-invoice-detail` | the void and draft slice |
-| **New:** a French semicolon file with several comma-decimal columns (Sage 50's revenue, cost, profit and margin) | the commas win the delimiter guess, every line is split on them, no column names are found and nothing is added up. A French file with one amount column still reads | `sage50-french` | a follow-on slice, to be named by the maintainer |
-| **New:** a formula saved with no value (Xero: an Excel export with formulas can show 0.00 until Enable Editing) | the line is listed as "no amount", as if the cell were empty, and August is 60.00 short | `xero-receivable-invoice-detail` | a follow-on slice, to be named by the maintainer |
-
-The two marked **New** were not foreseen when the slices were planned. Like every gap here they are
-to be fixed, not left pinned (decision of 2026-10-07); which slice fixes each is the maintainer's
-call. The
-design pass on 2026-10-06 had read a smaller French Sage 50-shaped file correctly; with every
-money column of the report written "1 000,00" it no longer does.
 
 ### Fixed, found 2026-10-08
+
+**A French semicolon file with several comma-decimal columns** (Sage 50 Canadian in French:
+revenue, cost, profit and margin written "1 000,00"; practice file `sage50-french`). The commas
+won the delimiter guess, every line was split on them, no column names were found and nothing was
+added up; a French file with one amount column read, and so had the smaller French file of the
+2026-10-06 design pass. Now, before guessing, `lib/figures/file/read-csv.ts` reads the first lines
+on their semicolons: when at least two lines split, and the cells holding a comma on those lines
+are amounts at least twice as often as text, the commas are decimal marks and the file is read on
+its semicolons. So a French description with a comma ("Design, impressions") doesn't undo it. A
+comma file whose commas sit in its text keeps the guess as it was, so a stray semicolon in it
+doesn't move it off its commas (a file built so its semicolons cut lines into amount-looking
+pieces could still be misread; none of the practice files is like that).
+The file now reads like the English one: "Revenu" pre-filled, day-first dates, July, August and
+September to the cent. The `it.fails` test is a normal passing test, under "a French semicolon
+file with several amount columns, and a formula with no saved value", and the rule has its own
+tests in `tests/figures-file-read.spec.ts`.
+
+**A formula saved with no value** (Xero: an Excel export with formulas can show 0.00 until Enable
+Editing; practice file `xero-receivable-invoice-detail`). The line was listed as "no amount", as if
+the cell were empty. The workbook library gives such a cell as empty, and DotAmi never works a
+formula out, so `lib/figures/file/unsaved-formulas.ts` reads the sheets' XML once more for which
+cells hold a formula and no saved value. The row is now listed as "a formula Excel didn't save a
+value for (open the file in Excel, click Enable Editing if it asks, save it, then drop it here
+again)", and nothing is guessed for it: August still leaves its 60.00 out, now saying why. The
+same holds for a date cell, and for a cell under a month in a months-across report. The `it.fails`
+test is a normal passing test beside the French one; the rules have their own tests in
+`tests/figures-file-read.spec.ts`, `tests/figures-file-logic.spec.ts` and
+`tests/figures-file-months-across.spec.ts`. (The file's Voided line is still counted in August:
+that is the void and draft slice, above.)
 
 **Months across the top** (FreshBooks' old Revenue by Client; practice file
 `freshbooks-revenue-by-client`). No date sat under any column, so no column names were found and

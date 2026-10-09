@@ -23,6 +23,7 @@ import { monthlyTotals } from "./totals";
 import type {
   AcrossResult,
   Cell,
+  CellPlace,
   Century,
   ColumnChoice,
   DateOrder,
@@ -163,7 +164,8 @@ const FAILED_MESSAGE = "DotAmi couldn't read that file. Nothing was kept.";
  * Works out the preview for one sheet from the person's picks and answers. `today` is the person's
  * own calendar day (YYYY-MM-DD), so a month's "is it over yet" is theirs and a test can fix it.
  * `hold` makes the preview wait even when it could show totals (the screen uses it while the
- * currency is not yet three letters).
+ * currency is not yet three letters). `unsavedFormulas` is the sheet's own list from the reader
+ * (Excel only): those cells are listed as formulas Excel didn't save a value for.
  */
 export function previewSheet(
   rows: Cell[][],
@@ -171,6 +173,7 @@ export function previewSheet(
   answers: PreviewAnswers,
   today: string,
   hold = false,
+  unsavedFormulas: readonly CellPlace[] = [],
 ): SheetPreview {
   const dateCells =
     picks.headerRow !== null && picks.dateColumn !== null
@@ -237,7 +240,7 @@ export function previewSheet(
     decimalStyle,
   };
   try {
-    return outcome("ready", null, null, monthlyTotals(rows, choice, today));
+    return outcome("ready", null, null, monthlyTotals(rows, choice, today, unsavedFormulas));
   } catch (error) {
     // The only throw is the "too large" sentence, which carries no amount.
     return outcome("failed", null, error instanceof Error ? error.message : FAILED_MESSAGE, null);
@@ -342,8 +345,8 @@ const noMonthsMessage = (monthsRow: number) =>
 /**
  * Works out the preview of a months-across table from the person's picks: which row holds the month
  * names and where the totals come from. A month name DotAmi can't be sure of, or the same month
- * named twice, stops it: nothing is added up, and the message says which columns. `today` and
- * `hold` work as in previewSheet.
+ * named twice, stops it: nothing is added up, and the message says which columns. `today`,
+ * `hold` and `unsavedFormulas` work as in previewSheet.
  */
 export function previewAcross(
   rows: Cell[][],
@@ -351,6 +354,7 @@ export function previewAcross(
   answers: Pick<PreviewAnswers, "decimalStyle">,
   today: string,
   hold = false,
+  unsavedFormulas: readonly CellPlace[] = [],
 ): AcrossPreview {
   const { monthsRow } = picks;
   const reading = monthsRow === null ? null : readMonthsRow(rows, monthsRow);
@@ -401,7 +405,12 @@ export function previewAcross(
   if (hold) return outcome("waiting", "held", null, null);
 
   try {
-    const result = acrossTotals(rows, { monthsRow, monthColumns, totalRow, decimalStyle }, today);
+    const result = acrossTotals(
+      rows,
+      { monthsRow, monthColumns, totalRow, decimalStyle },
+      today,
+      unsavedFormulas,
+    );
     return outcome("ready", null, null, result);
   } catch (error) {
     // The only throw is the "too large" sentence, which carries no amount.
@@ -527,7 +536,9 @@ export async function previewFile(
   const read = await readSpreadsheet(fileName, bytes);
   if (!read.ok) throw new Error("the file could not be read");
 
-  const rows = read.sheets[firstSheetWithRows(read.sheets)].rows;
+  const sheet = read.sheets[firstSheetWithRows(read.sheets)];
+  const rows = sheet.rows;
+  const unsaved = sheet.unsavedFormulas ?? [];
   const { guess, picks: guessed } = guessPicks(rows, answers.headerRow);
   const picks: Picks = {
     headerRow: guessed.headerRow,
@@ -536,7 +547,7 @@ export async function previewFile(
     // Unlike the others, null here is an answer: the person cleared the select.
     typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
   };
-  const preview = previewSheet(rows, picks, answers, today);
+  const preview = previewSheet(rows, picks, answers, today, false, unsaved);
 
   const layout = answers.layout ?? guessLayout(rows).layout;
   const guessedAcross = guessAcrossPicks(rows);
@@ -544,7 +555,8 @@ export async function previewFile(
     monthsRow: answers.monthsRow ?? guessedAcross.monthsRow,
     addUp: answers.addUp ?? guessedAcross.addUp,
   };
-  const across = layout === "across" ? previewAcross(rows, acrossPicks, answers, today) : null;
+  const across =
+    layout === "across" ? previewAcross(rows, acrossPicks, answers, today, false, unsaved) : null;
   const exportInstead =
     layout === "rows" && picks.headerRow === null ? exportInsteadSentence(rows) : null;
   return { ...preview, rows, guess, picks, layout, acrossPicks, across, exportInstead };

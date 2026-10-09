@@ -320,6 +320,82 @@ describe("acrossTotals", () => {
       ),
     ).toThrow("A month's total is too large to hold exactly.");
   });
+
+  // An Excel export whose sums were left for Excel to work out: the reader gives those cells as
+  // empty and says where they are. They are listed as such, never as empty and never as a number.
+  it("lists a cell holding a formula saved with no value apart from an empty one", () => {
+    const rows: Cell[][] = [
+      ["Client", "Jul 2026", "Aug 2026"], // 1
+      ["Client A", "100.00", null], // 2: August is a formula with no saved value
+      ["Client B", null, "50.00"], // 3: July is truly empty
+      ["Total", null, null], // 4: the file's own sum, formulas too
+    ];
+    const choice = {
+      monthsRow: 0,
+      monthColumns: [
+        { column: 1, month: "2026-07" },
+        { column: 2, month: "2026-08" },
+      ],
+      totalRow: null,
+      decimalStyle: "point" as const,
+    };
+    const unsaved = [
+      { row: 1, column: 2 },
+      { row: 3, column: 1 },
+      { row: 3, column: 2 },
+    ];
+    const result = acrossTotals(rows, choice, TODAY, unsaved);
+    // Positive first: the readable cells are added.
+    expect(amounts(result.months)).toEqual([
+      ["2026-07-01", 10000],
+      ["2026-08-01", 5000],
+    ]);
+    expect(result.skippedCells).toEqual([
+      { row: 2, column: 2, reason: "unsaved-formula" },
+      { row: 3, column: 1, reason: "empty" },
+    ]);
+    expect(result.skippedRows).toEqual([{ row: 4, reason: "total" }]);
+
+    // Taking only the Total row, whose cells are all unsaved formulas: each cell is listed, and the
+    // row is not called one with nothing under any month.
+    const totalOnly = acrossTotals(rows, { ...choice, totalRow: 3 }, TODAY, unsaved);
+    expect(totalOnly.skippedCells).toEqual([
+      { row: 4, column: 1, reason: "unsaved-formula" },
+      { row: 4, column: 2, reason: "unsaved-formula" },
+    ]);
+    expect(totalOnly.skippedRows).toEqual([]);
+    expect(totalOnly.months).toEqual([]);
+  });
+
+  it("keeps a row whose only formula is in a month not yet over as one row with no amount", () => {
+    // October isn't over on TODAY, so the whole column is listed as not over; an unsaved formula
+    // there doesn't turn the row into three "empty" cells under the months that are.
+    const rows: Cell[][] = [
+      ["Client", "Jul 2026", "Aug 2026", "Sep 2026", "Oct 2026"], // 1
+      ["Client A", "100.00", "20.00", "30.00", null], // 2
+      ["Client B", null, null, null, null], // 3: October is a formula with no saved value
+    ];
+    const choice = {
+      monthsRow: 0,
+      monthColumns: [
+        { column: 1, month: "2026-07" },
+        { column: 2, month: "2026-08" },
+        { column: 3, month: "2026-09" },
+        { column: 4, month: "2026-10" },
+      ],
+      totalRow: null,
+      decimalStyle: "point" as const,
+    };
+    const result = acrossTotals(rows, choice, TODAY, [{ row: 2, column: 4 }]);
+    // Positive first: Client A is added.
+    expect(amounts(result.months)).toEqual([
+      ["2026-07-01", 10000],
+      ["2026-08-01", 2000],
+      ["2026-09-01", 3000],
+    ]);
+    expect(result.skippedRows).toEqual([{ row: 3, reason: "no-amount" }]);
+    expect(result.skippedCells).toEqual([]);
+  });
 });
 
 describe("previewAcross", () => {
