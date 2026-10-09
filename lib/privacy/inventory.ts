@@ -500,7 +500,7 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "loadURL(`${origin}${pathname}`",
-    why: "The Go menu (Home, Your ideas, Settings): a path on the same local origin as above. pathname is one of three fixed strings in buildMenu.",
+    why: "The Go menu (Home, Your ideas, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
   },
   {
     file: "desktop/main.mjs",

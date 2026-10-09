@@ -8,6 +8,8 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { NOTICES_FILE, writeNotices } from "./notices.mjs";
+
 const root = process.cwd();
 const dist = path.join(root, ".next-desktop");
 const standalone = path.join(dist, "standalone");
@@ -58,6 +60,13 @@ const forbidden = [];
 if (forbidden.length) {
   throw new Error(`desktop build: private files inside the app build:\n  ${forbidden.join("\n  ")}`);
 }
+
+// The third-party notices for exactly what this build ships (desktop/notices.mjs): every package in
+// the server's node_modules, the desktop app's own packages and Electron, beside server.js, where the
+// /licences page reads it. It replaces any copy of the source checkout's list the build traced in.
+// desktop/package.mjs copies it beside DotAmi.exe too, and refuses to package a package it doesn't list.
+const notices = writeNotices(root, path.join(standalone, NOTICES_FILE), { standalone });
+console.log(`desktop build: ${NOTICES_FILE} lists ${notices.length} entries`);
 
 const removed = [...envFiles, ...(gitCopied ? [".git"] : [])];
 console.log(`desktop build ready: ${path.relative(root, server)}${removed.length ? ` (removed ${removed.join(", ")})` : ""}`);

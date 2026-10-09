@@ -9,6 +9,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
+  package, its version, its licence, where it ships, and the licence's own words (open an entry to
+  read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The
+  installer now carries the same list as `THIRD-PARTY-NOTICES.txt` beside DotAmi.exe, next to
+  Electron's licence and Chromium's notices. The list is written from the packages themselves each
+  time the app is built, and building the installer stops if a package that ships has no entry, so
+  the minified app no longer drops the notices its packages' licences ask to be kept.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your

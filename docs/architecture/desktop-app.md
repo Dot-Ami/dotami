@@ -39,7 +39,8 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    2026-10-05).
 6. **Updates** (installed app only) — see below.
 7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
-   ideas · Settings; View; Help → About · Check for updates · Source on GitHub.
+   ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·
+   Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
 
@@ -107,6 +108,20 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   finished app for private files again. The server is copied in after electron-builder assembles
   the app, because electron-builder's file filters drop `node_modules` from both `files` and
   `extraResources` (both tried: the first package was 5 MB and couldn't have started).
+- **Third-party notices** (`desktop/notices.mjs`). The built code is minified and the server's
+  `node_modules` keeps only the files it runs, so the packages' own licence files don't travel with
+  them. `desktop:build` writes `THIRD-PARTY-NOTICES.txt` beside `server.js`: one entry per package
+  in the server's `node_modules`, per package in DotAmi's dependencies (what the page code bundles,
+  such as pdf.js and ofx-js), per package the app itself carries (electron-updater and what it pulls
+  in), the code Next.js carries inside itself, Tailwind's base styles, the two fonts and Electron —
+  each with its version, licence and the licence and notice files from the package, word for word.
+  A package with no licence file stops the build until `LICENCE_ELSEWHERE` in that file says where
+  its terms are. `desktop:package` then refuses to package if any package in the app's or the
+  server's `node_modules` has no entry for its exact version, copies the file beside `DotAmi.exe`,
+  and checks that electron-builder put Electron's `LICENSE.electron.txt` and Chromium's
+  `LICENSES.chromium.html` there too (it copies both from Electron's download). The app shows the
+  file at Help → Licences (`/licences`). `npm run build` writes the same kind of list, without
+  Electron, for a copy run from source.
 - **Installs per user**, no administrator rights (`%LOCALAPPDATA%\Programs\DotAmi`). **Uninstalling
   leaves the data folder alone** — whether to offer deleting it is an open decision (settings doc,
   Part 4 §6). Not code-signed: Windows shows "Windows protected your PC" on first install (signing
@@ -198,7 +213,12 @@ to the data.
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.
+   Packaging writes the third-party notices from the packages it ships and stops if one has no
+   entry (see *Building and packaging*); a new dependency with no licence file stops it here, so
+   add that package to `LICENCE_ELSEWHERE` in `desktop/notices.mjs` in a PR first.
 4. Read the draft on GitHub (for a pre-release, tick *Set as a pre-release*), then **Publish**.
+   Before publishing, open the unpacked app's Help → Licences (or `THIRD-PARTY-NOTICES.txt` beside
+   `DotAmi.exe` in a test install) and check it lists the version's new packages.
    Installed apps pick it up the next time they start.
 
 ## Tests
@@ -209,7 +229,15 @@ to the data.
   and "nothing leaves this computer" although the app was started with a model key in its
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
-  "Desktop app (Windows)").
+  "Desktop app (Windows)"). The same run opens Help → Licences (Electron, the server's packages and
+  electron-updater are listed) and checks every package in the server's `node_modules` has an entry
+  for its exact version; on a packaged app, also that the notices, `LICENSE.electron.txt` and
+  `LICENSES.chromium.html` sit beside `DotAmi.exe`.
+- `tests/third-party-notices.spec.ts` — the notices generator and the packaging check on invented
+  `node_modules` folders (a missing package, a nested or scoped one, another version, a package with
+  no licence file), plus this checkout's own list: every dependency, every package the page code or
+  the style sheet imports, and what `desktop/package.mjs` copies in. (Checked that it bites: six
+  deliberate breaks, each fails it.)
 - `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
   refuse / back up / undo cases.
 - `tests/desktop-startup-log.spec.ts` — replays a start in its own process and kills it the moment

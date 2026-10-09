@@ -46,6 +46,9 @@ content and the project itself run alongside everything.
   - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
+  - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
+    ships, its version and licence text, written at build time; packaging stops if one is missing), shown
+    at Help → Licences and from Settings → Updates
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer

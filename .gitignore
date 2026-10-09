@@ -20,3 +20,6 @@ coverage
 playwright-report
 test-results
 
+
+# third-party notices, written by desktop/notices.mjs on every build
+/THIRD-PARTY-NOTICES.txt

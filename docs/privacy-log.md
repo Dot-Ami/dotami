@@ -121,6 +121,14 @@ person is asked).
   desktop app's server. Reviewed 2026-10-08
   ([`docs/connectors/pdf-reader-review.md`](connectors/pdf-reader-review.md)); listed in
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`, `LIBRARY_IMPORTS`).
+- **No package added or removed; the installer now carries a list of them.** `THIRD-PARTY-NOTICES.txt`
+  (beside `DotAmi.exe`, and in the server's folder) names every package, font and piece of bundled
+  code by others that ships, with its version, licence and licence text, written from the packages
+  at build time ([`desktop/notices.mjs`](../desktop/notices.mjs)); the new `/licences` page and
+  Help → Licences show it. It is a text file the app reads from its own folder: nothing is kept
+  about the person, nothing is sent, and the page asks nothing. The list also shows what the
+  installer already carried without being named before, among them TypeScript and the image
+  library sharp (with libvips, LGPL-3.0-or-later) that Next's file tracer copies into the server.
 
 ### New powers or permissions
 

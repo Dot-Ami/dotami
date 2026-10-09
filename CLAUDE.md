@@ -49,7 +49,9 @@ says where it is going.
   everything else, what sits outside the database and what leaves the computer, read from the data
   file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
   data from `lib/privacy/inventory.ts` `DELETE_MENU`, asked twice, then wiped from the file by
-  `lib/privacy/delete.ts`).
+  `lib/privacy/delete.ts`) · `/licences` (the third-party notices: every package that ships, its
+  version and licence text, read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes
+  at build time; packaging the installer stops if a package that ships has no entry).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT
