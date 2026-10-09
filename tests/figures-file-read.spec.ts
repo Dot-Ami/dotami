@@ -231,6 +231,47 @@ describe("readCsv", () => {
     expect(rows[2]).toEqual(["Client A"]);
   });
 
+  // French item descriptions often hold a comma ("Design, impressions"). A single one used to hand
+  // the guess back to the commas and cut every line into pieces again.
+  it.each([
+    ["quoted", '"Design, impressions"'],
+    ["not quoted", "Design, impressions"],
+  ])("reads that semicolon file on its semicolons when a description holds a comma (%s)", (_, article) => {
+    const rows = rowsOf(
+      [
+        "Rapport détaillé des ventes",
+        "Date;Source;Article;Revenu;Coût;Bénéfice;Marge (%)",
+        "Client A",
+        `14-07-2026;1001;${article};1 000,00;0,00;1 000,00;100,0`,
+        "03-08-2026;1004;Prints;120,00;48,00;72,00;60,0",
+        "Total;;;1 120,00;48,00;1 072,00;",
+        "",
+      ].join("\n"),
+    );
+    expect(rows[3]).toEqual([
+      "14-07-2026",
+      "1001",
+      "Design, impressions",
+      "1 000,00",
+      "0,00",
+      "1 000,00",
+      "100,0",
+    ]);
+    expect(rows[1]).toEqual(["Date", "Source", "Article", "Revenu", "Coût", "Bénéfice", "Marge (%)"]);
+    expect(rows[0]).toEqual(["Rapport détaillé des ventes"]);
+  });
+
+  it("still reads a tab file on its tabs when a note ends in a semicolon before an amount", () => {
+    // Read on its semicolons, "\t1 000,00" would look like an amount once the tab is trimmed; a
+    // cell holding a tab is never taken for one.
+    const rows = rowsOf("Date\tNote\tMontant\n14/07/2026\tVu;\t1 000,00\n15/07/2026\tPayé;\t20,50\n");
+    expect(rows).toEqual([
+      ["Date", "Note", "Montant"],
+      ["14/07/2026", "Vu;", "1 000,00"],
+      ["15/07/2026", "Payé;", "20,50"],
+    ]);
+  });
+
   it("still reads a comma file on its commas when a note holds a semicolon", () => {
     const rows = rowsOf(
       'date,note,amount\n2026-01-05,"paid; thanks",10.50\n2026-01-06,"a; b; c",1200.00\n',

@@ -263,6 +263,7 @@ export function acrossTotals(
   // ISO months compare correctly as text: a month that ends after today isn't over.
   const notOver = choice.monthColumns.filter((m) => lastDayOfMonth(m.month) > today);
   const ended = choice.monthColumns.filter((m) => lastDayOfMonth(m.month) <= today);
+  const endedColumns = new Set(ended.map((m) => m.column));
 
   // Blank rows after the last real row are just the sheet's trailing space, not part of the table.
   let lastRow = rows.length - 1;
@@ -305,10 +306,14 @@ export function acrossTotals(
       }
     }
     // A row of unsaved formulas (a Total row whose sums Excel never worked out) isn't "nothing
-    // under any month": each such cell is listed below for what it is.
+    // under any month": each such cell is listed below for what it is. Only months that are over
+    // count here, since only they are listed cell by cell; a formula in a month still running is
+    // already covered by that month being listed whole as not over.
     if (
       choice.monthColumns.every(
-        (m) => isEmptyCell(row[m.column]) && !isUnsavedFormula(i, m.column),
+        (m) =>
+          isEmptyCell(row[m.column]) &&
+          !(endedColumns.has(m.column) && isUnsavedFormula(i, m.column)),
       )
     ) {
       skippedRows.push({ row: i + 1, reason: "no-amount" });

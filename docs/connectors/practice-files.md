@@ -78,9 +78,12 @@ revenue, cost, profit and margin written "1 000,00"; practice file `sage50-frenc
 won the delimiter guess, every line was split on them, no column names were found and nothing was
 added up; a French file with one amount column read, and so had the smaller French file of the
 2026-10-06 design pass. Now, before guessing, `lib/figures/file/read-csv.ts` reads the first lines
-on their semicolons: when at least two lines split, and every cell holding a comma on those lines
-is an amount, the commas are decimal marks and the file is read on its semicolons. Any comma in
-text leaves the guess as it was, so a comma file with a semicolon in it still reads on its commas.
+on their semicolons: when at least two lines split, and the cells holding a comma on those lines
+are amounts at least twice as often as text, the commas are decimal marks and the file is read on
+its semicolons. So a French description with a comma ("Design, impressions") doesn't undo it. A
+comma file whose commas sit in its text keeps the guess as it was, so a stray semicolon in it
+doesn't move it off its commas (a file built so its semicolons cut lines into amount-looking
+pieces could still be misread; none of the practice files is like that).
 The file now reads like the English one: "Revenu" pre-filled, day-first dates, July, August and
 September to the cent. The `it.fails` test is a normal passing test, under "a French semicolon
 file with several amount columns, and a formula with no saved value", and the rule has its own

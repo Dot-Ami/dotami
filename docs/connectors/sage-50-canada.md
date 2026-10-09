@@ -46,9 +46,10 @@ Things to check, from the same pages:
 - **French.** Sage 50 switches between English and French ([switch language][language], 2023); what
   the report's column titles become in French is not documented. A French export with several
   comma-decimal columns ("1 000,00", which also puts more commas than semicolons on a line) is read
-  on its semicolons: when every comma on the lines that split on semicolons sits inside an amount,
-  DotAmi takes the commas for decimal marks (fixed 2026-10-08; until then the commas won and every
-  line was split on them). The English and French practice files both read.
+  on its semicolons: when the commas on the lines that split on semicolons sit mostly inside
+  amounts (a description like "Design, impressions" is allowed), DotAmi takes them for decimal
+  marks (fixed 2026-10-08; until then the commas won and every line was split on them). The English
+  and French practice files both read.
 
 ## What DotAmi keeps
 

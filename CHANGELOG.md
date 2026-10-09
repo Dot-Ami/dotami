@@ -112,9 +112,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
   with semicolons and amounts like "1 000,00" in several columns (Sage 50 Canadian in French) was
-  split on its commas, so no column names were found and nothing was added up. When every comma on
-  the lines that split on semicolons sits inside an amount, DotAmi now reads the file on its
-  semicolons. A comma file with a semicolon in its text still reads on its commas.
+  split on its commas, so no column names were found and nothing was added up. When the commas on
+  the lines that split on semicolons sit mostly inside amounts, DotAmi now reads the file on its
+  semicolons, also when a description holds a comma ("Design, impressions"). A comma file whose
+  commas sit in its text still reads on its commas when a semicolon turns up in it.
 - **An Excel formula with no saved value is no longer called an empty amount** ([8c-3]) — some
   programs (Xero says so for its Excel reports) leave a sum for Excel to work out when the file is
   opened, so the cell holds a formula and no number until the file is saved again in Excel. Such a
