@@ -459,7 +459,7 @@ describe("desktop migrator — typed expenses (an optional idea, refunds, a busi
 
     // Apply it the way the app does: one transaction, foreign keys on, a safety copy first.
     const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 11 });
-    // This one first, then any newer one (the receipts table, which touches no table this test reads).
+    // This one and every later one (the bank and card accounts and receipts tables sort after it).
     expect(applied).toEqual(localNames.filter((n) => n >= typedMigration!));
     expect(backup).not.toBeNull();
 
@@ -557,6 +557,97 @@ describe("desktop migrator — typed expenses (an optional idea, refunds, a busi
     expect(query(dbFile, `SELECT * FROM "Expense"`)).toEqual([]);
     expect(query<{ n: number }>(dbFile, `SELECT count(*) AS n FROM "Venture"`)).toEqual([{ n: 1 }]);
   });
+});
+
+describe("desktop migrator — the bank and card accounts table", () => {
+  const accountsMigration = localNames.find((name) => name.endsWith("_source_accounts"));
+
+  it("is one plain CREATE TABLE with no link to anything, so nothing else in the database is rebuilt", () => {
+    expect(accountsMigration, "no migration ending in _source_accounts").toBeDefined();
+    const statements = statementsOf(accountsMigration!);
+    expect(statements).toHaveLength(1);
+    expect(statements[0]).toMatch(/^CREATE TABLE "SourceAccount" \(/);
+    // Nothing links to it and it links to nothing yet: a later link INTO this table must be
+    // hand-written SQL with its own test (the migrator runs with foreign keys on).
+    expect(statements[0]).not.toMatch(/\b(FOREIGN KEY|REFERENCES)\b/i);
+    expect(statements[0]).not.toMatch(/\b(DROP|ALTER|RENAME|INSERT|PRAGMA)\b|\bDELETE\s+FROM\b/i);
+    // No column for a number of any kind, and no hash of one: the person's name for the account, the button, the dates.
+    expect(statements[0]).not.toMatch(/number|acct|hash|digits|institution|transit|branch/i);
+  });
+
+  it("keeps every idea, figure, expense record, link, map progress and setting when it is applied to a database that has them", () => {
+    // Everything before the accounts table, as a person on the last release has it.
+    const before = path.join(dir, "migrations-before-source-accounts");
+    cpSync(migrations, before, { recursive: true });
+    rmSync(path.join(before, accountsMigration!), { recursive: true, force: true });
+    migrate(dbFile, before);
+    expect(tables(dbFile)).not.toContain("SourceAccount");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // One of every table, with invented values.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'in my words', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'my note', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed'),
+               ('f2', 'v2', 'gross-revenue', 4, 5, 99, 'typed', 'typed by you', 'retracted');
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status)
+        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+    `,
+    );
+    const everything = () => ({
+      users: query(dbFile, `SELECT * FROM "User" ORDER BY id`),
+      statements: query(dbFile, `SELECT * FROM "PersonStatement" ORDER BY id`),
+      ventures: query(dbFile, `SELECT * FROM "Venture" ORDER BY id`),
+      links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
+      progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
+      settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      figures: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, status FROM "Figure" ORDER BY id`),
+      expenses: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, paidTo, status FROM "Expense" ORDER BY id`),
+    });
+    const held = everything();
+    expect(held.figures).toHaveLength(2);
+    expect(held.expenses).toHaveLength(1);
+
+    // Apply the accounts table (and anything newer) the way the app does.
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 9 });
+    expect(applied).toContain(accountsMigration);
+    expect(backup).not.toBeNull();
+
+    // Every row is still there, unchanged, and the new table is empty and usable.
+    expect(everything()).toEqual(held);
+    expect(tables(dbFile)).toContain("SourceAccount");
+    expect(columns(dbFile, "SourceAccount")).toEqual(["id", "name", "allowance", "agreedAt", "retiredAt", "createdAt"]);
+    expect(query(dbFile, `SELECT * FROM "SourceAccount"`)).toEqual([]);
+    runSql(dbFile, `INSERT INTO "SourceAccount" (id, name, allowance, agreedAt) VALUES ('a1', 'Visa ending 1234', 'always', 0);`);
+    expect(query(dbFile, `SELECT id, name, allowance, retiredAt FROM "SourceAccount"`)).toEqual([
+      { id: "a1", name: "Visa ending 1234", allowance: "always", retiredAt: null },
+    ]);
+    expect(tables(backup!)).not.toContain("SourceAccount");
+
+    // Prisma's own referee agrees the file matches the schema.
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // Deleting an idea still cascades to its own rows only, and never to the accounts, which belong to no idea.
+    // Its expense record stays, no longer attached to an idea (the typed-expenses migration makes that
+    // link ON DELETE SET NULL).
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f2" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense"`)).toEqual([{ id: "e1", ventureId: null }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SourceAccount"`)).toEqual([{ id: "a1" }]);
+    expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
+  }, 60_000);
 });
 
 describe("desktop migrator — receipts (a table describing each receipt file)", () => {

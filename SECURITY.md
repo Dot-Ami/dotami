@@ -38,7 +38,9 @@ advisory unless you ask not to be.
   `X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive `Permissions-Policy`. Fonts
   are committed to the repo and served from this origin — no page view contacts a third
   party. Write routes accept only same-origin `application/json` bodies, with a byte cap and
-  a per-client rate limit (`lib/api/`). Links built from data the app did not write render
+  a per-client rate limit (`lib/api/`; the browser-test server alone sets
+  `DOTAMI_E2E_RATE_LIMITS`, which stops counting requests that don't name a bucket — never set it
+  on a copy people use, and the desktop app removes it). Links built from data the app did not write render
   only as absolute `https:` URLs (`lib/http/safe-url.ts`). The statute-store lookup runs as
   a child process with allow-listed arguments and a minimal environment — the database URL
   and any API key never reach it.

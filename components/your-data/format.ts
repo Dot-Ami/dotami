@@ -27,6 +27,8 @@ export const SOURCE_KIND_WORDS: Record<FigureSourceKind, string> = {
   file: "Read from a file",
   agent: "Proposed by an agent",
   "tax-return": "Read from a tax return",
+  // The maintainer's wording (2026-10-08): books and a file in one name, with a slash.
+  books: "Books / file",
 };
 
 export function kindWords(kind: string): string {
