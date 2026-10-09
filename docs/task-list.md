@@ -115,7 +115,9 @@ roadmap's build order.
     [issue #124](https://github.com/Dot-Ami/dotami/issues/124)
   - [ ] Check each row pasted in reply (no figures, client or company names), then mark those titles
     "documented" in their practice files, citing the issue
-  - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
+  - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
+    preview shows the earliest and latest date read, in words, to check against the file
+  - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
     months across the top, the FreshBooks summary block, French files with several comma-decimal
     columns, formulas saved with no value, a report with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;

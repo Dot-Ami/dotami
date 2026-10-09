@@ -61,6 +61,8 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
   const sums = new Map<string, { cents: bigint; rows: number }>();
   const skipped: SkippedRow[] = [];
   let rowsCounted = 0;
+  let firstDay: string | null = null;
+  let lastDay: string | null = null;
 
   for (let i = choice.headerRow + 1; i <= lastRow; i += 1) {
     const row = rows[i];
@@ -79,12 +81,18 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
       continue;
     }
 
-    const day = cellToDay(row[choice.dateColumn] ?? null, choice.dateOrder);
+    const day = cellToDay(row[choice.dateColumn] ?? null, choice.dateOrder, choice.century ?? null);
     if (day === null) {
       const isSumRow = row.some((cell) => typeof cell === "string" && TOTAL_ROW_LABEL.test(cell));
       skip(isSumRow ? "total" : "no-date");
       continue;
     }
+
+    // Every date read counts towards the range shown to the person, even on a row that adds
+    // nothing (no amount, a month not over): a year read wrong (2099 for 99) shows up there.
+    // ISO days compare correctly as text.
+    if (firstDay === null || day < firstDay) firstDay = day;
+    if (lastDay === null || day > lastDay) lastDay = day;
 
     const amountCell = row[choice.amountColumn];
     if (isEmpty(amountCell)) {
@@ -127,7 +135,9 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
     });
   }
 
-  return { months, rowsCounted, skipped };
+  const datesRead =
+    firstDay !== null && lastDay !== null ? { first: firstDay, last: lastDay } : null;
+  return { months, rowsCounted, skipped, datesRead };
 }
 
 /**

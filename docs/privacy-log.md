@@ -225,6 +225,14 @@ person is asked).
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
   file.
 
+- **A file with two-digit years needs one answer before any totals show** ([8c-3]): "Is 05 the
+  year 2005?" on *Add from a file*. The answer only says how to read that file's dates; it is held
+  in the panel for that file and never stored, sent or remembered for the next file
+  ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/preview.ts`](../lib/figures/file/preview.ts)). Every preview now also shows
+  the earliest and latest date read, for the person to check before they review the figures;
+  agreeing is unchanged.
+
 - **A figure from a GnuCash book needs the same three steps as one from a spreadsheet**: the
   person answers *Accounting software or a spreadsheet you keep*, picks or drops the book, and
   presses *Agree* in the agree prompt after *Review*. The accounts GnuCash marks as income start

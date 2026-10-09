@@ -3,7 +3,8 @@
  * tests both call (components/ventures/file-drop.tsx; tests/figures-file-packages.spec.ts).
  *
  * The steps: take the first sheet with anything in it, guess which row holds the column names and
- * which columns hold the dates and amounts, work out how the dates and amounts are written, and
+ * which columns hold the dates and amounts, work out how the dates and amounts are written (asking
+ * the person what the dates can't prove: the order of 03/04/2026, the century of 12-03-05), and
  * add up each month. They used to be repeated in a test helper, and a copy can drift from the
  * screen; now a test of a practice file runs the very code the screen runs.
  *
@@ -14,11 +15,19 @@
  * picked, and previewFile does the same (a dynamic import).
  */
 import { detectDecimalStyle } from "./amounts";
-import { detectDateOrder } from "./dates";
+import { dayInWords, detectDateOrder, firstTwoDigitYear } from "./dates";
 import { guessColumns, isBlankRow } from "./table";
 import type { ColumnGuess } from "./table";
 import { monthlyTotals } from "./totals";
-import type { Cell, ColumnChoice, DateOrder, DecimalStyle, Sheet, TotalsResult } from "./types";
+import type {
+  Cell,
+  Century,
+  ColumnChoice,
+  DateOrder,
+  DecimalStyle,
+  Sheet,
+  TotalsResult,
+} from "./types";
 
 /** Which row holds the column names and which columns hold the dates and amounts (null = not chosen). */
 export interface Picks {
@@ -105,12 +114,18 @@ export function guessPicks(
 export interface PreviewAnswers {
   /** Their answer to "how are the dates written?", asked only when the dates can't prove it. "" = not answered. */
   dateOrder?: DateOrder | "";
+  /**
+   * Their answer to "Is 05 the year 2005?", asked only when a date in the column has a two-digit
+   * year: 2000 (yes) or 1900 (no). "" = not answered. Ignored when every year has four digits.
+   */
+  century?: Century | "";
   /** Their answer about how amounts are written, if they overrule what the amounts show. */
   decimalStyle?: DecimalStyle;
 }
 
 /** Why the screen shows no totals yet. "held" is the screen's own reason (the currency isn't three letters yet). */
-export type WaitingFor = "a-column" | "different-columns" | "date-order-answer" | "held";
+export type WaitingFor =
+  "a-column" | "different-columns" | "date-order-answer" | "century-answer" | "held";
 
 /** What the preview works out from the person's choices: totals, or the one reason there are none yet. */
 export interface SheetPreview {
@@ -118,8 +133,15 @@ export interface SheetPreview {
   detectedOrder: DateOrderReading;
   /** The style the amounts are written in, as detected from the amount column. */
   detectedStyle: DecimalStyle;
+  /**
+   * The first two-digit year in the date column, as written ("05"), which the screen asks about;
+   * null when every date there has a four-digit year, and then nothing is asked.
+   */
+  twoDigitYear: string | null;
   /** The order and style the totals were (or will be) worked out with. */
   dateOrder: DateOrder | null;
+  /** The century two-digit years are read in: the person's answer, or null (unanswered, or none to ask about). */
+  century: Century | null;
   decimalStyle: DecimalStyle;
   /** "ready" with totals, "waiting" for the person, or "failed" (the totals can't be held exactly). */
   state: "ready" | "waiting" | "failed";
@@ -131,6 +153,7 @@ export interface SheetPreview {
 
 const DIFFERENT_COLUMNS_MESSAGE = "The date and the amount can't be the same column.";
 const DATE_ORDER_MESSAGE = "Say how the dates are written to see the totals.";
+const centuryMessage = (year: string) => `Say which year ${year} is to see the totals.`;
 const FAILED_MESSAGE = "DotAmi couldn't read that file. Nothing was kept.";
 
 /**
@@ -164,6 +187,11 @@ export function previewSheet(
   const dateOrder: DateOrder | null =
     needsAnswer || detectedOrder.conflicting ? answers.dateOrder || null : detectedOrder.order;
 
+  // A two-digit year is read only in the century the person said, and only for this sheet's date
+  // column; with no two-digit year a stray answer is ignored, so it can't touch any other date.
+  const twoDigitYear = firstTwoDigitYear(dateCells);
+  const century: Century | null = twoDigitYear !== null ? answers.century || null : null;
+
   const outcome = (
     state: SheetPreview["state"],
     waitingFor: WaitingFor | null,
@@ -172,7 +200,9 @@ export function previewSheet(
   ): SheetPreview => ({
     detectedOrder,
     detectedStyle,
+    twoDigitYear,
     dateOrder,
+    century,
     decimalStyle,
     state,
     waitingFor,
@@ -189,6 +219,9 @@ export function previewSheet(
   if (needsAnswer && dateOrder === null) {
     return outcome("waiting", "date-order-answer", DATE_ORDER_MESSAGE, null);
   }
+  if (twoDigitYear !== null && century === null) {
+    return outcome("waiting", "century-answer", centuryMessage(twoDigitYear), null);
+  }
   if (hold) return outcome("waiting", "held", null, null);
 
   const choice: ColumnChoice = {
@@ -197,6 +230,7 @@ export function previewSheet(
     amountColumn: picks.amountColumn,
     typeColumn: picks.typeColumn,
     dateOrder,
+    century,
     decimalStyle,
   };
   try {
@@ -205,6 +239,20 @@ export function previewSheet(
     // The only throw is the "too large" sentence, which carries no amount.
     return outcome("failed", null, error instanceof Error ? error.message : FAILED_MESSAGE, null);
   }
+}
+
+/**
+ * The sentence every preview shows under its totals: the earliest and latest date DotAmi read, in
+ * words, for the person to check against the file ("Dates read: 3 December 2005 to 28 February
+ * 2006. ..."). A wrong date order or century shows up here as a day the file doesn't hold. Null
+ * when no date was read (nothing to check).
+ */
+export function datesReadSentence(datesRead: TotalsResult["datesRead"]): string | null {
+  if (datesRead === null) return null;
+  if (datesRead.first === datesRead.last) {
+    return `Dates read: ${dayInWords(datesRead.first)}, the only date. Check it against the file.`;
+  }
+  return `Dates read: ${dayInWords(datesRead.first)} to ${dayInWords(datesRead.last)}. Check these against the file's earliest and latest dates.`;
 }
 
 /**

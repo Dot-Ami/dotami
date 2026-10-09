@@ -5,7 +5,13 @@
  * say its export looks. It is built in code (never committed as a binary), so a reviewer can read
  * every cell in the diff. No real export, no real person and no real figure is used anywhere.
  */
-import type { DateOrder, DecimalStyle, MonthTotal, SkippedRow } from "@/lib/figures/file/types";
+import type {
+  Century,
+  DateOrder,
+  DecimalStyle,
+  MonthTotal,
+  SkippedRow,
+} from "@/lib/figures/file/types";
 
 /** One vendor page a layout fact comes from. */
 export interface VendorSource {
@@ -53,6 +59,8 @@ export interface Expected {
   /** What the date column says about how its dates are written, and the answer asked of the person if it can't say. */
   dateOrder: { order: DateOrder | null; ambiguous: boolean; conflicting: boolean };
   answer?: DateOrder;
+  /** The person's answer to "Is 26 the year 2026?", for a file whose dates have a two-digit year. */
+  century?: Century;
   decimalStyle: DecimalStyle;
   /** The months, to the cent, with how many rows each adds up. */
   months: MonthTotal[];

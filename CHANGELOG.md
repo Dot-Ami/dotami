@@ -100,6 +100,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Saving a file in the desktop app asks where** — a file made in the page (the calendar file, a
   playbook) now opens a Save dialog with the file's own name; Cancel saves nothing. Only DotAmi's
   own pages can start a save.
+- **Two-digit years on "Add from a file"** ([8c-3]) — a file with dates like 12-03-05 (Sage 50) or
+  03.12.26 (FreshBooks) used to find no dates at all. Now it gets one question, "Is 05 the year
+  2005?", with Yes and No, and no totals until it is answered. DotAmi never picks the century
+  itself. The answer is for that file only: the next file is asked again. The year is taken to be
+  the last number, as in those programs' short dates.
+- **Every file's preview says how its dates were read** — above the monthly totals, the earliest
+  and latest date in words ("Dates read: 3 December 2005 to 28 February 2006"), to check against
+  the file. A date in a month that isn't over yet is included, so a year read wrong can't hide there.
 
 ### Changed
 - **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
@@ -123,9 +131,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   help pages, plus Xero's Receivable Invoice Detail, each checked to the cent. They found nine
   things DotAmi gets wrong today, now written down as tests that fail the day each is fixed: a
   refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
-  taken for the column names, two-digit years, months across the top, a Wave report with no dates,
-  a French Sage 50 file with several comma-decimal columns split on its commas, and a formula saved
-  with no value reported as an empty amount. See docs/connectors/practice-files.md.
+  taken for the column names, two-digit years (since fixed, under Added), months across the top, a
+  Wave report with no dates, a French Sage 50 file with several comma-decimal columns split on its
+  commas, and a formula saved with no value reported as an empty amount. See
+  docs/connectors/practice-files.md.
 
 ### Documented
 - **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to

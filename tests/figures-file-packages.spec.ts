@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { decodeText } from "@/lib/figures/file/decode";
-import { previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
+import { datesReadSentence, previewFile as runLikeTheScreen } from "@/lib/figures/file/preview";
 import type { FileAnswers as Answers, FilePreview as ScreenRun } from "@/lib/figures/file/preview";
 import { readSpreadsheet } from "@/lib/figures/file/read-file";
 import { columnsOf, isBlankRow } from "@/lib/figures/file/table";
@@ -36,13 +36,14 @@ const PACKAGES = {
 };
 const ALL_FILES: PracticeFile[] = Object.values(PACKAGES).flatMap((p) => p.files);
 
-/** The answers a person gives on the screen for a file: the columns they pick, and how dates are written. */
+/** The answers a person gives on the screen for a file: the columns they pick, how dates are written, and the century of a two-digit year. */
 function answersFor(file: PracticeFile): Answers {
   return {
     headerRow: file.expected.picks?.headerRow,
     dateColumn: file.expected.picks?.dateColumn,
     amountColumn: file.expected.picks?.amountColumn,
     dateOrder: file.expected.answer,
+    century: file.expected.century,
   };
 }
 
@@ -361,6 +362,61 @@ describe("Sage 50 Canadian's export route", () => {
 });
 
 /*
+ * A gap the newer practice files found, now fixed: dates written with a two-digit year. These two
+ * were `it.fails` tests until the fix landed. DotAmi asks the person once which century the year
+ * is in ("Is 26 the year 2026?") and never picks it itself (the maintainer's decision, 2026-10-07);
+ * the rules have their own tests in tests/figures-file-two-digit-years.spec.ts.
+ */
+describe("two-digit years, read once the person says the century", () => {
+  // dd.mm.yy is one of FreshBooks' six date formats.
+  it("FreshBooks: dates written dd.mm.yy are read once the century is known", async () => {
+    const file = find("freshbooks-invoices-two-digit-year");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run).map((m) => m.periodStart)).toEqual(
+      freshbooks.ISSUED_NOT_DRAFT.map((m) => m.periodStart),
+    );
+  });
+
+  // 12-03-05 is Sage 50's own example of a short date.
+  it("Sage 50: dates with a two-digit year are read once the century is known", async () => {
+    const file = find("sage50-two-digit-year");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
+  });
+
+  it("asks before it reads them: nothing is added up until the person answers", async () => {
+    for (const id of ["freshbooks-invoices-two-digit-year", "sage50-two-digit-year"]) {
+      const file = find(id);
+      const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
+        ...answersFor(file),
+        century: undefined,
+      });
+      // Positive first: the two-digit year was found, and it is what the question names.
+      expect(run.twoDigitYear, id).toBe("26");
+      expect(run.waitingFor, id).toBe("century-answer");
+      expect(run.result, id).toBeNull();
+    }
+  });
+
+  it("shows the earliest and latest date it read, in words, for the person to check", async () => {
+    const sage = find("sage50-two-digit-year");
+    const run = await runLikeTheScreen(sage.fileName, sage.bytes(), TODAY, answersFor(sage));
+    // 2 October is in a month not over yet: left out of the totals, still one of the dates read.
+    expect(datesReadSentence(run.result!.datesRead)).toBe(
+      "Dates read: 14 July 2026 to 2 October 2026. Check these against the file's earliest and latest dates.",
+    );
+    // Answered "no", the same file reads a century earlier, and the sentence says so.
+    const no = await runLikeTheScreen(sage.fileName, sage.bytes(), TODAY, {
+      ...answersFor(sage),
+      century: 1900,
+    });
+    expect(datesReadSentence(no.result!.datesRead)).toBe(
+      "Dates read: 14 July 1926 to 2 October 1926. Check these against the file's earliest and latest dates.",
+    );
+  });
+});
+
+/*
  * Gaps the Wave, FreshBooks, Sage and Xero Receivable Invoice Detail files found (2026-10-08). Each
  * is written as an `it.fails` test: it passes only while the gap is there, so the day a fix lands it
  * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
@@ -395,15 +451,6 @@ describe("gaps the newer practice files found, fails today", () => {
     expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
   });
 
-  // dd.mm.yy is one of FreshBooks' six date formats; a two-digit year is never read today.
-  it.fails("FreshBooks: dates written dd.mm.yy are read once the century is known", async () => {
-    const file = find("freshbooks-invoices-two-digit-year");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run).map((m) => m.periodStart)).toEqual(
-      freshbooks.ISSUED_NOT_DRAFT.map((m) => m.periodStart),
-    );
-  });
-
   it.fails("FreshBooks: Revenue by Client, months across the top, gives one total per month", async () => {
     const file = find("freshbooks-revenue-by-client");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
@@ -414,13 +461,6 @@ describe("gaps the newer practice files found, fails today", () => {
     const file = find("sage-accounting-sales-list");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
     expect(amountsOf(run)).toEqual(sageAccounting.SALES_NOT_VOID);
-  });
-
-  // 12-03-05 is Sage 50's own example of a short date.
-  it.fails("Sage 50: dates with a two-digit year are read once the century is known", async () => {
-    const file = find("sage50-two-digit-year");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run)).toEqual(sage50.TRUE_MONTHS);
   });
 
   // Four comma-decimal columns per line win the delimiter guess over the semicolons: every line

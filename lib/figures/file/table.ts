@@ -5,7 +5,7 @@
  * misstate someone's income, so an unsure guess leaves the dropdown empty for the person to pick.
  */
 import { cellToCents } from "./amounts";
-import { cellToDay } from "./dates";
+import { cellToDay, firstTwoDigitYear } from "./dates";
 import type { Cell } from "./types";
 
 export interface ColumnInfo {
@@ -86,7 +86,10 @@ function readsAsDate(cell: Cell | undefined): boolean {
   return (
     cellToDay(value, null) !== null ||
     cellToDay(value, "mdy") !== null ||
-    cellToDay(value, "dmy") !== null
+    cellToDay(value, "dmy") !== null ||
+    // A date with a two-digit year (12-03-05) is still a date for finding the columns; which
+    // century it is in is asked of the person later, never guessed here.
+    firstTwoDigitYear([value]) !== null
   );
 }
 

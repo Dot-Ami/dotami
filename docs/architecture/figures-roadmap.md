@@ -122,7 +122,7 @@ Gaps already found by running the real code:
 - A FreshBooks summary row is taken as the header.
 - A Wave refund sits in a Debit column.
 - A Sage void invoice is counted.
-- Two-digit years are refused.
+- Two-digit years are refused. *Fixed 2026-10-08 ([8c-3]): one question per file, "Is 05 the year 2005?".*
 - Months-across reports can't be read.
 
 **Sources (read 2026-10-06):**

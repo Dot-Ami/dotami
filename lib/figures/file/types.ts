@@ -29,6 +29,12 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 /** How a date like 03/01/2026 is written: year first (2026-03-01), month first, or day first. */
 export type DateOrder = "ymd" | "mdy" | "dmy";
 
+/**
+ * Which hundred years a two-digit year is read in: 2000 reads "05" as 2005, 1900 reads it as 1905.
+ * Only ever the person's own answer, for one file ("Is 05 the year 2005?"); DotAmi never picks it.
+ */
+export type Century = 1900 | 2000;
+
 /** How an amount is written: 1,234.56 ("point") or 1 234,56 ("comma", French and most of Europe). */
 export type DecimalStyle = "point" | "comma";
 
@@ -46,6 +52,11 @@ export interface ColumnChoice {
   typeColumn?: number | null;
   /** Needed only for dates like 03/01/2026; null when every date in the column is unambiguous. */
   dateOrder: DateOrder | null;
+  /**
+   * The person's answer about a two-digit year (12-03-05). Unset or null: a date written with a
+   * two-digit year is not read, and its row is listed as "no date".
+   */
+  century?: Century | null;
   decimalStyle: DecimalStyle;
 }
 
@@ -88,4 +99,10 @@ export interface TotalsResult {
   /** Rows added into `months`. */
   rowsCounted: number;
   skipped: SkippedRow[];
+  /**
+   * The earliest and latest day read from the date column (YYYY-MM-DD), over every row whose date
+   * was read, whether it was added up or not (a month not over yet, no amount). Shown to the person
+   * in words so a date read the wrong way stands out. Null when no row had a date DotAmi could read.
+   */
+  datesRead: { first: string; last: string } | null;
 }

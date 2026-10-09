@@ -888,6 +888,13 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   await expect(
     table.getByRole("row", { name: new RegExp(`^${c.name} \\$100\\.00 2 rows$`) }),
   ).toBeVisible();
+  // How the dates were read, in words, for the person to check: the row in a month not over yet
+  // adds nothing but its date was read, so it is the latest.
+  await expect(
+    card.getByText(
+      `Dates read: 15 ${a.name} to 15 ${next.name}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
   await expect(card.getByText(`1 blank row: row ${blankRow}`)).toBeVisible();
   await expect(
     card.getByText(`1 row without a date DotAmi can read: row ${noteRow}`),
@@ -1052,6 +1059,80 @@ test("dates that read two ways are asked about once, and nothing is totalled unt
   const table = card.getByRole("table", { name: "Monthly totals from two-ways.csv" });
   await expect(table.getByRole("row")).toHaveCount(1);
   await expect(table.getByRole("row", { name: new RegExp(`^${target.name} \\$150\\.00 2 rows$`) })).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a file with two-digit years asks once which century, then shows how the dates were read", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // dd.mm.yy, one of FreshBooks' date formats. 18 can only be a day, so the order needs no
+  // question; the century does. Invented clients and amounts.
+  const [a, b] = [monthsAgo(3), monthsAgo(2)];
+  const yy = (y: number) => String(y).slice(2);
+  const lines = [
+    "Invoice Date,Client,Amount",
+    `18.${two(a.m)}.${yy(a.y)},Client A,100.00`,
+    `18.${two(b.m)}.${yy(b.y)},Client B,50.00`,
+  ];
+  const file = {
+    name: "short-years.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  };
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+
+  // The columns are still found, and the one question is asked instead of refusing the file.
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "A · Invoice Date",
+  );
+  const century = card.getByLabel(`Is ${yy(a.y)} the year 20${yy(a.y)}?`);
+  await expect(century).toBeVisible();
+  await expect(century).toHaveValue("");
+  await expect(
+    card.getByText("This file writes years with two digits. Your answer is used for every date written that way in this column, for this file only."),
+  ).toBeVisible();
+  await expect(card.getByText(`Say which year ${yy(a.y)} is to see the totals.`)).toBeVisible();
+  await expect(card.getByLabel("Dates are written")).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await expect(card.getByRole("button", { name: /^Review (these|this)/ })).toHaveCount(0);
+
+  // Yes: the dates are read in the 2000s, and the screen says how, in words.
+  await century.selectOption("2000");
+  const table = card.getByRole("table", { name: "Monthly totals from short-years.csv" });
+  await expect(table.getByRole("row", { name: new RegExp(`^${a.name} \\$100\\.00 1 row$`) })).toBeVisible();
+  await expect(table.getByRole("row", { name: new RegExp(`^${b.name} \\$50\\.00 1 row$`) })).toBeVisible();
+  await expect(
+    card.getByText(
+      `Dates read: 18 ${a.name} to 18 ${b.name}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeVisible();
+
+  // No: the same rows land a hundred years earlier, and the sentence shows it at once.
+  await century.selectOption("1900");
+  const old = (m: { y: number; m: number }) => `${MONTH_NAMES[m.m - 1]} ${m.y - 100}`;
+  await expect(table.getByRole("row", { name: new RegExp(`^${old(a)} \\$100\\.00 1 row$`) })).toBeVisible();
+  await expect(
+    card.getByText(
+      `Dates read: 18 ${old(a)} to 18 ${old(b)}. Check these against the file's earliest and latest dates.`,
+    ),
+  ).toBeVisible();
+
+  // The answer covers this file only: the same file again is asked again.
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  await expect(century).toBeVisible();
+  await expect(century).toHaveValue("");
+  await expect(card.getByRole("table")).toHaveCount(0);
 
   await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
