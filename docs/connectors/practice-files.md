@@ -35,8 +35,9 @@ from that program works, because:
   Intuit's developer page describes the report as data, not as an Excel file. The Wave, FreshBooks,
   Sage Accounting and Sage 50 pages were read on 2026-10-08.
 - The one way to close that gap is a header row copied from a real export (column names only,
-  never a figure). The request for that is drafted [below](#asking-for-real-column-names), for the
-  maintainer to approve before it is posted.
+  never a figure). The request for that was posted on 2026-10-09 as
+  [issue #124](https://github.com/Dot-Ami/dotami/issues/124); its text is kept
+  [below](#asking-for-real-column-names).
 
 The screen says so to everyone who drops a file: "Each accounting program's export was tested on
 files shaped from that program's help pages, not on real exports, so check the columns and totals."
