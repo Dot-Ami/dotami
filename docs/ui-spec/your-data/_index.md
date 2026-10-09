@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-08 ([8d] — the Delete menu; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-08 ([8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -45,14 +45,17 @@ jump links, then five sections in this order:
    [8i]) counts every single business expense in the file (typed, or proposed by an agent; waiting,
    agreed, taken-back and turned-down ones alike), 0 until the first one is proposed. It says what a record holds (never a bank or card
    number, no receipt file) and that nothing in the app takes one back yet. Only the count is shown here: no payee, no words, no amount.
+   "Your bank and card accounts" (added 2026-10-08, [8g]) counts the accounts in the file, in use and
+   taken back; it shows no name (Settings lists them) and says Take back leaves the row until Delete.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened (the log's row says
    what it holds, including that a start that fails writes DotAmi's message, which can name the
    data folder, with the error's name and code, and that a failed database update adds the
    database's words about which update failed and what it objected to); and the window's
-   own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A line
-   pointing at disk encryption in Settings.
+   own storage (what DotAmi puts in `localStorage`/`sessionStorage`, how long it stays). A row for
+   the "wipe pending" note Delete leaves beside the data file while a wipe is still owed ("None: no
+   wipe is owed." when it isn't there). A line pointing at disk encryption in Settings.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
    is, and that DotAmi can't take it back), the desktop update check (GitHub sees the computer's
@@ -73,7 +76,8 @@ logs only the error's name and code.
 | A source row (`<details>`) | opens and closes with Enter/Space or a click; no script | — |
 | **Copy path** (data file, safety copies, log) | copies the path; "Copied", or "Copy failed — select it instead" | — |
 | ← Settings, the Settings → links | plain links | — |
-| **Delete** and its menu, two asks, result | see [delete-menu.md](delete-menu.md) | deletes rows from the data file and wipes it (`POST /api/your-data/delete`) |
+| **Delete** and its menu, two asks, result | see [delete-menu.md](delete-menu.md) | deletes rows from the data file, and DotAmi's safety copies when ticked, and wipes it (`POST /api/your-data/delete`) |
+| **Finish it now** (only while an earlier Delete's wipe is owed) | see [delete-menu.md](delete-menu.md) | finishes the wipe and the owed safety copies (`POST /api/your-data/delete`, `retryWipe`) |
 
 ## What it deliberately does not do
 
@@ -81,9 +85,9 @@ logs only the error's name and code.
   source is kept (a later decision). Delete works on whole kinds of data only: statements are
   deleted all at once or not at all (the maintainer's decision, 2026-10-07), and there is no
   delete-one-idea or delete-one-figure control here.
-- **Delete doesn't clear the backups folder or the window's earlier leftovers yet.** The menu says
-  so in plain words; clearing the backups folder is the next step, and how to reach what the
-  desktop window stored in earlier launches is a later decision.
+- **Delete doesn't clear the window's earlier leftovers yet.** The menu says so in plain words; how
+  to reach what the desktop window stored in earlier launches is a later decision. The safety copies
+  in the backups folder have their own box (2026-10-08).
 - **No query string, no amounts in a URL** (privacy review, rule 1): the page takes none, and the
   source names it shows are text on the page, never links.
 - **No figure value in any log** (rule 2): a failed read logs the error's name and code only.
