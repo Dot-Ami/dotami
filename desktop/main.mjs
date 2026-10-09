@@ -26,6 +26,7 @@ import {
 } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
+import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
@@ -59,6 +60,11 @@ let dbFile = "";
  * @type {import("./receipt-key.mjs").OpenedReceiptKey | null}
  */
 let receiptKey = null;
+/**
+ * The "Preparing DotAmi…" window ([8i], desktop/preparing.mjs): shown only while a first start waits for
+ * Windows to save its own key, closed when the main window shows or the start fails.
+ */
+const preparing = preparingWindow(openPreparingWindow, { log: (line) => log?.write(`${line}\n`) });
 
 // Only the installed app updates itself, from GitHub Releases ([7d]); a copy run from the source
 // code updates with git. Tests switch the check off so they never reach the internet.
@@ -79,7 +85,11 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(start).catch((error) => fail("DotAmi couldn't start.", error));
 }
 
-app.on("window-all-closed", () => app.quit());
+// While a start is failing (fail() closes the preparing window, then shows its message), quitting is
+// already under way: closing that last window mustn't quit again under the message.
+app.on("window-all-closed", () => {
+  if (!quitting) app.quit();
+});
 app.on("before-quit", () => {
   quitting = true;
   server?.kill();
@@ -138,8 +148,9 @@ async function start() {
   // § 9). Before the server starts, so nothing else has the files open. The log gets counts only.
   try {
     // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
-    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs).
-    receiptKey = await openReceiptKey(dataDir, safeStorage);
+    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs); the
+    // preparing window is on the screen meanwhile (preparing.mjs), and only then.
+    receiptKey = await openReceiptKey(dataDir, safeStorage, { keyStoreSaved: waitShowingWindow(dataDir, preparing) });
   } catch (error) {
     return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
@@ -176,7 +187,11 @@ async function start() {
     show: false,
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
   });
-  win.once("ready-to-show", () => win?.show());
+  win.once("ready-to-show", () => {
+    win?.show();
+    // In the same step, so there is never a moment with neither window on the screen.
+    preparing.close("the main window showed");
+  });
   await win.loadURL(origin).catch((error) => {
     // ERR_ABORTED: another navigation (a menu item clicked during start-up) replaced the first
     // load. That isn't a failure; treating it as one closed the app (seen 2026-10-05).
@@ -670,11 +685,35 @@ function receiptFileCount(folder) {
   }
 }
 
+/**
+ * The "Preparing DotAmi…" window: small, local, no script (desktop/preparing.html's own policy lets it
+ * load and reach nothing), and with no working close button, since closing it would end a start half
+ * done. Not the window the app runs in; lockDown() isn't in place yet when it opens, and it has no links.
+ */
+function openPreparingWindow() {
+  const window = new BrowserWindow({
+    width: 420,
+    height: 170,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    title: PREPARING_TITLE,
+    backgroundColor: "#161619",
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
+  });
+  window.setMenu(null);
+  void window.loadFile(path.join(root, "desktop", "preparing.html"));
+  return window;
+}
+
 /** Says what went wrong in plain words, then quits — never a blank window. */
 function fail(message, error) {
   if (error) console.error(error);
   if (quitting) return;
   quitting = true;
+  // Before the message, so the preparing window can't stay behind it.
+  preparing.close("start-up failed");
   // Into the log before the dialog: the dialog waits for a click, and the person may end the app
   // from the task manager instead. DotAmi's own message (it can name the data folder) and only the
   // error's name and code, as everywhere else in the log; a failed database update has already

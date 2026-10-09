@@ -21,7 +21,11 @@ export interface ReceiptProtectionText {
 export const KEY_LOSS_SENTENCE =
   "If your Windows profile is reset, or this data folder is moved to another account or computer, that key is gone and so are the receipts, except those in a backup (File → Back up…).";
 
-export function receiptProtectionText(state: ReceiptLockState): ReceiptProtectionText {
+/**
+ * @param setAsideTo after Start a new key ("new-key-at-restart"): the folder the locked receipts were
+ *   moved to, said in full so the person knows where they are (lock.ts receiptsSetAsideTo)
+ */
+export function receiptProtectionText(state: ReceiptLockState, setAsideTo: string | null = null): ReceiptProtectionText {
   switch (state) {
     case "on":
       return {
@@ -54,7 +58,19 @@ export function receiptProtectionText(state: ReceiptLockState): ReceiptProtectio
       return {
         headline: "DotAmi can't open the key to your receipts.",
         detail:
-          "Windows won't open it for this account, or the key file (receipts.key, beside DotAmi's data file) is missing. That happens when the Windows profile is reset, when the data folder came from another account or computer, or when that file was deleted or moved. Until the key is back, receipts can't be shown or added. Nothing was changed or deleted. If you deleted or moved receipts.key, put it back (it may be in the Recycle Bin) and restart DotAmi. Otherwise, to get the receipts back, restore a backup (File → Restore from a backup…). Or delete them (Delete on What DotAmi knows about you, “Your receipts”) and restart DotAmi, which then starts a new key.",
+          "Windows won't open it for this account, or the key file (receipts.key, beside DotAmi's data file) is missing. That happens when the Windows profile is reset, when the data folder came from another account or computer, or when that file was deleted or moved. Until the key is back, receipts can't be shown or added. Nothing was changed or deleted. If you deleted or moved receipts.key, put it back (it may be in the Recycle Bin) and restart DotAmi. Otherwise, to get the receipts back, restore a backup (File → Restore from a backup…). Or delete them (Delete on What DotAmi knows about you, “Your receipts”) and restart DotAmi, which then starts a new key. Or, with no backup, start a new key (Start a new key…): the locked receipts are moved aside, not deleted, and given up unless the old key comes back.",
+        tone: "problem",
+      };
+    case "new-key-at-restart":
+      // After Start a new key (expense-records.md § 10): the files are moved, and the desktop app makes the
+      // new key at its next start; the server can't reach Windows' key store itself.
+      return {
+        headline: "DotAmi starts a new key for your receipts the next time it starts.",
+        detail: `${
+          setAsideTo
+            ? `The receipt files locked with the old key, and the old key file if it was there, were moved, not deleted, to ${setAsideTo}.`
+            : "There were no locked receipt files left to move."
+        } Close DotAmi and open it again; until then, receipts can't be shown or added. Your expense records stay, and a receipt that was set aside says so when you open it. The moved files stay in that folder, untouched: they open again only if the old key comes back.`,
         tone: "problem",
       };
   }

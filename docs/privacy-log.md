@@ -39,6 +39,19 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Start a new key moves locked receipts aside, never deletes them ([8i], 2026-10-09).** While the
+  desktop app can't open the receipts' key, the person may press *Start a new key…* (asked twice). The
+  server then moves every receipt file locked with a key it can't open, and `receipts.key`, into a new
+  folder beside the data file, `backups/receipts-locked-<time>/`
+  ([`desktop/receipt-key.mjs`](../desktop/receipt-key.mjs) `setAsideLockedReceipts`,
+  [`lib/expenses/receipts/new-key.ts`](../lib/expenses/receipts/new-key.ts)), and the next start makes a
+  new key as for a missing key file. The `Receipt` rows stay in the data file (their size and SHA-256
+  are what the files must match if the old key comes back). No new table, column or browser-storage
+  key; the log gets a count only. *What DotAmi knows about you* names the new folder under the safety
+  copies and the key file. Tested by [`tests/receipt-key.spec.ts`](../tests/receipt-key.spec.ts),
+  [`tests/receipt-new-key.spec.ts`](../tests/receipt-new-key.spec.ts),
+  [`e2e/receipt-new-key.spec.ts`](../e2e/receipt-new-key.spec.ts) and the desktop test.
+
 - **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
   file is read in memory inside the app's window, in a worker of DotAmi's own
   ([`lib/figures/return/`](../lib/figures/return/)); its bytes move into that worker, pdf.js's
@@ -297,6 +310,17 @@ person is asked).
 
 ### New powers or permissions
 
+- **A page-only route that moves receipt files ([8i]).** `POST /api/expenses/receipt/new-key`
+  ([`app/api/expenses/receipt/new-key/route.ts`](../app/api/expenses/receipt/new-key/route.ts)) answers
+  only DotAmi's own window (an agent or another program gets 403 and nothing moves), reads its body
+  through `readJsonWithLimit`, needs `{ giveUp: true }`, and does anything only while the receipts' key
+  can't be opened. It moves files within the data folder; it deletes nothing and sends nothing.
+- **A second, small window at a first start ([8i]).** "Preparing DotAmi…"
+  ([`desktop/preparing.html`](../desktop/preparing.html)) is a local page with no script and a
+  Content-Security-Policy of `default-src 'none'`, listed with the app's other local loads in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `LOCAL_REQUESTS`. It shows nothing of the
+  person's and reaches nothing.
+
 - **The page can start one worker of DotAmi's own, the return reader's.** It gets no new
   reach: DotAmi's static script files now carry a policy (`default-src 'none'; script-src
   'self'`) that lets such a worker load DotAmi's own scripts and connect nowhere
@@ -343,6 +367,12 @@ person is asked).
   it; there is no Mac build.) No other new power: the server still can't reach anything new.
 
 ### What the person must agree to
+
+- **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
+  key can't open them, so they are given up for good unless the old key comes back, that nothing is
+  deleted and where they go, and to restore a backup instead if there is one; the second asks again.
+  Cancel is focused on both, and cancelling either changes nothing
+  ([`components/expenses/start-new-key.tsx`](../components/expenses/start-new-key.tsx)).
 
 - **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
@@ -428,6 +458,10 @@ person is asked).
   choice to make (the maintainer's decision of 2026-10-09); there is no setting.
 
 ### How to remove it
+
+- **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
+  person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
+  the receipts folders a restore moves there).
 
 - Nothing new to remove: the return reader keeps nothing (above).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but

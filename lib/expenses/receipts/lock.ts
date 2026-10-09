@@ -22,7 +22,14 @@ export type ReceiptLock =
   /** The desktop app, but the operating system's key store isn't available: kept unencrypted. */
   | { state: "no-key-store" }
   /** The desktop app has a key file this account can't open, and receipts are locked with it. */
-  | { state: "key-unreadable" };
+  | { state: "key-unreadable" }
+  /**
+   * The key couldn't be opened and the person pressed Start a new key (expense-records.md § 10): the
+   * locked receipts were moved to `setAsideTo` (null when nothing was left to move), and the desktop app
+   * makes a new key at its next start. Never read from the environment: only markNewKeyAtRestart sets it,
+   * for the rest of this server's run. Nothing can be added or shown until then.
+   */
+  | { state: "new-key-at-restart"; setAsideTo: string | null };
 
 export type ReceiptLockState = ReceiptLock["state"];
 
@@ -60,6 +67,16 @@ export function receiptLock(): ReceiptLock {
 /** Only the state, for pages: never the key. */
 export function receiptLockState(env: Record<string, string | undefined> = process.env): ReceiptLockState {
   return env === process.env ? receiptLock().state : readReceiptLock(env).state;
+}
+
+/** After Start a new key moved the locked receipts aside: what this server says until it is restarted. */
+export function markNewKeyAtRestart(setAsideTo: string | null): void {
+  (globalThis as Holder).__dotamiReceiptLock = { state: "new-key-at-restart", setAsideTo };
+}
+
+/** Where Start a new key moved the locked receipts during this run, or null (not pressed, or nothing moved). */
+export function receiptsSetAsideTo(lock: ReceiptLock = receiptLock()): string | null {
+  return lock.state === "new-key-at-restart" ? lock.setAsideTo : null;
 }
 
 /** For the tests: forget what was read, so the next receiptLock() reads the environment again. */

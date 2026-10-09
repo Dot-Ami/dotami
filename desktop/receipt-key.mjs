@@ -236,6 +236,49 @@ export function revertReceiptKey(dataDir, newKeyId, setAside) {
   return "reverted";
 }
 
+/**
+ * "Start a new key" (docs/architecture/expense-records.md § 10): while the key can't be opened, the
+ * person may give up the receipts it locks. Every file countLockedReceipts counts (DotAmi's own names in
+ * receipts/, encrypted, whatever key they name, unfinished writes included) is moved into a new folder,
+ * backups/receipts-locked-<time>/, and then receipts.key, if it is there, into the same folder under the
+ * same name. Nothing is deleted, plain receipts stay (they open without a key; the next start encrypts
+ * them), and the next start finds nothing locked, so it makes a new key (openReceiptKey: "missing, none
+ * locked"). Putting the folder's files back, with its key file, opens them again if that key opens.
+ *
+ * The key file goes last: a move cut short leaves it beside the receipts not moved yet, which stay
+ * locked with it, and pressing again moves the rest into a second folder. Each move is a rename inside
+ * the data folder. `rename` is for the tests, which cut a move short.
+ * @param {string} dataDir
+ * @param {{ now?: () => number, rename?: (from: string, to: string) => void }} [options]
+ * @returns {{ folder: string | null, receipts: number, keyFile: boolean }} folder is null when there
+ *   was nothing to move (no locked receipt, no key file), and then no folder is made
+ */
+export function setAsideLockedReceipts(dataDir, { now = Date.now, rename = renameSync } = {}) {
+  const receiptsDir = path.join(dataDir, RECEIPTS_FOLDER);
+  const keyFile = path.join(dataDir, RECEIPT_KEY_FILE);
+  const locked = lockedReceiptNames(receiptsDir, null);
+  const hasKeyFile = existsSync(keyFile);
+  if (locked.length === 0 && !hasKeyFile) return { folder: null, receipts: 0, keyFile: false };
+
+  const backups = path.join(dataDir, "backups");
+  mkdirSync(backups, { recursive: true });
+  // A folder of its own every time, never one already there (two presses in the same millisecond).
+  const stamp = `receipts-locked-${now()}`;
+  let folder = path.join(backups, stamp);
+  for (let n = 1; ; n += 1) {
+    try {
+      mkdirSync(folder);
+      break;
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      folder = path.join(backups, `${stamp}-${n}`);
+    }
+  }
+  for (const name of locked) rename(path.join(receiptsDir, name), path.join(folder, name));
+  if (hasKeyFile) rename(keyFile, path.join(folder, RECEIPT_KEY_FILE));
+  return { folder, receipts: locked.length, keyFile: hasKeyFile };
+}
+
 /** The key file as parsed: its key id (null if it isn't readable as one), and the parsed JSON. */
 function readKeyFile(file) {
   let parsed;
@@ -268,21 +311,24 @@ function unwrap(file, store) {
  * Only the first bytes of each are read.
  */
 export function countLockedReceipts(receiptsDir, keyId) {
+  return lockedReceiptNames(receiptsDir, keyId).length;
+}
+
+/** The names countLockedReceipts counts: one rule for "locked", for counting and for setting aside. */
+function lockedReceiptNames(receiptsDir, keyId) {
   let names;
   try {
     names = readdirSync(receiptsDir, { withFileTypes: true })
       .filter((e) => e.isFile() && /^[0-9a-f]{32}\./.test(e.name))
       .map((e) => e.name);
   } catch {
-    return 0;
+    return [];
   }
-  let locked = 0;
-  for (const name of names) {
+  return names.filter((name) => {
     const head = readHead(path.join(receiptsDir, name), 32);
-    if (!head || !isEncryptedReceipt(head)) continue;
-    if (keyId === null || encryptedKeyId(head) === keyId) locked += 1;
-  }
-  return locked;
+    if (!head || !isEncryptedReceipt(head)) return false;
+    return keyId === null || encryptedKeyId(head) === keyId;
+  });
 }
 
 /** The first `length` bytes of a file (fewer if it's shorter), or null when it can't be read. */

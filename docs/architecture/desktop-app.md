@@ -35,12 +35,18 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
    account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's
    own key is in the data folder's `Local State`, which Chromium writes about ten seconds after start:
-   so the very first start of a new data folder waits about that long; then any receipt file not encrypted
+   so the very first start of a new data folder waits about that long, with a small "Preparing DotAmi…"
+   window on the screen meanwhile (`desktop/preparing.mjs`, `desktop/preparing.html`: a local page with no
+   script that can load nothing; shown only during that wait, closed when the main window shows, and
+   closed before the message when the start fails); then any receipt file not encrypted
    yet, in `receipts/` and in the receipts folders earlier restores moved into `backups/`, is
    encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
    state and counts only. A key this account can't open changes nothing on the disk when receipts are
    locked with it; with none locked, it is moved to `backups/` and a new one made. No key store: the
-   receipts stay unencrypted, and the settings page says so.
+   receipts stay unencrypted, and the settings page says so. After **Start a new key** (the pages'
+   button while the key can't be opened; [expense-records.md § 10](expense-records.md)) the server has
+   already moved the locked receipts and the key file into `backups/receipts-locked-<time>/`, so this
+   step finds the key file missing with nothing locked and makes a new key.
 5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):

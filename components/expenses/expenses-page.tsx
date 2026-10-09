@@ -62,10 +62,13 @@ const newestFirst = (a: ExpenseView, b: ExpenseView) => b.date.localeCompare(a.d
 export function ExpensesPage({
   initialIdea,
   receiptProtection = "source",
+  receiptsSetAside = null,
 }: {
   initialIdea: string | null;
   /** How this copy keeps receipt files, read on the server ([8i], lib/expenses/receipts/lock.ts): only the state. */
   receiptProtection?: ReceiptLockState;
+  /** After Start a new key, until the restart: where the locked receipts went (lock.ts receiptsSetAsideTo). */
+  receiptsSetAside?: string | null;
 }) {
   const today = useLocalToday();
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
@@ -300,7 +303,7 @@ export function ExpensesPage({
             Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never
             picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice.
           </p>
-          <ReceiptKeyProblem />
+          <ReceiptKeyProblem setAsideTo={receiptsSetAside} />
         </header>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">

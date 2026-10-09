@@ -30,3 +30,5 @@ test-results
 prisma/receipts/
 # The browser tests' throwaway data folder (e2e/prepare-db.mjs).
 prisma/e2e/
+# The data folder of the browser test that starts a server of its own (e2e/receipt-new-key.spec.ts).
+prisma/e2e-new-key/

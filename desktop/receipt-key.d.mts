@@ -40,3 +40,7 @@ export function saveReceiptKey(
 ): Promise<{ setAside: string | null }>;
 export function revertReceiptKey(dataDir: string, newKeyId: string, setAside: string | null): "reverted" | "kept";
 export function countLockedReceipts(receiptsDir: string, keyId: string | null): number;
+export function setAsideLockedReceipts(
+  dataDir: string,
+  options?: { now?: () => number; rename?: (from: string, to: string) => void },
+): { folder: string | null; receipts: number; keyFile: boolean };

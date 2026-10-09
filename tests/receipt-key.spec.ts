@@ -2,7 +2,8 @@
  * [8i] The receipts' key (desktop/receipt-key.mjs; expense-records.md § 9, "The key" and "Losing the
  * key"): made once, kept only wrapped by the operating system's per-user protection, opened again at the
  * next start; what happens when it can't be opened; no key store meaning "not encrypted", never a key
- * file of DotAmi's own; and never saved before Windows' own key for it is on the disk. Electron's
+ * file of DotAmi's own; never saved before Windows' own key for it is on the disk; and "Start a new
+ * key" setting the locked receipts and the key file aside (expense-records.md § 10). Electron's
  * safeStorage is replaced by a stand-in that wraps per "account", the way DPAPI does: one account can't
  * open what another wrapped.
  *
@@ -12,12 +13,12 @@
  * below models Linux and a Mac by name.
  */
 import { createHash, randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { encryptReceipt, keyIdOf } from "../desktop/receipt-crypto.mjs";
+import { decryptReceipt, encryptReceipt, keyIdOf } from "../desktop/receipt-crypto.mjs";
 import {
   countLockedReceipts,
   KeyStoreNotSaved,
@@ -29,6 +30,7 @@ import {
   RECEIPT_KEY_FILE,
   revertReceiptKey,
   saveReceiptKey,
+  setAsideLockedReceipts,
   waitForLocalState,
   type KeyStore,
 } from "../desktop/receipt-key.mjs";
@@ -463,5 +465,137 @@ describe("never saved before Windows' own key is on the disk", () => {
     });
     expect(reopened.state).toBe("on");
     expect(asked).toBe(0);
+  });
+});
+
+// "Start a new key" (expense-records.md § 10): while the key can't be opened, the person may give up the
+// receipts it locks. They are moved aside, never deleted, with the key file, so that the next start makes
+// a new key, and so that putting them back opens them again if the old key ever comes back.
+describe("setting the locked receipts aside to start a new key", () => {
+  /** Every file under `folder`, by its bytes only, sorted: what was kept, wherever it now is. */
+  const contents = (folder: string) => Object.values(snapshot(folder)).sort();
+
+  /** A data folder whose key account-a made and account-b can't open, with what the tests below need. */
+  async function lockedFolder() {
+    const original = await open(dir, accountStore("account-a"));
+    if (original.state !== "on") throw new Error("expected a key");
+    lockedReceipt(original.key);
+    lockedReceipt(original.key);
+    lockedReceipt(randomBytes(32)); // locked by yet another key: no key here opens it either
+    const partialId = randomBytes(16).toString("hex");
+    writeFileSync(path.join(dir, "receipts", `${partialId}.pdf.partial`), encryptReceipt(Buffer.from("%PDF-1.4"), { key: original.key, id: partialId }));
+    const plain = `${randomBytes(16).toString("hex")}.png`;
+    writeFileSync(path.join(dir, "receipts", plain), png(2, 2));
+    writeFileSync(path.join(dir, "receipts", "notes.txt"), "DOTAMI-RECEIPT but not DotAmi's");
+    const opened = await open(dir, accountStore("account-b"));
+    expect(opened).toMatchObject({ state: "key-unreadable", locked: 4, missing: false });
+    return { original, plain };
+  }
+
+  it("moves every locked receipt and then the key file into one new folder in backups, and deletes nothing", async () => {
+    const { plain } = await lockedFolder();
+    const keyBefore = readFileSync(path.join(dir, RECEIPT_KEY_FILE));
+    const lockedBefore = readdirSync(path.join(dir, "receipts")).filter((n) => n !== plain && n !== "notes.txt");
+    const everything = contents(dir);
+
+    const result = setAsideLockedReceipts(dir, { now: () => 42 });
+    const aside = path.join(dir, "backups", "receipts-locked-42");
+    expect(result).toEqual({ folder: aside, receipts: 4, keyFile: true });
+    // The locked files and the key file, byte for byte, side by side; nothing else.
+    expect(readdirSync(aside).sort()).toEqual([...lockedBefore, RECEIPT_KEY_FILE].sort());
+    expect(readFileSync(path.join(aside, RECEIPT_KEY_FILE)).equals(keyBefore)).toBe(true);
+    // A plain receipt opens without a key, and a file DotAmi didn't name is never touched: both stay.
+    expect(readdirSync(path.join(dir, "receipts")).sort()).toEqual([plain, "notes.txt"].sort());
+    expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
+    // Nothing deleted: every file that was there is still somewhere in the data folder.
+    expect(contents(dir)).toEqual(everything);
+    // One rule for "locked" here and at the next start: nothing is left for it to count.
+    expect(countLockedReceipts(path.join(dir, "receipts"), null)).toBe(0);
+  });
+
+  it("after it, the next start makes a new key; putting the folder back opens the old receipts again", async () => {
+    const { original } = await lockedFolder();
+    const { folder } = setAsideLockedReceipts(dir, { now: () => 7 });
+
+    const next = await open(dir, accountStore("account-b"));
+    expect(next.state).toBe("on");
+    if (next.state !== "on") return;
+    expect(next.made).toBe(true);
+    expect(next.key.equals(original.key)).toBe(false);
+
+    // Later the old key comes back (here: the account that wrapped it). With DotAmi closed, the person
+    // moves the folder's files back into receipts/ and its key file over the new one.
+    for (const name of readdirSync(folder!)) {
+      const to = name === RECEIPT_KEY_FILE ? path.join(dir, RECEIPT_KEY_FILE) : path.join(dir, "receipts", name);
+      writeFileSync(to, readFileSync(path.join(folder!, name)));
+    }
+    const back = await open(dir, accountStore("account-a"));
+    expect(back.state).toBe("on");
+    if (back.state !== "on") return;
+    expect(back.made).toBe(false);
+    expect(back.key.equals(original.key)).toBe(true);
+    const opened = readdirSync(path.join(dir, "receipts"))
+      .filter((n) => /^[0-9a-f]{32}\.png$/.test(n))
+      .map((n) => {
+        try {
+          return decryptReceipt(readFileSync(path.join(dir, "receipts", n)), { key: back.key, id: n.slice(0, 32) }).equals(png(2, 2));
+        } catch {
+          return false;
+        }
+      });
+    // The two locked with the old key open again; the plain one is plain, and the third key's stays locked.
+    expect(opened.filter(Boolean).length).toBe(2);
+  });
+
+  it("with receipts.key missing, moves only the locked receipts; the folder has no key file to hold", async () => {
+    const original = await open(dir, accountStore("account-a"));
+    if (original.state !== "on") throw new Error("expected a key");
+    lockedReceipt(original.key);
+    rmSync(path.join(dir, RECEIPT_KEY_FILE));
+    expect(await open(dir, accountStore("account-a"))).toMatchObject({ state: "key-unreadable", missing: true, locked: 1 });
+
+    const result = setAsideLockedReceipts(dir, { now: () => 8 });
+    expect(result).toEqual({ folder: path.join(dir, "backups", "receipts-locked-8"), receipts: 1, keyFile: false });
+    expect(readdirSync(result.folder!)).toHaveLength(1);
+    const next = await open(dir, accountStore("account-a"));
+    expect(next).toMatchObject({ state: "on", made: true });
+  });
+
+  it("with nothing locked and no key file, moves nothing and makes no folder", () => {
+    mkdirSync(path.join(dir, "receipts"));
+    writeFileSync(path.join(dir, "receipts", `${randomBytes(16).toString("hex")}.png`), png(2, 2));
+    const before = snapshot(dir);
+    expect(setAsideLockedReceipts(dir, { now: () => 9 })).toEqual({ folder: null, receipts: 0, keyFile: false });
+    expect(snapshot(dir)).toEqual(before);
+    expect(existsSync(path.join(dir, "backups"))).toBe(false);
+  });
+
+  it("moves the key file last: cut short, the key stays beside the receipts not moved yet, and pressing again moves the rest", async () => {
+    await lockedFolder();
+    const keyBefore = readFileSync(path.join(dir, RECEIPT_KEY_FILE));
+    let renames = 0;
+    // The second move fails, as if the computer were switched off there.
+    const cutShort = (from: string, to: string) => {
+      renames += 1;
+      if (renames === 2) throw Object.assign(new Error("switched off"), { code: "EIO" });
+      renameSync(from, to);
+    };
+    expect(() => setAsideLockedReceipts(dir, { now: () => 10, rename: cutShort })).toThrow("switched off");
+    expect(readdirSync(path.join(dir, "backups", "receipts-locked-10"))).toHaveLength(1);
+    expect(readFileSync(path.join(dir, RECEIPT_KEY_FILE)).equals(keyBefore)).toBe(true);
+    expect(countLockedReceipts(path.join(dir, "receipts"), null)).toBe(3);
+
+    const again = setAsideLockedReceipts(dir, { now: () => 11 });
+    expect(again).toEqual({ folder: path.join(dir, "backups", "receipts-locked-11"), receipts: 3, keyFile: true });
+    expect(countLockedReceipts(path.join(dir, "receipts"), null)).toBe(0);
+  });
+
+  it("never reuses a folder that is already there: two presses in the same millisecond get two folders", async () => {
+    await lockedFolder();
+    mkdirSync(path.join(dir, "backups", "receipts-locked-12"), { recursive: true });
+    writeFileSync(path.join(dir, "backups", "receipts-locked-12", "already-here.txt"), "kept");
+    const result = setAsideLockedReceipts(dir, { now: () => 12 });
+    expect(result.folder).toBe(path.join(dir, "backups", "receipts-locked-12-1"));
+    expect(readdirSync(path.join(dir, "backups", "receipts-locked-12"))).toEqual(["already-here.txt"]);
   });
 });
