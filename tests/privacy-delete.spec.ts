@@ -5,11 +5,11 @@
  * Runs on throwaway migrated SQLite files (the same setup as tests/privacy-holdings.spec.ts) and
  * through Prisma, because the wipe has to be proven with the database library the app really uses.
  */
-import { execFileSync } from "node:child_process";
+import { type ChildProcessWithoutNullStreams, execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { createInterface } from "node:readline";
 
 import { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -31,8 +31,8 @@ vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
 const root = mkdtempSync(path.join(tmpdir(), "dotami-delete-"));
 const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
 const clients: PrismaClient[] = [];
-/** Lock-holding connections (lockBeforeNextWipe) not yet released; afterAll closes any a failed test left open. */
-const openLockers = new Set<DatabaseSync>();
+/** Lock-holding processes (startLocker) not yet finished; afterAll ends any a failed test left running. */
+const openLockers = new Set<ChildProcessWithoutNullStreams>();
 
 /** A migrated, empty database in its own folder. */
 function makeDb(name: string) {
@@ -115,8 +115,9 @@ function markerOnDisk(folder: string): string[] {
 
 afterAll(async () => {
   for (const c of clients) await c.$disconnect();
-  // A lock a failed test never released: closing the connection rolls its transaction back.
-  for (const l of openLockers) l.close();
+  // A lock a failed test never released: ending the process rolls its transaction back. Wait for
+  // it to exit, so Windows lets go of the file before the folder is removed.
+  await Promise.all([...openLockers].map((l) => new Promise((done) => (l.once("exit", done), l.kill()))));
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -308,29 +309,6 @@ describe("deleteData", () => {
     expect(await countAll(prisma)).toEqual(before);
     expect(before.PersonStatement).toBe(2);
   });
-
-  it("deletes nothing when another connection is mid-change during the delete itself, and the next try deletes", async () => {
-    const { prisma, url } = makeDb("delete-locked");
-    await seed(prisma);
-    const seen = await seenFor(prisma, ["statements"]);
-    // Another DotAmi process holds the write lock for the whole delete, on its one connection.
-    const other = new DatabaseSync(url.replace(/^file:/, ""));
-    openLockers.add(other);
-    other.prepare("BEGIN IMMEDIATE").run();
-    // The database gives up after its busy wait; the route turns that into "nothing was deleted".
-    await expect(deleteData(prisma, { kinds: ["statements"], seen })).rejects.toThrow();
-    other.prepare("COMMIT").run();
-    other.close();
-    openLockers.delete(other);
-    expect(await prisma.personStatement.count()).toBe(2);
-    // The client isn't left holding a half-finished transaction: the same delete now goes through.
-    expect(await deleteData(prisma, { kinds: ["statements"], seen })).toEqual({
-      status: "deleted",
-      deleted: { PersonStatement: 2 },
-      left: { PersonStatement: 0 },
-      wiped: true,
-    });
-  });
 });
 
 describe("the deleted words are gone from the file, not just hidden", () => {
@@ -364,30 +342,94 @@ describe("the deleted words are gone from the file, not just hidden", () => {
 });
 
 /**
- * Makes the next VACUUM on `prisma` meet a real lock: just before it runs, a second connection
- * starts a write transaction on the same file (what another DotAmi process mid-change looks like).
- * The VACUUM itself is the real one and fails with SQLite's own "database is locked".
+ * The program the lock-holding process runs: one node:sqlite connection to the file named on its
+ * command line, driven a line at a time over stdin ("lock" = BEGIN IMMEDIATE, "commit" = COMMIT).
+ * It answers each line with "<command> ok" or "<command> error <message>", and exits after its
+ * COMMIT or when stdin closes (an unfinished transaction is rolled back when it exits).
+ */
+const LOCKER_PROGRAM = `
+const { DatabaseSync } = require("node:sqlite");
+const db = new DatabaseSync(process.argv[1]);
+// Wait for a write that is just finishing rather than fail at once: the lock must be taken.
+db.prepare("PRAGMA busy_timeout = 5000").run();
+const sql = { lock: "BEGIN IMMEDIATE", commit: "COMMIT" };
+const lines = require("node:readline").createInterface({ input: process.stdin });
+lines.on("line", (command) => {
+  try {
+    if (!(command in sql)) throw new Error("unknown command");
+    db.prepare(sql[command]).run();
+    process.stdout.write(command + " ok\\n");
+    if (command === "commit") { db.close(); lines.close(); }
+  } catch (error) {
+    process.stdout.write(command + " error " + String(error && error.message).replace(/\\s+/g, " ") + "\\n");
+  }
+});
+lines.on("close", () => process.exit(0));
+`;
+
+/**
+ * Another program holding the data file's write lock: a separate node process with its own SQLite
+ * connection (what another DotAmi process mid-change looks like). `lock()` resolves once that
+ * process's BEGIN IMMEDIATE has succeeded and rejects with SQLite's message if it didn't;
+ * `commit()` resolves once the lock is let go and the process has exited.
  *
- * The lock is held by one plain node:sqlite connection, not a second PrismaClient. A PrismaClient
- * keeps a pool of connections and sends each query to whichever one is free, so a raw BEGIN and its
- * COMMIT can go to two different connections: the COMMIT then fails with "cannot commit - no
- * transaction is active" and the lock stays held into the next test. That is how this file failed
- * on CI (runs 37866604298, 37873788136 and 37875709156, 2026-10-09). A single connection has no
- * other one to send the COMMIT to.
+ * Why a separate process, and not a connection in this one (CI runs 37866604298, 37873788136,
+ * 37875709156 and 37885770339):
+ * - A second PrismaClient keeps a pool of connections and sends each query to whichever one is
+ *   free, so a raw BEGIN and its COMMIT can go to two different connections. The COMMIT then fails
+ *   with "cannot commit - no transaction is active" and the lock stays held into the next test.
+ * - A node:sqlite connection in this process uses node's own copy of SQLite, while Prisma's engine
+ *   carries another. On Linux SQLite's file locks are POSIX locks, which belong to the whole
+ *   process, so two copies in one process never block each other: the "lock" held nothing, and
+ *   four tests failed on the Linux runner while passing on Windows.
+ * Locks between two processes are real on every system, and one connection in one process has
+ * nowhere else to send its COMMIT.
+ */
+function startLocker(file: string) {
+  const child = spawn(process.execPath, ["--no-warnings", "-e", LOCKER_PROGRAM, file], { stdio: ["pipe", "pipe", "pipe"] });
+  openLockers.add(child);
+  const exited = new Promise<void>((done) => child.once("exit", () => (openLockers.delete(child), done())));
+  // Answers arrive in the order the commands were sent, one line each.
+  const waiting: Array<(answer: string) => void> = [];
+  createInterface({ input: child.stdout }).on("line", (answer) => waiting.shift()?.(answer));
+  let stderr = "";
+  child.stderr.on("data", (chunk) => (stderr += String(chunk)));
+  const send = (command: "lock" | "commit") =>
+    new Promise<void>((resolve, reject) => {
+      waiting.push((answer) => (answer === `${command} ok` ? resolve() : reject(new Error(`locker: ${answer}`))));
+      // A process that dies first (node:sqlite missing, file unreadable) fails the test, not hangs it.
+      void exited.then(() => reject(new Error(`locker exited before answering "${command}": ${stderr}`)));
+      child.stdin.write(`${command}\n`);
+    });
+  return {
+    lock: () => send("lock"),
+    commit: async () => {
+      await send("commit");
+      await exited;
+    },
+    /** Ends the process without committing (its transaction, if any, is rolled back). */
+    end: async () => {
+      child.stdin.end();
+      await exited;
+    },
+  };
+}
+
+/**
+ * Makes the next VACUUM on `prisma` meet a real lock: just before it runs, another process
+ * (startLocker) starts a write transaction on the same file. The VACUUM itself is the real one and
+ * fails with SQLite's own "database is locked".
  *
  * `state` says whether the lock was really taken and how the wipe's VACUUM ended, so a test can
- * check that the wipe failed on this lock and not on something else (had BEGIN IMMEDIATE itself
- * failed, the wipe would still answer false, for the wrong reason).
+ * check that the wipe failed on this lock and not on something else (had the lock not been taken,
+ * or not blocked Prisma, the wipe would answer false for the wrong reason, or true).
  */
 function lockBeforeNextWipe(prisma: PrismaClient, url: string) {
-  const other = new DatabaseSync(url.replace(/^file:/, ""));
-  openLockers.add(other);
-  // Wait for a write that is just finishing rather than fail at once: the lock must be taken.
-  other.prepare("PRAGMA busy_timeout = 5000").run();
+  const locker = startLocker(url.replace(/^file:/, ""));
   const state = { held: false, query: "", error: "" };
   const real = prisma.$executeRawUnsafe.bind(prisma);
   const spy = vi.spyOn(prisma, "$executeRawUnsafe").mockImplementationOnce((async (query: string, ...values: unknown[]) => {
-    other.prepare("BEGIN IMMEDIATE").run();
+    await locker.lock();
     state.held = true;
     state.query = query;
     try {
@@ -401,9 +443,8 @@ function lockBeforeNextWipe(prisma: PrismaClient, url: string) {
     state,
     release: async () => {
       spy.mockRestore();
-      other.prepare("COMMIT").run();
-      other.close();
-      openLockers.delete(other);
+      if (state.held) await locker.commit();
+      else await locker.end();
     },
   };
 }
@@ -522,6 +563,20 @@ describe("POST /api/your-data/delete", () => {
     expect(stale.status).toBe(409);
     expect(((await stale.json()) as { counts: Record<string, number> }).counts).toEqual({ PersonStatement: 2 });
     expect(await db.prisma.personStatement.count()).toBe(2);
+  });
+
+  it("answers 503 'nothing was deleted' when another program holds the file for the whole delete, and deletes nothing", async () => {
+    const seen = await seenFor(db.prisma, ["statements"]);
+    const locker = startLocker(db.file);
+    await locker.lock();
+    // The delete waits out the database's busy timeout, then gives up; the route says so.
+    const res = await route.POST(post({ kinds: ["statements"], seen }));
+    await locker.commit();
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as { error: string }).error).toMatch(/nothing was deleted/);
+    expect(await db.prisma.personStatement.count()).toBe(2);
+    // The next test sends the same delete with the lock gone, and it goes through: the app's
+    // client isn't left holding a half-finished transaction.
   });
 
   it("deletes what was ticked and says it is wiped", async () => {
