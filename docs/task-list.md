@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-08. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-09. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -111,7 +111,10 @@ roadmap's build order.
   - [x] Wave, FreshBooks, Sage Accounting, Sage 50 Canadian, and Xero's Receivable Invoice Detail: practice
     files checked to the cent, nine gaps they found pinned by eleven "fails today" tests; a line on "Add from a
     file" saying each program's export was only tested on files shaped from its help pages
-  - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
+  - [x] Ask on GitHub for the column-names row of real exports: posted 2026-10-09 as
+    [issue #124](https://github.com/Dot-Ami/dotami/issues/124)
+  - [ ] Check each row pasted in reply (no figures, client or company names), then mark those titles
+    "documented" in their practice files, citing the issue
   - [ ] Fix the gaps those files found (follow-on slices: void and draft rows, refunds, two-digit years,
     months across the top, the FreshBooks summary block, French files with several comma-decimal
     columns, formulas saved with no value, a report with no dates)
