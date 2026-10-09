@@ -1295,6 +1295,18 @@ test("Review waits for 'These dates are right', and changing the date order or t
   await expect(review).toBeEnabled();
   await expect(card.getByText(`Tick "These dates are right" once they match the file.`)).toHaveCount(0);
 
+  // The currency never moves a date, so retyping it leaves the tick alone, even though the totals
+  // (and the "Dates read" line with them) go away while it is only "U" or "US".
+  const currency = card.getByLabel("Currency");
+  for (const code of ["USD", "CAD"]) {
+    await currency.fill("");
+    await currency.pressSequentially(code);
+    await expect(currency).toHaveValue(code);
+    await expect(card.getByText(dayFirst)).toBeVisible();
+    await expect(datesRight).toBeChecked();
+    await expect(review).toBeEnabled();
+  }
+
   // Month first: other dates, so the tick is taken away and Review is shut again.
   await order.selectOption("mdy");
   const monthFirst = `Dates read: ${target.m} ${MONTH_NAMES[day - 1]} ${target.y} to ${target.m} ${MONTH_NAMES[day]} ${target.y}. Check these against the file's earliest and latest dates.`;
@@ -1311,7 +1323,9 @@ test("Review waits for 'These dates are right', and changing the date order or t
   // Nothing was sent while the box went on and off.
   expect(seen.filter((r) => r.body !== null)).toEqual([]);
 
-  // The same file again starts with the box empty: the tick was for that reading of that file.
+  // The same file again, after Cancel, starts with the box empty: the tick was for that reading of
+  // that file. (Cancel forgets the tick by itself; the file counter in the key covers the same case
+  // in the unit tests.)
   await datesRight.check();
   await expect(review).toBeEnabled();
   await card.getByRole("button", { name: "Cancel" }).click();

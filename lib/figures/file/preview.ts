@@ -435,10 +435,12 @@ export function monthsReadSentence(monthsRead: AcrossResult["monthsRead"]): stri
 /**
  * Everything that decides which dates (or, across the top, which months) a preview read. The
  * person's "These dates are right" tick vouches for one combination of these and no other
- * (the maintainer's decision, 2026-10-07: ask the person to confirm dates). `file` is a counter the
+ * (the maintainer's decision, 2026-10-07: ask the person to confirm dates and times; a time of day
+ * never moves the day here and isn't shown, so only dates are confirmed). `file` is a counter the
  * screen bumps for every file it reads, so the same file dropped twice is confirmed twice.
- * `sentence` is the "Dates read: ..." line itself: if the words on screen change, so does the key.
- * The amount column, the currency and the amounts' style aren't here: they don't move a date.
+ * `sentence` is the "Dates read: ..." line itself: if the words on screen change, so does the key
+ * (while no line is on screen, see datesCheckSentence). The amount column, the currency and the
+ * amounts' style aren't here: they don't move a date.
  */
 export interface DatesCheckParts {
   file: number;
@@ -474,6 +476,22 @@ export function datesCheckKey(parts: DatesCheckParts): string {
     parts.monthsRow,
     parts.sentence,
   ]);
+}
+
+/**
+ * The "Dates read" line to put in the key. While the totals are held back for something that never
+ * moves a date (the currency half typed, the amount column set to the date column, a totals row that
+ * can't be used yet) there is no line on screen, and keying on that null would empty the box every
+ * time someone retyped CAD as USD. So the line the box was last looked at under stands in for it.
+ * Nothing slips through that way: every answer that moves a date is a part of the key on its own,
+ * and once the totals show again it is their own line that is compared.
+ */
+export function datesCheckSentence(onScreen: string | null, check: DatesCheck): string | null {
+  if (onScreen !== null || check.key === "") return onScreen;
+  // The line is the last entry of the key (see datesCheckKey).
+  const parts: unknown = JSON.parse(check.key);
+  const last = Array.isArray(parts) ? parts[parts.length - 1] : null;
+  return typeof last === "string" ? last : null;
 }
 
 /**

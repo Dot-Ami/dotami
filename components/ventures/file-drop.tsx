@@ -6,6 +6,7 @@ import { Pill } from "@/components/ui";
 import { monthInWords } from "@/lib/figures/file/dates";
 import {
   datesCheckKey,
+  datesCheckSentence,
   datesConfirmed,
   datesReadSentence,
   exportInsteadSentence,
@@ -503,7 +504,9 @@ export function FileDrop({
     dateOrder: dateOrderChoice,
     century: centuryChoice,
     monthsRow: acrossPicks.monthsRow,
-    sentence: shown.readSentence,
+    // With the totals held back (say, the currency half retyped) there is no line on screen; the
+    // last one stands in, so the tick survives CAD becoming USD.
+    sentence: datesCheckSentence(shown.readSentence, datesCheck),
   });
   const followedCheck = followDatesCheck(datesCheck, datesKey);
   if (followedCheck !== datesCheck) setDatesCheck(followedCheck);

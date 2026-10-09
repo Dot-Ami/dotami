@@ -69,7 +69,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   line that must be ticked before Review opens the agree prompt ("These months are right" for a
   report with the months across the top). Choosing another file, date column, date order or
   century answer empties it again, and going back to an earlier answer doesn't tick it again by
-  itself. The tick is held only on the screen; nothing new is kept or sent.
+  itself. Retyping the currency or changing the amount column leaves it ticked. The tick is held
+  only on the screen; nothing new is kept or sent.
 - **Reports with the months across the top on "Add from a file"** ([8c-3]) — a report with one
   column per month, like FreshBooks' Revenue by Client, used to find no column names and add up
   nothing. A new "The file has" choice says whether the file has one row per sale with a date, or

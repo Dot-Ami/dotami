@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   datesCheckKey,
+  datesCheckSentence,
   datesConfirmed,
   followDatesCheck,
   NO_DATES_CHECK,
@@ -105,5 +106,59 @@ describe("followDatesCheck", () => {
   it("an answer with no dates read has nothing to confirm under it", () => {
     const none = datesCheckKey({ ...PARTS, sentence: null });
     expect(datesConfirmed(tickedUnder(PARTS), none)).toBe(false);
+  });
+});
+
+// While the totals are held back for something that never moves a date (the currency half typed,
+// the amount column set to the date column, a totals row that can't be used), no "Dates read" line
+// is on screen. The screen keys the check on the line it was last looked at under instead, so
+// retyping CAD as USD (through "U" and "US") leaves the tick where it was.
+describe("datesCheckSentence", () => {
+  const OTHER_LINE =
+    "Dates read: 12 March 2005 to 28 February 2006. Check these against the file's earliest and latest dates.";
+
+  /** The key the screen builds for these parts with whatever line is (or isn't) on screen. */
+  function screenKey(check: DatesCheck, parts: DatesCheckParts): string {
+    return datesCheckKey({ ...parts, sentence: datesCheckSentence(parts.sentence, check) });
+  }
+
+  it("is the line on screen whenever there is one", () => {
+    expect(datesCheckSentence(OTHER_LINE, tickedUnder(PARTS))).toBe(OTHER_LINE);
+    expect(datesCheckSentence(PARTS.sentence, NO_DATES_CHECK)).toBe(PARTS.sentence);
+  });
+
+  it("keeps the tick while the currency is retyped from CAD to USD", () => {
+    let check = tickedUnder(PARTS);
+    // "U", then "US": held, no line on screen.
+    for (let i = 0; i < 2; i += 1) {
+      const key = screenKey(check, { ...PARTS, sentence: null });
+      check = followDatesCheck(check, key);
+      expect(datesConfirmed(check, key)).toBe(true);
+    }
+    // "USD": the same line is back, and the box is still ticked.
+    const key = screenKey(check, PARTS);
+    expect(followDatesCheck(check, key)).toBe(check);
+    expect(datesConfirmed(check, key)).toBe(true);
+  });
+
+  it("still takes the tick away when the line comes back different", () => {
+    let check = tickedUnder(PARTS);
+    check = followDatesCheck(check, screenKey(check, { ...PARTS, sentence: null }));
+    const key = screenKey(check, { ...PARTS, sentence: OTHER_LINE });
+    expect(datesConfirmed(followDatesCheck(check, key), key)).toBe(false);
+  });
+
+  it("still takes the tick away for a date answer changed while the totals are held", () => {
+    // Held, the date order flipped and flipped back: the dates changed under the box, so it is
+    // looked at again even though the line that comes back is the one it was ticked under.
+    let check = tickedUnder(PARTS);
+    check = followDatesCheck(check, screenKey(check, { ...PARTS, sentence: null, dateOrder: "mdy" }));
+    check = followDatesCheck(check, screenKey(check, { ...PARTS, sentence: null }));
+    const key = screenKey(check, PARTS);
+    expect(datesConfirmed(followDatesCheck(check, key), key)).toBe(false);
+  });
+
+  it("has no line to carry before anything was looked at", () => {
+    expect(datesCheckSentence(null, NO_DATES_CHECK)).toBeNull();
   });
 });
