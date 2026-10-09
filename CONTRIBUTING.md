@@ -39,6 +39,11 @@ Vulnerabilities go through [SECURITY.md](SECURITY.md), never a public issue.
 5. **The roadmap.** `docs/roadmap.md` lists the bigger pieces — roadmaps as data, progress,
    connecting to accounting software and financial records locally, complex strategies and
    structures as roadmaps. Each is open; say in an issue which one you are taking.
+6. **Your export's column names.** "Add from a file" has only been tested on invented files
+   shaped from each accounting program's help pages. If you use QuickBooks Online, Xero, Wave,
+   FreshBooks, Sage Accounting or Sage 50 Canadian, paste the **one row of column names** from
+   your export in [issue #124](https://github.com/Dot-Ami/dotami/issues/124) — never an amount,
+   a client or company name, or any row below it. The issue says which reports and how.
 
 ## The rules (short)
 

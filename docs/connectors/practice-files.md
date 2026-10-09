@@ -1,6 +1,6 @@
 # Practice files — shaped from help pages, not real exports
 
-Status: 2026-10-08. All six packages in [the connectors research](README.md) have practice files:
+Status: 2026-10-09 (the request for real column names is posted, [below](#asking-for-real-column-names)). All six packages in [the connectors research](README.md) have practice files:
 Xero and QuickBooks Online (2026-10-06), then Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 and Xero's Receivable Invoice Detail (2026-10-08). The 2026-10-08 files found new gaps, pinned as
 "fails today" tests [below](#open-found-2026-10-08); they are fixed in follow-on slices.
@@ -121,10 +121,12 @@ the original gap as possible, not confirmed.
 ## Asking for real column names
 
 The maintainer's decision (2026-10-07): build on guessed names, mark them "assumed", warn the people
-who use DotAmi, and ask on GitHub for the column-names row of real exports. The text below is a
-**draft for the maintainer to approve; it has not been posted.** Once it is, every row pasted in
-reply is checked for figures, client names or a company name before anything enters the repository;
-a checked title then becomes "documented" in its fixture, citing the issue.
+who use DotAmi, and ask on GitHub for the column-names row of real exports. The maintainer approved
+the text below and it was **posted on 2026-10-09 as
+[issue #124](https://github.com/Dot-Ami/dotami/issues/124)**; it is kept here as the record of what
+was asked. Every row pasted in reply is checked for figures, client names or a company name before
+anything enters the repository; a reply holding any of them is hidden, and nothing from it is
+copied. A checked title then becomes "documented" in its fixture, citing the issue.
 
 > **Title:** Help DotAmi read your accounting export: paste only its row of column names
 >
