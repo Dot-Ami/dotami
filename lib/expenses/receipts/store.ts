@@ -21,7 +21,7 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
-import { mkdir, open, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, open, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
@@ -43,7 +43,8 @@ const PARTIAL_AGE_MS = 10 * 60_000;
 /** Only names DotAmi itself writes; anything else in the folder is never touched. */
 const EXTENSIONS = RECEIPT_TYPES.map((t) => t.extension).join("|");
 const STORED_NAME = new RegExp(`^([0-9a-f]{32})\\.(${EXTENSIONS})$`);
-const PARTIAL_NAME = new RegExp(`^[0-9a-f]{32}\\.(${EXTENSIONS})\\.partial$`);
+// Group 1 is the final name the write was heading for ("<id>.<ext>").
+const PARTIAL_NAME = new RegExp(`^([0-9a-f]{32}\\.(?:${EXTENSIONS}))\\.partial$`);
 
 /** A receipt request that can't be done as asked. `message` is said to the person as is; `status` is the HTTP answer. */
 export class ReceiptError extends Error {
@@ -81,9 +82,11 @@ const noFolder = () => new ReceiptError("This copy of DotAmi has no data folder,
  * shows it. Refuses (ReceiptError) a file DotAmi doesn't keep, a record that isn't theirs or isn't
  * agreed, and a record that already has a receipt (the person removes the old one first).
  *
- * Order of writes, so a crash at any point leaves nothing that looks finished and is wrong: the
- * bytes go to "<name>.partial"; then the row; then the rename. A sweep keeps young .partial files,
- * so it can't remove a file that is still being written.
+ * Order of writes: the bytes go to "<name>.partial"; then the row; then the rename. A sweep keeps
+ * young .partial files, so it can't remove a file that is still being written. If the app stops
+ * before the row, the .partial is an orphan the sweep removes later. If it stops after the row and
+ * before the rename, the sweep finishes the rename later (checking size and SHA-256 against the
+ * row first), so the record never keeps a receipt whose only copy was thrown away.
  */
 export async function addReceipt(prisma: PrismaClient, folder: string | null, expenseId: unknown, bytes: Uint8Array): Promise<ExpenseView> {
   if (!folder) throw noFolder();
@@ -176,6 +179,11 @@ export interface SweepResult {
  *
  * The folder is listed BEFORE the rows are read: a receipt added in between has its row written before
  * its file gets its final name, so it can never be listed as a file without a row.
+ *
+ * One abandoned write is not an orphan: the app stopped after addReceipt wrote the row but before it
+ * renamed "<name>.partial" to "<name>". That .partial is the only copy of a receipt the record says it
+ * has, so the sweep finishes the add instead (finishAbandonedAdd) when the bytes are the ones the row
+ * describes, and drops the row along with the file when they aren't.
  */
 export async function sweepOrphanReceipts(prisma: PrismaClient, folder: string | null, now: () => number = Date.now): Promise<SweepResult> {
   const result: SweepResult = { removed: 0, failed: 0, kept: 0 };
@@ -188,22 +196,42 @@ export async function sweepOrphanReceipts(prisma: PrismaClient, folder: string |
     throw error;
   }
 
-  const rows = await prisma.receipt.findMany({ select: { id: true, type: true } });
-  const described = new Set(rows.filter((r) => RECEIPT_ID.test(r.id) && isReceiptType(r.type)).map((r) => receiptFileName(r.id, r.type)));
+  const rows = await prisma.receipt.findMany({ select: { id: true, type: true, bytes: true, sha256: true } });
+  const byName = new Map<string, DescribedFile>();
+  for (const r of rows) {
+    if (RECEIPT_ID.test(r.id) && isReceiptType(r.type)) byName.set(receiptFileName(r.id, r.type), r);
+  }
 
   for (const name of names) {
     let orphan = false;
     if (STORED_NAME.test(name)) {
-      orphan = !described.has(name);
-    } else if (PARTIAL_NAME.test(name)) {
-      try {
-        orphan = now() - (await stat(path.join(folder, name))).mtimeMs > PARTIAL_AGE_MS;
-      } catch {
-        orphan = false;
-      }
-      if (!orphan) continue;
+      orphan = !byName.has(name);
     } else {
-      continue; // not DotAmi's
+      const partial = name.match(PARTIAL_NAME);
+      if (!partial) continue; // not DotAmi's
+      let age: number;
+      try {
+        age = now() - (await stat(path.join(folder, name))).mtimeMs;
+      } catch {
+        continue; // gone already
+      }
+      if (age <= PARTIAL_AGE_MS) continue; // may still be being written
+      const finalName = partial[1];
+      const row = byName.get(finalName);
+      // A row describes it and the finished file isn't there: this is the only copy.
+      if (row && !names.includes(finalName)) {
+        const outcome = await finishAbandonedAdd(prisma, folder, name, finalName, row);
+        if (outcome === "finished") {
+          result.kept += 1;
+          continue;
+        }
+        if (outcome === "failed") {
+          result.failed += 1;
+          continue;
+        }
+        // "dropped": the row is gone; the file goes below like any other orphan.
+      }
+      orphan = true;
     }
     if (!orphan) {
       result.kept += 1;
@@ -217,6 +245,48 @@ export async function sweepOrphanReceipts(prisma: PrismaClient, folder: string |
     }
   }
   return result;
+}
+
+/** What a Receipt row says about its file, enough to check the bytes. */
+interface DescribedFile {
+  id: string;
+  bytes: number;
+  sha256: string;
+}
+
+/**
+ * An add the app stopped between the row and the rename. If the .partial file is exactly what the
+ * row describes (same size, same SHA-256), it is renamed into place and the receipt is whole again
+ * ("finished"). If it isn't (the write itself was cut short), the row is removed, since no copy of
+ * the receipt it describes exists, and the caller removes the file ("dropped"). "failed": the file
+ * couldn't be read or renamed now; both are left for a later sweep.
+ */
+async function finishAbandonedAdd(
+  prisma: PrismaClient,
+  folder: string,
+  partialName: string,
+  finalName: string,
+  row: DescribedFile,
+): Promise<"finished" | "dropped" | "failed"> {
+  const partialPath = path.join(folder, partialName);
+  let matches: boolean;
+  try {
+    // The size first, so a file far larger than any receipt is never read whole.
+    const size = (await stat(partialPath)).size;
+    matches = size === row.bytes && sha256(await readFile(partialPath)) === row.sha256;
+  } catch {
+    return "failed";
+  }
+  if (!matches) {
+    await prisma.receipt.deleteMany({ where: { id: row.id } });
+    return "dropped";
+  }
+  try {
+    await rename(partialPath, path.join(folder, finalName));
+    return "finished";
+  } catch {
+    return "failed";
+  }
 }
 
 /** The stored type of a receipt row, narrowed; exported for the viewer route and the tests. */

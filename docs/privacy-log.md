@@ -142,7 +142,11 @@ person is asked).
 - **A receipt goes nowhere but DotAmi's own server.** The window sends its bytes as base64 to
   `POST /api/expenses/receipt` on this computer; no address carries anything about it, the file's
   name is not sent, and no route sends a receipt's bytes back out
-  ([`app/api/expenses/receipt/route.ts`](../app/api/expenses/receipt/route.ts)).
+  ([`app/api/expenses/receipt/route.ts`](../app/api/expenses/receipt/route.ts)). The record list
+  (`GET /api/expenses`, which any program on the computer can call, agents included) does say
+  whether a record has a receipt, and its kind, size and day added; never its bytes, its
+  fingerprint, its id or where it is ([`lib/expenses/store.ts`](../lib/expenses/store.ts)
+  `rowToExpense`).
 - **Showing a receipt sends nothing out.** *Show receipt* asks DotAmi's own server for the bytes
   (`POST /api/expenses/receipt/file`, page-only), shows a picture from a `blob:` address of the page's
   own, and draws a PDF in a worker whose policy refuses every connection; nothing a PDF asks for (a

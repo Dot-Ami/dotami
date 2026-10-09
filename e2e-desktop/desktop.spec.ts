@@ -100,6 +100,9 @@ test("start → describe a venture → close → start again: the venture is sti
     path.join(dataDir, "dotami.db"),
   );
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("File → Back up…");
+  // Backups carry the receipts folder now, and the page says so.
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("with your receipt files in it");
+  await expect(page.getByRole("region", { name: "Data and backups" })).not.toContainText("doesn't hold the receipts folder");
   await expect(page.getByRole("region", { name: "Privacy" })).toContainText("DotAmi sends nothing off this computer.");
 
   // An outside link opens in the person's own browser, never inside the app's window.

@@ -245,7 +245,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Receipt",
     name: "Your receipts",
     holds:
-      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG or WebP picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”).",
+      "For each receipt you added to an expense record: which record it belongs to, the kind of file DotAmi found it to be (a JPEG, PNG or WebP picture, or a PDF, read from the file itself), its size, a fingerprint of its bytes (SHA-256) so DotAmi can tell if the file changes, and the day you added it. Not the file's name, and not the picture or PDF itself: that is a copy in the receipts folder beside the data file (listed under “On this computer, outside the data file”). A program on this computer that lists your expense records (an agent, for one) sees whether a record has a receipt, its kind, its size and the day it was added; never the file itself, its fingerprint or where it is.",
     removedBy:
       "“Remove receipt” on a record on the Expenses page removes that one, file included; the record stays. Delete, at the bottom of this page, with “Your receipts” ticked removes every one and its file, keeping the records; with “Your expense records” ticked, the records go and their receipts with them.",
   },

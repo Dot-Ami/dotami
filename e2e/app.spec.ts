@@ -136,6 +136,11 @@ test("the settings page: every group, what's true today, every setting and its w
       .getByRole("checkbox"),
   ).toHaveCount(3);
 
+  // The receipt copies live beside the data file, so a copy of the file alone isn't all of it.
+  await expect(data).toContainText("plus the copies of your receipts in a folder named receipts beside it");
+  await expect(data).toContainText("Copying that file and the receipts folder beside it while DotAmi is stopped is a complete backup");
+  await expect(data).not.toContainText("All of your data is one file");
+
   // The path button: the data file's path lands on the clipboard exactly as shown.
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await data.getByRole("button", { name: "Copy path" }).click();
