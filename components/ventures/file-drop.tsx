@@ -311,7 +311,8 @@ export function FileDrop({
   /**
    * [8h] Reads a GnuCash book in the books worker. The window stays usable while it reads, and
    * Change or Cancel stop the worker. Only what the worker hands back (accounts and posted lines)
-   * is kept, in this component's state; the bytes went to the worker and are gone with it.
+   * is kept, in this component's state; the bytes went to the worker, which holds on to nothing
+   * once it has answered.
    */
   async function openBook(file: File, token: number) {
     setReadingBook(true);

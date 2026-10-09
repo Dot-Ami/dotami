@@ -492,7 +492,14 @@ describe("inputs that aren't a readable book", () => {
   });
 
   it("refuses a gzip file that isn't a GnuCash book", () => {
-    expect(refusalOf(gzipSync(text("just some words, not xml")))).toContain("damaged or cut short");
+    // Any gzip file now reaches the books reader (its first bytes say "gzip", not "GnuCash"), so a
+    // compressed CSV or text file is told it isn't a book, not that its book may be damaged.
+    expect(refusalOf(gzipSync(text("just some words, not xml")))).toContain(
+      "doesn't look like a GnuCash book",
+    );
+    expect(refusalOf(gzipSync(text("date,amount\n2025-01-01,10\n")))).toContain(
+      "doesn't look like a GnuCash book",
+    );
     expect(refusalOf(gzipSync(text(`<?xml version="1.0"?><html/>`)))).toContain(
       "doesn't look like a GnuCash book",
     );

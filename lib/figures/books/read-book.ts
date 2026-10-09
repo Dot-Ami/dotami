@@ -1,14 +1,15 @@
 /**
  * [8h] Read a GnuCash book in the background — the window's side of the books worker.
  *
- * The file's size is checked before a byte is read. Then its bytes are read into memory and moved
+ * The file's size is checked before a byte is read here. Then its bytes are read into memory and moved
  * (not copied) into the worker (worker.ts), which hands back the book's accounts and posted lines.
  * Nothing is sent to the server, stored or logged here; only the monthly totals the person later
  * agrees to leave the page, through /api/figures/propose.
  *
- * One worker serves one open "Add from a file" panel. It is stopped when the panel closes or the
- * person picks another file (close()), and at once when a read runs past BOOK_READ_TIMEOUT_MS, so a
- * hostile or enormous file can't keep a thread busy.
+ * One worker serves one open "Add from a file" panel. It holds on to nothing once it has answered,
+ * and is stopped when the panel closes or the person presses Change or Cancel or picks another file
+ * (close()), and at once when a read runs past BOOK_READ_TIMEOUT_MS, so a hostile or enormous file
+ * can't keep a thread busy. A read stopped while its bytes are still loading never starts a worker.
  */
 import { BOOK_TOO_BIG_MESSAGE, MAX_BOOK_BYTES } from "./detect";
 import type { BookReadResult } from "./types";
@@ -44,6 +45,8 @@ export class BookReader {
   private worker: BookWorkerLike | null = null;
   /** Ends the read in flight, if any, with the result given. */
   private finishPending: ((result: BookReadResult) => void) | null = null;
+  /** Bumped by every close(), so a read whose bytes were still loading can tell it was stopped meanwhile. */
+  private generation = 0;
 
   constructor(
     private readonly makeWorker: () => BookWorkerLike = startBookWorker,
@@ -53,9 +56,14 @@ export class BookReader {
   /** Reads one book. Never throws: every failure is a plain sentence. */
   async read(file: Blob): Promise<BookReadResult> {
     try {
+      // One read at a time: a read still running is stopped, with its worker, before this one starts.
+      this.close();
+      const ticket = this.generation;
       // Too big: said without reading a single byte of it.
       if (file.size > MAX_BOOK_BYTES) return { ok: false, error: BOOK_TOO_BIG_MESSAGE };
       const bytes = new Uint8Array(await file.arrayBuffer());
+      // Cancel, Change, the panel closing or a newer file came while the bytes loaded: start no worker.
+      if (ticket !== this.generation) return { ok: false, error: STOPPED };
       return await this.inWorker(bytes);
     } catch {
       return { ok: false, error: BOOK_READ_FAILED };
@@ -63,8 +71,6 @@ export class BookReader {
   }
 
   private inWorker(bytes: Uint8Array): Promise<BookReadResult> {
-    // One read at a time: a read still running is stopped, with its worker, before this one starts.
-    this.close();
     const worker = this.makeWorker();
     this.worker = worker;
 
@@ -102,6 +108,7 @@ export class BookReader {
 
   /** Stops the worker and whatever it was reading; a read in flight ends as "stopped". */
   close(): void {
+    this.generation += 1;
     const pending = this.finishPending;
     this.finishPending = null;
     this.worker?.terminate();

@@ -35,7 +35,12 @@ export class XmlRefusal extends Error {
   }
 }
 
-export type XmlAttributes = Readonly<Record<string, string>>;
+/**
+ * A tag's attributes, by name as written. A Map rather than a plain object, so an attribute named
+ * "__proto__" or "constructor" in a hostile file is just another key and can never reach an
+ * object's prototype.
+ */
+export type XmlAttributes = ReadonlyMap<string, string>;
 
 export interface XmlHandlers {
   /** A tag opened. `name` is as written, prefix included ("act:name"). */
@@ -49,7 +54,7 @@ export interface XmlHandlers {
 /** Deep enough for any book (GnuCash nests about ten levels), shallow enough to bound the stack. */
 export const MAX_DEPTH = 100;
 
-const NO_ATTRIBUTES: XmlAttributes = Object.freeze(Object.create(null) as Record<string, string>);
+const NO_ATTRIBUTES: XmlAttributes = new Map<string, string>();
 
 const NAMED_ENTITIES: Record<string, string> = {
   amp: "&",
@@ -175,7 +180,7 @@ export function walkXml(xml: string, handlers: XmlHandlers): void {
     while (isNameChar(xml.charCodeAt(end))) end += 1;
     const name = xml.slice(at + 1, end);
 
-    let attributes: XmlAttributes = NO_ATTRIBUTES;
+    let attributes: Map<string, string> | null = null;
     let selfClosing = false;
     for (;;) {
       const before = end;
@@ -206,16 +211,16 @@ export function walkXml(xml: string, handlers: XmlHandlers): void {
       if (close === -1) throw new XmlRefusal("malformed");
       const value = xml.slice(end + 1, close);
       if (value.indexOf("<") !== -1) throw new XmlRefusal("malformed");
-      if (attributes === NO_ATTRIBUTES) attributes = Object.create(null) as Record<string, string>;
-      if (attribute in attributes) throw new XmlRefusal("malformed"); // the same attribute twice
-      (attributes as Record<string, string>)[attribute] = decodeEntities(value);
+      attributes ??= new Map<string, string>();
+      if (attributes.has(attribute)) throw new XmlRefusal("malformed"); // the same attribute twice
+      attributes.set(attribute, decodeEntities(value));
       end = close + 1;
     }
 
     sawRoot = true;
     if (stack.length >= MAX_DEPTH) throw new XmlRefusal("malformed");
     stack.push(name);
-    handlers.open(name, attributes);
+    handlers.open(name, attributes ?? NO_ATTRIBUTES);
     if (selfClosing) {
       stack.pop();
       handlers.close(name);

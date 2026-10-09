@@ -48,7 +48,8 @@ person is asked).
   Tested by [`tests/figures-return-read.spec.ts`](../tests/figures-return-read.spec.ts).
 
 - **A GnuCash book the person drops ([8h], *Add from a file*): only the totals they agree to are
-  kept.** The book's bytes move into the books worker and are gone with it
+  kept.** The book's bytes move into the books worker, which holds on to nothing once it has
+  answered and is stopped when the panel closes
   ([`lib/figures/books/read-book.ts`](../lib/figures/books/read-book.ts)); its accounts and posted
   lines live only in the open panel, and which accounts were ticked is not remembered. The
   monthly totals the person reviews and agrees to are stored as figures (the existing `Figure`

@@ -311,4 +311,51 @@ describe("BookReader: the book is read in a background worker, with a time limit
     expect(stopped.ok).toBe(false);
     if (!stopped.ok) expect(stopped.error).toContain("Nothing was kept");
   });
+
+  it("closing the panel while the book's bytes are still loading starts no worker afterwards", async () => {
+    const workers: FakeWorker[] = [];
+    const reader = new BookReader(() => {
+      const w = new FakeWorker();
+      workers.push(w);
+      return w;
+    });
+    // A big file: its bytes arrive only when this test says so.
+    let arrive: (buffer: ArrayBuffer) => void = () => {};
+    const slow = {
+      size: 1024,
+      arrayBuffer: () => new Promise<ArrayBuffer>((resolve) => (arrive = resolve)),
+    } as unknown as Blob;
+    const reading = reader.read(slow);
+    await settle();
+    reader.close(); // Cancel, Change or the panel closing
+    arrive(new ArrayBuffer(1024));
+    const result = await reading;
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("Nothing was kept");
+    expect(workers).toHaveLength(0);
+  });
+
+  it("a newer file picked while the older one is still loading: only the newer one reaches a worker", async () => {
+    const workers: FakeWorker[] = [];
+    const reader = new BookReader(() => {
+      const w = new FakeWorker();
+      workers.push(w);
+      return w;
+    });
+    let arrive: (buffer: ArrayBuffer) => void = () => {};
+    const older = reader.read({
+      size: 1024,
+      arrayBuffer: () => new Promise<ArrayBuffer>((resolve) => (arrive = resolve)),
+    } as unknown as Blob);
+    await settle();
+    const newer = reader.read(new Blob([text("<gnc-v2/>")]));
+    await settle();
+    expect(workers).toHaveLength(1);
+    arrive(new ArrayBuffer(1024));
+    expect((await older).ok).toBe(false);
+    expect(workers).toHaveLength(1);
+    expect(workers[0].terminated).toBe(false); // the newer read is still running
+    reader.close();
+    expect((await newer).ok).toBe(false);
+  });
 });

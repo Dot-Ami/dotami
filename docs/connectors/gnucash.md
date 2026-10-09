@@ -41,9 +41,10 @@ Where the source is named to people (the *What DotAmi knows about you* page), it
   larger limit than a spreadsheet's 10 MB, read by a background worker). Checked from the file's
   size before a byte past its first 8 KB is read.
 - **200 MB once unpacked.** A compressed book is unpacked a slice at a time and stopped the moment
-  it passes 200 MB, so a zip bomb never fills memory. GnuCash's XML takes roughly a kilobyte per
-  transaction, so this is well over a hundred thousand transactions; an invented book of 150,000
-  transactions (167 MB of XML) read in about four seconds on a developer's laptop. A compressed
+  it passes 200 MB, so a zip bomb never fills memory. On invented books GnuCash's XML took roughly a
+  kilobyte per transaction, so this is well over a hundred thousand transactions; an invented book
+  of 150,000 transactions (167 MB of XML) read in about four seconds in Node on a developer's
+  laptop (not measured inside a browser worker, and never on a real GnuCash save). A compressed
   book near the 50 MB limit can unpack past 200 MB; it is refused with a sentence that says so.
   Lifting that would need a reader that walks the XML as it unpacks, rather than all at once.
 - **One minute** per read. The worker is ended at once when it passes, and when the panel closes or
@@ -62,7 +63,8 @@ account name or a line of the book.
 
 ## What it keeps
 
-Nothing from the book. Its bytes move into the worker and are gone with it; the accounts and lines
+Nothing from the book. Its bytes move into the worker, which holds on to nothing once it has
+answered and is stopped when the panel closes or on Change or Cancel; the accounts and lines
 the worker hands back live only in the open panel. Only the totals the person agrees to are stored,
 as figures (`Figure` rows), with the file's name and how many lines were added. Which accounts were
 ticked is not remembered. Privacy review row: `docs/architecture/figures-privacy-review.md`.

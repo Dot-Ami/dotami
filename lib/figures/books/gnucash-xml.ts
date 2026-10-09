@@ -268,7 +268,7 @@ class Collector implements XmlHandlers {
         name === "gnc:account" ||
         name === "gnc:transaction" ||
         name === "gnc:commodity") &&
-      attributes.version !== FILE_VERSION
+      attributes.get("version") !== FILE_VERSION
     ) {
       throw new Refusal(NEWER_VERSION);
     }
@@ -358,7 +358,7 @@ class Collector implements XmlHandlers {
   private checkRoot(name: string, attributes: XmlAttributes): void {
     if (name !== "gnc-v2") throw new Refusal(NOT_GNUCASH);
     for (const prefix of REQUIRED_NAMESPACES) {
-      if (attributes[`xmlns:${prefix}`] !== `http://www.gnucash.org/XML/${prefix}`) {
+      if (attributes.get(`xmlns:${prefix}`) !== `http://www.gnucash.org/XML/${prefix}`) {
         throw new Refusal(NOT_GNUCASH);
       }
     }
@@ -593,6 +593,9 @@ export function readGnuCashBook(
     let text: string;
     if (isGzip(bytes)) {
       text = gunzipToText(bytes, maxUnpackedBytes);
+      // Any gzip file reaches here (a compressed CSV too); if what came out isn't XML at all, it was
+      // never a book, so say that rather than calling it a damaged one.
+      if (!/^\uFEFF?[ \t\r\n]*</.test(text)) return { ok: false, error: NOT_GNUCASH };
     } else if (startsLikeXml(bytes)) {
       text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     } else {

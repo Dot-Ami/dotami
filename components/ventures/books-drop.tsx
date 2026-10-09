@@ -104,7 +104,7 @@ export function BookReview({
       <fieldset className="mt-3" aria-describedby={`${uid}-accounts-hint`}>
         <legend className={FIELD_LABEL}>Accounts in this book</legend>
         <p id={`${uid}-accounts-hint`} className="mt-1 max-w-prose text-[11px] text-stone-dim">
-          The ticked ones are the accounts GnuCash marks as income. An income account can also hold
+          Accounts GnuCash marks as income start ticked. An income account can also hold
           interest, or GST/HST you collected, which isn&apos;t revenue from sales. Tick or untick
           any account; only the ticked ones are added up.
         </p>
