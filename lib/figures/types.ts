@@ -21,8 +21,13 @@ export const FIGURE_KIND_LABELS: Record<FigureKind, string> = {
 export const FIGURE_STATUSES = ["proposed", "confirmed", "retracted", "discarded"] as const;
 export type FigureStatus = (typeof FIGURE_STATUSES)[number];
 
-/** Where a figure came from: typed by the person, read from a file, suggested by an agent, or a tax return. */
-export const FIGURE_SOURCE_KINDS = ["typed", "file", "agent", "tax-return"] as const;
+/**
+ * Where a figure came from: typed by the person, read from a file, suggested by an agent, a tax
+ * return, or read from the person's books (a GnuCash book today, journals next; [8h]). "books" was
+ * named by the maintainer (2026-10-08): the id is "books", and where the source is named to people
+ * it reads "Books / file".
+ */
+export const FIGURE_SOURCE_KINDS = ["typed", "file", "agent", "tax-return", "books"] as const;
 export type FigureSourceKind = (typeof FIGURE_SOURCE_KINDS)[number];
 
 /** What the routes and the screens see. Dates are calendar days; the amount is whole cents. */

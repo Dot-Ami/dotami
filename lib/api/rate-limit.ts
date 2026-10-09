@@ -43,7 +43,38 @@ export interface RateLimitResult {
   retryAfterSeconds?: number;
 }
 
+/**
+ * The browser-test switch. `playwright.config.ts` starts the test server with
+ * `DOTAMI_E2E_RATE_LIMITS=opt-in`, and nothing else sets it (the desktop app removes it from its
+ * server's environment: desktop/main.mjs `serverEnv`). Without it, nothing below changes anything.
+ *
+ * Why it exists: every request in the browser suite comes from one client, so all of them land in
+ * one bucket per route ("unknown"). One server serves the whole suite, so as tests were added the
+ * suite on a fast machine made more settings calls in a minute than a person would, and the real
+ * limits started answering 429 to tests that had done nothing wrong. Raising a limit each time
+ * that happened (as was done for the figures list) only lasts until the next test.
+ *
+ * With the switch on, a request is counted only when it names its own bucket in the
+ * `x-dotami-e2e-rate-limit` header; the browser test that checks the limits does, and sees the
+ * shipped limit hold. Every other request in the suite is not counted, so the suite's size can
+ * never trip a limit by accident. The limits themselves are the same numbers either way.
+ */
+export const E2E_RATE_LIMITS_ENV = "DOTAMI_E2E_RATE_LIMITS";
+export const E2E_RATE_LIMIT_HEADER = "x-dotami-e2e-rate-limit";
+// What clientKeyFromRequest answers for an unlabelled request while the switch is on. A label
+// becomes "e2e:<label>" and keeps no spaces, so no label can end a key with this.
+const E2E_UNCOUNTED = "e2e uncounted";
+
+function e2eOptIn(): boolean {
+  // Read on every call rather than once at start-up, so the unit tests can switch it per test.
+  return process.env[E2E_RATE_LIMITS_ENV] === "opt-in";
+}
+
 export function checkRateLimit(key: string, options: RateLimitOptions): RateLimitResult {
+  // Browser-test server only: a request that named no bucket is let through and not counted.
+  // Every call site builds its key as "<route>:<client key>", so the marker is always the end.
+  if (e2eOptIn() && key.endsWith(`:${E2E_UNCOUNTED}`)) return { allowed: true };
+
   const now = Date.now();
 
   callsSinceSweep += 1;
@@ -74,6 +105,12 @@ export function checkRateLimit(key: string, options: RateLimitOptions): RateLimi
  * per-user limits arrive with real auth (Phase 7).
  */
 export function clientKeyFromRequest(request: Request): string {
+  if (e2eOptIn()) {
+    // Browser-test server only (see E2E_RATE_LIMITS_ENV above): the header names the bucket.
+    // Plain name characters, kept short, so a label can't grow the bucket map or reshape the key.
+    const label = (request.headers.get(E2E_RATE_LIMIT_HEADER) ?? "").replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 64);
+    return label ? `e2e:${label}` : E2E_UNCOUNTED;
+  }
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
   return request.headers.get("x-real-ip")?.trim() || "unknown";
