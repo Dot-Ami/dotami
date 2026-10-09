@@ -47,6 +47,17 @@ person is asked).
   database or the disk, or logged, and there is no new table, column or browser-storage key.
   Tested by [`tests/figures-return-read.spec.ts`](../tests/figures-return-read.spec.ts).
 
+- **A GnuCash book the person drops ([8h], *Add from a file*): only the totals they agree to are
+  kept.** The book's bytes move into the books worker, which holds on to nothing once it has
+  answered and is stopped when the panel closes
+  ([`lib/figures/books/read-book.ts`](../lib/figures/books/read-book.ts)); its accounts and posted
+  lines live only in the open panel, and which accounts were ticked is not remembered. The
+  monthly totals the person reviews and agrees to are stored as figures (the existing `Figure`
+  table) with the new source kind `books`, the book's file name as the source's name and how many
+  lines were added. No new table, column or browser-storage key; nothing from the book is logged.
+  Tested by [`tests/figures-books-review.spec.ts`](../tests/figures-books-review.spec.ts) and the
+  browser test in [`e2e/app.spec.ts`](../e2e/app.spec.ts).
+
 - **The desktop app's log (`logs/server.log`) now keeps why a start stopped.** Every line is
   written to the disk at once ([`desktop/log.mjs`](../desktop/log.mjs)), so a start that is ended
   or fails part-way still leaves its lines. When the app can't start it writes the message it
@@ -109,10 +120,34 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). While a restore is being checked,
   the backup's receipts are unpacked into a staging folder beside the data file
   (`restore-staging.db-receipts`), removed if the person cancels or the backup is refused.
-- **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
+- **A "wipe pending" note beside the data file, only while a Delete's wipe is unfinished ([8d]).**
+  Delete writes `dotami.db.wipe-pending` (named after the data file) just before it deletes and
+  wipes, and removes it once the wipe and any safety copies it was deleting are done. It holds the
+  time the Delete started and the file names of safety copies still to delete, nothing the person
+  typed and no amount ([`desktop/wipe-pending.mjs`](../desktop/wipe-pending.mjs)). While it is
+  there, the desktop app finishes the wipe at its next start and writes one or two lines to
+  `logs/server.log` saying how many safety copies it deleted, or that the wipe is still owed with
+  the error's code only. Listed on *What DotAmi knows about you*
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)).
+- **Delete ([8d]) keeps nothing else new.** No new table, column or browser-storage key; its one
+  new file is the "wipe pending" note above, and only while a wipe is unfinished. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
   adds one line to the log with only the error's name and code, never what was deleted.
+- **Bank and card accounts ([8g]): a new table, `SourceAccount`, empty until the statement screen
+  lands.** Each row holds the person's own name for an account ("Business chequing", "Visa ending
+  1234"), which of the statement warning's three buttons they pressed, the day they agreed, and the
+  day they took it back. Never an account, card, bank, branch or transit number, a file name, or a
+  scrambled copy (hash) of any of them: a name with a run of four or more digits is refused unless
+  it is "ending" and four digits at the end, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks), and digits
+  of any script, as one run ([`lib/figures/source-account-name.ts`](../lib/figures/source-account-name.ts)).
+  "Always allow every account" will be kept as the moment it was pressed, inside the
+  `bank-records` setting (the `Setting` table). Nothing can add an account yet: the setting stays
+  *planned* and the route refuses while it is
+  ([`lib/figures/source-accounts.ts`](../lib/figures/source-accounts.ts)). Listed on *What DotAmi
+  knows about you*, which counts the accounts and never shows their names
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); tested by
+  [`tests/bank-sources.spec.ts`](../tests/bank-sources.spec.ts).
 
 ### What leaves the computer, and to whom
 
@@ -122,6 +157,12 @@ person is asked).
   is served with its own policy that refuses every connection, DotAmi's own server included
   ([`next.config.mjs`](../next.config.mjs), `workerPolicy`); the browser test tries a fetch from
   inside the worker and the browser refuses it ([`e2e/app.spec.ts`](../e2e/app.spec.ts)).
+
+- **The books reader sends nothing out.** Its worker runs under the same policy, and the browser
+  test checks a fetch from inside it is refused. The one request is from DotAmi's page to
+  DotAmi's own server, `POST /api/figures/propose`, carrying only the monthly totals, the file's
+  name and line counts: never an account name, a transaction or the book
+  ([`e2e/app.spec.ts`](../e2e/app.spec.ts) checks every request the page makes).
 
 - **Nothing new is sent by DotAmi.** The calendar file is made in the page and saved by the
   browser or the desktop app; the browser test checks the click makes no request
@@ -157,6 +198,12 @@ person is asked).
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
 
+- **The bank and card accounts list sends nothing out.** Its requests go from DotAmi's page to
+  DotAmi's own server (`GET` and `POST /api/figures/bank-sources`, `POST
+  /api/figures/bank-sources/retire`) and carry only an account's name, which button was pressed and
+  an id; any other caller, an agent included, is refused
+  ([`app/api/figures/bank-sources/route.ts`](../app/api/figures/bank-sources/route.ts)).
+
 - **Running DotAmi from its source code no longer reports to Next.js or Prisma through the
   project's own commands.** `npm run dev`, `npm run build`, `npm run start` and `npm run lint` now
   start Next.js with `NEXT_TELEMETRY_DISABLED=1` ([`scripts/next.mjs`](../scripts/next.mjs)), so
@@ -188,6 +235,29 @@ person is asked).
   desktop app's server. Reviewed 2026-10-08
   ([`docs/connectors/pdf-reader-review.md`](connectors/pdf-reader-review.md)); listed in
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`, `LIBRARY_IMPORTS`).
+- **No package added or removed; the installer now carries a list of them.** `THIRD-PARTY-NOTICES.txt`
+  (beside `DotAmi.exe`, and in the server's folder) names every package, font and piece of bundled
+  code by others that ships, with its version, licence and licence text, written from the packages
+  at build time ([`desktop/notices.mjs`](../desktop/notices.mjs)); the new `/licences` page and
+  Help → Licences show it. It is a text file the app reads from its own folder: nothing is kept
+  about the person, nothing is sent, and the page asks nothing. The list also shows what the
+  installer already carried without being named before, among them TypeScript and the image
+  library sharp (with libvips, LGPL-3.0-or-later) that Next's file tracer copies into the server.
+- **Ten packages removed from the desktop app's server; nothing added.** The build now deletes
+  sharp, its prebuilt builds with libvips (`@img/sharp-win32-x64`, `@img/sharp-wasm32` and, on other
+  systems, `@img/sharp-libvips-*`), `@img/colour`, `detect-libc`, `@emnapi/runtime`, `typescript`,
+  `source-map-support`, `buffer-from` and `source-map` from the server it ships
+  ([`desktop/left-out.mjs`](../desktop/left-out.mjs), [`desktop/build.mjs`](../desktop/build.mjs)):
+  Next's file tracer copied them in, but only Next's image optimiser loads sharp and only Next's
+  build loads TypeScript, and the rest are what those two pull in. The desktop build switches the
+  image optimiser off ([`next.config.mjs`](../next.config.mjs)), so `/_next/image` answers 404. The
+  server is 89.1 MB → 59.4 MB, the installed app 476.7 MB → 446.8 MB and the installer
+  133.8 MB → 126.1 MB (0.2.1 built on Windows, 2026-10-08). The notices file drops their entries
+  (183 → 172, semver with them: only sharp named it), and with them the only LGPL-licensed code it
+  listed. The build stops if the app's own server code or a
+  package that stays needs one of them; `e2e-desktop/desktop.spec.ts` fails if one comes back into
+  the built or packaged server, and drives the app without them. A copy run from the source code
+  still installs sharp with Next, as before.
 
 ### New powers or permissions
 
@@ -195,6 +265,11 @@ person is asked).
   reach: DotAmi's static script files now carry a policy (`default-src 'none'; script-src
   'self'`) that lets such a worker load DotAmi's own scripts and connect nowhere
   ([`next.config.mjs`](../next.config.mjs)). No worker loaded from those files before.
+
+- **A second worker, the books reader's ([8h]),** under the same policy, so it connects nowhere
+  either (the browser test tries a fetch from inside it and the browser refuses it,
+  [`e2e/app.spec.ts`](../e2e/app.spec.ts)). It reads a GnuCash book and is stopped after a
+  minute, or when the panel closes ([`lib/figures/books/read-book.ts`](../lib/figures/books/read-book.ts)).
 
 - **The desktop app can save a file the page makes, where the person picks.** A file made in the
   page (the calendar file, a playbook) opens DotAmi's own Save dialog with the file's name and
@@ -233,6 +308,39 @@ person is asked).
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
   file.
 
+- **A file with two-digit years needs one answer before any totals show** ([8c-3]): "Is 05 the
+  year 2005?" on *Add from a file*. The answer only says how to read that file's dates; it is held
+  in the panel for that file and never stored, sent or remembered for the next file
+  ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/preview.ts`](../lib/figures/file/preview.ts)). Every preview now also shows
+  the earliest and latest date read, for the person to check before they review the figures;
+  agreeing is unchanged.
+
+- **A figure from a GnuCash book needs the same three steps as one from a spreadsheet**: the
+  person answers *Accounting software or a spreadsheet you keep*, picks or drops the book, and
+  presses *Agree* in the agree prompt after *Review*. The accounts GnuCash marks as income start
+  ticked, and every tick is the person's to change before anything is proposed
+  ([`components/ventures/books-drop.tsx`](../components/ventures/books-drop.tsx)).
+
+- **The dates must be confirmed before Review** ([8c-3]): on *Add from a file*, the person ticks
+  *These dates are right* (or *These months are right*, for a report with the months across the
+  top) beside the line saying which dates were read; until then *Review* can't be pressed. The tick
+  is emptied whenever another file, date column, date order or century answer changes the dates
+  read. It is held in the panel only, never stored, sent or remembered for the next file
+  ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/preview.ts`](../lib/figures/file/preview.ts) `followDatesCheck`). Nothing new
+  is kept or sent; the agree prompt that follows is unchanged.
+
+- **A report with the months across the top asks how it is laid out** ([8c-3]): on *Add from a
+  file*, "The file has" (one row per sale, or months across the top), "Month names are in row"
+  and "Totals come from" (every row, or one row). Like the other pickers, the answers only say how
+  to read that file; they are held in the panel and never stored, sent or remembered for the next
+  file ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
+  [`lib/figures/file/across.ts`](../lib/figures/file/across.ts)). Only the monthly totals the
+  person reviews and agrees to are kept, exactly as before; nothing new is kept or sent. For these
+  reports the figures are kept without a row count (one client row goes into every month, so a
+  count added up across months would mislead): slightly less is kept, never more.
+
 - **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
   file is written without the person choosing where. In a browser it is an ordinary download,
   following the browser's own setting.
@@ -248,6 +356,10 @@ person is asked).
   attached to an idea since, nothing is deleted
   ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
   [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
+- **Deleting the safety copies is its own tick-box, with a warning.** It is never ticked for the
+  person; the box, the first ask and the second ask each say that afterwards only a backup saved
+  somewhere else could bring anything back
+  ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx)).
 - **Adding a receipt needs the person to choose the file**, after a note that the copy is kept
   exactly as given and what is accepted; a file DotAmi doesn't keep is refused in the window and
   nothing is sent. *Remove receipt* asks once ([`components/expenses/receipt-line.tsx`](../components/expenses/receipt-line.tsx)).
@@ -256,6 +368,16 @@ person is asked).
   changed in the file since the person looked, nothing is deleted
   ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
   [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
+
+- **Reading a bank or card statement will need two warnings, and their words are now fixed**
+  ([8g]; the maintainer's decision, 2026-10-07): the setting's own warning before *Bank and card
+  records* is turned on, and before a statement from an account not always allowed, *Before DotAmi
+  reads a bank or card statement*, with *Allow once*, *Always allow this account*, *Always allow
+  every account* and *Cancel* (`BANK_STATEMENT_WARNING` in
+  [`lib/settings/catalog.ts`](../lib/settings/catalog.ts), word for word in Part 1 of
+  [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md)). Neither is shown yet: the
+  setting stays *planned*, with no switch, until the statement screen exists. Taking an account
+  back in Settings asks once (*Yes, take it back* or *Keep it*).
 
 - No change to what needs a click: an update still installs only after *Restart and update*.
   What changed is when the person hears of it: a notice that a new version is downloading now
@@ -269,12 +391,15 @@ person is asked).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
   keep the row. Deleting ideas keeps them too, as "not attached yet". Only the Delete menu's *Your
   expense records* box removes them, all at once; nothing removes a single record yet.
+- Figures agreed from a GnuCash book are ordinary figures: *Retract* on the ideas page and the
+  Delete button's "figures" box remove them like any other. Nothing else from the book is kept.
 - **Receipts:** *Remove receipt* on a record (agreed or taken back) deletes its row and its file; the
   Delete menu's *Your receipts* box removes them all and keeps the records, and *Your expense records*
   takes the receipts with the records. Deleting ideas keeps both. A file that couldn't be removed at
   once is removed the next time a receipt is added or deleted. A removed file's bytes can stay on the
   disk until written over, which the menu says. The receipts folder a restore moved into `backups/` is
-  not touched by Delete.
+  not touched by Delete, even with *Safety copies in the backups folder* ticked (that box deletes
+  only DotAmi's `dotami-before-….db` copies); the menu says so.
 - **The Delete button on *What DotAmi knows about you*** removes ideas, figures, expense records,
   statements and settings from the data file, then wipes the file's free space; if the wipe can't
   run, the page says so and offers to try again. **What it doesn't reach yet**, and the page says
@@ -282,6 +407,21 @@ person is asked).
   safety copies in `backups/`, what the desktop window stored in earlier launches, the log,
   anything that already left the computer, and the disk under the data file. The placeholder
   account (`User`) stays (`KEPT_BY_DELETE`).
+- **Delete can now remove the safety copies in `backups/`** (the tick-box *Safety copies in the
+  backups folder*). It removes only the files DotAmi names its own copies (`dotami-before-….db`)
+  directly in that folder, never a file through a link, and leaves anything else the person put
+  there. A deleted copy's file is removed, not overwritten, so the disk can still hold its pieces
+  (the menu says so). A wipe or a copy that couldn't be finished is finished at the desktop app's
+  next start, and only then: an ordinary start does nothing here
+  ([`desktop/main.mjs`](../desktop/main.mjs), tested by
+  [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Still not reached: what the
+  desktop window stored in earlier launches, the log, anything that already left the computer, and
+  the disk under the data file.
+- **Bank and card accounts:** *Take back* beside an account in Settings stops it being used, but
+  its row (the name and days) stays in the data file. Delete, with *Your bank and card accounts*
+  ticked, erases every account, taken back or not. Figures read from an account's statements are
+  not removed with it (nothing links a figure to its account yet), and "Always allow every
+  account" goes with *Your settings*.
 
 ### What the policy will need to say
 
@@ -303,9 +443,16 @@ person is asked).
 - Deleting an idea in DotAmi does not delete the business expense records attached to it: they
   stay on the person's computer, in DotAmi's data file, as "not attached yet", until the person
   deletes the expense records themselves. DotAmi says so before the idea is deleted.
-- Delete removes DotAmi's own copy only: backups the person made, the safety copies in the
-  backups folder and anything already shared still hold what was deleted, and the CRA generally
+- Delete removes DotAmi's own copy only: backups the person made and anything already shared
+  still hold what was deleted, and so do the safety copies in the backups folder unless the person
+  ticks them, and the CRA generally
   expects business records to be kept six years, which Delete doesn't change.
+- A GnuCash book the person drops is read on their computer, in memory, in a worker that can't
+  connect anywhere, and is not kept or sent; only the monthly totals of the accounts they tick,
+  and agree to, are stored, as figures from "Books / file".
+- The names people give their bank and card accounts are kept in the data file, with the day
+  they agreed to the warning and the day they took the account back; "ending" and four digits is
+  the most of a number a name may hold. DotAmi never keeps the account or card number itself.
 
 ### Still open (carried forward until decided)
 
@@ -326,12 +473,13 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
-- **Deleting things.** The Delete menu is built ([8d], above). Still open: clearing the backups
-  folder from it, clearing what the desktop window stored in earlier launches, and whether an
-  agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
+- **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
+  the backups folder. Still open: clearing what the desktop window stored in earlier launches, and
+  whether an agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
 - Found while writing this log, not yet raised as decisions: the desktop app's log
   (`logs/server.log`) is appended to and never trimmed, and nothing removes old safety copies in
-  `backups/` ([`desktop/main.mjs`](../desktop/main.mjs), [`desktop/migrate.mjs`](../desktop/migrate.mjs));
+  `backups/` by itself, only the person through Delete ([`desktop/main.mjs`](../desktop/main.mjs),
+  [`desktop/migrate.mjs`](../desktop/migrate.mjs));
   and nobody has yet checked what the browser engine inside the desktop app (Electron's Chromium)
   writes to the data folder or requests on its own.
 

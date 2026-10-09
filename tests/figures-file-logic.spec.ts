@@ -69,6 +69,7 @@ describe("cellToDay", () => {
     expect(cellToDay("03/04/2026", "ymd")).toBeNull();
   });
 
+  // The person's answer is the only way a two-digit year is read: tests/figures-file-two-digit-years.spec.ts.
   it("never guesses a century for a two-digit year", () => {
     expect(cellToDay("03/04/26", "mdy")).toBeNull();
     expect(cellToDay("25/03/26", null)).toBeNull();
@@ -706,6 +707,44 @@ describe("monthlyTotals", () => {
     expect(result.rowsCounted + result.skipped.length).toBe(13);
   });
 
+  // Xero's help: an Excel report with formulas can show 0.00 until Enable Editing. The reader gives
+  // a formula saved with no value as an empty cell and says where it is; the row is then told apart
+  // from a truly empty amount, and nothing is guessed for it.
+  it("lists a row whose amount or date is a formula saved with no value apart from an empty one", () => {
+    const rows: Cell[][] = [
+      ["Date", "Amount"], // 1
+      ["2026-07-03", "10.00"], // 2
+      ["2026-07-04", null], // 3 amount: a formula with no saved value
+      ["2026-07-05", null], // 4 amount: truly empty
+      [null, "5.00"], // 5 date: a formula with no saved value
+      ["Total", null], // 6 the report's own sum, a formula too: still the sum row
+    ];
+    const c: ColumnChoice = { ...choice, headerRow: 0, dateColumn: 0, amountColumn: 1 };
+    const unsaved = [
+      { row: 2, column: 1 },
+      { row: 4, column: 0 },
+      { row: 5, column: 1 },
+    ];
+    const result = monthlyTotals(rows, c, TODAY, unsaved);
+    // Positive first: the one real amount is counted, and nothing is added for the formulas.
+    expect(result.months).toEqual([
+      { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 1000, rows: 1 },
+    ]);
+    expect(result.skipped).toEqual([
+      { row: 3, reason: "unsaved-formula" },
+      { row: 4, reason: "no-amount" },
+      { row: 5, reason: "unsaved-formula" },
+      { row: 6, reason: "total" },
+    ]);
+    // A formula's place outside the date and amount columns changes nothing.
+    const elsewhere = monthlyTotals(rows, c, TODAY, [{ row: 3, column: 5 }]);
+    expect(elsewhere.skipped.find((s) => s.row === 4)?.reason).toBe("no-amount");
+    // With no places given (a CSV), an empty amount is "no amount", as before.
+    expect(monthlyTotals(rows, c, TODAY).skipped.find((s) => s.row === 3)?.reason).toBe(
+      "no-amount",
+    );
+  });
+
   it("counts a month only once it has ended", () => {
     const rows: Cell[][] = [
       ["Date", "Amount"],
@@ -822,8 +861,14 @@ describe("monthlyTotals", () => {
       months: [],
       rowsCounted: 0,
       skipped: [],
+      datesRead: null,
     });
-    expect(monthlyTotals([], choice, TODAY)).toEqual({ months: [], rowsCounted: 0, skipped: [] });
+    expect(monthlyTotals([], choice, TODAY)).toEqual({
+      months: [],
+      rowsCounted: 0,
+      skipped: [],
+      datesRead: null,
+    });
   });
 
   it("throws, without putting an amount in the message, when a month is too big to hold exactly", () => {
