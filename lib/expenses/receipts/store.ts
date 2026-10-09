@@ -14,6 +14,10 @@
  *     viewer, readReceiptFile) work on any of their records. Agents can do none of the three: the
  *     routes answer only DotAmi's own page.
  *   - Nothing here logs a word, an amount, a file name or a path.
+ *   - In the desktop app the file on the disk is encrypted (expense-records.md § 9): AES-256-GCM with
+ *     the key the app opened (lock.ts), in the format of desktop/receipt-crypto.mjs. The row's size and
+ *     SHA-256 are always of the receipt's own bytes, checked after decrypting. A copy run from source
+ *     has no key and keeps the bytes as they are; a plain file still opens wherever it is found.
  *
  * Files and rows can drift apart (the app stops between the two writes, a record's row is deleted
  * and the database takes its Receipt row with it). sweepOrphanReceipts() removes DotAmi's own files
@@ -26,10 +30,20 @@ import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
 
+import {
+  decryptReceipt,
+  ENCRYPTED_OVERHEAD,
+  encryptedKeyId,
+  encryptReceipt,
+  isEncryptedReceipt,
+  ReceiptCryptoError,
+} from "@/desktop/receipt-crypto.mjs";
 import { databaseFilePath } from "@/lib/settings/today";
 
 import { findPersonExpense, rowToExpense } from "../store";
 import type { ExpenseView } from "../types";
+import { receiptLock, type ReceiptLock } from "./lock";
+import { LOCKED_RECEIPT_MESSAGES } from "./protection";
 import { RECEIPT_REFUSALS } from "./refusals";
 import { sniffReceipt } from "./sniff";
 import { extensionOf, isReceiptType, MAX_RECEIPT_BYTES, RECEIPT_ID, RECEIPT_TYPES, type ReceiptType } from "./types";
@@ -76,6 +90,35 @@ export function receiptFileName(id: string, type: string): string {
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
 const noFolder = () => new ReceiptError("This copy of DotAmi has no data folder, so it can't keep receipt files.", 409);
+const keyUnreadable = () => new ReceiptError(LOCKED_RECEIPT_MESSAGES.keyUnreadable, 409);
+
+/** The bytes as they go on the disk: encrypted for this receipt's id when the key is open, as they are otherwise. */
+const onDiskBytes = (bytes: Uint8Array, id: string, lock: ReceiptLock): Uint8Array =>
+  lock.state === "on" ? encryptReceipt(bytes, { key: lock.key, id }) : bytes;
+
+/**
+ * The receipt's own bytes from what is on the disk: decrypted when the file is encrypted, as they are
+ * when it is plain. Throws ReceiptError when it can't be opened here (another key, or no key in this
+ * copy), and returns null when it is damaged or changed (the caller says so in its own words).
+ */
+function receiptBytesOf(file: Buffer, id: string, lock: ReceiptLock): Buffer | null {
+  if (!isEncryptedReceipt(file)) return file;
+  switch (lock.state) {
+    case "source":
+      throw new ReceiptError(LOCKED_RECEIPT_MESSAGES.source, 409);
+    case "no-key-store":
+      throw new ReceiptError(LOCKED_RECEIPT_MESSAGES.noKeyStore, 409);
+    case "key-unreadable":
+      throw keyUnreadable();
+  }
+  try {
+    return decryptReceipt(file, { key: lock.key, id });
+  } catch (error) {
+    if (error instanceof ReceiptCryptoError && error.kind === "other-key") throw new ReceiptError(LOCKED_RECEIPT_MESSAGES.otherKey, 409);
+    if (error instanceof ReceiptCryptoError) return null;
+    throw error;
+  }
+}
 
 /**
  * Keeps `bytes` as the receipt of one of the person's agreed records. Returns the record as the page
@@ -87,9 +130,19 @@ const noFolder = () => new ReceiptError("This copy of DotAmi has no data folder,
  * before the row, the .partial is an orphan the sweep removes later. If it stops after the row and
  * before the rename, the sweep finishes the rename later (checking size and SHA-256 against the
  * row first), so the record never keeps a receipt whose only copy was thrown away.
+ *
+ * With the key open (`lock`, the desktop app), what goes on the disk is the encrypted file, made in
+ * memory; the row describes the receipt's own bytes. While the key can't be opened, nothing is added.
  */
-export async function addReceipt(prisma: PrismaClient, folder: string | null, expenseId: unknown, bytes: Uint8Array): Promise<ExpenseView> {
+export async function addReceipt(
+  prisma: PrismaClient,
+  folder: string | null,
+  expenseId: unknown,
+  bytes: Uint8Array,
+  lock: ReceiptLock = receiptLock(),
+): Promise<ExpenseView> {
   if (!folder) throw noFolder();
+  if (lock.state === "key-unreadable") throw keyUnreadable();
   if (typeof expenseId !== "string" || expenseId.length === 0) throw new ReceiptError("Say which expense record the receipt is for.", 400);
 
   const sniffed = sniffReceipt(bytes);
@@ -103,7 +156,7 @@ export async function addReceipt(prisma: PrismaClient, folder: string | null, ex
   if (record.receipt) throw new ReceiptError("This record already has a receipt. Remove it first to add another.", 409);
 
   // Before writing, so files left by an earlier crash don't pile up.
-  await sweepOrphanReceipts(prisma, folder);
+  await sweepOrphanReceipts(prisma, folder, Date.now, lock);
 
   const id = randomBytes(16).toString("hex");
   const name = receiptFileName(id, sniffed.type);
@@ -111,7 +164,7 @@ export async function addReceipt(prisma: PrismaClient, folder: string | null, ex
   const partialPath = `${finalPath}.partial`;
   await mkdir(folder, { recursive: true });
   // "wx": never overwrite anything, even a file with this random name.
-  await writeFile(partialPath, bytes, { flag: "wx" });
+  await writeFile(partialPath, onDiskBytes(bytes, id, lock), { flag: "wx" });
 
   try {
     await prisma.receipt.create({
@@ -185,7 +238,12 @@ export interface SweepResult {
  * has, so the sweep finishes the add instead (finishAbandonedAdd) when the bytes are the ones the row
  * describes, and drops the row along with the file when they aren't.
  */
-export async function sweepOrphanReceipts(prisma: PrismaClient, folder: string | null, now: () => number = Date.now): Promise<SweepResult> {
+export async function sweepOrphanReceipts(
+  prisma: PrismaClient,
+  folder: string | null,
+  now: () => number = Date.now,
+  lock: ReceiptLock = receiptLock(),
+): Promise<SweepResult> {
   const result: SweepResult = { removed: 0, failed: 0, kept: 0 };
   if (!folder) return result;
   let names: string[];
@@ -220,7 +278,7 @@ export async function sweepOrphanReceipts(prisma: PrismaClient, folder: string |
       const row = byName.get(finalName);
       // A row describes it and the finished file isn't there: this is the only copy.
       if (row && !names.includes(finalName)) {
-        const outcome = await finishAbandonedAdd(prisma, folder, name, finalName, row);
+        const outcome = await finishAbandonedAdd(prisma, folder, name, finalName, row, lock);
         if (outcome === "finished") {
           result.kept += 1;
           continue;
@@ -260,6 +318,9 @@ interface DescribedFile {
  * ("finished"). If it isn't (the write itself was cut short), the row is removed, since no copy of
  * the receipt it describes exists, and the caller removes the file ("dropped"). "failed": the file
  * couldn't be read or renamed now; both are left for a later sweep.
+ *
+ * An encrypted .partial is decrypted to be checked. One that this copy can't open (another key, or no
+ * key here) is "failed", never "dropped": it may be the only copy, and a copy with the key can finish it.
  */
 async function finishAbandonedAdd(
   prisma: PrismaClient,
@@ -267,6 +328,7 @@ async function finishAbandonedAdd(
   partialName: string,
   finalName: string,
   row: DescribedFile,
+  lock: ReceiptLock,
 ): Promise<"finished" | "dropped" | "failed"> {
   const partialPath = path.join(folder, partialName);
   let matches: boolean;
@@ -276,11 +338,17 @@ async function finishAbandonedAdd(
     const handle = await open(partialPath, "r");
     try {
       const size = (await handle.stat()).size;
-      matches = size === row.bytes && sha256(await handle.readFile()) === row.sha256;
+      if (size !== row.bytes && size !== row.bytes + ENCRYPTED_OVERHEAD) {
+        matches = false;
+      } else {
+        const plain = receiptBytesOf(await handle.readFile(), row.id, lock);
+        matches = plain !== null && plain.length === row.bytes && sha256(plain) === row.sha256;
+      }
     } finally {
       await handle.close();
     }
   } catch {
+    // Unreadable now, or encrypted with a key this copy doesn't have (receiptBytesOf threw).
     return "failed";
   }
   if (!matches) {
@@ -306,11 +374,17 @@ export function storedType(type: string): ReceiptType | null {
  * what the row says, so a file changed or replaced on the disk since it was added is refused, not
  * shown. Works on any of the person's records that has a receipt (agreed or taken back). Returns the
  * type DotAmi stored and the bytes; the window checks the bytes again before drawing anything.
+ *
+ * An encrypted file is decrypted here, in memory, and only then checked against the row; nothing
+ * decrypted is written anywhere. One encrypted with another key, or found by a copy with no key, is
+ * refused with a sentence that says which (protection.ts LOCKED_RECEIPT_MESSAGES); a damaged one is
+ * "changed", like any other file that no longer matches its row.
  */
 export async function readReceiptFile(
   prisma: PrismaClient,
   folder: string | null,
   expenseId: unknown,
+  lock: ReceiptLock = receiptLock(),
 ): Promise<{ type: ReceiptType; bytes: Buffer }> {
   if (!folder) throw noFolder();
   if (typeof expenseId !== "string" || expenseId.length === 0) throw new ReceiptError("Say which expense record you mean.", 400);
@@ -336,19 +410,69 @@ export async function readReceiptFile(
     throw error;
   }
   try {
-    // The size first, from the file system: a file that grew is refused before it is read.
+    // The size first, from the file system: a file that grew is refused before it is read. On the
+    // disk a receipt is its own size (plain) or exactly ENCRYPTED_OVERHEAD more (encrypted).
     const { size } = await handle.stat();
-    if (size !== receipt.bytes || size > MAX_RECEIPT_BYTES) throw changed();
-    const bytes = Buffer.alloc(size);
+    const encryptedSize = receipt.bytes + ENCRYPTED_OVERHEAD;
+    if ((size !== receipt.bytes && size !== encryptedSize) || receipt.bytes > MAX_RECEIPT_BYTES) throw changed();
+    const onDisk = Buffer.alloc(size);
     let read = 0;
     while (read < size) {
-      const { bytesRead } = await handle.read(bytes, read, size - read, read);
+      const { bytesRead } = await handle.read(onDisk, read, size - read, read);
       if (bytesRead === 0) break;
       read += bytesRead;
     }
-    if (read !== size || sha256(bytes) !== receipt.sha256) throw changed();
+    if (read !== size) throw changed();
+    // A plain file can't start with the encrypted file's magic, so each size goes with one kind only.
+    if (isEncryptedReceipt(onDisk) ? size !== encryptedSize : size !== receipt.bytes) throw changed();
+    const bytes = receiptBytesOf(onDisk, receipt.id, lock);
+    if (bytes === null || bytes.length !== receipt.bytes || sha256(bytes) !== receipt.sha256) throw changed();
     return { type, bytes };
   } finally {
     await handle.close();
   }
+}
+
+/** How the receipt files on the disk are kept, for What DotAmi knows about you. Counts only. */
+export interface ReceiptFilesProtection {
+  /** Encrypted with the key this copy has open. */
+  encrypted: number;
+  /** Kept as they were given: no key here, or not encrypted yet. */
+  plain: number;
+  /** Encrypted with a key this copy can't open (a lost key, or the desktop app's key seen from source). */
+  locked: number;
+}
+
+/**
+ * Counts DotAmi's own receipt files in `folder` by how they are kept, reading only the first bytes of
+ * each (the magic and the key's id): never a whole file, never a name outside the count.
+ */
+export async function describeReceiptFiles(folder: string | null, lock: ReceiptLock = receiptLock()): Promise<ReceiptFilesProtection> {
+  const counts: ReceiptFilesProtection = { encrypted: 0, plain: 0, locked: 0 };
+  if (!folder) return counts;
+  let names: string[];
+  try {
+    names = (await readdir(folder, { withFileTypes: true })).filter((e) => e.isFile() && STORED_NAME.test(e.name)).map((e) => e.name);
+  } catch {
+    return counts;
+  }
+  for (const name of names) {
+    let head: Buffer;
+    try {
+      const handle = await open(path.join(folder, name), "r");
+      try {
+        head = Buffer.alloc(32);
+        const { bytesRead } = await handle.read(head, 0, head.length, 0);
+        head = head.subarray(0, bytesRead);
+      } finally {
+        await handle.close();
+      }
+    } catch {
+      continue;
+    }
+    if (!isEncryptedReceipt(head)) counts.plain += 1;
+    else if (lock.state === "on" && encryptedKeyId(head) === lock.keyId) counts.encrypted += 1;
+    else counts.locked += 1;
+  }
+  return counts;
 }

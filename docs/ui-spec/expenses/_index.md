@@ -1,6 +1,6 @@
 # Your expenses page (`/expenses`) — page overview
 
-Last updated: 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
+Last updated: 2026-10-09 (receipt files encrypted in the desktop app: the note before adding one says whether, and an amber line when the key can't be opened; 2026-10-08: new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
 
 **Route:** `/expenses` · `/expenses?idea=<idea id>` (opened on one idea) · **Component:**
 `components/expenses/expenses-page.tsx` (+ `expense-form.tsx`, `expense-review.tsx`) ·
@@ -57,6 +57,28 @@ record's words or amounts: only an idea's id, in `?idea=`.
 | **Add a receipt** (on each agreed record with none; `components/expenses/receipt-line.tsx`) | opens a note first: "DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is your own record; it says nothing about whether you can stop keeping the original." Then **Choose the receipt file** (a file picker; its type list is a hint only) and **Not now**. The window checks the size first (over 10 MB is refused without reading the file), then reads the file's first bytes (`lib/expenses/receipts/sniff.ts`): anything that isn't a JPEG, PNG, WebP or PDF, or a picture over 50 megapixels or 20,000 pixels a side, is refused in amber with what to do instead, and nothing is sent. Otherwise the bytes go as base64 to `POST /api/expenses/receipt` (page-only), which checks them again and keeps the copy under a name it makes up; the file's own name is never sent. Not shown on a waiting, turned-down record | a file in `receipts/`; a `Receipt` row |
 | Receipt line (on a record with one) | "Receipt: PNG picture · 2.1 MB · added <day>" (the type DotAmi read from the bytes, never the file's name) and **Remove receipt**, which asks inline "Remove this receipt? DotAmi deletes its copy of the file; the record stays." **Remove receipt** / **Keep it**; Remove → `POST /api/expenses/receipt/remove`. **Show receipt** opens the viewer (below) | `Receipt` row and its file deleted |
 | **Receipt viewer** (dialog "Receipt: <day> · <paid to>"; `components/expenses/receipt-viewer.tsx`) | "<PNG picture / PDF>, shown inside DotAmi from its copy on this computer. Nothing in it can be clicked or run." The bytes come from `POST /api/expenses/receipt/file` (page-only), and are checked again in the window: they must be the type DotAmi stored, and a picture within 50 megapixels and 20,000 pixels a side, before anything decodes them. A picture is shown by the browser's image decoder from a `blob:` address (alt "The receipt picture (W × H pixels)"); a PDF is drawn page by page by pdf.js in a worker of DotAmi's own that can reach nothing, each page a picture in a canvas ("Page 1 of N"), at most 20 pages and at most 80 megapixels of pages in all; when fewer pages are drawn than the PDF has, it says so ("DotAmi shows the first 20 pages; this PDF has N. The rest are kept in the file.", with the number drawn, or "the first page" for one). A file changed on the disk since it was added, missing, of another type than kept, or too large to show says so in amber with what to do (remove the receipt and add it again). **Close**, Escape or a click outside closes it and lets go of everything it held. Security design: `expense-records.md` § 8 | — |
+
+## Receipts encrypted at rest ([8i], 2026-10-09)
+
+The route reads only the state of the receipts' key (`receiptLockState`, `lib/expenses/receipts/lock.ts`)
+and hands it to the page (`components/expenses/receipt-protection.tsx`); the key never reaches it.
+
+- **The note before adding a receipt** gains one sentence (`receiptNoteSentence`): in the desktop app,
+  "In this app the copy is encrypted, with a key Windows keeps for your Windows account only." and that
+  losing that key (a Windows profile reset, the folder moved to another account or computer) loses the
+  receipts except those in a backup (File → Back up…); from source, "In this copy, run from source, the
+  copy isn't encrypted" and that the desktop app encrypts receipts; with no key store, that it isn't
+  encrypted and why.
+- **When the key can't be opened** (Windows won't open it, the key store isn't available while
+  receipts are encrypted, or `receipts.key` is missing), an amber line under the page's heading
+  (`ReceiptKeyProblem`, role status) says so, what usually causes it, that nothing was changed, to put
+  `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup; or delete
+  the receipts on *What DotAmi knows about you* and restart). Adding a receipt then
+  answers 409 with the same advice.
+- **The viewer** shows, in amber like its other refusals, a receipt encrypted with a key this account
+  can no longer open ("…A backup made before then still holds it: File → Restore from a backup…"), or,
+  in a copy run from source, one the desktop app encrypted ("Open it in the desktop app"). A damaged or
+  swapped encrypted file is "changed on this computer", as before.
 
 ## What it deliberately does not do
 

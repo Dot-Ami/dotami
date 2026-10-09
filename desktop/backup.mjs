@@ -12,8 +12,9 @@
 //              ciphertext as one stream
 //   16 bytes   the GCM tag (locked backups only)
 //
-// Every file is read and written in pieces of CHUNK bytes, never whole, so a backup of a big data
-// file and a few hundred receipts needs no more memory than a small one. The header lists each
+// The data file is read and written in pieces of CHUNK bytes, never whole, and receipts one at a
+// time (each at most 10 MB, held whole while it is decrypted or encrypted: see [8i] below), so a
+// backup of a big data file and a few hundred receipts needs no more memory than a small one. The header lists each
 // file's size and SHA-256, so the writer reads each file twice: once to measure it, once to write
 // it (and a file that changed in between stops the backup rather than writing a wrong one).
 //
@@ -29,6 +30,14 @@
 // Restoring is two steps so a bad backup can never touch the live data: prepareRestore() checks the
 // file and unpacks it next to the live database (the receipts into a staging folder beside it);
 // applyRestore() swaps both in once the app has closed its own connection to the database.
+//
+// Receipts encrypted at rest (docs/architecture/expense-records.md § 9, desktop/receipt-crypto.mjs):
+// a backup always holds each receipt's own bytes, decrypted with this computer's key as it is written,
+// so it restores on another computer, whose key differs; a passphrase still covers them, and without
+// one they are readable by whoever has the file. A restore encrypts each receipt with this computer's
+// key as it is unpacked, after its SHA-256 is checked. The format doesn't change: a backup made before
+// receipts were encrypted reads the same. A receipt is at most 10 MB, so one is decrypted or encrypted
+// whole, one at a time; the database is still streamed in pieces.
 import { createCipheriv, createDecipheriv, createHash, randomBytes, scryptSync } from "node:crypto";
 import {
   closeSync,
@@ -49,6 +58,8 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { decryptReceipt, ENCRYPTED_OVERHEAD, encryptReceipt, isEncryptedReceipt, receiptIdOfName } from "./receipt-crypto.mjs";
+
 /** The file extension (without the dot) the app gives its backups. */
 export const BACKUP_EXTENSION = "dotami-backup";
 
@@ -63,6 +74,9 @@ export const RECEIPT_EXTENSIONS = Object.freeze({ "image/jpeg": "jpg", "image/pn
 
 /** A file DotAmi named in the receipts folder: 32 random hex characters and one of the extensions. */
 const RECEIPT_NAME = new RegExp(`^[0-9a-f]{32}\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
+
+/** True for a name DotAmi gives a receipt file (used by the first-start encryption, desktop/receipt-crypto.mjs). */
+export const isReceiptFileName = (name) => RECEIPT_NAME.test(name);
 /** The receipt cap (10 MB, the maintainer's decision); a backup that lists a bigger receipt is not one of ours. */
 const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
 
@@ -114,12 +128,16 @@ const changedWhileWriting = () =>
  * neither, and one added in between has a row and no listed file: it counts as missing, like a
  * described file that isn't on the disk at all, and the caller says so. Files no row describes
  * (leftovers DotAmi's sweep would remove) are left out.
+ *
+ * Each receipt goes in as its own bytes: an encrypted one is decrypted with `receiptKey` (this
+ * computer's key) in memory first. One this computer can't open (no key, another key, damaged) can't go
+ * in, and is counted in `unreadableReceipts` for the caller to say so.
  * @param {string} dbFile the live database; its receipts are in the receipts folder beside it
  * @param {string} outFile where the backup goes (replaced if it exists)
- * @param {{ passphrase?: string, appVersion: string, now?: () => number }} options an empty passphrase means "not encrypted"
- * @returns {{ encrypted: boolean, bytes: number, migrations: string[], receipts: number, missingReceipts: number }}
+ * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null }} options an empty passphrase means "not encrypted"
+ * @returns {{ encrypted: boolean, bytes: number, migrations: string[], receipts: number, missingReceipts: number, unreadableReceipts: number }}
  */
-export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now } = {}) {
+export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null } = {}) {
   const receiptsDir = path.join(path.dirname(dbFile), RECEIPTS_FOLDER);
   const listed = new Set(receiptNamesIn(receiptsDir));
 
@@ -139,12 +157,15 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     const migrations = appliedMigrations(copy);
 
     // First pass: every file's size and fingerprint, for the header.
-    const files = [{ path: DB_ENTRY, source: copy, ...measure(copy) }];
+    const files = [{ path: DB_ENTRY, source: copy, receipt: false, ...measure(copy) }];
     let missingReceipts = 0;
+    let unreadableReceipts = 0;
     for (const name of describedReceipts(copy)) {
-      const measured = listed.has(name) ? measure(path.join(receiptsDir, name), { missingOk: true }) : null;
-      if (measured) files.push({ path: `${RECEIPTS_FOLDER}/${name}`, source: path.join(receiptsDir, name), ...measured });
-      else missingReceipts += 1;
+      const source = path.join(receiptsDir, name);
+      const plain = listed.has(name) ? receiptForBackup(source, name, receiptKey) : "missing";
+      if (plain === "missing") missingReceipts += 1;
+      else if (plain === "unreadable") unreadableReceipts += 1;
+      else files.push({ path: `${RECEIPTS_FOLDER}/${name}`, source, receipt: true, bytes: plain.length, sha256: sha256(plain) });
     }
 
     const encrypted = passphrase !== "";
@@ -178,6 +199,16 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     // Second pass: each file again, in pieces, checked against what the header says.
     const piece = Buffer.allocUnsafe(CHUNK);
     for (const f of files) {
+      if (f.receipt) {
+        // A receipt (at most 10 MB) is read, and decrypted if need be, whole; then written in pieces.
+        const plain = receiptForBackup(f.source, path.basename(f.source), receiptKey);
+        if (!Buffer.isBuffer(plain) || plain.length !== f.bytes || sha256(plain) !== f.sha256) throw changedWhileWriting();
+        for (let at = 0; at < plain.length; at += CHUNK) {
+          const part = plain.subarray(at, at + CHUNK);
+          written += writeAll(out, cipher ? cipher.update(part) : part);
+        }
+        continue;
+      }
       const hash = createHash("sha256");
       let count = 0;
       let fd;
@@ -207,7 +238,7 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     closeSync(out);
     out = null;
     renameSync(partial, outFile);
-    return { encrypted, bytes: written, migrations, receipts: files.length - 1, missingReceipts };
+    return { encrypted, bytes: written, migrations, receipts: files.length - 1, missingReceipts, unreadableReceipts };
   } catch (error) {
     if (out !== null) closeSync(out);
     rmSync(partial, { force: true });
@@ -222,12 +253,14 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
  * fingerprint and, for a locked one, the tag. Changes nothing, unless `unpackTo` names where to put
  * the database and the receipt files as they are read (prepareRestore does; the caller removes them
  * if this throws). A format-2 backup is read in pieces; a format-1 one whole, as it always was.
+ * With `receiptKey` (this computer's key), each unpacked receipt is encrypted with it, after its
+ * SHA-256 is checked; without one, receipts are unpacked as they are.
  * @param {string} file
- * @param {{ passphrase?: string, unpackTo?: { dbFile: string, receiptsDir: string } | null }} [options]
+ * @param {{ passphrase?: string, unpackTo?: { dbFile: string, receiptsDir: string } | null, receiptKey?: Buffer | null }} [options]
  * @returns {{ header: object, files: { path: string, bytes: number }[] }}
  * @throws {BackupError}
  */
-export function readBackup(file, { passphrase = "", unpackTo = null } = {}) {
+export function readBackup(file, { passphrase = "", unpackTo = null, receiptKey = null } = {}) {
   const fd = openSync(file, "r");
   try {
     const size = fstatSync(fd).size;
@@ -245,14 +278,18 @@ export function readBackup(file, { passphrase = "", unpackTo = null } = {}) {
     }
     if (isFormat1Header(header)) return readFormat1(file, header, FIXED_BYTES + headerLength, passphrase, unpackTo);
     if (!isFormat2Header(header)) throw notABackup();
-    return readFormat2(fd, size, header, headerBytes, passphrase, unpackTo);
+    return readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receiptKey);
   } finally {
     closeSync(fd);
   }
 }
 
-/** Format 2: streams the payload through the cipher (if locked) into each file in turn. */
-function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo) {
+/**
+ * Format 2: streams the payload through the cipher (if locked) into each file in turn. With a
+ * `receiptKey`, a receipt is gathered whole instead (at most 10 MB: isFormat2Header refuses more),
+ * checked, and only then written, encrypted, so no receipt is ever written here unencrypted.
+ */
+function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receiptKey) {
   const enc = header.encryption;
   if (enc !== null && passphrase === "") throw needsPassphrase();
   const payloadStart = FIXED_BYTES + headerBytes.length;
@@ -298,10 +335,15 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo) {
 
   for (const entry of header.files) {
     const target = unpackTo ? targetOf(entry.path, unpackTo) : null;
+    // The receipt's id, when this receipt is to be encrypted as it is unpacked.
+    const encryptFor = target && receiptKey && entry.path !== DB_ENTRY ? receiptIdOfName(path.basename(target)) : null;
     let out = null;
+    let whole = null;
+    let filled = 0;
     if (target) {
       mkdirSync(path.dirname(target), { recursive: true });
-      out = openSync(target, "wx");
+      if (encryptFor) whole = Buffer.alloc(entry.bytes);
+      else out = openSync(target, "wx");
     }
     const hash = createHash("sha256");
     let need = entry.bytes;
@@ -313,12 +355,14 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo) {
         if (take.length < plain.length) carry = plain.subarray(take.length);
         hash.update(take);
         if (out !== null) writeAll(out, take);
+        if (whole !== null) filled += take.copy(whole, filled);
         need -= take.length;
       }
     } finally {
       if (out !== null) closeSync(out);
     }
     if (hash.digest("hex") !== entry.sha256) throw wrong();
+    if (whole !== null) writeNewFile(target, encryptReceipt(whole, { key: receiptKey, id: encryptFor }));
   }
   if (decipher) {
     try {
@@ -384,19 +428,21 @@ export function discardRestore(stagingFile) {
 /**
  * Checks a backup and unpacks it beside the live database, without touching the live data: the
  * database to `stagingFile`, the receipts to stagedReceiptsFolder(stagingFile). On any failure both
- * are deleted before the error is thrown.
+ * are deleted before the error is thrown. With `receiptKey` (the key the receipts here will be opened
+ * with), every receipt is staged encrypted with it.
  * @param {string} file the backup
- * @param {{ passphrase?: string, migrationsDir: string, stagingFile: string }} options
+ * @param {{ passphrase?: string, migrationsDir: string, stagingFile: string, receiptKey?: Buffer | null }} options
  * @returns {{ header: object, receipts: number }}
  * @throws {BackupError}
  */
-export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFile }) {
+export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFile, receiptKey = null }) {
   // Whatever an earlier attempt left behind would otherwise mix with this one.
   discardRestore(stagingFile);
   try {
     const { header, files } = readBackup(file, {
       passphrase,
       unpackTo: { dbFile: stagingFile, receiptsDir: stagedReceiptsFolder(stagingFile) },
+      receiptKey,
     });
 
     let migrations;
@@ -501,12 +547,21 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 /**
  * The sentence File → Back up… adds about receipts ([8i]), from what writeBackup() returned: how many
  * went in, and how many DotAmi has a record of but couldn't find. Empty when there are none of either.
+ * `unreadable`: receipts this computer's key couldn't open, left out ([8i] § 9). `locked`: whether the
+ * backup has a passphrase; an unlocked one says its receipts aren't encrypted in it.
  */
-export function backupReceiptsNote(receipts, missingReceipts) {
+export function backupReceiptsNote(receipts, missingReceipts, { unreadable = 0, locked = true } = {}) {
   let note = receipts > 0 ? `It holds your ${plural(receipts, "receipt file")} too. ` : "";
+  if (receipts > 0 && !locked) {
+    note += `The receipt ${receipts === 1 ? "file in it isn't" : "files in it aren't"} encrypted either: anyone with the backup can open ${receipts === 1 ? "it" : "them"}. `;
+  }
   if (missingReceipts > 0) {
     const one = missingReceipts === 1;
     note += `${plural(missingReceipts, "receipt file")} DotAmi has a record of ${one ? "wasn't" : "weren't"} in the receipts folder, so ${one ? "it isn't" : "they aren't"} in the backup. `;
+  }
+  if (unreadable > 0) {
+    const one = unreadable === 1;
+    note += `${plural(unreadable, "receipt file")} couldn't be opened with this computer's key, so ${one ? "it isn't" : "they aren't"} in the backup (Settings → Data and backups says why). `;
   }
   return note;
 }
@@ -579,6 +634,52 @@ function measure(file, { missingOk = false } = {}) {
       bytes += n;
     }
     return { bytes, sha256: hash.digest("hex") };
+  } finally {
+    closeSync(fd);
+  }
+}
+
+/**
+ * One receipt's own bytes, for a backup: read whole through one handle (a receipt is at most 10 MB),
+ * and decrypted with `key` when the file is encrypted. "missing" when the file isn't there;
+ * "unreadable" when it can't be opened here (no key, another key, damaged, or bigger than any receipt).
+ */
+function receiptForBackup(file, name, key) {
+  let fd;
+  try {
+    fd = openSync(file, "r");
+  } catch (error) {
+    if (error?.code === "ENOENT") return "missing";
+    throw error;
+  }
+  let onDisk;
+  try {
+    const size = fstatSync(fd).size;
+    if (size > MAX_RECEIPT_BYTES + ENCRYPTED_OVERHEAD) return "unreadable";
+    onDisk = Buffer.alloc(size);
+    let got = 0;
+    while (got < size) {
+      const n = readSync(fd, onDisk, got, size - got, got);
+      if (n <= 0) return "unreadable";
+      got += n;
+    }
+  } finally {
+    closeSync(fd);
+  }
+  if (!isEncryptedReceipt(onDisk)) return onDisk.length <= MAX_RECEIPT_BYTES ? onDisk : "unreadable";
+  if (!key) return "unreadable";
+  try {
+    return decryptReceipt(onDisk, { key, id: receiptIdOfName(name) });
+  } catch {
+    return "unreadable";
+  }
+}
+
+/** Writes a new file, never over an existing one (the staging folder starts empty). */
+function writeNewFile(file, bytes) {
+  const fd = openSync(file, "wx");
+  try {
+    writeAll(fd, bytes);
   } finally {
     closeSync(fd);
   }

@@ -210,18 +210,50 @@ most 50 megapixels and 20,000 pixels on a side, read from its header before anyt
 
 | Who | How | What stops it | Status |
 |---|---|---|---|
-| Someone with the computer or its disk | reads `receipts/` | the operating system's disk encryption; a receipt copy is not encrypted by DotAmi | the person's choice; DotAmi says so |
-| Someone with a backup | opens it | a backup holds the receipts with the data file; the backup passphrase, when set, covers them (AES-256-GCM over the whole stream, its file list authenticated); an unlocked backup is readable by whoever holds it, as before | the person's choice; built (desktop-app.md § Backup and restore) |
+| Someone with the computer or its disk, an administrator account on it, or a copy of the data folder | reads `receipts/` | another standard Windows account is already kept out of the data folder by Windows' folder permissions; against an administrator account, a disk read outside Windows and a copy, **in the desktop app, each receipt file is encrypted** (AES-256-GCM, one key for the folder, kept only wrapped by Windows for the person's account; below and expense-records.md § 9); the operating system's disk encryption on top. **A copy run from source keeps receipts unencrypted**, and says so. The database beside them is not encrypted by DotAmi | encrypted: decided 2026-10-09, built in the desktop app; DotAmi says so either way |
+| Someone with a backup | opens it | a backup holds the receipts with the data file, decrypted so it restores on another computer; the backup passphrase, when set, covers them (AES-256-GCM over the whole stream, its file list authenticated); an unlocked backup is readable by whoever holds it, receipts included, and says so when it is made | the person's choice; built (desktop-app.md § Backup and restore) |
 | A receipt file crafted to attack whatever opens it | the person adds it | type decided by its first bytes (not its name or the browser's type), SVG and web pages refused, a size cap checked before the file is read, a pixel cap read from the header; the server never decodes, parses or runs it. Shown inside DotAmi only by what can't run a script: a picture by the browser's image decoder from a `blob:` address, a PDF drawn by pdf.js in a worker that can reach nothing, with no annotation layer and no scripting; the bytes are checked again (type, pixels) before drawing; never a frame or Chromium's PDF viewer (expense-records.md § 8) | built; browser tests with hostile files (`e2e/receipt-viewer.spec.ts`) |
 | A web page or program naming a file | tries `../` or a drive path through a receipt route | DotAmi names every stored file itself (a random id); the person's file name is never sent; the routes take a record's id, look it up in the database and build the name from the row; they answer only DotAmi's own page and sit behind the Host check like every route | built; `tests/expenses-receipts.spec.ts` tries `../`, a drive path and a type that isn't one of the four |
 | An agent or another program | adds, removes or reads a receipt | adding, removing and reading (`POST /api/expenses/receipt/file`) answer only DotAmi's own page (`Sec-Fetch-Site: same-origin`); the bytes come back as `application/octet-stream` with `nosniff` and a sandbox policy, and only after their size and SHA-256 match the row | built |
 | A model the Lens uses | reads receipts to propose records | the person's chosen model and permission level; a hosted model's company sees what it reads | when the Lens exists |
 | Someone who finds the data after "delete" | reads leftover bytes | the database is wiped (`VACUUM`); a removed receipt file is deleted, and DotAmi cannot promise its bytes are gone from the disk, which the Delete menu says | built |
 
+### Receipts encrypted at rest (decided 2026-10-09)
+
+The maintainer said yes (2026-10-09) to the question below this section had held: DotAmi encrypts the
+receipt files itself. The design, written before the code, is
+[expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09). In short:
+
+- **What it protects:** the receipt files against an administrator account on the same computer (not
+  one that runs a program as the person, and not a workplace domain's administrators), a copied or
+  synced data folder, and a disk read outside Windows, such as a stolen disk without disk encryption
+  (only as strongly as the Windows account's password, since Windows protects the key with it). Other
+  standard accounts on the computer are not where it adds much: Windows' folder permissions already
+  keep them out of the person's data folder.
+- **What it doesn't:** anything running as the person while DotAmi can open the files (a program the
+  person runs can ask Windows for the key as DotAmi does); **the database, which is not encrypted** and
+  holds every record in full and each receipt's description (encrypting it is a separate option for the
+  maintainer, about 8 to 12 days by my estimate, § 9); bytes left on the disk from before; and a backup
+  without a passphrase, whose receipts are readable (it says so).
+- **The key:** one random key per data folder, kept only in `receipts.key`, wrapped by Electron's
+  `safeStorage` (DPAPI on Windows, the Keychain on a Mac). Never in the database, a backup, the log or
+  anything sent. Losing it (a Windows profile reset, the folder moved to another account) loses the
+  receipts except those in a backup; Settings, *What DotAmi knows about you*, the note before adding a
+  receipt and the backup message say so. While receipts are encrypted, a key that can't be opened, a
+  deleted `receipts.key` or a key store that isn't available never leads to a new key or a green
+  "encrypted" line: nothing on the disk changes and the pages say so in amber.
+- **A copy run from source has no key store**, so its receipts stay unencrypted, and Settings and *What
+  DotAmi knows about you* say so; it never makes a key file of its own.
+- **Backups** decrypt the receipts so a backup restores on another computer; restoring encrypts them
+  with that computer's key; the format stays 2, and formats 1 and 2 still restore.
+- **Existing receipts** are encrypted once, at the first start of the version that ships this; a crash
+  part-way never loses one.
+
 ### Open (for the maintainer)
 
-- Whether DotAmi should offer to encrypt the `receipts/` folder itself; today it relies on disk
-  encryption, as it does for the database.
+- Whether to encrypt the database too, and whether to offer a "start a new key" button when receipts
+  are locked with a key that can't be opened (expense-records.md § 9, "Still open"). Encrypting the
+  `receipts/` folder itself was decided on 2026-10-09 (above).
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the
   information, the person decides. If it does, the CRA's wording is six years from the end of the
   last tax year a record relates to; indefinitely for long-term property, the share registry and

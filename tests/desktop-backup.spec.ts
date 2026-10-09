@@ -4,7 +4,7 @@
  * (format 1) still restores; a locked one stays unreadable without the passphrase; and every kind of bad file
  * is refused, with the live database left exactly as it was.
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -24,6 +24,7 @@ import {
 } from "../desktop/backup.mjs";
 import { RECEIPT_TYPES } from "../lib/expenses/receipts/types";
 import { migrate } from "../desktop/migrate.mjs";
+import { decryptReceipt, encryptedKeyId, encryptReceipt, isEncryptedReceipt, keyIdOf } from "../desktop/receipt-crypto.mjs";
 
 const migrations = path.join(path.resolve(__dirname, ".."), "prisma", "migrations");
 const PASSPHRASE = "correct horse";
@@ -564,7 +565,124 @@ describe("desktop backup — backups made before receipts were carried (format 1
   }, 120_000);
 });
 
+// ---------------------------------------------------------------------------------------------
+// [8i] Receipts encrypted at rest (expense-records.md § 9): a backup holds each receipt's own bytes, so
+// it restores on another computer whose key differs, and a restore encrypts them with that computer's
+// key as they are unpacked. The backup format is unchanged.
+
+describe("desktop backup — receipts encrypted at rest", () => {
+  const keyA = randomBytes(32);
+  const keyB = randomBytes(32);
+  const RECEIPT = "%PDF-1.4 an invented receipt, encrypted on computer A\n%%EOF\n";
+
+  /** Every file under `folder` that holds `text` in the clear. */
+  const holding = (folder: string, text: string) => allFiles(folder).filter((f) => readFileSync(f).indexOf(text) !== -1);
+
+  /** Computer A: a database with one record whose receipt file is encrypted with keyA, as the app writes it. */
+  function computerA(): { db: string; name: string } {
+    const db = makeDb(path.join(dir, "a", "dotami.db"), "computer-a");
+    const name = addReceipt(db, "a", "application/pdf", RECEIPT);
+    const file = path.join(dir, "a", "receipts", name);
+    writeFileSync(file, encryptReceipt(readFileSync(file), { key: keyA, id: id("a") }));
+    expect(holding(path.join(dir, "a", "receipts"), "an invented receipt")).toEqual([]);
+    return { db, name };
+  }
+
+  it("a backup from computer A restores on computer B, whose key differs: the same receipt, encrypted with B's key", () => {
+    const { db, name } = computerA();
+    for (const passphrase of ["", PASSPHRASE]) {
+      const backup = path.join(dir, `a${passphrase ? "-locked" : ""}.dotami-backup`);
+      const info = writeBackup(db, backup, { appVersion: "1", passphrase, receiptKey: keyA });
+      expect(info).toMatchObject({ receipts: 1, missingReceipts: 0, unreadableReceipts: 0 });
+      // The backup lists the receipt's own size and SHA-256, not the encrypted file's.
+      const { header } = readBackup(backup, { passphrase });
+      expect(header.format === 2 && header.files[1]).toEqual({
+        path: `receipts/${name}`,
+        bytes: RECEIPT.length,
+        sha256: createHash("sha256").update(RECEIPT, "latin1").digest("hex"),
+      });
+      // Without a passphrase the receipt is readable in the backup, as the backup message says; with one, it isn't.
+      expect(readFileSync(backup).indexOf("an invented receipt") !== -1).toBe(passphrase === "");
+
+      const computerB = path.join(dir, `b${passphrase ? "-locked" : ""}`);
+      const staging = path.join(computerB, "dotami.db.restoring");
+      expect(prepareRestore(backup, { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: keyB }).receipts).toBe(1);
+      // Staged encrypted, never in the clear on B's disk, even before the person confirms.
+      const staged = readFileSync(path.join(stagedReceiptsFolder(staging), name));
+      expect(isEncryptedReceipt(staged)).toBe(true);
+      expect(encryptedKeyId(staged)).toBe(keyIdOf(keyB));
+      expect(holding(computerB, "an invented receipt")).toEqual([]);
+
+      const target = path.join(computerB, "dotami.db");
+      applyRestore(staging, target, { backupDir: path.join(computerB, "backups") });
+      const restored = readFileSync(path.join(computerB, "receipts", name));
+      expect(decryptReceipt(restored, { key: keyB, id: id("a") }).toString("latin1")).toBe(RECEIPT);
+      // A's key can't open it: B's copy is B's own.
+      expect(() => decryptReceipt(restored, { key: keyA, id: id("a") })).toThrow();
+      expect(users(target)).toEqual(["computer-a"]);
+    }
+  }, 120_000);
+
+  it("a receipt this computer can't open is left out of the backup and counted, never copied as it is", () => {
+    const { db } = computerA();
+    for (const receiptKey of [null, keyB]) {
+      const backup = path.join(dir, "unreadable.dotami-backup");
+      expect(writeBackup(db, backup, { appVersion: "1", receiptKey })).toMatchObject({ receipts: 0, missingReceipts: 0, unreadableReceipts: 1 });
+      const { header } = readBackup(backup);
+      expect(header.format === 2 && header.files.map((f) => f.path)).toEqual(["dotami.db"]);
+      expect(readFileSync(backup).indexOf("DOTAMI-RECEIPT")).toBe(-1);
+    }
+  });
+
+  it("backups made before receipts were encrypted (format 2, plain and locked) restore, encrypted with this computer's key", () => {
+    // Made by the earlier writer (desktop/backup.mjs before this change), holding one plain receipt.
+    for (const [file, passphrase] of [
+      ["format-2-plain.dotami-backup", ""],
+      ["format-2-locked.dotami-backup", PASSPHRASE],
+    ] as const) {
+      const computer = path.join(dir, file);
+      const staging = path.join(computer, "dotami.db.restoring");
+      const prepared = prepareRestore(path.join(fixtures, file), { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: keyB });
+      expect(prepared).toMatchObject({ header: { format: 2, appVersion: "0.2.1" }, receipts: 1 });
+      const target = path.join(computer, "dotami.db");
+      applyRestore(staging, target, { backupDir: path.join(computer, "backups") });
+      const restored = readFileSync(path.join(computer, "receipts", `${id("7")}.pdf`));
+      expect(decryptReceipt(restored, { key: keyB, id: id("7") }).toString("latin1")).toContain("An invented receipt, kept before DotAmi encrypted receipts.");
+      expect(users(target)).toEqual(["made-before-encryption"]);
+      expect(query(target, `SELECT paidTo FROM "Expense"`)).toEqual([{ paidTo: "Example Print Shop" }]);
+    }
+    // With no key (a copy with no key store), the same backup restores its receipt as it was.
+    const plainComputer = path.join(dir, "no-key");
+    const staging = path.join(plainComputer, "dotami.db.restoring");
+    prepareRestore(path.join(fixtures, "format-2-plain.dotami-backup"), { migrationsDir: migrations, stagingFile: staging });
+    applyRestore(staging, path.join(plainComputer, "dotami.db"), { backupDir: path.join(plainComputer, "backups") });
+    expect(readFileSync(path.join(plainComputer, "receipts", `${id("7")}.pdf`), "latin1")).toContain("An invented receipt");
+  }, 120_000);
+
+  it("format 1 backups (no receipts) still restore when a key is given", () => {
+    const computer = path.join(dir, "format-1");
+    const staging = path.join(computer, "dotami.db.restoring");
+    const prepared = prepareRestore(path.join(fixtures, "format-1-plain.dotami-backup"), { migrationsDir: migrations, stagingFile: staging, receiptKey: keyB });
+    expect(prepared).toMatchObject({ header: { format: 1 }, receipts: 0 });
+    applyRestore(staging, path.join(computer, "dotami.db"), { backupDir: path.join(computer, "backups") });
+    expect(users(path.join(computer, "dotami.db"))).toEqual(["made-before-receipts"]);
+  });
+});
+
 describe("desktop backup — what the dialogs say about receipts", () => {
+  it("an unlocked backup says its receipts aren't encrypted in it, and receipts left out for the key are named", () => {
+    expect(backupReceiptsNote(2, 0, { locked: false })).toBe(
+      "It holds your 2 receipt files too. The receipt files in it aren't encrypted either: anyone with the backup can open them. ",
+    );
+    expect(backupReceiptsNote(1, 0, { locked: false })).toBe(
+      "It holds your 1 receipt file too. The receipt file in it isn't encrypted either: anyone with the backup can open it. ",
+    );
+    expect(backupReceiptsNote(1, 0, { locked: true })).toBe("It holds your 1 receipt file too. ");
+    expect(backupReceiptsNote(0, 0, { locked: false, unreadable: 3 })).toBe(
+      "3 receipt files couldn't be opened with this computer's key, so they aren't in the backup (Settings → Data and backups says why). ",
+    );
+  });
+
   it("Back up says how many receipts it holds, and names the ones it couldn't find", () => {
     expect(backupReceiptsNote(0, 0)).toBe("");
     expect(backupReceiptsNote(1, 0)).toBe("It holds your 1 receipt file too. ");

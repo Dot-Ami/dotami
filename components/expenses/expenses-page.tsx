@@ -17,12 +17,14 @@ import {
   type ExpenseDraft,
   type ExpenseFormValues,
 } from "@/lib/expenses/display";
+import type { ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import type { ExpenseView } from "@/lib/expenses/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { ExpenseForm } from "./expense-form";
 import { ExpenseReview, type ReviewRow } from "./expense-review";
 import { ReceiptLine } from "./receipt-line";
+import { ReceiptKeyProblem, ReceiptProtectionContext } from "./receipt-protection";
 
 /**
  * [8i] "Your expenses" (/expenses, or /expenses?idea=<id> from an idea's card): typing business
@@ -57,7 +59,14 @@ const titleOf = (r: { date: string; paidTo: string; whatFor: string }) => `${r.d
 /** Newest day first, then the most recently proposed. */
 const newestFirst = (a: ExpenseView, b: ExpenseView) => b.date.localeCompare(a.date) || b.proposedAt.localeCompare(a.proposedAt);
 
-export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
+export function ExpensesPage({
+  initialIdea,
+  receiptProtection = "source",
+}: {
+  initialIdea: string | null;
+  /** How this copy keeps receipt files, read on the server ([8i], lib/expenses/receipts/lock.ts): only the state. */
+  receiptProtection?: ReceiptLockState;
+}) {
   const today = useLocalToday();
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   const [records, setRecords] = useState<ExpenseView[] | null>(null);
@@ -269,6 +278,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
   ));
 
   return (
+    <ReceiptProtectionContext.Provider value={receiptProtection}>
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/ventures" tone="stone">
@@ -290,6 +300,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
             Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never
             picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice.
           </p>
+          <ReceiptKeyProblem />
         </header>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -469,6 +480,7 @@ export function ExpensesPage({ initialIdea }: { initialIdea: string | null }) {
         />
       ) : null}
     </div>
+    </ReceiptProtectionContext.Provider>
   );
 }
 
