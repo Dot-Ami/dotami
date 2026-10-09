@@ -686,8 +686,8 @@ available, or `receipts.key` is **missing**):
   decision: **restore a backup** (File → Restore from a backup… brings the receipts back under a new
   key; the unreadable key file moves into `backups/` beside the receipts folder it locks), or **delete
   the receipts** (the Delete menu's *Your receipts*), after which the next start makes a new key.
-  A button to start a new key while keeping the unreadable receipts is a question for the maintainer
-  (below), not built.
+  A third, **Start a new key**, sets the locked receipts aside and starts a new key at the next start
+  (added later the same day: § 10).
 - **A restore that saves a new key and then can't swap the data in** (the last step of a restore
   fails, and the old receipts folder goes back where it was) takes the new key back: the old key file
   returns from `backups/` (or, if there was none, the new one is removed), so the next start says the
@@ -811,6 +811,106 @@ restore's key never taken back fails two, and taken back over restored receipts 
 ### Still open (for the maintainer)
 
 - Whether to encrypt the database too (the option above, with its cost).
-- Whether to offer a button that starts a new key while receipts are locked with one that can't be
-  opened (giving up those receipts for good unless the old key comes back), or keep the two ways
-  forward above.
+- ~~Whether to offer a button that starts a new key while receipts are locked with one that can't be
+  opened.~~ Yes (the maintainer, 2026-10-09): § 10.
+
+## 10. Starting a new key, and the window during the first start (2026-10-09)
+
+The maintainer said yes (2026-10-09) to both: a button that starts a new key while receipts are locked
+with one that can't be opened, and a small window during the first start's wait for Windows' own key
+(§ 9, "The key"), which showed nothing for about ten seconds. This section was written before the code.
+
+### "Start a new key": what it does
+
+Before this, the only ways forward while the key can't be opened were putting `receipts.key` back,
+restoring a backup, or deleting the receipts (§ 9, "Losing the key"). The button is a fourth, for
+someone who has no backup and wants to go on adding receipts without deleting the old ones.
+
+- **Shown only while the key can't be opened and receipts are locked with it** (the server's lock
+  state `key-unreadable`): wherever the amber line "DotAmi can't open the key to your receipts." shows
+  today, on Settings → Data and backups, on *What DotAmi knows about you* (under the receipts folder)
+  and at the top of the Expenses page. Never while the key opens, never in a copy run from source, and
+  never with no key store and nothing encrypted (those keep receipts unencrypted; there is no key to
+  start again).
+- **Asked twice, with the cost said first.** The first press opens a warning that says exactly what
+  is given up: a new key can't open the receipts locked with the old one, so they are given up for
+  good unless the old key comes back (`receipts.key` found again, or the Windows profile that could open
+  it). It says that nothing is deleted, where the files will go, that the expense records stay, and
+  that a backup made before the key was lost is the way to get those receipts back inside DotAmi, so
+  restoring one is the better answer for someone who has one. The second press asks once more. Cancel at
+  either step changes nothing.
+- **Moved aside, never deleted.** The server moves every receipt file the next start would count as
+  locked (`desktop/receipt-key.mjs` `countLockedReceipts`: DotAmi's own names in `receipts/`, encrypted,
+  whatever key they name, unfinished writes included) into a new folder,
+  `backups/receipts-locked-<time>/`, and then the key file, `receipts.key`, into the same folder under
+  the same name, if it is there. One definition of "locked" for both, so after the move the next start
+  finds nothing locked. Plain receipt files (never encrypted) stay where they are: they open without a
+  key, and the next start encrypts them with the new key. Each move is a rename inside the data folder.
+  The key file goes last, so a move cut short (the computer switched off) leaves the key file beside
+  whatever was not moved yet; pressing the button again moves the rest into a second folder.
+- **Where they went is said**: the answer names the folder by its full path, and until DotAmi is
+  restarted, Settings, *What DotAmi knows about you* and the Expenses page say, in place of the amber
+  line, that a new key is started at the next start, with that path.
+- **The new key is made at the next start, by the desktop app**, exactly as for a data folder whose key
+  file is missing and holds no locked receipt (§ 9: "with the file missing, a new key is simply made").
+  The server can't make one: only the desktop app's main process can reach Windows' key store. So the
+  page asks the person to close DotAmi and open it again; until then, receipts can't be shown or added.
+  If Windows' key store still isn't available at that start, receipts are kept unencrypted, as on any
+  computer without one, and the pages say so.
+- **The expense records stay, with their receipt rows.** Each receipt that was set aside still shows on
+  its record; opening it says it was set aside when a new key was started, and in which folder, rather
+  than "isn't in the receipts folder any more". Removing it and adding the file again works as before.
+  The rows are kept on purpose: a receipt row holds the size and SHA-256 the file must match, so if the
+  old key ever comes back, the files can be put back and open again.
+- **Getting them back later** (no button for it, said here so it isn't lost): with DotAmi closed, move
+  the files in that folder back into `receipts/` and its `receipts.key` back beside the data file, over
+  the new one. They open again if Windows can open that key on this account. Receipts added under the
+  new key are then locked in turn, so first make a backup (File → Back up…), which holds those decrypted,
+  and restore it afterwards only if they are wanted more than the old ones. Not built into the app.
+- **The route** is `POST /api/expenses/receipt/new-key` with `{ "giveUp": true }`: page-only like the
+  agree and delete routes (`refuseUnlessFromAppPage`: an agent or another program gets 403 and nothing
+  moves), its body read through `readJsonWithLimit` (1 KB), rate-limited, and refused (409, nothing
+  moved) unless this server's lock is `key-unreadable`. Once the files are moved, the server's lock
+  becomes `new-key-at-restart` for the rest of its run, so a second press is refused and the pages say
+  what happened. The log gets the count only, never a name.
+- **Delete** (the Delete menu) doesn't reach these folders, like the receipts folders a restore moves
+  into `backups/`; *What DotAmi knows about you* says so, and how to remove them by hand.
+
+### The "Preparing DotAmi…" window
+
+The first start of a new data folder waits about ten seconds before its window opens (§ 9, "The key":
+the receipts' key is saved only once Electron's own key is in `Local State`). Nothing was on the screen
+in those seconds, which looks like DotAmi didn't start.
+
+- **A small window, "Preparing DotAmi…"**, saying that DotAmi is setting up the key that protects its
+  receipt files and that this takes about ten seconds. A local page shipped with the app
+  (`desktop/preparing.html`), with no script and a Content-Security-Policy of `default-src 'none'`, so
+  it can't load or reach anything; its close button is greyed out (closing it would end a start that is
+  half done), and it isn't the window the rest of the app runs in.
+- **Shown only when the start is about to wait**: the desktop app shows it when it is about to save a
+  new receipts key and `Local State` doesn't hold Electron's key yet (on Windows; a Mac doesn't wait).
+  An ordinary start opens the key that is there, saves nothing and so never shows it; a start that
+  makes a new key in a folder whose `Local State` is already written doesn't wait either.
+- **Closed as soon as the main window shows**, in the same step that shows it.
+- **Never left behind**: when the start fails anywhere after it opened, the window is closed before the
+  failure message is shown, and that message still shows (`fail()` in `desktop/main.mjs`).
+- `desktop/preparing.mjs` decides when it shows and closes (plain Node, unit-tested with a stand-in
+  window); `desktop/main.mjs` makes the real window.
+
+### Tests (each must fail when its rule is removed)
+
+- Setting aside: every locked file moved (another key's, an unfinished write's), plain files and files
+  DotAmi didn't name left alone, the key file moved last into the same folder, nothing deleted; after
+  it, the next start makes a new key; putting the folder's files and key back opens the old receipts
+  again (`tests/receipt-key.spec.ts`).
+- The route: refused for a caller that isn't DotAmi's page, for a body without `giveUp: true`, for a
+  body over the limit, and whenever the lock isn't `key-unreadable` (open key, from source, no key store,
+  already pressed), each with nothing moved; then the lock's new state and the pages' sentence with the
+  path (`tests/receipt-new-key.spec.ts`); a set-aside receipt opened from its record says where it is.
+- The browser: the button's warning flow, asked twice, cancel changing nothing, then the folder named on
+  the page and the files moved on the disk, on the production build started with the lock the desktop
+  app gives a key it can't open (`e2e/receipt-new-key.spec.ts`).
+- The desktop app: the button in the real app, then a restart that makes a new key; the preparing window
+  shown at a first start and closed when the main window shows, never at an ordinary start, and closed
+  before the failure message when the start fails (`e2e-desktop/desktop.spec.ts`), with its rules
+  unit-tested in `tests/desktop-preparing.spec.ts`.
