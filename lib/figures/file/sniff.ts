@@ -5,14 +5,27 @@
  * renamed "sales.xlsx", an old .xls, a macro workbook or a 2 GB export is turned away with a plain
  * sentence instead of being fed to a parser. The CONTENT decides the format; the name is only
  * consulted for the two extensions that can't be told apart by content alone (.xlsm / .xlsb), and
- * even then it can only refuse a file, never accept one.
+ * to word the refusal of a GnuCash database book (.gnucash), and even then it can only refuse a
+ * file, never accept one.
  *
  * Runs in the browser and keeps nothing: the bytes are never sent or stored.
  */
 
+import {
+  BOOK_TOO_BIG_MESSAGE,
+  GNUCASH_SQLITE_MESSAGE,
+  isSqlite,
+  looksLikeGnuCash,
+  MAX_BOOK_BYTES,
+} from "../books/detect";
 import { MAX_FILE_BYTES } from "./types";
 
-export type Sniffed = { ok: true; format: "csv" | "xlsx" } | { ok: false; error: string };
+/**
+ * "gnucash" is a GnuCash book ([8h]): the window hands it to the books reader
+ * (lib/figures/books/read-book.ts) instead of the spreadsheet readers.
+ */
+export type Sniffed =
+  { ok: true; format: "csv" | "xlsx" | "gnucash" } | { ok: false; error: string };
 
 // The refusals are exported because read-xlsx.ts says the same things when it looks inside a zip.
 export const MACROS_MESSAGE =
@@ -67,6 +80,17 @@ export function sniffFile(name: string, size: number, head: Uint8Array): Sniffed
   const lowerName = name.toLowerCase();
 
   if (size === 0) return refuse(EMPTY_MESSAGE);
+
+  // A GnuCash book (compressed, which is GnuCash's default, or plain XML) has a limit of its own:
+  // it is read in a background worker, so it may be bigger than a spreadsheet. So the book check
+  // comes before the spreadsheet's 10 MB limit, and a book over 50 MB is refused unread.
+  if (looksLikeGnuCash(head)) {
+    return size > MAX_BOOK_BYTES ? refuse(BOOK_TOO_BIG_MESSAGE) : { ok: true, format: "gnucash" };
+  }
+  // A GnuCash book saved as a database. Any SQLite file is refused below anyway (it holds NUL
+  // bytes); the name only picks the more useful sentence, it can't make a file readable.
+  if (isSqlite(head) && lowerName.endsWith(".gnucash")) return refuse(GNUCASH_SQLITE_MESSAGE);
+
   if (size > MAX_FILE_BYTES) return refuse(TOO_BIG_MESSAGE);
 
   // Macro-enabled and binary workbooks are zips (or OLE files) like any other; only the name says so.

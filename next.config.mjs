@@ -37,7 +37,11 @@ const nextConfig = {
   // Not `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
   // Windows they never match (node_modules/next/dist/build/collect-build-traces.js:503). The
   // build script removes and checks for private files instead.
-  ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop" } : {}),
+  //
+  // `images.unoptimized` turns Next's image optimiser off in the desktop build: its route
+  // (/_next/image) then answers 404 instead of loading sharp, the image library the desktop
+  // server leaves out (desktop/left-out.mjs). DotAmi uses no next/image and serves no images.
+  ...(desktopBuild ? { output: "standalone", distDir: ".next-desktop", images: { unoptimized: true } } : {}),
   experimental: {
     // middleware.ts makes Next copy every request body, and the copy is cut at this size (10 MiB by
     // default). A receipt of the maintainer's 10 MB cap travels as base64 in JSON, about 14 MB, so the

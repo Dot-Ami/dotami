@@ -21,12 +21,23 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    name and code only). A log that can't be opened (a read-only file, a full disk) is skipped, never
    a reason not to start. Until 0.2.1 the log was a stream that
    wrote in the background while start-up ran synchronously, so a start killed or failed before the
-   server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
+   server left no line at all (seen 2026-10-08). Then, **only if Delete left a "wipe pending" note**
+   beside the data file (`dotami.db.wipe-pending`: its wipe couldn't finish because the computer
+   was busy, the disk was full or it was switched off), the app finishes that wipe before the server
+   opens the file: it deletes the safety copies the note names (DotAmi's own `dotami-before-….db`
+   files in `backups/`, never through a link), rebuilds the file with `VACUUM`, and removes the note
+   (`desktop/wipe-pending.mjs`, `vacuumFile` in `desktop/migrate.mjs`). Whatever still fails stays
+   in the note for the next start and never stops this one; the log says which. An ordinary start,
+   with no note, does nothing here: free space in the file is normal after any edit, and rebuilding
+   the file on every start would slow it for nothing. Then `dotami.db` in that folder is created or
    brought up to date by `desktop/migrate.mjs` (below).
 4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
    DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
+   Nor does it carry the browser tests' rate-limit switch (`DOTAMI_E2E_RATE_LIMITS` is removed in
+   `serverEnv`, `desktop/main.mjs`), so the real rate limits always apply in the app, even when the
+   shell that started it set the switch (desktop-tested in `e2e-desktop/desktop.spec.ts`).
 5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a
@@ -39,7 +50,8 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    2026-10-05).
 6. **Updates** (installed app only) — see below.
 7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
-   ideas · Settings; View; Help → About · Check for updates · Source on GitHub.
+   ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·
+   Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
 
@@ -59,7 +71,9 @@ which is about 146 MB of engines for five kinds of database and reports usage to
   migrated must need nothing from the app. (Checked that the referee bites: with the migrator
   not marking a migration finished, Prisma's check fails the test on its own.)
 - **Refuses, untouched:** a database a newer DotAmi has migrated ("update the app first"), and one
-  where an update was left half-done.
+  where an update was left half-done. One exception: when a Delete left a "wipe pending" note, the
+  start finishes that wipe first (`VACUUM`, which keeps the contents and frees the deleted space), so
+  such a file is rebuilt before these checks refuse it.
 - **Backs up first:** before changing a database that already has data, a full copy goes to
   `backups/` in the data folder (`VACUUM INTO`, consistent even if the file is open).
 - **All or nothing per migration:** each runs in a transaction; SQLite undoes schema changes too,
@@ -100,6 +114,20 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   and `next-env.d.ts`, which `next build` rewrites for a new folder. (Not
   `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
   Windows they never match — `collect-build-traces.js:503`.)
+- **What the server leaves out** (`desktop/left-out.mjs`). Next's file tracer copies in every
+  package Next's own code could `require`, including ones only reached on paths DotAmi never takes.
+  The build deletes two families of them from the server's `node_modules`: **sharp** (Next's image
+  library, with its prebuilt libvips, LGPL-3.0-or-later; only Next's image optimiser loads it) and
+  **typescript** (only Next's build loads it: type checks, `tsconfig.json`, a `next.config.ts`), with
+  what only they pull in (`@img/*`, `detect-libc`, `@emnapi/runtime`, `source-map-support`,
+  `buffer-from`, `source-map`). The desktop build also sets `images.unoptimized` in
+  `next.config.mjs`, so `/_next/image` answers 404 instead of reaching for sharp; DotAmi uses no
+  `next/image` and serves no images. Before deleting, the build **fails if the app's own server
+  code requires one of them or a package that stays names one as a dependency it needs**; after,
+  it fails if any copy is left, nested ones included. Vercel's own builds leave sharp out the same
+  way (the `hasNextSupport` ignores in `collect-build-traces.js`). Measured on 0.2.1, Windows,
+  2026-10-08: server 89.1 MB → 59.4 MB, installed app 476.7 MB → 446.8 MB, installer
+  133.8 MB → 126.1 MB. A package to add to the list needs a reason there and a desktop test run.
 - `npm run desktop:package` — an unpacked app in `dist-desktop/out/win-unpacked/`.
   `npm run desktop:installer` — the installer, `DotAmi Setup <version>.exe` (about 126 MB), plus
   `latest.yml`. `desktop/package.mjs` stages only what ships: the main process, the migrator, the
@@ -107,6 +135,23 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   finished app for private files again. The server is copied in after electron-builder assembles
   the app, because electron-builder's file filters drop `node_modules` from both `files` and
   `extraResources` (both tried: the first package was 5 MB and couldn't have started).
+- **Third-party notices** (`desktop/notices.mjs`). The built code is minified and the server's
+  `node_modules` keeps only the files it runs, so the packages' own licence files don't travel with
+  them. `desktop:build` writes `THIRD-PARTY-NOTICES.txt` beside `server.js`: one entry per package
+  in the server's `node_modules`, per package in DotAmi's dependencies (what the page code bundles,
+  such as pdf.js and ofx-js), per package the app itself carries (electron-updater and what it pulls
+  in), the code Next.js carries inside itself, Tailwind's base styles, the two fonts and Electron —
+  each with its version, licence and the licence and notice files from the package, word for word
+  (third-party notice files such as TypeScript's `ThirdPartyNoticeText.txt` included). The packages
+  the server leaves out get no entry, even where a dependency names them (next names sharp as
+  optional); the list for a copy run from source keeps sharp, since npm installs it there with Next.
+  A package with no licence file stops the build until `LICENCE_ELSEWHERE` in that file says where
+  its terms are. `desktop:package` then refuses to package if any package in the app's or the
+  server's `node_modules` has no entry for its exact version, copies the file beside `DotAmi.exe`,
+  and checks that electron-builder put Electron's `LICENSE.electron.txt` and Chromium's
+  `LICENSES.chromium.html` there too (it copies both from Electron's download). The app shows the
+  file at Help → Licences (`/licences`). `npm run build` writes the same kind of list, without
+  Electron, for a copy run from source.
 - **Installs per user**, no administrator rights (`%LOCALAPPDATA%\Programs\DotAmi`). **Uninstalling
   leaves the data folder alone** — whether to offer deleting it is an open decision (settings doc,
   Part 4 §6). Not code-signed: Windows shows "Windows protected your PC" on first install (signing
@@ -198,7 +243,12 @@ to the data.
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.
+   Packaging writes the third-party notices from the packages it ships and stops if one has no
+   entry (see *Building and packaging*); a new dependency with no licence file stops it here, so
+   add that package to `LICENCE_ELSEWHERE` in `desktop/notices.mjs` in a PR first.
 4. Read the draft on GitHub (for a pre-release, tick *Set as a pre-release*), then **Publish**.
+   Before publishing, open the unpacked app's Help → Licences (or `THIRD-PARTY-NOTICES.txt` beside
+   `DotAmi.exe` in a test install) and check it lists the version's new packages.
    Installed apps pick it up the next time they start.
 
 ## Tests
@@ -209,7 +259,29 @@ to the data.
   and "nothing leaves this computer" although the app was started with a model key in its
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
-  "Desktop app (Windows)").
+  "Desktop app (Windows)"). Delete ([8d]): an idea and a statement holding a marker string, a backup
+  saved elsewhere and restored (which leaves a safety copy) → Delete with ideas, statements and the
+  safety copies ticked → after closing, the marker is in no byte of `dotami.db` or `backups/` → the
+  backup saved elsewhere still restores. And a wipe Delete couldn't finish: an ordinary start leaves
+  the deleted words in the file (the control), a start with the "wipe pending" note removes them and
+  the owed safety copy. The same run opens Help → Licences (Electron, the server's packages and
+  electron-updater are listed) and checks every package in the server's `node_modules` has an entry
+  for its exact version; on a packaged app, also that the notices, `LICENSE.electron.txt` and
+  `LICENSES.chromium.html` sit beside `DotAmi.exe`. Another test describes a venture in the app,
+  then checks the server (built or packaged) holds none of the packages `desktop/left-out.mjs`
+  names, its notices list none of them and nothing under the LGPL, and `/_next/image` answers 404.
+- `tests/desktop-wipe-pending.spec.ts` — which files count as safety copies, that a link out of
+  `backups/` is never followed, and that a start finishes a wipe only when the note is there.
+- `tests/desktop-left-out.spec.ts` — which packages are left out (and which look-alikes aren't),
+  the removal on an invented `node_modules` (nested copies, empty scope folders), the two checks
+  that stop the build, the desktop notices without them, and that `desktop/build.mjs` and
+  `next.config.mjs` still do their part. (Checked that it bites: eleven deliberate breaks, each
+  fails it.)
+- `tests/third-party-notices.spec.ts` — the notices generator and the packaging check on invented
+  `node_modules` folders (a missing package, a nested or scoped one, another version, a package with
+  no licence file), plus this checkout's own list: every dependency, every package the page code or
+  the style sheet imports, and what `desktop/package.mjs` copies in. (Checked that it bites: six
+  deliberate breaks, each fails it.)
 - `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
   refuse / back up / undo cases.
 - `tests/desktop-startup-log.spec.ts` — replays a start in its own process and kills it the moment

@@ -25,8 +25,11 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 } } }],
   webServer: {
-    command: `node e2e/prepare-db.mjs && npm run build && npx next start -H 127.0.0.1 -p ${PORT}`,
-    url: `http://127.0.0.1:${PORT}`,
+    command: `node e2e/port-free.mjs ${PORT} && node e2e/prepare-db.mjs && npm run build && npx next start -H 127.0.0.1 -p ${PORT}`,
+    // Ready when THIS run's server says so, not when something answers on the port: a server from
+    // another checkout's run can answer there while ours is still building, and the tests would
+    // then use that run's database (e2e/port-free.mjs has the whole story).
+    wait: { stdout: /Ready in \d/ },
     timeout: 240_000,
     reuseExistingServer: false,
     env: {
@@ -34,6 +37,11 @@ export default defineConfig({
       // Empty on purpose: the intake parser uses its deterministic keyword fallback.
       ANTHROPIC_API_KEY: "",
       NEXT_TELEMETRY_DISABLED: "1",
+      // The suite's own requests aren't counted against the app's rate limits; only a request that
+      // names its own bucket is, at the shipped limit (lib/api/rate-limit.ts; e2e/rate-limit.spec.ts
+      // checks both). Every browser test shares one client, so otherwise the suite's size alone
+      // trips the limits on a fast machine. Set only here: the desktop app removes it.
+      DOTAMI_E2E_RATE_LIMITS: "opt-in",
     },
   },
 });
