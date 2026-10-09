@@ -33,6 +33,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   give them. DotAmi doesn't say how a refund is taxed.
 - **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
   (or turn them down), exactly as before.
+- **A "Status column" for invoice lists** ([8c-3]) — invoice lists from FreshBooks, Sage Accounting
+  and Xero can include void, deleted and draft invoices, which were added up as sales. "Add from a
+  file" now has an optional Status column, pre-filled only when a column is headed exactly "Status"
+  or "Statut". Rows marked Void, Voided, Deleted or Draft (and, assumed for French files, Annulé,
+  Supprimé or Brouillon) are left out of the totals and listed with the reason, beside the other
+  left-out rows; any other status counts as before, only the chosen column is read, and choosing
+  "None" counts every row. Nothing about the column is stored.
 - **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
   compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
   account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
@@ -247,6 +254,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   for, with what to do: open the file in Excel, click Enable Editing if it asks, save it, and drop
   it again. DotAmi still never works a formula out itself, so nothing is guessed for that row. The
   same goes for a cell under a month in a report with the months across the top.
+- **A FreshBooks file with a summary on top opens on its real column names** ([8c-3]) — FreshBooks'
+  Invoice Details puts a short summary ("Total Invoiced, Total Paid" over two figures) above the
+  table, and "Add from a file" took the summary's two titles for the column names, with "Total
+  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary,
+  the one that names the date column. A sheet whose first row of names already says "Date" keeps
+  it, and a row you pick yourself is never moved.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading

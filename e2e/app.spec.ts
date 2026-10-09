@@ -1523,6 +1523,78 @@ test("a QuickBooks-shaped list: the Type column is pre-filled and the payment is
   expect(await figures()).toEqual(before);
 });
 
+test("an invoice list with a summary on top: the real column names are found, and void and draft rows are left out", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // FreshBooks-shaped (invented numbers): a title, a short summary of two titles over two figures,
+  // then the table. One invoice is a Draft and one is Void; the issued invoices come to $500.00.
+  const month = monthsAgo(3);
+  const day = (d: number) => `${month.y}-${two(month.m)}-${two(d)}`;
+  const lines = [
+    "Invoice Details",
+    "Total Invoiced,Total Paid",
+    "500.00,500.00",
+    "",
+    "Client,Invoice Number,Issue Date,Status,Subtotal",
+    `Invented Client A,0000001,${day(6)},Paid,400.00`,
+    `Invented Client B,0000002,${day(14)},Draft,250.00`,
+    `Invented Client C,0000003,${day(21)},Void,80.00`,
+    `Invented Client B,0000004,${day(27)},Paid,100.00`,
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "invoice_details.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The column names are found on row 5, under the summary, and the Status column is pre-filled.
+  await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
+    "Row 5",
+  );
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "C · Issue Date",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "E · Subtotal",
+  );
+  const status = card.getByLabel("Status column (optional)");
+  await expect(status.locator("option:checked")).toHaveText("D · Status");
+
+  // The month is the two issued invoices; the draft and the void are listed with their reason.
+  const table = card.getByRole("table", { name: "Monthly totals from invoice_details.csv" });
+  await expect(table.getByRole("row")).toHaveCount(1);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$500\\.00 2 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "2 rows marked void, deleted or draft, left out because a Status column is chosen (if they are sales of yours, choose None): rows 7, 8",
+    ),
+  ).toBeVisible();
+
+  // Clearing the select counts every row again, and says nothing is left out.
+  await status.selectOption("");
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$830\\.00 4 rows$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/left out because a Status column is chosen/)).toHaveCount(0);
+  await expect(card.getByText("Left out", { exact: true })).toHaveCount(0);
+
+  // Choosing the column again leaves them out again.
+  await status.selectOption({ label: "D · Status" });
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$500\\.00 2 rows$`) }),
+  ).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
 test("an .xlsx is read in the window; a renamed picture and a macro workbook are refused", async ({
   page,
 }) => {

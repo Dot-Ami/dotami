@@ -120,6 +120,10 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). While a restore is being checked,
   the backup's receipts are unpacked into a staging folder beside the data file
   (`restore-staging.db-receipts`), removed if the person cancels or the backup is refused.
+- ***Add from a file*'s Status column ([8c-3]) keeps nothing.** It is a pick on the panel only,
+  like the Type column: no new table, column, file or browser-storage key, and only the monthly
+  totals the person agrees to are kept, as before
+  ([`lib/figures/file/totals.ts`](../lib/figures/file/totals.ts)).
 - **A "wipe pending" note beside the data file, only while a Delete's wipe is unfinished ([8d]).**
   Delete writes `dotami.db.wipe-pending` (named after the data file) just before it deletes and
   wipes, and removes it once the wipe and any safety copies it was deleting are done. It holds the

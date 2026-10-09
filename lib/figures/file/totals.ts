@@ -15,6 +15,7 @@ import type {
   ColumnChoice,
   MonthTotal,
   SkippedRow,
+  SkipReason,
   TotalsResult,
 } from "./types";
 
@@ -41,6 +42,65 @@ const PAYMENT_TYPES = new Set(["payment", "deposit", "paiement", "dépôt"]);
 /** True when a type cell names a payment or deposit (see PAYMENT_TYPES). */
 export function isPaymentType(cell: Cell | undefined): boolean {
   return typeof cell === "string" && PAYMENT_TYPES.has(cell.trim().toLowerCase());
+}
+
+/**
+ * What an invoice's status cell says when the invoice was never a sale: voided, deleted or never
+ * sent. Matched on the whole cell, trimmed, ignoring case and accents, so "Draft sent to client" or
+ * "Not void" is not one, and only the column the person chose is ever read: a memo that happens to
+ * say "Draft" can't hide a sale.
+ *
+ * Where each word comes from (see tests/fixtures/packages/ and docs/connectors/practice-files.md):
+ *  - "Draft" is published: FreshBooks' Invoice Details help page names it as a status (read 2026-10-08).
+ *  - "Void" (Sage Accounting) and "Voided" (Xero) are ASSUMED. Sage's help page says to void an
+ *    invoice rather than delete it (read 2026-10-08), and Xero's says its Receivable Invoice Detail
+ *    report includes voided and deleted invoices by default (as of 2026-10-06), but neither page
+ *    shows the word the status cell holds.
+ *  - "Deleted" is ASSUMED the same way, from that Xero page.
+ *  - The French words (annulé / annulée, supprimé / supprimée, brouillon) are ASSUMED: no French
+ *    export has been seen, so they are the obvious translations, nothing more. They are kept
+ *    without accents here because the cell is compared with its accents taken off ("Annulée" and
+ *    "annulee" both match).
+ */
+const LEFT_OUT_STATUSES = new Set([
+  "void",
+  "voided",
+  "deleted",
+  "draft",
+  "annule",
+  "annulee",
+  "supprime",
+  "supprimee",
+  "brouillon",
+]);
+
+/** A cell's text trimmed, lower-cased and with its accents taken off ("Annulée" -> "annulee"). */
+function plainWord(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+/** True when a status cell says the invoice is void, deleted or a draft (see LEFT_OUT_STATUSES). */
+export function isLeftOutStatus(cell: Cell | undefined): boolean {
+  return typeof cell === "string" && LEFT_OUT_STATUSES.has(plainWord(cell));
+}
+
+/**
+ * The shared "which rows count" rule: why the person's optional columns leave a row out, or null
+ * when they don't. Both columns are optional and each reads only its own cell. A status column is
+ * checked first, so a voided payment is listed as void (it is neither a sale nor money received).
+ * Called before the date and amount are read, so a row left out here is told so even when its
+ * date or amount couldn't be read.
+ */
+export function leftOutByColumns(row: Cell[], choice: ColumnChoice): SkipReason | null {
+  if (choice.statusColumn != null && isLeftOutStatus(row[choice.statusColumn])) {
+    return "void-or-draft";
+  }
+  if (choice.typeColumn != null && isPaymentType(row[choice.typeColumn])) return "payment";
+  return null;
 }
 
 function isEmpty(cell: Cell | undefined): boolean {
@@ -101,11 +161,13 @@ export function monthlyTotals(
       continue;
     }
 
-    // In QuickBooks a Payment or Deposit is usually money received for a sale on another row (a
-    // Deposit can also be the only record of a sale — the screen's hint says so). Leave it out,
-    // whatever else is wrong with the row, so the person is told why rather than "no date".
-    if (choice.typeColumn != null && isPaymentType(row[choice.typeColumn])) {
-      skip("payment");
+    // The optional Status and Type columns come first. A void, deleted or draft invoice was never
+    // a sale; in QuickBooks a Payment or Deposit is usually money received for a sale on another
+    // row (a Deposit can also be the only record of a sale — the screen's hint says so). Either is
+    // left out whatever else is wrong with the row, so the person is told why rather than "no date".
+    const byColumns = leftOutByColumns(row, choice);
+    if (byColumns !== null) {
+      skip(byColumns);
       continue;
     }
 

@@ -110,7 +110,13 @@ function localToday(): string {
 }
 
 /** The pickers' value for "nothing chosen yet". */
-const NO_PICKS: Picks = { headerRow: null, dateColumn: null, amountColumn: null, typeColumn: null };
+const NO_PICKS: Picks = {
+  headerRow: null,
+  dateColumn: null,
+  amountColumn: null,
+  typeColumn: null,
+  statusColumn: null,
+};
 const NO_ACROSS_PICKS: AcrossPicks = { monthsRow: null, addUp: "every-row" };
 
 /** The most rows offered as "take only this row" for a months-across table. */
@@ -231,6 +237,11 @@ function leftOutText(reason: SkipReason, n: number): string {
       return n === 1
         ? "1 row typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks that is money received for a sale listed on another row; if it is a sale of yours, choose None)"
         : `${n} rows typed Payment or Deposit, left out because a Type column is chosen (in QuickBooks those are money received for sales listed on other rows; if they are sales of yours, choose None)`;
+    case "void-or-draft":
+      // Said the same careful way as the payment line: what was done, why, and how to undo it.
+      return n === 1
+        ? "1 row marked void, deleted or draft, left out because a Status column is chosen (if it is a sale of yours, choose None)"
+        : `${n} rows marked void, deleted or draft, left out because a Status column is chosen (if they are sales of yours, choose None)`;
     case "not-over":
       return `${n} ${rowWord(n)} in a month that isn't over yet`;
   }
@@ -243,6 +254,7 @@ const LEFT_OUT_ORDER: SkipReason[] = [
   "bad-amount",
   "unsaved-formula",
   "total",
+  "void-or-draft",
   "payment",
   "not-over",
   "blank",
@@ -1086,6 +1098,33 @@ export function FileDrop({
                       column, rows typed Payment or Deposit are left out so the sale isn&apos;t
                       counted twice. That also leaves out a Deposit that is the only record of a sale,
                       so check the left-out list. Choose None to count every row.
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor={`${uid}-status`} className={FIELD_LABEL}>
+                      Status column (optional)
+                    </label>
+                    <select
+                      id={`${uid}-status`}
+                      value={picks.statusColumn ?? ""}
+                      onChange={(e) => {
+                        setPicks({ ...picks, statusColumn: asNumber(e.target.value) });
+                        setGuessed(false);
+                      }}
+                      aria-describedby={`${uid}-status-hint`}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="">None — count every row</option>
+                      {columns.map((c) => (
+                        <option key={c.index} value={c.index}>
+                          {c.letter} · {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p id={`${uid}-status-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                      Invoice lists can include void, deleted and draft invoices, which were never
+                      sales. With a status column, rows marked Void, Voided, Deleted or Draft are left
+                      out and listed. Choose None to count every row.
                     </p>
                   </div>
                 </>
