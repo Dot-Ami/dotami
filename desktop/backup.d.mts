@@ -2,6 +2,8 @@
 export const BACKUP_EXTENSION: "dotami-backup";
 export const RECEIPTS_FOLDER: "receipts";
 export const RECEIPT_EXTENSIONS: Readonly<Record<"image/jpeg" | "image/png" | "image/webp" | "application/pdf", string>>;
+/** True for a name DotAmi gives a receipt file: 32 hex characters and one of RECEIPT_EXTENSIONS. */
+export function isReceiptFileName(name: string): boolean;
 
 export type BackupErrorKind = "not-a-backup" | "damaged" | "needs-passphrase" | "cannot-decrypt" | "newer-app" | "changed-while-writing";
 

@@ -63,6 +63,9 @@ export const RECEIPT_EXTENSIONS = Object.freeze({ "image/jpeg": "jpg", "image/pn
 
 /** A file DotAmi named in the receipts folder: 32 random hex characters and one of the extensions. */
 const RECEIPT_NAME = new RegExp(`^[0-9a-f]{32}\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
+
+/** True for a name DotAmi gives a receipt file (used by the first-start encryption, desktop/receipt-crypto.mjs). */
+export const isReceiptFileName = (name) => RECEIPT_NAME.test(name);
 /** The receipt cap (10 MB, the maintainer's decision); a backup that lists a bigger receipt is not one of ours. */
 const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
 
