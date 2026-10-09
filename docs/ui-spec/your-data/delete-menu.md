@@ -21,6 +21,9 @@ all at once only, and one cited line on keeping business records.
      progress, figure and expense record (they belong to an idea; the database deletes them with it).
    - **Your figures** — every figure, in every state; cards go back to the estimates.
    - **Your expense records** — every record, in every state.
+   - **Your bank and card accounts** (added 2026-10-08, [8g]) — every account name, in use or taken
+     back, with its days. Figures read from their statements stay; "Always allow every account" goes
+     with Your settings.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
    - **Your settings** — every saved choice goes back to its default.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
@@ -72,7 +75,7 @@ sentences are in `DELETE_MENU`.
 ## State touched (field names only)
 
 Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`,
-`Expense` rows of those ideas), `Figure`, `Expense`, `PersonStatement`, `Setting`. Never `User`
+`Expense` rows of those ideas), `Figure`, `Expense`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
 (`KEPT_BY_DELETE`). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
 is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
 

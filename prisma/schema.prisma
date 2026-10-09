@@ -235,3 +235,27 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+/// [8g] A bank or card account the person allowed DotAmi to read statements from, listed under the
+/// person's own name for it ("Business chequing", "Visa ending 1234"; lib/figures/bank/accounts.ts
+/// says which names are accepted). Never an account or card number, a bank, branch or transit
+/// number, a file name, or a hash of any of those: an account number has so few possible values
+/// that a hash of it can be reversed by trying them all. Nothing links to this table yet — which
+/// figure came from which account waits on a later decision — so taking an account back
+/// (`retiredAt`) leaves the figures read from its statements alone. Any later link INTO this table
+/// must be hand-written SQL with a test that seeded data survives (the desktop migrator runs with
+/// foreign keys on).
+model SourceAccount {
+  id        String    @id @default(cuid())
+  /// The person's own name for the account, as they typed it (trimmed).
+  name      String
+  /// "once" | "always" (lib/figures/bank/accounts.ts ACCOUNT_ALLOWANCES): which button the person
+  /// pressed on the warning. "once" shows the warning again before the next statement.
+  allowance String
+  /// When the person last agreed to the warning for this account.
+  agreedAt  DateTime
+  /// When the person took it back in Settings; null while it is in use. The row stays (its name
+  /// and dates) until Delete removes every account.
+  retiredAt DateTime?
+  createdAt DateTime  @default(now())
+}

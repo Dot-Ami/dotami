@@ -59,6 +59,11 @@ async function seed(prisma: PrismaClient) {
   await addTypedStatement(prisma, { text: `statement ${MARKER}`, saidAt: "2026-09-01" });
   await addTypedStatement(prisma, { text: "a second statement", saidAt: "2026-09-02" });
   await writeSetting(prisma, "figure-reminders", { cadences: ["yearly"], ideaIds: [a] });
+  // [8g] A bank account in use and one taken back. Nothing links to them, so no idea takes them along.
+  await prisma.sourceAccount.create({ data: { name: "Business chequing", allowance: "always", agreedAt: new Date("2026-09-01T00:00:00Z") } });
+  await prisma.sourceAccount.create({
+    data: { name: "Visa ending 1234", allowance: "once", agreedAt: new Date("2026-09-02T00:00:00Z"), retiredAt: new Date("2026-09-03T00:00:00Z") },
+  });
   for (const ventureId of [a, b]) {
     await prisma.figure.create({
       data: {
@@ -256,6 +261,23 @@ describe("deleteData", () => {
     const result = await deleteData(prisma, { kinds: ["figures", "expenses"], seen: await seenFor(prisma, ["figures", "expenses"]) });
     expect(result.status).toBe("deleted");
     expect(await countAll(prisma)).toEqual({ ...before, Figure: 0, Expense: 0 });
+  });
+
+  it("deletes every bank and card account, the taken-back ones too, and leaves figures, ideas and settings", async () => {
+    const { prisma, folder } = makeDb("bank-accounts");
+    await seed(prisma);
+    // The person's own words for an account, marked, so the wipe can be checked in the file's bytes.
+    await prisma.sourceAccount.create({ data: { name: `Savings ${MARKER}`, allowance: "every", agreedAt: new Date("2026-09-04T00:00:00Z") } });
+    const before = await countAll(prisma);
+    expect(before.SourceAccount).toBe(3);
+
+    const result = await deleteData(prisma, { kinds: ["bank-accounts"], seen: await seenFor(prisma, ["bank-accounts"]) });
+    expect(result).toEqual({ status: "deleted", deleted: { SourceAccount: 3 }, left: { SourceAccount: 0 }, wiped: true });
+    expect(await countAll(prisma)).toEqual({ ...before, SourceAccount: 0 });
+    // Only the account's name carried the marker in this test's extra row; the seed's other marked
+    // rows (notes, statements, figures) are still there, so look for the account's own words.
+    await prisma.$disconnect();
+    expect(readFileSync(path.join(folder, "dotami.db")).includes(Buffer.from(`Savings ${MARKER}`))).toBe(false);
   });
 
   it("deletes nothing when the counts changed since the person looked (an import or an agent added one)", async () => {

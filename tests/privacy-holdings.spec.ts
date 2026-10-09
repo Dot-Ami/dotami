@@ -110,6 +110,11 @@ beforeAll(async () => {
       agreedAt: agreed,
     },
   });
+
+  // [8g] Two bank and card accounts, one taken back. The page counts them (both rows are in the
+  // file) and shows no name: the names are the person's words, and Settings is where they're listed.
+  await db.sourceAccount.create({ data: { name: "Example business chequing", allowance: "always", agreedAt: agreed } });
+  await db.sourceAccount.create({ data: { name: "Example Visa ending 4321", allowance: "once", agreedAt: agreed, retiredAt: agreed } });
 }, 180_000);
 
 afterAll(async () => {
@@ -151,8 +156,19 @@ describe("readHoldings on a seeded database", () => {
       Setting: 1,
       Figure: 7,
       Expense: 1,
+      SourceAccount: 2,
     });
     expect(h.ideasWithNotes).toBe(1);
+  });
+
+  it("counts bank and card accounts, the taken-back ones too, but carries none of their names", async () => {
+    const h = await readHoldings(seeded.prisma, seededToday);
+    const card = h.tables.find((t) => t.entry.model === "SourceAccount")!;
+    expect(card.count).toBe(2);
+    expect(card.entry.name).toBe("Your bank and card accounts");
+    const everything = JSON.stringify(h);
+    expect(everything).not.toContain("Example business chequing");
+    expect(everything).not.toContain("4321");
   });
 
   it("counts expense records but carries none of their words or amounts (this page only counts them)", async () => {

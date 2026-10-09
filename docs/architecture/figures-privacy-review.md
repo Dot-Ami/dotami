@@ -43,6 +43,25 @@ details for anything. All of it in the one database file on the person's compute
    `readJsonWithLimit`. *Forget this source* isn't built.
 5. **Every write route** goes through `readJsonWithLimit` (cross-site, JSON-only and size checks).
 
+## Bank and card accounts ([8g], built 2026-10-08, no screen adds one yet)
+
+The `SourceAccount` table holds, per account, the person's own name for it, which of the statement
+warning's three buttons they pressed, the day they agreed and the day they took it back. **Not
+stored:** an account, card, bank, branch or transit number, a file name, or a hash of any of them (an
+account number has so few possible values that a hash can be reversed by trying them all). The name
+is the only way in for digits, so it is checked on the server: "ending" plus exactly four digits at
+the end is allowed (the maintainer's decision, 2026-10-07), and any other run of four or more digits
+is refused, counting digits split by spaces, hyphens, dots or slashes as one run, digits of any
+script, and refusing hidden characters (`lib/figures/source-account-name.ts`). The routes
+(`/api/figures/bank-sources`, `/retire`) answer only DotAmi's own page, read their bodies through
+`readJsonWithLimit`, refuse a field they don't know (so a number can't ride along unread), and log
+only an error's name and code. Adding needs the *Bank and card records* switch on; the switch stays
+planned until the statement screen exists, so today nothing can add an account. The names are
+counted on *What DotAmi knows about you*, never shown there, and Delete has a box for them. Who can
+read them: anyone who can open the data file (disk encryption is the answer, as for figures).
+Nothing links a figure to its account yet; when something does, that link must be hand-written SQL
+with a test that seeded data survives.
+
 ## Open
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the

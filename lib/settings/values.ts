@@ -151,7 +151,11 @@ export function isLiveSettingId(id: unknown): id is LiveSettingId {
  * page — for the reminders, the fallback is "no reminder", the quiet direction.
  */
 export function valueFromStored<K extends LiveSettingId>(id: K, stored: string | null): SettingValues[K] {
-  const def = SETTING_DEFINITIONS[id] as SettingDefinition<SettingValues[K]>;
+  return readStoredWith(SETTING_DEFINITIONS[id] as SettingDefinition<SettingValues[K]>, stored);
+}
+
+/** valueFromStored for a definition in hand (one not registered above yet, such as BANK_RECORDS_DEFINITION). */
+export function readStoredWith<V extends object>(def: SettingDefinition<V>, stored: string | null): V {
   if (stored === null) return structuredClone(def.fallback);
   try {
     const patch = def.parsePatch(JSON.parse(stored));
@@ -161,3 +165,50 @@ export function valueFromStored<K extends LiveSettingId>(id: K, stored: string |
   }
   return structuredClone(def.fallback);
 }
+
+/**
+ * [8g] What the saved value of "Bank and card records" will hold.
+ *
+ * The setting is still `planned` in lib/settings/catalog.ts: it is the statement screen (the next
+ * step) that makes the switch do anything, and until that lands nobody is shown a switch that does
+ * nothing. This definition is ready for that step, which adds it to SettingValues and
+ * SETTING_DEFINITIONS above in the same change that flips the catalog row to live
+ * (tests/settings-catalog.spec.ts refuses a registered definition for a setting that isn't live).
+ * Until then lib/figures/bank/accounts.ts reads the setting as off, whatever the file holds.
+ *
+ *  - on: the switch on the Settings page. Off to start; turning it on shows the catalog's warning.
+ *  - everyAccountSince: when the person pressed "Always allow every account" on a statement's
+ *    warning, as an ISO date-time, or null. While it is set, no account's statement shows the
+ *    warning. Settings lists it with its date and can take it back.
+ */
+export interface BankRecordsValue {
+  on: boolean;
+  everyAccountSince: string | null;
+}
+
+/** A date-time as Date.prototype.toISOString writes it, and a real one (not 2026-02-30). */
+function isIsoInstant(raw: unknown): raw is string {
+  if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(raw)) return false;
+  const t = new Date(raw);
+  return !Number.isNaN(t.getTime()) && t.toISOString() === raw;
+}
+
+export const BANK_RECORDS_DEFINITION: SettingDefinition<BankRecordsValue> = {
+  fallback: { on: false, everyAccountSince: null },
+  parsePatch(raw) {
+    if (!isPlainObject(raw)) return null;
+    const out: Partial<BankRecordsValue> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (key === "on") {
+        if (typeof value !== "boolean") return null;
+        out.on = value;
+      } else if (key === "everyAccountSince") {
+        if (value !== null && !isIsoInstant(value)) return null;
+        out.everyAccountSince = value;
+      } else {
+        return null;
+      }
+    }
+    return out;
+  },
+};

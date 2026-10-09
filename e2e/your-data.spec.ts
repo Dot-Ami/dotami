@@ -4,6 +4,9 @@
  * Runs after e2e/app.spec.ts in the same throwaway database, so it makes its own figure and
  * statement rather than relying on what the earlier tests left, and asserts only on those.
  */
+import path from "node:path";
+
+import { PrismaClient } from "@prisma/client";
 import { expect, test, type Page } from "@playwright/test";
 
 import { SENT_ELSEWHERE, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
@@ -306,6 +309,64 @@ test("Delete: when the wipe couldn't run, the page says the space isn't wiped ye
   await done.getByRole("button", { name: "Try the wipe again" }).click();
   await expect(done).toContainText("Their space in the data file is wiped");
   await expect(done.getByRole("button", { name: "Try the wipe again" })).toBeHidden();
+});
+
+/**
+ * [8g] The e2e database, opened from the test itself. Nothing in the app adds a bank or card account
+ * yet (the statement screen that asks is the next step), so the test puts them in the file the way
+ * that screen will.
+ */
+async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
+  const file = path.join(process.cwd(), "prisma", "e2e.db").split(path.sep).join("/");
+  const db = new PrismaClient({ datasourceUrl: `file:${file}` });
+  try {
+    return await fn(db);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+const ACCOUNTS_BOX = "Your bank and card accounts";
+
+test("Delete: bank and card accounts have their own box, the taken-back ones too, and figures stay", async ({ page }) => {
+  // With no account, the box is there and has nothing to delete.
+  let removing = await openDeleteMenu(page);
+  const box = () => removing.getByRole("listitem").filter({ has: page.getByLabel(ACCOUNTS_BOX) });
+  await expect(box()).toContainText("Nothing to delete");
+  await expect(removing.getByLabel(ACCOUNTS_BOX)).toBeDisabled();
+
+  // One account in use and one taken back, as the statement screen and Settings will leave them.
+  await withE2eDb(async (db) => {
+    await db.sourceAccount.create({ data: { name: "Example chequing", allowance: "always", agreedAt: new Date() } });
+    await db.sourceAccount.create({ data: { name: "Example Visa ending 4321", allowance: "once", agreedAt: new Date(), retiredAt: new Date() } });
+  });
+  await page.goto("/your-data");
+  expect(await tableCount(page, ACCOUNTS_BOX)).toBe(2);
+  const figuresBefore = await tableCount(page, "Your figures");
+  // The page counts the accounts and shows no name: Settings is where they are listed.
+  await expect(page.locator("main")).not.toContainText("Example chequing");
+
+  removing = await openDeleteMenu(page);
+  await expect(box()).toContainText(`${ACCOUNTS_BOX}: 2`);
+  await expect(box()).toContainText("including the ones you took back");
+  await expect(box()).toContainText("Figures read from their statements stay");
+  await box().getByText("Learn more").click();
+  await expect(box()).toContainText("“Always allow every account” is a saved choice, so it goes with “Your settings”");
+
+  await removing.getByLabel(ACCOUNTS_BOX).check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  const first = page.getByRole("dialog", { name: "Delete these?" });
+  await expect(first).toContainText(`${ACCOUNTS_BOX}: 2 records`);
+  await first.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
+  const done = removing.getByRole("status");
+  await expect(done).toContainText(`${ACCOUNTS_BOX}: 2 records deleted, 0 left`);
+  await expect(done).toContainText("Their space in the data file is wiped");
+
+  await page.reload();
+  expect(await tableCount(page, ACCOUNTS_BOX)).toBe(0);
+  expect(await tableCount(page, "Your figures")).toBe(figuresBefore);
+  expect(await withE2eDb((db) => db.sourceAccount.count())).toBe(0);
 });
 
 test("Delete: tick ideas and statements, see what goes with them, say yes twice, and they are gone after a reload", async ({ page }) => {

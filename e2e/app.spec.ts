@@ -6,7 +6,9 @@
  * docs/architecture/settings-and-edge-cases.md.
  */
 import http from "node:http";
+import path from "node:path";
 
+import { PrismaClient } from "@prisma/client";
 import { expect, test, type Download, type Locator, type Page, type Worker } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
@@ -383,6 +385,82 @@ test("Remind me about this idea: off until turned on, per idea, and still on aft
   await expect(switchOf(salish)).not.toBeChecked();
   await page.goto("/settings");
   await setBox(page, boxes.quarterly, false);
+});
+
+/**
+ * [8g] The e2e database, opened from the test itself. Nothing in the app can add a bank or card
+ * account yet (the statement screen that asks is the next step, and the route refuses while the
+ * setting is planned), so the test puts one in the file the way that screen will.
+ */
+async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
+  const file = path.join(process.cwd(), "prisma", "e2e.db").replace(/\\/g, "/");
+  const db = new PrismaClient({ datasourceUrl: `file:${file}` });
+  try {
+    return await fn(db);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+test("Bank and card records: still planned with no switch; an account is listed with its day and can be taken back", async ({ page }) => {
+  const row = () =>
+    page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Bank and card records", level: 3, exact: true }) });
+
+  // No account yet: the row is a plan, with its warning and no control at all.
+  await page.goto("/settings");
+  await expect(row()).toContainText("Not built yet · [8g]");
+  await expect(row()).toContainText("Before DotAmi reads a bank or card statement");
+  await expect(row().locator("input, button, select")).toHaveCount(0);
+
+  // A program can't list or add accounts; even DotAmi's own page can't add one while the setting is planned.
+  expect((await page.request.get("/api/figures/bank-sources")).status()).toBe(403);
+  expect((await page.request.post("/api/figures/bank-sources", { data: { allow: "always", name: "Example chequing" } })).status()).toBe(403);
+  const fromPage = await page.evaluate(async () => {
+    const res = await fetch("/api/figures/bank-sources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allow: "always", name: "Example chequing" }),
+    });
+    return { status: res.status, body: (await res.json()) as { error: string } };
+  });
+  expect(fromPage).toEqual({ status: 409, body: { error: "Bank and card records is off in Settings, so no account can be added." } });
+
+  // An account in the file, agreed to today: Settings lists it under its name, with the day.
+  const agreed = new Date();
+  const today = agreed.toLocaleDateString("en-CA");
+  const account = await withE2eDb((db) => db.sourceAccount.create({ data: { name: "Example chequing", allowance: "always", agreedAt: agreed } }));
+  try {
+    await page.reload();
+    const list = row().getByRole("region", { name: "Your bank and card accounts" });
+    await expect(list).toContainText("Example chequing");
+    await expect(list).toContainText(`Always allowed since ${today}`);
+    // Still no switch: the only controls in the row are the account's own.
+    await expect(row().locator("input, select")).toHaveCount(0);
+
+    // Take back asks first; "Keep it" changes nothing.
+    await list.getByRole("button", { name: "Take back Example chequing" }).click();
+    const ask = list.getByRole("group", { name: "Take back Example chequing?" });
+    await expect(ask).toContainText("Figures already read from it stay.");
+    await ask.getByRole("button", { name: "Keep it" }).click();
+    await expect(ask).toBeHidden();
+    await expect(list).toContainText("Example chequing");
+
+    // "Yes, take it back": gone from the list, and still gone after a reload.
+    await list.getByRole("button", { name: "Take back Example chequing" }).click();
+    const answered = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/figures/bank-sources/retire");
+    await list.getByRole("group", { name: "Take back Example chequing?" }).getByRole("button", { name: "Yes, take it back" }).click();
+    expect((await answered).status()).toBe(200);
+    await expect(list.getByRole("status")).toHaveText("Taken back: Example chequing.");
+    await expect(list).toContainText("No accounts in your list.");
+    await page.reload();
+    await expect(row()).toContainText("Not built yet · [8g]");
+    await expect(row().getByRole("region", { name: "Your bank and card accounts" })).toHaveCount(0);
+    // Taken back, not deleted: the row stays in the file, with the day, until Delete.
+    const kept = await withE2eDb((db) => db.sourceAccount.findUnique({ where: { id: account.id } }));
+    expect(kept?.retiredAt).not.toBeNull();
+  } finally {
+    await withE2eDb((db) => db.sourceAccount.deleteMany({ where: { id: account.id } }));
+  }
 });
 
 test("a confirmed figure decides the GST card, with its source — and only the agree prompt confirms", async ({ page }) => {

@@ -146,7 +146,11 @@ roadmap's build order.
     account numbers never leave it, pending rows and repeated ids are handled, and a file with its
     own document type, two downloads joined together, or too many entries is refused; no screen
     yet ([review](connectors/ofx-reader-review.md))
-  - [ ] The warning, the switch, the screen, the OFX files on the screen (run the reader in a Web Worker)
+  - [x] The accounts list behind the warning: each account under the person's own name for it
+    ("ending" plus four digits allowed, no other run of four digits), the warning button pressed and
+    the day, taken back in Settings, and on the Delete menu; the warnings' words written. The
+    switch stays "planned" until the screen arrives, so nothing can add an account yet
+  - [ ] The switch, the warning on screen, the statement screen, the OFX files on the screen (run the reader in a Web Worker)
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
   - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)

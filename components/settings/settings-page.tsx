@@ -2,10 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
+import type { BankSourcesState } from "@/lib/figures/source-account-name";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
 import type { SettingsToday } from "@/lib/settings/today";
 import type { FigureRemindersValue } from "@/lib/settings/values";
 
+import { BankAccountsControl } from "./bank-accounts-control";
 import { CopyPathButton } from "./copy-path-button";
 import { FigureRemindersControl } from "./figure-reminders-control";
 
@@ -24,9 +26,18 @@ const NEXT_TELEMETRY_URL = "https://nextjs.org/telemetry";
  * says which story brings it. The story that builds a setting adds its control here.
  *
  * `reminders` is the saved "Figure reminders" value, read on the server (the first setting
- * that is live); null when the data file couldn't be read.
+ * that is live); null when the data file couldn't be read. `bankSources` is the [8g] bank and
+ * card accounts list, also read on the server; null when it couldn't be read.
  */
-export function SettingsPage({ today, reminders }: { today: SettingsToday; reminders: FigureRemindersValue | null }) {
+export function SettingsPage({
+  today,
+  reminders,
+  bankSources = null,
+}: {
+  today: SettingsToday;
+  reminders: FigureRemindersValue | null;
+  bankSources?: BankSourcesState | null;
+}) {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
@@ -78,7 +89,7 @@ export function SettingsPage({ today, reminders }: { today: SettingsToday; remin
 
               <ul className="mt-3 space-y-3">
                 {settingsInGroup(g.id).map((s) => (
-                  <SettingRow key={s.id} setting={s} reminders={reminders} />
+                  <SettingRow key={s.id} setting={s} reminders={reminders} bankSources={bankSources} />
                 ))}
               </ul>
             </section>
@@ -89,7 +100,21 @@ export function SettingsPage({ today, reminders }: { today: SettingsToday; remin
   );
 }
 
-function SettingRow({ setting, reminders }: { setting: SettingEntry; reminders: FigureRemindersValue | null }) {
+function SettingRow({
+  setting,
+  reminders,
+  bankSources,
+}: {
+  setting: SettingEntry;
+  reminders: FigureRemindersValue | null;
+  bankSources: BankSourcesState | null;
+}) {
+  // [8g] The accounts list shows as soon as there is something in it, even while the switch itself
+  // is still planned: taking an account back must always be possible. Nothing can add one before
+  // the statement screen exists, so today it shows only on a file that already holds an account.
+  const showAccounts =
+    setting.id === "bank-records" && bankSources !== null && (bankSources.accounts.length > 0 || bankSources.everyAccountSince !== null);
+
   const status =
     setting.status === "undecided"
       ? "Waiting on a decision"
@@ -134,6 +159,11 @@ function SettingRow({ setting, reminders }: { setting: SettingEntry; reminders: 
       {setting.id === "figure-reminders" && setting.status === "live" ? (
         <div className="mt-3 border-t border-rule-soft pt-3">
           <FigureRemindersControl initial={reminders ? reminders.cadences : null} />
+        </div>
+      ) : null}
+      {showAccounts ? (
+        <div className="mt-3 border-t border-rule-soft pt-3">
+          <BankAccountsControl initial={bankSources!} />
         </div>
       ) : null}
     </li>
