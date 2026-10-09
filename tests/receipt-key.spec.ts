@@ -5,6 +5,11 @@
  * file of DotAmi's own; and never saved before Windows' own key for it is on the disk. Electron's
  * safeStorage is replaced by a stand-in that wraps per "account", the way DPAPI does: one account can't
  * open what another wrapped.
+ *
+ * Each test names the platform it models instead of taking the one it runs on: the same file runs on
+ * Windows here and on GitHub's Linux runner, where the production rule is different (Electron's fixed
+ * built-in password, "basic_text", is no key store). Most tests model Windows; "which key stores count"
+ * below models Linux and a Mac by name.
  */
 import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -16,8 +21,10 @@ import { encryptReceipt, keyIdOf } from "../desktop/receipt-crypto.mjs";
 import {
   countLockedReceipts,
   KeyStoreNotSaved,
+  keyStoreAvailable,
   localStateHoldsKey,
   newReceiptKey,
+  NoKeyStore,
   openReceiptKey,
   RECEIPT_KEY_FILE,
   revertReceiptKey,
@@ -33,14 +40,19 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
 
+/** The platform these tests model unless they say otherwise: Windows, whose DPAPI the stand-in copies. */
+const WINDOWS = "win32";
 /** The key store's own key is on the disk already (the waiting has its own tests below). */
 const saved = async () => true;
 const open = (folder: string, store: KeyStore, options: Parameters<typeof openReceiptKey>[2] = {}) =>
-  openReceiptKey(folder, store, { keyStoreSaved: saved, ...options });
+  openReceiptKey(folder, store, { platform: WINDOWS, keyStoreSaved: saved, ...options });
 const save = (folder: string, store: KeyStore, key: Buffer, options: Parameters<typeof saveReceiptKey>[3] = {}) =>
-  saveReceiptKey(folder, store, key, { keyStoreSaved: saved, ...options });
+  saveReceiptKey(folder, store, key, { platform: WINDOWS, keyStoreSaved: saved, ...options });
 
-/** A stand-in for Electron's safeStorage: what one "account" wraps, only that account can open. */
+/**
+ * A stand-in for Electron's safeStorage: what one "account" wraps, only that account can open. Like
+ * Electron, it has getSelectedStorageBackend only when given a backend (Electron has it on Linux only).
+ */
 function accountStore(account: string, { available = true, backend }: { available?: boolean; backend?: string } = {}): KeyStore & { wraps: number } {
   const secret = createHash("sha256").update(account).digest();
   const xor = (bytes: Buffer) => Buffer.from(bytes.map((b, i) => b ^ secret[i % secret.length]));
@@ -192,7 +204,7 @@ describe("the receipts' key", () => {
     const before = snapshot(dir);
 
     let waited = 0;
-    const gone = await openReceiptKey(dir, store, { keyStoreSaved: async () => ((waited += 1), true) });
+    const gone = await openReceiptKey(dir, store, { platform: WINDOWS, keyStoreSaved: async () => ((waited += 1), true) });
     expect(gone).toEqual({ state: "key-unreadable", keyId: null, locked: 2, missing: true });
     expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
     expect(snapshot(dir)).toEqual(before);
@@ -234,13 +246,6 @@ describe("the receipts' key", () => {
     expect(await open(dir, accountStore("account-a", { available: false }))).toEqual({ state: "no-key-store" });
     expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
     expect(snapshot(dir)).toEqual({});
-  });
-
-  it("on Linux, Electron's fixed built-in password (basic_text) is no key store; a real keyring is", async () => {
-    expect(await open(dir, accountStore("account-a", { backend: "basic_text" }), { platform: "linux" })).toEqual({ state: "no-key-store" });
-    expect(await open(dir, accountStore("account-a", { backend: "unknown" }), { platform: "linux" })).toEqual({ state: "no-key-store" });
-    expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
-    expect((await open(dir, accountStore("account-a", { backend: "gnome_libsecret" }), { platform: "linux" })).state).toBe("on");
   });
 
   it("saving a new key over one that can't be opened moves the old file into backups first", async () => {
@@ -303,6 +308,91 @@ describe("the receipts' key", () => {
   });
 });
 
+// Which key stores count, by platform (keyStoreAvailable). On Linux, Electron falls back to a password
+// built into Chromium ("basic_text") when no keyring is running: a key "wrapped" with it is readable by
+// anyone with the file, so DotAmi treats it as no key store at all, and keeps receipts unencrypted and
+// says so rather than claim protection that isn't there. These tests pin that rule down on every
+// runner, whatever platform the runner itself is.
+describe("which key stores count, on each platform", () => {
+  it("Windows and a Mac: the operating system's store counts whenever it is available, and no backend is asked", () => {
+    for (const platform of ["win32", "darwin"]) {
+      expect(keyStoreAvailable(accountStore("a"), platform)).toBe(true);
+      expect(keyStoreAvailable(accountStore("a", { available: false }), platform)).toBe(false);
+      // Electron has no backend question there; even a stand-in that answered one isn't asked.
+      expect(keyStoreAvailable(accountStore("a", { backend: "basic_text" }), platform)).toBe(true);
+    }
+  });
+
+  it("Linux: a real keyring counts; the fixed built-in password, an unknown backend or none named doesn't", () => {
+    for (const backend of ["gnome_libsecret", "kwallet", "kwallet5", "kwallet6"]) {
+      expect(keyStoreAvailable(accountStore("a", { backend }), "linux")).toBe(true);
+      expect(keyStoreAvailable(accountStore("a", { backend, available: false }), "linux")).toBe(false);
+    }
+    expect(keyStoreAvailable(accountStore("a", { backend: "basic_text" }), "linux")).toBe(false);
+    expect(keyStoreAvailable(accountStore("a", { backend: "unknown" }), "linux")).toBe(false);
+    expect(keyStoreAvailable(accountStore("a"), "linux")).toBe(false);
+  });
+
+  it.each([
+    { platform: "win32", backend: undefined },
+    { platform: "darwin", backend: undefined },
+    { platform: "linux", backend: "gnome_libsecret" },
+    { platform: "linux", backend: "kwallet6" },
+  ])("$platform $backend: a key is made, opened again, and can't be opened by another account", async ({ platform, backend }) => {
+    const store = accountStore("account-a", { backend });
+    const first = await open(dir, store, { platform });
+    if (first.state !== "on") throw new Error(`expected a key, got ${first.state}`);
+    expect(first.made).toBe(true);
+    const again = await open(dir, store, { platform });
+    expect(again.state === "on" && again.key.equals(first.key) && !again.made).toBe(true);
+    lockedReceipt(first.key);
+    expect(await open(dir, accountStore("account-b", { backend }), { platform })).toEqual({
+      state: "key-unreadable",
+      keyId: first.keyId,
+      locked: 1,
+      missing: false,
+    });
+  });
+
+  it("Linux with only the fixed built-in password (basic_text): no key file is made and receipts stay unencrypted", async () => {
+    const store = accountStore("account-a", { backend: "basic_text" });
+    mkdirSync(path.join(dir, "receipts"));
+    writeFileSync(path.join(dir, "receipts", `${randomBytes(16).toString("hex")}.png`), png(2, 2));
+    const before = snapshot(dir);
+    expect(await open(dir, store, { platform: "linux" })).toEqual({ state: "no-key-store" });
+    expect(await open(dir, accountStore("account-a", { backend: "unknown" }), { platform: "linux" })).toEqual({ state: "no-key-store" });
+    expect(await open(dir, accountStore("account-a"), { platform: "linux" })).toEqual({ state: "no-key-store" });
+    expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
+    expect(snapshot(dir)).toEqual(before);
+    expect(store.wraps).toBe(0); // nothing was ever "wrapped" with the fixed password
+  });
+
+  it("Linux whose keyring went away (basic_text now) with receipts already encrypted: the key can't be opened, nothing changes", async () => {
+    const original = await open(dir, accountStore("account-a", { backend: "gnome_libsecret" }), { platform: "linux" });
+    if (original.state !== "on") throw new Error("expected a key");
+    lockedReceipt(original.key);
+    const before = snapshot(dir);
+    const fallback = accountStore("account-a", { backend: "basic_text" });
+    expect(await open(dir, fallback, { platform: "linux" })).toEqual({ state: "key-unreadable", keyId: original.keyId, locked: 1, missing: false });
+    expect(snapshot(dir)).toEqual(before);
+    expect(fallback.wraps).toBe(0);
+  });
+
+  it("a restore never saves a key under the fixed built-in password: refused before anything is wrapped or written", async () => {
+    await open(dir, accountStore("account-a", { backend: "gnome_libsecret" }), { platform: "linux" });
+    const before = snapshot(dir);
+    const fallback = accountStore("account-b", { backend: "basic_text" });
+    await expect(save(dir, fallback, newReceiptKey(), { platform: "linux" })).rejects.toBeInstanceOf(NoKeyStore);
+    expect(fallback.wraps).toBe(0);
+    expect(snapshot(dir)).toEqual(before);
+    // The same for a store that isn't available at all (Windows here).
+    const unavailable = accountStore("account-b", { available: false });
+    await expect(save(dir, unavailable, newReceiptKey())).rejects.toBeInstanceOf(NoKeyStore);
+    expect(unavailable.wraps).toBe(0);
+    expect(snapshot(dir)).toEqual(before);
+  });
+});
+
 // On Windows, safeStorage encrypts with a key of Electron's own, itself protected by DPAPI and kept in
 // the data folder's "Local State" file, which Chromium writes about ten seconds after it starts
 // (measured 2026-10-09: 9.98 s in a fresh folder, with or without a safeStorage call). A receipts key
@@ -348,14 +438,14 @@ describe("never saved before Windows' own key is on the disk", () => {
   });
 
   it("when it never comes, no key file is written and receipts stay unencrypted for this start", async () => {
-    const result = await openReceiptKey(dir, accountStore("account-a"), { keyStoreSaved: async () => false });
+    const result = await openReceiptKey(dir, accountStore("account-a"), { platform: WINDOWS, keyStoreSaved: async () => false });
     expect(result).toEqual({ state: "no-key-store" });
     expect(existsSync(path.join(dir, RECEIPT_KEY_FILE))).toBe(false);
     expect(readdirSync(dir).filter((f) => f.startsWith(RECEIPT_KEY_FILE))).toEqual([]);
     // Saving a replacement key (the restore path) refuses the same way, and changes nothing.
     await open(dir, accountStore("account-a"));
     const before = snapshot(dir);
-    await expect(saveReceiptKey(dir, accountStore("account-b"), newReceiptKey(), { keyStoreSaved: async () => false })).rejects.toBeInstanceOf(
+    await expect(saveReceiptKey(dir, accountStore("account-b"), newReceiptKey(), { platform: WINDOWS, keyStoreSaved: async () => false })).rejects.toBeInstanceOf(
       KeyStoreNotSaved,
     );
     expect(snapshot(dir)).toEqual(before);
@@ -365,6 +455,7 @@ describe("never saved before Windows' own key is on the disk", () => {
     await open(dir, accountStore("account-a"));
     let asked = 0;
     const reopened = await openReceiptKey(dir, accountStore("account-a"), {
+      platform: WINDOWS,
       keyStoreSaved: async () => {
         asked += 1;
         return false;

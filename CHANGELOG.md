@@ -104,8 +104,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file, and that copying both is a backup when running from source.
 - **Your receipts are encrypted in the desktop app** ([8i], the maintainer's decision of 2026-10-09)
   — each receipt file is locked (AES-256-GCM) with a key that Windows keeps for your Windows account
-  only, so another account on the computer, a copy of the data folder, or the disk on its own can't
-  read them. Receipts you already have are encrypted the first time this version starts, one at a
+  only. Windows already keeps other standard accounts out of your data folder; the encryption means
+  an administrator account, a copy of the data folder, or the disk read outside Windows can't read
+  them either. Receipts you already have are encrypted the first time this version starts, one at a
   time, without ever risking one. Backups still hold your receipts and still restore on another
   computer; without a passphrase the receipts in a backup aren't encrypted, and the backup window
   says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses

@@ -26,7 +26,10 @@ export function receiptProtectionText(state: ReceiptLockState): ReceiptProtectio
     case "on":
       return {
         headline: "Your receipt files are encrypted on this computer.",
-        detail: `Each one is locked with a key that Windows keeps for your Windows account only, so another account, a copy of this data folder, or the disk on its own can't read them. Anything running as you can still open them, as DotAmi does. ${KEY_LOSS_SENTENCE} The data file itself isn't encrypted: your expense records in it, and what DotAmi notes about each receipt, are readable by anyone who can read the file.`,
+        // Precise on purpose: Windows' folder permissions already keep other standard accounts out of
+        // the data folder, so the encryption's gain is against an administrator account, a copy of the
+        // folder and a disk read outside Windows (expense-records.md § 9, "What it protects").
+        detail: `Each one is locked with a key that Windows keeps for your Windows account only. Windows already keeps other standard accounts on this computer out of your data folder; the encryption means an administrator account, a copy of this data folder, or the disk read outside Windows can't read them either. Anything running as you can still open them, as DotAmi does, and so can a program an administrator runs as you. ${KEY_LOSS_SENTENCE} The data file itself isn't encrypted: your expense records in it, and what DotAmi notes about each receipt, are readable by anyone who can read the file.`,
         tone: "ok",
       };
     case "source":

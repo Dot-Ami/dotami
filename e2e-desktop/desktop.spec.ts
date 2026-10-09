@@ -144,8 +144,12 @@ test("start → describe a venture → close → start again: the venture is sti
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("with your receipt files in it");
   await expect(page.getByRole("region", { name: "Data and backups" })).not.toContainText("doesn't hold the receipts folder");
   // [8i] The receipts are encrypted in the desktop app, with a key kept only wrapped by Windows; the
-  // page says so, and what losing that key means.
+  // page says so, precisely what that protects (not "another account" in general: Windows' folder
+  // permissions already keep other standard accounts out), and what losing that key means.
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText(
+    "Windows already keeps other standard accounts on this computer out of your data folder",
+  );
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("except those in a backup");
   expect(startLog).toContain("[desktop] receipts: key open (made now)");
   const keyFile = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8"));

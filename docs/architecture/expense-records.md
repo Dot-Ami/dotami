@@ -541,19 +541,32 @@ computer's disk encryption. This section was written and committed before any co
 ### What it protects, and what it doesn't
 
 Encryption at rest means the receipt files on the disk are unreadable without one key, and the key is
-kept so that only the person's own account on this computer can open it. So it protects the files
-against:
+kept so that only the person's own account on this computer can open it.
 
-- **Another account on the same computer** (a family member's, a guest's) that can read the data
-  folder: it finds files it can't read.
+What it does *not* add, said first because it is easy to overclaim: protection from **other standard
+accounts** on the same computer (a family member's, a guest's). Windows already keeps those out: the
+data folder is inside the person's own profile (`%APPDATA%`), and Windows' folder permissions don't let
+another standard account open it, encrypted or not. The gain against "another Windows account" is
+mainly against an **administrator** account, and against a disk read **outside Windows**, where folder
+permissions mean nothing. So it protects the files against:
+
+- **An administrator account on the same computer.** An administrator can open any folder, the
+  person's included; it finds receipt files it can't read, because Windows won't open the key for it
+  without the person's password (and an administrator who resets that password locks the key away for
+  good, as "Losing the key" below says). It does **not** keep out an administrator who runs a program
+  as the person (while they are signed in, or set up to run when they next are): that is "anything
+  running as the person", below. On a workplace computer joined to a domain, the domain's
+  administrators hold a recovery key for Windows' protection, so they aren't kept out either.
 - **A copied or synced data folder**: a copy of `%APPDATA%\DotAmi` on a USB stick, in a folder a cloud
   service syncs, or inside another computer's backup. The receipt files and the key file travel, but
-  the key can't be opened on another computer or another account. (One exception, said plainly:
+  the key can't be opened on another computer or under another account. (One exception, said plainly:
   Windows accounts set up to roam between computers, as some workplaces do, can share this protection.)
-- **A stolen disk or computer without disk encryption**: the receipts are unreadable from the disk on
-  its own. This is only as strong as the Windows account's password: Windows protects the key with it,
-  so an account with no password, or a guessable one, gives little protection here. Disk encryption is
-  still the stronger answer for a stolen computer, and the settings page keeps saying how to turn it on.
+- **A disk read outside Windows: a stolen disk or computer without disk encryption**, or the same disk
+  read from another operating system started on this computer. Folder permissions don't apply there;
+  the receipts are unreadable from the disk on its own. This is only as strong as the Windows account's
+  password: Windows protects the key with it, so an account with no password, or a guessable one, gives
+  little protection here. Disk encryption is still the stronger answer for a stolen computer, and the
+  settings page keeps saying how to turn it on.
 
 It does **not** protect against:
 
@@ -604,7 +617,12 @@ either is worth it.
   key" (the key was lost or replaced) from "damaged or changed", and count the receipts a lost key
   locks.
 - **On Linux** Electron can fall back to a fixed, built-in password when no keyring is running
-  (`basic_text`); DotAmi treats that as no key store (below). There is no Linux build yet.
+  (`basic_text`), which protects nothing: anyone with the file and Chromium's source can open it.
+  DotAmi treats that, and a backend it can't name (`unknown`, or no answer at all), as no key store
+  (below), both when it opens the key at start and when a restore saves a new one
+  (`desktop/receipt-key.mjs` `keyStoreAvailable`); a real keyring (GNOME's libsecret, KDE's KWallet)
+  counts. There is no Linux build yet; the unit tests model each platform by name, so they mean the
+  same thing on GitHub's Linux runner as on Windows.
 - **Never saved before Windows' own key is on the disk** (found while building, measured 2026-10-09 on
   Electron 44 and Windows 11): Electron makes its own key when the app starts but writes it to
   `Local State` only about ten seconds later (9.98 s in a fresh folder, whether or not `safeStorage`

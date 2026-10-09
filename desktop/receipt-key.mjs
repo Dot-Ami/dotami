@@ -40,8 +40,11 @@ const KEY_ID = /^[0-9a-f]{16}$/;
 /**
  * Whether `store` really protects what it wraps. On Linux, Electron falls back to a fixed password
  * built into Chromium ("basic_text") when no keyring is running, which protects nothing; DotAmi treats
- * that (and "unknown") as no key store at all.
+ * that, "unknown", and a store that can't say which backend it uses as no key store at all; a real
+ * keyring ("gnome_libsecret", "kwallet", "kwallet5", "kwallet6") counts. Electron has
+ * getSelectedStorageBackend on Linux only, so on Windows (DPAPI) and a Mac (the Keychain) it isn't asked.
  * @param {KeyStore} store
+ * @param {string} [platform] process.platform by default; the tests name the platform they model
  */
 export function keyStoreAvailable(store, platform = process.platform) {
   if (!store.isEncryptionAvailable()) return false;
@@ -62,6 +65,14 @@ export class KeyStoreNotSaved extends Error {
   constructor() {
     super("the operating system's key store hasn't saved its own key yet");
     this.name = "KeyStoreNotSaved";
+  }
+}
+
+/** Thrown by saveReceiptKey when there is no key store that really protects a key (keyStoreAvailable): nothing was saved. */
+export class NoKeyStore extends Error {
+  constructor() {
+    super("this computer has no key store that protects the receipts key");
+    this.name = "NoKeyStore";
   }
 }
 
@@ -133,7 +144,7 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
     if (locked > 0) return { state: "key-unreadable", keyId: null, locked, missing: true };
     const key = newReceiptKey();
     try {
-      await saveReceiptKey(dataDir, store, key, { now, keyStoreSaved: waitForStore });
+      await saveReceiptKey(dataDir, store, key, { platform, now, keyStoreSaved: waitForStore });
     } catch (error) {
       if (error instanceof KeyStoreNotSaved) return { state: "no-key-store" };
       throw error;
@@ -151,7 +162,7 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
   const fresh = newReceiptKey();
   let setAside;
   try {
-    ({ setAside } = await saveReceiptKey(dataDir, store, fresh, { now, keyStoreSaved: waitForStore }));
+    ({ setAside } = await saveReceiptKey(dataDir, store, fresh, { platform, now, keyStoreSaved: waitForStore }));
   } catch (error) {
     if (error instanceof KeyStoreNotSaved) return { state: "key-unreadable", keyId, locked: 0, missing: false };
     throw error;
@@ -164,20 +175,24 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
  * be opened: this is only called for a new folder, or to replace such a file) is moved first to
  * backups/receipts-key-unreadable-<time>.key, never deleted. Written beside its name, flushed, then
  * renamed into place, so a crash leaves either the old file or the whole new one. Nothing is written
- * until `keyStoreSaved` says the operating system's own key is on the disk (KeyStoreNotSaved otherwise).
+ * until `keyStoreSaved` says the operating system's own key is on the disk (KeyStoreNotSaved otherwise),
+ * and never anything when the key store wouldn't really protect the key (NoKeyStore: Linux's fixed
+ * built-in password, say). openReceiptKey checks that first; a restore (desktop/main.mjs) comes here
+ * directly, so the check is made here too, before anything is wrapped.
  * @param {string} dataDir
  * @param {KeyStore} store
  * @param {Buffer} key
- * @param {{ now?: () => number, keyStoreSaved?: () => Promise<boolean> }} [options]
+ * @param {{ platform?: string, now?: () => number, keyStoreSaved?: () => Promise<boolean> }} [options]
  * @returns {Promise<{ setAside: string | null }>}
  */
-export async function saveReceiptKey(dataDir, store, key, { now = Date.now, keyStoreSaved } = {}) {
+export async function saveReceiptKey(dataDir, store, key, { platform = process.platform, now = Date.now, keyStoreSaved } = {}) {
   if (!Buffer.isBuffer(key) || key.length !== KEY_BYTES) throw new Error("a receipt key is 32 bytes");
+  if (!keyStoreAvailable(store, platform)) throw new NoKeyStore();
   const file = path.join(dataDir, RECEIPT_KEY_FILE);
   // Wrapped first: on Windows this makes sure Electron's own key exists, and the wait below is for that
   // key to reach the disk.
   const wrapped = store.encryptString(key.toString("base64")).toString("base64");
-  if (!(await (keyStoreSaved ?? (() => waitForLocalState(dataDir)))())) throw new KeyStoreNotSaved();
+  if (!(await (keyStoreSaved ?? (() => waitForLocalState(dataDir, { platform })))())) throw new KeyStoreNotSaved();
   const content = Buffer.from(JSON.stringify({ format: 1, keyId: keyIdOf(key), wrapped }), "utf8");
   const partial = `${file}.partial`;
   rmSync(partial, { force: true });

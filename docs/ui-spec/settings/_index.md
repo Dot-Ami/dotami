@@ -32,7 +32,10 @@ Each group:
      says the receipt copies ([8i]) are in a folder named receipts beside the file. Under the path, one
      line from `today.receipts` (`lib/expenses/receipts/protection.ts`, expense-records.md § 9): in the
      desktop app with its key open, "Your receipt files are encrypted on this computer." with what that
-     protects, that anything running as the person can still open them, that losing the key (a Windows
+     protects, said precisely (Windows' folder permissions already keep other standard accounts out of
+     the data folder; the encryption adds an administrator account, a copy of the folder and the disk
+     read outside Windows), that anything running as the person (or a program an administrator runs as
+     them) can still open them, that losing the key (a Windows
      profile reset, the folder moved to another account or computer) loses the receipts except those in
      a backup, and that the data file itself isn't encrypted; from source (or with no key store and no
      receipt encrypted yet), "Receipts in this copy aren't encrypted." and why (the desktop app encrypts

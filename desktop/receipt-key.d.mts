@@ -17,6 +17,8 @@ export type OpenedReceiptKey =
 
 /** Thrown by saveReceiptKey when the operating system's own key never reached the disk: nothing was saved. */
 export class KeyStoreNotSaved extends Error {}
+/** Thrown by saveReceiptKey when there is no key store that really protects a key: nothing was saved. */
+export class NoKeyStore extends Error {}
 
 export function keyStoreAvailable(store: KeyStore, platform?: string): boolean;
 export function newReceiptKey(): Buffer;
@@ -34,7 +36,7 @@ export function saveReceiptKey(
   dataDir: string,
   store: KeyStore,
   key: Buffer,
-  options?: { now?: () => number; keyStoreSaved?: () => Promise<boolean> },
+  options?: { platform?: string; now?: () => number; keyStoreSaved?: () => Promise<boolean> },
 ): Promise<{ setAside: string | null }>;
 export function revertReceiptKey(dataDir: string, newKeyId: string, setAside: string | null): "reverted" | "kept";
 export function countLockedReceipts(receiptsDir: string, keyId: string | null): number;

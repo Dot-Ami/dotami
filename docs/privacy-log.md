@@ -496,8 +496,10 @@ person is asked).
   they agreed to the warning and the day they took the account back; "ending" and four digits is
   the most of a number a name may hold. DotAmi never keeps the account or card number itself.
 - In the desktop app, receipt files are encrypted on the computer with a key only the person's
-  Windows account can open; this protects them from other accounts, copies of the folder and a disk
-  read on its own, not from programs the person runs. The data file is not encrypted. A backup
+  Windows account can open. Other standard accounts are already kept out of the data folder by
+  Windows' folder permissions; what encryption adds is protection from an administrator account,
+  copies of the folder and a disk read outside Windows, not from programs the person runs (or an
+  administrator runs as them). The data file is not encrypted. A backup
   without a passphrase holds the receipts unencrypted. Losing the key (a Windows profile reset) loses
   the receipts except those in a backup. A copy run from source doesn't encrypt them.
 

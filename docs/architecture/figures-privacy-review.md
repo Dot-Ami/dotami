@@ -210,7 +210,7 @@ most 50 megapixels and 20,000 pixels on a side, read from its header before anyt
 
 | Who | How | What stops it | Status |
 |---|---|---|---|
-| Someone with the computer or its disk, another account on it, or a copy of the data folder | reads `receipts/` | **in the desktop app, each receipt file is encrypted** (AES-256-GCM, one key for the folder, kept only wrapped by Windows for the person's account; below and expense-records.md § 9); the operating system's disk encryption on top. **A copy run from source keeps receipts unencrypted**, and says so. The database beside them is not encrypted by DotAmi | encrypted: decided 2026-10-09, built in the desktop app; DotAmi says so either way |
+| Someone with the computer or its disk, an administrator account on it, or a copy of the data folder | reads `receipts/` | another standard Windows account is already kept out of the data folder by Windows' folder permissions; against an administrator account, a disk read outside Windows and a copy, **in the desktop app, each receipt file is encrypted** (AES-256-GCM, one key for the folder, kept only wrapped by Windows for the person's account; below and expense-records.md § 9); the operating system's disk encryption on top. **A copy run from source keeps receipts unencrypted**, and says so. The database beside them is not encrypted by DotAmi | encrypted: decided 2026-10-09, built in the desktop app; DotAmi says so either way |
 | Someone with a backup | opens it | a backup holds the receipts with the data file, decrypted so it restores on another computer; the backup passphrase, when set, covers them (AES-256-GCM over the whole stream, its file list authenticated); an unlocked backup is readable by whoever holds it, receipts included, and says so when it is made | the person's choice; built (desktop-app.md § Backup and restore) |
 | A receipt file crafted to attack whatever opens it | the person adds it | type decided by its first bytes (not its name or the browser's type), SVG and web pages refused, a size cap checked before the file is read, a pixel cap read from the header; the server never decodes, parses or runs it. Shown inside DotAmi only by what can't run a script: a picture by the browser's image decoder from a `blob:` address, a PDF drawn by pdf.js in a worker that can reach nothing, with no annotation layer and no scripting; the bytes are checked again (type, pixels) before drawing; never a frame or Chromium's PDF viewer (expense-records.md § 8) | built; browser tests with hostile files (`e2e/receipt-viewer.spec.ts`) |
 | A web page or program naming a file | tries `../` or a drive path through a receipt route | DotAmi names every stored file itself (a random id); the person's file name is never sent; the routes take a record's id, look it up in the database and build the name from the row; they answer only DotAmi's own page and sit behind the Host check like every route | built; `tests/expenses-receipts.spec.ts` tries `../`, a drive path and a type that isn't one of the four |
@@ -224,9 +224,12 @@ The maintainer said yes (2026-10-09) to the question below this section had held
 receipt files itself. The design, written before the code, is
 [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09). In short:
 
-- **What it protects:** the receipt files against another account on the same computer, a copied or
-  synced data folder, and a stolen disk without disk encryption (only as strongly as the Windows
-  account's password, since Windows protects the key with it).
+- **What it protects:** the receipt files against an administrator account on the same computer (not
+  one that runs a program as the person, and not a workplace domain's administrators), a copied or
+  synced data folder, and a disk read outside Windows, such as a stolen disk without disk encryption
+  (only as strongly as the Windows account's password, since Windows protects the key with it). Other
+  standard accounts on the computer are not where it adds much: Windows' folder permissions already
+  keep them out of the person's data folder.
 - **What it doesn't:** anything running as the person while DotAmi can open the files (a program the
   person runs can ask Windows for the key as DotAmi does); **the database, which is not encrypted** and
   holds every record in full and each receipt's description (encrypting it is a separate option for the
