@@ -377,6 +377,67 @@ describe("QuickBooks Transaction List", () => {
   });
 });
 
+// Three more gaps, fixed by the optional Status column and a smarter search for the column names
+// (the maintainer's decision, 2026-10-07): void, deleted and draft invoices are left out and listed,
+// and a summary block above the table is no longer taken for the column names. They were `it.fails`
+// tests until the fix landed. Tests of the rules themselves: tests/figures-file-status-column.spec.ts.
+describe("void and draft invoices, and a summary above the table", () => {
+  // The summary's "Total Invoiced, Total Paid" titles were taken for the column names, and "Total
+  // Paid" was pre-filled as the amount over the invoice numbers.
+  it("FreshBooks: finds the real column names under the summary block", async () => {
+    for (const id of [
+      "freshbooks-invoices-iso",
+      "freshbooks-invoices-month-name",
+      "freshbooks-invoices-dmy",
+    ]) {
+      const run = await runLikeTheScreen(find(id).fileName, find(id).bytes(), TODAY);
+      expect(run.picks, id).toEqual({
+        headerRow: 4,
+        dateColumn: 2, // Issue Date
+        amountColumn: 4, // Subtotal, before tax
+        typeColumn: null,
+        statusColumn: 3, // Status
+      });
+    }
+  });
+
+  it("FreshBooks: a Draft invoice is left out and listed", async () => {
+    const file = find("freshbooks-invoices-iso");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT); // August 476.19, not 726.19
+    expect(reasonFor(run, 9)).toBe("void-or-draft"); // invoice 0000004, the Draft
+  });
+
+  it("Sage Accounting: a voided invoice is left out and listed", async () => {
+    const file = find("sage-accounting-sales-list");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(run.picks.statusColumn).toBe(6);
+    expect(amountsOf(run)).toEqual(sageAccounting.SALES_NOT_VOID); // August -50.00, not 150.00
+    expect(reasonFor(run, 4)).toBe("void-or-draft"); // SI-3, Void
+  });
+
+  // Receivable Invoice Detail includes voided invoices by default.
+  it("Xero Receivable Invoice Detail: the Voided invoice is left out and listed", async () => {
+    const file = find("xero-receivable-invoice-detail");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
+    expect(run.picks.statusColumn).toBe(3);
+    expect(reasonFor(run, xero.DETAIL_VOIDED_ROW)).toBe("void-or-draft");
+    // No August total at all: its only other line is the formula with no saved value, which DotAmi
+    // lists and never works out.
+    expect(amountsOf(run).map((m) => m.periodStart)).toEqual(["2026-07-01", "2026-09-01"]);
+  });
+
+  it("clearing the Status column counts the void and the draft again, as before", async () => {
+    const sage = find("sage-accounting-sales-list");
+    const run = await runLikeTheScreen(sage.fileName, sage.bytes(), TODAY, {
+      ...answersFor(sage),
+      statusColumn: null,
+    });
+    const august = run.result!.months.find((m) => m.periodStart === "2026-08-01");
+    expect(august?.amountCents).toBe(15000); // the void's 200.00 plus the credit note's -50.00
+  });
+});
+
 describe("Sage 50 Canadian's export route", () => {
   // Sage 50 offers .csv, .htm, .pdf, .xls and .txt. Its Excel choice is the old .xls format, which
   // DotAmi refuses with a sentence saying what to do; the practice files above prove the .csv route.
@@ -542,9 +603,11 @@ describe("a French semicolon file with several amount columns, and a formula wit
     expect(reasonFor(run, xero.DETAIL_UNSAVED_FORMULA_ROW)).not.toBe("no-amount");
     // The report's own Total, also an unsaved formula, is still its sum row.
     expect(reasonFor(run, 11)).toBe("total");
-    // Nothing is worked out for the formula: August holds no 60.00 from it.
+    // Nothing is worked out for the formula: August holds no 60.00 from it. The voided line, August's
+    // only other row, is left out by the Status column, so August has no total at all.
     const august = run.result!.months.find((m) => m.periodStart === "2026-08-01");
-    expect(august?.rows).toBe(1);
+    expect(august).toBeUndefined();
+    expect(reasonFor(run, xero.DETAIL_VOIDED_ROW)).toBe("void-or-draft");
   });
 });
 
@@ -552,7 +615,8 @@ describe("a French semicolon file with several amount columns, and a formula wit
  * Gaps the Wave, FreshBooks, Sage and Xero Receivable Invoice Detail files found (2026-10-08). Each
  * is written as an `it.fails` test: it passes only while the gap is there, so the day a fix lands it
  * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
- * docs/connectors/practice-files.md "Known gaps" lists each one.
+ * docs/connectors/practice-files.md "Known gaps" lists each one. The void, draft and summary-block
+ * gaps are fixed: their tests are in "void and draft invoices, and a summary above the table" above.
  */
 describe("gaps the newer practice files found, fails today", () => {
   // Wave's ledger keeps sales in Credit and a refund in Debit. With Credit picked, the refund's row
@@ -561,33 +625,6 @@ describe("gaps the newer practice files found, fails today", () => {
     const file = find("wave-account-transactions");
     const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
     expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS);
-  });
-
-  // The summary's "Total Invoiced, Total Paid" titles are taken for the column names, and "Total
-  // Paid" is pre-filled as the amount over the invoice numbers.
-  it.fails("FreshBooks: finds the real column names under the summary block", async () => {
-    const file = find("freshbooks-invoices-iso");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    expect(run.picks.headerRow).toBe(4);
-  });
-
-  it.fails("FreshBooks: a Draft invoice is left out", async () => {
-    const file = find("freshbooks-invoices-iso");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run)).toEqual(freshbooks.ISSUED_NOT_DRAFT);
-  });
-
-  it.fails("Sage Accounting: a voided invoice is left out", async () => {
-    const file = find("sage-accounting-sales-list");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run)).toEqual(sageAccounting.SALES_NOT_VOID);
-  });
-
-  // Receivable Invoice Detail includes voided invoices by default.
-  it.fails("Xero Receivable Invoice Detail: the Voided invoice is left out", async () => {
-    const file = find("xero-receivable-invoice-detail");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY);
-    expect(reasonFor(run, xero.DETAIL_VOIDED_ROW)).toBeDefined();
   });
 
   it("the true figures those tests pin add up from the fixtures' own line data", () => {

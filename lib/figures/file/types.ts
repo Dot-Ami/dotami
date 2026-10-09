@@ -63,6 +63,12 @@ export interface ColumnChoice {
    * money arriving. Unset or null: every row counts.
    */
   typeColumn?: number | null;
+  /**
+   * The column holding each row's status (an invoice list's "Status"), if the person picked one.
+   * Rows marked void, voided, deleted or draft are left out: none of them was ever a sale. Unset
+   * or null: every row counts.
+   */
+  statusColumn?: number | null;
   /** Needed only for dates like 03/01/2026; null when every date in the column is unambiguous. */
   dateOrder: DateOrder | null;
   /**
@@ -97,6 +103,7 @@ export interface MonthTotal {
  * unsaved-formula — the amount (or the date) is an Excel formula saved with no value: the cell
  *              looks empty, but it is a sum Excel never worked out, and DotAmi never guesses it
  * payment    — the type column says Payment or Deposit: money received for a sale the file already lists
+ * void-or-draft — the status column says void, voided, deleted or draft: an invoice that was never a sale
  * not-over   — its month hasn't ended yet, so there's no total for it yet
  */
 export type SkipReason =
@@ -107,6 +114,7 @@ export type SkipReason =
   | "bad-amount"
   | "unsaved-formula"
   | "payment"
+  | "void-or-draft"
   | "not-over";
 
 export interface SkippedRow {

@@ -43,6 +43,11 @@ export interface Picks {
    * Pre-filled only for a header that is exactly "Transaction Type" or "Type" (see guessColumns).
    */
   typeColumn: number | null;
+  /**
+   * The optional column of invoice statuses. Null leaves it unused, and then every row counts.
+   * Pre-filled only for a header that is exactly "Status" or "Statut" (see guessColumns).
+   */
+  statusColumn: number | null;
 }
 
 /** What the date column says about how its dates are written (see detectDateOrder). */
@@ -83,6 +88,7 @@ export function guessPicks(
     dateColumn: null,
     amountColumn: null,
     typeColumn: null,
+    statusColumn: null,
   };
   if (forcedHeader === undefined) {
     const guess = guessColumns(rows);
@@ -94,12 +100,14 @@ export function guessPicks(
         dateColumn: guess.dateColumn,
         amountColumn: guess.amountColumn,
         typeColumn: guess.typeColumn,
+        statusColumn: guess.statusColumn,
       },
       guessed: true,
     };
   }
   // Looking from the chosen row down keeps every column index the same as in the whole sheet.
-  const guess = guessColumns(rows.slice(forcedHeader));
+  // keepFirstRow: the person's row stays the header even when a wider row of names sits under it.
+  const guess = guessColumns(rows.slice(forcedHeader), { keepFirstRow: true });
   if (!guess || guess.headerRow !== 0) return { guess, picks: none, guessed: false };
   return {
     guess,
@@ -108,9 +116,14 @@ export function guessPicks(
       dateColumn: guess.dateColumn,
       amountColumn: guess.amountColumn,
       typeColumn: guess.typeColumn,
+      statusColumn: guess.statusColumn,
     },
     // A forced row that gave no columns at all is not a guess worth announcing.
-    guessed: guess.dateColumn !== null || guess.amountColumn !== null || guess.typeColumn !== null,
+    guessed:
+      guess.dateColumn !== null ||
+      guess.amountColumn !== null ||
+      guess.typeColumn !== null ||
+      guess.statusColumn !== null,
   };
 }
 
@@ -235,6 +248,7 @@ export function previewSheet(
     dateColumn: picks.dateColumn,
     amountColumn: picks.amountColumn,
     typeColumn: picks.typeColumn,
+    statusColumn: picks.statusColumn,
     dateOrder,
     century,
     decimalStyle,
@@ -571,6 +585,8 @@ export interface FileAnswers extends PreviewAnswers {
   amountColumn?: number;
   /** 0-based column they pick for the transaction types; null clears it (the select's empty choice). */
   typeColumn?: number | null;
+  /** 0-based column they pick for the invoice statuses; null clears it (the select's empty choice). */
+  statusColumn?: number | null;
   /** The screen's "The file has" select: one row per sale, or months across the top. */
   layout?: Layout;
   /** 0-based row they say holds the month names (months across only). */
@@ -625,6 +641,8 @@ export async function previewFile(
     amountColumn: answers.amountColumn ?? guessed.amountColumn,
     // Unlike the others, null here is an answer: the person cleared the select.
     typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
+    statusColumn:
+      answers.statusColumn === undefined ? guessed.statusColumn : answers.statusColumn,
   };
   const preview = previewSheet(rows, picks, answers, today, false, unsaved);
 

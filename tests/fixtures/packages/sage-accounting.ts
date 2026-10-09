@@ -21,7 +21,8 @@
  * naming "invoice date, customer name, amount and status"; on 2026-10-08 the page named no default
  * column, so those are assumed too.
  *
- * Today's wrong answer, pinned as a "fails today" test: the voided invoice is counted as a sale.
+ * Fixed since (the maintainer's decision, 2026-10-07): the voided invoice used to be counted as a
+ * sale. The "Status" header now pre-fills the Status column, and the Void row is left out and listed.
  */
 import { csv } from "./csv";
 import { utf8 } from "../../helpers/encode";
@@ -123,7 +124,7 @@ export const SALES: SaleDoc[] = [
     taxCents: 750,
     status: "Paid",
   },
-  // Voided to keep the numbers in sequence: not a sale. Counted today.
+  // Voided to keep the numbers in sequence: not a sale. Left out through the Status column.
   {
     number: "SI-3",
     date: "2026-08-07",
@@ -231,11 +232,14 @@ export const files: PracticeFile[] = [
       decimalStyle: "point",
       months: [
         { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 75000, rows: 2 },
-        // WRONG TODAY: the void's 200.00 plus the credit note's -50.00. True: -50.00.
-        { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 15000, rows: 2 },
+        // The credit note's -50.00 alone: the void's 200.00 is left out (it used to give 150.00).
+        { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: -5000, rows: 1 },
         { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 42550, rows: 1 },
       ],
-      skipped: [{ row: 7, reason: "not-over" }],
+      skipped: [
+        { row: 4, reason: "void-or-draft" }, // SI-3, Void
+        { row: 7, reason: "not-over" },
+      ],
     },
   },
   {

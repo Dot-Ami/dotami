@@ -117,7 +117,13 @@ const SAGE_SHORT: Cell[][] = [
   ["01-04-06", "Customer C", "25.00"], // 5
   ["02-28-06", "Customer C", ""], // 6 a date, no amount
 ];
-const SAGE_PICKS: Picks = { headerRow: 0, dateColumn: 0, amountColumn: 2, typeColumn: null };
+const SAGE_PICKS: Picks = {
+  headerRow: 0,
+  dateColumn: 0,
+  amountColumn: 2,
+  typeColumn: null,
+  statusColumn: null,
+};
 
 describe("monthlyTotals: the dates it read", () => {
   const choice: ColumnChoice = {
@@ -206,7 +212,13 @@ describe("previewSheet: one question about the century", () => {
       ["Date", "Amount"],
       ["2026-07-15", "10.00"],
     ];
-    const picks: Picks = { headerRow: 0, dateColumn: 0, amountColumn: 1, typeColumn: null };
+    const picks: Picks = {
+      headerRow: 0,
+      dateColumn: 0,
+      amountColumn: 1,
+      typeColumn: null,
+      statusColumn: null,
+    };
     const preview = previewSheet(rows, picks, { century: 1900 }, TODAY);
     expect(preview.state).toBe("ready");
     expect(preview.twoDigitYear).toBeNull();
@@ -220,7 +232,13 @@ describe("previewSheet: one question about the century", () => {
       ["03.04.26", "10.00"],
       ["05.06.26", "10.00"],
     ];
-    const picks: Picks = { headerRow: 0, dateColumn: 0, amountColumn: 1, typeColumn: null };
+    const picks: Picks = {
+      headerRow: 0,
+      dateColumn: 0,
+      amountColumn: 1,
+      typeColumn: null,
+      statusColumn: null,
+    };
     expect(previewSheet(rows, picks, {}, TODAY).waitingFor).toBe("date-order-answer");
     expect(previewSheet(rows, picks, { dateOrder: "dmy" }, TODAY).waitingFor).toBe(
       "century-answer",

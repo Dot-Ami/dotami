@@ -125,8 +125,9 @@ roadmap's build order.
   - [x] A French semicolon file with several comma-decimal columns (Sage 50) reads on its
     semicolons; an Excel formula saved with no value is listed as one, with what to do, never as
     "no amount" and never guessed
-  - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
-    the FreshBooks summary block)
+  - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
+    summary block no longer taken for the column names
+  - [ ] Fix the other gap those files found (follow-on slice: refunds)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
