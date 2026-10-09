@@ -23,7 +23,11 @@ reader `gnucash-xml.ts`, the worker `worker.ts` and `read-book.ts`, the screen's
    can be ticked or unticked. An income account can hold interest or GST/HST collected rather
    than sales, so they are shown, never hidden, and the line above the list says so. An account
    whose direction GnuCash doesn't fix (type NONE or TRADING) or that holds shares rather than
-   money can't be ticked, and says why.
+   money can't be ticked, and says why. A ticked account GnuCash doesn't mark as income (a bank,
+   an expense) gets a note under it: *This isn't an income account in your book. If a sale also
+   lands here, it may be counted twice.* A sale is posted to both sides, so ticking the bank next
+   to the income account adds it up twice. The note is information only: the tick stays and is
+   counted.
 5. **Monthly totals**, one table per currency, in exact cents, never converted or rounded. Then
    what was left out and why (a month that isn't over, an amount that isn't whole cents, a date
    DotAmi can't read), any month already in DotAmi with the same total, and how many scheduled

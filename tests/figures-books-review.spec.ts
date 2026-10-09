@@ -18,6 +18,8 @@ import {
   accountTypeWords,
   bookProposal,
   initialTicks,
+  NOT_INCOME_NOTE,
+  notIncomeNote,
   skipSummary,
   skipWords,
   tickable,
@@ -89,6 +91,26 @@ describe("which accounts start ticked", () => {
     expect(tickable(shares)).toBe("holds shares or something else that isn't money");
     expect(tickable(odd)).toBe("GnuCash doesn't say which way this account counts");
     expect(tickable(sales)).toBeNull();
+  });
+
+  it("a ticked account GnuCash doesn't mark as income gets a plain note that a sale may be counted twice", () => {
+    const book = bookOf(text(GOLDEN_BOOK_XML));
+    const notes = book.accounts.map((a) => [a.fullName, notIncomeNote(a)]);
+    // The bank and the expense accounts get the note; the income ones (interest included) don't.
+    expect(notes).toEqual([
+      ["Assets", NOT_INCOME_NOTE],
+      ["Assets:Chequing", NOT_INCOME_NOTE],
+      ["Expenses", NOT_INCOME_NOTE],
+      ["Income", null],
+      ["Income:Consulting & Design", null],
+      ["Income:Interest", null],
+    ]);
+    expect(NOT_INCOME_NOTE).toBe(
+      "This isn't an income account in your book. If a sale also lands here, it may be counted twice.",
+    );
+    // An account that can't be ticked already says why beside it; it gets no second note.
+    expect(notIncomeNote(account({ side: null, bookType: "NONE", markedAsRevenue: false }))).toBeNull();
+    expect(notIncomeNote(account({ currency: null, bookType: "STOCK", markedAsRevenue: false }))).toBeNull();
   });
 
   it("names GnuCash's account types in plain words", () => {

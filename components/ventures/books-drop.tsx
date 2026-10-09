@@ -7,6 +7,7 @@ import {
   accountTypeWords,
   bookProposal,
   initialTicks,
+  notIncomeNote,
   skipSummary,
   skipWords,
   tickable,
@@ -112,6 +113,10 @@ export function BookReview({
           {book.accounts.map((account) => {
             const reason = tickable(account);
             const id = `${uid}-acct-${account.id}`;
+            // A ticked bank or expense account can hold the other side of a sale already counted
+            // in an income account: say so beside it, and leave the tick exactly as the person set it.
+            const note = reason === null && ticked.has(account.id) ? notIncomeNote(account) : null;
+            const describedBy = reason !== null ? `${id}-why` : note !== null ? `${id}-note` : undefined;
             return (
               <li key={account.id} className="flex flex-wrap items-baseline gap-x-2">
                 <input
@@ -120,7 +125,7 @@ export function BookReview({
                   checked={reason === null && ticked.has(account.id)}
                   disabled={reason !== null || busy}
                   onChange={(e) => toggle(account.id, e.target.checked)}
-                  aria-describedby={reason !== null ? `${id}-why` : undefined}
+                  aria-describedby={describedBy}
                   className="accent-maple"
                 />
                 <label htmlFor={id} className={reason === null ? "text-paper" : "text-stone-dim"}>
@@ -133,6 +138,12 @@ export function BookReview({
                 {reason !== null ? (
                   <span id={`${id}-why`} className="text-[11px] text-stone-dim">
                     — can&apos;t be ticked: {reason}
+                  </span>
+                ) : null}
+                {note !== null ? (
+                  // Amber like the screen's other notes, but not an alert: nothing went wrong.
+                  <span id={`${id}-note`} className="basis-full pl-5 text-[11px] text-amber">
+                    {note}
                   </span>
                 ) : null}
               </li>

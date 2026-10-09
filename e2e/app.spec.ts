@@ -1669,6 +1669,22 @@ test("a GnuCash book: income accounts ticked, read in a worker that can reach no
   await expect(table.getByRole("row", { name: "April 2024 $1,900.00 2 lines", exact: true })).toBeVisible();
   await expect(table.getByRole("row")).toHaveCount(2);
 
+  // Ticking the bank beside the income accounts is the person's call: it stays ticked and is counted,
+  // with a plain note beside it that a sale landing in both may be counted twice.
+  const twiceNote = "This isn't an income account in your book. If a sale also lands here, it may be counted twice.";
+  const chequing = accounts.getByRole("checkbox", { name: "Assets:Chequing" });
+  await chequing.check();
+  await expect(chequing).toBeChecked();
+  await expect(chequing).toHaveAccessibleDescription(twiceNote);
+  await expect(accounts.getByText(twiceNote)).toHaveCount(1);
+  // March: the commissions (1,750.00) plus the bank's side of those same sales and the interest (1,762.34).
+  await expect(table.getByRole("row", { name: "March 2024 $3,512.34 5 lines", exact: true })).toBeVisible();
+  // An income account carries no such note.
+  await expect(accounts.getByRole("checkbox", { name: "Income:Map Commissions" })).toHaveAccessibleDescription("");
+  await chequing.uncheck();
+  await expect(accounts.getByText(twiceNote)).toHaveCount(0);
+  await expect(table.getByRole("row", { name: "March 2024 $1,750.00 2 lines", exact: true })).toBeVisible();
+
   // The book was read in DotAmi's own worker, which the browser keeps from reaching anything.
   const reader = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
   expect(reader, "the books worker").toBeTruthy();
