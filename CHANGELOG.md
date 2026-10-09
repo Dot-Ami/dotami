@@ -33,6 +33,49 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   give them. DotAmi doesn't say how a refund is taxed.
 - **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
   (or turn them down), exactly as before.
+- **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
+  compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
+  account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
+  since an income account can also hold interest or GST/HST you collected. The monthly totals of
+  the ticked accounts follow, one list per currency, exact to the cent, with what was left out and
+  why, and the note "DotAmi read your last save" (changes not yet saved in GnuCash aren't in it).
+  Review sends only those totals to the agree prompt; nothing counts until you agree. Books up to
+  50 MB are read in the background, so the window stays usable, and a read is stopped after a
+  minute. A book from a newer GnuCash, with a feature, account type or part DotAmi doesn't know,
+  is turned away with that thing's name. Figures from a book are listed under **Books / file**.
+- **A note beside a ticked book account that isn't income** ([8h]) — tick a bank, expense or other
+  account GnuCash doesn't mark as income, and a plain note appears under it: "This isn't an income
+  account in your book. If a sale also lands here, it may be counted twice." A sale is posted to
+  both the income account and the bank, so ticking both adds it up twice. The note is all it does:
+  the tick stays yours, the account is still counted, and nothing is blocked.
+- **Bank and card accounts, the groundwork** ([8g]; nothing new to see until the statement screen
+  arrives) — DotAmi can now keep a list of the bank and card accounts you allow it to read
+  statements from, each under your own name for it ("Business chequing", "Visa ending 1234"), with
+  which button you pressed on the warning (Allow once, Always allow this account, Always allow
+  every account) and the day. A name may hold four digits only as "ending" plus four digits at the
+  end; any other run of four or more digits is refused, so an account number can't slip in, and no
+  account or card number is ever kept. Settings lists each account under *Bank and card records*
+  with a *Take back*, and the Delete menu on *What DotAmi knows about you* gets a *Your bank and
+  card accounts* box. The *Bank and card records* switch itself stays marked "not built yet": it,
+  the warning and the statement screen arrive together, so no switch shows that does nothing, and
+  until then nothing can add an account. The words of both warnings are written and reviewed now,
+  in the settings list. Only DotAmi's own window can list, allow or take back an account, never an
+  agent.
+- **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
+  package, its version, its licence, where it ships, and the licence's own words (open an entry to
+  read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The
+  installer now carries the same list as `THIRD-PARTY-NOTICES.txt` beside DotAmi.exe, next to
+  Electron's licence and Chromium's notices. The list is written from the packages themselves each
+  time the app is built, and building the installer stops if a package that ships has no entry, so
+  the minified app no longer drops the notices its packages' licences ask to be kept.
+- **Delete can clear the safety copies, and finishes a wipe that was cut short** ([8d]) — the Delete
+  list gets one more tick-box, "Safety copies in the backups folder", warning that afterwards only a
+  backup you saved somewhere else could bring anything back. Only the copies DotAmi made itself are
+  deleted; anything else in that folder stays, and a link out of the folder is never followed. If a
+  wipe can't finish (the computer is busy, the disk is full), DotAmi leaves a small note beside the
+  data file and the desktop app finishes the wipe the next time it starts. It does this only when
+  that note is there, never on an ordinary start. The page also says when an earlier Delete hasn't
+  finished, with "Finish it now".
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
@@ -87,6 +130,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (and is emptied, not deleted, when its idea is deleted) and the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
   are kept as they are (a test seeds each and checks it after the update), and the app backs the
   file up first.
+- **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
+  server no longer carries the image library sharp (with libvips, LGPL-3.0-or-later) or the
+  TypeScript compiler, which Next.js's build copied in although DotAmi never resizes an image and
+  never compiles code while it runs, nor the small packages only those two needed. Next's image
+  optimiser is switched off in the desktop app, so its address answers "not found" instead of
+  reaching for the missing library. Their entries leave the app's licence list; nothing changes on
+  screen otherwise. A copy run from the source code is unchanged.
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
   return*, instead of "That isn't a spreadsheet".
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,

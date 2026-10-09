@@ -104,10 +104,14 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "bank-records",
     group: "figures",
     label: "Bank and card records",
-    does: "Lets figures be read from bank and card statements. The project doesn't recommend it; it's your call.",
+    // Stays "planned" until the statement screen lands: until then the switch would do nothing.
+    // Its accounts list (lib/figures/source-accounts.ts) is already built and shows here once an
+    // account exists. The warning shown before each statement is BANK_STATEMENT_WARNING below.
+    does: "Lets figures be read from bank and card statements, in this window. Each account you allow is listed here under your own name for it, with the day you agreed to its warning, and you can take it back. The project doesn't recommend it; it's your call.",
     defaultValue: "off",
-    options: "on per source",
-    warning: "A warning every time a new bank source is added.",
+    options: "on · then, for each statement: allow once · always allow this account · always allow every account",
+    warning:
+      'Before turning it on: "a statement holds every purchase and payment, the names of people, balances and account numbers; DotAmi reads it in this window, keeps only the monthly totals you agree to and never keeps an account or card number". Then, before each statement from an account you haven\'t always allowed: "Before DotAmi reads a bank or card statement", with Allow once, Always allow this account and Always allow every account.',
     story: "8g",
     status: "planned",
   },
@@ -281,6 +285,60 @@ export const SETTINGS: readonly SettingEntry[] = [
     status: "planned",
   },
 ];
+
+/** The three answers to the statement warning. Ids are permanent: the bank-sources route takes them. */
+export type BankAllowChoice = "once" | "always" | "every";
+
+export interface BankStatementWarning {
+  title: string;
+  intro: readonly string[];
+  /** Under "If you go ahead:". */
+  ifYouGoAhead: readonly string[];
+  /** Under "What DotAmi can't protect:". */
+  cantProtect: readonly string[];
+  /** The buttons, in the order shown, each with one line on what it means. Cancel is always there too. */
+  choices: readonly { id: BankAllowChoice; label: string; means: string }[];
+}
+
+/**
+ * [8g] The warning shown before DotAmi reads a bank or card statement, unless the person chose
+ * "Always allow" for that account or for every account (the maintainer's decision, 2026-10-07:
+ * three buttons, and Settings lists the accounts and takes them back). Kept here, not in a
+ * component, so the words are reviewed in one place; Part 1 of
+ * docs/architecture/settings-and-edge-cases.md has it word for word and
+ * tests/bank-sources.spec.ts fails if the two drift. The statement screen that shows it is the
+ * next step.
+ */
+export const BANK_STATEMENT_WARNING: BankStatementWarning = {
+  title: "Before DotAmi reads a bank or card statement",
+  intro: [
+    "The DotAmi project doesn't recommend this. It's your choice.",
+    "A statement holds much more than your business totals: every purchase and payment, the names of people who paid you or whom you paid, balances, and account or card numbers.",
+  ],
+  ifYouGoAhead: [
+    "The file is read in this window, on this computer. DotAmi doesn't send it anywhere or save it, and never asks for your online banking login.",
+    "Nothing counts as revenue until you tick it. Money in isn't always revenue: transfers between your own accounts, loans, refunds, and money from selling something you own are examples to look out for.",
+    "DotAmi keeps only the monthly totals you agree to, under the name you give this account. Account and card numbers are never kept.",
+  ],
+  cantProtect: [
+    "The file stays wherever you saved it. DotAmi doesn't move or delete it.",
+    "Anyone who can open DotAmi's data on this computer can see the totals you agreed to, and the names you gave your accounts. Settings says how to turn on your computer's disk encryption, which covers a lost or stolen computer.",
+    "DotAmi could misread your bank's file. Check every total before you agree to it.",
+  ],
+  choices: [
+    { id: "once", label: "Allow once", means: "This statement only. You'll see this warning again next time." },
+    {
+      id: "always",
+      label: "Always allow this account",
+      means: "No warning for this account's statements until you take it back in Settings.",
+    },
+    {
+      id: "every",
+      label: "Always allow every account",
+      means: "No warning for any account, including ones you add later, until you take it back in Settings.",
+    },
+  ],
+};
 
 export function settingsInGroup(group: SettingGroupId): SettingEntry[] {
   return SETTINGS.filter((s) => s.group === group);

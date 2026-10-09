@@ -23,7 +23,7 @@ Change both together.
 | Backup passphrase | none | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
 | Automatic updates | on | on · ask first · off | off: "you won't get fixes, including security fixes" | [7d] |
 | Figure reminders | none ticked | monthly · quarterly · yearly (tick any, or none) | — | [8e] |
-| Bank and card records | off | on per source | yes, every new bank source | [8g] |
+| Bank and card records | off | on · then, for each statement: allow once · always allow this account · always allow every account | turning it on: "a statement holds every purchase and payment, the names of people, balances and account numbers; DotAmi reads it in this window, keeps only the monthly totals you agree to and never keeps an account or card number"; then, before each statement from an account not always allowed: "Before DotAmi reads a bank or card statement" (below) | [8g] |
 | Model | none chosen | local model · own key per provider | own key: "what the Lens reads goes to that company" | [9a] |
 | Monthly spend limit for an own key | required when a key is added | an amount | — (see Part 4) | [9a] |
 | Permission level, per venture | Propose | Read · Propose · Act asking first · Act freely | Act freely: "it changes things without asking; everything is logged and can be undone" | [9f] |
@@ -38,6 +38,44 @@ Change both together.
 | Tax year shown | the current one | any year with catalogs | — | [11i] |
 | Language | English | English · French (when it exists) | — | [11j] |
 | Share anonymous usage | **off until you say yes** | see Part 4 | — | Part 4 |
+
+**Bank and card records — the statement warning, word for word** (`BANK_STATEMENT_WARNING` in
+`lib/settings/catalog.ts`; `tests/bank-sources.spec.ts` fails if this and the catalog differ). The
+maintainer's decision (2026-10-07): a separate switch, off to start, with its own warning (the
+table above); then this warning before a statement, with three buttons, and Settings lists each
+account and can take it back. It is not shown for an account the person chose "Always allow this
+account" for, nor for any account while "Always allow every account" stands. The switch stays
+`planned` until the statement screen that shows this warning is built; the accounts list is built
+(`lib/figures/source-accounts.ts`) and shows in Settings once it holds an account.
+
+- Title: Before DotAmi reads a bank or card statement
+- The DotAmi project doesn't recommend this. It's your choice.
+- A statement holds much more than your business totals: every purchase and payment, the names of
+  people who paid you or whom you paid, balances, and account or card numbers.
+- If you go ahead:
+  - The file is read in this window, on this computer. DotAmi doesn't send it anywhere or save
+    it, and never asks for your online banking login.
+  - Nothing counts as revenue until you tick it. Money in isn't always revenue: transfers between
+    your own accounts, loans, refunds, and money from selling something you own are examples to
+    look out for.
+  - DotAmi keeps only the monthly totals you agree to, under the name you give this account.
+    Account and card numbers are never kept.
+- What DotAmi can't protect:
+  - The file stays wherever you saved it. DotAmi doesn't move or delete it.
+  - Anyone who can open DotAmi's data on this computer can see the totals you agreed to, and the
+    names you gave your accounts. Settings says how to turn on your computer's disk encryption,
+    which covers a lost or stolen computer.
+  - DotAmi could misread your bank's file. Check every total before you agree to it.
+- The buttons (and Cancel, which adds nothing and reads nothing):
+  - **Allow once** — This statement only. You'll see this warning again next time.
+  - **Always allow this account** — No warning for this account's statements until you take it
+    back in Settings.
+  - **Always allow every account** — No warning for any account, including ones you add later,
+    until you take it back in Settings.
+- The account's name is the person's own words. Four digits are allowed only as "ending" plus
+  exactly four digits at the end ("Visa ending 1234"); any other run of four or more digits is
+  refused, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks) as one run and
+  digits of any script, and so is a name with hidden characters.
 
 ## Part 2 — Edge cases, story by story
 
@@ -128,7 +166,7 @@ calendar day across the move; run twice → no duplicates; nothing leaves the co
 - Merged cells, totals rows, blank rows and notes in an Excel report. *Every row below the column names is either counted or listed with its reason and row number: blank, the file's own totals row, no date, a date but no amount, an unreadable amount, a month not over yet. A merged cell's value sits in its first row only; the rows under it show as "no date" — never filled down (tested).*
 - A transaction list that holds a sale and the payment received for it (QuickBooks' Transaction List: an Invoice row, then a Payment row for the same money) → *used to be added twice, so a month of $700 in sales read $1,200. Now an optional "Type column" on the panel is pre-filled only when a column header is exactly "Transaction Type" (QuickBooks' name; a bare "Type" is left for the person to pick, and the cells are never used to guess); rows whose type is exactly Payment or Deposit (whole cell, any case; the French "Paiement" and "Dépôt" are assumed, no French export has been seen) are left out of the totals and listed as "typed Payment or Deposit, left out because a Type column is chosen", with a note that in QuickBooks these are money received for a sale on another row and "if they are sales of yours, choose None" (DotAmi cannot tell which they are, so the line does not claim a sale was already counted). Invoice, Sales Receipt and a negative Credit Memo count as before, and a "Type" column holding other words changes nothing. The person can clear the select to count every row. **Known limit, kept as the maintainer chose it (Payment and Deposit are both left out):** a Deposit made straight to an income account in QuickBooks (the only record of that sale, not a payment on an invoice) is left out too, and the hint under the select says so. Nothing about the column is stored, and only monthly totals are proposed (tested in `tests/figures-file-type-column.spec.ts`, the QuickBooks practice file, and browser-tested). A Payment row is left out whatever else is wrong with it; a file with no type column at all still counts every row, so the person has to know to pick one.*
 - A password-protected Excel file → "open it in Excel and save a copy without a password". *Refused with that sentence; an old .xls gets the same one (same container) (tested).*
-- A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused before the file is read; a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested).*
+- A 100 MB file → a size limit with a plain message; never freeze the app. *Over 10 MB is refused after only its first 8 KB is looked at (to tell a GnuCash book apart); a workbook that would unpack past 100 MB per part or 200 MB in all is refused before it's opened (tested). A GnuCash book may be up to 50 MB and 200 MB unpacked, read in a background worker that is stopped after a minute (tested, 2026-10-08).*
 - The same file dropped twice → recognised (by fingerprint), not counted twice. *Recognised by its totals instead: a month already waiting or agreed with the same total and currency is listed as "already in DotAmi" and not proposed again (tested). A byte fingerprint would need a table — left for [8c-2] with the remembered column choice. Even a second, different total for the same month is never added: the map leaves that quarter out until the person chooses ([8a]).*
 - A bank or credit card file dropped in (its amounts, and a file name that can carry account digits) → *The panel asks "Where is this file from?" before reading anything, for every file: the answer covers one file only (a second file, or another try after a refusal, goes back to the question), and it is never remembered. "A bank or credit card account" shows a plain warning and opens nothing: no bytes, no name, no figure. A file dropped on the panel before the answer is ignored unread. The answer is only as good as the person's click — a bank file the person calls "accounting software" is read like any other spreadsheet; nothing checks the answer (browser-tested 2026-10-07).*
 - A file that isn't what it claims (a renamed image, a macro-enabled workbook) → refused; macros never run. *Refused by content, not name: pictures, PDFs, video, .xlsb, .ods and any workbook carrying macros, even one named .xlsx. A PDF gets its own sentence pointing to **Add from last year's return** ([8f]). Nothing in a workbook is ever run — only its XML text is read (tested).*
@@ -152,13 +190,21 @@ and can't be undone (but a backup can restore it).
 - Deleted rows left readable in the file → *VACUUM after the delete; a byte scan finds the deleted
   words before and not after (tested). The wipe can't run (another connection busy, not enough
   disk): the rows are deleted and the page says their space isn't wiped yet, with "Try the wipe
-  again". Finishing it at the next start of the desktop app is the next step.*
+  again". A "wipe pending" note goes beside the data file before the delete, and the desktop app
+  finishes the wipe at its next start, only when that note is there (desktop-tested; an ordinary
+  start without it leaves the file alone, tested too).*
+- The safety copies in the backups folder still hold what was deleted → *their own box, warning that
+  afterwards only a backup saved elsewhere could bring anything back. Only DotAmi's own copies go;
+  anything else in the folder stays, and a folder or file that is a link is never followed (tested).
+  A copy another program holds open is left, said on the page, and finished later like the wipe
+  (tested).*
+- The number of safety copies changed between the asks → *refused, nothing deleted (tested).*
 - An agent, a script or another site calls Delete → *403 (tested).*
 - After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
   on the map can't bring the idea back.*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: the backups folder, what the desktop window stored in
-  earlier launches, the log, anything already sent elsewhere.
+- Not reached yet, and the menu says so: what the desktop window stored in earlier launches, the
+  log, anything already sent elsewhere, the disk under the data file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.
@@ -182,6 +228,16 @@ document type or puts attributes on a tag, two downloads joined into one file, a
 statement that doesn't say its currency, and one it cannot read with certainty. It marks pending rows
 (never counted), passes the bank's corrections on (applied by the totals), passes a repeated bank id on
 (counted once by the totals) and blanks every account number the file names (a transfer's memo names the other account) out of descriptions and ids.
+
+*The accounts list* (built 2026-10-08, no screen adds to it yet; `tests/bank-sources.spec.ts`)
+- An account number typed as the account's name → *refused with "Leave the account number out…"; nothing is written, and the number is in no answer, log or byte of the file (tested). "ending" plus exactly four digits at the end is the one place digits may stand ("Visa ending 1234"); "Visa 1234", "Visa ending 12345", "Spending 1234", digits split by spaces, hyphens, en dashes, dots, slashes, commas, brackets or accent marks, full-width, Arabic-Indic, superscript or circled digits, and hidden characters between digits are all refused. A year in a name ("Business 2026") is refused too, by the same rule.*
+- The same account named twice → *refused while the first is in use; names that differ only in case or spaces are the same account (tested).*
+- An agent or a script tries to list, add or take back an account → *refused; the routes answer only DotAmi's own page (tested).*
+- An account added while the switch is off, or before the switch exists → *refused (409), nothing written; the setting reads as off while it is planned, whatever the file says (tested).*
+- Taking an account back, or "Always allow every account", with the switch off → *works: taking a permission back is never blocked (tested).* A taken-back account's next statement starts over as a new account, with the warning; its row stays in the file until Delete.
+- "Always allow every account" taken back → *each account's warning comes back, except those allowed with "Always allow this account" (tested).*
+- Figures read from an account's statements when the account is taken back → *left alone: nothing links a figure to its account yet (a later decision on where sources are kept).*
+- More than 100 accounts in use → *refused (tested).*
 
 **Books on disk [8h]** — the accounting program has the file open and locked; a file from a
 newer version of that program than the reader knows.

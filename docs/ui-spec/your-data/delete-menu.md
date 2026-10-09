@@ -25,8 +25,17 @@ with where they are kept, before confirming.
      (`keeps` in `DELETE_MENU`).
    - **Your figures** — every figure, in every state; cards go back to the estimates.
    - **Your expense records** — every record, attached to an idea or not, in every state.
+   - **Your bank and card accounts** (added 2026-10-08, [8g]) — every account name, in use or taken
+     back, with its days. Figures read from their statements stay; "Always allow every account" goes
+     with Your settings, and the tick-box line says so.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
    - **Your settings** — every saved choice goes back to its default.
+   - **Safety copies in the backups folder** (added 2026-10-08) — DotAmi's own whole copies of the
+     data file, made before each update and restore. Its sentence, in amber, is the warning:
+     afterwards only a backup saved somewhere else could bring anything back. It counts files, not
+     records ("Safety copies: 2"), and only the files DotAmi names itself (`dotami-before-….db`
+     directly in `backups/`); anything else in the folder stays and isn't counted. Switched off
+     ("Nothing to delete") when there are none, which is always the case in a copy run from source.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
      file's columns yet. This is its place on the menu when it does.
 
@@ -53,27 +62,39 @@ with where they are kept, before confirming.
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
    last tax year they relate to, with exceptions, linked to the CRA's page with the day it was read.
-   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): the safety copies in the backups
-   folder, what the window stored in earlier launches ("Not cleared yet"), the log, anything that
-   already left the computer, and the disk under the data file.
+   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): what the window stored in earlier
+   launches ("Not cleared yet"), the log, anything that already left the computer, and the disk
+   under the data file (which can still hold older pieces of the file and of deleted safety copies).
 
    **Delete what's ticked…** (off until a box is ticked) goes to the first ask. **Cancel** closes
    the menu and unticks everything.
 3. **First ask** (dialog, "Delete these?"): every ticked box with the count of each table it
-   touches; under **Kept, not deleted**, the same warning on the expense records that stay; and a
-   line that everything not ticked stays, as does what Delete doesn't reach. **Yes,
-   continue** or **Cancel** (back to the menu, boxes still ticked).
-4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." In the desktop app it points
-   to File → Back up… first and File → Restore; from source, to copying the data file. Focus starts
-   on **Cancel**, so Enter can't delete by accident. **Delete now** sends the request.
+   touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
+   expense records that stay; and a line that everything not ticked stays, as does what Delete
+   doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
+   backup saved somewhere else could bring anything back. Without them, when there are any, a line
+   that the safety copies aren't ticked and still hold what is deleted. **Yes, continue** or
+   **Cancel** (back to the menu, boxes still ticked).
+4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
+   ticked, the amber warning again. In the desktop app it points to File → Back up… first and File →
+   Restore; from source, to copying the data file. Focus starts on **Cancel**, so Enter can't delete
+   by accident. **Delete now** sends the request.
 5. **Result**: "Deleted." with each table's count deleted and left (0), a line for what was kept
    ("Your expense records: 2 records kept, now “not attached yet”; 3 records in all"; left out when
    none was kept, so ticking ideas with no records attached says nothing about expenses), and whether
    the file's space is wiped. When the wipe couldn't run, an amber note says the records are deleted but their
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
-   using it), with **Try the wipe again**. If the server deleted but couldn't read the file back to
-   count what is left, the "left" counts are dropped and an amber line says to reload and check.
-   The page's counts are read again from the file.
+   using it), with **Try the wipe again**. Safety copies are counted as files ("Safety copies: 2 files
+   deleted, 0 left"); a copy another program holds open is left, and an amber line says so, with
+   the same button. In the desktop app a line adds that it finishes the next time the app starts. If
+   the server deleted but couldn't read the file back to count what is left, the "left" counts are
+   dropped and an amber line says to reload and check. The page's counts are read again from the file.
+6. **An earlier Delete that hasn't finished.** When the "wipe pending" note is beside the data file
+   (an earlier wipe couldn't finish, or a safety copy couldn't be deleted), an amber note under the
+   button says so ("An earlier Delete hasn't finished…"; in the desktop app, that it finishes the
+   next time it starts) with **Finish it now**, which runs the same retry. Done, it says "Finished:
+   the earlier Delete's wipe is done."; still not done, it says to close any program using DotAmi's
+   files and check the free disk space.
 
 Escape, Cancel or a click on the dim backdrop at either ask deletes nothing. If the counts in the
 file differ from what the person was shown (an import or an agent added something), the server
@@ -90,14 +111,17 @@ with it, and trust that it is gone from the file rather than hidden.
 
 Delete · What do you want to delete? · Learn more · Nothing to delete · Not kept yet · Delete
 what's ticked… · Cancel · Delete these? · Yes, continue · Delete them now? · Delete now ·
-Deleting… · Deleted. · Try the wipe again · What Delete doesn't reach. The box labels and their
-sentences are in `DELETE_MENU`.
+Deleting… · Deleted. · Try the wipe again · What Delete doesn't reach · An earlier Delete hasn't
+finished · Finish it now · Finishing… · Finished: the earlier Delete's wipe is done. The box labels
+and their sentences are in `DELETE_MENU`.
 
 ## State touched (field names only)
 
 Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`;
-`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense`, `PersonStatement`, `Setting`. Never `User`
-(`KEPT_BY_DELETE`). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
+`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
+(`KEPT_BY_DELETE`). On disk: the safety copies DotAmi made in `backups/` beside the data file (when
+ticked), and the "wipe pending" note beside the data file (`<data file>.wipe-pending`, written before
+the wipe and removed once it has worked; it holds a time and safety-copy file names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
 is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
 
 ## Downstream consumers (where the data goes today)
@@ -107,12 +131,20 @@ settings page read empty or default afterwards.
 
 ## Cleanup / open questions
 
-- Clearing the backups folder from this menu, and finishing a wipe that couldn't run at the next
-  start of the desktop app: the next step.
 - Clearing what the desktop window stored in earlier launches: waits on a later decision on how to
   reach it.
 - Whether an agent (the Lens, or an outside one) may ever delete: a later decision. Until then the
   route answers only to DotAmi's own page.
+- Known limit: the "wipe pending" note is written just before the rows are deleted. If the computer
+  is switched off in that moment, the rows are kept (the delete never committed) but the ticked
+  safety copies are deleted at the next desktop start, as the person confirmed, with no message
+  saying the rows are still there; the page's counts show them.
+- Known limit: on a completely full disk even the note may not be written. The delete still happens
+  and **Try the wipe again** is offered, but the line saying the desktop app finishes it at the next
+  start can then be wrong: that start can't know the wipe is owed.
+- Known limit: a safety copy that can never be deleted (for example, no permission) keeps the note,
+  so each desktop start rebuilds the data file again and the page keeps showing the amber note until
+  the copy is removed by hand.
 
 ## Backend wiring
 
@@ -121,4 +153,11 @@ unless the request comes from DotAmi's own page (`refuseUnlessFromAppPage`), bod
 `readJsonWithLimit` (JSON only, 8 KB). `{ kinds, seen }` runs `deleteData` (`lib/privacy/delete.ts`):
 the counts are checked against `seen` and the tables emptied in one transaction (409 with fresh
 counts on a mismatch, 400 for a kind it can't delete), then `VACUUM` outside the transaction.
-`{ retryWipe: true }` runs only the wipe. A failure logs the error's name and code only.
+`{ retryWipe: true }` runs `finishWipe`: the safety copies the "wipe pending" note still owes,
+then the wipe, and removes the note once both have worked (`{ wiped, backupsLeft }`). With the
+safety-copies box ticked, the route passes the data file it uses (`DATABASE_URL`) so the copies and
+the note are found beside it; their count is checked against `seen.backups` first (409 on a
+mismatch), the note is written before anything is deleted, and the copies are deleted after the
+rows (`desktop/wipe-pending.mjs`, which only deletes `dotami-before-….db` files directly in a
+`backups/` folder that isn't a link). The desktop app finishes what the note owes at its next start
+(`desktop/main.mjs`), and only when the note is there. A failure logs the error's name and code only.

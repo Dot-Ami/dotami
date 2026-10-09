@@ -46,6 +46,12 @@ content and the project itself run alongside everything.
   - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
+  - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
+    ships, its version and licence text, written at build time; packaging stops if one is missing), shown
+    at Help → Licences and from Settings → Updates
+  - [x] The server leaves out what it never loads: sharp with libvips (LGPL) and the TypeScript compiler,
+    with what only they pull in (about 30 MB; the build stops if something still needs one, a desktop
+    test fails if one comes back)
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -115,7 +121,9 @@ roadmap's build order.
     that hold events only (#86)
   - [x] *Delete*: pick what to delete and see what else it affects — one button, tick-boxes per kind
     of data, asked twice, wiped from the file (a byte-scan test proves it); statements all at once only
-  - [ ] *Delete* can also clear the backups folder, and a wipe that didn't finish completes at the next start
+  - [x] *Delete* can also clear the backups folder (only DotAmi's own safety copies, never through a
+    link), and a wipe that didn't finish completes at the next start of the desktop app, only when
+    Delete left its "wipe pending" note
   - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
 - 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
@@ -146,14 +154,24 @@ roadmap's build order.
     account numbers never leave it, pending rows and repeated ids are handled, and a file with its
     own document type, two downloads joined together, or too many entries is refused; no screen
     yet ([review](connectors/ofx-reader-review.md))
-  - [ ] The warning, the switch, the screen, the OFX files on the screen (run the reader in a Web Worker)
+  - [x] The accounts list behind the warning: each account under the person's own name for it
+    ("ending" plus four digits allowed, no other run of four digits), the warning button pressed and
+    the day, taken back in Settings, and on the Delete menu; the warnings' words written. The
+    switch stays "planned" until the screen arrives, so nothing can add an account yet
+  - [ ] The switch, the warning on screen, the statement screen, the OFX files on the screen (run the reader in a Web Worker)
 - 🔄 **[8h] Books on disk** — read-only: ledger/hledger, GnuCash, Sage 50, QuickBooks Desktop.
-  - [x] GnuCash XML read in the window, revenue accounts to monthly totals; refuses what it doesn't
+  - [x] GnuCash XML reader, revenue accounts to monthly totals; refuses what it doesn't
     fully understand (#83)
   - [x] hledger / Ledger journals: DotAmi's own reader, written from hledger's manual; accounts and
     monthly totals through the same core; refuses what it doesn't read by name and line; no screen
     yet ([journal-reader.md](connectors/journal-reader.md))
-  - [ ] Proposing figures, the screens, the other formats
+  - [x] A GnuCash book on "Add from a file": read in a background worker (up to 50 MB, a one-minute
+    limit), its accounts listed with the income ones ticked, monthly totals proposed under the
+    source kind "books" ("Books / file"); unknown GnuCash features refused by name
+    ([gnucash.md](connectors/gnucash.md))
+  - [x] A ticked account the book doesn't mark as income gets a note that a sale may be counted
+    twice; information only, nothing unticked or blocked
+  - [ ] Journals on the screen, GnuCash database (SQLite) books, Sage 50, QuickBooks Desktop
 - 🔄 **[8i] Business expense records** — a record of each business expense the person adds (date,
   amount, who it was paid to, what for, a category they pick, an optional receipt file), so the
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is

@@ -3,6 +3,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
+import { BookReader } from "@/lib/figures/books/read-book";
+import type { BookData } from "@/lib/figures/books/types";
 import {
   firstSheetWithRows,
   guessPicks,
@@ -25,6 +27,7 @@ import {
 import type { FigureView } from "@/lib/figures/types";
 
 import { describePeriod, formatAmount, postJson } from "./agree-prompt";
+import { BookReview, type BookProposal } from "./books-drop";
 
 /**
  * [8c] "Add from a file": reads a spreadsheet inside this window and proposes one total per
@@ -37,6 +40,10 @@ import { describePeriod, formatAmount, postJson } from "./agree-prompt";
  *
  * The parsing code (zip and XML readers) is loaded only when a file is picked, so the ideas page
  * costs nothing extra for someone who never uses this.
+ *
+ * [8h] A GnuCash book is told from its first bytes and goes to the books reader instead: it is read
+ * in a background worker (lib/figures/books/read-book.ts, up to 50 MB, with a time limit), and its
+ * accounts and totals are shown by books-drop.tsx.
  */
 
 const FIELD =
@@ -52,8 +59,11 @@ const MAX_FIGURES_PER_FILE = 500;
 const MAX_ROW_NUMBERS_SHOWN = 5;
 const MAX_LABEL_CHARS = 120;
 
+// .gnucash is GnuCash's own name for a book (compressed or not); .xml and .gz for a copy renamed.
 const ACCEPT =
-  ".xlsx,.csv,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  ".xlsx,.csv,.txt,.gnucash,.xml,.gz,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+/** How much of a file is looked at to tell what it is (a book, a workbook, a CSV) before it is read. */
+const HEAD_BYTES = 8192;
 const ACCOUNTING_LABEL = "Accounting software or a spreadsheet you keep";
 const BANK_LABEL = "A bank or credit card account";
 const READ_FAILED = "DotAmi couldn't read that file. Nothing was kept.";
@@ -158,13 +168,22 @@ export function FileDrop({
   const [styleAnswer, setStyleAnswer] = useState<Answer<DecimalStyle> | null>(null);
   const [currency, setCurrency] = useState("CAD");
 
+  // [8h] A GnuCash book, once the books worker has read it: its accounts and posted lines, in memory.
+  const [book, setBook] = useState<BookData | null>(null);
+  const [readingBook, setReadingBook] = useState(false);
+  // The books worker, started on the first book and stopped whenever the file is forgotten.
+  const bookReader = useRef<BookReader | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [proposeError, setProposeError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = readToken;
+    const reader = bookReader;
     return () => {
       token.current += 1;
+      // The panel closed: stop the worker and whatever book it holds.
+      reader.current?.close();
     };
   }, []);
 
@@ -200,6 +219,10 @@ export function FileDrop({
    */
   function askAgain() {
     readToken.current += 1;
+    // A book still being read is stopped with its worker; one already read is forgotten below.
+    bookReader.current?.close();
+    setBook(null);
+    setReadingBook(false);
     answerUsed.current = false;
     setOrigin("ask");
     setDragging(false);
@@ -230,12 +253,32 @@ export function FileDrop({
     setReadError(null);
     setProposeError(null);
     setSheets([]);
+    setBook(null);
     setPhase("reading");
 
-    // Too big: say so without reading a single byte of it.
+    // What kind of file is it? Only its first bytes are looked at, so a file that is too big for
+    // what it turns out to be (a spreadsheet over 10 MB, a GnuCash book over 50 MB) is refused
+    // before the rest of it is read.
+    let sniffed: ReturnType<typeof sniffFile>;
+    try {
+      const head = new Uint8Array(await file.slice(0, HEAD_BYTES).arrayBuffer());
+      sniffed = sniffFile(file.name, file.size, head);
+    } catch {
+      sniffed = { ok: false, error: READ_FAILED };
+    }
+    if (token !== readToken.current) return; // a newer file was picked, or the screen closed
+    if (!sniffed.ok) {
+      setReadError(sniffed.error);
+      setPhase("pick");
+      return;
+    }
+    if (sniffed.format === "gnucash") {
+      await openBook(file, token);
+      return;
+    }
+    // A spreadsheet past its limit was refused above; this is a second guard for the full read.
     if (file.size > MAX_FILE_BYTES) {
-      const refusal = sniffFile(file.name, file.size, new Uint8Array(0));
-      setReadError(refusal.ok ? READ_FAILED : refusal.error);
+      setReadError(READ_FAILED);
       setPhase("pick");
       return;
     }
@@ -262,6 +305,27 @@ export function FileDrop({
     setDateAnswer(null);
     setStyleAnswer(null);
     applyGuess(result.sheets[start]?.rows ?? []);
+    setPhase("ready");
+  }
+
+  /**
+   * [8h] Reads a GnuCash book in the books worker. The window stays usable while it reads, and
+   * Change or Cancel stop the worker. Only what the worker hands back (accounts and posted lines)
+   * is kept, in this component's state; the bytes went to the worker, which holds on to nothing
+   * once it has answered.
+   */
+  async function openBook(file: File, token: number) {
+    setReadingBook(true);
+    bookReader.current ??= new BookReader();
+    const result = await bookReader.current.read(file);
+    if (token !== readToken.current) return; // a newer file was picked, or the screen closed
+    setReadingBook(false);
+    if (!result.ok) {
+      setReadError(result.error);
+      setPhase("pick");
+      return;
+    }
+    setBook(result.book);
     setPhase("ready");
   }
 
@@ -311,10 +375,8 @@ export function FileDrop({
 
   async function review() {
     if (busy || !split) return;
-    setProposeError(null);
     const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || "a file";
-    setBusy(true);
-    const result = await postJson("/api/figures/propose", {
+    await propose({
       ventureId,
       source: { kind: "file", label, rows: split.fresh.reduce((sum, m) => sum + m.rows, 0) },
       figures: split.fresh.map((m) => ({
@@ -326,6 +388,14 @@ export function FileDrop({
         rows: m.rows,
       })),
     });
+  }
+
+  /** Sends the totals (from a spreadsheet or a book) to wait in the agree prompt, then opens it. */
+  async function propose(body: BookProposal | Record<string, unknown>) {
+    if (busy) return;
+    setProposeError(null);
+    setBusy(true);
+    const result = await postJson("/api/figures/propose", body);
     setBusy(false);
     if (!result.ok) {
       setProposeError(result.error);
@@ -396,8 +466,8 @@ export function FileDrop({
             </Pill>
           </div>
           <p id={`${uid}-origin-hint`} className="mt-2 text-[11px] text-stone-dim">
-            Accounting software means QuickBooks, Xero, Wave, FreshBooks or similar; a spreadsheet
-            you keep is one in Excel. Nothing is opened until you answer.
+            Accounting software means QuickBooks, Xero, Wave, FreshBooks, GnuCash or similar; a
+            spreadsheet you keep is one in Excel. Nothing is opened until you answer.
           </p>
         </div>
       ) : null}
@@ -445,7 +515,9 @@ export function FileDrop({
               }`}
             >
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs text-paper-dim">Drop a .xlsx or .csv file here, or</p>
+                <p className="text-xs text-paper-dim">
+                  Drop a .xlsx or .csv file, or a GnuCash book, here, or
+                </p>
                 <Pill
                   data-autofocus
                   variant="elev"
@@ -481,6 +553,9 @@ export function FileDrop({
           className="mt-2 text-[11px] text-stone-dim outline-hidden"
         >
           Reading {fileName}…
+          {readingBook
+            ? " A GnuCash book is read in the background, so this window stays usable. A big one can take a little while."
+            : ""}
         </p>
       ) : null}
       {origin === "accounting" && readError ? (
@@ -492,7 +567,18 @@ export function FileDrop({
         </p>
       ) : null}
 
-      {origin === "accounting" && phase === "ready" ? (
+      {origin === "accounting" && phase === "ready" && book ? (
+        <BookReview
+          ventureId={ventureId}
+          fileName={fileName}
+          book={book}
+          existing={existing}
+          busy={busy}
+          onReview={(body) => void propose(body)}
+        />
+      ) : null}
+
+      {origin === "accounting" && phase === "ready" && !book ? (
         <div className="mt-3">
           {/* Focus lands here once a file is read, since the Choose a file button it came from is gone. */}
           <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
