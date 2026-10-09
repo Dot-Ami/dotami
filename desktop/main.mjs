@@ -353,6 +353,8 @@ function buildMenu(origin, dataDir) {
               }),
           },
           { label: "Check for updates…", click: () => void checkForUpdates(true) },
+          // The third-party notices the build wrote (desktop/notices.mjs), shown by the /licences page.
+          { id: "licences", label: "Licences", click: go("/licences") },
           { label: "Source on GitHub", click: () => void shell.openExternal("https://github.com/Dot-Ami/dotami") },
         ],
       },

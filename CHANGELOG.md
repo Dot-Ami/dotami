@@ -9,6 +9,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
+  package, its version, its licence, where it ships, and the licence's own words (open an entry to
+  read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The
+  installer now carries the same list as `THIRD-PARTY-NOTICES.txt` beside DotAmi.exe, next to
+  Electron's licence and Chromium's notices. The list is written from the packages themselves each
+  time the app is built, and building the installer stops if a package that ships has no entry, so
+  the minified app no longer drops the notices its packages' licences ask to be kept.
 - **Delete can clear the safety copies, and finishes a wipe that was cut short** ([8d]) — the Delete
   list gets one more tick-box, "Safety copies in the backups folder", warning that afterwards only a
   backup you saved somewhere else could bring anything back. Only the copies DotAmi made itself are

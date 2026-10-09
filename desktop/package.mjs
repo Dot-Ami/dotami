@@ -5,12 +5,15 @@
 //
 // It stages exactly what the installed app needs into dist-desktop/app/ — the Electron main
 // process, the migrator, the migration files, the self-contained server and the updater — and
-// nothing else, then refuses to continue if any git data, env file or database is in there.
+// nothing else, then refuses to continue if any git data, env file or database is in there, or if
+// a package that ships has no entry in the third-party notices (THIRD-PARTY-NOTICES.txt).
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
 import { Arch, build, Platform } from "electron-builder";
+
+import { missingFromNotices, NOTICES_FILE } from "./notices.mjs";
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -72,6 +75,16 @@ walk(stage);
 walk(serverStage);
 if (forbidden.length) throw new Error(`desktop package: private files staged:\n  ${forbidden.join("\n  ")}`);
 
+// 3b. Every package that ships has its licence in the third-party notices desktop/build.mjs wrote
+// (desktop/notices.mjs): the minified code drops the packages' own notices, so this file is where
+// their licences travel. A package in either node_modules that the file doesn't list stops here.
+const noticesFile = path.join(serverStage, NOTICES_FILE);
+if (!existsSync(noticesFile)) throw new Error(`desktop package: ${NOTICES_FILE} is missing from the server build`);
+const unlisted = missingFromNotices(readFileSync(noticesFile, "utf8"), [path.join(stage, "node_modules"), path.join(serverStage, "node_modules")]);
+if (unlisted.length) {
+  throw new Error(`desktop package: these ship but ${NOTICES_FILE} has no entry for them (desktop/notices.mjs):\n  ${unlisted.join("\n  ")}`);
+}
+
 // 4. Package. Per-user install (no administrator rights); uninstalling leaves the data folder
 // alone — whether to offer deleting it is still an open decision (settings doc, Part 4 §6).
 await build({
@@ -93,6 +106,15 @@ await build({
       cpSync(serverStage, dest, { recursive: true });
       if (!existsSync(path.join(dest, "node_modules", "next", "package.json"))) {
         throw new Error("desktop package: the server's node_modules didn't make it into the app");
+      }
+      // The notices beside DotAmi.exe as well, where a person looking through the installed folder
+      // finds them next to Electron's own licence files. Those two come from Electron's download
+      // (electron-builder renames LICENSE to LICENSE.electron.txt on Windows; LICENSES.chromium.html
+      // is Chromium's list): if a new electron-builder stopped shipping them, the notices file's
+      // Electron entry would point at nothing, so that stops the package too.
+      cpSync(path.join(serverStage, NOTICES_FILE), path.join(appOutDir, NOTICES_FILE));
+      for (const f of ["LICENSE.electron.txt", "LICENSES.chromium.html"]) {
+        if (!existsSync(path.join(appOutDir, f))) throw new Error(`desktop package: Electron's ${f} isn't in the app folder`);
       }
       walk(appOutDir);
       if (forbidden.length) throw new Error(`desktop package: private files in the app:\n  ${forbidden.join("\n  ")}`);

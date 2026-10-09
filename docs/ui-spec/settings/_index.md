@@ -1,6 +1,6 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-08 ([8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-08 (the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
 the interactive controls are `copy-path-button.tsx` and `figure-reminders-control.tsx`) ·
@@ -48,7 +48,9 @@ Each group:
      computer's internet address and nothing else). Includes a link, "What DotAmi
      knows about you", to `/your-data` ([8d], docs/ui-spec/your-data/_index.md).
    - Updates: the version; the installed app checks GitHub at start and asks before installing;
-     a copy run from source updates with git.
+     a copy run from source updates with git. Then: DotAmi is open source under the Apache License
+     2.0 and ships with others' work, with a link, "Licences", to `/licences` (and, in the desktop
+     app, "also under Help → Licences"; added 2026-10-08, docs/ui-spec/licences/_index.md).
 2. **One card per setting** — label · what it controls · Default · Choices · the warning shown
    before switching on the risky option (amber) · a status chip: `Not built yet · [code]`,
    `Asked each time · <where>` (the backup passphrase — asked in the passphrase window, which
@@ -64,6 +66,7 @@ Each group:
 | **Add to my calendar** (Figure reminders, under the tick-boxes; added 2026-10-08, [8e]) | saves `DotAmi figure reminders.ics`, made in the page from the boxes as shown (`lib/figures/calendar.ts`, saved by `lib/utils/save-file.ts`; no request is made). One all-day repeating event per ticked box, titled "Bring your DotAmi figures up to date": monthly from the 1st of next month, quarterly from the 1st of the next quarter (January, April, July, October), yearly from January 1; always the first such day after today. Each event's UID is a random UUID, new for every file. The text beside it says to open the file with a calendar app or its Import menu, that Google Calendar imports only on a computer at calendar.google.com (Settings, then Import & export), and that importing the same file again adds a second copy (so delete the old events after changing the ticks); it also says the calendar can't see DotAmi, so it reminds whether or not the figures are in, that the file holds only general words (no amounts, no idea names), and that a calendar that syncs online shares them with its company. Switched off while no box is ticked, while a tick is saving, and while the saved choice hasn't been read. In a browser it is an ordinary download; in the desktop app a Save dialog asks where (Cancel saves nothing; `desktop/main.mjs` `saveDownload`) | — (a file the person keeps; nothing stored) |
 | Public task list / Part 4 / nextjs.org links | open in a new tab | — |
 | **What DotAmi knows about you** (Privacy group, and again in Your figures) | opens `/your-data` in the same tab | — |
+| **Licences** (Updates group; added 2026-10-08) | opens `/licences`, the third-party notices, in the same tab | — |
 
 ## What it deliberately does not do
 

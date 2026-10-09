@@ -50,7 +50,10 @@ says where it is going.
   file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
   data from `lib/privacy/inventory.ts` `DELETE_MENU` (the safety copies in `backups/` among them),
   asked twice, then wiped from the file by `lib/privacy/delete.ts`; a wipe that couldn't finish is
-  finished at the desktop app's next start, only when Delete left its note: `desktop/wipe-pending.mjs`).
+  finished at the desktop app's next start, only when Delete left its note: `desktop/wipe-pending.mjs`)
+  · `/licences` (the third-party notices: every package that ships, its version and licence text,
+  read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes at build time; packaging
+  the installer stops if a package that ships has no entry).
 - API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `settings` (GET/PUT

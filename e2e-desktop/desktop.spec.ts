@@ -15,6 +15,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
+import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
@@ -126,6 +127,37 @@ test("start → describe a venture → close → start again: the venture is sti
   await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
   await page.getByRole("link", { name: "Your ideas →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+});
+
+test("Help → Licences shows the notices for what this app ships, and every package in it has an entry", async () => {
+  const page = await launch();
+  await clickMenu("licences");
+  await expect(page).toHaveURL(/\/licences$/);
+  // The list desktop/build.mjs wrote beside server.js: Electron itself, the server's packages and
+  // the desktop app's own (electron-updater).
+  const runtime = page.getByRole("region", { name: "The desktop app's runtime" });
+  await expect(runtime.getByText("electron", { exact: true })).toBeVisible();
+  await runtime.getByText("electron", { exact: true }).click();
+  await expect(runtime).toContainText("LICENSES.chromium.html");
+  const packages = page.getByRole("region", { name: "Packages" });
+  for (const name of ["next", "react", "@prisma/client", "electron-updater"]) {
+    await expect(packages.getByText(name, { exact: true })).toBeVisible();
+  }
+
+  // Every package inside the server that ships has an entry for its exact version: the same check
+  // desktop/package.mjs runs before it packages anything. A packaged app keeps the server in
+  // resources/server (and its own packages inside app.asar, checked when it was packaged).
+  const server = packagedExe ? path.join(path.dirname(packagedExe), "resources", "server") : path.join(root, ".next-desktop", "standalone");
+  const notices = readFileSync(path.join(server, NOTICES_FILE), "utf8");
+  const shipped = packagesIn(path.join(server, "node_modules"));
+  expect(shipped.map((p) => p.name)).toEqual(expect.arrayContaining(["next", "react", "@prisma/client"]));
+  expect(missingFromNotices(notices, [path.join(server, "node_modules")])).toEqual([]);
+  if (packagedExe) {
+    // Beside DotAmi.exe: the notices, Electron's licence and Chromium's notices.
+    for (const f of [NOTICES_FILE, "LICENSE.electron.txt", "LICENSES.chromium.html"]) {
+      expect(existsSync(path.join(path.dirname(packagedExe), f)), f).toBe(true);
+    }
+  }
 });
 
 test("Add to my calendar asks where to save with a Save dialog, writes the file there, and writes nothing when cancelled", async () => {

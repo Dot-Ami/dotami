@@ -22,3 +22,6 @@ test-results
 
 # Delete leaves this note beside a data file while its wipe is unfinished (desktop/wipe-pending.mjs).
 *.db.wipe-pending
+
+# third-party notices, written by desktop/notices.mjs on every build
+/THIRD-PARTY-NOTICES.txt
