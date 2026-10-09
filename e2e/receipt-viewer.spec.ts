@@ -15,7 +15,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { RECEIPT_REFUSALS } from "../lib/expenses/receipts/refusals";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
-import { pdf, png } from "../tests/helpers/receipt-files";
+import { manyPagePdf, pdf, png } from "../tests/helpers/receipt-files";
 
 // This run's data folder (playwright.config.ts): the data file and the receipts folder beside it.
 const DATA = path.join(process.cwd(), "prisma", "e2e");
@@ -252,9 +252,21 @@ test("the receipt route answers only DotAmi's own page, and never as a page", as
   // From the page: the bytes, as plain data.
   const fromPage = await page.evaluate(async (expenseId) => {
     const res = await fetch("/api/expenses/receipt/file", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ expenseId }) });
-    return { status: res.status, type: res.headers.get("content-type"), nosniff: res.headers.get("x-content-type-options"), text: await res.text() };
+    const header = (name: string) => res.headers.get(name);
+    return {
+      status: res.status,
+      type: header("content-type"),
+      nosniff: header("x-content-type-options"),
+      disposition: header("content-disposition"),
+      cache: header("cache-control"),
+      csp: header("content-security-policy"),
+      text: await res.text(),
+    };
   }, id);
-  expect(fromPage).toMatchObject({ status: 200, type: "application/octet-stream", nosniff: "nosniff" });
+  expect(fromPage).toMatchObject({ status: 200, type: "application/octet-stream", nosniff: "nosniff", disposition: "attachment", cache: "no-store" });
+  // The policy the real server sends (next.config.mjs's headers are applied over the route's own, so
+  // they must carry it too): were the answer ever loaded as a page, nothing in it could run or load.
+  expect(fromPage.csp).toBe("default-src 'none'; frame-ancestors 'none'; sandbox");
   expect(fromPage.text).toContain("zq-route-marker");
 
   // From outside the page (an agent, a script, another program through the browser): refused.
@@ -264,4 +276,28 @@ test("the receipt route answers only DotAmi's own page, and never as a page", as
   // As an address: there is no GET, so nothing can load it as a page or a picture.
   const asAddress = await page.request.get("/api/expenses/receipt/file");
   expect(asAddress.status()).toBe(405);
+});
+
+// Each page is held to MAX_PAGE_PIXELS, but 20 pages at that cap would be about 1.3 GB of pictures.
+// Tall, narrow pages (100 x 625 points) are drawn at exactly the per-page cap, 1600 x 10,000 pixels;
+// the viewer stops when the pages so far reach its total and says how many it shows.
+test("a hostile PDF of 20 huge pages: only as many pages as the memory limit allows are drawn, and the viewer says so", async ({ page }) => {
+  test.setTimeout(90_000);
+  const PAYEE = `Example Tall Pages viewer test ${Date.now()}`;
+  await page.goto("/expenses");
+  await keptRecord(page, PAYEE);
+  await page.reload();
+  const row = agreedRow(page, PAYEE);
+  await addThroughPage(row, "receipt.pdf", "application/pdf", manyPagePdf(20, 100, 625));
+  const seen = watch(page);
+
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const first = viewer(page).getByRole("img", { name: "Page 1 of 20" });
+  await expect(first).toBeVisible({ timeout: 30_000 });
+  expect(await first.evaluate((el) => [(el as HTMLCanvasElement).width, (el as HTMLCanvasElement).height])).toEqual([1600, 10_000]);
+  await expect(viewer(page)).toContainText("DotAmi shows the first 5 pages; this PDF has 20. The rest are kept in the file.");
+  await expect(viewer(page).getByRole("img", { name: /^Page \d+ of 20$/ })).toHaveCount(5);
+  await expect(viewer(page).getByRole("img", { name: "Page 6 of 20" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  expect(seen.dialogs).toEqual([]);
 });

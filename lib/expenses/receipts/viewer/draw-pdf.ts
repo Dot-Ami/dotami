@@ -11,14 +11,14 @@
  *     and the SVG filters it would add to a document are switched off (NoFilters);
  *   - no annotation layer and no text layer are built, so nothing in a PDF is clickable, and pdf.js's
  *     scripting sandbox (the only part of it that runs a PDF's JavaScript) is never loaded;
- *   - pictures inside the PDF are capped at MAX_IMAGE_PIXELS, a page at MAX_PAGE_PIXELS, and at most
- *     MAX_PDF_PAGES pages are drawn.
+ *   - pictures inside the PDF are capped at MAX_IMAGE_PIXELS, a page at MAX_PAGE_PIXELS, all drawn
+ *     pages together at MAX_PDF_TOTAL_PIXELS, and at most MAX_PDF_PAGES pages are drawn.
  */
 
 import { PDF_OPTIONS, type PdfJs } from "@/lib/figures/return/extract";
 
 import { MAX_IMAGE_PIXELS } from "../types";
-import { MAX_PAGE_PIXELS, MAX_PDF_PAGES, PAGE_TARGET_WIDTH, type PdfDrawResult } from "./types";
+import { MAX_PAGE_PIXELS, MAX_PDF_PAGES, MAX_PDF_TOTAL_PIXELS, PAGE_TARGET_WIDTH, type PdfDrawResult } from "./types";
 
 /** Chromium's largest canvas side is 32,767 pixels; staying well under it keeps every page drawable. */
 const MAX_PAGE_SIDE = 16_384;
@@ -107,13 +107,24 @@ export async function drawPdfPages(pdfjs: PdfJs, bytes: Uint8Array): Promise<Pdf
   try {
     const doc = await task.promise;
     const pages: ImageBitmap[] = [];
+    let drawnPixels = 0;
     for (let n = 1; n <= Math.min(doc.numPages, MAX_PDF_PAGES); n += 1) {
       const page = await doc.getPage(n);
       const base = page.getViewport({ scale: 1 });
       const scale = pageScale(base.width, base.height);
       if (scale === 0) return { ok: false, code: "failed" };
       const viewport = page.getViewport({ scale });
-      const canvas = new OffscreenCanvas(Math.max(1, Math.floor(viewport.width)), Math.max(1, Math.floor(viewport.height)));
+      const width = Math.max(1, Math.floor(viewport.width));
+      const height = Math.max(1, Math.floor(viewport.height));
+      // Every page drawn so far is held until the window takes them, so stop before the total passes
+      // the budget (the first page always fits: it is at most MAX_PAGE_PIXELS). The window says how
+      // many of the PDF's pages it shows.
+      if (pages.length > 0 && drawnPixels + width * height > MAX_PDF_TOTAL_PIXELS) {
+        page.cleanup();
+        break;
+      }
+      drawnPixels += width * height;
+      const canvas = new OffscreenCanvas(width, height);
       const context = canvas.getContext("2d");
       if (!context) return { ok: false, code: "failed" };
       await page.render({

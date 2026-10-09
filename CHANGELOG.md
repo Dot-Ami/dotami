@@ -43,7 +43,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
   Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
   is fetched from the internet, and DotAmi checks the file is the one you added before showing it;
-  a file changed or replaced on your computer since then is refused, with what to do.
+  a file changed or replaced on your computer since then is refused, with what to do. A PDF shows at
+  most 20 pages, and fewer when its pages are very large (80 megapixels in all), saying how many.
 - **Backups hold your receipts** — *File → Back up…* now puts every receipt file in the backup with
   the data, locked by the same passphrase if you chose one, and says how many went in. *Restore*
   brings them back; the receipts already on this computer go to the backups folder beside the safety
@@ -163,6 +164,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a
   worker's own response policy, not the page's, so Next's static files now carry one that allows
   DotAmi's scripts and nothing else. No worker before the return reader loaded from those files.
+- **The answer carrying a receipt's bytes has a sandbox policy** (`default-src 'none';
+  frame-ancestors 'none'; sandbox`), set in `next.config.mjs` as well as the route, since Next's
+  general headers would otherwise replace the route's own. Were it ever loaded as a page, nothing in
+  it could run or load.
 
 ## [0.2.1] — 2026-10-08
 

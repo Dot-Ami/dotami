@@ -26,6 +26,13 @@ export const securityHeaders = [
 const dev = process.env.NODE_ENV === "development";
 export const workerPolicy = `default-src 'none'; script-src 'self'${dev ? " 'unsafe-eval'" : ""}; frame-ancestors 'none'`;
 
+// The answer with a receipt's bytes (app/api/expenses/receipt/file/route.ts, [8i]). The route sets this
+// policy itself, but Next applies the headers below over a route's own, so the general rule's
+// "frame-ancestors 'none'" would replace it. Were that answer ever loaded as a page, this lets nothing
+// in it run or load (docs/architecture/expense-records.md § 8, rule 2). Must equal the route's
+// RECEIPT_FILE_HEADERS policy (tests/security-hardening.spec.ts checks it).
+export const receiptFilePolicy = "default-src 'none'; frame-ancestors 'none'; sandbox";
+
 // The desktop app ([7b]) runs a self-contained build of this server inside Electron. It builds
 // into its own folder so a desktop build never overwrites the `.next` a running `npm run dev`
 // or `next start` is using; every other build is unchanged. Set by desktop/build.mjs.
@@ -50,6 +57,7 @@ const nextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       // Same key as above: for these paths Next sends the later one (its documented rule).
       { source: "/_next/static/:path*", headers: [{ key: "Content-Security-Policy", value: workerPolicy }] },
+      { source: "/api/expenses/receipt/file", headers: [{ key: "Content-Security-Policy", value: receiptFilePolicy }] },
     ];
   },
 };

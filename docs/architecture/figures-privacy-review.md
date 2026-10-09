@@ -67,8 +67,9 @@ details for anything. All of it in the one database file on the person's compute
 **Typed expense records are reviewed here and built (2026-10-07, the store: the table, the checks and
 the routes; 2026-10-08, the screen to type and agree to them, with the maintainer's decisions of that
 day). Receipt files are kept too (2026-10-08: the store, adding and removing one, the Delete menu and
-the sweep; reviewed under "Receipts" below, the design as built in expense-records.md § 7), and
-desktop backups carry them; showing one inside DotAmi is not built yet.** The
+the sweep; reviewed under "Receipts" below, the design as built in expense-records.md § 7), desktop
+backups carry them, and *Show receipt* shows one inside DotAmi (its security design is
+expense-records.md § 8).** The
 maintainer decided on 2026-10-07 to keep single expense records and their receipt files, copied into
 the data folder and carried by backups, with every way in. The design and the options are in
 [expense-records.md](expense-records.md). For expense records this section replaces the "Not stored:

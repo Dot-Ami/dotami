@@ -2,6 +2,7 @@
 declare module "*.mjs" {
   export const securityHeaders: { key: string; value: string }[];
   export const workerPolicy: string;
+  export const receiptFilePolicy: string;
   const nextConfig: {
     poweredByHeader: boolean;
     headers(): Promise<{ source: string; headers: { key: string; value: string }[] }[]>;

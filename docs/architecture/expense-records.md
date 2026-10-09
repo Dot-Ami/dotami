@@ -459,7 +459,9 @@ committed on its own before any viewer code; "Built by" below names the files).
    plain sentence, and a missing one is named as missing. The answer is `application/octet-stream`
    with `X-Content-Type-Options: nosniff`, `Content-Disposition: attachment`, `Cache-Control: no-store`
    and a Content-Security-Policy of its own (`default-src 'none'; frame-ancestors 'none'; sandbox`),
-   so even if it were ever loaded as a page, nothing in it could run.
+   so even if it were ever loaded as a page, nothing in it could run. Next applies the headers in
+   `next.config.mjs` over a route's own, so that file sets this policy for this one path too
+   (`receiptFilePolicy`; otherwise the general `frame-ancestors 'none'` would replace it).
 3. **Pictures** are shown by the browser's own image decoder and nothing else: the bytes become a
    `Blob` with the type DotAmi read (never one taken from the file), a `blob:` address of that blob is
    the `src` of an `<img>`, and the address is revoked when the viewer closes. An `<img>` never runs a
@@ -477,8 +479,11 @@ committed on its own before any viewer code; "Built by" below names the files).
    PDF can be clicked or submitted) and no text layer. Each page is drawn on an `OffscreenCanvas` in
    the worker and handed to the page as a finished picture (`ImageBitmap`), shown in a `<canvas>`.
    Limits: at most 20 pages drawn (the viewer says how many more there are), a page drawn at most
-   16 megapixels (the scale is lowered to fit), pictures inside the PDF at most 50 megapixels
-   (pdf.js's `maxImageSize`), and the worker is stopped if a file takes longer than 20 seconds.
+   16 megapixels (the scale is lowered to fit), all drawn pages together at most 80 megapixels (about
+   320 MB; twenty Letter or A4 pages fit, pages at the per-page cap stop after five, and the viewer
+   says how many it shows), pictures inside the PDF at most 50 megapixels (pdf.js's `maxImageSize`),
+   and the worker is stopped if a file takes longer than 20 seconds. Closing the viewer ends its
+   worker, and a viewer closed while the bytes are still arriving starts none.
 5. **Never Chromium's PDF viewer, never a navigation.** No `<iframe>`, `<embed>` or `<object>` is
    ever given a receipt; the page's policy already has `object-src 'none'`, and gains `frame-src 'none'`
    (DotAmi has no frames), so not even a mistake could put one in a frame. The desktop app leaves
@@ -501,12 +506,15 @@ committed on its own before any viewer code; "Built by" below names the files).
 - A row and a file that disagree: an SVG under a `.png` row, and a PDF under a picture row: refused in
   the window, nothing drawn.
 - A file changed on the disk after it was added: refused by the server.
-- The route itself: only DotAmi's page gets the bytes; the answer's headers are the ones above; the
-  path comes from the row.
+- A PDF of 20 pages, each drawn at the per-page cap (100 × 625 points, 1600 × 10,000 pixels): five
+  pages drawn, and the viewer says so.
+- The route itself: only DotAmi's page gets the bytes; the answer's headers are the ones above, read
+  from the built server (not only from the route's code); the path comes from the row.
 
 **Built by** (2026-10-08, in the same change, after this section): rule 1, `lib/expenses/receipts/sniff.ts`
 and `checkShownBytes` in `lib/expenses/receipts/viewer/open.ts`; rule 2, `app/api/expenses/receipt/file/route.ts`,
-`readReceiptFile` in `lib/expenses/receipts/store.ts` and `lib/expenses/receipts/file-headers.ts`; rule 3,
+`readReceiptFile` in `lib/expenses/receipts/store.ts`, `lib/expenses/receipts/file-headers.ts` and
+`receiptFilePolicy` in `next.config.mjs`; rule 3,
 `lib/expenses/receipts/viewer/open.ts` and `components/expenses/receipt-viewer.tsx`; rule 4,
 `lib/expenses/receipts/viewer/draw-pdf.ts` and `pdf-pages.worker.ts` beside it; rule 5, `frame-src 'none'`
 in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/security-hardening.spec.ts`,
@@ -515,8 +523,8 @@ in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/se
 DotAmi's server).
 
 **Known limits.** The server's size check before reading is a cheap first look; the SHA-256 check after
-it catches the same files, so no test tells the two apart. pdf.js has no overall memory cap: a crafted
-PDF can still unpack a stream far larger than the file and crash the worker (or the window) before the
-20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
+it catches the same files, so no test tells the two apart. The drawn pages have a total cap, but pdf.js
+itself has no overall memory cap while it reads a file: a crafted PDF can still unpack a stream far
+larger than the file and crash the worker (or the window) before the 20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
 `docs/connectors/pdf-reader-review.md`). A drawn page is a picture: its text can't be selected or
 searched, and there is no zoom beyond the window's own.

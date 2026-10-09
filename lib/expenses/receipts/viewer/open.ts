@@ -70,6 +70,9 @@ async function fetchReceipt(expenseId: string): Promise<{ ok: true; bytes: Uint8
 
 export class ReceiptOpener {
   private worker: Worker | null = null;
+  // Set by close(). The viewer can close while the bytes are still on their way; after that nothing
+  // may start a worker, since nothing would ever end it.
+  private closed = false;
 
   /** Starts the PDF worker on first use. The `new URL(…, import.meta.url)` form ships it as a file of DotAmi's own. */
   private start(): Worker {
@@ -84,6 +87,8 @@ export class ReceiptOpener {
     try {
       const fetched = await fetchReceipt(expenseId);
       if (!fetched.ok) return fetched;
+      // Closed meanwhile: no one is waiting for the receipt any more.
+      if (this.closed) return { ok: false, message: VIEW_MESSAGES.unreadable };
       const checked = checkShownBytes(fetched.bytes, stored);
       if (!checked.ok) return checked;
       if (checked.type === "application/pdf") {
@@ -130,6 +135,7 @@ export class ReceiptOpener {
 
   /** Stops the worker and everything pdf.js holds in it. */
   close(): void {
+    this.closed = true;
     this.worker?.terminate();
     this.worker = null;
   }

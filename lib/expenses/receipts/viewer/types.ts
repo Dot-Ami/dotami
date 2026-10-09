@@ -10,6 +10,13 @@ export const MAX_PDF_PAGES = 20;
 /** A drawn page is at most this many pixels (the scale is lowered to fit): 16 megapixels, about 64 MB of memory. */
 export const MAX_PAGE_PIXELS = 16_000_000;
 
+/**
+ * All drawn pages together are at most this many pixels: 80 megapixels, about 320 MB. Twenty ordinary
+ * pages (Letter or A4, 3.3 to 3.7 megapixels each at PAGE_TARGET_WIDTH) fit; pages drawn at the
+ * per-page cap stop after five. The viewer says how many it shows.
+ */
+export const MAX_PDF_TOTAL_PIXELS = 80_000_000;
+
 /** How wide, in pixels, a page is drawn when it fits under MAX_PAGE_PIXELS: sharp at the viewer's width on a high-density screen. */
 export const PAGE_TARGET_WIDTH = 1600;
 

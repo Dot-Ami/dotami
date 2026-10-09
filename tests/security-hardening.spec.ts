@@ -6,14 +6,16 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
-import nextConfig, { securityHeaders, workerPolicy } from "../next.config.mjs";
+import { RECEIPT_FILE_HEADERS } from "@/lib/expenses/receipts/file-headers";
+import nextConfig, { receiptFilePolicy, securityHeaders, workerPolicy } from "../next.config.mjs";
 
 afterEach(() => __resetRateLimitStateForTests());
 
 describe("response headers on every route", () => {
   it("sets the defence-in-depth headers and hides the framework banner", async () => {
     const rules = await nextConfig.headers();
-    expect(rules).toHaveLength(2);
+    // The general rule, Next's static files, and the receipt bytes route ([8i]).
+    expect(rules).toHaveLength(3);
     expect(rules[0].source).toBe("/(.*)");
     const keys = rules[0].headers.map((h) => h.key);
     for (const required of [
@@ -43,6 +45,17 @@ describe("response headers on every route", () => {
     expect(directives).toContain("script-src 'self'");
     expect(directives).toContain("frame-ancestors 'none'");
     expect(workerPolicy).not.toMatch(/connect-src|unsafe-eval|unsafe-inline|blob:|data:|\*/);
+  });
+
+  it("keeps the receipt bytes route's sandbox policy: the general rule would otherwise replace it ([8i])", async () => {
+    // Next applies these rules over a route's own headers, so the route's policy alone never reaches
+    // the browser (e2e/receipt-viewer.spec.ts reads what the built server really sends).
+    const rules = await nextConfig.headers();
+    const receipt = rules.find((r) => r.source === "/api/expenses/receipt/file");
+    expect(receipt?.headers).toEqual([{ key: "Content-Security-Policy", value: receiptFilePolicy }]);
+    expect(rules.indexOf(receipt!)).toBeGreaterThan(rules.findIndex((r) => r.source === "/(.*)"));
+    expect(receiptFilePolicy).toBe(RECEIPT_FILE_HEADERS["Content-Security-Policy"]);
+    expect(receiptFilePolicy.split(";").map((d) => d.trim())).toEqual(["default-src 'none'", "frame-ancestors 'none'", "sandbox"]);
   });
 });
 

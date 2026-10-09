@@ -28,7 +28,7 @@ import { addReceipt, readReceiptFile, ReceiptError } from "@/lib/expenses/receip
 import { MAX_IMAGE_PIXELS } from "@/lib/expenses/receipts/types";
 import { pageScale } from "@/lib/expenses/receipts/viewer/draw-pdf";
 import { VIEW_MESSAGES } from "@/lib/expenses/receipts/viewer/messages";
-import { checkShownBytes } from "@/lib/expenses/receipts/viewer/open";
+import { checkShownBytes, ReceiptOpener } from "@/lib/expenses/receipts/viewer/open";
 import { MAX_PAGE_PIXELS, PAGE_TARGET_WIDTH } from "@/lib/expenses/receipts/viewer/types";
 import { jpegHeader, pdf, png } from "./helpers/receipt-files";
 
@@ -89,6 +89,37 @@ describe("a PDF page is drawn within the limits (rule 4)", () => {
       "maxImageSize: MAX_IMAGE_PIXELS",
     );
     expect(MAX_IMAGE_PIXELS).toBe(50_000_000);
+  });
+});
+
+describe("closing the viewer ends its work", () => {
+  // The viewer closes the opener when it goes away. If that happens while the bytes are still on
+  // their way, the PDF must not be handed to a new worker that nothing will ever end.
+  it("starts no PDF worker once closed, even when the bytes arrive afterwards", async () => {
+    let started = 0;
+    class CountingWorker {
+      constructor() {
+        started += 1;
+      }
+      addEventListener() {}
+      removeEventListener() {}
+      postMessage() {}
+      terminate() {}
+    }
+    let arrive!: (r: Response) => void;
+    vi.stubGlobal("Worker", CountingWorker);
+    vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => (arrive = resolve)));
+    try {
+      const opener = new ReceiptOpener();
+      const opening = opener.open("any-record", "application/pdf");
+      opener.close();
+      arrive(new Response(new Uint8Array(pdf()), { status: 200 }));
+      const result = await opening;
+      expect(result.ok).toBe(false);
+      expect(started).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

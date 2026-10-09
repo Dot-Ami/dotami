@@ -5,7 +5,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { typeName, type ReceiptType } from "@/lib/expenses/receipts/types";
 import { VIEW_MESSAGES } from "@/lib/expenses/receipts/viewer/messages";
 import { ReceiptOpener, type ShownReceipt } from "@/lib/expenses/receipts/viewer/open";
-import { MAX_PDF_PAGES } from "@/lib/expenses/receipts/viewer/types";
 
 /**
  * [8i] A receipt, shown inside DotAmi (the maintainer's decision of 2026-10-08), by the rules of § 8
@@ -137,9 +136,11 @@ export function ReceiptViewer({
               {shown.pages.map((bitmap, i) => (
                 <PageCanvas key={i} bitmap={bitmap} label={`Page ${i + 1} of ${shown.pageCount}`} />
               ))}
-              {shown.pageCount > MAX_PDF_PAGES ? (
+              {/* Fewer pages than the PDF has: past MAX_PDF_PAGES, or past the memory budget for all pages together. */}
+              {shown.pages.length < shown.pageCount ? (
                 <p className="text-[11.5px] text-stone">
-                  DotAmi shows the first {MAX_PDF_PAGES} pages; this PDF has {shown.pageCount}. The rest are kept in the file.
+                  DotAmi shows the first {shown.pages.length === 1 ? "page" : `${shown.pages.length} pages`}; this PDF has{" "}
+                  {shown.pageCount}. The rest are kept in the file.
                 </p>
               ) : null}
             </div>
