@@ -33,7 +33,8 @@ jump links, then five sections in this order:
    by state, the idea or ideas it touched and the days it was proposed. Opening it lists every
    figure: what it is, the exact period, the amount, its state, "edited by you", the rows summed,
    and the days it was **proposed**, **agreed** and **taken back** (only those that happened;
-   turning a proposal down isn't dated in the file). Days are the calendar day on this computer.
+   turning a proposal down isn't dated in the file). A T2125 total's tax year and form line
+   ([8f]) are kept but not shown here yet. Days are the calendar day on this computer.
    An empty file says "No figures are kept."
 2. **Everything else in the data file** — one card per table in the inventory: its plain name,
    how many records, what it holds, and **what takes a record out today** (including "nothing, by

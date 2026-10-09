@@ -14,8 +14,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and
   says which line of the CRA's form it goes on that year. DotAmi has read the CRA's 2025 form so far;
   for any other year it says "not read yet" instead of guessing the number, and still keeps the
-  figure with its year. Each figure remembers its tax year, and, once figures can be read from a
-  return, the form and line printed on it. Every line is cited to the CRA's own 2025 T2125 and
+  figure with its year. The tax year has to be the year the figure's period ends in, so a 2024
+  total can't be filed under 2025 by a slip. Each figure remembers its tax year, and, once figures
+  can be read from a return, the form and line printed on it (only a figure read from a return can
+  have one). Every line is cited to the CRA's own 2025 T2125 and
   Guide T4002, read 2026-10-08 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
   collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what

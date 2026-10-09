@@ -7,7 +7,9 @@ income, the price of a big purchase) are the most sensitive thing DotAmi will ho
 ## What will be stored
 
 Confirmed totals only, each with: what it is, the period or date, the amount and currency, where it
-came from (a source name, the file name, how many rows were summed), who confirmed it and when.
+came from (a source name, the file name, how many rows were summed), who confirmed it and when. A
+T2125 total also keeps its tax year and, only when read from a return, the form and line printed
+there ([8f], 2026-10-08); /your-data does not show those two yet.
 **Not stored:** individual transactions (apart from the business expense records the person agrees to keep, reviewed in the last section), the imported files (not even sent to the local server — [8c] reads them in the app's window), bank or card numbers ([8g]), login
 details for anything. All of it in the one database file on the person's computer.
 

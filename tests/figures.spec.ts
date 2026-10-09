@@ -202,6 +202,11 @@ describe("validateFigureInput: tax year and form line ([8f])", () => {
     });
   });
 
+  it("takes a fiscal period that started the year before, filed for the year it ends in", () => {
+    const offCalendar = { ...t2125, periodStart: "2024-07-01", periodEnd: "2025-06-30" };
+    expect(validateFigureInput(offCalendar, TODAY)).toEqual({ ok: true, value: { ...offCalendar, currency: "CAD" } });
+  });
+
   it("keeps a line as read for a year nobody has read yet (the CRA may have numbered it differently)", () => {
     const old = { ...t2125, periodStart: "2018-01-01", periodEnd: "2018-12-31", taxYear: 2018, formLine: "T2125 8300" };
     expect(validateFigureInput(old, TODAY)).toEqual({ ok: true, value: { ...old, currency: "CAD" } });
@@ -218,6 +223,22 @@ describe("validateFigureInput: tax year and form line ([8f])", () => {
     ["a form line in lower case", { formLine: "t2125 8299" }, /written like "T2125 8299"/],
     ["a form line that isn't text", { formLine: 8299 }, /written like "T2125 8299"/],
     ["another total's line in a year that has been read", { formLine: "T2125 9946" }, /2025 T2125 this total is line 8299, not 9946/],
+    // A fiscal period belongs to the tax year it ends in, so the two have to agree.
+    [
+      "a period that ends in an earlier year",
+      { periodStart: "2024-01-01", periodEnd: "2024-12-31" },
+      /^This period ends in 2024, so it is a 2024 tax-year total, not 2025\.$/,
+    ],
+    [
+      "a tax year after the year its period ends in",
+      { taxYear: 2026 },
+      /^This period ends in 2025, so it is a 2025 tax-year total, not 2026\.$/,
+    ],
+    [
+      "a period that ends in a later year",
+      { periodStart: "2025-07-01", periodEnd: "2026-06-30" },
+      /^This period ends in 2026, so it is a 2026 tax-year total, not 2025\.$/,
+    ],
   ])("refuses a T2125 total with %s", (_name, change, message) => {
     const result = validateFigureInput({ ...t2125, ...change }, TODAY);
     expect(result.ok).toBe(false);
@@ -683,6 +704,22 @@ describe("the store", () => {
     // A revenue figure has neither.
     const [revenue] = await proposeFigures(prisma, ventureId, SOURCE, [good], "2026-10-06");
     expect(revenue).toMatchObject({ taxYear: null, formLine: null });
+  });
+
+  it.each([
+    ["typed", { kind: "typed", label: "typed by you" }],
+    ["an agent", { kind: "agent", label: "my bookkeeping agent" }],
+    ["a file", SOURCE],
+  ])("refuses a form line on a T2125 total from %s: only a return has one printed on it ([8f])", async (_name, source) => {
+    // The same total without a form line is fine from any source...
+    const [ok] = await proposeFigures(prisma, ventureId, source, [t2125], "2026-10-06");
+    expect(ok).toMatchObject({ kind: "business-gross-income", taxYear: 2025, formLine: null });
+    // ...but "as printed on your return" would be untrue, so the line is refused and nothing is kept.
+    const before = await prisma.figure.count();
+    await expect(
+      proposeFigures(prisma, ventureId, source, [t2125, { ...t2125, formLine: "T2125 8299" }], "2026-10-06"),
+    ).rejects.toThrow(/^Figure 2: Only a figure read from a tax return can carry the form line printed on it\.$/);
+    expect(await prisma.figure.count()).toBe(before);
   });
 
   it("agreeToFigures confirms only what is proposed", async () => {

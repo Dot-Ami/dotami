@@ -21,8 +21,7 @@ The guide has no section of its own for line 9368; the form defines it.
 ## How it reasons
 
 - **Kinds are named for what the amount means, never for a line number** (the maintainer's
-  decision, 2026-10-07). The CRA has renumbered lines before (the T1's 162 and 135 became 13499 and
-  13500 in 2019), so a figure kind like `t2125-8299` could go out of date. Catalog ids follow the
+  decision, 2026-10-07). The CRA can renumber a line from one year's form to the next, so a figure kind like `t2125-8299` could go out of date. Catalog ids follow the
   same rule; `tests/engine-integrity.spec.ts` fails on an id that contains its line number.
 - **A line is known one tax year at a time.** Each entry lists `yearsRead`: the years a person has
   read that year's form, each with its own line number, printed label, form version and citations.

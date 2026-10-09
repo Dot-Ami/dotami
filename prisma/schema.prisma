@@ -177,7 +177,7 @@ model Figure {
   sourceRows     Int?
   /// [8f] The tax year a T2125 total is for; null for every other kind.
   taxYear        Int?
-  /// [8f] The form and line as printed on the return it was read from, e.g. "T2125 8299"; null when typed.
+  /// [8f] The form and line as printed on the return it was read from, e.g. "T2125 8299"; null unless the source is a tax return.
   formLine       String?
   /// "proposed" | "confirmed" | "retracted" | "discarded"
   status         String    @default("proposed")

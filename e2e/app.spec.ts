@@ -654,9 +654,16 @@ test("Add a figure offers the four T2125 totals with their lines, asks the tax y
   await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-08.`)).toBeVisible();
   await expect(unread).toHaveCount(0);
 
+  // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.
+  await card.getByLabel("From", { exact: true }).fill("2024-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2024-12-31");
+  await card.getByLabel("Amount", { exact: true }).fill("48,250");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  await expect(card.getByText(/This period ends in 2024, so it is a 2024 tax-year total, not 2025\./)).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Agree to these figures?" })).toHaveCount(0);
+
   await card.getByLabel("From", { exact: true }).fill("2025-01-01");
   await card.getByLabel("To", { exact: true }).fill("2025-12-31");
-  await card.getByLabel("Amount", { exact: true }).fill("48,250");
   await card.getByRole("button", { name: "Review this figure" }).click();
 
   // The agree prompt names the tax year and the line before anything is agreed.

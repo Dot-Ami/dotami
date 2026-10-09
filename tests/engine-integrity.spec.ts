@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 import { describe, expect, it } from "vitest";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
@@ -197,6 +199,16 @@ describe("tax-line catalog ([8f])", () => {
         return [newest.line, newest.printedLabel, e.figureKind];
       }),
     );
+    // The check above can't tell a derived list from a hand-copied one with the same numbers, so
+    // also make sure the reader's file has no line number written out as a value of its own
+    // (the header comment names them, which is fine; a quoted "8299" would be a second copy).
+    const source = readFileSync(join(process.cwd(), "lib/figures/return/lines.ts"), "utf8");
+    expect(source).toContain("taxLinesCatalogV2026");
+    for (const e of entries) {
+      for (const year of e.yearsRead) {
+        expect(source).not.toMatch(new RegExp(`["'\`]${year.line}["'\`]`));
+      }
+    }
   });
 });
 

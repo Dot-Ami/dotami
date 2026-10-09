@@ -122,7 +122,7 @@ export const t2125LinesV2026: readonly TaxLineEntry[] = [
     id: "t2125-net-business-income",
     form: "T2125",
     figureKind: "business-net-income",
-    description: "Your net income (loss) from the business: your share of the income before adjustments, less other deductible amounts and business-use-of-home expenses. A loss is negative.",
+    description: "Your net income (loss) from the business: your share of the income before adjustments, plus the Canadian journalism labour tax credit and any GST/HST rebate for partners, less other deductible amounts and business-use-of-home expenses. A loss is negative.",
     yearsRead: [
       {
         taxYear: 2025,

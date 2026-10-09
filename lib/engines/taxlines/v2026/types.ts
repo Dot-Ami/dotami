@@ -5,7 +5,7 @@ import type { FigureKind } from "@/lib/figures/types";
  * [8f] The tax-line catalog: which CRA form line each of DotAmi's tax-form figure kinds goes on.
  *
  * A line is read from the CRA's own form for one tax year at a time. The form is reissued every
- * year and a number can move (the T1's lines 162 and 135 became 13499 and 13500 in 2019), so a
+ * year and the CRA can renumber a line from one year's form to the next, so a
  * line is only ever shown for a year listed in `yearsRead`. Any other year is "not read yet", never
  * the nearest year's number. Years are read in stages, starting with 2025 (the maintainer's
  * decision, 2026-10-07): a year is added when someone needs it and a person has read that year's

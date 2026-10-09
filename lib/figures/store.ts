@@ -108,6 +108,11 @@ export async function proposeFigures(
   const valid = inputs.map((input, i) => {
     const checked = validateFigureInput(input, today);
     if (!checked.ok) throw new FigureInputError(`Figure ${i + 1}: ${checked.error}`);
+    // [8f] The screens say a form line was "printed on your return", so only a figure read from a
+    // return may carry one. A typed, file or agent total keeps its tax year and no form line.
+    if (checked.value.formLine !== undefined && checkedSource.value.kind !== "tax-return") {
+      throw new FigureInputError(`Figure ${i + 1}: Only a figure read from a tax return can carry the form line printed on it.`);
+    }
     return checked.value;
   });
 
