@@ -19,9 +19,10 @@ details for anything. All of it in the one database file on the person's compute
 | Someone with a backup file | opens it | a backup passphrase (AES-256-GCM, [7c]) | the person's choice; the warning is shown |
 | A website the person visits — a write | a page fires a request at DotAmi's local address | cross-site writes and non-JSON writes refused (`lib/api/body-limit.ts`, 2026-09-20); the browser's CORS rules block other methods | in place |
 | A website the person visits — DNS rebinding | the page re-points its own domain at 127.0.0.1, then reads and writes as if DotAmi were its own site | **was open:** `GET /api/ventures` with `Host: evil.example` returned every venture (2026-10-06). **Fixed:** every request whose Host isn't this computer's own name is refused with 421 (`lib/http/allowed-host.ts`, `middleware.ts`), prefetches included | fixed; `e2e/app.spec.ts` "DNS rebinding guard" fails on the old code (200) and passes now |
-| A file the person drops ([8c]) | a spreadsheet crafted to attack its reader, or simply holding every transaction | it is read inside the app's window, in memory: the bytes never go to the server or the disk, and only the monthly totals the person goes on to agree to are sent (`/api/figures/propose`). Its type is decided by its first bytes, macros refuse the file, the size is capped before reading and again before unpacking, and no library error text is shown (it could quote the file). A reader bug stays inside the page's sandbox, away from the database | in place (2026-10-06) |
+| A file the person drops ([8c]) | a spreadsheet crafted to attack its reader, or simply holding every transaction | it is read inside the app's window, in memory: the bytes never go to the server or the disk, and only the monthly totals the person goes on to agree to are sent (`/api/figures/propose`). Its type is decided by its first bytes, macros refuse the file, the size is capped before reading (only the first 8 KB is looked at, to tell a GnuCash book apart) and again before unpacking, and no library error text is shown (it could quote the file). A reader bug stays inside the page's sandbox, away from the database | in place (2026-10-06) |
 | A calendar company ([8e] Add to my calendar) | the person imports the reminders file into a calendar that syncs online (Google, Microsoft, Apple), whose company then holds the events | the file is made in the page from the ticked boxes alone and holds only general words: the title "Bring your DotAmi figures up to date", which period ended, and that the calendar can't see DotAmi. No amount, no idea name, no figure, no date of anything the person did. The page says a syncing calendar shares the words. Unit-tested: the event text has no digits, so no amount can be in it (`tests/figures-calendar.spec.ts`) | in place (2026-10-08) |
 | A return PDF the person drops ([8f]) | the most sensitive file yet (name, address, social insurance number, income), or a PDF crafted to attack its reader | read inside the app's window, in memory, in a worker of DotAmi's own whose script carries a policy that refuses every connection (`next.config.mjs`, `workerPolicy`; a browser test proves a fetch from inside it is refused). The bytes move into that worker and pdf.js's copy is destroyed after each read; the worker stops when the panel closes. Nothing is proposed, sent, stored or logged in this step; only the four T2125 lines and their pages are shown. pdf.js is pinned and reviewed, with drawing, fonts, scripts, forms and downloads switched off ([review](../connectors/pdf-reader-review.md)) | in place (2026-10-08), shown only; proposing figures from it is the next step |
+| A GnuCash book the person drops ([8h]) | every transaction the person ever entered, with customers' names, or a book crafted to attack its reader (a zip bomb, odd XML) | read in a worker of DotAmi's own, in memory, under the same policy that refuses every connection (`workerPolicy`; a browser test proves a fetch from inside it is refused). The bytes move into the worker; only the accounts and posted lines come back to the window, and only the monthly totals of the accounts the person ticks are sent, under the source kind "books", to wait in the agree prompt. Up to 50 MB and 200 MB unpacked, checked before reading and while unpacking; a read is stopped after a minute; DotAmi's own strict XML reader refuses document types and custom entities, and unknown GnuCash features, account types and transaction parts are refused by name. No book text is ever in a message or a log. The worker holds on to nothing once it has answered and stops when the panel closes or on Change or Cancel; a read stopped while the book is still loading never starts one ([connector notes](../connectors/gnucash.md)) | in place (2026-10-08) |
 | Another computer on the network | connects to the port | the server listens on 127.0.0.1 only | in place |
 | Another program on this computer | reads the file, or calls the local server (no login) | **nothing in DotAmi** — a program running as the person can already read their files. Same trust as the person's own account; stated, not defended | by design for a single-user app |
 | A model the Lens uses ([9]) | reads figures to answer | the person's chosen model and permission level; a hosted model's company sees what it reads (the "own key" warning) | when the Lens exists |
@@ -41,19 +42,48 @@ details for anything. All of it in the one database file on the person's compute
    free (`tests/privacy-delete.spec.ts` scans the file for a marker string; a plain delete leaves it
    there). Only DotAmi's own page can call it (`refuseUnlessFromAppPage`), and its body goes through
    `readJsonWithLimit`. *Forget this source* isn't built.
+   *Added 2026-10-08:* a box for the safety copies in the backups folder (whole copies of the file,
+   so they still hold what was deleted), warning that afterwards only a backup saved elsewhere could
+   bring anything back. It deletes only DotAmi's own `dotami-before-….db` files directly in
+   `backups/`, never through a link (`desktop/wipe-pending.mjs`). A wipe that can't finish leaves a
+   "wipe pending" note (written before the delete, removed once the wipe and the copies are done),
+   and the desktop app finishes it at its next start, only when the note is there
+   (`tests/desktop-wipe-pending.spec.ts`, `e2e-desktop/desktop.spec.ts`: the marker string is gone
+   from `dotami.db` and `backups/` after the restart, and an ordinary start without the note leaves
+   it).
 5. **Every write route** goes through `readJsonWithLimit` (cross-site, JSON-only and size checks).
+
+## Bank and card accounts ([8g], built 2026-10-08, no screen adds one yet)
+
+The `SourceAccount` table holds, per account, the person's own name for it, which of the statement
+warning's three buttons they pressed, the day they agreed and the day they took it back. **Not
+stored:** an account, card, bank, branch or transit number, a file name, or a hash of any of them (an
+account number has so few possible values that a hash can be reversed by trying them all). The name
+is the only way in for digits, so it is checked on the server: "ending" plus exactly four digits at
+the end is allowed (the maintainer's decision, 2026-10-07), and any other run of four or more digits
+is refused, counting digits split by anything but a letter (spaces, hyphens, en dashes, commas, brackets, accent marks) as one run, digits of any
+script, and refusing hidden characters (`lib/figures/source-account-name.ts`). The routes
+(`/api/figures/bank-sources`, `/retire`) answer only DotAmi's own page, read their bodies through
+`readJsonWithLimit`, refuse a field they don't know (so a number can't ride along unread), and log
+only an error's name and code. Adding needs the *Bank and card records* switch on; the switch stays
+planned until the statement screen exists, so today nothing can add an account. The names are
+counted on *What DotAmi knows about you*, never shown there, and Delete has a box for them. Who can
+read them: anyone who can open the data file (disk encryption is the answer, as for figures).
+Nothing links a figure to its account yet; when something does, that link must be hand-written SQL
+with a test that seeded data survives.
 
 ## Open
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the
-  backups folder (whole copies of the file; clearing them from the menu is the next step), what the
-  desktop window stored in earlier launches (a later decision), and the drive under the data file
-  (SQLite's journal is deleted, not overwritten, and a drive keeps its own spare copies; disk
-  encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
+  backups folder unless that box is ticked, what the desktop window stored in earlier launches (a
+  later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
+  removed, not overwritten, and a drive keeps its own spare copies; disk encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
   its amount in the file, and the page lists it.
 - The wipe needs free disk space about the size of the file and no other connection mid-change. When
   it can't run, the rows are still deleted and the page says their space isn't wiped yet, with a
-  button to try again.
+  button to try again; the desktop app also finishes it at its next start. If even the small "wipe
+  pending" note can't be written (a completely full disk), the next start can't know: the page's
+  retry is then the only way.
 - Other programs on the computer can read everything — a per-launch secret for the local server
   wouldn't change that (they can read the file directly), so it isn't proposed.
 - An unlocked backup is readable by whoever holds it; the default stays "no passphrase" because a

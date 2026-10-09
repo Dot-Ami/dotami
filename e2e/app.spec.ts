@@ -6,11 +6,14 @@
  * docs/architecture/settings-and-edge-cases.md.
  */
 import http from "node:http";
+import path from "node:path";
 
+import { PrismaClient } from "@prisma/client";
 import { expect, test, type Download, type Locator, type Page, type Worker } from "@playwright/test";
 
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
+import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
 import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
@@ -154,6 +157,35 @@ test("the settings page: every group, what's true today, every setting and its w
   await page.goto("/ventures");
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page).toHaveURL(/\/settings$/);
+});
+
+test("Licences: reached from the settings page, every package with its licence word for word", async ({ page }) => {
+  await page.goto("/settings");
+  await page.getByRole("region", { name: "Updates" }).getByRole("link", { name: "Licences", exact: true }).click();
+  await expect(page).toHaveURL(/\/licences$/);
+  await expect(page.getByRole("heading", { name: /^Licences/, level: 1 })).toBeVisible();
+
+  // The list `npm run build` wrote (desktop/notices.mjs) for this copy: DotAmi's dependencies with
+  // their licences, the fonts, and the code bundled inside Next.js.
+  const packages = page.getByRole("region", { name: "Packages" });
+  const react = packages.getByRole("listitem").filter({ has: page.getByText("react", { exact: true }) });
+  await expect(react).toContainText("MIT");
+  // Closed until opened; opened, it shows where it ships and the licence's own words.
+  await expect(react.getByText(/Permission is hereby granted/)).toBeHidden();
+  await react.getByText("react", { exact: true }).click();
+  await expect(react.getByText(/Permission is hereby granted/)).toBeVisible();
+  await expect(react).toContainText("Ships in DotAmi's dependencies");
+  for (const name of ["next", "pdfjs-dist", "ofx-js", "@prisma/client", "tailwindcss"]) {
+    await expect(packages.getByText(name, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole("region", { name: "Fonts" })).toContainText("Inter (font)");
+  await expect(page.getByRole("region", { name: "Copied inside other packages" })).toBeVisible();
+  // A copy run from source doesn't carry Electron, so there is no runtime section.
+  await expect(page.getByRole("region", { name: "The desktop app's runtime" })).toHaveCount(0);
+
+  // Phone width: a long licence line wraps instead of pushing the page sideways.
+  await page.setViewportSize({ width: 390, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 /** The "Figure reminders" row on /settings, and its three tick-boxes. */
@@ -386,6 +418,82 @@ test("Remind me about this idea: off until turned on, per idea, and still on aft
   await expect(switchOf(salish)).not.toBeChecked();
   await page.goto("/settings");
   await setBox(page, boxes.quarterly, false);
+});
+
+/**
+ * [8g] The e2e database, opened from the test itself. Nothing in the app can add a bank or card
+ * account yet (the statement screen that asks is the next step, and the route refuses while the
+ * setting is planned), so the test puts one in the file the way that screen will.
+ */
+async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
+  const file = path.join(process.cwd(), "prisma", "e2e.db").replace(/\\/g, "/");
+  const db = new PrismaClient({ datasourceUrl: `file:${file}` });
+  try {
+    return await fn(db);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+test("Bank and card records: still planned with no switch; an account is listed with its day and can be taken back", async ({ page }) => {
+  const row = () =>
+    page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Bank and card records", level: 3, exact: true }) });
+
+  // No account yet: the row is a plan, with its warning and no control at all.
+  await page.goto("/settings");
+  await expect(row()).toContainText("Not built yet · [8g]");
+  await expect(row()).toContainText("Before DotAmi reads a bank or card statement");
+  await expect(row().locator("input, button, select")).toHaveCount(0);
+
+  // A program can't list or add accounts; even DotAmi's own page can't add one while the setting is planned.
+  expect((await page.request.get("/api/figures/bank-sources")).status()).toBe(403);
+  expect((await page.request.post("/api/figures/bank-sources", { data: { allow: "always", name: "Example chequing" } })).status()).toBe(403);
+  const fromPage = await page.evaluate(async () => {
+    const res = await fetch("/api/figures/bank-sources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allow: "always", name: "Example chequing" }),
+    });
+    return { status: res.status, body: (await res.json()) as { error: string } };
+  });
+  expect(fromPage).toEqual({ status: 409, body: { error: "Bank and card records is off in Settings, so no account can be added." } });
+
+  // An account in the file, agreed to today: Settings lists it under its name, with the day.
+  const agreed = new Date();
+  const today = agreed.toLocaleDateString("en-CA");
+  const account = await withE2eDb((db) => db.sourceAccount.create({ data: { name: "Example chequing", allowance: "always", agreedAt: agreed } }));
+  try {
+    await page.reload();
+    const list = row().getByRole("region", { name: "Your bank and card accounts" });
+    await expect(list).toContainText("Example chequing");
+    await expect(list).toContainText(`Always allowed since ${today}`);
+    // Still no switch: the only controls in the row are the account's own.
+    await expect(row().locator("input, select")).toHaveCount(0);
+
+    // Take back asks first; "Keep it" changes nothing.
+    await list.getByRole("button", { name: "Take back Example chequing" }).click();
+    const ask = list.getByRole("group", { name: "Take back Example chequing?" });
+    await expect(ask).toContainText("Figures already read from it stay.");
+    await ask.getByRole("button", { name: "Keep it" }).click();
+    await expect(ask).toBeHidden();
+    await expect(list).toContainText("Example chequing");
+
+    // "Yes, take it back": gone from the list, and still gone after a reload.
+    await list.getByRole("button", { name: "Take back Example chequing" }).click();
+    const answered = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/figures/bank-sources/retire");
+    await list.getByRole("group", { name: "Take back Example chequing?" }).getByRole("button", { name: "Yes, take it back" }).click();
+    expect((await answered).status()).toBe(200);
+    await expect(list.getByRole("status")).toHaveText("Taken back: Example chequing.");
+    await expect(list).toContainText("No accounts in your list.");
+    await page.reload();
+    await expect(row()).toContainText("Not built yet · [8g]");
+    await expect(row().getByRole("region", { name: "Your bank and card accounts" })).toHaveCount(0);
+    // Taken back, not deleted: the row stays in the file, with the day, until Delete.
+    const kept = await withE2eDb((db) => db.sourceAccount.findUnique({ where: { id: account.id } }));
+    expect(kept?.retiredAt).not.toBeNull();
+  } finally {
+    await withE2eDb((db) => db.sourceAccount.deleteMany({ where: { id: account.id } }));
+  }
 });
 
 test("a confirmed figure decides the GST card, with its source — and only the agree prompt confirms", async ({ page }) => {
@@ -1980,6 +2088,175 @@ test("a PDF dropped on 'Add from a file' is pointed to the return button, unread
   await expect(card.getByRole("alert")).toContainText("use Add from last year's return");
   await expect(card.getByRole("table")).toHaveCount(0);
   await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+// ---- [8h] A GnuCash book --------------------------------------------------------------------
+// An invented book for the invented "Demo — Salish Trail Maps", built by tests/helpers/make-gnucash.ts.
+// Its months are in 2024, so the figures it adds can't touch the reminder tests' recent months.
+
+/** An invented GnuCash book: map commissions and bank interest (both income), a chequing account, an expense. */
+function inventedBook(): string {
+  const next = monthsAgo(-1); // a month that hasn't ended: never totalled
+  const sale = (date: string, account: string, amount: string, description = "Invented sale") => ({
+    date,
+    description,
+    splits: [
+      { account: "bank", quantity: amount.startsWith("-") ? amount.slice(1) : `-${amount}` },
+      { account, quantity: amount },
+    ],
+  });
+  return gnucashXml({
+    accounts: [
+      { key: "income", name: "Income", type: "INCOME" },
+      { key: "maps", name: "Map Commissions", type: "INCOME", parent: "income" },
+      { key: "interest", name: "Bank Interest", type: "INCOME", parent: "income" },
+      { key: "assets", name: "Assets", type: "ASSET" },
+      { key: "bank", name: "Chequing", type: "BANK", parent: "assets" },
+      { key: "expenses", name: "Expenses", type: "EXPENSE" },
+      { key: "paper", name: "Paper", type: "EXPENSE", parent: "expenses" },
+    ],
+    transactions: [
+      sale("2024-03-05", "maps", "-150000/100", "Trailhead Co-op wall map"),
+      sale("2024-03-20", "maps", "-25000/100"),
+      sale("2024-03-31", "interest", "-1234/100"),
+      sale("2024-04-10", "maps", "-200000/100"),
+      sale("2024-04-15", "maps", "10000/100", "Refund to Trailhead Co-op"),
+      sale("2024-04-30", "interest", "-1000/100"),
+      { date: "2024-04-12", splits: [{ account: "paper", quantity: "4500/100" }, { account: "bank", quantity: "-4500/100" }] },
+      sale(`${next.y}-${two(next.m)}-02`, "maps", "-99900/100"),
+    ],
+    // A scheduled monthly retainer: planned, never counted.
+    templateTransactions: [sale("2024-05-01", "maps", "-50000/100", "Planned retainer")],
+  });
+}
+
+test("a GnuCash book: income accounts ticked, read in a worker that can reach nothing, totals agreed under Books / file", async ({
+  page,
+}) => {
+  const { card, ventureId, figures } = await openSalish(page);
+  const before = await figures();
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const seen = watchRequests(page);
+  const secrets = ["Trailhead", "Map Commissions", "Bank Interest", "Chequing", "Planned retainer", "1762.34", "176234"];
+
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await expect(card.getByText("Drop a .xlsx or .csv file, or a GnuCash book, here, or")).toBeVisible();
+  // Compressed, the way GnuCash saves a book by default.
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "salish-books.gnucash",
+    mimeType: "application/gzip",
+    buffer: Buffer.from(gnucashGz(inventedBook())),
+  });
+
+  // What the person sees first: the file, that DotAmi read the last save, and every account.
+  await expect(card.getByText("File: salish-books.gnucash")).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByText(/^DotAmi read your last save\./)).toBeVisible();
+  const accounts = card.getByRole("group", { name: "Accounts in this book" });
+  await expect(accounts.getByRole("checkbox", { name: "Income:Map Commissions" })).toBeChecked();
+  // Bank interest is income to GnuCash: shown and ticked, never hidden, and the person decides.
+  await expect(accounts.getByRole("checkbox", { name: "Income:Bank Interest" })).toBeChecked();
+  await expect(accounts.getByRole("checkbox", { name: "Assets:Chequing" })).not.toBeChecked();
+  await expect(accounts.getByRole("checkbox", { name: "Expenses:Paper" })).not.toBeChecked();
+  await expect(accounts.getByRole("checkbox")).toHaveCount(7);
+  await expect(accounts).toContainText("An income account can also hold interest, or GST/HST you collected");
+
+  // Monthly totals with interest ticked, then without it.
+  const table = card.getByRole("table", { name: "Monthly totals from salish-books.gnucash (CAD)" });
+  await expect(table.getByRole("row", { name: "March 2024 $1,762.34 3 lines", exact: true })).toBeVisible();
+  await expect(table.getByRole("row", { name: "April 2024 $1,910.00 3 lines", exact: true })).toBeVisible();
+  await expect(card.getByText("1 line in a month that isn't over yet")).toBeVisible();
+  // The planned retainer's two sides (bank and commissions): counted for the note, never added.
+  await expect(card.getByText(/scheduled transactions \(2 lines\) are plans GnuCash hasn't posted/)).toBeVisible();
+  await accounts.getByRole("checkbox", { name: "Income:Bank Interest" }).uncheck();
+  await expect(table.getByRole("row", { name: "March 2024 $1,750.00 2 lines", exact: true })).toBeVisible();
+  await expect(table.getByRole("row", { name: "April 2024 $1,900.00 2 lines", exact: true })).toBeVisible();
+  await expect(table.getByRole("row")).toHaveCount(2);
+
+  // Ticking the bank beside the income accounts is the person's call: it stays ticked and is counted,
+  // with a plain note beside it that a sale landing in both may be counted twice.
+  const twiceNote = "This isn't an income account in your book. If a sale also lands here, it may be counted twice.";
+  const chequing = accounts.getByRole("checkbox", { name: "Assets:Chequing" });
+  await chequing.check();
+  await expect(chequing).toBeChecked();
+  await expect(chequing).toHaveAccessibleDescription(twiceNote);
+  await expect(accounts.getByText(twiceNote)).toHaveCount(1);
+  // March: the commissions (1,750.00) plus the bank's side of those same sales and the interest (1,762.34).
+  await expect(table.getByRole("row", { name: "March 2024 $3,512.34 5 lines", exact: true })).toBeVisible();
+  // An income account carries no such note.
+  await expect(accounts.getByRole("checkbox", { name: "Income:Map Commissions" })).toHaveAccessibleDescription("");
+  await chequing.uncheck();
+  await expect(accounts.getByText(twiceNote)).toHaveCount(0);
+  await expect(table.getByRole("row", { name: "March 2024 $1,750.00 2 lines", exact: true })).toBeVisible();
+
+  // The book was read in DotAmi's own worker, which the browser keeps from reaching anything.
+  const reader = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(reader, "the books worker").toBeTruthy();
+  const attempt = await reader!.evaluate(() =>
+    fetch("/api/figures").then(
+      () => "reached",
+      () => "refused",
+    ),
+  );
+  expect(attempt).toBe("refused");
+  // Reading and ticking sent nothing: no body, no account name, no amount.
+  expectNothingLeftThisPage(seen, secrets);
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+
+  // Review: only the monthly totals go, under the source kind "books".
+  await card.getByRole("button", { name: "Review these 2 figures" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  const proposals = seen.filter((r) => r.path === "/api/figures/propose");
+  expect(proposals).toHaveLength(1);
+  expect(JSON.parse(proposals[0].body!)).toEqual({
+    ventureId,
+    source: { kind: "books", label: "salish-books.gnucash", rows: 4 },
+    figures: [
+      { kind: "gross-revenue", periodStart: "2024-03-01", periodEnd: "2024-03-31", amountCents: 175000, currency: "CAD", rows: 2 },
+      { kind: "gross-revenue", periodStart: "2024-04-01", periodEnd: "2024-04-30", amountCents: 190000, currency: "CAD", rows: 2 },
+    ],
+  });
+  expectNothingLeftThisPage(seen, secrets);
+  await expect(prompt.getByRole("region", { name: "From salish-books.gnucash" })).toContainText("March 2024");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+  await expect(card.getByText("from salish-books.gnucash · 2 rows")).toHaveCount(2);
+  const after = await figures();
+  expect(after.length).toBe(before.length + 2);
+  expect(after.filter((f) => f.sourceLabel === "salish-books.gnucash").map((f) => f.status)).toEqual([
+    "confirmed",
+    "confirmed",
+  ]);
+
+  // Where the source is named to people, it reads "Books / file".
+  await page.goto("/your-data");
+  await expect(page.getByText("Books / file").first()).toBeVisible();
+  await expect(page.getByText("salish-books.gnucash").first()).toBeVisible();
+});
+
+test("a GnuCash book with a feature DotAmi doesn't know is refused by name, and nothing is proposed", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  // Plain XML this time (GnuCash can save without compression), from an imagined newer GnuCash.
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "newer.gnucash",
+    mimeType: "application/xml",
+    buffer: Buffer.from(gnucashXml({ ...smallBook(), features: ["Teleporting invoices"] }), "utf8"),
+  });
+  await expect(card.getByRole("alert")).toContainText(`GnuCash feature DotAmi doesn't know ("Teleporting invoices")`);
+  await expect(card.getByRole("alert")).toContainText("DotAmi won't guess, so it read nothing.");
+  await expect(card.getByRole("group", { name: "Accounts in this book" })).toHaveCount(0);
+  await expect(card.getByRole("table")).toHaveCount(0);
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(seen.filter((r) => r.method !== "GET")).toEqual([]);
   expect(await figures()).toEqual(before);
 });
 

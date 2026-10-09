@@ -3,14 +3,20 @@
  * instead of guessing at.
  */
 import { describe, expect, it } from "vitest";
-import { MAX_DEPTH, walkXml, XmlRefusal, type XmlRefusalReason } from "@/lib/figures/books/xml";
+import {
+  MAX_DEPTH,
+  walkXml,
+  XmlRefusal,
+  type XmlAttributes,
+  type XmlRefusalReason,
+} from "@/lib/figures/books/xml";
 
 /** Walks `xml` and returns what the handlers saw, as one readable list. */
 function events(xml: string): string[] {
   const seen: string[] = [];
   walkXml(xml, {
     open: (name, attrs) =>
-      seen.push(`open ${name}${Object.keys(attrs).length ? " " + JSON.stringify(attrs) : ""}`),
+      seen.push(`open ${name}${attrs.size ? " " + JSON.stringify(Object.fromEntries(attrs)) : ""}`),
     close: (name) => seen.push(`close ${name}`),
     text: (text) => {
       if (text.trim() !== "") seen.push(`text ${JSON.stringify(text)}`);
@@ -80,6 +86,24 @@ describe("walkXml — what it reads", () => {
       'text "2 > 1"',
       "close a",
     ]);
+  });
+
+  it("keeps attributes named __proto__ or constructor as plain attributes, touching no prototype", () => {
+    const seen: XmlAttributes[] = [];
+    walkXml(`<a __proto__="x" constructor="y" hasOwnProperty="z"/>`, {
+      open: (_name, attrs) => seen.push(attrs),
+      close: () => {},
+      text: () => {},
+    });
+    expect(seen).toHaveLength(1);
+    expect([...seen[0]]).toEqual([
+      ["__proto__", "x"],
+      ["constructor", "y"],
+      ["hasOwnProperty", "z"],
+    ]);
+    // Nothing leaked onto every object.
+    expect(({} as Record<string, unknown>).hasOwnProperty).toBe(Object.prototype.hasOwnProperty);
+    expect(Object.getPrototypeOf({})).toBe(Object.prototype);
   });
 
   it("allows spaces before the > of a closing tag and around the =", () => {
