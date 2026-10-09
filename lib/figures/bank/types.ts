@@ -159,8 +159,10 @@ export interface BankTotalsOptions {
   currency: string;
   /**
    * Whether a ticked row of money going OUT is subtracted from its month (a refund paid back to a
-   * customer, counted in the month the money left). Off unless the maintainer decides to allow it
-   * (decision 7 of the [8g] design); until then a ticked money-out row is left out as "not-money-in".
+   * customer, counted in the month the money left). The maintainer allowed it as an optional pick
+   * (2026-10-07), under the same rule as the spreadsheet screen's refunds column
+   * (lib/figures/refunds.ts). Off unless the caller turns it on; while off, a ticked money-out row is
+   * left out as "not-money-in".
    */
   allowRefunds?: boolean;
 }
