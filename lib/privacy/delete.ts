@@ -2,7 +2,8 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { logRouteError } from "@/lib/api/log-error";
 
-import { DELETE_MENU, keptLinkKey, type DeleteKindId, type DeleteMenuEntry, type KeptLink } from "./inventory";
+import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry, type KeptLink } from "./inventory";
+import { affectedTables, keptLinkKey, keptLinks } from "./kept-links";
 
 /**
  * [8d] The "Delete" menu on /your-data, the server side. The person ticks kinds of data
@@ -92,30 +93,9 @@ export function pickKinds(kinds: unknown): DeleteMenuEntry[] {
   return DELETE_MENU.filter((e) => wanted.has(e.id));
 }
 
-/** Every table a set of menu entries touches: the ones they empty and the ones the database empties with them. */
-export function affectedTables(entries: readonly DeleteMenuEntry[]): string[] {
-  const out: string[] = [];
-  for (const e of entries) {
-    for (const m of [...e.tables, ...e.alsoDeletes]) if (!out.includes(m)) out.push(m);
-  }
-  return out;
-}
-
-/**
- * The links the ticked kinds clear while keeping the rows (an expense record's idea, when ideas are
- * ticked). A link into a table that a ticked kind empties anyway is left out: those rows go, so
- * nothing is kept (ideas and expense records ticked together delete every record).
- */
-export function keptLinks(entries: readonly DeleteMenuEntry[]): KeptLink[] {
-  const emptied = affectedTables(entries);
-  const out: KeptLink[] = [];
-  for (const e of entries) {
-    for (const k of e.keeps) {
-      if (!emptied.includes(k.model) && !out.some((o) => keptLinkKey(o) === keptLinkKey(k))) out.push(k);
-    }
-  }
-  return out;
-}
+// affectedTables and keptLinks live in ./kept-links, shared with the menu in the window, so both
+// sides work out the same tables and kept links. Re-exported here for the route and the tests.
+export { affectedTables, keptLinks };
 
 async function countTables(client: PrismaClient | Prisma.TransactionClient, models: readonly string[]): Promise<TableCounts> {
   const counts: TableCounts = {};

@@ -92,8 +92,9 @@ can delete them. Built in the same change as the typing screen:
   under the box and again in the first confirm dialog: how many expense records stay; that they
   stay as "not attached yet"; where they are kept (DotAmi's data file on this computer, counted on
   that page under *Your expense records*, listed on the Expenses page under *Not attached to an idea
-  yet*); and how to delete them (tick *Your expense records* too; no single record can be deleted
-  yet). That number is checked again when the person confirms, like the table counts, so a record
+  yet* except the ones the person turned down, which are kept and counted but shown on no list);
+  and how to delete them (tick *Your expense records* too; no single record can be deleted
+  yet). The count includes turned-down records, which is why the warning names them. That number is checked again when the person confirms, like the table counts, so a record
   attached in between stops the delete.
 - **The counts are true.** The *Your ideas* box no longer counts expense records as deleted, and the
   *Your expense records* box counts every record, attached or not. A test fails if a box would show

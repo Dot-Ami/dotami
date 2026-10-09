@@ -262,7 +262,7 @@ export interface KeptLink {
 }
 
 /** The key a kept link's count travels under, on the page and in the delete request: "Expense.ventureId". */
-export const keptLinkKey = (k: { model: string; field: string }) => `${k.model}.${k.field}`;
+export { keptLinkKey } from "./kept-links";
 
 /**
  * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
@@ -315,13 +315,13 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
         one: "expense record",
         becomes: "not attached yet",
         whereAndHow:
-          "They are kept in DotAmi's data file on this computer: this page counts them under “Your expense records”, and the Expenses page lists them under “Not attached to an idea yet”, where you can attach them to another idea. To delete them as well, tick “Your expense records” too. DotAmi can't delete a single record yet.",
+          "They are kept in DotAmi's data file on this computer: this page counts them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”, where you can attach them to another idea. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too. DotAmi can't delete a single record yet.",
       },
     ],
     goesWithIt:
       "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, unless you tick “Your expense records” too.",
     learnMore:
-      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists them under “Not attached to an idea yet”. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
   },
   {

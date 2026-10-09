@@ -41,9 +41,11 @@ with where they are kept, before confirming.
    **Ticking "Your ideas"** (while "Your expense records" isn't ticked, and some records are
    attached) shows a warning under the box at once: "2 expense records stay, as “not attached
    yet”." then where they are kept and how to delete them: in DotAmi's data file on this computer,
-   counted on this page under "Your expense records", listed on the Expenses page under "Not
-   attached to an idea yet" (where they can be attached to another idea); to delete them as well,
-   tick "Your expense records" too; no single record can be deleted yet. Ticking both boxes
+   counted on this page under "Your expense records", and, except the ones the person turned down,
+   listed on the Expenses page under "Not attached to an idea yet" (where they can be attached to
+   another idea); records turned down are kept and counted too, but no list shows them (the count
+   covers them, so the warning says so); to delete them as well, tick "Your expense records" too;
+   no single record can be deleted yet. Ticking both boxes
    deletes every record: the warning goes, and the ideas box's line ends "(they go too: “Your
    expense records” is ticked)".
 
@@ -65,7 +67,8 @@ with where they are kept, before confirming.
    to File → Back up… first and File → Restore; from source, to copying the data file. Focus starts
    on **Cancel**, so Enter can't delete by accident. **Delete now** sends the request.
 5. **Result**: "Deleted." with each table's count deleted and left (0), a line for what was kept
-   ("Your expense records: 2 records kept, now “not attached yet”; 3 records in all"), and whether
+   ("Your expense records: 2 records kept, now “not attached yet”; 3 records in all"; left out when
+   none was kept, so ticking ideas with no records attached says nothing about expenses), and whether
    the file's space is wiped. When the wipe couldn't run, an amber note says the records are deleted but their
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
    using it), with **Try the wipe again**. If the server deleted but couldn't read the file back to

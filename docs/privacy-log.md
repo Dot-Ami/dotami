@@ -81,7 +81,9 @@ person is asked).
   on this computer as "not attached yet", with their refund links. *What DotAmi knows about you*
   keeps counting them under *Your expense records*, and the Expenses page lists them under *Not
   attached to an idea yet* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`
-  `keeps`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)).
+  `keeps`; tested by [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts)). Records
+  the person turned down are kept and counted the same way but, as before, no list shows them; the
+  Delete menu's warning says so, because its "N stay" count includes them.
 - **Delete ([8d]) keeps nothing new.** No new table, column, file or browser-storage key. After
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
@@ -104,6 +106,14 @@ person is asked).
 - **The Expenses page sends nothing out.** Its requests go to DotAmi's own server; only an idea's
   id goes in an address, never who was paid, what for or an amount
   ([`app/api/expenses/route.ts`](../app/api/expenses/route.ts)).
+- **The expense list can now be read whole.** `GET /api/expenses` with no idea named returns every
+  record the page would list (all except turned-down ones), attached to an idea or not: who was
+  paid, what for, the amount, the address and GST/HST number. Before, it needed `?venture=<id>`
+  and returned one idea's records. Like the other read routes, it answers any program on this
+  computer that passes the Host check; that is the same trust as the data file itself, and the
+  figures list route still answers one idea at a time
+  ([`docs/architecture/figures-privacy-review.md`](architecture/figures-privacy-review.md), "Any
+  program on the computer that calls the API").
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).

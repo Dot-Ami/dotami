@@ -21,7 +21,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Deleting an idea keeps its expense records** (the maintainer's decision of 2026-10-08) — they
   stay in DotAmi's data file on your computer as "not attached yet", refund links included, and you
   can attach them to another idea. Before you delete, the Delete menu says how many stay, where they
-  are kept and how to delete them too (tick *Your expense records*).
+  are kept and how to delete them too (tick *Your expense records*). The count includes records you
+  turned down, which are kept but not listed on the Expenses page, and the warning says so.
 - **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
   beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
   amount from it. A share an agent or a file proposed is shown as theirs ("proposed by …"), never as

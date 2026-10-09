@@ -309,9 +309,11 @@ test("Delete: when the wipe couldn't run, the page says the space isn't wiped ye
 });
 
 test("Delete: tick ideas and statements, see what goes and what stays, say yes twice; after a reload the expense records are kept, not attached yet", async ({ page }) => {
-  // One expense record attached to an idea and one not attached, both proposed the way an agent
-  // would (an agent may propose, never agree), so this test knows two of the records exist.
+  // Two expense records attached to an idea and one not attached, all proposed the way an agent
+  // would (an agent may propose, never agree), so this test knows three of the records exist. One
+  // of the attached ones is then turned down: it is kept and counted, but no list shows it.
   const ATTACHED = `Example Courier delete test ${Date.now()}`;
+  const TURNED = `Example Turned Down delete test ${Date.now()}`;
   const LOOSE = `Example Kiosk delete test ${Date.now()}`;
   const { ventures } = (await (await page.request.get("/api/ventures")).json()) as { ventures: { id: string; name: string }[] };
   const chinook = ventures.find((v) => v.name === "Demo — Chinook Sign Painting")!;
@@ -329,6 +331,7 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
 
   for (const [ventureId, paidTo] of [
     [chinook.id, ATTACHED],
+    [chinook.id, TURNED],
     [null, LOOSE],
   ] as const) {
     const res = await page.request.post("/api/expenses/propose", {
@@ -336,8 +339,19 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
     });
     expect(res.status()).toBe(201);
   }
-  const expenses = expensesBefore + 2;
-  const attached = attachedBefore + 1;
+  const expenses = expensesBefore + 3;
+  const attached = attachedBefore + 2;
+
+  // Turn one attached record down on the Expenses page, the way a person would.
+  await page.goto("/expenses");
+  await page.getByRole("region", { name: "Waiting for you" }).getByRole("button", { name: "Review" }).click();
+  const reviewing = page.getByRole("dialog", { name: "Agree to these proposed records?" });
+  const turnedRow = reviewing.getByRole("listitem").filter({ hasText: TURNED });
+  await expect(turnedRow).toBeVisible();
+  await turnedRow.getByRole("button", { name: "Turn down" }).click();
+  await expect(reviewing.getByRole("listitem").filter({ hasText: ATTACHED })).toBeVisible();
+  await expect(turnedRow).toHaveCount(0);
+  await page.keyboard.press("Escape");
 
   // Every table checked for 0 after the reload holds something now, so each 0 is a real change.
   await page.goto("/your-data");
@@ -381,6 +395,9 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await removing.getByLabel(IDEAS_BOX).check();
   await expect(ideasBox).toContainText(warning);
   await expect(ideasBox).toContainText("They are kept in DotAmi's data file on this computer");
+  // The count includes the turned-down record, which the Expenses page doesn't list, and the warning says so.
+  await expect(ideasBox).toContainText("lists the ones you haven't turned down under “Not attached to an idea yet”");
+  await expect(ideasBox).toContainText("Records you turned down are kept and counted too, but no list shows them.");
   // Ticking the expense records too deletes them all, so the warning goes and the line says so.
   const expensesLabel = removing.getByLabel("Your expense records", { exact: true });
   await expensesLabel.check();
@@ -401,6 +418,7 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   await expect(first).toContainText(warning);
   await expect(first).toContainText("this page counts them under “Your expense records”");
   await expect(first).toContainText("To delete them as well, tick “Your expense records” too.");
+  await expect(first).toContainText("Records you turned down are kept and counted too, but no list shows them.");
   await first.getByRole("button", { name: "Yes, continue" }).click();
   await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
 
@@ -431,9 +449,14 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   const review = page.getByRole("dialog", { name: "Agree to these proposed records?" });
   await expect(review.getByRole("listitem").filter({ hasText: ATTACHED })).toContainText("From a test agent · not attached to an idea");
   await expect(review.getByRole("listitem").filter({ hasText: LOOSE })).toContainText("From a test agent · not attached to an idea");
+  // The turned-down record isn't listed (it was counted in the "N stay" above, and still is in the total).
+  await expect(review).not.toContainText(TURNED);
+  await expect(page.locator("main")).not.toContainText(TURNED);
   await page.keyboard.press("Escape");
   // And no record the page lists points at an idea any more.
-  const listed = (await (await page.request.get("/api/expenses")).json()) as { expenses: { ventureId: string | null }[] };
+  const listed = (await (await page.request.get("/api/expenses")).json()) as { expenses: { ventureId: string | null; paidTo: string }[] };
   expect(listed.expenses.length).toBeGreaterThan(0);
   expect(listed.expenses.filter((e) => e.ventureId !== null)).toEqual([]);
+  expect(listed.expenses.map((e) => e.paidTo)).toContain(ATTACHED);
+  expect(listed.expenses.map((e) => e.paidTo)).not.toContain(TURNED);
 });

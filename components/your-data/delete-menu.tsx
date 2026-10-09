@@ -7,6 +7,7 @@ import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
+import { keptLinkKey, keptLinks } from "@/lib/privacy/kept-links";
 
 import { numberWords, plural } from "./format";
 
@@ -41,22 +42,11 @@ interface Outcome {
 /** Every table a box touches: its own, then the ones that go with it. */
 const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes];
 
-/** The same key lib/privacy/inventory.ts keptLinkKey makes ("Expense.ventureId"), without bundling the inventory. */
-const keyOf = (k: KeptLink) => `${k.model}.${k.field}`;
-
-/**
- * The links the ticked boxes clear while keeping the rows, worked out the way lib/privacy/delete.ts
- * keptLinks does: a table another ticked box empties keeps nothing (ideas and expense records
- * ticked together delete every record).
- */
-function keptLinksOf(chosen: readonly DeleteMenuEntry[]): KeptLink[] {
-  const emptied = chosen.flatMap(tablesOf);
-  const out: KeptLink[] = [];
-  for (const e of chosen) {
-    for (const k of e.keeps) if (!emptied.includes(k.model) && !out.some((o) => keyOf(o) === keyOf(k))) out.push(k);
-  }
-  return out;
-}
+// The key a kept link's count travels under ("Expense.ventureId") and the links the ticked boxes
+// clear while keeping the rows come from lib/privacy/kept-links, the same code the server runs, so
+// the warning's number and the server's check can't drift apart.
+const keyOf = keptLinkKey;
+const keptLinksOf = keptLinks;
 
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -386,7 +376,9 @@ function DoneNote({
   onRetry: () => void;
 }) {
   const rows = Object.keys(outcome.deleted);
-  const keptRows = Object.entries(outcome.kept ?? {});
+  // A kept line only when something was kept: ticking ideas with no expense records attached would
+  // otherwise say "0 records kept".
+  const keptRows = Object.entries(outcome.kept ?? {}).filter(([, k]) => k.unlinked > 0);
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
       <p className="font-semibold">Deleted.</p>

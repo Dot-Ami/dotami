@@ -200,6 +200,22 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(DELETE_MENU.find((e) => e.id === "ideas")!.keeps.map(keptLinkKey)).toEqual(["Expense.ventureId"]);
   });
 
+  it("the menu in the window works out the kept links with the server's own code, not a copy", () => {
+    // The warning's number comes from the window and the server checks it; two copies of the rule
+    // could drift and show one number while checking another. Both import lib/privacy/kept-links,
+    // which loads nothing at run time, so the window doesn't bundle the inventory to get it.
+    const read = (p: string) => readFileSync(path.join(process.cwd(), p), "utf8");
+    const menu = read("components/your-data/delete-menu.tsx");
+    expect(menu).toMatch(/import \{ keptLinkKey, keptLinks \} from "@\/lib\/privacy\/kept-links";/);
+    // No loop of its own over a box's keeps (the copy this replaced did `for (const k of e.keeps)`).
+    expect(menu).not.toMatch(/function keptLinksOf|of e\.keeps\)/);
+    expect(read("lib/privacy/delete.ts")).toMatch(/from "\.\/kept-links";/);
+    const shared = read("lib/privacy/kept-links.ts");
+    const imports = shared.split("\n").filter((l) => /^import /.test(l));
+    expect(imports.length).toBeGreaterThan(0);
+    for (const l of imports) expect(l, "kept-links must load nothing at run time").toMatch(/^import type /);
+  });
+
   it("empties every table a box goes with completely, so the whole-table counts it shows are true", () => {
     // A table goes completely with a box only when each of its rows MUST point (a required link,
     // onDelete: Cascade) at a table the box empties. An optional link would leave the rows that
@@ -265,6 +281,12 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(ideas.learnMore).toMatch(/not attached yet/);
     expect(ideas.learnMore).toMatch(/data file on this computer/);
     expect(ideas.learnMore).toMatch(/Your expense records/);
+    // The kept count covers turned-down records too (the database clears every record's idea), but
+    // the Expenses page lists none of them, so the warning and the Learn more both say so.
+    for (const said of [ideas.keeps[0].whereAndHow, ideas.learnMore]) {
+      expect(said).toMatch(/lists the ones you haven't turned down/);
+      expect(said).toMatch(/Records you turned down are kept and counted too, but no list shows them/);
+    }
     for (const e of DELETE_MENU) expect(`${e.goesWithIt} ${e.learnMore}`).not.toMatch(/expense records? (always )?belongs? to an idea/i);
     // The expense records box counts every record, attached or not, and says so.
     const expenses = DELETE_MENU.find((e) => e.id === "expenses")!;
@@ -346,6 +368,23 @@ describe("deleteData", () => {
     expect((await prisma.expense.findUniqueOrThrow({ where: { id: loose.id } })).paidTo).toBe("Example Cafe");
     expect(after.PersonStatement).toBe(2);
     expect(after.Setting).toBe(1);
+  });
+
+  it("counts a turned-down record on an idea among the ones kept, and it stays turned down", async () => {
+    // The warning's "N stay" includes turned-down records; the Expenses page never lists them,
+    // which is why the warning says so (lib/privacy/inventory.ts, the ideas entry's keeps).
+    const { prisma } = makeDb("ideas-turned-down");
+    await seed(prisma);
+    const attached = await prisma.expense.findFirstOrThrow({ where: { ventureId: { not: null } } });
+    await prisma.expense.update({ where: { id: attached.id }, data: { status: "discarded" } });
+
+    const seen = await seenFor(prisma, ["ideas"]);
+    expect(seen["Expense.ventureId"]).toBe(2);
+    const result = await deleteData(prisma, { kinds: ["ideas"], seen });
+    expect(result).toMatchObject({ status: "deleted", kept: { Expense: { unlinked: 2, total: 2 } } });
+    const after = await prisma.expense.findUniqueOrThrow({ where: { id: attached.id } });
+    expect(after.ventureId).toBeNull();
+    expect(after.status).toBe("discarded");
   });
 
   it("ticking ideas and expense records together deletes every record, and keeps none", async () => {

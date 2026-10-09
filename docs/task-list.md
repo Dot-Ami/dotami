@@ -177,7 +177,7 @@ roadmap's build order.
   - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
-    the person confirms
+    the person confirms (the count includes turned-down records, which no list shows, and it says so)
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)
