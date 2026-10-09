@@ -174,7 +174,10 @@ roadmap's build order.
     as a refund record linked to the purchase; agent and file proposals wait there for the agree click
     ([ui-spec](ui-spec/expenses/_index.md))
   - [ ] Receipts as copies, and backups that carry them
-  - [x] The entries in the Delete menu ([8d]): expense records have their own box, and go with their idea
+  - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
+    record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
+    2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
+    the person confirms
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

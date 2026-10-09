@@ -37,8 +37,8 @@ Taken for the typing screen (the second slice), which builds the first four:
    (SQLite can't make a column optional in place); `Venture` is never copied, dropped or renamed, and a
    test seeds ideas, figures, links, map progress, settings and expense records and checks that every
    one survives the update (`tests/desktop-migrate.spec.ts`). Attaching, moving and detaching answer
-   only to DotAmi's own page (`POST /api/expenses/attach`). Deleting an idea still deletes the records
-   attached to it; a record not attached to any idea stays.
+   only to DotAmi's own page (`POST /api/expenses/attach`). Deleting an idea keeps its records (the
+   next decision, below).
 2. **Type many, agree once.** The person types as many records as they like; a review list shows them
    all, ticked, with **Agree to all N**, and lets them untick any first (the unticked ones stay on the
    typed list). Typed records are not sent or kept until that click. Anything an agent or a file
@@ -71,13 +71,43 @@ Taken for the typing screen (the second slice), which builds the first four:
    chose this over the computer's own viewer). Showing an outside file inside the window needs its own
    security design and tests in the receipts slice (section 6).
 
+### The maintainer's decision (2026-10-08): deleting an idea keeps its expense records
+
+Once a record could exist without an idea, the question in section 6 was whether deleting an idea
+should still delete the records attached to it. The maintainer decided to keep them, on condition
+that people are told so, and told where the records are kept, so that someone who wants them gone
+can delete them. Built in the same change as the typing screen:
+
+- **The database keeps them.** The link from a record to its idea is `ON DELETE SET NULL`
+  (`onDelete: SetNull` in `prisma/schema.prisma`, and the typed-expenses migration's own table
+  definition, which no released version had yet). Deleting an idea clears each of its records'
+  idea, so they wait "not attached yet" with every other field as it was, refund links included;
+  they can be attached to another idea from the Expenses page. Figures, links between ideas and
+  map progress still go with the idea. Tested by `tests/desktop-migrate.spec.ts` (ideas, figures,
+  settings, expense records and refund links survive the update; deleting an idea afterwards
+  leaves its records with no idea) and `tests/expenses-store.spec.ts` /
+  `tests/expenses-typed.spec.ts`.
+- **People are told before they confirm.** The only way to delete an idea today is the Delete menu
+  on *What DotAmi knows about you* (there is no delete-one-idea control). Ticking *Your ideas* says,
+  under the box and again in the first confirm dialog: how many expense records stay; that they
+  stay as "not attached yet"; where they are kept (DotAmi's data file on this computer, counted on
+  that page under *Your expense records*, listed on the Expenses page under *Not attached to an idea
+  yet*); and how to delete them (tick *Your expense records* too; no single record can be deleted
+  yet). That number is checked again when the person confirms, like the table counts, so a record
+  attached in between stops the delete.
+- **The counts are true.** The *Your ideas* box no longer counts expense records as deleted, and the
+  *Your expense records* box counts every record, attached or not. A test fails if a box would show
+  a whole-table count for a table it only partly empties (`tests/privacy-delete.spec.ts`).
+- **Not built:** deleting a single expense record. *Take back* and *Turn down* keep the row; only the
+  Delete menu's *Your expense records* box removes records, all at once.
+
 ## 1. What a record would hold, and what it would not
 
 **One expense record, in the person's own database on their computer, holds:**
 
 | Field | Notes |
 |---|---|
-| Which idea (venture) | optional since 2026-10-08: a record can be "not attached yet" and attached later; deleting an idea deletes the records attached to it, not the unattached ones |
+| Which idea (venture) | optional since 2026-10-08: a record can be "not attached yet" and attached later; deleting an idea keeps its records, "not attached yet" (the maintainer's decision of 2026-10-08, section 0) |
 | Date | a calendar day, never shifted by time zone (settings doc, Part 3) |
 | Amount and currency | whole cents, currency as given, never converted (same as figures) |
 | Paid to | the person's own words, short, e.g. "Staples" |
@@ -141,8 +171,8 @@ choices in it:
 
 - Deleting a record deletes its receipt file (a receipt with no record has no meaning).
 - Deleting only receipt files keeps the records, marked "no receipt".
-- Deleting an idea removes its records (the database does it) but not files on disk, so the
-  app deletes the files itself and the orphan sweep catches a crash in between.
+- Deleting an idea keeps its records, "not attached yet" (section 0, 2026-10-08), so their receipt
+  files stay with them.
 - Figures the person already agreed to stay unless picked, because each was agreed on its own;
   the menu says so, and lists what a card will do when a figure goes.
 - It lists what it cannot reach: the old copies in `backups/` (already counted on `/your-data`),
@@ -294,7 +324,8 @@ the Delete menu entries. Leave the bank-statement route until the bank and card 
 Decided on 2026-10-07 (section 0): what is kept, where receipts live, whether backups carry them,
 the ways in, the seller's address and GST/HST number, and the Lens suggesting a category. Decided on
 2026-10-08 (section 0): a record without an idea, type many and agree once, the business share, refunds
-and credits kept either way, the receipt size cap (10 MB) and receipts opening inside DotAmi. Still open:
+and credits kept either way, the receipt size cap (10 MB), receipts opening inside DotAmi, and that
+deleting an idea keeps its records "not attached yet", with people told so first. Still open:
 
 - **Showing a receipt inside DotAmi's window** (decided, not built): a photo or PDF the person added
   is an outside file, and showing it in the window needs its own security design and tests in the
@@ -302,9 +333,6 @@ and credits kept either way, the receipt size cap (10 MB) and receipts opening i
   content type and no guessing), what the page's Content-Security-Policy allows for images and PDFs,
   that a PDF can't run script or reach the network, and what happens to a file that claims one type
   and is another.
-- Whether deleting an idea should keep its records as "not attached yet" instead of deleting them,
-  now that a record can exist without an idea (today it deletes them, as before; the Delete menu's
-  wording depends on the answer).
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.

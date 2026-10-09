@@ -159,6 +159,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                 <DeleteMenu
                   menu={DELETE_MENU}
                   counts={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count]))}
+                  keptCounts={holdings.keptLinks}
                   tableNames={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name]))}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}

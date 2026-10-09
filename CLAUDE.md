@@ -62,7 +62,7 @@ says where it is going.
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number and no receipt yet; its idea is
-  optional, a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Setting` (the person's saved choices, one row per setting: a
+  optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`

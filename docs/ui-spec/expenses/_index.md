@@ -1,6 +1,6 @@
 # Your expenses page (`/expenses`) — page overview
 
-Last updated: 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08)
+Last updated: 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet)
 
 **Route:** `/expenses` · `/expenses?idea=<idea id>` (opened on one idea) · **Component:**
 `components/expenses/expenses-page.tsx` (+ `expense-form.tsx`, `expense-review.tsx`) ·
@@ -61,7 +61,9 @@ record's words or amounts: only an idea's id, in `?idea=`.
   with its own security design first; `expense-records.md` sections 0 and 6).
 - No category, business share or "deductible" mark chosen by DotAmi, and no deduction or tax total.
 - No ranking or ordering by amount: newest day first, nothing else.
-- No delete: taking back and turning down keep the row (the Delete menu is a separate story, [8d]).
+- No delete here: taking back and turning down keep the row. The Delete menu on *What DotAmi knows
+  about you* deletes every record at once. Deleting ideas there keeps their records, which then show
+  here as "Not attached to an idea yet" (the maintainer's decision of 2026-10-08).
 
 ## Browser-tested (`e2e/expenses.spec.ts`)
 

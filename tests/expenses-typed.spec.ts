@@ -266,18 +266,37 @@ describe("a record not attached to an idea", () => {
     expect((await row(foreign.id)).status).toBe("proposed");
   });
 
-  it("stays when an idea is deleted; the idea's own records go with it", async () => {
+  it("stays when an idea is deleted, and so do the idea's own records, now not attached yet with their refund links", async () => {
+    // The maintainer's decision (2026-10-08): deleting an idea keeps its expense records.
     const { userId } = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } });
     const doomed = (
       await prisma.venture.create({
         data: { userId, name: "doomed", type: "SERVICE", province: "AB", targetRevenueY1: 0, targetRevenueY3: 0, employmentStatus: "OTHER" },
       })
     ).id;
-    const [gone] = await propose([good], doomed);
+    const [onIdea] = await propose([{ ...good, whatFor: "on the doomed idea" }], doomed);
+    const refund = await prisma.expense.create({
+      data: {
+        ventureId: doomed,
+        date: new Date("2026-09-02T00:00:00Z"),
+        amountCents: 100n,
+        paidTo: "x",
+        whatFor: "its refund",
+        recordKind: "refund",
+        refundOfId: onIdea.id,
+        sourceKind: "typed",
+        sourceLabel: "typed by you",
+      },
+    });
     const [kept] = await propose([good], null);
     await prisma.venture.delete({ where: { id: doomed } });
-    expect(await prisma.expense.findUnique({ where: { id: gone.id } })).toBeNull();
-    expect(await prisma.expense.findUnique({ where: { id: kept.id } })).not.toBeNull();
+
+    expect((await row(onIdea.id)).ventureId).toBeNull();
+    expect(await row(refund.id)).toMatchObject({ ventureId: null, recordKind: "refund", refundOfId: onIdea.id });
+    expect((await row(kept.id)).ventureId).toBeNull();
+    // And the page's "not attached yet" list shows them.
+    const unattached = (await list("?unattached")).map((x) => x.id);
+    expect(unattached).toEqual(expect.arrayContaining([onIdea.id, refund.id, kept.id]));
   });
 });
 

@@ -17,8 +17,8 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { addTypedStatement } from "@/lib/person/statements";
-import { DeleteInputError, affectedTables, deleteData, pickKinds, wipeFreeSpace } from "@/lib/privacy/delete";
-import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES } from "@/lib/privacy/inventory";
+import { DeleteInputError, affectedTables, countKeptLinks, deleteData, keptLinks, pickKinds, wipeFreeSpace } from "@/lib/privacy/delete";
+import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES, keptLinkKey } from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
 import { demoScenarios } from "../prisma/seed-data";
 
@@ -98,10 +98,32 @@ async function countAll(prisma: PrismaClient): Promise<Record<string, number>> {
   return out;
 }
 
-/** What the page would send: the counts of every table the ticked kinds touch, as they stand. */
-async function seenFor(prisma: PrismaClient, kinds: string[]) {
+/**
+ * What the page would send: the counts of every table the ticked kinds touch, as they stand, and
+ * how many rows each kept link holds (an expense record's idea, when ideas are ticked).
+ */
+async function seenFor(prisma: PrismaClient, kinds: string[]): Promise<Record<string, number>> {
   const all = await countAll(prisma);
-  return Object.fromEntries(affectedTables(pickKinds(kinds)).map((m) => [m, all[m]]));
+  const entries = pickKinds(kinds);
+  return {
+    ...Object.fromEntries(affectedTables(entries).map((m) => [m, all[m]])),
+    ...(await countKeptLinks(prisma, keptLinks(entries))),
+  };
+}
+
+/** One expense record attached to no idea, as the Expenses page keeps one ("not attached yet"). */
+async function unattachedExpense(prisma: PrismaClient) {
+  return prisma.expense.create({
+    data: {
+      ventureId: null,
+      date: new Date("2026-08-20T00:00:00Z"),
+      amountCents: BigInt(1_250),
+      paidTo: "Example Cafe",
+      whatFor: "client coffee",
+      sourceKind: "typed",
+      sourceLabel: "typed by you",
+    },
+  });
 }
 
 /** Does the marker appear anywhere in the data file's folder (the file, and any journal beside it)? */
@@ -120,22 +142,76 @@ afterAll(async () => {
 describe("the Delete menu covers every table, and says what goes with each", () => {
   const schema = readFileSync(path.join(process.cwd(), "prisma", "schema.prisma"), "utf8");
 
-  /** model -> the models it points at with onDelete: Cascade, read from the schema text. */
-  function cascadeParents(): Map<string, string[]> {
-    const out = new Map<string, string[]>();
+  /** One link in the schema: `child.field` points at `parent`, optional or not, and what deleting the parent does. */
+  interface Relation {
+    child: string;
+    parent: string;
+    field: string;
+    optional: boolean;
+    onDelete: string | null;
+  }
+
+  /** Every link that holds a key (the side with `fields: [...]`), read from the schema text. */
+  function relations(): Relation[] {
+    const out: Relation[] = [];
     for (const m of schema.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
-      const parents: string[] = [];
       for (const line of m[2].split("\n")) {
-        const field = line.match(/^\s*\w+\s+(\w+)\??\s+@relation\(([^)]*)\)/);
-        if (field && /onDelete:\s*Cascade/.test(field[2])) parents.push(field[1]);
+        const rel = line.match(/^\s*\w+\s+(\w+)(\??)\s+@relation\(([^)]*)\)/);
+        const field = rel?.[3].match(/fields:\s*\[(\w+)\]/);
+        if (!rel || !field) continue;
+        out.push({ child: m[1], parent: rel[1], field: field[1], optional: rel[2] === "?", onDelete: rel[3].match(/onDelete:\s*(\w+)/)?.[1] ?? null });
       }
-      out.set(m[1], parents);
     }
     return out;
   }
 
-  it("reads the schema's cascades (a guard against the parse silently finding nothing)", () => {
+  /** model -> the models it points at with onDelete: Cascade. */
+  function cascadeParents(): Map<string, string[]> {
+    const out = new Map<string, string[]>();
+    for (const m of schema.matchAll(/^model\s+(\w+)\s*\{/gm)) out.set(m[1], []);
+    for (const r of relations()) if (r.onDelete === "Cascade") out.get(r.child)!.push(r.parent);
+    return out;
+  }
+
+  it("reads the schema's links (a guard against the parse silently finding nothing)", () => {
     expect(cascadeParents().get("Figure")).toEqual(["Venture"]);
+    expect(relations().find((r) => r.child === "Expense" && r.field === "ventureId")).toEqual({
+      child: "Expense",
+      parent: "Venture",
+      field: "ventureId",
+      optional: true,
+      onDelete: "SetNull",
+    });
+  });
+
+  it("names, for each box, the records it keeps with their link cleared (onDelete: SetNull)", () => {
+    // The maintainer's decision (2026-10-08): deleting ideas keeps their expense records, "not
+    // attached yet". The menu has to say so, with a count, so every such link must be listed.
+    const all = relations();
+    for (const entry of DELETE_MENU) {
+      const gone = [...entry.tables, ...entry.alsoDeletes];
+      const expected = all
+        .filter((r) => r.onDelete === "SetNull" && gone.includes(r.parent) && !gone.includes(r.child))
+        .map((r) => keptLinkKey({ model: r.child, field: r.field }))
+        .sort();
+      expect(entry.keeps.map(keptLinkKey).sort(), `${entry.id}: keeps`).toEqual(expected);
+      for (const k of entry.keeps) expect(k.becomes.trim()).not.toBe("");
+    }
+    expect(DELETE_MENU.find((e) => e.id === "ideas")!.keeps.map(keptLinkKey)).toEqual(["Expense.ventureId"]);
+  });
+
+  it("empties every table a box goes with completely, so the whole-table counts it shows are true", () => {
+    // A table goes completely with a box only when each of its rows MUST point (a required link,
+    // onDelete: Cascade) at a table the box empties. An optional link would leave the rows that
+    // point nowhere, and the menu would count them as deleted when they are not.
+    const all = relations();
+    for (const entry of DELETE_MENU) {
+      const gone = [...entry.tables, ...entry.alsoDeletes];
+      for (const model of entry.alsoDeletes) {
+        const whole = all.some((r) => r.child === model && r.onDelete === "Cascade" && !r.optional && gone.includes(r.parent));
+        expect(whole, `${entry.id}: ${model} isn't emptied completely; list it in keeps or give it a box of its own`).toBe(true);
+      }
+    }
   });
 
   it("reaches every table from a tick-box (its own, or one it goes with), or keeps it on purpose", () => {
@@ -182,7 +258,18 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     const ideas = DELETE_MENU.find((e) => e.id === "ideas")!;
     expect(ideas.goesWithIt).toMatch(/figure/);
     expect(ideas.goesWithIt).toMatch(/map progress/);
-    expect(ideas.goesWithIt).toMatch(/expense record/);
+    // Expense records are named too, as what STAYS (the maintainer's decision of 2026-10-08), and the
+    // Learn more says where they are kept and how to delete them. It never says they belong to an idea.
+    expect(ideas.goesWithIt).toMatch(/expense records stay/i);
+    expect(ideas.goesWithIt).toMatch(/not attached yet/);
+    expect(ideas.learnMore).toMatch(/not attached yet/);
+    expect(ideas.learnMore).toMatch(/data file on this computer/);
+    expect(ideas.learnMore).toMatch(/Your expense records/);
+    for (const e of DELETE_MENU) expect(`${e.goesWithIt} ${e.learnMore}`).not.toMatch(/expense records? (always )?belongs? to an idea/i);
+    // The expense records box counts every record, attached or not, and says so.
+    const expenses = DELETE_MENU.find((e) => e.id === "expenses")!;
+    expect(expenses.learnMore).not.toMatch(/on every idea/);
+    expect(expenses.goesWithIt).toMatch(/attached to an idea or not/);
     // Statements go all at once, never one by one, and the box says so.
     expect(DELETE_MENU.find((e) => e.id === "statements")!.goesWithIt).toMatch(/all of them go at once/i);
     // Remembered columns has a place on the menu but isn't built.
@@ -231,22 +318,76 @@ describe("deleteData", () => {
     expect(await countAll(prisma)).toEqual({ ...before, PersonStatement: 0 });
   });
 
-  it("deleting ideas takes their links, map progress, figures and expense records with them, and leaves statements and settings", async () => {
+  it("deleting ideas takes their links, map progress and figures, keeps every expense record (not attached yet), and leaves statements and settings", async () => {
+    // The case that made the counts wrong: 2 records attached to an idea and 1 not attached.
     const { prisma } = makeDb("ideas");
     await seed(prisma);
+    const loose = await unattachedExpense(prisma);
     const before = await countAll(prisma);
-    for (const m of ["Venture", "VentureLink", "ScenarioState", "Figure", "Expense"]) expect(before[m]).toBeGreaterThan(0);
+    for (const m of ["Venture", "VentureLink", "ScenarioState", "Figure"]) expect(before[m]).toBeGreaterThan(0);
+    expect(before.Expense).toBe(3);
 
-    const result = await deleteData(prisma, { kinds: ["ideas"], seen: await seenFor(prisma, ["ideas"]) });
-    expect(result.status).toBe("deleted");
-    if (result.status !== "deleted") return;
-    expect(result.deleted).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 2 });
-    expect(result.left).toEqual({ Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 });
+    // What the page shows and sends: whole-table counts for what goes, and how many records are attached.
+    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, "Expense.ventureId": 2 };
+    expect(await seenFor(prisma, ["ideas"])).toEqual(seen);
+    const result = await deleteData(prisma, { kinds: ["ideas"], seen });
+    expect(result).toEqual({
+      status: "deleted",
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0 },
+      kept: { Expense: { unlinked: 2, total: 3 } },
+      wiped: true,
+    });
 
     const after = await countAll(prisma);
-    expect(after).toEqual({ ...before, Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 });
+    expect(after).toEqual({ ...before, Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0 });
+    expect(after.Expense).toBe(3);
+    expect(await prisma.expense.count({ where: { ventureId: { not: null } } })).toBe(0);
+    expect((await prisma.expense.findUniqueOrThrow({ where: { id: loose.id } })).paidTo).toBe("Example Cafe");
     expect(after.PersonStatement).toBe(2);
     expect(after.Setting).toBe(1);
+  });
+
+  it("ticking ideas and expense records together deletes every record, and keeps none", async () => {
+    const { prisma } = makeDb("ideas-and-expenses");
+    await seed(prisma);
+    await unattachedExpense(prisma);
+    const kinds = ["ideas", "expenses"];
+    const seen = await seenFor(prisma, kinds);
+    // The expense records are counted whole, once, and no "kept" count is asked for.
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3 });
+    const result = await deleteData(prisma, { kinds, seen });
+    expect(result).toEqual({
+      status: "deleted",
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0 },
+      wiped: true,
+    });
+  });
+
+  it("deletes nothing when a record was attached to an idea since the person looked, though the totals are the same", async () => {
+    const { prisma } = makeDb("attached-since");
+    const { a } = await seed(prisma);
+    const loose = await unattachedExpense(prisma);
+    const seen = await seenFor(prisma, ["ideas"]);
+    expect(seen["Expense.ventureId"]).toBe(2);
+    // The warning said 2 records stay; attaching a third between the look and the "yes" makes that untrue.
+    await prisma.expense.update({ where: { id: loose.id }, data: { ventureId: a } });
+    const before = await countAll(prisma);
+
+    const result = await deleteData(prisma, { kinds: ["ideas"], seen });
+    expect(result.status).toBe("changed");
+    if (result.status === "changed") expect(result.counts["Expense.ventureId"]).toBe(3);
+    expect(await countAll(prisma)).toEqual(before);
+  });
+
+  it("refuses an ideas delete that doesn't say how many expense records the person was told stay", async () => {
+    const { prisma } = makeDb("kept-unseen");
+    await seed(prisma);
+    const { "Expense.ventureId": _told, ...withoutKept } = await seenFor(prisma, ["ideas"]);
+    expect(_told).toBe(2);
+    await expect(deleteData(prisma, { kinds: ["ideas"], seen: withoutKept })).rejects.toThrow(DeleteInputError);
+    expect((await countAll(prisma)).Venture).toBe(2);
   });
 
   it("deletes figures and expense records on their own, and the ideas stay", async () => {
@@ -324,7 +465,8 @@ describe("the deleted words are gone from the file, not just hidden", () => {
     await prisma.$disconnect();
     expect(markerOnDisk(folder)).toEqual(["dotami.db"]);
 
-    const kinds = ["ideas", "statements"];
+    // Expense records stay when ideas are deleted, so their box is ticked too: every marker goes.
+    const kinds = ["ideas", "statements", "expenses"];
     const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds) });
     expect(result.status === "deleted" && result.wiped).toBe(true);
     const free = await prisma.$queryRawUnsafe<{ freelist_count: number | bigint }[]>("PRAGMA freelist_count");

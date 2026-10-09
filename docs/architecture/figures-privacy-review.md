@@ -35,7 +35,8 @@ details for anything. All of it in the one database file on the person's compute
    a confirmed one; the server refuses confirmation from anything else, and a test proves it.
 4. **Deleting a venture deletes its figures** (asked first); *forget this source* retracts its figures ([8d]).
    *As built (2026-10-08):* the Delete menu on /your-data deletes whole kinds of data (ideas, which
-   take their figures and expense records with them; figures; expense records; statements, all at
+   take their figures with them and keep their expense records as "not attached yet", saying so
+   first, by the maintainer's decision of 2026-10-08; figures; expense records; statements, all at
    once; settings). It asks twice, refuses if the counts changed in between, deletes in one
    transaction, then runs VACUUM so the deleted rows are gone from the file's bytes, not only marked
    free (`tests/privacy-delete.spec.ts` scans the file for a marker string; a plain delete leaves it

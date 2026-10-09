@@ -353,11 +353,16 @@ describe("desktop migrator — the expenses table", () => {
     expect(status.out).toContain("Database schema is up to date");
     expect(status.code).toBe(0);
 
-    // Deleting an idea still cascades to its own figures, links, progress and now expense records,
-    // and to nothing else: the other idea's figure and expense, and the setting, are untouched.
+    // Deleting an idea still cascades to its own figures, links and progress, and to nothing else.
+    // Its expense records stay, no longer attached to an idea (the newer typed-expenses migration
+    // makes that link ON DELETE SET NULL); the other idea's figure and expense, and the setting,
+    // are untouched.
     runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f3" }]);
-    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Expense" ORDER BY id`)).toEqual([{ id: "e2" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense" ORDER BY id`)).toEqual([
+      { id: "e1", ventureId: null },
+      { id: "e2", ventureId: "v2" },
+    ]);
     expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
     expect(query(dbFile, `SELECT * FROM "ScenarioState"`)).toEqual([]);
     expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
@@ -375,6 +380,16 @@ describe("desktop migrator — typed expenses (an optional idea, refunds, a busi
     // "redefines" another table fails here.
     expect(statements).toHaveLength(6);
     expect(statements[0]).toMatch(/^CREATE TABLE "new_Expense" \(/);
+    // The maintainer's decision (2026-10-08): deleting an idea keeps its expense records, "not
+    // attached yet", so the idea link clears instead of cascading. A refund's link to its purchase
+    // clears the same way.
+    expect(statements[0]).toContain(
+      'CONSTRAINT "Expense_ventureId_fkey" FOREIGN KEY ("ventureId") REFERENCES "Venture" ("id") ON DELETE SET NULL ON UPDATE CASCADE',
+    );
+    expect(statements[0]).toContain(
+      'CONSTRAINT "Expense_refundOfId_fkey" FOREIGN KEY ("refundOfId") REFERENCES "Expense" ("id") ON DELETE SET NULL ON UPDATE CASCADE',
+    );
+    expect(statements[0]).not.toMatch(/ON DELETE CASCADE/);
     expect(statements[1]).toMatch(/^INSERT INTO "new_Expense" \([^)]*\) SELECT [^;]* FROM "Expense"$/);
     expect(statements[2]).toBe('DROP TABLE "Expense"');
     expect(statements[3]).toBe('ALTER TABLE "new_Expense" RENAME TO "Expense"');
@@ -476,15 +491,42 @@ describe("desktop migrator — typed expenses (an optional idea, refunds, a busi
     `,
     );
     expect(query(dbFile, `SELECT ventureId, businessSharePercent FROM "Expense" WHERE id = 'e4'`)).toEqual([{ ventureId: null, businessSharePercent: 40 }]);
+    // A refund kept as a negative amount, on the other idea, linked to the first idea's purchase too.
+    runSql(
+      dbFile,
+      `INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId)
+        VALUES ('r2', 'v2', 60, -500, 'Example Stationery Ltd', 'price adjustment', 'typed', 'typed by you', 'expense', 'e1')`,
+    );
 
-    // Deleting an idea still cascades to its own figures, links, progress and expense records, and
-    // to nothing else: the other idea's rows, the unattached record and the setting are untouched.
+    // What the database itself says about the two links, read from the rebuilt table.
+    const links = query<{ table: string; from: string; on_delete: string }>(dbFile, `PRAGMA foreign_key_list("Expense")`)
+      .map((k) => ({ table: k.table, from: k.from, on_delete: k.on_delete }))
+      .sort((a, b) => a.from.localeCompare(b.from));
+    expect(links).toEqual([
+      { table: "Expense", from: "refundOfId", on_delete: "SET NULL" },
+      { table: "Venture", from: "ventureId", on_delete: "SET NULL" },
+    ]);
+
+    // Deleting an idea (the maintainer's decision of 2026-10-08): its figures, links and map
+    // progress go with it, and nothing of the other idea's. Its expense records STAY, every field as
+    // it was, now "not attached yet"; the refund links between records still hold.
+    const expenseRows = () =>
+      query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, status, recordKind, refundOfId, creditNote FROM "Expense" ORDER BY id`);
+    const beforeDelete = expenseRows() as { id: string; ventureId: string | null }[];
+    expect(beforeDelete.filter((r) => r.ventureId === "v1").map((r) => r.id)).toEqual(["e1", "e3", "r1"]);
     runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Venture" ORDER BY id`)).toEqual([{ id: "v2" }]);
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f2" }]);
-    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Expense" ORDER BY id`)).toEqual([{ id: "e2" }, { id: "e4" }]);
+    expect(expenseRows()).toEqual(beforeDelete.map((r) => (r.ventureId === "v1" ? { ...r, ventureId: null } : r)));
+    expect(query(dbFile, `SELECT id, refundOfId FROM "Expense" WHERE refundOfId IS NOT NULL ORDER BY id`)).toEqual([
+      { id: "r1", refundOfId: "e1" },
+      { id: "r2", refundOfId: "e1" },
+    ]);
     expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
     expect(query(dbFile, `SELECT * FROM "ScenarioState"`)).toEqual([]);
     expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
+    expect(query(dbFile, `SELECT id, text FROM "PersonStatement"`)).toEqual([{ id: "s1", text: "in my words" }]);
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
   }, 60_000);
 
   it("deleting an expense keeps a refund that points at it, with the link cleared (a delete of every record still works)", () => {

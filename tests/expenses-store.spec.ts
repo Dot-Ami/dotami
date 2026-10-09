@@ -717,7 +717,7 @@ describe("what is stored", () => {
     expect((await prisma.expense.findUniqueOrThrow({ where: { id: e.id } })).amountCents).toBe(123_456_789_012n);
   });
 
-  it("deleting an idea deletes its expense records — and nobody else's", async () => {
+  it("deleting an idea keeps its expense records, now not attached to an idea, and touches nobody else's", async () => {
     // A third idea, owned by the same (stub) user as the other two.
     const { userId } = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } });
     const doomed = (
@@ -725,15 +725,19 @@ describe("what is stored", () => {
         data: { userId, name: "doomed", type: "SERVICE", province: "AB", targetRevenueY1: 0, targetRevenueY3: 0, employmentStatus: "OTHER" },
       })
     ).id;
-    const [gone] = await propose([good, { ...good, whatFor: "second" }], doomed);
+    const [onDoomed] = await propose([good, { ...good, whatFor: "second" }], doomed);
     const [kept] = await propose([good], otherVentureId);
     expect(await prisma.expense.count({ where: { ventureId: doomed } })).toBe(2);
 
     await prisma.venture.delete({ where: { id: doomed } });
 
+    // The maintainer's decision (2026-10-08): the records stay, "not attached yet", as they were.
     expect(await prisma.expense.count({ where: { ventureId: doomed } })).toBe(0);
-    expect(await prisma.expense.findUnique({ where: { id: gone.id } })).toBeNull();
-    expect(await prisma.expense.findUnique({ where: { id: kept.id } })).not.toBeNull();
+    const stayed = await prisma.expense.findUniqueOrThrow({ where: { id: onDoomed.id } });
+    expect(stayed.ventureId).toBeNull();
+    expect(stayed.amountCents).toBe(BigInt(onDoomed.amountCents));
+    expect(stayed.status).toBe(onDoomed.status);
+    expect((await prisma.expense.findUniqueOrThrow({ where: { id: kept.id } })).ventureId).toBe(otherVentureId);
   });
 });
 

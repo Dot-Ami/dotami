@@ -110,6 +110,19 @@ beforeAll(async () => {
       agreedAt: agreed,
     },
   });
+  // And one not attached to any idea yet, so the count of records attached to an idea (what the
+  // Delete menu says stays when ideas are deleted) is shown to differ from the whole table.
+  await db.expense.create({
+    data: {
+      ventureId: null,
+      date: new Date("2026-09-29T00:00:00Z"),
+      amountCents: 1250n,
+      paidTo: "Example Cafe",
+      whatFor: "client coffee",
+      sourceKind: "typed",
+      sourceLabel: "typed by you",
+    },
+  });
 }, 180_000);
 
 afterAll(async () => {
@@ -126,6 +139,7 @@ describe("readHoldings on a database with nothing in it", () => {
     expect(h.figures.total).toBe(0);
     expect(h.figures.sources).toEqual([]);
     expect(h.figures.byStatus).toEqual({ proposed: 0, confirmed: 0, retracted: 0, discarded: 0 });
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 0 });
   });
 
   it("says there is no safety-copy folder and no log, rather than a count of zero files", async () => {
@@ -150,15 +164,20 @@ describe("readHoldings on a seeded database", () => {
       ScenarioState: 2,
       Setting: 1,
       Figure: 7,
-      Expense: 1,
+      Expense: 2,
     });
     expect(h.ideasWithNotes).toBe(1);
+  });
+
+  it("counts the records the Delete menu would keep with their link cleared: only those attached to an idea", async () => {
+    const h = await readHoldings(seeded.prisma, seededToday);
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 1 });
   });
 
   it("counts expense records but carries none of their words or amounts (this page only counts them)", async () => {
     const h = await readHoldings(seeded.prisma, seededToday);
     const card = h.tables.find((t) => t.entry.model === "Expense")!;
-    expect(card.count).toBe(1);
+    expect(card.count).toBe(2);
     expect(card.entry.name).toBe("Your expense records");
     const everything = JSON.stringify(h);
     expect(everything).not.toContain("Example Stationery");

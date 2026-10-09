@@ -198,9 +198,11 @@ model Figure {
 /// refund or credit is kept either as a negative amount or as a separate "refund" record linked to
 /// the expense it came from. The migration that made this change rebuilds this table only
 /// (prisma/migrations/20261008120000_expenses_typed/migration.sql), never Venture.
+/// Deleting an idea keeps its records: their idea is cleared and they wait "not attached yet" (the
+/// maintainer's decision of 2026-10-08), so nothing the person typed is lost with an idea.
 model Expense {
   id              String    @id @default(cuid())
-  /// The idea it belongs to, or null while it is "not attached yet".
+  /// The idea it is attached to, or null while it is "not attached yet" (including after that idea is deleted).
   ventureId       String?
   /// The calendar day of the purchase; stored as midnight UTC of that day, like a Figure's period dates.
   date            DateTime
@@ -242,7 +244,7 @@ model Expense {
   proposedAt      DateTime  @default(now())
   agreedAt        DateTime?
   retractedAt     DateTime?
-  venture         Venture?  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  venture         Venture?  @relation(fields: [ventureId], references: [id], onDelete: SetNull)
   refundOf        Expense?  @relation("ExpenseRefunds", fields: [refundOfId], references: [id], onDelete: SetNull)
   refunds         Expense[] @relation("ExpenseRefunds")
 

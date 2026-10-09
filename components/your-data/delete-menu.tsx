@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
-import type { DeleteKindId, DeleteMenuEntry } from "@/lib/privacy/inventory";
+import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 
 import { numberWords, plural } from "./format";
 
@@ -14,6 +14,11 @@ export interface DeleteMenuProps {
   menu: readonly DeleteMenuEntry[];
   /** Rows per table, read from the file when the page was drawn. */
   counts: Record<string, number>;
+  /**
+   * For each link a box clears while keeping the rows (DELETE_MENU `keeps`), how many rows it holds
+   * now, keyed "Expense.ventureId": the expense records that stay, "not attached yet", when ideas go.
+   */
+  keptCounts: Record<string, number>;
   /** The page's name for each table ("Your ideas"), from the inventory. */
   tableNames: Record<string, string>;
   notCleared: readonly { name: string; why: string }[];
@@ -28,11 +33,32 @@ interface Outcome {
   deleted: Record<string, number>;
   /** Null when the server deleted but couldn't read the file back to count what is left. */
   left: Record<string, number> | null;
+  /** Rows that stayed with their link cleared, per table; absent when nothing was kept (lib/privacy/delete.ts). */
+  kept?: Record<string, { unlinked: number; total: number | null }>;
   wiped: boolean;
 }
 
 /** Every table a box touches: its own, then the ones that go with it. */
 const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes];
+
+/** The same key lib/privacy/inventory.ts keptLinkKey makes ("Expense.ventureId"), without bundling the inventory. */
+const keyOf = (k: KeptLink) => `${k.model}.${k.field}`;
+
+/**
+ * The links the ticked boxes clear while keeping the rows, worked out the way lib/privacy/delete.ts
+ * keptLinks does: a table another ticked box empties keeps nothing (ideas and expense records
+ * ticked together delete every record).
+ */
+function keptLinksOf(chosen: readonly DeleteMenuEntry[]): KeptLink[] {
+  const emptied = chosen.flatMap(tablesOf);
+  const out: KeptLink[] = [];
+  for (const e of chosen) {
+    for (const k of e.keeps) if (!emptied.includes(k.model) && !out.some((o) => keyOf(o) === keyOf(k))) out.push(k);
+  }
+  return out;
+}
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * [8d] The "Delete" button on "What DotAmi knows about you". It opens a menu of kinds of data, each
@@ -43,7 +69,7 @@ const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes];
  * Escape, Cancel or a click outside a dialog at either ask deletes nothing. Focus starts on Cancel
  * at the final ask, so a stray Enter can't delete.
  */
-export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, desktop }: DeleteMenuProps) {
+export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, retention, desktop }: DeleteMenuProps) {
   const router = useRouter();
   const { resetJourney } = useJourney();
   const panelId = useId();
@@ -60,6 +86,9 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
   const chosen = menu.filter((e) => ticked.includes(e.id));
   const affected: string[] = [];
   for (const e of chosen) for (const m of tablesOf(e)) if (!affected.includes(m)) affected.push(m);
+  // What stays with its link cleared, and how many: said before the person confirms.
+  const keptLinks = keptLinksOf(chosen);
+  const kept = keptLinks.filter((k) => (keptCounts[keyOf(k)] ?? 0) > 0);
 
   function toggle(id: DeleteKindId, on: boolean) {
     setTicked((prev) => (on ? [...prev.filter((k) => k !== id), id] : prev.filter((k) => k !== id)));
@@ -73,7 +102,11 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
     setStep("working");
     setError(null);
     // What the person was shown; the server refuses (409) if the file holds anything else now.
-    const seen = Object.fromEntries(affected.map((m) => [m, counts[m] ?? 0]));
+    // The number of records the warning said would stay is checked too, like the table counts.
+    const seen = {
+      ...Object.fromEntries(affected.map((m) => [m, counts[m] ?? 0])),
+      ...Object.fromEntries(keptLinks.map((k) => [keyOf(k), keptCounts[keyOf(k)] ?? 0])),
+    };
     const result = await postJson("/api/your-data/delete", { kinds: ticked, seen });
     if (!result.ok) {
       setError(result.error);
@@ -83,7 +116,7 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
       return;
     }
     const body = result.body as Outcome;
-    setOutcome({ deleted: body.deleted, left: body.left, wiped: body.wiped });
+    setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped });
     // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
     if (ticked.includes("ideas")) resetJourney();
     setTicked([]);
@@ -127,7 +160,15 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
         ) : null}
       </div>
 
-      {step === "done" && outcome ? <DoneNote outcome={outcome} tableNames={tableNames} retrying={retrying} onRetry={() => void retryWipe()} /> : null}
+      {step === "done" && outcome ? (
+        <DoneNote
+          outcome={outcome}
+          tableNames={tableNames}
+          keeps={menu.flatMap((e) => e.keeps)}
+          retrying={retrying}
+          onRetry={() => void retryWipe()}
+        />
+      ) : null}
       {error && step !== "menu" ? (
         <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
           {error}
@@ -175,7 +216,22 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
                                   .map((m) => `${tableNames[m] ?? m}: ${counts[m] ?? 0}`)
                                   .join(" · ")}
                         </p>
+                        {e.built && total > 0
+                          ? e.keeps.map((k) => (
+                              <p key={keyOf(k)} className="font-mono text-[11px] text-stone">
+                                {capitalise(k.one)}s attached to them: {keptCounts[keyOf(k)] ?? 0}{" "}
+                                {affected.includes(k.model)
+                                  ? `(they go too: “${tableNames[k.model] ?? k.model}” is ticked)`
+                                  : `(they stay, as “${k.becomes}”)`}
+                              </p>
+                            ))
+                          : null}
                         <p className="mt-1 text-[12.5px] text-paper-dim">{e.goesWithIt}</p>
+                        {on
+                          ? kept
+                              .filter((k) => e.keeps.some((own) => keyOf(own) === keyOf(k)))
+                              .map((k) => <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />)
+                          : null}
                         <details className="mt-1">
                           <summary className="cursor-pointer text-[12px] text-stone underline decoration-rule underline-offset-4 hover:text-paper">
                             Learn more
@@ -265,6 +321,14 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
               </li>
             ))}
           </ul>
+          {kept.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-sm font-semibold text-paper">Kept, not deleted</p>
+              {kept.map((k) => (
+                <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />
+              ))}
+            </div>
+          ) : null}
           <p className="mt-3 text-[12.5px] text-paper-dim">
             Everything not ticked stays, and so does what Delete doesn&apos;t reach (the safety copies, what the window stored in
             earlier launches, the log).
@@ -293,18 +357,36 @@ export function DeleteMenu({ menu, counts, tableNames, notCleared, retention, de
   );
 }
 
+/**
+ * Said before the person confirms: how many rows stay, what they become, where they are kept and
+ * how to delete them (the maintainer's decision of 2026-10-08, for an idea's expense records).
+ */
+function KeptWarning({ link, count }: { link: KeptLink; count: number }) {
+  return (
+    <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-paper">
+      <span className="font-semibold">
+        {plural(count, link.one)} {count === 1 ? "stays" : "stay"}, as “{link.becomes}”.
+      </span>{" "}
+      {link.whereAndHow}
+    </p>
+  );
+}
+
 function DoneNote({
   outcome,
   tableNames,
+  keeps,
   retrying,
   onRetry,
 }: {
   outcome: Outcome;
   tableNames: Record<string, string>;
+  keeps: readonly KeptLink[];
   retrying: boolean;
   onRetry: () => void;
 }) {
   const rows = Object.keys(outcome.deleted);
+  const keptRows = Object.entries(outcome.kept ?? {});
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
       <p className="font-semibold">Deleted.</p>
@@ -313,6 +395,12 @@ function DoneNote({
           <li key={m}>
             {tableNames[m] ?? m}: {plural(outcome.deleted[m], "record")} deleted
             {outcome.left ? `, ${outcome.left[m] ?? 0} left` : ""}
+          </li>
+        ))}
+        {keptRows.map(([m, k]) => (
+          <li key={m}>
+            {tableNames[m] ?? m}: {plural(k.unlinked, "record")} kept, now “{keeps.find((x) => x.model === m)?.becomes ?? "kept"}”
+            {k.total === null ? "" : `; ${plural(k.total, "record")} in all`}
           </li>
         ))}
       </ul>

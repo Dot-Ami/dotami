@@ -18,6 +18,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   There is no box for a bank or card number.
 - **Not attached yet** — a record can be kept without an idea and attached to one later (*Attach* /
   *Move* on each record).
+- **Deleting an idea keeps its expense records** (the maintainer's decision of 2026-10-08) — they
+  stay in DotAmi's data file on your computer as "not attached yet", refund links included, and you
+  can attach them to another idea. Before you delete, the Delete menu says how many stay, where they
+  are kept and how to delete them too (tick *Your expense records*).
 - **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
   beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
   amount from it. A share an agent or a file proposed is shown as theirs ("proposed by …"), never as
@@ -31,8 +35,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
-  settings. Each box says what else goes with it (deleting ideas also deletes their figures, expense
-  records and map progress) and has a Learn more. A cited line says Delete doesn't touch your own
+  settings. Each box says what else goes with it (deleting ideas also deletes their figures and map
+  progress; their expense records stay, counted, as "not attached yet") and has a Learn more. A cited line says Delete doesn't touch your own
   books, and that the CRA says business records are generally kept six years. DotAmi asks twice,
   refuses if anything changed in between, deletes in one step (a failure part-way deletes nothing),
   then wipes the deleted records out of the data file so they can't be dug back out of it. Only
@@ -78,8 +82,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   own pages can start a save.
 
 ### Changed
-- **A database update** rebuilds the expense records table only, so a record's idea can be empty and
-  the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
+- **A database update** rebuilds the expense records table only, so a record's idea can be empty
+  (and is emptied, not deleted, when its idea is deleted) and the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
   are kept as they are (a test seeds each and checks it after the update), and the app backs the
   file up first.
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's

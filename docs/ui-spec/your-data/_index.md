@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-08 ([8d] — the Delete menu; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-08 ([8d] — the Delete menu; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
