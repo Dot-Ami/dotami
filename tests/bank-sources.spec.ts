@@ -60,6 +60,10 @@ describe("an account's name: 'ending' plus four digits at the end, no other run 
     ["Savings 1 2 3", "Savings 1 2 3"],
     ["ending 1234", "ending 1234"],
     ["Compte d'épargne", "Compte d'épargne"],
+    // The same word typed with a separate accent mark (e + U+0301) is still a name, not hidden text.
+    ["Compte d'épargne", "Compte d'épargne"],
+    // Letters between short runs keep them apart.
+    ["Visa 12 and Visa 34", "Visa 12 and Visa 34"],
   ])("accepts %j as %j", (raw, stored) => {
     expect(checkAccountName(raw)).toEqual({ ok: true, name: stored });
   });
@@ -82,6 +86,18 @@ describe("an account's name: 'ending' plus four digits at the end, no other run 
     ["full-width digits", "Chequing \uFF14\uFF15\uFF11\uFF10"],
     ["Arabic-Indic digits", "Chequing \u0664\u0665\u0661\u0660"],
     ["a year, which reads like four digits", "Business 2026"],
+    // Copy-paste and word processors turn hyphens into en dashes; any mark that isn't a letter
+    // between digits keeps the run together (found in review, 2026-10-08).
+    ["digits split by en dashes", "Chequing 12–34–56–78"],
+    ["digits grouped with commas", "Chequing 123,456,789"],
+    ["digits in brackets", "Acct (123)(456)(789)"],
+    ["digits split by middle dots", "Card 45·20·12·34"],
+    ["digits split by colons", "Chequing 12:34:56:78"],
+    ["digits split by asterisks", "Card 12*34*56*78"],
+    ["a variation selector between digits", "Card 4️5️2️0️1️2️3️4"],
+    ["a combining accent between digits", "Card 4́5́2́0́"],
+    ["superscript digits", "Card ¹²³⁴"],
+    ["circled digits", "Card ①②③④"],
   ])("refuses %s", (_why, raw) => {
     expect(checkAccountName(raw)).toEqual({ ok: false, reason: DIGITS_REFUSED });
   });

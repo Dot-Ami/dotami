@@ -174,7 +174,7 @@ export function readStoredWith<V extends object>(def: SettingDefinition<V>, stor
  * nothing. This definition is ready for that step, which adds it to SettingValues and
  * SETTING_DEFINITIONS above in the same change that flips the catalog row to live
  * (tests/settings-catalog.spec.ts refuses a registered definition for a setting that isn't live).
- * Until then lib/figures/bank/accounts.ts reads the setting as off, whatever the file holds.
+ * Until then lib/figures/source-accounts.ts reads the setting as off, whatever the file holds.
  *
  *  - on: the switch on the Settings page. Off to start; turning it on shows the catalog's warning.
  *  - everyAccountSince: when the person pressed "Always allow every account" on a statement's

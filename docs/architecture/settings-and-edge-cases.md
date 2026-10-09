@@ -74,7 +74,7 @@ account" for, nor for any account while "Always allow every account" stands. The
     until you take it back in Settings.
 - The account's name is the person's own words. Four digits are allowed only as "ending" plus
   exactly four digits at the end ("Visa ending 1234"); any other run of four or more digits is
-  refused, counting digits split by spaces, hyphens, dots, slashes or underscores as one run and
+  refused, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks) as one run and
   digits of any script, and so is a name with hidden characters.
 
 ## Part 2 — Edge cases, story by story
@@ -222,7 +222,7 @@ statement that doesn't say its currency, and one it cannot read with certainty. 
 (counted once by the totals) and blanks every account number the file names (a transfer's memo names the other account) out of descriptions and ids.
 
 *The accounts list* (built 2026-10-08, no screen adds to it yet; `tests/bank-sources.spec.ts`)
-- An account number typed as the account's name → *refused with "Leave the account number out…"; nothing is written, and the number is in no answer, log or byte of the file (tested). "ending" plus exactly four digits at the end is the one place digits may stand ("Visa ending 1234"); "Visa 1234", "Visa ending 12345", "Spending 1234", digits split by spaces, hyphens, dots or slashes, full-width or Arabic-Indic digits, and hidden characters between digits are all refused. A year in a name ("Business 2026") is refused too, by the same rule.*
+- An account number typed as the account's name → *refused with "Leave the account number out…"; nothing is written, and the number is in no answer, log or byte of the file (tested). "ending" plus exactly four digits at the end is the one place digits may stand ("Visa ending 1234"); "Visa 1234", "Visa ending 12345", "Spending 1234", digits split by spaces, hyphens, en dashes, dots, slashes, commas, brackets or accent marks, full-width, Arabic-Indic, superscript or circled digits, and hidden characters between digits are all refused. A year in a name ("Business 2026") is refused too, by the same rule.*
 - The same account named twice → *refused while the first is in use; names that differ only in case or spaces are the same account (tested).*
 - An agent or a script tries to list, add or take back an account → *refused; the routes answer only DotAmi's own page (tested).*
 - An account added while the switch is off, or before the switch exists → *refused (409), nothing written; the setting reads as off while it is planned, whatever the file says (tested).*

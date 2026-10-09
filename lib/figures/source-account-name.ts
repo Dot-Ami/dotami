@@ -29,12 +29,18 @@ export const DIGITS_REFUSED =
 const ENDING = /(?:^|\s)ending (\d{4})$/i;
 
 /**
- * A run of digits, in any script (\p{Nd}: Arabic-Indic and full-width digits count too), where
- * spaces, hyphens, dots, slashes and underscores between digits don't break the run. Read as one
- * run on purpose: "1234 5678 9012" and "12-34-56-78" are account numbers with separators, and a
- * plain "four digits in a row" check would let them through.
+ * A run of digits, where anything that isn't a letter between two digits doesn't break the run.
+ * Read as one run on purpose: "1234 5678 9012", "12-34-56-78", "12–34" (an en dash, which word
+ * processors put in for a hyphen), "123,456", "(123)(456)" and "45·20" are account numbers with
+ * separators, and a plain "four digits in a row" check would let them through. Accent and
+ * variation marks (\p{M}) aren't letters either, so one tucked between digits can't split a run;
+ * an accented word ("épargne", typed either way) is letters and still reads as a name.
+ *
+ * A digit is any number character (\p{N}): Arabic-Indic and full-width digits, and also
+ * superscript and circled ones ("¹²³⁴", "①②③④"), which a person could use to write a number.
+ * The separator part leaves out \p{N} so the pattern can't match the same text two ways.
  */
-const DIGIT_RUN = /\p{Nd}(?:[\s\-./_]*\p{Nd})*/gu;
+const DIGIT_RUN = /\p{N}(?:[^\p{L}\p{N}]*\p{N})*/gu;
 
 /**
  * Control characters and invisible format characters (a zero-width space between digits would
@@ -62,7 +68,7 @@ export function checkAccountName(raw: unknown): AccountNameCheck {
   // what is left. The text before "ending" is checked like any other name.
   const rest = name.replace(ENDING, "");
   for (const [run] of rest.matchAll(DIGIT_RUN)) {
-    const digits = run.match(/\p{Nd}/gu)?.length ?? 0;
+    const digits = run.match(/\p{N}/gu)?.length ?? 0;
     if (digits >= 4) return { ok: false, reason: DIGITS_REFUSED };
   }
   return { ok: true, name };

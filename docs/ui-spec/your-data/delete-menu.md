@@ -23,7 +23,7 @@ all at once only, and one cited line on keeping business records.
    - **Your expense records** — every record, in every state.
    - **Your bank and card accounts** (added 2026-10-08, [8g]) — every account name, in use or taken
      back, with its days. Figures read from their statements stay; "Always allow every account" goes
-     with Your settings.
+     with Your settings, and the tick-box line says so.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
    - **Your settings** — every saved choice goes back to its default.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a

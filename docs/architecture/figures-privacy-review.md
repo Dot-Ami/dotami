@@ -51,7 +51,7 @@ stored:** an account, card, bank, branch or transit number, a file name, or a ha
 account number has so few possible values that a hash can be reversed by trying them all). The name
 is the only way in for digits, so it is checked on the server: "ending" plus exactly four digits at
 the end is allowed (the maintainer's decision, 2026-10-07), and any other run of four or more digits
-is refused, counting digits split by spaces, hyphens, dots or slashes as one run, digits of any
+is refused, counting digits split by anything but a letter (spaces, hyphens, en dashes, commas, brackets, accent marks) as one run, digits of any
 script, and refusing hidden characters (`lib/figures/source-account-name.ts`). The routes
 (`/api/figures/bank-sources`, `/retire`) answer only DotAmi's own page, read their bodies through
 `readJsonWithLimit`, refuse a field they don't know (so a number can't ride along unread), and log

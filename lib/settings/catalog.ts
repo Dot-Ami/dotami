@@ -105,7 +105,7 @@ export const SETTINGS: readonly SettingEntry[] = [
     group: "figures",
     label: "Bank and card records",
     // Stays "planned" until the statement screen lands: until then the switch would do nothing.
-    // Its accounts list (lib/figures/bank/accounts.ts) is already built and shows here once an
+    // Its accounts list (lib/figures/source-accounts.ts) is already built and shows here once an
     // account exists. The warning shown before each statement is BANK_STATEMENT_WARNING below.
     does: "Lets figures be read from bank and card statements, in this window. Each account you allow is listed here under your own name for it, with the day you agreed to its warning, and you can take it back. The project doesn't recommend it; it's your call.",
     defaultValue: "off",

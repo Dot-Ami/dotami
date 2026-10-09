@@ -76,7 +76,7 @@ person is asked).
   1234"), which of the statement warning's three buttons they pressed, the day they agreed, and the
   day they took it back. Never an account, card, bank, branch or transit number, a file name, or a
   scrambled copy (hash) of any of them: a name with a run of four or more digits is refused unless
-  it is "ending" and four digits at the end, counting digits split by spaces or dashes, and digits
+  it is "ending" and four digits at the end, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks), and digits
   of any script, as one run ([`lib/figures/source-account-name.ts`](../lib/figures/source-account-name.ts)).
   "Always allow every account" will be kept as the moment it was pressed, inside the
   `bank-records` setting (the `Setting` table). Nothing can add an account yet: the setting stays
