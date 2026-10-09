@@ -81,6 +81,20 @@ person is asked).
   deleting it rebuilds the data file (SQLite's `VACUUM`) so the deleted rows can't be read back out
   of its free space ([`lib/privacy/delete.ts`](../lib/privacy/delete.ts)). A failed delete or wipe
   adds one line to the log with only the error's name and code, never what was deleted.
+- **Bank and card accounts ([8g]): a new table, `SourceAccount`, empty until the statement screen
+  lands.** Each row holds the person's own name for an account ("Business chequing", "Visa ending
+  1234"), which of the statement warning's three buttons they pressed, the day they agreed, and the
+  day they took it back. Never an account, card, bank, branch or transit number, a file name, or a
+  scrambled copy (hash) of any of them: a name with a run of four or more digits is refused unless
+  it is "ending" and four digits at the end, counting digits split by anything but a letter (spaces, dashes, commas, brackets, accent marks), and digits
+  of any script, as one run ([`lib/figures/source-account-name.ts`](../lib/figures/source-account-name.ts)).
+  "Always allow every account" will be kept as the moment it was pressed, inside the
+  `bank-records` setting (the `Setting` table). Nothing can add an account yet: the setting stays
+  *planned* and the route refuses while it is
+  ([`lib/figures/source-accounts.ts`](../lib/figures/source-accounts.ts)). Listed on *What DotAmi
+  knows about you*, which counts the accounts and never shows their names
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); tested by
+  [`tests/bank-sources.spec.ts`](../tests/bank-sources.spec.ts).
 
 ### What leaves the computer, and to whom
 
@@ -99,6 +113,12 @@ person is asked).
 - **Delete sends nothing out.** Its one request goes from DotAmi's page to DotAmi's own server
   (`POST /api/your-data/delete`) and carries only the ticked kinds and the counts the person saw
   ([`app/api/your-data/delete/route.ts`](../app/api/your-data/delete/route.ts)).
+
+- **The bank and card accounts list sends nothing out.** Its requests go from DotAmi's page to
+  DotAmi's own server (`GET` and `POST /api/figures/bank-sources`, `POST
+  /api/figures/bank-sources/retire`) and carry only an account's name, which button was pressed and
+  an id; any other caller, an agent included, is refused
+  ([`app/api/figures/bank-sources/route.ts`](../app/api/figures/bank-sources/route.ts)).
 
 - **Running DotAmi from its source code no longer reports to Next.js or Prisma through the
   project's own commands.** `npm run dev`, `npm run build`, `npm run start` and `npm run lint` now
@@ -197,6 +217,16 @@ person is asked).
   ([`components/your-data/delete-menu.tsx`](../components/your-data/delete-menu.tsx),
   [`lib/privacy/delete.ts`](../lib/privacy/delete.ts)).
 
+- **Reading a bank or card statement will need two warnings, and their words are now fixed**
+  ([8g]; the maintainer's decision, 2026-10-07): the setting's own warning before *Bank and card
+  records* is turned on, and before a statement from an account not always allowed, *Before DotAmi
+  reads a bank or card statement*, with *Allow once*, *Always allow this account*, *Always allow
+  every account* and *Cancel* (`BANK_STATEMENT_WARNING` in
+  [`lib/settings/catalog.ts`](../lib/settings/catalog.ts), word for word in Part 1 of
+  [settings-and-edge-cases.md](architecture/settings-and-edge-cases.md)). Neither is shown yet: the
+  setting stays *planned*, with no switch, until the statement screen exists. Taking an account
+  back in Settings asks once (*Yes, take it back* or *Keep it*).
+
 - No change to what needs a click: an update still installs only after *Restart and update*.
   What changed is when the person hears of it: a notice that a new version is downloading now
   appears as soon as one is found, without blocking the app, and the taskbar button shows the
@@ -223,6 +253,11 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). Still not reached: what the
   desktop window stored in earlier launches, the log, anything that already left the computer, and
   the disk under the data file.
+- **Bank and card accounts:** *Take back* beside an account in Settings stops it being used, but
+  its row (the name and days) stays in the data file. Delete, with *Your bank and card accounts*
+  ticked, erases every account, taken back or not. Figures read from an account's statements are
+  not removed with it (nothing links a figure to its account yet), and "Always allow every
+  account" goes with *Your settings*.
 
 ### What the policy will need to say
 
@@ -241,6 +276,9 @@ person is asked).
   still hold what was deleted, and so do the safety copies in the backups folder unless the person
   ticks them, and the CRA generally
   expects business records to be kept six years, which Delete doesn't change.
+- The names people give their bank and card accounts are kept in the data file, with the day
+  they agreed to the warning and the day they took the account back; "ending" and four digits is
+  the most of a number a name may hold. DotAmi never keeps the account or card number itself.
 
 ### Still open (carried forward until decided)
 

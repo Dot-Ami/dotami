@@ -9,6 +9,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Bank and card accounts, the groundwork** ([8g]; nothing new to see until the statement screen
+  arrives) — DotAmi can now keep a list of the bank and card accounts you allow it to read
+  statements from, each under your own name for it ("Business chequing", "Visa ending 1234"), with
+  which button you pressed on the warning (Allow once, Always allow this account, Always allow
+  every account) and the day. A name may hold four digits only as "ending" plus four digits at the
+  end; any other run of four or more digits is refused, so an account number can't slip in, and no
+  account or card number is ever kept. Settings lists each account under *Bank and card records*
+  with a *Take back*, and the Delete menu on *What DotAmi knows about you* gets a *Your bank and
+  card accounts* box. The *Bank and card records* switch itself stays marked "not built yet": it,
+  the warning and the statement screen arrive together, so no switch shows that does nothing, and
+  until then nothing can add an account. The words of both warnings are written and reviewed now,
+  in the settings list. Only DotAmi's own window can list, allow or take back an account, never an
+  agent.
 - **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
   package, its version, its licence, where it ships, and the licence's own words (open an entry to
   read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The

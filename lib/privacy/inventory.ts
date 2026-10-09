@@ -245,10 +245,26 @@ export const TABLES: readonly TableEntry[] = [
     removedBy:
       "Nothing in the app takes one back yet: the screens to type, agree to and take back a record are the next step. Once they exist, taking one back or turning one down will stop it counting but leave the row, with its amount and words, in the data file. Delete, at the bottom of this page, erases every record from the file (tick “Your expense records”, or “Your ideas”, which takes their records with them).",
   },
+  {
+    model: "SourceAccount",
+    name: "Your bank and card accounts",
+    holds:
+      "The bank and card accounts you allowed DotAmi to read statements from, each under the name you gave it (like “Business chequing” or “Visa ending 1234”), which button you pressed on the warning (allow once, always allow this account, or always allow every account), and the days you agreed and took it back. Never an account or card number, a bank or transit number, a file name, or a scrambled copy of any of them: a name with four or more digits in a row is refused (spaces, dashes, commas or other marks between them don't help), apart from “ending” and four digits at the end. Nothing adds one yet: the statement screen that asks is the next step.",
+    removedBy:
+      "“Take back” beside the account in Settings stops it being used, but the row (its name and days) stays in the data file. Delete, at the bottom of this page, with “Your bank and card accounts” ticked, erases every one from the file. Figures read from an account's statements are not deleted with it.",
+  },
 ];
 
 /** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
-export type DeleteKindId = "ideas" | "figures" | "expenses" | "statements" | "settings" | "backups" | "remembered-columns";
+export type DeleteKindId =
+  | "ideas"
+  | "figures"
+  | "expenses"
+  | "bank-accounts"
+  | "statements"
+  | "settings"
+  | "backups"
+  | "remembered-columns";
 
 /**
  * One tick-box on the "Delete" menu on /your-data. The menu is a list of kinds of data, each
@@ -315,6 +331,17 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt: "Every expense record goes, whether waiting, agreed, taken back or turned down. Your ideas and figures stay.",
     learnMore:
       "This is every single business expense you typed or an agent proposed, on every idea: the day, the amount, who it was paid to and what for, and anything else you gave. It removes DotAmi's copy only. Receipts, bank statements and your own books kept anywhere else are not touched.",
+    built: true,
+  },
+  {
+    id: "bank-accounts",
+    label: "Your bank and card accounts",
+    tables: ["SourceAccount"],
+    alsoDeletes: [],
+    goesWithIt:
+      "Every account name goes, including the ones you took back, with the days you agreed to their warnings. Figures read from their statements stay: tick “Your figures” to delete those too. “Always allow every account” stays until “Your settings” is ticked as well.",
+    learnMore:
+      "This is the list Settings shows under Bank and card records, plus the accounts you took back, which stay in the data file until they are deleted here. Afterwards the next statement shows the warning again and asks for the account's name, as the first time, unless “Always allow every account” is still on. “Always allow every account” is a saved choice, so it goes with “Your settings”, not with this box. Nothing links a figure to the account it came from yet, so no figure changes. Your bank statements themselves, wherever you saved them, are not touched.",
     built: true,
   },
   {
