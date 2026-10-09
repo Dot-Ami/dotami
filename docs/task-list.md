@@ -108,8 +108,10 @@ roadmap's build order.
   - [ ] Ask on GitHub for the column-names row of real exports (the issue text waits for the maintainer)
   - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
     summary block no longer taken for the column names
-  - [ ] Fix the other gaps those files found (follow-on slices: refunds, two-digit years, months across
-    the top, French files with several comma-decimal columns, formulas saved with no value, a report
+  - [x] Refunds in a ledger's Debit column taken off the month they were paid back, through an
+    optional "Refunds / money out" column, under the same rule as the bank statement totals
+  - [ ] Fix the other gaps those files found (follow-on slices: two-digit years, months across the
+    top, French files with several comma-decimal columns, formulas saved with no value, a report
     with no dates)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.

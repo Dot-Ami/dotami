@@ -5,6 +5,7 @@
  * listed as skipped with the reason, so the person can see exactly what the totals leave out.
  * Nothing here logs, and no error message ever carries an amount or a cell's text.
  */
+import { refundPaidOut, revenueEffect } from "../refunds";
 import type { FigureView } from "../types";
 import { cellToCents } from "./amounts";
 import { cellToDay } from "./dates";
@@ -115,6 +116,15 @@ function lastDayOfMonth(month: string): string {
   return `${month}-${String(last).padStart(2, "0")}`;
 }
 
+/** A BigInt sum as a number of cents, or the "too large" error (which carries no amount). */
+function exactCents(cents: bigint): number {
+  const amount = Number(cents);
+  if (!Number.isSafeInteger(amount) || BigInt(amount) !== cents) {
+    throw new Error("A month's total is too large to hold exactly.");
+  }
+  return amount;
+}
+
 /**
  * Walks every row after the column names and totals the amounts by month. Only months that have
  * ended by `today` (YYYY-MM-DD) are totalled: a month still running has no total yet.
@@ -124,7 +134,10 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
   let lastRow = rows.length - 1;
   while (lastRow > choice.headerRow && isBlankRow(rows[lastRow])) lastRow -= 1;
 
-  const sums = new Map<string, { cents: bigint; rows: number }>();
+  const sums = new Map<
+    string,
+    { cents: bigint; rows: number; refundRows: number; refundCents: bigint }
+  >();
   const skipped: SkippedRow[] = [];
   let rowsCounted = 0;
 
@@ -154,14 +167,29 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
       continue;
     }
 
+    // The amount column counts as written, a negative credit note included, as it always has.
+    // With a refunds column picked, a ledger row holds its money in one of the two: the sale in
+    // the amount column (Credit), a refund in the refunds column (Debit).
     const amountCell = row[choice.amountColumn];
-    if (isEmpty(amountCell)) {
+    const refundCell = choice.refundColumn != null ? row[choice.refundColumn] : undefined;
+    if (isEmpty(amountCell) && isEmpty(refundCell)) {
       skip("no-amount");
       continue;
     }
-    const cents = cellToCents(amountCell ?? null, choice.decimalStyle);
-    if (cents === null) {
+    const cents = isEmpty(amountCell) ? 0 : cellToCents(amountCell ?? null, choice.decimalStyle);
+    const refundRead = isEmpty(refundCell)
+      ? 0
+      : cellToCents(refundCell ?? null, choice.decimalStyle);
+    if (cents === null || refundRead === null) {
       skip("bad-amount");
+      continue;
+    }
+    // The shared rule: a refund is money out, and it counts because the person picked the column.
+    // Zero ("0.00" in the unused one of the two columns) moves nothing.
+    const refund = revenueEffect(refundPaidOut(refundRead), true);
+    if (isEmpty(amountCell) && refund === null) {
+      // Only a refunds cell, and it says 0.00: nothing moved, so there is no amount to add.
+      skip("no-amount");
       continue;
     }
 
@@ -172,10 +200,15 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
       continue;
     }
 
-    // BigInt, so a very long sheet can never silently lose a cent to floating point.
-    const sum = sums.get(month) ?? { cents: 0n, rows: 0 };
-    sum.cents += BigInt(cents);
+    // BigInt, so a very long sheet can never silently lose a cent to floating point. A refund lowers
+    // the month of its own row's date: the month the money left, not the month of the sale.
+    const sum = sums.get(month) ?? { cents: 0n, rows: 0, refundRows: 0, refundCents: 0n };
+    sum.cents += BigInt(cents) + BigInt(refund ?? 0);
     sum.rows += 1;
+    if (refund !== null) {
+      sum.refundRows += 1;
+      sum.refundCents -= BigInt(refund);
+    }
     sums.set(month, sum);
     rowsCounted += 1;
   }
@@ -183,16 +216,17 @@ export function monthlyTotals(rows: Cell[][], choice: ColumnChoice, today: strin
   const months: MonthTotal[] = [];
   for (const month of [...sums.keys()].sort()) {
     const sum = sums.get(month)!;
-    const amount = Number(sum.cents);
-    if (!Number.isSafeInteger(amount) || BigInt(amount) !== sum.cents) {
-      throw new Error("A month's total is too large to hold exactly.");
-    }
-    months.push({
+    const total: MonthTotal = {
       periodStart: `${month}-01`,
       periodEnd: lastDayOfMonth(month),
-      amountCents: amount,
+      amountCents: exactCents(sum.cents),
       rows: sum.rows,
-    });
+    };
+    // Only months a refund lowered carry the note, so a file without refunds reads exactly as before.
+    if (sum.refundRows > 0) {
+      total.refunds = { rows: sum.refundRows, cents: exactCents(sum.refundCents) };
+    }
+    months.push(total);
   }
 
   return { months, rowsCounted, skipped };

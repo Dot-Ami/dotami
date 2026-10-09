@@ -35,6 +35,13 @@ export interface Picks {
    * Pre-filled only for a header that is exactly "Status" or "Statut" (see guessColumns).
    */
   statusColumn: number | null;
+  /**
+   * The optional column of refunds paid back (a ledger's Debit column). Unset or null: refunds are
+   * not taken off. NEVER pre-filled, so guessPicks leaves it unset: a column that subtracts money
+   * from the person's revenue is only ever their own choice, and "Debit" means money in on a bank
+   * account's ledger, so its name alone proves nothing.
+   */
+  refundColumn?: number | null;
 }
 
 /** What the date column says about how its dates are written (see detectDateOrder). */
@@ -143,6 +150,7 @@ export interface SheetPreview {
 }
 
 const DIFFERENT_COLUMNS_MESSAGE = "The date and the amount can't be the same column.";
+const REFUND_COLUMN_MESSAGE = "The refunds column can't be the date or the amount column.";
 const DATE_ORDER_MESSAGE = "Say how the dates are written to see the totals.";
 const FAILED_MESSAGE = "DotAmi couldn't read that file. Nothing was kept.";
 
@@ -165,11 +173,18 @@ export function previewSheet(
       : [];
   const detectedOrder = detectDateOrder(dateCells);
 
+  const refundColumn = picks.refundColumn ?? null;
   const amountCells =
     picks.headerRow !== null && picks.amountColumn !== null
       ? columnCells(rows, picks.headerRow, picks.amountColumn)
       : [];
-  const detectedStyle = detectDecimalStyle(amountCells);
+  // The refunds column is written the same way as the amounts, so its cells help tell 1,234.56
+  // from 1 234,56 (in a ledger, a month of refunds may be the only amounts in a stretch of rows).
+  const refundCells =
+    picks.headerRow !== null && picks.amountColumn !== null && refundColumn !== null
+      ? columnCells(rows, picks.headerRow, refundColumn)
+      : [];
+  const detectedStyle = detectDecimalStyle([...amountCells, ...refundCells]);
   const decimalStyle = answers.decimalStyle ?? detectedStyle;
 
   // Asked (or conflicting) dates follow the person's answer; otherwise whatever the dates prove.
@@ -199,6 +214,11 @@ export function previewSheet(
   if (picks.dateColumn === picks.amountColumn) {
     return outcome("waiting", "different-columns", DIFFERENT_COLUMNS_MESSAGE, null);
   }
+  // A refunds column that is also the amounts would take every sale off again; one that is the
+  // dates would read every date as an amount.
+  if (refundColumn === picks.amountColumn || refundColumn === picks.dateColumn) {
+    return outcome("waiting", "different-columns", REFUND_COLUMN_MESSAGE, null);
+  }
   if (needsAnswer && dateOrder === null) {
     return outcome("waiting", "date-order-answer", DATE_ORDER_MESSAGE, null);
   }
@@ -210,6 +230,7 @@ export function previewSheet(
     amountColumn: picks.amountColumn,
     typeColumn: picks.typeColumn,
     statusColumn: picks.statusColumn,
+    refundColumn,
     dateOrder,
     decimalStyle,
   };
@@ -236,6 +257,8 @@ export interface FileAnswers extends PreviewAnswers {
   typeColumn?: number | null;
   /** 0-based column they pick for the invoice statuses; null clears it (the select's empty choice). */
   statusColumn?: number | null;
+  /** 0-based column they pick for refunds paid back; null clears it. Never guessed, so unset = none. */
+  refundColumn?: number | null;
 }
 
 /** A whole file run through the screen's steps. */
@@ -275,6 +298,8 @@ export async function previewFile(
     typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
     statusColumn:
       answers.statusColumn === undefined ? guessed.statusColumn : answers.statusColumn,
+    // Never guessed: only the person's own pick sets it.
+    ...(answers.refundColumn != null ? { refundColumn: answers.refundColumn } : {}),
   };
   const preview = previewSheet(rows, picks, answers, today);
   return { ...preview, rows, guess, picks };

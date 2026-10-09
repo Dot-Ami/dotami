@@ -42,6 +42,7 @@ function answersFor(file: PracticeFile): Answers {
     headerRow: file.expected.picks?.headerRow,
     dateColumn: file.expected.picks?.dateColumn,
     amountColumn: file.expected.picks?.amountColumn,
+    refundColumn: file.expected.picks?.refundColumn,
     dateOrder: file.expected.answer,
   };
 }
@@ -404,6 +405,44 @@ describe("void and draft invoices, and a summary above the table", () => {
   });
 });
 
+// One more gap, fixed by the optional "Refunds / money out" column (the maintainer's decision,
+// 2026-10-07: refunds are subtracted from the month the money left, under the same rule as the bank
+// screen). It was an `it.fails` test until the fix landed. Tests of the rule itself:
+// tests/figures-file-refunds.spec.ts.
+describe("a refund in a ledger's Debit column", () => {
+  // Wave's ledger keeps sales in Credit and a refund in Debit. With Credit picked as the amount and
+  // Debit as the refunds column, the 40.00 refund paid back on 19 August is taken off August.
+  it("Wave: a refund in the Debit column lowers the month it was paid back", async () => {
+    const file = find("wave-account-transactions");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
+    expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS); // August 280.00, not 320.00
+    const august = run.result!.months.find((m) => m.periodStart === "2026-08-01");
+    expect(august?.refunds).toEqual({ rows: 1, cents: 4000 });
+    // Positive first: the refund's row is counted, and so no longer listed as "no amount".
+    expect(august?.rows).toBe(2);
+    expect(reasonFor(run, 12)).toBeUndefined();
+  });
+
+  it("Wave: without a refunds column nothing is taken off, and the refund row is listed as no amount", async () => {
+    const file = find("wave-account-transactions");
+    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, {
+      amountColumn: wave.LEDGER_CREDIT,
+    });
+    // The refunds column is never pre-filled, not even for a column called "Debit".
+    expect(run.picks.refundColumn ?? null).toBeNull();
+    const august = run.result!.months.find((m) => m.periodStart === "2026-08-01");
+    expect(august).toEqual({
+      periodStart: "2026-08-01",
+      periodEnd: "2026-08-31",
+      amountCents: 32000,
+      rows: 1,
+    });
+    expect(reasonFor(run, 12)).toBe("no-amount");
+    // No month says a refund was taken off.
+    expect(run.result!.months.some((m) => m.refunds)).toBe(false);
+  });
+});
+
 describe("Sage 50 Canadian's export route", () => {
   // Sage 50 offers .csv, .htm, .pdf, .xls and .txt. Its Excel choice is the old .xls format, which
   // DotAmi refuses with a sentence saying what to do; the practice files above prove the .csv route.
@@ -426,16 +465,9 @@ describe("Sage 50 Canadian's export route", () => {
  * errors until it becomes a normal test. The fixes are follow-on slices, not this one:
  * docs/connectors/practice-files.md "Known gaps" lists each one. The void, draft and summary-block
  * gaps are fixed: their tests are in "void and draft invoices, and a summary above the table" above.
+ * So is Wave's refund in the Debit column: "a refund in a ledger's Debit column" above.
  */
 describe("gaps the newer practice files found, fails today", () => {
-  // Wave's ledger keeps sales in Credit and a refund in Debit. With Credit picked, the refund's row
-  // is listed as "no amount" and August stays 40.00 too high.
-  it.fails("Wave: a refund in the Debit column lowers the month it was paid back", async () => {
-    const file = find("wave-account-transactions");
-    const run = await runLikeTheScreen(file.fileName, file.bytes(), TODAY, answersFor(file));
-    expect(amountsOf(run)).toEqual(wave.LEDGER_NET_OF_REFUNDS);
-  });
-
   // Wave's Income by Customer has no dates at all, and the screen should name the report that
   // does (Account Transactions). That gap is pinned in the browser, in e2e/app.spec.ts ("fails
   // today: Wave's Income by Customer..."), not here: the "no column names" sentence is written by

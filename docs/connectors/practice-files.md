@@ -48,7 +48,7 @@ files shaped from that program's help pages, not on real exports, so check the c
 | Xero invoice export (CSV, one row per invoice line) | day-first dates, month-first dates, dates that can't say which, a French file | the date question is asked only when needed; comma decimals and Windows-1252 bytes read; a month still running is left out |
 | Xero Receivable Invoice Detail (Excel) | title rows, a Voided invoice, a line amount and the Total saved as formulas with no value | Invoice Date wins over Due Date; "Line Amount (ex)" is pre-filled and "Unit Price (ex)" is not; the Voided invoice is left out through the pre-filled Status column; the unsaved formula is pinned as a gap |
 | QuickBooks Online (Excel) | Sales by Customer Detail with many lines per customer, with one line per customer, and a Transaction List | title rows, customer-name rows and "Total for" rows are listed as left out, not added; a list with no totals rows; the Transaction List's Payment row is left out through the pre-filled Type column |
-| Wave (CSV) | Account Transactions for the Sales account; Income by Customer | the account's name and the Starting Balance, Totals, Balance Change and Ending Balance rows are listed, not added; Debit and Credit are never pre-filled (the person picks Credit); a refund in Debit and a report with no dates are pinned as gaps |
+| Wave (CSV) | Account Transactions for the Sales account; Income by Customer | the account's name and the Starting Balance, Totals, Balance Change and Ending Balance rows are listed, not added; Debit and Credit are never pre-filled (the person picks Credit as the amount and Debit as the refunds column); the refund in Debit is taken off August, the month it was paid back; a report with no dates is pinned as a gap |
 | FreshBooks (CSV) | Invoice Details with a summary on top, dates written yyyy-mm-dd, mmm d, yyyy, dd/mm/yyyy and dd.mm.yy; the old Revenue by Client with months across | the real row of column names is found under the summary, every date shape but dd.mm.yy reads, Issue Date, Subtotal and Status are pre-filled, and the Draft is left out; dd.mm.yy and months across are pinned as gaps |
 | Sage Accounting, Canada (CSV) | the Sales list (Invoice Number first, a Void and a credit note); the Sales Day Book with a Type column and a totals row | "Total" beside a tax column is never pre-filled (the person picks Net); a negative credit note lowers its month; a bare "Type" is not pre-filled; the Void is left out through the pre-filled Status column |
 | Sage 50 Canadian (CSV) | Customer Sales Detail grouped by customer, dates 07-14-2026; the same with 07-14-26; the same in French, semicolons, windows-1252 | the grouped report reads and "Revenue" is pre-filled; the old .xls export is refused with a sentence saying what to do, so the route is .csv ([sage-50-canada.md](sage-50-canada.md)); two-digit years and the French file are pinned as gaps |
@@ -58,15 +58,14 @@ files shaped from that program's help pages, not on real exports, so check the c
 ### Open, found 2026-10-08
 
 Each is a test written to pass only while the gap is there, so the day a fix lands it errors until
-it is turned into a normal test. Six are in `tests/figures-file-packages.spec.ts`, under "gaps the
-newer practice files found, fails today", written with `it.fails`. The seventh, Wave's report with
+it is turned into a normal test. Five are in `tests/figures-file-packages.spec.ts`, under "gaps the
+newer practice files found, fails today", written with `it.fails`. The sixth, Wave's report with
 no dates, is a browser test in `e2e/app.spec.ts` written with `test.fail()`, because the sentence
-the screen should show is the screen's own. Seven tests, six gaps; three more found the same day
+the screen should show is the screen's own. Six tests, five gaps; four more found the same day
 are fixed (below). They are fixed in follow-on slices, not in the one that found them.
 
 | Gap | What happens today | Practice file | Fixed by |
 | --- | --- | --- | --- |
-| A refund paid back sits in a ledger's Debit column | with Credit picked, the refund's row is listed as "no amount" and August reads 320.00 against a true 280.00 | `wave-account-transactions` | the refunds slice |
 | A report with no dates at all (Wave's Income by Customer) | "no row of column names found", and nothing says which report to export instead (Account Transactions) | `wave-income-by-customer` (pinned in the browser) | the months-across slice |
 | Dates with a two-digit year (FreshBooks dd.mm.yy, Sage 50's own 12-03-05) | no date is read, so no column names are found and nothing is added up | `freshbooks-invoices-two-digit-year`, `sage50-two-digit-year` | the two-digit years slice |
 | Months across the top (FreshBooks' old Revenue by Client) | no column names found; nothing can be added up | `freshbooks-revenue-by-client` | the months-across slice |
@@ -80,6 +79,14 @@ design pass on 2026-10-06 had read a smaller French Sage 50-shaped file correctl
 money column of the report written "1 000,00" it no longer does.
 
 ### Fixed, found 2026-10-08
+
+A refund paid back in a ledger's Debit column (Wave's Account Transactions) was listed as "no
+amount" with Credit picked, so August read 320.00 against a true 280.00. An optional "Refunds /
+money out" column, never pre-filled, now takes each amount in it off the month of its own row: the
+person picks Debit, and August is 280.00. Its `it.fails` test is a normal passing test in
+`tests/figures-file-packages.spec.ts`, under "a refund in a ledger's Debit column", beside one
+showing that without the pick nothing is taken off; the rule has its own tests in
+`tests/figures-file-refunds.spec.ts`. The Debit and Credit column titles are still assumed.
 
 Three of the gaps above are fixed (decision of 2026-10-07: fix every gap the practice files found).
 Their `it.fails` tests are now normal passing tests in `tests/figures-file-packages.spec.ts`, under

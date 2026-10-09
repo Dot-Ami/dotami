@@ -50,6 +50,13 @@ export interface ColumnChoice {
    * or null: every row counts.
    */
   statusColumn?: number | null;
+  /**
+   * The column holding refunds paid back to customers, if the person picked one: a ledger export's
+   * Debit column, where the sales are in Credit (Wave's Account Transactions). Each amount in it is
+   * money out, taken off the month of that row's date (lib/figures/refunds.ts). Unset or null:
+   * refunds are not taken off, and a row with only a refund in it has no amount.
+   */
+  refundColumn?: number | null;
   /** Needed only for dates like 03/01/2026; null when every date in the column is unambiguous. */
   dateOrder: DateOrder | null;
   decimalStyle: DecimalStyle;
@@ -65,6 +72,12 @@ export interface MonthTotal {
   amountCents: number;
   /** How many rows of the file were added up into this total. */
   rows: number;
+  /**
+   * Set only when a refunds column took something off this month: how many rows had a refund in
+   * it, and the size of what was taken off (positive cents), so the screen can say so beside the
+   * total. Absent for every month when no refunds column is picked.
+   */
+  refunds?: { rows: number; cents: number };
 }
 
 /**

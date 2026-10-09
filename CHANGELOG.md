@@ -9,6 +9,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Refunds taken off the month they were paid back** ([8c-3]) — ledger exports such as Wave's
+  Account Transactions keep sales in one column (Credit) and refunds paid back to customers in
+  another (Debit), and "Add from a file" only ever added up one, so a month with a refund read too
+  high (the Wave practice file's August: 320.00 against a true 280.00). It now has an optional
+  "Refunds / money out" column. It is never pre-filled, not even for a column named Debit or
+  Refunds: you pick it. Each amount in it is taken off the month of its own row, the month the
+  money went back, which may be later than the sale's; the preview says how many refunds each
+  month had and what they took off, and says that a refund lowers the month it was paid back. A
+  month can go below zero. The rule is the same one the bank statement totals use, kept in one
+  place so the two screens can't disagree. Choosing "None" takes nothing off, as before. Nothing
+  about the column is stored.
 - **A "Status column" for invoice lists** ([8c-3]) — invoice lists from FreshBooks, Sage Accounting
   and Xero can include void, deleted and draft invoices, which were added up as sales. "Add from a
   file" now has an optional Status column, pre-filled only when a column is headed exactly "Status"
