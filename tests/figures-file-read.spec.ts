@@ -209,6 +209,50 @@ describe("readCsv", () => {
     ]);
   });
 
+  // Sage 50 Canadian in French: four amount columns written "1 000,00" put more commas than
+  // semicolons on some lines, and the commas used to win the delimiter guess.
+  it("reads a semicolon file with several decimal-comma columns on its semicolons, not its commas", () => {
+    const rows = rowsOf(
+      [
+        "Rapport détaillé des ventes",
+        "Date;Source;Article;Revenu;Coût;Bénéfice;Marge (%)",
+        "Client A",
+        "14-07-2026;1001;Design;1 000,00;0,00;1 000,00;100,0",
+        "03-08-2026;1004;Prints;120,00;48,00;72,00;60,0",
+        "Total;;;1 120,00;48,00;1 072,00;",
+        "",
+      ].join("\n"),
+    );
+    expect(rows[1]).toEqual(["Date", "Source", "Article", "Revenu", "Coût", "Bénéfice", "Marge (%)"]);
+    expect(rows[3]).toEqual(["14-07-2026", "1001", "Design", "1 000,00", "0,00", "1 000,00", "100,0"]);
+    expect(rows[5]).toEqual(["Total", "", "", "1 120,00", "48,00", "1 072,00", ""]);
+    // A title or a customer's name stays one cell.
+    expect(rows[0]).toEqual(["Rapport détaillé des ventes"]);
+    expect(rows[2]).toEqual(["Client A"]);
+  });
+
+  it("still reads a comma file on its commas when a note holds a semicolon", () => {
+    const rows = rowsOf(
+      'date,note,amount\n2026-01-05,"paid; thanks",10.50\n2026-01-06,"a; b; c",1200.00\n',
+    );
+    expect(rows).toEqual([
+      ["date", "note", "amount"],
+      ["2026-01-05", "paid; thanks", "10.50"],
+      ["2026-01-06", "a; b; c", "1200.00"],
+    ]);
+  });
+
+  it("still reads a comma file on its commas when its semicolons happen to sit beside amounts", () => {
+    // Read on its semicolons, "Hosting;2,30" gives "2,30", which looks like a comma amount; but the
+    // same line's "2026-01-05,Hosting" holds a comma in text, so the semicolons never win.
+    const rows = rowsOf("date,item,amount\n2026-01-05,Hosting;2,30\n2026-01-06,Design;1,45\n");
+    expect(rows).toEqual([
+      ["date", "item", "amount"],
+      ["2026-01-05", "Hosting;2", "30"],
+      ["2026-01-06", "Design;1", "45"],
+    ]);
+  });
+
   it("reads a tab-separated file", () => {
     expect(rowsOf("date\tamount\n2026-01-05\t10.5\n")).toEqual([
       ["date", "amount"],
@@ -416,6 +460,76 @@ describe("readXlsx", () => {
       ]),
     );
     expect(sheets[0].rows[1]).toEqual([10, 20]);
+  });
+
+  // Xero's help: an Excel report with formulas can show 0.00 until Enable Editing, because the
+  // program that wrote it left the sums for Excel to work out. The library gives such a cell as
+  // empty; the reader also says where it is, so the screen can say why it has no amount.
+  it("says where each formula saved with no value is, and lists no other cell", async () => {
+    const sheets = await sheetsOf(
+      makeXlsx([
+        {
+          name: "Detail",
+          rows: [
+            ["Qty", "Price", "Line"],
+            [2, 30, { formula: "A2*B2" }], // no saved value
+            [1, 5, { formula: "A3*B3", value: 5 }], // a saved value
+            [null, null, null], // truly empty
+            ["Total", null, { formula: "SUM(C2:C3)" }], // no saved value
+          ],
+        },
+      ]),
+    );
+    // Positive first: the saved value is read, and the two unsaved formulas are named.
+    expect(sheets[0].rows[2]).toEqual([1, 5, 5]);
+    expect(sheets[0].unsavedFormulas).toEqual([
+      { row: 1, column: 2 },
+      { row: 4, column: 2 },
+    ]);
+    // The cells themselves stay empty: DotAmi never works a formula out.
+    expect(sheets[0].rows[1][2] ?? null).toBeNull();
+  });
+
+  it("puts each unsaved formula on its own sheet, found through the workbook's relationships", async () => {
+    // Swap which file holds which sheet, so only following the relationships finds the right one.
+    const swapped = editPart(
+      makeXlsx([
+        { name: "First", rows: [["a"], [{ formula: "1+1", value: 2 }]] },
+        { name: "Second", rows: [["b"], [null, { formula: "1+1" }]] },
+      ]),
+      "xl/_rels/workbook.xml.rels",
+      (xml) =>
+        xml
+          .replace("worksheets/sheet1.xml", "worksheets/TEMP.xml")
+          .replace("worksheets/sheet2.xml", "worksheets/sheet1.xml")
+          .replace("worksheets/TEMP.xml", "worksheets/sheet2.xml"),
+    );
+    const sheets = await sheetsOf(swapped);
+    // Positive first: the library follows the same relationships.
+    expect(sheets.map((s) => s.name)).toEqual(["First", "Second"]);
+    expect(sheets[0].rows).toEqual([["b"]]);
+    expect(sheets[1].rows).toEqual([["a"], [2]]);
+    expect(sheets[0].unsavedFormulas).toEqual([{ row: 1, column: 1 }]);
+    expect(sheets[1].unsavedFormulas).toEqual([]);
+  });
+
+  it("names a shared formula with no value, but not a formula whose saved value is empty text", async () => {
+    const xlsx = editPart(
+      makeXlsx([{ name: "S", rows: [["x"], ["y"], ["z"]] }]),
+      "xl/worksheets/sheet1.xml",
+      (xml) =>
+        xml.replace(
+          "</sheetData>",
+          // B4: a shared formula with no value. C4: a text formula that worked out to "" (saved).
+          // D4: a formula with a value and its attributes in another order.
+          '<row r="4"><c r="B4"><f t="shared" ref="B4:B5" si="0">A4*2</f></c>' +
+            '<c r="C4" t="str"><f>A4&amp;""</f><v></v></c>' +
+            '<c t="n" r="D4"><f>1+1</f><v>2</v></c></row></sheetData>',
+        ),
+    );
+    const sheets = await sheetsOf(xlsx);
+    expect(sheets[0].rows[3]).toEqual([null, null, null, 2]);
+    expect(sheets[0].unsavedFormulas).toEqual([{ row: 3, column: 1 }]);
   });
 
   it("refuses a workbook that carries vbaProject.bin even though it is named .xlsx", async () => {

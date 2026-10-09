@@ -18,6 +18,19 @@ export type Cell = string | number | boolean | Date | null;
 export interface Sheet {
   name: string;
   rows: Cell[][];
+  /**
+   * Excel only: the cells holding a formula saved with no value (read-xlsx.ts). The reader can only
+   * give such a cell as empty, since DotAmi never works a formula out itself, so this says which
+   * "empty" cells are really sums Excel never calculated, and the person is told so rather than
+   * "no amount". Absent for a CSV, which has no formulas.
+   */
+  unsavedFormulas?: CellPlace[];
+}
+
+/** Where a cell is in a sheet, 0-based: `rows[row][column]`. */
+export interface CellPlace {
+  row: number;
+  column: number;
 }
 
 export type ReadResult =
@@ -81,11 +94,20 @@ export interface MonthTotal {
  * no-date    — no date DotAmi can read with certainty (notes, headings, a merged cell's empty half)
  * no-amount  — a date but an empty amount cell
  * bad-amount — a date but an amount DotAmi can't read with certainty
+ * unsaved-formula — the amount (or the date) is an Excel formula saved with no value: the cell
+ *              looks empty, but it is a sum Excel never worked out, and DotAmi never guesses it
  * payment    — the type column says Payment or Deposit: money received for a sale the file already lists
  * not-over   — its month hasn't ended yet, so there's no total for it yet
  */
 export type SkipReason =
-  "blank" | "total" | "no-date" | "no-amount" | "bad-amount" | "payment" | "not-over";
+  | "blank"
+  | "total"
+  | "no-date"
+  | "no-amount"
+  | "bad-amount"
+  | "unsaved-formula"
+  | "payment"
+  | "not-over";
 
 export interface SkippedRow {
   /** 1-based, as the person sees it in Excel. */
@@ -130,10 +152,11 @@ export type AcrossRowReason = "blank" | "total" | "no-amount";
 /**
  * Why one cell under a month wasn't added, in a row that was otherwise read.
  *
- * empty      — nothing in the cell
- * bad-amount — something DotAmi can't read as an amount with certainty
+ * empty           — nothing in the cell
+ * bad-amount      — something DotAmi can't read as an amount with certainty
+ * unsaved-formula — an Excel formula saved with no value (see SkipReason)
  */
-export type AcrossCellReason = "empty" | "bad-amount";
+export type AcrossCellReason = "empty" | "bad-amount" | "unsaved-formula";
 
 /** What adding up a months-across table gives. Every cell under a month is accounted for. */
 export interface AcrossResult {

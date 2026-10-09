@@ -44,10 +44,11 @@ Things to check, from the same pages:
   date read, in words, to check against the file. Whether the setting offers a four-digit year is
   not said on the pages read.
 - **French.** Sage 50 switches between English and French ([switch language][language], 2023); what
-  the report's column titles become in French is not documented. **A French export with several
-  comma-decimal columns ("1 000,00") is not read today** (a known gap, pinned by a test: the commas
-  win over the semicolons when DotAmi works out how the file is split). The English practice file
-  reads.
+  the report's column titles become in French is not documented. A French export with several
+  comma-decimal columns ("1 000,00", which also puts more commas than semicolons on a line) is read
+  on its semicolons: when every comma on the lines that split on semicolons sits inside an amount,
+  DotAmi takes the commas for decimal marks (fixed 2026-10-08; until then the commas won and every
+  line was split on them). The English and French practice files both read.
 
 ## What DotAmi keeps
 

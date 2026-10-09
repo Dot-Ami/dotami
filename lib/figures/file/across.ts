@@ -15,8 +15,15 @@
 import { cellToCents } from "./amounts";
 import { cellToDay, firstTwoDigitYear, monthNumber, plainText } from "./dates";
 import { isBlankRow } from "./table";
-import { lastDayOfMonth, TOTAL_ROW_LABEL } from "./totals";
-import type { AcrossResult, Cell, DecimalStyle, MonthColumn, MonthTotal } from "./types";
+import { lastDayOfMonth, TOTAL_ROW_LABEL, unsavedFormulaLookup } from "./totals";
+import type {
+  AcrossResult,
+  Cell,
+  CellPlace,
+  DecimalStyle,
+  MonthColumn,
+  MonthTotal,
+} from "./types";
 
 /** How far down a sheet the month names are looked for; the same window as the column names. */
 const MONTHS_ROW_SEARCH = 30;
@@ -244,7 +251,14 @@ export interface AcrossChoice {
  * (YYYY-MM-DD) are totalled; a month still running is listed whole as not over. Every cell under a
  * month is accounted for: added, in a row left out with its reason, or left out on its own.
  */
-export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string): AcrossResult {
+export function acrossTotals(
+  rows: Cell[][],
+  choice: AcrossChoice,
+  today: string,
+  unsavedFormulas: readonly CellPlace[] = [],
+): AcrossResult {
+  // Excel only: cells holding a formula saved with no value, which read as empty (totals.ts).
+  const isUnsavedFormula = unsavedFormulaLookup(unsavedFormulas);
   const monthColumnSet = new Set(choice.monthColumns.map((m) => m.column));
   // ISO months compare correctly as text: a month that ends after today isn't over.
   const notOver = choice.monthColumns.filter((m) => lastDayOfMonth(m.month) > today);
@@ -290,7 +304,13 @@ export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string
         continue;
       }
     }
-    if (choice.monthColumns.every((m) => isEmptyCell(row[m.column]))) {
+    // A row of unsaved formulas (a Total row whose sums Excel never worked out) isn't "nothing
+    // under any month": each such cell is listed below for what it is.
+    if (
+      choice.monthColumns.every(
+        (m) => isEmptyCell(row[m.column]) && !isUnsavedFormula(i, m.column),
+      )
+    ) {
       skippedRows.push({ row: i + 1, reason: "no-amount" });
       continue;
     }
@@ -299,7 +319,8 @@ export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string
     for (const m of ended) {
       const cell = row[m.column];
       if (isEmptyCell(cell)) {
-        skippedCells.push({ row: i + 1, column: m.column, reason: "empty" });
+        const reason = isUnsavedFormula(i, m.column) ? "unsaved-formula" : "empty";
+        skippedCells.push({ row: i + 1, column: m.column, reason });
         continue;
       }
       const cents = cellToCents(cell ?? null, choice.decimalStyle);

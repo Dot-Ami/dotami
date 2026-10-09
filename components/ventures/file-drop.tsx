@@ -27,6 +27,7 @@ import {
   MAX_FILE_BYTES,
   type AcrossResult,
   type Cell,
+  type CellPlace,
   type Century,
   type DateOrder,
   type DecimalStyle,
@@ -120,7 +121,7 @@ function placesText(word: string, plural: string, places: string[]): string {
  */
 function acrossLeftOut(result: AcrossResult): string[] {
   const lines: string[] = [];
-  const cellsFor = (reason: "bad-amount" | "empty") =>
+  const cellsFor = (reason: "bad-amount" | "empty" | "unsaved-formula") =>
     result.skippedCells
       .filter((c) => c.reason === reason)
       .map((c) => `${columnLetter(c.column)}${c.row}`);
@@ -131,6 +132,12 @@ function acrossLeftOut(result: AcrossResult): string[] {
   if (bad.length > 0) {
     lines.push(
       `${bad.length} ${bad.length === 1 ? "cell" : "cells"} under a month with an amount DotAmi can't read: ${placesText("cell", "cells", bad)}`,
+    );
+  }
+  const unsaved = cellsFor("unsaved-formula");
+  if (unsaved.length > 0) {
+    lines.push(
+      `${unsaved.length} ${unsaved.length === 1 ? "cell" : "cells"} under a month holding ${UNSAVED_FORMULA_ADVICE}: ${placesText("cell", "cells", unsaved)}`,
     );
   }
   const empty = cellsFor("empty");
@@ -175,6 +182,17 @@ function rowLabel(row: Cell[] | undefined, monthColumns: Set<number>): string {
   return "";
 }
 
+/**
+ * What a formula saved with no value is, and what to do about it. Some programs (Xero says so for
+ * its Excel reports) leave a formula's result for Excel to work out on opening; until the file is
+ * opened in Excel and saved again, the cell holds no number, and DotAmi never works one out.
+ */
+const UNSAVED_FORMULA_ADVICE =
+  "a formula Excel didn't save a value for (open the file in Excel, click Enable Editing if it asks, save it, then drop it here again)";
+
+/** No unsaved formulas: one shared empty list, so a CSV doesn't make the preview work again. */
+const NO_PLACES: CellPlace[] = [];
+
 /** Sentence for rows the totals leave out, e.g. "2 rows without a date DotAmi can read". */
 function leftOutText(reason: SkipReason, n: number): string {
   switch (reason) {
@@ -188,6 +206,8 @@ function leftOutText(reason: SkipReason, n: number): string {
       return `${n} ${rowWord(n)} with a date but no amount`;
     case "bad-amount":
       return `${n} ${rowWord(n)} with an amount DotAmi can't read`;
+    case "unsaved-formula":
+      return `${n} ${rowWord(n)} with ${UNSAVED_FORMULA_ADVICE}`;
     case "payment":
       // DotAmi can't tell whether these rows are money for a sale listed elsewhere (QuickBooks) or
       // the person's own sales (their own sheet, or a deposit straight to an income account), so
@@ -205,6 +225,7 @@ const LEFT_OUT_ORDER: SkipReason[] = [
   "no-date",
   "no-amount",
   "bad-amount",
+  "unsaved-formula",
   "total",
   "payment",
   "not-over",
@@ -277,6 +298,11 @@ export function FileDrop({
   }, [screen]);
 
   const rows = useMemo(() => sheets[sheetIndex]?.rows ?? [], [sheets, sheetIndex]);
+  // Excel only: the cells holding a formula saved with no value, so they aren't called empty.
+  const unsavedFormulas = useMemo(
+    () => sheets[sheetIndex]?.unsavedFormulas ?? NO_PLACES,
+    [sheets, sheetIndex],
+  );
   const nonEmptySheets = useMemo(
     () =>
       sheets.map((sheet, index) => ({ sheet, index })).filter(({ sheet }) => sheetHasRows(sheet)),
@@ -413,8 +439,9 @@ export function FileDrop({
         { dateOrder: dateOrderChoice, century: centuryChoice, decimalStyle: styleChoice },
         localToday(),
         !currencyOk,
+        unsavedFormulas,
       ),
-    [rows, picks, dateOrderChoice, centuryChoice, styleChoice, currencyOk],
+    [rows, picks, dateOrderChoice, centuryChoice, styleChoice, currencyOk, unsavedFormulas],
   );
   const { detectedOrder, twoDigitYear } = preview;
   const needsDateQuestion = detectedOrder.ambiguous;
@@ -423,9 +450,16 @@ export function FileDrop({
   const acrossPreview = useMemo(
     () =>
       layout === "across"
-        ? previewAcross(rows, acrossPicks, { decimalStyle: styleChoice }, localToday(), !currencyOk)
+        ? previewAcross(
+            rows,
+            acrossPicks,
+            { decimalStyle: styleChoice },
+            localToday(),
+            !currencyOk,
+            unsavedFormulas,
+          )
         : null,
-    [layout, rows, acrossPicks, styleChoice, currencyOk],
+    [layout, rows, acrossPicks, styleChoice, currencyOk, unsavedFormulas],
   );
 
   // What the bottom of the screen shows, from whichever layout is in use.

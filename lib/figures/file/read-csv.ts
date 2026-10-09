@@ -7,6 +7,7 @@
  */
 
 import Papa from "papaparse";
+import { cellToCents } from "./amounts";
 import type { ReadResult } from "./types";
 
 // Commas, semicolons (French and most European Excel), tabs and pipes.
@@ -25,7 +26,46 @@ function guessDelimiter(text: string): string {
     .filter((line) => line.trim() !== "")
     .slice(0, 50)
     .join("\n");
+  if (semicolonsAroundCommaAmounts(sample)) return ";";
   return Papa.parse(sample, { delimitersToGuess: DELIMITERS, preview: 50 }).meta.delimiter;
+}
+
+/**
+ * A cell holding an amount written with a decimal comma: "1 000,00", "-12,50", "100,0",
+ * "1 000,00 $", or a percentage like "12,5 %".
+ */
+function isCommaAmount(cell: string): boolean {
+  return cell.includes(",") && cellToCents(cell.replace(/\s*%$/, ""), "comma") !== null;
+}
+
+/**
+ * True when the sample is a semicolon file whose commas all sit inside amounts. French and most
+ * European Excel save a CSV with semicolons because the comma is their decimal mark, but Papa
+ * counts every comma as a possible delimiter: with several amount columns on a line
+ * ("14-07-2026;1001;Design;1;1 000,00;0,00;1 000,00;100,0") the commas can look like the more
+ * regular split and win the guess, which cuts every line into pieces (Sage 50 Canadian in French;
+ * docs/connectors/practice-files.md).
+ *
+ * So read the sample on its semicolons first. When at least two lines split into two or more cells,
+ * and every cell holding a comma on those lines is an amount, the commas are decimal marks and the
+ * file is a semicolon file. A line that doesn't split (a title, a customer's name) has no say. A
+ * comma anywhere else ("Smith, J.", or a whole comma-separated line) leaves the choice to Papa as
+ * before, so a comma file with a stray semicolon is never read on its semicolons.
+ */
+function semicolonsAroundCommaAmounts(sample: string): boolean {
+  const lines = Papa.parse<string[]>(sample, { delimiter: ";", preview: 50 }).data;
+  let splitLines = 0;
+  let amounts = 0;
+  for (const cells of lines) {
+    if (cells.length < 2) continue;
+    splitLines += 1;
+    for (const cell of cells) {
+      if (!cell.includes(",")) continue;
+      if (!isCommaAmount(cell)) return false;
+      amounts += 1;
+    }
+  }
+  return splitLines >= 2 && amounts > 0;
 }
 
 export function readCsv(text: string, name: string): ReadResult {

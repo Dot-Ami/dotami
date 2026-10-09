@@ -111,9 +111,11 @@ roadmap's build order.
   - [x] Months across the top (FreshBooks' Revenue by Client): pick the row of month names and where
     the totals come from, one total per month; a report with no dates (Wave's Income by Customer)
     names the report to export instead
+  - [x] A French semicolon file with several comma-decimal columns (Sage 50) reads on its
+    semicolons; an Excel formula saved with no value is listed as one, with what to do, never as
+    "no amount" and never guessed
   - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
-    the FreshBooks summary block, French files with several comma-decimal columns, formulas saved
-    with no value)
+    the FreshBooks summary block)
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
