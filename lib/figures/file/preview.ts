@@ -430,6 +430,85 @@ export function monthsReadSentence(monthsRead: AcrossResult["monthsRead"]): stri
   return `Months read from the column names: ${monthInWords(monthsRead.first)} to ${monthInWords(monthsRead.last)}. Check these against the file.`;
 }
 
+// ---- [8c-3] "These dates are right" ------------------------------------------------------------
+
+/**
+ * Everything that decides which dates (or, across the top, which months) a preview read. The
+ * person's "These dates are right" tick vouches for one combination of these and no other
+ * (the maintainer's decision, 2026-10-07: ask the person to confirm dates and times; a time of day
+ * never moves the day here and isn't shown, so only dates are confirmed). `file` is a counter the
+ * screen bumps for every file it reads, so the same file dropped twice is confirmed twice.
+ * `sentence` is the "Dates read: ..." line itself: if the words on screen change, so does the key
+ * (while no line is on screen, see datesCheckSentence). The amount column, the currency and the
+ * amounts' style aren't here: they don't move a date.
+ */
+export interface DatesCheckParts {
+  file: number;
+  sheet: number;
+  layout: Layout;
+  headerRow: number | null;
+  dateColumn: number | null;
+  dateOrder: DateOrder | "";
+  century: Century | "";
+  monthsRow: number | null;
+  sentence: string | null;
+}
+
+/** The tick-box's state: ticked or not, and the reading of the dates it was last looked at under. */
+export interface DatesCheck {
+  key: string;
+  ticked: boolean;
+}
+
+/** Nothing looked at yet. No real key is empty, so this never counts as confirmed. */
+export const NO_DATES_CHECK: DatesCheck = { key: "", ticked: false };
+
+/** One string per reading of the dates (JSON keeps null, "" and 0 apart). */
+export function datesCheckKey(parts: DatesCheckParts): string {
+  return JSON.stringify([
+    parts.file,
+    parts.sheet,
+    parts.layout,
+    parts.headerRow,
+    parts.dateColumn,
+    parts.dateOrder,
+    parts.century,
+    parts.monthsRow,
+    parts.sentence,
+  ]);
+}
+
+/**
+ * The "Dates read" line to put in the key. While the totals are held back for something that never
+ * moves a date (the currency half typed, the amount column set to the date column, a totals row that
+ * can't be used yet) there is no line on screen, and keying on that null would empty the box every
+ * time someone retyped CAD as USD. So the line the box was last looked at under stands in for it.
+ * Nothing slips through that way: every answer that moves a date is a part of the key on its own,
+ * and once the totals show again it is their own line that is compared.
+ */
+export function datesCheckSentence(onScreen: string | null, check: DatesCheck): string | null {
+  if (onScreen !== null || check.key === "") return onScreen;
+  // The line is the last entry of the key (see datesCheckKey).
+  const parts: unknown = JSON.parse(check.key);
+  const last = Array.isArray(parts) ? parts[parts.length - 1] : null;
+  return typeof last === "string" ? last : null;
+}
+
+/**
+ * The check as it stands under the reading now on screen: unchanged while the reading is the same,
+ * un-ticked the moment it differs. It moves to the new key rather than remembering the old one, so
+ * going back to the answer the person ticked under (day first, month first, day first again) does
+ * not tick the box again by itself: the dates changed on screen twice, so they are looked at again.
+ */
+export function followDatesCheck(check: DatesCheck, key: string): DatesCheck {
+  return check.key === key ? check : { key, ticked: false };
+}
+
+/** True only when the box was ticked under exactly the reading now on screen. */
+export function datesConfirmed(check: DatesCheck, key: string): boolean {
+  return check.ticked && check.key === key;
+}
+
 /**
  * Wave's Income by Customer, by the three column names Wave's help page gives it ("Customers",
  * "All income", "Paid income"): one total per customer for a date range, and no date anywhere.

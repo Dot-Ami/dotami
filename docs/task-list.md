@@ -117,6 +117,8 @@ roadmap's build order.
     "documented" in their practice files, citing the issue
   - [x] Two-digit years: one question per file ("Is 05 the year 2005?"), never guessed; every
     preview shows the earliest and latest date read, in words, to check against the file
+  - [x] "These dates are right": a tick-box beside that line, needed before Review; another file, date
+    column, date order or century answer empties it ("These months are right" for months across)
   - [x] Months across the top (FreshBooks' Revenue by Client): pick the row of month names and where
     the totals come from, one total per month; a report with no dates (Wave's Income by Customer)
     names the report to export instead

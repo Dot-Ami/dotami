@@ -914,7 +914,10 @@ test("a dropped CSV becomes monthly figures, waiting for the person to agree", a
   expect(seen.filter((r) => r.body !== null)).toEqual([]);
   expect(await figures()).toEqual([]);
 
-  // Review: only the totals go to the server — no cell, no client name, no file content.
+  // Review: only the totals go to the server — no cell, no client name, no file content. The
+  // dates are confirmed first; ticking the box sends nothing either.
+  await card.getByRole("checkbox", { name: "These dates are right" }).check();
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
   await card.getByRole("button", { name: "Review these 3 figures" }).click();
   const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
   await expect(prompt).toBeVisible();
@@ -1171,6 +1174,11 @@ test("a report with the months across the top: one total per month column, from 
   // Back to the right row: every row again, and Review proposes the three months.
   await card.getByLabel("Month names are in row").selectOption({ label: "Row 4" });
   await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  // Across the top, the months are what the person confirms.
+  const monthsRight = card.getByRole("checkbox", { name: "These months are right" });
+  await expect(monthsRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: "Review these 3 figures" })).toBeDisabled();
+  await monthsRight.check();
   await card.getByRole("button", { name: "Review these 3 figures" }).click();
   const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
   const fromFile = prompt.getByRole("region", { name: `From ${revenue.fileName}` });
@@ -1315,8 +1323,12 @@ test("a file with two-digit years asks once which century, then shows how the da
     ),
   ).toBeVisible();
   await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeVisible();
+  const datesRight = card.getByRole("checkbox", { name: "These dates are right" });
+  await datesRight.check();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeEnabled();
 
-  // No: the same rows land a hundred years earlier, and the sentence shows it at once.
+  // No: the same rows land a hundred years earlier, and the sentence shows it at once. The dates
+  // changed, so the tick is taken away.
   await century.selectOption("1900");
   const old = (m: { y: number; m: number }) => `${MONTH_NAMES[m.m - 1]} ${m.y - 100}`;
   await expect(table.getByRole("row", { name: new RegExp(`^${old(a)} \\$100\\.00 1 row$`) })).toBeVisible();
@@ -1325,6 +1337,8 @@ test("a file with two-digit years asks once which century, then shows how the da
       `Dates read: 18 ${old(a)} to 18 ${old(b)}. Check these against the file's earliest and latest dates.`,
     ),
   ).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: "Review these 2 figures" })).toBeDisabled();
 
   // The answer covers this file only: the same file again is asked again.
   await card.getByRole("button", { name: "Cancel" }).click();
@@ -1336,6 +1350,109 @@ test("a file with two-digit years asks once which century, then shows how the da
   await expect(card.getByRole("table")).toHaveCount(0);
 
   await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("Review waits for 'These dates are right', and changing the date order or the file takes the tick away", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+  const seen = watchRequests(page);
+
+  // 04/08/2025 and 05/08/2025 read two ways, and nothing in the file settles it. Over a year ago,
+  // so both readings land in months that are over and both show totals. Invented clients.
+  const target = monthsAgo(14);
+  const day = target.m === 4 ? 5 : 4;
+  const lines = [
+    "Date,Customer,Amount",
+    `${two(day)}/${two(target.m)}/${target.y},Client A,100.00`,
+    `${two(day + 1)}/${two(target.m)}/${target.y},Client B,50.00`,
+  ];
+  const file = {
+    name: "confirm-dates.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  };
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  const order = card.getByLabel("Dates are written");
+  await order.selectOption("dmy");
+
+  // Day first: the totals and how the dates were read are on screen, with the box beside them,
+  // empty, and Review can't be pressed until it is ticked.
+  const table = card.getByRole("table", { name: "Monthly totals from confirm-dates.csv" });
+  await expect(table.getByRole("row", { name: new RegExp(`^${target.name} \\$150\\.00 2 rows$`) })).toBeVisible();
+  const dayFirst = `Dates read: ${day} ${target.name} to ${day + 1} ${target.name}. Check these against the file's earliest and latest dates.`;
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  const datesRight = card.getByRole("checkbox", { name: "These dates are right" });
+  await expect(datesRight).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  // The box is described by the sentence it confirms.
+  await expect(datesRight).toHaveAccessibleDescription(dayFirst);
+  // Both rows are in one month day first, so one figure.
+  const review = card.getByRole("button", { name: "Review this figure" });
+  await expect(review).toBeVisible();
+  await expect(review).toBeDisabled();
+  await expect(card.getByText(`Tick "These dates are right" once they match the file.`)).toBeVisible();
+  await expect(review).toHaveAccessibleDescription(`Tick "These dates are right" once they match the file.`);
+
+  // Ticked: Review can be pressed, and the reminder goes.
+  await datesRight.check();
+  await expect(review).toBeEnabled();
+  await expect(card.getByText(`Tick "These dates are right" once they match the file.`)).toHaveCount(0);
+
+  // The currency never moves a date, so retyping it leaves the tick alone, even though the totals
+  // (and the "Dates read" line with them) go away while it is only "U" or "US".
+  const currency = card.getByLabel("Currency");
+  for (const code of ["USD", "CAD"]) {
+    await currency.fill("");
+    await currency.pressSequentially(code);
+    await expect(currency).toHaveValue(code);
+    await expect(card.getByText(dayFirst)).toBeVisible();
+    await expect(datesRight).toBeChecked();
+    await expect(review).toBeEnabled();
+  }
+
+  // Month first: other dates, so the tick is taken away and Review is shut again.
+  await order.selectOption("mdy");
+  const monthFirst = `Dates read: ${target.m} ${MONTH_NAMES[day - 1]} ${target.y} to ${target.m} ${MONTH_NAMES[day]} ${target.y}. Check these against the file's earliest and latest dates.`;
+  await expect(card.getByText(monthFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(card.getByRole("button", { name: /^Review these \d+ figures$/ })).toBeDisabled();
+
+  // Back to day first: the box stays empty; the dates changed on screen, so they are looked at again.
+  await order.selectOption("dmy");
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(review).toBeDisabled();
+
+  // Nothing was sent while the box went on and off.
+  expect(seen.filter((r) => r.body !== null)).toEqual([]);
+
+  // The same file again, after Cancel, starts with the box empty: the tick was for that reading of
+  // that file. (Cancel forgets the tick by itself; the file counter in the key covers the same case
+  // in the unit tests.)
+  await datesRight.check();
+  await expect(review).toBeEnabled();
+  await card.getByRole("button", { name: "Cancel" }).click();
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles(file);
+  await order.selectOption("dmy");
+  await expect(card.getByText(dayFirst)).toBeVisible();
+  await expect(datesRight).not.toBeChecked();
+  await expect(review).toBeDisabled();
+
+  // Ticked, Review opens the agree prompt; turning it down keeps nothing.
+  await datesRight.check();
+  await review.click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  expect(seen.filter((r) => r.path === "/api/figures/propose")).toHaveLength(1);
+  await prompt.getByRole("button", { name: "No, I'll do it myself" }).click();
+  await expect(prompt).toBeHidden();
   expect(await figures()).toEqual(before);
 });
 

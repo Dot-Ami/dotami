@@ -108,6 +108,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Every file's preview says how its dates were read** — above the monthly totals, the earliest
   and latest date in words ("Dates read: 3 December 2005 to 28 February 2006"), to check against
   the file. A date in a month that isn't over yet is included, so a year read wrong can't hide there.
+- **"These dates are right" on "Add from a file"** ([8c-3]) — a tick-box beside the "Dates read"
+  line that must be ticked before Review opens the agree prompt ("These months are right" for a
+  report with the months across the top). Choosing another file, date column, date order or
+  century answer empties it again, and going back to an earlier answer doesn't tick it again by
+  itself. Retyping the currency or changing the amount column leaves it ticked. The tick is held
+  only on the screen; nothing new is kept or sent.
 - **Reports with the months across the top on "Add from a file"** ([8c-3]) — a report with one
   column per month, like FreshBooks' Revenue by Client, used to find no column names and add up
   nothing. A new "The file has" choice says whether the file has one row per sale with a date, or

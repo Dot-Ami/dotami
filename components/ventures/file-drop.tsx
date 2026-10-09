@@ -7,18 +7,24 @@ import { BookReader } from "@/lib/figures/books/read-book";
 import type { BookData } from "@/lib/figures/books/types";
 import { monthInWords } from "@/lib/figures/file/dates";
 import {
+  datesCheckKey,
+  datesCheckSentence,
+  datesConfirmed,
   datesReadSentence,
   exportInsteadSentence,
   firstSheetWithRows,
+  followDatesCheck,
   guessAcrossPicks,
   guessLayout,
   guessPicks,
   monthsReadSentence,
+  NO_DATES_CHECK,
   previewAcross,
   previewSheet,
   sheetHasRows,
   type AcrossPicks,
   type AddUp,
+  type DatesCheck,
   type Layout,
   type Picks,
 } from "@/lib/figures/file/preview";
@@ -284,6 +290,10 @@ export function FileDrop({
   const [centuryAnswer, setCenturyAnswer] = useState<Answer<Century | ""> | null>(null);
   const [styleAnswer, setStyleAnswer] = useState<Answer<DecimalStyle> | null>(null);
   const [currency, setCurrency] = useState("CAD");
+  // "These dates are right": ticked under one reading of the dates only (see followDatesCheck).
+  // fileCount goes into that reading, so every file read is confirmed afresh.
+  const [fileCount, setFileCount] = useState(0);
+  const [datesCheck, setDatesCheck] = useState<DatesCheck>(NO_DATES_CHECK);
 
   // [8h] A GnuCash book, once the books worker has read it: its accounts and posted lines, in memory.
   const [book, setBook] = useState<BookData | null>(null);
@@ -372,6 +382,7 @@ export function FileDrop({
     setCenturyAnswer(null);
     setStyleAnswer(null);
     setCurrency("CAD");
+    setDatesCheck(NO_DATES_CHECK);
   }
 
   async function openFile(file: File) {
@@ -440,6 +451,7 @@ export function FileDrop({
     setDateAnswer(null);
     setCenturyAnswer(null);
     setStyleAnswer(null);
+    setFileCount((n) => n + 1);
     startSheet(result.sheets[start]?.rows ?? []);
     setPhase("ready");
   }
@@ -544,13 +556,35 @@ export function FileDrop({
       };
   const decimalStyle = acrossPreview ? acrossPreview.decimalStyle : preview.decimalStyle;
 
+  // The reading of the dates now on screen. When it differs from the one the box was last looked at
+  // under, the box is emptied right here in render (React's way of resetting state when what it
+  // depends on changes; no effect, so there is never a frame with a stale tick).
+  const datesKey = datesCheckKey({
+    file: fileCount,
+    sheet: sheetIndex,
+    layout,
+    headerRow: picks.headerRow,
+    dateColumn: picks.dateColumn,
+    dateOrder: dateOrderChoice,
+    century: centuryChoice,
+    monthsRow: acrossPicks.monthsRow,
+    // With the totals held back (say, the currency half retyped) there is no line on screen; the
+    // last one stands in, so the tick survives CAD becoming USD.
+    sentence: datesCheckSentence(shown.readSentence, datesCheck),
+  });
+  const followedCheck = followDatesCheck(datesCheck, datesKey);
+  if (followedCheck !== datesCheck) setDatesCheck(followedCheck);
+  const datesOk = datesConfirmed(datesCheck, datesKey);
+  const datesBoxLabel = acrossPreview ? "These months are right" : "These dates are right";
+
   const split = useMemo(
     () => (shown.months ? splitAlreadyKnown(shown.months, existing, code) : null),
     [shown.months, existing, code],
   );
 
   async function review() {
-    if (busy || !split) return;
+    // The button is disabled until the dates are confirmed; this is the second lock on the same door.
+    if (busy || !split || !datesOk) return;
     const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || "a file";
     // Row counts go along only when each row lands in exactly one month. With the months across
     // the top, one client row adds into every month, and the agree prompt (and the cards' "from
@@ -1181,7 +1215,25 @@ export function FileDrop({
               {/* Every file: how the dates (or, across the top, the months) were read, in words, so
                   a wrong order, century or month shows. */}
               {shown.readSentence ? (
-                <p className="mb-2 text-[11px] text-paper-dim">{shown.readSentence}</p>
+                <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <p id={`${uid}-dates-read`} className="text-[11px] text-paper-dim">
+                    {shown.readSentence}
+                  </p>
+                  {/* The person confirms the dates before Review (the maintainer's decision,
+                      2026-10-07). Emptied whenever the reading changes: see datesKey above. */}
+                  {split.fresh.length > 0 ? (
+                    <label className="flex items-center gap-2 text-xs text-paper">
+                      <input
+                        type="checkbox"
+                        checked={datesOk}
+                        onChange={(e) => setDatesCheck({ key: datesKey, ticked: e.target.checked })}
+                        aria-describedby={`${uid}-dates-read`}
+                        className="size-4 accent-maple"
+                      />
+                      {datesBoxLabel}
+                    </label>
+                  ) : null}
+                </div>
               ) : null}
               {split.fresh.length > 0 ? (
                 <table className="text-xs">
@@ -1251,11 +1303,22 @@ export function FileDrop({
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {split && split.fresh.length > 0 && split.fresh.length <= MAX_FIGURES_PER_FILE ? (
-          <Pill variant="maple" size="small" onClick={() => void review()} disabled={busy}>
+          <Pill
+            variant="maple"
+            size="small"
+            onClick={() => void review()}
+            disabled={busy || !datesOk}
+            aria-describedby={datesOk ? undefined : `${uid}-confirm-first`}
+          >
             {split.fresh.length === 1
               ? "Review this figure"
               : `Review these ${split.fresh.length} figures`}
           </Pill>
+        ) : null}
+        {split && split.fresh.length > 0 && split.fresh.length <= MAX_FIGURES_PER_FILE && !datesOk ? (
+          <p id={`${uid}-confirm-first`} className="text-[11px] text-amber">
+            {`Tick "${datesBoxLabel}" once they match the file.`}
+          </p>
         ) : null}
         <Pill variant="ghost" size="small" onClick={onCancel} disabled={busy}>
           Cancel
