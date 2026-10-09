@@ -71,11 +71,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the months across the top; DotAmi starts on months across only when it finds no dates on the
   rows and a row of month names above some amounts, and says to check it. You pick the row holding
   the month names and where the totals come from: every row added down each month (the file's own
-  totals rows left out), or one row only, such as the file's Total row. The screen lists the
+  totals rows left out, while a client whose name starts with "Total" is still counted), or one
+  row only, such as the file's Total row. The screen lists the
   columns it read as months and the ones it didn't add (Client, Total). Month names are read in
   English and French with a four-digit year (Jul 2026, juillet 2026, 2026-07, 07/2026); a name
   that only looks like a month (Jul, Jul 26, a whole date) stops the table and the screen names
   the column, rather than guess the year. Left-out cells are listed the way Excel names them (C6).
+  These figures go to the agree prompt without a row count: one client row goes into every month,
+  so adding the months' counts would show more rows than the file has.
 - **A report with no dates says which report to export instead** — Wave's Income by Customer (one
   total per customer, no dates) now gets a sentence naming Wave's Account Transactions report,
   which has a date on every line. Any other file with no date and no month at all is told to

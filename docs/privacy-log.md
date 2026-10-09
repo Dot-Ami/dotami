@@ -164,7 +164,9 @@ person is asked).
   to read that file; they are held in the panel and never stored, sent or remembered for the next
   file ([`components/ventures/file-drop.tsx`](../components/ventures/file-drop.tsx),
   [`lib/figures/file/across.ts`](../lib/figures/file/across.ts)). Only the monthly totals the
-  person reviews and agrees to are kept, exactly as before; nothing new is kept or sent.
+  person reviews and agrees to are kept, exactly as before; nothing new is kept or sent. For these
+  reports the figures are kept without a row count (one client row goes into every month, so a
+  count added up across months would mislead): slightly less is kept, never more.
 
 - **Saving a file in the desktop app needs the Save dialog's answer.** Cancel saves nothing; no
   file is written without the person choosing where. In a browser it is an ordinary download,

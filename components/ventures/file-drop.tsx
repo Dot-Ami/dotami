@@ -456,16 +456,25 @@ export function FileDrop({
     setProposeError(null);
     const label = fileName.trim().slice(0, MAX_LABEL_CHARS) || "a file";
     setBusy(true);
+    // Row counts go along only when each row lands in exactly one month. With the months across
+    // the top, one client row adds into every month, and the agree prompt (and the cards' "from
+    // your records") add the figures' counts up: 3 clients over 3 months would read "9 rows".
+    // No count is better than a wrong one; the preview above still shows each month's rows.
+    const withRows = !acrossPreview;
     const result = await postJson("/api/figures/propose", {
       ventureId,
-      source: { kind: "file", label, rows: split.fresh.reduce((sum, m) => sum + m.rows, 0) },
+      source: {
+        kind: "file",
+        label,
+        ...(withRows ? { rows: split.fresh.reduce((sum, m) => sum + m.rows, 0) } : {}),
+      },
       figures: split.fresh.map((m) => ({
         kind: "gross-revenue",
         periodStart: m.periodStart,
         periodEnd: m.periodEnd,
         amountCents: m.amountCents,
         currency: code,
-        rows: m.rows,
+        ...(withRows ? { rows: m.rows } : {}),
       })),
     });
     setBusy(false);

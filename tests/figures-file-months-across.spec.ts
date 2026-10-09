@@ -20,8 +20,9 @@ import { utf8 } from "./helpers/encode";
 
 // [8c-3] Reports with the months across the top (FreshBooks' Revenue by Client): the month is in
 // the column's name, not on each row. A name is read as a month only when it says the month and
-// the year with certainty; one that only looks like a month stops the table, never guessed (the
-// maintainer's decision, 2026-10-07: teach DotAmi to read these tables). All figures are invented.
+// the year with certainty; one that only looks like a month stops the table, never guessed (a
+// builder default: the maintainer's decision, 2026-10-07, is only that these tables are read). All
+// figures are invented.
 
 const TODAY = "2026-10-06";
 
@@ -171,6 +172,33 @@ describe("acrossTotals", () => {
     expect(result.skippedCells).toEqual([{ row: 5, column: 2, reason: "empty" }]);
     expect(result.notOver).toEqual([]);
     expect(result.monthsRead).toEqual({ first: "2026-07", last: "2026-09" });
+  });
+
+  it("counts a client whose name starts with Total, but still leaves out the file's own sum rows", () => {
+    const months = [
+      { column: 1, month: "2026-01" },
+      { column: 2, month: "2026-02" },
+    ];
+    const rows: Cell[][] = [
+      ["Client", "Jan 2026", "Feb 2026", "Total"],
+      ["Total Wine & More", "1000.00", "2000.00", "3000.00"], // a client, not a sum: nothing above it
+      ["Acme", "100.00", "200.00", "300.00"],
+      // Starts with Total and holds exactly the rows above: the file's own sum, left out.
+      ["Total for all clients", "1100.00", "2200.00", "3300.00"],
+      ["TOTAL Fitness", "50.00", "", "50.00"], // starts with Total but is not the sum above: a client
+      ["Total:", "1.00", "2.00", "3.00"], // the word alone is always the file's own sum
+    ];
+    const result = acrossTotals(rows, { monthsRow: 0, monthColumns: months, totalRow: null, decimalStyle: "point" }, TODAY);
+    expect(amounts(result.months)).toEqual([
+      ["2026-01-01", 115000],
+      ["2026-02-01", 220000],
+    ]);
+    expect(result.rowsCounted).toBe(3);
+    expect(result.skippedRows).toEqual([
+      { row: 4, reason: "total" },
+      { row: 6, reason: "total" },
+    ]);
+    expect(result.skippedCells).toEqual([{ row: 5, column: 2, reason: "empty" }]);
   });
 
   it("takes one chosen row as it is, even the Total row", () => {

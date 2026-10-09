@@ -157,6 +157,58 @@ function readsAsAmount(cell: Cell | undefined): boolean {
 }
 
 /**
+ * A label that is a total word and nothing else ("Total", "TOTAL:", "Grand total", "Sous-total",
+ * "Total général"). TOTAL_ROW_LABEL also matches longer labels that start with one, which in a
+ * months-across report can be a client's name ("Total Wine & More").
+ */
+const TOTAL_WORD_ALONE =
+  /^\s*(?:grand[\s-]+total|sub[\s-]?total|sous[\s-]?total|total[\s-]+g[ée]n[ée]ral|totals|totaux|total)\s*[:.]?\s*$/iu;
+
+/**
+ * Running sums, per month column, of the rows counted since the report's last sum row. Used to tell
+ * a sum row with a longer label ("Total for group A") from a client whose name starts with Total.
+ */
+class SinceLastSum {
+  private sums = new Map<number, bigint>();
+  /** Columns with a cell that couldn't be read since the last sum row: no sum is sure there. */
+  private unsure = new Set<number>();
+  private rows = 0;
+
+  constructor(
+    private readonly monthColumns: MonthColumn[],
+    private readonly decimalStyle: DecimalStyle,
+  ) {}
+
+  add(row: Cell[]): void {
+    for (const { column } of this.monthColumns) {
+      const cell = row[column];
+      if (isEmptyCell(cell)) continue;
+      const cents = cellToCents(cell ?? null, this.decimalStyle);
+      if (cents === null) this.unsure.add(column);
+      else this.sums.set(column, (this.sums.get(column) ?? 0n) + BigInt(cents));
+    }
+    this.rows += 1;
+  }
+
+  /** True when every month cell of `row` is exactly what the rows since the last sum add up to. */
+  matches(row: Cell[]): boolean {
+    if (this.rows === 0) return false;
+    return this.monthColumns.every(({ column }) => {
+      if (this.unsure.has(column)) return false;
+      const cell = row[column];
+      const cents = isEmptyCell(cell) ? 0 : cellToCents(cell ?? null, this.decimalStyle);
+      return cents !== null && BigInt(cents) === (this.sums.get(column) ?? 0n);
+    });
+  }
+
+  reset(): void {
+    this.sums.clear();
+    this.unsure.clear();
+    this.rows = 0;
+  }
+}
+
+/**
  * The row holding the month names, as a first guess for the person to check: the first of the
  * first 30 rows with at least one column named as a month (and nothing that only looks like one),
  * with a readable amount under one of those months in the 50 rows below. Null when there is none.
@@ -210,6 +262,9 @@ export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string
   const skippedRows: AcrossResult["skippedRows"] = [];
   const skippedCells: AcrossResult["skippedCells"] = [];
   let rowsCounted = 0;
+  // What the rows counted since the last sum row add up to, per month column: a row whose label
+  // only STARTS with a total word is the file's own sum only when it holds exactly this.
+  const sinceSum = new SinceLastSum(choice.monthColumns, choice.decimalStyle);
 
   for (const i of rowsToRead) {
     const row = rows[i] ?? [];
@@ -219,14 +274,21 @@ export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string
     }
     // Adding every row, the report's own sum row would count everything twice. The label sits
     // outside the month columns ("Total" under Client); a chosen row is taken whatever it says.
-    if (
-      choice.totalRow === null &&
-      row.some(
-        (cell, c) => !monthColumnSet.has(c) && typeof cell === "string" && TOTAL_ROW_LABEL.test(cell),
-      )
-    ) {
-      skippedRows.push({ row: i + 1, reason: "total" });
-      continue;
+    // The word on its own ("Total", "Grand total:") is always the sum. A longer label that starts
+    // with one ("Total for group A", but also a client called "Total Wine & More") is the sum only
+    // when its amounts are exactly the rows above it, so a client is never dropped for its name.
+    if (choice.totalRow === null) {
+      const labels = row.filter(
+        (cell, c): cell is string => !monthColumnSet.has(c) && typeof cell === "string",
+      );
+      const isSum =
+        labels.some((cell) => TOTAL_WORD_ALONE.test(cell)) ||
+        (labels.some((cell) => TOTAL_ROW_LABEL.test(cell)) && sinceSum.matches(row));
+      if (isSum) {
+        skippedRows.push({ row: i + 1, reason: "total" });
+        sinceSum.reset();
+        continue;
+      }
     }
     if (choice.monthColumns.every((m) => isEmptyCell(row[m.column]))) {
       skippedRows.push({ row: i + 1, reason: "no-amount" });
@@ -253,6 +315,7 @@ export function acrossTotals(rows: Cell[][], choice: AcrossChoice, today: string
       added = true;
     }
     if (added) rowsCounted += 1;
+    sinceSum.add(row);
   }
 
   const months: MonthTotal[] = [];

@@ -86,7 +86,7 @@ nothing was added up. Now the screen starts on "Months across the top, one colum
 with row 4 guessed as the month names: July, August and September come out 500.00, 476.19 and
 300.00 from every client row added down each month (the Total row left out), and the same from the
 Total row taken alone. A month name DotAmi can't be sure of (Jul, Jul 26) stops the table with the
-column named, never guessed (decision of 2026-10-07). The `it.fails` test is a normal passing test,
+column named, never guessed (a builder default; the decision of 2026-10-07 is that these reports are read). The `it.fails` test is a normal passing test,
 under "months across the top, and a report with no dates", and the rules have their own tests in
 `tests/figures-file-months-across.spec.ts`.
 

@@ -994,10 +994,39 @@ test("a report with the months across the top: one total per month column, from 
   ).toBeVisible();
   await expect(card.getByRole("table")).toHaveCount(0);
 
-  // Reading the file sent nothing, and Cancel keeps nothing.
+  // Reading the file sent nothing.
   expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
   expect(seen.filter((r) => r.body !== null)).toEqual([]);
-  await card.getByRole("button", { name: "Cancel" }).click();
+
+  // Back to the right row: every row again, and Review proposes the three months.
+  await card.getByLabel("Month names are in row").selectOption({ label: "Row 4" });
+  await expect(table.getByRole("row", { name: /^July 2026 \$500\.00 3 rows$/ })).toBeVisible();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  const fromFile = prompt.getByRole("region", { name: `From ${revenue.fileName}` });
+  await expect(fromFile).toContainText("July 2026");
+  await expect(fromFile).toContainText("September 2026");
+  // One client row goes into every month, so adding the months' row counts would say "9 rows"
+  // for a file of 3 clients. No row count is sent for this layout, so none is shown.
+  const proposals = seen.filter((r) => r.path === "/api/figures/propose");
+  expect(proposals).toHaveLength(1);
+  const sent = JSON.parse(proposals[0].body!) as {
+    source: Record<string, unknown>;
+    figures: Record<string, unknown>[];
+  };
+  expect(sent.source).toEqual({ kind: "file", label: revenue.fileName });
+  expect(sent.figures.map((f) => [f.periodStart, f.amountCents, "rows" in f])).toEqual([
+    ["2026-07-01", 50000, false],
+    ["2026-08-01", 47619, false],
+    ["2026-09-01", 30000, false],
+  ]);
+  await expect(fromFile.getByText(`From ${revenue.fileName}`, { exact: true })).toBeVisible();
+  await expect(prompt.getByText(/\d+ rows?/)).toHaveCount(0);
+  expectNothingLeftThisPage(seen, ["Invented Client", "476.19", "476,19"]);
+
+  // Turning them down keeps nothing.
+  await prompt.getByRole("button", { name: "No, I'll do it myself" }).click();
+  await expect(prompt).toBeHidden();
   expect(await figures()).toEqual(before);
 });
 
