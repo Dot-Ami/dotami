@@ -21,7 +21,15 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    name and code only). A log that can't be opened (a read-only file, a full disk) is skipped, never
    a reason not to start. Until 0.2.1 the log was a stream that
    wrote in the background while start-up ran synchronously, so a start killed or failed before the
-   server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
+   server left no line at all (seen 2026-10-08). Then, **only if Delete left a "wipe pending" note**
+   beside the data file (`dotami.db.wipe-pending`: its wipe couldn't finish because the computer
+   was busy, the disk was full or it was switched off), the app finishes that wipe before the server
+   opens the file: it deletes the safety copies the note names (DotAmi's own `dotami-before-….db`
+   files in `backups/`, never through a link), rebuilds the file with `VACUUM`, and removes the note
+   (`desktop/wipe-pending.mjs`, `vacuumFile` in `desktop/migrate.mjs`). Whatever still fails stays
+   in the note for the next start and never stops this one; the log says which. An ordinary start,
+   with no note, does nothing here: free space in the file is normal after any edit, and rebuilding
+   the file on every start would slow it for nothing. Then `dotami.db` in that folder is created or
    brought up to date by `desktop/migrate.mjs` (below).
 4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
@@ -209,7 +217,14 @@ to the data.
   and "nothing leaves this computer" although the app was started with a model key in its
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
-  "Desktop app (Windows)").
+  "Desktop app (Windows)"). Delete ([8d]): an idea and a statement holding a marker string, a backup
+  saved elsewhere and restored (which leaves a safety copy) → Delete with ideas, statements and the
+  safety copies ticked → after closing, the marker is in no byte of `dotami.db` or `backups/` → the
+  backup saved elsewhere still restores. And a wipe Delete couldn't finish: an ordinary start leaves
+  the deleted words in the file (the control), a start with the "wipe pending" note removes them and
+  the owed safety copy.
+- `tests/desktop-wipe-pending.spec.ts` — which files count as safety copies, that a link out of
+  `backups/` is never followed, and that a start finishes a wipe only when the note is there.
 - `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
   refuse / back up / undo cases.
 - `tests/desktop-startup-log.spec.ts` — replays a start in its own process and kills it the moment

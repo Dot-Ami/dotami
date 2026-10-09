@@ -9,6 +9,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Delete can clear the safety copies, and finishes a wipe that was cut short** ([8d]) — the Delete
+  list gets one more tick-box, "Safety copies in the backups folder", warning that afterwards only a
+  backup you saved somewhere else could bring anything back. Only the copies DotAmi made itself are
+  deleted; anything else in that folder stays, and a link out of the folder is never followed. If a
+  wipe can't finish (the computer is busy, the disk is full), DotAmi leaves a small note beside the
+  data file and the desktop app finishes the wipe the next time it starts. It does this only when
+  that note is there, never on an ordinary start. The page also says when an earlier Delete hasn't
+  finished, with "Finish it now".
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your

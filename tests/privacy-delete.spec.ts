@@ -6,7 +6,7 @@
  * through Prisma, because the wipe has to be proven with the database library the app really uses.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -17,9 +17,19 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { addTypedStatement } from "@/lib/person/statements";
-import { DeleteInputError, affectedTables, deleteData, pickKinds, wipeFreeSpace } from "@/lib/privacy/delete";
+import {
+  DeleteInputError,
+  SAFETY_COPIES_KEY,
+  affectedKeys,
+  affectedTables,
+  deleteData,
+  finishWipe,
+  pickKinds,
+  wipeFreeSpace,
+} from "@/lib/privacy/delete";
 import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES } from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
+import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { demoScenarios } from "../prisma/seed-data";
 
 // Each database test migrates its own file (1.5-5 s on this machine, more on a busy runner), and
@@ -98,16 +108,38 @@ async function countAll(prisma: PrismaClient): Promise<Record<string, number>> {
   return out;
 }
 
-/** What the page would send: the counts of every table the ticked kinds touch, as they stand. */
-async function seenFor(prisma: PrismaClient, kinds: string[]) {
+/**
+ * What the page would send: the counts of every table the ticked kinds touch, as they stand, and
+ * the number of safety copies when that box is ticked (`copies`, as the page counted them).
+ */
+async function seenFor(prisma: PrismaClient, kinds: string[], copies = 0) {
   const all = await countAll(prisma);
-  return Object.fromEntries(affectedTables(pickKinds(kinds)).map((m) => [m, all[m]]));
+  return Object.fromEntries(affectedKeys(pickKinds(kinds)).map((m) => [m, m === SAFETY_COPIES_KEY ? copies : all[m]]));
 }
 
-/** Does the marker appear anywhere in the data file's folder (the file, and any journal beside it)? */
-function markerOnDisk(folder: string): string[] {
+/**
+ * Every file in the data file's folder, and in the folders beside it (backups/), that holds the
+ * marker: the data file, any journal, a safety copy. Paths are relative, with "/".
+ */
+function markerOnDisk(folder: string, prefix = ""): string[] {
   const needle = Buffer.from(MARKER, "utf8");
-  return readdirSync(folder).filter((name) => readFileSync(path.join(folder, name)).includes(needle));
+  return readdirSync(folder, { withFileTypes: true }).flatMap((item) => {
+    const full = path.join(folder, item.name);
+    if (item.isDirectory()) return markerOnDisk(full, `${prefix}${item.name}/`);
+    return readFileSync(full).includes(needle) ? [`${prefix}${item.name}`] : [];
+  });
+}
+
+/**
+ * A safety copy as the desktop app makes one (VACUUM INTO, as desktop/backup.mjs's restore does),
+ * so it holds whatever the data file holds right now: the marker, after seed().
+ */
+async function makeSafetyCopy(prisma: PrismaClient, file: string, name = "dotami-before-restore-1760000000000.db") {
+  const dir = path.join(path.dirname(file), "backups");
+  mkdirSync(dir, { recursive: true });
+  const copy = path.join(dir, name);
+  await prisma.$executeRawUnsafe(`VACUUM INTO '${copy.replace(/'/g, "''")}'`);
+  return copy;
 }
 
 afterAll(async () => {
@@ -189,10 +221,25 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(DELETE_MENU.find((e) => e.id === "remembered-columns")!.built).toBe(false);
   });
 
-  it("says plainly what it can't reach: the safety copies and the window's earlier leftovers", () => {
+  it("says plainly what it can't reach: the window's earlier leftovers, the log, the disk", () => {
     const names = NOT_CLEARED_BY_DELETE.map((n) => n.name);
-    expect(names).toContain("Safety copies in the backups folder");
     expect(NOT_CLEARED_BY_DELETE.find((n) => n.name === "What the window stored in earlier launches")!.why).toMatch(/^Not cleared yet/);
+    expect(names).toContain("The log");
+    expect(names).toContain("The disk under the data file");
+    // The safety copies have their own box now, so they are no longer on this list.
+    expect(names).not.toContain("Safety copies in the backups folder");
+  });
+
+  it("has a box for the safety copies in the backups folder, warning that only a backup saved elsewhere could bring anything back", () => {
+    const box = DELETE_MENU.find((e) => e.id === "backups")!;
+    expect(box.label).toBe("Safety copies in the backups folder");
+    expect(box.built).toBe(true);
+    expect(box.folder).toBe("backups");
+    // Files, not rows: no table of its own, and nothing the database takes with it.
+    expect(box.tables).toEqual([]);
+    expect(box.alsoDeletes).toEqual([]);
+    expect(box.goesWithIt).toMatch(/only a backup you saved somewhere else could bring anything back/);
+    expect(box.learnMore).toMatch(/anything else you put in that folder stays/);
   });
 
   it("cites the CRA's record-keeping page, dated, with the six years as a typed field", () => {
@@ -480,15 +527,177 @@ describe("POST /api/your-data/delete", () => {
     expect(await res.json()).toEqual({ status: "deleted", deleted: { Figure: 2 }, left: { Figure: 0 }, wiped: false });
     await lock.release();
     expect(await db.prisma.figure.count()).toBe(0);
+    // The wipe the lock stopped is owed, in the note beside the data file.
+    expect(readWipePending(db.file)).toEqual({ since: expect.any(String), backups: [] });
     const retry = await route.POST(post({ retryWipe: true }));
     expect(retry.status).toBe(200);
-    expect(await retry.json()).toEqual({ wiped: true });
+    expect(await retry.json()).toEqual({ wiped: true, backupsLeft: 0 });
+    expect(existsSync(wipePendingFile(db.file))).toBe(false);
   });
 
   it("runs the wipe again on its own when asked, from the page only", async () => {
     const res = await route.POST(post({ retryWipe: true }));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ wiped: true });
+    expect(await res.json()).toEqual({ wiped: true, backupsLeft: 0 });
     expect((await route.POST(post({ retryWipe: true }, {}))).status).toBe(403);
+  });
+
+  it("deletes the safety copies beside its own data file when that box is ticked", async () => {
+    const copy = await makeSafetyCopy(db.prisma, db.file);
+    const stale = await route.POST(post({ kinds: ["backups"], seen: { backups: 0 } }));
+    expect(stale.status).toBe(409);
+    expect(existsSync(copy)).toBe(true);
+
+    const res = await route.POST(post({ kinds: ["backups"], seen: { backups: 1 } }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: "deleted", deleted: { backups: 1 }, left: { backups: 0 }, wiped: true });
+    expect(existsSync(copy)).toBe(false);
+    expect(existsSync(wipePendingFile(db.file))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// [8d] The safety copies in the backups folder, and the note that keeps an unfinished wipe owed.
+
+describe("the safety copies in the backups folder", () => {
+  it("shows the problem is real: Delete without that box leaves the deleted words in the safety copy", async () => {
+    const { prisma, file, folder } = makeDb("copies-untouched");
+    await seed(prisma);
+    await makeSafetyCopy(prisma, file);
+    const kinds = ["ideas", "statements"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds) }, { dataFile: file });
+    expect(result.status === "deleted" && result.wiped).toBe(true);
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toEqual(["backups/dotami-before-restore-1760000000000.db"]);
+  });
+
+  it("with the box ticked, DotAmi's copies go and the deleted words are in no file; anything else in the folder stays", async () => {
+    const { prisma, file, folder } = makeDb("copies-deleted");
+    await seed(prisma);
+    await makeSafetyCopy(prisma, file, "dotami-before-restore-1760000000000.db");
+    await makeSafetyCopy(prisma, file, "dotami-before-20261008005701_settings-1760000000001.db");
+    const notes = path.join(folder, "backups", "my own notes.txt");
+    writeFileSync(notes, "the person's own file");
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toHaveLength(3);
+
+    const kinds = ["ideas", "statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 2) }, { dataFile: file });
+    expect(result).toMatchObject({ status: "deleted", wiped: true });
+    if (result.status !== "deleted") throw new Error("not deleted");
+    expect(result.deleted[SAFETY_COPIES_KEY]).toBe(2);
+    expect(result.left?.[SAFETY_COPIES_KEY]).toBe(0);
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toEqual([]);
+    expect(readdirSync(path.join(folder, "backups"))).toEqual(["my own notes.txt"]);
+    expect(readFileSync(notes, "utf8")).toBe("the person's own file");
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("deletes nothing when the number of safety copies changed since the person looked, and leaves no note", async () => {
+    const { prisma, file } = makeDb("copies-changed");
+    await seed(prisma);
+    const copy = await makeSafetyCopy(prisma, file);
+    const before = await countAll(prisma);
+    const kinds = ["statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0) }, { dataFile: file });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1 } });
+    expect(existsSync(copy)).toBe(true);
+    expect(await countAll(prisma)).toEqual(before);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("when a table's count changed, the copies stay and an earlier note is put back exactly as it was", async () => {
+    const { prisma, file } = makeDb("copies-table-changed");
+    await seed(prisma);
+    const copy = await makeSafetyCopy(prisma, file);
+    // An earlier Delete still owes a copy that is already gone (it doesn't matter which).
+    writeWipePending(file, { backups: ["dotami-before-restore-1.db"], since: "2026-10-01T00:00:00.000Z" });
+    const kinds = ["statements", "backups"];
+    const seen = { ...(await seenFor(prisma, kinds, 1)), PersonStatement: 5 };
+    const result = await deleteData(prisma, { kinds, seen }, { dataFile: file });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1 } });
+    expect(existsSync(copy)).toBe(true);
+    // The copy the person didn't end up deleting is NOT owed: the next start must not delete it.
+    expect(readWipePending(file)).toEqual({ since: "2026-10-01T00:00:00.000Z", backups: ["dotami-before-restore-1.db"] });
+  });
+
+  it("refuses the box when this copy's database isn't a file (there is no folder to look in)", async () => {
+    const { prisma } = makeDb("copies-no-file");
+    await expect(deleteData(prisma, { kinds: ["backups"], seen: { backups: 0 } })).rejects.toThrow(/no data folder/);
+  });
+});
+
+describe("a wipe that couldn't finish stays owed in a note beside the data file", () => {
+  it("writes the note before the wipe starts and removes it once the wipe has worked", async () => {
+    const { prisma, file } = makeDb("note-order");
+    await seed(prisma);
+    let notedDuringWipe: boolean | null = null;
+    const real = prisma.$executeRawUnsafe.bind(prisma);
+    const spy = vi.spyOn(prisma, "$executeRawUnsafe").mockImplementation((async (query: string, ...values: unknown[]) => {
+      if (query === "VACUUM") notedDuringWipe = existsSync(wipePendingFile(file));
+      return real(query, ...values);
+    }) as typeof prisma.$executeRawUnsafe);
+    const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) }, { dataFile: file });
+    spy.mockRestore();
+    expect(result).toMatchObject({ status: "deleted", wiped: true });
+    expect(notedDuringWipe).toBe(true);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("when the wipe meets a lock, the note stays, and 'Try the wipe again' finishes it and removes the note", async () => {
+    const { prisma, url, file, folder } = makeDb("note-locked");
+    await seed(prisma);
+    const lock = lockBeforeNextWipe(prisma, url);
+    const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) }, { dataFile: file });
+    await lock.release();
+    expect(result).toMatchObject({ status: "deleted", wiped: false });
+    expect(readWipePending(file)).toEqual({ since: expect.any(String), backups: [] });
+    await prisma.$disconnect();
+    expect(statementInFile(folder)).toBe(true);
+
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0 });
+    await prisma.$disconnect();
+    expect(statementInFile(folder)).toBe(false);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("a safety copy another program holds open stays owed in the note, and is deleted once it is free", async () => {
+    const { prisma, file, folder } = makeDb("note-copy-busy");
+    await seed(prisma);
+    const copy = await makeSafetyCopy(prisma, file);
+    const busy = () => {
+      throw Object.assign(new Error("resource busy or locked"), { code: "EBUSY" });
+    };
+    // Everything that holds the marker goes, so only the busy copy can still hold it.
+    const kinds = ["ideas", "statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 1) }, { dataFile: file, remove: busy });
+    expect(result).toMatchObject({
+      status: "deleted",
+      deleted: { PersonStatement: 2, backups: 0 },
+      left: { PersonStatement: 0, Venture: 0, backups: 1 },
+      wiped: true,
+    });
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toEqual(["backups/dotami-before-restore-1760000000000.db"]);
+    expect(existsSync(copy)).toBe(true);
+    expect(readWipePending(file)?.backups).toEqual([path.basename(copy)]);
+
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0 });
+    expect(existsSync(copy)).toBe(false);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toEqual([]);
+  });
+
+  it("a later Delete also finishes what an earlier one still owed", async () => {
+    const { prisma, file } = makeDb("note-carried");
+    await seed(prisma);
+    const owed = await makeSafetyCopy(prisma, file, "dotami-before-restore-1.db");
+    writeWipePending(file, { backups: [path.basename(owed)] });
+    const result = await deleteData(prisma, { kinds: ["settings"], seen: await seenFor(prisma, ["settings"]) }, { dataFile: file });
+    expect(result).toMatchObject({ status: "deleted", wiped: true });
+    expect(existsSync(owed)).toBe(false);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
   });
 });

@@ -20,3 +20,5 @@ coverage
 playwright-report
 test-results
 
+# Delete leaves this note beside a data file while its wipe is unfinished (desktop/wipe-pending.mjs).
+*.db.wipe-pending
