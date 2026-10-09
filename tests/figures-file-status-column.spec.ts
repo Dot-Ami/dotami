@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { previewFile, previewSheet } from "@/lib/figures/file/preview";
+import { guessPicks, previewFile, previewSheet } from "@/lib/figures/file/preview";
 import { guessColumns } from "@/lib/figures/file/table";
 import { isLeftOutStatus, monthlyTotals } from "@/lib/figures/file/totals";
 import type { Cell, ColumnChoice } from "@/lib/figures/file/types";
@@ -259,6 +259,69 @@ describe("guessColumns finds the column names under a summary block", () => {
       ["2026-07-02", "Invented Client A", "Paid", "100.00"],
     ];
     expect(guessColumns(withDates)?.headerRow).toBe(1);
+  });
+
+  it("keeps a row that already names the date column: a wider note under it is not the table's header", () => {
+    // A simple two-column sheet with a note row under its column names. The first row says "Date",
+    // so it is the table's own; the note is wider only because it is a sentence split into cells.
+    const rows: Cell[][] = [
+      ["Date", "Amount"],
+      ["Opening note", "carried", "from", "last", "year"],
+      ["2026-07-02", "100.00"],
+      ["2026-07-09", "50.00"],
+    ];
+    const guess = guessColumns(rows);
+    expect(guess?.headerRow).toBe(0);
+    expect(guess?.dateColumn).toBe(0);
+    expect(guess?.amountColumn).toBe(1);
+    // And the screen opens ready, with July's two sales counted.
+    const { picks } = guessPicks(rows);
+    const months = previewSheet(rows, picks, {}, TODAY).result!.months;
+    expect(months.map((m) => [m.periodStart, m.amountCents])).toEqual([["2026-07-01", 15000]]);
+  });
+});
+
+describe("a column-names row the person picks is never moved", () => {
+  // Row 0 names no date column and row 1 is wider and does, so the automatic guess moves to row 1.
+  // When the person says row 0 holds the column names, their row is kept and pre-filled from it.
+  const TWO_HEADER_ROWS: Cell[][] = [
+    ["When", "Amount"],
+    ["Invoice Date", "Amount", "Client", "Status"],
+    ["2026-07-02", "100.00", "Invented Client A", "Paid"],
+    ["2026-07-09", "50.00", "Invented Client B", "Paid"],
+  ];
+
+  it("the automatic guess takes the wider row that names the date", () => {
+    expect(guessPicks(TWO_HEADER_ROWS).picks.headerRow).toBe(1);
+  });
+
+  it("the person's own row is pre-filled from that row, not dropped", () => {
+    const { picks, guessed } = guessPicks(TWO_HEADER_ROWS, 0);
+    expect(guessed).toBe(true);
+    expect(picks).toEqual({
+      headerRow: 0,
+      dateColumn: 0,
+      amountColumn: 1,
+      typeColumn: null,
+      statusColumn: null,
+    });
+  });
+
+  it("a picked row with a wider row of names under it keeps its own columns", () => {
+    const rows: Cell[][] = [
+      ["Date", "Client", "Status", "Amount"],
+      ["Invoice date", "Client name", "Status of invoice", "Amount in CAD", "Memo"],
+      ["2026-07-02", "Invented Client A", "Paid", "100.00", ""],
+      ["2026-07-09", "Invented Client B", "Void", "50.00", ""],
+    ];
+    const { picks } = guessPicks(rows, 0);
+    expect(picks).toEqual({
+      headerRow: 0,
+      dateColumn: 0,
+      amountColumn: 3,
+      typeColumn: null,
+      statusColumn: 2,
+    });
   });
 });
 

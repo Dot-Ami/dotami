@@ -161,6 +161,14 @@ const DUE_DATE_HEADER = /(?<![\p{L}\p{N}])(due|échéance|echeance)(?![\p{L}\p{N
 function spacedLabel(label: string): string {
   return label.replace(/([a-zà-ÿ0-9])([A-ZÀ-Þ])/g, "$1 $2").replace(/[_.]+/g, " ");
 }
+/** True when one of the row's text cells names a sale-date column ("Date", "Issue Date"; not a due date). */
+function namesDateColumn(row: Cell[]): boolean {
+  return row.some((cell) => {
+    if (typeof cell !== "string") return false;
+    const label = spacedLabel(cell);
+    return DATE_HEADER.test(label) && !DUE_DATE_HEADER.test(label);
+  });
+}
 /**
  * A cell that is not a date because it names a group or a total, not a transaction: a customer name
  * sitting alone on its row, or a "Total for ..." line. Grouped reports (QuickBooks' Sales by
@@ -186,8 +194,10 @@ const AMOUNT_HEADER_ANY =
  */
 const TYPE_HEADER = /^transaction\s*type$/i;
 /**
- * The only headers pre-filled as the status column: exactly "Status" (FreshBooks, Sage Accounting,
- * Xero) or "Statut" (French, assumed), in any case. A longer name ("Payment Status", "Status Date")
+ * The only headers pre-filled as the status column: exactly "Status" or "Statut", in any case. Both
+ * are ASSUMED titles: the FreshBooks, Sage Accounting and Xero help pages name a status for each
+ * invoice but none shows the column's title (see tests/fixtures/packages/), and no French export has
+ * been seen. A longer name ("Payment Status", "Status Date")
  * is left for the person to pick, and the cells are never read to guess the column. Pre-filling is
  * safe in a way a bare "Type" is not: only a cell that is exactly void, voided, deleted or draft
  * is ever left out, and every such row is listed with its reason.
@@ -217,8 +227,14 @@ const NOT_REVENUE_HEADER =
  * Guesses where the table starts and which columns are the date and the amount. Returns null when
  * no row looks like column names above at least one date — the person is then asked to pick the
  * row themselves.
+ *
+ * `keepFirstRow`: the person has said the first row holds the column names (the rows passed start
+ * at their pick), so a wider row further down never takes its place.
  */
-export function guessColumns(rows: Cell[][]): ColumnGuess | null {
+export function guessColumns(
+  rows: Cell[][],
+  options: { keepFirstRow?: boolean } = {},
+): ColumnGuess | null {
   const searchEnd = Math.min(HEADER_SEARCH_ROWS, rows.length);
   /** True when a date sits in the rows just below row r: a header with none is a title or a note. */
   const datesBelow = (r: number) =>
@@ -234,16 +250,19 @@ export function guessColumns(rows: Cell[][]): ColumnGuess | null {
   if (headerRow === -1) return null;
 
   // A short summary above the table (FreshBooks' Invoice Details: "Total Invoiced, Total Paid" over
-  // two figures) also reads as column names with dates further down. Until the first dated row, a
-  // WIDER row of column names below it wins: that is the table's own. Once a row has a date the
-  // table has started, and any text row after that is just a row.
-  let labels = headerLabelCount(rows[headerRow]);
-  for (let r = headerRow + 1; r < searchEnd; r += 1) {
-    if (rows[r].some((cell) => readsAsDate(cell))) break;
-    const wider = headerLabelCount(rows[r]);
-    if (wider > labels && datesBelow(r)) {
-      headerRow = r;
-      labels = wider;
+  // two figures) also reads as column names with dates further down. When the row found so far
+  // names no date column, a WIDER row below it that does name one wins: that is the table's own.
+  // A row that already names its date column is kept, so a note row under a simple "Date, Amount"
+  // header is never taken for the header. The search stops at the first dated row (the table has
+  // started) and never runs when the person picked the row themselves.
+  if (!options.keepFirstRow && !namesDateColumn(rows[headerRow])) {
+    const labels = headerLabelCount(rows[headerRow]);
+    for (let r = headerRow + 1; r < searchEnd; r += 1) {
+      if (rows[r].some((cell) => readsAsDate(cell))) break;
+      if (headerLabelCount(rows[r]) > labels && namesDateColumn(rows[r]) && datesBelow(r)) {
+        headerRow = r;
+        break;
+      }
     }
   }
 

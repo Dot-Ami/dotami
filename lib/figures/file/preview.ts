@@ -93,7 +93,8 @@ export function guessPicks(
     };
   }
   // Looking from the chosen row down keeps every column index the same as in the whole sheet.
-  const guess = guessColumns(rows.slice(forcedHeader));
+  // keepFirstRow: the person's row stays the header even when a wider row of names sits under it.
+  const guess = guessColumns(rows.slice(forcedHeader), { keepFirstRow: true });
   if (!guess || guess.headerRow !== 0) return { guess, picks: none, guessed: false };
   return {
     guess,

@@ -88,13 +88,16 @@ Their `it.fails` tests are now normal passing tests in `tests/figures-file-packa
 
 | Gap | What the screen does now |
 | --- | --- |
-| A summary block above the table (FreshBooks' Invoice Details) was taken for the column names | until the first dated row, a wider row of column names below wins: every FreshBooks Invoice Details file opens on row 5, with Issue Date, Subtotal and Status pre-filled |
+| A summary block above the table (FreshBooks' Invoice Details) was taken for the column names | when the first row of names found names no date column, a wider row below it that does (before the first dated row) wins: every FreshBooks Invoice Details file opens on row 5, with Issue Date, Subtotal and Status pre-filled. A row that already names its date column is kept, and a row the person picks is never moved |
 | A Draft invoice was counted as a sale (FreshBooks' August 726.19 against a true 476.19) | an optional Status column, pre-filled from a header that is exactly "Status" or "Statut", leaves rows marked Void, Voided, Deleted or Draft out and lists them; August is 476.19 |
 | A voided invoice was counted as a sale (Sage Accounting's August 150.00 against a true -50.00; Xero's Receivable Invoice Detail counted its Voided line) | the same Status column: Sage's August is -50.00, and Xero's Voided line is listed as left out. Xero's August still has no total, because its other line is the formula saved with no value (still open) |
 
-The status words are the vendors' own (Void, Voided, Draft; Xero's help says its report can include
-deleted invoices). The French words (annulé, supprimé, brouillon) are assumed until someone sees a
-real French export.
+Only one status word is published: FreshBooks' help page names Draft (read 2026-10-08). Void
+(Sage Accounting) and Voided (Xero) are assumed: Sage's page says to void an invoice rather than
+delete it (read 2026-10-08) and Xero's says its report includes voided and deleted invoices by
+default (as of 2026-10-06), but neither shows the word in the status cell, so Deleted is assumed too.
+The "Status" column title is assumed for all three. The French words (annulé, supprimé, brouillon)
+are assumed until someone sees a real French export.
 
 ### Fixed, found 2026-10-06
 

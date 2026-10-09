@@ -44,16 +44,22 @@ export function isPaymentType(cell: Cell | undefined): boolean {
 }
 
 /**
- * What an invoice's status cell says when the invoice was never a sale: voided (Sage Accounting's
- * "Void", Xero's "Voided"), deleted (Xero's report can include deleted invoices) or never sent
- * (FreshBooks' "Draft"). Matched on the whole cell, trimmed, ignoring case and accents, so "Draft
- * sent to client" or "Not void" is not one, and only the column the person chose is ever read: a
- * memo that happens to say "Draft" can't hide a sale.
+ * What an invoice's status cell says when the invoice was never a sale: voided, deleted or never
+ * sent. Matched on the whole cell, trimmed, ignoring case and accents, so "Draft sent to client" or
+ * "Not void" is not one, and only the column the person chose is ever read: a memo that happens to
+ * say "Draft" can't hide a sale.
  *
- * The English words are the ones the vendors' help pages use for those states. The French ones
- * (annulé / annulée, supprimé / supprimée, brouillon) are ASSUMED: no French export has been seen,
- * so they are the obvious translations, nothing more. They are kept without accents here because
- * the cell is compared with its accents taken off ("Annulée" and "annulee" both match).
+ * Where each word comes from (see tests/fixtures/packages/ and docs/connectors/practice-files.md):
+ *  - "Draft" is published: FreshBooks' Invoice Details help page names it as a status (read 2026-10-08).
+ *  - "Void" (Sage Accounting) and "Voided" (Xero) are ASSUMED. Sage's help page says to void an
+ *    invoice rather than delete it (read 2026-10-08), and Xero's says its Receivable Invoice Detail
+ *    report includes voided and deleted invoices by default (as of 2026-10-06), but neither page
+ *    shows the word the status cell holds.
+ *  - "Deleted" is ASSUMED the same way, from that Xero page.
+ *  - The French words (annulé / annulée, supprimé / supprimée, brouillon) are ASSUMED: no French
+ *    export has been seen, so they are the obvious translations, nothing more. They are kept
+ *    without accents here because the cell is compared with its accents taken off ("Annulée" and
+ *    "annulee" both match).
  */
 const LEFT_OUT_STATUSES = new Set([
   "void",

@@ -93,7 +93,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **A FreshBooks file with a summary on top opens on its real column names** ([8c-3]) — FreshBooks'
   Invoice Details puts a short summary ("Total Invoiced, Total Paid" over two figures) above the
   table, and "Add from a file" took the summary's two titles for the column names, with "Total
-  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary.
+  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary,
+  the one that names the date column. A sheet whose first row of names already says "Date" keeps
+  it, and a row you pick yourself is never moved.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading
