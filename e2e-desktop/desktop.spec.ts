@@ -14,7 +14,7 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
-import { png } from "../tests/helpers/receipt-files";
+import { pdf, png } from "../tests/helpers/receipt-files";
 
 const root = path.resolve(__dirname, "..");
 
@@ -333,4 +333,50 @@ test("last year's return is read inside the app, in a worker that can reach noth
   expect(reader, "the return reader's worker").toBeTruthy();
   expect(await reader!.evaluate(() => fetch("/api/figures").then(() => "reached", () => "refused"))).toBe("refused");
   await card.getByRole("button", { name: "Close" }).click();
+});
+
+test("a PDF receipt is drawn inside the app, in a worker that can reach nothing ([8i])", async () => {
+  // The desktop window's own build of pdf.js, worker and policy, as in the browser test
+  // (e2e/receipt-viewer.spec.ts): the receipt's pages come back as pictures, and the worker can't connect.
+  const page = await launch();
+  await page.goto(new URL("/expenses", page.url()).toString());
+  const id = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) =>
+      (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<{
+        expenses?: { id: string }[];
+      }>;
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 2_500, paidTo: "Example Print Shop desktop viewer", whatFor: "toner" }],
+    });
+    const expenseId = proposed.expenses![0].id;
+    await post("/api/expenses/agree", { expenseIds: [expenseId] });
+    await post("/api/expenses/receipt", { expenseId, file });
+    return expenseId;
+  }, pdf({ text: "Example Print Shop receipt" }).toString("base64"));
+  expect(id).toBeTruthy();
+  await page.reload();
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const row = page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Print Shop desktop viewer" });
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const drawn = page.getByRole("dialog", { name: /^Receipt: / }).getByRole("img", { name: "Page 1 of 1" });
+  await expect(drawn).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(() =>
+      drawn.evaluate((el) => {
+        const c = el as HTMLCanvasElement;
+        const data = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+        for (let i = 0; i < data.length; i += 4) if (data[i] < 100 && data[i + 1] < 100 && data[i + 2] < 100) return true;
+        return false;
+      }),
+    )
+    .toBe(true);
+  const viewerWorker = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(viewerWorker, "the receipt viewer's worker").toBeTruthy();
+  expect(await viewerWorker!.evaluate(() => fetch("/api/expenses").then(() => "reached", () => "refused"))).toBe("refused");
+  // The window is still DotAmi's Expenses page: nothing in the receipt moved it.
+  expect(new URL(page.url()).pathname).toBe("/expenses");
 });

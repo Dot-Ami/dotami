@@ -614,6 +614,11 @@ export const LIBRARY_IMPORTS: readonly AllowedCall[] = [
     call: 'package "pdfjs-dist"',
     why: "The return reader's worker loads pdf.js and its parser (the legacy build) and hands the parser to pdf.js as globalThis.pdfjsWorker, so pdf.js starts no worker and loads no script of its own. It only calls extractPageText (lib/figures/return/extract.ts). The worker runs under the static files' own policy in next.config.mjs (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/app.spec.ts checks that in a real browser.",
   },
+  {
+    file: "lib/expenses/receipts/viewer/pdf-pages.worker.ts",
+    call: 'package "pdfjs-dist"',
+    why: "The receipt viewer's worker ([8i]) loads pdf.js and its parser the same way as the return reader's worker, and only calls drawPdfPages (lib/expenses/receipts/viewer/draw-pdf.ts), which hands getDocument the receipt's bytes (`data`), never an address, with the return reader's PDF_OPTIONS (no data-file fetches). It draws pages onto OffscreenCanvases and hands back pictures. It runs under the same static-file policy (default-src 'none'), so even a request pdf.js tried to make would be refused; e2e/receipt-viewer.spec.ts and the desktop test check that in a real browser and in the app.",
+  },
 ];
 
 /**
@@ -690,7 +695,7 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
   {
     name: "pdfjs-dist",
     network: "yes",
-    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in the return reader's worker (lib/figures/return/), hands it the bytes of a file the person dropped, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
+    why: "Mozilla's PDF reader (pdf.js), version 6.4.299 pinned exactly, reviewed 2026-10-08 (docs/connectors/pdf-reader-review.md). It can fetch: a PDF from an address (fetch, or XMLHttpRequest), its character maps, standard fonts and WebAssembly decoders from addresses it is given, and its own worker script. DotAmi uses it only in two workers of its own, the return reader's (lib/figures/return/) and the receipt viewer's (lib/expenses/receipts/viewer/), hands it the bytes of a file the person dropped or a receipt they kept, gives it no address, and turns off both data-file fetches; the worker it runs in can't connect anywhere (next.config.mjs, workerPolicy). Its imports are listed in LIBRARY_IMPORTS. It is bundled into the page's own script files; it is not copied into the desktop app's server.",
   },
   {
     name: "react",

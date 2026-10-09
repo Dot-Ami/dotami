@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Showing a receipt inside DotAmi comes next; the other ways in are not built.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first); the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -331,11 +331,6 @@ the ways in, the seller's address and GST/HST number, and the Lens suggesting a 
 and credits kept either way, the receipt size cap (10 MB), receipts opening inside DotAmi, and that
 deleting an idea keeps its records "not attached yet", with people told so first. Still open:
 
-- **Showing a receipt inside DotAmi's window** (decided, not built): a photo or PDF the person added
-  is an outside file, and showing it in the window needs its own security design and tests: how the
-  bytes are served, what the page's Content-Security-Policy allows for images and PDFs, that a PDF
-  can't run script or reach the network, and what happens to a file that claims one type and is
-  another. **The design is § 8** (written 2026-10-08, before any viewer code).
 - The bank-statement route's own rules (rule 3 of section 3), when the bank and card statements
   story exists.
 - The CRA text above is a summary read today; a human re-read before it enters the catalog.
@@ -343,8 +338,7 @@ deleting an idea keeps its records "not attached yet", with people told so first
 ## 7. Receipts as built: the store, the Delete menu and the sweep (2026-10-08)
 
 The third slice: option A of section 2, as the maintainer decided, and backups that carry the
-receipts (the backup change of section 2). Showing a receipt inside DotAmi is the next change; until
-it is built, DotAmi keeps a receipt but has no way to show it, and no route returns its bytes.
+receipts (the backup change of section 2). Showing a receipt inside DotAmi is § 8.
 
 **Where a receipt lives.** A copy of the file in a `receipts/` folder beside the data file
 (`<data folder>/receipts/` in the desktop app; `prisma/receipts/` beside a copy run from source,
@@ -427,8 +421,8 @@ DotAmi made up and never the file's own, then removed).
 Written before any viewer code, as the maintainer asked when choosing (2026-10-08) to open receipts
 inside DotAmi rather than in the computer's own viewer. A receipt is an outside file, and it may have
 been made to attack whatever opens it. This section is what the viewer must do, and the tests that
-hold it to that. Status: **designed; the viewer follows in the same change** (the rules below say
-which file builds each one once it exists).
+hold it to that. Status: **designed first, then built in the same change** (the section was
+committed on its own before any viewer code; "Built by" below names the files).
 
 **What could go wrong**, and what each rule below answers:
 
@@ -503,3 +497,20 @@ which file builds each one once it exists).
 - A file changed on the disk after it was added: refused by the server.
 - The route itself: only DotAmi's page gets the bytes; the answer's headers are the ones above; the
   path comes from the row.
+
+**Built by** (2026-10-08, in the same change, after this section): rule 1, `lib/expenses/receipts/sniff.ts`
+and `checkShownBytes` in `lib/expenses/receipts/viewer/open.ts`; rule 2, `app/api/expenses/receipt/file/route.ts`,
+`readReceiptFile` in `lib/expenses/receipts/store.ts` and `lib/expenses/receipts/file-headers.ts`; rule 3,
+`lib/expenses/receipts/viewer/open.ts` and `components/expenses/receipt-viewer.tsx`; rule 4,
+`lib/expenses/receipts/viewer/draw-pdf.ts` and `pdf-pages.worker.ts` beside it; rule 5, `frame-src 'none'`
+in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/security-hardening.spec.ts`,
+`e2e/receipt-viewer.spec.ts` (every hostile file above, in a real browser on the production build) and
+`e2e-desktop/desktop.spec.ts` (a PDF receipt drawn in the app's own window, its worker unable to reach
+DotAmi's server).
+
+**Known limits.** The server's size check before reading is a cheap first look; the SHA-256 check after
+it catches the same files, so no test tells the two apart. pdf.js has no overall memory cap: a crafted
+PDF can still unpack a stream far larger than the file and crash the worker (or the window) before the
+20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
+`docs/connectors/pdf-reader-review.md`). A drawn page is a picture: its text can't be selected or
+searched, and there is no zoom beyond the window's own.

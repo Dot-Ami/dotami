@@ -161,7 +161,7 @@ blank. A person should re-read the CRA page before any sentence of it is copied 
 ### Receipts: built (the store, 2026-10-08)
 
 Built as option A of expense-records.md § 2, with backups that carry the receipts; the design as
-built is § 7 there. Showing one inside DotAmi is the next change.
+built is § 7 there; showing one inside DotAmi is § 8 (its security design, written before the viewer).
 
 What is stored: optionally one receipt file per agreed record, exactly as the person gave it, in a
 `receipts/` folder beside the database, named by DotAmi (32 random hex characters and the extension of
@@ -181,9 +181,9 @@ most 50 megapixels and 20,000 pixels on a side, read from its header before anyt
 |---|---|---|---|
 | Someone with the computer or its disk | reads `receipts/` | the operating system's disk encryption; a receipt copy is not encrypted by DotAmi | the person's choice; DotAmi says so |
 | Someone with a backup | opens it | a backup holds the receipts with the data file; the backup passphrase, when set, covers them (AES-256-GCM over the whole stream, its file list authenticated); an unlocked backup is readable by whoever holds it, as before | the person's choice; built (desktop-app.md § Backup and restore) |
-| A receipt file crafted to attack whatever opens it | the person adds it | type decided by its first bytes (not its name or the browser's type), SVG and web pages refused, a size cap checked before the file is read, a pixel cap read from the header; the server never decodes, parses or runs it. No screen shows a receipt yet; the viewer's own security design comes first, in its own change | built for adding; the viewer is next |
+| A receipt file crafted to attack whatever opens it | the person adds it | type decided by its first bytes (not its name or the browser's type), SVG and web pages refused, a size cap checked before the file is read, a pixel cap read from the header; the server never decodes, parses or runs it. Shown inside DotAmi only by what can't run a script: a picture by the browser's image decoder from a `blob:` address, a PDF drawn by pdf.js in a worker that can reach nothing, with no annotation layer and no scripting; the bytes are checked again (type, pixels) before drawing; never a frame or Chromium's PDF viewer (expense-records.md § 8) | built; browser tests with hostile files (`e2e/receipt-viewer.spec.ts`) |
 | A web page or program naming a file | tries `../` or a drive path through a receipt route | DotAmi names every stored file itself (a random id); the person's file name is never sent; the routes take a record's id, look it up in the database and build the name from the row; they answer only DotAmi's own page and sit behind the Host check like every route | built; `tests/expenses-receipts.spec.ts` tries `../`, a drive path and a type that isn't one of the four |
-| An agent or another program | adds, removes or reads a receipt | adding and removing answer only DotAmi's own page (`Sec-Fetch-Site: same-origin`); no route returns a receipt's bytes | built |
+| An agent or another program | adds, removes or reads a receipt | adding, removing and reading (`POST /api/expenses/receipt/file`) answer only DotAmi's own page (`Sec-Fetch-Site: same-origin`); the bytes come back as `application/octet-stream` with `nosniff` and a sandbox policy, and only after their size and SHA-256 match the row | built |
 | A model the Lens uses | reads receipts to propose records | the person's chosen model and permission level; a hosted model's company sees what it reads | when the Lens exists |
 | Someone who finds the data after "delete" | reads leftover bytes | the database is wiped (`VACUUM`); a removed receipt file is deleted, and DotAmi cannot promise its bytes are gone from the disk, which the Delete menu says | built |
 

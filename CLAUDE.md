@@ -56,7 +56,7 @@ says where it is going.
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
   `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
-  `receipt/remove`) · `settings` (GET/PUT
+  `receipt/remove` / `receipt/file`, the last returning a receipt's bytes only after its size and SHA-256 match) · `settings` (GET/PUT
   one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window).
 - Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no

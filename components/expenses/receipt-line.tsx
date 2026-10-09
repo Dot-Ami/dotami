@@ -10,9 +10,12 @@ import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_RECEIPT_BYTES, typeName } from "@/lib/expenses/receipts/types";
 import type { ExpenseView } from "@/lib/expenses/types";
 
+import { ReceiptViewer } from "./receipt-viewer";
+
 /**
  * [8i] A record's receipt, on the Expenses page: what is kept ("Receipt: PDF · 1.2 MB · added …")
- * with **Remove receipt**, or **Add a receipt** for an agreed record that has none.
+ * with **Show receipt** (inside DotAmi, receipt-viewer.tsx) and **Remove receipt**, or **Add a receipt**
+ * for an agreed record that has none.
  *
  * Adding one: the person is told first, in plain words, that the file is kept exactly as given (so
  * whatever is printed on it is kept too) and what kinds and size are accepted. The file is checked
@@ -39,6 +42,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
   const input = useRef<HTMLInputElement>(null);
   const [adding, setAdding] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [showing, setShowing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +104,9 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
             {/* The day on the person's own clock: the stored time is UTC, which is already tomorrow on a Canadian evening. */}
             Receipt: {typeName(r.type)} · {sizeWords(r.bytes)} · added {new Date(r.addedAt).toLocaleDateString("en-CA")}
           </span>
+          <button type="button" onClick={() => setShowing(true)} className={LINK}>
+            Show receipt
+          </button>
           {confirmingRemove ? (
             <span className="flex items-center gap-2">
               <span className="text-paper-dim">Remove this receipt? DotAmi deletes its copy of the file; the record stays.</span>
@@ -117,6 +124,9 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
           )}
         </div>
         {errorLine}
+        {showing ? (
+          <ReceiptViewer expenseId={record.id} type={r.type} title={`${record.date} · ${record.paidTo}`} onClose={() => setShowing(false)} />
+        ) : null}
       </div>
     );
   }

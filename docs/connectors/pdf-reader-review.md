@@ -149,6 +149,32 @@ cases in [tests/figures-return-read.spec.ts](../../tests/figures-return-read.spe
 file, a truncated file, something that only starts like a PDF, 301 pages, pictures only) is left to
 pdf.js's own testing, which runs on every Firefox release.
 
+## The receipt viewer: drawing pages ([8i])
+
+Since 2026-10-08 the same pdf.js also draws receipts (the security design is § 8 of
+[expense-records.md](../architecture/expense-records.md)). It runs in a second worker of DotAmi's own,
+`lib/expenses/receipts/viewer/pdf-pages.worker.ts`, set up exactly like the return reader's (parser
+handed over as `globalThis.pdfjsWorker`, the static files' no-connection policy, the same
+`PDF_OPTIONS`). Drawing switches on more of pdf.js than reading text does, and each part is bounded:
+
+- **The renderer** runs (`page.render`) onto an `OffscreenCanvas` in the worker; the page receives
+  only finished pictures (`ImageBitmap`). pdf.js's own canvases come from a factory of DotAmi's that
+  makes `OffscreenCanvas`es, and the SVG filters it would add to a document are switched off (there is
+  no document in a worker).
+- **Pictures inside the PDF** are decoded by pdf.js's own JavaScript decoders (`isImageDecoderSupported`
+  and `useWasm` stay off), capped at 50 megapixels each (`maxImageSize`).
+- **Fonts** are drawn as outlines inside the worker (`disableFontFace` stays on); a font the PDF
+  doesn't embed is drawn with a standard one, since pdf.js's font files are never fetched.
+- **Still off:** the annotation layer (no link or form field becomes a control), the text layer, XFA,
+  and pdf.js's scripting sandbox, the only part of pdf.js that runs a PDF's JavaScript, which DotAmi
+  never loads.
+- **Limits:** 20 pages drawn, 16 megapixels a page, 20 seconds a file (the worker is ended after
+  that). The memory limit above applies here too.
+
+Hostile PDFs tested in a real browser: one with JavaScript in its `OpenAction` and a URI action, and
+one with a web page appended (`e2e/receipt-viewer.spec.ts`): both drawn, nothing runs, nothing is
+fetched.
+
 ## When a new version comes out
 
 1. Check the GitHub Advisory Database for `pdfjs-dist` and read the release notes since 6.4.299.

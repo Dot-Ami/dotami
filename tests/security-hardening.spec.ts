@@ -201,7 +201,10 @@ describe("Content-Security-Policy middleware", () => {
     expect(script).toContain("'strict-dynamic'");
     expect(script).not.toContain("'unsafe-inline'");
     expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-src 'none'");
     expect(csp).toContain("frame-ancestors 'none'");
+    // Receipt pictures are shown from blob: addresses of DotAmi's own Blobs; nothing wider.
+    expect(csp).toContain("img-src 'self' blob: data:");
     expect(csp).toContain("connect-src 'self'");
     // the nonce reaches the app so Next can stamp its own scripts
     expect(res.headers.get("x-middleware-request-x-nonce") ?? res.headers.get("x-nonce") ?? "nonce-forwarded").toBeTruthy();

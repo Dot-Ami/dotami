@@ -39,7 +39,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or a web page can carry a script), and refuses a picture too large to show safely. It names the copy
   itself with a random string; your file's name is never sent or kept. You are told first that the copy
   is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
-  DotAmi's copy and keeps the record. There is no way to look at a receipt inside DotAmi yet.
+  DotAmi's copy and keeps the record.
+- **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
+  Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
+  is fetched from the internet, and DotAmi checks the file is the one you added before showing it;
+  a file changed or replaced on your computer since then is refused, with what to do.
 - **Backups hold your receipts** — *File → Back up…* now puts every receipt file in the backup with
   the data, locked by the same passphrase if you chose one, and says how many went in. *Restore*
   brings them back; the receipts already on this computer go to the backups folder beside the safety
