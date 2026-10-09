@@ -9,6 +9,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -30,6 +31,8 @@ vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
 const root = mkdtempSync(path.join(tmpdir(), "dotami-delete-"));
 const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
 const clients: PrismaClient[] = [];
+/** Lock-holding connections (lockBeforeNextWipe) not yet released; afterAll closes any a failed test left open. */
+const openLockers = new Set<DatabaseSync>();
 
 /** A migrated, empty database in its own folder. */
 function makeDb(name: string) {
@@ -112,6 +115,8 @@ function markerOnDisk(folder: string): string[] {
 
 afterAll(async () => {
   for (const c of clients) await c.$disconnect();
+  // A lock a failed test never released: closing the connection rolls its transaction back.
+  for (const l of openLockers) l.close();
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -303,6 +308,29 @@ describe("deleteData", () => {
     expect(await countAll(prisma)).toEqual(before);
     expect(before.PersonStatement).toBe(2);
   });
+
+  it("deletes nothing when another connection is mid-change during the delete itself, and the next try deletes", async () => {
+    const { prisma, url } = makeDb("delete-locked");
+    await seed(prisma);
+    const seen = await seenFor(prisma, ["statements"]);
+    // Another DotAmi process holds the write lock for the whole delete, on its one connection.
+    const other = new DatabaseSync(url.replace(/^file:/, ""));
+    openLockers.add(other);
+    other.prepare("BEGIN IMMEDIATE").run();
+    // The database gives up after its busy wait; the route turns that into "nothing was deleted".
+    await expect(deleteData(prisma, { kinds: ["statements"], seen })).rejects.toThrow();
+    other.prepare("COMMIT").run();
+    other.close();
+    openLockers.delete(other);
+    expect(await prisma.personStatement.count()).toBe(2);
+    // The client isn't left holding a half-finished transaction: the same delete now goes through.
+    expect(await deleteData(prisma, { kinds: ["statements"], seen })).toEqual({
+      status: "deleted",
+      deleted: { PersonStatement: 2 },
+      left: { PersonStatement: 0 },
+      wiped: true,
+    });
+  });
 });
 
 describe("the deleted words are gone from the file, not just hidden", () => {
@@ -339,21 +367,50 @@ describe("the deleted words are gone from the file, not just hidden", () => {
  * Makes the next VACUUM on `prisma` meet a real lock: just before it runs, a second connection
  * starts a write transaction on the same file (what another DotAmi process mid-change looks like).
  * The VACUUM itself is the real one and fails with SQLite's own "database is locked".
+ *
+ * The lock is held by one plain node:sqlite connection, not a second PrismaClient. A PrismaClient
+ * keeps a pool of connections and sends each query to whichever one is free, so a raw BEGIN and its
+ * COMMIT can go to two different connections: the COMMIT then fails with "cannot commit - no
+ * transaction is active" and the lock stays held into the next test. That is how this file failed
+ * on CI (runs 37866604298, 37873788136 and 37875709156, 2026-10-09). A single connection has no
+ * other one to send the COMMIT to.
+ *
+ * `state` says whether the lock was really taken and how the wipe's VACUUM ended, so a test can
+ * check that the wipe failed on this lock and not on something else (had BEGIN IMMEDIATE itself
+ * failed, the wipe would still answer false, for the wrong reason).
  */
 function lockBeforeNextWipe(prisma: PrismaClient, url: string) {
-  const other = new PrismaClient({ datasourceUrl: url });
-  clients.push(other);
+  const other = new DatabaseSync(url.replace(/^file:/, ""));
+  openLockers.add(other);
+  // Wait for a write that is just finishing rather than fail at once: the lock must be taken.
+  other.prepare("PRAGMA busy_timeout = 5000").run();
+  const state = { held: false, query: "", error: "" };
   const real = prisma.$executeRawUnsafe.bind(prisma);
   const spy = vi.spyOn(prisma, "$executeRawUnsafe").mockImplementationOnce((async (query: string, ...values: unknown[]) => {
-    await other.$executeRawUnsafe("BEGIN IMMEDIATE");
-    return real(query, ...values);
+    other.prepare("BEGIN IMMEDIATE").run();
+    state.held = true;
+    state.query = query;
+    try {
+      return await real(query, ...values);
+    } catch (error) {
+      state.error = String((error as { meta?: { message?: unknown } }).meta?.message ?? "");
+      throw error;
+    }
   }) as typeof prisma.$executeRawUnsafe);
   return {
+    state,
     release: async () => {
       spy.mockRestore();
-      await other.$executeRawUnsafe("COMMIT");
+      other.prepare("COMMIT").run();
+      other.close();
+      openLockers.delete(other);
     },
   };
+}
+
+/** The wipe ran its VACUUM while the lock was held, and SQLite refused it for that lock. */
+function expectWipeMetTheLock(lock: ReturnType<typeof lockBeforeNextWipe>) {
+  expect(lock.state).toEqual({ held: true, query: "VACUUM", error: expect.stringMatching(/database is locked/) });
 }
 
 /** Is this statement's text anywhere in the data file's bytes? */
@@ -366,6 +423,7 @@ describe("when the wipe can't run, the rows are still gone and the person is tol
     await prisma.personStatement.deleteMany();
     const lock = lockBeforeNextWipe(prisma, url);
     expect(await wipeFreeSpace(prisma)).toBe(false);
+    expectWipeMetTheLock(lock);
     await lock.release();
     expect(await wipeFreeSpace(prisma)).toBe(true);
   });
@@ -376,6 +434,7 @@ describe("when the wipe can't run, the rows are still gone and the person is tol
     const lock = lockBeforeNextWipe(prisma, url);
     const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) });
     expect(result).toEqual({ status: "deleted", deleted: { PersonStatement: 2 }, left: { PersonStatement: 0 }, wiped: false });
+    expectWipeMetTheLock(lock);
     await lock.release();
     expect(await prisma.personStatement.count()).toBe(0);
     // This is why the page says the space isn't wiped yet: the deleted words are still in the file.
@@ -478,6 +537,7 @@ describe("POST /api/your-data/delete", () => {
     const res = await route.POST(post({ kinds: ["figures"], seen: await seenFor(db.prisma, ["figures"]) }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: "deleted", deleted: { Figure: 2 }, left: { Figure: 0 }, wiped: false });
+    expectWipeMetTheLock(lock);
     await lock.release();
     expect(await db.prisma.figure.count()).toBe(0);
     const retry = await route.POST(post({ retryWipe: true }));
