@@ -16,6 +16,9 @@
 //   7. the plain file (and a journal beside it) is overwritten with zeros, flushed and deleted; then the
 //      note is deleted.
 // resumeEncryption reads what is on the disk at a start and finishes, redoes or stops (§ 6's table).
+// There is one note for the whole data folder, so only one file is encrypted at a time: encryptFile
+// refuses to start while a note is there (a wipe another program held up is still owed), because a new
+// note would replace the old one and the plain file it names would never be wiped.
 //
 // The log gets the step and counts only, never a name of the person's, a value or the key.
 import { createHash } from "node:crypto";
@@ -41,7 +44,7 @@ const JOURNAL = "-journal";
 
 /** Thrown when a file can't be encrypted now and nothing was changed; `message` is written for the person. */
 export class EncryptionStopped extends Error {
-  /** @param {"damaged" | "busy" | "stuck" | "mismatch"} kind @param {string} message */
+  /** @param {"damaged" | "busy" | "stuck" | "mismatch" | "pending"} kind @param {string} message */
   constructor(kind, message) {
     super(message);
     this.name = "EncryptionStopped";
@@ -106,8 +109,11 @@ function sha256Of(file) {
  * there. Throws when another program holds it (Windows: EBUSY or EPERM): the caller keeps it owed.
  * On a solid-state disk this makes the bytes unreadable through the file system, not necessarily on the
  * physical disk (§ 1); DotAmi says so in Settings.
+ * @param {string} file
+ * @param {{ remove?: (file: string) => void }} [options]  `remove` stands in for the delete in the tests
+ *   (one that fails shows what the zeros left behind).
  */
-export function wipeFile(file) {
+export function wipeFile(file, { remove = rmSync } = {}) {
   // Opened once and measured through the same handle, so the zeros cover the whole of the file opened.
   let fd;
   try {
@@ -127,7 +133,7 @@ export function wipeFile(file) {
   } finally {
     closeSync(fd);
   }
-  rmSync(file);
+  remove(file);
 }
 
 /** The plain file's contents, after SQLite's integrity check (step 1). A file SQLite finds damaged is refused, unchanged. */
@@ -184,6 +190,14 @@ function clearLeftovers(file, dataDir) {
  *   `rename` replaces the first rename in the tests (a file another program holds).
  */
 export function encryptFile(dataDir, file, key, { log = () => {}, crashAt, rename = renameSync } = {}) {
+  // One note per data folder: while one is there (a wipe still owed, or an encryption a crash left that the
+  // start couldn't finish), a new one would replace it and the plain file it names would be forgotten.
+  if (readNote(dataDir) !== null) {
+    throw new EncryptionStopped(
+      "pending",
+      "DotAmi is still finishing an earlier encryption (a plain copy another program holds is still to be wiped), so it didn't start another. Nothing was changed; DotAmi tries again at its next start.",
+    );
+  }
   clearLeftovers(file, dataDir);
   const expected = checkedPlain(file);
   const copy = `${file}${COPY_SUFFIX}`;
@@ -267,7 +281,8 @@ export function resumeEncryption(dataDir, key, { log = () => {} } = {}) {
     const had = leftovers.length > 0 || existsSync(`${notePath(dataDir)}.tmp`) || note !== null;
     for (const f of leftovers) wipeFile(f);
     removeNote(dataDir);
-    return { action: had ? "cleared" : "none" };
+    const orphans = key ? wipeOrphanPlainCopies(dataDir, key, log) : 0;
+    return { action: had || orphans > 0 ? "cleared" : "none" };
   }
   // Every step from here either needs the key to check the encrypted file or follows one that did.
   if (!key) return { action: "none" };
@@ -320,6 +335,19 @@ export function resumeEncryption(dataDir, key, { log = () => {} } = {}) {
 
 /** Every "<file>.encrypting" (and its journal) in the data folder and its backups/ folder. */
 function leftoverCopies(dataDir) {
+  return filesEndingIn(dataDir, [COPY_SUFFIX, `${COPY_SUFFIX}${JOURNAL}`]);
+}
+
+/**
+ * Every "<file>.plain-to-wipe" (and its journal) still in the data folder and its backups/ folder: a
+ * whole plain copy of the data each, waiting to be overwritten. Settings counts them (desktop/main.mjs).
+ * @param {string} dataDir
+ */
+export function plainLeftovers(dataDir) {
+  return filesEndingIn(dataDir, [PLAIN_SUFFIX, `${PLAIN_SUFFIX}${JOURNAL}`]);
+}
+
+function filesEndingIn(dataDir, endings) {
   const found = [];
   for (const folder of [dataDir, path.join(dataDir, "backups")]) {
     let names;
@@ -328,7 +356,7 @@ function leftoverCopies(dataDir) {
     } catch {
       continue;
     }
-    for (const n of names) if (n.endsWith(COPY_SUFFIX) || n.endsWith(`${COPY_SUFFIX}${JOURNAL}`)) found.push(path.join(folder, n));
+    for (const n of names) if (endings.some((e) => n.endsWith(e))) found.push(path.join(folder, n));
   }
   return found;
 }
@@ -352,6 +380,34 @@ export function setAsideLockedFile(dataDir, dbFile, now = Date.now) {
   renameSync(dbFile, target);
   if (existsSync(`${dbFile}${JOURNAL}`)) renameSync(`${dbFile}${JOURNAL}`, `${target}${JOURNAL}`);
   return target;
+}
+
+/**
+ * A plain copy no note names (an earlier build could forget one when it encrypted a second file while a
+ * wipe was still owed): wiped when the encrypted file beside it, the one it was swapped out for, opens with
+ * the key. Anything else is left as it is. Returns how many were wiped; one another program holds stays.
+ */
+function wipeOrphanPlainCopies(dataDir, key, log) {
+  let wiped = 0;
+  for (const plain of plainLeftovers(dataDir)) {
+    if (!plain.endsWith(PLAIN_SUFFIX)) continue;
+    const encrypted = plain.slice(0, -PLAIN_SUFFIX.length);
+    try {
+      if (fileKind(encrypted) !== "encrypted") continue;
+      openDatabase(encrypted, { key, readonly: true, fileMustExist: true }).close();
+    } catch {
+      continue;
+    }
+    try {
+      wipeFile(plain);
+      wipeFile(`${plain}${JOURNAL}`);
+      wiped += 1;
+    } catch (error) {
+      log(`[encrypt] a plain copy no note named couldn't be wiped yet (${error?.code ?? error?.name ?? "error"}); tried again at the next start`);
+    }
+  }
+  if (wiped > 0) log(`[encrypt] ${wiped} plain cop${wiped === 1 ? "y" : "ies"} no note named, beside a file the key opens, wiped`);
+  return wiped;
 }
 
 /** The sentence for files DotAmi didn't leave in this state: what is there, and that nothing was removed. */

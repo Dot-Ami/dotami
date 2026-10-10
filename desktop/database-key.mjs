@@ -23,6 +23,7 @@ import { randomBytes } from "node:crypto";
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeSync } from "node:fs";
 import path from "node:path";
 
+import { setAsideLockedFile } from "./encrypt-database.mjs";
 import { keyIdOf } from "./receipt-crypto.mjs";
 import { KeyStoreNotSaved, keyStoreAvailable, NoKeyStore, waitForLocalState } from "./receipt-key.mjs";
 
@@ -50,9 +51,10 @@ export class KeyNotReadableAfterSave extends Error {
  *       something is to be encrypted (`unreadable`: a key file is there that this account can't open; it
  *       will be moved to backups/, never deleted)
  *   { state: "no-key-store" }  the operating system's protection isn't available and nothing is locked
- *   { state: "key-unreadable", keyId, missing }  something is locked, and no key here opens it: the key
- *       file can't be opened by this account, holds another key, is `missing`, or the key store isn't
- *       available right now. Nothing on the disk is changed.
+ *   { state: "key-unreadable", keyId, missing, storeUnavailable }  something is locked, and no key here
+ *       opens it: the key file can't be opened by this account, holds another key, is `missing`, or the
+ *       key store isn't available right now (`storeUnavailable`: a restart may bring it back, so nothing
+ *       may be given up for it). Nothing on the disk is changed.
  * @param {string} dataDir
  * @param {import("./receipt-key.mjs").KeyStore} store
  * @param {{ locked: boolean, platform?: string }} options
@@ -61,13 +63,13 @@ export function openDatabaseKey(dataDir, store, { locked, platform = process.pla
   const file = path.join(dataDir, DATABASE_KEY_FILE);
   const missing = !existsSync(file);
   if (!keyStoreAvailable(store, platform)) {
-    if (locked) return { state: "key-unreadable", keyId: missing ? null : readKeyFile(file).keyId, missing };
+    if (locked) return { state: "key-unreadable", keyId: missing ? null : readKeyFile(file).keyId, missing, storeUnavailable: true };
     return { state: "no-key-store" };
   }
-  if (missing) return locked ? { state: "key-unreadable", keyId: null, missing: true } : { state: "none", unreadable: false };
+  if (missing) return locked ? { state: "key-unreadable", keyId: null, missing: true, storeUnavailable: false } : { state: "none", unreadable: false };
   const { keyId, key } = unwrap(file, store);
   if (key) return { state: "on", key, keyId: keyIdOf(key) };
-  return locked ? { state: "key-unreadable", keyId, missing: false } : { state: "none", unreadable: true };
+  return locked ? { state: "key-unreadable", keyId, missing: false, storeUnavailable: false } : { state: "none", unreadable: true };
 }
 
 /**
@@ -119,6 +121,42 @@ export async function makeDatabaseKey(dataDir, store, { platform = process.platf
     throw new KeyNotReadableAfterSave();
   }
   return { key, keyId: keyIdOf(key), setAside };
+}
+
+/**
+ * [8i] For a restore from the lost-key window: moves the locked data file into backups/ (never deleting it;
+ * encrypt-database.mjs setAsideLockedFile), THEN saves `key` as the data file's key (the old key file goes
+ * to backups/ too, makeDatabaseKey). In this order so a step that fails never leaves a new key beside the
+ * old locked file (a key file that opens but doesn't fit, found in review): if the file can't be moved
+ * (another program holds it), nothing has changed; if the key can't be saved, the locked file is put back
+ * where it was. Throws the step's error with `step` set to "set-aside" or "key".
+ * @param {string} dataDir
+ * @param {string} dbFile
+ * @param {import("./receipt-key.mjs").KeyStore} store
+ * @param {Buffer} key
+ * @param {{ platform?: string, now?: () => number, keyStoreSaved?: () => Promise<boolean>, setAside?: typeof setAsideLockedFile }} [options]
+ *   `setAside` stands in for the move in the tests (a file another program holds).
+ * @returns {Promise<{ lockedTo: string | null, keySetAside: string | null }>}
+ */
+export async function setAsideLockedFileUnderNewKey(dataDir, dbFile, store, key, { setAside = setAsideLockedFile, ...keyOptions } = {}) {
+  let lockedTo;
+  try {
+    lockedTo = setAside(dataDir, dbFile);
+  } catch (error) {
+    throw Object.assign(error, { step: "set-aside" });
+  }
+  try {
+    const made = await makeDatabaseKey(dataDir, store, { ...keyOptions, key });
+    return { lockedTo, keySetAside: made.setAside };
+  } catch (error) {
+    // makeDatabaseKey changes nothing when it throws (it puts the old key file back itself); the locked file
+    // goes back where it was, so the next start finds the same lost-key state as before.
+    if (lockedTo) {
+      renameSync(lockedTo, dbFile);
+      if (existsSync(`${lockedTo}-journal`)) renameSync(`${lockedTo}-journal`, `${dbFile}-journal`);
+    }
+    throw Object.assign(error, { step: "key" });
+  }
 }
 
 /** The key file as parsed: its key id (null if it isn't readable as one), and the parsed JSON. */

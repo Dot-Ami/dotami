@@ -21,6 +21,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Restore from a backup… when the data file's key is lost** ([8i]) — the window that says the key
   can't be opened now offers it: the locked data file and its key file are moved into the backups
   folder, never deleted (in case the key comes back), and the backup is restored under a new key.
+  The locked file moves before the new key is saved, so a step that fails changes nothing; while
+  Windows' key store is only unavailable for now, the window offers no restore and says to restart.
 - **Your data file is encrypted in the desktop app** ([8i], the maintainer's decisions of 2026-10-10)
   — with a key only your Windows account on this computer can open, kept wrapped by Windows (the
   same protection as the receipts' key, in a file of its own, `database.key`), and its safety copies
@@ -30,9 +32,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and **Never…** (after a second warning). Encrypting never makes a second plain copy, survives being
   stopped at any step, and overwrites the plain file with zeros before deleting it. Settings and
   *What DotAmi knows about you* say whether the file is encrypted, and Settings has an **Encrypt the
-  data file** switch to turn it on after "Never". When the key can't be opened, nothing is changed
-  and a window says what happened and that putting `database.key` back brings everything back.
-  Backups hold the data decrypted, rebuilt in memory (no plain copy on the disk), so they restore on
+  data file** switch to turn it on after "Never". When the key can't be opened (or the key file
+  opens but holds another key, or Windows' key store isn't available right now), nothing is changed
+  and a window says what happened and that putting `database.key` back brings everything back. A key
+  that opens is never replaced, even when the data file is missing; a data file another program holds
+  stops the start with a sentence saying so, never taken for a new one; and only one file is encrypted
+  at a time, so an unencrypted copy whose wipe another program held up is never forgotten.  Backups hold the data decrypted, rebuilt in memory (no plain copy on the disk), so they restore on
   another computer; a restore is written encrypted with this computer's key. An older DotAmi can't
   open an encrypted file: going back needs a backup. A copy run from source keeps the file plain and
   says so.
@@ -347,8 +352,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   backups and restore would change, encrypting an existing file once without ever losing data, a
   copy run from source (stays unencrypted, and says so), and losing the key. With reviews of the
   three candidate packages (`better-sqlite3-multiple-ciphers` with Prisma's adapter, `libsql`, the
-  SQLCipher packages) and the choices left for the maintainer, with their costs. Nothing changes in
-  the app (`docs/architecture/database-encryption.md`).
+  SQLCipher packages), the choices put to the maintainer with their costs, and the maintainer's four
+  decisions of 2026-10-10 (option A, measured first; backups only plus "Start fresh"; a passphrase
+  required on every backup; "Not now" and "Never" allowed). Nothing changes in the app
+  (`docs/architecture/database-encryption.md`).
 
 ### Fixed
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved

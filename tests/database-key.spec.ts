@@ -11,7 +11,15 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { DATABASE_KEY_FILE, KeyNotReadableAfterSave, makeDatabaseKey, NoKeyStore, KeyStoreNotSaved, openDatabaseKey } from "../desktop/database-key.mjs";
+import {
+  DATABASE_KEY_FILE,
+  KeyNotReadableAfterSave,
+  makeDatabaseKey,
+  NoKeyStore,
+  KeyStoreNotSaved,
+  openDatabaseKey,
+  setAsideLockedFileUnderNewKey,
+} from "../desktop/database-key.mjs";
 import type { KeyStore } from "../desktop/receipt-key.mjs";
 
 let dir = "";
@@ -88,7 +96,7 @@ describe("when the key can't be opened and something is locked with it", () => {
   });
 
   it("a missing key file is never replaced while something is locked", () => {
-    expect(open(dir, accountStore("dot"), true)).toEqual({ state: "key-unreadable", keyId: null, missing: true });
+    expect(open(dir, accountStore("dot"), true)).toEqual({ state: "key-unreadable", keyId: null, missing: true, storeUnavailable: false });
     expect(readdirSync(dir)).toEqual([]);
   });
 
@@ -106,7 +114,57 @@ describe("when the key can't be opened and something is locked with it", () => {
 
   it("no key store right now, with something locked: key-unreadable, not 'no key store'", async () => {
     await make(dir, accountStore("dot"));
-    expect(open(dir, accountStore("dot", { available: false }), true)).toMatchObject({ state: "key-unreadable" });
+    // Said apart from a lost key: a restart may bring the store back, so the window mustn't offer to give anything up.
+    expect(open(dir, accountStore("dot", { available: false }), true)).toMatchObject({ state: "key-unreadable", storeUnavailable: true });
+    expect(open(dir, accountStore("dot"), true)).toMatchObject({ state: "on" });
     expect(open(dir, accountStore("dot", { available: false }), false)).toEqual({ state: "no-key-store" });
+  });
+});
+
+describe("a restore from the lost-key window: the locked file set aside, then the new key saved", () => {
+  /** A data folder whose data file is locked with a key this account can't open: another account's key file. */
+  async function lockedFolder() {
+    await make(dir, accountStore("someone-else"));
+    const dbFile = path.join(dir, "dotami.db");
+    writeFileSync(dbFile, Buffer.from("encrypted bytes stand-in"));
+    return { dbFile, keyBefore: readFileSync(path.join(dir, DATABASE_KEY_FILE)), dbBefore: readFileSync(dbFile) };
+  }
+  const newKey = Buffer.alloc(32, 0x5e);
+  const backupsHolding = (prefix: string) => (existsSync(path.join(dir, "backups")) ? readdirSync(path.join(dir, "backups")).filter((f) => f.startsWith(prefix)) : []);
+
+  it("does both, in that order, and deletes nothing", async () => {
+    const { dbBefore, keyBefore } = await lockedFolder();
+    const done = await setAsideLockedFileUnderNewKey(dir, path.join(dir, "dotami.db"), accountStore("dot"), newKey, { platform: WINDOWS, keyStoreSaved: saved, now: () => 9 });
+    expect(done.lockedTo).toMatch(/dotami-locked-\d+\.db$/);
+    expect(readFileSync(done.lockedTo!).equals(dbBefore)).toBe(true);
+    expect(readFileSync(done.keySetAside!).equals(keyBefore)).toBe(true);
+    expect(open(dir, accountStore("dot"), true)).toMatchObject({ state: "on", key: newKey });
+    expect(existsSync(path.join(dir, "dotami.db"))).toBe(false);
+  });
+
+  it("a locked file another program holds: nothing changes, and no new key is saved", async () => {
+    const { dbFile, dbBefore, keyBefore } = await lockedFolder();
+    const held = () => {
+      throw Object.assign(new Error("resource busy or locked"), { code: "EBUSY" });
+    };
+    const failed = await setAsideLockedFileUnderNewKey(dir, dbFile, accountStore("dot"), newKey, { platform: WINDOWS, keyStoreSaved: saved, setAside: held }).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    // The key file is the one found, byte for byte: never a new key beside the old locked file.
+    expect(readFileSync(path.join(dir, DATABASE_KEY_FILE)).equals(keyBefore)).toBe(true);
+    expect(backupsHolding("database-key-")).toEqual([]);
+    expect(readFileSync(dbFile).equals(dbBefore)).toBe(true);
+    expect(failed).toMatchObject({ step: "set-aside", code: "EBUSY" });
+  });
+
+  it("a key that can't be saved: the locked file is put back where it was, and the old key file stays", async () => {
+    const { dbFile, dbBefore, keyBefore } = await lockedFolder();
+    await expect(
+      setAsideLockedFileUnderNewKey(dir, dbFile, accountStore("dot"), newKey, { platform: WINDOWS, keyStoreSaved: async () => false }),
+    ).rejects.toMatchObject({ step: "key" });
+    expect(readFileSync(dbFile).equals(dbBefore)).toBe(true);
+    expect(readFileSync(path.join(dir, DATABASE_KEY_FILE)).equals(keyBefore)).toBe(true);
+    expect(backupsHolding("dotami-locked-")).toEqual([]);
   });
 });

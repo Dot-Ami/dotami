@@ -854,6 +854,12 @@ describe("desktop migrator — on an encrypted data file ([8i])", () => {
     expect(() => vacuumFile(dbFile)).toThrow(CannotOpenDatabase);
     expect(fileHash(dbFile)).toBe(was);
     expect(vacuumFile(dbFile, KEY)).toBe(true);
+    // Rebuilt by VACUUM, the file is still encrypted: it doesn't open without the key, and does with it.
+    // (A VACUUM that wrote it back decrypted would still have dropped the deleted words, so the wipe's own
+    // tests can't see this.)
+    expect(fileKind(dbFile)).toBe("encrypted");
+    expect(() => openDatabase(dbFile, { readonly: true, fileMustExist: true })).toThrow(CannotOpenDatabase);
+    expect(withKey(dbFile, (db) => db.pragma("integrity_check", { simple: true }))).toBe("ok");
   });
 });
 

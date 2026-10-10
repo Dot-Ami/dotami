@@ -9,9 +9,13 @@
  *   the plain file whole when it stopped before the swap.
  * - A file another program holds, a plain file written to after its copy was made, a note that can't be
  *   read, files in a state DotAmi didn't leave, and a damaged file: nothing is lost or removed.
+ * - The wipe really writes zeros over the plain file's whole length before it deletes it, and a plain
+ *   copy whose wipe is owed is never forgotten: no second file is encrypted while the note names it.
+ * - A data file another program holds is never taken for a missing one (fileKind).
  */
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -27,12 +31,14 @@ import {
   ENCRYPTING_NOTE,
   notePath,
   PLAIN_SUFFIX,
+  plainLeftovers,
   readNote,
   resumeEncryption,
   setAsideLockedFile,
+  wipeFile,
   type CrashPoint,
 } from "../desktop/encrypt-database.mjs";
-import { CannotOpenDatabase, fileKind, openDatabase } from "../desktop/sqlite.mjs";
+import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase } from "../desktop/sqlite.mjs";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
 import { countEveryTable, seedEveryTable } from "./helpers/seed-every-table";
 
@@ -236,5 +242,120 @@ describe("a data file whose key is lost is set aside, never deleted ([8i])", () 
     rmSync(`${moved}-journal`);
     expect(contentsOfFile(moved!, KEY)).toEqual(before.contents);
     expect(setAsideLockedFile(before.dir, before.file)).toBeNull();
+  });
+});
+
+describe("a plain copy whose wipe is owed is never forgotten", () => {
+  /** A plain safety copy in backups/, as the migrator leaves one before an update. */
+  async function plainSafetyCopy(dir: string) {
+    const other = await seededFolder();
+    mkdirSync(path.join(dir, "backups"), { recursive: true });
+    const copy = path.join(dir, "backups", "dotami-before-001-x.db");
+    copyFileSync(other.file, copy);
+    return { copy, contents: other.contents };
+  }
+
+  it("no second file is encrypted while the note names the data file's plain copy; once it is wiped, the copy is", async () => {
+    const before = await seededFolder();
+    // Stopped after the note says "wipe": the same files on the disk as a wipe another program held up.
+    encryptFile(before.dir, before.file, KEY, { crashAt: "note-wipe" });
+    const plain = `${before.file}${PLAIN_SUFFIX}`;
+    const safety = await plainSafetyCopy(before.dir);
+    const copyWas = sha(safety.copy);
+
+    let stopped: unknown = null;
+    try {
+      encryptFile(before.dir, safety.copy, KEY);
+    } catch (error) {
+      stopped = error;
+    }
+    expect(stopped).toBeInstanceOf(EncryptionStopped);
+    expect((stopped as EncryptionStopped).kind).toBe("pending");
+    // The note still names the data file's plain copy, which is still there to be wiped; the safety copy is untouched.
+    expect(readNote(before.dir)).toMatchObject({ step: "wipe", file: "dotami.db" });
+    expect(existsSync(plain)).toBe(true);
+    expect(sha(safety.copy)).toBe(copyWas);
+    expect(plainLeftovers(before.dir)).toEqual([plain]);
+
+    // The next start finishes the wipe, and then the safety copy is encrypted too: nothing plain is left.
+    expect(resumeEncryption(before.dir, KEY)).toMatchObject({ action: "finished", wipePending: false });
+    expect(encryptFile(before.dir, safety.copy, KEY)).toEqual({ wipePending: false });
+    expect(plainLeftovers(before.dir)).toEqual([]);
+    expect(contentsOfFile(safety.copy, KEY)).toEqual(safety.contents);
+    expect(filesHoldingMarker(before.dir)).toEqual([]);
+  });
+
+  it("a plain copy no note names, beside a file the key opens, is wiped at the next start; one beside a file it doesn't open stays", async () => {
+    const before = await seededFolder();
+    encryptFile(before.dir, before.file, KEY, { crashAt: "note-wipe" });
+    const plain = `${before.file}${PLAIN_SUFFIX}`;
+    // What an earlier build could leave: the note gone, the plain copy still there.
+    rmSync(notePath(before.dir));
+    expect(filesHoldingMarker(before.dir)).toEqual([path.basename(plain)]);
+
+    // Without the key, or with a key that doesn't open the file beside it, nothing is touched.
+    expect(resumeEncryption(before.dir, null)).toEqual({ action: "none" });
+    expect(resumeEncryption(before.dir, Buffer.alloc(32, 0x07))).toEqual({ action: "none" });
+    expect(existsSync(plain)).toBe(true);
+
+    expect(resumeEncryption(before.dir, KEY)).toEqual({ action: "cleared" });
+    await expectEncryptedWhole(before.dir, before.file, before);
+  });
+});
+
+describe("the wipe", () => {
+  it("writes zeros over the plain file's whole length before it deletes it", () => {
+    const file = path.join(root, "wipe-me.db");
+    // Longer than one 64 KB block and not a multiple of it, so the last, partial block is covered too.
+    const words = Buffer.from(`${MARKER} `.repeat(9000));
+    writeFileSync(file, words);
+    // The delete is made to fail, as when another program grabs the file at the last moment, so what the
+    // zeros left behind can be read.
+    const busy = () => {
+      throw Object.assign(new Error("resource busy or locked"), { code: "EBUSY" });
+    };
+    expect(() => wipeFile(file, { remove: busy })).toThrow(/busy/);
+    const after = readFileSync(file);
+    expect(after.length).toBe(words.length);
+    expect(after.every((b) => b === 0)).toBe(true);
+    // The control: the same file before the wipe holds the words.
+    expect(words.includes(Buffer.from(MARKER))).toBe(true);
+    wipeFile(file);
+    expect(existsSync(file)).toBe(false);
+  });
+});
+
+describe("what a data file is (fileKind)", () => {
+  it("a missing file is absent; a file this account can't read now is never taken for absent", async () => {
+    expect(fileKind(path.join(root, "no-such.db"))).toBe("absent");
+    const { file } = await seededFolder();
+    expect(fileKind(file)).toBe("plain");
+    if (process.platform === "win32") {
+      // Held by another program with no sharing, as an antivirus scan or a sync app can (Windows: EBUSY).
+      const holder = spawn("powershell.exe", [
+        "-NoProfile",
+        "-Command",
+        `$f = [System.IO.File]::Open('${file.replace(/'/g, "''")}', 'Open', 'Read', 'None'); Write-Output held; Start-Sleep -Seconds 60; $f.Close()`,
+      ]);
+      try {
+        await new Promise<void>((resolve, reject) => {
+          holder.stdout.on("data", (d: Buffer) => d.toString().includes("held") && resolve());
+          holder.on("exit", () => reject(new Error("the holder stopped before it held the file")));
+        });
+        expect(() => fileKind(file)).toThrow(FileNotReadable);
+      } finally {
+        holder.kill();
+        await new Promise((r) => holder.once("exit", r));
+      }
+    } else if (process.getuid?.() !== 0) {
+      // Elsewhere: a file this account may not read (EACCES). Root reads anything, so it can't show this.
+      chmodSync(file, 0o000);
+      try {
+        expect(() => fileKind(file)).toThrow(FileNotReadable);
+      } finally {
+        chmodSync(file, 0o644);
+      }
+    }
+    expect(fileKind(file)).toBe("plain");
   });
 });

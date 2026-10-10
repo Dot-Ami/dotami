@@ -8,7 +8,7 @@
  * ([8d]) is driven from its menu, and the bytes of the data file and the backups folder are read
  * afterwards to prove the deleted words are gone, not just hidden.
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -20,7 +20,7 @@ import { readBackup } from "../desktop/backup.mjs";
 import { LEFT_OUT, leftOutIn, ownPlatformBuild } from "../desktop/left-out.mjs";
 import { migrate } from "../desktop/migrate.mjs";
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
-import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
+import { ENCRYPTED_OVERHEAD, encryptedKeyId, keyIdOf } from "../desktop/receipt-crypto.mjs";
 import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { fileKind, openDatabase, runSql as runOn } from "../desktop/sqlite.mjs";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
@@ -1372,4 +1372,67 @@ test("a lost key: Start fresh… asks twice, keeps the locked file and its key i
   expect(readFileSync(keyFile).equals(keyBytes)).toBe(false);
   expect(fileKind(path.join(dataDir, "dotami.db"))).toBe("encrypted");
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[database] started fresh: the locked data file and the receipts folder went to the backups folder");
+});
+
+test("a key file that opens but holds another key: the lost-key window, not a failed update, and nothing changes ([8i])", async () => {
+  let page = await launch();
+  await describeVenture(page);
+  // A second key, wrapped by this running app's own protection: the key file will open, but won't fit.
+  const other = randomBytes(32);
+  const wrapped = await app!.evaluate(({ safeStorage }, b64) => safeStorage.encryptString(b64).toString("base64"), other.toString("base64"));
+  await quit();
+  const dbFile = path.join(dataDir, "dotami.db");
+  const keyFile = path.join(dataDir, "database.key");
+  const rightKey = readFileSync(keyFile);
+  const wrongKey = Buffer.from(JSON.stringify({ format: 1, keyId: keyIdOf(other), wrapped }), "utf8");
+  writeFileSync(keyFile, wrongKey);
+  const before = readFileSync(dbFile);
+
+  const window = await launchTo("lost-key");
+  await expect(window.getByRole("heading", { name: "DotAmi can't open your data" })).toBeVisible();
+  await expect(window.getByText(/opens, but holds another key, not this data file's\./)).toBeVisible();
+  await expect(window.getByText("Nothing was changed.")).toBeVisible();
+  const closed = app!.waitForEvent("close");
+  await window.getByRole("button", { name: "Quit" }).click();
+  await closed;
+  app = null;
+  // Nothing on the disk changed: the data file, and the key file as it was found (never replaced).
+  expect(readFileSync(dbFile).equals(before)).toBe(true);
+  expect(readFileSync(keyFile).equals(wrongKey)).toBe(true);
+  const logText = readFileSync(path.join(dataDir, "logs", "server.log"), "utf8");
+  expect(logText).toContain("[database] the key file opens, but holds another key; nothing was changed");
+  expect(logText).not.toContain("couldn't prepare its database");
+
+  // The right key put back: everything comes back.
+  writeFileSync(keyFile, rightKey);
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+});
+
+test("a missing data file beside a key that opens: the key is kept, so the old file still opens when it comes back ([8i])", async () => {
+  let page = await launch();
+  await describeVenture(page);
+  await quit();
+  const dbFile = path.join(dataDir, "dotami.db");
+  const keyFile = path.join(dataDir, "database.key");
+  const keyBefore = readFileSync(keyFile);
+  const aside = path.join(tmp, "dotami.db.aside");
+  writeFileSync(aside, readFileSync(dbFile));
+  rmSync(dbFile);
+
+  // A start with no data file makes a new, empty one, encrypted with the key that is already there.
+  page = await launch();
+  await expect(page.getByPlaceholder(/What are you building/)).toBeVisible();
+  await quit();
+  expect(fileKind(dbFile)).toBe("encrypted");
+  expect(readFileSync(keyFile).equals(keyBefore)).toBe(true);
+  const backups = path.join(dataDir, "backups");
+  expect(existsSync(backups) ? readdirSync(backups).filter((f) => f.startsWith("database-key-")) : []).toEqual([]);
+
+  // The old data file put back opens with that same key: nothing was stranded.
+  writeFileSync(dbFile, readFileSync(aside));
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
 });

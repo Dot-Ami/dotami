@@ -72,7 +72,10 @@ jump links, then five sections in this order:
    (`lib/db/protection.ts`); a row for **the key to your data file** (`database.key`, desktop app only:
    what it is, that losing it loses everything not in a backup, never removed or replaced while
    anything is locked with it); and a row for **the note that encrypting is under way**
-   (`database-encrypting.json`, "None: nothing is being encrypted." when it isn't there). The receipts
+   (`database-encrypting.json`, "None: nothing is being encrypted." when it isn't there); and rows for
+   **the encrypted copy being made** (`dotami.db.encrypting`) and **the unencrypted data file being
+   wiped** (`dotami.db.plain-to-wipe`, which holds everything unencrypted and can stay across starts
+   while another program holds it; Delete doesn't remove it, the next start does). The receipts
    row says whether the data file is encrypted too.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
