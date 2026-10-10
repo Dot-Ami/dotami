@@ -8,10 +8,19 @@
   // refuses those answers too, desktop/main.mjs showLostKey).
   if (bridge.status === "store-unavailable") {
     $("restore").hidden = true;
+    $("start-fresh").hidden = true;
     $("store-unavailable").hidden = false;
   }
   $("quit").addEventListener("click", () => bridge.answer("quit"));
   $("open-folder").addEventListener("click", () => bridge.answer("open-folder"));
   $("restore").addEventListener("click", () => bridge.answer("restore"));
+  // "Start fresh" asks once more, saying what is given up, before it is sent.
+  const show = (which) => {
+    $("lost").hidden = which !== "lost";
+    $("confirm-fresh").hidden = which !== "fresh";
+  };
+  $("start-fresh").addEventListener("click", () => show("fresh"));
+  $("back").addEventListener("click", () => show("lost"));
+  $("fresh-confirm").addEventListener("click", () => bridge.answer("start-fresh"));
   $("quit").focus();
 })();

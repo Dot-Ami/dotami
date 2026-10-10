@@ -438,9 +438,9 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     alsoDeletes: [],
     keeps: [],
     goesWithIt:
-      "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show.",
+      "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show. In the desktop app, a “Never” answer about encrypting the data file is forgotten too, so the next start asks again.",
     learnMore:
-      "This is every saved choice from the Settings page and the Ideas page: how often to be reminded about your figures, which ideas have their reminder switch on, and which banners you answered “Not this time”. Choices that aren't saved yet (the ones Settings marks as coming later) aren't affected.",
+      "This is every saved choice from the Settings page and the Ideas page: how often to be reminded about your figures, which ideas have their reminder switch on, which banners you answered “Not this time”, and whether to encrypt the data file (Settings' switch, or “Never” in the window before the first encryption). An encrypted data file stays encrypted. Choices that aren't saved yet (the ones Settings marks as coming later) aren't affected.",
     built: true,
   },
   {
@@ -487,6 +487,10 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
     // (docs/architecture/expense-records.md § 11); these key files, set aside on their own, aren't.
     name: "Key files set aside in the backups folder",
     why: "Not deleted. When Windows couldn't open the key to your receipts on this account and no receipt was locked with it, or a restore gave your receipts a new key, the old key file was moved to the backups folder (receipts-key-unreadable-….key). It holds only a key file that Windows protected for your account, nothing you typed or added. To remove one, close DotAmi and delete it (the backups folder's path is above).",
+  },
+  {
+    name: "The locked data file and key files set aside in the backups folder",
+    why: "Not touched, even with “Safety copies in the backups folder” ticked. When the data file's key can't be opened, Restore from a backup… and Start fresh… move the locked data file into the backups folder (dotami-locked-…db) and never delete it, so it can still be opened if its key comes back; the key file that couldn't open it goes there too (database-key-unreadable-…key), and Start fresh moves the receipts folder there whole (receipts-before-start-fresh-…). Each holds what it held then. To remove them, close DotAmi and delete those files and folders (the backups folder's path is above).",
   },
   {
     name: "What the window stored in earlier launches",
@@ -614,7 +618,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here, never deleted, in case the key comes back. Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and those receipt folders.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…), and when you start fresh after losing the data file's key it is moved here the same way (receipts-before-start-fresh-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here, never deleted, in case the key comes back. Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and the receipts-before-restore-… and receipts-locked-… folders; the folder Start fresh set aside and the locked data file and key files stay (see “What Delete doesn't reach”).",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },

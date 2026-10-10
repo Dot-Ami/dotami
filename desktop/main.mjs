@@ -6,7 +6,7 @@
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
 import { randomBytes } from "node:crypto";
-import { mkdirSync, accessSync, constants, existsSync, readdirSync } from "node:fs";
+import { mkdirSync, accessSync, constants, existsSync, readdirSync, renameSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +27,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption } from "./encrypt-database.mjs";
+import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
@@ -380,12 +380,22 @@ function safetyCopyFiles() {
  *   Back up first…, Encrypt now, Not now and Never;
  * - no key store: the file stays plain, and Settings says why.
  * Then the plain safety copies are encrypted too. Returns false when the start must stop (it has said why).
+ * @param {{ afterStartFresh?: boolean }} [options] `afterStartFresh`: the locked data was just set aside;
+ *   the new data file must then be encrypted, never created plain (if no key can be made, the start stops).
  */
-async function prepareDatabase() {
+async function prepareDatabase({ afterStartFresh = false } = {}) {
   const say = (line) => log.write(`[database] ${line}\n`);
+  // After "Start fresh" the person was promised an empty file under a new key: never an unencrypted one.
+  const noPlainAfterStartFresh = () => {
+    say("no key could be made after starting fresh; no unencrypted data file was created");
+    fail(
+      `Your locked data was set aside in the backups folder, but Windows' key store didn't answer, so DotAmi didn't create a new, unencrypted data file. Restart Windows (or sign out and in again), then start DotAmi again.\n\n${dataDir}`,
+    );
+    return false;
+  };
   const copies = safetyCopyFiles();
-  // A safety copy another program holds counts as not locked here (it is tried again at the next start);
-  // the data file itself is never guessed at: fileKind throws, and the start stops having changed nothing.
+  // A safety copy another program holds is read as "held" (it is tried again at the next start); the data file
+  // itself is never guessed at: fileKind throws, and the start stops having changed nothing.
   const copyKind = (f) => {
     try {
       return fileKind(f);
@@ -394,7 +404,10 @@ async function prepareDatabase() {
       throw error;
     }
   };
-  const locked = fileKind(dbFile) === "encrypted" || copies.some((f) => copyKind(f) === "encrypted") || readNote(dataDir) !== null;
+  // Whether the key must be the one that opens what is here: the data file, or one being encrypted. A safety
+  // copy left encrypted with a key that is lost (after "Start fresh") doesn't count: it is kept as it is, and
+  // must not stop a new key for the new data file.
+  const locked = fileKind(dbFile) === "encrypted" || readNote(dataDir) !== null;
   const opened = openDatabaseKey(dataDir, safeStorage, { locked });
   if (opened.state === "key-unreadable") {
     say(
@@ -404,7 +417,8 @@ async function prepareDatabase() {
           ? "the key file is missing; nothing was changed"
           : "the key can't be opened by this account; nothing was changed",
     );
-    await showLostKey(opened);
+    // "Start fresh" moved the locked data aside: the start goes on as for a new data folder.
+    if ((await showLostKey(opened)) === "start-fresh") return prepareDatabase({ afterStartFresh: true });
     return false;
   }
   let key = opened.state === "on" ? opened.key : null;
@@ -432,6 +446,7 @@ async function prepareDatabase() {
     databaseLock = { state: "on", plainLeft: 0 };
     say("the data file is encrypted; key open");
   } else if (opened.state === "no-key-store") {
+    if (afterStartFresh) return noPlainAfterStartFresh();
     databaseLock = { state: "no-key-store", plainLeft: 0 };
     say("the operating system's key store isn't available, so the data file is kept unencrypted");
     return true;
@@ -440,7 +455,7 @@ async function prepareDatabase() {
     // kept, never replaced: encrypted safety copies (or the data file, put back) may be locked with it
     // (desktop/database-key.mjs: never replaced automatically once anything is encrypted with it).
     key ??= await newDatabaseKey(say);
-    if (!key) return true;
+    if (!key) return afterStartFresh ? noPlainAfterStartFresh() : true;
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
     say("a new data file, encrypted from its first byte");
@@ -633,7 +648,10 @@ async function askToEncrypt() {
 /**
  * [8i] The start when the data file is encrypted and its key can't be opened (§ 10): nothing on the disk is
  * changed, and the person is told what happened and what can bring the data back (desktop/lost-key.html),
- * before the main window opens. Then the app quits.
+ * before the main window opens. Then the app quits, unless the person chose "Start fresh" (asked twice in
+ * the window, saying what is given up): then the locked data is set aside (startFresh) and this resolves
+ * with "start-fresh" for the start to go on.
+ * @returns {Promise<"start-fresh" | "quit">}
  */
 async function showLostKey(opened) {
   const why = opened.storeUnavailable
@@ -645,10 +663,10 @@ async function showLostKey(opened) {
         : "Windows won't open its key for this Windows account, or the key file holds another key.";
   // While Windows' key store is only unavailable for now, a restart may bring the key back: nothing that sets
   // the locked file aside is offered, and the answer is refused here too.
-  const answers = opened.storeUnavailable ? ["quit", "open-folder"] : ["quit", "open-folder", "restore"];
+  const answers = opened.storeUnavailable ? ["quit", "open-folder"] : ["quit", "open-folder", "restore", "start-fresh"];
   const status = opened.storeUnavailable ? "store-unavailable" : "";
   for (;;) {
-    const answer = await askInWindow("lost-key", answers, "quit", { detail: why, status, height: 460 });
+    const answer = await askInWindow("lost-key", answers, "quit", { detail: why, status, height: 520 });
     if (answer === "open-folder") {
       await shell.openPath(dataDir);
       continue;
@@ -658,10 +676,63 @@ async function showLostKey(opened) {
       await restore({ databaseKeyLost: true });
       continue;
     }
+    if (answer === "start-fresh") {
+      try {
+        startFresh();
+        return "start-fresh";
+      } catch (error) {
+        log?.write(`[database] starting fresh didn't finish: ${describeError(error)}\n`);
+        await dialog.showMessageBox({
+          type: "error",
+          title: "DotAmi",
+          message: "DotAmi couldn't start fresh.",
+          detail:
+            error instanceof StartFreshRefused
+              ? error.message
+              : "Nothing was deleted: whatever was moved is in the backups folder, and the rest is where it was. Close any program that may have the data folder open, then try again.",
+        });
+        continue;
+      }
+    }
     break;
   }
   quitting = true;
   app.quit();
+  return "quit";
+}
+
+/** Thrown by startFresh when an encryption was part-way: nothing was moved. The message is for the person. */
+class StartFreshRefused extends Error {
+  constructor() {
+    super(
+      `DotAmi was part-way through encrypting your data file when its key stopped opening, so it didn't start fresh: an unencrypted copy (${path.basename(dbFile)}${PLAIN_SUFFIX}) may still be in the data folder, and it may be the only copy of your data that can be read. Nothing was moved. Keep the data folder as it is and ask for help on GitHub.`,
+    );
+    this.name = "StartFreshRefused";
+  }
+}
+
+/**
+ * [8i] "Start fresh" (the maintainer's decision 2 of 2026-10-10): the locked data file goes to
+ * backups/dotami-locked-<time>.db, never deleted (desktop/encrypt-database.mjs setAsideLockedFile), so it
+ * can still be opened if its key comes back; the receipts folder goes beside it, whole, as a restore moves
+ * it (an empty data file describes none of the receipts, and DotAmi's sweep would take them for leftovers).
+ * The key file stays where it is: the new key made next moves it into backups/ (makeDatabaseKey), never
+ * deleting it. Then the start goes on as for a new data folder: a new key, an empty encrypted file.
+ */
+function startFresh() {
+  // An encryption that was part-way when the key stopped opening: its note (and maybe a plain copy waiting to
+  // be wiped) would bring this window straight back, and that plain copy may be the only readable copy of the
+  // data. Nothing is moved; the window says why (found in review, 2026-10-10).
+  if (readNote(dataDir) !== null) throw new StartFreshRefused();
+  const stamp = Date.now();
+  const lockedTo = setAsideLockedFile(dataDir, dbFile, () => stamp);
+  const receipts = path.join(dataDir, RECEIPTS_FOLDER);
+  let receiptsTo = null;
+  if (existsSync(receipts)) {
+    receiptsTo = path.join(dataDir, "backups", `receipts-before-start-fresh-${stamp}`);
+    renameSync(receipts, receiptsTo);
+  }
+  log?.write(`[database] started fresh: the locked data file${receiptsTo ? " and the receipts folder" : ""} went to the backups folder${lockedTo ? "" : " (there was no data file)"}\n`);
 }
 
 /** The log line about the key: its state and what happened to it, never the key or its id. */

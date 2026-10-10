@@ -25,6 +25,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   longer lists them; it now names the key files set aside on their own
   (`receipts-key-unreadable-….key`), which Delete still leaves. With the box unticked, the first
   "are you sure" step says the set-aside receipt folders still hold their receipt files.
+- **Start fresh when the data file's key is lost** ([8i], the maintainer's decision of 2026-10-10) — the
+  window that says the key can't be opened offers **Start fresh…**, asked twice, saying plainly what is
+  given up (everything in the locked file that isn't in a backup, unless its key comes back). Nothing is
+  deleted: the locked data file, its key file and the receipts folder go to the backups folder as they
+  are, and DotAmi starts with an empty data file under a new key. It isn't offered while Windows' key
+  store is only unavailable for now, it moves nothing while an encryption was part-way, and the new
+  file is never created unencrypted. *What DotAmi knows about you* names what it sets aside among what
+  Delete doesn't reach, and Delete's settings box says it forgets a "Never" about encrypting.
 - **Every backup is locked with a passphrase** ([8i], the maintainer's decision of 2026-10-10) — a
   backup holds your data and receipts unencrypted inside it so it restores on another computer, so
   File → Back up… no longer offers to leave the passphrase out, and the backup code refuses to write

@@ -363,6 +363,11 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(NOT_CLEARED_BY_DELETE.map((n) => n.why).join(" ")).not.toMatch(/receipts-before-restore|receipts-locked/);
     // What it still leaves there is said: the key files set aside on their own.
     expect(NOT_CLEARED_BY_DELETE.find((n) => n.name === "Key files set aside in the backups folder")!.why).toMatch(/receipts-key-unreadable-/);
+    // [8i] What a lost key's restore or Start fresh sets aside is never deleted by DotAmi, and the list says so by name.
+    const setAside = NOT_CLEARED_BY_DELETE.find((n) => n.name === "The locked data file and key files set aside in the backups folder")!.why;
+    for (const name of ["dotami-locked-", "database-key-unreadable-", "receipts-before-start-fresh-"]) expect(setAside).toContain(name);
+    // The Settings box says it forgets a "Never" about encrypting the data file.
+    expect(DELETE_MENU.find((e) => e.id === "settings")!.goesWithIt).toMatch(/“Never” answer about encrypting the data file/);
   });
 
   it("has a box for the safety copies in the backups folder, warning that only a backup saved elsewhere could bring anything back", () => {

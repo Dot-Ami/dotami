@@ -43,7 +43,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    file) stops the start, having changed nothing, with a window that says what
    happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`), and
    offers **Restore from a backup…** (the locked file and its key file go to `backups/`, never deleted,
-   and the backup is restored under a new key); a
+   and the backup is restored under a new key) and **Start fresh…** (asked twice; the locked file, its
+   key file and the receipts folder go to `backups/`, never deleted, and the start goes on with an empty
+   file under a new key; neither is offered while Windows' key store is only unavailable for now); a
    data file another program holds stops the start with a sentence saying so (never taken for a
    missing one); a
    new data folder gets a key (a key that already opens is kept) and its file is created encrypted from its first byte; an existing plain

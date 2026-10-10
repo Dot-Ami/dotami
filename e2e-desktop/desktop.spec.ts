@@ -1436,6 +1436,94 @@ test("a lost key: Restore from a backup… sets the locked file and its key asid
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your data file is encrypted on this computer.");
 });
 
+test("a lost key: Start fresh… asks twice, keeps the locked file and its key in backups/, and starts empty under a new key ([8i])", async () => {
+  test.setTimeout(180_000);
+  let page = await launch();
+  await describeVenture(page);
+  await quit();
+  // A key file this Windows account can't open (as after a profile reset), and a receipts folder.
+  const keyFile = path.join(dataDir, "database.key");
+  writeFileSync(
+    keyFile,
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  writeFileSync(path.join(dataDir, "receipts", `${"7".repeat(32)}.png`), "a receipt the empty file won't describe");
+  const lockedBytes = readFileSync(path.join(dataDir, "dotami.db"));
+  const keyBytes = readFileSync(keyFile);
+
+  const window = await launchTo("lost-key");
+  await expect(window.getByRole("heading", { name: "DotAmi can't open your data" })).toBeVisible();
+  // Asked twice: the first click only shows what is given up; Go back changes nothing.
+  await window.getByRole("button", { name: "Start fresh…" }).click();
+  await expect(window.getByRole("heading", { name: "Start fresh with an empty data file?" })).toBeVisible();
+  await expect(window.getByText(/isn't in a backup is given up/)).toBeVisible();
+  await expect(window.getByText(/Nothing is deleted\./)).toBeVisible();
+  await window.getByRole("button", { name: "Go back" }).click();
+  await expect(window.getByRole("heading", { name: "DotAmi can't open your data" })).toBeVisible();
+  expect(readFileSync(path.join(dataDir, "dotami.db")).equals(lockedBytes)).toBe(true);
+  await window.getByRole("button", { name: "Start fresh…" }).click();
+  await window.getByRole("button", { name: "Start fresh", exact: true }).click();
+  page = await mainWindow(app!);
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByText("Nothing saved yet.")).toBeVisible();
+  await quit();
+
+  // Nothing deleted: the locked file, its key file and the receipts, as they were, in backups/.
+  const backups = readdirSync(path.join(dataDir, "backups"));
+  const locked = backups.filter((f) => /^dotami-locked-\d+\.db$/.test(f));
+  const oldKeys = backups.filter((f) => /^database-key-unreadable-\d+\.key$/.test(f));
+  const receiptFolders = backups.filter((f) => f.startsWith("receipts-before-start-fresh-"));
+  expect([locked.length, oldKeys.length, receiptFolders.length]).toEqual([1, 1, 1]);
+  expect(readFileSync(path.join(dataDir, "backups", locked[0])).equals(lockedBytes)).toBe(true);
+  expect(readFileSync(path.join(dataDir, "backups", oldKeys[0])).equals(keyBytes)).toBe(true);
+  expect(readdirSync(path.join(dataDir, "backups", receiptFolders[0]))).toEqual([`${"7".repeat(32)}.png`]);
+  // A new key, and a new, empty file encrypted with it.
+  expect(readFileSync(keyFile).equals(keyBytes)).toBe(false);
+  expect(fileKind(path.join(dataDir, "dotami.db"))).toBe("encrypted");
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[database] started fresh: the locked data file and the receipts folder went to the backups folder");
+});
+
+test("a lost key while an encryption was part-way: Start fresh moves nothing and says why ([8i])", async () => {
+  const page = await launch();
+  await describeVenture(page);
+  await quit();
+  // A key file this account can't open, and the note of an encryption that hadn't finished.
+  const keyFile = path.join(dataDir, "database.key");
+  writeFileSync(
+    keyFile,
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  const note = path.join(dataDir, "database-encrypting.json");
+  writeFileSync(note, JSON.stringify({ format: 1, step: "wipe", file: "dotami.db", size: 1, sha256: "0".repeat(64) }));
+  const before = readdirSync(dataDir).sort();
+  const lockedBytes = readFileSync(path.join(dataDir, "dotami.db"));
+
+  const window = await launchTo("lost-key");
+  // The message box is DotAmi's own; it is recorded here instead of shown.
+  await app!.evaluate(({ dialog }) => {
+    (globalThis as { shown?: string[] }).shown = [];
+    dialog.showMessageBox = (async (options: { detail?: string }) => {
+      (globalThis as { shown?: string[] }).shown!.push(options.detail ?? "");
+      return { response: 0, checkboxChecked: false };
+    }) as unknown as typeof dialog.showMessageBox;
+  });
+  await window.getByRole("button", { name: "Start fresh…" }).click();
+  await window.getByRole("button", { name: "Start fresh", exact: true }).click();
+  await expect.poll(() => app!.evaluate(() => (globalThis as { shown?: string[] }).shown!.join(" | "))).toMatch(/part-way through encrypting your data file/);
+  // The window comes back; nothing was moved.
+  const isLostKey = (p: Page) => p.url().includes("/desktop/lost-key.html") && !p.isClosed();
+  await expect.poll(() => app!.windows().some(isLostKey), { timeout: 30_000 }).toBe(true);
+  const again = app!.windows().find(isLostKey)!;
+  const closed = app!.waitForEvent("close");
+  await again.getByRole("button", { name: "Quit" }).click();
+  await closed;
+  app = null;
+  expect(readdirSync(dataDir).sort()).toEqual(before);
+  expect(readFileSync(path.join(dataDir, "dotami.db")).equals(lockedBytes)).toBe(true);
+  expect(existsSync(path.join(dataDir, "backups")) ? readdirSync(path.join(dataDir, "backups")).filter((f) => f.startsWith("dotami-locked-")) : []).toEqual([]);
+});
+
 test("a key file that opens but holds another key: the lost-key window, not a failed update, and nothing changes ([8i])", async () => {
   let page = await launch();
   await describeVenture(page);

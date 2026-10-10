@@ -600,7 +600,8 @@ person is asked).
 ### How to remove it
 
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
-  the unreadable key file beside it) after a restore; DotAmi never deletes it, and Delete's
+  the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
+  folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's
   "safety copies" box doesn't match its name: removing it is the person's own act.
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
@@ -744,10 +745,13 @@ unless marked otherwise.
   passphrase required on every backup** from then on (older backups still restore); and a person free
   to say no: the window before an existing data file is first encrypted offers **Back up first…**,
   **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a switch in
-  Settings to turn it on later). Being built in stacked pull requests; until they merge the data file
-  still relies on the computer's disk encryption. As designed, DotAmi keeps one new file,
-  `database.key` (a random key wrapped by Windows' per-user protection); a lost key loses everything
-  not in a backup, and an older DotAmi can't open the file (going back needs a backup)
+  Settings to turn it on later). **Built** in the stacked pull requests that end with "Start fresh"
+  (the [8i] entries above say what is kept and asked); until they merge, the data file still relies on
+  the computer's disk encryption. DotAmi keeps one new file, `database.key` (a random key wrapped by
+  Windows' per-user protection); a lost key loses everything not in a backup, and an older DotAmi
+  can't open the file (going back needs a backup). Still open, for the maintainer: whether a brand-new
+  data folder should be asked too (today it is encrypted from its first byte without a question), and
+  whether a switch to turn encryption off should exist
   ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
   [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-being-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in

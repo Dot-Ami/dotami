@@ -482,7 +482,11 @@ When the app starts and can't open the key:
   the same window, asked twice, which says plainly what is given up (everything in the locked file
   not in a backup, unless its key comes back), then moves the locked data file and its key file into
   `backups/` (never deleting them) and starts with an empty, encrypted data file under a new key.
-  There is no recovery key.
+  There is no recovery key. Three guards, found in review (2026-10-10): it isn't offered while
+  Windows' key store is only unavailable for now (a restart may bring the key back); it is refused,
+  moving nothing, while an encryption note is on disk (an unencrypted copy waiting to be wiped may be
+  the only readable copy); and after it, the new file is never created unencrypted (if no key can be
+  made, the start stops and says so).
 
 ## 11. Tests (each must fail when its rule is removed)
 
@@ -644,7 +648,13 @@ The design's three pull requests became four, stacked, each green on its own:
   locked data file goes to `backups/dotami-locked-<time>.db`, a name Delete's "safety copies" box
   doesn't match, and its key file to `backups/database-key-unreadable-<time>.key`; the new key is
   saved before the restore is put in place.
-- **D, "Start fresh"** (decision 2).
+- **D, "Start fresh"** (decision 2). As built: a button in the lost-key window, asked twice (a second
+  panel saying what is given up and that nothing is deleted). The locked data file goes to
+  `backups/dotami-locked-<time>.db`, the receipts folder beside it (an empty data file describes none of
+  the receipts, and DotAmi's sweep would take them for leftovers), and the key file is moved into
+  `backups/` by the new key; then the start goes on as for a new folder. A safety copy left encrypted
+  with the lost key no longer counts as "locked" at the start (only the data file and the note do), so
+  it can't stop the new key; it is kept as it is.
 
 ## 13. Not checked
 
