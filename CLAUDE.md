@@ -121,6 +121,13 @@ says where it is going.
   GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.
+- Every Prisma Client is made by `lib/db/client.ts` ([8i]): Prisma's adapter for `better-sqlite3`,
+  and the package behind that name is `better-sqlite3-multiple-ciphers` (SQLite with an encryption
+  extension); `tests/database-client.spec.ts` fails on one made anywhere else, and
+  `tests/database-package.spec.ts` if the real `better-sqlite3` is ever installed. `package-lock.json`
+  keeps `"gypfile": false` on that package so `npm ci` doesn't try to compile it: after any
+  `npm install <package>` or a Dependabot change to the lockfile, run `node scripts/keep-gypfile.mjs`
+  (the package test fails until it is back).
 - Every request is refused unless its Host is this computer's own name (`middleware.ts` +
   `lib/http/allowed-host.ts`, the DNS-rebinding guard) — never add a matcher exception or an early
   return before that check. Every write route reads its body through `readJsonWithLimit`.
