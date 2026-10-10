@@ -23,7 +23,8 @@ const PAGE_ONLY_MESSAGE =
  *
  *   { kinds: ["statements", ...], seen: { PersonStatement: 3, ... } }  deletes the ticked kinds
  *   { retryWipe: true }                                                 finishes the wipe (and any safety
- *                                                                       copies an earlier Delete still owes)
+ *                                                                       copies and set-aside receipt folders
+ *                                                                       an earlier Delete still owes)
  *
  * Answers only to DotAmi's own page: whether an agent may ever delete is a later decision, so like
  * agreeing to a figure it is the person's click and nothing else's (refuseUnlessFromAppPage). The

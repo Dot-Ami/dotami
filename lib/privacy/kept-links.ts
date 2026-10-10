@@ -11,6 +11,20 @@ import type { DeleteMenuEntry, KeptLink } from "./inventory";
 /** The key a kept link's count travels under, on the page and in the delete request: "Expense.ventureId". */
 export const keptLinkKey = (k: { model: string; field: string }) => `${k.model}.${k.field}`;
 
+/** The count key of DotAmi's safety copies in the backups folder, beside the tables' names (which all start with a capital). */
+export const SAFETY_COPIES_KEY = "backups";
+/** The count key of the receipt folders DotAmi set aside in the backups folder ([8i], expense-records.md § 11). */
+export const SET_ASIDE_RECEIPTS_KEY = "set-aside-receipts";
+
+/**
+ * The counts a box that deletes files rather than rows travels under, on the page and in the delete
+ * request: the safety copies in the backups folder, then the receipt folders set aside there, which
+ * the same box clears.
+ */
+export function folderKeys(entry: Pick<DeleteMenuEntry, "folder">): string[] {
+  return entry.folder === "backups" ? [SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY] : [];
+}
+
 /** Every table a set of menu entries touches: the ones they empty and the ones the database empties with them. */
 export function affectedTables(entries: readonly DeleteMenuEntry[]): string[] {
   const out: string[] = [];

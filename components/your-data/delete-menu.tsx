@@ -7,7 +7,7 @@ import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
-import { keptLinkKey, keptLinks } from "@/lib/privacy/kept-links";
+import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
 import { numberWords, plural } from "./format";
 
@@ -28,6 +28,12 @@ export interface DeleteMenuProps {
   desktop: boolean;
   /** An earlier Delete's wipe is still owed: its note sits beside the data file. */
   wipePending: boolean;
+  /**
+   * [8i] Said in amber while the safety-copies box is ticked and the backups folder holds receipt
+   * folders DotAmi set aside (lib/privacy/inventory.ts SET_ASIDE_RECEIPTS_WARNING, passed in so the
+   * window doesn't bundle the inventory).
+   */
+  setAsideWarning: string;
 }
 
 type Step = "closed" | "menu" | "first-ask" | "second-ask" | "working" | "done";
@@ -46,17 +52,21 @@ interface Outcome {
   receiptFiles?: { removed: number; failed: number } | null;
 }
 
-/** The key the safety copies' count goes under: the box's folder, beside the tables' names. */
-const COPIES = "backups";
+/** The keys the safety copies' count and the set-aside receipt folders' count go under, beside the tables' names. */
+const COPIES = SAFETY_COPIES_KEY;
+const SET_ASIDE = SET_ASIDE_RECEIPTS_KEY;
 
-/** Every count a box touches: its own tables, the ones that go with them, then its folder's files. */
-const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes, ...(e.folder ? [e.folder] : [])];
+/** Every count a box touches: its own tables, the ones that go with them, then its folder's files and set-aside folders. */
+const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes, ...folderKeys(e)];
 
-/** "3 records", or "1 file" for the safety copies, which are files rather than rows. */
-const countWords = (key: string, n: number) => (key === COPIES ? plural(n, "file") : plural(n, "record"));
+/** "3 records"; "1 file" for the safety copies and "2 folders" for the set-aside receipts, which aren't rows. */
+const countWords = (key: string, n: number) =>
+  key === COPIES ? plural(n, "file") : key === SET_ASIDE ? plural(n, "folder") : plural(n, "record");
 
 /** Safety copies the server couldn't delete (another program had them open); 0 when none were ticked. */
 const copiesLeftOf = (o: Outcome) => o.left?.[COPIES] ?? 0;
+/** Set-aside receipt folders the server couldn't clear (another program had a file open); 0 when none. */
+const foldersLeftOf = (o: Outcome) => o.left?.[SET_ASIDE] ?? 0;
 
 // The key a kept link's count travels under ("Expense.ventureId") and the links the ticked boxes
 // clear while keeping the rows come from lib/privacy/kept-links, the same code the server runs, so
@@ -75,7 +85,7 @@ const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * Escape, Cancel or a click outside a dialog at either ask deletes nothing. Focus starts on Cancel
  * at the final ask, so a stray Enter can't delete.
  */
-export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, retention, desktop, wipePending }: DeleteMenuProps) {
+export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, retention, desktop, wipePending, setAsideWarning }: DeleteMenuProps) {
   const router = useRouter();
   const { resetJourney } = useJourney();
   const panelId = useId();
@@ -85,7 +95,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [retrying, setRetrying] = useState(false);
   // An earlier Delete's unfinished wipe, finished from here: null until "Finish it now" answers.
-  const [pendingResult, setPendingResult] = useState<{ wiped: boolean; backupsLeft: number } | null>(null);
+  const [pendingResult, setPendingResult] = useState<PendingResult | null>(null);
 
   const countOf = (e: DeleteMenuEntry) => tablesOf(e).reduce((sum, m) => sum + (counts[m] ?? 0), 0);
   const deletable = (e: DeleteMenuEntry) => e.built && countOf(e) > 0;
@@ -93,6 +103,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
 
   const chosen = menu.filter((e) => ticked.includes(e.id));
   const copiesTicked = chosen.some((e) => e.folder === COPIES);
+  // [8i] The set-aside receipt folders go with the safety copies: warned about only when there are some.
+  const setAsideTicked = copiesTicked && (counts[SET_ASIDE] ?? 0) > 0;
   const affected: string[] = [];
   for (const e of chosen) for (const m of tablesOf(e)) if (!affected.includes(m)) affected.push(m);
   // What stays with its link cleared, and how many: said before the person confirms.
@@ -141,13 +153,20 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
       setError(result.error);
       return;
     }
-    const body = result.body as { wiped?: unknown; backupsLeft?: unknown };
+    const body = result.body as { wiped?: unknown; backupsLeft?: unknown; receiptFoldersLeft?: unknown };
     const wiped = body.wiped === true;
     const backupsLeft = typeof body.backupsLeft === "number" ? body.backupsLeft : 0;
+    const receiptFoldersLeft = typeof body.receiptFoldersLeft === "number" ? body.receiptFoldersLeft : 0;
     setOutcome((prev) =>
-      prev ? { ...prev, wiped, left: prev.left && COPIES in prev.left ? { ...prev.left, [COPIES]: backupsLeft } : prev.left } : prev,
+      prev
+        ? {
+            ...prev,
+            wiped,
+            left: prev.left && COPIES in prev.left ? { ...prev.left, [COPIES]: backupsLeft, [SET_ASIDE]: receiptFoldersLeft } : prev.left,
+          }
+        : prev,
     );
-    return { wiped, backupsLeft };
+    return { wiped, backupsLeft, receiptFoldersLeft };
   }
 
   async function finishPending() {
@@ -252,6 +271,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                           : null}
                         {/* The safety copies are the last way back, so their sentence reads as the warning it is. */}
                         <p className={`mt-1 text-[12.5px] ${e.folder ? "text-amber" : "text-paper-dim"}`}>{e.goesWithIt}</p>
+                        {on && e.folder && setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
                         {on
                           ? kept
                               .filter((k) => e.keeps.some((own) => keyOf(own) === keyOf(k)))
@@ -359,6 +379,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
             </p>
           ) : null}
+          {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
           <p className="mt-3 text-[12.5px] text-paper-dim">
             Everything not ticked stays, and so does what Delete doesn&apos;t reach (what the window stored in earlier launches,
             the log).
@@ -386,6 +407,11 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               anything back.
             </p>
           ) : null}
+          {setAsideTicked ? (
+            <div className="mb-2">
+              <SetAsideWarning text={setAsideWarning} />
+            </div>
+          ) : null}
           <p className="text-[12.5px] text-paper-dim">
             {desktop
               ? "If you might want them back, cancel and use File → Back up… first; File → Restore puts a backup back."
@@ -395,6 +421,22 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
       ) : null}
     </div>
   );
+}
+
+/** What "Try the wipe again" / "Finish it now" answers (lib/privacy/delete.ts finishWipe). */
+interface PendingResult {
+  wiped: boolean;
+  backupsLeft: number;
+  receiptFoldersLeft: number;
+}
+
+/**
+ * [8i] The warning about the receipt folders set aside in the backups folder (expense-records.md § 11):
+ * which they are, and that their receipts can never be opened afterwards. Under the ticked box and at
+ * both asks.
+ */
+function SetAsideWarning({ text }: { text: string }) {
+  return <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-amber">{text}</p>;
 }
 
 /**
@@ -432,6 +474,7 @@ function DoneNote({
   // otherwise say "0 records kept".
   const keptRows = Object.entries(outcome.kept ?? {}).filter(([, k]) => k.unlinked > 0);
   const copiesLeft = copiesLeftOf(outcome);
+  const foldersLeft = foldersLeftOf(outcome);
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
       <p className="font-semibold">Deleted.</p>
@@ -461,11 +504,11 @@ function DoneNote({
       {outcome.left ? null : (
         <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
       )}
-      {/* Deleting only safety copies takes nothing out of the data file, so there is no space to speak of. */}
-      {outcome.wiped && rows.some((m) => m !== COPIES) ? (
+      {/* Deleting only safety copies and set-aside folders takes nothing out of the data file, so there is no space to speak of. */}
+      {outcome.wiped && rows.some((m) => m !== COPIES && m !== SET_ASIDE) ? (
         <p className="mt-2 text-[12.5px] text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
       ) : null}
-      {outcome.wiped && copiesLeft === 0 ? null : (
+      {outcome.wiped && copiesLeft === 0 && foldersLeft === 0 ? null : (
         <div className="mt-2 space-y-1 text-[12.5px] text-amber">
           {outcome.wiped ? null : (
             <p>
@@ -477,6 +520,12 @@ function DoneNote({
             <p>
               {plural(copiesLeft, "safety copy", "safety copies")} in the backups folder couldn&apos;t be deleted, because another
               program has {copiesLeft === 1 ? "it" : "them"} open. Close that program and try again.
+            </p>
+          ) : null}
+          {foldersLeft > 0 ? (
+            <p>
+              {plural(foldersLeft, "set-aside receipt folder")} in the backups folder couldn&apos;t be cleared, because another
+              program has a file in {foldersLeft === 1 ? "it" : "them"} open. Close that program and try again.
             </p>
           ) : null}
           {desktop ? <p>If it still can&apos;t finish, the desktop app finishes it the next time it starts.</p> : null}
@@ -506,10 +555,10 @@ function PendingNote({
 }: {
   desktop: boolean;
   retrying: boolean;
-  result: { wiped: boolean; backupsLeft: number } | null;
+  result: PendingResult | null;
   onFinish: () => void;
 }) {
-  if (result && result.wiped && result.backupsLeft === 0) {
+  if (result && result.wiped && result.backupsLeft === 0 && result.receiptFoldersLeft === 0) {
     return (
       <p role="status" className="mt-3 text-[12.5px] text-paper-dim">
         Finished: the earlier Delete&apos;s wipe is done.
@@ -519,8 +568,8 @@ function PendingNote({
   return (
     <div role="status" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-[12.5px] text-amber">
       <p>
-        An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a safety copy it was
-        deleting is still there.{" "}
+        An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a safety copy or
+        set-aside receipt folder it was deleting is still there.{" "}
         {desktop ? "The desktop app finishes it the next time it starts." : "Finish it here."}
       </p>
       {result ? <p className="mt-1">It still couldn&apos;t finish. Close any program using DotAmi&apos;s files, and check there is free disk space.</p> : null}

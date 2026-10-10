@@ -442,9 +442,9 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     keeps: [],
     folder: "backups",
     goesWithIt:
-      "Deletes the whole copies of the data file DotAmi made before each update and restore. Afterwards, only a backup you saved somewhere else could bring anything back.",
+      "Deletes the whole copies of the data file DotAmi made before each update and restore, and the receipt folders set aside in the backups folder. Afterwards, only a backup you saved somewhere else could bring anything back.",
     learnMore:
-      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. If a copy can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was before a restore). Only the files DotAmi put in them are deleted; a file of yours in one stays, and so does that folder. Once they are gone, those receipts can never be opened, even if the old key comes back. If a copy or a set-aside receipt can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
     built: true,
   },
   {
@@ -474,8 +474,10 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
  */
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
-    name: "Receipts folders moved into the backups folder",
-    why: "Not touched, even with “Safety copies in the backups folder” ticked: that box deletes only DotAmi's copies of the data file. Before a restore, the receipts folder is moved into the backups folder whole, as it was (receipts-before-restore-…), so it still holds the receipt files you had then. Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder there too (receipts-locked-…). To remove them, close DotAmi and delete those folders (the backups folder's path is above).",
+    // [8i] The receipt folders set aside there are cleared by the safety-copies box since 2026-10-10
+    // (docs/architecture/expense-records.md § 11); these key files, set aside on their own, aren't.
+    name: "Key files set aside in the backups folder",
+    why: "Not deleted. When Windows couldn't open the key to your receipts on this account and no receipt was locked with it, or a restore gave your receipts a new key, the old key file was moved to the backups folder (receipts-key-unreadable-….key). It holds only a key Windows wrapped for an account, nothing you typed or added. To remove one, close DotAmi and delete it (the backups folder's path is above).",
   },
   {
     name: "What the window stored in earlier launches",
@@ -491,9 +493,17 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The disk under the data file",
-    why: "Delete wipes the deleted records out of the data file itself, removes deleted receipt files from the receipts folder, and deletes the safety copies you tick. The drive can still hold older copies of the file's pieces, a removed receipt's bytes and deleted safety copies in its free space until they are overwritten; disk encryption is what protects those.",
+    why: "Delete wipes the deleted records out of the data file itself, removes deleted receipt files from the receipts folder, and deletes the safety copies and set-aside receipt folders you tick. The drive can still hold older copies of the file's pieces, a removed receipt's bytes, deleted safety copies and set-aside receipts in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
+
+/**
+ * [8i] Said in amber under the safety-copies box once it is ticked, and at both asks, while the backups
+ * folder holds receipt folders DotAmi set aside (docs/architecture/expense-records.md § 11): which
+ * folders, and that what is in them can never be opened afterwards.
+ */
+export const SET_ASIDE_RECEIPTS_WARNING =
+  "The receipt folders set aside in the backups folder go too: receipts-locked-… (receipts Start a new key set aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was before a restore). Afterwards those receipts can never be opened, even if the old key comes back.";
 
 /** The browser-storage keys. Each is a string constant in the code, so the test can find it. */
 export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
@@ -555,7 +565,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was. Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…), never deleted.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and those receipt folders.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },

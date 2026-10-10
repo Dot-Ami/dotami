@@ -7,7 +7,8 @@ import type { FolderFacts, Holdings, SentFacts, SentState, TableCount } from "@/
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
-import { DELETE_MENU, NOT_CLEARED_BY_DELETE, type WindowStorageEntry } from "@/lib/privacy/inventory";
+import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
+import { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
 import { DeleteMenu } from "./delete-menu";
 import { FiguresBySource } from "./figures-by-source";
@@ -167,18 +168,22 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                   menu={DELETE_MENU}
                   counts={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count])),
-                    // The safety-copies box counts files, under its folder's name.
-                    backups: holdings.safetyCopies,
+                    // The safety-copies box counts files, under its folder's name, and the receipt
+                    // folders set aside in that folder, which it clears too ([8i]).
+                    [SAFETY_COPIES_KEY]: holdings.safetyCopies,
+                    [SET_ASIDE_RECEIPTS_KEY]: holdings.setAsideReceiptFolders,
                   }}
                   keptCounts={holdings.keptLinks}
                   tableNames={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
-                    backups: "Safety copies",
+                    [SAFETY_COPIES_KEY]: "Safety copies",
+                    [SET_ASIDE_RECEIPTS_KEY]: "Set-aside receipt folders",
                   }}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}
                   desktop={holdings.desktop}
                   wipePending={holdings.wipePending}
+                  setAsideWarning={SET_ASIDE_RECEIPTS_WARNING}
                 />
               </Section>
             </div>

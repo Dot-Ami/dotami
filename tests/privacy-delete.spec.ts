@@ -253,7 +253,10 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     // which loads nothing at run time, so the window doesn't bundle the inventory to get it.
     const read = (p: string) => readFileSync(path.join(process.cwd(), p), "utf8");
     const menu = read("components/your-data/delete-menu.tsx");
-    expect(menu).toMatch(/import \{ keptLinkKey, keptLinks \} from "@\/lib\/privacy\/kept-links";/);
+    expect(menu).toMatch(/import \{[^}]*\bkeptLinkKey, keptLinks\b[^}]*\} from "@\/lib\/privacy\/kept-links";/);
+    // [8i] So are the safety-copies box's counts (its copies and the set-aside receipt folders).
+    expect(menu).toMatch(/import \{[^}]*\bfolderKeys\b[^}]*\} from "@\/lib\/privacy\/kept-links";/);
+    expect(read("lib/privacy/delete.ts")).toMatch(/import \{[^}]*\bfolderKeys\b[^}]*\} from "\.\/kept-links";/);
     // No loop of its own over a box's keeps (the copy this replaced did `for (const k of e.keeps)`).
     expect(menu).not.toMatch(/function keptLinksOf|of e\.keeps\)/);
     expect(read("lib/privacy/delete.ts")).toMatch(/from "\.\/kept-links";/);
@@ -863,7 +866,7 @@ describe("POST /api/your-data/delete", () => {
     await lock.release();
     expect(await db.prisma.figure.count()).toBe(0);
     // The wipe the lock stopped is owed, in the note beside the data file.
-    expect(readWipePending(db.file)).toEqual({ since: expect.any(String), backups: [] });
+    expect(readWipePending(db.file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [] });
     const retry = await route.POST(post({ retryWipe: true }));
     expect(retry.status).toBe(200);
     expect(await retry.json()).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
