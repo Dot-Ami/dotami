@@ -23,7 +23,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file of yours in one stays. A folder that can't be cleared yet (another program has a file open) is
   finished by *Finish it now* or the next time the desktop app starts. *What Delete doesn't reach* no
   longer lists them; it now names the key files set aside on their own
-  (`receipts-key-unreadable-….key`), which Delete still leaves.
+  (`receipts-key-unreadable-….key`), which Delete still leaves. With the box unticked, the first
+  "are you sure" step says the set-aside receipt folders still hold their receipt files.
 - **Start a new key for your receipts** ([8i]) — when the desktop app can't open the key your
   receipts are locked with (a Windows profile reset, a data folder from another account or computer,
   a deleted `receipts.key`), Settings, *What DotAmi knows about you* and the Expenses page now offer

@@ -917,7 +917,8 @@ someone who has no backup and wants to go on adding receipts without deleting th
   that a backup made before the key was lost is the way to get those receipts back inside DotAmi, so
   restoring one is the better answer for someone who has one. The second press asks once more. Cancel at
   either step changes nothing.
-- **Moved aside, never deleted.** The server moves every receipt file the next start would count as
+- **Moved aside, never deleted** (by this step; since § 11, Delete's safety-copies box can clear the
+  folder after a warning). The server moves every receipt file the next start would count as
   locked (`desktop/receipt-key.mjs` `countLockedReceipts`: DotAmi's own names in `receipts/`, encrypted,
   whatever key they name, unfinished writes included) into a new folder,
   `backups/receipts-locked-<time>/`, and then the key file, `receipts.key`, into the same folder under
@@ -1067,9 +1068,20 @@ warning. This section was written before the code.
   note an earlier version wrote, with no folders in it, owes none.
 - **Still not reached, and said so:** key files set aside on their own in `backups/`
   (`receipts-key-unreadable-<time>.key`: a key file this account couldn't open, moved when nothing was
-  locked with it, or by a restore that gave the receipts a new key). Each holds only a key Windows wraps
-  for an account, nothing the person gave. And, as for every deleted file, the disk's free space: a
-  file is removed, not overwritten.
+  locked with it, or by a restore that gave the receipts a new key). Each holds only a key file that
+  Windows protected for the person's account, nothing the person gave. And, as for every deleted file,
+  the disk's free space: a file is removed, not overwritten.
+- **With the box unticked, the first ask says they stay.** When there are set-aside folders, the first
+  ask says the receipt folders set aside in the backups folder aren't ticked and still hold their
+  receipt files, even when there is no safety copy (a restore's folder can be there alone).
+- **A known edge, warned not prevented:** a restore whose put-back failed leaves the receipts folder as
+  it was before in `receipts-before-restore-<time>/` (§ 7, "never lost"); that folder can then be the only
+  copy of those receipts, and this box clears it. The amber warning names the folder and says the
+  receipts can never be opened afterwards. A restore that records a failed put-back, so Delete could
+  hold such a folder back, is not built.
+- **Before the restart, the amber line on Expenses** names the folder the files moved to from the
+  server's memory, not from the disk; it says the files stay there unless cleared with Delete, so the
+  line stays true if they are cleared before DotAmi restarts.
 
 ### Tests (each must fail when its rule is removed)
 
@@ -1086,8 +1098,9 @@ warning. This section was written before the code.
   itself is replaced by the test, as in the restore test, because Playwright can't follow a relaunched
   app).
 - Delete: only DotAmi's set-aside folders and only DotAmi's files in them, never through a link, the
-  person's own files kept; the count checked; the note owing a folder that couldn't be cleared, and
+  person's own files kept; the count checked; the note written before the first file is removed already
+  owing the ticked folders; the note owing a folder that couldn't be cleared, and
   finishing it (`tests/desktop-wipe-pending.spec.ts`, `tests/privacy-delete.spec.ts`); the page's count
-  (`tests/privacy-holdings.spec.ts`); the warning and the result in a real browser (`e2e/your-data.spec.ts`);
+  (`tests/privacy-holdings.spec.ts`); the warning, the unticked line and the result in a real browser (`e2e/your-data.spec.ts`);
   and in the real app, after Delete, no byte of a cleared folder's files is left in any file under the
   data folder (`e2e-desktop/desktop.spec.ts`).

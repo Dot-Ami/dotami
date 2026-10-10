@@ -268,7 +268,7 @@ The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
   junction, and inside only the files DotAmi named; the person's own files stay. Files are removed, not
   overwritten: the drive's free space can still hold them, as for every deleted file (disk encryption).
   Still not reached, and said: key files set aside on their own (`receipts-key-unreadable-<time>.key`),
-  which hold only a key Windows wrapped for an account.
+  which hold only a key file that Windows protected for the person's account.
 - **The desktop app restarts itself after the move.** The only new power is a third call from DotAmi's
   page to the desktop app's main process (`desktop/window-preload.cjs`), believed only from DotAmi's own
   window showing its own page, and acted on only while this start's key couldn't be opened and no locked

@@ -389,6 +389,11 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
             {!copiesTicked && (counts[COPIES] ?? 0) > 0
               ? " The safety copies in the backups folder aren't ticked, so they still hold what you delete."
               : null}
+            {/* The set-aside receipt folders ride on the same box, and can be there with no safety
+                copy at all (a restore's receipts-before-restore-…), so they get their own line. */}
+            {!copiesTicked && (counts[SET_ASIDE] ?? 0) > 0
+              ? " The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files."
+              : null}
           </p>
         </ConfirmDialog>
       ) : null}

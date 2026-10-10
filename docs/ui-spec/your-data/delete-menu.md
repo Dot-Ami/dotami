@@ -89,7 +89,9 @@ with where they are kept, before confirming.
    doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
    backup saved somewhere else could bring anything back; and, when there are set-aside receipt
    folders, the same amber warning as under the box ("Set-aside receipt folders: 2 folders" in the list). Without them, when there are any, a line
-   that the safety copies aren't ticked and still hold what is deleted. **Yes, continue** or
+   that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
+   receipt folders (even with no safety copy), a line that those folders aren't ticked and still hold
+   their receipt files. **Yes, continue** or
    **Cancel** (back to the menu, boxes still ticked).
 4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
    ticked, the amber warning again, and the set-aside receipt folders' warning when there are some. In the desktop app it points to File → Back up… first and File →

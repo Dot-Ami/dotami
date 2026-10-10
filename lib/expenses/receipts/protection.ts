@@ -91,7 +91,7 @@ export function receiptProtectionText(
           desktop
             ? "DotAmi restarts by itself to start it. If it hasn't, close DotAmi and open it again."
             : "This copy doesn't restart by itself: stop it and start it again to start the new key."
-        } Until then, receipts can't be shown or added. Your expense records stay, and a receipt that was set aside says so when you open it. The moved files stay in that folder, untouched: they open again only if the old key comes back.`,
+        } Until then, receipts can't be shown or added. Your expense records stay, and a receipt that was set aside says so when you open it. The moved files stay in that folder unless you clear them with Delete on What DotAmi knows: they open again only if the old key comes back.`,
         tone: "problem",
       };
   }

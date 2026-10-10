@@ -477,7 +477,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
     // [8i] The receipt folders set aside there are cleared by the safety-copies box since 2026-10-10
     // (docs/architecture/expense-records.md § 11); these key files, set aside on their own, aren't.
     name: "Key files set aside in the backups folder",
-    why: "Not deleted. When Windows couldn't open the key to your receipts on this account and no receipt was locked with it, or a restore gave your receipts a new key, the old key file was moved to the backups folder (receipts-key-unreadable-….key). It holds only a key Windows wrapped for an account, nothing you typed or added. To remove one, close DotAmi and delete it (the backups folder's path is above).",
+    why: "Not deleted. When Windows couldn't open the key to your receipts on this account and no receipt was locked with it, or a restore gave your receipts a new key, the old key file was moved to the backups folder (receipts-key-unreadable-….key). It holds only a key file that Windows protected for your account, nothing you typed or added. To remove one, close DotAmi and delete it (the backups folder's path is above).",
   },
   {
     name: "What the window stored in earlier launches",

@@ -557,8 +557,8 @@ person is asked).
   can't be cleared yet (another program has a file open) is owed in the wipe-pending note and cleared
   by *Finish it now* or at the desktop app's next start. Files are removed, not overwritten, as with
   every Delete. **Still not reached**, and the menu says so: key files set aside on their own in
-  `backups/` (`receipts-key-unreadable-<time>.key`), which hold only a key Windows wrapped for an
-  account. Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
+  `backups/` (`receipts-key-unreadable-<time>.key`), which hold only a key file that Windows protected
+  for the person's account. Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
   [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts), [`e2e/your-data.spec.ts`](../e2e/your-data.spec.ts)
   and the desktop test, which scans every file in the data folder afterwards for byte runs of the
   cleared files.

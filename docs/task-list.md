@@ -233,7 +233,7 @@ roadmap's build order.
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
     the person confirms (the count includes turned-down records, which no list shows, and it says so)
   - [x] Start a new key while the key can't be opened (the maintainer said yes, 2026-10-09): asked twice,
-    the locked receipts and the key file moved to `backups/receipts-locked-<time>/`, never deleted, the new
+    the locked receipts and the key file moved to `backups/receipts-locked-<time>/`, never deleted by that step (since § 11, Delete's safety-copies box can clear it), the new
     key made at the next start; never offered while the key is only out of reach for now (the key store
     unavailable), and no Add a receipt while none can be added; and a "Preparing DotAmi…" window during
     the first start's wait ([expense-records.md § 10](architecture/expense-records.md)).

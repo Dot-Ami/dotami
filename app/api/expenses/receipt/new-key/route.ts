@@ -22,7 +22,7 @@ const PAGE_ONLY_MESSAGE =
  *
  * "Start a new key" (docs/architecture/expense-records.md § 10): while the receipts' key can't be
  * opened, moves the receipts locked with it, and the key file, into backups/receipts-locked-<time>/
- * (never deleted), and answers { movedTo, receipts, keyFile }. The desktop app makes the new key at its
+ * (never deleted by this route; Delete's safety-copies box can clear that folder, § 11), and answers { movedTo, receipts, keyFile }. The desktop app makes the new key at its
  * next start. Refused (409, nothing moved) unless this server's key can't be opened.
  *
  * Answers only to DotAmi's own page, like agreeing and deleting: giving up receipts is the person's
