@@ -8,7 +8,7 @@
  * ([8d]) is driven from its menu, and the bytes of the data file and the backups folder are read
  * afterwards to prove the deleted words are gone, not just hidden.
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -23,6 +23,7 @@ import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mj
 import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
+import { SET_ASIDE_RECEIPTS_WARNING } from "../lib/privacy/inventory";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
@@ -591,7 +592,7 @@ test("a deleted receipts.key with encrypted receipts: no new key is made, and Se
   );
 });
 
-test("Start a new key: the locked receipt and the key file are moved aside, and the next start makes a new key ([8i])", async () => {
+test("Start a new key: the locked receipt and the key file are moved aside, DotAmi restarts by itself, and that start makes a new key that takes receipts again ([8i])", async () => {
   const first = await launch();
   // Never offered while the key opens fine.
   await first.goto(new URL("/settings", first.url()).toString());
@@ -613,24 +614,43 @@ test("Start a new key: the locked receipt and the key file are moved aside, and 
   await page.goto(new URL("/settings", page.url()).toString());
   const data = page.getByRole("region", { name: "Data and backups" });
   await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+  // [8i] § 11: the app restarts by itself after the move. Playwright can't follow a relaunched app, so
+  // Electron's relaunch is replaced, as in the restore test, by one that only leaves a file saying it was
+  // asked for; the test then starts the app again itself, as the relaunch would.
+  const relaunchAsked = path.join(tmp, "relaunch-asked");
+  await app!.evaluate(({ app: electronApp }, marker) => {
+    electronApp.relaunch = () => {
+      (process as unknown as { getBuiltinModule(id: string): typeof import("node:fs") }).getBuiltinModule("node:fs").writeFileSync(marker, "asked");
+    };
+  }, relaunchAsked);
+  const logBeforeRestart = desktopLog().length;
   await data.getByRole("button", { name: "Start a new key…" }).click();
   await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
-  await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
-  await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
+  const sure = page.getByRole("dialog", { name: "Are you sure?" });
+  await expect(sure).toContainText("Then DotAmi restarts by itself to start the new key.");
+  const closed = app!.waitForEvent("close");
+  await sure.getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+  // Said first, with where the files went; then the app closes itself.
+  await expect(data.getByRole("status").filter({ hasText: "DotAmi will restart now to start the new key…" })).toBeVisible();
 
   // Moved, not deleted: the receipt and the key file side by side in one folder in backups/, named on the page.
   const backups = path.join(dataDir, "backups");
+  await expect.poll(() => (existsSync(backups) ? readdirSync(backups).filter((n) => n.startsWith("receipts-locked-")) : [])).toHaveLength(1);
   const aside = readdirSync(backups).filter((n) => n.startsWith("receipts-locked-"));
-  expect(aside).toHaveLength(1);
   const movedTo = path.join(backups, aside[0]);
-  await expect(data).toContainText(movedTo);
+  await closed;
+  app = null;
   expect(readFileSync(path.join(movedTo, lockedName)).equals(locked)).toBe(true);
   expect(readFileSync(path.join(movedTo, "receipts.key")).equals(keyBefore)).toBe(true);
   expect(existsSync(path.join(dataDir, "receipts", lockedName))).toBe(false);
   expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
-  await quit();
+  // It closed to restart: the relaunch was asked for, and the log says why, with no path or name.
+  expect(existsSync(relaunchAsked)).toBe(true);
+  const restartLog = desktopLog().slice(logBeforeRestart);
+  expect(restartLog).toContain("[desktop] restarting to start the new receipts key");
+  expect(restartLog).not.toContain("refused");
 
-  // The next start makes the new key (Local State is already written, so it doesn't wait).
+  // The start that follows makes the new key (Local State is already written, so it doesn't wait).
   const logBefore = desktopLog().length;
   const again = await launch();
   await again.goto(new URL("/settings", again.url()).toString());
@@ -643,6 +663,30 @@ test("Start a new key: the locked receipt and the key file are moved aside, and 
   expect(thisStart).not.toContain("Preparing DotAmi");
   // The set-aside folder is left exactly as it was.
   expect(readdirSync(movedTo).sort()).toEqual([lockedName, "receipts.key"]);
+
+  // Receipts can be added again: kept encrypted with the new key, and shown as the bytes that were added.
+  const receipt = png(4, 3);
+  const kept = await again.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) => {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, body: (await res.json()) as { expenses?: { id: string }[] } };
+    };
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 2_150, paidTo: "Example Print Shop after a new key", whatFor: "paper" }],
+    });
+    const id = proposed.body.expenses![0].id;
+    const agreed = await post("/api/expenses/agree", { expenseIds: [id] });
+    const added = await post("/api/expenses/receipt", { expenseId: id, file });
+    return [proposed.status, agreed.status, added.status];
+  }, receipt.toString("base64"));
+  expect(kept).toEqual([201, 200, 200]);
+  const added = readdirSync(path.join(dataDir, "receipts"));
+  expect(added).toHaveLength(1);
+  expect(encryptedKeyId(readFileSync(path.join(dataDir, "receipts", added[0])))).toBe(keyId);
+  expect(await receiptBytesShown(again, "Example Print Shop after a new key")).toEqual(receipt.toString("base64"));
 });
 
 test("the first start of a new data folder shows \"Preparing DotAmi…\" while it waits, closed when the main window shows; an ordinary start never shows it ([8i])", async () => {
@@ -793,8 +837,8 @@ test("a HEIC receipt is drawn by the graphics chip where it decodes HEVC, or pla
   // picture shows green, white / red, blue: the tiles were placed and the rotation applied.
   const page = await launch();
   await page.goto(new URL("/expenses", page.url()).toString());
-  // The window's bridge gives the page exactly its two HEIC calls (desktop/window-preload.cjs).
-  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped"]);
+  // The window's bridge gives the page exactly its two HEIC calls and the restart for a new key (desktop/window-preload.cjs).
+  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped", "restartForNewKey"]);
   const photo = heic({ transforms: [["irot", 1]] });
   const id = await page.evaluate(async (file) => {
     const post = async (url: string, body: unknown) =>
@@ -897,6 +941,25 @@ const MARKER = "zq-desktop-delete-marker-5813";
 /** Does this file's raw bytes hold the marker? */
 const holdsMarker = (file: string) => readFileSync(file).includes(Buffer.from(MARKER));
 
+/** Every file under `folder` (relative, with "/") whose raw bytes hold any of `needles`. */
+function filesHoldingAny(folder: string, needles: Buffer[], prefix = ""): string[] {
+  return readdirSync(folder, { withFileTypes: true }).flatMap((item) => {
+    const full = path.join(folder, item.name);
+    if (item.isDirectory()) return filesHoldingAny(full, needles, `${prefix}${item.name}/`);
+    if (!item.isFile()) return [];
+    let bytes: Buffer;
+    try {
+      bytes = readFileSync(full);
+    } catch {
+      // A file Chromium still holds locked a moment after the app quits (its own lock or cache files):
+      // nothing DotAmi writes. Say which, so a skipped file is never silent.
+      console.warn(`couldn't read ${prefix}${item.name} for the byte scan`);
+      return [];
+    }
+    return needles.some((n) => bytes.includes(n)) ? [`${prefix}${item.name}`] : [];
+  });
+}
+
 /** DotAmi's own safety copies in a data folder's backups/ (the names desktop/wipe-pending.mjs deletes). */
 const safetyCopies = (dir: string) =>
   existsSync(path.join(dir, "backups")) ? readdirSync(path.join(dir, "backups")).filter((f) => /^dotami-before-.+\.db$/.test(f)) : [];
@@ -933,15 +996,16 @@ async function restoreFrom(file: string, passphrase: string) {
   app = null;
 }
 
-test("Delete with the safety copies ticked: the words are gone from dotami.db and backups/, and a backup saved elsewhere still restores", async () => {
+test("Delete with the safety copies ticked: the words are gone from dotami.db and backups/, the receipt folders set aside there are cleared to the last byte, and a backup saved elsewhere still restores", async () => {
   test.setTimeout(300_000);
   const elsewhere = path.join(tmp, "saved elsewhere", "DotAmi backup.dotami-backup");
   mkdirSync(path.dirname(elsewhere));
   const passphrase = "correct horse battery staple";
   const dbFile = path.join(dataDir, "dotami.db");
 
-  // An idea and a statement holding the marker, a backup saved elsewhere, then a restore of it,
-  // which leaves a safety copy of the data in backups/ the way the app really makes one.
+  // An idea and a statement holding the marker, and a record with a receipt; a backup saved elsewhere,
+  // then a restore of it, which leaves a safety copy of the data in backups/, and the receipts folder as
+  // it was (receipts-before-restore-…), the way the app really makes them.
   let page = await launch();
   await describeVenture(page);
   const status = await page.evaluate(
@@ -951,37 +1015,83 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
     `statement ${MARKER}`,
   );
   expect(status).toBe(200);
+  const kept = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) => {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, body: (await res.json()) as { expenses?: { id: string }[] } };
+    };
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 1_999, paidTo: "Example Stationery before a restore", whatFor: "paper" }],
+    });
+    const id = proposed.body.expenses![0].id;
+    const agreed = await post("/api/expenses/agree", { expenseIds: [id] });
+    const added = await post("/api/expenses/receipt", { expenseId: id, file });
+    return [proposed.status, agreed.status, added.status];
+  }, png(6, 2).toString("base64"));
+  expect(kept).toEqual([201, 200, 200]);
   await backUpTo(elsewhere, passphrase);
   await restoreFrom(elsewhere, passphrase);
+
+  // [8i] And what Start a new key leaves (expense-records.md § 10): a receipt locked with a lost key and
+  // that key file, in a folder of their own.
+  const backupsDir = path.join(dataDir, "backups");
+  const lockedAside = path.join(backupsDir, "receipts-locked-1760000000000");
+  mkdirSync(lockedAside);
+  writeFileSync(
+    path.join(lockedAside, `${"7".repeat(32)}.pdf`),
+    Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from("0011223344556677", "hex"), randomBytes(64)]),
+  );
+  writeFileSync(path.join(lockedAside, "receipts.key"), JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: randomBytes(48).toString("base64") }));
+  const setAside = readdirSync(backupsDir).filter((n) => /^receipts-(locked|before-restore)-/.test(n)).sort();
+  expect(setAside).toHaveLength(2);
+  expect(setAside[0]).toMatch(/^receipts-before-restore-\d+$/);
+  // 32 bytes from the end of each file in them (past the shared header): what a byte scan looks for afterwards.
+  const clearedBytes = setAside.flatMap((folder) =>
+    readdirSync(path.join(backupsDir, folder)).map((f) => {
+      const bytes = readFileSync(path.join(backupsDir, folder, f));
+      return bytes.subarray(bytes.length - 32);
+    }),
+  );
+  expect(clearedBytes).toHaveLength(3);
 
   // The "before": the words are in the data file and in the safety copy.
   expect(holdsMarker(dbFile)).toBe(true);
   expect(safetyCopies(dataDir)).toHaveLength(1);
   expect(holdsMarker(path.join(dataDir, "backups", safetyCopies(dataDir)[0]))).toBe(true);
+  expect(filesHoldingAny(dataDir, clearedBytes)).toHaveLength(3);
 
   page = await launch();
   await page.goto(new URL("/your-data", page.url()).toString());
   const removing = page.getByRole("region", { name: "Taking things out" });
   await removing.getByRole("button", { name: "Delete", exact: true }).click();
   const box = removing.getByRole("listitem").filter({ has: page.getByLabel("Safety copies in the backups folder") });
-  await expect(box).toContainText("Safety copies: 1");
+  await expect(box).toContainText("Safety copies: 1 · Set-aside receipt folders: 2");
   await expect(box).toContainText("Afterwards, only a backup you saved somewhere else could bring anything back.");
   await removing.getByLabel("Your ideas, with their notes, links and map progress").check();
   await removing.getByLabel("Your statements (“In your words”)").check();
   await removing.getByLabel("Safety copies in the backups folder").check();
+  await expect(box).toContainText(SET_ASIDE_RECEIPTS_WARNING);
   await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
   await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
   const second = page.getByRole("dialog", { name: "Delete them now?" });
   await expect(second).toContainText("The safety copies in the backups folder go too.");
+  await expect(second).toContainText(SET_ASIDE_RECEIPTS_WARNING);
   await second.getByRole("button", { name: "Delete now" }).click();
   const done = removing.getByRole("status");
   await expect(done).toContainText("Safety copies: 1 file deleted, 0 left");
+  await expect(done).toContainText("Set-aside receipt folders: 2 folders deleted, 0 left");
   await expect(done).toContainText("Their space in the data file is wiped");
   await quit();
 
   // The "after": in no byte of the data file, no safety copy left, no journal, no wipe still owed.
   expect(holdsMarker(dbFile)).toBe(false);
   expect(safetyCopies(dataDir)).toEqual([]);
+  // The set-aside folders are gone, and no file anywhere in the data folder holds a byte run of theirs.
+  for (const folder of setAside) expect(existsSync(path.join(backupsDir, folder)), folder).toBe(false);
+  expect(filesHoldingAny(dataDir, clearedBytes)).toEqual([]);
   for (const f of readdirSync(path.join(dataDir, "backups"))) expect(holdsMarker(path.join(dataDir, "backups", f)), f).toBe(false);
   expect(existsSync(`${dbFile}-journal`)).toBe(false);
   expect(existsSync(wipePendingFile(dbFile))).toBe(false);

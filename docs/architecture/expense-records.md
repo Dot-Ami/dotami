@@ -917,7 +917,8 @@ someone who has no backup and wants to go on adding receipts without deleting th
   that a backup made before the key was lost is the way to get those receipts back inside DotAmi, so
   restoring one is the better answer for someone who has one. The second press asks once more. Cancel at
   either step changes nothing.
-- **Moved aside, never deleted.** The server moves every receipt file the next start would count as
+- **Moved aside, never deleted** (by this step; since § 11, Delete's safety-copies box can clear the
+  folder after a warning). The server moves every receipt file the next start would count as
   locked (`desktop/receipt-key.mjs` `countLockedReceipts`: DotAmi's own names in `receipts/`, encrypted,
   whatever key they name, unfinished writes included) into a new folder,
   `backups/receipts-locked-<time>/`, and then the key file, `receipts.key`, into the same folder under
@@ -934,7 +935,8 @@ someone who has no backup and wants to go on adding receipts without deleting th
   The server can't make one: only the desktop app's main process can reach Windows' key store. So the
   page asks the person to close DotAmi and open it again; until then, receipts can't be shown or added.
   If Windows' key store still isn't available at that start, receipts are kept unencrypted, as on any
-  computer without one, and the pages say so.
+  computer without one, and the pages say so. *Since 2026-10-10 the desktop app restarts by itself
+  instead (§ 11); a copy run from source still says to restart it by hand.*
 - **The expense records stay, with their receipt rows.** Each receipt that was set aside still shows on
   its record; opening it says it was set aside when a new key was started, and in which folder, rather
   than "isn't in the receipts folder any more". Removing it and adding the file again works as before.
@@ -952,7 +954,9 @@ someone who has no backup and wants to go on adding receipts without deleting th
   becomes `new-key-at-restart` for the rest of its run, so a second press is refused and the pages say
   what happened. The log gets the count only, never a name.
 - **Delete** (the Delete menu) doesn't reach these folders, like the receipts folders a restore moves
-  into `backups/`; *What DotAmi knows about you* says so, and how to remove them by hand.
+  into `backups/`; *What DotAmi knows about you* says so, and how to remove them by hand. *Since
+  2026-10-10 the Delete menu's "Safety copies in the backups folder" box clears both kinds, with a
+  warning (§ 11).*
 
 ### The "Preparing DotAmi…" window
 
@@ -996,3 +1000,107 @@ in those seconds, which looks like DotAmi didn't start.
   shown at a first start and closed when the main window shows, never at an ordinary start, and closed
   before the failure message when the start fails (`e2e-desktop/desktop.spec.ts`), with its rules
   unit-tested in `tests/desktop-preparing.spec.ts`.
+
+## 11. Restarting by itself after "Start a new key", and Delete reaching the set-aside receipts (2026-10-10)
+
+The maintainer said yes (2026-10-10) to two follow-ups to § 10: DotAmi restarts by itself after Start a
+new key, instead of asking the person to close it and open it again; and the Delete menu's "Safety
+copies in the backups folder" box also clears the receipt folders DotAmi set aside in `backups/`, with a
+warning. This section was written before the code.
+
+### Restarting by itself
+
+- **Only after the move.** The restart is asked for once the server has moved the locked receipts aside
+  and answered (§ 10). A refused or failed move asks for nothing: the page shows the error, as before.
+- **The page says what is about to happen first.** The second ask says that DotAmi then restarts by
+  itself. After the move, the page says where the files went and "DotAmi will restart now to start the
+  new key…", and asks for the restart about two seconds later, so the line can be read.
+- **Only in the desktop app.** The page asks through the window's bridge (`desktop/window-preload.cjs`
+  gains a third call, `restartForNewKey`). A copy run from source has no bridge: nothing restarts, the
+  page is refreshed, and the amber line says plainly that this copy doesn't restart by itself and to
+  stop it and start it again.
+- **The desktop app decides, not the page** (`restartForNewKey` in `desktop/receipt-key.mjs`, called by
+  `desktop/main.mjs`). It restarts only when all of these hold, and otherwise answers "refused", changes
+  nothing and logs which rule stopped it (no path, no name):
+  - the request comes from DotAmi's own window showing one of its own pages (the same check as the HEIC
+    calls);
+  - this start told its server `key-unreadable`, the only state the button shows in;
+  - the receipts folder holds no locked receipt any more (`countLockedReceipts`, the count the next
+    start makes): the move happened, so the next start makes a new key;
+  - the app isn't already quitting (a restore, or a start that failed).
+- **The restart.** Electron's `app.relaunch()` first, so that if it is refused the server still runs and
+  nothing has changed; then the server is stopped and waited for (the data file closed, as a restore
+  does); then the app exits, and the new copy starts, finds nothing locked and makes the new key (§ 9,
+  "with the file missing, a new key is simply made"), showing "Preparing DotAmi…" if it has to wait. The
+  log says `[desktop] restarting to start the new receipts key`.
+- **A failed restart loses nothing.** The files were moved before anything restarts. A refused relaunch
+  leaves the app running: the page is refreshed and the amber line (desktop app) now reads "DotAmi
+  restarts by itself to start it. If it hasn't, close DotAmi and open it again." If the new copy never
+  comes up (the computer switched off in between), the next ordinary start makes the key all the same.
+
+### Delete reaches the set-aside receipts
+
+- **Two kinds of folder in `backups/` hold receipts DotAmi set aside**: `receipts-locked-<time>/` (Start a
+  new key, § 10: the locked receipt files and the old `receipts.key`) and `receipts-before-restore-<time>/`
+  (a restore, § 7: the receipts folder as it was before). Until now Delete didn't reach them, and the
+  menu said so.
+- **The box "Safety copies in the backups folder" now clears them too.** It counts them as folders, beside
+  the safety copies ("Safety copies: 1 · Set-aside receipt folders: 2"), and can be ticked when either is
+  above zero.
+- **The warning names them and says what is lost.** With the box ticked and set-aside folders there,
+  the box, the first ask and the second ask say in amber: the set-aside receipt folders in the backups
+  folder go too, `receipts-locked-…` (receipts Start a new key set aside, with the old key file) and
+  `receipts-before-restore-…` (the receipts folder as it was before a restore), and afterwards those
+  receipts can never be opened, even if the old key comes back.
+- **What exactly is deleted** (`desktop/wipe-pending.mjs`, fenced like the safety copies): only folders
+  directly inside a `backups/` folder that is a real folder, not a link; only folders named exactly as
+  DotAmi names them (`receipts-locked-<digits>`, with `-<n>` when two were made in the same millisecond,
+  and `receipts-before-restore-<digits>`), and only when the folder itself is real, not a link or
+  junction; inside, only regular files DotAmi named: receipt files (32 hex characters, then `.jpg`,
+  `.png`, `.webp`, `.pdf` or `.heic`, with `.partial` or `.encrypting` for an unfinished write) and
+  `receipts.key`. Anything else inside (a file the person put there, a sub-folder, a link) stays, and the
+  folder with it; an emptied folder is removed. A set-aside folder holding nothing DotAmi named isn't
+  counted.
+- **Checked and owed like the safety copies.** The number of folders is checked against what the page
+  showed (nothing is deleted on a mismatch); the "wipe pending" note names the owed folders as well,
+  written before anything is deleted; a folder with a file that couldn't be deleted (another program had
+  it open) stays owed, finished by *Finish it now* or at the desktop app's next start, and only then. A
+  note an earlier version wrote, with no folders in it, owes none.
+- **Still not reached, and said so:** key files set aside on their own in `backups/`
+  (`receipts-key-unreadable-<time>.key`: a key file this account couldn't open, moved when nothing was
+  locked with it, or by a restore that gave the receipts a new key). Each holds only a key file that
+  Windows protected for the person's account, nothing the person gave. And, as for every deleted file,
+  the disk's free space: a file is removed, not overwritten.
+- **With the box unticked, the first ask says they stay.** When there are set-aside folders, the first
+  ask says the receipt folders set aside in the backups folder aren't ticked and still hold their
+  receipt files, even when there is no safety copy (a restore's folder can be there alone).
+- **A known edge, warned not prevented:** a restore whose put-back failed leaves the receipts folder as
+  it was before in `receipts-before-restore-<time>/` (§ 7, "never lost"); that folder can then be the only
+  copy of those receipts, and this box clears it. The amber warning names the folder and says the
+  receipts can never be opened afterwards. A restore that records a failed put-back, so Delete could
+  hold such a folder back, is not built.
+- **Before the restart, the amber line on Expenses** names the folder the files moved to from the
+  server's memory, not from the disk; it says the files stay there unless cleared with Delete, so the
+  line stays true if they are cleared before DotAmi restarts.
+
+### Tests (each must fail when its rule is removed)
+
+- The decision to restart: refused from anything but DotAmi's own window, in every state but
+  `key-unreadable`, while a locked receipt is still there, and while quitting; the relaunch asked for
+  before the server stops, and a refused relaunch stops nothing (`tests/receipt-key.spec.ts`, with
+  stand-ins for Electron); the bridge's three calls (`tests/desktop-sandbox.spec.ts`).
+- The page, in a real browser: with a stand-in bridge, the line "DotAmi will restart now…" is on the
+  page before the restart is asked for, it is asked for once, and a refused restart leaves the amber
+  line saying to restart by hand; with no bridge, nothing is asked for and the line says this copy
+  doesn't restart by itself (`e2e/receipt-new-key.spec.ts`). The sentences: `tests/receipt-protection.spec.ts`.
+- The real app: the button, the app closes itself to restart, and the start that follows has a new key
+  and takes a receipt again, encrypted with that key (`e2e-desktop/desktop.spec.ts`; Electron's relaunch
+  itself is replaced by the test, as in the restore test, because Playwright can't follow a relaunched
+  app).
+- Delete: only DotAmi's set-aside folders and only DotAmi's files in them, never through a link, the
+  person's own files kept; the count checked; the note written before the first file is removed already
+  owing the ticked folders; the note owing a folder that couldn't be cleared, and
+  finishing it (`tests/desktop-wipe-pending.spec.ts`, `tests/privacy-delete.spec.ts`); the page's count
+  (`tests/privacy-holdings.spec.ts`); the warning, the unticked line and the result in a real browser (`e2e/your-data.spec.ts`);
+  and in the real app, after Delete, no byte of a cleared folder's files is left in any file under the
+  data folder (`e2e-desktop/desktop.spec.ts`).

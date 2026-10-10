@@ -48,8 +48,8 @@ says where it is going.
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
   everything else, what sits outside the database and what leaves the computer, read from the data
   file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
-  data from `lib/privacy/inventory.ts` `DELETE_MENU` (the safety copies in `backups/` among them),
-  asked twice, then wiped from the file by `lib/privacy/delete.ts`; a wipe that couldn't finish is
+  data from `lib/privacy/inventory.ts` `DELETE_MENU` (the safety copies in `backups/` among them, with
+  the receipt folders set aside there), asked twice, then wiped from the file by `lib/privacy/delete.ts`; a wipe that couldn't finish is
   finished at the desktop app's next start, only when Delete left its note: `desktop/wipe-pending.mjs`)
   · `/expenses[?idea=<id>]` ("Your expenses": typing business expense records and agreeing to them
   all at once, records not attached to an idea yet, refunds kept either way; [8i])

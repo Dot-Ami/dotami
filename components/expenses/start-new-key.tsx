@@ -13,6 +13,19 @@ interface Started {
   keyFile: boolean;
 }
 
+/** The desktop window's call to restart after the move (desktop/window-preload.cjs); absent in a copy run from source. */
+interface RestartBridge {
+  restartForNewKey(): Promise<"restarting" | "refused">;
+}
+
+const restartBridge = (): RestartBridge | null => {
+  const candidate = typeof window === "undefined" ? undefined : (window as unknown as { dotamiDesktop?: Partial<RestartBridge> }).dotamiDesktop;
+  return candidate && typeof candidate.restartForNewKey === "function" ? (candidate as RestartBridge) : null;
+};
+
+/** How long "DotAmi will restart now…" is on the page before the restart is asked for, so it can be read. */
+const RESTART_PAUSE_MS = 2_000;
+
 /** "2 locked receipt files and the old key file were", "1 locked receipt file was", "the old key file was". */
 function movedSentence({ receipts, keyFile }: Started): string {
   const files = receipts === 0 ? "" : receipts === 1 ? "1 locked receipt file" : `${receipts} locked receipt files`;
@@ -27,7 +40,12 @@ function movedSentence({ receipts, keyFile }: Started): string {
  *
  * Asked twice, the cost said first: a new key gives up the receipts locked with the old one unless the
  * old key comes back. Nothing is sent until the second answer; Cancel, Escape or a click outside at
- * either step changes nothing. Then the page is refreshed, and the line above says where the files went.
+ * either step changes nothing.
+ *
+ * Then (§ 11): in the desktop app, the page says "DotAmi will restart now…" with where the files went,
+ * and a moment later asks the window's bridge to restart; the desktop app decides for itself whether
+ * to (desktop/receipt-key.mjs restartForNewKey). If it doesn't, or in a copy run from source, which has
+ * no bridge, the page is refreshed and the amber line above says to restart by hand.
  */
 export function StartNewReceiptKey() {
   const router = useRouter();
@@ -35,6 +53,9 @@ export function StartNewReceiptKey() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState<Started | null>(null);
+  // Read when the button is pressed, not while rendering: the server's render has no window.
+  const [canRestart, setCanRestart] = useState(false);
+  const [restarting, setRestarting] = useState(false);
 
   async function start() {
     setBusy(true);
@@ -48,7 +69,19 @@ export function StartNewReceiptKey() {
     }
     setStarted(result.body as Started);
     setStep("done");
-    // The pages' line about the key is the server's: it now says where the files went, until the restart.
+    const bridge = restartBridge();
+    if (!bridge) {
+      // The pages' line about the key is the server's: it now says where the files went, until the restart.
+      router.refresh();
+      return;
+    }
+    // Said first, then asked for: the person reads what is about to happen before the window closes.
+    setRestarting(true);
+    await new Promise((resolve) => setTimeout(resolve, RESTART_PAUSE_MS));
+    const answer = await bridge.restartForNewKey().catch(() => "refused" as const);
+    // "restarting": the app is closing, and this page with it.
+    if (answer === "restarting") return;
+    setRestarting(false);
     router.refresh();
   }
 
@@ -59,6 +92,7 @@ export function StartNewReceiptKey() {
           type="button"
           onClick={() => {
             setError(null);
+            setCanRestart(restartBridge() !== null);
             setStep("warn");
           }}
           className="rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber transition hover:bg-amber/10"
@@ -93,7 +127,9 @@ export function StartNewReceiptKey() {
       {step === "sure" ? (
         <ConfirmDialog
           title="Are you sure?"
-          intro="The receipts locked with the old key are given up for good unless the old key comes back. DotAmi starts the new key the next time it starts."
+          intro={`The receipts locked with the old key are given up for good unless the old key comes back. ${
+            canRestart ? "Then DotAmi restarts by itself to start the new key." : "DotAmi starts the new key the next time it starts."
+          }`}
           confirmLabel={busy ? "Moving them aside…" : "Give up the locked receipts and start a new key"}
           focusCancel
           busy={busy}
@@ -107,7 +143,7 @@ export function StartNewReceiptKey() {
       {step === "done" && started ? (
         <p role="status" className="mt-1 text-[12.5px] text-amber">
           {started.movedTo ? `Done. ${movedSentence(started)} moved to ${started.movedTo}.` : "Done. There were no locked receipt files left to move."}{" "}
-          Close DotAmi and open it again to start the new key.
+          {restarting ? "DotAmi will restart now to start the new key…" : "Close DotAmi and open it again to start the new key."}
         </p>
       ) : null}
 
