@@ -346,7 +346,16 @@ its action:
 **When the wipe can't finish** (antivirus or a sync program holding `dotami.db.plain-to-wipe` open):
 the start goes on, on the encrypted file; the note stays at `wipe`; the wipe is tried again at every
 start; and while the plain copy exists, Settings says so in a line, as the Delete menu's
-"wipe pending" note does today.
+"wipe pending" note does today. **One file at a time:** there is one note for the data folder, so
+while it is there no other file is encrypted (`encryptFile` refuses, "pending"); the plain safety
+copies wait for a start where the owed wipe has finished, and are counted as still plain meanwhile.
+(Found in review, 2026-10-10: encrypting a safety copy in the same start replaced the data file's
+`wipe` note and then removed it, so the plain copy was never wiped. A start now also wipes a
+`.plain-to-wipe` that no note names, when the encrypted file beside it opens with the key.)
+
+**A file another program holds is never taken for a missing one.** The plain-or-encrypted check
+(§ 4) says "absent" only when the file isn't there; a `dotami.db` another program holds stops the start
+with a sentence saying so, having changed nothing, instead of being treated as a new data folder.
 
 **A journal SQLite rolls back itself.** If an earlier crash left a plain `dotami.db-journal`, step 1's
 open lets SQLite undo the half-done transaction, and SQLite deletes that journal, it doesn't
@@ -454,6 +463,13 @@ When the app starts and can't open the key:
 - **It changes nothing on the disk.** The key may come back (a profile that loads later, a
   `database.key` put back from the Recycle Bin), so the data file and the key file stay exactly as
   they are, and a missing `database.key` is **never** replaced while the file is encrypted.
+- **A key file that opens is not enough: it must open the data file.** One that holds another key
+  (copied from another data folder, or saved by a restore that couldn't finish) is the same lost-key
+  case, said in the same window ("opens, but holds another key"), never a failed update. And a key
+  that opens is never replaced because `dotami.db` is missing: a new data file gets the same key, so
+  the safety copies locked with it (or the data file, put back) still open.
+- **Windows' key store not available right now** (it can be, briefly, after signing in or an
+  update) is said apart from a lost key: restart Windows or sign in again. Nothing is given up for it.
 - **It says so before any window opens**, in plain words: what happened, that nothing was changed,
   that putting `database.key` back (if it was moved or deleted) brings everything back, and the way
   forward that needs no new decision: **File → Restore from a backup…**, which moves the locked data

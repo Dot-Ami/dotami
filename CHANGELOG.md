@@ -18,9 +18,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and **Never…** (after a second warning). Encrypting never makes a second plain copy, survives being
   stopped at any step, and overwrites the plain file with zeros before deleting it. Settings and
   *What DotAmi knows about you* say whether the file is encrypted, and Settings has an **Encrypt the
-  data file** switch to turn it on after "Never". When the key can't be opened, nothing is changed
-  and a window says what happened and that putting `database.key` back brings everything back.
-  Backups hold the data decrypted, rebuilt in memory (no plain copy on the disk), so they restore on
+  data file** switch to turn it on after "Never". When the key can't be opened (or the key file
+  opens but holds another key, or Windows' key store isn't available right now), nothing is changed
+  and a window says what happened and that putting `database.key` back brings everything back. A key
+  that opens is never replaced, even when the data file is missing; a data file another program holds
+  stops the start with a sentence saying so, never taken for a new one; and only one file is encrypted
+  at a time, so an unencrypted copy whose wipe another program held up is never forgotten.  Backups hold the data decrypted, rebuilt in memory (no plain copy on the disk), so they restore on
   another computer; a restore is written encrypted with this computer's key. An older DotAmi can't
   open an encrypted file: going back needs a backup. A copy run from source keeps the file plain and
   says so.

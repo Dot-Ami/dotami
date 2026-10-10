@@ -8,7 +8,7 @@ export type OpenedDatabaseKey =
   | { state: "on"; key: Buffer; keyId: string }
   | { state: "none"; unreadable: boolean }
   | { state: "no-key-store" }
-  | { state: "key-unreadable"; keyId: string | null; missing: boolean };
+  | { state: "key-unreadable"; keyId: string | null; missing: boolean; storeUnavailable: boolean; wrongKey?: boolean };
 export function openDatabaseKey(dataDir: string, store: KeyStore, options: { locked: boolean; platform?: string }): OpenedDatabaseKey;
 export function makeDatabaseKey(
   dataDir: string,

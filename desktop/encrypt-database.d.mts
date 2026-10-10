@@ -4,11 +4,12 @@ export const COPY_SUFFIX: string;
 export const PLAIN_SUFFIX: string;
 export type CrashPoint = "copied" | "checked" | "note-swap" | "first-rename" | "second-rename" | "note-wipe" | "plain-deleted";
 export class EncryptionStopped extends Error {
-  kind: "damaged" | "busy" | "stuck" | "mismatch";
+  kind: "damaged" | "busy" | "stuck" | "mismatch" | "pending";
 }
 export function notePath(dataDir: string): string;
 export function readNote(dataDir: string): null | { unreadable: true } | { step: "swap" | "wipe"; file: string; size: number; sha256: string };
-export function wipeFile(file: string): void;
+export function wipeFile(file: string, options?: { remove?: (file: string) => void }): void;
+export function plainLeftovers(dataDir: string): string[];
 export function encryptFile(
   dataDir: string,
   file: string,

@@ -45,8 +45,10 @@ person is asked).
   Windows' per-user protection (Electron's `safeStorage`), with the key's id; the key itself is
   written nowhere else, never in a backup or the log ([`desktop/database-key.mjs`](../desktop/database-key.mjs)).
   While a file is being encrypted, **`database-encrypting.json`** holds which of DotAmi's own files
-  and the step (no data of the person's), and `dotami.db.encrypting` / `dotami.db.plain-to-wipe`
-  exist for moments. The plain file is overwritten with zeros, then deleted; on a solid-state disk
+  and the step (no data of the person's), and `dotami.db.encrypting` (the encrypted copy being made) and
+  `dotami.db.plain-to-wipe` (the whole data file, unencrypted, until it is wiped) normally exist for
+  moments; a plain copy another program holds stays until a later start can wipe it, Settings counts it
+  meanwhile, and no other file is encrypted until it is gone. The plain file is overwritten with zeros, then deleted; on a solid-state disk
   that doesn't promise the old bytes are physically gone, and copies Windows or a synced folder made
   before aren't changed (said in Settings). A copy run from source keeps the file plain and says so.
   Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`FOLDERS`).

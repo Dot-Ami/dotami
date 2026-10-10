@@ -95,11 +95,20 @@ export interface WindowStorageEntry {
 
 /** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log" | "wipe-pending" | "receipts" | "receipts-key" | "database-key" | "database-encrypting";
+  id:
+    | "backups"
+    | "log"
+    | "wipe-pending"
+    | "receipts"
+    | "receipts-key"
+    | "database-key"
+    | "database-encrypting"
+    | "database-encrypting-copy"
+    | "database-plain-to-wipe";
   /**
-   * Path relative to the folder holding the data file. The wipe-pending note is named after the
-   * data file itself, so this shows the desktop app's name for it (lib/privacy/holdings.ts finds it
-   * beside whichever data file this copy uses).
+   * Path relative to the folder holding the data file. The wipe-pending note and the two files of an
+   * encryption under way are named after the data file itself, so this shows the desktop app's name for
+   * them (lib/privacy/holdings.ts finds them beside whichever data file this copy uses).
    */
   relativePath: string;
   name: string;
@@ -569,6 +578,26 @@ export const FOLDERS: readonly FolderEntry[] = [
     writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'ENCRYPTING_NOTE = "database-encrypting.json"' },
     desktopOnly: true,
     whenAbsent: "None: nothing is being encrypted.",
+  },
+  {
+    id: "database-encrypting-copy",
+    relativePath: "dotami.db.encrypting",
+    name: "The encrypted copy being made",
+    holds:
+      "Made only while the desktop app encrypts the data file: everything the data file holds, written by SQLite straight into this file already encrypted with the data file's key (no plain copy is made). Once it is checked against the data file it takes the data file's place, a moment later. If DotAmi stops before that, its next start overwrites it with zeros and deletes it (or finishes the swap). The same name with “.encrypting” after a safety copy's name can appear in the safety copies folder for the same moments; a journal SQLite keeps beside it (“-journal”) goes with it.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'COPY_SUFFIX = ".encrypting"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being encrypted.",
+  },
+  {
+    id: "database-plain-to-wipe",
+    relativePath: "dotami.db.plain-to-wipe",
+    name: "The unencrypted data file being wiped",
+    holds:
+      "The data file as it was before it was encrypted: everything it held, unencrypted. It is there from the moment the encrypted copy takes its place until it is overwritten with zeros and deleted, normally a moment later. If another program holds it (an antivirus scan or a sync app can), it stays until a later start can wipe it, and Settings says an unencrypted copy is still on the disk. A safety copy's own (its name with “.plain-to-wipe” after it, in the safety copies folder) is handled the same way, and so is a journal SQLite keeps beside either (“-journal”). Delete doesn't remove these files; the desktop app's next start does. On a solid-state disk, zeros don't promise the old bytes are physically gone.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'PLAIN_SUFFIX = ".plain-to-wipe"' },
+    desktopOnly: true,
+    whenAbsent: "None: no unencrypted copy is waiting to be wiped.",
   },
   {
     id: "backups",

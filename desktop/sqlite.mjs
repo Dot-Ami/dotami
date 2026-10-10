@@ -78,10 +78,27 @@ export function runSql(db, sql) {
 const PLAIN_HEADER = Buffer.from("SQLite format 3\0", "latin1");
 
 /**
+ * Thrown by fileKind when a file is there but can't be read now: another program holds it (an antivirus
+ * scan or a sync app; Windows says EBUSY or EPERM) or this account may not read it (EACCES). Not "absent":
+ * a file that is there must never be taken for a new data folder. The message is DotAmi's.
+ */
+export class FileNotReadable extends Error {
+  constructor(file, code) {
+    super(
+      `Another program has ${path.basename(file)} open, or this Windows account can't read it (${code ?? "error"}), so DotAmi can't tell what it holds. Nothing was changed. Close the program that has it (an antivirus scan or a sync app can do this) and start DotAmi again.`,
+    );
+    this.name = "FileNotReadable";
+    this.code = code;
+  }
+}
+
+/**
  * What a data file is, from its first bytes (database-encryption.md § 4, "The check, exactly"):
  * "absent" (no file, or 0 bytes: a new database), "plain" (starts "SQLite format 3" and a zero byte),
  * or "encrypted" (anything else, which must open with the key; a plain file damaged at its start lands
  * here too, and the start then says it may be damaged as well as locked).
+ * Only a missing file is "absent": one another program holds throws FileNotReadable, so a busy data file
+ * is never taken for a new data folder (which would make a new key and create a new file).
  * @param {string} file
  * @returns {"absent" | "plain" | "encrypted"}
  */
@@ -90,8 +107,9 @@ export function fileKind(file) {
   let fd;
   try {
     fd = openSync(file, "r");
-  } catch {
-    return "absent";
+  } catch (error) {
+    if (error?.code === "ENOENT") return "absent";
+    throw new FileNotReadable(file, error?.code);
   }
   try {
     if (fstatSync(fd).size === 0) return "absent";

@@ -26,13 +26,13 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, readNote, resumeEncryption } from "./encrypt-database.mjs";
+import { encryptFile, EncryptionStopped, plainLeftovers, resumeEncryption } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
-import { fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
+import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe, SAFETY_COPY_NAME } from "./wipe-pending.mjs";
 
@@ -177,7 +177,14 @@ async function start() {
   // [8i] The data file's key, and encrypting the file when it is new or the person says so
   // (docs/architecture/database-encryption.md § 6). Stops the start, having changed nothing, when the
   // key can't be opened or the files are in a state DotAmi didn't leave them in.
-  if (!(await prepareDatabase())) return;
+  try {
+    if (!(await prepareDatabase())) return;
+  } catch (error) {
+    // The data file (or the note's file) is there but another program holds it: never taken for a new
+    // folder, so nothing was made or changed (desktop/sqlite.mjs fileKind).
+    if (error instanceof FileNotReadable) return fail(error.message);
+    throw error;
+  }
 
   // A Delete whose wipe couldn't finish (the computer was busy, the disk full, or it was switched
   // off part-way) left a "wipe pending" note beside the data file: finish it now, before the server
@@ -376,10 +383,26 @@ function safetyCopyFiles() {
 async function prepareDatabase() {
   const say = (line) => log.write(`[database] ${line}\n`);
   const copies = safetyCopyFiles();
-  const locked = fileKind(dbFile) === "encrypted" || copies.some((f) => fileKind(f) === "encrypted") || readNote(dataDir) !== null;
+  // A safety copy another program holds counts as not locked here (it is tried again at the next start);
+  // the data file itself is never guessed at: fileKind throws, and the start stops having changed nothing.
+  const copyKind = (f) => {
+    try {
+      return fileKind(f);
+    } catch (error) {
+      if (error instanceof FileNotReadable) return "held";
+      throw error;
+    }
+  };
+  const locked = fileKind(dbFile) === "encrypted" || copies.some((f) => copyKind(f) === "encrypted") || readNote(dataDir) !== null;
   const opened = openDatabaseKey(dataDir, safeStorage, { locked });
   if (opened.state === "key-unreadable") {
-    say(opened.missing ? "the key file is missing; nothing was changed" : "the key can't be opened by this account; nothing was changed");
+    say(
+      opened.storeUnavailable
+        ? "the key store isn't available right now; nothing was changed"
+        : opened.missing
+          ? "the key file is missing; nothing was changed"
+          : "the key can't be opened by this account; nothing was changed",
+    );
     await showLostKey(opened);
     return false;
   }
@@ -397,6 +420,13 @@ async function prepareDatabase() {
 
   const kind = fileKind(dbFile);
   if (kind === "encrypted") {
+    // The key file opened, but is it this file's key? One that holds another key (put back from another
+    // folder, or saved by a restore that couldn't finish) is the lost-key case, not a failed update.
+    if (!key || !opensWith(dbFile, key)) {
+      say("the key file opens, but holds another key; nothing was changed");
+      await showLostKey({ state: "key-unreadable", keyId: opened.state === "on" ? opened.keyId : null, missing: false, wrongKey: true });
+      return false;
+    }
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
     say("the data file is encrypted; key open");
@@ -405,8 +435,10 @@ async function prepareDatabase() {
     say("the operating system's key store isn't available, so the data file is kept unencrypted");
     return true;
   } else if (kind === "absent") {
-    // A new data folder: the file is created encrypted from its first byte by the migrator.
-    key = await newDatabaseKey(say);
+    // A new data file: created encrypted from its first byte by the migrator. A key that already opens is
+    // kept, never replaced: encrypted safety copies (or the data file, put back) may be locked with it
+    // (desktop/database-key.mjs: never replaced automatically once anything is encrypted with it).
+    key ??= await newDatabaseKey(say);
     if (!key) return true;
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
@@ -439,9 +471,10 @@ async function prepareDatabase() {
       say("the window's cache was cleared");
     } catch (error) {
       if (!(error instanceof EncryptionStopped)) throw error;
-      if (error.kind === "busy") {
-        // Nothing moved: carry on unencrypted, and ask again at the next start.
-        say("the data file was busy; kept unencrypted for now");
+      if (error.kind === "busy" || error.kind === "pending") {
+        // Nothing moved (another program holds the file, or an earlier plain copy's wipe is still owed):
+        // carry on unencrypted, and ask again at the next start.
+        say(error.kind === "busy" ? "the data file was busy; kept unencrypted for now" : "an earlier wipe is still owed; kept unencrypted for now");
         databaseLock = { state: "off", plainLeft: 0 };
         await dialog.showMessageBox({ type: "info", title: "DotAmi", message: "Your data file wasn't encrypted this time.", detail: error.message });
         return true;
@@ -452,20 +485,36 @@ async function prepareDatabase() {
   }
 
   // The plain safety copies (made before updates and restores) are encrypted the same way, one by one; one
-  // another program holds stays as it is, still restorable, and is tried again at the next start.
-  let left = databaseLock.plainLeft;
-  if (existsSync(`${dbFile}${PLAIN_SUFFIX}`)) left = Math.max(left, 1);
-  for (const file of copies.filter((f) => existsSync(f) && fileKind(f) === "plain")) {
+  // another program holds stays as it is, still restorable, and is tried again at the next start. Only one
+  // file is encrypted at a time: while a plain copy's wipe is owed, encryptFile refuses ("pending"), so the
+  // note that names it is never replaced and the copy is never forgotten.
+  let notYet = 0;
+  for (const file of copies.filter((f) => existsSync(f) && ["plain", "held"].includes(copyKind(f)))) {
     try {
-      if (encryptFile(dataDir, file, databaseKey, { log: say }).wipePending) left += 1;
+      if (copyKind(file) === "held") throw new EncryptionStopped("busy", "held");
+      encryptFile(dataDir, file, databaseKey, { log: say });
     } catch (error) {
-      left += 1;
+      notYet += 1;
       say(`a safety copy couldn't be encrypted yet (${error instanceof EncryptionStopped ? error.kind : describeError(error)})`);
     }
   }
+  // What is still plain on the disk: the copies not encrypted yet, and every plain copy whose wipe is owed
+  // (the data file's and the safety copies'), counted from the disk itself.
+  const left = notYet + plainLeftovers(dataDir).filter((f) => !f.endsWith("-journal")).length;
   databaseLock = { state: "on", plainLeft: left };
   if (left > 0) say(`${left} plain cop${left === 1 ? "y" : "ies"} still on the disk; tried again at the next start`);
   return true;
+}
+
+/** Whether the encrypted file opens with `key` (read-only; nothing is written). */
+function opensWith(file, key) {
+  try {
+    openDatabase(file, { key, readonly: true, fileMustExist: true }).close();
+    return true;
+  } catch (error) {
+    if (error instanceof CannotOpenDatabase) return false;
+    throw error;
+  }
 }
 
 /**
@@ -586,9 +635,13 @@ async function askToEncrypt() {
  * before the main window opens. Then the app quits.
  */
 async function showLostKey(opened) {
-  const why = opened.missing
-    ? `The key file (${DATABASE_KEY_FILE}, beside the data file) is missing.`
-    : "Windows won't open its key for this Windows account, or the key file holds another key.";
+  const why = opened.storeUnavailable
+    ? "Windows' key store isn't available right now. Restart Windows (or sign out and in again), then start DotAmi again."
+    : opened.missing
+      ? `The key file (${DATABASE_KEY_FILE}, beside the data file) is missing.`
+      : opened.wrongKey
+        ? `The key file (${DATABASE_KEY_FILE}, beside the data file) opens, but holds another key, not this data file's.`
+        : "Windows won't open its key for this Windows account, or the key file holds another key.";
   for (;;) {
     const answer = await askInWindow("lost-key", ["quit", "open-folder"], "quit", { detail: why, height: 420 });
     if (answer !== "open-folder") break;
