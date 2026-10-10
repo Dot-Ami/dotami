@@ -125,8 +125,10 @@ roadmap's build order.
   - [x] A French semicolon file with several comma-decimal columns (Sage 50) reads on its
     semicolons; an Excel formula saved with no value is listed as one, with what to do, never as
     "no amount" and never guessed
-  - [ ] Fix the other gaps those files found (follow-on slices: void and draft rows, refunds,
-    the FreshBooks summary block)
+  - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
+    summary block no longer taken for the column names
+  - [x] Refunds in a ledger's Debit column taken off the month they were paid back, through an
+    optional "Refunds / money out" column, under the same rule as the bank statement totals
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
@@ -189,7 +191,7 @@ roadmap's build order.
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
   every business expense); the store for typed records and the screen to type them are built
-  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies, carried by backups and shown inside DotAmi (2026-10-08); the other ways in are not.
+  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies, carried by backups and shown inside DotAmi (2026-10-08), and encrypted in the desktop app (2026-10-09); the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
   - [x] The privacy review (typed records and receipts as built):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
@@ -215,6 +217,13 @@ roadmap's build order.
     ([expense-records.md § 8](architecture/expense-records.md)), then **Show receipt**: pictures from a
     `blob:` address, PDFs drawn by pdf.js in a no-network worker, every file checked again before it
     is drawn; browser tests with hostile files
+  - [x] Receipt files encrypted at rest in the desktop app (the maintainer's yes of 2026-10-09): the
+    design and threat model first ([expense-records.md § 9](architecture/expense-records.md)), then
+    AES-256-GCM per file with one key kept only wrapped by Windows (`safeStorage`), existing receipts
+    encrypted once at the first start without risking one, backups that still restore on another
+    computer, and plain words where the person looks (Settings, *What DotAmi knows about you*, the note
+    before adding a receipt). A copy run from source keeps them unencrypted and says so. Open for the
+    maintainer: encrypting the data file too, and a "start a new key" button
   - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before

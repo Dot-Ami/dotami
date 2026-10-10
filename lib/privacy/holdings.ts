@@ -5,6 +5,8 @@ import type { PrismaClient } from "@prisma/client";
 
 import { listSafetyCopies, wipePendingFile } from "@/desktop/wipe-pending.mjs";
 
+import { receiptLock, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
+import { describeReceiptFiles, RECEIPTS_FOLDER, type ReceiptFilesProtection } from "@/lib/expenses/receipts/store";
 import {
   FIGURE_SOURCE_KINDS,
   FIGURE_STATUSES,
@@ -128,6 +130,12 @@ export interface Holdings {
   safetyCopies: number;
   /** True while an earlier Delete's wipe is still owed (its note sits beside the data file). */
   wipePending: boolean;
+  /**
+   * [8i] How the receipt files are kept (docs/architecture/expense-records.md § 9): this copy's state
+   * and the files counted by their first bytes only (encrypted with this copy's key, plain, or locked
+   * with a key it can't open).
+   */
+  receiptFiles: ReceiptFilesProtection & { state: ReceiptLockState };
   windowStorage: readonly WindowStorageEntry[];
   sentElsewhere: SentFacts[];
 }
@@ -285,9 +293,10 @@ function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
 
 /**
  * Reads everything. `today` is lib/settings/today.ts's reading of this copy (where the data file
- * is, whether a key is set, desktop or source): the same facts the settings page shows.
+ * is, whether a key is set, desktop or source): the same facts the settings page shows. `lock` is
+ * this server's receipts lock (lib/expenses/receipts/lock.ts); only its state and counts reach the page.
  */
-export async function readHoldings(prisma: PrismaClient, today: SettingsToday): Promise<Holdings> {
+export async function readHoldings(prisma: PrismaClient, today: SettingsToday, lock: ReceiptLock = receiptLock()): Promise<Holdings> {
   const tables: TableCount[] = [];
   for (const entry of TABLES) tables.push({ entry, count: await countTable(prisma, entry.model) });
 
@@ -311,6 +320,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
       : { exists: false, files: null, bytes: null, newestOn: null, readable: true };
     return { entry, path: target, ...facts };
   });
+  const receiptCounts = await describeReceiptFiles(dataFolder ? path.join(dataFolder, RECEIPTS_FOLDER) : null, lock);
 
   return {
     desktop: today.desktop,
@@ -322,6 +332,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday): 
     folders,
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
+    receiptFiles: { state: lock.state, ...receiptCounts },
     windowStorage: WINDOW_STORAGE,
     sentElsewhere: SENT_ELSEWHERE.map((entry) => sentFacts(entry, today)),
   };

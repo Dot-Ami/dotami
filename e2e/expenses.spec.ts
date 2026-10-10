@@ -257,6 +257,8 @@ test("a receipt: the bytes decide what is kept, under a name DotAmi makes up, an
   // Told first that the copy is kept exactly as given, and what is accepted.
   await expect(row).toContainText("anything printed on it (the last digits of a card, your name and address) is kept too");
   await expect(row).toContainText("A JPEG, PNG or WebP picture, or a PDF, up to 10 MB");
+  // [8i] Run from source, the note says the copy isn't encrypted here (the desktop app's is).
+  await expect(row).toContainText("In this copy, run from source, the copy isn't encrypted");
 
   // An SVG with a script, named like a picture: refused in the window by its bytes, nothing sent.
   await row.getByLabel("Choose the receipt file").setInputFiles({

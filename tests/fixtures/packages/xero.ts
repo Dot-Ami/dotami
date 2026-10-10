@@ -397,6 +397,7 @@ function invoiceDetailSheet(): XlsxCell[][] {
     [{ date: "2026-07-15" }, "INV-0001", "Invented Client A", "Paid", "Design work", 3, 100, 300, { date: "2026-08-14" }, 0],
     [{ date: "2026-07-15" }, "INV-0001", "Invented Client A", "Paid", "Printing", 1, 50, 50, { date: "2026-08-14" }, 0],
     // Row 8: voided, so not a sale; included because the report includes voided invoices by default.
+    // The pre-filled Status column leaves it out.
     [{ date: "2026-08-03" }, "INV-0002", "Invented Client B", "Voided", "Design work", 3, 40, 120, { date: "2026-09-02" }, 0],
     // Row 9: 2 x 30.00 = 60.00, but the line amount is a formula saved with no value.
     [{ date: "2026-08-12" }, "INV-0003", "Invented Client B", "Awaiting Payment", "Hosting", 2, 30, { formula: "F9*G9" }, { date: "2026-09-11" }, 60],
@@ -420,13 +421,13 @@ files.push({
     decimalStyle: "point",
     months: [
       { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 35000, rows: 2 },
-      // WRONG TODAY: this is the voided invoice's 120.00. INV-0003's 60.00 is left out because its
-      // formula has no saved value, and the person is told so (DotAmi never works it out). True,
-      // once the voided line is left out and the file is saved again in Excel: 60.00.
-      { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 12000, rows: 1 },
+      // No August: the voided invoice's 120.00 is rightly left out, and INV-0003's 60.00 is left
+      // out because its formula has no saved value, and the person is told so (DotAmi never works
+      // it out). Once the file is saved again in Excel, August is 60.00.
       { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 7500, rows: 1 },
     ],
     skipped: [
+      { row: DETAIL_VOIDED_ROW, reason: "void-or-draft" },
       // The cell holds a formula Excel never worked out: told apart from an empty amount.
       { row: DETAIL_UNSAVED_FORMULA_ROW, reason: "unsaved-formula" },
       { row: 11, reason: "total" },

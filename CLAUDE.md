@@ -71,7 +71,7 @@ says where it is going.
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
   optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed
   record, described: its type read from the bytes, size and SHA-256; the file itself is a copy in `receipts/` beside the data file,
-  named by DotAmi with a random id, never the person's file name; `lib/expenses/receipts/`; [8i]) · `Setting` (the person's saved choices, one row per setting: a
+  named by DotAmi with a random id, never the person's file name, and encrypted by the desktop app with a key kept only wrapped by Windows (`desktop/receipt-crypto.mjs`, `desktop/receipt-key.mjs`; a copy run from source keeps it plain and says so); `lib/expenses/receipts/`; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]) · `SourceAccount` (the bank and card
   accounts the person allowed, under their own name for each, with the warning button and the days; never a number; nothing links to it yet; [8g]). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every

@@ -25,6 +25,8 @@ export interface ColumnGuess {
   amountColumn: number | null;
   /** The column of transaction types, pre-filled only for a header that is exactly that (see TYPE_HEADER). */
   typeColumn: number | null;
+  /** The column of invoice statuses, pre-filled only for a header that is exactly "Status" or "Statut" (see STATUS_HEADER). */
+  statusColumn: number | null;
 }
 
 /** Widest sheet we offer columns for; a real export never needs more, and a bad file can't make a huge list. */
@@ -116,13 +118,22 @@ function readsAsAmount(cell: Cell | undefined): boolean {
  * column names. Note it looks at text cells only — a number or Date cell is skipped, not refused.
  */
 export function looksLikeHeader(row: Cell[]): boolean {
+  return headerLabelCount(row) >= 2;
+}
+
+/**
+ * How many column names a row holds: its text cells, or 0 when any text cell reads as a date or an
+ * amount (then it is a data row, not column names). Used to tell a short summary above a table
+ * from the table's own, wider row of column names.
+ */
+function headerLabelCount(row: Cell[]): number {
   let labels = 0;
   for (const cell of row) {
     if (typeof cell !== "string" || cell.trim() === "") continue;
-    if (readsAsDate(cell) || readsAsAmount(cell)) return false;
+    if (readsAsDate(cell) || readsAsAmount(cell)) return 0;
     labels += 1;
   }
-  return labels >= 2;
+  return labels;
 }
 
 /**
@@ -165,6 +176,14 @@ const DUE_DATE_HEADER = /(?<![\p{L}\p{N}])(due|échéance|echeance)(?![\p{L}\p{N
 function spacedLabel(label: string): string {
   return label.replace(/([a-zà-ÿ0-9])([A-ZÀ-Þ])/g, "$1 $2").replace(/[_.]+/g, " ");
 }
+/** True when one of the row's text cells names a sale-date column ("Date", "Issue Date"; not a due date). */
+function namesDateColumn(row: Cell[]): boolean {
+  return row.some((cell) => {
+    if (typeof cell !== "string") return false;
+    const label = spacedLabel(cell);
+    return DATE_HEADER.test(label) && !DUE_DATE_HEADER.test(label);
+  });
+}
 /**
  * A cell that is not a date because it names a group or a total, not a transaction: a customer name
  * sitting alone on its row, or a "Total for ..." line. Grouped reports (QuickBooks' Sales by
@@ -189,6 +208,16 @@ const AMOUNT_HEADER_ANY =
  * header that merely contains the word ("Type of work", "Account Type") is never pre-filled either.
  */
 const TYPE_HEADER = /^transaction\s*type$/i;
+/**
+ * The only headers pre-filled as the status column: exactly "Status" or "Statut", in any case. Both
+ * are ASSUMED titles: the FreshBooks, Sage Accounting and Xero help pages name a status for each
+ * invoice but none shows the column's title (see tests/fixtures/packages/), and no French export has
+ * been seen. A longer name ("Payment Status", "Status Date")
+ * is left for the person to pick, and the cells are never read to guess the column. Pre-filling is
+ * safe in a way a bare "Type" is not: only a cell that is exactly void, voided, deleted or draft
+ * is ever left out, and every such row is listed with its reason.
+ */
+const STATUS_HEADER = /^(status|statut)$/i;
 
 /** "Total" columns: in many invoice exports the total includes the sales tax collected. */
 const TOTAL_HEADER = /^\s*(total|grand[\s-]+total)\b/i;
@@ -213,19 +242,44 @@ const NOT_REVENUE_HEADER =
  * Guesses where the table starts and which columns are the date and the amount. Returns null when
  * no row looks like column names above at least one date — the person is then asked to pick the
  * row themselves.
+ *
+ * `keepFirstRow`: the person has said the first row holds the column names (the rows passed start
+ * at their pick), so a wider row further down never takes its place.
  */
-export function guessColumns(rows: Cell[][]): ColumnGuess | null {
+export function guessColumns(
+  rows: Cell[][],
+  options: { keepFirstRow?: boolean } = {},
+): ColumnGuess | null {
+  const searchEnd = Math.min(HEADER_SEARCH_ROWS, rows.length);
+  /** True when a date sits in the rows just below row r: a header with none is a title or a note. */
+  const datesBelow = (r: number) =>
+    rows.slice(r + 1, r + 1 + DATE_LOOKAHEAD_ROWS).some((row) => row.some((c) => readsAsDate(c)));
+
   let headerRow = -1;
-  for (let r = 0; r < Math.min(HEADER_SEARCH_ROWS, rows.length); r += 1) {
-    if (!looksLikeHeader(rows[r])) continue;
-    // A header with no dates under it is a title or a note, not the table's header.
-    const below = rows.slice(r + 1, r + 1 + DATE_LOOKAHEAD_ROWS);
-    if (below.some((row) => row.some((cell) => readsAsDate(cell)))) {
+  for (let r = 0; r < searchEnd; r += 1) {
+    if (looksLikeHeader(rows[r]) && datesBelow(r)) {
       headerRow = r;
       break;
     }
   }
   if (headerRow === -1) return null;
+
+  // A short summary above the table (FreshBooks' Invoice Details: "Total Invoiced, Total Paid" over
+  // two figures) also reads as column names with dates further down. When the row found so far
+  // names no date column, a WIDER row below it that does name one wins: that is the table's own.
+  // A row that already names its date column is kept, so a note row under a simple "Date, Amount"
+  // header is never taken for the header. The search stops at the first dated row (the table has
+  // started) and never runs when the person picked the row themselves.
+  if (!options.keepFirstRow && !namesDateColumn(rows[headerRow])) {
+    const labels = headerLabelCount(rows[headerRow]);
+    for (let r = headerRow + 1; r < searchEnd; r += 1) {
+      if (rows[r].some((cell) => readsAsDate(cell))) break;
+      if (headerLabelCount(rows[r]) > labels && namesDateColumn(rows[r]) && datesBelow(r)) {
+        headerRow = r;
+        break;
+      }
+    }
+  }
 
   const columns = columnsOf(rows, headerRow);
   const dataRows = rows
@@ -283,5 +337,15 @@ export function guessColumns(rows: Cell[][]): ColumnGuess | null {
   );
   const typeColumn = typeColumns.length === 1 ? typeColumns[0].index : null;
 
-  return { headerRow, columns, dateColumn, amountColumn, typeColumn };
+  // Status column: the same rule, one header that is exactly "Status" or "Statut".
+  const statusColumns = columns.filter(
+    (c) =>
+      c.index !== dateColumn &&
+      c.index !== amountColumn &&
+      c.index !== typeColumn &&
+      STATUS_HEADER.test(c.label.trim()),
+  );
+  const statusColumn = statusColumns.length === 1 ? statusColumns[0].index : null;
+
+  return { headerRow, columns, dateColumn, amountColumn, typeColumn, statusColumn };
 }

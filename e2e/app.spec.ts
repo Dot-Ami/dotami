@@ -107,6 +107,11 @@ test("the settings page: every group, what's true today, every setting and its w
   const data = page.getByRole("region", { name: "Data and backups" });
   const filePath = data.locator("code").filter({ hasText: /e2e[\\/]dotami\.db$/ });
   await expect(filePath).toBeVisible();
+  // [8i] Run from source there is no operating-system key store: the receipts aren't encrypted, and
+  // the page says so rather than staying quiet (docs/architecture/expense-records.md § 9).
+  await expect(data).toContainText("Receipts in this copy aren't encrypted.");
+  await expect(data).toContainText("The desktop app encrypts them.");
+  await expect(data).not.toContainText("Your receipt files are encrypted");
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");
@@ -1518,6 +1523,200 @@ test("a QuickBooks-shaped list: the Type column is pre-filled and the payment is
   await expect(
     table.getByRole("row", { name: new RegExp(`^${month.name} \\$700\\.00 2 rows$`) }),
   ).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("an invoice list with a summary on top: the real column names are found, and void and draft rows are left out", async ({
+  page,
+}) => {
+  const { card, figures } = await openSalish(page);
+  const before = await figures();
+
+  // FreshBooks-shaped (invented numbers): a title, a short summary of two titles over two figures,
+  // then the table. One invoice is a Draft and one is Void; the issued invoices come to $500.00.
+  const month = monthsAgo(3);
+  const day = (d: number) => `${month.y}-${two(month.m)}-${two(d)}`;
+  const lines = [
+    "Invoice Details",
+    "Total Invoiced,Total Paid",
+    "500.00,500.00",
+    "",
+    "Client,Invoice Number,Issue Date,Status,Subtotal",
+    `Invented Client A,0000001,${day(6)},Paid,400.00`,
+    `Invented Client B,0000002,${day(14)},Draft,250.00`,
+    `Invented Client C,0000003,${day(21)},Void,80.00`,
+    `Invented Client B,0000004,${day(27)},Paid,100.00`,
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "invoice_details.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The column names are found on row 5, under the summary, and the Status column is pre-filled.
+  await expect(card.getByLabel("Column names are in row").locator("option:checked")).toHaveText(
+    "Row 5",
+  );
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText(
+    "C · Issue Date",
+  );
+  await expect(card.getByLabel("Amount column (revenue)").locator("option:checked")).toHaveText(
+    "E · Subtotal",
+  );
+  const status = card.getByLabel("Status column (optional)");
+  await expect(status.locator("option:checked")).toHaveText("D · Status");
+
+  // The month is the two issued invoices; the draft and the void are listed with their reason.
+  const table = card.getByRole("table", { name: "Monthly totals from invoice_details.csv" });
+  await expect(table.getByRole("row")).toHaveCount(1);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$500\\.00 2 rows$`) }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "2 rows marked void, deleted or draft, left out because a Status column is chosen (if they are sales of yours, choose None): rows 7, 8",
+    ),
+  ).toBeVisible();
+
+  // Clearing the select counts every row again, and says nothing is left out.
+  await status.selectOption("");
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$830\\.00 4 rows$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/left out because a Status column is chosen/)).toHaveCount(0);
+  await expect(card.getByText("Left out", { exact: true })).toHaveCount(0);
+
+  // Choosing the column again leaves them out again.
+  await status.selectOption({ label: "D · Status" });
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${month.name} \\$500\\.00 2 rows$`) }),
+  ).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a ledger export: refunds picked from the Debit column are taken off the month they were paid back", async ({
+  page,
+}) => {
+  const { card, ventureId, figures } = await openSalish(page);
+  const before = await figures();
+
+  // Wave-shaped Account Transactions for the Sales account (invented numbers): sales in Credit,
+  // refunds paid back in Debit. A sale in the first month, a sale and a 40.00 refund (for the first
+  // month's sale) in the second, and only a 25.00 refund in the third.
+  const [a, b, c] = [monthsAgo(4), monthsAgo(3), monthsAgo(2)];
+  const day = (m: { y: number; m: number }, d: number) => `${m.y}-${two(m.m)}-${two(d)}`;
+  const lines = [
+    "Invented Shop Ltd.",
+    "Account Transactions",
+    "",
+    "Date,Description,Debit,Credit,Balance",
+    "Sales",
+    "Starting Balance,,,,0.00",
+    `${day(a, 8)},Invoice 1 - Invented Client A,,500.00,500.00`,
+    `${day(b, 5)},Invoice 2 - Invented Client B,,320.00,820.00`,
+    `${day(b, 19)},Refund - Invented Client A,40.00,,780.00`,
+    `${day(c, 3)},Refund - Invented Client B,25.00,,755.00`,
+    "Totals,,65.00,820.00,",
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "account-transactions.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The date is pre-filled; the refunds column never is, and offers "None" until the person picks.
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText("A · Date");
+  const refunds = card.getByLabel("Refunds / money out column (optional)");
+  await expect(refunds).toBeVisible();
+  await expect(refunds.locator("option:checked")).toHaveText("None — refunds not taken off");
+  await expect(
+    card.getByText(
+      "Ledger exports, such as Wave's Account Transactions, keep sales in one column (Credit) and refunds paid back to customers in another (Debit).",
+      { exact: false },
+    ),
+  ).toBeVisible();
+
+  // With only Credit picked, the refunds are rows with no amount, and nothing is taken off.
+  await card.getByLabel("Amount column (revenue)").selectOption({ label: "D · Credit" });
+  const table = card.getByRole("table", { name: "Monthly totals from account-transactions.csv" });
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${b.name} \\$320\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/2 rows with a date but no amount/)).toBeVisible();
+  await expect(card.getByText(/taken off the month they were paid back/)).toHaveCount(0);
+
+  // Picking Debit as the refunds column takes each refund off the month it was paid back: the
+  // second month, not the first month's sale, and the third month goes below zero.
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${a.name} \\$500\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${b.name} \\$280\\.00 2 rows · 1 refund taken off \\(\\$40\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${c.name} [-−]\\$25\\.00 1 row · 1 refund taken off \\(\\$25\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "Refunds are taken off the month they were paid back, which may be a later month than the sale they refund.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByText(/with a date but no amount/)).toHaveCount(0);
+
+  // The same column as the amount is refused with a sentence, and no totals are shown.
+  await refunds.selectOption({ label: "D · Credit" });
+  await expect(
+    card.getByText("The refunds column can't be the date or the amount column."),
+  ).toBeVisible();
+  await expect(table).toHaveCount(0);
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+
+  // Review sends the netted totals, the negative month included. The request is answered here
+  // with an error so nothing is stored and the idea's figures stay as they were.
+  let sent: unknown = null;
+  await page.route("**/api/figures/propose", async (route) => {
+    sent = JSON.parse(route.request().postData() ?? "null");
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Held by the test." }),
+    });
+  });
+  // Review waits for the dates to be confirmed (the "These dates are right" tick-box).
+  await card.getByRole("checkbox", { name: "These dates are right" }).check();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  await expect(card.getByText("Held by the test.")).toBeVisible();
+  const lastDay = (m: { y: number; m: number }) => new Date(Date.UTC(m.y, m.m, 0)).getUTCDate();
+  const figure = (m: { y: number; m: number }, amountCents: number, rows: number) => ({
+    kind: "gross-revenue",
+    periodStart: `${m.y}-${two(m.m)}-01`,
+    periodEnd: `${m.y}-${two(m.m)}-${lastDay(m)}`,
+    amountCents,
+    currency: "CAD",
+    rows,
+  });
+  expect(sent).toEqual({
+    ventureId,
+    source: { kind: "file", label: "account-transactions.csv", rows: 4 },
+    figures: [figure(a, 50000, 1), figure(b, 28000, 2), figure(c, -2500, 1)],
+  });
+  await page.unroute("**/api/figures/propose");
 
   await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);
