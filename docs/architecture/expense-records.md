@@ -1264,3 +1264,24 @@ was refused: <the rule>` for the list). Never a path, a name or a key id.
   then the old key file turns up (the real one, put into the set-aside folder); the button, the dialog,
   and the receipt opens in the viewer again, locked on the disk with the new key, and the set-aside
   folder holds only the old key file.
+
+### Built by (2026-10-10, in the same change, after this section)
+
+`desktop/receipt-bring-back.mjs` (the list and the bring-back, with every refusal rule), called from
+`desktop/main.mjs` (two window calls, answered only for DotAmi's own window) and asked for through
+`desktop/window-preload.cjs`; `desktop/receipt-key.mjs` `openKeyFile` (an old key file, the same checks as at
+start); `desktop/wipe-pending.mjs` `listLockedReceiptFolders` (the count the pages read, from names only);
+the control, `components/expenses/bring-back-receipts.tsx`, on Settings and What DotAmi knows about you;
+the sentences, `lib/expenses/receipts/protection.ts`; the viewer's sentence for a set-aside receipt,
+`lib/expenses/receipts/store.ts`.
+
+**Checked that the tests bite** (each rule broken on purpose, its test run and seen to fail, the file put
+back from git, `git diff --quiet`): a receipt locked again with the old key instead of the current one; the
+set-aside copy removed before the new one is written; the SHA-256 comparison dropped (this first passed: the
+test's changed receipt also had another size, so the size check caught it; the test now changes one byte and
+keeps the size); a row of another type accepted; a file already in `receipts/` written over; a placed file not
+removed when a later step fails; the window check dropped; the folder-name check dropped; a link or junction
+taken for a real folder; an old key opened by a key store that doesn't protect it; a folder holding only the
+old key file counted for the pages; the bridge's bring-back call believed from any window. In a real browser:
+the sentence for a copy run from source left out. In the real app: a receipt locked again with the old key
+(the read-back check refuses it, so no receipt is brought back and the test fails at the result line).
