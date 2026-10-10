@@ -29,6 +29,7 @@ import {
   PLAIN_SUFFIX,
   readNote,
   resumeEncryption,
+  setAsideLockedFile,
   type CrashPoint,
 } from "../desktop/encrypt-database.mjs";
 import { CannotOpenDatabase, fileKind, openDatabase } from "../desktop/sqlite.mjs";
@@ -215,5 +216,25 @@ describe("stopped at every step, the next start finishes it", () => {
     expect(readdirSync(before.dir).sort()).toEqual(left);
     expect(statSync(`${before.file}${PLAIN_SUFFIX}`).size).toBeGreaterThan(0);
     expect(existsSync(notePath(before.dir))).toBe(true);
+  });
+});
+
+describe("a data file whose key is lost is set aside, never deleted ([8i])", () => {
+  it("moves it and its journal into backups/ under a name Delete's safety-copies box never matches", async () => {
+    const before = await seededFolder();
+    encryptFile(before.dir, before.file, KEY);
+    writeFileSync(`${before.file}-journal`, "journal");
+    const bytes = readFileSync(before.file);
+    const moved = setAsideLockedFile(before.dir, before.file, () => 77);
+    expect(moved).toBe(path.join(before.dir, "backups", "dotami-locked-77.db"));
+    expect(readFileSync(moved!).equals(bytes)).toBe(true);
+    expect(readFileSync(`${moved}-journal`, "utf8")).toBe("journal");
+    expect(existsSync(before.file)).toBe(false);
+    // Not a name DotAmi gives its safety copies (desktop/wipe-pending.mjs SAFETY_COPY_NAME).
+    expect(/^dotami-before-[A-Za-z0-9_-]+\.db$/.test(path.basename(moved!))).toBe(false);
+    // Still opens, if its key comes back (the stand-in journal above is not a real one: set aside first).
+    rmSync(`${moved}-journal`);
+    expect(contentsOfFile(moved!, KEY)).toEqual(before.contents);
+    expect(setAsideLockedFile(before.dir, before.file)).toBeNull();
   });
 });

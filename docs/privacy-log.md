@@ -387,6 +387,12 @@ person is asked).
 
 ### What the person must agree to
 
+- **A passphrase on every backup ([8i]).** File → Back up… asks for one and refuses to go on without
+  it (`desktop/passphrase.js`; `writeBackup` refuses an empty one too). The warning stays: "lose it and
+  the backup can't be opened — nobody can recover it". Older backups without one still restore.
+- **Restoring when the data file's key is lost ([8i])** asks, before anything moves, that the locked
+  data file and its key file go to the backups folder and the restored data gets a new key.
+
 - **Before an existing data file is first encrypted ([8i]),** a window says what it protects (an
   administrator account while the person is signed out, a copy of the folder, the disk read outside
   Windows), what it doesn't (anything running as the person; copies already made), that a lost key
@@ -480,6 +486,10 @@ person is asked).
   choice to make (the maintainer's decision of 2026-10-09); there is no setting.
 
 ### How to remove it
+
+- **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
+  the unreadable key file beside it) after a restore; DotAmi never deletes it, and Delete's
+  "safety copies" box doesn't match its name: removing it is the person's own act.
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what

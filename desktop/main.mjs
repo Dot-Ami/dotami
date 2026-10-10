@@ -5,6 +5,7 @@
 // Next.js server (built by desktop/build.mjs) on a free port bound to 127.0.0.1 → open a window on
 // it. Nothing listens beyond this computer, and the window can't navigate anywhere else: outside
 // links open in the person's own browser. Plan: docs/architecture/desktop-app.md.
+import { randomBytes } from "node:crypto";
 import { mkdirSync, accessSync, constants, existsSync, readdirSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -25,7 +26,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, readNote, resumeEncryption } from "./encrypt-database.mjs";
+import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
@@ -561,9 +562,17 @@ async function showLostKey(opened) {
     ? `The key file (${DATABASE_KEY_FILE}, beside the data file) is missing.`
     : "Windows won't open its key for this Windows account, or the key file holds another key.";
   for (;;) {
-    const answer = await askInWindow("lost-key", ["quit", "open-folder"], "quit", { detail: why, height: 420 });
-    if (answer !== "open-folder") break;
-    await shell.openPath(dataDir);
+    const answer = await askInWindow("lost-key", ["quit", "open-folder", "restore"], "quit", { detail: why, height: 460 });
+    if (answer === "open-folder") {
+      await shell.openPath(dataDir);
+      continue;
+    }
+    // Restore relaunches the app when it has replaced the data; otherwise (cancelled) the window comes back.
+    if (answer === "restore") {
+      await restore({ databaseKeyLost: true });
+      continue;
+    }
+    break;
   }
   quitting = true;
   app.quit();
@@ -758,12 +767,13 @@ function buildMenu(origin, dataDir) {
 
 /**
  * File → Back up…: one file holding the whole database and the receipt files it describes, locked
- * with a passphrase if the person chooses one (desktop/backup.mjs). Meant to be kept somewhere other
- * than this computer.
+ * with a passphrase the person chooses (desktop/backup.mjs). [8i] The passphrase is required (the
+ * maintainer's decision of 2026-10-10): the window refuses an empty one and so does writeBackup. Meant
+ * to be kept somewhere other than this computer.
  */
 async function backUp() {
   const passphrase = await askPassphrase("backup");
-  if (passphrase === null) return null;
+  if (passphrase === null || passphrase === "") return null;
   const day = new Date().toLocaleDateString("en-CA");
   const { canceled, filePath } = await dialog.showSaveDialog(win ?? undefined, {
     title: "Back up DotAmi",
@@ -790,7 +800,7 @@ async function backUp() {
       title: "Backed up",
       message: `Backed up to ${filePath}`,
       detail:
-        (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
+        "It's locked with your passphrase: without it, nobody can open it, and nobody can recover the passphrase. " +
         backupReceiptsNote(receipts, missingReceipts, { unreadable: unreadableReceipts, locked: encrypted }) +
         (key && receipts > 0
           ? "Your receipts here are encrypted with a key Windows keeps for your account: if that key is ever lost (a Windows profile reset), a backup is how they come back. "
@@ -811,7 +821,13 @@ async function backUp() {
  * the person confirms, the current data is copied to backups/ and replaced. The app restarts so
  * the database opens fresh (and an older backup is upgraded by desktop/migrate.mjs).
  */
-async function restore() {
+/**
+ * @param {{ databaseKeyLost?: boolean }} [options] `databaseKeyLost` ([8i]): from the lost-key window, the
+ * data file here is encrypted with a key that can't be opened. The backup is then staged under a new key,
+ * and once the person confirms, the locked data file and its key file go to backups/ (never deleted) and
+ * the new key is saved before the restore is put in place (database-encryption.md § 10).
+ */
+async function restore({ databaseKeyLost = false } = {}) {
   const { canceled, filePaths } = await dialog.showOpenDialog(win ?? undefined, {
     title: "Restore DotAmi from a backup",
     properties: ["openFile"],
@@ -824,13 +840,16 @@ async function restore() {
   // saved only once the person confirms (the restore then replaces every receipt the old key locked).
   const keyLost = receiptKey?.state === "key-unreadable";
   const restoreKey = receiptKey?.state === "on" ? receiptKey.key : keyLost ? newReceiptKey() : null;
+  // [8i] The key the restored data file is staged under: this computer's own, or, when it is lost, a new
+  // one, kept in memory and saved only once the person confirms.
+  const stagingKey = databaseKeyLost ? randomBytes(32) : databaseKey;
   let passphrase = "";
   let header;
   let receipts = 0;
   for (;;) {
     try {
       // [8i] The restored data file is staged encrypted with this computer's key when the file here is.
-      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: restoreKey, databaseKey }));
+      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: restoreKey, databaseKey: stagingKey }));
       break;
     } catch (error) {
       if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
@@ -858,7 +877,10 @@ async function restore() {
     cancelId: 1,
     message: "This replaces everything in DotAmi on this computer with the backup.",
     detail:
-      `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
+      `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. ` +
+      (databaseKeyLost
+        ? "The data file here, which can't be opened, and its key file go to the backups folder as they are, never deleted, and the restored data gets a new key."
+        : "A safety copy of what's here now goes to the backups folder first.") +
       restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
       (keyLost
         ? receiptKey.missing
@@ -894,6 +916,24 @@ async function restore() {
       app.exit(0);
       return;
     }
+  }
+  if (databaseKeyLost) {
+    // [8i] The new key first (a key file this account can't open is moved into backups/ by makeDatabaseKey,
+    // never deleted), then the locked data file beside it; only then the restore. Nothing is deleted on
+    // any path: if a step fails, the locked file and its key are in backups/ or still in place.
+    try {
+      const made = await makeDatabaseKey(dataDir, safeStorage, { key: stagingKey });
+      const lockedTo = setAsideLockedFile(dataDir, dbFile);
+      log?.write(`[restore] a new key for the data file was saved; the locked data file and its key went to the backups folder${made.setAside || lockedTo ? "" : " (there were none)"}\n`);
+    } catch (error) {
+      log?.write(`[restore] the locked data file couldn't be set aside under a new key: ${describeError(error)}\n`);
+      discardRestore(staging);
+      dialog.showErrorBox("DotAmi", "The restore didn't happen: DotAmi couldn't save a new key for your data. Nothing was deleted. DotAmi will restart.");
+      app.relaunch();
+      app.exit(0);
+      return;
+    }
+    databaseKey = stagingKey;
   }
   try {
     const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups"), databaseKey });

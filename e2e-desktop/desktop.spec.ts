@@ -1028,3 +1028,62 @@ test("a data file whose key can't be opened: nothing changes, the app says what 
   await page.getByRole("link", { name: "Your ideas →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
 });
+
+test("every backup needs a passphrase: the window refuses an empty one and saves nothing ([8i])", async () => {
+  await launch();
+  const target = path.join(tmp, "never written.dotami-backup");
+  await app!.evaluate(({ dialog }, file) => {
+    dialog.showSaveDialog = (async () => ({ canceled: false, filePath: file })) as typeof dialog.showSaveDialog;
+  }, target);
+  const opened = app!.waitForEvent("window");
+  await clickMenu("backup");
+  const prompt = await opened;
+  await expect(prompt.getByText("Every backup needs one")).toBeVisible();
+  await prompt.getByRole("button", { name: "Back up" }).click();
+  await expect(prompt.getByRole("alert")).toHaveText("Choose a passphrase: every backup is locked with one.");
+  await prompt.getByRole("button", { name: "Cancel" }).click();
+  expect(existsSync(target)).toBe(false);
+});
+
+test("a lost key: Restore from a backup… sets the locked file and its key aside and restores under a new key ([8i])", async () => {
+  test.setTimeout(240_000);
+  const backupFile = path.join(tmp, "kept elsewhere.dotami-backup");
+  const passphrase = "correct horse battery staple";
+  let page = await launch();
+  await describeVenture(page);
+  await backUpTo(backupFile, passphrase);
+  await quit();
+  // The key is lost (here: deleted, with no copy kept).
+  const lockedBytes = readFileSync(path.join(dataDir, "dotami.db"));
+  const oldKey = readFileSync(path.join(dataDir, "database.key"));
+  rmSync(path.join(dataDir, "database.key"));
+
+  const window = await launchFirstWindow();
+  await expect(window.getByRole("heading", { name: "DotAmi can't open your data" })).toBeVisible();
+  await app!.evaluate(({ dialog, app: electronApp }, source) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [source] })) as typeof dialog.showOpenDialog;
+    dialog.showMessageBox = (async () => ({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
+    electronApp.relaunch = () => {};
+  }, backupFile);
+  const prompted = app!.waitForEvent("window");
+  await window.getByRole("button", { name: "Restore from a backup…" }).click();
+  const prompt = await prompted;
+  await prompt.locator("#pass").fill(passphrase);
+  const closed = app!.waitForEvent("close");
+  await prompt.getByRole("button", { name: "Open" }).click();
+  await closed;
+  app = null;
+
+  // The locked file kept, as it was, in backups/; a new key; the restored data encrypted under it.
+  const kept = readdirSync(path.join(dataDir, "backups")).filter((f) => /^dotami-locked-\d+\.db$/.test(f));
+  expect(kept).toHaveLength(1);
+  expect(readFileSync(path.join(dataDir, "backups", kept[0])).equals(lockedBytes)).toBe(true);
+  expect(readFileSync(path.join(dataDir, "database.key")).equals(oldKey)).toBe(false);
+  expect(fileKind(path.join(dataDir, "dotami.db"))).toBe("encrypted");
+
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+  await page.goto(new URL("/settings", page.url()).toString());
+  await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your data file is encrypted on this computer.");
+});

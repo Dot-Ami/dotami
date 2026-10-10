@@ -9,6 +9,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Every backup is locked with a passphrase** ([8i], the maintainer's decision of 2026-10-10) — a
+  backup holds your data and receipts unencrypted inside it so it restores on another computer, so
+  File → Back up… no longer offers to leave the passphrase out, and the backup code refuses to write
+  one without it. Backups made before, with or without a passphrase, still restore.
+- **Restore from a backup… when the data file's key is lost** ([8i]) — the window that says the key
+  can't be opened now offers it: the locked data file and its key file are moved into the backups
+  folder, never deleted (in case the key comes back), and the backup is restored under a new key.
 - **Your data file is encrypted in the desktop app** ([8i], the maintainer's decisions of 2026-10-10)
   — with a key only your Windows account on this computer can open, kept wrapped by Windows (the
   same protection as the receipts' key, in a file of its own, `database.key`), and its safety copies

@@ -616,7 +616,12 @@ The design's three pull requests became four, stacked, each green on its own:
   to the new package in B too, because once a file is encrypted `node:sqlite` can't open it: without
   them File → Back up… would fail on the first encrypted file.
 - **C, a passphrase on every backup** (decision 3) and **restoring from the lost-key window**, under a
-  new key, on this computer or another.
+  new key, on this computer or another. As built: the passphrase window refuses an empty passphrase
+  and `writeBackup` refuses one too (its `allowUnlocked` option is only for the tests that make the
+  unlocked backups older versions wrote, and a test checks `desktop/main.mjs` never passes it). The
+  locked data file goes to `backups/dotami-locked-<time>.db`, a name Delete's "safety copies" box
+  doesn't match, and its key file to `backups/database-key-unreadable-<time>.key`; the new key is
+  saved before the restore is put in place.
 - **D, "Start fresh"** (decision 2).
 
 ## 13. Not checked

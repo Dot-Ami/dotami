@@ -31,9 +31,11 @@
     </p>
     <p><strong>Nothing was changed.</strong> If you deleted or moved <code>database.key</code> (beside the data file),
       put it back — it may be in the Recycle Bin — and start DotAmi again: everything comes back. Otherwise, a
-      backup brings back what it holds.</p>
+      backup brings back what it holds: <strong>Restore from a backup…</strong> moves the locked data file and its
+      key file into the backups folder (never deleting them) and restores the backup under a new key.</p>
     <div class="buttons">
       <button type="button" id="open-folder">Open the data folder</button>
+      <button type="button" id="restore">Restore from a backup…</button>
       <button type="button" id="quit" class="primary">Quit</button>
     </div>
     <script src="lost-key.js"></script>

@@ -6,5 +6,6 @@
   $("why").textContent = bridge.detail;
   $("quit").addEventListener("click", () => bridge.answer("quit"));
   $("open-folder").addEventListener("click", () => bridge.answer("open-folder"));
+  $("restore").addEventListener("click", () => bridge.answer("restore"));
   $("quit").focus();
 })();

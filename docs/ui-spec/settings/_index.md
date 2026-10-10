@@ -52,7 +52,8 @@ Each group:
      encrypted), in amber, "DotAmi can't open the key to your receipts." with what happened, to put
      `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup, or
      delete the receipts and restart). In the desktop
-     app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), and that a backup holds
+     app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), that every backup is locked
+     with a passphrase the person chooses ([8i], required since 2026-10-10), and that a backup holds
      the receipt files too; from source: copying the file and the receipts folder together
      is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,
      BitLocker on Pro — Microsoft's page, read 2026-10-06; FileVault on a Mac).

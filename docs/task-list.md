@@ -242,6 +242,8 @@ roadmap's build order.
     - [x] (B) the key, a new folder encrypted from its first byte, the window that asks first (four
       answers), the crash-safe first-start encryption, the lost-key window, the Settings switch, and
       the migrator, backups and restore on the new package
+    - [x] (C) a passphrase on every backup; Restore from a backup… in the lost-key window, under a new
+      key, the locked file kept in backups/
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

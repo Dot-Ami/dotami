@@ -575,7 +575,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was. In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here, never deleted, in case the key comes back.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },
