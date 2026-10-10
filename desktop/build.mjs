@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { isLeftOut, leftOutIn, removeLeftOut, requiredByServerCode, stillNeeded } from "./left-out.mjs";
+import { isLeftOut, leftOutIn, ownPlatformBuild, removeLeftOut, removeOtherPlatformBuilds, requiredByServerCode, stillNeeded } from "./left-out.mjs";
 import { NOTICES_FILE, writeNotices } from "./notices.mjs";
 
 const root = process.cwd();
@@ -80,6 +80,15 @@ if (stillThere.length) {
   throw new Error(`desktop build: these are still in the server after removal:\n  ${stillThere.map((p) => p.rel).join("\n  ")}`);
 }
 console.log(`desktop build: left out of the server: ${leftOut.map((p) => `${p.name} ${p.version}`).join(", ") || "nothing to leave out"}`);
+
+// [8i] The database package's prebuilt SQLite for the other kinds of computer (left-out.mjs,
+// OTHER_PLATFORM_BUILDS): only this computer's stays, and it must be there, or the server can't open
+// the data file.
+const builds = removeOtherPlatformBuilds(modules);
+if (builds.kept.length !== 1) {
+  throw new Error(`desktop build: expected the database package's ${ownPlatformBuild()} in the server, found: ${builds.kept.join(", ") || "none"}`);
+}
+console.log(`desktop build: the database package keeps ${builds.kept[0]}; ${builds.removed.length} other kinds of computer's builds left out`);
 
 // The third-party notices for exactly what this build ships (desktop/notices.mjs): every package in
 // the server's node_modules, the desktop app's own packages and Electron, beside server.js, where the

@@ -117,11 +117,25 @@ SHA-256 of the tarballs read: `better-sqlite3-multiple-ciphers-13.0.3.tgz`
   request that adds the package lists the installer's files to confirm, and if it is there, it goes on
   the inventory and the notices like any shipped package.
 
+## Installed (2026-10-10)
+
+The maintainer chose this package on 2026-10-10. Installed pinned (`better-sqlite3` →
+`npm:better-sqlite3-multiple-ciphers@13.0.3`, with an `overrides` entry, and
+`@prisma/adapter-better-sqlite3` 6.19.3): the tarballs npm fetched have the SHA-256s above;
+`npm audit signatures` verified the registry signatures of all 670 installed packages and 147
+attestations; `npm audit --omit=dev` found 0 vulnerabilities. Loaded in Node 25.8 it reports SQLite
+3.53.4 and SQLite3 Multiple Ciphers 2.4.0. One correction to "No install script" above: npm honours
+the package's `"gypfile": false` only when it reads the package's own `package.json`; `npm ci` reads
+the lockfile, which npm writes without that field, and so runs `node-gyp rebuild` (which needs a C++
+compiler, and downloads Node's headers). DotAmi keeps the field in `package-lock.json`
+(`scripts/keep-gypfile.mjs`, checked by `tests/database-package.spec.ts`). The cost in time was measured first
+([database-encryption.md § 14](../architecture/database-encryption.md#14-measured-before-anything-else-was-built-2026-10-10)).
+
 ## Not checked
 
-- Loading or running anything: the performance, whether the binary loads in Electron 44's server
-  process and main process, and the behaviour of `VACUUM INTO`, `serialize()` and the backup API on an
-  encrypted file. The first build step measures them ([database-encryption.md § 12](../architecture/database-encryption.md#12-for-the-maintainer-the-choices-with-what-each-costs)).
+- At the time of this review, loading or running anything: the performance, whether the binary loads
+  in Electron 44's server process and main process, and the behaviour of `VACUUM INTO`, `serialize()`
+  and the backup API on an encrypted file. Since measured or tested as the build goes (the section above).
 - Rebuilding the binaries from source to compare with the published ones.
 - Reading SQLite3 Multiple Ciphers' cipher code line by line (its licences, default cipher and key
   handling were read).

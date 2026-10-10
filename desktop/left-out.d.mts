@@ -7,3 +7,6 @@ export function leftOutIn(nodeModules: string): FoundPackage[];
 export function removeLeftOut(nodeModules: string): FoundPackage[];
 export function stillNeeded(nodeModules: string): string[];
 export function requiredByServerCode(serverDir: string): string[];
+export const OTHER_PLATFORM_BUILDS: { name: string; folder: string; extension: string };
+export function ownPlatformBuild(platform?: string, arch?: string, musl?: boolean): string;
+export function removeOtherPlatformBuilds(nodeModules: string, keep?: string): { removed: string[]; kept: string[] };

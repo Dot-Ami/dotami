@@ -11,10 +11,11 @@ import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { formatCents, parseMoneyToCents } from "@/lib/figures/money";
 import { agreeToFigures, listFigures, proposeFigures } from "@/lib/figures/store";
@@ -42,7 +43,7 @@ beforeAll(async () => {
     stdio: "pipe",
   });
   process.env.DATABASE_URL = url;
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
 
   routes.list = (await import("@/app/api/figures/route")) as unknown as RouteModule;
   routes.propose = await import("@/app/api/figures/propose/route");
@@ -789,7 +790,7 @@ describe("amounts stay out of URLs and logs", () => {
     console.error = (...args: unknown[]) => void logged.push(args.map(String).join(" "));
     try {
       // A database that can't be reached: the error path runs without the values ever being logged.
-      const broken = new PrismaClient({ datasourceUrl: `file:${tmpdir().replace(/\\/g, "/")}/no-such-folder/x.db` });
+      const broken = createDatabaseClient({ url: `file:${tmpdir().replace(/\\/g, "/")}/no-such-folder/x.db` });
       await expect(
         proposeFigures(broken, ventureId, SOURCE, [{ ...good, amountCents: 424242424 }], "2026-10-06"),
       ).rejects.toThrow();

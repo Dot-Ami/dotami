@@ -20,10 +20,11 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { RECEIPT_FILE_HEADERS } from "@/lib/expenses/receipts/file-headers";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { addReceipt, readReceiptFile, ReceiptError } from "@/lib/expenses/receipts/store";
@@ -257,7 +258,7 @@ beforeAll(async () => {
   const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
   execFileSync(process.execPath, [prismaCli, "migrate", "deploy"], { env: { ...process.env, DATABASE_URL: url, CHECKPOINT_DISABLE: "1" }, stdio: "pipe" });
   process.env.DATABASE_URL = url;
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
   fileRoute = await import("@/app/api/expenses/receipt/file/route");
 }, 120_000);
 

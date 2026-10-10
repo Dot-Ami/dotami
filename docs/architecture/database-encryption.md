@@ -586,13 +586,77 @@ person say "Not now" or "Never"; the decisions at the top hold.)
 
 ## 13. Not checked
 
-- **Nothing was run.** The candidate packages were downloaded into a scratch folder outside the
-  repository, unpacked and read, never installed or imported, as the HEIC review did: the outside-code
-  rule reviews a package before it is used. So the performance cost, whether the prebuilt binary loads
-  in Electron 44, and how `VACUUM INTO`, `serialize()` and the backup API treat an encrypted file are
-  all unmeasured; each is named above where it matters.
+- **Nothing was run** while this design was written. The candidate packages were downloaded into a
+  scratch folder outside the repository, unpacked and read, never installed or imported, as the HEIC
+  review did: the outside-code rule reviews a package before it is used. Since the maintainer's choice
+  (2026-10-10), A is installed and measured (§ 14), and `serialize()` of an encrypted connection was
+  seen to give the plain page image (the measurement's backup step checks it); whether the binary
+  loads in Electron 44's server and main processes is proved by the desktop tests of each pull request.
 - The prebuilt binaries were not rebuilt from source to compare; their npm provenance says they were
   built by the project's own GitHub Actions workflow.
 - SQLite3 Multiple Ciphers' cipher code was not read line by line (tens of thousands of lines); its
   licence notices, its default cipher and how it takes a raw key were.
 - A Mac: there is no Mac build of DotAmi yet; there `safeStorage` uses the Keychain.
+
+## 14. Measured, before anything else was built (2026-10-10)
+
+The maintainer's decision 1: install the two packages, measure against today's numbers, and stop if a
+person would notice. Measured on the maintainer's computer (Windows 11, Node 25.8) with
+`npx tsx scripts/measure-database-adapter.ts typical` and `… large`, which seed a data file, copy it,
+encrypt the copy with a raw key, and time the same work three ways: today's built-in engine on the
+plain file, the adapter on the plain file, and the adapter on the encrypted file. Medians, in
+milliseconds; "typical" is 5 ideas, 400 expense records, 120 figures and 30 statements (a 300 KB
+file), "large" is 25 ideas, 5,000 records, 2,000 figures and 300 statements (2.3 MB).
+
+| What | Typical: today | adapter | encrypted | Large: today | adapter | encrypted |
+|---|---:|---:|---:|---:|---:|---:|
+| Start: load Prisma (and the adapter) | 31.3 | 47.1 | 49.4 | 61.8 | 91.2 | 89.3 |
+| Start: open the file, first query | 16.2 | 19.7 | 20.0 | 49.4 | 38.1 | 42.4 |
+| Start: the desktop migrator opens the file and reads its table | 0.7 | 1.0 | 1.2 | 1.2 | 1.6 | 1.9 |
+| The ideas page's query | 2.1 | 5.4 | 2.7 | 7.4 | 4.6 | 3.8 |
+| An idea's map | 1.0 | 1.9 | 1.3 | 3.3 | 1.7 | 1.4 |
+| The Expenses page (every record) | 19.7 | 20.0 | 18.7 | 352.8 | 242.0 | 211.7 |
+| *What DotAmi knows about you* | 15.7 | 13.7 | 12.5 | 96.1 | 95.2 | 92.4 |
+| Delete's wipe (`VACUUM`) | 10.9 | 10.7 | 13.5 | 47.6 | 33.9 | 54.2 |
+| A whole backup with a passphrase, today | 320.0 | | | 307.9 | | |
+| The backup's data-file copy step (today `VACUUM INTO` a file; encrypted: the decrypted image read into memory and rebuilt there) | 10.6 | | 3.9 | 22.1 | | 17.4 |
+
+**Reading it:** the one cost that grows is loading the adapter at start, 16 to 30 ms once per start
+(the desktop app's start already waits for its server for seconds). Every page's query is within a few
+milliseconds of today's, faster on the large file; the encryption itself adds 0 to 20 ms to the wipe
+and nothing measurable to a page. Today's backup is about 300 ms, almost all of it the passphrase's
+key derivation (scrypt), which doesn't change; its copy step is faster in memory. **No person would
+notice, so the build goes on.** The runs vary by a few milliseconds between tries (the same row
+measured twice differed by up to 5 ms); the script is in the repository to run again.
+
+**Found while building the first pull request** (none of these needed a choice from the maintainer;
+each is handled in `lib/db/client.ts` and tested):
+
+- **A transaction could swallow another request's write.** The adapter has one connection; a query
+  from another request that arrived while an interactive transaction was open ran inside it, and was
+  undone with it when it rolled back, with no error (measured: the write was gone; Prisma's built-in
+  engine kept it). DotAmi's client now makes every query wait its turn, a transaction holding the turn
+  until it ends; `tests/database-client.spec.ts` shows the write kept, and the adapter on its own
+  losing it (the control).
+- **"Database is locked" lost its words.** The adapter reports SQLite's busy error with a kind Prisma
+  6.19's engine doesn't know, so the error said "unknown variant `SocketTimeout`" instead of SQLite's
+  "database is locked". DotAmi's client passes it on as SQLite's own error, as the engine did
+  (`tests/privacy-delete.spec.ts`'s locked-wipe tests failed until it did).
+- **Prisma connects as soon as a client is made**, so a file that can't be opened (no `DATABASE_URL`,
+  the wrong key) became an error nothing waited for. The file is opened at the first query instead,
+  inside the first turn, and the failure is that query's error.
+- **`npm ci` tried to compile the package.** Its `package.json` says `"gypfile": false` (don't compile:
+  the prebuilt files are inside), but npm writes the lockfile without that field and `npm ci` reads each
+  package from the lockfile, so it saw the package's `binding.gyp` and ran `node-gyp rebuild`, which
+  needs Visual Studio's C++ tools and failed on this computer, which has none (measured: `npm ci`
+  failed; with the field in the lockfile it installed). The field is now in `package-lock.json`, and
+  `tests/database-package.spec.ts` fails, naming `node scripts/keep-gypfile.mjs`, when npm rewrites
+  the lockfile and drops it (any `npm install <package>`, or a Dependabot update, does). A question
+  for the maintainer (the pull request's "Open"): keep this, or vendor an edited copy of the package,
+  or install C++ tools on every computer that installs DotAmi's code.
+- **The package's types can't be reached by its name** (its `exports` map leaves out `index.d.ts`), so
+  `lib/db/better-sqlite3.d.ts` describes the part DotAmi uses.
+- **The desktop build copied all eight systems' prebuilt SQLite** (20 MB); it keeps this computer's
+  one (`desktop/left-out.mjs`, `removeOtherPlatformBuilds`), and the build stops if it isn't there.
+  `node-addon-api` (the package's compile-time headers) isn't copied into the server; it is listed in
+  the notices as one of DotAmi's dependencies' packages, as every package they pull in is.

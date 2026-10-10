@@ -37,6 +37,50 @@ export const LEFT_OUT = [
   { name: "source-map", why: "Required only by source-map-support (Next carries its own copies in next/dist/compiled)." },
 ];
 
+/**
+ * [8i] Files left out of a package that stays: better-sqlite3-multiple-ciphers (the database, under the
+ * name better-sqlite3) carries a prebuilt SQLite for eight kinds of computer, about 2.4 MB each, and
+ * loads only the one for the computer it runs on (its lib/binding.js picks prebuilds/<system>-<cpu>.node).
+ * The tracer copies all eight; the desktop server keeps the one for the computer the app is built for.
+ */
+export const OTHER_PLATFORM_BUILDS = { name: "better-sqlite3-multiple-ciphers", folder: "prebuilds", extension: ".node" };
+
+/**
+ * The prebuilt file better-sqlite3-multiple-ciphers loads on this computer: "<system>-<cpu>.node", the
+ * system written "linuxmusl" on a Linux without glibc (the package's own rule, lib/binding.js).
+ */
+export function ownPlatformBuild(platform = process.platform, arch = process.arch, musl = isLinuxMusl(platform)) {
+  return `${platform === "linux" && musl ? "linuxmusl" : platform}-${arch}${OTHER_PLATFORM_BUILDS.extension}`;
+}
+
+function isLinuxMusl(platform) {
+  return platform === "linux" && !process.report.getReport().header.glibcVersionRuntime;
+}
+
+/**
+ * Deletes the other kinds of computer's prebuilt files from every copy of the package in a node_modules
+ * folder, keeping `keep`. Returns { removed: [relative paths], kept: [relative paths] }; desktop/build.mjs
+ * stops unless exactly one is kept in each copy.
+ */
+export function removeOtherPlatformBuilds(nodeModules, keep = ownPlatformBuild()) {
+  const removed = [];
+  const kept = [];
+  for (const p of packagesIn(nodeModules).filter((p) => p.name === OTHER_PLATFORM_BUILDS.name)) {
+    const dir = path.join(nodeModules, p.rel, OTHER_PLATFORM_BUILDS.folder);
+    if (!existsSync(dir)) continue;
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(OTHER_PLATFORM_BUILDS.extension)) continue;
+      const rel = `${p.rel}/${OTHER_PLATFORM_BUILDS.folder}/${file}`;
+      if (file === keep) kept.push(rel);
+      else {
+        rmSync(path.join(dir, file));
+        removed.push(rel);
+      }
+    }
+  }
+  return { removed, kept };
+}
+
 /** Whether the desktop server leaves this package out. */
 export function isLeftOut(name) {
   return LEFT_OUT.some((p) => (p.name.endsWith("/*") ? name.startsWith(p.name.slice(0, -1)) : name === p.name));

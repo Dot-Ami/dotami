@@ -756,9 +756,19 @@ export const DEPENDENCIES: readonly DependencyEntry[] = [
     why: "Anthropic's own client: it sends requests to api.anthropic.com, or to the address in ANTHROPIC_BASE_URL, with the key it is given (its README and client.js). DotAmi imports it in one file, the intake's sentence reader (app/api/intent/parse/route.ts), which runs it only when ANTHROPIC_API_KEY is set. The desktop app takes that key out of its server's environment (serverEnv in desktop/main.mjs).",
   },
   {
+    name: "@prisma/adapter-better-sqlite3",
+    network: "no",
+    why: "Prisma's own adapter that hands every query to better-sqlite3 (below) instead of Prisma's built-in SQLite. Version 6.19.3, pinned exactly to match @prisma/client, read 2026-10-09 (docs/connectors/better-sqlite3-multiple-ciphers-review.md): about 660 lines that open the file with better-sqlite3 and turn Prisma's queries into its calls; a search finds no request call. It has a debug output that prints each query's values when the DEBUG environment variable names it: the desktop app removes DEBUG from its server's environment (serverEnv in desktop/main.mjs). DotAmi imports it in one file, lib/db/client.ts.",
+  },
+  {
     name: "@prisma/client",
     network: "no",
-    why: "The database client. DotAmi's database is SQLite (provider \"sqlite\" in prisma/schema.prisma), a file on this computer that the client reads through a local query engine. The package also holds code for Prisma's hosted proxy (addresses starting prisma://), which a SQLite database never uses, and its runtime files hold no address for Prisma's usage check-in (no checkpoint.prisma.io in node_modules/@prisma/client/runtime). Its README doesn't discuss network use: this comes from the schema and that search. The `prisma` command-line tool, a development tool, is the one that checks in; scripts/prisma.mjs switches that off.",
+    why: "The database client. DotAmi's database is SQLite (provider \"sqlite\" in prisma/schema.prisma), a file on this computer that the client reads through better-sqlite3 (lib/db/client.ts) and a local query engine. The package also holds code for Prisma's hosted proxy (addresses starting prisma://), which a SQLite database never uses, and its runtime files hold no address for Prisma's usage check-in (no checkpoint.prisma.io in node_modules/@prisma/client/runtime). Its README doesn't discuss network use: this comes from the schema and that search. The `prisma` command-line tool, a development tool, is the one that checks in; scripts/prisma.mjs switches that off.",
+  },
+  {
+    name: "better-sqlite3",
+    network: "no",
+    why: "The name package.json gives better-sqlite3-multiple-ciphers 13.0.3 (pinned exactly; an npm alias, and an \"overrides\" entry so Prisma's adapter gets the same package, which tests/database-package.spec.ts checks): SQLite 3.53.4 with SQLite3 Multiple Ciphers 2.4.0, an encryption extension, as one prebuilt file for each kind of computer. Read 2026-10-09 (docs/connectors/better-sqlite3-multiple-ciphers-review.md): its JavaScript requires only node's fs, path and util and its own files; the Windows file imports only node.exe and KERNEL32.dll, no network library; SQLite has no network code. It has no install script, so installing it downloads nothing more. DotAmi imports it through Prisma's adapter (lib/db/client.ts).",
   },
   {
     name: "fflate",

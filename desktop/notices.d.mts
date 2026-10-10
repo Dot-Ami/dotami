@@ -13,6 +13,9 @@ export interface LicenceElsewhere {
 export const LICENCE_ELSEWHERE: Readonly<Record<string, LicenceElsewhere>>;
 export function licenceElsewhere(name: string): LicenceElsewhere | undefined;
 export function readmeLicensing(dir: string): { file: string; text: string } | null;
+/** [8i] Packages whose binary carries other people's code whose notices are only in its C source. */
+export const SOURCE_NOTICES: Readonly<Record<string, { file: string; why: string }>>;
+export function noticesInSource(file: string): { lines: string[]; blocks: string[] } | null;
 
 export interface FoundPackage {
   name: string;

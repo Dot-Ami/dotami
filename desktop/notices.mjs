@@ -80,6 +80,48 @@ export const LICENCE_ELSEWHERE = {
     { why: "The published package holds no licence file; its package.json names MIT and its repository is github.com/develar/lazy-val. It comes with electron-updater, the installed app's update check." },
 };
 
+/**
+ * [8i] Packages whose shipped binary is compiled from C code by other people whose notices are only in
+ * that code's comments, not in a licence file: better-sqlite3-multiple-ciphers (the database) builds
+ * SQLite (public domain) with SQLite3 Multiple Ciphers (MIT) and what that bundles (AEGIS, MIT; SHA-2,
+ * BSD-3-Clause; Argon2 and fast-pbkdf2, CC0 or Apache-2.0; MD5 and Rijndael, public domain; miniz, MIT;
+ * BearSSL-derived code, MIT). Its own LICENSE covers only its JavaScript and C++. So the notices file
+ * also carries, word for word, every copyright and licence line in the C source's comments and every
+ * comment block that states licence terms (noticesInSource). docs/connectors/better-sqlite3-multiple-ciphers-review.md.
+ * @type {Record<string, { file: string; why: string }>}
+ */
+export const SOURCE_NOTICES = {
+  "better-sqlite3-multiple-ciphers": {
+    file: "deps/sqlite3/sqlite3.c",
+    why: "Its prebuilt binary is compiled from SQLite (public domain) and SQLite3 Multiple Ciphers, by Ulrich Telle (MIT), and the code SQLite3 Multiple Ciphers bundles. Their notices are in the C source's comments, below, word for word: the copyright and licence lines, then each comment that states licence terms. Where a file names the MIT licence without its text (SQLite3 Multiple Ciphers, AEGIS), the terms are the MIT licence's, as in this package's LICENSE above.",
+  },
+};
+
+/**
+ * The notices in a C source file's comments, word for word: every line naming a copyright holder or a
+ * licence (SQLite's own "The author disclaims copyright" blessing, which asks for nothing, left out),
+ * in the order they first appear, each once; and every comment block that states licence terms
+ * ("Redistribution and use", "Permission is hereby granted", CC0, "placed in the public domain"), each once.
+ * Null when the file isn't there.
+ */
+export function noticesInSource(file) {
+  if (!existsSync(file)) return null;
+  const text = readFileSync(file, "utf8").replace(/\r\n?/g, "\n");
+  const lines = [];
+  for (const line of text.split("\n")) {
+    if (/disclaims copyright/i.test(line)) continue;
+    if (!/^\s*(\*|\/\/|\/\*)/.test(line) || !/copyright|SPDX-License-Identifier|\bLicen[cs]e:/i.test(line)) continue;
+    const trimmed = line.trim();
+    if (!lines.includes(trimmed)) lines.push(trimmed);
+  }
+  const blocks = [];
+  for (const match of text.matchAll(/\/\*[\s\S]*?\*\//g)) {
+    const block = match[0];
+    if (/Redistribution and use|Permission is hereby granted|CC0|placed in the public domain/i.test(block) && !blocks.includes(block)) blocks.push(block);
+  }
+  return { lines, blocks };
+}
+
 /** Fonts committed to app/fonts, each with the licence file committed beside it. */
 const FONTS = [
   { name: "Inter (font)", licence: "OFL-1.1", file: "app/fonts/LICENSE-Inter.txt", version: "as committed in app/fonts" },
@@ -329,6 +371,14 @@ export function collectNotices(root, { standalone, leaveOut } = {}) {
     } else if (README_LICENSING.some((r) => r.test(entry.name))) {
       const section = readmeLicensing(dir);
       if (section) entry.texts.push(section);
+    }
+    const source = Object.hasOwn(SOURCE_NOTICES, entry.name) ? SOURCE_NOTICES[entry.name] : null;
+    if (source) {
+      const found = noticesInSource(path.join(dir, source.file));
+      if (!found || found.lines.length === 0) throw new Error(`third-party notices: ${entry.name}'s ${source.file} has no notices to copy; read it again and update SOURCE_NOTICES`);
+      entry.note = source.why;
+      entry.texts.push({ file: `${source.file} (its copyright and licence lines)`, text: found.lines.join("\n") });
+      entry.texts.push({ file: `${source.file} (its comments that state licence terms)`, text: found.blocks.join("\n\n") });
     }
   }
   if (unexplained.length) {

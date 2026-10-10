@@ -7,9 +7,10 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { createDatabaseClient } from "../lib/db/client";
 import { SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
@@ -326,7 +327,7 @@ test("Delete: when the wipe couldn't run, the page says the space isn't wiped ye
  */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
   const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
-  const db = new PrismaClient({ datasourceUrl: `file:${file}` });
+  const db = createDatabaseClient({ url: `file:${file}` });
   try {
     return await fn(db);
   } finally {

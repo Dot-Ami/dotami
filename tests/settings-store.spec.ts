@@ -8,10 +8,11 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { SettingInputError, readSetting, writeSetting } from "@/lib/settings/store";
 import {
   MAX_DISMISSALS,
@@ -36,7 +37,7 @@ beforeAll(() => {
     env: { ...process.env, DATABASE_URL: url, CHECKPOINT_DISABLE: "1" },
     stdio: "pipe",
   });
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
 });
 
 afterAll(async () => {
@@ -175,7 +176,7 @@ describe("saving a setting", () => {
     expect(saved).toEqual({ cadences: ["monthly", "yearly"], ideaIds: [], dismissed: [] });
     expect(await readSetting(prisma, "figure-reminders")).toEqual(saved);
     // A different client on the same file (as a restart would be) sees it too.
-    const again = new PrismaClient({ datasourceUrl: url });
+    const again = createDatabaseClient({ url });
     try {
       expect(await readSetting(again, "figure-reminders")).toEqual(saved);
     } finally {

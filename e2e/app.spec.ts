@@ -8,9 +8,10 @@
 import http from "node:http";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Download, type Locator, type Page, type Worker } from "@playwright/test";
 
+import { createDatabaseClient } from "../lib/db/client";
 import { SETTING_GROUPS, SETTINGS } from "../lib/settings/catalog";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
@@ -437,7 +438,7 @@ test("Remind me about this idea: off until turned on, per idea, and still on aft
  */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
   const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").replace(/\\/g, "/");
-  const db = new PrismaClient({ datasourceUrl: `file:${file}` });
+  const db = createDatabaseClient({ url: `file:${file}` });
   try {
     return await fn(db);
   } finally {

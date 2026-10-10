@@ -252,10 +252,11 @@ roadmap's build order.
     answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
   - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
     designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
-    the four decisions (option A measured first, backups only plus "Start fresh", a passphrase required
-    on every backup, "Not now" and "Never" allowed) are at the top of that page; then the build in
-    stacked pull requests (the Prisma connection, the key and first-start encryption, backups and
-    restore, "Start fresh")
+    being built in stacked pull requests: (A) the packages, the Prisma adapter and the measurements;
+    (B) the key, the first-start encryption and the window that asks first; (C) the migrator, backups
+    with a passphrase and restore; (D) the "Start fresh" button
+    - [x] (A) the packages installed and measured (no slowdown a person would notice), every Prisma
+      Client moved to one factory (`lib/db/client.ts`)
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

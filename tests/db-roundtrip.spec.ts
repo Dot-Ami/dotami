@@ -13,9 +13,10 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { toStringList } from "@/lib/db/json-list";
 import { linkVentures, listVentures, loadVentureScenarioById } from "@/lib/db/ventures";
@@ -34,7 +35,7 @@ beforeAll(() => {
     env: { ...process.env, DATABASE_URL: url },
     stdio: "pipe",
   });
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
 }, 120_000);
 
 afterAll(async () => {

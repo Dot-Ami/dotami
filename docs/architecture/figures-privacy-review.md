@@ -289,14 +289,16 @@ The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
 - Whether a refund or credit (a negative amount) may be a record. Today an amount must be more than
   zero.
 
-## Privacy review: encrypting the database file (design, 2026-10-09; not built)
+## Privacy review: encrypting the database file (design, 2026-10-09; being built)
 
 The maintainer said yes (2026-10-09) to encrypting the data file itself. The design is
 [database-encryption.md](database-encryption.md), written before any code. On 2026-10-10 the
-maintainer chose how: `better-sqlite3-multiple-ciphers` through Prisma's adapter, measured first;
-backups only plus a "Start fresh" button when the key is lost; a passphrase required on every backup;
-and a person may say "Not now" or "Never". **Nothing changes in this pull request**: the data file
-still relies on the computer's disk encryption, as the first row of the table at the top says.
+maintainer chose how: `better-sqlite3-multiple-ciphers` through Prisma's adapter, measured first (its
+§ 14: no slowdown a person would notice); backups only plus a "Start fresh" button when the key is
+lost; a passphrase required on every backup; and a person may say "Not now" or "Never". The first
+pull request moves the database layer to the package without encrypting anything; until the rest
+merge, the data file still relies on the computer's disk encryption, as the first row of the table at
+the top says.
 
 **What would be stored that isn't today:** one file, `database.key`, beside the data file: 32 random
 bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI), and the key's id

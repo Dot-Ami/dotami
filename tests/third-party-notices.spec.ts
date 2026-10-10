@@ -30,6 +30,7 @@ import {
   licenceElsewhere,
   licenceFiles,
   missingFromNotices,
+  noticesInSource,
   packagesIn,
   productionPackages,
   SEPARATOR,
@@ -183,6 +184,62 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
     const covered = installed.filter((p) => licenceElsewhere(p.name));
     expect(covered.length).toBeGreaterThan(3);
     for (const p of covered) expect(licenceFiles(path.join(ROOT, "node_modules", p.rel)), p.name).toEqual([]);
+  });
+});
+
+describe("noticesInSource: the notices inside a C source's comments ([8i])", () => {
+  it("copies each copyright and licence line once, and each comment that states terms, word for word; leaves SQLite's blessing out", () => {
+    const file = path.join(temp, "sample.c");
+    writeFileSync(
+      file,
+      [
+        "/*",
+        "** The author disclaims copyright to this source code.  In place of",
+        "** a legal notice, here is a blessing:",
+        "*/",
+        "/*",
+        "** Copyright:   (c) 2020 Someone",
+        "** License:     MIT",
+        "*/",
+        "int a;",
+        "/*",
+        "** Copyright:   (c) 2020 Someone",
+        "** License:     MIT",
+        "*/",
+        "/*",
+        " * Copyright (C) 2005 Another Person",
+        " * Redistribution and use in source and binary forms, with or without",
+        " * modification, are permitted.",
+        " */",
+        'const char *s = "Copyright";',
+      ].join("\r\n"),
+    );
+    expect(noticesInSource(file)).toEqual({
+      lines: ["** Copyright:   (c) 2020 Someone", "** License:     MIT", "* Copyright (C) 2005 Another Person"],
+      blocks: [
+        ["/*", " * Copyright (C) 2005 Another Person", " * Redistribution and use in source and binary forms, with or without", " * modification, are permitted.", " */"].join("\n"),
+      ],
+    });
+    expect(noticesInSource(path.join(temp, "no-such.c"))).toBeNull();
+  });
+
+  it("the database package's entry carries the notices of the code compiled into its binary", () => {
+    const entry = collectNotices(ROOT).find((e) => e.name === "better-sqlite3-multiple-ciphers");
+    expect(entry?.version).toBe("13.0.3");
+    const text = entry!.texts.map((t: { text: string }) => t.text).join("\n");
+    // Its own MIT licence, SQLite3 Multiple Ciphers' author, AEGIS's, the SHA-2 code's BSD terms whole,
+    // and the CC0 dedication of the PBKDF2 code.
+    for (const words of [
+      "Copyright (c) 2021 Mahesh Bandara Wijerathna",
+      "** Copyright:   (c) 2006-2025 Ulrich Telle",
+      "** Copyright:   (c) 2023-2024 Frank Denis",
+      "Copyright (C) 2005, 2007 Olivier Gay <olivier.gay@a3.epfl.ch>",
+      "3. Neither the name of the project nor the names of its contributors",
+      "You should have received a copy of the CC0 Public Domain Dedication",
+    ]) {
+      expect(text, words).toContain(words);
+    }
+    expect(text).not.toContain("The author disclaims copyright to this source code");
   });
 });
 

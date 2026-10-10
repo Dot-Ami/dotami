@@ -12,10 +12,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { addTypedStatement } from "@/lib/person/statements";
@@ -58,7 +59,7 @@ function makeDb(name: string) {
     env: { ...process.env, DATABASE_URL: url, CHECKPOINT_DISABLE: "1" },
     stdio: "pipe",
   });
-  const prisma = new PrismaClient({ datasourceUrl: url });
+  const prisma = createDatabaseClient({ url });
   clients.push(prisma);
   return { folder, file, url, prisma };
 }

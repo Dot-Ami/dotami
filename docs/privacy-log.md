@@ -322,6 +322,27 @@ person is asked).
 
 ### Packages that ship
 
+- **`better-sqlite3-multiple-ciphers` 13.0.3 and `@prisma/adapter-better-sqlite3` 6.19.3, pinned
+  exactly ([8i]).** The database now reads and writes through Prisma's adapter and this package:
+  SQLite 3.53.4 with SQLite3 Multiple Ciphers 2.4.0, an encryption extension, as one prebuilt file for
+  each kind of computer (MIT; the C code it is built from is public domain, MIT, BSD-3-Clause and
+  CC0-or-Apache-2.0, with no LGPL or GPL; its notices are copied into `THIRD-PARTY-NOTICES.txt` from the
+  C source, word for word, by [`desktop/notices.mjs`](../desktop/notices.mjs)). Network: none found
+  (its JavaScript requires only node's `fs`, `path` and `util`; the Windows file imports only
+  `node.exe` and `KERNEL32.dll`); no install script, and it isn't compiled when it installs (the
+  lockfile keeps its `"gypfile": false`, which `npm ci` would otherwise lose; compiling would download
+  Node's headers). `package.json` names it `better-sqlite3`, the
+  name the adapter loads, and [`tests/database-package.spec.ts`](../tests/database-package.spec.ts)
+  fails if the real `better-sqlite3` (no encryption, and a download when it installs) is ever
+  installed instead. The desktop app's server carries only the Windows x64 file (2.4 MB; the other
+  seven are left out by [`desktop/left-out.mjs`](../desktop/left-out.mjs)). Reviewed 2026-10-09
+  ([the review](connectors/better-sqlite3-multiple-ciphers-review.md)); listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`). **Nothing is encrypted
+  by this change**, and nothing new is kept or sent: the same file holds the same rows, dates stored
+  the same way ([`tests/db-dates.spec.ts`](../tests/db-dates.spec.ts)). The adapter's debug output
+  prints query values when the `DEBUG` environment variable names it: the desktop app removes `DEBUG`
+  from its server's environment ([`desktop/main.mjs`](../desktop/main.mjs) `serverEnv`;
+  `e2e-desktop/desktop.spec.ts` checks the log).
 - **HEIC photos add no package.** The container reader is DotAmi's own code; the decoder is the
   graphics driver's, reached through Chromium's WebCodecs, which Electron already ships. Not new: the
   Electron build DotAmi has always shipped includes Chromium's HEVC parser and hardware-assist decoding
@@ -673,23 +694,18 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
-- **Encrypting the database file** — the maintainer said yes on 2026-10-09. Designed, with the
-  candidate packages reviewed by reading only; **not built, and nothing DotAmi keeps, sends or ships
-  changes yet**: the data file still relies on the computer's disk encryption. If built as designed,
-  DotAmi would keep one new file, `database.key` (a random key wrapped by Windows' per-user
-  protection), and ship one native package; a backup without a passphrase would still hold the data
-  unencrypted, a lost key would lose everything not in a backup, and an older DotAmi couldn't open
-  the file (going back would need a backup). It would add one thing the person must agree to: a
-  window before an existing data file is first encrypted, saying what changes and what a lost key
-  costs. The maintainer decided the four open questions on 2026-10-10: option A
-  (`better-sqlite3-multiple-ciphers` through Prisma's adapter), measured first and stopped if a person
-  would notice a slowdown; a lost key means backups only, plus a **Start fresh** button that keeps
-  the locked file (moved aside, never deleted), asked twice; **a backup passphrase is required** from
-  then on, and older backups still restore; and a person may say no: the window offers **Back up
-  first…**, **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a
-  switch in Settings to turn it on later). Built in the pull requests that follow this design
+- **Encrypting the database file** — the maintainer said yes on 2026-10-09, and on 2026-10-10 chose
+  how: the package above (installed, and measured first); when the key is lost, backups only plus a
+  **Start fresh** button that keeps the locked file (moved aside, never deleted), asked twice; **a
+  passphrase required on every backup** from then on (older backups still restore); and a person free
+  to say no: the window before an existing data file is first encrypted offers **Back up first…**,
+  **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a switch in
+  Settings to turn it on later). Being built in stacked pull requests; until they merge the data file
+  still relies on the computer's disk encryption. As designed, DotAmi keeps one new file,
+  `database.key` (a random key wrapped by Windows' per-user protection); a lost key loses everything
+  not in a backup, and an older DotAmi can't open the file (going back needs a backup)
   ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
-  [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-not-built)).
+  [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-being-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
   the backups folder. Still open: clearing what the desktop window stored in earlier launches, and
   whether an agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).
