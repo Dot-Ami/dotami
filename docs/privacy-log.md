@@ -646,19 +646,16 @@ unless marked otherwise.
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
 - **Encrypting the database file** — the maintainer said yes on 2026-10-09, and on 2026-10-10 chose
-  how: the package above (installed, and measured first), backups only plus a "Start fresh" button
-  when the key is lost, a passphrase required on every backup, and a person free to say "Not now" or
-  "Never" (with a switch in Settings). Being built in stacked pull requests; until they merge the data
-  file still relies on the computer's disk encryption. If built as designed,
-  DotAmi would keep one new file, `database.key` (a random key wrapped by Windows' per-user
-  protection), and ship one native package; a backup without a passphrase would still hold the data
-  unencrypted, a lost key would lose everything not in a backup, and an older DotAmi couldn't open
-  the file (going back would need a backup). It would add one thing the person must agree to: a
-  window before an existing data file is first encrypted, saying what changes and what a lost key
-  costs, with **Back up first…** and **Encrypt now** (whether it also offers **Not now** is one of the
-  questions). Waiting for the maintainer's choice of package, of what happens when the key is lost,
-  and of whether a person may decline
-  ([database-encryption.md](architecture/database-encryption.md), its § 12;
+  how: the package above (installed, and measured first); when the key is lost, backups only plus a
+  **Start fresh** button that keeps the locked file (moved aside, never deleted), asked twice; **a
+  passphrase required on every backup** from then on (older backups still restore); and a person free
+  to say no: the window before an existing data file is first encrypted offers **Back up first…**,
+  **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a switch in
+  Settings to turn it on later). Being built in stacked pull requests; until they merge the data file
+  still relies on the computer's disk encryption. As designed, DotAmi keeps one new file,
+  `database.key` (a random key wrapped by Windows' per-user protection); a lost key loses everything
+  not in a backup, and an older DotAmi can't open the file (going back needs a backup)
+  ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
   [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-not-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
   the backups folder. Still open: clearing what the desktop window stored in earlier launches, and

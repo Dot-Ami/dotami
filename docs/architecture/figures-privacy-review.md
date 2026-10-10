@@ -254,9 +254,10 @@ receipt files itself. The design, written before the code, is
 
 ### Open (for the maintainer)
 
-- Whether to encrypt the database too, and whether to offer a "start a new key" button when receipts
-  are locked with a key that can't be opened (expense-records.md § 9, "Still open"). Encrypting the
-  `receipts/` folder itself was decided on 2026-10-09 (above).
+- Whether to offer a "start a new key" button when receipts are locked with a key that can't be
+  opened (expense-records.md § 9, "Still open"). Encrypting the `receipts/` folder itself was decided
+  on 2026-10-09 (above); encrypting the database too was decided on 2026-10-09, and how on 2026-10-10
+  (the next section).
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the
   information, the person decides. If it does, the CRA's wording is six years from the end of the
   last tax year a record relates to; indefinitely for long-term property, the share registry and
@@ -287,9 +288,9 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
 | An administrator account while the person is signed out, a copied or synced data folder, a stolen disk without disk encryption | reads `dotami.db` or a safety copy in `backups/` | the file encrypted page by page (ChaCha20-Poly1305), with a key only this Windows account can open; as strong as the account's password. An administrator while the person is signed in can act as the person (the "program running as the person" row) | designed |
 | The same, for the plain files the first start replaces | reads the disk's free space | the plain files overwritten with zeros and removed; on a solid-state disk that doesn't promise the bytes are physically gone, which DotAmi says; disk encryption covers it | designed |
 | Someone who later has the key, or a backup | reads words deleted or edited over | the Delete wipe still runs `VACUUM`, proved on the decrypted image; a backup is rebuilt from the live rows before it is written, as `VACUUM INTO` does today | designed |
-| Someone with a backup without a passphrase | opens it | nothing: it holds the data decrypted so it restores on another computer, and DotAmi says so; with a passphrase, AES-256-GCM as today | designed (a question: require a passphrase?) |
+| Someone with a backup without a passphrase | opens it | nothing: it holds the data decrypted so it restores on another computer, and DotAmi says so; with a passphrase, AES-256-GCM as today | designed (decided 2026-10-10: a passphrase is required from now on; older backups still restore) |
 | A program running as the person | asks Windows for the key, or asks DotAmi's server | nothing in DotAmi: the same trust as today, stated, not defended | by design |
-| The person, after losing the key | opens DotAmi | nothing can open the file; a backup restores it under a new key; nothing on the disk is changed or replaced | designed (a question: a recovery key, or "start fresh"?) |
+| The person, after losing the key | opens DotAmi | nothing can open the file; a backup restores it under a new key; nothing on the disk is changed or replaced | designed (decided 2026-10-10: no recovery key; backups, plus "Start fresh", which keeps the locked file) |
 
 **Rules for building it:**
 
