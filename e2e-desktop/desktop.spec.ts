@@ -8,7 +8,7 @@
  * ([8d]) is driven from its menu, and the bytes of the data file and the backups folder are read
  * afterwards to prove the deleted words are gone, not just hidden.
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -23,6 +23,7 @@ import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mj
 import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
+import { SET_ASIDE_RECEIPTS_WARNING } from "../lib/privacy/inventory";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
@@ -929,6 +930,25 @@ const MARKER = "zq-desktop-delete-marker-5813";
 /** Does this file's raw bytes hold the marker? */
 const holdsMarker = (file: string) => readFileSync(file).includes(Buffer.from(MARKER));
 
+/** Every file under `folder` (relative, with "/") whose raw bytes hold any of `needles`. */
+function filesHoldingAny(folder: string, needles: Buffer[], prefix = ""): string[] {
+  return readdirSync(folder, { withFileTypes: true }).flatMap((item) => {
+    const full = path.join(folder, item.name);
+    if (item.isDirectory()) return filesHoldingAny(full, needles, `${prefix}${item.name}/`);
+    if (!item.isFile()) return [];
+    let bytes: Buffer;
+    try {
+      bytes = readFileSync(full);
+    } catch {
+      // A file Chromium still holds locked a moment after the app quits (its own lock or cache files):
+      // nothing DotAmi writes. Say which, so a skipped file is never silent.
+      console.warn(`couldn't read ${prefix}${item.name} for the byte scan`);
+      return [];
+    }
+    return needles.some((n) => bytes.includes(n)) ? [`${prefix}${item.name}`] : [];
+  });
+}
+
 /** DotAmi's own safety copies in a data folder's backups/ (the names desktop/wipe-pending.mjs deletes). */
 const safetyCopies = (dir: string) =>
   existsSync(path.join(dir, "backups")) ? readdirSync(path.join(dir, "backups")).filter((f) => /^dotami-before-.+\.db$/.test(f)) : [];
@@ -965,15 +985,16 @@ async function restoreFrom(file: string, passphrase: string) {
   app = null;
 }
 
-test("Delete with the safety copies ticked: the words are gone from dotami.db and backups/, and a backup saved elsewhere still restores", async () => {
+test("Delete with the safety copies ticked: the words are gone from dotami.db and backups/, the receipt folders set aside there are cleared to the last byte, and a backup saved elsewhere still restores", async () => {
   test.setTimeout(300_000);
   const elsewhere = path.join(tmp, "saved elsewhere", "DotAmi backup.dotami-backup");
   mkdirSync(path.dirname(elsewhere));
   const passphrase = "correct horse battery staple";
   const dbFile = path.join(dataDir, "dotami.db");
 
-  // An idea and a statement holding the marker, a backup saved elsewhere, then a restore of it,
-  // which leaves a safety copy of the data in backups/ the way the app really makes one.
+  // An idea and a statement holding the marker, and a record with a receipt; a backup saved elsewhere,
+  // then a restore of it, which leaves a safety copy of the data in backups/, and the receipts folder as
+  // it was (receipts-before-restore-…), the way the app really makes them.
   let page = await launch();
   await describeVenture(page);
   const status = await page.evaluate(
@@ -983,37 +1004,83 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
     `statement ${MARKER}`,
   );
   expect(status).toBe(200);
+  const kept = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) => {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, body: (await res.json()) as { expenses?: { id: string }[] } };
+    };
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 1_999, paidTo: "Example Stationery before a restore", whatFor: "paper" }],
+    });
+    const id = proposed.body.expenses![0].id;
+    const agreed = await post("/api/expenses/agree", { expenseIds: [id] });
+    const added = await post("/api/expenses/receipt", { expenseId: id, file });
+    return [proposed.status, agreed.status, added.status];
+  }, png(6, 2).toString("base64"));
+  expect(kept).toEqual([201, 200, 200]);
   await backUpTo(elsewhere, passphrase);
   await restoreFrom(elsewhere, passphrase);
+
+  // [8i] And what Start a new key leaves (expense-records.md § 10): a receipt locked with a lost key and
+  // that key file, in a folder of their own.
+  const backupsDir = path.join(dataDir, "backups");
+  const lockedAside = path.join(backupsDir, "receipts-locked-1760000000000");
+  mkdirSync(lockedAside);
+  writeFileSync(
+    path.join(lockedAside, `${"7".repeat(32)}.pdf`),
+    Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from("0011223344556677", "hex"), randomBytes(64)]),
+  );
+  writeFileSync(path.join(lockedAside, "receipts.key"), JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: randomBytes(48).toString("base64") }));
+  const setAside = readdirSync(backupsDir).filter((n) => /^receipts-(locked|before-restore)-/.test(n)).sort();
+  expect(setAside).toHaveLength(2);
+  expect(setAside[0]).toMatch(/^receipts-before-restore-\d+$/);
+  // 32 bytes from the end of each file in them (past the shared header): what a byte scan looks for afterwards.
+  const clearedBytes = setAside.flatMap((folder) =>
+    readdirSync(path.join(backupsDir, folder)).map((f) => {
+      const bytes = readFileSync(path.join(backupsDir, folder, f));
+      return bytes.subarray(bytes.length - 32);
+    }),
+  );
+  expect(clearedBytes).toHaveLength(3);
 
   // The "before": the words are in the data file and in the safety copy.
   expect(holdsMarker(dbFile)).toBe(true);
   expect(safetyCopies(dataDir)).toHaveLength(1);
   expect(holdsMarker(path.join(dataDir, "backups", safetyCopies(dataDir)[0]))).toBe(true);
+  expect(filesHoldingAny(dataDir, clearedBytes)).toHaveLength(3);
 
   page = await launch();
   await page.goto(new URL("/your-data", page.url()).toString());
   const removing = page.getByRole("region", { name: "Taking things out" });
   await removing.getByRole("button", { name: "Delete", exact: true }).click();
   const box = removing.getByRole("listitem").filter({ has: page.getByLabel("Safety copies in the backups folder") });
-  await expect(box).toContainText("Safety copies: 1");
+  await expect(box).toContainText("Safety copies: 1 · Set-aside receipt folders: 2");
   await expect(box).toContainText("Afterwards, only a backup you saved somewhere else could bring anything back.");
   await removing.getByLabel("Your ideas, with their notes, links and map progress").check();
   await removing.getByLabel("Your statements (“In your words”)").check();
   await removing.getByLabel("Safety copies in the backups folder").check();
+  await expect(box).toContainText(SET_ASIDE_RECEIPTS_WARNING);
   await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
   await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
   const second = page.getByRole("dialog", { name: "Delete them now?" });
   await expect(second).toContainText("The safety copies in the backups folder go too.");
+  await expect(second).toContainText(SET_ASIDE_RECEIPTS_WARNING);
   await second.getByRole("button", { name: "Delete now" }).click();
   const done = removing.getByRole("status");
   await expect(done).toContainText("Safety copies: 1 file deleted, 0 left");
+  await expect(done).toContainText("Set-aside receipt folders: 2 folders deleted, 0 left");
   await expect(done).toContainText("Their space in the data file is wiped");
   await quit();
 
   // The "after": in no byte of the data file, no safety copy left, no journal, no wipe still owed.
   expect(holdsMarker(dbFile)).toBe(false);
   expect(safetyCopies(dataDir)).toEqual([]);
+  // The set-aside folders are gone, and no file anywhere in the data folder holds a byte run of theirs.
+  for (const folder of setAside) expect(existsSync(path.join(backupsDir, folder)), folder).toBe(false);
+  expect(filesHoldingAny(dataDir, clearedBytes)).toEqual([]);
   for (const f of readdirSync(path.join(dataDir, "backups"))) expect(holdsMarker(path.join(dataDir, "backups", f)), f).toBe(false);
   expect(existsSync(`${dbFile}-journal`)).toBe(false);
   expect(existsSync(wipePendingFile(dbFile))).toBe(false);

@@ -346,6 +346,31 @@ describe("the folders beside the data file", () => {
       exists: true,
       path: path.join(folder, "mine.db.wipe-pending"),
     });
+    // No receipt folders set aside here, so the same box has none of those to clear.
+    expect(h.setAsideReceiptFolders).toBe(0);
+  });
+
+  it("counts the receipt folders DotAmi set aside in the backups folder, which the same box clears ([8i])", async () => {
+    const folder = path.join(root, "with-set-aside");
+    const backups = path.join(folder, "backups");
+    const secret = "marker-inside-a-set-aside-receipt";
+    mkdirSync(path.join(backups, "receipts-locked-1760000000000"), { recursive: true });
+    writeFileSync(path.join(backups, "receipts-locked-1760000000000", `${"c".repeat(32)}.png`), secret);
+    writeFileSync(path.join(backups, "receipts-locked-1760000000000", "receipts.key"), "{}");
+    mkdirSync(path.join(backups, "receipts-before-restore-1760000000001"));
+    writeFileSync(path.join(backups, "receipts-before-restore-1760000000001", `${"d".repeat(32)}.pdf`), secret);
+    // Not one of DotAmi's: a folder of the person's, and a set-aside name holding only the person's file.
+    mkdirSync(path.join(backups, "my receipts"));
+    writeFileSync(path.join(backups, "my receipts", `${"e".repeat(32)}.png`), secret);
+    mkdirSync(path.join(backups, "receipts-locked-1760000000002"));
+    writeFileSync(path.join(backups, "receipts-locked-1760000000002", "my scan.png"), secret);
+    const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
+    const h = await readHoldings(seeded.prisma, today);
+
+    expect(h.setAsideReceiptFolders).toBe(2);
+    expect(h.safetyCopies).toBe(0);
+    // A count only: nothing from inside a receipt.
+    expect(JSON.stringify(h)).not.toContain(secret);
   });
 
   it("says how the receipt files are kept, from their first bytes only, and lists the key file without its key ([8i])", async () => {
@@ -388,6 +413,7 @@ describe("the folders beside the data file", () => {
     const h = await readHoldings(seeded.prisma, today);
     expect(h.folders.every((f) => f.path === null && !f.exists)).toBe(true);
     expect(h.safetyCopies).toBe(0);
+    expect(h.setAsideReceiptFolders).toBe(0);
     expect(h.wipePending).toBe(false);
     expect(h.dataFile.path).toBeNull();
   });
