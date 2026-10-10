@@ -1369,7 +1369,9 @@ test("Back up first… makes a backup of the still-plain file, then comes back t
   expect(database!.includes(Buffer.from(PLAIN_WORDS))).toBe(true);
 });
 
-const NOTHING_TO_BACK_UP = "This is a new data folder, so there's nothing to back up yet.";
+const NOTHING_TO_BACK_UP = "There's no data file yet, so there's nothing to back up.";
+/** [8i] The sentence about an old file and copies already made: true of an existing file only. */
+const EARLIER_COPIES = /Copies\s+Windows or a synced folder already made aren't changed/;
 
 test("a brand-new data folder is asked the same four choices first; Back up first… is turned off, and Encrypt now encrypts it from its first byte ([8i])", async () => {
   const dbFile = path.join(dataDir, "dotami.db");
@@ -1379,6 +1381,9 @@ test("a brand-new data folder is asked the same four choices first; Back up firs
   for (const name of ["Back up first…", "Encrypt now", "Not now", "Never…"]) await expect(ask.getByRole("button", { name, exact: true })).toBeVisible();
   await expect(ask.getByRole("button", { name: "Back up first…", exact: true })).toBeDisabled();
   await expect(ask.getByText(NOTHING_TO_BACK_UP)).toBeVisible();
+  // There is no old file and no copy of it yet, so the window doesn't talk about them.
+  await expect(ask.getByText("anything running as you can still open it, as DotAmi does.", { exact: false })).toBeVisible();
+  await expect(ask.getByText(EARLIER_COPIES)).toHaveCount(0);
   // Asked before anything is made: no data file and no key yet.
   expect(existsSync(dbFile)).toBe(false);
   expect(existsSync(path.join(dataDir, "database.key"))).toBe(false);
@@ -1406,6 +1411,8 @@ test("a brand-new data folder: Not now gives a plain file asked about again; Nev
   const askedAgain = await launchTo("encrypt-ask");
   await expect(askedAgain.getByRole("button", { name: "Back up first…", exact: true })).toBeEnabled();
   await expect(askedAgain.getByText(NOTHING_TO_BACK_UP)).toBeHidden();
+  // An existing file: the sentence about the old file and copies already made is back.
+  await expect(askedAgain.getByText(EARLIER_COPIES)).toBeVisible();
   page = await answerEncryptAsk(askedAgain, "Not now");
   await quit();
 
@@ -1457,7 +1464,11 @@ test("turning locking off: a warning first, then the next start decrypts the dat
   // Unticking asks first, saying what turning it off exposes, and that backups and receipts keep their locks.
   await box.click();
   const warning = data.getByRole("alertdialog", { name: "Turn off locking for the data file?" });
-  await expect(warning).toContainText("At DotAmi's next start, your data file and its safety copies are decrypted and their key is deleted.");
+  await expect(warning).toContainText(
+    "At DotAmi's next start, your data file and its safety copies are decrypted, and their key is deleted once nothing is locked with it.",
+  );
+  // A copy of the whole data folder carries its own copy of the key: said, never promised away.
+  await expect(warning).toContainText("A copy of the whole data folder holds its own copy of the key, so it still opens on your Windows account.");
   await expect(warning).toContainText(
     "anyone who can read your data folder, a copy of it, or this computer's disk outside Windows can read your ideas, figures, expense records and statements",
   );
@@ -1497,6 +1508,104 @@ test("turning locking off: a warning first, then the next start decrypts the dat
   const everywhere = [...readdirSync(dataDir), ...readdirSync(path.join(dataDir, "backups"))];
   expect(everywhere.filter((f) => /decrypting|encrypted-to-wipe|encrypting|plain-to-wipe/.test(f))).toEqual([]);
   expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(true);
+});
+
+test("a data file moved away beside its key, then Never… in the new-folder window: the next start keeps the key and the encrypted safety copy ([8i])", async () => {
+  test.setTimeout(240_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  const keyFile = path.join(dataDir, "database.key");
+  let page = await launch();
+  await describeVenture(page);
+  await quit();
+  // A safety copy locked with the same key, as the migrator leaves one before an update.
+  mkdirSync(path.join(dataDir, "backups"), { recursive: true });
+  const safetyCopy = path.join(dataDir, "backups", "dotami-before-20260101000000_test-1.db");
+  writeFileSync(safetyCopy, readFileSync(dbFile));
+  const copyBytes = createHash("sha256").update(readFileSync(safetyCopy)).digest("hex");
+  // The encrypted data file leaves the folder (moved to a USB stick, say); its key and the copy stay.
+  const movedTo = path.join(tmp, "moved-dotami.db");
+  writeFileSync(movedTo, readFileSync(dbFile));
+  rmSync(dbFile);
+
+  // No data file: the new-folder window, answered Never… The person never turned locking off.
+  page = await launch(dataDir, { newFolder: "Never…" });
+  await quit();
+  expect(fileKind(dbFile)).toBe("plain");
+
+  // The start after that: nothing is decrypted and the key isn't deleted, so the moved file can come back.
+  const before = desktopLog().length;
+  page = await launch();
+  await expect(page.getByPlaceholder(/What are you building/)).toBeVisible();
+  await quit();
+  const thisStart = desktopLog().slice(before);
+  expect(thisStart).toContain("[database] kept unencrypted: the person chose Never (Settings can turn it on)");
+  expect(thisStart).not.toContain("safety cop");
+  expect(thisStart).not.toContain("it was deleted");
+  expect(existsSync(keyFile)).toBe(true);
+  expect(fileKind(safetyCopy)).toBe("encrypted");
+  expect(createHash("sha256").update(readFileSync(safetyCopy)).digest("hex")).toBe(copyBytes);
+  expect(filesHolding(dataDir, "My venture")).toEqual([]);
+  expect(readdirSync(dataDir).filter((f) => f.startsWith("database-turned-off"))).toEqual([]);
+});
+
+test("a turned-off data file that fails its integrity check: DotAmi still opens, the file stays encrypted and the switch is ticked again ([8i])", async () => {
+  test.setTimeout(240_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  let page = await launch();
+  await describeVenture(page);
+  const key = await dataKey();
+  await quit();
+  // Room at the end of the file for a bad page that nothing DotAmi reads at a start touches, and the switch
+  // turned off as Settings saves it.
+  let db = openDatabase(dbFile, { key });
+  try {
+    runOn(db, "CREATE TABLE filler (id INTEGER PRIMARY KEY, t TEXT)");
+    const add = db.prepare("INSERT INTO filler (t) VALUES (?)");
+    for (let i = 0; i < 2000; i++) add.run(`row ${i} ${"x".repeat(200)}`);
+    db.prepare(`INSERT INTO "Setting" (key, value, updatedAt) VALUES ('database-encryption', '{"on":false}', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(Date.now());
+  } finally {
+    db.close();
+  }
+  // One page near the end goes bad, as a failing disk sector would.
+  const bytes = readFileSync(dbFile);
+  bytes.fill(0xff, bytes.length - 4096 * 3 + 100, bytes.length - 4096 * 3 + 164);
+  writeFileSync(dbFile, bytes);
+  db = openDatabase(dbFile, { key, readonly: true, fileMustExist: true });
+  try {
+    // The control: it still opens with its key and the switch reads off, but it fails SQLite's own check.
+    expect(db.prepare(`SELECT value FROM "Setting" WHERE key = 'database-encryption'`).get()).toEqual({ value: '{"on":false}' });
+    let check: unknown;
+    try {
+      check = db.pragma("integrity_check", { simple: true });
+    } catch (error) {
+      check = (error as { code?: string }).code;
+    }
+    expect(check).not.toBe("ok");
+  } finally {
+    db.close();
+  }
+
+  // The start goes on (it used to stop, and every start after it), with the file still encrypted.
+  const before = desktopLog().length;
+  page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  const data = page.getByRole("region", { name: "Data and backups" });
+  await expect(data).toContainText("Your data file is encrypted on this computer.");
+  await expect(data.getByLabel("Encrypt the data file")).toBeChecked();
+  const thisStart = desktopLog().slice(before);
+  expect(thisStart).toContain("[database] the data file couldn't be decrypted (damaged); kept encrypted, and the switch was turned back on");
+  expect(thisStart).not.toContain("[desktop] stopped:");
+  await quit();
+  expect(fileKind(dbFile)).toBe("encrypted");
+  expect(existsSync(path.join(dataDir, "database.key"))).toBe(true);
+  expect(readdirSync(dataDir).filter((f) => /decrypting|encrypted-to-wipe|database-turned-off/.test(f))).toEqual([]);
+
+  // And the start after that doesn't try again: the switch says on.
+  const again = desktopLog().length;
+  page = await launch();
+  await expect(page.getByPlaceholder(/What are you building/)).toBeVisible();
+  await quit();
+  expect(desktopLog().slice(again)).not.toContain("couldn't be decrypted");
 });
 
 test("a data file whose key can't be opened: nothing changes, the app says what to do, and putting the key back brings everything back ([8i])", async () => {
