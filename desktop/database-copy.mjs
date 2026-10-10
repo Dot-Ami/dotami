@@ -48,11 +48,29 @@ const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
  * @param {Buffer} key
  */
 export function copyIntoKeyedFile(source, target, key) {
-  const ATTACHED = "dotami_encrypted";
+  // The key goes in as SQL text, in the form SQLite3 Multiple Ciphers reads as a raw key.
+  copyInto(source, target, keyPragma(key).slice("key = ".length));
+}
+
+/**
+ * [8i] The same copy into a new PLAIN file: how a data file is decrypted after the person turned locking
+ * off (desktop/decrypt-database.mjs; database-encryption.md § 15.3). `source` is a connection opened with
+ * its key. The empty key is spelled out on purpose: an attached file with no KEY clause takes the main
+ * file's key and would be written encrypted (measured 2026-10-10, SQLite3 Multiple Ciphers 2.4.0). Rows are
+ * copied, not the page image, so words deleted from the encrypted file (still in its free pages) stay out.
+ * @param {any} source
+ * @param {string} target
+ */
+export function copyIntoPlainFile(source, target) {
+  copyInto(source, target, "''");
+}
+
+/** Attaches `target` with the KEY clause `keyClause` (SQL text) and copies everything from `source` into it. */
+function copyInto(source, target, keyClause) {
+  const ATTACHED = "dotami_copy";
   const fk = source.pragma("foreign_keys", { simple: true });
   source.pragma("foreign_keys = OFF");
-  // The key goes in as SQL text, in the form SQLite3 Multiple Ciphers reads as a raw key.
-  source.prepare(`ATTACH DATABASE ? AS ${ATTACHED} KEY ${keyPragma(key).slice("key = ".length)}`).run(target);
+  source.prepare(`ATTACH DATABASE ? AS ${ATTACHED} KEY ${keyClause}`).run(target);
   try {
     const { tables, others } = objectsOf(source, "main");
     runSql(source, "BEGIN IMMEDIATE");

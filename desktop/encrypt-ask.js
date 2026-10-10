@@ -4,6 +4,15 @@
 (() => {
   const bridge = window.dotamiChoice;
   const $ = (id) => document.getElementById(id);
+  // A brand-new data folder (database-encryption.md § 15.1): the same four buttons, but there is nothing to
+  // back up yet, so Back up first… is shown turned off, with a line saying why (the app refuses that answer
+  // from this window too). And nothing is "now" about a first start.
+  if (bridge.mode === "new-folder") {
+    $("backup").disabled = true;
+    $("backup").setAttribute("aria-describedby", "nothing-to-back-up");
+    $("nothing-to-back-up").hidden = false;
+    $("now").remove();
+  }
   if (bridge.status) {
     $("status").textContent = bridge.status;
     $("status").hidden = false;

@@ -104,7 +104,10 @@ export interface FolderEntry {
     | "database-key"
     | "database-encrypting"
     | "database-encrypting-copy"
-    | "database-plain-to-wipe";
+    | "database-plain-to-wipe"
+    | "database-decrypting"
+    | "database-decrypting-copy"
+    | "database-encrypted-to-wipe";
   /**
    * Path relative to the folder holding the data file. The wipe-pending note and the two files of an
    * encryption under way are named after the data file itself, so this shows the desktop app's name for
@@ -440,7 +443,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt:
       "Every choice you saved goes back to how it was at first launch: figure reminders go back to none ticked, so no reminder banners show. In the desktop app, a “Never” answer about encrypting the data file is forgotten too, so the next start asks again.",
     learnMore:
-      "This is every saved choice from the Settings page and the Ideas page: how often to be reminded about your figures, which ideas have their reminder switch on, which banners you answered “Not this time”, and whether to encrypt the data file (Settings' switch, or “Never” in the window before the first encryption). An encrypted data file stays encrypted. Choices that aren't saved yet (the ones Settings marks as coming later) aren't affected.",
+      "This is every saved choice from the Settings page and the Ideas page: how often to be reminded about your figures, which ideas have their reminder switch on, which banners you answered “Not this time”, and whether to encrypt the data file (Settings' switch, or “Never” in the window before the first encryption). An encrypted data file stays encrypted, and if you had turned the switch off, the decryption it would have done at the next start is cancelled. Choices that aren't saved yet (the ones Settings marks as coming later) aren't affected.",
     built: true,
   },
   {
@@ -578,7 +581,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "database.key",
     name: "The key to your data file",
     holds:
-      "The key that encrypts the data file and its safety copies, itself encrypted by Windows for your Windows account only (the same protection as the receipts' key, in a file of its own). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses everything in the data file except what a backup holds. Made the first time the desktop app encrypts the data file; never removed or replaced by DotAmi while anything is encrypted with it.",
+      "The key that encrypts the data file and its safety copies, itself encrypted by Windows for your Windows account only (the same protection as the receipts' key, in a file of its own). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses everything in the data file except what a backup holds. Made the first time the desktop app encrypts the data file; never removed or replaced by DotAmi while anything is encrypted with it. If you turn “Encrypt the data file” off in Settings, the desktop app's next start decrypts the data file and its safety copies, then overwrites this file with zeros and deletes it, once nothing opens with it any more (a safety copy another program had open keeps it until a later start).",
     writtenBy: { file: "desktop/database-key.mjs", mentions: 'DATABASE_KEY_FILE = "database.key"' },
     desktopOnly: true,
     whenAbsent: "None: the data file isn't encrypted (or, if it is, the key is missing, and DotAmi says so when it starts).",
@@ -612,6 +615,38 @@ export const FOLDERS: readonly FolderEntry[] = [
     writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'PLAIN_SUFFIX = ".plain-to-wipe"' },
     desktopOnly: true,
     whenAbsent: "None: no unencrypted copy is waiting to be wiped.",
+  },
+  // [8i] The three files of a decryption under way, after the person turned locking off in Settings
+  // (desktop/decrypt-database.mjs; docs/architecture/database-encryption.md § 15.3).
+  {
+    id: "database-decrypting",
+    relativePath: "database-decrypting.json",
+    name: "A note that decrypting the data file is under way",
+    holds:
+      "Written while the desktop app decrypts the data file or a safety copy, after you turned “Encrypt the data file” off in Settings, and removed when it is done. It holds which of DotAmi's own files is being decrypted, the step it is at, and the decrypted copy's size and SHA-256, nothing of yours. If DotAmi stops part-way, the next start reads it to finish safely.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'DECRYPTING_NOTE = "database-decrypting.json"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being decrypted.",
+  },
+  {
+    id: "database-decrypting-copy",
+    relativePath: "dotami.db.decrypting",
+    name: "The decrypted copy being made",
+    holds:
+      "Made only while the desktop app decrypts the data file, after you turned locking off: everything the data file holds, unencrypted, written by SQLite from the encrypted file. Once it is checked against the encrypted file it takes the data file's place, a moment later. If DotAmi stops before that, its next start overwrites it with zeros and deletes it (or finishes the swap). The same name with “.decrypting” after a safety copy's name can appear in the safety copies folder for the same moments; a journal SQLite keeps beside it (“-journal”) goes with it.",
+    writtenBy: { file: "desktop/decrypt-database.mjs", mentions: 'DECRYPT_COPY_SUFFIX = ".decrypting"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being decrypted.",
+  },
+  {
+    id: "database-encrypted-to-wipe",
+    relativePath: "dotami.db.encrypted-to-wipe",
+    name: "The encrypted data file being wiped",
+    holds:
+      "The data file as it was before it was decrypted, still encrypted with the data file's key. It is there from the moment the decrypted copy takes its place until it is overwritten with zeros and deleted, normally a moment later; while it is there, the key is kept. If another program holds it, it stays until a later start can wipe it. A safety copy's own (its name with “.encrypted-to-wipe” after it, in the safety copies folder) is handled the same way. Delete doesn't remove these files; the desktop app's next start does.",
+    writtenBy: { file: "desktop/decrypt-database.mjs", mentions: 'ENCRYPTED_SUFFIX = ".encrypted-to-wipe"' },
+    desktopOnly: true,
+    whenAbsent: "None: no encrypted copy is waiting to be wiped.",
   },
   {
     id: "backups",

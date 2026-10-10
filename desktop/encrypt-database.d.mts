@@ -1,5 +1,6 @@
 // Types for desktop/encrypt-database.mjs, so the TypeScript tests can import it.
 export const ENCRYPTING_NOTE: string;
+export const DECRYPTING_NOTE: string;
 export const COPY_SUFFIX: string;
 export const PLAIN_SUFFIX: string;
 export type CrashPoint = "copied" | "checked" | "note-swap" | "first-rename" | "second-rename" | "note-wipe" | "plain-deleted";

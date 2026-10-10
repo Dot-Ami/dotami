@@ -1,6 +1,6 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-10 ([8i] — after Start a new key the desktop app restarts by itself, saying so first; [8i] — whether the data file is encrypted, and the "Encrypt the data file" switch; 2026-10-09: [8i] — whether the receipt files are encrypted, and Start a new key while the key can't be opened; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-10 ([8i] — "Encrypt the data file" can be turned off while the file is encrypted, behind a warning; [8i] — after Start a new key the desktop app restarts by itself, saying so first; [8i] — whether the data file is encrypted, and the "Encrypt the data file" switch; 2026-10-09: [8i] — whether the receipt files are encrypted, and Start a new key while the key can't be opened; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
 the interactive controls are `copy-path-button.tsx`, `figure-reminders-control.tsx`,
@@ -146,9 +146,19 @@ The catalog row `database-encryption` (Data and backups), live, with its control
 (`components/settings/database-encryption-control.tsx`). It reads the saved value itself before it
 lets anything change, like the reminders.
 
-- **The file is encrypted** (`today.database.state` "on"): "On: your data file is encrypted, and stays
-  encrypted." No control: DotAmi doesn't decrypt a file (the maintainer's decision was a switch to
-  turn encryption on later).
+- **The file is encrypted** (`today.database.state` "on"; since 2026-10-10, the maintainer's decision 5,
+  database-encryption.md § 15): a tick-box **Encrypt the data file**, ticked, and "On: your data file is
+  encrypted. Untick to decrypt it at the next start." Unticking it saves nothing yet: it opens, in amber
+  (role alertdialog, named "Turn off locking for the data file?"), "At DotAmi's next start, your data
+  file and its safety copies are decrypted and their key is deleted. After that, anyone who can read your
+  data folder, a copy of it, or this computer's disk outside Windows can read your ideas, figures, expense
+  records and statements. Backups you make with File → Back up… stay locked with their passphrase either
+  way. Your receipt files keep their own encryption.", with **Go back** (nothing saved, the box ticked
+  again) and **Turn it off**, which saves `{ "on": false }`; the box then shows unticked and the line says
+  "Off: DotAmi decrypts your data file the next time it starts. Tick the box again before then to keep it
+  encrypted." Ticking it again saves `{ "on": true }` at once, and nothing is decrypted. Nothing changes on
+  the disk while DotAmi runs; the next start decrypts (the data file only: the receipts keep their own
+  key), and Settings then reads as after Never.
 - **Run from source:** "Only the desktop app encrypts the data file; this copy, run from source,
   can't." No control.
 - **Plain in the desktop app** (Not now, Never, or no key store): a tick-box **Encrypt the data file**.
@@ -158,5 +168,7 @@ lets anything change, like the reminders.
   unencrypted, and DotAmi doesn't ask."). A save that fails says "Couldn't save; nothing changed."
 
 The desktop app reads the value from the data file at its next start (`desktop/main.mjs`
-`readEncryptionChoice`) and writes it when the person answers **Never** in the window before the
-first encryption. Covered by `e2e-desktop/desktop.spec.ts` ("Not now keeps the file plain…").
+`readEncryptionChoice`, with the key when the file is encrypted) and writes it when the person answers
+**Never** in the window before the first encryption (for an existing file or, since 2026-10-10, a
+brand-new folder). Covered by `e2e-desktop/desktop.spec.ts` ("Not now keeps the file plain…", "a
+brand-new data folder: Not now…", "turning locking off…").

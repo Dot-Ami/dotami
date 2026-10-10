@@ -518,7 +518,7 @@ When the app starts and can't open the key:
   marker in any file, at any moment the test looks); with no key store, it is plain and Settings
   doesn't say "encrypted".
 - The window before the first encryption: shown once for an existing plain file, never for a new
-  folder or an already-encrypted file; **Back up first…** makes a backup of the still-plain file
+  folder (changed by § 15: a new folder is asked too) or an already-encrypted file; **Back up first…** makes a backup of the still-plain file
   that restores.
 - The Delete wipe on an encrypted file: the marker is gone from the **decrypted** page image
   (`serialize()`) and `freelist_count` is 0; the control, Delete with `VACUUM` switched off, leaves

@@ -66,13 +66,16 @@ export interface FigureRemindersValue {
 
 /**
  * [8i] The saved value of "Encrypt the data file" (docs/architecture/database-encryption.md, the
- * maintainer's decision 4 of 2026-10-10).
+ * maintainer's decisions 4 and 5 of 2026-10-10).
  *  - on: true (the default) means the desktop app encrypts the data file wherever there is a key store,
- *    asking first when an existing file is still plain; false is the person's "Never": the file stays
+ *    asking first while the file is new or still plain; false is the person's "Never": the file stays
  *    unencrypted and the window doesn't ask again. Turning it back on makes the next start ask again.
+ *  - false while the file is encrypted (the person unticked the switch, after its warning) means the
+ *    desktop app decrypts the file and its safety copies at its next start and deletes the key
+ *    (database-encryption.md § 15); the file then stays plain, as after "Never". Receipts keep their own lock.
  * The desktop app's main process reads it from the data file before the server starts (desktop/main.mjs
- * readEncryptionChoice) and writes it when the person answers "Never" there. Once the file is encrypted
- * the switch can't turn it off: DotAmi doesn't decrypt a file (the decision was a switch to turn it on).
+ * readEncryptionChoice, with the key when the file is encrypted) and writes it when the person answers
+ * "Never" there.
  */
 export interface DatabaseEncryptionValue {
   on: boolean;

@@ -48,14 +48,20 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    file under a new key; neither is offered while Windows' key store is only unavailable for now); a
    data file another program holds stops the start with a sentence saying so (never taken for a
    missing one); a
-   new data folder gets a key (a key that already opens is kept) and its file is created encrypted from its first byte; an existing plain
-   file is asked about first, unless the person said "Never" (`desktop/encrypt-ask.html`: **Back up
-   first…**, **Encrypt now**, **Not now**, **Never…**, with a second warning before Never); no key store
-   leaves the file plain. Encrypting writes an encrypted copy straight through SQLite (never a second
-   plain copy), checks it holds every table's rows, swaps it in and overwrites the plain file with
-   zeros before deleting it, in steps a crash can't lose data in. The plain safety copies in `backups/`
-   are encrypted the same way. The receipts' key (step 4) is opened before this, so a backup made from
-   the window carries the receipts. The log gets the step and which button was pressed, never a value.
+   new data folder and an existing plain file are both asked about first, unless the person said
+   "Never" (`desktop/encrypt-ask.html`: **Back up first…**, **Encrypt now**, **Not now**, **Never…**,
+   with a second warning before Never; for a new folder **Back up first…** is shown turned off, with a
+   line saying there's nothing to back up yet, and it isn't asked right after **Start fresh**); for a new
+   folder **Encrypt now** makes a key (a key that already opens is kept) and the file is created
+   encrypted from its first byte; no key store leaves the file plain. Encrypting writes an encrypted copy
+   straight through SQLite (never a second plain copy), checks it holds every table's rows, swaps it in
+   and overwrites the plain file with zeros before deleting it, in steps a crash can't lose data in. The
+   plain safety copies in `backups/` are encrypted the same way. When the person has turned **Encrypt
+   the data file** off in Settings, the reverse runs instead (`desktop/decrypt-database.mjs`,
+   database-encryption.md § 15): the data file and the safety copies locked with its key are decrypted,
+   crash-safe the same way, and `database.key` is deleted once nothing opens with it. The receipts' key
+   (step 4) is opened before this, so a backup made from the window carries the receipts. The log gets
+   the step and which button was pressed, never a value.
 4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
    `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
    account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's

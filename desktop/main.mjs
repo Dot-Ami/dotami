@@ -27,6 +27,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
+import { decryptFile, DecryptionStopped, deleteKeyWhenUnused, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
 import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
@@ -375,7 +376,12 @@ function safetyCopyFiles() {
  * it is (or becomes) encrypted (docs/architecture/database-encryption.md § 6 and § 10):
  * - an encryption a crash left part-way is finished first;
  * - an encrypted file: its key must open, or the start stops having changed nothing (showLostKey);
- * - a new data folder: a key is made and the migrator creates the file encrypted from its first byte;
+ * - an encrypted file whose setting says off (the person unticked "Encrypt the data file" in Settings): it
+ *   and the safety copies locked with its key are decrypted, and the key deleted once nothing opens with it
+ *   (desktop/decrypt-database.mjs; database-encryption.md § 15);
+ * - a new data folder: the window asks first, with the same four answers (Back up first… turned off: there
+ *   is nothing to back up yet); Encrypt now makes a key and the migrator creates the file encrypted from its
+ *   first byte; Not now and Never leave it plain (§ 15.1);
  * - an existing plain file: unless the person said "Never" (the setting), the window asks first, with
  *   Back up first…, Encrypt now, Not now and Never;
  * - no key store: the file stays plain, and Settings says why.
@@ -407,7 +413,7 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
   // Whether the key must be the one that opens what is here: the data file, or one being encrypted. A safety
   // copy left encrypted with a key that is lost (after "Start fresh") doesn't count: it is kept as it is, and
   // must not stop a new key for the new data file.
-  const locked = fileKind(dbFile) === "encrypted" || readNote(dataDir) !== null;
+  const locked = fileKind(dbFile) === "encrypted" || readNote(dataDir) !== null || readDecryptNote(dataDir) !== null;
   const opened = openDatabaseKey(dataDir, safeStorage, { locked });
   if (opened.state === "key-unreadable") {
     say(
@@ -432,6 +438,19 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     }
     throw error;
   }
+  try {
+    const resumed = resumeDecryption(dataDir, key, { log: say });
+    if (resumed.action !== "none") say(`a decryption left part-way: ${resumed.action}${resumed.wipePending ? " (the encrypted original's wipe is still owed)" : ""}`);
+  } catch (error) {
+    if (!(error instanceof DecryptionStopped)) throw error;
+    // The swap's first rename refused (another program holds the file): nothing moved, the file is still
+    // encrypted with its key, and the note stays for the next start. Anything else stops the start.
+    if (error.kind !== "busy") {
+      fail(error.message);
+      return false;
+    }
+    say("a decryption left part-way couldn't go on yet (a file was busy); tried again at the next start");
+  }
 
   const kind = fileKind(dbFile);
   if (kind === "encrypted") {
@@ -445,13 +464,28 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
     say("the data file is encrypted; key open");
+    // [8i] The person unticked "Encrypt the data file" in Settings (§ 15.2): read from the encrypted file
+    // itself, with its key. A decryption still owed (a busy file) is tried again here too.
+    if (!readEncryptionChoice(key)) return turnLockingOff(key, say);
   } else if (opened.state === "no-key-store") {
     if (afterStartFresh) return noPlainAfterStartFresh();
     databaseLock = { state: "no-key-store", plainLeft: 0 };
     say("the operating system's key store isn't available, so the data file is kept unencrypted");
     return true;
   } else if (kind === "absent") {
-    // A new data file: created encrypted from its first byte by the migrator. A key that already opens is
+    // [8i] A new data file (§ 15.1): asked first, with the same four answers as an existing plain file, except
+    // right after "Start fresh", whose second question already promised an empty, encrypted file under a new
+    // key. Not now and Never leave the migrator to create a plain file; no key is made for it.
+    if (!afterStartFresh) {
+      const answer = await askToEncrypt({ newFolder: true });
+      say(`the window before encrypting was shown (a new data folder); the answer: ${answer}`);
+      if (answer === "not-now" || answer === "never") {
+        neverChosen = answer === "never";
+        databaseLock = { state: answer === "never" ? "never" : "off", plainLeft: 0 };
+        return true;
+      }
+    }
+    // Encrypt now: created encrypted from its first byte by the migrator. A key that already opens is
     // kept, never replaced: encrypted safety copies (or the data file, put back) may be locked with it
     // (desktop/database-key.mjs: never replaced automatically once anything is encrypted with it).
     key ??= await newDatabaseKey(say);
@@ -465,6 +499,9 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     if (!readEncryptionChoice()) {
       databaseLock = { state: "never", plainLeft: 0 };
       say("kept unencrypted: the person chose Never (Settings can turn it on)");
+      // [8i] A key that still opens beside a plain file after "Never": locking was turned off and a safety
+      // copy another program held is still encrypted with it, or the key couldn't be deleted yet (§ 15.3).
+      if (key) finishTurningOff(key, say);
       return true;
     }
     const answer = await askToEncrypt();
@@ -522,6 +559,62 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
   return true;
 }
 
+/**
+ * [8i] Locking turned off in Settings (database-encryption.md § 15.2–15.3): the data file is decrypted,
+ * crash-safe (desktop/decrypt-database.mjs), then the safety copies locked with the same key, then the key
+ * is deleted once nothing opens with it. A file another program holds moves nothing: the data file then
+ * stays encrypted for this start (said in a message), and the next start tries again, since the setting
+ * still says off. Returns false when the start must stop (it has said why).
+ */
+async function turnLockingOff(key, say) {
+  try {
+    const done = decryptFile(dataDir, dbFile, key, { log: say });
+    say(`locking was turned off in Settings; the data file was decrypted${done.wipePending ? " (the encrypted original's wipe is owed)" : ""}`);
+  } catch (error) {
+    if (!(error instanceof DecryptionStopped)) throw error;
+    if (error.kind === "busy" || error.kind === "pending") {
+      say(error.kind === "busy" ? "the data file was busy; kept encrypted for now" : "an earlier change is still owed; kept encrypted for now");
+      await dialog.showMessageBox({ type: "info", title: "DotAmi", message: "Your data file wasn't decrypted this time.", detail: error.message });
+      return true;
+    }
+    fail(error.message);
+    return false;
+  }
+  databaseKey = null;
+  // The same state as after "Never": unencrypted by the person's choice, and Settings can turn it back on.
+  databaseLock = { state: "never", plainLeft: 0 };
+  finishTurningOff(key, say);
+  return true;
+}
+
+/**
+ * [8i] The rest of turning locking off, also at any later start that finds the key beside a plain file after
+ * "Never": the safety copies still encrypted with `key` are decrypted one by one (one another program holds
+ * stays, and is tried again at the next start), then the key file is deleted, zero-filled first, only once
+ * nothing in the data folder opens with it (desktop/decrypt-database.mjs deleteKeyWhenUnused). Never a reason
+ * not to start. The log gets counts only.
+ */
+function finishTurningOff(key, say) {
+  let decrypted = 0;
+  for (const file of safetyCopyFiles()) {
+    try {
+      if (fileKind(file) !== "encrypted" || !opensWith(file, key)) continue;
+      decryptFile(dataDir, file, key, { log: say });
+      decrypted += 1;
+    } catch (error) {
+      say(`a safety copy couldn't be decrypted yet (${error instanceof DecryptionStopped ? error.kind : describeError(error)})`);
+    }
+  }
+  if (decrypted > 0) say(`${decrypted} safety cop${decrypted === 1 ? "y" : "ies"} decrypted`);
+  try {
+    const { deleted, lockedLeft } = deleteKeyWhenUnused(dataDir, key);
+    if (deleted) say("nothing is locked with the key any more; it was deleted");
+    else if (lockedLeft > 0) say(`the key was kept: ${lockedLeft} file${lockedLeft === 1 ? " is" : "s are"} still locked with it; tried again at the next start`);
+  } catch (error) {
+    say(`the key couldn't be deleted yet (${describeError(error)}); tried again at the next start`);
+  }
+}
+
 /** Whether the encrypted file opens with `key` (read-only; nothing is written). */
 function opensWith(file, key) {
   try {
@@ -552,14 +645,17 @@ async function newDatabaseKey(say) {
 }
 
 /**
- * [8i] Whether the person still wants the data file encrypted: false only after "Never" (the
- * "database-encryption" setting, saved as {"on":false}; lib/settings/values.ts). Read from the plain
- * file itself; a file without the Setting table yet, or no row, means yes.
+ * [8i] Whether the person still wants the data file encrypted: false after "Never", or after unticking
+ * "Encrypt the data file" in Settings (the "database-encryption" setting, saved as {"on":false};
+ * lib/settings/values.ts). Read from the data file itself, with `key` when it is encrypted; a file without
+ * the Setting table yet, or no row, means yes, and so does a file that can't be read (nothing is decrypted
+ * on a guess).
+ * @param {Buffer | null} [key]
  */
-function readEncryptionChoice() {
+function readEncryptionChoice(key = null) {
   let db;
   try {
-    db = openDatabase(dbFile, { readonly: true, fileMustExist: true });
+    db = openDatabase(dbFile, { key, readonly: true, fileMustExist: true });
     const row = db.prepare(`SELECT value FROM "Setting" WHERE key = 'database-encryption'`).get();
     if (!row) return true;
     return JSON.parse(row.value)?.on !== false;
@@ -593,9 +689,10 @@ function saveEncryptionChoice(on) {
  * @param {"encrypt-ask" | "lost-key"} which
  * @param {readonly string[]} answers
  * @param {string} closed
- * @param {{ status?: string, detail?: string, height?: number }} [options]
+ * @param {{ status?: string, detail?: string, mode?: string, height?: number }} [options]  `mode`: "new-folder"
+ *   for the window before a brand-new data file is created (desktop/encrypt-ask.js).
  */
-function askInWindow(which, answers, closed, { status = "", detail = "", height = 600 } = {}) {
+function askInWindow(which, answers, closed, { status = "", detail = "", mode = "", height = 600 } = {}) {
   // The "Preparing DotAmi…" window, if a first start showed it, has nothing more to wait for.
   preparing.close("a question before the main window");
   return new Promise((resolve) => {
@@ -625,20 +722,23 @@ function askInWindow(which, answers, closed, { status = "", detail = "", height 
     };
     ipcMain.on("dotami-choice", onAnswer);
     ask.on("closed", () => finish(closed));
-    void ask.loadFile(path.join(root, "desktop", `${which}.html`), { query: { which, status, detail } });
+    void ask.loadFile(path.join(root, "desktop", `${which}.html`), { query: { which, status, detail, mode } });
   });
 }
 
 /**
- * [8i] The window before an existing data file is first encrypted (desktop/encrypt-ask.html): what it
- * protects and what it doesn't, what a lost key costs, and four answers. "Back up first…" runs File →
- * Back up… on the still-plain file and comes back here. Closing the window counts as "Not now".
- * Resolves with "encrypt", "not-now" or "never".
+ * [8i] The window before a data file is first encrypted (desktop/encrypt-ask.html): what it protects and
+ * what it doesn't, what a lost key costs, and four answers. "Back up first…" runs File → Back up… on the
+ * still-plain file and comes back here. For a brand-new data folder (`newFolder`, § 15.1) there is nothing
+ * to back up yet: the page shows that button turned off, with a line saying why, and the answer is refused
+ * here too. Closing the window counts as "Not now". Resolves with "encrypt", "not-now" or "never".
+ * @param {{ newFolder?: boolean }} [options]
  */
-async function askToEncrypt() {
+async function askToEncrypt({ newFolder = false } = {}) {
   let status = "";
+  const answers = newFolder ? ["encrypt", "not-now", "never"] : ["encrypt", "backup", "not-now", "never"];
   for (;;) {
-    const answer = await askInWindow("encrypt-ask", ["encrypt", "backup", "not-now", "never"], "not-now", { status });
+    const answer = await askInWindow("encrypt-ask", answers, "not-now", { status, mode: newFolder ? "new-folder" : "" });
     if (answer !== "backup") return answer;
     const made = await backUp();
     status = made ? `Backed up to ${made}. Keep it somewhere other than this computer.` : "No backup was made.";
@@ -701,11 +801,14 @@ async function showLostKey(opened) {
   return "quit";
 }
 
-/** Thrown by startFresh when an encryption was part-way: nothing was moved. The message is for the person. */
+/** Thrown by startFresh when an encryption or a decryption was part-way: nothing was moved. The message is for the person. */
 class StartFreshRefused extends Error {
-  constructor() {
+  /** @param {"encrypting" | "decrypting"} which */
+  constructor(which) {
     super(
-      `DotAmi was part-way through encrypting your data file when its key stopped opening, so it didn't start fresh: an unencrypted copy (${path.basename(dbFile)}${PLAIN_SUFFIX}) may still be in the data folder, and it may be the only copy of your data that can be read. Nothing was moved. Keep the data folder as it is and ask for help on GitHub.`,
+      which === "decrypting"
+        ? `DotAmi was part-way through decrypting your data file when its key stopped opening, so it didn't start fresh: an unencrypted copy (${path.basename(dbFile)}.decrypting, or ${path.basename(dbFile)} itself) may be in the data folder, and it may be the only copy of your data that can be read. Nothing was moved. Keep the data folder as it is and ask for help on GitHub.`
+        : `DotAmi was part-way through encrypting your data file when its key stopped opening, so it didn't start fresh: an unencrypted copy (${path.basename(dbFile)}${PLAIN_SUFFIX}) may still be in the data folder, and it may be the only copy of your data that can be read. Nothing was moved. Keep the data folder as it is and ask for help on GitHub.`,
     );
     this.name = "StartFreshRefused";
   }
@@ -723,7 +826,8 @@ function startFresh() {
   // An encryption that was part-way when the key stopped opening: its note (and maybe a plain copy waiting to
   // be wiped) would bring this window straight back, and that plain copy may be the only readable copy of the
   // data. Nothing is moved; the window says why (found in review, 2026-10-10).
-  if (readNote(dataDir) !== null) throw new StartFreshRefused();
+  if (readNote(dataDir) !== null) throw new StartFreshRefused("encrypting");
+  if (readDecryptNote(dataDir) !== null) throw new StartFreshRefused("decrypting");
   const stamp = Date.now();
   const lockedTo = setAsideLockedFile(dataDir, dbFile, () => stamp);
   const receipts = path.join(dataDir, RECEIPTS_FOLDER);

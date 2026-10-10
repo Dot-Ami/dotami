@@ -69,8 +69,10 @@ says where it is going.
   only DotAmi's own window; adding is refused until the bank-records setting is live).
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
-  (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), an existing plain file only after the
-  person agrees, and never replaces a key that opens; a copy run from source keeps it plain;
+  (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
+  person agrees, decrypts it again and deletes the key once nothing opens with it when the person turns
+  the Settings switch off (`desktop/decrypt-database.mjs`), and never replaces a key that opens; a copy
+  run from source keeps it plain;
   `docs/architecture/database-encryption.md`; every backup it writes is locked with a passphrase,
   required since [8i]: `desktop/backup.mjs` `writeBackup` refuses one without, and older backups still
   restore) — `User` (single stub user, no

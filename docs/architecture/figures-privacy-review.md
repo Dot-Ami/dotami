@@ -345,5 +345,8 @@ maintainer's decisions of 2026-10-10).
    the unencrypted `better-sqlite3` it stands in for is ever installed.
 7. The person is told before an existing file is first encrypted, and offered a backup first; a new
    data folder's file is encrypted from its first byte. Settings says "encrypted" only when the file is.
+   (Changed 2026-10-10, database-encryption.md § 15: a new data folder is asked the same four choices,
+   and locking can be turned off from Settings, behind a warning; the next start decrypts the file,
+   crash-safe, and deletes the key once nothing opens with it. The receipts keep their own lock.)
 8. Deleted words stay out of reach as today: the Delete wipe's proof runs on the decrypted image, and
    a backup is rebuilt from the live rows before it is written.

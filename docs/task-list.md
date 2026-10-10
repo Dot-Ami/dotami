@@ -265,6 +265,11 @@ roadmap's build order.
       key, the locked file kept in backups/
     - [x] (D) Start fresh… in the lost-key window, asked twice; the locked file, its key and the receipts
       kept in backups/
+    - [x] A brand-new data folder asked the same four choices (Back up first… turned off there), and
+      the Settings switch able to turn locking off: the next start decrypts the data file and its safety
+      copies, crash-safe, and deletes the key once nothing opens with it (the maintainer said yes,
+      2026-10-10; [database-encryption.md § 15](architecture/database-encryption.md))
+    - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

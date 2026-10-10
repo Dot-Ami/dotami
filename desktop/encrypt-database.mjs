@@ -18,7 +18,9 @@
 // resumeEncryption reads what is on the disk at a start and finishes, redoes or stops (§ 6's table).
 // There is one note for the whole data folder, so only one file is encrypted at a time: encryptFile
 // refuses to start while a note is there (a wipe another program held up is still owed), because a new
-// note would replace the old one and the plain file it names would never be wiped.
+// note would replace the old one and the plain file it names would never be wiped. The same holds across
+// both directions: while a decryption's note is there (desktop/decrypt-database.mjs, after the person
+// turned locking off), nothing is encrypted either, and decryptFile refuses while this note is there.
 //
 // The log gets the step and counts only, never a name of the person's, a value or the key.
 import { createHash } from "node:crypto";
@@ -30,6 +32,12 @@ import { CannotOpenDatabase, fileKind, openDatabase } from "./sqlite.mjs";
 
 /** The note's name, beside the data file. lib/privacy/inventory.ts FOLDERS lists it. */
 export const ENCRYPTING_NOTE = "database-encrypting.json";
+/**
+ * [8i] The note a decryption keeps (desktop/decrypt-database.mjs, database-encryption.md § 15.3). Named here
+ * so each direction can refuse while the other's note is there without the two modules importing each other.
+ * lib/privacy/inventory.ts FOLDERS lists it.
+ */
+export const DECRYPTING_NOTE = "database-decrypting.json";
 export const COPY_SUFFIX = ".encrypting";
 export const PLAIN_SUFFIX = ".plain-to-wipe";
 /** SQLite's rollback journal beside a file. */
@@ -196,6 +204,12 @@ export function encryptFile(dataDir, file, key, { log = () => {}, crashAt, renam
     throw new EncryptionStopped(
       "pending",
       "DotAmi is still finishing an earlier encryption (a plain copy another program holds is still to be wiped), so it didn't start another. Nothing was changed; DotAmi tries again at its next start.",
+    );
+  }
+  if (existsSync(path.join(dataDir, DECRYPTING_NOTE))) {
+    throw new EncryptionStopped(
+      "pending",
+      "DotAmi is still finishing decrypting a file (locking was turned off), so it didn't start encrypting another. Nothing was changed; DotAmi tries again at its next start.",
     );
   }
   clearLeftovers(file, dataDir);
