@@ -1,14 +1,35 @@
 # Encrypting the database file — design ([8i])
 
-Status: **design, 2026-10-09, written before any code. Nothing is built, and the build waits for a
-choice only the maintainer can make (§ 12).** The maintainer said yes (2026-10-09) to encrypting
-DotAmi's database file, after the receipt files (the receipt encryption is pull request #128, not
-merged yet; this design is written on `main` and names #128 where it reuses its key mechanism). The
-receipts design priced this at about 8 to 12 working days. This page is what it would take, the
-packages that could do it (each reviewed under the outside-code rule), and the questions.
+Status: **design, 2026-10-09, written before any code; the maintainer's decisions of 2026-10-10 are
+below, and the build follows them in stacked pull requests.** The maintainer said yes (2026-10-09) to
+encrypting DotAmi's database file, after the receipt files (the receipt encryption, pull request
+#128, merged on 2026-10-10; this design names #128 where it reuses its key mechanism). The receipts
+design priced this at about 8 to 12 working days. This page is what it would take, the packages that
+could do it (each reviewed under the outside-code rule), and the questions.
 
 The costs are my rough estimates in working days, not measurements. Every "measured" below says
 how; everything else is read from code or documentation, and says so.
+
+## The maintainer's decisions (2026-10-10)
+
+The maintainer answered the four questions of § 12 with "ok lets do it" to these picks. Where a
+section below still describes the choice as open, this list is what holds.
+
+1. **How: option A.** Add the one small free library (`better-sqlite3-multiple-ciphers`) to encrypt
+   the data file, and move DotAmi's database layer to Prisma's driver adapter
+   (`@prisma/adapter-better-sqlite3`, which Prisma 7 requires anyway). The first build pull request
+   installs the pinned packages and **measures** the start-up, page queries, the Delete wipe and a
+   backup against today's numbers before anything else is built, and the build **stops for the
+   maintainer's word** if a person would notice the slowdown.
+2. **When the key is lost: backups only, plus a "Start fresh" button** that keeps the locked file
+   (moved aside into `backups/`, never deleted), asked twice, saying plainly what is given up. No
+   recovery key.
+3. **Backups: a passphrase is required from now on**, because a backup without one holds the data
+   decrypted and would undo the encryption. Backups made before this change, with or without a
+   passphrase, still restore.
+4. **A person may say no.** The window before the first encryption offers **Back up first…**,
+   **Encrypt now**, **Not now** (asked again at a later start) and **Never** (with a plain warning,
+   and a switch in Settings to turn encryption on later).
 
 ## The short version
 
@@ -30,11 +51,10 @@ how; everything else is read from code or documentation, and says so.
   can't detect tampering; `@journeyapps/sqlcipher` has no Prisma adapter and compiles at install.
   The reviews: [better-sqlite3-multiple-ciphers](../connectors/better-sqlite3-multiple-ciphers-review.md),
   [libsql](../connectors/libsql-review.md), [SQLCipher packages](../connectors/sqlcipher-review.md).
-- **Why it stops here:** replacing how Prisma reaches the database, and adding a native package,
-  are the maintainer's calls; the performance cost can't be measured until he allows the package to
-  be installed and run (the review only reads it, as the HEIC review did); and what happens when
-  the key is lost, and whether a person may decline, are product choices (§ 10, § 6). The questions
-  are in § 12, each option in one plain sentence first.
+- **What was decided:** the maintainer chose A on 2026-10-10, with the performance measured before
+  anything else is built, backups only plus a "Start fresh" button when the key is lost, a passphrase
+  required on every backup, and a person free to say "Not now" or "Never" (the list above; the
+  questions as asked are in § 12).
 
 ## 1. What it protects, and what it doesn't
 
@@ -73,8 +93,8 @@ It does **not** protect against:
   encryption covers that; DotAmi can't.
 - **Memory.** While DotAmi runs, the data it shows is in the memory of its server and window, and
   Windows can write memory to its page file. Disk encryption covers that too.
-- **A backup with no passphrase.** It holds the data file decrypted, so that it restores on another
-  computer (§ 8); anyone with the file can read it. DotAmi says so when it makes one, as today.
+- **A backup made before this change without a passphrase.** It holds the data file decrypted;
+  anyone with the file can read it. From this change on, every backup needs a passphrase (§ 8).
 - **The receipts.** They are #128's subject, with their own key; this design changes nothing there.
 
 ## 2. The key
@@ -253,7 +273,7 @@ adapter for files on a disk.
 ## 6. Encrypting an existing plain file, once, at the first start
 
 **A new data folder** never has a plain file: its database is created encrypted from its first byte.
-With #128's key code (§ 2; not merged yet), the very first start of a new folder waits about ten
+With #128's key code (§ 2), the very first start of a new folder waits about ten
 seconds for Electron to save its own key in `Local State` before any key is used, and the migrator, which creates `dotami.db`, runs after that
 wait, with the key. Only if no key store comes (#128 gives up after 30 seconds, or there is none) is
 the file created plain; Settings then says it isn't encrypted (§ 4's check), and a later start with a
@@ -269,10 +289,12 @@ next.
    lines: the data file is about to be locked with a key only this Windows account can open; what
    that protects and what it doesn't (§ 1); that if the key is ever lost, everything not in a backup
    is lost (§ 10); and that an older DotAmi can't open the file afterwards (§ 7). It offers **Back up
-   first…** (today's File → Back up… on the still-plain file, then back to this window) and
-   **Encrypt now**. Whether it also offers **Not now** (keep the file unencrypted, and ask again
-   later or never) is the maintainer's call (§ 12, question 4); until he decides, the build offers
-   only the two. The log records that the window was shown and which button was pressed, nothing else.
+   first…** (today's File → Back up… on the still-plain file, then back to this window),
+   **Encrypt now**, **Not now** (the file stays unencrypted and the window is shown again at a later
+   start) and **Never** (the file stays unencrypted and the window isn't shown again; a plain warning
+   first says what that leaves unprotected, and Settings keeps a switch to turn encryption on at any
+   later start). The maintainer's decision 4 (2026-10-10). The log records that the window was shown
+   and which button was pressed, nothing else.
 1. **Check the plain file first**: open it (which lets SQLite finish or undo a transaction an
    earlier crash left), `PRAGMA integrity_check` must say `ok`. If not, nothing is changed and the
    start says so, as the migrator does for a half-done update.
@@ -338,7 +360,7 @@ the file system, not necessarily on the physical disk (§ 1).
 - **Settings → Data and backups** says, in the desktop app with the key open: the data file is
   encrypted, with a key only this Windows account can open; what that protects and what it doesn't
   (§ 1, in a few lines); that losing the key loses the data except what a backup holds (§ 10); and
-  that a backup without a passphrase isn't encrypted. In a copy run from source: "This copy's data
+  that every backup is locked with a passphrase the person chooses. In a copy run from source: "This copy's data
   file isn't encrypted", and why (§ 9).
 - **Going back to an older DotAmi.** An older release opens the data file with `node:sqlite` and
   Prisma's built-in engine, so it can't open the encrypted file, nor the encrypted safety copies made
@@ -348,10 +370,11 @@ the file system, not necessarily on the physical disk (§ 1).
 - ***What DotAmi knows about you*** says the same in one line beside the data file's path, and lists
   `database.key` among the files kept in the data folder (`lib/privacy/inventory.ts`, `FOLDERS` and the
   files list), with what removes it.
-- The settings catalog gains no switch as designed: encryption is on wherever there is a key store,
-  as for the receipts, and the person is told and offered a backup before an existing file is first
-  encrypted (§ 6, step 0). Whether people may decline is the maintainer's question 4 (§ 12); if he
-  says yes, the switch goes in the settings catalog and Part 1 of [settings-and-edge-cases.md](settings-and-edge-cases.md).
+- **The settings catalog gains a switch** (the maintainer's decision 4, 2026-10-10): people may
+  decline. Encryption is on by default wherever there is a key store, as for the receipts; a person
+  who chose **Never** in the window before the first encryption (§ 6, step 0) can turn it on from
+  Settings, and it then happens at the next start, through the same steps. The switch is in the
+  settings catalog and Part 1 of [settings-and-edge-cases.md](settings-and-edge-cases.md).
 
 ## 8. Backups and restore
 
@@ -374,15 +397,18 @@ the file system, not necessarily on the physical disk (§ 1).
   `new Database(image)`, which opens a serialized image in memory, read in its `lib/database.js`),
   `VACUUM` runs there, and only that rebuilt image is serialized into the backup.
   (`VACUUM INTO` an in-memory address isn't available: the package is built with `SQLITE_USE_URI=0`,
-  per its review.) A test: a marker removed with an ordinary delete, no wipe, must not appear in a
-  backup made without a passphrase, and the control (the image before the rebuild) must hold it.
+  per its review.) A test: a marker removed with an ordinary delete, no wipe, must not appear in
+  the data file a backup holds once unlocked with its passphrase, and the control (the image before
+  the rebuild) must hold it.
 - **Restoring** reads the backup's data file into memory, runs today's checks there (that it is
   whole, which migrations it has, that a newer DotAmi didn't make it), and writes it to the staging
   file **encrypted with this computer's key**; the swap is as today. Formats 1 and 2 restore the same
   way, since both hold a plain data file. A restore on a computer whose key can't be opened (§ 10)
   makes a new key first, because restoring is the way back.
-- **The message after backing up** says plainly that a backup without a passphrase holds the data
-  unencrypted. Whether to require a passphrase now is a question (§ 12).
+- **A passphrase is required from now on** (the maintainer's decision 3, 2026-10-10): a backup
+  without one would hold the data decrypted and undo the encryption, so File → Back up… no longer
+  offers to leave it out. Backups made before this change, with or without a passphrase, still
+  restore.
 
 ## 9. A copy run from source has no key store
 
@@ -424,8 +450,11 @@ When the app starts and can't open the key:
   that putting `database.key` back (if it was moved or deleted) brings everything back, and the way
   forward that needs no new decision: **File → Restore from a backup…**, which moves the locked data
   file and its key file into `backups/` (never deleting them) and restores the backup under a new key.
-- **Not built without the maintainer's word** (§ 12): starting fresh while keeping the locked file;
-  a recovery key the person writes down.
+- **Start fresh, keeping the locked file** (the maintainer's decision 2, 2026-10-10): a button in
+  the same window, asked twice, which says plainly what is given up (everything in the locked file
+  not in a backup, unless its key comes back), then moves the locked data file and its key file into
+  `backups/` (never deleting them) and starts with an empty, encrypted data file under a new key.
+  There is no recovery key.
 
 ## 11. Tests (each must fail when its rule is removed)
 
@@ -454,8 +483,9 @@ When the app starts and can't open the key:
 - The Delete wipe on an encrypted file: the marker is gone from the **decrypted** page image
   (`serialize()`) and `freelist_count` is 0; the control, Delete with `VACUUM` switched off, leaves
   the marker in that image. The raw-byte scan and its control stay for a plain file.
-- A backup of an encrypted file made without a passphrase doesn't contain a marker removed with an
-  ordinary delete (no wipe); the image before the rebuild does (the control).
+- A backup of an encrypted file, unlocked with its passphrase, doesn't contain a marker removed with
+  an ordinary delete (no wipe); the image before the rebuild does (the control). A backup can't be
+  made without a passphrase.
 - Every Prisma Client is made by the one factory: a test fails on `new PrismaClient` anywhere else.
 - `better-sqlite3` resolved from the adapter's folder is `better-sqlite3-multiple-ciphers` at the
   pinned version; `package-lock.json` has no `node_modules/better-sqlite3` and no `prebuild-install`.
@@ -472,6 +502,10 @@ When the app starts and can't open the key:
   then shows the data; Settings says the file is encrypted.
 
 ## 12. For the maintainer: the choices, with what each costs
+
+**Answered on 2026-10-10** (see "The maintainer's decisions" at the top): A, measured first; backups
+only plus *Start fresh*; a passphrase required; and yes, a person may say no ("Not now" and "Never",
+with a switch in Settings). The questions are kept below as they were asked.
 
 **Question 1 — how to encrypt** (the build can't start without it). Each option in one plain
 sentence first; the package names and details are in the table and the linked reviews.
