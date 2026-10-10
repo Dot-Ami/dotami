@@ -5,7 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 
 import { listSafetyCopies, wipePendingFile } from "@/desktop/wipe-pending.mjs";
 
-import { receiptLock, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
+import { receiptLock, receiptsSetAsideTo, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import { describeReceiptFiles, RECEIPTS_FOLDER, type ReceiptFilesProtection } from "@/lib/expenses/receipts/store";
 import {
   FIGURE_SOURCE_KINDS,
@@ -137,7 +137,7 @@ export interface Holdings {
    * and the files counted by their first bytes only (encrypted with this copy's key, plain, or locked
    * with a key it can't open).
    */
-  receiptFiles: ReceiptFilesProtection & { state: ReceiptLockState };
+  receiptFiles: ReceiptFilesProtection & { state: ReceiptLockState; setAsideTo: string | null };
   windowStorage: readonly WindowStorageEntry[];
   sentElsewhere: SentFacts[];
 }
@@ -335,7 +335,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     folders,
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
-    receiptFiles: { state: lock.state, ...receiptCounts },
+    receiptFiles: { state: lock.state, setAsideTo: receiptsSetAsideTo(lock), ...receiptCounts },
     windowStorage: WINDOW_STORAGE,
     sentElsewhere: SENT_ELSEWHERE.map((entry) => sentFacts(entry, today)),
   };

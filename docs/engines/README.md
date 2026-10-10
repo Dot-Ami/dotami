@@ -1,6 +1,6 @@
 # Engine Reasoning Docs
 
-Last updated: 2026-09-22
+Last updated: 2026-10-08 (the tax-lines catalog, [8f])
 
 One file per engine: what it holds, how it reasons (today vs target), and the authoring
 conventions that keep a cheaper model's output correct. The *catalog shape contract*
@@ -17,6 +17,7 @@ in `docs/brain/`.
 | Structure | [structure.md](./structure.md) | Medium |
 | CFE | [cfe.md](./cfe.md) | Medium |
 | Templates | [templates.md](./templates.md) | Low |
+| Tax lines ([8f], 2026-10-08) | [taxlines.md](./taxlines.md) | Low (read by the figures store and the return reader, not by the map) |
 
 ## Conventions that apply to every engine (do not deviate)
 

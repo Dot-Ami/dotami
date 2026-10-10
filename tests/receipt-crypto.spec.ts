@@ -23,6 +23,8 @@ import {
   ReceiptCryptoError,
 } from "../desktop/receipt-crypto.mjs";
 import { isReceiptFileName } from "../desktop/backup.mjs";
+import { heicPicture } from "../lib/expenses/receipts/heic/picture";
+import { heic } from "./helpers/heic-files";
 import { pdf, png } from "./helpers/receipt-files";
 
 const ID = "0123456789abcdef0123456789abcdef";
@@ -165,6 +167,24 @@ describe("encrypting the receipts already on the disk", () => {
     const again = encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName });
     expect(again).toEqual({ encrypted: 0, already: 3, failed: 0, leftoversRemoved: 0 });
     expect(readdirSync(folder).sort()).toEqual([...files.keys(), "my-own-note.txt", `${"a".repeat(32)}.png.partial`].sort());
+  });
+
+  it("a HEIC photo kept plain by an earlier version is encrypted too, and decrypts to a photo the HEIC reader opens ([8i])", () => {
+    const folder = path.join(dir, "receipts");
+    mkdirSync(folder, { recursive: true });
+    const photo = heic();
+    const name = `${ID}.heic`;
+    writeFileSync(path.join(folder, name), photo);
+    expect(isReceiptFileName(name)).toBe(true);
+
+    expect(encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName })).toEqual({ encrypted: 1, already: 0, failed: 0, leftoversRemoved: 0 });
+    const onDisk = readFileSync(path.join(folder, name));
+    expect(isEncryptedReceipt(onDisk)).toBe(true);
+    expect(onDisk.indexOf(photo.subarray(0, 24))).toBe(-1);
+    expect(heicPicture(new Uint8Array(onDisk)).ok).toBe(false);
+    const shown = decryptReceipt(onDisk, { key, id: ID });
+    expect(shown.equals(photo)).toBe(true);
+    expect(heicPicture(new Uint8Array(shown)).ok).toBe(true);
   });
 
   it("a folder that isn't there is nothing to do", () => {

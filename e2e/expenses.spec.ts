@@ -241,7 +241,7 @@ test("a receipt: the bytes decide what is kept, under a name DotAmi makes up, an
   const PRINTER = `Example Printer Shop receipt test ${Date.now()}`;
   // The browser tests' data file is prisma/e2e/dotami.db (playwright.config.ts); receipts sit beside it.
   const receipts = path.join(process.cwd(), "prisma", "e2e", "receipts");
-  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(n)) : []);
+  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf|heic)$/.test(n)) : []);
   const receiptPosts: string[] = [];
   page.on("request", (r) => {
     if (r.url().includes("/api/expenses/receipt")) receiptPosts.push(r.postData() ?? "");
@@ -256,7 +256,7 @@ test("a receipt: the bytes decide what is kept, under a name DotAmi makes up, an
   await row.getByRole("button", { name: "Add a receipt" }).click();
   // Told first that the copy is kept exactly as given, and what is accepted.
   await expect(row).toContainText("anything printed on it (the last digits of a card, your name and address) is kept too");
-  await expect(row).toContainText("A JPEG, PNG or WebP picture, or a PDF, up to 10 MB");
+  await expect(row).toContainText("A JPEG, PNG, WebP or HEIC (iPhone) picture, or a PDF, up to 10 MB");
   // [8i] Run from source, the note says the copy isn't encrypted here (the desktop app's is).
   await expect(row).toContainText("In this copy, run from source, the copy isn't encrypted");
 
@@ -302,7 +302,7 @@ test("a receipt of exactly 10 MB is kept through the real server, and one byte m
   test.setTimeout(120_000);
   const SHOP = `Example Big Scan Shop ${Date.now()}`;
   const receipts = path.join(process.cwd(), "prisma", "e2e", "receipts");
-  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(n)) : []);
+  const ourFiles = () => (existsSync(receipts) ? readdirSync(receipts).filter((n) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf|heic)$/.test(n)) : []);
 
   await page.goto("/expenses");
   await typePurchase(page, { amount: "12.00", paidTo: SHOP, whatFor: "a scanned receipt" });

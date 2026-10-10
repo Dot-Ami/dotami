@@ -9,9 +9,11 @@ import { ReceiptOpener, type ShownReceipt } from "@/lib/expenses/receipts/viewer
 /**
  * [8i] A receipt, shown inside DotAmi (the maintainer's decision of 2026-10-08), by the rules of § 8
  * of docs/architecture/expense-records.md: a picture through the browser's own image decoder from a
- * blob: address, a PDF as pictures of its pages drawn by pdf.js in a worker that can reach nothing.
- * Nothing in the receipt can be clicked, nothing it holds runs, and closing the viewer lets go of
- * everything it held (the blob address is revoked, the worker ended, the page pictures closed).
+ * blob: address, a PDF as pictures of its pages drawn by pdf.js in a worker that can reach nothing,
+ * a HEIC photo as one picture drawn in another such worker by the graphics chip (option D of
+ * docs/connectors/heic-decoder-review.md). Nothing in the receipt can be clicked, nothing it holds
+ * runs, and closing the viewer lets go of everything it held (the blob address is revoked, the
+ * workers ended, the pictures closed).
  */
 
 /** One drawn PDF page: the worker's finished picture handed to a <canvas> as it is. */
@@ -97,7 +99,8 @@ export function ReceiptViewer({
               Receipt: {title}
             </h2>
             <p className="mt-0.5 text-[11.5px] text-stone">
-              {typeName(type)}, shown inside DotAmi from its copy on this computer. Nothing in it can be clicked or run.
+              {typeName(type)}, shown inside DotAmi from its copy on this computer
+              {type === "image/heic" ? ", drawn by this computer's graphics chip" : ""}. Nothing in it can be clicked or run.
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-xs text-stone hover:text-paper">
@@ -113,6 +116,9 @@ export function ReceiptViewer({
             <p role="status" className="text-sm text-paper-dim">
               Opening the receipt…
             </p>
+          ) : shown.kind === "drawn" ? (
+            // A HEIC photo: the worker's finished picture in a canvas, like a PDF page.
+            <PageCanvas bitmap={shown.picture} label={`The receipt photo (${shown.width} × ${shown.height} pixels)`} />
           ) : shown.kind === "picture" ? (
             pictureFailed ? (
               <p role="alert" className="text-sm text-amber">
@@ -154,5 +160,6 @@ export function ReceiptViewer({
 /** Lets go of what an opened receipt holds: the blob address, or the page pictures. */
 function release(shown: ShownReceipt) {
   if (shown.kind === "picture") URL.revokeObjectURL(shown.url);
+  else if (shown.kind === "drawn") shown.picture.close();
   else for (const page of shown.pages) page.close();
 }

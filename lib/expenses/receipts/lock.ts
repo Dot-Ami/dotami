@@ -3,7 +3,8 @@
  * docs/architecture/expense-records.md § 9).
  *
  * The desktop app's main process opens the key (desktop/receipt-key.mjs) and starts this server with:
- *   DOTAMI_RECEIPT_LOCK  "on" | "no-key-store" | "key-unreadable"
+ *   DOTAMI_RECEIPT_LOCK  "on" | "no-key-store" | "key-unreadable" | "key-out-of-reach"
+ *     (desktop/receipt-key.mjs receiptLockEnv chooses between the last two)
  *   DOTAMI_RECEIPT_KEY   the key, base64 (only when "on")
  * A copy run from source sets neither: it has no operating-system key store, so its receipts are kept
  * unencrypted ("source"), and the settings page and What DotAmi knows about you say so.
@@ -21,8 +22,24 @@ export type ReceiptLock =
   | { state: "source" }
   /** The desktop app, but the operating system's key store isn't available: kept unencrypted. */
   | { state: "no-key-store" }
-  /** The desktop app has a key file this account can't open, and receipts are locked with it. */
-  | { state: "key-unreadable" };
+  /**
+   * Receipts are locked, and the key that opens them can't be opened here: the key file is missing, or
+   * this account can't open it, while the key store is there. Start a new key is offered (§ 10).
+   */
+  | { state: "key-unreadable" }
+  /**
+   * Receipts are locked and the key can't be opened right now, but it may open at a later start: the
+   * key store isn't available, or nothing is locked and a new key wasn't saved yet. Nothing can be shown
+   * or added, and Start a new key is never offered: it would set aside a key that may still open.
+   */
+  | { state: "key-out-of-reach" }
+  /**
+   * The key couldn't be opened and the person pressed Start a new key (expense-records.md § 10): the
+   * locked receipts were moved to `setAsideTo` (null when nothing was left to move), and the desktop app
+   * makes a new key at its next start. Never read from the environment: only markNewKeyAtRestart sets it,
+   * for the rest of this server's run. Nothing can be added or shown until then.
+   */
+  | { state: "new-key-at-restart"; setAsideTo: string | null };
 
 export type ReceiptLockState = ReceiptLock["state"];
 
@@ -34,14 +51,17 @@ export function readReceiptLock(env: Record<string, string | undefined>): Receip
   switch (env.DOTAMI_RECEIPT_LOCK) {
     case "on": {
       const key = Buffer.from(env.DOTAMI_RECEIPT_KEY ?? "", "base64");
-      // The main process always sends 32 bytes; anything else is treated as a key that can't be opened,
-      // so nothing is written unencrypted by mistake and nothing is shown that can't be checked.
-      return key.length === 32 ? { state: "on", key, keyId: keyIdOf(key) } : { state: "key-unreadable" };
+      // The main process always sends 32 bytes; anything else is treated as a key out of reach, so
+      // nothing is written unencrypted by mistake, nothing is shown that can't be checked, and Start a
+      // new key is never offered over a key file that may open.
+      return key.length === 32 ? { state: "on", key, keyId: keyIdOf(key) } : { state: "key-out-of-reach" };
     }
     case "no-key-store":
       return { state: "no-key-store" };
     case "key-unreadable":
       return { state: "key-unreadable" };
+    case "key-out-of-reach":
+      return { state: "key-out-of-reach" };
     default:
       return { state: "source" };
   }
@@ -60,6 +80,16 @@ export function receiptLock(): ReceiptLock {
 /** Only the state, for pages: never the key. */
 export function receiptLockState(env: Record<string, string | undefined> = process.env): ReceiptLockState {
   return env === process.env ? receiptLock().state : readReceiptLock(env).state;
+}
+
+/** After Start a new key moved the locked receipts aside: what this server says until it is restarted. */
+export function markNewKeyAtRestart(setAsideTo: string | null): void {
+  (globalThis as Holder).__dotamiReceiptLock = { state: "new-key-at-restart", setAsideTo };
+}
+
+/** Where Start a new key moved the locked receipts during this run, or null (not pressed, or nothing moved). */
+export function receiptsSetAsideTo(lock: ReceiptLock = receiptLock()): string | null {
+  return lock.state === "new-key-at-restart" ? lock.setAsideTo : null;
 }
 
 /** For the tests: forget what was read, so the next receiptLock() reads the environment again. */

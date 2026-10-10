@@ -24,6 +24,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   another computer; a restore is written encrypted with this computer's key. An older DotAmi can't
   open an encrypted file: going back needs a backup. A copy run from source keeps the file plain and
   says so.
+- **Start a new key for your receipts** ([8i]) — when the desktop app can't open the key your
+  receipts are locked with (a Windows profile reset, a data folder from another account or computer,
+  a deleted `receipts.key`), Settings, *What DotAmi knows about you* and the Expenses page now offer
+  *Start a new key…* under the amber line, besides putting the key back, restoring a backup or
+  deleting the receipts. It asks twice, saying first that the locked receipts are given up for good
+  unless the old key comes back. Nothing is deleted: the locked receipt files and the old key file are
+  moved into a new folder in the backups folder, and the page says where. The new key is made the next
+  time DotAmi starts. Your expense records stay; a receipt that was set aside says so, and where it is,
+  when you open it. Only DotAmi's own window can do this; an agent can't. It isn't offered while the
+  key is only out of reach for now (Windows' key store not available at the moment): the page then
+  says DotAmi tries again each time it starts. While no receipt can be added, an agreed record says so
+  instead of offering *Add a receipt*.
+- **"Preparing DotAmi…"** ([8i]) — the first start of a new data folder takes about ten seconds
+  while Windows saves the key that protects your receipts, and nothing was on the screen. A small
+  window now says what is happening, and closes as soon as DotAmi's window opens. Ordinary starts
+  don't show it.
+- **The four T2125 totals in "Add a figure"** ([8f]) — the list of what you can add gains business
+  gross income (T2125 line 8299), business total expenses (9368), business net income before
+  adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and
+  says which line of the CRA's form it goes on that year. DotAmi has read the CRA's 2025 form so far;
+  for any other year it says "not read yet" instead of guessing the number, and still keeps the
+  figure with its year. The tax year has to be the year the figure's period ends in, so a 2024
+  total can't be filed under 2025 by a slip. Each figure remembers its tax year, and, once figures
+  can be read from a return, the form and line printed on it (only a figure read from a return can
+  have one). Every line is cited to the CRA's own 2025 T2125 and
+  Guide T4002, checked by the maintainer on 2026-10-10 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
+  collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
   (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
   expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
@@ -116,6 +143,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself with a random string; your file's name is never sent or kept. You are told first that the copy
   is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
   DotAmi's copy and keeps the record.
+- **iPhone (HEIC) photos as receipts** ([8i]) — a HEIC photo is kept exactly as you give it, like any
+  receipt, and *Show receipt* shows it: DotAmi reads the photo's container with its own code, in a
+  worker that can't connect anywhere, and the computer's graphics chip decodes the picture (option D
+  of `docs/connectors/heic-decoder-review.md`, chosen by the maintainer after a double-check). It works
+  on computers whose graphics driver decodes HEVC; where it can't, the photo is still kept and DotAmi
+  says so, and how to see it. A HEIC is decoded only when you click *Show receipt*, and after one fails
+  DotAmi doesn't try another until it restarts. Bursts, animations and layered HEIF pictures are
+  refused, and so is a HEIC whose tiles would ask the graphics chip to decode more than the pixel
+  caps allow. Not tried on a Mac yet.
 - **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
   Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
   is fetched from the internet, and DotAmi checks the file is the one you added before showing it;
