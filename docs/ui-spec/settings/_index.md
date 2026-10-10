@@ -1,6 +1,6 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-09 ([8i] — whether the receipt files are encrypted; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-09 ([8i] — whether the receipt files are encrypted, and Start a new key while the key can't be opened; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
 the interactive controls are `copy-path-button.tsx`, `figure-reminders-control.tsx` and
@@ -42,8 +42,11 @@ Each group:
      them; with no key store, that DotAmi tries again at each start); when the key can't be opened
      (Windows won't open it, `receipts.key` is missing, or the key store is gone while receipts are
      encrypted), in amber, "DotAmi can't open the key to your receipts." with what happened, to put
-     `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup, or
-     delete the receipts and restart). In the desktop
+     `receipts.key` back if it was deleted or moved, and the ways forward (restore a backup, delete
+     the receipts and restart, or start a new key); when the key is out of reach only for now (the key
+     store isn't available, or a new key wasn't saved yet), in amber, "DotAmi can't open the key to your
+     receipts right now." with that nothing was changed and that DotAmi tries again at each start, and
+     no button. **Start a new key…** (`components/expenses/start-new-key.tsx`; expense-records.md § 10) — shown under that amber line only while the key can't be opened, never while it opens, never from source. First press: a dialog "Start a new key, and give up the locked receipts?" saying a new key can't open the receipts locked with the old one, so they are given up for good unless the old key comes back (`receipts.key` found again, or the Windows profile that could open it); that nothing is deleted (the locked files, and the old key file if there, go to a new folder in the backups folder, and DotAmi says where); that the expense records stay; and to restore a backup instead if there is one. **Cancel** has the focus; **Continue…** opens the second ask, "Are you sure?", whose button is **Give up the locked receipts and start a new key** (Cancel focused again). Cancel, Escape or a click outside at either step sends nothing. The second answer posts `/api/expenses/receipt/new-key` `{ giveUp: true }` (page-only); the answer names the folder ("Done. 1 locked receipt file and the old key file were moved to <path>. Close DotAmi and open it again to start the new key."), and the page is refreshed: the amber line becomes "DotAmi starts a new key for your receipts the next time it starts." with the full path, that receipts can't be shown or added until the restart, that the records stay, and that the moved files open again only if the old key comes back. No button then. A refusal is shown in amber (role alert). In the desktop
      app (`DOTAMI_DESKTOP=1`): where Back up and Restore are (File menu), and that a backup holds
      the receipt files too; from source: copying the file and the receipts folder together
      is a backup. Always: how to turn on disk encryption (Windows Device encryption on Home,

@@ -537,7 +537,7 @@ function PendingNote({
 }
 
 /** A modal ask with Cancel and one confirm button. Escape, Cancel and a click outside all cancel. */
-function ConfirmDialog({
+export function ConfirmDialog({
   title,
   intro,
   children,

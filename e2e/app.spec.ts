@@ -729,6 +729,100 @@ test.describe("how old each figure is", () => {
   });
 });
 
+// ---- [8f] The four T2125 totals ----------------------------------------------------------------
+// On the invented venture "Demo — Chinook Sign Painting", after the figures tests above; the GST card's
+// own figure is "gross-revenue", which these never touch. Amounts are invented.
+
+test("Add a figure offers the four T2125 totals with their lines, asks the tax year, and says 'not read yet' for an unread year", async ({
+  page,
+}) => {
+  await page.goto("/ventures");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+    .first();
+  const ventureId = new URL((await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href"))!, "http://x").searchParams.get("venture")!;
+  type Listed = { id: string; kind: string; status: string; taxYear: number | null; formLine: string | null };
+  const listed = async () => ((await (await page.request.get(`/api/figures?venture=${ventureId}`)).json()) as { figures: Listed[] }).figures;
+
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  const what = card.getByLabel("What", { exact: true });
+  // The list: revenue as before, then the four totals, each with the line it goes on.
+  await expect(what.locator("option")).toHaveText([
+    "Revenue (gross, before expenses)",
+    "Business gross income (T2125), line 8299",
+    "Business total expenses (T2125), line 9368",
+    "Business net income before adjustments (T2125), line 9369",
+    "Business net income (T2125), line 9946",
+  ]);
+
+  // A T2125 total asks for its tax year; the line it goes on depends on the year.
+  await what.selectOption({ label: "Business gross income (T2125), line 8299" });
+  const taxYear = card.getByLabel("Tax year", { exact: true });
+  await expect(taxYear).toBeVisible();
+  await expect(card.getByText("The tax year this total is for. The CRA line it goes on can change from one year's form to the next.")).toBeVisible();
+
+  // A year nobody has read: "not read yet", and no borrowed line number.
+  await taxYear.fill("2023");
+  const unread = card.getByText(
+    "2023: not read yet. DotAmi has read the CRA's T2125 for 2025 only, so this figure is kept with its tax year and no line number until that year's form is read.",
+  );
+  await expect(unread).toBeVisible();
+  await expect(taxYear).toHaveAccessibleDescription(/not read yet/);
+
+  // 2025 has been read: the line, the form's words for it and the day it was read.
+  await taxYear.fill("2025");
+  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`)).toBeVisible();
+  await expect(unread).toHaveCount(0);
+
+  // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.
+  await card.getByLabel("From", { exact: true }).fill("2024-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2024-12-31");
+  await card.getByLabel("Amount", { exact: true }).fill("48,250");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  await expect(card.getByText(/This period ends in 2024, so it is a 2024 tax-year total, not 2025\./)).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Agree to these figures?" })).toHaveCount(0);
+
+  await card.getByLabel("From", { exact: true }).fill("2025-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2025-12-31");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+
+  // The agree prompt names the tax year and the line before anything is agreed.
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  await expect(prompt).toContainText("Business gross income (T2125)");
+  await expect(prompt).toContainText("tax year 2025 · T2125 line 8299");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+
+  // Kept with its tax year; typed, so there is no form line "as read".
+  const gross = (await listed()).find((f) => f.kind === "business-gross-income")!;
+  expect(gross).toMatchObject({ status: "confirmed", taxYear: 2025, formLine: null });
+  await expect(card.getByText("tax year 2025 · T2125 line 8299")).toBeVisible();
+
+  // A second total for a year nobody has read is kept too, and says so in the list.
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Business net income (T2125), line 9946" });
+  await card.getByLabel("Tax year", { exact: true }).fill("2023");
+  await card.getByLabel("From", { exact: true }).fill("2023-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2023-12-31");
+  await card.getByLabel("Amount", { exact: true }).fill("-1,200");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  await expect(prompt).toContainText("tax year 2023 · T2125 line not read yet");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+  await expect(card.getByText("tax year 2023 · T2125 line not read yet")).toBeVisible();
+  expect((await listed()).find((f) => f.kind === "business-net-income")).toMatchObject({ status: "confirmed", taxYear: 2023, formLine: null });
+
+  // Revenue has no tax year to ask: the field is there for a T2125 total and goes for revenue.
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Business total expenses (T2125), line 9368" });
+  await expect(card.getByLabel("Tax year", { exact: true })).toBeVisible();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Revenue (gross, before expenses)" });
+  await expect(card.getByLabel("Amount", { exact: true })).toBeVisible();
+  await expect(card.getByLabel("Tax year", { exact: true })).toHaveCount(0);
+});
+
 // ---- [8c] Add from a file -------------------------------------------------------------------
 // All three use the invented venture "Demo — Salish Trail Maps" (the figures test above uses
 // Chinook). Only the first one proposes anything for it; the other two prove their refusals and

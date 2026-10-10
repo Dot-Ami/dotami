@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
+import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import type { BankSourcesState } from "@/lib/figures/source-account-name";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
@@ -175,12 +176,16 @@ function SettingRow({
  * [8i] Whether the receipt files are encrypted in this copy, and what losing the key means
  * (docs/architecture/expense-records.md § 9). Read from the app's own environment on every visit.
  */
-function ReceiptProtectionLine({ state }: { state: SettingsToday["receipts"] }) {
-  const { headline, detail, tone } = receiptProtectionText(state);
+function ReceiptProtectionLine({ state, setAsideTo }: { state: SettingsToday["receipts"]; setAsideTo: string | null }) {
+  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo);
   return (
-    <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
-      <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
-    </p>
+    <div>
+      <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
+        <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
+      </p>
+      {/* Offered only while the key can't be opened (expense-records.md § 10). */}
+      {state === "key-unreadable" ? <StartNewReceiptKey /> : null}
+    </div>
   );
 }
 
@@ -212,7 +217,7 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <Code>{path}</Code>
             <CopyPathButton path={path} />
           </div>
-          <ReceiptProtectionLine state={today.receipts} />
+          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

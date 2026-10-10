@@ -1,5 +1,5 @@
 import { ExpensesPage } from "@/components/expenses/expenses-page";
-import { receiptLockState } from "@/lib/expenses/receipts/lock";
+import { receiptLockState, receiptsSetAsideTo } from "@/lib/expenses/receipts/lock";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ export default async function ExpensesRoutePage({ searchParams }: { searchParams
   const { idea } = await searchParams;
   const initialIdea = typeof idea === "string" && idea.length > 0 ? idea : null;
   // Only the state of the receipts' key goes to the page ([8i]), never the key.
-  return <ExpensesPage initialIdea={initialIdea} receiptProtection={receiptLockState()} />;
+  return <ExpensesPage initialIdea={initialIdea} receiptProtection={receiptLockState()} receiptsSetAside={receiptsSetAsideTo()} />;
 }

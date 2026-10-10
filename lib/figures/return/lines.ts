@@ -10,24 +10,33 @@
  * numbers also appear inside sentences ("Gross business income (line 8299 of Part 3C)"); those
  * are mentions, not the line, and the reader skips them.
  *
- * These are READ-ONLY reading aids for this slice, not catalog entries: nothing is proposed or kept
- * from them. When the reader starts proposing figures, the lines move into a cited, versioned
- * catalog under lib/engines/ with the person-read lastVerified the catalogs require.
+ * [8f] The lines themselves now live in the cited, versioned catalog
+ * (lib/engines/taxlines/v2026/t2125.ts), each with the figure kind a total on it is kept as. This
+ * list is read from there, so the reader and the store can't disagree on a number or a label.
  */
+
+import { newestYearRead, taxLinesCatalogV2026 } from "@/lib/engines/taxlines/v2026";
+import type { FigureKind } from "../types";
 
 export interface ReturnLine {
   /** The line number as printed. */
   line: string;
-  /** The words printed beside it on the 2025 form. */
+  /** The words printed beside it on the newest form read (2025). */
   label: string;
+  /** The figure kind a total on this line is kept as. */
+  kind: FigureKind;
 }
 
-export const T2125_LINES: readonly ReturnLine[] = [
-  { line: "8299", label: "Gross business or professional income" },
-  { line: "9368", label: "Total expenses" },
-  { line: "9369", label: "Net income (loss) before adjustments" },
-  { line: "9946", label: "Your net income (loss)" },
-];
+/**
+ * The newest form's numbers: the reader looks for the layout of the newest form a person has read.
+ * Catalog order (8299, 9368, 9369, 9946), which is the order on the form.
+ */
+export const T2125_LINES: readonly ReturnLine[] = taxLinesCatalogV2026.entries
+  .filter((e) => e.form === "T2125")
+  .map((e) => {
+    const newest = newestYearRead(e);
+    return { line: newest.line, label: newest.printedLabel, kind: e.figureKind };
+  });
 
 /** Printed at the top of the form's first page, and how the reader tells one copy from the next. */
 export const T2125_TITLE = "Statement of Business or Professional Activities";

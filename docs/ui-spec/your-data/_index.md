@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-09 ([8i] — how the receipt files are kept, and the key's file; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-09 ([8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -34,7 +34,8 @@ jump links, then five sections in this order:
    by state, the idea or ideas it touched and the days it was proposed. Opening it lists every
    figure: what it is, the exact period, the amount, its state, "edited by you", the rows summed,
    and the days it was **proposed**, **agreed** and **taken back** (only those that happened;
-   turning a proposal down isn't dated in the file). Days are the calendar day on this computer.
+   turning a proposal down isn't dated in the file). A T2125 total's tax year and form line
+   ([8f]) are kept but not shown here yet. Days are the calendar day on this computer.
    An empty file says "No figures are kept."
 2. **Everything else in the data file** — one card per table in the inventory: its plain name,
    how many records, what it holds, and **what takes a record out today** (including "nothing, by
@@ -58,7 +59,10 @@ jump links, then five sections in this order:
    the "wipe pending" note Delete leaves beside the data file while a wipe is still owed ("None: no
    wipe is owed." when it isn't there). A line pointing at disk encryption in Settings. The receipts folder's row ([8i], 2026-10-09) also says
    whether this copy encrypts receipt files (the same sentences as Settings,
-   `lib/expenses/receipts/protection.ts`, amber when the key can't be opened) and counts the files by
+   `lib/expenses/receipts/protection.ts`, amber when the key can't be opened, with **Start a new key…**
+   under it then (not while the key is only out of reach for now: the key store unavailable, or a new
+   key not saved yet), the same control and the same two asks as on Settings, `docs/ui-spec/settings/_index.md`;
+   afterwards, until the restart, the amber "DotAmi starts a new key…" line with the folder) and counts the files by
    how they are kept, read from the first few bytes of each and nothing more ("N of M receipt files
    encrypted with this computer's key.", any not encrypted yet, any locked with a key this computer
    can't open); its footnote says those first bytes were read. A row for **the key to your receipt

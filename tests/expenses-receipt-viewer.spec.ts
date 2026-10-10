@@ -8,18 +8,20 @@
  *   - the window reads the bytes again and refuses any that aren't the type the row stored, or a
  *     picture over the pixel limits, before anything decodes them;
  *   - a PDF page's drawing size stays within the limits;
+ *   - the HEIC worker is ended after 20 seconds, when it fails or when the viewer closes, and only a
+ *     real failure stops HEIC photos for the session (closing, or a computer that can't decode, doesn't);
  *   - nothing in the app puts a receipt in a frame, an <embed> or an <object>, and the desktop app
  *     leaves Electron's plugins (its PDF viewer) off.
  *
  * Every name and number is invented.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { PrismaClient } from "@prisma/client";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { RECEIPT_FILE_HEADERS } from "@/lib/expenses/receipts/file-headers";
@@ -28,8 +30,10 @@ import { addReceipt, readReceiptFile, ReceiptError } from "@/lib/expenses/receip
 import { MAX_IMAGE_PIXELS } from "@/lib/expenses/receipts/types";
 import { pageScale } from "@/lib/expenses/receipts/viewer/draw-pdf";
 import { VIEW_MESSAGES } from "@/lib/expenses/receipts/viewer/messages";
+import { __resetHeicSessionForTests, heicStopped } from "@/lib/expenses/receipts/viewer/heic-session";
 import { checkShownBytes, ReceiptOpener } from "@/lib/expenses/receipts/viewer/open";
-import { MAX_PAGE_PIXELS, PAGE_TARGET_WIDTH } from "@/lib/expenses/receipts/viewer/types";
+import { HEIC_REPLY_LABEL, MAX_PAGE_PIXELS, PAGE_TARGET_WIDTH, VIEW_TIMEOUT_MS } from "@/lib/expenses/receipts/viewer/types";
+import { heic } from "./helpers/heic-files";
 import { jpegHeader, pdf, png } from "./helpers/receipt-files";
 
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
@@ -120,6 +124,99 @@ describe("closing the viewer ends its work", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("the HEIC worker is ended, and a failure remembered, whatever happens (option D)", () => {
+  /** A stand-in for the HEIC worker: it never answers unless a test makes it. */
+  class FakeWorker {
+    static all: FakeWorker[] = [];
+    listeners = new Map<string, ((event: unknown) => void)[]>();
+    posted = 0;
+    terminated = false;
+    constructor() {
+      FakeWorker.all.push(this);
+    }
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+    }
+    removeEventListener() {}
+    postMessage() {
+      this.posted += 1;
+    }
+    terminate() {
+      this.terminated = true;
+    }
+    fire(type: string, event: unknown) {
+      for (const listener of this.listeners.get(type) ?? []) listener(event);
+    }
+  }
+
+  /** Opens an invented HEIC receipt and waits until its bytes have been handed to a worker. */
+  async function openHeic(opener: ReceiptOpener): Promise<{ opening: Promise<Awaited<ReturnType<ReceiptOpener["open"]>>>; worker: FakeWorker }> {
+    const opening = opener.open("any-record", "image/heic");
+    // setImmediate isn't faked, so the fetch and the checks run while the 20-second timer stands still.
+    for (let i = 0; i < 200 && !FakeWorker.all.some((w) => w.posted > 0); i += 1) await new Promise((r) => setImmediate(r));
+    const worker = FakeWorker.all.find((w) => w.posted > 0);
+    if (!worker) throw new Error("the HEIC never reached a worker");
+    return { opening, worker };
+  }
+
+  beforeEach(() => {
+    FakeWorker.all = [];
+    __resetHeicSessionForTests();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    vi.stubGlobal("Worker", FakeWorker);
+    vi.stubGlobal("fetch", async () => new Response(new Uint8Array(heic()), { status: 200 }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    __resetHeicSessionForTests();
+  });
+
+  it("ends a worker that never answers after 20 seconds, says so, and asks the graphics chip nothing more this session", async () => {
+    const opener = new ReceiptOpener();
+    const { opening, worker } = await openHeic(opener);
+    // Just before the limit: still waiting.
+    vi.advanceTimersByTime(VIEW_TIMEOUT_MS - 1);
+    expect(worker.terminated).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(await opening).toEqual({ ok: false, message: VIEW_MESSAGES.heicFailed });
+    expect(worker.terminated).toBe(true);
+    expect(await heicStopped()).toBe(true);
+    // The next HEIC is not even fetched: no worker, the plain sentence.
+    expect(await new ReceiptOpener().open("another-record", "image/heic")).toEqual({ ok: false, message: VIEW_MESSAGES.heicStopped });
+    expect(FakeWorker.all).toHaveLength(1);
+  });
+
+  it("treats the worker itself failing (a crash, a script that didn't load) as a failure", async () => {
+    const { opening, worker } = await openHeic(new ReceiptOpener());
+    worker.fire("error", new Event("error"));
+    expect(await opening).toEqual({ ok: false, message: VIEW_MESSAGES.heicFailed });
+    expect(worker.terminated).toBe(true);
+    expect(await heicStopped()).toBe(true);
+  });
+
+  it("ends the worker when the viewer closes mid-drawing, without counting that as a failure", async () => {
+    const opener = new ReceiptOpener();
+    const { opening, worker } = await openHeic(opener);
+    opener.close();
+    expect(worker.terminated).toBe(true);
+    expect((await opening).ok).toBe(false);
+    expect(await heicStopped()).toBe(false);
+    // And the timer it left behind does nothing later.
+    vi.advanceTimersByTime(VIEW_TIMEOUT_MS);
+    expect(await heicStopped()).toBe(false);
+  });
+
+  it("does not count a computer that can't decode HEVC as a failure: the next HEIC is still tried", async () => {
+    const { opening, worker } = await openHeic(new ReceiptOpener());
+    worker.fire("message", { data: { label: HEIC_REPLY_LABEL, result: { ok: false, code: "unsupported" } } });
+    expect(await opening).toEqual({ ok: false, message: VIEW_MESSAGES.heicUnsupported });
+    expect(worker.terminated).toBe(true);
+    expect(await heicStopped()).toBe(false);
   });
 });
 
@@ -299,5 +396,18 @@ describe("POST /api/expenses/receipt/file", () => {
     expect(((await res.json()) as { error: string }).error).toMatch(/isn't in the receipts folder any more/);
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
+  });
+
+  it("a receipt set aside when a new key was started says so, and in which folder (expense-records.md § 10)", async () => {
+    const { id, stored } = await withReceipt(png(4, 2));
+    const aside = path.join(path.dirname(folder), "backups", "receipts-locked-77");
+    mkdirSync(aside, { recursive: true });
+    renameSync(stored, path.join(aside, path.basename(stored)));
+    const res = await fileRoute.POST(post({ expenseId: id }));
+    expect(res.status).toBe(404);
+    const { error } = (await res.json()) as { error: string };
+    expect(error).toBe(
+      `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key. To keep a receipt on this record, remove this one and add the file again.`,
+    );
   });
 });

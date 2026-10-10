@@ -70,7 +70,7 @@ export const RECEIPTS_FOLDER = "receipts";
  * A receipt type's file extension, as lib/expenses/receipts/types.ts RECEIPT_TYPES names them (the
  * desktop code can't import the app's TypeScript; tests/desktop-backup.spec.ts keeps the two equal).
  */
-export const RECEIPT_EXTENSIONS = Object.freeze({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" });
+export const RECEIPT_EXTENSIONS = Object.freeze({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf", "image/heic": "heic" });
 
 /** A file DotAmi named in the receipts folder: 32 random hex characters and one of the extensions. */
 const RECEIPT_NAME = new RegExp(`^[0-9a-f]{32}\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
