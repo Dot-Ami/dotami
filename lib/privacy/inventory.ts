@@ -451,9 +451,9 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     keeps: [],
     folder: "backups",
     goesWithIt:
-      "Deletes the whole copies of the data file DotAmi made before each update and restore, and the receipt folders set aside in the backups folder. Afterwards, only a backup you saved somewhere else could bring anything back.",
+      "Deletes the whole copies of the data file DotAmi made before each update and restore, the receipt folders set aside in the backups folder, and the old key files and locked data file set aside there. Afterwards, only a backup you saved somewhere else could bring anything back.",
     learnMore:
-      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was before a restore). Only the files DotAmi put in them are deleted; a file of yours in one stays, and so does that folder. Once they are gone, those receipts can never be opened, even if the old key comes back. If a copy or a set-aside receipt can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh). Only the files DotAmi put in them are deleted; a file of yours in one stays, and so does that folder. So do the old key files DotAmi moved there when it made a new key (receipts-key-unreadable-….key and database-key-unreadable-….key), and the locked data file a restore or Start fresh moved there when its key was lost (dotami-locked-….db), with everything that was in it. Once they are gone, that locked data and those receipts can never be opened, even if the old key comes back. If one of them can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
     built: true,
   },
   {
@@ -483,14 +483,11 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
  */
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
-    // [8i] The receipt folders set aside there are cleared by the safety-copies box since 2026-10-10
-    // (docs/architecture/expense-records.md § 11); these key files, set aside on their own, aren't.
-    name: "Key files set aside in the backups folder",
-    why: "Not deleted. When Windows couldn't open the key to your receipts on this account and no receipt was locked with it, or a restore gave your receipts a new key, the old key file was moved to the backups folder (receipts-key-unreadable-….key). It holds only a key file that Windows protected for your account, nothing you typed or added. To remove one, close DotAmi and delete it (the backups folder's path is above).",
-  },
-  {
-    name: "The locked data file and key files set aside in the backups folder",
-    why: "Not touched, even with “Safety copies in the backups folder” ticked. When the data file's key can't be opened, Restore from a backup… and Start fresh… move the locked data file into the backups folder (dotami-locked-…db) and never delete it, so it can still be opened if its key comes back; the key file that couldn't open it goes there too (database-key-unreadable-…key), and Start fresh moves the receipts folder there whole (receipts-before-start-fresh-…). Each holds what it held then. To remove them, close DotAmi and delete those files and folders (the backups folder's path is above).",
+    // [8i] Since database-encryption.md § 15 the safety-copies box clears everything DotAmi sets aside in
+    // the backups folder (receipt folders, old key files, locked data files), so what is left there is
+    // only what the person put there.
+    name: "What you put in the backups folder yourself",
+    why: "Not touched. The “Safety copies in the backups folder” box deletes only what DotAmi put there itself: its safety copies, and the receipt folders, old key files and locked data files it set aside. Nothing DotAmi sets aside there is out of its reach. A file or folder of yours stays, even inside a folder DotAmi set aside. A file DotAmi is part-way through encrypting there (….encrypting, ….plain-to-wipe) is wiped by the desktop app's next start, not by Delete.",
   },
   {
     name: "What the window stored in earlier launches",
@@ -506,17 +503,39 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The disk under the data file",
-    why: "Delete wipes the deleted records out of the data file itself, removes deleted receipt files from the receipts folder, and deletes the safety copies and set-aside receipt folders you tick. The drive can still hold older copies of the file's pieces, a removed receipt's bytes, deleted safety copies and set-aside receipts in its free space until they are overwritten; disk encryption is what protects those.",
+    why: "Delete wipes the deleted records out of the data file itself, removes deleted receipt files from the receipts folder, and deletes the safety copies and what DotAmi set aside in the backups folder when you tick that box. The drive can still hold older copies of the file's pieces, a removed receipt's bytes, and the files that box deleted in its free space until they are overwritten; disk encryption is what protects those.",
   },
 ];
 
 /**
  * [8i] Said in amber under the safety-copies box once it is ticked, and at both asks, while the backups
- * folder holds receipt folders DotAmi set aside (docs/architecture/expense-records.md § 11): which
- * folders, and that what is in them can never be opened afterwards.
+ * folder holds things DotAmi set aside (docs/architecture/expense-records.md § 11, database-encryption.md
+ * § 15): it names each kind that is there, and says what is in them can never be opened afterwards.
+ * Built from the counts the page shows, so it never names a kind the folder doesn't hold; null when
+ * there is nothing set aside (the box's own sentence then says enough).
  */
-export const SET_ASIDE_RECEIPTS_WARNING =
-  "The receipt folders set aside in the backups folder go too: receipts-locked-… (receipts Start a new key set aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was before a restore). Afterwards those receipts can never be opened, even if the old key comes back.";
+export function setAsideWarning(counts: { receiptFolders: number; keyFiles: number; lockedFiles: number }): string | null {
+  const { receiptFolders, keyFiles, lockedFiles } = counts;
+  const parts: string[] = [];
+  if (receiptFolders > 0) {
+    parts.push(
+      "the receipt folders DotAmi set aside there: receipts-locked-… (receipts Start a new key set aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh)",
+    );
+  }
+  if (keyFiles > 0) {
+    parts.push("the old key files DotAmi set aside there when it made a new key: receipts-key-unreadable-….key and database-key-unreadable-….key");
+  }
+  if (lockedFiles > 0) {
+    const files = lockedFiles === 1 ? "file" : "files";
+    parts.push(`the locked data ${files} a lost key's restore or Start fresh set aside there, with everything in ${lockedFiles === 1 ? "it" : "them"}: dotami-locked-….db`);
+  }
+  if (parts.length === 0) return null;
+  // What can never be opened afterwards: the locked data and the receipts when they are there; with
+  // only key files, whatever those keys locked (somewhere DotAmi doesn't keep any more).
+  const lost = [lockedFiles > 0 ? "the locked data" : null, receiptFolders > 0 ? "those receipts" : null].filter((s): s is string => s !== null);
+  const subject = lost.length > 0 ? lost.join(" and ") : "anything those old keys locked";
+  return `Also deleted from the backups folder: ${parts.join("; ")}. Afterwards ${subject} can never be opened, even if the old key comes back.`;
+}
 
 /** The browser-storage keys. Each is a string constant in the code, so the test can find it. */
 export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
@@ -618,7 +637,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…), and when you start fresh after losing the data file's key it is moved here the same way (receipts-before-start-fresh-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here, never deleted, in case the key comes back. Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and the receipts-before-restore-… and receipts-locked-… folders; the folder Start fresh set aside and the locked data file and key files stay (see “What Delete doesn't reach”).",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…), and when you start fresh after losing the data file's key it is moved here the same way (receipts-before-start-fresh-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here (dotami-locked-….db, database-key-unreadable-….key), and a receipts key file that couldn't be opened is moved here when a new one is made (receipts-key-unreadable-….key), in case the key comes back. Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and everything DotAmi set aside here, after a warning; what you put here yourself stays.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },
@@ -627,7 +646,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies and set-aside files and folders it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
     desktopOnly: true,
   },
@@ -636,7 +655,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "dotami.db.wipe-pending",
     name: "A note that a wipe is still owed",
     holds:
-      "Written by Delete just before it wipes the data file, and removed once the wipe has worked. It holds the time the Delete started and the names of safety copies still to be deleted, nothing of yours. While it is there, the desktop app finishes the wipe the next time it starts; it does nothing of the kind on an ordinary start.",
+      "Written by Delete just before it wipes the data file, and removed once the wipe has worked. It holds the time the Delete started and the names of the safety copies, and of the receipt folders, old key files and locked data files DotAmi set aside, still to be deleted, nothing of yours. While it is there, the desktop app finishes the wipe the next time it starts; it does nothing of the kind on an ordinary start.",
     writtenBy: { file: "desktop/wipe-pending.mjs", mentions: ".wipe-pending" },
     desktopOnly: false,
     whenAbsent: "None: no wipe is owed.",

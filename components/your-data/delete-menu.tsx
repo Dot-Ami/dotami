@@ -7,7 +7,8 @@ import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
-import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
+// One line on purpose: tests/privacy-delete.spec.ts reads this import to check the menu shares the server's code.
+import { folderKeys, keptLinkKey, keptLinks, LOCKED_FILES_KEY, SAFETY_COPIES_KEY, SET_ASIDE_KEYS, SET_ASIDE_KEYS_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
 import { numberWords, plural } from "./format";
 
@@ -29,11 +30,11 @@ export interface DeleteMenuProps {
   /** An earlier Delete's wipe is still owed: its note sits beside the data file. */
   wipePending: boolean;
   /**
-   * [8i] Said in amber while the safety-copies box is ticked and the backups folder holds receipt
-   * folders DotAmi set aside (lib/privacy/inventory.ts SET_ASIDE_RECEIPTS_WARNING, passed in so the
-   * window doesn't bundle the inventory).
+   * [8i] Said in amber while the safety-copies box is ticked and the backups folder holds things DotAmi
+   * set aside (lib/privacy/inventory.ts setAsideWarning, built by the page from the same counts and
+   * passed in so the window doesn't bundle the inventory). Null when nothing is set aside.
    */
-  setAsideWarning: string;
+  setAsideWarning: string | null;
 }
 
 type Step = "closed" | "menu" | "first-ask" | "second-ask" | "working" | "done";
@@ -52,21 +53,27 @@ interface Outcome {
   receiptFiles?: { removed: number; failed: number } | null;
 }
 
-/** The keys the safety copies' count and the set-aside receipt folders' count go under, beside the tables' names. */
+/**
+ * The keys the safety copies' count and the counts of what DotAmi set aside in the backups folder go
+ * under, beside the tables' names: receipt folders, and [8i] old key files and locked data files.
+ */
 const COPIES = SAFETY_COPIES_KEY;
 const SET_ASIDE = SET_ASIDE_RECEIPTS_KEY;
+const KEY_FILES = SET_ASIDE_KEYS_KEY;
+const LOCKED = LOCKED_FILES_KEY;
+/** Every key that counts files, not rows. */
+const FILE_KEYS: readonly string[] = [COPIES, ...SET_ASIDE_KEYS];
+const isSetAside = (key: string) => (SET_ASIDE_KEYS as readonly string[]).includes(key);
 
-/** Every count a box touches: its own tables, the ones that go with them, then its folder's files and set-aside folders. */
+/** Every count a box touches: its own tables, the ones that go with them, then its folder's files and set-aside things. */
 const tablesOf = (e: DeleteMenuEntry) => [...e.tables, ...e.alsoDeletes, ...folderKeys(e)];
 
-/** "3 records"; "1 file" for the safety copies and "2 folders" for the set-aside receipts, which aren't rows. */
+/** "3 records"; "1 file" for the safety copies, key files and locked files, and "2 folders" for the set-aside receipts, which aren't rows. */
 const countWords = (key: string, n: number) =>
-  key === COPIES ? plural(n, "file") : key === SET_ASIDE ? plural(n, "folder") : plural(n, "record");
+  key === SET_ASIDE ? plural(n, "folder") : FILE_KEYS.includes(key) ? plural(n, "file") : plural(n, "record");
 
-/** Safety copies the server couldn't delete (another program had them open); 0 when none were ticked. */
-const copiesLeftOf = (o: Outcome) => o.left?.[COPIES] ?? 0;
-/** Set-aside receipt folders the server couldn't clear (another program had a file open); 0 when none. */
-const foldersLeftOf = (o: Outcome) => o.left?.[SET_ASIDE] ?? 0;
+/** What the server couldn't delete of one kind of file (another program had it open); 0 when none were ticked. */
+const leftOf = (o: Outcome, key: string) => o.left?.[key] ?? 0;
 
 // The key a kept link's count travels under ("Expense.ventureId") and the links the ticked boxes
 // clear while keeping the rows come from lib/privacy/kept-links, the same code the server runs, so
@@ -100,11 +107,15 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
   const countOf = (e: DeleteMenuEntry) => tablesOf(e).reduce((sum, m) => sum + (counts[m] ?? 0), 0);
   const deletable = (e: DeleteMenuEntry) => e.built && countOf(e) > 0;
   const anything = menu.some(deletable);
+  // [8i] The counts shown for a box: a kind DotAmi set aside in the backups folder only when there is
+  // some (most people never have a locked data file; "Locked data files: 0" would only puzzle them).
+  // The request still sends every count, zeros included, so the server checks them all.
+  const shownOf = (e: DeleteMenuEntry) => tablesOf(e).filter((m) => !isSetAside(m) || (counts[m] ?? 0) > 0);
 
   const chosen = menu.filter((e) => ticked.includes(e.id));
   const copiesTicked = chosen.some((e) => e.folder === COPIES);
-  // [8i] The set-aside receipt folders go with the safety copies: warned about only when there are some.
-  const setAsideTicked = copiesTicked && (counts[SET_ASIDE] ?? 0) > 0;
+  // [8i] What DotAmi set aside in the backups folder goes with the safety copies: warned about only when there is some.
+  const setAsideTicked = copiesTicked && setAsideWarning !== null && SET_ASIDE_KEYS.some((k) => (counts[k] ?? 0) > 0);
   // The safety copies' own warning only when there are copies: the box can now be ticked for set-aside folders alone.
   const copiesGoing = copiesTicked && (counts[COPIES] ?? 0) > 0;
   const affected: string[] = [];
@@ -155,20 +166,35 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
       setError(result.error);
       return;
     }
-    const body = result.body as { wiped?: unknown; backupsLeft?: unknown; receiptFoldersLeft?: unknown };
+    const body = result.body as Partial<Record<keyof PendingResult, unknown>>;
     const wiped = body.wiped === true;
-    const backupsLeft = typeof body.backupsLeft === "number" ? body.backupsLeft : 0;
-    const receiptFoldersLeft = typeof body.receiptFoldersLeft === "number" ? body.receiptFoldersLeft : 0;
+    const number = (v: unknown) => (typeof v === "number" ? v : 0);
+    const answer: PendingResult = {
+      wiped,
+      backupsLeft: number(body.backupsLeft),
+      receiptFoldersLeft: number(body.receiptFoldersLeft),
+      keyFilesLeft: number(body.keyFilesLeft),
+      lockedFilesLeft: number(body.lockedFilesLeft),
+    };
     setOutcome((prev) =>
       prev
         ? {
             ...prev,
             wiped,
-            left: prev.left && COPIES in prev.left ? { ...prev.left, [COPIES]: backupsLeft, [SET_ASIDE]: receiptFoldersLeft } : prev.left,
+            left:
+              prev.left && COPIES in prev.left
+                ? {
+                    ...prev.left,
+                    [COPIES]: answer.backupsLeft,
+                    [SET_ASIDE]: answer.receiptFoldersLeft,
+                    [KEY_FILES]: answer.keyFilesLeft,
+                    [LOCKED]: answer.lockedFilesLeft,
+                  }
+                : prev.left,
           }
         : prev,
     );
-    return { wiped, backupsLeft, receiptFoldersLeft };
+    return answer;
   }
 
   async function finishPending() {
@@ -257,7 +283,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                             ? "Not kept yet"
                             : total === 0
                               ? "Nothing to delete"
-                              : tablesOf(e)
+                              : shownOf(e)
                                   .map((m) => `${tableNames[m] ?? m}: ${counts[m] ?? 0}`)
                                   .join(" · ")}
                         </p>
@@ -273,7 +299,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                           : null}
                         {/* The safety copies are the last way back, so their sentence reads as the warning it is. */}
                         <p className={`mt-1 text-[12.5px] ${e.folder ? "text-amber" : "text-paper-dim"}`}>{e.goesWithIt}</p>
-                        {on && e.folder && setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
+                        {on && e.folder && setAsideTicked && setAsideWarning ? <SetAsideWarning text={setAsideWarning} /> : null}
                         {on
                           ? kept
                               .filter((k) => e.keeps.some((own) => keyOf(own) === keyOf(k)))
@@ -359,7 +385,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               <li key={e.id} className="text-sm text-paper">
                 <span className="font-semibold">{e.label}</span>
                 <ul className="mt-0.5 space-y-0.5 pl-4 text-[12.5px] text-paper-dim">
-                  {tablesOf(e).map((m) => (
+                  {shownOf(e).map((m) => (
                     <li key={m}>
                       {tableNames[m] ?? m}: {countWords(m, counts[m] ?? 0)}
                     </li>
@@ -381,7 +407,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
             </p>
           ) : null}
-          {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
+          {setAsideTicked && setAsideWarning ? <SetAsideWarning text={setAsideWarning} /> : null}
           <p className="mt-3 text-[12.5px] text-paper-dim">
             Everything not ticked stays, and so does what Delete doesn&apos;t reach (what the window stored in earlier launches,
             the log).
@@ -393,6 +419,16 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                 copy at all (a restore's receipts-before-restore-…), so they get their own line. */}
             {!copiesTicked && (counts[SET_ASIDE] ?? 0) > 0
               ? " The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files."
+              : null}
+            {/* [8i] Likewise what a lost key left there: the old key files, and the locked data file,
+                which could still be opened if its key comes back. */}
+            {!copiesTicked && (counts[KEY_FILES] ?? 0) > 0
+              ? " The old key files set aside in the backups folder aren't ticked, so they stay."
+              : null}
+            {!copiesTicked && (counts[LOCKED] ?? 0) > 0
+              ? (counts[LOCKED] ?? 0) === 1
+                ? " The locked data file set aside in the backups folder isn't ticked, so it stays, and could still be opened if its key comes back."
+                : " The locked data files set aside in the backups folder aren't ticked, so they stay, and could still be opened if their key comes back."
               : null}
           </p>
         </ConfirmDialog>
@@ -414,7 +450,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               anything back.
             </p>
           ) : null}
-          {setAsideTicked ? (
+          {setAsideTicked && setAsideWarning ? (
             <div className="mb-2">
               <SetAsideWarning text={setAsideWarning} />
             </div>
@@ -435,12 +471,14 @@ interface PendingResult {
   wiped: boolean;
   backupsLeft: number;
   receiptFoldersLeft: number;
+  keyFilesLeft: number;
+  lockedFilesLeft: number;
 }
 
 /**
- * [8i] The warning about the receipt folders set aside in the backups folder (expense-records.md § 11):
- * which they are, and that their receipts can never be opened afterwards. Under the ticked box and at
- * both asks.
+ * [8i] The warning about what DotAmi set aside in the backups folder (expense-records.md § 11,
+ * database-encryption.md § 15): which kinds are there, and that what is in them can never be opened
+ * afterwards. Under the ticked box and at both asks.
  */
 function SetAsideWarning({ text }: { text: string }) {
   return <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-amber">{text}</p>;
@@ -476,12 +514,16 @@ function DoneNote({
   retrying: boolean;
   onRetry: () => void;
 }) {
-  const rows = Object.keys(outcome.deleted);
+  // [8i] A kind DotAmi set aside in the backups folder gets a line only when there was some, as on the menu.
+  const rows = Object.keys(outcome.deleted).filter((m) => !isSetAside(m) || outcome.deleted[m] > 0 || leftOf(outcome, m) > 0);
   // A kept line only when something was kept: ticking ideas with no expense records attached would
   // otherwise say "0 records kept".
   const keptRows = Object.entries(outcome.kept ?? {}).filter(([, k]) => k.unlinked > 0);
-  const copiesLeft = copiesLeftOf(outcome);
-  const foldersLeft = foldersLeftOf(outcome);
+  const copiesLeft = leftOf(outcome, COPIES);
+  const foldersLeft = leftOf(outcome, SET_ASIDE);
+  const keyFilesLeft = leftOf(outcome, KEY_FILES);
+  const lockedLeft = leftOf(outcome, LOCKED);
+  const filesLeft = copiesLeft + foldersLeft + keyFilesLeft + lockedLeft;
   return (
     <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
       <p className="font-semibold">Deleted.</p>
@@ -511,11 +553,11 @@ function DoneNote({
       {outcome.left ? null : (
         <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
       )}
-      {/* Deleting only safety copies and set-aside folders takes nothing out of the data file, so there is no space to speak of. */}
-      {outcome.wiped && rows.some((m) => m !== COPIES && m !== SET_ASIDE) ? (
+      {/* Deleting only files in the backups folder takes nothing out of the data file, so there is no space to speak of. */}
+      {outcome.wiped && rows.some((m) => !FILE_KEYS.includes(m)) ? (
         <p className="mt-2 text-[12.5px] text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
       ) : null}
-      {outcome.wiped && copiesLeft === 0 && foldersLeft === 0 ? null : (
+      {outcome.wiped && filesLeft === 0 ? null : (
         <div className="mt-2 space-y-1 text-[12.5px] text-amber">
           {outcome.wiped ? null : (
             <p>
@@ -533,6 +575,18 @@ function DoneNote({
             <p>
               {plural(foldersLeft, "set-aside receipt folder")} in the backups folder couldn&apos;t be cleared, because another
               program has a file in {foldersLeft === 1 ? "it" : "them"} open. Close that program and try again.
+            </p>
+          ) : null}
+          {keyFilesLeft > 0 ? (
+            <p>
+              {plural(keyFilesLeft, "set-aside key file")} in the backups folder couldn&apos;t be deleted, because another program
+              has {keyFilesLeft === 1 ? "it" : "them"} open. Close that program and try again.
+            </p>
+          ) : null}
+          {lockedLeft > 0 ? (
+            <p>
+              {plural(lockedLeft, "locked data file")} in the backups folder couldn&apos;t be deleted, because another program
+              has {lockedLeft === 1 ? "it" : "them"} open. Close that program and try again.
             </p>
           ) : null}
           {desktop ? <p>If it still can&apos;t finish, the desktop app finishes it the next time it starts.</p> : null}
@@ -565,7 +619,7 @@ function PendingNote({
   result: PendingResult | null;
   onFinish: () => void;
 }) {
-  if (result && result.wiped && result.backupsLeft === 0 && result.receiptFoldersLeft === 0) {
+  if (result && result.wiped && result.backupsLeft + result.receiptFoldersLeft + result.keyFilesLeft + result.lockedFilesLeft === 0) {
     return (
       <p role="status" className="mt-3 text-[12.5px] text-paper-dim">
         Finished: the earlier Delete&apos;s wipe is done.
@@ -575,8 +629,8 @@ function PendingNote({
   return (
     <div role="status" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-[12.5px] text-amber">
       <p>
-        An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a safety copy or
-        set-aside receipt folder it was deleting is still there.{" "}
+        An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a file or folder
+        it was deleting from the backups folder is still there.{" "}
         {desktop ? "The desktop app finishes it the next time it starts." : "Finish it here."}
       </p>
       {result ? <p className="mt-1">It still couldn&apos;t finish. Close any program using DotAmi&apos;s files, and check there is free disk space.</p> : null}

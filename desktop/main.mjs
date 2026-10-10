@@ -193,7 +193,12 @@ async function start() {
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
   const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
-  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+  if (wipe.ran) {
+    // Cleared only when the wipe worked and nothing it owed in backups/ is left ([8i]: key files and locked data files too).
+    const cleared =
+      wipe.wiped && [wipe.backupsLeft, wipe.receiptFoldersLeft, wipe.keyFilesLeft, wipe.lockedFilesLeft].every((names) => names.length === 0);
+    log.write(`[desktop] wipe-pending note ${cleared ? "cleared" : "kept for the next start"}\n`);
+  }
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused

@@ -2,17 +2,29 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 
 import {
   clearWipePending,
-  deleteSafetyCopies,
-  deleteSetAsideReceiptFolders,
+  deleteOwedFiles,
+  type FilesLeft,
+  listLockedDataFiles,
   listSafetyCopies,
+  listSetAsideKeyFiles,
   listSetAsideReceiptFolders,
+  type OwedFiles,
   readWipePending,
   writeWipePending,
 } from "@/desktop/wipe-pending.mjs";
 import { logRouteError } from "@/lib/api/log-error";
 
 import { DELETE_MENU, type DeleteKindId, type DeleteMenuEntry, type KeptLink } from "./inventory";
-import { affectedTables, folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "./kept-links";
+import {
+  affectedTables,
+  folderKeys,
+  keptLinkKey,
+  keptLinks,
+  LOCKED_FILES_KEY,
+  SAFETY_COPIES_KEY,
+  SET_ASIDE_KEYS_KEY,
+  SET_ASIDE_RECEIPTS_KEY,
+} from "./kept-links";
 
 /**
  * [8d] The "Delete" menu on /your-data, the server side. The person ticks kinds of data
@@ -31,11 +43,13 @@ import { affectedTables, folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, 
  * was deleted. They have their own box: ticked, DotAmi's own copies there are deleted too
  * (desktop/wipe-pending.mjs says which files those are, and never follows a link out of the folder).
  * [8i] The same box clears the receipt folders DotAmi set aside there (Start a new key's
- * receipts-locked-…, a restore's receipts-before-restore-…; expense-records.md § 11): their count is
- * checked like the copies', and only DotAmi's own files in them go.
+ * receipts-locked-…, a restore's receipts-before-restore-…, Start fresh's receipts-before-start-fresh-…;
+ * expense-records.md § 11-12), and the old key files and locked data files a lost key left there
+ * (database-encryption.md § 15): each kind's count is checked like the copies', and only DotAmi's own
+ * files go.
  *
  * A wipe that can't finish now is finished later. Before anything is deleted, a "wipe pending" note
- * goes beside the data file, naming the safety copies and set-aside folders still to delete; it is
+ * goes beside the data file, naming the safety copies and set-aside things still to delete; it is
  * removed once the wipe and those deletions have worked. The desktop app finishes what the note owes the next time it
  * starts (desktop/main.mjs), and "Try the wipe again" finishes it now (finishWipe).
  *
@@ -54,13 +68,34 @@ export class DeleteInputError extends Error {
 
 /**
  * How many rows each table holds, keyed by the model's name in prisma/schema.prisma — and, when the
- * safety-copies box is ticked, how many safety copies, under SAFETY_COPIES_KEY, and how many receipt
- * folders set aside in the backups folder, under SET_ASIDE_RECEIPTS_KEY.
+ * safety-copies box is ticked, how many safety copies, under SAFETY_COPIES_KEY, how many receipt
+ * folders set aside in the backups folder, under SET_ASIDE_RECEIPTS_KEY, and [8i] how many old key files
+ * and locked data files set aside there, under SET_ASIDE_KEYS_KEY and LOCKED_FILES_KEY.
  */
 export type TableCounts = Record<string, number>;
 
 // The keys the box's files are counted under (lib/privacy/kept-links.ts, shared with the menu in the window).
-export { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY };
+export { LOCKED_FILES_KEY, SAFETY_COPIES_KEY, SET_ASIDE_KEYS_KEY, SET_ASIDE_RECEIPTS_KEY };
+
+type OwedKind = keyof OwedFiles;
+
+/**
+ * Each kind of file the safety-copies box deletes: the key its count travels under on the page, the list
+ * that names it in the wipe-pending note (desktop/wipe-pending.mjs), and how it is found. One table, so
+ * the count check, the note, the deletion and the read-back can't miss a kind.
+ */
+const BOX_KINDS: readonly { key: string; owed: OwedKind; list: (dataFile: string) => string[] }[] = [
+  { key: SAFETY_COPIES_KEY, owed: "backups", list: (f) => listSafetyCopies(f).names },
+  { key: SET_ASIDE_RECEIPTS_KEY, owed: "receiptFolders", list: (f) => listSetAsideReceiptFolders(f).names },
+  { key: SET_ASIDE_KEYS_KEY, owed: "keyFiles", list: (f) => listSetAsideKeyFiles(f).names },
+  { key: LOCKED_FILES_KEY, owed: "lockedFiles", list: (f) => listLockedDataFiles(f).names },
+];
+
+/** Where deleteOwedFiles reports what is left of a kind: "backups" → "backupsLeft". */
+const leftOf = (owed: OwedKind) => `${owed}Left` as keyof FilesLeft;
+
+const nothingOwed = (): OwedFiles => ({ backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
+const nothingLeft = (): FilesLeft => ({ backupsLeft: [], receiptFoldersLeft: [], keyFilesLeft: [], lockedFilesLeft: [] });
 
 /** Where the data file is, for the safety copies and the wipe-pending note. */
 export interface DeleteFiles {
@@ -220,7 +255,8 @@ type Note = ReturnType<typeof readWipePending>;
 function restoreNote(dataFile: string, previous: Note) {
   try {
     if (previous) {
-      writeWipePending(dataFile, { backups: previous.backups, receiptFolders: previous.receiptFolders, since: previous.since ?? undefined });
+      const { since, ...owed } = previous;
+      writeWipePending(dataFile, { ...owed, since: since ?? undefined });
     } else clearWipePending(dataFile);
   } catch (error) {
     logRouteError("your-data/delete wipe note", error);
@@ -228,10 +264,18 @@ function restoreNote(dataFile: string, previous: Note) {
 }
 
 /** After the wipe: no note when everything is done, otherwise a note owing what is left. */
-function settleNote(dataFile: string, since: string | undefined, wiped: boolean, copiesLeft: readonly string[], foldersLeft: readonly string[]) {
+function settleNote(dataFile: string, since: string | undefined, wiped: boolean, left: FilesLeft) {
   try {
-    if (wiped && copiesLeft.length === 0 && foldersLeft.length === 0) clearWipePending(dataFile);
-    else writeWipePending(dataFile, { backups: copiesLeft, receiptFolders: foldersLeft, since });
+    if (wiped && Object.values(left).every((names) => names.length === 0)) clearWipePending(dataFile);
+    else {
+      writeWipePending(dataFile, {
+        backups: left.backupsLeft,
+        receiptFolders: left.receiptFoldersLeft,
+        keyFiles: left.keyFilesLeft,
+        lockedFiles: left.lockedFilesLeft,
+        since,
+      });
+    }
   } catch (error) {
     logRouteError("your-data/delete wipe note", error);
   }
@@ -239,7 +283,7 @@ function settleNote(dataFile: string, since: string | undefined, wiped: boolean,
 
 /**
  * Deletes every row of the tables the ticked kinds name (and, when that box is ticked, DotAmi's
- * safety copies in the backups folder and the receipt folders it set aside there), then wipes the file.
+ * safety copies in the backups folder and everything it set aside there), then wipes the file.
  *
  * `seen` is the count of each affected table as the person saw it when they confirmed. If any
  * differs from the file now, nothing is deleted and the fresh counts come back, so the person
@@ -253,8 +297,9 @@ function settleNote(dataFile: string, since: string | undefined, wiped: boolean,
  * told the person how many would stay, so that number is in `seen` and checked like the rest: a
  * record attached to an idea since they looked makes the warning untrue, and nothing is deleted.
  *
- * The safety copies and the set-aside receipt folders are files, so they can't be in the transaction:
- * their counts are checked first, and they are deleted only once the rows are. Without
+ * The safety copies and what DotAmi set aside in the backups folder (receipt folders, [8i] old key
+ * files, locked data files) are files, so they can't be in the transaction: their counts are checked
+ * first, and they are deleted only once the rows are. Without
  * `files.dataFile` there is no folder to look in and no note to leave: the safety-copies box is
  * refused, and the rest works as before.
  */
@@ -275,12 +320,13 @@ export async function deleteData(
   }
   const seen = readSeen(request.seen, [...affectedKeys(entries), ...links.map(keptLinkKey)]);
 
-  // The safety copies and set-aside receipt folders being deleted: listed once, and checked against
-  // what the person saw.
-  const copies = withCopies && dataFile ? listSafetyCopies(dataFile).names : [];
-  const folders = withCopies && dataFile ? listSetAsideReceiptFolders(dataFile).names : [];
-  const fileCounts: TableCounts = withCopies ? { [SAFETY_COPIES_KEY]: copies.length, [SET_ASIDE_RECEIPTS_KEY]: folders.length } : {};
-  if (withCopies && (copies.length !== seen[SAFETY_COPIES_KEY] || folders.length !== seen[SET_ASIDE_RECEIPTS_KEY])) {
+  // What the box would delete, kind by kind (safety copies, set-aside receipt folders, [8i] old key
+  // files, locked data files): listed once, and each count checked against what the person saw. A
+  // different count deletes nothing, of any kind.
+  const going = nothingOwed();
+  if (withCopies && dataFile) for (const k of BOX_KINDS) going[k.owed] = k.list(dataFile);
+  const fileCounts: TableCounts = withCopies ? Object.fromEntries(BOX_KINDS.map((k) => [k.key, going[k.owed].length])) : {};
+  if (withCopies && BOX_KINDS.some((k) => going[k.owed].length !== seen[k.key])) {
     return {
       status: "changed",
       counts: {
@@ -292,16 +338,16 @@ export async function deleteData(
   }
 
   // The note goes down before anything is deleted, so a wipe the computer cuts short from here on
-  // is finished later. It owes what an earlier Delete still owed plus the copies and folders ticked
-  // now. If it can't be written (a full disk), the delete goes ahead and the page offers the retry.
+  // is finished later. It owes what an earlier Delete still owed plus everything ticked now. If it
+  // can't be written (a full disk), the delete goes ahead and the page offers the retry.
   const previous = dataFile ? readWipePending(dataFile) : null;
-  const owedCopies = union(previous?.backups ?? [], copies);
-  const owedFolders = union(previous?.receiptFolders ?? [], folders);
+  const owed = nothingOwed();
+  for (const k of BOX_KINDS) owed[k.owed] = union(previous?.[k.owed] ?? [], going[k.owed]);
   const since = previous?.since ?? new Date().toISOString();
   let noted = false;
   if (dataFile) {
     try {
-      writeWipePending(dataFile, { backups: owedCopies, receiptFolders: owedFolders, since });
+      writeWipePending(dataFile, { ...owed, since });
       noted = true;
     } catch (error) {
       logRouteError("your-data/delete wipe note", error);
@@ -337,17 +383,16 @@ export async function deleteData(
   // Only the tables go in `deleted`: the kept links' counts in `before` aren't deletions.
   const deleted: TableCounts = Object.fromEntries(models.map((m) => [m, before[m]]));
 
-  // The rows are gone. Now the copies and the set-aside folders (one another program holds a file of
-  // open stays owed), then the wipe.
-  const copiesLeft = dataFile ? deleteSafetyCopies(dataFile, owedCopies, { remove: files.remove }).left : [];
-  const foldersLeft = dataFile ? deleteSetAsideReceiptFolders(dataFile, owedFolders, { remove: files.remove }).left : [];
+  // The rows are gone. Now the files in the backups folder (one another program holds stays owed),
+  // then the wipe.
+  const filesLeft = dataFile ? deleteOwedFiles(dataFile, owed, { remove: files.remove }) : nothingLeft();
   if (withCopies) {
-    deleted[SAFETY_COPIES_KEY] = copies.filter((n) => !copiesLeft.includes(n)).length;
-    deleted[SET_ASIDE_RECEIPTS_KEY] = folders.filter((n) => !foldersLeft.includes(n)).length;
+    for (const k of BOX_KINDS) deleted[k.key] = going[k.owed].filter((n) => !filesLeft[leftOf(k.owed)].includes(n)).length;
   }
-  // Deleting only safety copies leaves nothing in the data file to wipe, unless an earlier wipe is owed.
+  // Deleting only files in the backups folder leaves nothing in the data file to wipe, unless an
+  // earlier wipe is owed.
   const wiped = models.length > 0 || previous ? await wipeFreeSpace(prisma) : true;
-  if (noted && dataFile) settleNote(dataFile, since, wiped, copiesLeft, foldersLeft);
+  if (noted && dataFile) settleNote(dataFile, since, wiped, filesLeft);
 
   // The rows are gone by now. If reading the file back fails, say that, rather than throw into
   // the route's "nothing was deleted" answer, which would no longer be true.
@@ -357,8 +402,7 @@ export async function deleteData(
   try {
     left = await countTables(prisma, models);
     if (withCopies) {
-      left[SAFETY_COPIES_KEY] = copies.filter((n) => copiesLeft.includes(n)).length;
-      left[SET_ASIDE_RECEIPTS_KEY] = folders.filter((n) => foldersLeft.includes(n)).length;
+      for (const k of BOX_KINDS) left[k.key] = going[k.owed].filter((n) => filesLeft[leftOf(k.owed)].includes(n)).length;
     }
     keptTotals = await countTables(prisma, keptModels);
   } catch (error) {
@@ -376,22 +420,27 @@ export async function deleteData(
 }
 
 /**
- * "Try the wipe again": finishes what an earlier Delete still owes — the safety copies and set-aside
- * receipt folders its note names, then the wipe — and removes the note once all of it has worked.
- * With no note it just wipes, as before. `backupsLeft` and `receiptFoldersLeft` count the copies and
- * folders still owed (another program holds a file open).
+ * "Try the wipe again": finishes what an earlier Delete still owes — the safety copies, set-aside
+ * receipt folders and [8i] set-aside key files and locked data files its note names, then the wipe —
+ * and removes the note once all of it has worked. With no note it just wipes, as before. The `…Left`
+ * numbers count what is still owed of each (another program holds a file open).
  */
 export async function finishWipe(
   prisma: PrismaClient,
   files: DeleteFiles = {},
-): Promise<{ wiped: boolean; backupsLeft: number; receiptFoldersLeft: number }> {
+): Promise<{ wiped: boolean; backupsLeft: number; receiptFoldersLeft: number; keyFilesLeft: number; lockedFilesLeft: number }> {
   const dataFile = files.dataFile ?? null;
   const owed = dataFile ? readWipePending(dataFile) : null;
-  const left = dataFile && owed ? deleteSafetyCopies(dataFile, owed.backups, { remove: files.remove }).left : [];
-  const foldersLeft = dataFile && owed ? deleteSetAsideReceiptFolders(dataFile, owed.receiptFolders, { remove: files.remove }).left : [];
+  const left = dataFile && owed ? deleteOwedFiles(dataFile, owed, { remove: files.remove }) : nothingLeft();
   const wiped = await wipeFreeSpace(prisma);
-  if (dataFile && owed) settleNote(dataFile, owed.since ?? undefined, wiped, left, foldersLeft);
-  return { wiped, backupsLeft: left.length, receiptFoldersLeft: foldersLeft.length };
+  if (dataFile && owed) settleNote(dataFile, owed.since ?? undefined, wiped, left);
+  return {
+    wiped,
+    backupsLeft: left.backupsLeft.length,
+    receiptFoldersLeft: left.receiptFoldersLeft.length,
+    keyFilesLeft: left.keyFilesLeft.length,
+    lockedFilesLeft: left.lockedFilesLeft.length,
+  };
 }
 
 /** The ids on the menu, for the route's own checks and the tests. */

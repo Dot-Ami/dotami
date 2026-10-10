@@ -646,7 +646,8 @@ The design's three pull requests became four, stacked, each green on its own:
   and `writeBackup` refuses one too (its `allowUnlocked` option is only for the tests that make the
   unlocked backups older versions wrote, and a test checks `desktop/main.mjs` never passes it). The
   locked data file goes to `backups/dotami-locked-<time>.db`, a name Delete's "safety copies" box
-  doesn't match, and its key file to `backups/database-key-unreadable-<time>.key`; the new key is
+  doesn't match (until § 15, which has the box clear it after a warning), and its key file to
+  `backups/database-key-unreadable-<time>.key`; the new key is
   saved before the restore is put in place.
 - **D, "Start fresh"** (decision 2). As built: a button in the lost-key window, asked twice (a second
   panel saying what is given up and that nothing is deleted). The locked data file goes to

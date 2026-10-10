@@ -8,8 +8,8 @@ import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { databaseProtectionText } from "@/lib/db/protection";
 import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
-import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
-import { SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
+import { DELETE_MENU, NOT_CLEARED_BY_DELETE, setAsideWarning, type WindowStorageEntry } from "@/lib/privacy/inventory";
+import { LOCKED_FILES_KEY, SAFETY_COPIES_KEY, SET_ASIDE_KEYS_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
 import { DeleteMenu } from "./delete-menu";
 import { FiguresBySource } from "./figures-by-source";
@@ -170,22 +170,31 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                   menu={DELETE_MENU}
                   counts={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count])),
-                    // The safety-copies box counts files, under its folder's name, and the receipt
-                    // folders set aside in that folder, which it clears too ([8i]).
+                    // The safety-copies box counts files, under its folder's name, and what DotAmi set
+                    // aside in that folder, which it clears too ([8i]): receipt folders, old key files
+                    // and locked data files.
                     [SAFETY_COPIES_KEY]: holdings.safetyCopies,
                     [SET_ASIDE_RECEIPTS_KEY]: holdings.setAsideReceiptFolders,
+                    [SET_ASIDE_KEYS_KEY]: holdings.setAsideKeyFiles,
+                    [LOCKED_FILES_KEY]: holdings.lockedDataFiles,
                   }}
                   keptCounts={holdings.keptLinks}
                   tableNames={{
                     ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
                     [SAFETY_COPIES_KEY]: "Safety copies",
                     [SET_ASIDE_RECEIPTS_KEY]: "Set-aside receipt folders",
+                    [SET_ASIDE_KEYS_KEY]: "Set-aside key files",
+                    [LOCKED_FILES_KEY]: "Locked data files",
                   }}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}
                   desktop={holdings.desktop}
                   wipePending={holdings.wipePending}
-                  setAsideWarning={SET_ASIDE_RECEIPTS_WARNING}
+                  setAsideWarning={setAsideWarning({
+                    receiptFolders: holdings.setAsideReceiptFolders,
+                    keyFiles: holdings.setAsideKeyFiles,
+                    lockedFiles: holdings.lockedDataFiles,
+                  })}
                 />
               </Section>
             </div>

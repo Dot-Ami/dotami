@@ -602,7 +602,28 @@ person is asked).
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
   the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
   folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's
-  "safety copies" box doesn't match its name: removing it is the person's own act.
+  "safety copies" box doesn't match its name: removing it is the person's own act. *Changed
+  2026-10-10, next line.*
+- **Delete now reaches everything DotAmi sets aside in `backups/` ([8i], 2026-10-10, the maintainer's
+  "one box").** The box *Safety copies in the backups folder* also deletes the old key files
+  (`receipts-key-unreadable-<time>.key`, `database-key-unreadable-<time>.key`), the locked data file a
+  lost key's restore or Start fresh set aside (`dotami-locked-<time>.db`, with its journal) and the
+  receipts folder Start fresh set aside (`receipts-before-start-fresh-<time>/`, cleared like a
+  restore's: DotAmi's files only). It counts each kind, checks the counts against what the page showed,
+  and, once ticked, warns in amber, at the box and at both asks, naming each kind there and saying that
+  afterwards the locked data and those receipts can never be opened, even if the old key comes back.
+  Fenced as before: DotAmi's exact names, directly in a backups folder that isn't a link, regular files
+  only, never a link; the wipe-pending note names them before anything is removed, and anything another
+  program holds stays owed until *Finish it now* or the next start. *What Delete doesn't reach* now
+  names only what the person put in the backups folder. A call the maintainer can reverse: the
+  start-fresh receipts are locked with the receipts' key, which Start fresh didn't touch, so they may
+  still open, but nothing in the new data file points to them. Files are removed, not overwritten.
+  Design: [database-encryption.md § 15](architecture/database-encryption.md); tested by
+  [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
+  [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts),
+  [`tests/privacy-holdings.spec.ts`](../tests/privacy-holdings.spec.ts),
+  [`e2e/your-data.spec.ts`](../e2e/your-data.spec.ts) and the desktop test, which does a real Start
+  fresh and scans every file in the data folder afterwards for byte runs of what was deleted.
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
@@ -619,7 +640,7 @@ person is asked).
   by *Finish it now* or at the desktop app's next start. Files are removed, not overwritten, as with
   every Delete. **Still not reached**, and the menu says so: key files set aside on their own in
   `backups/` (`receipts-key-unreadable-<time>.key`), which hold only a key file that Windows protected
-  for the person's account. Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
+  for the person's account (*reached since, above*). Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
   [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts), [`e2e/your-data.spec.ts`](../e2e/your-data.spec.ts)
   and the desktop test, which scans every file in the data folder afterwards for byte runs of the
   cleared files.

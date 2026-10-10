@@ -9,6 +9,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Delete can clear what a lost key left in the backups folder** ([8i], the maintainer's "one box") —
+  the Delete menu's *Safety copies in the backups folder* box now also deletes the old key files DotAmi
+  moved there when it made a new key (`receipts-key-unreadable-….key`, `database-key-unreadable-….key`),
+  the locked data file a restore or *Start fresh* moved there when its key was lost (`dotami-locked-….db`,
+  with its journal), and the receipts folder *Start fresh* moved there (`receipts-before-start-fresh-…`;
+  only the files DotAmi put in it). The box counts each kind (a kind that isn't there isn't shown), and
+  once ticked it warns, there and at both asks, naming each kind and saying that afterwards the locked
+  data and those receipts can never be opened, even if the old key comes back. With the box unticked,
+  the first "are you sure" step says each one stays. *What Delete doesn't reach* no longer lists them; it
+  now says only what you put in the backups folder yourself is left there. Anything another program has
+  open is finished by *Finish it now* or the next time the desktop app starts.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have
@@ -23,7 +34,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file of yours in one stays. A folder that can't be cleared yet (another program has a file open) is
   finished by *Finish it now* or the next time the desktop app starts. *What Delete doesn't reach* no
   longer lists them; it now names the key files set aside on their own
-  (`receipts-key-unreadable-….key`), which Delete still leaves. With the box unticked, the first
+  (`receipts-key-unreadable-….key`), which Delete still leaves (it clears them too now, above). With the box unticked, the first
   "are you sure" step says the set-aside receipt folders still hold their receipt files.
 - **Start fresh when the data file's key is lost** ([8i], the maintainer's decision of 2026-10-10) — the
   window that says the key can't be opened offers **Start fresh…**, asked twice, saying plainly what is
@@ -32,7 +43,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   are, and DotAmi starts with an empty data file under a new key. It isn't offered while Windows' key
   store is only unavailable for now, it moves nothing while an encryption was part-way, and the new
   file is never created unencrypted. *What DotAmi knows about you* names what it sets aside among what
-  Delete doesn't reach, and Delete's settings box says it forgets a "Never" about encrypting.
+  Delete doesn't reach (Delete can now clear it, first entry above), and Delete's settings box says it
+  forgets a "Never" about encrypting.
 - **Every backup is locked with a passphrase** ([8i], the maintainer's decision of 2026-10-10) — a
   backup holds your data and receipts unencrypted inside it so it restores on another computer, so
   File → Back up… no longer offers to leave the passphrase out, and the backup code refuses to write
