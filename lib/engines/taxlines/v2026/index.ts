@@ -7,7 +7,7 @@ import type { TaxLineEntry, TaxLineYearRead } from "./types";
 export const taxLinesCatalogV2026 = {
   version: "v2026",
   jurisdiction: "Canada",
-  lastVerified: "2026-10-08",
+  lastVerified: "2026-10-10",
   entries: t2125LinesV2026,
 } as const;
 

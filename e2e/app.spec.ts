@@ -651,7 +651,7 @@ test("Add a figure offers the four T2125 totals with their lines, asks the tax y
 
   // 2025 has been read: the line, the form's words for it and the day it was read.
   await taxYear.fill("2025");
-  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-08.`)).toBeVisible();
+  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`)).toBeVisible();
   await expect(unread).toHaveCount(0);
 
   // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.

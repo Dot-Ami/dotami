@@ -3,8 +3,11 @@ import type { TaxLineEntry } from "./types";
 
 /**
  * [8f] The four T2125 totals: gross income, total expenses, net income before adjustments and net
- * income. Read 2026-10-08 from the CRA's 2025 form (T2125 E (25), the text pdf.js reads from the
- * standard-print PDF, page by page) and, where it has a section on the line, Guide T4002.
+ * income. First read 2026-10-08 by the builder (an AI agent) from the CRA's 2025 form (T2125 E (25),
+ * the text pdf.js reads from the standard-print PDF, page by page) and, where it has a section on the
+ * line, Guide T4002. The maintainer checked the four lines (8299, 9368, 9369 and 9946: their names,
+ * parts and pages, and DotAmi's descriptions of them) against the CRA's form and Guide T4002 on
+ * 2026-10-10, so lastVerified is that day: the day a person read the source.
  *
  * What the form says about GST/HST matters for the rest of DotAmi: line 8299 is built from amount 3A
  * (gross sales "include GST/HST collected or collectible") minus amount 3B (GST/HST, provincial sales
@@ -16,7 +19,12 @@ import type { TaxLineEntry } from "./types";
  * farming's net income before adjustments); this catalog has the business and professional form only.
  */
 
-const READ = "2026-10-08";
+/** The day a person (the maintainer) read these lines against the source. */
+const READ = "2026-10-10";
+
+/** Said in every 2025 citation's note, so each one records who read it and when. */
+const CHECKED =
+  "The maintainer checked these lines against the CRA's form and guide on 2026-10-10 (the first reading, by the builder, was 2026-10-08).";
 
 /** The 2025 form itself: every line below is read from it. */
 const FORM_2025: EngineCitation = {
@@ -25,8 +33,7 @@ const FORM_2025: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/content/dam/cra-arc/formspubs/pbg/t2125/t2125-25e.pdf",
   lastVerified: READ,
-  note:
-    "Read 2026-10-08, the standard-print PDF listed as the current (2025) version on the CRA's T2125 page (page details dated 2026-05-01). Nine pages, each footed 'T2125 E (25)'.",
+  note: `Read 2026-10-08, the standard-print PDF listed as the current (2025) version on the CRA's T2125 page (page details dated 2026-05-01). Nine pages, each footed 'T2125 E (25)'. ${CHECKED}`,
 };
 
 /** Guide T4002, Chapter 2 (Income), the 2025 guide (T4002(E) Rev. 25). */
@@ -36,8 +43,7 @@ const GUIDE_INCOME: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-4.html",
   lastVerified: READ,
-  note:
-    "Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 8299 – Gross business or professional income': line 8000 (adjusted gross sales or adjusted professional fees) plus reserves deducted last year (line 8290) plus other income (line 8230). Amount 3A includes GST/HST collected or collectible; amount 3B, included in 3A, is the GST/HST, provincial sales tax, returns, allowances and discounts.",
+  note: `Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 8299 – Gross business or professional income': line 8000 (adjusted gross sales or adjusted professional fees) plus reserves deducted last year (line 8290) plus other income (line 8230). Amount 3A includes GST/HST collected or collectible; amount 3B, included in 3A, is the GST/HST, provincial sales tax, returns, allowances and discounts. ${CHECKED}`,
 };
 
 /** Guide T4002, Chapter 3 (Expenses), which also covers Parts 4 and 5 of the form. */
@@ -47,8 +53,7 @@ const GUIDE_EXPENSES: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-5.html",
   lastVerified: READ,
-  note:
-    "Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 9899 or 9369 – Net income (loss) before adjustments': for business and professional income, line 9369 on Form T2125, the gross income minus the total expenses, a loss in brackets. Section 'Line 9946 – Your net income (loss)': your net income or loss, a loss in brackets. The chapter has no section of its own for line 9368; the form defines it.",
+  note: `Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 9899 or 9369 – Net income (loss) before adjustments': for business and professional income, line 9369 on Form T2125, the gross income minus the total expenses, a loss in brackets. Section 'Line 9946 – Your net income (loss)': your net income or loss, a loss in brackets. The chapter has no section of its own for line 9368; the form defines it. ${CHECKED}`,
 };
 
 export const t2125LinesV2026: readonly TaxLineEntry[] = [

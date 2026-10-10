@@ -270,13 +270,13 @@ describe("a T2125 total's line, in words ([8f])", () => {
       line: "9946",
       printedLabel: "Your net income (loss)",
       taxYear: 2025,
-      lastVerified: "2026-10-08",
+      lastVerified: "2026-10-10",
     });
     expect(taxLineStatus("business-net-income", 2023)).toEqual({ status: "not-read-yet", form: "T2125", taxYear: 2023, yearsRead: [2025] });
     expect(taxLineStatus("gross-revenue", 2025)).toBeUndefined();
 
     expect(taxYearHint("business-gross-income", 2025)).toBe(
-      `Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-08.`,
+      `Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`,
     );
     const unread = taxYearHint("business-gross-income", 2023)!;
     expect(unread).toBe(

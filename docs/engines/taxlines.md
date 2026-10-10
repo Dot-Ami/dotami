@@ -1,6 +1,6 @@
 # Tax lines (`lib/engines/taxlines/v2026/`)
 
-Last updated: 2026-10-08 ([8f], first catalog entries)
+Last updated: 2026-10-10 (the maintainer checked the 2025 lines; [8f] first catalog entries 2026-10-08)
 
 ## What it holds
 
@@ -14,9 +14,12 @@ Form T2125 (Statement of Business or Professional Activities).
 | `t2125-net-business-income-before-adjustments` | `business-net-income-before-adjustments` | 9369 (Part 4, page 3) | Net income (loss) before adjustments |
 | `t2125-net-business-income` | `business-net-income` | 9946 (Part 5, page 3) | Your net income (loss) |
 
-Every line is cited to the CRA's 2025 form (`t2125-25e.pdf`, read 2026-10-08) and, where the guide
-has a section on that line, to Guide T4002 (2025, chapter pages dated 2026-04-16, read 2026-10-08).
-The guide has no section of its own for line 9368; the form defines it.
+Every line is cited to the CRA's 2025 form (`t2125-25e.pdf`) and, where the guide has a section on
+that line, to Guide T4002 (2025, chapter pages dated 2026-04-16). The guide has no section of its own
+for line 9368; the form defines it. The builder (an AI agent) first read both on 2026-10-08; the
+maintainer checked the four lines (names, parts, pages and DotAmi's descriptions) against the form and
+the guide on 2026-10-10, so every 2025 citation's `lastVerified` is 2026-10-10, the day a person read
+the source, and each note says so.
 
 ## How it reasons
 

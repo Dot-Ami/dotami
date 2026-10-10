@@ -18,7 +18,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   total can't be filed under 2025 by a slip. Each figure remembers its tax year, and, once figures
   can be read from a return, the form and line printed on it (only a figure read from a return can
   have one). Every line is cited to the CRA's own 2025 T2125 and
-  Guide T4002, read 2026-10-08 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
+  Guide T4002, checked by the maintainer on 2026-10-10 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
   collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
