@@ -399,7 +399,7 @@ describe("POST /api/expenses/receipt/file", () => {
     errors.mockRestore();
   });
 
-  it("a receipt set aside when a new key was started says so, and in which folder (expense-records.md § 10)", async () => {
+  it("a receipt set aside when a new key was started says so, in which folder, and how it can come back (expense-records.md § 10, § 12)", async () => {
     const { id, stored } = await withReceipt(png(4, 2));
     const aside = path.join(path.dirname(folder), "backups", "receipts-locked-77");
     mkdirSync(aside, { recursive: true });
@@ -408,7 +408,7 @@ describe("POST /api/expenses/receipt/file", () => {
     expect(res.status).toBe(404);
     const { error } = (await res.json()) as { error: string };
     expect(error).toBe(
-      `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key. To keep a receipt on this record, remove this one and add the file again.`,
+      `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key: if Windows can open that key on this account again, Settings → Data and backups in the desktop app can bring it back. To keep a receipt on this record, remove this one and add the file again.`,
     );
   });
 });

@@ -7,7 +7,16 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { receiptProtectionText, receiptsCanBeAdded } from "@/lib/expenses/receipts/protection";
+import {
+  BRING_BACK_LEFT,
+  BRING_BACK_REFUSED,
+  bringBackDoneText,
+  receiptProtectionText,
+  receiptsCanBeAdded,
+  SET_ASIDE_FROM_SOURCE,
+  SET_ASIDE_NEEDS_OPEN_KEY,
+  setAsideFolderText,
+} from "@/lib/expenses/receipts/protection";
 
 describe("what the encryption is said to protect", () => {
   const { headline, detail, tone } = receiptProtectionText("on");
@@ -77,5 +86,46 @@ describe("after Start a new key, until the restart (expense-records.md § 11)", 
       expect(detail).toContain("This copy doesn't restart by itself: stop it and start it again to start the new key.");
       expect(detail).not.toContain("restarts by itself to start it");
     }
+  });
+});
+
+describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
+  const folder = "/home/someone/DotAmi/backups/receipts-locked-1760000000000";
+
+  it("says, for each set-aside folder, how many receipts it holds and whether their old key opens again", () => {
+    expect(setAsideFolderText({ path: folder, receipts: 2, canOpen: 2 })).toEqual({
+      summary: `2 receipt files set aside in ${folder}. This Windows account can open their old key again.`,
+      canBringBack: true,
+    });
+    expect(setAsideFolderText({ path: folder, receipts: 3, canOpen: 1 })).toEqual({
+      summary: `3 receipt files set aside in ${folder}. This Windows account can open the old key to 1 of them again; the others stay where they are.`,
+      canBringBack: true,
+    });
+    expect(setAsideFolderText({ path: folder, receipts: 1, canOpen: 0 })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. Their old key still can't be opened on this Windows account, so they can't be brought back.`,
+      canBringBack: false,
+    });
+  });
+
+  it("says plainly when this copy can't bring them back at all", () => {
+    expect(SET_ASIDE_FROM_SOURCE).toContain("has no key store");
+    expect(SET_ASIDE_FROM_SOURCE).toContain("The desktop app can");
+    expect(SET_ASIDE_NEEDS_OPEN_KEY).toContain("only while DotAmi's own receipts key opens");
+  });
+
+  it("has a plain sentence for every reason a receipt stays, and every reason the desktop app refuses", () => {
+    for (const why of ["no-key", "no-record", "changed", "already-there", "not-written"] as const) expect(BRING_BACK_LEFT[why]).toMatch(/^[A-Z].+\.$/);
+    for (const reason of ["not-dotami-window", "no-current-key", "closing", "not-a-set-aside-folder", "data-file-unreadable"] as const) {
+      expect(BRING_BACK_REFUSED[reason]).toMatch(/Nothing was moved\.$/);
+    }
+    expect(BRING_BACK_LEFT["no-record"]).toContain("deleted since");
+  });
+
+  it("counts what came back, and says when an old copy is still in the folder", () => {
+    expect(bringBackDoneText({ broughtBack: ["a.png"], oldCopiesLeft: [], left: [] })).toBe("1 receipt brought back. It opens from its record again.");
+    expect(bringBackDoneText({ broughtBack: ["a.png", "b.pdf"], oldCopiesLeft: ["b.pdf"], left: [] })).toBe(
+      "2 receipts brought back. They open from their records again. The old copy of 1 is still in the set-aside folder, because another program had it open.",
+    );
+    expect(bringBackDoneText({ broughtBack: [], oldCopiesLeft: [], left: [{ name: "a.png", why: "no-key" }] })).toBe("No receipt was brought back.");
   });
 });
