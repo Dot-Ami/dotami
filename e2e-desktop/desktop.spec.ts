@@ -1015,8 +1015,15 @@ test("a HEIC receipt is drawn by the graphics chip where it decodes HEVC, or pla
   // picture shows green, white / red, blue: the tiles were placed and the rotation applied.
   const page = await launch();
   await page.goto(new URL("/expenses", page.url()).toString());
-  // The window's bridge gives the page exactly its two HEIC calls and the restart for a new key (desktop/window-preload.cjs).
-  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped", "restartForNewKey"]);
+  // The window's bridge gives the page exactly its two HEIC calls, the restart for a new key, and the two
+  // set-aside receipt calls (desktop/window-preload.cjs; expense-records.md § 12).
+  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual([
+    "bringBackReceipts",
+    "heicFailed",
+    "heicStopped",
+    "listSetAsideReceipts",
+    "restartForNewKey",
+  ]);
   const photo = heic({ transforms: [["irot", 1]] });
   const id = await page.evaluate(async (file) => {
     const post = async (url: string, body: unknown) =>
