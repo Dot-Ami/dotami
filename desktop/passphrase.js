@@ -6,8 +6,10 @@
   const backup = bridge.mode === "backup";
 
   $("title").textContent = backup ? "Back up DotAmi" : "This backup is locked";
+  // [8i] Every backup is locked (the maintainer's decision of 2026-10-10): it holds the data decrypted,
+  // so it restores on another computer, and the passphrase is what keeps it locked.
   $("intro").textContent = backup
-    ? "Choose a passphrase to lock this backup, or leave both boxes empty for a backup anyone with the file can open, your receipts included: they aren't encrypted inside a backup without a passphrase."
+    ? "Choose a passphrase to lock this backup. Every backup needs one: a backup holds your data and receipts unencrypted inside it, so it can be restored on another computer, and the passphrase is what keeps it locked."
     : "Enter the passphrase it was locked with.";
   $("ok").textContent = backup ? "Back up" : "Open";
   $("confirm-row").hidden = !backup;
@@ -21,6 +23,10 @@
   $("form").addEventListener("submit", (event) => {
     event.preventDefault();
     const pass = $("pass").value;
+    if (backup && pass === "") {
+      $("error").textContent = "Choose a passphrase: every backup is locked with one.";
+      return;
+    }
     if (backup && pass !== $("confirm").value) {
       $("error").textContent = "The two passphrases don't match.";
       return;

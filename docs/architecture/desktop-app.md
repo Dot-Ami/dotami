@@ -41,7 +41,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    (`desktop/encrypt-database.mjs`, the note `database-encrypting.json`), and then: an encrypted file
    whose key can't be opened (or whose key file opens but holds another key, checked by opening the
    file) stops the start, having changed nothing, with a window that says what
-   happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`); a
+   happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`), and
+   offers **Restore from a backup…** (the locked file and its key file go to `backups/`, never deleted,
+   and the backup is restored under a new key); a
    data file another program holds stops the start with a sentence saying so (never taken for a
    missing one); a
    new data folder gets a key (a key that already opens is kept) and its file is created encrypted from its first byte; an existing plain
@@ -137,8 +139,9 @@ which is about 146 MB of engines for five kinds of database and reports usage to
 
 ## Backup and restore ([7c], `desktop/backup.mjs`)
 
-**File → Back up…** asks for an optional passphrase (twice; the warning *"lose it and the backup
-can't be opened — nobody can recover it"* is shown first), then where to save, and writes one
+**File → Back up…** asks for a passphrase (twice; the warning *"lose it and the backup
+can't be opened — nobody can recover it"* is shown first; required since 2026-10-10, [8i]: a backup
+holds the data decrypted, so the window and `writeBackup` refuse an empty one), then where to save, and writes one
 `.dotami-backup` file. **File → Restore from a backup…** opens one, asks for its passphrase if it's
 locked, checks it, asks for confirmation, keeps a safety copy of the current data in `backups/`,
 swaps it in and restarts the app (an older backup is then upgraded by the migrator).
@@ -184,7 +187,7 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   The format doesn't change. Back up decrypts each receipt in memory with this computer's key and
   writes its own bytes (the size and SHA-256 the file list gives), so the backup restores on a computer
   whose key differs; one this computer can't open is left out and named in the message. An unlocked
-  backup's receipts are readable by whoever has it, and the passphrase window and the message say so.
+  backup (one an older version made) has its receipts readable by whoever has it.
   Restore encrypts each receipt with this computer's key as it is unpacked, after its SHA-256 is
   checked, so nothing is staged unencrypted. When this computer's key file can't be opened, a restore
   makes a new key, saves it only once the person confirms (the old key file goes to `backups/`), and

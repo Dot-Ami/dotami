@@ -55,7 +55,7 @@ export type BackupHeader = BackupHeaderV1 | BackupHeaderV2;
 export function writeBackup(
   dbFile: string,
   outFile: string,
-  options: { passphrase?: string; appVersion: string; now?: () => number; receiptKey?: Buffer | null; databaseKey?: Buffer | null },
+  options: { passphrase?: string; appVersion: string; now?: () => number; receiptKey?: Buffer | null; databaseKey?: Buffer | null; allowUnlocked?: boolean },
 ): { encrypted: boolean; bytes: number; migrations: string[]; receipts: number; missingReceipts: number; unreadableReceipts: number };
 
 /** [8i] The data file's live rows as a rebuilt page image, in memory only; with the migrations and receipt files it describes. */

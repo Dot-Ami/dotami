@@ -94,10 +94,29 @@ function kindOf(run: () => unknown): string {
   return "no error";
 }
 
+/**
+ * [8i] A passphrase on every backup (the maintainer's decision of 2026-10-10). The unlocked backups the
+ * tests below make (with `allowUnlocked`) stand for the ones older versions wrote, which still restore.
+ */
+describe("desktop backup — every new backup is locked ([8i])", () => {
+  it("refuses an empty passphrase and writes nothing", () => {
+    const out = path.join(dir, "out.dotami-backup");
+    expect(kindOf(() => writeBackup(makeDb(path.join(dir, "dotami.db")), out, { appVersion: "1" }))).toBe("needs-passphrase");
+    expect(existsSync(out)).toBe(false);
+    expect(existsSync(`${out}.partial`)).toBe(false);
+  });
+
+  it("the desktop app never asks for an unlocked one, and its passphrase window refuses an empty passphrase", () => {
+    const desktop = path.join(path.resolve(__dirname, ".."), "desktop");
+    expect(readFileSync(path.join(desktop, "main.mjs"), "utf8")).not.toContain("allowUnlocked");
+    expect(readFileSync(path.join(desktop, "passphrase.js"), "utf8")).toContain('if (backup && pass === "") {');
+  });
+});
+
 describe("desktop backup — round trips", () => {
   it("restores a plain backup onto a new computer", () => {
     const backup = path.join(dir, "plain.dotami-backup");
-    const info = writeBackup(makeDb(path.join(dir, "old", "dotami.db")), backup, { appVersion: "1.2.3" });
+    const info = writeBackup(makeDb(path.join(dir, "old", "dotami.db")), backup, { appVersion: "1.2.3" , allowUnlocked: true });
     expect(info.encrypted).toBe(false);
     // Every migration the app ships — read from the folder, so a new migration doesn't break this.
     const shipped = readdirSync(migrations, { withFileTypes: true })
@@ -126,7 +145,7 @@ describe("desktop backup — round trips", () => {
     const source = makeDb(path.join(dir, "old", "dotami.db"));
     const plain = path.join(dir, "plain.dotami-backup");
     const locked = path.join(dir, "locked.dotami-backup");
-    writeBackup(source, plain, { appVersion: "1.2.3" });
+    writeBackup(source, plain, { appVersion: "1.2.3" , allowUnlocked: true });
     const info = writeBackup(source, locked, { appVersion: "1.2.3", passphrase: PASSPHRASE });
     expect(info.encrypted).toBe(true);
 
@@ -178,7 +197,7 @@ describe("desktop backup — locked backups", () => {
 describe("desktop backup — damaged and foreign files", () => {
   it("refuses a plain backup that was cut short or had a byte changed", () => {
     const backup = path.join(dir, "plain.dotami-backup");
-    writeBackup(makeDb(path.join(dir, "dotami.db")), backup, { appVersion: "1" });
+    writeBackup(makeDb(path.join(dir, "dotami.db")), backup, { appVersion: "1" , allowUnlocked: true });
     const cut = path.join(dir, "cut.dotami-backup");
     const flipped = path.join(dir, "flipped.dotami-backup");
     const original = readFileSync(backup);
@@ -211,7 +230,7 @@ describe("desktop backup — restoring safely", () => {
       `INSERT INTO "_prisma_migrations" (id, checksum, migration_name, finished_at, started_at, applied_steps_count) VALUES ('x', 'y', '29990101000000_from_the_future', 1, 1, 1) RETURNING id`,
     );
     const backup = path.join(dir, "future.dotami-backup");
-    writeBackup(source, backup, { appVersion: "9.0.0" });
+    writeBackup(source, backup, { appVersion: "9.0.0" , allowUnlocked: true });
 
     const live = makeDb(path.join(dir, "live", "dotami.db"), "keep-me");
     const before = fileHash(live);
@@ -226,7 +245,7 @@ describe("desktop backup — restoring safely", () => {
 
   it("keeps a safety copy of the data it replaces, and leaves no half-finished files", () => {
     const backup = path.join(dir, "mine.dotami-backup");
-    writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" });
+    writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" , allowUnlocked: true });
 
     const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
     const backupDir = path.join(dir, "live", "backups");
@@ -244,7 +263,7 @@ describe("desktop backup — restoring safely", () => {
     // The restored data file doesn't describe the receipt files beside the live one, so DotAmi's
     // sweep would remove them if they stayed; the safety copy beside them does describe them.
     const backup = path.join(dir, "mine.dotami-backup");
-    writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" });
+    writeBackup(makeDb(path.join(dir, "old", "dotami.db"), "from-backup"), backup, { appVersion: "1" , allowUnlocked: true });
     const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
     const receipts = path.join(dir, "live", "receipts");
     mkdirSync(receipts);
@@ -275,7 +294,7 @@ describe("desktop backup — restoring safely", () => {
 
   it("never leaves a .partial file beside a finished backup", () => {
     const out = path.join(dir, "out.dotami-backup");
-    writeBackup(makeDb(path.join(dir, "dotami.db")), out, { appVersion: "1" });
+    writeBackup(makeDb(path.join(dir, "dotami.db")), out, { appVersion: "1" , allowUnlocked: true });
     expect(existsSync(out)).toBe(true);
     expect(existsSync(`${out}.partial`)).toBe(false);
   });
@@ -344,7 +363,8 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
 
     for (const passphrase of ["", PASSPHRASE]) {
       const backup = path.join(dir, `with-receipts${passphrase ? "-locked" : ""}.dotami-backup`);
-      const info = writeBackup(source, backup, { appVersion: "1.2.3", passphrase });
+      // The unlocked one stands for a backup an older version wrote ([8i]).
+      const info = writeBackup(source, backup, { appVersion: "1.2.3", passphrase, allowUnlocked: passphrase === "" });
       expect(info).toMatchObject({ encrypted: passphrase !== "", receipts: 2, missingReceipts: 0 });
       expect(info.bytes).toBe(readFileSync(backup).length);
       if (passphrase) expect(readFileSync(backup).indexOf("an invented receipt")).toBe(-1);
@@ -378,7 +398,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
     const source = makeDb(path.join(dir, "old", "dotami.db"), "from-backup");
     const fromBackup = addReceipt(source, "a", "application/pdf", "%PDF-1.4 from the backup");
     const backup = path.join(dir, "mine.dotami-backup");
-    writeBackup(source, backup, { appVersion: "1" });
+    writeBackup(source, backup, { appVersion: "1" , allowUnlocked: true });
 
     const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
     const fromLive = addReceipt(live, "d", "image/png", "a picture kept here");
@@ -398,7 +418,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
     addReceipt(source, "a", "application/pdf", "%PDF-1.4 here");
     addReceipt(source, "b", "image/webp", "RIFF....WEBP gone", false);
     const backup = path.join(dir, "missing.dotami-backup");
-    expect(writeBackup(source, backup, { appVersion: "1" })).toMatchObject({ receipts: 1, missingReceipts: 1 });
+    expect(writeBackup(source, backup, { appVersion: "1" , allowUnlocked: true })).toMatchObject({ receipts: 1, missingReceipts: 1 });
     const { header } = readBackup(backup);
     expect(header.format === 2 && header.files.map((f) => f.path)).toEqual(["dotami.db", `receipts/${id("a")}.pdf`]);
   });
@@ -441,7 +461,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
     const source = makeDb(path.join(dir, "old", "dotami.db"));
     addReceipt(source, "a", "application/pdf", "%PDF-1.4 a receipt that will be changed");
     const plain = path.join(dir, "plain.dotami-backup");
-    writeBackup(source, plain, { appVersion: "1" });
+    writeBackup(source, plain, { appVersion: "1" , allowUnlocked: true });
     const original = readFileSync(plain);
     const flipped = path.join(dir, "flipped.dotami-backup");
     writeFileSync(flipped, original);
@@ -461,7 +481,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
     const source = makeDb(path.join(dir, "old", "dotami.db"));
     addReceipt(source, "a", "application/pdf", "%PDF-1.4 a receipt");
     const plain = path.join(dir, "plain.dotami-backup");
-    writeBackup(source, plain, { appVersion: "1" });
+    writeBackup(source, plain, { appVersion: "1" , allowUnlocked: true });
 
     type Entry = { path: string; bytes: number; sha256: string };
     const hostile: [string, (files: Entry[]) => void][] = [
@@ -491,7 +511,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
     const source = makeDb(path.join(dir, "old", "dotami.db"));
     addReceipt(source, "a", "application/pdf", "%PDF-1.4 from the backup");
     const backup = path.join(dir, "mine.dotami-backup");
-    writeBackup(source, backup, { appVersion: "1" });
+    writeBackup(source, backup, { appVersion: "1" , allowUnlocked: true });
     const live = makeDb(path.join(dir, "live", "dotami.db"), "from-live");
     const fromLive = addReceipt(live, "d", "image/png", "kept here");
     const staging = path.join(dir, "live", "dotami.db.restoring");
@@ -597,7 +617,7 @@ describe("desktop backup — receipts encrypted at rest", () => {
     const { db, name } = computerA();
     for (const passphrase of ["", PASSPHRASE]) {
       const backup = path.join(dir, `a${passphrase ? "-locked" : ""}.dotami-backup`);
-      const info = writeBackup(db, backup, { appVersion: "1", passphrase, receiptKey: keyA });
+      const info = writeBackup(db, backup, { appVersion: "1", passphrase, receiptKey: keyA, allowUnlocked: passphrase === "" });
       expect(info).toMatchObject({ receipts: 1, missingReceipts: 0, unreadableReceipts: 0 });
       // The backup lists the receipt's own size and SHA-256, not the encrypted file's.
       const { header } = readBackup(backup, { passphrase });
@@ -632,7 +652,7 @@ describe("desktop backup — receipts encrypted at rest", () => {
     const { db } = computerA();
     for (const receiptKey of [null, keyB]) {
       const backup = path.join(dir, "unreadable.dotami-backup");
-      expect(writeBackup(db, backup, { appVersion: "1", receiptKey })).toMatchObject({ receipts: 0, missingReceipts: 0, unreadableReceipts: 1 });
+      expect(writeBackup(db, backup, { appVersion: "1", receiptKey , allowUnlocked: true })).toMatchObject({ receipts: 0, missingReceipts: 0, unreadableReceipts: 1 });
       const { header } = readBackup(backup);
       expect(header.format === 2 && header.files.map((f) => f.path)).toEqual(["dotami.db"]);
       expect(readFileSync(backup).indexOf("DOTAMI-RECEIPT")).toBe(-1);

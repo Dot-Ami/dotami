@@ -20,7 +20,7 @@ Change both together.
 | Setting | Default | Options | Warning before switching on | Story |
 |---|---|---|---|---|
 | Where the data file lives | the app's own folder | any folder | moving it: "the app will close and reopen" | [7b] |
-| Backup passphrase | none | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
+| Backup passphrase | required | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
 | Encrypt the data file | on, asked first | on · never | encrypting: "if the key is ever lost, everything not in a backup is lost; an older DotAmi can't open the file afterwards"; never: "your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer's disk outside Windows can read it" | [8i] |
 | Automatic updates | on | on · ask first · off | off: "you won't get fixes, including security fixes" | [7d] |
 | Figure reminders | none ticked | monthly · quarterly · yearly (tick any, or none) | — | [8e] |

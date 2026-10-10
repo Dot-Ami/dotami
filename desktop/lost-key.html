@@ -18,6 +18,7 @@
       .buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 14px; }
       button { padding: 6px 14px; border-radius: 999px; border: 1px solid #32303a; background: transparent; color: #efe7d6; font: inherit; cursor: pointer; }
       button.primary { border-color: #b94a2c; background: #b94a2c; }
+      [hidden] { display: none !important; }
     </style>
   </head>
   <body>
@@ -31,9 +32,16 @@
     </p>
     <p><strong>Nothing was changed.</strong> If you deleted or moved <code>database.key</code> (beside the data file),
       put it back — it may be in the Recycle Bin — and start DotAmi again: everything comes back. Otherwise, a
-      backup brings back what it holds.</p>
+      backup brings back what it holds: <strong>Restore from a backup…</strong> moves the locked data file and its
+      key file into the backups folder (never deleting them) and restores the backup under a new key.</p>
+    <p id="store-unavailable" class="warning" hidden>
+      Windows' key store isn't answering right now, so your key may well be fine. Nothing is given up for
+      that: restart Windows (or sign out and in again) and start DotAmi again. Restoring a backup is offered
+      only when the key store answers and the key still can't be opened.
+    </p>
     <div class="buttons">
       <button type="button" id="open-folder">Open the data folder</button>
+      <button type="button" id="restore">Restore from a backup…</button>
       <button type="button" id="quit" class="primary">Quit</button>
     </div>
     <script src="lost-key.js"></script>

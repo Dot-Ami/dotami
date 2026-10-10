@@ -9,7 +9,7 @@ const query = new URLSearchParams(window.location.search);
 /** The answers each window may send; anything else is never sent. desktop/main.mjs checks them again. */
 const ANSWERS = {
   "encrypt-ask": ["encrypt", "backup", "not-now", "never"],
-  "lost-key": ["quit", "open-folder"],
+  "lost-key": ["quit", "open-folder", "restore"],
 };
 const which = query.get("which") ?? "";
 const allowed = ANSWERS[which] ?? [];

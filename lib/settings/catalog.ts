@@ -81,8 +81,9 @@ export const SETTINGS: readonly SettingEntry[] = [
     id: "backup-passphrase",
     group: "data",
     label: "Backup passphrase",
-    does: "Locks your backups so only someone with the passphrase can open them.",
-    defaultValue: "none",
+    // [8i] Required since 2026-10-10 (the maintainer's decision): a backup holds the data decrypted.
+    does: "Locks every backup so only someone with the passphrase can open it. Every backup needs one: a backup holds your data unencrypted inside it, so it can be restored on another computer.",
+    defaultValue: "required",
     options: "a passphrase",
     warning: "Before setting one: \"lose it and the backup can't be opened — nobody can recover it\".",
     story: "7c",

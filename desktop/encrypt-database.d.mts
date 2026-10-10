@@ -8,6 +8,8 @@ export class EncryptionStopped extends Error {
 }
 export function notePath(dataDir: string): string;
 export function readNote(dataDir: string): null | { unreadable: true } | { step: "swap" | "wipe"; file: string; size: number; sha256: string };
+export function wipeFile(file: string): void;
+export function setAsideLockedFile(dataDir: string, dbFile: string, now?: () => number): string | null;
 export function wipeFile(file: string, options?: { remove?: (file: string) => void }): void;
 export function plainLeftovers(dataDir: string): string[];
 export function encryptFile(

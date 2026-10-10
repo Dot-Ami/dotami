@@ -22,7 +22,7 @@
 //
 // The log gets the step and counts only, never a name of the person's, a value or the key.
 import { createHash } from "node:crypto";
-import { closeSync, existsSync, fstatSync, fsyncSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
+import { closeSync, existsSync, fstatSync, fsyncSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
 import path from "node:path";
 
 import { contentsOf, copyIntoKeyedFile, differences } from "./database-copy.mjs";
@@ -359,6 +359,27 @@ function filesEndingIn(dataDir, endings) {
     for (const n of names) if (endings.some((e) => n.endsWith(e))) found.push(path.join(folder, n));
   }
   return found;
+}
+
+/**
+ * [8i] Moves a data file that can't be opened (its key is lost) out of the way, into backups/, never
+ * deleting it: `dotami-locked-<time>.db`, with its journal beside it if there is one. The name isn't one
+ * DotAmi gives its safety copies (`dotami-before-…`), so Delete's "safety copies" box never deletes it
+ * and nothing tries to encrypt it again; if its key ever comes back, it can still be opened. Used by
+ * "Restore from a backup…" and "Start fresh…" in the lost-key window (desktop/main.mjs). Returns where it
+ * went, or null when there was no file.
+ * @param {string} dataDir
+ * @param {string} dbFile
+ * @param {() => number} [now]
+ */
+export function setAsideLockedFile(dataDir, dbFile, now = Date.now) {
+  if (!existsSync(dbFile)) return null;
+  const backups = path.join(dataDir, "backups");
+  mkdirSync(backups, { recursive: true });
+  const target = path.join(backups, `dotami-locked-${now()}.db`);
+  renameSync(dbFile, target);
+  if (existsSync(`${dbFile}${JOURNAL}`)) renameSync(`${dbFile}${JOURNAL}`, `${target}${JOURNAL}`);
+  return target;
 }
 
 /**

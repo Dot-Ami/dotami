@@ -614,7 +614,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and those receipt folders.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was (receipts-before-restore-…). Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…). In the desktop app they are encrypted with the data file's key. When the data file's key is lost and you restore a backup (or start fresh), the locked data file and its key file are moved here, never deleted, in case the key comes back. Nothing here is deleted unless you tick “Safety copies in the backups folder” on the Delete menu below, which deletes the safety copies and those receipt folders.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },

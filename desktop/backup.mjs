@@ -143,11 +143,17 @@ const changedWhileWriting = () =>
  * in, and is counted in `unreadableReceipts` for the caller to say so.
  * @param {string} dbFile the live database; its receipts are in the receipts folder beside it
  * @param {string} outFile where the backup goes (replaced if it exists)
- * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null, databaseKey?: Buffer | null }} options an empty passphrase means "not encrypted";
+ * [8i] A passphrase is required (the maintainer's decision 3 of 2026-10-10): a backup holds the data file
+ * decrypted, so without one it would undo the data file's encryption. An empty passphrase is refused,
+ * with nothing written. `allowUnlocked` exists only so the tests can make the unlocked backups older
+ * versions wrote, to prove those still restore; the desktop app never passes it
+ * (tests/desktop-backup.spec.ts checks desktop/main.mjs).
+ * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null, databaseKey?: Buffer | null, allowUnlocked?: boolean }} options
  *   `databaseKey`: the data file's key when it is encrypted ([8i])
  * @returns {{ encrypted: boolean, bytes: number, migrations: string[], receipts: number, missingReceipts: number, unreadableReceipts: number }}
  */
-export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null, databaseKey = null } = {}) {
+export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null, databaseKey = null, allowUnlocked = false } = {}) {
+  if (passphrase === "" && !allowUnlocked) throw new BackupError("needs-passphrase", "Every backup needs a passphrase. No backup was saved.");
   const receiptsDir = path.join(path.dirname(dbFile), RECEIPTS_FOLDER);
   const listed = new Set(receiptNamesIn(receiptsDir));
 

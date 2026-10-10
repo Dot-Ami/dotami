@@ -4,7 +4,14 @@
   const bridge = window.dotamiChoice;
   const $ = (id) => document.getElementById(id);
   $("why").textContent = bridge.detail;
+  // Windows' key store only unavailable for now: nothing that gives up the locked file is offered (the app
+  // refuses those answers too, desktop/main.mjs showLostKey).
+  if (bridge.status === "store-unavailable") {
+    $("restore").hidden = true;
+    $("store-unavailable").hidden = false;
+  }
   $("quit").addEventListener("click", () => bridge.answer("quit"));
   $("open-folder").addEventListener("click", () => bridge.answer("open-folder"));
+  $("restore").addEventListener("click", () => bridge.answer("restore"));
   $("quit").focus();
 })();
