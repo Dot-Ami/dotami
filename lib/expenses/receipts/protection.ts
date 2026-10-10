@@ -111,6 +111,75 @@ export function receiptsCanBeAdded(state: ReceiptLockState): boolean {
 /** What an agreed record says instead of Add a receipt while receiptsCanBeAdded is false. */
 export const RECEIPTS_CANT_BE_ADDED = "Receipts can't be added now: the amber line at the top of this page says why.";
 
+// [8i] Bringing set-aside receipts back (expense-records.md § 12): the sentences Settings and What DotAmi
+// knows about you show beside each folder Start a new key set receipts aside in, and after the button.
+
+/** A copy run from source has no key store, so it can't open an old key: said instead of a button. */
+export const SET_ASIDE_FROM_SOURCE =
+  "Receipts were set aside in the backups folder when a new key was started. This copy runs from source and has no key store, so it can't bring them back. The desktop app can, if Windows can open their old key on your account again.";
+
+/** The desktop app while its own key isn't open: there is no key to lock them with again. */
+export const SET_ASIDE_NEEDS_OPEN_KEY =
+  "Receipts were set aside in the backups folder when a new key was started. They can be brought back only while DotAmi's own receipts key opens.";
+
+/** The desktop app didn't answer the list (it always should): said instead of the folders. */
+export const SET_ASIDE_LIST_FAILED =
+  "Receipts were set aside in the backups folder, but the desktop app didn't say whether they can be brought back. Reload this page to ask again.";
+
+const receiptFiles = (n: number) => `${n} receipt file${n === 1 ? "" : "s"}`;
+
+/**
+ * One set-aside folder, as the desktop app listed it (desktop/receipt-bring-back.mjs listSetAsideReceipts):
+ * where it is, how many receipts, and whether their old key opens on this account again. `canBringBack`
+ * is whether the button is offered.
+ */
+export function setAsideFolderText({ path, receipts, canOpen }: { path: string; receipts: number; canOpen: number }): {
+  summary: string;
+  canBringBack: boolean;
+} {
+  const where = `${receiptFiles(receipts)} set aside in ${path}.`;
+  if (canOpen <= 0) {
+    return { summary: `${where} Their old key still can't be opened on this Windows account, so they can't be brought back.`, canBringBack: false };
+  }
+  if (canOpen >= receipts) return { summary: `${where} This Windows account can open their old key again.`, canBringBack: true };
+  return {
+    summary: `${where} This Windows account can open the old key to ${canOpen} of them again; the others stay where they are.`,
+    canBringBack: true,
+  };
+}
+
+/** Why one receipt stayed in the set-aside folder (desktop/receipt-bring-back.mjs bringBackReceipts `left`). */
+export const BRING_BACK_LEFT = {
+  "no-record": "Its expense record was deleted since, or no longer has this receipt, so it wasn't brought back.",
+  "no-key": "Its old key can't be opened on this Windows account.",
+  changed: "It changed or was damaged since it was set aside, so DotAmi won't bring it back.",
+  "already-there": "A file of the same name is already in the receipts folder, so it was left as it is.",
+  "not-written": "It couldn't be written to the receipts folder (another program may have the folder open). Try again.",
+} as const;
+
+/** Why the desktop app refused the whole request. Every one of them moves nothing. */
+export const BRING_BACK_REFUSED = {
+  "not-dotami-window": "Only DotAmi's own window can bring receipts back. Nothing was moved.",
+  "no-current-key": "DotAmi's own receipts key isn't open right now, so there is no key to lock them with again. Nothing was moved.",
+  closing: "DotAmi is closing. Nothing was moved.",
+  "not-a-set-aside-folder": "That folder isn't one DotAmi set receipts aside in, or it is no longer there. Nothing was moved.",
+  "data-file-unreadable": "DotAmi couldn't read its data file to check the receipts against their records. Nothing was moved.",
+  "no-answer": "The desktop app didn't answer. Nothing was moved.",
+} as const;
+
+export type BringBackLeftReason = keyof typeof BRING_BACK_LEFT;
+export type BringBackRefusal = keyof typeof BRING_BACK_REFUSED;
+
+/** The line after the button: how many came back, and an old copy still in the folder. Each one left is named under it. */
+export function bringBackDoneText({ broughtBack, oldCopiesLeft }: { broughtBack: readonly string[]; oldCopiesLeft: readonly string[]; left: readonly unknown[] }): string {
+  if (broughtBack.length === 0) return "No receipt was brought back.";
+  const n = broughtBack.length;
+  const head = n === 1 ? "1 receipt brought back. It opens from its record again." : `${n} receipts brought back. They open from their records again.`;
+  return oldCopiesLeft.length === 0
+    ? head
+    : `${head} The old copy of ${oldCopiesLeft.length} is still in the set-aside folder, because another program had it open.`;
+}
+
 /** Why one encrypted receipt can't be shown (the viewer says it in amber). */
 export const LOCKED_RECEIPT_MESSAGES = {
   otherKey:

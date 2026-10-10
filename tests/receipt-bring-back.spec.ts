@@ -16,7 +16,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { decryptReceipt, encryptedKeyId, encryptReceipt, encryptReceiptsIn, keyIdOf } from "../desktop/receipt-crypto.mjs";
-import { isReceiptFileName } from "../desktop/backup.mjs";
+import { isReceiptFileName, RECEIPT_EXTENSIONS } from "../desktop/backup.mjs";
 import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "../desktop/receipt-bring-back.mjs";
 import { RECEIPT_KEY_FILE, type KeyStore } from "../desktop/receipt-key.mjs";
 import { openDatabase, runSql } from "../desktop/sqlite.mjs";
@@ -99,6 +99,8 @@ function snapshot(): Record<string, string> {
     if (!existsSync(at)) return;
     for (const e of readdirSync(at, { withFileTypes: true })) {
       const full = path.join(at, e.name);
+      // A link (a junction, in the tests about links) is the test's own; what it points at is walked as itself.
+      if (e.isSymbolicLink()) continue;
       if (e.isDirectory()) walk(full);
       else if (!e.name.startsWith("dotami.db")) out[path.relative(dir, full)] = readFileSync(full).toString("base64");
     }
@@ -472,6 +474,15 @@ describe("the list of set-aside folders the page shows", () => {
     });
     // The server counts the same folders from their names and files (no key needed for that).
     expect(listLockedReceiptFolders(dbFile()).names).toEqual(["receipts-locked-7000", "receipts-locked-7001"]);
+  });
+
+  it("counts a folder holding a receipt of any type DotAmi keeps (its own list of extensions matches backup.mjs)", () => {
+    for (const [i, ext] of Object.values(RECEIPT_EXTENSIONS).entries()) {
+      const folder = path.join(backups(), `receipts-locked-80${i}`);
+      mkdirSync(folder, { recursive: true });
+      writeFileSync(path.join(folder, `${randomBytes(16).toString("hex")}.${ext}`), "x");
+    }
+    expect(listLockedReceiptFolders(dbFile()).names).toHaveLength(Object.values(RECEIPT_EXTENSIONS).length);
   });
 
   it("answers only DotAmi's own window, and only while this start's key is open", () => {

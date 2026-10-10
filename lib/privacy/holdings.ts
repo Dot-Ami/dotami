@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
 
-import { listSafetyCopies, listSetAsideReceiptFolders, wipePendingFile } from "@/desktop/wipe-pending.mjs";
+import { listLockedReceiptFolders, listSafetyCopies, listSetAsideReceiptFolders, wipePendingFile } from "@/desktop/wipe-pending.mjs";
 
 import { receiptLock, receiptsSetAsideTo, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import { describeReceiptFiles, RECEIPTS_FOLDER, type ReceiptFilesProtection } from "@/lib/expenses/receipts/store";
@@ -140,9 +140,10 @@ export interface Holdings {
   /**
    * [8i] How the receipt files are kept (docs/architecture/expense-records.md § 9): this copy's state
    * and the files counted by their first bytes only (encrypted with this copy's key, plain, or locked
-   * with a key it can't open).
+   * with a key it can't open). `lockedFolders`: the folders Start a new key set receipts aside in that
+   * still hold one, for "Bring these receipts back" (expense-records.md § 12).
    */
-  receiptFiles: ReceiptFilesProtection & { state: ReceiptLockState; setAsideTo: string | null };
+  receiptFiles: ReceiptFilesProtection & { state: ReceiptLockState; setAsideTo: string | null; lockedFolders: number };
   windowStorage: readonly WindowStorageEntry[];
   sentElsewhere: SentFacts[];
 }
@@ -292,6 +293,18 @@ function setAsideReceiptFoldersIn(dataPath: string): number {
   }
 }
 
+/**
+ * [8i] The folders Start a new key set receipts aside in that still hold a receipt file, for "Bring these
+ * receipts back" (expense-records.md § 12); 0 when the backups folder can't be read.
+ */
+function lockedReceiptFoldersIn(dataPath: string): number {
+  try {
+    return listLockedReceiptFolders(dataPath).names.length;
+  } catch {
+    return 0;
+  }
+}
+
 function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
   switch (entry.id) {
     case "intake-sentence":
@@ -359,7 +372,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
     setAsideReceiptFolders: dataPath ? setAsideReceiptFoldersIn(dataPath) : 0,
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
-    receiptFiles: { state: lock.state, setAsideTo: receiptsSetAsideTo(lock), ...receiptCounts },
+    receiptFiles: { state: lock.state, setAsideTo: receiptsSetAsideTo(lock), lockedFolders: dataPath ? lockedReceiptFoldersIn(dataPath) : 0, ...receiptCounts },
     windowStorage: WINDOW_STORAGE,
     sentElsewhere: SENT_ELSEWHERE.map((entry) => sentFacts(entry, today)),
   };

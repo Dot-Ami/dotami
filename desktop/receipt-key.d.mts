@@ -61,3 +61,5 @@ export function setAsideLockedReceipts(
   dataDir: string,
   options?: { now?: () => number; rename?: (from: string, to: string) => void },
 ): { folder: string | null; receipts: number; keyFile: boolean };
+/** Opens a receipts key file set aside elsewhere (expense-records.md § 12); never throws, changes nothing. */
+export function openKeyFile(file: string, store: KeyStore, platform?: string): { keyId: string | null; key: Buffer | null };

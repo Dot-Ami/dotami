@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { listLockedReceiptFolders } from "@/desktop/wipe-pending.mjs";
 import { databaseFilePath } from "@/lib/db/database-file";
 import { databaseLockState, type DatabaseLockState } from "@/lib/db/lock";
 import { receiptLockState, receiptsSetAsideTo, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
@@ -41,6 +42,13 @@ export interface SettingsToday {
    * said on the page until the restart. Null otherwise. Only this server's own run knows it.
    */
   receiptsSetAside: string | null;
+  /**
+   * [8i] How many folders Start a new key set receipts aside in still hold a receipt file
+   * (backups/receipts-locked-…; desktop/wipe-pending.mjs listLockedReceiptFolders): when there are any,
+   * Settings says whether they can be brought back (expense-records.md § 12). Counted from the folder
+   * names and file names only.
+   */
+  receiptsLockedFolders: number;
   /** The tax year the catalogs cover (lib/engines/<engine>/v2026). Becomes a setting with [11i]. */
   taxYear: number;
 }
@@ -48,6 +56,15 @@ export interface SettingsToday {
 // Moved to lib/db/database-file.ts (the database client opens the file through it too); still
 // exported here for the callers that import it from this file.
 export { databaseFilePath };
+
+/** The set-aside receipt folders beside a data file; 0 when they can't be read (the page then says nothing about them). */
+function lockedFoldersBeside(file: string): number {
+  try {
+    return listLockedReceiptFolders(file).names.length;
+  } catch {
+    return 0;
+  }
+}
 
 export function readSettingsToday(
   env: Record<string, string | undefined> = process.env,
@@ -67,6 +84,7 @@ export function readSettingsToday(
     receipts: receiptLockState(env),
     database: databaseLockState(env),
     receiptsSetAside: env === process.env ? receiptsSetAsideTo() : null,
+    receiptsLockedFolders: file ? lockedFoldersBeside(file) : 0,
     taxYear: 2026,
   };
 }

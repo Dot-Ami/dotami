@@ -177,6 +177,36 @@ export function listSetAsideReceiptFolders(dbFile) {
   return { names: names.sort() };
 }
 
+/** Start a new key's folders only (`receipts-locked-<time>`, `-<n>`): what "Bring these receipts back" reads. */
+export const LOCKED_FOLDER_NAME = /^receipts-locked-\d+(?:-\d+)?$/;
+/** A finished receipt file DotAmi named (no unfinished write, no key file). */
+const RECEIPT_FILE_NAME = /^[0-9a-f]{32}\.(?:jpg|png|webp|pdf|heic)$/;
+
+/**
+ * [8i] The folders Start a new key set receipts aside in that still hold a receipt file, by name, sorted:
+ * real `receipts-locked-<time>` folders directly inside a real backups folder, with at least one regular
+ * receipt file DotAmi named in them (expense-records.md § 12). A folder holding only the old key file
+ * (every receipt was brought back) isn't listed. The server counts these for the pages; the desktop app's
+ * main process lists them to bring receipts back (desktop/receipt-bring-back.mjs).
+ * @param {string} dbFile
+ * @returns {{ names: string[] }}
+ */
+export function listLockedReceiptFolders(dbFile) {
+  const backups = backupsFolder(dbFile);
+  if (!isRealFolder(backups)) return { names: [] };
+  const names = [];
+  for (const item of readdirSync(backups, { withFileTypes: true })) {
+    if (!item.isDirectory() || !LOCKED_FOLDER_NAME.test(item.name)) continue;
+    try {
+      const inside = readdirSync(path.join(backups, item.name), { withFileTypes: true });
+      if (inside.some((e) => e.isFile() && RECEIPT_FILE_NAME.test(e.name))) names.push(item.name);
+    } catch {
+      // Can't be read: nothing DotAmi could bring back from it either.
+    }
+  }
+  return { names: names.sort() };
+}
+
 /**
  * [8i] Clears the named set-aside receipt folders: deletes the files DotAmi put in each (never a link,
  * never anything else), then removes the folder if that left it empty. A folder counts as cleared once

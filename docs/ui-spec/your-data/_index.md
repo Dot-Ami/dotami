@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-10 ([8i] — Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-10 ([8i] — Bring these receipts back in the receipts folder's row; [8i] — Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -64,7 +64,11 @@ jump links, then five sections in this order:
    key not saved yet), the same control and the same two asks as on Settings, `docs/ui-spec/settings/_index.md`;
    afterwards, until the restart, the amber "DotAmi starts a new key…" line with the folder; in the desktop app
    DotAmi restarts by itself after saying so, and the line, read only if it didn't, says to close it and open
-   it again; a copy run from source says it doesn't restart by itself, expense-records.md § 11) and counts the files by
+   it again; a copy run from source says it doesn't restart by itself, expense-records.md § 11); then, when the
+   backups folder holds a `receipts-locked-…` folder with a receipt file in it, the receipts set aside earlier
+   and **Bring these receipts back** for each folder whose old key this Windows account can open again (the same
+   control, sentences and dialog as on Settings, `docs/ui-spec/settings/_index.md`; expense-records.md § 12;
+   desktop app only, while its own key opens; from source, one sentence and no button), and counts the files by
    how they are kept, read from the first few bytes of each and nothing more ("N of M receipt files
    encrypted with this computer's key.", any not encrypted yet, any locked with a key this computer
    can't open); its footnote says those first bytes were read. A row for **the key to your receipt

@@ -411,7 +411,7 @@ export async function readReceiptFile(
       const aside = await setAsideFolderHolding(folder, path.basename(file));
       if (aside) {
         throw new ReceiptError(
-          `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key. To keep a receipt on this record, remove this one and add the file again.`,
+          `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key: if Windows can open that key on this account again, Settings → Data and backups in the desktop app can bring it back. To keep a receipt on this record, remove this one and add the file again.`,
           404,
         );
       }

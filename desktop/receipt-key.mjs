@@ -360,6 +360,25 @@ function readKeyFile(file) {
   return { keyId, parsed };
 }
 
+/**
+ * [8i] Opens a receipts key file found elsewhere than beside the data file: the old `receipts.key` Start a
+ * new key set aside in backups/receipts-locked-<time>/ (desktop/receipt-bring-back.mjs, expense-records.md
+ * § 12). The same checks as at start (the format, the id, a key that matches its id), and nothing opens
+ * when the key store wouldn't really protect a key (keyStoreAvailable). Never throws; changes nothing.
+ * @param {string} file
+ * @param {KeyStore} store
+ * @param {string} [platform]
+ * @returns {{ keyId: string | null, key: Buffer | null }}
+ */
+export function openKeyFile(file, store, platform = process.platform) {
+  try {
+    if (!keyStoreAvailable(store, platform)) return { keyId: readKeyFile(file).keyId, key: null };
+    return unwrap(file, store);
+  } catch {
+    return { keyId: null, key: null };
+  }
+}
+
 /** The key file's key id (null if the file isn't readable as one) and its key (null if it can't be opened). */
 function unwrap(file, store) {
   const { keyId, parsed } = readKeyFile(file);

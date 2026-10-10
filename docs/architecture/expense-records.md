@@ -1224,8 +1224,9 @@ in the main process in one go, without waiting on anything, so two presses can't
 
 ### The log
 
-`[desktop] set-aside receipts: 2 brought back, 1 left where it was` (counts only), or
-`[desktop] bringing set-aside receipts back was refused: <the rule>`. Never a path, a name or a key id.
+`[desktop] set-aside receipts: 2 brought back, 1 left where they were` (counts only), or
+`[desktop] bringing set-aside receipts back was refused: <the rule>` (and `listing set-aside receipts
+was refused: <the rule>` for the list). Never a path, a name or a key id.
 
 ### Not done, and why
 

@@ -31,6 +31,7 @@ import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote,
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
+import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "./receipt-bring-back.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, restartForNewKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
@@ -247,8 +248,9 @@ async function start() {
     title: "DotAmi",
     backgroundColor: "#161619",
     show: false,
-    // The preload gives DotAmi's pages three calls and nothing else (desktop/window-preload.cjs: two
-    // about HEIC, one to restart after Start a new key); the window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
+    // The preload gives DotAmi's pages five calls and nothing else (desktop/window-preload.cjs: two
+    // about HEIC, one to restart after Start a new key, two to list and bring back set-aside receipts);
+    // the window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
     // switch may turn off Chromium's sandboxes or run the graphics process inside the browser process
     // (tests/desktop-sandbox.spec.ts lists the switches and fails if one appears).
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(root, "desktop", "window-preload.cjs") },
@@ -837,7 +839,7 @@ function lockDown(origin) {
 }
 
 /**
- * The three calls the page may make (desktop/window-preload.cjs). Each is believed only from DotAmi's
+ * The five calls the page may make (desktop/window-preload.cjs). Each is believed only from DotAmi's
  * own window showing one of its own pages (Electron security checklist #17).
  *   - The two HEIC questions: "may I still draw a HEIC?" and "a HEIC just failed". Anything else asking
  *     is told HEIC is stopped, and anything else reporting a failure is ignored.
@@ -845,6 +847,11 @@ function lockDown(origin) {
  *     once the server has moved the locked receipts aside, and restartForNewKey (receipt-key.mjs)
  *     decides from what this process knows: this start's key, the receipts folder on the disk, whether
  *     the app is already quitting. Anything else asking is refused, and nothing restarts.
+ *   - Listing and bringing back set-aside receipts ([8i], expense-records.md § 12): only this process can
+ *     ask Windows to open an old key, so it does the work (desktop/receipt-bring-back.mjs), deciding from
+ *     what it knows (this start's key, the folders on the disk, the data file's rows), never from what the
+ *     page says beyond which folder. The page gets back folder paths, counts and DotAmi's own file names,
+ *     never a key.
  */
 function answerWindowCalls(origin) {
   const fromDotAmi = (event) => {
@@ -877,6 +884,26 @@ function answerWindowCalls(origin) {
         await stopped;
       },
       exit: (code) => app.exit(code),
+      log: (line) => log?.write(`${line}\n`),
+    }),
+  );
+  ipcMain.handle("dotami-list-set-aside-receipts", (event) =>
+    listSetAsideReceipts(dataDir, {
+      fromDotAmi: fromDotAmi(event),
+      opened: receiptKey,
+      store: safeStorage,
+      log: (line) => log?.write(`${line}\n`),
+    }),
+  );
+  ipcMain.handle("dotami-bring-back-receipts", (event, folder) =>
+    bringBackReceipts(dataDir, folder, {
+      fromDotAmi: fromDotAmi(event),
+      opened: receiptKey,
+      quitting,
+      store: safeStorage,
+      // The rows the receipts must match, read-only, with the data file's key when it is encrypted. The
+      // server has the file open meanwhile; SQLite lets a second reader in.
+      readRows: () => receiptRowsIn(dbFile, databaseKey),
       log: (line) => log?.write(`${line}\n`),
     }),
   );

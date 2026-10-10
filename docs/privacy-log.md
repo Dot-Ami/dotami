@@ -39,6 +39,17 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Set-aside receipts can come back into the receipts folder ([8i], 2026-10-10).** In the desktop app,
+  once Windows can open the old key of receipts *Start a new key* set aside in
+  `backups/receipts-locked-<time>/` again, *Bring these receipts back* opens each with that key in the main
+  process's memory, checks it against its `Receipt` row (size and SHA-256), locks it again with the current
+  key, writes it into `receipts/` (through `<name>.encrypting`, removed by the next start if left behind)
+  and only then removes the set-aside copy; the old key file stays in that folder
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)). Nothing is decrypted onto the
+  disk. No new table, column, file kind or browser-storage key; the log gets counts only. A copy run from
+  source can't do it and says so. Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
+  (`FOLDERS`: the receipts folder, the safety copies folder and the receipts key). Tested by
+  [`tests/receipt-bring-back.spec.ts`](../tests/receipt-bring-back.spec.ts) and the desktop test.
 - **The "wipe pending" note can also name set-aside receipt folders ([8i], 2026-10-10).** When Delete is
   asked to clear the receipt folders set aside in `backups/` (below, *How to remove it*), the note it
   leaves beside the data file until the work is done lists those folders' names (`receiptFolders`:
@@ -401,6 +412,16 @@ person is asked).
 
 ### New powers or permissions
 
+- **The window can ask the desktop app about set-aside receipts, and to bring them back ([8i],
+  2026-10-10).** The window's bridge ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs)) gains
+  two calls, `listSetAsideReceipts` and `bringBackReceipts(folder)`, five in all. The main process answers
+  only DotAmi's own window showing one of its own pages, only while this start's receipts key is open, and
+  for the second only a folder named exactly as Start a new key names it, directly inside a real backups
+  folder (never a link or junction), only while the app isn't closing and only when the data file can be
+  read; otherwise it refuses and moves nothing. The main process now also asks Windows to open old key
+  files found in `backups/receipts-locked-…/` (the same per-account protection as `receipts.key`), and
+  reads the `Receipt` table read-only. The page gets back folder paths, counts and DotAmi's own file
+  names, never a key. Nothing is sent anywhere.
 - **The desktop app can restart itself after *Start a new key* ([8i], 2026-10-10).** The window's bridge
   ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs)) gains a third call, `restartForNewKey`.
   The main process restarts only when the call comes from DotAmi's own window showing one of its own
@@ -483,6 +504,10 @@ person is asked).
 
 ### What the person must agree to
 
+- ***Bring these receipts back* is asked once ([8i], 2026-10-10)**: a dialog says what happens (each receipt
+  opened with its old key, checked against its record, locked again with the current key and put back,
+  and only then removed from the set-aside folder), that a receipt whose record was deleted since stays
+  and is named, and that the old key file stays. Nothing is given up, so there is no second ask.
 - **The restart after *Start a new key* needs no new answer ([8i], 2026-10-10)**: the second ask now says
   that DotAmi then restarts by itself, and after the move the page says "DotAmi will restart now to start
   the new key…" before the restart is asked for.
@@ -599,6 +624,9 @@ person is asked).
 
 ### How to remove it
 
+- **A set-aside folder after *Bring these receipts back* ([8i], 2026-10-10)** keeps the old key file and
+  any receipt that didn't come back. The Delete box *Safety copies in the backups folder* still counts it
+  and clears it, as before; the receipts that came back are in the receipts folder, removed like any other.
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
   the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
   folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's

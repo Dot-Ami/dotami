@@ -33,3 +33,9 @@ export function finishPendingWipe(
   dbFile: string,
   options: { vacuum: (dbFile: string) => boolean; log?: (line: string) => void; remove?: (file: string) => void },
 ): { ran: false } | { ran: true; wiped: boolean; backupsLeft: string[]; receiptFoldersLeft: string[] };
+
+/** Start a new key's folders only: `receipts-locked-<time>`, with `-<n>` when two were made in the same millisecond ([8i]). */
+export const LOCKED_FOLDER_NAME: RegExp;
+
+/** The receipts-locked folders that still hold a receipt file, by name, sorted (expense-records.md § 12). */
+export function listLockedReceiptFolders(dbFile: string): { names: string[] };

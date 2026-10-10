@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
 import { databaseProtectionText } from "@/lib/db/protection";
+import { BringBackReceipts } from "@/components/expenses/bring-back-receipts";
 import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import type { BankSourcesState } from "@/lib/figures/source-account-name";
@@ -190,11 +191,14 @@ function ReceiptProtectionLine({
   setAsideTo,
   desktop,
   dataFileEncrypted,
+  lockedFolders,
 }: {
   state: SettingsToday["receipts"];
   setAsideTo: string | null;
   desktop: boolean;
   dataFileEncrypted: boolean;
+  /** Folders Start a new key set receipts aside in, still holding one (expense-records.md § 12). */
+  lockedFolders: number;
 }) {
   const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { desktop, dataFileEncrypted });
   return (
@@ -204,6 +208,8 @@ function ReceiptProtectionLine({
       </p>
       {/* Offered only while the key can't be opened (expense-records.md § 10). */}
       {state === "key-unreadable" ? <StartNewReceiptKey /> : null}
+      {/* Receipts set aside earlier, and bringing them back once their old key opens (§ 12). */}
+      <BringBackReceipts lockedFolders={lockedFolders} lockState={state} desktop={desktop} />
     </div>
   );
 }
@@ -256,6 +262,7 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             setAsideTo={today.receiptsSetAside}
             desktop={today.desktop}
             dataFileEncrypted={today.database.state === "on"}
+            lockedFolders={today.receiptsLockedFolders}
           />
           {today.desktop ? (
             <p className="text-paper-dim">
