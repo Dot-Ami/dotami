@@ -165,11 +165,11 @@ describe("when it does something", () => {
     // Until the restart, this server says so on every page, with the folder.
     expect(receiptLockState()).toBe("new-key-at-restart");
     expect(receiptsSetAsideTo()).toBe(answer.movedTo);
-    const text = receiptProtectionText("new-key-at-restart", answer.movedTo);
+    const text = receiptProtectionText("new-key-at-restart", answer.movedTo, { desktop: true });
     expect(text.tone).toBe("problem");
     expect(text.headline).toBe("DotAmi starts a new key for your receipts the next time it starts.");
     expect(text.detail).toContain(answer.movedTo);
-    expect(text.detail).toContain("Close DotAmi and open it again");
+    expect(text.detail).toContain("If it hasn't, close DotAmi and open it again");
     expect(text.detail).toContain("moved, not deleted");
   });
 

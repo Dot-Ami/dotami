@@ -63,12 +63,15 @@ export function ExpensesPage({
   initialIdea,
   receiptProtection = "source",
   receiptsSetAside = null,
+  desktop = false,
 }: {
   initialIdea: string | null;
   /** How this copy keeps receipt files, read on the server ([8i], lib/expenses/receipts/lock.ts): only the state. */
   receiptProtection?: ReceiptLockState;
   /** After Start a new key, until the restart: where the locked receipts went (lock.ts receiptsSetAsideTo). */
   receiptsSetAside?: string | null;
+  /** The desktop app, which restarts by itself after Start a new key (lib/settings/today.ts). */
+  desktop?: boolean;
 }) {
   const today = useLocalToday();
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
@@ -303,7 +306,7 @@ export function ExpensesPage({
             Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never
             picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice.
           </p>
-          <ReceiptKeyProblem setAsideTo={receiptsSetAside} />
+          <ReceiptKeyProblem setAsideTo={receiptsSetAside} desktop={desktop} />
         </header>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">

@@ -188,13 +188,15 @@ function SettingRow({
 function ReceiptProtectionLine({
   state,
   setAsideTo,
+  desktop,
   dataFileEncrypted,
 }: {
   state: SettingsToday["receipts"];
   setAsideTo: string | null;
+  desktop: boolean;
   dataFileEncrypted: boolean;
 }) {
-  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { dataFileEncrypted });
+  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { desktop, dataFileEncrypted });
   return (
     <div>
       <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
@@ -249,7 +251,12 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <CopyPathButton path={path} />
           </div>
           <DatabaseProtectionLine database={today.database} />
-          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} dataFileEncrypted={today.database.state === "on"} />
+          <ReceiptProtectionLine
+            state={today.receipts}
+            setAsideTo={today.receiptsSetAside}
+            desktop={today.desktop}
+            dataFileEncrypted={today.database.state === "on"}
+          />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

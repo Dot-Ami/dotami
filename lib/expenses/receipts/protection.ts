@@ -24,13 +24,15 @@ export const KEY_LOSS_SENTENCE =
 /**
  * @param setAsideTo after Start a new key ("new-key-at-restart"): the folder the locked receipts were
  *   moved to, said in full so the person knows where they are (lock.ts receiptsSetAsideTo)
+ * @param desktop the desktop app (lib/settings/today.ts), which restarts by itself after Start a new
+ *   key (expense-records.md § 11); a copy run from source doesn't, and says so
  * @param options.dataFileEncrypted ([8i]) whether the data file is encrypted too (lib/db/lock.ts), which
  *   changes the last sentence of the "on" text: the records and what DotAmi notes about each receipt live there
  */
 export function receiptProtectionText(
   state: ReceiptLockState,
   setAsideTo: string | null = null,
-  { dataFileEncrypted = false }: { dataFileEncrypted?: boolean } = {},
+  { desktop = false, dataFileEncrypted = false }: { desktop?: boolean; dataFileEncrypted?: boolean } = {},
 ): ReceiptProtectionText {
   switch (state) {
     case "on":
@@ -78,14 +80,20 @@ export function receiptProtectionText(
       };
     case "new-key-at-restart":
       // After Start a new key (expense-records.md § 10): the files are moved, and the desktop app makes the
-      // new key at its next start; the server can't reach Windows' key store itself.
+      // new key at its next start; the server can't reach Windows' key store itself. The desktop app
+      // restarts by itself (§ 11), so this line is read either just before it does, or after a restart
+      // it refused; a copy run from source never restarts by itself, and says so.
       return {
         headline: "DotAmi starts a new key for your receipts the next time it starts.",
         detail: `${
           setAsideTo
             ? `The receipt files locked with the old key, and the old key file if it was there, were moved, not deleted, to ${setAsideTo}.`
             : "There were no locked receipt files left to move."
-        } Close DotAmi and open it again; until then, receipts can't be shown or added. Your expense records stay, and a receipt that was set aside says so when you open it. The moved files stay in that folder, untouched: they open again only if the old key comes back.`,
+        } ${
+          desktop
+            ? "DotAmi restarts by itself to start it. If it hasn't, close DotAmi and open it again."
+            : "This copy doesn't restart by itself: stop it and start it again to start the new key."
+        } Until then, receipts can't be shown or added. Your expense records stay, and a receipt that was set aside says so when you open it. The moved files stay in that folder unless you clear them with Delete on What DotAmi knows: they open again only if the old key comes back.`,
         tone: "problem",
       };
   }
