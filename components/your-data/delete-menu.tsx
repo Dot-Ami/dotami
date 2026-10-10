@@ -105,6 +105,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
   const copiesTicked = chosen.some((e) => e.folder === COPIES);
   // [8i] The set-aside receipt folders go with the safety copies: warned about only when there are some.
   const setAsideTicked = copiesTicked && (counts[SET_ASIDE] ?? 0) > 0;
+  // The safety copies' own warning only when there are copies: the box can now be ticked for set-aside folders alone.
+  const copiesGoing = copiesTicked && (counts[COPIES] ?? 0) > 0;
   const affected: string[] = [];
   for (const e of chosen) for (const m of tablesOf(e)) if (!affected.includes(m)) affected.push(m);
   // What stays with its link cleared, and how many: said before the person confirms.
@@ -374,7 +376,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               ))}
             </div>
           ) : null}
-          {copiesTicked ? (
+          {copiesGoing ? (
             <p className="mt-3 text-[12.5px] text-amber">
               The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
             </p>
@@ -401,7 +403,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           busy={step === "working"}
           focusCancel
         >
-          {copiesTicked ? (
+          {copiesGoing ? (
             <p className="mb-2 text-[12.5px] text-amber">
               The safety copies in the backups folder go too. Afterwards, only a backup you saved somewhere else could bring
               anything back.
