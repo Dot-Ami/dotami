@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
 import { FIGURE_KIND_LABELS, type FigureView } from "@/lib/figures/types";
+import { taxLineWords } from "@/lib/figures/tax-line";
 import { formatCents, parseMoneyToCents } from "@/lib/figures/money";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 
@@ -334,6 +335,8 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
                           <span className="min-w-0 flex-1 text-paper">
                             {FIGURE_KIND_LABELS[row.kind]} <span className="text-stone">· {period}</span>
+                            {/* [8f] A T2125 total says which tax year and line it is, before the person agrees. */}
+                            {taxLineWords(row) ? <span className="text-stone"> · {taxLineWords(row)}</span> : null}
                           </span>
                           <label htmlFor={inputId} className="sr-only">
                             Amount for {period}

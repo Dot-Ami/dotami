@@ -158,6 +158,10 @@ roadmap's build order.
     with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
     or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
     ([review](connectors/pdf-reader-review.md))
+  - [x] The four T2125 totals as figure kinds, named for what they mean (business gross income, total
+    expenses, net income before adjustments, net income), cited to the CRA's 2025 form and guide
+    ([engine doc](engines/taxlines.md)); each figure keeps its tax year and the form and line as read
+    (two optional columns); a year whose form isn't read yet says so; the GST/HST card never reads them
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax

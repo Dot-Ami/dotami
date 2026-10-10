@@ -9,6 +9,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The four T2125 totals in "Add a figure"** ([8f]) — the list of what you can add gains business
+  gross income (T2125 line 8299), business total expenses (9368), business net income before
+  adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and
+  says which line of the CRA's form it goes on that year. DotAmi has read the CRA's 2025 form so far;
+  for any other year it says "not read yet" instead of guessing the number, and still keeps the
+  figure with its year. The tax year has to be the year the figure's period ends in, so a 2024
+  total can't be filed under 2025 by a slip. Each figure remembers its tax year, and, once figures
+  can be read from a return, the form and line printed on it (only a figure read from a return can
+  have one). Every line is cited to the CRA's own 2025 T2125 and
+  Guide T4002, checked by the maintainer on 2026-10-10 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
+  collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
   (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
   expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
