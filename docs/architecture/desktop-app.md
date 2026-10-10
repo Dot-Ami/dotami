@@ -78,7 +78,11 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    comes by itself: the page asks the main process to restart (`restartForNewKey` in
    `desktop/receipt-key.mjs`, only from DotAmi's own window, only while this start's key couldn't be
    opened and once no locked receipt is left), which asks Electron to relaunch, stops the server and
-   exits ([expense-records.md § 11](expense-records.md)).
+   exits ([expense-records.md § 11](expense-records.md)). Once Windows opens the old key again, the
+   receipts in that folder can come back: the page asks the main process (`bringBackReceipts` in
+   `desktop/receipt-bring-back.mjs`, only from DotAmi's own window and while this start's key is open),
+   which opens the old key file, checks each receipt against its row, locks it again with this start's
+   key and puts it back in `receipts/` ([expense-records.md § 12](expense-records.md)).
 5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):

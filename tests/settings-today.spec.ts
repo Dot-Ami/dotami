@@ -1,3 +1,5 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -73,6 +75,25 @@ describe("readSettingsToday", () => {
     expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "key-out-of-reach" }, cwd).receipts).toBe("key-out-of-reach");
     // ... nor "key-unreadable", which offers Start a new key: a key that isn't one is out of reach.
     expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "on" }, cwd).receipts).toBe("key-out-of-reach");
+  });
+
+  it("counts the folders Start a new key set receipts aside in beside the data file, from their names only ([8i], expense-records.md § 12)", () => {
+    const folder = mkdtempSync(path.join(os.tmpdir(), "dotami-today-"));
+    try {
+      const url = `file:${path.join(folder, "dotami.db").replace(/\\/g, "/")}`;
+      expect(readSettingsToday({ DATABASE_URL: url }, cwd).receiptsLockedFolders).toBe(0);
+      const aside = path.join(folder, "backups", "receipts-locked-1760000000000");
+      mkdirSync(aside, { recursive: true });
+      writeFileSync(path.join(aside, "receipts.key"), "{}");
+      // Only the old key file left: nothing to bring back, so not counted.
+      expect(readSettingsToday({ DATABASE_URL: url }, cwd).receiptsLockedFolders).toBe(0);
+      writeFileSync(path.join(aside, `${"a".repeat(32)}.png`), "locked");
+      expect(readSettingsToday({ DATABASE_URL: url }, cwd).receiptsLockedFolders).toBe(1);
+      // A copy whose database setting isn't a file has no folder beside it.
+      expect(readSettingsToday({ DATABASE_URL: "postgresql://x" }, cwd).receiptsLockedFolders).toBe(0);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
   });
 
   it("reports the version from package.json", () => {

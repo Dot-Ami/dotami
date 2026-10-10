@@ -764,6 +764,109 @@ test("Start a new key: the locked receipt and the key file are moved aside, DotA
   expect(await receiptBytesShown(again, "Example Print Shop after a new key")).toEqual(receipt.toString("base64"));
 });
 
+test("Bring these receipts back: once the old key opens again, a set-aside receipt comes back under the new key and opens in the viewer ([8i])", async () => {
+  // A receipt added in the app, locked with the key the first start made.
+  const first = await launch();
+  await first.goto(new URL("/expenses", first.url()).toString());
+  const receipt = png(5, 3, { rgb: [30, 90, 200] });
+  const statuses = await first.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) => {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, body: (await res.json()) as { expenses?: { id: string }[] } };
+    };
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 1_234, paidTo: "Example Hardware brought back", whatFor: "hinges" }],
+    });
+    const id = proposed.body.expenses![0].id;
+    const agreed = await post("/api/expenses/agree", { expenseIds: [id] });
+    const added = await post("/api/expenses/receipt", { expenseId: id, file });
+    return [proposed.status, agreed.status, added.status];
+  }, receipt.toString("base64"));
+  expect(statuses).toEqual([201, 200, 200]);
+  await quit();
+  const [receiptName] = readdirSync(path.join(dataDir, "receipts"));
+  const lockedBefore = readFileSync(path.join(dataDir, "receipts", receiptName));
+  // The real key file, kept aside by the test: "the old key turns up" later.
+  const realKeyFile = readFileSync(path.join(dataDir, "receipts.key"));
+  const oldKeyId = JSON.parse(realKeyFile.toString("utf8")).keyId as string;
+  // A stand-in for a key this account can't open (a Windows profile reset): the right key id, wrapped
+  // bytes Windows won't open.
+  writeFileSync(
+    path.join(dataDir, "receipts.key"),
+    JSON.stringify({ format: 1, keyId: oldKeyId, wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+
+  // Start a new key, as in the test above; Electron's relaunch is replaced, and the test starts it again.
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  const data = page.getByRole("region", { name: "Data and backups" });
+  await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+  // No key of its own open: nothing can be brought back now, and it says so.
+  await expect(data.getByRole("button", { name: "Bring these receipts back" })).toHaveCount(0);
+  await app!.evaluate(({ app: electronApp }) => {
+    electronApp.relaunch = () => {};
+  });
+  await data.getByRole("button", { name: "Start a new key…" }).click();
+  await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+  const closed = app!.waitForEvent("close");
+  await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+  await closed;
+  app = null;
+  const backups = path.join(dataDir, "backups");
+  const aside = readdirSync(backups).filter((n) => n.startsWith("receipts-locked-"));
+  expect(aside).toHaveLength(1);
+  const movedTo = path.join(backups, aside[0]);
+  expect(readdirSync(movedTo).sort()).toEqual([receiptName, "receipts.key"].sort());
+
+  // The start after it has a new key. The folder's key still can't be opened: a plain line, no button.
+  const again = await launch();
+  await again.goto(new URL("/settings", again.url()).toString());
+  const settings = again.getByRole("region", { name: "Data and backups" });
+  await expect(settings).toContainText("Your receipt files are encrypted on this computer.");
+  const newKeyId = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId as string;
+  expect(newKeyId).not.toBe(oldKeyId);
+  await expect(settings).toContainText(`1 receipt file set aside in ${movedTo}.`);
+  await expect(settings).toContainText("Their old key still can't be opened on this Windows account, so they can't be brought back.");
+  await expect(settings.getByRole("button", { name: "Bring these receipts back" })).toHaveCount(0);
+  // Opening it from its record says where it is, and how it can come back.
+  expect(await receiptBytesShown(again, "Example Hardware brought back")).toContain("Settings → Data and backups in the desktop app can bring it back");
+  expect(readFileSync(path.join(movedTo, receiptName)).equals(lockedBefore)).toBe(true);
+
+  // The old key turns up: the real key file, put into the set-aside folder.
+  writeFileSync(path.join(movedTo, "receipts.key"), realKeyFile);
+  await again.reload();
+  await expect(settings).toContainText("This Windows account can open their old key again.");
+  const logBefore = desktopLog().length;
+  await settings.getByRole("button", { name: "Bring these receipts back" }).click();
+  const ask = again.getByRole("dialog", { name: "Bring these receipts back?" });
+  await expect(ask).toContainText("only then is it removed from the set-aside folder");
+  await ask.getByRole("button", { name: "Bring them back" }).click();
+  await expect(settings.getByRole("status").filter({ hasText: "1 receipt brought back." })).toBeVisible();
+
+  // On the disk: back in receipts/, locked with the new key (never plain), gone from the folder, whose old key file stays.
+  const back = readFileSync(path.join(dataDir, "receipts", receiptName));
+  expect(encryptedKeyId(back)).toBe(newKeyId);
+  expect(back.indexOf(receipt.subarray(0, 16))).toBe(-1);
+  expect(readdirSync(movedTo)).toEqual(["receipts.key"]);
+  expect(readdirSync(path.join(dataDir, "receipts"))).toEqual([receiptName]);
+  const thisRun = desktopLog().slice(logBefore);
+  expect(thisRun).toContain("[desktop] set-aside receipts: 1 brought back, 0 left where they were");
+  expect(thisRun).not.toContain(receiptName.slice(0, 32));
+  // Nothing left to bring back: the folder isn't offered any more.
+  await again.reload();
+  await expect(settings.getByRole("button", { name: "Bring these receipts back" })).toHaveCount(0);
+
+  // And it opens in the viewer, the picture that was added.
+  expect(await receiptBytesShown(again, "Example Hardware brought back")).toEqual(receipt.toString("base64"));
+  await again.goto(new URL("/expenses", again.url()).toString());
+  const row = again.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Hardware brought back" });
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  await expect(again.getByRole("dialog", { name: /^Receipt: / }).getByRole("img", { name: "The receipt picture (5 × 3 pixels)" })).toBeVisible({ timeout: 30_000 });
+});
+
 test("the first start of a new data folder shows \"Preparing DotAmi…\" while it waits, closed when the main window shows; an ordinary start never shows it ([8i])", async () => {
   await startApp();
   // Up during the wait for Windows' own key (about ten seconds).
@@ -912,8 +1015,15 @@ test("a HEIC receipt is drawn by the graphics chip where it decodes HEVC, or pla
   // picture shows green, white / red, blue: the tiles were placed and the rotation applied.
   const page = await launch();
   await page.goto(new URL("/expenses", page.url()).toString());
-  // The window's bridge gives the page exactly its two HEIC calls and the restart for a new key (desktop/window-preload.cjs).
-  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped", "restartForNewKey"]);
+  // The window's bridge gives the page exactly its two HEIC calls, the restart for a new key, and the two
+  // set-aside receipt calls (desktop/window-preload.cjs; expense-records.md § 12).
+  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual([
+    "bringBackReceipts",
+    "heicFailed",
+    "heicStopped",
+    "listSetAsideReceipts",
+    "restartForNewKey",
+  ]);
   const photo = heic({ transforms: [["irot", 1]] });
   const id = await page.evaluate(async (file) => {
     const post = async (url: string, body: unknown) =>

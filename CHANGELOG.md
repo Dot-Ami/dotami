@@ -9,6 +9,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Bring set-aside receipts back** ([8i]) — receipts that *Start a new key* moved into the backups folder
+  can now come back inside DotAmi, once Windows can open their old key on your account again (your old
+  Windows profile came back, or the old `receipts.key` turned up). Settings → Data and backups and *What
+  DotAmi knows about you* list each folder of set-aside receipts and say whether their old key opens; when
+  it does, **Bring these receipts back** (asked once) checks each receipt against its expense record, locks
+  it again with the key DotAmi uses now, puts it back in the receipts folder, and only then removes it from
+  the set-aside folder. Receipts you added since aren't touched. A receipt whose record was deleted since,
+  or that changed, stays where it is and is named. Desktop app only: a copy run from source says it can't.
+  Receipt folders set aside by a restore or by *Start fresh* aren't offered (their records aren't in the
+  data file any more). The button is offered only for receipts that could really come back: each folder's
+  line says why the others can't (their record is gone, they are already back, they changed, another
+  program has them open, or their old key can't be opened), and when a folder has no `receipts.key` of its
+  own it says to put a found one there. A folder an earlier Delete is still clearing is never offered.
+  One receipt that fails never stops the others, and the answer always says what really moved.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have

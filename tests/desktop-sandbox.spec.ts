@@ -5,7 +5,8 @@
  * stands between a hostile file and the computer. So nothing in the desktop app may switch them off or
  * move the graphics process into the browser process, and every window it opens is sandboxed and
  * isolated. Also: every preload a window names ships in the installed app, and the main window's
- * preload gives a page nothing but its two HEIC calls.
+ * preload gives a page nothing but its two HEIC calls, the restart after Start a new key, and the two calls
+ * that list and bring back set-aside receipts.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -63,7 +64,7 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
     }
   });
 
-  it("ships every preload a window names, and the main window's gives a page only its two HEIC calls and the restart for a new key", () => {
+  it("ships every preload a window names, and the main window's gives a page only its two HEIC calls, the restart for a new key and the two set-aside receipt calls", () => {
     const main = readFileSync(path.join(desktop, "main.mjs"), "utf8");
     const pack = readFileSync(path.join(desktop, "package.mjs"), "utf8");
     const preloads = [...main.matchAll(/preload: path\.join\(root, "desktop", "([^"]+)"\)/g)].map((m) => m[1]);
@@ -73,8 +74,14 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
 
     const preload = readFileSync(path.join(desktop, "window-preload.cjs"), "utf8");
     expect(preload.match(/exposeInMainWorld\(/g)).toHaveLength(1);
-    expect([...preload.matchAll(/ipcRenderer\.(\w+)\(/g)].map((m) => m[1]).sort()).toEqual(["invoke", "invoke", "send"]);
-    expect([...preload.matchAll(/"(dotami-[a-z-]+)"/g)].map((m) => m[1]).sort()).toEqual(["dotami-heic-failed", "dotami-heic-stopped", "dotami-restart-for-new-key"]);
+    expect([...preload.matchAll(/ipcRenderer\.(\w+)\(/g)].map((m) => m[1]).sort()).toEqual(["invoke", "invoke", "invoke", "invoke", "send"]);
+    expect([...preload.matchAll(/"(dotami-[a-z-]+)"/g)].map((m) => m[1]).sort()).toEqual([
+      "dotami-bring-back-receipts",
+      "dotami-heic-failed",
+      "dotami-heic-stopped",
+      "dotami-list-set-aside-receipts",
+      "dotami-restart-for-new-key",
+    ]);
     // The main process believes them only from DotAmi's own window, and keeps the graphics-process watch.
     expect(main).toMatch(/app\.on\("child-process-gone"/);
     expect(main).toMatch(/details\.type !== "GPU"/);
@@ -82,5 +89,9 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
     // The restart for a new key (expense-records.md § 11) is asked of the same check, and the main
     // process makes its own decision (desktop/receipt-key.mjs restartForNewKey).
     expect(main).toMatch(/ipcMain\.handle\("dotami-restart-for-new-key", \(event\) =>[\s\S]{0,200}fromDotAmi: fromDotAmi\(event\)/);
+    // So are the two set-aside receipt calls (expense-records.md § 12): the main process decides
+    // (desktop/receipt-bring-back.mjs), and only from DotAmi's own window.
+    expect(main).toMatch(/ipcMain\.handle\("dotami-list-set-aside-receipts", \(event\) =>[\s\S]{0,200}fromDotAmi: fromDotAmi\(event\)/);
+    expect(main).toMatch(/ipcMain\.handle\("dotami-bring-back-receipts", \(event, folder\) =>[\s\S]{0,300}fromDotAmi: fromDotAmi\(event\)/);
   });
 });
