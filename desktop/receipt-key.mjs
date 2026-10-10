@@ -299,6 +299,55 @@ export function setAsideLockedReceipts(dataDir, { now = Date.now, rename = renam
   return { folder, receipts: locked.length, keyFile: hasKeyFile };
 }
 
+/**
+ * The desktop app's half of restarting by itself after "Start a new key" (docs/architecture/
+ * expense-records.md § 11). The page asks once the server has moved the locked receipts aside; this
+ * decides, from what the main process itself knows, and never from what the page says:
+ *   - `fromDotAmi`: the request came from DotAmi's own window showing one of its own pages;
+ *   - `opened`: this start told its server "key-unreadable" (receiptLockEnv), the only state the button
+ *     shows in;
+ *   - `quitting`: the app isn't already on its way out (a restore, a start that failed);
+ *   - nothing in the receipts folder is locked any more (the same count the next start makes), so the
+ *     move happened and the next start makes a new key.
+ * Anything else answers "refused" and changes nothing. Otherwise the relaunch is asked for first, so a
+ * relaunch Electron refuses leaves the server running and nothing changed (the next ordinary start
+ * still makes the key); then the server is stopped and waited for, so the data file is closed; then the
+ * app exits and Electron starts the new copy. The log gets the rule that stopped it, never a path.
+ * @param {string} dataDir
+ * @param {{
+ *   opened: Awaited<ReturnType<typeof openReceiptKey>> | null,
+ *   fromDotAmi: boolean,
+ *   quitting: boolean,
+ *   relaunch: () => void,
+ *   stopServer: () => Promise<void>,
+ *   exit: (code: number) => void,
+ *   log: (line: string) => void,
+ * }} options
+ * @returns {Promise<"restarting" | "refused">}
+ */
+export async function restartForNewKey(dataDir, { opened, fromDotAmi, quitting, relaunch, stopServer, exit, log }) {
+  const refuse = (why) => {
+    log(`[desktop] a restart for a new receipts key was refused: ${why}`);
+    return "refused";
+  };
+  if (!fromDotAmi) return refuse("it wasn't asked by DotAmi's own window");
+  if (!opened || receiptLockEnv(opened).DOTAMI_RECEIPT_LOCK !== "key-unreadable") {
+    return refuse("this start's receipts key wasn't one Start a new key replaces");
+  }
+  if (quitting) return refuse("DotAmi is already closing");
+  if (countLockedReceipts(path.join(dataDir, RECEIPTS_FOLDER), null) > 0) return refuse("receipts are still locked with the old key");
+  try {
+    relaunch();
+  } catch (error) {
+    log(`[desktop] DotAmi couldn't restart itself for the new receipts key (${error?.code ?? error?.name ?? "error"}); it makes the key at its next start`);
+    return "refused";
+  }
+  log("[desktop] restarting to start the new receipts key");
+  await stopServer();
+  exit(0);
+  return "restarting";
+}
+
 /** The key file as parsed: its key id (null if it isn't readable as one), and the parsed JSON. */
 function readKeyFile(file) {
   let parsed;

@@ -176,8 +176,8 @@ function SettingRow({
  * [8i] Whether the receipt files are encrypted in this copy, and what losing the key means
  * (docs/architecture/expense-records.md § 9). Read from the app's own environment on every visit.
  */
-function ReceiptProtectionLine({ state, setAsideTo }: { state: SettingsToday["receipts"]; setAsideTo: string | null }) {
-  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo);
+function ReceiptProtectionLine({ state, setAsideTo, desktop }: { state: SettingsToday["receipts"]; setAsideTo: string | null; desktop: boolean }) {
+  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { desktop });
   return (
     <div>
       <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
@@ -217,7 +217,7 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <Code>{path}</Code>
             <CopyPathButton path={path} />
           </div>
-          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} />
+          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} desktop={today.desktop} />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

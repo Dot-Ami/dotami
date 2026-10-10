@@ -1,5 +1,6 @@
 import { ExpensesPage } from "@/components/expenses/expenses-page";
 import { receiptLockState, receiptsSetAsideTo } from "@/lib/expenses/receipts/lock";
+import { readSettingsToday } from "@/lib/settings/today";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,14 @@ export const dynamic = "force-dynamic";
 export default async function ExpensesRoutePage({ searchParams }: { searchParams: Promise<{ idea?: string | string[] }> }) {
   const { idea } = await searchParams;
   const initialIdea = typeof idea === "string" && idea.length > 0 ? idea : null;
-  // Only the state of the receipts' key goes to the page ([8i]), never the key.
-  return <ExpensesPage initialIdea={initialIdea} receiptProtection={receiptLockState()} receiptsSetAside={receiptsSetAsideTo()} />;
+  // Only the state of the receipts' key goes to the page ([8i]), never the key; and whether this is the
+  // desktop app, which restarts by itself after Start a new key (expense-records.md § 11).
+  return (
+    <ExpensesPage
+      initialIdea={initialIdea}
+      receiptProtection={receiptLockState()}
+      receiptsSetAside={receiptsSetAsideTo()}
+      desktop={readSettingsToday().desktop}
+    />
+  );
 }
