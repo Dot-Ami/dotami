@@ -762,11 +762,14 @@ the file:
 | **Encrypt now** | As before: a key is made (or one that already opens is kept, § 10) and the migrator creates the file encrypted from its first byte. |
 | **Not now** | The migrator creates a plain file. No key is made. The next start finds an existing plain file and asks again (with **Back up first…** working then, since there is something to back up). |
 | **Never…** | The same second warning as for an existing file ("Never lock the data file?", **Go back** / **Keep it unencrypted**); then a plain file, and the answer saved as the setting `{ "on": false }` once the migrator has made the Setting table, so Settings shows the switch unticked and the next start doesn't ask. |
-| **Back up first…** | **Shown, but turned off** (greyed out and not clickable), with a short line under the buttons: "This is a new data folder, so there's nothing to back up yet." The app refuses that answer from this window too, so a page that sent it anyway changes nothing. *A design call the maintainer can change:* the alternatives were hiding the button (the window then differs from the one existing users see) or leaving it working (it would back up an empty folder). |
+| **Back up first…** | **Shown, but turned off** (greyed out and not clickable), with a short line under the buttons: "There's no data file yet, so there's nothing to back up." (It said "This is a new data folder…" until a review on 2026-10-10 found the folder needn't be new: a data file moved away leaves its key and safety copies behind, and the line is only about the data file.) The app refuses that answer from this window too, so a page that sent it anyway changes nothing. *A design call the maintainer can change:* the alternatives were hiding the button (the window then differs from the one existing users see) or leaving it working (it would back up an empty folder). |
 
-The window's other words stay as they are; one sentence changes for a new folder, from "DotAmi can
-now lock its data file" to "DotAmi can lock its data file" (there is nothing "now" about a first
-start). Closing the window counts as **Not now**, as before.
+The window's other words stay as they are, with two changes for a new folder: "DotAmi can now lock its
+data file" becomes "DotAmi can lock its data file" (there is nothing "now" about a first start), and
+**What it doesn't** keeps only "anything running as you can still open it, as DotAmi does." Its other
+sentence, about copies Windows or a synced folder already made and the old file's bytes on a solid-state
+disk, is left out: with no data file yet there is no old file and no copy of it. Closing the window counts
+as **Not now**, as before.
 
 **When a new data file is not asked about:**
 
@@ -804,6 +807,27 @@ with it any more. Then the start goes on with a plain file, and the state is the
 (Settings: "Your data file isn't encrypted. You chose to keep it unencrypted…", the switch unticked;
 ticking it brings the question back at the following start).
 
+**The turn-off is recorded, never guessed.** Before it decrypts anything, the main process writes a
+small note, `database-turned-off.json`, holding only the key's id (the same 16 hex characters
+`database.key` already shows: the first 8 bytes of the key's SHA-256). What is left to do at later
+starts (a safety copy another program held, a key that couldn't be deleted yet) is done only when that
+note names the key that opens. It is never inferred from "a plain data file, the setting off, and a key
+that opens": that is also what a data file moved out of the folder leaves behind (its key and encrypted
+safety copies stay), followed by **Never…** in the new-folder window, and decrypting the safety copies
+and deleting the key then would make the moved file impossible to open (found in review, 2026-10-10).
+The note is removed when the key is deleted, when a start finds the file still encrypted and the switch
+ticked again (the turn-off was cancelled), and when the key is used again to encrypt a data file.
+
+**A data file that can't be decrypted.** If the encrypted file fails SQLite's integrity check (part of it
+damaged, though it still opens with its key and DotAmi runs on it) or its decrypted copy doesn't match it
+(step 3 below), nothing is changed and the start goes on with the file encrypted, as before. The switch
+is set back to on (in the encrypted file, with its key) and the turn-off note removed, so the next start
+doesn't stop on it again, and a message says so: "Your data file wasn't decrypted.", the reason, and
+"DotAmi works as before, with the file still encrypted. The Encrypt the data file switch in Settings is
+ticked again; untick it to try again." The message doesn't hold up the main window. Until a review on
+2026-10-10 this stopped the start, and since the setting lives inside the encrypted file, every start
+after it stopped the same way.
+
 **Delete → Your settings** resets the setting to `{ "on": true }`; done before the next start, it
 cancels a decryption that was asked for, and the file stays encrypted. The Delete menu's sentence about
 the setting says so.
@@ -832,8 +856,11 @@ checked plain file is in place, and a note says which step comes next.
 4. **Write the note** `database-decrypting.json`, step `swap`, with the copy's size and SHA-256, the
    way § 6 writes its note (to `.tmp`, flushed, renamed into place).
 5. **Swap**: rename `F` to `F.encrypted-to-wipe`, then `F.decrypting` to `F`. A first rename another
-   program refuses (`EPERM`, `EBUSY`) moves nothing: the file stays encrypted, and the next start tries
-   again.
+   program refuses (`EPERM`, `EBUSY`) moves nothing: the file stays encrypted, the plain copy is
+   zero-filled and deleted and the note removed at once, and the next start begins again from step 1.
+   (Until a review on 2026-10-10 the copy and the note stayed for the next start: a whole plain copy then
+   sat beside the encrypted file for the session, still holding what Delete removed meanwhile, and a
+   safety copy deleted from the Delete menu left its plain copy behind and stopped every later start.)
 6. **Rewrite the note** to step `wipe`.
 7. **Wipe the encrypted original**: `F.encrypted-to-wipe` (and a journal beside it) overwritten with
    zeros, flushed, deleted; then the note is deleted. It is encrypted, so this is tidiness more than
@@ -851,14 +878,16 @@ table):
 |---|---|---|
 | No decrypting note; `F` encrypted; maybe `F.decrypting`, its journal, or the note's `.tmp` | a crash in steps 1 to 4 | zero-fill and delete the leftovers (the copy is plain, step 2), delete the `.tmp`; the setting still says off, so start again from step 1 |
 | A note that can't be read; `F` encrypted | can't happen with step 4's rename, but handled | as the row above |
-| Note `swap`; `F` encrypted; `F.decrypting` matching the note | a crash between steps 4 and 5, or the first rename was refused | compare the copy with the encrypted file again (step 3); if they agree, redo from step 5; if not, zero-fill and delete the copy and the note, and start again from step 1 |
+| Note `swap`; `F` encrypted; `F.decrypting` matching the note; no `F.encrypted-to-wipe` | a crash between steps 4 and 5 | check the encrypted file and compare the copy with it again (steps 1 and 3); if they agree, redo from step 5; if not, or the encrypted file now fails its check, zero-fill and delete the copy and the note, and start again from step 1 |
+| Note `swap`; no `F`; `F.decrypting` matching the note; no `F.encrypted-to-wipe`; `F` a safety copy in `backups/` | a crash between steps 4 and 5, then the safety copy deleted from the Delete menu | zero-fill and delete the plain copy and the note: the safety copy is gone, as the person asked, and so is every copy of it |
 | Note `swap`; no `F`; `F.decrypting` matching the note; `F.encrypted-to-wipe` there | a crash between the two renames | finish step 5, then 6 and 7 |
 | Note `swap`; `F` plain and matching the note; no `F.decrypting` | a crash between steps 5 and 6 | steps 6 and 7 |
 | Note `wipe`; `F` plain (opens without a key); `F.encrypted-to-wipe` there | a crash in step 7, or another program held the file | finish step 7 (held again: the note stays, tried at the next start) |
 | Note `wipe`; `F` plain; no `F.encrypted-to-wipe` | a crash after the delete, before the note went | delete the note |
-| No note; `F` plain; `database.key` there; nothing in the folder opens with it | a crash before the key was deleted | delete the key (below) |
-| No note; `F` plain; a safety copy still encrypted with the key | a safety copy was held by another program | decrypt it now; the key stays until then |
-| Anything else (a copy that doesn't match the note, `F` missing with no copy, a note `wipe` beside an `F` that won't open without a key) | something outside DotAmi changed the files | remove nothing; stop with a plain sentence naming the files |
+| No note; `F` plain; `database.key` there and named by the turn-off note; nothing in the folder opens with it | a crash before the key was deleted | delete the key (below) |
+| No note; `F` plain; a safety copy still encrypted with the key the turn-off note names | a safety copy was held by another program | decrypt it now; the key stays until then |
+| `F` plain; a key that opens, and **no** turn-off note naming it | the data file was moved away and a new one made, or Never chosen beside a key | nothing: the key and every file locked with it stay as they are |
+| Anything else (a copy that doesn't match the note, `F` missing with no copy, the data file itself missing, a note `wipe` beside an `F` that won't open without a key, a note `swap` with both `F` encrypted and `F.encrypted-to-wipe` there) | something outside DotAmi changed the files (the last: a crash between the renames, then an older DotAmi that made a new, empty data file) | remove nothing; stop with a plain sentence naming the files |
 
 **When the key is deleted.** Only once nothing is locked with it any more: after the decryptions, the
 start looks at every database file DotAmi keeps in the data folder and in `backups/` (names ending
@@ -871,7 +900,11 @@ left as it is: it doesn't open with this key, so it doesn't keep it, and decrypt
 possible.
 
 **Which safety copies are decrypted:** the ones DotAmi names itself (`backups/dotami-before-….db`, and
-a leftover `restore-staging.db`), each only if it is encrypted and opens with this key. A
+a leftover `restore-staging.db`), each only if it is encrypted and opens with this key, and only while
+the turn-off note names the key. A safety copy an earlier Delete still owes (named in its "wipe pending"
+note, `desktop/wipe-pending.mjs`, because another program held it) is skipped: decrypting it would write
+the deleted data out in plain text just before the owed delete removes it. It stays encrypted and keeps
+the key until it is gone; the start after that deletes the key. A
 `dotami-locked-….db` is not one of them (it is kept as it was set aside, § 10).
 
 **Starting fresh while a decryption is part-way** (the key stops opening between two starts) is
@@ -882,9 +915,12 @@ may be the only readable copy.
 "N safety copies decrypted", "the key was deleted" or "the key was kept: N files are still locked with
 it". Never a name, a value or the key.
 
-**What it can't promise** (§ 1): decrypting doesn't change copies made while the file was encrypted
-(they stay encrypted, and stay unreadable once the key is deleted: a copy of the data folder synced
-somewhere while it was encrypted can't be opened afterwards, which is the point of deleting the key).
+**What it can't promise** (§ 1): decrypting doesn't change copies made while the file was encrypted.
+A copy of the data file alone stays encrypted, and can't be opened once the key is deleted. A copy of the
+**whole data folder** (synced, File History, a USB stick) holds its own copy of `database.key` and of the
+`Local State` file Windows unwraps it with, so it still opens on this Windows account, before or after the
+key here is deleted (and, as always, nowhere else). Deleting the key doesn't change that. (Until a review
+on 2026-10-10 this said such copies "can't be opened afterwards", which isn't true of a whole folder.)
 Backups made with File → Back up… are passphrase-locked and hold the data decrypted inside, as before;
 they don't depend on this key and restore either way.
 
@@ -903,8 +939,9 @@ Nothing new reaches the server: after a decryption the main process starts it wi
 The catalog row (`lib/settings/catalog.ts`) and Part 1 of
 [settings-and-edge-cases.md](settings-and-edge-cases.md) change together: the options become
 "on · off", and the warning gains the one for turning it off. *What DotAmi knows about you* lists the
-three new files (`database-decrypting.json`, `dotami.db.decrypting`, `dotami.db.encrypted-to-wipe`),
-and the key file's line says DotAmi deletes it after locking is turned off.
+four new files (`database-decrypting.json`, `dotami.db.decrypting`, `dotami.db.encrypted-to-wipe`, and
+`database-turned-off.json` from 15.2), and the key file's line says DotAmi deletes it after locking is
+turned off.
 
 ### 15.5 Tests (each must fail when its rule is removed)
 
@@ -914,13 +951,21 @@ and the key file's line says DotAmi deletes it after locking is turned off.
   next start finishes it, or leaves the encrypted file whole when it stopped before the swap; a refused
   first rename moves nothing; a note that can't be read; files DotAmi didn't leave; a wipe held up stays
   owed; `encryptFile` and `decryptFile` refuse while the other's note is there; the key is deleted only
-  when nothing opens with it (a safety copy still encrypted keeps it) and is zero-filled first.
+  when nothing opens with it (a safety copy still encrypted keeps it) and is zero-filled first. Added
+  after review: a refused first rename leaves no plain copy and no note; a safety copy deleted from the
+  Delete menu between a crash and the next start doesn't stop that start, and leaves no plain copy; a
+  note `swap` beside both an encrypted `F` and `F.encrypted-to-wipe` stops, wiping nothing; nothing is
+  decrypted and the key isn't deleted without a turn-off note naming it; a safety copy Delete still owes
+  isn't decrypted.
 - `e2e-desktop/desktop.spec.ts`: a brand-new folder shows the window, with **Back up first…** turned off
   and its line; **Encrypt now** gives an encrypted file; **Not now** a plain file asked about again at the
   next start; **Never…** its second warning, a plain file and the switch unticked, not asked again.
   Turning locking off: the warning's words, then the next start decrypts, every idea is still there,
   and no encrypted file, note or `database.key` is left (an encrypted safety copy in `backups/` is
-  decrypted too); `receipts.key` is still there.
+  decrypted too); `receipts.key` is still there. Added after review: a data file moved away beside its
+  key and an encrypted safety copy, then **Never…** in the new-folder window: the following start keeps
+  the key and the encrypted copy; a turned-off data file that fails its integrity check: DotAmi still
+  opens, the file stays encrypted and the switch is ticked again.
 
 ### 15.6 Questions for the maintainer
 
