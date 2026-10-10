@@ -21,9 +21,11 @@ import { migrate } from "../desktop/migrate.mjs";
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
 import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
 import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
+import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
+import { heic } from "../tests/helpers/heic-files";
 import { pdf, png } from "../tests/helpers/receipt-files";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
@@ -37,7 +39,8 @@ let app: ElectronApplication | null = null;
 // from `npm run desktop:package`) instead of running this checkout with Electron.
 const packagedExe = process.env.DOTAMI_DESKTOP_EXE;
 
-async function launch(dir = dataDir): Promise<Page> {
+/** Starts the app on a data folder, without waiting for its window. */
+async function startApp(dir = dataDir): Promise<ElectronApplication> {
   // ANTHROPIC_API_KEY is set here on purpose: the app must not pass a key from the shell it was
   // started from to its server (desktop/main.mjs serverEnv) — the settings page proves it didn't.
   // DOTAMI_E2E_RATE_LIMITS is set on purpose too: the browser tests' rate-limit switch must never
@@ -56,10 +59,32 @@ async function launch(dir = dataDir): Promise<Page> {
       DEBUG: "prisma*",
     },
   });
-  const page = await app.firstWindow();
-  await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\//);
-  return page;
+  return app;
 }
+
+/**
+ * The main window, once it shows DotAmi's own server. Not simply the first window: a first start shows
+ * the small "Preparing DotAmi…" window before it ([8i], desktop/preparing.mjs).
+ */
+async function mainWindow(electronApp: ElectronApplication): Promise<Page> {
+  const isMain = (p: Page) => /^http:\/\/127\.0\.0\.1:\d+\//.test(p.url());
+  await expect.poll(() => electronApp.windows().some(isMain), { timeout: 90_000, intervals: [100] }).toBe(true);
+  return electronApp.windows().find(isMain)!;
+}
+
+async function launch(dir = dataDir): Promise<Page> {
+  return mainWindow(await startApp(dir));
+}
+
+/** The titles of the app's open windows, read in its main process. */
+const windowTitles = () =>
+  app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed()).map((w) => w.getTitle()));
+
+/** The desktop log, and how much of it there is now (to read only what a later start writes). */
+const desktopLog = (dir = dataDir) => {
+  const file = path.join(dir, "logs", "server.log");
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+};
 
 async function quit() {
   await app?.close();
@@ -533,7 +558,8 @@ test("a receipts key this Windows account can't open: nothing is changed, and th
   expect(readFileSync(path.join(dataDir, "receipts.key")).equals(keyBefore)).toBe(true);
   expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
-    "the key file can't be opened by this account (or the key store isn't available); 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
+    // The log now says which of the two it is: the key store was there, so this account can't open it.
+    "the key file can't be opened by this account; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
   );
 });
 
@@ -563,6 +589,125 @@ test("a deleted receipts.key with encrypted receipts: no new key is made, and Se
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
     "the key file is missing; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
   );
+});
+
+test("Start a new key: the locked receipt and the key file are moved aside, and the next start makes a new key ([8i])", async () => {
+  const first = await launch();
+  // Never offered while the key opens fine.
+  await first.goto(new URL("/settings", first.url()).toString());
+  await expect(first.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  await expect(first.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+  await quit();
+  // A key file wrapped for some other account, and a receipt locked with that key (as in the test above).
+  writeFileSync(
+    path.join(dataDir, "receipts.key"),
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  const lockedName = `${"7".repeat(32)}.pdf`;
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  const locked = Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from("0011223344556677", "hex"), Buffer.alloc(40, 4)]);
+  writeFileSync(path.join(dataDir, "receipts", lockedName), locked);
+  const keyBefore = readFileSync(path.join(dataDir, "receipts.key"));
+
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  const data = page.getByRole("region", { name: "Data and backups" });
+  await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+  await data.getByRole("button", { name: "Start a new key…" }).click();
+  await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+  await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+  await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
+
+  // Moved, not deleted: the receipt and the key file side by side in one folder in backups/, named on the page.
+  const backups = path.join(dataDir, "backups");
+  const aside = readdirSync(backups).filter((n) => n.startsWith("receipts-locked-"));
+  expect(aside).toHaveLength(1);
+  const movedTo = path.join(backups, aside[0]);
+  await expect(data).toContainText(movedTo);
+  expect(readFileSync(path.join(movedTo, lockedName)).equals(locked)).toBe(true);
+  expect(readFileSync(path.join(movedTo, "receipts.key")).equals(keyBefore)).toBe(true);
+  expect(existsSync(path.join(dataDir, "receipts", lockedName))).toBe(false);
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+  await quit();
+
+  // The next start makes the new key (Local State is already written, so it doesn't wait).
+  const logBefore = desktopLog().length;
+  const again = await launch();
+  await again.goto(new URL("/settings", again.url()).toString());
+  await expect(again.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  const keyId = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId as string;
+  expect(keyId).toMatch(/^[0-9a-f]{16}$/);
+  expect(keyId).not.toBe("0011223344556677");
+  const thisStart = desktopLog().slice(logBefore);
+  expect(thisStart).toContain("[desktop] receipts: key open (made now)");
+  expect(thisStart).not.toContain("Preparing DotAmi");
+  // The set-aside folder is left exactly as it was.
+  expect(readdirSync(movedTo).sort()).toEqual([lockedName, "receipts.key"]);
+});
+
+test("the first start of a new data folder shows \"Preparing DotAmi…\" while it waits, closed when the main window shows; an ordinary start never shows it ([8i])", async () => {
+  await startApp();
+  // Up during the wait for Windows' own key (about ten seconds).
+  await expect.poll(() => windowTitles(), { timeout: 30_000, intervals: [100] }).toContain("Preparing DotAmi…");
+  const page = await mainWindow(app!);
+  // Gone once the main window shows: one window left, the app's own.
+  await expect.poll(() => windowTitles(), { timeout: 10_000 }).toHaveLength(1);
+  expect(await windowTitles()).not.toContain("Preparing DotAmi…");
+  await expect(page.getByPlaceholder(/What are you building/)).toBeVisible();
+  const first = desktopLog();
+  const shown = first.indexOf('[desktop] showing the "Preparing DotAmi…" window while Windows saves its own key');
+  const keyMade = first.indexOf("[desktop] receipts: key open (made now)");
+  const closed = first.indexOf("[desktop] the preparing window closed (the main window showed)");
+  expect(shown).toBeGreaterThan(-1);
+  expect(keyMade).toBeGreaterThan(shown);
+  expect(closed).toBeGreaterThan(keyMade);
+  await quit();
+
+  // An ordinary start: the key opens, nothing waits, and the window never opens.
+  const before = desktopLog().length;
+  await launch();
+  expect(await windowTitles()).toHaveLength(1);
+  const second = desktopLog().slice(before);
+  expect(second).toContain("[desktop] receipts: key open\n");
+  expect(second).not.toContain("Preparing DotAmi");
+  expect(second).not.toContain("preparing window");
+});
+
+test("a start that fails while \"Preparing DotAmi…\" is up closes it before the failure message, which still shows ([8i])", async () => {
+  // A folder where the new key file is first written: saving the key fails right after the wait.
+  mkdirSync(path.join(dataDir, "receipts.key.partial"));
+  await startApp();
+  await expect.poll(() => windowTitles(), { timeout: 30_000, intervals: [100] }).toContain("Preparing DotAmi…");
+  // The failure message is answered here so the test can read it, and the app is kept open to look.
+  await app!.evaluate(({ app: electronApp, BrowserWindow, dialog }) => {
+    const seen = globalThis as unknown as { __failure: unknown; __realQuit: () => void; __quitAsked: boolean };
+    seen.__failure = null;
+    seen.__quitAsked = false;
+    seen.__realQuit = electronApp.quit.bind(electronApp);
+    electronApp.quit = () => {
+      seen.__quitAsked = true;
+    };
+    dialog.showErrorBox = (_title: string, message: string) => {
+      seen.__failure = { message, windows: BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed()).map((w) => w.getTitle()) };
+    };
+  });
+  const failure = () => app!.evaluate(() => (globalThis as unknown as { __failure: { message: string; windows: string[] } | null }).__failure);
+  await expect.poll(failure, { timeout: 60_000 }).not.toBeNull();
+  const shown = (await failure())!;
+  // The message showed, and when it did, no window was left behind it.
+  expect(shown.message).toContain("DotAmi couldn't prepare the key that encrypts your receipts");
+  expect(shown.windows).toEqual([]);
+  expect(await app!.evaluate(() => (globalThis as unknown as { __quitAsked: boolean }).__quitAsked)).toBe(true);
+  const log = desktopLog();
+  expect(log.indexOf("[desktop] the preparing window closed (start-up failed)")).toBeGreaterThan(-1);
+  expect(log.indexOf("[desktop] stopped: DotAmi couldn't prepare the key")).toBeGreaterThan(log.indexOf("[desktop] the preparing window closed (start-up failed)"));
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+
+  // Now let it quit for real.
+  const closedApp = app!.waitForEvent("close");
+  await app!.evaluate(() => (globalThis as unknown as { __realQuit: () => void }).__realQuit()).catch(() => {});
+  await closedApp;
+  app = null;
 });
 
 test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {
@@ -640,6 +785,110 @@ test("a PDF receipt is drawn inside the app, in a worker that can reach nothing 
   expect(await viewerWorker!.evaluate(() => fetch("/api/expenses").then(() => "reached", () => "refused"))).toBe("refused");
   // The window is still DotAmi's Expenses page: nothing in the receipt moved it.
   expect(new URL(page.url()).pathname).toBe("/expenses");
+});
+
+test("a HEIC receipt is drawn by the graphics chip where it decodes HEVC, or plainly refused; once the graphics process stops, DotAmi doesn't try again ([8i])", async () => {
+  // Option D of docs/connectors/heic-decoder-review.md, in the app's own window. The invented photo is
+  // a 2 × 2 grid of flat colours (red, green / blue, white) turned a quarter anticlockwise, so a drawn
+  // picture shows green, white / red, blue: the tiles were placed and the rotation applied.
+  const page = await launch();
+  await page.goto(new URL("/expenses", page.url()).toString());
+  // The window's bridge gives the page exactly its two HEIC calls (desktop/window-preload.cjs).
+  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped"]);
+  const photo = heic({ transforms: [["irot", 1]] });
+  const id = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) =>
+      (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<{
+        expenses?: { id: string }[];
+      }>;
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 1_800, paidTo: "Example Corner Store desktop HEIC", whatFor: "printer paper" }],
+    });
+    const expenseId = proposed.expenses![0].id;
+    await post("/api/expenses/agree", { expenseIds: [expenseId] });
+    await post("/api/expenses/receipt", { expenseId, file });
+    return expenseId;
+  }, photo.toString("base64"));
+  expect(id).toBeTruthy();
+  const receipts = readdirSync(path.join(dataDir, "receipts"));
+  expect(receipts).toHaveLength(1);
+  expect(receipts[0]).toMatch(/^[0-9a-f]{32}\.heic$/);
+  // Encrypted on the disk like every other receipt (#128), with this data folder's key: none of the
+  // photo's own bytes, not even its ftyp box, are in the file.
+  const onDisk = readFileSync(path.join(dataDir, "receipts", receipts[0]));
+  expect(onDisk.subarray(0, 14).toString("latin1")).toBe("DOTAMI-RECEIPT");
+  expect(onDisk.length).toBe(photo.length + ENCRYPTED_OVERHEAD);
+  expect(onDisk.indexOf(photo.subarray(0, 24))).toBe(-1);
+  expect(encryptedKeyId(onDisk)).toBe(JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId);
+  // The window is handed the photo itself, decrypted in memory, which is what the HEIC reader opens below.
+  expect(await receiptBytesShown(page, "Example Corner Store desktop HEIC")).toEqual(photo.toString("base64"));
+
+  await page.reload();
+  // What this computer's graphics chip says about the photo's codec decides which answer is right.
+  const decodes = await page.evaluate(async () =>
+    typeof VideoDecoder === "undefined" ? false : (await VideoDecoder.isConfigSupported({ codec: "hvc1.1.2.L186.90", codedWidth: 128, codedHeight: 128 })).supported === true,
+  );
+  console.log(`this computer's graphics chip ${decodes ? "decodes" : "doesn't decode"} the invented HEVC`);
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const row = page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Corner Store desktop HEIC" });
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const dialog = page.getByRole("dialog", { name: /^Receipt: / });
+  await expect(dialog).toContainText("HEIC photo, shown inside DotAmi from its copy on this computer, drawn by this computer's graphics chip.");
+  if (decodes) {
+    const drawn = dialog.getByRole("img", { name: "The receipt photo (256 × 256 pixels)" });
+    await expect(drawn).toBeVisible({ timeout: 30_000 });
+    const pixels = await drawn.evaluate((el) => {
+      const c = el as HTMLCanvasElement;
+      const g = c.getContext("2d")!;
+      return [
+        [64, 64],
+        [192, 64],
+        [64, 192],
+        [192, 192],
+      ].map(([x, y]) => Array.from(g.getImageData(x, y, 1, 1).data.slice(0, 3)));
+    });
+    const near = (got: number[], want: number[]) => got.every((v, i) => Math.abs(v - want[i]) <= 40);
+    const expected = [
+      [0, 160, 0],
+      [255, 255, 255],
+      [255, 0, 0],
+      [0, 0, 255],
+    ];
+    expect(
+      pixels.map((p, i) => near(p, expected[i])),
+      JSON.stringify(pixels),
+    ).toEqual([true, true, true, true]);
+  } else {
+    await expect(dialog.getByRole("alert")).toHaveText(VIEW_MESSAGES.heicUnsupported);
+    await expect(dialog.getByRole("img")).toHaveCount(0);
+  }
+  // The HEIC worker came from DotAmi's own files and can't reach DotAmi's server (or anything else).
+  const heicWorker = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(heicWorker, "the HEIC worker").toBeTruthy();
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(dialog).toBeHidden();
+
+  // The graphics process stops (as a crash would report it): from now on, until DotAmi restarts, no
+  // HEIC is handed to the graphics chip, even after a reload of the page.
+  await app!.evaluate(({ app: electronApp }) => {
+    electronApp.emit("child-process-gone", {}, { type: "GPU", reason: "crashed", exitCode: 1 });
+  });
+  await page.reload();
+  const started = workers.length;
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  await expect(dialog.getByRole("alert")).toHaveText(VIEW_MESSAGES.heicStopped);
+  await expect(dialog.getByRole("img")).toHaveCount(0);
+  expect(workers.length, "no HEIC worker started").toBe(started);
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
+    "[desktop] the graphics process stopped (crashed); HEIC receipts won't be drawn until DotAmi restarts",
+  );
+  // The stored file is untouched, and still opens as the photo.
+  expect(readFileSync(path.join(dataDir, "receipts", receipts[0])).equals(onDisk)).toBe(true);
+  expect(await receiptBytesShown(page, "Example Corner Store desktop HEIC")).toEqual(photo.toString("base64"));
 });
 
 /** Text no real data holds, so finding it in a file's bytes can only mean the deleted statement. */

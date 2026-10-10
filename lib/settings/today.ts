@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 
 import { databaseFilePath } from "@/lib/db/database-file";
-import { receiptLockState, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
+import { receiptLockState, receiptsSetAsideTo, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import pkg from "@/package.json";
 import { DEFAULT_INTENT_ANTHROPIC_MODEL } from "@/lib/providers/llm/constants";
 
@@ -29,6 +29,11 @@ export interface SettingsToday {
    * opened. Only the state: the key never reaches a page.
    */
   receipts: ReceiptLockState;
+  /**
+   * After Start a new key (receipts "new-key-at-restart"): the folder the locked receipts were moved to,
+   * said on the page until the restart. Null otherwise. Only this server's own run knows it.
+   */
+  receiptsSetAside: string | null;
   /** The tax year the catalogs cover (lib/engines/<engine>/v2026). Becomes a setting with [11i]. */
   taxYear: number;
 }
@@ -53,6 +58,7 @@ export function readSettingsToday(
     updates: env.DOTAMI_UPDATES === "github" ? "github" : "manual",
     desktop: env.DOTAMI_DESKTOP === "1",
     receipts: receiptLockState(env),
+    receiptsSetAside: env === process.env ? receiptsSetAsideTo() : null,
     taxYear: 2026,
   };
 }

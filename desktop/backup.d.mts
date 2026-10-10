@@ -1,7 +1,7 @@
 // Types for desktop/backup.mjs, so the TypeScript tests can import it.
 export const BACKUP_EXTENSION: "dotami-backup";
 export const RECEIPTS_FOLDER: "receipts";
-export const RECEIPT_EXTENSIONS: Readonly<Record<"image/jpeg" | "image/png" | "image/webp" | "application/pdf", string>>;
+export const RECEIPT_EXTENSIONS: Readonly<Record<"image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "image/heic", string>>;
 /** True for a name DotAmi gives a receipt file: 32 hex characters and one of RECEIPT_EXTENSIONS. */
 export function isReceiptFileName(name: string): boolean;
 
