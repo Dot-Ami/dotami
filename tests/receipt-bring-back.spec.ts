@@ -13,21 +13,49 @@ import { createHash, randomBytes } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { decryptReceipt, encryptedKeyId, encryptReceipt, encryptReceiptsIn, keyIdOf } from "../desktop/receipt-crypto.mjs";
 import { isReceiptFileName, RECEIPT_EXTENSIONS } from "../desktop/backup.mjs";
 import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "../desktop/receipt-bring-back.mjs";
 import { RECEIPT_KEY_FILE, type KeyStore } from "../desktop/receipt-key.mjs";
 import { openDatabase, runSql } from "../desktop/sqlite.mjs";
-import { listLockedReceiptFolders } from "../desktop/wipe-pending.mjs";
+import { listLockedReceiptFolders, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { pdf, png } from "./helpers/receipt-files";
+
+/**
+ * Another program holding a file open (antivirus, a sync tool) can't be made for real in a test, so
+ * node:fs is wrapped: a path ending in one of these makes that call fail the way Windows does. Empty
+ * between tests, so every other test uses the real calls.
+ */
+const held = vi.hoisted(() => ({ open: new Set<string>(), rename: new Set<string>(), remove: new Set<string>() }));
+vi.mock("node:fs", async (importOriginal) => {
+  const real = await importOriginal<typeof import("node:fs")>();
+  const busy = (set: Set<string>, target: unknown, call: string) => {
+    for (const end of set) {
+      if (String(target).endsWith(end)) throw Object.assign(new Error(`EBUSY: resource busy or locked, ${call}`), { code: "EBUSY" });
+    }
+  };
+  const wrapped = {
+    ...real,
+    openSync: (file: never, ...rest: never[]) => (busy(held.open, file, "open"), real.openSync(file, ...rest)),
+    renameSync: (from: never, to: never) => (busy(held.rename, from, "rename"), real.renameSync(from, to)),
+    rmSync: (target: never, options?: never) => (busy(held.remove, target, "unlink"), real.rmSync(target, options)),
+    unlinkSync: (target: never) => (busy(held.remove, target, "unlink"), real.unlinkSync(target)),
+  };
+  return { ...wrapped, default: wrapped };
+});
 
 let dir = "";
 beforeEach(() => {
   dir = mkdtempSync(path.join(os.tmpdir(), "dotami-bring-back-"));
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
+afterEach(() => {
+  held.open.clear();
+  held.rename.clear();
+  held.remove.clear();
+  rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+});
 
 const WINDOWS = "win32";
 const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -469,13 +497,12 @@ describe("the list of set-aside folders the page shows", () => {
     mkdirSync(path.join(backups(), "receipts-before-restore-7003"));
     mkdirSync(path.join(backups(), "my-folder"));
 
-    const lines: string[] = [];
-    const listed = listSetAsideReceipts(dir, { fromDotAmi: true, opened: onKey(randomBytes(32)), store: account, platform: WINDOWS, log: (l: string) => lines.push(l) });
+    const listed = list(account, randomBytes(32));
     expect(listed).toEqual({
       outcome: "listed",
       folders: [
-        { name: "receipts-locked-7000", path: a, receipts: 3, canOpen: 2 },
-        { name: "receipts-locked-7001", path: b, receipts: 1, canOpen: 0 },
+        { ...none, name: "receipts-locked-7000", path: a, receipts: 3, canBringBack: 2, noKey: 1 },
+        { ...none, name: "receipts-locked-7001", path: b, receipts: 1, noKey: 1 },
       ],
     });
     // The server counts the same folders from their names and files (no key needed for that).
@@ -502,6 +529,190 @@ describe("the list of set-aside folders the page shows", () => {
       outcome: "refused",
       reason: "no-current-key",
     });
-    expect(listSetAsideReceipts(dir, { fromDotAmi: true, opened: onKey(randomBytes(32)), store: account, platform: WINDOWS, log })).toEqual({ outcome: "listed", folders: [] });
+    expect(listSetAsideReceipts(dir, { fromDotAmi: true, opened: onKey(randomBytes(32)), store: account, platform: WINDOWS, readRows: () => new Map(), log })).toEqual({
+      outcome: "listed",
+      folders: [],
+    });
+  });
+});
+
+/** A listed folder with nothing in it counted: each test spreads this and names only what it expects. */
+const none = { receipts: 0, canBringBack: 0, noKey: 0, noRecord: 0, alreadyBack: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
+
+/** The list as the page asks for it, with the data file's rows. */
+function list(store: KeyStore, current: Buffer) {
+  return listSetAsideReceipts(dir, {
+    fromDotAmi: true,
+    opened: onKey(current),
+    store,
+    platform: WINDOWS,
+    readRows: () => receiptRowsIn(dbFile(), null),
+    log: () => {},
+  });
+}
+
+describe("fix round: one receipt's failure never ends the run, and nothing is skipped without a word", () => {
+  it("a write that fails and whose clean-up also fails (another program holds the new file) still answers done, names that receipt, and tries the next", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9000", oldKey, account);
+    const [first, second, third] = [lockedReceipt(folder, oldKey), lockedReceipt(folder, oldKey), lockedReceipt(folder, oldKey)].sort((x, y) =>
+      x.name.localeCompare(y.name),
+    );
+    // The second's new file can be neither renamed into place nor removed again.
+    held.rename.add(`${second.name}.encrypting`);
+    held.remove.add(`${second.name}.encrypting`);
+    const secondBefore = readFileSync(path.join(folder, second.name));
+
+    const { result, lines } = call("receipts-locked-9000", account, current);
+    expect(result).toEqual({
+      outcome: "done",
+      folder,
+      broughtBack: [first.name, third.name],
+      oldCopiesLeft: [],
+      left: [{ name: second.name, why: "not-written" }],
+    });
+    // The two that moved are back and gone from the folder; the second's set-aside copy is untouched.
+    for (const r of [first, third]) expect(existsSync(path.join(folder, r.name))).toBe(false);
+    expect(readFileSync(path.join(folder, second.name)).equals(secondBefore)).toBe(true);
+    expect(lines).toEqual(["[desktop] set-aside receipts: 2 brought back, 1 left where they were"]);
+  });
+
+  it("a set-aside receipt another program holds open is named (in-use), not skipped; the list counts it apart and offers no button for it", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9100", oldKey, account);
+    const [a, b] = [lockedReceipt(folder, oldKey), lockedReceipt(folder, oldKey)].sort((x, y) => x.name.localeCompare(y.name));
+    held.open.add(b.name);
+    expect(list(account, current)).toEqual({
+      outcome: "listed",
+      folders: [{ ...none, name: "receipts-locked-9100", path: folder, receipts: 2, canBringBack: 1, unreadable: 1 }],
+    });
+    const { result, lines } = call("receipts-locked-9100", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [a.name], oldCopiesLeft: [], left: [{ name: b.name, why: "in-use" }] });
+    expect(lines).toEqual(["[desktop] set-aside receipts: 1 brought back, 1 left where they were"]);
+    expect(existsSync(path.join(folder, b.name))).toBe(true);
+  });
+
+  it("an encrypted file bigger than any receipt is named as changed, and counted so in the list", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9200", oldKey, account);
+    const big = lockedReceipt(folder, oldKey);
+    // Its header still says "encrypted receipt"; the bytes after it make it bigger than DotAmi keeps.
+    writeFileSync(path.join(folder, big.name), Buffer.concat([readFileSync(path.join(folder, big.name)), Buffer.alloc(10 * 1024 * 1024 + 64)]));
+    const current = randomBytes(32);
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9200", path: folder, receipts: 1, changed: 1 }] });
+    const { result } = call("receipts-locked-9200", account, current);
+    expect(result).toMatchObject({ outcome: "done", broughtBack: [], left: [{ name: big.name, why: "changed" }] });
+  });
+});
+
+describe("fix round: the list counts for the button only receipts that could come back", () => {
+  it("a receipt whose row is gone is counted as no record, and a folder of only those offers nothing, press after press", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9300", oldKey, account);
+    lockedReceipt(folder, oldKey, { row: false });
+    // A row of another type than the file's name says counts the same.
+    const otherType = lockedReceipt(folder, oldKey, { row: false });
+    addRow(otherType.id, "application/pdf", otherType.plain);
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9300", path: folder, receipts: 2, noRecord: 2 }] });
+  });
+
+  it("a receipt already in receipts/ (its old copy couldn't be removed) is counted as already back, not offered again", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9400", oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    // The first press brings it back, but another program holds the set-aside copy.
+    held.remove.add(path.join("receipts-locked-9400", a.name));
+    expect(call("receipts-locked-9400", account, current).result).toMatchObject({ broughtBack: [a.name], oldCopiesLeft: [a.name] });
+    held.remove.clear();
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9400", path: folder, receipts: 1, alreadyBack: 1 }] });
+  });
+
+  it("a receipt a press found changed isn't offered again while DotAmi runs", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9500", oldKey, account);
+    const changed = lockedReceipt(folder, oldKey);
+    const sameSize = Buffer.from(changed.plain);
+    sameSize[0] ^= 0xff;
+    writeFileSync(path.join(folder, changed.name), encryptReceipt(sameSize, { key: oldKey, id: changed.id }));
+    // Before a press it can't be told apart (only its SHA-256 differs): offered once.
+    expect(list(account, current)).toMatchObject({ folders: [{ receipts: 1, canBringBack: 1 }] });
+    expect(call("receipts-locked-9500", account, current).result).toMatchObject({ left: [{ name: changed.name, why: "changed" }] });
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9500", path: folder, receipts: 1, changed: 1 }] });
+  });
+
+  it("says when the folder has no key file of its own (where a found receipts.key goes)", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9600", oldKey, account, { keyFile: false });
+    lockedReceipt(folder, oldKey);
+    expect(list(account, randomBytes(32))).toEqual({
+      outcome: "listed",
+      folders: [{ ...none, name: "receipts-locked-9600", path: folder, receipts: 1, noKey: 1, keyFile: false }],
+    });
+  });
+
+  it("the list is refused when the data file's rows can't be read", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    lockedReceipt(setAsideFolder("receipts-locked-9700", oldKey, account), oldKey);
+    expect(
+      listSetAsideReceipts(dir, {
+        fromDotAmi: true,
+        opened: onKey(randomBytes(32)),
+        store: account,
+        platform: WINDOWS,
+        readRows: () => {
+          throw new Error("SQLITE_NOTADB");
+        },
+        log: () => {},
+      }),
+    ).toEqual({ outcome: "refused", reason: "data-file-unreadable" });
+  });
+});
+
+describe("fix round: a folder an earlier Delete still owes is never offered or brought back", () => {
+  it("is listed as owed with nothing counted for the button, and the button is refused with nothing moved", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9800", oldKey, account);
+    lockedReceipt(folder, oldKey);
+    writeWipePending(dbFile(), { backups: [], receiptFolders: ["receipts-locked-9800"] });
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9800", path: folder, receipts: 1, deleteOwed: true }] });
+    const before = snapshot();
+    const { result, lines } = call("receipts-locked-9800", account, current);
+    expect(result).toEqual({ outcome: "refused", reason: "delete-owed" });
+    expect(snapshot()).toEqual(before);
+    expect(lines).toEqual(["[desktop] bringing set-aside receipts back was refused: an earlier Delete still owes that folder"]);
+  });
+
+  it("control: the same folder with no Delete owed comes back", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9801", oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    writeWipePending(dbFile(), { backups: [], receiptFolders: ["receipts-locked-1"] });
+    expect(call("receipts-locked-9801", account, randomBytes(32)).result).toMatchObject({ outcome: "done", broughtBack: [a.name] });
   });
 });

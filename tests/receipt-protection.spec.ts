@@ -92,17 +92,59 @@ describe("after Start a new key, until the restart (expense-records.md § 11)", 
 describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
   const folder = "/home/someone/DotAmi/backups/receipts-locked-1760000000000";
 
+  /** A folder as the desktop app lists it, nothing counted: each case names only what it holds. */
+  const listed = { receipts: 0, canBringBack: 0, noKey: 0, noRecord: 0, alreadyBack: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
+  const at = (counts: Partial<typeof listed>) => setAsideFolderText({ ...listed, path: folder, ...counts });
+
   it("says, for each set-aside folder, how many receipts it holds and whether their old key opens again", () => {
-    expect(setAsideFolderText({ path: folder, receipts: 2, canOpen: 2 })).toEqual({
+    expect(at({ receipts: 2, canBringBack: 2 })).toEqual({
       summary: `2 receipt files set aside in ${folder}. This Windows account can open their old key again.`,
       canBringBack: true,
     });
-    expect(setAsideFolderText({ path: folder, receipts: 3, canOpen: 1 })).toEqual({
-      summary: `3 receipt files set aside in ${folder}. This Windows account can open the old key to 1 of them again; the others stay where they are.`,
+    expect(at({ receipts: 3, canBringBack: 1, noKey: 2 })).toEqual({
+      summary: `3 receipt files set aside in ${folder}. 1 of them can be brought back now. 2 of them are locked with an old key this Windows account still can't open.`,
       canBringBack: true,
     });
-    expect(setAsideFolderText({ path: folder, receipts: 1, canOpen: 0 })).toEqual({
+    expect(at({ receipts: 1, noKey: 1 })).toEqual({
       summary: `1 receipt file set aside in ${folder}. Their old key still can't be opened on this Windows account, so they can't be brought back.`,
+      canBringBack: false,
+    });
+  });
+
+  it("fix round: offers the button only for receipts that could come back, and says why each of the others can't", () => {
+    expect(at({ receipts: 1, noRecord: 1 })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. 1 of them can't come back: its expense record was deleted, or no longer has that receipt. Delete (“Safety copies in the backups folder”) on What DotAmi knows about you can clear this folder.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 2, alreadyBack: 2 })).toEqual({
+      summary: `2 receipt files set aside in ${folder}. 2 of them are already back in the receipts folder; the copies here are old ones. Delete (“Safety copies in the backups folder”) on What DotAmi knows about you can clear this folder.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 1, changed: 1 })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. 1 of them changed or was damaged since it was set aside, so DotAmi won't bring it back. Delete (“Safety copies in the backups folder”) on What DotAmi knows about you can clear this folder.`,
+      canBringBack: false,
+    });
+    // Something that may still come back (held open now) means Delete isn't suggested.
+    expect(at({ receipts: 2, noRecord: 1, unreadable: 1 })).toEqual({
+      summary: `2 receipt files set aside in ${folder}. 1 of them can't come back: its expense record was deleted, or no longer has that receipt. 1 of them couldn't be read just now (another program may have it open). Reload this page to check again.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 3, canBringBack: 2, noRecord: 1 }).canBringBack).toBe(true);
+  });
+
+  it("fix round: a folder with no key file of its own says where a found receipts.key goes", () => {
+    expect(at({ receipts: 1, noKey: 1, keyFile: false })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. Their old key file isn't in this folder, so they can't be brought back. If you find the old receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 2, canBringBack: 1, noKey: 1, keyFile: false }).summary).toContain(
+      "1 of them is locked with an old key whose file isn't in this folder. If you find the old receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page.",
+    );
+  });
+
+  it("fix round: a folder an earlier Delete still owes is never offered", () => {
+    expect(at({ receipts: 1, deleteOwed: true })).toEqual({
+      summary: `Receipts set aside in ${folder} are being cleared by an earlier Delete that hasn't finished, so they can't be brought back. What DotAmi knows about you can finish it (Finish it now).`,
       canBringBack: false,
     });
   });
@@ -114,11 +156,18 @@ describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
   });
 
   it("has a plain sentence for every reason a receipt stays, and every reason the desktop app refuses", () => {
-    for (const why of ["no-key", "no-record", "changed", "already-there", "not-written"] as const) expect(BRING_BACK_LEFT[why]).toMatch(/^[A-Z].+\.$/);
-    for (const reason of ["not-dotami-window", "no-current-key", "closing", "not-a-set-aside-folder", "data-file-unreadable"] as const) {
+    for (const why of ["no-key", "no-record", "changed", "already-there", "not-written", "in-use"] as const) expect(BRING_BACK_LEFT[why]).toMatch(/^[A-Z].+\.$/);
+    for (const reason of ["not-dotami-window", "no-current-key", "closing", "not-a-set-aside-folder", "data-file-unreadable", "delete-owed"] as const) {
       expect(BRING_BACK_REFUSED[reason]).toMatch(/Nothing was moved\.$/);
     }
     expect(BRING_BACK_LEFT["no-record"]).toContain("deleted since");
+    expect(BRING_BACK_LEFT["in-use"]).toBe("Another program had it open, so it couldn't be read. Try again.");
+    expect(BRING_BACK_REFUSED["delete-owed"]).toBe("An earlier Delete is still clearing that folder, so its receipts can't be brought back. Nothing was moved.");
+  });
+
+  it("fix round: no answer at all doesn't claim nothing moved (the page can't know), and says how to see what is left", () => {
+    expect(BRING_BACK_REFUSED["no-answer"]).toBe("The desktop app didn't answer. Reload this page to see which receipts are still set aside.");
+    expect(BRING_BACK_REFUSED["no-answer"]).not.toContain("Nothing was moved");
   });
 
   it("counts what came back, and says when an old copy is still in the folder", () => {
