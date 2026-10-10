@@ -9,6 +9,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
+  aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
+  desktop app closes and opens again by itself, making the new key on the way up. You no longer have
+  to close it and open it again. If the restart doesn't happen, nothing is lost: the files were already
+  moved, the page says to close DotAmi and open it again, and the next start makes the key. A copy run
+  from source doesn't restart by itself, and says so.
+- **Delete can clear the receipts DotAmi set aside** ([8i]) — the Delete menu's *Safety copies in the
+  backups folder* box now also clears the receipt folders DotAmi set aside there:
+  `receipts-locked-…` (from *Start a new key*) and `receipts-before-restore-…` (from a restore). The
+  box counts them, and once ticked it warns, there and at both asks, that afterwards those receipts can
+  never be opened, even if the old key comes back. Only the files DotAmi put in them are deleted; a
+  file of yours in one stays. A folder that can't be cleared yet (another program has a file open) is
+  finished by *Finish it now* or the next time the desktop app starts. *What Delete doesn't reach* no
+  longer lists them; it now names the key files set aside on their own
+  (`receipts-key-unreadable-….key`), which Delete still leaves.
 - **Start a new key for your receipts** ([8i]) — when the desktop app can't open the key your
   receipts are locked with (a Windows profile reset, a data folder from another account or computer,
   a deleted `receipts.key`), Settings, *What DotAmi knows about you* and the Expenses page now offer

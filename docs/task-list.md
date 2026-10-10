@@ -237,6 +237,12 @@ roadmap's build order.
     key made at the next start; never offered while the key is only out of reach for now (the key store
     unavailable), and no Add a receipt while none can be added; and a "Preparing DotAmi…" window during
     the first start's wait ([expense-records.md § 10](architecture/expense-records.md)).
+  - [x] Two follow-ups (the maintainer said yes, 2026-10-10): the desktop app restarts by itself after
+    Start a new key, saying so first, only from its own window and only once the receipts are moved (a
+    copy run from source says to restart it by hand); and the Delete menu's safety-copies box also
+    clears the receipt folders set aside in `backups/` (`receipts-locked-…`, `receipts-before-restore-…`),
+    with a warning, owed in the wipe-pending note if cut short
+    ([expense-records.md § 11](architecture/expense-records.md))
   - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
     ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)), then option D chosen after a
     double-check and built: kept exactly as given, read by DotAmi's own container reader in a
