@@ -643,6 +643,15 @@ each is handled in `lib/db/client.ts` and tested):
 - **Prisma connects as soon as a client is made**, so a file that can't be opened (no `DATABASE_URL`,
   the wrong key) became an error nothing waited for. The file is opened at the first query instead,
   inside the first turn, and the failure is that query's error.
+- **`npm ci` tried to compile the package.** Its `package.json` says `"gypfile": false` (don't compile:
+  the prebuilt files are inside), but npm writes the lockfile without that field and `npm ci` reads each
+  package from the lockfile, so it saw the package's `binding.gyp` and ran `node-gyp rebuild`, which
+  needs Visual Studio's C++ tools and failed on this computer, which has none (measured: `npm ci`
+  failed; with the field in the lockfile it installed). The field is now in `package-lock.json`, and
+  `tests/database-package.spec.ts` fails, naming `node scripts/keep-gypfile.mjs`, when npm rewrites
+  the lockfile and drops it (any `npm install <package>`, or a Dependabot update, does). A question
+  for the maintainer (the pull request's "Open"): keep this, or vendor an edited copy of the package,
+  or install C++ tools on every computer that installs DotAmi's code.
 - **The package's types can't be reached by its name** (its `exports` map leaves out `index.d.ts`), so
   `lib/db/better-sqlite3.d.ts` describes the part DotAmi uses.
 - **The desktop build copied all eight systems' prebuilt SQLite** (20 MB); it keeps this computer's

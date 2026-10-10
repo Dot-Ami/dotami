@@ -275,7 +275,9 @@ person is asked).
   CC0-or-Apache-2.0, with no LGPL or GPL; its notices are copied into `THIRD-PARTY-NOTICES.txt` from the
   C source, word for word, by [`desktop/notices.mjs`](../desktop/notices.mjs)). Network: none found
   (its JavaScript requires only node's `fs`, `path` and `util`; the Windows file imports only
-  `node.exe` and `KERNEL32.dll`); no install script. `package.json` names it `better-sqlite3`, the
+  `node.exe` and `KERNEL32.dll`); no install script, and it isn't compiled when it installs (the
+  lockfile keeps its `"gypfile": false`, which `npm ci` would otherwise lose; compiling would download
+  Node's headers). `package.json` names it `better-sqlite3`, the
   name the adapter loads, and [`tests/database-package.spec.ts`](../tests/database-package.spec.ts)
   fails if the real `better-sqlite3` (no encryption, and a download when it installs) is ever
   installed instead. The desktop app's server carries only the Windows x64 file (2.4 MB; the other

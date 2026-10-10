@@ -19,7 +19,14 @@ const root = process.cwd();
 const REVIEWED = { name: "better-sqlite3-multiple-ciphers", version: "13.0.3" };
 const ADAPTER = "6.19.3";
 
-type LockEntry = { name?: string; version?: string; resolved?: string; hasInstallScript?: boolean; dependencies?: Record<string, string> };
+type LockEntry = {
+  name?: string;
+  version?: string;
+  resolved?: string;
+  hasInstallScript?: boolean;
+  gypfile?: boolean;
+  dependencies?: Record<string, string>;
+};
 type Lockfile = { packages: Record<string, LockEntry> };
 
 /**
@@ -39,6 +46,9 @@ function lockfileProblems(lock: Lockfile): string[] {
         problems.push(`${where} is ${entry.name ?? "better-sqlite3"} ${entry.version} from ${entry.resolved}`);
       }
       if (entry.hasInstallScript) problems.push(`${where} has an install script`);
+      // npm ci reads the package from this entry: without the package's own "gypfile": false here it sees
+      // binding.gyp and runs node-gyp, which needs a C++ compiler (scripts/keep-gypfile.mjs puts it back).
+      if (entry.gypfile !== false) problems.push(`${where} is missing "gypfile": false (run node scripts/keep-gypfile.mjs)`);
     }
   }
   if (found !== 1) problems.push(`better-sqlite3 is installed ${found} times (once expected)`);
@@ -82,8 +92,17 @@ describe("the database package", () => {
     expect(lockfileProblems(lapsed)).toEqual([
       "node_modules/@prisma/adapter-better-sqlite3/node_modules/better-sqlite3 is better-sqlite3 11.10.0 from https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-11.10.0.tgz",
       "node_modules/@prisma/adapter-better-sqlite3/node_modules/better-sqlite3 has an install script",
+      'node_modules/@prisma/adapter-better-sqlite3/node_modules/better-sqlite3 is missing "gypfile": false (run node scripts/keep-gypfile.mjs)',
       "node_modules/prebuild-install is installed",
       "better-sqlite3 is installed 2 times (once expected)",
+    ]);
+  });
+
+  it("the check fails on a lockfile npm rewrote, which drops \"gypfile\": false (the control)", () => {
+    const { gypfile: _dropped, ...rewritten } = lock.packages["node_modules/better-sqlite3"];
+    void _dropped;
+    expect(lockfileProblems({ packages: { ...lock.packages, "node_modules/better-sqlite3": rewritten } })).toEqual([
+      'node_modules/better-sqlite3 is missing "gypfile": false (run node scripts/keep-gypfile.mjs)',
     ]);
   });
 

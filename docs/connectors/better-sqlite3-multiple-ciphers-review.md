@@ -124,7 +124,11 @@ The maintainer chose this package on 2026-10-10. Installed pinned (`better-sqlit
 `@prisma/adapter-better-sqlite3` 6.19.3): the tarballs npm fetched have the SHA-256s above;
 `npm audit signatures` verified the registry signatures of all 670 installed packages and 147
 attestations; `npm audit --omit=dev` found 0 vulnerabilities. Loaded in Node 25.8 it reports SQLite
-3.53.4 and SQLite3 Multiple Ciphers 2.4.0. The cost in time was measured first
+3.53.4 and SQLite3 Multiple Ciphers 2.4.0. One correction to "No install script" above: npm honours
+the package's `"gypfile": false` only when it reads the package's own `package.json`; `npm ci` reads
+the lockfile, which npm writes without that field, and so runs `node-gyp rebuild` (which needs a C++
+compiler, and downloads Node's headers). DotAmi keeps the field in `package-lock.json`
+(`scripts/keep-gypfile.mjs`, checked by `tests/database-package.spec.ts`). The cost in time was measured first
 ([database-encryption.md § 14](../architecture/database-encryption.md#14-measured-before-anything-else-was-built-2026-10-10)).
 
 ## Not checked
