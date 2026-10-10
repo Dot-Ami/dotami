@@ -25,13 +25,16 @@ import {
   restoreReceiptsNote,
   writeBackup,
 } from "./backup.mjs";
+import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey } from "./database-key.mjs";
+import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, restartForNewKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
+import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
-import { finishPendingWipe } from "./wipe-pending.mjs";
+import { finishPendingWipe, SAFETY_COPY_NAME } from "./wipe-pending.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Installed: the server ships as its own folder beside the app (desktop/package.mjs); from a
@@ -53,6 +56,12 @@ let win = null;
 /** @type {Electron.UtilityProcess | null} */
 let server = null;
 let quitting = false;
+/**
+ * [8i] True until the main window exists. The windows shown before it (the one before the first
+ * encryption, the backup passphrase it can open) close on their own, and closing the last window must
+ * not quit the app while it is still starting.
+ */
+let starting = true;
 /** @type {import("./log.mjs").DesktopLog | null} */
 let log = null;
 let dataDir = "";
@@ -63,6 +72,18 @@ let dbFile = "";
  * @type {import("./receipt-key.mjs").OpenedReceiptKey | null}
  */
 let receiptKey = null;
+/**
+ * [8i] The data file's key (desktop/database-key.mjs) when the file is encrypted, else null; and what the
+ * server is told about it (lib/db/lock.ts): "on", "off" (the person said Not now), "never", or
+ * "no-key-store", with how many plain copies are still on the disk. The key is never written anywhere but
+ * database.key, wrapped.
+ * @type {Buffer | null}
+ */
+let databaseKey = null;
+/** @type {{ state: "on" | "off" | "never" | "no-key-store", plainLeft: number }} */
+let databaseLock = { state: "no-key-store", plainLeft: 0 };
+/** The setting a "Never" answer saves once the file is migrated (the Setting table may not exist before). */
+let neverChosen = false;
 /**
  * The "Preparing DotAmi…" window ([8i], desktop/preparing.mjs): shown only while a first start waits for
  * Windows to save its own key, closed when the main window shows or the start fails.
@@ -89,9 +110,10 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 // While a start is failing (fail() closes the preparing window, then shows its message), quitting is
-// already under way: closing that last window mustn't quit again under the message.
+// already under way: closing that last window mustn't quit again under the message. [8i] Nor while
+// the app is still starting: the windows before the main one close on their own.
 app.on("window-all-closed", () => {
-  if (!quitting) app.quit();
+  if (!quitting && !starting) app.quit();
 });
 app.on("before-quit", () => {
   quitting = true;
@@ -135,13 +157,41 @@ async function start() {
 
   // Prisma reads `file:` URLs with forward slashes on every system.
   const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
+  // [8i] The main process opens the data file with the same SQLite package as the server, from the
+  // server's own folder (desktop/sqlite.mjs): the installed app keeps it only there.
+  useSqliteFrom(path.dirname(serverEntry));
+
+  // [8i] The receipts' key, opened first so a backup made from the window below carries the receipts
+  // (docs/architecture/expense-records.md § 9). Before the server starts, so nothing else has the files
+  // open. The log gets counts only.
+  try {
+    // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
+    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs); the
+    // preparing window is on the screen meanwhile (preparing.mjs), and only then.
+    receiptKey = await openReceiptKey(dataDir, safeStorage, { keyStoreSaved: waitShowingWindow(dataDir, preparing) });
+  } catch (error) {
+    return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
+  }
+  log.write(`[desktop] receipts: ${describeReceiptKey(receiptKey)}\n`);
+
+  // [8i] The data file's key, and encrypting the file when it is new or the person says so
+  // (docs/architecture/database-encryption.md § 6). Stops the start, having changed nothing, when the
+  // key can't be opened or the files are in a state DotAmi didn't leave them in.
+  try {
+    if (!(await prepareDatabase())) return;
+  } catch (error) {
+    // The data file (or the note's file) is there but another program holds it: never taken for a new
+    // folder, so nothing was made or changed (desktop/sqlite.mjs fileKind).
+    if (error instanceof FileNotReadable) return fail(error.message);
+    throw error;
+  }
 
   // A Delete whose wipe couldn't finish (the computer was busy, the disk full, or it was switched
   // off part-way) left a "wipe pending" note beside the data file: finish it now, before the server
   // opens the file. Only then — an ordinary start, with no note, does nothing here: free space in
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
-  const wipe = finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (line) => log.write(`${line}\n`) });
+  const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
   if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
@@ -149,7 +199,7 @@ async function start() {
   // untouched (the one exception is the owed wipe just above: when a "wipe pending" note was there,
   // the file has already been rebuilt, with the same contents, before these checks run).
   try {
-    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`) });
+    const { applied, backup } = migrate(dbFile, migrations, { log: (line) => log.write(`${line}\n`), key: databaseKey });
     log.write(`[desktop] database ready (${applied.length} update(s) applied${backup ? `, backup ${backup}` : ""})\n`);
   } catch (error) {
     if (error instanceof MigrationRefused) return fail(error.message);
@@ -160,17 +210,10 @@ async function start() {
     return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
 
-  // [8i] The receipts' key, then any receipt file not encrypted yet (docs/architecture/expense-records.md
-  // § 9). Before the server starts, so nothing else has the files open. The log gets counts only.
-  try {
-    // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
-    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs); the
-    // preparing window is on the screen meanwhile (preparing.mjs), and only then.
-    receiptKey = await openReceiptKey(dataDir, safeStorage, { keyStoreSaved: waitShowingWindow(dataDir, preparing) });
-  } catch (error) {
-    return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
-  }
-  log.write(`[desktop] receipts: ${describeReceiptKey(receiptKey)}\n`);
+  // [8i] "Never" from the window: saved now that the file has its Setting table (Settings can turn it back on).
+  if (neverChosen) saveEncryptionChoice(false);
+
+  // [8i] Any receipt file not encrypted yet (docs/architecture/expense-records.md § 9).
   if (receiptKey.state === "on") encryptExistingReceipts(receiptKey.key);
 
   const port = await freePort();
@@ -178,7 +221,7 @@ async function start() {
     cwd: path.dirname(serverEntry),
     stdio: "pipe",
     serviceName: "DotAmi server",
-    env: serverEnv({ PORT: String(port), HOSTNAME: "127.0.0.1", DATABASE_URL: databaseUrl, ...receiptLockEnv(receiptKey) }),
+    env: serverEnv({ PORT: String(port), HOSTNAME: "127.0.0.1", DATABASE_URL: databaseUrl, ...receiptLockEnv(receiptKey), ...databaseLockEnv() }),
   });
   log.follow(server.stdout);
   log.follow(server.stderr);
@@ -194,6 +237,7 @@ async function start() {
   buildMenu(origin, dataDir);
   answerWindowCalls(origin);
 
+  starting = false;
   win = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -282,8 +326,12 @@ function serverEnv(own) {
   // DOTAMI_DESKTOP tells it this is the desktop app, which has Back up and Restore in its File menu.
   const updates = updatesOn ? "github" : "";
   // A receipt key never comes from the shell either: only the one this app opened (receiptLockEnv).
-  const { DOTAMI_RECEIPT_KEY: _fromShell, ...inherited } = process.env;
+  // Nor the data file's key, nor what the server is told about it ([8i]).
+  const { DOTAMI_RECEIPT_KEY: _fromShell, DOTAMI_DATABASE_KEY: _dbKey, DOTAMI_DATABASE_LOCK: _dbLock, DOTAMI_DATABASE_PLAIN_LEFT: _dbLeft, ...inherited } = process.env;
   void _fromShell;
+  void _dbKey;
+  void _dbLock;
+  void _dbLeft;
   const env = { ...inherited, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
@@ -292,6 +340,315 @@ function serverEnv(own) {
   // output goes into logs/server.log (docs/architecture/database-encryption.md § 3).
   delete env.DEBUG;
   return env;
+}
+
+/**
+ * [8i] What the server is told about the data file (lib/db/lock.ts reads it): the state, the key only when
+ * it is "on", and how many plain copies are still on the disk. The server takes the key out of its
+ * environment the first time it reads it.
+ */
+function databaseLockEnv() {
+  const env = { DOTAMI_DATABASE_LOCK: databaseLock.state, DOTAMI_DATABASE_PLAIN_LEFT: String(databaseLock.plainLeft) };
+  if (databaseLock.state === "on" && databaseKey) env.DOTAMI_DATABASE_KEY = databaseKey.toString("base64");
+  return env;
+}
+
+/** The data file's safety copies in backups/ (DotAmi's own names only) and a leftover restore staging file. */
+function safetyCopyFiles() {
+  const files = [];
+  const backups = path.join(dataDir, "backups");
+  try {
+    for (const e of readdirSync(backups, { withFileTypes: true })) {
+      if (e.isFile() && SAFETY_COPY_NAME.test(e.name)) files.push(path.join(backups, e.name));
+    }
+  } catch {
+    // No backups folder yet.
+  }
+  const staging = path.join(dataDir, "restore-staging.db");
+  if (existsSync(staging)) files.push(staging);
+  return files;
+}
+
+/**
+ * [8i] Opens the data file's key and decides, before the migrator or the server touches the file, whether
+ * it is (or becomes) encrypted (docs/architecture/database-encryption.md § 6 and § 10):
+ * - an encryption a crash left part-way is finished first;
+ * - an encrypted file: its key must open, or the start stops having changed nothing (showLostKey);
+ * - a new data folder: a key is made and the migrator creates the file encrypted from its first byte;
+ * - an existing plain file: unless the person said "Never" (the setting), the window asks first, with
+ *   Back up first…, Encrypt now, Not now and Never;
+ * - no key store: the file stays plain, and Settings says why.
+ * Then the plain safety copies are encrypted too. Returns false when the start must stop (it has said why).
+ */
+async function prepareDatabase() {
+  const say = (line) => log.write(`[database] ${line}\n`);
+  const copies = safetyCopyFiles();
+  // A safety copy another program holds counts as not locked here (it is tried again at the next start);
+  // the data file itself is never guessed at: fileKind throws, and the start stops having changed nothing.
+  const copyKind = (f) => {
+    try {
+      return fileKind(f);
+    } catch (error) {
+      if (error instanceof FileNotReadable) return "held";
+      throw error;
+    }
+  };
+  const locked = fileKind(dbFile) === "encrypted" || copies.some((f) => copyKind(f) === "encrypted") || readNote(dataDir) !== null;
+  const opened = openDatabaseKey(dataDir, safeStorage, { locked });
+  if (opened.state === "key-unreadable") {
+    say(
+      opened.storeUnavailable
+        ? "the key store isn't available right now; nothing was changed"
+        : opened.missing
+          ? "the key file is missing; nothing was changed"
+          : "the key can't be opened by this account; nothing was changed",
+    );
+    await showLostKey(opened);
+    return false;
+  }
+  let key = opened.state === "on" ? opened.key : null;
+  try {
+    const resumed = resumeEncryption(dataDir, key, { log: say });
+    if (resumed.action !== "none") say(`an encryption left part-way: ${resumed.action}${resumed.wipePending ? " (the plain copy's wipe is still owed)" : ""}`);
+  } catch (error) {
+    if (error instanceof EncryptionStopped) {
+      fail(error.message);
+      return false;
+    }
+    throw error;
+  }
+
+  const kind = fileKind(dbFile);
+  if (kind === "encrypted") {
+    // The key file opened, but is it this file's key? One that holds another key (put back from another
+    // folder, or saved by a restore that couldn't finish) is the lost-key case, not a failed update.
+    if (!key || !opensWith(dbFile, key)) {
+      say("the key file opens, but holds another key; nothing was changed");
+      await showLostKey({ state: "key-unreadable", keyId: opened.state === "on" ? opened.keyId : null, missing: false, wrongKey: true });
+      return false;
+    }
+    databaseKey = key;
+    databaseLock = { state: "on", plainLeft: 0 };
+    say("the data file is encrypted; key open");
+  } else if (opened.state === "no-key-store") {
+    databaseLock = { state: "no-key-store", plainLeft: 0 };
+    say("the operating system's key store isn't available, so the data file is kept unencrypted");
+    return true;
+  } else if (kind === "absent") {
+    // A new data file: created encrypted from its first byte by the migrator. A key that already opens is
+    // kept, never replaced: encrypted safety copies (or the data file, put back) may be locked with it
+    // (desktop/database-key.mjs: never replaced automatically once anything is encrypted with it).
+    key ??= await newDatabaseKey(say);
+    if (!key) return true;
+    databaseKey = key;
+    databaseLock = { state: "on", plainLeft: 0 };
+    say("a new data file, encrypted from its first byte");
+    return true;
+  } else {
+    // An existing plain file: asked first, unless the person said "Never".
+    if (!readEncryptionChoice()) {
+      databaseLock = { state: "never", plainLeft: 0 };
+      say("kept unencrypted: the person chose Never (Settings can turn it on)");
+      return true;
+    }
+    const answer = await askToEncrypt();
+    say(`the window before encrypting was shown; the answer: ${answer}`);
+    if (answer === "not-now" || answer === "never") {
+      neverChosen = answer === "never";
+      databaseLock = { state: answer === "never" ? "never" : "off", plainLeft: 0 };
+      return true;
+    }
+    key ??= await newDatabaseKey(say);
+    if (!key) return true;
+    try {
+      const done = encryptFile(dataDir, dbFile, key, { log: say });
+      databaseKey = key;
+      databaseLock = { state: "on", plainLeft: done.wipePending ? 1 : 0 };
+      say(`the data file is encrypted${done.wipePending ? "; the plain copy's wipe is owed" : ""}`);
+      // What an earlier version let Chromium cache (pages and answers holding the data in plain text) is
+      // cleared once, now; from now on nothing is cached (lockDown).
+      await session.defaultSession.clearCache();
+      say("the window's cache was cleared");
+    } catch (error) {
+      if (!(error instanceof EncryptionStopped)) throw error;
+      if (error.kind === "busy" || error.kind === "pending") {
+        // Nothing moved (another program holds the file, or an earlier plain copy's wipe is still owed):
+        // carry on unencrypted, and ask again at the next start.
+        say(error.kind === "busy" ? "the data file was busy; kept unencrypted for now" : "an earlier wipe is still owed; kept unencrypted for now");
+        databaseLock = { state: "off", plainLeft: 0 };
+        await dialog.showMessageBox({ type: "info", title: "DotAmi", message: "Your data file wasn't encrypted this time.", detail: error.message });
+        return true;
+      }
+      fail(error.message);
+      return false;
+    }
+  }
+
+  // The plain safety copies (made before updates and restores) are encrypted the same way, one by one; one
+  // another program holds stays as it is, still restorable, and is tried again at the next start. Only one
+  // file is encrypted at a time: while a plain copy's wipe is owed, encryptFile refuses ("pending"), so the
+  // note that names it is never replaced and the copy is never forgotten.
+  let notYet = 0;
+  for (const file of copies.filter((f) => existsSync(f) && ["plain", "held"].includes(copyKind(f)))) {
+    try {
+      if (copyKind(file) === "held") throw new EncryptionStopped("busy", "held");
+      encryptFile(dataDir, file, databaseKey, { log: say });
+    } catch (error) {
+      notYet += 1;
+      say(`a safety copy couldn't be encrypted yet (${error instanceof EncryptionStopped ? error.kind : describeError(error)})`);
+    }
+  }
+  // What is still plain on the disk: the copies not encrypted yet, and every plain copy whose wipe is owed
+  // (the data file's and the safety copies'), counted from the disk itself.
+  const left = notYet + plainLeftovers(dataDir).filter((f) => !f.endsWith("-journal")).length;
+  databaseLock = { state: "on", plainLeft: left };
+  if (left > 0) say(`${left} plain cop${left === 1 ? "y" : "ies"} still on the disk; tried again at the next start`);
+  return true;
+}
+
+/** Whether the encrypted file opens with `key` (read-only; nothing is written). */
+function opensWith(file, key) {
+  try {
+    openDatabase(file, { key, readonly: true, fileMustExist: true }).close();
+    return true;
+  } catch (error) {
+    if (error instanceof CannotOpenDatabase) return false;
+    throw error;
+  }
+}
+
+/**
+ * A new key for the data file, saved wrapped and read back (desktop/database-key.mjs), or null when this
+ * computer has no key store that can keep it (the file then stays plain, and Settings says so).
+ */
+async function newDatabaseKey(say) {
+  try {
+    // The receipts' key was opened first, so Windows' own key is on the disk by now; the preparing window
+    // shows only if it still has to wait.
+    const made = await makeDatabaseKey(dataDir, safeStorage, { keyStoreSaved: waitShowingWindow(dataDir, preparing) });
+    say(`a key was made${made.setAside ? "; a key file this account couldn't open was moved to the backups folder" : ""}`);
+    return made.key;
+  } catch (error) {
+    say(`no key could be made (${describeError(error)}); the data file is kept unencrypted`);
+    databaseLock = { state: "no-key-store", plainLeft: 0 };
+    return null;
+  }
+}
+
+/**
+ * [8i] Whether the person still wants the data file encrypted: false only after "Never" (the
+ * "database-encryption" setting, saved as {"on":false}; lib/settings/values.ts). Read from the plain
+ * file itself; a file without the Setting table yet, or no row, means yes.
+ */
+function readEncryptionChoice() {
+  let db;
+  try {
+    db = openDatabase(dbFile, { readonly: true, fileMustExist: true });
+    const row = db.prepare(`SELECT value FROM "Setting" WHERE key = 'database-encryption'`).get();
+    if (!row) return true;
+    return JSON.parse(row.value)?.on !== false;
+  } catch {
+    return true;
+  } finally {
+    db?.close();
+  }
+}
+
+/** Saves the "database-encryption" setting, as the settings store writes it (lib/settings/store.ts). */
+function saveEncryptionChoice(on) {
+  let db;
+  try {
+    db = openDatabase(dbFile, { key: databaseKey });
+    db.prepare(`INSERT INTO "Setting" (key, value, updatedAt) VALUES ('database-encryption', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = excluded.updatedAt`).run(
+      JSON.stringify({ on }),
+      Date.now(),
+    );
+  } catch (error) {
+    log?.write(`[database] the answer couldn't be saved (${describeError(error)}); the window asks again at the next start\n`);
+  } finally {
+    db?.close();
+  }
+}
+
+/**
+ * [8i] One of the start-up windows (desktop/encrypt-ask.html, desktop/lost-key.html): a local page that can
+ * send back only one of `answers` (desktop/choice-preload.cjs, checked again here). Closing it answers
+ * `closed`. Resolves with the answer.
+ * @param {"encrypt-ask" | "lost-key"} which
+ * @param {readonly string[]} answers
+ * @param {string} closed
+ * @param {{ status?: string, detail?: string, height?: number }} [options]
+ */
+function askInWindow(which, answers, closed, { status = "", detail = "", height = 600 } = {}) {
+  // The "Preparing DotAmi…" window, if a first start showed it, has nothing more to wait for.
+  preparing.close("a question before the main window");
+  return new Promise((resolve) => {
+    const ask = new BrowserWindow({
+      width: 620,
+      height,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      title: "DotAmi",
+      backgroundColor: "#161619",
+      webPreferences: { preload: path.join(root, "desktop", "choice-preload.cjs"), contextIsolation: true, sandbox: true, nodeIntegration: false },
+    });
+    ask.setMenu(null);
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      ipcMain.removeListener("dotami-choice", onAnswer);
+      if (!ask.isDestroyed()) ask.close();
+      resolve(value);
+    };
+    const onAnswer = (event, message) => {
+      // Only this window's own page, and only one of its answers, is believed (Electron security checklist #17).
+      if (event.sender !== ask.webContents || message?.which !== which) return;
+      finish(answers.includes(message?.answer) ? message.answer : closed);
+    };
+    ipcMain.on("dotami-choice", onAnswer);
+    ask.on("closed", () => finish(closed));
+    void ask.loadFile(path.join(root, "desktop", `${which}.html`), { query: { which, status, detail } });
+  });
+}
+
+/**
+ * [8i] The window before an existing data file is first encrypted (desktop/encrypt-ask.html): what it
+ * protects and what it doesn't, what a lost key costs, and four answers. "Back up first…" runs File →
+ * Back up… on the still-plain file and comes back here. Closing the window counts as "Not now".
+ * Resolves with "encrypt", "not-now" or "never".
+ */
+async function askToEncrypt() {
+  let status = "";
+  for (;;) {
+    const answer = await askInWindow("encrypt-ask", ["encrypt", "backup", "not-now", "never"], "not-now", { status });
+    if (answer !== "backup") return answer;
+    const made = await backUp();
+    status = made ? `Backed up to ${made}. Keep it somewhere other than this computer.` : "No backup was made.";
+  }
+}
+
+/**
+ * [8i] The start when the data file is encrypted and its key can't be opened (§ 10): nothing on the disk is
+ * changed, and the person is told what happened and what can bring the data back (desktop/lost-key.html),
+ * before the main window opens. Then the app quits.
+ */
+async function showLostKey(opened) {
+  const why = opened.storeUnavailable
+    ? "Windows' key store isn't available right now. Restart Windows (or sign out and in again), then start DotAmi again."
+    : opened.missing
+      ? `The key file (${DATABASE_KEY_FILE}, beside the data file) is missing.`
+      : opened.wrongKey
+        ? `The key file (${DATABASE_KEY_FILE}, beside the data file) opens, but holds another key, not this data file's.`
+        : "Windows won't open its key for this Windows account, or the key file holds another key.";
+  for (;;) {
+    const answer = await askInWindow("lost-key", ["quit", "open-folder"], "quit", { detail: why, height: 420 });
+    if (answer !== "open-folder") break;
+    await shell.openPath(dataDir);
+  }
+  quitting = true;
+  app.quit();
 }
 
 /** The log line about the key: its state and what happened to it, never the key or its id. */
@@ -538,14 +895,14 @@ function buildMenu(origin, dataDir) {
  */
 async function backUp() {
   const passphrase = await askPassphrase("backup");
-  if (passphrase === null) return;
+  if (passphrase === null) return null;
   const day = new Date().toLocaleDateString("en-CA");
   const { canceled, filePath } = await dialog.showSaveDialog(win ?? undefined, {
     title: "Back up DotAmi",
     defaultPath: path.join(app.getPath("documents"), `DotAmi backup ${day}.${BACKUP_EXTENSION}`),
     filters: [{ name: "DotAmi backup", extensions: [BACKUP_EXTENSION] }],
   });
-  if (canceled || !filePath) return;
+  if (canceled || !filePath) return null;
   try {
     // [8i] Receipts go in as their own bytes, decrypted with this computer's key, so the backup restores
     // on a computer whose key differs (expense-records.md § 9).
@@ -554,6 +911,8 @@ async function backUp() {
       passphrase,
       appVersion: app.getVersion(),
       receiptKey: key,
+      // [8i] The data file goes in decrypted, rebuilt in memory, so the backup restores anywhere.
+      databaseKey,
     });
     log?.write(
       `[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing, ${unreadableReceipts} couldn't be opened)\n`,
@@ -570,9 +929,11 @@ async function backUp() {
           : "") +
         "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
     });
+    return filePath;
   } catch (error) {
     log?.write(`[backup] failed: ${error}\n`);
     await dialog.showMessageBox(win ?? undefined, { type: "error", title: "Backup failed", message: "DotAmi couldn't write the backup.", detail: String(error?.message ?? error) });
+    return null;
   }
 }
 
@@ -603,7 +964,8 @@ async function restore() {
   let receipts = 0;
   for (;;) {
     try {
-      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: restoreKey }));
+      // [8i] The restored data file is staged encrypted with this computer's key when the file here is.
+      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: restoreKey, databaseKey }));
       break;
     } catch (error) {
       if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
@@ -669,7 +1031,7 @@ async function restore() {
     }
   }
   try {
-    const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
+    const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups"), databaseKey });
     log?.write(
       `[restore] restored from ${filePaths[0]}; safety copy ${safetyCopy ?? "(no previous data)"}; ${receiptsRestored} receipt files restored${receiptsMovedTo ? `; receipts folder moved to ${receiptsMovedTo}` : ""}\n`,
     );

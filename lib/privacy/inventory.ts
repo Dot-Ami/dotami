@@ -95,11 +95,20 @@ export interface WindowStorageEntry {
 
 /** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log" | "wipe-pending" | "receipts" | "receipts-key";
+  id:
+    | "backups"
+    | "log"
+    | "wipe-pending"
+    | "receipts"
+    | "receipts-key"
+    | "database-key"
+    | "database-encrypting"
+    | "database-encrypting-copy"
+    | "database-plain-to-wipe";
   /**
-   * Path relative to the folder holding the data file. The wipe-pending note is named after the
-   * data file itself, so this shows the desktop app's name for it (lib/privacy/holdings.ts finds it
-   * beside whichever data file this copy uses).
+   * Path relative to the folder holding the data file. The wipe-pending note and the two files of an
+   * encryption under way are named after the data file itself, so this shows the desktop app's name for
+   * them (lib/privacy/holdings.ts finds them beside whichever data file this copy uses).
    */
   relativePath: string;
   name: string;
@@ -561,6 +570,46 @@ export const FOLDERS: readonly FolderEntry[] = [
     desktopOnly: true,
   },
   {
+    id: "database-key",
+    relativePath: "database.key",
+    name: "The key to your data file",
+    holds:
+      "The key that encrypts the data file and its safety copies, itself encrypted by Windows for your Windows account only (the same protection as the receipts' key, in a file of its own). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses everything in the data file except what a backup holds. Made the first time the desktop app encrypts the data file; never removed or replaced by DotAmi while anything is encrypted with it.",
+    writtenBy: { file: "desktop/database-key.mjs", mentions: 'DATABASE_KEY_FILE = "database.key"' },
+    desktopOnly: true,
+    whenAbsent: "None: the data file isn't encrypted (or, if it is, the key is missing, and DotAmi says so when it starts).",
+  },
+  {
+    id: "database-encrypting",
+    relativePath: "database-encrypting.json",
+    name: "A note that encrypting the data file is under way",
+    holds:
+      "Written while the desktop app encrypts the data file or a safety copy, and removed when it is done. It holds which of DotAmi's own files is being encrypted, the step it is at, and the encrypted copy's size and SHA-256, nothing of yours. If DotAmi stops part-way, the next start reads it to finish safely.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'ENCRYPTING_NOTE = "database-encrypting.json"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being encrypted.",
+  },
+  {
+    id: "database-encrypting-copy",
+    relativePath: "dotami.db.encrypting",
+    name: "The encrypted copy being made",
+    holds:
+      "Made only while the desktop app encrypts the data file: everything the data file holds, written by SQLite straight into this file already encrypted with the data file's key (no plain copy is made). Once it is checked against the data file it takes the data file's place, a moment later. If DotAmi stops before that, its next start overwrites it with zeros and deletes it (or finishes the swap). The same name with “.encrypting” after a safety copy's name can appear in the safety copies folder for the same moments; a journal SQLite keeps beside it (“-journal”) goes with it.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'COPY_SUFFIX = ".encrypting"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being encrypted.",
+  },
+  {
+    id: "database-plain-to-wipe",
+    relativePath: "dotami.db.plain-to-wipe",
+    name: "The unencrypted data file being wiped",
+    holds:
+      "The data file as it was before it was encrypted: everything it held, unencrypted. It is there from the moment the encrypted copy takes its place until it is overwritten with zeros and deleted, normally a moment later. If another program holds it (an antivirus scan or a sync app can), it stays until a later start can wipe it, and Settings says an unencrypted copy is still on the disk. A safety copy's own (its name with “.plain-to-wipe” after it, in the safety copies folder) is handled the same way, and so is a journal SQLite keeps beside either (“-journal”). Delete doesn't remove these files; the desktop app's next start does. On a solid-state disk, zeros don't promise the old bytes are physically gone.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'PLAIN_SUFFIX = ".plain-to-wipe"' },
+    desktopOnly: true,
+    whenAbsent: "None: no unencrypted copy is waiting to be wiped.",
+  },
+  {
     id: "backups",
     relativePath: "backups",
     name: "Safety copies",
@@ -672,6 +721,11 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
     file: "desktop/main.mjs",
     call: 'loadFile(path.join(root, "desktop", "passphrase.html")',
     why: "The passphrase window: a page shipped in the app and loaded from disk. Its own Content-Security-Policy is default-src 'none' (desktop/passphrase.html), so the page can't make a connection, and desktop/passphrase-preload.cjs lets it send back only the passphrase or a cancel.",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: 'loadFile(path.join(root, "desktop", `${which}.html`)',
+    why: "[8i] The two start-up windows: before an existing data file is first encrypted (desktop/encrypt-ask.html), and when the data file's key can't be opened (desktop/lost-key.html). Pages shipped in the app and loaded from disk, chosen from those two names only. Each one's own Content-Security-Policy is default-src 'none', so the page can't make a connection, and desktop/choice-preload.cjs lets it send back only one of its fixed answers.",
   },
   {
     file: "desktop/main.mjs",

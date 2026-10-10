@@ -11,7 +11,8 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { migrate, MigrationRefused } from "../desktop/migrate.mjs";
+import { migrate, MigrationRefused, vacuumFile } from "../desktop/migrate.mjs";
+import { CannotOpenDatabase, fileKind, openDatabase, runSql as runOn } from "../desktop/sqlite.mjs";
 
 const root = path.resolve(__dirname, "..");
 const migrations = path.join(root, "prisma", "migrations");
@@ -767,6 +768,99 @@ describe("desktop migrator — receipts (a table describing each receipt file)",
     expect(query<{ n: number }>(dbFile, `SELECT count(*) AS n FROM "Venture"`)).toEqual([{ n: 1 }]);
     expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
   }, 60_000);
+});
+
+/**
+ * [8i] The migrator on an encrypted data file (docs/architecture/database-encryption.md § 5). Prisma's own
+ * referee can't open an encrypted file, so the comparison with `migrate status` above keeps running on a
+ * plain one (the migrator works the same with or without a key); these check the rest through the key.
+ */
+describe("desktop migrator — on an encrypted data file ([8i])", () => {
+  const KEY = Buffer.alloc(32, 0x6b);
+  const MARKER = "zq-migrate-encrypted-marker-3307";
+  const withKey = <T>(file: string, read: (db: ReturnType<typeof openDatabase>) => T): T => {
+    const db = openDatabase(file, { key: KEY, fileMustExist: true });
+    try {
+      return read(db);
+    } finally {
+      db.close();
+    }
+  };
+
+  it("creates a new data file encrypted from its first byte, and applies every migration", () => {
+    expect(migrate(dbFile, migrations, { key: KEY }).applied).toEqual(localNames);
+    expect(fileKind(dbFile)).toBe("encrypted");
+    expect(() => openDatabase(dbFile, { readonly: true })).toThrow(CannotOpenDatabase);
+    expect(withKey(dbFile, (db) => db.prepare(`SELECT migration_name FROM "_prisma_migrations" ORDER BY migration_name`).all())).toEqual(
+      localNames.map((migration_name) => ({ migration_name })),
+    );
+    // The next start has nothing to do.
+    expect(migrate(dbFile, migrations, { key: KEY })).toEqual({ applied: [], backup: null });
+  });
+
+  it("applies an update to an encrypted file, keeps every idea's children, and its safety copy is encrypted with the same key", () => {
+    const latest = localNames[localNames.length - 1];
+    const before = path.join(dir, "migrations-before-latest");
+    cpSync(migrations, before, { recursive: true });
+    rmSync(path.join(before, latest), { recursive: true, force: true });
+    migrate(dbFile, before, { key: KEY });
+    withKey(dbFile, (db) =>
+      runOn(
+        db,
+        `
+        INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+        INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'statement ${MARKER}', 0);
+        INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+          VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'note ${MARKER}', 0),
+                 ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+        INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+        INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+          VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+        INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+          VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed');
+      `,
+      ),
+    );
+    const everything = () =>
+      withKey(dbFile, (db) => ({
+        statements: db.prepare(`SELECT * FROM "PersonStatement" ORDER BY id`).all(),
+        ventures: db.prepare(`SELECT * FROM "Venture" ORDER BY id`).all(),
+        links: db.prepare(`SELECT * FROM "VentureLink" ORDER BY id`).all(),
+        progress: db.prepare(`SELECT * FROM "ScenarioState" ORDER BY id`).all(),
+        figures: db.prepare(`SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount FROM "Figure" ORDER BY id`).all(),
+      }));
+    const held = everything();
+
+    const { applied, backup } = migrate(dbFile, migrations, { key: KEY, backupDir: path.join(dir, "backups"), now: () => 9 });
+    expect(applied).toEqual([latest]);
+    expect(everything()).toEqual(held);
+    expect(withKey(dbFile, (db) => db.prepare("PRAGMA foreign_key_check").all())).toEqual([]);
+
+    // The safety copy before the update: encrypted, the words not in its bytes, and whole with the key.
+    expect(fileKind(backup!)).toBe("encrypted");
+    expect(readFileSync(backup!).includes(Buffer.from(MARKER))).toBe(false);
+    expect(withKey(backup!, (db) => db.prepare(`SELECT count(*) AS n FROM "Venture"`).get())).toEqual({ n: 2 });
+    // The control: the same words are in a plain file's bytes.
+    const plain = path.join(dir, "plain.db");
+    migrate(plain, before);
+    runSql(plain, `INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0); INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'statement ${MARKER}', 0);`);
+    expect(readFileSync(plain).includes(Buffer.from(MARKER))).toBe(true);
+  });
+
+  it("without the key it refuses and changes nothing; Delete's owed wipe runs with it", () => {
+    migrate(dbFile, migrations, { key: KEY });
+    const was = fileHash(dbFile);
+    expect(() => migrate(dbFile, migrations)).toThrow(CannotOpenDatabase);
+    expect(() => vacuumFile(dbFile)).toThrow(CannotOpenDatabase);
+    expect(fileHash(dbFile)).toBe(was);
+    expect(vacuumFile(dbFile, KEY)).toBe(true);
+    // Rebuilt by VACUUM, the file is still encrypted: it doesn't open without the key, and does with it.
+    // (A VACUUM that wrote it back decrypted would still have dropped the deleted words, so the wipe's own
+    // tests can't see this.)
+    expect(fileKind(dbFile)).toBe("encrypted");
+    expect(() => openDatabase(dbFile, { readonly: true, fileMustExist: true })).toThrow(CannotOpenDatabase);
+    expect(withKey(dbFile, (db) => db.pragma("integrity_check", { simple: true }))).toBe("ok");
+  });
 });
 
 describe("desktop migrator — a T2125 total's tax year and form line on Figure ([8f])", () => {

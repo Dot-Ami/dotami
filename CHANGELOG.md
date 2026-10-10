@@ -25,6 +25,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   longer lists them; it now names the key files set aside on their own
   (`receipts-key-unreadable-….key`), which Delete still leaves. With the box unticked, the first
   "are you sure" step says the set-aside receipt folders still hold their receipt files.
+- **Your data file is encrypted in the desktop app** ([8i], the maintainer's decisions of 2026-10-10)
+  — with a key only your Windows account on this computer can open, kept wrapped by Windows (the
+  same protection as the receipts' key, in a file of its own, `database.key`), and its safety copies
+  with it. A new data folder is encrypted from its first byte. An existing file is asked about first,
+  in a window that says what it protects, what it doesn't and what a lost key costs (everything not
+  in a backup), with **Back up first…**, **Encrypt now**, **Not now** (asked again at the next start)
+  and **Never…** (after a second warning). Encrypting never makes a second plain copy, survives being
+  stopped at any step, and overwrites the plain file with zeros before deleting it. Settings and
+  *What DotAmi knows about you* say whether the file is encrypted, and Settings has an **Encrypt the
+  data file** switch to turn it on after "Never". When the key can't be opened (or the key file
+  opens but holds another key, or Windows' key store isn't available right now), nothing is changed
+  and a window says what happened and that putting `database.key` back brings everything back. A key
+  that opens is never replaced, even when the data file is missing; a data file another program holds
+  stops the start with a sentence saying so, never taken for a new one; and only one file is encrypted
+  at a time, so an unencrypted copy whose wipe another program held up is never forgotten.  Backups hold the data decrypted, rebuilt in memory (no plain copy on the disk), so they restore on
+  another computer; a restore is written encrypted with this computer's key. An older DotAmi can't
+  open an encrypted file: going back needs a backup. A copy run from source keeps the file plain and
+  says so.
 - **Start a new key for your receipts** ([8i]) — when the desktop app can't open the key your
   receipts are locked with (a Windows profile reset, a data folder from another account or computer,
   a deleted `receipts.key`), Settings, *What DotAmi knows about you* and the Expenses page now offer

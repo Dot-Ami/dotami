@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
+import { databaseProtectionText } from "@/lib/db/protection";
 import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import type { BankSourcesState } from "@/lib/figures/source-account-name";
@@ -11,6 +12,7 @@ import type { FigureRemindersValue } from "@/lib/settings/values";
 
 import { BankAccountsControl } from "./bank-accounts-control";
 import { CopyPathButton } from "./copy-path-button";
+import { DatabaseEncryptionControl } from "./database-encryption-control";
 import { FigureRemindersControl } from "./figure-reminders-control";
 
 const TASK_LIST_URL = "https://github.com/Dot-Ami/dotami/blob/main/docs/task-list.md";
@@ -91,7 +93,7 @@ export function SettingsPage({
 
               <ul className="mt-3 space-y-3">
                 {settingsInGroup(g.id).map((s) => (
-                  <SettingRow key={s.id} setting={s} reminders={reminders} bankSources={bankSources} />
+                  <SettingRow key={s.id} setting={s} reminders={reminders} bankSources={bankSources} today={today} />
                 ))}
               </ul>
             </section>
@@ -106,10 +108,12 @@ function SettingRow({
   setting,
   reminders,
   bankSources,
+  today,
 }: {
   setting: SettingEntry;
   reminders: FigureRemindersValue | null;
   bankSources: BankSourcesState | null;
+  today: SettingsToday;
 }) {
   // [8g] The accounts list shows as soon as there is something in it, even while the switch itself
   // is still planned: taking an account back must always be possible. Nothing can add one before
@@ -158,6 +162,11 @@ function SettingRow({
           {setting.warning}
         </p>
       ) : null}
+      {setting.id === "database-encryption" && setting.status === "live" ? (
+        <div className="mt-3 border-t border-rule-soft pt-3">
+          <DatabaseEncryptionControl lock={today.database.state} />
+        </div>
+      ) : null}
       {setting.id === "figure-reminders" && setting.status === "live" ? (
         <div className="mt-3 border-t border-rule-soft pt-3">
           <FigureRemindersControl initial={reminders ? reminders.cadences : null} />
@@ -176,8 +185,18 @@ function SettingRow({
  * [8i] Whether the receipt files are encrypted in this copy, and what losing the key means
  * (docs/architecture/expense-records.md § 9). Read from the app's own environment on every visit.
  */
-function ReceiptProtectionLine({ state, setAsideTo, desktop }: { state: SettingsToday["receipts"]; setAsideTo: string | null; desktop: boolean }) {
-  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { desktop });
+function ReceiptProtectionLine({
+  state,
+  setAsideTo,
+  desktop,
+  dataFileEncrypted,
+}: {
+  state: SettingsToday["receipts"];
+  setAsideTo: string | null;
+  desktop: boolean;
+  dataFileEncrypted: boolean;
+}) {
+  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { desktop, dataFileEncrypted });
   return (
     <div>
       <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
@@ -186,6 +205,20 @@ function ReceiptProtectionLine({ state, setAsideTo, desktop }: { state: Settings
       {/* Offered only while the key can't be opened (expense-records.md § 10). */}
       {state === "key-unreadable" ? <StartNewReceiptKey /> : null}
     </div>
+  );
+}
+
+/**
+ * [8i] Whether the data file is encrypted in this copy, what that protects and doesn't, and what losing
+ * the key means (docs/architecture/database-encryption.md § 7). Read from the app's own environment on
+ * every visit; says "encrypted" only when the desktop app opened the file with its key.
+ */
+function DatabaseProtectionLine({ database }: { database: SettingsToday["database"] }) {
+  const { headline, detail } = databaseProtectionText(database.state, database.plainLeft);
+  return (
+    <p className="text-paper-dim">
+      <strong className="font-semibold text-paper">{headline}</strong> {detail}
+    </p>
   );
 }
 
@@ -217,7 +250,13 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <Code>{path}</Code>
             <CopyPathButton path={path} />
           </div>
-          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} desktop={today.desktop} />
+          <DatabaseProtectionLine database={today.database} />
+          <ReceiptProtectionLine
+            state={today.receipts}
+            setAsideTo={today.receiptsSetAside}
+            desktop={today.desktop}
+            dataFileEncrypted={today.database.state === "on"}
+          />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

@@ -26,11 +26,13 @@ export const KEY_LOSS_SENTENCE =
  *   moved to, said in full so the person knows where they are (lock.ts receiptsSetAsideTo)
  * @param desktop the desktop app (lib/settings/today.ts), which restarts by itself after Start a new
  *   key (expense-records.md § 11); a copy run from source doesn't, and says so
+ * @param options.dataFileEncrypted ([8i]) whether the data file is encrypted too (lib/db/lock.ts), which
+ *   changes the last sentence of the "on" text: the records and what DotAmi notes about each receipt live there
  */
 export function receiptProtectionText(
   state: ReceiptLockState,
   setAsideTo: string | null = null,
-  { desktop = false }: { desktop?: boolean } = {},
+  { desktop = false, dataFileEncrypted = false }: { desktop?: boolean; dataFileEncrypted?: boolean } = {},
 ): ReceiptProtectionText {
   switch (state) {
     case "on":
@@ -39,7 +41,7 @@ export function receiptProtectionText(
         // Precise on purpose: Windows' folder permissions already keep other standard accounts out of
         // the data folder, so the encryption's gain is against an administrator account, a copy of the
         // folder and a disk read outside Windows (expense-records.md § 9, "What it protects").
-        detail: `Each one is locked with a key that Windows keeps for your Windows account only. Windows already keeps other standard accounts on this computer out of your data folder; the encryption means an administrator account, a copy of this data folder, or the disk read outside Windows can't read them either. Anything running as you can still open them, as DotAmi does, and so can a program an administrator runs as you. ${KEY_LOSS_SENTENCE} The data file itself isn't encrypted: your expense records in it, and what DotAmi notes about each receipt, are readable by anyone who can read the file.`,
+        detail: `Each one is locked with a key that Windows keeps for your Windows account only. Windows already keeps other standard accounts on this computer out of your data folder; the encryption means an administrator account, a copy of this data folder, or the disk read outside Windows can't read them either. Anything running as you can still open them, as DotAmi does, and so can a program an administrator runs as you. ${KEY_LOSS_SENTENCE} ${dataFileEncrypted ? "The data file, with your expense records and what DotAmi notes about each receipt, is encrypted too, with a key of its own." : "The data file itself isn't encrypted: your expense records in it, and what DotAmi notes about each receipt, are readable by anyone who can read the file."}`,
         tone: "ok",
       };
     case "source":

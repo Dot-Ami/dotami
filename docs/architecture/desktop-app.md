@@ -32,7 +32,26 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    in the note for the next start and never stops this one; the log says which. An ordinary start,
    with no note, does nothing here: free space in the file is normal after any edit, and rebuilding
    the file on every start would slow it for nothing. Then `dotami.db` in that folder is created or
-   brought up to date by `desktop/migrate.mjs` (below).
+   brought up to date by `desktop/migrate.mjs` (below), with the data file's key when it is encrypted.
+
+   **Before that, the data file's key and its encryption** ([8i],
+   [database-encryption.md](database-encryption.md)). The main process opens the data file with the
+   same SQLite package as the server, from the server's own folder (`desktop/sqlite.mjs`). It opens
+   `database.key` (`desktop/database-key.mjs`), finishes an encryption a crash left part-way
+   (`desktop/encrypt-database.mjs`, the note `database-encrypting.json`), and then: an encrypted file
+   whose key can't be opened (or whose key file opens but holds another key, checked by opening the
+   file) stops the start, having changed nothing, with a window that says what
+   happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`); a
+   data file another program holds stops the start with a sentence saying so (never taken for a
+   missing one); a
+   new data folder gets a key (a key that already opens is kept) and its file is created encrypted from its first byte; an existing plain
+   file is asked about first, unless the person said "Never" (`desktop/encrypt-ask.html`: **Back up
+   first…**, **Encrypt now**, **Not now**, **Never…**, with a second warning before Never); no key store
+   leaves the file plain. Encrypting writes an encrypted copy straight through SQLite (never a second
+   plain copy), checks it holds every table's rows, swaps it in and overwrites the plain file with
+   zeros before deleting it, in steps a crash can't lose data in. The plain safety copies in `backups/`
+   are encrypted the same way. The receipts' key (step 4) is opened before this, so a backup made from
+   the window carries the receipts. The log gets the step and which button was pressed, never a value.
 4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
    `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
    account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's
@@ -65,7 +84,11 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    shell that started it set the switch (desktop-tested in `e2e-desktop/desktop.spec.ts`).
    It is told the receipts' key state (`DOTAMI_RECEIPT_LOCK`) and, when the key is open, the key
    itself (`DOTAMI_RECEIPT_KEY`), which it takes out of its own environment the first time it
-   reads it; a receipt key in the shell that started the app is never passed on.
+   reads it; a receipt key in the shell that started the app is never passed on. The same for the
+   data file ([8i]): `DOTAMI_DATABASE_LOCK` ("on", "off", "never" or "no-key-store"),
+   `DOTAMI_DATABASE_KEY` only when "on", and `DOTAMI_DATABASE_PLAIN_LEFT` (a count);
+   `lib/db/lock.ts` reads them and `lib/prisma.ts` opens the file with the key. Nor `DEBUG`: the
+   database adapter prints query values when it names it.
 6. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a

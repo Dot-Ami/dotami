@@ -122,6 +122,8 @@ export interface Holdings {
     sources: HeldSource[];
   };
   dataFile: { path: string | null; exists: boolean; bytes: number | null };
+  /** [8i] Whether the data file is encrypted (lib/db/lock.ts, as lib/settings/today.ts reads it): the state and a count, never the key. */
+  database: SettingsToday["database"];
   folders: FolderFacts[];
   /**
    * How many of the files in the backups folder are DotAmi's own safety copies: what the Delete
@@ -305,6 +307,13 @@ function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
   }
 }
 
+/** The entries whose file is named after the data file (desktop/wipe-pending.mjs, desktop/encrypt-database.mjs). */
+const NAMED_AFTER_DATA_FILE: Partial<Record<FolderEntry["id"], (dataPath: string) => string>> = {
+  "wipe-pending": wipePendingFile,
+  "database-encrypting-copy": (dataPath) => `${dataPath}.encrypting`,
+  "database-plain-to-wipe": (dataPath) => `${dataPath}.plain-to-wipe`,
+};
+
 /**
  * Reads everything. `today` is lib/settings/today.ts's reading of this copy (where the data file
  * is, whether a key is set, desktop or source): the same facts the settings page shows. `lock` is
@@ -322,10 +331,12 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
   const dataFolder = dataPath ? path.dirname(dataPath) : null;
   const dataInfo = dataPath ? inspect(dataPath) : null;
   const folders: FolderFacts[] = FOLDERS.map((entry) => {
-    // The wipe-pending note is named after the data file, whatever that file is called.
+    // The wipe-pending note and an encryption's two files are named after the data file, whatever that
+    // file is called.
+    const afterDataFile = NAMED_AFTER_DATA_FILE[entry.id];
     const target =
-      dataPath && entry.id === "wipe-pending"
-        ? wipePendingFile(dataPath)
+      dataPath && afterDataFile
+        ? afterDataFile(dataPath)
         : dataFolder
           ? path.join(dataFolder, ...entry.relativePath.split("/"))
           : null;
@@ -343,6 +354,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     ideasWithNotes,
     figures,
     dataFile: { path: dataPath, exists: today.dataFile.exists, bytes: dataInfo?.bytes ?? null },
+    database: today.database,
     folders,
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
     setAsideReceiptFolders: dataPath ? setAsideReceiptFoldersIn(dataPath) : 0,

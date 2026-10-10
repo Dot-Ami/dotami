@@ -5,6 +5,7 @@ import { CopyPathButton } from "@/components/settings/copy-path-button";
 import { GhostLink, WordMark } from "@/components/ui";
 import type { FolderFacts, Holdings, SentFacts, SentState, TableCount } from "@/lib/privacy/holdings";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { databaseProtectionText } from "@/lib/db/protection";
 import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, type WindowStorageEntry } from "@/lib/privacy/inventory";
@@ -114,6 +115,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                       facts={f}
                       desktop={holdings.desktop}
                       receiptFiles={f.entry.id === "receipts" ? holdings.receiptFiles : null}
+                      dataFileEncrypted={holdings.database.state === "on"}
                     />
                   ))}
                 </ul>
@@ -252,6 +254,7 @@ function DataFileRow({ holdings }: { holdings: Holdings }) {
             <Code>{path}</Code>
             {exists ? <CopyPathButton path={path} /> : null}
           </div>
+          <DatabaseProtection database={holdings.database} />
         </div>
       ) : (
         <p className="mt-1.5 text-sm text-paper">
@@ -262,15 +265,28 @@ function DataFileRow({ holdings }: { holdings: Holdings }) {
   );
 }
 
+/** [8i] Whether the data file is encrypted, in the same words as Settings (lib/db/protection.ts). */
+function DatabaseProtection({ database }: { database: Holdings["database"] }) {
+  const { headline, detail } = databaseProtectionText(database.state, database.plainLeft);
+  return (
+    <p className="text-[12px] text-paper-dim">
+      <strong className="font-semibold text-paper">{headline}</strong> {detail}
+    </p>
+  );
+}
+
 function FolderRow({
   facts,
   desktop,
   receiptFiles,
+  dataFileEncrypted,
 }: {
   facts: FolderFacts;
   desktop: boolean;
   /** For the receipts folder only: how its files are kept ([8i], expense-records.md § 9). */
   receiptFiles: Holdings["receiptFiles"] | null;
+  /** [8i] Whether the data file is encrypted too: the receipts' sentence about it depends on it. */
+  dataFileEncrypted: boolean;
 }) {
   const { entry } = facts;
   let status: ReactNode;
@@ -316,7 +332,7 @@ function FolderRow({
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
       <h3 className="font-semibold text-paper">{entry.name}</h3>
       <p className="mt-1 text-[12.5px] text-paper-dim">{entry.holds}</p>
-      {receiptFiles ? <ReceiptProtection files={receiptFiles} desktop={desktop} /> : null}
+      {receiptFiles ? <ReceiptProtection files={receiptFiles} desktop={desktop} dataFileEncrypted={dataFileEncrypted} /> : null}
       {status}
     </li>
   );
@@ -327,8 +343,16 @@ function FolderRow({
  * folder are kept right now, counted from their first bytes (lib/expenses/receipts/store.ts
  * describeReceiptFiles).
  */
-function ReceiptProtection({ files, desktop }: { files: Holdings["receiptFiles"]; desktop: boolean }) {
-  const { headline, detail, tone } = receiptProtectionText(files.state, files.setAsideTo, { desktop });
+function ReceiptProtection({
+  files,
+  desktop,
+  dataFileEncrypted,
+}: {
+  files: Holdings["receiptFiles"];
+  desktop: boolean;
+  dataFileEncrypted: boolean;
+}) {
+  const { headline, detail, tone } = receiptProtectionText(files.state, files.setAsideTo, { desktop, dataFileEncrypted });
   const total = files.encrypted + files.plain + files.locked;
   const counts: string[] = [];
   if (files.state === "on" && total > 0) {

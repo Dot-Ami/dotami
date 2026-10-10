@@ -314,6 +314,12 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
 | A program running as the person | asks Windows for the key, or asks DotAmi's server | nothing in DotAmi: the same trust as today, stated, not defended | by design |
 | The person, after losing the key | opens DotAmi | nothing can open the file; a backup restores it under a new key; nothing on the disk is changed or replaced | designed (decided 2026-10-10: no recovery key; backups, plus "Start fresh", which keeps the locked file) |
 
+**Built so far (2026-10-10):** the rows marked "designed" for an administrator account, a copied
+folder and a stolen disk, for the plain files the first start replaces, and for deleted words are
+built (the encryption, the zero-filled plain files, the wipe proved on the decrypted image, backups
+rebuilt in memory); so is the lost-key start (nothing changed, said in a window). A passphrase on
+every backup, restoring from the lost-key window and "Start fresh" are the next pull requests.
+
 **Rules for building it:**
 
 1. The key is never in the clear on the disk, in a backup, in the log or in an address, and is never

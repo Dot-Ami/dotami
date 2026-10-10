@@ -251,6 +251,10 @@ adapter for files on a disk.
   **encrypted with the same key**, never plain. Which SQLite step does that (`VACUUM INTO` keeping the
   source's encryption, or the backup API into a keyed copy) isn't in the library's documentation, so
   it is measured first in the build, and a test scans the copy for a marker string.
+- **Measured 2026-10-10:** `VACUUM INTO` on an encrypted connection writes a copy encrypted with the
+  same key, so the migrator's safety copy needs nothing more (`tests/desktop-migrate.spec.ts`). And
+  SQLite3 Multiple Ciphers turns SQLite's `secure_delete` on for every encrypted connection, so an
+  ordinary delete already overwrites the deleted words with zeros there; the wipe below still runs.
 - **The Delete wipe** (`vacuumFile`, and `VACUUM` through Prisma in `lib/privacy/delete.ts`) runs on
   the encrypted file, and it still matters: deleted words stay in the file's free pages until
   `VACUUM` (`lib/privacy/delete.ts`), and anything that later reads the file with the key (a program
@@ -263,7 +267,8 @@ adapter for files on a disk.
   `serialize()` (every page, free pages included), then searched for the marker. The tests keep the
   raw-byte scan on a plain file and the `freelist_count == 0` check, and gain a fail-first control:
   on an encrypted file, Delete with the `VACUUM` switched off must leave the marker in the decrypted
-  image.
+  image. (As built: because `secure_delete` is on for an encrypted file, the control switches it off
+  for its delete; `tests/privacy-delete.spec.ts`.)
 - **The referee.** `tests/desktop-migrate.spec.ts` uses `prisma migrate status` to check the
   migrator; Prisma's schema engine can't open an encrypted file, so that comparison keeps running on
   a plain file (the migrator works the same with or without a key), and new tests run every
@@ -301,10 +306,13 @@ next.
 2. **Write the encrypted copy** to `dotami.db.encrypting` (never overwriting anything), with the key,
    then flush it to the disk. How it is made is measured first in the build: a single SQLite copy
    into a keyed new file if the library supports it; otherwise a plain copy encrypted in place with
-   `PRAGMA rekey` (documented). That fallback makes a second plain file for a moment, so: the copy is
-   disposable (a crash just means it is wiped and made again), the rekey runs with
-   `journal_mode = OFF` so no plain journal of it is written, and any leftover
-   `dotami.db.encrypting-journal` is overwritten with zeros before it is deleted.
+   `PRAGMA rekey` (documented). **Measured 2026-10-10:** `VACUUM INTO` and the backup API can't write a
+   plain source into a keyed file and there is no `sqlcipher_export`, but a keyed file attached to the
+   plain file's connection (`ATTACH … KEY`) can be written, so DotAmi copies every table, its rows and
+   its indexes into it (`desktop/database-copy.mjs`): no second plain copy is ever made, and the
+   `rekey` fallback isn't used. (The attached file is opened with the main file's flags, so the plain
+   file is opened without "must exist" for this step.) A leftover copy is overwritten with zeros
+   before it is deleted all the same.
 3. **Check the copy**: open it with the key; `integrity_check` says `ok`; every table has the same
    rows as the plain file (counted, and a SHA-256 over each table's rows in key order); Prisma's
    bookkeeping table is identical; and the copy does **not** open without the key.
@@ -338,7 +346,16 @@ its action:
 **When the wipe can't finish** (antivirus or a sync program holding `dotami.db.plain-to-wipe` open):
 the start goes on, on the encrypted file; the note stays at `wipe`; the wipe is tried again at every
 start; and while the plain copy exists, Settings says so in a line, as the Delete menu's
-"wipe pending" note does today.
+"wipe pending" note does today. **One file at a time:** there is one note for the data folder, so
+while it is there no other file is encrypted (`encryptFile` refuses, "pending"); the plain safety
+copies wait for a start where the owed wipe has finished, and are counted as still plain meanwhile.
+(Found in review, 2026-10-10: encrypting a safety copy in the same start replaced the data file's
+`wipe` note and then removed it, so the plain copy was never wiped. A start now also wipes a
+`.plain-to-wipe` that no note names, when the encrypted file beside it opens with the key.)
+
+**A file another program holds is never taken for a missing one.** The plain-or-encrypted check
+(§ 4) says "absent" only when the file isn't there; a `dotami.db` another program holds stops the start
+with a sentence saying so, having changed nothing, instead of being treated as a new data folder.
 
 **A journal SQLite rolls back itself.** If an earlier crash left a plain `dotami.db-journal`, step 1's
 open lets SQLite undo the half-done transaction, and SQLite deletes that journal, it doesn't
@@ -446,6 +463,13 @@ When the app starts and can't open the key:
 - **It changes nothing on the disk.** The key may come back (a profile that loads later, a
   `database.key` put back from the Recycle Bin), so the data file and the key file stay exactly as
   they are, and a missing `database.key` is **never** replaced while the file is encrypted.
+- **A key file that opens is not enough: it must open the data file.** One that holds another key
+  (copied from another data folder, or saved by a restore that couldn't finish) is the same lost-key
+  case, said in the same window ("opens, but holds another key"), never a failed update. And a key
+  that opens is never replaced because `dotami.db` is missing: a new data file gets the same key, so
+  the safety copies locked with it (or the data file, put back) still open.
+- **Windows' key store not available right now** (it can be, briefly, after signing in or an
+  update) is said apart from a lost key: restart Windows or sign in again. Nothing is given up for it.
 - **It says so before any window opens**, in plain words: what happened, that nothing was changed,
   that putting `database.key` back (if it was moved or deleted) brings everything back, and the way
   forward that needs no new decision: **File → Restore from a backup…**, which moves the locked data
@@ -583,6 +607,35 @@ person say "Not now" or "Never"; the decisions at the top hold.)
    knows about you*.
 3. **Backups and restore** (about 2.5 to 3 days): no plain copy on the disk; the image rebuilt before
    it is written; restore writing the encrypted staging file; formats 1 and 2.
+
+## Found while building B (2026-10-10)
+
+- **The window's own cache held the data in plain text.** The desktop test that encrypts an existing
+  file found the words of a statement in Chromium's disk cache (`Cache\Cache_Data` in the data
+  folder), beside the encrypted file: DotAmi's API answers carried no `Cache-Control`, and Chromium
+  stored one. Pages were already sent `no-store`. Every `/api/…` answer is now `no-store`
+  (`next.config.mjs`, `apiCachePolicy`), and the cache an earlier version filled is cleared once, when
+  the data file is first encrypted. A first try that rewrote the header in Electron's main process
+  (`webRequest.onHeadersReceived`) didn't keep the answer out of the cache; the header has to come from
+  the server.
+- **Closing the window before the main one quit the app.** The app quits when its last window closes;
+  the window that asks first was that last window. It now quits so only once the main window exists.
+
+## The build, as split (2026-10-10)
+
+The design's three pull requests became four, stacked, each green on its own:
+
+- **A, the packages and the Prisma connection** (§ 14's measurements first). Nothing encrypted.
+- **B, the key and encrypting the file:** `database.key`; a new data folder encrypted from its first
+  byte; the window before an existing file is first encrypted, with the four answers and the Never
+  warning; the crash-safe first-start encryption of the data file and the plain safety copies; the
+  lost-key window; the Settings switch and the lines in Settings and *What DotAmi knows about you*;
+  the server opening the file with its key. The migrator, the owed wipe, **backups and restore** move
+  to the new package in B too, because once a file is encrypted `node:sqlite` can't open it: without
+  them File → Back up… would fail on the first encrypted file.
+- **C, a passphrase on every backup** (decision 3) and **restoring from the lost-key window**, under a
+  new key, on this computer or another.
+- **D, "Start fresh"** (decision 2).
 
 ## 13. Not checked
 

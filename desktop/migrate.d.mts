@@ -4,7 +4,7 @@ export class MigrationRefused extends Error {}
 export function migrate(
   dbFile: string,
   migrationsDir: string,
-  options?: { backupDir?: string; now?: () => number; log?: (line: string) => void },
+  options?: { backupDir?: string; now?: () => number; log?: (line: string) => void; key?: Buffer | null },
 ): { applied: string[]; backup: string | null };
 
-export function vacuumFile(dbFile: string): boolean;
+export function vacuumFile(dbFile: string, key?: Buffer | null): boolean;

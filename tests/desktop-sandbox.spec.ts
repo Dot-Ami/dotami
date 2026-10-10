@@ -67,7 +67,8 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
     const main = readFileSync(path.join(desktop, "main.mjs"), "utf8");
     const pack = readFileSync(path.join(desktop, "package.mjs"), "utf8");
     const preloads = [...main.matchAll(/preload: path\.join\(root, "desktop", "([^"]+)"\)/g)].map((m) => m[1]);
-    expect(preloads.sort()).toEqual(["passphrase-preload.cjs", "window-preload.cjs"]);
+    // [8i] choice-preload.cjs: the two windows before the main one (the first encryption, a lost key).
+    expect(preloads.sort()).toEqual(["choice-preload.cjs", "passphrase-preload.cjs", "window-preload.cjs"]);
     for (const p of preloads) expect(pack, p).toContain(`"${p}"`);
 
     const preload = readFileSync(path.join(desktop, "window-preload.cjs"), "utf8");

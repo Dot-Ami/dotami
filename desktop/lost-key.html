@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- [8i] The window when the data file is encrypted and its key can't be opened (desktop/main.mjs
+     showLostKey; docs/architecture/database-encryption.md § 10). Shown before the main window, having
+     changed nothing on the disk. A local page with no network access: the CSP allows only its own script,
+     and the only thing it can send back is which button was pressed (desktop/choice-preload.cjs). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'" />
+    <title>DotAmi</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 22px 24px; background: #161619; color: #efe7d6; font: 13px/1.5 system-ui, sans-serif; }
+      h1 { margin: 0 0 8px; font: 700 18px Georgia, serif; }
+      p { margin: 0 0 9px; color: #cfc6b3; }
+      strong { color: #efe7d6; }
+      .warning { padding: 8px 10px; border: 1px solid rgba(200, 137, 58, 0.45); border-radius: 6px; color: #c8893a; }
+      .buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+      button { padding: 6px 14px; border-radius: 999px; border: 1px solid #32303a; background: transparent; color: #efe7d6; font: inherit; cursor: pointer; }
+      button.primary { border-color: #b94a2c; background: #b94a2c; }
+    </style>
+  </head>
+  <body>
+    <h1>DotAmi can't open your data</h1>
+    <p class="warning">
+      Your data file is encrypted, and its key can't be opened on this Windows account. <span id="why"></span>
+    </p>
+    <p>
+      That happens when the Windows profile is reset, when an administrator resets your password, when the
+      data folder came from another account or computer, or when the key file was deleted or moved.
+    </p>
+    <p><strong>Nothing was changed.</strong> If you deleted or moved <code>database.key</code> (beside the data file),
+      put it back — it may be in the Recycle Bin — and start DotAmi again: everything comes back. Otherwise, a
+      backup brings back what it holds.</p>
+    <div class="buttons">
+      <button type="button" id="open-folder">Open the data folder</button>
+      <button type="button" id="quit" class="primary">Quit</button>
+    </div>
+    <script src="lost-key.js"></script>
+  </body>
+</html>

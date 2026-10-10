@@ -46,6 +46,23 @@ person is asked).
   own names and a date, nothing of the person's
   ([`desktop/wipe-pending.mjs`](../desktop/wipe-pending.mjs)). No new table, column, file or
   browser-storage key; the desktop log's wipe lines gain a count of folders, never a name.
+- **The data file is encrypted in the desktop app ([8i]).** The same rows as before, in `dotami.db`,
+  now encrypted page by page (ChaCha20-Poly1305) with a 256-bit key, and its safety copies in
+  `backups/` with the same key. One new file, **`database.key`** beside it: the key wrapped by
+  Windows' per-user protection (Electron's `safeStorage`), with the key's id; the key itself is
+  written nowhere else, never in a backup or the log ([`desktop/database-key.mjs`](../desktop/database-key.mjs)).
+  While a file is being encrypted, **`database-encrypting.json`** holds which of DotAmi's own files
+  and the step (no data of the person's), and `dotami.db.encrypting` (the encrypted copy being made) and
+  `dotami.db.plain-to-wipe` (the whole data file, unencrypted, until it is wiped) normally exist for
+  moments; a plain copy another program holds stays until a later start can wipe it, Settings counts it
+  meanwhile, and no other file is encrypted until it is gone. The plain file is overwritten with zeros, then deleted; on a solid-state disk
+  that doesn't promise the old bytes are physically gone, and copies Windows or a synced folder made
+  before aren't changed (said in Settings). A copy run from source keeps the file plain and says so.
+  Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`FOLDERS`).
+- **No answer from DotAmi's API is kept in a cache on the disk any more ([8i]).** Every `/api/…`
+  answer is sent `Cache-Control: no-store` ([`next.config.mjs`](../next.config.mjs)); before, the
+  desktop window's Chromium could keep one (a statement's words were found in the `Cache` folder in the
+  data folder). The desktop app clears that cache once when it first encrypts the data file.
 
 - **Start a new key moves locked receipts aside, never deletes them ([8i], 2026-10-09).** While the
   desktop app can't open the receipts' key, the person may press *Start a new key…* (asked twice). The
@@ -474,6 +491,14 @@ person is asked).
   a warning in amber, again at both asks, that names `receipts-locked-…` and `receipts-before-restore-…`
   and says those receipts can never be opened afterwards, even if the old key comes back
   ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `SET_ASIDE_RECEIPTS_WARNING`).
+- **Before an existing data file is first encrypted ([8i]),** a window says what it protects (an
+  administrator account while the person is signed out, a copy of the folder, the disk read outside
+  Windows), what it doesn't (anything running as the person; copies already made), that a lost key
+  loses everything not in a backup, and that an older DotAmi can't open the file afterwards; with
+  **Back up first…**, **Encrypt now**, **Not now** and **Never…** (a second warning first:
+  [`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html)). Settings → Data and backups has an
+  **Encrypt the data file** switch (on by default; turning it off asks first). A new data folder is
+  encrypted without asking. The log records that the window was shown and which button was pressed.
 
 - **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
   key can't open them, so they are given up for good unless the old key comes back, that nothing is
@@ -568,6 +593,10 @@ person is asked).
 
 ### How to remove it
 
+- **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
+  it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
+  a backup holds, and DotAmi then says so and changes nothing. Once encrypted, the file isn't
+  decrypted again by DotAmi; Delete works on it as before.
 - **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
   person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
   the receipts folders a restore moves there). *Changed 2026-10-10, next line.*
@@ -633,6 +662,11 @@ person is asked).
   backups folder, until the person deletes them, with DotAmi's Delete menu or by hand; once deleted they
   can never be opened, even if the old key comes back. A key file set aside on its own stays until the
   person deletes it by hand.
+- **Encryption at rest ([8i])** protects against an administrator account while the person is signed
+  out, a copied or synced data folder, and a disk read outside Windows; not against anything running
+  as the person, and only as strong as the Windows password. Losing the key loses the data except what
+  a backup holds. Backups hold the data decrypted (so they restore elsewhere); an older version can't
+  open an encrypted file.
 
 - A HEIC photo added as a receipt is kept as given. Showing it hands the picture data to the person's
   own graphics driver or operating system to decode, on their computer; nothing is sent elsewhere, and

@@ -253,10 +253,14 @@ roadmap's build order.
   - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
     designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
     being built in stacked pull requests: (A) the packages, the Prisma adapter and the measurements;
-    (B) the key, the first-start encryption and the window that asks first; (C) the migrator, backups
-    with a passphrase and restore; (D) the "Start fresh" button
+    (B) the key, the first-start encryption, the window that asks first, the Settings switch, and the
+    migrator, backups and restore on the new package; (C) a passphrase on every backup and restoring
+    from the lost-key window; (D) the "Start fresh" button
     - [x] (A) the packages installed and measured (no slowdown a person would notice), every Prisma
       Client moved to one factory (`lib/db/client.ts`)
+    - [x] (B) the key, a new folder encrypted from its first byte, the window that asks first (four
+      answers), the crash-safe first-start encryption, the lost-key window, the Settings switch, and
+      the migrator, backups and restore on the new package
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

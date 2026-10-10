@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- [8i] The window before an existing data file is first encrypted (desktop/main.mjs askToEncrypt;
+     docs/architecture/database-encryption.md § 6, step 0, and the maintainer's decision 4 of 2026-10-10).
+     A local page with no network access: the CSP allows only its own script, and the only thing it can
+     send back is which button was pressed (desktop/choice-preload.cjs). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'" />
+    <title>DotAmi</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 22px 24px; background: #161619; color: #efe7d6; font: 13px/1.5 system-ui, sans-serif; }
+      h1 { margin: 0 0 8px; font: 700 18px Georgia, serif; }
+      p { margin: 0 0 9px; color: #cfc6b3; }
+      strong { color: #efe7d6; }
+      .note { margin: 0 0 10px; padding: 7px 10px; border: 1px solid #32303a; border-radius: 6px; color: #cfc6b3; font-size: 12px; }
+      .warning { margin-top: 4px; padding: 8px 10px; border: 1px solid rgba(200, 137, 58, 0.45); border-radius: 6px; color: #c8893a; }
+      .buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+      button { padding: 6px 14px; border-radius: 999px; border: 1px solid #32303a; background: transparent; color: #efe7d6; font: inherit; cursor: pointer; }
+      button.primary { border-color: #b94a2c; background: #b94a2c; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <section id="ask">
+      <h1>Lock your data file with a key?</h1>
+      <p id="status" class="note" role="status" hidden></p>
+      <p>
+        DotAmi can now lock its data file — your ideas, figures, expense records, statements and settings —
+        and its safety copies with a key that only <strong>your Windows account on this computer</strong> can open.
+      </p>
+      <p>
+        <strong>What it protects:</strong> an administrator account while you're signed out, a copy of the data
+        folder (on a USB stick, in a synced folder, in another computer's backup), or this computer's disk read
+        outside Windows can't read it. It is only as strong as your Windows password.
+      </p>
+      <p>
+        <strong>What it doesn't:</strong> anything running as you can still open it, as DotAmi does. Copies
+        Windows or a synced folder already made aren't changed, and on a solid-state disk the old file's bytes
+        may stay on the disk; disk encryption covers those.
+      </p>
+      <p class="warning">
+        If the key is ever lost — your Windows profile is reset, an administrator resets your password, or the
+        data folder is moved to another account or computer — everything not in a backup is lost. An older
+        DotAmi can't open the file afterwards; going back to one needs a backup.
+      </p>
+      <div class="buttons">
+        <button type="button" id="never">Never…</button>
+        <button type="button" id="later">Not now</button>
+        <button type="button" id="backup">Back up first…</button>
+        <button type="button" id="encrypt" class="primary">Encrypt now</button>
+      </div>
+    </section>
+    <section id="confirm-never" hidden>
+      <h1>Never lock the data file?</h1>
+      <p class="warning">
+        Your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this
+        computer's disk outside Windows can read your ideas, figures, expense records and statements.
+        Disk encryption still protects a lost or stolen computer.
+      </p>
+      <p>DotAmi won't ask again. You can turn encryption on later in Settings → Data and backups.</p>
+      <div class="buttons">
+        <button type="button" id="back">Go back</button>
+        <button type="button" id="never-confirm" class="primary">Keep it unencrypted</button>
+      </div>
+    </section>
+    <script src="encrypt-ask.js"></script>
+  </body>
+</html>

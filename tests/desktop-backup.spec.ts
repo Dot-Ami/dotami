@@ -17,6 +17,7 @@ import {
   backupReceiptsNote,
   prepareRestore,
   readBackup,
+  rebuiltImage,
   RECEIPT_EXTENSIONS,
   restoreReceiptsNote,
   stagedReceiptsFolder,
@@ -25,6 +26,7 @@ import {
 import { RECEIPT_TYPES } from "../lib/expenses/receipts/types";
 import { migrate } from "../desktop/migrate.mjs";
 import { decryptReceipt, encryptedKeyId, encryptReceipt, isEncryptedReceipt, keyIdOf } from "../desktop/receipt-crypto.mjs";
+import { CannotOpenDatabase, fileKind, openDatabase, runSql as runOn } from "../desktop/sqlite.mjs";
 
 const migrations = path.join(path.resolve(__dirname, ".."), "prisma", "migrations");
 const PASSPHRASE = "correct horse";
@@ -509,8 +511,11 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
   });
 
   it("reads and writes in pieces: no whole-file read in the format-2 writer or reader", () => {
-    // A guard against a return to reading everything into memory (format 1 did, and still does for
+    // A guard against a return to reading files whole from the disk (format 1 did, and still does for
     // the old backups it reads). The two functions that handle format 2 must not read a file whole.
+    // [8i] The data file itself is held in memory on purpose since it can be encrypted: its decrypted,
+    // rebuilt image is what goes in, so no plain copy is written to the disk (rebuiltImage; the design
+    // is docs/architecture/database-encryption.md § 8). Receipts are still read one at a time.
     const code = readFileSync(path.join(path.resolve(__dirname, ".."), "desktop", "backup.mjs"), "utf8");
     const body = (name: string) => {
       const start = code.indexOf(`function ${name}(`);
@@ -520,7 +525,7 @@ describe("desktop backup — receipts travel with the data (format 2)", () => {
       const end = Math.min(...[next, nextExport].filter((i) => i > 0));
       return code.slice(start, end);
     };
-    for (const name of ["writeBackup", "readFormat2", "measure"]) {
+    for (const name of ["writeBackup", "readFormat2"]) {
       expect(body(name), name).not.toMatch(/readFileSync|writeFileSync\(|Buffer\.concat/);
     }
   });
@@ -702,5 +707,112 @@ describe("desktop backup — what the dialogs say about receipts", () => {
     expect(restoreReceiptsNote(1, 0, 2)).toBe(
       " This backup was made before backups held receipt files: your receipts folder is moved into the backups folder as it is, and the restored records have no receipt files.",
     );
+  });
+});
+
+/**
+ * [8i] Backups of an encrypted data file (docs/architecture/database-encryption.md § 8): the backup holds
+ * the data decrypted, so it restores on another computer with another key; nothing plain is written to
+ * the disk while backing up or restoring; and words deleted since the last wipe stay out of it.
+ */
+describe("desktop backup — an encrypted data file ([8i])", () => {
+  const KEY_A = Buffer.alloc(32, 0xa1);
+  const KEY_B = Buffer.alloc(32, 0xb2);
+  const MARKER = "zq-backup-encrypted-marker-6610";
+
+  /** A migrated data file created encrypted with `key`, holding one statement with the marker. */
+  function encryptedDb(file: string, key: Buffer) {
+    mkdirSync(path.dirname(file), { recursive: true });
+    migrate(file, migrations, { key });
+    const db = openDatabase(file, { key });
+    try {
+      runOn(
+        db,
+        `INSERT INTO "User" (id, updatedAt) VALUES ('someone', 0);
+         INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'someone', 'statement ${MARKER}', 0);`,
+      );
+    } finally {
+      db.close();
+    }
+    return file;
+  }
+  const statements = (file: string, key: Buffer | null) => {
+    const db = openDatabase(file, { key, readonly: true, fileMustExist: true });
+    try {
+      return db.prepare(`SELECT text FROM "PersonStatement"`).all();
+    } finally {
+      db.close();
+    }
+  };
+
+  it("restores on a second computer, under that computer's key, and on a third without encryption", () => {
+    const a = encryptedDb(path.join(dir, "computer-a", "dotami.db"), KEY_A);
+    const out = path.join(dir, "out.dotami-backup");
+    writeBackup(a, out, { passphrase: PASSPHRASE, appVersion: "9.9.9", databaseKey: KEY_A });
+    // The backup never holds the key, in any form.
+    const backup = readFileSync(out);
+    for (const form of [KEY_A, Buffer.from(KEY_A.toString("hex")), Buffer.from(KEY_A.toString("base64"))]) expect(backup.includes(form)).toBe(false);
+
+    // Computer B, whose data file is encrypted with its own key.
+    const b = encryptedDb(path.join(dir, "computer-b", "dotami.db"), KEY_B);
+    const stagingB = path.join(dir, "computer-b", "restore-staging.db");
+    prepareRestore(out, { passphrase: PASSPHRASE, migrationsDir: migrations, stagingFile: stagingB, databaseKey: KEY_B });
+    // Staged encrypted with B's key, never plain on the disk.
+    expect(fileKind(stagingB)).toBe("encrypted");
+    expect(readFileSync(stagingB).includes(Buffer.from(MARKER))).toBe(false);
+    const { safetyCopy } = applyRestore(stagingB, b, { backupDir: path.join(dir, "computer-b", "backups"), databaseKey: KEY_B });
+    expect(statements(b, KEY_B)).toEqual([{ text: `statement ${MARKER}` }]);
+    expect(() => statements(b, KEY_A)).toThrow(CannotOpenDatabase);
+    // The safety copy of what B had is encrypted with B's key too.
+    expect(fileKind(safetyCopy!)).toBe("encrypted");
+    expect(statements(safetyCopy!, KEY_B)).toHaveLength(1);
+
+    // Computer C keeps its data file unencrypted: the same backup restores plain there.
+    const c = makeDb(path.join(dir, "computer-c", "dotami.db"));
+    const stagingC = path.join(dir, "computer-c", "restore-staging.db");
+    prepareRestore(out, { passphrase: PASSPHRASE, migrationsDir: migrations, stagingFile: stagingC });
+    applyRestore(stagingC, c, { backupDir: path.join(dir, "computer-c", "backups") });
+    expect(fileKind(c)).toBe("plain");
+    expect(statements(c, null)).toEqual([{ text: `statement ${MARKER}` }]);
+  });
+
+  it("writes nothing plain to the disk while backing up: no temporary copy anywhere", () => {
+    const a = encryptedDb(path.join(dir, "computer-a", "dotami.db"), KEY_A);
+    const tmpBefore = new Set(readdirSync(os.tmpdir()));
+    const out = path.join(dir, "out.dotami-backup");
+    writeBackup(a, out, { passphrase: PASSPHRASE, appVersion: "9.9.9", databaseKey: KEY_A });
+    const made = readdirSync(os.tmpdir()).filter((name) => !tmpBefore.has(name) && name.startsWith("dotami-backup-"));
+    expect(made).toEqual([]);
+    // In the data folder, only the data file (the backup went elsewhere, locked).
+    expect(allFiles(path.join(dir, "computer-a")).map((f) => path.basename(f))).toEqual(["dotami.db"]);
+    expect(readFileSync(out).includes(Buffer.from(MARKER))).toBe(false);
+  });
+
+  it("a backup without the key can't be made from an encrypted file, and changes nothing", () => {
+    const a = encryptedDb(path.join(dir, "computer-a", "dotami.db"), KEY_A);
+    const was = fileHash(a);
+    expect(() => writeBackup(a, path.join(dir, "out.dotami-backup"), { passphrase: PASSPHRASE, appVersion: "9.9.9" })).toThrow(CannotOpenDatabase);
+    expect(fileHash(a)).toBe(was);
+    expect(existsSync(path.join(dir, "out.dotami-backup"))).toBe(false);
+  });
+
+  it("leaves out words deleted since the last wipe: the image is rebuilt before it is written (the image before is the control)", () => {
+    // A plain file, where SQLite leaves deleted words in the file's free space.
+    const file = makeDb(path.join(dir, "plain", "dotami.db"));
+    query(file, `INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'someone', 'statement ${MARKER}', 0)`);
+    query(file, `DELETE FROM "PersonStatement"`);
+    // The control: the file's own page image still holds the deleted words.
+    const raw = openDatabase(file, { readonly: true, fileMustExist: true });
+    try {
+      expect(raw.serialize().includes(Buffer.from(MARKER))).toBe(true);
+    } finally {
+      raw.close();
+    }
+    expect(rebuiltImage(file).image.includes(Buffer.from(MARKER))).toBe(false);
+    const out = path.join(dir, "out.dotami-backup");
+    writeBackup(file, out, { passphrase: PASSPHRASE, appVersion: "9.9.9" });
+    const { database } = readBackup(out, { passphrase: PASSPHRASE, unpackTo: { receiptsDir: path.join(dir, "unpacked-receipts") } });
+    expect(database!.includes(Buffer.from("SQLite format 3"))).toBe(true);
+    expect(database!.includes(Buffer.from(MARKER))).toBe(false);
   });
 });

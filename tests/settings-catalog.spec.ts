@@ -39,7 +39,7 @@ const rows = part1Rows(doc);
 
 describe("settings catalog matches Part 1 of the settings doc", () => {
   it("reads the table (a guard against the parser silently finding nothing)", () => {
-    expect(rows.length).toBe(19);
+    expect(rows.length).toBe(20);
   });
 
   it("has exactly the settings the doc lists", () => {
@@ -87,7 +87,9 @@ describe("settings catalog shape", () => {
   it("has exactly the live settings listed here — a live one needs its control and a test that it survives a restart", () => {
     // When a story makes a setting live, it adds its id to this list in the same pull request
     // as the control, its storage and its browser test (story [7g]'s done-when). First: [8e].
-    expect(SETTINGS.filter((s) => s.status === "live").map((s) => s.id)).toEqual(["figure-reminders"]);
+    // [8i] "Encrypt the data file": its switch is on the settings page, and the desktop test checks it
+    // is read at the next start.
+    expect(SETTINGS.filter((s) => s.status === "live").map((s) => s.id)).toEqual(["database-encryption", "figure-reminders"]);
   });
 
   it("gives every live setting a definition of what it may hold, and every definition a live setting", () => {

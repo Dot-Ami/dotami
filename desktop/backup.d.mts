@@ -55,13 +55,16 @@ export type BackupHeader = BackupHeaderV1 | BackupHeaderV2;
 export function writeBackup(
   dbFile: string,
   outFile: string,
-  options: { passphrase?: string; appVersion: string; now?: () => number; receiptKey?: Buffer | null },
+  options: { passphrase?: string; appVersion: string; now?: () => number; receiptKey?: Buffer | null; databaseKey?: Buffer | null },
 ): { encrypted: boolean; bytes: number; migrations: string[]; receipts: number; missingReceipts: number; unreadableReceipts: number };
+
+/** [8i] The data file's live rows as a rebuilt page image, in memory only; with the migrations and receipt files it describes. */
+export function rebuiltImage(dbFile: string, key?: Buffer | null): { image: Buffer; migrations: string[]; described: string[] };
 
 export function readBackup(
   file: string,
-  options?: { passphrase?: string; unpackTo?: { dbFile: string; receiptsDir: string } | null; receiptKey?: Buffer | null },
-): { header: BackupHeader; files: { path: string; bytes: number }[] };
+  options?: { passphrase?: string; unpackTo?: { receiptsDir: string } | null; receiptKey?: Buffer | null },
+): { header: BackupHeader; files: { path: string; bytes: number }[]; database: Buffer | null };
 
 export function backupReceiptsNote(receipts: number, missingReceipts: number, options?: { unreadable?: number; locked?: boolean }): string;
 
@@ -73,11 +76,11 @@ export function discardRestore(stagingFile: string): void;
 
 export function prepareRestore(
   file: string,
-  options: { passphrase?: string; migrationsDir: string; stagingFile: string; receiptKey?: Buffer | null },
+  options: { passphrase?: string; migrationsDir: string; stagingFile: string; receiptKey?: Buffer | null; databaseKey?: Buffer | null },
 ): { header: BackupHeader; receipts: number };
 
 export function applyRestore(
   stagingFile: string,
   dbFile: string,
-  options: { backupDir: string; now?: () => number },
+  options: { backupDir: string; now?: () => number; databaseKey?: Buffer | null },
 ): { safetyCopy: string | null; receiptsMovedTo: string | null; receiptsRestored: number };

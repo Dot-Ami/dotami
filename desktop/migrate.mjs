@@ -1,7 +1,9 @@
 // Brings the desktop app's database up to date by applying Prisma's own migration files
-// (prisma/migrations/*/migration.sql) with the SQLite built into Electron's Node — instead of
-// shipping the Prisma CLI, which is ~146 MB of engines for five kinds of database and reports
-// usage to checkpoint.prisma.io.
+// (prisma/migrations/*/migration.sql) with the same SQLite the server uses ([8i]: better-sqlite3-multiple-ciphers,
+// through desktop/sqlite.mjs, so an encrypted data file is opened with its key) — instead of shipping
+// the Prisma CLI, which is ~146 MB of engines for five kinds of database and reports usage to
+// checkpoint.prisma.io. (Until [8i] it used node:sqlite, the SQLite built into Electron's Node, which
+// can't open an encrypted file.)
 //
 // It keeps Prisma's own bookkeeping table exactly as `prisma migrate deploy` does (same table, a
 // SHA-256 of the file's bytes, times in milliseconds — read from a database Prisma migrated,
@@ -14,7 +16,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+
+import { openDatabase, runSql } from "./sqlite.mjs";
 
 const BOOKKEEPING = `CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
     "id"                    TEXT PRIMARY KEY NOT NULL,
@@ -27,19 +30,15 @@ const BOOKKEEPING = `CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
     "applied_steps_count"   INTEGER UNSIGNED NOT NULL DEFAULT 0
 )`;
 
-/**
- * Runs one or more SQL statements on the database: node:sqlite's DatabaseSync `exec` method.
- * SQL only, from the app's own migration files — it never starts a program.
- */
-const runSql = (db, sql) => db["exec"](sql);
-
 /** Thrown for a database the app must not touch; `message` is written for the person. */
 export class MigrationRefused extends Error {}
 
 /**
  * @param {string} dbFile the database file (created if missing)
  * @param {string} migrationsDir the folder holding one folder per migration
- * @param {{ backupDir?: string, now?: () => number, log?: (line: string) => void }} [options]
+ * @param {{ backupDir?: string, now?: () => number, log?: (line: string) => void, key?: Buffer | null }} [options]
+ *   `key`: the data file's key ([8i]); a new file is created encrypted with it from its first byte, and the
+ *   safety copy before an update is encrypted with it too (VACUUM INTO keeps the source's encryption).
  * @returns {{ applied: string[], backup: string | null }}
  */
 export function migrate(dbFile, migrationsDir, options = {}) {
@@ -50,7 +49,7 @@ export function migrate(dbFile, migrationsDir, options = {}) {
     .map((d) => d.name)
     .sort();
 
-  const db = new DatabaseSync(dbFile);
+  const db = openDatabase(dbFile, { key: options.key ?? null });
   try {
     runSql(db, BOOKKEEPING);
     const rows = db.prepare(`SELECT migration_name, checksum, finished_at, rolled_back_at FROM "_prisma_migrations"`).all();
@@ -82,7 +81,8 @@ export function migrate(dbFile, migrationsDir, options = {}) {
     if (pending.length === 0) return { applied: [], backup: null };
 
     // An existing database gets a full copy before anything changes it. VACUUM INTO writes a
-    // consistent copy even if something else has the file open.
+    // consistent copy even if something else has the file open, and an encrypted file's copy is
+    // encrypted with the same key (measured 2026-10-10; tests/desktop-migrate.spec.ts checks).
     let backup = null;
     if (done.size > 0) {
       const dir = options.backupDir ?? path.join(path.dirname(dbFile), "backups");
@@ -126,12 +126,13 @@ function sha256(file) {
  * Rebuilds the database file (VACUUM) so the space of deleted rows, and the words in it, is gone
  * from the file. Used only to finish a wipe that Delete left owed (desktop/wipe-pending.mjs), before
  * the server opens the file. Returns true when the file has no free pages left; throws when SQLite
- * can't do it (not enough disk, the file busy).
+ * can't do it (not enough disk, the file busy, the key wrong).
  * @param {string} dbFile
+ * @param {Buffer | null} [key] the data file's key, when it is encrypted ([8i])
  * @returns {boolean}
  */
-export function vacuumFile(dbFile) {
-  const db = new DatabaseSync(dbFile);
+export function vacuumFile(dbFile, key = null) {
+  const db = openDatabase(dbFile, { key });
   try {
     runSql(db, "VACUUM");
     const row = db.prepare("PRAGMA freelist_count").get();
