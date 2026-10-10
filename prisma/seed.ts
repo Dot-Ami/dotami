@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { addTypedStatement, listTypedStatements } from "@/lib/person/statements";
 import { linkVentures } from "@/lib/db/ventures";
@@ -15,7 +14,7 @@ import { DEMO_LINK, DEMO_STATEMENT, demoScenarios } from "./seed-data";
  * you still have two ventures, not four.
  */
 async function main() {
-  const prisma = new PrismaClient();
+  const prisma = createDatabaseClient();
   try {
     const ids = new Map<string, string>();
     for (const scenario of demoScenarios) {

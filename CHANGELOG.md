@@ -219,6 +219,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   export a report that has a date on every sale.
 
 ### Changed
+- **DotAmi's database layer now reads and writes through Prisma's adapter for `better-sqlite3`**
+  ([8i], the first step of encrypting the data file; the maintainer's decision of 2026-10-10) — the
+  package behind it is `better-sqlite3-multiple-ciphers` 13.0.3 (MIT; SQLite 3.53.4 with an
+  encryption extension), with `@prisma/adapter-better-sqlite3` 6.19.3 (Apache-2.0), both pinned. Nothing
+  is encrypted yet and nothing looks different: dates are stored as before (whole milliseconds), a
+  transaction that rolls back no longer can take another request's write with it, and "database is
+  locked" keeps SQLite's words. Measured first: the ideas, map, Expenses and *What DotAmi knows about
+  you* pages are within a few milliseconds of before; the start loads the adapter in 16 to 30 ms more
+  (`docs/architecture/database-encryption.md` § 14, `scripts/measure-database-adapter.ts`). The
+  desktop app keeps only this computer's prebuilt SQLite (2.4 MB) and removes `DEBUG` from its
+  server's environment, because the adapter's debug output prints query values.
 - **Requests up to 16 MB reach DotAmi's routes whole** (`next.config.mjs`,
   `middlewareClientMaxBodySize`). Next cut every request body at 10 MiB on its way through
   `middleware.ts`, so a receipt near the 10 MB cap (sent as base64, about 14 MB) arrived broken and

@@ -13,10 +13,11 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { storeErrorResponse } from "@/lib/expenses/http";
 import { agreeToExpenses, discardExpenses, listExpenses, proposeExpenses, retractExpenses } from "@/lib/expenses/store";
@@ -53,7 +54,7 @@ beforeAll(async () => {
     stdio: "pipe",
   });
   process.env.DATABASE_URL = url;
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
 
   routes.list = (await import("@/app/api/expenses/route")) as unknown as RouteModule;
   routes.propose = await import("@/app/api/expenses/propose/route");

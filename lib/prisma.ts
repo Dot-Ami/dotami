@@ -1,4 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
+
+import { createDatabaseClient } from "@/lib/db/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -16,9 +18,12 @@ const globalForPrisma = globalThis as unknown as {
  * still carries the full text; the routes catch it and log only its name and code
  * (lib/api/log-error.ts). tests/prisma-log.spec.ts runs a malformed write and checks that
  * nothing it prints holds the values.
+ *
+ * The client opens the file through DotAmi's one database client (lib/db/client.ts, [8i]): Prisma's
+ * adapter for better-sqlite3, on the file DATABASE_URL names.
  */
 function createClient(): PrismaClient {
-  const client = new PrismaClient({ log: [{ emit: "event", level: "error" }] });
+  const client = createDatabaseClient({ log: [{ emit: "event" as const, level: "error" as const }] });
   client.$on("error", (event) => {
     console.error(`[database] the database library reported an error (${describeLogTarget(event.target)})`);
   });

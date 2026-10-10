@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 
-import { isLeftOut, LEFT_OUT, leftOutIn, removeLeftOut, requiredByServerCode, stillNeeded } from "../desktop/left-out.mjs";
+import { isLeftOut, LEFT_OUT, leftOutIn, ownPlatformBuild, removeLeftOut, removeOtherPlatformBuilds, requiredByServerCode, stillNeeded } from "../desktop/left-out.mjs";
 import { collectNotices, packagesIn } from "../desktop/notices.mjs";
 
 const ROOT = process.cwd();
@@ -173,6 +173,44 @@ describe("collectNotices with leaveOut: the desktop notices drop what the server
   it("without leaveOut, the desktop list still names sharp through next (the reason the build passes it)", () => {
     const { root, standalone } = checkout("desktop-unfiltered");
     expect(collectNotices(root, { standalone }).map((e) => e.name)).toContain("sharp");
+  });
+});
+
+describe("the database package keeps only this computer's prebuilt SQLite ([8i])", () => {
+  it("names the file the package itself loads on each kind of computer", () => {
+    expect(ownPlatformBuild("win32", "x64", false)).toBe("win32-x64.node");
+    expect(ownPlatformBuild("darwin", "arm64", false)).toBe("darwin-arm64.node");
+    expect(ownPlatformBuild("linux", "x64", false)).toBe("linux-x64.node");
+    expect(ownPlatformBuild("linux", "arm64", true)).toBe("linuxmusl-arm64.node");
+  });
+
+  it("deletes the other kinds of computer's files from every copy of the package, and nothing else", () => {
+    const modules = path.join(temp, "builds", "node_modules");
+    const all = ["darwin-arm64.node", "linux-x64.node", "win32-arm64.node", "win32-x64.node"];
+    // The package sits under the adapter's name, as npm installs the alias.
+    const pkg = path.join(modules, "better-sqlite3");
+    mkdirSync(path.join(pkg, "prebuilds"), { recursive: true });
+    writeFileSync(path.join(pkg, "package.json"), JSON.stringify({ name: "better-sqlite3-multiple-ciphers", version: "13.0.3" }));
+    for (const f of [...all, "README.txt"]) writeFileSync(path.join(pkg, "prebuilds", f), f);
+    // Another package's own prebuilds folder is not touched.
+    const other = fakePackage(modules, "some-other-native", "1.0.0");
+    mkdirSync(path.join(other, "prebuilds"));
+    writeFileSync(path.join(other, "prebuilds", "linux-x64.node"), "x");
+
+    expect(removeOtherPlatformBuilds(modules, "win32-x64.node")).toEqual({
+      removed: ["better-sqlite3/prebuilds/darwin-arm64.node", "better-sqlite3/prebuilds/linux-x64.node", "better-sqlite3/prebuilds/win32-arm64.node"],
+      kept: ["better-sqlite3/prebuilds/win32-x64.node"],
+    });
+    expect(readdirSync(path.join(pkg, "prebuilds")).sort()).toEqual(["README.txt", "win32-x64.node"]);
+    expect(readdirSync(path.join(other, "prebuilds"))).toEqual(["linux-x64.node"]);
+    // Asked for a build the package doesn't have, it keeps none: the build stops on that.
+    expect(removeOtherPlatformBuilds(modules, "linux-riscv64.node").kept).toEqual([]);
+  });
+
+  it("the build stops unless exactly one is kept", () => {
+    const build = readFileSync(path.join(ROOT, "desktop", "build.mjs"), "utf8");
+    expect(build).toContain("const builds = removeOtherPlatformBuilds(modules);");
+    expect(build).toContain("if (builds.kept.length !== 1) {");
   });
 });
 

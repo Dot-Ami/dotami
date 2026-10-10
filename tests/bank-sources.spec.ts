@@ -13,10 +13,11 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { localDay } from "@/lib/figures/age";
 import {
   DIGITS_REFUSED,
@@ -219,7 +220,7 @@ function makeDb(name: string) {
     env: { ...process.env, DATABASE_URL: url, CHECKPOINT_DISABLE: "1" },
     stdio: "pipe",
   });
-  const prisma = new PrismaClient({ datasourceUrl: url });
+  const prisma = createDatabaseClient({ url });
   clients.push(prisma);
   return { folder, file, url, prisma };
 }

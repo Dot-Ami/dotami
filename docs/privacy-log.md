@@ -268,6 +268,25 @@ person is asked).
 
 ### Packages that ship
 
+- **`better-sqlite3-multiple-ciphers` 13.0.3 and `@prisma/adapter-better-sqlite3` 6.19.3, pinned
+  exactly ([8i]).** The database now reads and writes through Prisma's adapter and this package:
+  SQLite 3.53.4 with SQLite3 Multiple Ciphers 2.4.0, an encryption extension, as one prebuilt file for
+  each kind of computer (MIT; the C code it is built from is public domain, MIT, BSD-3-Clause and
+  CC0-or-Apache-2.0, with no LGPL or GPL; its notices are copied into `THIRD-PARTY-NOTICES.txt` from the
+  C source, word for word, by [`desktop/notices.mjs`](../desktop/notices.mjs)). Network: none found
+  (its JavaScript requires only node's `fs`, `path` and `util`; the Windows file imports only
+  `node.exe` and `KERNEL32.dll`); no install script. `package.json` names it `better-sqlite3`, the
+  name the adapter loads, and [`tests/database-package.spec.ts`](../tests/database-package.spec.ts)
+  fails if the real `better-sqlite3` (no encryption, and a download when it installs) is ever
+  installed instead. The desktop app's server carries only the Windows x64 file (2.4 MB; the other
+  seven are left out by [`desktop/left-out.mjs`](../desktop/left-out.mjs)). Reviewed 2026-10-09
+  ([the review](connectors/better-sqlite3-multiple-ciphers-review.md)); listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`DEPENDENCIES`). **Nothing is encrypted
+  by this change**, and nothing new is kept or sent: the same file holds the same rows, dates stored
+  the same way ([`tests/db-dates.spec.ts`](../tests/db-dates.spec.ts)). The adapter's debug output
+  prints query values when the `DEBUG` environment variable names it: the desktop app removes `DEBUG`
+  from its server's environment ([`desktop/main.mjs`](../desktop/main.mjs) `serverEnv`;
+  `e2e-desktop/desktop.spec.ts` checks the log).
 - **`pdfjs-dist` 6.4.299 (Mozilla's pdf.js), pinned exactly.** Apache-2.0. It can reach the
   network (a PDF, character maps, fonts and decoders from addresses it is given, and its own
   worker script); DotAmi gives it no address, turns its data-file fetches off and runs it in the
@@ -532,9 +551,11 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
-- **Encrypting the database file** — the maintainer said yes on 2026-10-09. Designed, with the
-  candidate packages reviewed by reading only; **not built, and nothing DotAmi keeps, sends or ships
-  changes yet**: the data file still relies on the computer's disk encryption. If built as designed,
+- **Encrypting the database file** — the maintainer said yes on 2026-10-09, and on 2026-10-10 chose
+  how: the package above (installed, and measured first), backups only plus a "Start fresh" button
+  when the key is lost, a passphrase required on every backup, and a person free to say "Not now" or
+  "Never" (with a switch in Settings). Being built in stacked pull requests; until they merge the data
+  file still relies on the computer's disk encryption. If built as designed,
   DotAmi would keep one new file, `database.key` (a random key wrapped by Windows' per-user
   protection), and ship one native package; a backup without a passphrase would still hold the data
   unencrypted, a lost key would lose everything not in a backup, and an older DotAmi couldn't open

@@ -16,10 +16,11 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
@@ -161,7 +162,7 @@ beforeAll(async () => {
     stdio: "pipe",
   });
   process.env.DATABASE_URL = url;
-  prisma = new PrismaClient({ datasourceUrl: url });
+  prisma = createDatabaseClient({ url });
   addRoute = await import("@/app/api/expenses/receipt/route");
   removeRoute = await import("@/app/api/expenses/receipt/remove/route");
   ventureId = (await ensureVentureFromScenario(prisma, demoScenarios[0])).ventureId;

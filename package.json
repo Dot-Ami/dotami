@@ -31,7 +31,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
+    "@prisma/adapter-better-sqlite3": "6.19.3",
     "@prisma/client": "^6.19.3",
+    "better-sqlite3": "npm:better-sqlite3-multiple-ciphers@13.0.3",
     "fflate": "^0.8.3",
     "next": "^15.5.27",
     "ofx-js": "1.1.2",
@@ -62,6 +64,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
+    "better-sqlite3": "$better-sqlite3",
     "deepmerge-ts": "^8.0.0",
     "glob": "^10.5.0",
     "postcss": "^8.5.13"

@@ -231,11 +231,13 @@ roadmap's build order.
   - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
     none clean on every count, the options and their costs waiting for the maintainer's choice
     ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
-  - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09): designed and the packages
-    reviewed ([architecture/database-encryption.md](architecture/database-encryption.md)); waiting for
-    the maintainer's choice of package, of what happens when the key is lost, and of whether a person
-    may decline; then three pull
-    requests (the Prisma connection, the migrator and first-start encryption, backups and restore)
+  - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
+    designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
+    being built in stacked pull requests: (A) the packages, the Prisma adapter and the measurements;
+    (B) the key, the first-start encryption and the window that asks first; (C) the migrator, backups
+    with a passphrase and restore; (D) the "Start fresh" button
+    - [x] (A) the packages installed and measured (no slowdown a person would notice), every Prisma
+      Client moved to one factory (`lib/db/client.ts`)
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

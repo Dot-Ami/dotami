@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync }
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -24,6 +24,7 @@ import {
   sizeWords,
 } from "@/components/your-data/format";
 import { encryptReceipt, keyIdOf } from "@/desktop/receipt-crypto.mjs";
+import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import type { ReceiptLock } from "@/lib/expenses/receipts/lock";
 import { TABLES } from "@/lib/privacy/inventory";
@@ -47,7 +48,7 @@ function makeDb(name: string) {
     env: { ...process.env, DATABASE_URL: url, CHECKPOINT_DISABLE: "1" },
     stdio: "pipe",
   });
-  return { folder, file, url, prisma: new PrismaClient({ datasourceUrl: url }) };
+  return { folder, file, url, prisma: createDatabaseClient({ url }) };
 }
 
 const empty = { prisma: undefined as unknown as PrismaClient, today: undefined as unknown as SettingsToday };

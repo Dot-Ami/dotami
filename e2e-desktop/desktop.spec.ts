@@ -16,7 +16,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
-import { LEFT_OUT, leftOutIn } from "../desktop/left-out.mjs";
+import { LEFT_OUT, leftOutIn, ownPlatformBuild } from "../desktop/left-out.mjs";
 import { migrate } from "../desktop/migrate.mjs";
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
 import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
@@ -43,6 +43,8 @@ async function launch(dir = dataDir): Promise<Page> {
   // DOTAMI_E2E_RATE_LIMITS is set on purpose too: the browser tests' rate-limit switch must never
   // reach the desktop server either (the rate-limit test below proves it didn't).
   // DOTAMI_NO_UPDATE_CHECK keeps a packaged app from asking GitHub for updates during the test.
+  // DEBUG is set on purpose: the database library prints every query with its values when DEBUG names
+  // it, and the desktop app must not pass it to its server ([8i]; the first test reads the log).
   app = await electron.launch({
     ...(packagedExe ? { executablePath: packagedExe, args: [] } : { args: [root] }),
     env: {
@@ -51,6 +53,7 @@ async function launch(dir = dataDir): Promise<Page> {
       ANTHROPIC_API_KEY: "sk-from-the-shell",
       DOTAMI_E2E_RATE_LIMITS: "opt-in",
       DOTAMI_NO_UPDATE_CHECK: "1",
+      DEBUG: "prisma*",
     },
   });
   const page = await app.firstWindow();
@@ -132,6 +135,11 @@ test("start → describe a venture → close → start again: the venture is sti
   expect(startLog).not.toContain("[desktop] stopped:");
 
   await describeVenture(page);
+  // [8i] The venture went through the database library, with DEBUG set in the shell: none of its query
+  // output reached the log (desktop/main.mjs serverEnv removes DEBUG).
+  const afterWrite = readFileSync(path.join(dataDir, "logs", "server.log"), "utf8");
+  expect(afterWrite).not.toContain("prisma:driver-adapter");
+  expect(afterWrite).not.toContain("[js::");
 
   // The settings page reports the app's own data file, and that nothing leaves the computer —
   // the key in the shell's environment never reached the server.
@@ -225,6 +233,9 @@ test("the server leaves out what it never loads (sharp with libvips, TypeScript)
   // …and none of what desktop/left-out.mjs names, at any depth.
   expect(LEFT_OUT.map((p) => p.name)).toEqual(expect.arrayContaining(["sharp", "@img/*", "typescript"]));
   expect(leftOutIn(modules).map((p) => `${p.name} ${p.version} (node_modules/${p.rel})`)).toEqual([]);
+  // [8i] The database package keeps only this computer's prebuilt SQLite (desktop/left-out.mjs), and the
+  // venture above was saved through it.
+  expect(readdirSync(path.join(modules, "better-sqlite3", "prebuilds"))).toEqual([ownPlatformBuild()]);
 
   // The notices follow what ships: entries for the server's packages, none for the left-out ones,
   // and so nothing under the LGPL (libvips was the only one).

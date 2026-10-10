@@ -238,7 +238,8 @@ async function checkForUpdates(byHand) {
  * The server's environment: what Node needs to run, plus the app's own settings — and never a
  * model key from the shell it was started from. DotAmi ships no key; the person's model comes
  * from the app's settings once the Lens exists ([9a]). Nor the browser tests' rate-limit switch:
- * the desktop app always runs with the real limits (lib/api/rate-limit.ts, E2E_RATE_LIMITS_ENV).
+ * the desktop app always runs with the real limits (lib/api/rate-limit.ts, E2E_RATE_LIMITS_ENV). Nor
+ * DEBUG, which would make the database library print query values into the log.
  */
 function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
@@ -251,6 +252,9 @@ function serverEnv(own) {
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
   delete env.DOTAMI_E2E_RATE_LIMITS;
+  // [8i] The database adapter prints every query with its values when DEBUG names it, and the server's
+  // output goes into logs/server.log (docs/architecture/database-encryption.md § 3).
+  delete env.DEBUG;
   return env;
 }
 
