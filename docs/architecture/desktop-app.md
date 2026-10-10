@@ -25,7 +25,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    beside the data file (`dotami.db.wipe-pending`: its wipe couldn't finish because the computer
    was busy, the disk was full or it was switched off), the app finishes that wipe before the server
    opens the file: it deletes the safety copies the note names (DotAmi's own `dotami-before-….db`
-   files in `backups/`, never through a link), rebuilds the file with `VACUUM`, and removes the note
+   files in `backups/`, never through a link) and clears the set-aside receipt folders it names
+   (DotAmi's own files in `backups/receipts-locked-…` and `backups/receipts-before-restore-…`, [8i],
+   expense-records.md § 11), rebuilds the file with `VACUUM`, and removes the note
    (`desktop/wipe-pending.mjs`, `vacuumFile` in `desktop/migrate.mjs`). Whatever still fails stays
    in the note for the next start and never stops this one; the log says which. An ordinary start,
    with no note, does nothing here: free space in the file is normal after any edit, and rebuilding
@@ -68,7 +70,11 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    (`receiptLockEnv`, `desktop/receipt-key.mjs`). After **Start a new key** (the pages'
    button while the key can't be opened; [expense-records.md § 10](expense-records.md)) the server has
    already moved the locked receipts and the key file into `backups/receipts-locked-<time>/`, so this
-   step finds the key file missing with nothing locked and makes a new key.
+   step finds the key file missing with nothing locked and makes a new key. Since 2026-10-10 that start
+   comes by itself: the page asks the main process to restart (`restartForNewKey` in
+   `desktop/receipt-key.mjs`, only from DotAmi's own window, only while this start's key couldn't be
+   opened and once no locked receipt is left), which asks Electron to relaunch, stops the server and
+   exits ([expense-records.md § 11](expense-records.md)).
 5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
@@ -95,8 +101,8 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    2026-10-05). No switch may turn off Chromium's sandboxes or run the graphics process inside the
    browser process (`tests/desktop-sandbox.spec.ts`), a condition of drawing HEIC receipts on the
    graphics chip ([8i], 2026-10-09). The window's one preload (`desktop/window-preload.cjs`) gives
-   DotAmi's pages two calls about HEIC receipts and nothing else; the main process believes them only
-   from DotAmi's own window, and stops HEIC drawing for the session once the graphics process stops
+   DotAmi's pages two calls about HEIC receipts and, since 2026-10-10, one to restart after Start a new
+   key, and nothing else; the main process believes them only from DotAmi's own window, and stops HEIC drawing for the session once the graphics process stops
    (`child-process-gone`, type `GPU`) or a HEIC fails (desktop-tested).
 7. **Updates** (installed app only) — see below.
 8. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
@@ -350,9 +356,11 @@ to the data.
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
   "Desktop app (Windows)"). Delete ([8d]): an idea and a statement holding a marker string, a backup
-  saved elsewhere and restored (which leaves a safety copy) → Delete with ideas, statements and the
-  safety copies ticked → after closing, the marker is in no byte of `dotami.db` or `backups/` → the
-  backup saved elsewhere still restores. And a wipe Delete couldn't finish: an ordinary start leaves
+  saved elsewhere and restored (which leaves a safety copy, and the receipts folder as it was in
+  `receipts-before-restore-…`), plus a `receipts-locked-…` folder as Start a new key leaves one → Delete
+  with ideas, statements and the safety copies ticked → after closing, the marker is in no byte of
+  `dotami.db` or `backups/`, both set-aside folders are gone and no file in the data folder holds a byte
+  run of their files → the backup saved elsewhere still restores. And a wipe Delete couldn't finish: an ordinary start leaves
   the deleted words in the file (the control), a start with the "wipe pending" note removes them and
   the owed safety copy. The same run opens Help → Licences (Electron, the server's packages and
   electron-updater are listed) and checks every package in the server's `node_modules` has an entry
@@ -361,7 +369,9 @@ to the data.
   then checks the server (built or packaged) holds none of the packages `desktop/left-out.mjs`
   names, its notices list none of them and nothing under the LGPL, and `/_next/image` answers 404.
 - `tests/desktop-wipe-pending.spec.ts` — which files count as safety copies, that a link out of
-  `backups/` is never followed, and that a start finishes a wipe only when the note is there.
+  `backups/` is never followed, and that a start finishes a wipe only when the note is there; which
+  folders count as set-aside receipts and which files in them are DotAmi's, never through a link, the
+  person's own files kept ([8i]).
 - `tests/desktop-left-out.spec.ts` — which packages are left out (and which look-alikes aren't),
   the removal on an invented `node_modules` (nested copies, empty scope folders), the two checks
   that stop the build, the desktop notices without them, and that `desktop/build.mjs` and

@@ -59,3 +59,23 @@ describe("when Add a receipt is offered", () => {
     expect(receiptsCanBeAdded("new-key-at-restart")).toBe(false);
   });
 });
+
+describe("after Start a new key, until the restart (expense-records.md § 11)", () => {
+  const folder = "/home/someone/DotAmi/backups/receipts-locked-1760000000000";
+
+  it("in the desktop app: says DotAmi restarts by itself, and to close it and open it again if it hasn't", () => {
+    const { headline, detail, tone } = receiptProtectionText("new-key-at-restart", folder, { desktop: true });
+    expect(tone).toBe("problem");
+    expect(headline).toBe("DotAmi starts a new key for your receipts the next time it starts.");
+    expect(detail).toContain(folder);
+    expect(detail).toContain("DotAmi restarts by itself to start it. If it hasn't, close DotAmi and open it again.");
+    expect(detail).not.toContain("doesn't restart by itself");
+  });
+
+  it("in a copy run from source: says plainly that it doesn't restart by itself, and to restart it by hand", () => {
+    for (const { detail } of [receiptProtectionText("new-key-at-restart", folder), receiptProtectionText("new-key-at-restart", folder, { desktop: false })]) {
+      expect(detail).toContain("This copy doesn't restart by itself: stop it and start it again to start the new key.");
+      expect(detail).not.toContain("restarts by itself to start it");
+    }
+  });
+});

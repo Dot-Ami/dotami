@@ -1,6 +1,6 @@
 # Your expenses page (`/expenses`) — page overview
 
-Last updated: 2026-10-09 (HEIC photos kept as receipts and shown by the graphics chip, option D of the HEIC decoder review; receipt files encrypted in the desktop app: the note before adding one says whether, and an amber line when the key can't be opened, with Start a new key); 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
+Last updated: 2026-10-10 (after Start a new key the desktop app restarts by itself, saying so first; a copy run from source says to restart it by hand); 2026-10-09 (HEIC photos kept as receipts and shown by the graphics chip, option D of the HEIC decoder review; receipt files encrypted in the desktop app: the note before adding one says whether, and an amber line when the key can't be opened, with Start a new key); 2026-10-08 (new page, [8i] typed records, with the maintainer's decisions of 2026-10-08; records of a deleted idea show here as not attached yet; receipts added and removed)
 
 **Route:** `/expenses` · `/expenses?idea=<idea id>` (opened on one idea) · **Component:**
 `components/expenses/expenses-page.tsx` (+ `expense-form.tsx`, `expense-review.tsx`) ·
@@ -74,9 +74,12 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
   (`ReceiptKeyProblem`, role status) says so, what usually causes it, that nothing was changed, to put
   `receipts.key` back if it was deleted or moved, and the two ways forward (restore a backup; or delete
   the receipts on *What DotAmi knows about you* and restart), with **Start a new key…** under it: the
-  same control and the same two asks as on Settings (`docs/ui-spec/settings/_index.md`). After it,
-  until DotAmi is restarted, the line says "DotAmi starts a new key for your receipts the next time
-  it starts." with the folder the locked receipts were moved to, and has no button. Adding a receipt
+  same control and the same two asks as on Settings (`docs/ui-spec/settings/_index.md`). After it, the
+  desktop app says "DotAmi will restart now to start the new key…" and restarts by itself (§ 11 of
+  expense-records.md); until it has, or if it didn't, the line says "DotAmi starts a new key for your
+  receipts the next time it starts." with the folder the locked receipts were moved to and "If it
+  hasn't, close DotAmi and open it again." (from source: that this copy doesn't restart by itself), and
+  has no button. Adding a receipt
   then answers 409 with the same advice.
 - **When the key is out of reach only for now** (the key store isn't available, or a new key wasn't
   saved yet; lock state `key-out-of-reach`): the same amber line reads "DotAmi can't open the key to

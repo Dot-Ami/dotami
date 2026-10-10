@@ -42,6 +42,19 @@ export function saveReceiptKey(
 export function receiptLockEnv(
   opened: OpenedReceiptKey,
 ): { DOTAMI_RECEIPT_LOCK: "on"; DOTAMI_RECEIPT_KEY: string } | { DOTAMI_RECEIPT_LOCK: "no-key-store" | "key-unreadable" | "key-out-of-reach" };
+/** Restarts the desktop app after Start a new key, only when the main process's own checks allow it (§ 11). */
+export function restartForNewKey(
+  dataDir: string,
+  options: {
+    opened: OpenedReceiptKey | null;
+    fromDotAmi: boolean;
+    quitting: boolean;
+    relaunch: () => void;
+    stopServer: () => Promise<void>;
+    exit: (code: number) => void;
+    log: (line: string) => void;
+  },
+): Promise<"restarting" | "refused">;
 export function revertReceiptKey(dataDir: string, newKeyId: string, setAside: string | null): "reverted" | "kept";
 export function countLockedReceipts(receiptsDir: string, keyId: string | null): number;
 export function setAsideLockedReceipts(
