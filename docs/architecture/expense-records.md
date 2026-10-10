@@ -1139,7 +1139,8 @@ shows one, so a receipt brought back opens at once.
 - **Only receipts that could really come back are counted for the button** (fix round, 2026-10-10:
   a folder whose receipts can never come back used to keep its button for good). The list reads the
   data file's rows too (read-only, as the button does), and for each encrypted receipt file says which
-  one of these it is, in this order:
+  one of these it is (a file that can't be read is counted first, then one found changed, then the
+  rest in the order below):
   - **no record**: no `Receipt` row with its id, or a row of another type (the record, or its receipt,
     was deleted since; also what "remove this one and add the file again" in the viewer leads to):
     "1 of them can't come back: its expense record was deleted, or no longer has that receipt."
@@ -1339,3 +1340,22 @@ taken for a real folder; an old key opened by a key store that doesn't protect i
 old key file counted for the pages; the bridge's bring-back call believed from any window. In a real browser:
 the sentence for a copy run from source left out. In the real app: a receipt locked again with the old key
 (the read-back check refuses it, so no receipt is brought back and the test fails at the result line).
+
+**Review fix round (2026-10-10).** Built by: `desktop/receipt-bring-back.mjs` (each receipt handled on
+its own and caught, `bringBackOne`; a guarded clean-up; `readReceiptFile` telling "can't be read" and
+"too big" apart; the list sorting each receipt by row, receipts/, key and what a press found changed;
+`delete-owed`, from `desktop/wipe-pending.mjs` `readWipePending`), `desktop/main.mjs` (the list reads the
+rows), `lib/expenses/receipts/protection.ts` (one sentence per kind, where a found key goes, the owed
+folder, the no-answer sentence), `components/expenses/bring-back-receipts.tsx` (asks for the list again
+after any answer) and the viewer's sentence in `lib/expenses/receipts/store.ts`. The tests went in
+first and failed on the code before (17 failed, 55 passed; the clean-up case failed with the `EBUSY`
+escaping the run, the bug itself). **Checked that the tests bite** (each broken on purpose, its test run
+and seen to fail, the file put back from git, `git diff --quiet`): both guards around one receipt removed
+(removing only the clean-up's own catch does *not* fail the test, because the per-receipt catch still
+holds: the two are belt and braces); a receipt that can't be read skipped without a word; the list
+ignoring the rows; the list ignoring a file already in `receipts/`; a receipt found changed not
+remembered; the button not checking what Delete still owes; the list not leaving that folder out; the
+list always saying the folder has its key file. And for three tests that came in with the feature commit
+rather than before it (the server's folder count in `tests/settings-today.spec.ts`,
+`tests/privacy-holdings.spec.ts` and the extensions check in `tests/receipt-bring-back.spec.ts`): the count
+made to find no folder, and all three fail.
