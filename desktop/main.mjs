@@ -27,7 +27,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
+import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
@@ -380,9 +380,19 @@ function safetyCopyFiles() {
  *   Back up first…, Encrypt now, Not now and Never;
  * - no key store: the file stays plain, and Settings says why.
  * Then the plain safety copies are encrypted too. Returns false when the start must stop (it has said why).
+ * @param {{ afterStartFresh?: boolean }} [options] `afterStartFresh`: the locked data was just set aside;
+ *   the new data file must then be encrypted, never created plain (if no key can be made, the start stops).
  */
-async function prepareDatabase() {
+async function prepareDatabase({ afterStartFresh = false } = {}) {
   const say = (line) => log.write(`[database] ${line}\n`);
+  // After "Start fresh" the person was promised an empty file under a new key: never an unencrypted one.
+  const noPlainAfterStartFresh = () => {
+    say("no key could be made after starting fresh; no unencrypted data file was created");
+    fail(
+      `Your locked data was set aside in the backups folder, but Windows' key store didn't answer, so DotAmi didn't create a new, unencrypted data file. Restart Windows (or sign out and in again), then start DotAmi again.\n\n${dataDir}`,
+    );
+    return false;
+  };
   const copies = safetyCopyFiles();
   // A safety copy another program holds is read as "held" (it is tried again at the next start); the data file
   // itself is never guessed at: fileKind throws, and the start stops having changed nothing.
@@ -436,6 +446,7 @@ async function prepareDatabase() {
     databaseLock = { state: "on", plainLeft: 0 };
     say("the data file is encrypted; key open");
   } else if (opened.state === "no-key-store") {
+    if (afterStartFresh) return noPlainAfterStartFresh();
     databaseLock = { state: "no-key-store", plainLeft: 0 };
     say("the operating system's key store isn't available, so the data file is kept unencrypted");
     return true;
@@ -444,7 +455,7 @@ async function prepareDatabase() {
     // kept, never replaced: encrypted safety copies (or the data file, put back) may be locked with it
     // (desktop/database-key.mjs: never replaced automatically once anything is encrypted with it).
     key ??= await newDatabaseKey(say);
-    if (!key) return true;
+    if (!key) return afterStartFresh ? noPlainAfterStartFresh() : true;
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
     say("a new data file, encrypted from its first byte");
@@ -675,7 +686,10 @@ async function showLostKey(opened) {
           type: "error",
           title: "DotAmi",
           message: "DotAmi couldn't start fresh.",
-          detail: "Nothing was deleted: whatever was moved is in the backups folder, and the rest is where it was. Close any program that may have the data folder open, then try again.",
+          detail:
+            error instanceof StartFreshRefused
+              ? error.message
+              : "Nothing was deleted: whatever was moved is in the backups folder, and the rest is where it was. Close any program that may have the data folder open, then try again.",
         });
         continue;
       }
@@ -687,6 +701,16 @@ async function showLostKey(opened) {
   return "quit";
 }
 
+/** Thrown by startFresh when an encryption was part-way: nothing was moved. The message is for the person. */
+class StartFreshRefused extends Error {
+  constructor() {
+    super(
+      `DotAmi was part-way through encrypting your data file when its key stopped opening, so it didn't start fresh: an unencrypted copy (${path.basename(dbFile)}${PLAIN_SUFFIX}) may still be in the data folder, and it may be the only copy of your data that can be read. Nothing was moved. Keep the data folder as it is and ask for help on GitHub.`,
+    );
+    this.name = "StartFreshRefused";
+  }
+}
+
 /**
  * [8i] "Start fresh" (the maintainer's decision 2 of 2026-10-10): the locked data file goes to
  * backups/dotami-locked-<time>.db, never deleted (desktop/encrypt-database.mjs setAsideLockedFile), so it
@@ -696,6 +720,10 @@ async function showLostKey(opened) {
  * deleting it. Then the start goes on as for a new data folder: a new key, an empty encrypted file.
  */
 function startFresh() {
+  // An encryption that was part-way when the key stopped opening: its note (and maybe a plain copy waiting to
+  // be wiped) would bring this window straight back, and that plain copy may be the only readable copy of the
+  // data. Nothing is moved; the window says why (found in review, 2026-10-10).
+  if (readNote(dataDir) !== null) throw new StartFreshRefused();
   const stamp = Date.now();
   const lockedTo = setAsideLockedFile(dataDir, dbFile, () => stamp);
   const receipts = path.join(dataDir, RECEIPTS_FOLDER);

@@ -1374,6 +1374,46 @@ test("a lost key: Start fresh… asks twice, keeps the locked file and its key i
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[database] started fresh: the locked data file and the receipts folder went to the backups folder");
 });
 
+test("a lost key while an encryption was part-way: Start fresh moves nothing and says why ([8i])", async () => {
+  const page = await launch();
+  await describeVenture(page);
+  await quit();
+  // A key file this account can't open, and the note of an encryption that hadn't finished.
+  const keyFile = path.join(dataDir, "database.key");
+  writeFileSync(
+    keyFile,
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  const note = path.join(dataDir, "database-encrypting.json");
+  writeFileSync(note, JSON.stringify({ format: 1, step: "wipe", file: "dotami.db", size: 1, sha256: "0".repeat(64) }));
+  const before = readdirSync(dataDir).sort();
+  const lockedBytes = readFileSync(path.join(dataDir, "dotami.db"));
+
+  const window = await launchTo("lost-key");
+  // The message box is DotAmi's own; it is recorded here instead of shown.
+  await app!.evaluate(({ dialog }) => {
+    (globalThis as { shown?: string[] }).shown = [];
+    dialog.showMessageBox = (async (options: { detail?: string }) => {
+      (globalThis as { shown?: string[] }).shown!.push(options.detail ?? "");
+      return { response: 0, checkboxChecked: false };
+    }) as unknown as typeof dialog.showMessageBox;
+  });
+  await window.getByRole("button", { name: "Start fresh…" }).click();
+  await window.getByRole("button", { name: "Start fresh", exact: true }).click();
+  await expect.poll(() => app!.evaluate(() => (globalThis as { shown?: string[] }).shown!.join(" | "))).toMatch(/part-way through encrypting your data file/);
+  // The window comes back; nothing was moved.
+  const isLostKey = (p: Page) => p.url().includes("/desktop/lost-key.html") && !p.isClosed();
+  await expect.poll(() => app!.windows().some(isLostKey), { timeout: 30_000 }).toBe(true);
+  const again = app!.windows().find(isLostKey)!;
+  const closed = app!.waitForEvent("close");
+  await again.getByRole("button", { name: "Quit" }).click();
+  await closed;
+  app = null;
+  expect(readdirSync(dataDir).sort()).toEqual(before);
+  expect(readFileSync(path.join(dataDir, "dotami.db")).equals(lockedBytes)).toBe(true);
+  expect(existsSync(path.join(dataDir, "backups")) ? readdirSync(path.join(dataDir, "backups")).filter((f) => f.startsWith("dotami-locked-")) : []).toEqual([]);
+});
+
 test("a key file that opens but holds another key: the lost-key window, not a failed update, and nothing changes ([8i])", async () => {
   let page = await launch();
   await describeVenture(page);

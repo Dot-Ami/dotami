@@ -351,6 +351,11 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(names).toContain("The disk under the data file");
     // The safety copies have their own box now, so they are no longer on this list.
     expect(names).not.toContain("Safety copies in the backups folder");
+    // [8i] What a lost key's restore or Start fresh sets aside is never deleted by DotAmi, and the list says so by name.
+    const setAside = NOT_CLEARED_BY_DELETE.find((n) => n.name === "The locked data file and key files set aside in the backups folder")!.why;
+    for (const name of ["dotami-locked-", "database-key-unreadable-", "receipts-before-start-fresh-"]) expect(setAside).toContain(name);
+    // The Settings box says it forgets a "Never" about encrypting the data file.
+    expect(DELETE_MENU.find((e) => e.id === "settings")!.goesWithIt).toMatch(/“Never” answer about encrypting the data file/);
   });
 
   it("has a box for the safety copies in the backups folder, warning that only a backup saved elsewhere could bring anything back", () => {

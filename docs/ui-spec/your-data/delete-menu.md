@@ -32,7 +32,9 @@ with where they are kept, before confirming.
      back, with its days. Figures read from their statements stay; "Always allow every account" goes
      with Your settings, and the tick-box line says so.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
-   - **Your settings** — every saved choice goes back to its default.
+   - **Your settings** — every saved choice goes back to its default. [8i] That includes whether to
+     encrypt the data file: a "Never" is forgotten, so the desktop app's next start asks again (an
+     encrypted file stays encrypted); the box says so.
    - **Safety copies in the backups folder** (added 2026-10-08) — DotAmi's own whole copies of the
      data file, made before each update and restore. Its sentence, in amber, is the warning:
      afterwards only a backup saved somewhere else could bring anything back. It counts files, not
@@ -67,7 +69,9 @@ with where they are kept, before confirming.
    last tax year they relate to, with exceptions, linked to the CRA's page with the day it was read.
    Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): the receipts folders a restore
    moved into the backups folder (the safety-copies box deletes only DotAmi's copies of the data
-   file), what the window stored in earlier launches ("Not cleared yet"), the log, anything that
+   file); [8i] the locked data file, the key file that couldn't open it and the receipts folder a
+   lost key's restore or Start fresh set aside (`dotami-locked-…db`, `database-key-unreadable-…key`,
+   `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window stored in earlier launches ("Not cleared yet"), the log, anything that
    already left the computer, and the disk under the data file (which can still hold older pieces
    of the file, a removed receipt's bytes and deleted safety copies).
 

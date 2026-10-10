@@ -8,6 +8,7 @@
   // refuses those answers too, desktop/main.mjs showLostKey).
   if (bridge.status === "store-unavailable") {
     $("restore").hidden = true;
+    $("start-fresh").hidden = true;
     $("store-unavailable").hidden = false;
   }
   $("quit").addEventListener("click", () => bridge.answer("quit"));

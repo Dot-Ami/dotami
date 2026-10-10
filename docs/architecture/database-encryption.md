@@ -482,7 +482,11 @@ When the app starts and can't open the key:
   the same window, asked twice, which says plainly what is given up (everything in the locked file
   not in a backup, unless its key comes back), then moves the locked data file and its key file into
   `backups/` (never deleting them) and starts with an empty, encrypted data file under a new key.
-  There is no recovery key.
+  There is no recovery key. Three guards, found in review (2026-10-10): it isn't offered while
+  Windows' key store is only unavailable for now (a restart may bring the key back); it is refused,
+  moving nothing, while an encryption note is on disk (an unencrypted copy waiting to be wiped may be
+  the only readable copy); and after it, the new file is never created unencrypted (if no key can be
+  made, the start stops and says so).
 
 ## 11. Tests (each must fail when its rule is removed)
 

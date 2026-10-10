@@ -295,8 +295,11 @@ bytes wrapped by Windows' per-user protection (Electron's `safeStorage`, DPAPI),
 **Built so far (2026-10-10):** the rows marked "designed" for an administrator account, a copied
 folder and a stolen disk, for the plain files the first start replaces, and for deleted words are
 built (the encryption, the zero-filled plain files, the wipe proved on the decrypted image, backups
-rebuilt in memory); so is the lost-key start (nothing changed, said in a window). A passphrase on
-every backup, restoring from the lost-key window and "Start fresh" are the next pull requests.
+rebuilt in memory); so is the lost-key start (nothing changed, said in a window). So are the rest of
+the stack: a passphrase required on every backup (older backups still restore), restoring from the
+lost-key window under a new key, and "Start fresh", asked twice, keeping the locked file, its key file
+and the receipts folder in `backups/`. The two rows that asked a question are answered (the
+maintainer's decisions of 2026-10-10).
 
 **Rules for building it:**
 
