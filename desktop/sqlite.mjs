@@ -8,7 +8,7 @@
 // that folder before anything opens a file. A copy run from the source code, and the tests, load it from
 // the top folder's node_modules. (Not `import.meta.url`: Playwright loads desktop files for the desktop
 // test through its CommonJS transform, where import.meta is a syntax error.)
-import { closeSync, openSync, readSync, statSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -86,19 +86,19 @@ const PLAIN_HEADER = Buffer.from("SQLite format 3\0", "latin1");
  * @returns {"absent" | "plain" | "encrypted"}
  */
 export function fileKind(file) {
-  let size;
+  // Opened once and measured through the same handle, so the size and the bytes are of one file.
+  let fd;
   try {
-    size = statSync(file).size;
+    fd = openSync(file, "r");
   } catch {
     return "absent";
   }
-  if (size === 0) return "absent";
-  const head = Buffer.alloc(16);
-  const fd = openSync(file, "r");
   try {
+    if (fstatSync(fd).size === 0) return "absent";
+    const head = Buffer.alloc(16);
     readSync(fd, head, 0, 16, 0);
+    return head.equals(PLAIN_HEADER) ? "plain" : "encrypted";
   } finally {
     closeSync(fd);
   }
-  return head.equals(PLAIN_HEADER) ? "plain" : "encrypted";
 }
