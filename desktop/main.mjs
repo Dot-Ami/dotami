@@ -892,6 +892,8 @@ function answerWindowCalls(origin) {
       fromDotAmi: fromDotAmi(event),
       opened: receiptKey,
       store: safeStorage,
+      // The list offers the button only for receipts whose row is still there, so it reads the rows too.
+      readRows: () => receiptRowsIn(dbFile, databaseKey),
       log: (line) => log?.write(`${line}\n`),
     }),
   );

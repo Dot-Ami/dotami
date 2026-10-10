@@ -93,8 +93,9 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
 - **A receipt that was set aside** by Start a new key: the viewer says, in amber, that it was set
   aside when DotAmi started a new key, the folder it is in, that it opens again only with the old
   key, that if Windows can open that key on this account again Settings → Data and backups in the
-  desktop app can bring it back (expense-records.md § 12), and to remove it and add the file again to
-  keep a receipt on the record.
+  desktop app can bring it back (expense-records.md § 12), that removing the receipt from its record
+  gives that up (once removed, it can't be brought back), and to remove it and add the file again to
+  keep a receipt on the record now.
 - **The viewer** shows, in amber like its other refusals, a receipt encrypted with a key this account
   can no longer open ("…A backup made before then still holds it: File → Restore from a backup…"), or,
   in a copy run from source, one the desktop app encrypted ("Open it in the desktop app"). A damaged or

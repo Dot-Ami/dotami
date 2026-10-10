@@ -39,6 +39,16 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **The list of set-aside receipts reads their records, and a folder Delete still owes stays out of it
+  ([8i], 2026-10-10, review fix round).** To offer *Bring these receipts back* only for receipts that
+  could come back, the desktop app's main process now also reads the `Receipt` table (read-only) when the
+  page asks for the list, and checks whether a file of the same name is already in `receipts/`. It
+  remembers, in memory only and until it closes, which set-aside files a press found changed (their
+  path, size and time), so they aren't offered again. A folder named in the wipe-pending note (an
+  earlier Delete that hasn't finished) is never offered, and the button refuses it, so receipts Delete
+  said were gone can't come back before the wipe finishes. The page gets counts, never a key. Nothing new
+  is kept on the disk, and nothing is sent anywhere
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)).
 - **Set-aside receipts can come back into the receipts folder ([8i], 2026-10-10).** In the desktop app,
   once Windows can open the old key of receipts *Start a new key* set aside in
   `backups/receipts-locked-<time>/` again, *Bring these receipts back* opens each with that key in the main

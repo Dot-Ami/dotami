@@ -14,14 +14,12 @@ import {
   setAsideFolderText,
   type BringBackLeftReason,
   type BringBackRefusal,
+  type SetAsideFolderCounts,
 } from "@/lib/expenses/receipts/protection";
 
 /** One folder as the desktop app lists it (desktop/receipt-bring-back.mjs listSetAsideReceipts). */
-interface SetAsideFolder {
+interface SetAsideFolder extends SetAsideFolderCounts {
   name: string;
-  path: string;
-  receipts: number;
-  canOpen: number;
 }
 
 type Refused = { outcome: "refused"; reason: BringBackRefusal };
@@ -93,13 +91,11 @@ function SetAsideFolders() {
     const answer: Done = desktopApp ? await desktopApp.bringBackReceipts(folder.name).catch(() => ({ outcome: "refused", reason: "no-answer" }) as const) : { outcome: "refused", reason: "no-answer" };
     setBusy(false);
     setAsking(null);
-    if (answer.outcome !== "done") {
-      setError(refusedText(answer.reason));
-      return;
-    }
-    setResult({ text: bringBackDoneText(answer), left: answer.left });
+    if (answer.outcome !== "done") setError(refusedText(answer.reason));
+    else setResult({ text: bringBackDoneText(answer), left: answer.left });
     // Asked again rather than refreshing the page: a folder with nothing left drops out of the list, and
-    // this line about what happened stays on the screen.
+    // this line about what happened stays on the screen. After no answer too: the list then shows what
+    // is really still set aside.
     await list();
   }
 

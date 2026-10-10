@@ -246,7 +246,9 @@ roadmap's build order.
   - [x] The third follow-up (the maintainer said yes, 2026-10-10): **Bring these receipts back**, in the
     desktop app, for each `backups/receipts-locked-…` folder whose old key this Windows account can open
     again; asked once; each receipt checked against its record, locked again with the current key, put
-    back, and only then removed from the folder; anything that fails stays and is named
+    back, and only then removed from the folder; anything that fails stays and is named; the button only
+    for receipts that could really come back, never for a folder an earlier Delete still owes (review fix
+    round, 2026-10-10)
     ([expense-records.md § 12](architecture/expense-records.md)). Not done, with the reasons there: the
     receipt folders a restore or Start fresh set aside
   - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
