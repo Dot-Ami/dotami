@@ -43,7 +43,10 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
    state and counts only. A key this account can't open changes nothing on the disk when receipts are
    locked with it; with none locked, it is moved to `backups/` and a new one made. No key store: the
-   receipts stay unencrypted, and the settings page says so. After **Start a new key** (the pages'
+   receipts stay unencrypted, and the settings page says so. The server is told `key-unreadable`
+   (which offers Start a new key) only when the key store is there and receipts are locked; with the
+   store unavailable for now it is told `key-out-of-reach`, which never offers it
+   (`receiptLockEnv`, `desktop/receipt-key.mjs`). After **Start a new key** (the pages'
    button while the key can't be opened; [expense-records.md § 10](expense-records.md)) the server has
    already moved the locked receipts and the key file into `backups/receipts-locked-<time>/`, so this
    step finds the key file missing with nothing locked and makes a new key.

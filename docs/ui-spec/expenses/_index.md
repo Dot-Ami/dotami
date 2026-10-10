@@ -78,6 +78,15 @@ and hands it to the page (`components/expenses/receipt-protection.tsx`); the key
   until DotAmi is restarted, the line says "DotAmi starts a new key for your receipts the next time
   it starts." with the folder the locked receipts were moved to, and has no button. Adding a receipt
   then answers 409 with the same advice.
+- **When the key is out of reach only for now** (the key store isn't available, or a new key wasn't
+  saved yet; lock state `key-out-of-reach`): the same amber line reads "DotAmi can't open the key to
+  your receipts right now.", says nothing was changed and that DotAmi tries again each time it starts
+  (close it and open it again; restart Windows if it keeps happening). No **Start a new key…** then:
+  the key may still open.
+- **No Add a receipt while none can be added** (the key can't be opened, is out of reach, or until the
+  restart after Start a new key): an agreed record without a receipt shows, in small dim text,
+  "Receipts can't be added now: the amber line at the top of this page says why." instead of the
+  **Add a receipt** link.
 - **A receipt that was set aside** by Start a new key: the viewer says, in amber, that it was set
   aside when DotAmi started a new key, the folder it is in, that it opens again only with the old
   key, and to remove it and add the file again to keep a receipt on the record.

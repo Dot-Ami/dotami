@@ -31,6 +31,10 @@ const REFUSED: Record<Exclude<ReceiptLock["state"], "key-unreadable">, string> =
   source: "This copy doesn't encrypt receipts, so there's no key to start again. Nothing was moved.",
   "no-key-store": "This copy doesn't encrypt receipts, so there's no key to start again. Nothing was moved.",
   "new-key-at-restart": "DotAmi already moved the locked receipts aside. Close it and open it again to start the new key.",
+  // The key store is only unavailable for now (desktop/receipt-key.mjs receiptLockEnv): the key may open
+  // at the next start, and no new key could be made while the store is down.
+  "key-out-of-reach":
+    "DotAmi can't reach the key to your receipts right now, so there's no new key to start: the key may still open the next time DotAmi starts. Nothing was moved.",
 };
 
 /**

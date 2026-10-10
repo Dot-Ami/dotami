@@ -121,11 +121,39 @@ test.afterAll(async () => {
 
 const dataRegion = (page: Page) => page.getByRole("region", { name: "Data and backups" });
 
+/** One agreed record on this server, kept through DotAmi's own routes from its own page. */
+async function keptRecord(page: Page, paidTo: string) {
+  await page.evaluate(async (payee) => {
+    const post = async (url: string, body: unknown) =>
+      (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<{
+        expenses: { id: string }[];
+      }>;
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the new-key test" },
+      expenses: [{ date: day, amountCents: 1_234, paidTo: payee, whatFor: "a record with no receipt yet" }],
+    });
+    await post("/api/expenses/agree", { expenseIds: [proposed.expenses[0].id] });
+  }, paidTo);
+}
+
+/** The agreed record's row on the Expenses page: Add a receipt is never offered while no receipt can be added. */
+async function expectNoAddReceipt(page: Page, paidTo: string) {
+  const row = page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: paidTo });
+  await expect(row).toContainText("Receipts can't be added now: the amber line at the top of this page says why.");
+  await expect(row.getByRole("button", { name: "Add a receipt" })).toHaveCount(0);
+}
+
 test("Start a new key: asked twice with the cost first, nothing moved on cancel, then the folder named on the page and on the disk", async ({ page }) => {
   // Offered wherever the amber line shows: the Expenses page and What DotAmi knows about you, as well as Settings.
   await page.goto(`${ORIGIN}/expenses`);
   await expect(page.getByRole("status").filter({ hasText: "DotAmi can't open the key to your receipts." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
+  // While the key can't be opened, an agreed record offers no Add a receipt (the server would refuse it).
+  await keptRecord(page, "Corner Hardware");
+  await page.reload();
+  await expectNoAddReceipt(page, "Corner Hardware");
   await page.goto(`${ORIGIN}/your-data`);
   await expect(page.getByText("DotAmi can't open the key to your receipts.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
@@ -182,6 +210,9 @@ test("Start a new key: asked twice with the cost first, nothing moved on cancel,
   await page.goto(`${ORIGIN}/expenses`);
   await expect(page.getByRole("status").filter({ hasText: "DotAmi starts a new key for your receipts the next time it starts." })).toContainText(movedTo);
   await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+  // Nor until the restart: the page never claims there was nothing to move.
+  await expectNoAddReceipt(page, "Corner Hardware");
+  await expect(page.getByText("There were no locked receipt files left to move.")).toHaveCount(0);
   await page.goto(`${ORIGIN}/your-data`);
   await expect(page.getByText("DotAmi starts a new key for your receipts the next time it starts.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);

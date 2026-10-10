@@ -43,7 +43,7 @@ import { databaseFilePath } from "@/lib/settings/today";
 import { findPersonExpense, rowToExpense } from "../store";
 import type { ExpenseView } from "../types";
 import { receiptLock, type ReceiptLock } from "./lock";
-import { LOCKED_RECEIPT_MESSAGES } from "./protection";
+import { LOCKED_RECEIPT_MESSAGES, receiptsCanBeAdded } from "./protection";
 import { RECEIPT_REFUSALS } from "./refusals";
 import { sniffReceipt } from "./sniff";
 import { extensionOf, isReceiptType, MAX_RECEIPT_BYTES, RECEIPT_ID, RECEIPT_TYPES, type ReceiptType } from "./types";
@@ -109,6 +109,7 @@ function receiptBytesOf(file: Buffer, id: string, lock: ReceiptLock): Buffer | n
     case "no-key-store":
       throw new ReceiptError(LOCKED_RECEIPT_MESSAGES.noKeyStore, 409);
     case "key-unreadable":
+    case "key-out-of-reach":
     case "new-key-at-restart":
       throw keyUnreadable();
   }
@@ -144,7 +145,7 @@ export async function addReceipt(
 ): Promise<ExpenseView> {
   if (!folder) throw noFolder();
   // No key to encrypt with: the old one can't be opened, or a new one comes only at the next start.
-  if (lock.state === "key-unreadable" || lock.state === "new-key-at-restart") throw keyUnreadable();
+  if (!receiptsCanBeAdded(lock.state)) throw keyUnreadable();
   if (typeof expenseId !== "string" || expenseId.length === 0) throw new ReceiptError("Say which expense record the receipt is for.", 400);
 
   const sniffed = sniffReceipt(bytes);

@@ -545,7 +545,8 @@ test("a receipts key this Windows account can't open: nothing is changed, and th
   expect(readFileSync(path.join(dataDir, "receipts.key")).equals(keyBefore)).toBe(true);
   expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
-    "the key file can't be opened by this account (or the key store isn't available); 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
+    // The log now says which of the two it is: the key store was there, so this account can't open it.
+    "the key file can't be opened by this account; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
   );
 });
 

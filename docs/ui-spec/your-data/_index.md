@@ -59,7 +59,8 @@ jump links, then five sections in this order:
    wipe is owed." when it isn't there). A line pointing at disk encryption in Settings. The receipts folder's row ([8i], 2026-10-09) also says
    whether this copy encrypts receipt files (the same sentences as Settings,
    `lib/expenses/receipts/protection.ts`, amber when the key can't be opened, with **Start a new key…**
-   under it then, the same control and the same two asks as on Settings, `docs/ui-spec/settings/_index.md`;
+   under it then (not while the key is only out of reach for now: the key store unavailable, or a new
+   key not saved yet), the same control and the same two asks as on Settings, `docs/ui-spec/settings/_index.md`;
    afterwards, until the restart, the amber "DotAmi starts a new key…" line with the folder) and counts the files by
    how they are kept, read from the first few bytes of each and nothing more ("N of M receipt files
    encrypted with this computer's key.", any not encrypted yet, any locked with a key this computer

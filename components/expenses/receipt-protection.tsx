@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 
 import type { ReceiptLockState } from "@/lib/expenses/receipts/lock";
-import { KEY_LOSS_SENTENCE, receiptProtectionText } from "@/lib/expenses/receipts/protection";
+import { KEY_LOSS_SENTENCE, RECEIPTS_CANT_BE_ADDED, receiptProtectionText } from "@/lib/expenses/receipts/protection";
 
 import { StartNewReceiptKey } from "./start-new-key";
 
@@ -26,19 +26,22 @@ export function receiptNoteSentence(state: ReceiptLockState): string {
     case "no-key-store":
       return "On this computer the copy isn't encrypted (the key store Windows keeps for your account isn't available to DotAmi right now): anyone who can read the receipts folder can open it.";
     case "key-unreadable":
+    case "key-out-of-reach":
     case "new-key-at-restart":
-      return receiptProtectionText(state).detail;
+      // Add a receipt isn't offered in these (receiptsCanBeAdded); said all the same, never a claim
+      // about what was moved.
+      return RECEIPTS_CANT_BE_ADDED;
   }
 }
 
 /**
  * The amber line at the top of the Expenses page while the receipts' key can't be opened, with Start a
- * new key… (expense-records.md § 10); after that, until the restart, where the locked receipts went.
- * Nothing otherwise.
+ * new key… (expense-records.md § 10) only when the key store is there ("key-unreadable", not
+ * "key-out-of-reach"); after that, until the restart, where the locked receipts went. Nothing otherwise.
  */
 export function ReceiptKeyProblem({ setAsideTo = null }: { setAsideTo?: string | null }) {
   const state = useReceiptProtection();
-  if (state !== "key-unreadable" && state !== "new-key-at-restart") return null;
+  if (state !== "key-unreadable" && state !== "key-out-of-reach" && state !== "new-key-at-restart") return null;
   const { headline, detail } = receiptProtectionText(state, setAsideTo);
   return (
     <div className="mt-4 max-w-2xl rounded-sm border border-amber/40 px-3 py-2 text-[12.5px] text-amber">

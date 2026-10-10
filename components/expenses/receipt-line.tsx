@@ -5,6 +5,7 @@ import { useId, useRef, useState } from "react";
 import { Pill } from "@/components/ui";
 import { postJson } from "@/components/ventures/agree-prompt";
 import { sizeWords } from "@/components/your-data/format";
+import { RECEIPTS_CANT_BE_ADDED, receiptsCanBeAdded } from "@/lib/expenses/receipts/protection";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_RECEIPT_BYTES, typeName } from "@/lib/expenses/receipts/types";
@@ -135,6 +136,12 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
 
   // Only a record the person agreed to takes a receipt (the server says the same).
   if (record.status !== "confirmed") return null;
+
+  // [8i] No key to encrypt with (expense-records.md § 9, § 10): the server would refuse, so Add a receipt
+  // isn't offered; the amber line at the top of the page says why and what to do.
+  if (!receiptsCanBeAdded(protection)) {
+    return <p className="mt-1.5 text-[11px] text-paper-dim">{RECEIPTS_CANT_BE_ADDED}</p>;
+  }
 
   return (
     <div className="mt-1.5">

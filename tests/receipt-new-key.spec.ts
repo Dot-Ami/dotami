@@ -133,6 +133,11 @@ describe("when it does something", () => {
     ["the key opens fine", { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: Buffer.alloc(32, 7).toString("base64") }, "The key to your receipts opens fine, so there's no new key to start. Nothing was moved."],
     ["a copy run from source", {}, "This copy doesn't encrypt receipts, so there's no key to start again. Nothing was moved."],
     ["no key store, nothing encrypted", { DOTAMI_RECEIPT_LOCK: "no-key-store" }, "This copy doesn't encrypt receipts, so there's no key to start again. Nothing was moved."],
+    [
+      "the key store only unavailable for now",
+      { DOTAMI_RECEIPT_LOCK: "key-out-of-reach" },
+      "DotAmi can't reach the key to your receipts right now, so there's no new key to start: the key may still open the next time DotAmi starts. Nothing was moved.",
+    ],
   ])("never while %s: 409, and nothing is moved", async (_name, env, message) => {
     serverWith(env);
     const before = snapshot();

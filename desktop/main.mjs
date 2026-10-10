@@ -28,7 +28,7 @@ import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
-import { newReceiptKey, openReceiptKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
+import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe } from "./wipe-pending.mjs";
 
@@ -269,23 +269,17 @@ function serverEnv(own) {
   return env;
 }
 
-/**
- * [8i] What the server is told about the receipts' key (lib/expenses/receipts/lock.ts reads it): the
- * state, and the key itself only when it is open. The server takes the key out of its environment the
- * first time it reads it.
- */
-function receiptLockEnv(opened) {
-  if (opened.state === "on") return { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: opened.key.toString("base64") };
-  return { DOTAMI_RECEIPT_LOCK: opened.state };
-}
-
 /** The log line about the key: its state and what happened to it, never the key or its id. */
 function describeReceiptKey(opened) {
   if (opened.state === "on") {
     return `key open${opened.made ? " (made now)" : ""}${opened.setAside ? "; a key file this account couldn't open was moved to the backups folder" : ""}`;
   }
   if (opened.state === "no-key-store") return "the operating system's key store isn't available, so receipts are kept unencrypted";
-  const why = opened.missing ? "the key file is missing" : "the key file can't be opened by this account (or the key store isn't available)";
+  const why = opened.storeUnavailable
+    ? "the key store isn't available right now"
+    : opened.missing
+      ? "the key file is missing"
+      : "the key file can't be opened by this account";
   return `${why}; ${opened.locked} receipt file(s) are encrypted and can't be opened; nothing was changed`;
 }
 
@@ -529,6 +523,9 @@ async function restore() {
   // this computer's own key; or, when its key file can't be opened, a new key, kept in memory and
   // saved only once the person confirms (the restore then replaces every receipt the old key locked).
   const keyLost = receiptKey?.state === "key-unreadable";
+  // Start a new key (expense-records.md § 10) may have moved receipts.key aside since this start: the
+  // dialog then says it is missing, not that it goes to the backups folder.
+  const keyFileGone = keyLost && (receiptKey.missing || !existsSync(path.join(dataDir, RECEIPT_KEY_FILE)));
   const restoreKey = receiptKey?.state === "on" ? receiptKey.key : keyLost ? newReceiptKey() : null;
   let passphrase = "";
   let header;
@@ -566,7 +563,7 @@ async function restore() {
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
       restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
       (keyLost
-        ? receiptKey.missing
+        ? keyFileGone
           ? " The key to the receipts here is missing: they go to the backups folder as they are, and the restored receipts get a new key."
           : " The key to the receipts here can't be opened on this Windows account: it goes to the backups folder with them, and the restored receipts get a new key."
         : ""),

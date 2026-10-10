@@ -832,6 +832,21 @@ someone who has no backup and wants to go on adding receipts without deleting th
   and at the top of the Expenses page. Never while the key opens, never in a copy run from source, and
   never with no key store and nothing encrypted (those keep receipts unencrypted; there is no key to
   start again).
+- **Never while the key is only out of reach for now** (lock state `key-out-of-reach`, added after
+  review the same day). The desktop app tells its server `key-unreadable` only when the key store is
+  there and receipts are locked: the key file is missing, or this account can't open it
+  (`receiptLockEnv` in `desktop/receipt-key.mjs`). When the key store itself isn't available, the
+  key file may still open at a later start, and no new key could be made while the store is down, so
+  setting the key aside would only lose a key that works; the same when nothing is locked and a new key
+  just wasn't saved yet (the next start tries again by itself), and when the key the server is handed
+  isn't 32 bytes. Those say "DotAmi can't open the key to your receipts right now.", that nothing was
+  changed, and that DotAmi tries again each time it starts; no button. A Mac's Keychain prompt answered
+  "Deny" can't be told apart from a key this account can't open, so there the button is offered; the
+  files are moved, not deleted, so putting them back still works.
+- **Add a receipt isn't offered** while no receipt can be added (`key-unreadable`,
+  `key-out-of-reach`, `new-key-at-restart`): an agreed record says "Receipts can't be added now: the
+  amber line at the top of this page says why." instead (`receiptsCanBeAdded`,
+  `lib/expenses/receipts/protection.ts`; the server refuses an add in those states all the same).
 - **Asked twice, with the cost said first.** The first press opens a warning that says exactly what
   is given up: a new key can't open the receipts locked with the old one, so they are given up for
   good unless the old key comes back (`receipts.key` found again, or the Windows profile that could open
@@ -870,7 +885,7 @@ someone who has no backup and wants to go on adding receipts without deleting th
 - **The route** is `POST /api/expenses/receipt/new-key` with `{ "giveUp": true }`: page-only like the
   agree and delete routes (`refuseUnlessFromAppPage`: an agent or another program gets 403 and nothing
   moves), its body read through `readJsonWithLimit` (1 KB), rate-limited, and refused (409, nothing
-  moved) unless this server's lock is `key-unreadable`. Once the files are moved, the server's lock
+  moved) unless this server's lock is `key-unreadable` (`key-out-of-reach` included). Once the files are moved, the server's lock
   becomes `new-key-at-restart` for the rest of its run, so a second press is refused and the pages say
   what happened. The log gets the count only, never a name.
 - **Delete** (the Delete menu) doesn't reach these folders, like the receipts folders a restore moves
@@ -899,16 +914,20 @@ in those seconds, which looks like DotAmi didn't start.
 
 ### Tests (each must fail when its rule is removed)
 
+- What the server is told: `key-unreadable` (the button) only with the key store there and receipts
+  locked; `key-out-of-reach` with the store unavailable (the key then opens again once it is back) or
+  nothing locked (`tests/receipt-key.spec.ts`); a malformed key is `key-out-of-reach` too, and no
+  receipt is added in that state (`tests/expenses-receipts.spec.ts`).
 - Setting aside: every locked file moved (another key's, an unfinished write's), plain files and files
   DotAmi didn't name left alone, the key file moved last into the same folder, nothing deleted; after
   it, the next start makes a new key; putting the folder's files and key back opens the old receipts
   again (`tests/receipt-key.spec.ts`).
 - The route: refused for a caller that isn't DotAmi's page, for a body without `giveUp: true`, for a
   body over the limit, and whenever the lock isn't `key-unreadable` (open key, from source, no key store,
-  already pressed), each with nothing moved; then the lock's new state and the pages' sentence with the
+  key out of reach for now, already pressed), each with nothing moved; then the lock's new state and the pages' sentence with the
   path (`tests/receipt-new-key.spec.ts`); a set-aside receipt opened from its record says where it is.
 - The browser: the button's warning flow, asked twice, cancel changing nothing, then the folder named on
-  the page and the files moved on the disk, on the production build started with the lock the desktop
+  the page and the files moved on the disk, and an agreed record offering no Add a receipt before or after, on the production build started with the lock the desktop
   app gives a key it can't open (`e2e/receipt-new-key.spec.ts`).
 - The desktop app: the button in the real app, then a restart that makes a new key; the preparing window
   shown at a first start and closed when the main window shows, never at an ordinary start, and closed

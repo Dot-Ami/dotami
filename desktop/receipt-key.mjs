@@ -110,9 +110,10 @@ export async function waitForLocalState(dataDir, { platform = process.platform, 
  *   { state: "no-key-store" }  the operating system's protection isn't available and no receipt is
  *       encrypted yet: receipts stay unencrypted, and no key file is made (a key beside the files it
  *       locks would protect nothing)
- *   { state: "key-unreadable", keyId, locked, missing }  `locked` receipt files are encrypted, and no
- *       key here can open them: the key file is there but this account can't open it (or it holds
- *       another key), it is `missing`, or the operating system's protection isn't available right now.
+ *   { state: "key-unreadable", keyId, locked, missing, storeUnavailable }  `locked` receipt files are
+ *       encrypted, and no key here can open them: the key file is there but this account can't open it
+ *       (or it holds another key), it is `missing`, or the operating system's protection isn't
+ *       available right now (`storeUnavailable`: then the key file may still open at a later start).
  *       Nothing on the disk is changed: the key may come back (a Keychain prompt answered "Deny", a
  *       profile that loads later, a receipts.key put back from the Recycle Bin).
  * "locked" counts every encrypted receipt, whatever key it names: a new key would open none of them,
@@ -132,7 +133,7 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
     // Receipts already encrypted (by a key store that worked before) can't be "kept unencrypted", and
     // plain ones mustn't be added beside them: treated as a key that can't be opened until it's back.
     const locked = countLockedReceipts(receiptsDir, null);
-    if (locked > 0) return { state: "key-unreadable", keyId: missing ? null : readKeyFile(file).keyId, locked, missing };
+    if (locked > 0) return { state: "key-unreadable", keyId: missing ? null : readKeyFile(file).keyId, locked, missing, storeUnavailable: true };
     return { state: "no-key-store" };
   }
   const waitForStore = keyStoreSaved ?? (() => waitForLocalState(dataDir, { platform }));
@@ -141,7 +142,7 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
     // encrypted: a new key would open none of them, and a receipts.key put back from the Recycle Bin
     // afterwards would then lock out everything added under the new one. So nothing is written.
     const locked = countLockedReceipts(receiptsDir, null);
-    if (locked > 0) return { state: "key-unreadable", keyId: null, locked, missing: true };
+    if (locked > 0) return { state: "key-unreadable", keyId: null, locked, missing: true, storeUnavailable: false };
     const key = newReceiptKey();
     try {
       await saveReceiptKey(dataDir, store, key, { platform, now, keyStoreSaved: waitForStore });
@@ -158,16 +159,35 @@ export async function openReceiptKey(dataDir, store, { platform = process.platfo
   // Can't be opened. If no receipt is encrypted (with it or any other key), nothing can be lost by
   // starting a new key; the old file is kept in backups/ all the same.
   const locked = countLockedReceipts(receiptsDir, null);
-  if (locked > 0) return { state: "key-unreadable", keyId, locked, missing: false };
+  if (locked > 0) return { state: "key-unreadable", keyId, locked, missing: false, storeUnavailable: false };
   const fresh = newReceiptKey();
   let setAside;
   try {
     ({ setAside } = await saveReceiptKey(dataDir, store, fresh, { platform, now, keyStoreSaved: waitForStore }));
   } catch (error) {
-    if (error instanceof KeyStoreNotSaved) return { state: "key-unreadable", keyId, locked: 0, missing: false };
+    if (error instanceof KeyStoreNotSaved) return { state: "key-unreadable", keyId, locked: 0, missing: false, storeUnavailable: false };
     throw error;
   }
   return { state: "on", key: fresh, keyId: keyIdOf(fresh), made: true, setAside };
+}
+
+/**
+ * What the desktop app tells its own server about the key (lib/expenses/receipts/lock.ts reads it): the
+ * state, and the key itself only when it is open.
+ *
+ * A key that can't be opened is told as one of two states, because only one of them may offer "Start a
+ * new key" (docs/architecture/expense-records.md § 10):
+ *   "key-unreadable"   the key store is there and receipts are locked: the key file is missing, or this
+ *       account can't open it. A new key could be made at the next start, and would give those up.
+ *   "key-out-of-reach" the key store isn't available right now (the key file may still open at a later
+ *       start, and no new key could be made while the store is down), or nothing is locked and a new
+ *       key just wasn't saved yet (the next start tries again by itself). Never offered.
+ * @param {Awaited<ReturnType<typeof openReceiptKey>>} opened
+ */
+export function receiptLockEnv(opened) {
+  if (opened.state === "on") return { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: opened.key.toString("base64") };
+  if (opened.state === "key-unreadable" && (opened.storeUnavailable || opened.locked === 0)) return { DOTAMI_RECEIPT_LOCK: "key-out-of-reach" };
+  return { DOTAMI_RECEIPT_LOCK: opened.state };
 }
 
 /**

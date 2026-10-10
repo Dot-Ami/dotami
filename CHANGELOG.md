@@ -17,7 +17,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   unless the old key comes back. Nothing is deleted: the locked receipt files and the old key file are
   moved into a new folder in the backups folder, and the page says where. The new key is made the next
   time DotAmi starts. Your expense records stay; a receipt that was set aside says so, and where it is,
-  when you open it. Only DotAmi's own window can do this; an agent can't.
+  when you open it. Only DotAmi's own window can do this; an agent can't. It isn't offered while the
+  key is only out of reach for now (Windows' key store not available at the moment): the page then
+  says DotAmi tries again each time it starts. While no receipt can be added, an agreed record says so
+  instead of offering *Add a receipt*.
 - **"Preparing DotAmi…"** ([8i]) — the first start of a new data folder takes about ten seconds
   while Windows saves the key that protects your receipts, and nothing was on the screen. A small
   window now says what is happening, and closes as soon as DotAmi's window opens. Ordinary starts
