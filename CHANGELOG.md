@@ -9,6 +9,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Start fresh when the data file's key is lost** ([8i], the maintainer's decision of 2026-10-10) — the
+  window that says the key can't be opened offers **Start fresh…**, asked twice, saying plainly what is
+  given up (everything in the locked file that isn't in a backup, unless its key comes back). Nothing is
+  deleted: the locked data file, its key file and the receipts folder go to the backups folder as they
+  are, and DotAmi starts with an empty data file under a new key.
 - **Every backup is locked with a passphrase** ([8i], the maintainer's decision of 2026-10-10) — a
   backup holds your data and receipts unencrypted inside it so it restores on another computer, so
   File → Back up… no longer offers to leave the passphrase out, and the backup code refuses to write

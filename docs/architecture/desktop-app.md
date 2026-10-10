@@ -40,7 +40,9 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    whose key can't be opened stops the start, having changed nothing, with a window that says what
    happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`), and
    offers **Restore from a backup…** (the locked file and its key file go to `backups/`, never deleted,
-   and the backup is restored under a new key); a
+   and the backup is restored under a new key) and **Start fresh…** (asked twice; the locked file, its
+   key file and the receipts folder go to `backups/`, never deleted, and the start goes on with an empty
+   file under a new key); a
    new data folder gets a key and its file is created encrypted from its first byte; an existing plain
    file is asked about first, unless the person said "Never" (`desktop/encrypt-ask.html`: **Back up
    first…**, **Encrypt now**, **Not now**, **Never…**, with a second warning before Never); no key store

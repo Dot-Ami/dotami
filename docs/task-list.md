@@ -244,6 +244,8 @@ roadmap's build order.
       the migrator, backups and restore on the new package
     - [x] (C) a passphrase on every backup; Restore from a backup… in the lost-key window, under a new
       key, the locked file kept in backups/
+    - [x] (D) Start fresh… in the lost-key window, asked twice; the locked file, its key and the receipts
+      kept in backups/
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

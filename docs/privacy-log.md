@@ -488,7 +488,8 @@ person is asked).
 ### How to remove it
 
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
-  the unreadable key file beside it) after a restore; DotAmi never deletes it, and Delete's
+  the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
+  folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's
   "safety copies" box doesn't match its name: removing it is the person's own act.
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
