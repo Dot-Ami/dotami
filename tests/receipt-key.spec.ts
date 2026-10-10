@@ -29,6 +29,7 @@ import {
   openReceiptKey,
   RECEIPT_KEY_FILE,
   receiptLockEnv,
+  restartForNewKey,
   revertReceiptKey,
   saveReceiptKey,
   setAsideLockedReceipts,
@@ -680,5 +681,116 @@ describe("what the server is told, and when Start a new key is offered", () => {
     const opened = await open(dir, accountStore("account-b"), { keyStoreSaved: async () => false });
     expect(opened).toMatchObject({ state: "key-unreadable", locked: 0 });
     expect(receiptLockEnv(opened)).toEqual({ DOTAMI_RECEIPT_LOCK: "key-out-of-reach" });
+  });
+});
+
+describe("restarting by itself after Start a new key (expense-records.md § 11)", () => {
+  /** Stand-ins for Electron and the server: each call is recorded, in order. */
+  function electron({ relaunchFails = false } = {}) {
+    const calls: string[] = [];
+    const lines: string[] = [];
+    return {
+      calls,
+      lines,
+      relaunch: () => {
+        calls.push("relaunch");
+        if (relaunchFails) throw new Error("relaunch refused");
+      },
+      stopServer: async () => {
+        calls.push("stop server");
+      },
+      exit: (code: number) => {
+        calls.push(`exit ${code}`);
+      },
+      log: (line: string) => {
+        lines.push(line);
+      },
+    };
+  }
+
+  /** A data folder whose key can't be opened by this account, with receipts locked by it: what this start opened. */
+  async function unreadable() {
+    const original = await open(dir, accountStore("account-a"));
+    if (original.state !== "on") throw new Error("expected a key");
+    lockedReceipt(original.key);
+    lockedReceipt(original.key);
+    const opened = await open(dir, accountStore("account-b"));
+    expect(receiptLockEnv(opened)).toEqual({ DOTAMI_RECEIPT_LOCK: "key-unreadable" });
+    return opened;
+  }
+
+  it("once the locked receipts are set aside: the relaunch is asked for first, then the server is stopped, then the app exits", async () => {
+    const opened = await unreadable();
+    setAsideLockedReceipts(dir);
+    const e = electron();
+    expect(await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: false, ...e })).toBe("restarting");
+    expect(e.calls).toEqual(["relaunch", "stop server", "exit 0"]);
+    expect(e.lines).toEqual(["[desktop] restarting to start the new receipts key"]);
+    // The next start finds nothing locked and makes the new key, as for a missing key file.
+    const next = await open(dir, accountStore("account-b"));
+    expect(next).toMatchObject({ state: "on", made: true });
+  });
+
+  it("never before the move: while a locked receipt is still in the folder, nothing restarts", async () => {
+    const opened = await unreadable();
+    const e = electron();
+    expect(await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: false, ...e })).toBe("refused");
+    expect(e.calls).toEqual([]);
+    expect(e.lines).toEqual(["[desktop] a restart for a new receipts key was refused: receipts are still locked with the old key"]);
+  });
+
+  it("only for DotAmi's own window: anything else asking restarts nothing", async () => {
+    const opened = await unreadable();
+    setAsideLockedReceipts(dir);
+    const e = electron();
+    expect(await restartForNewKey(dir, { opened, fromDotAmi: false, quitting: false, ...e })).toBe("refused");
+    expect(e.calls).toEqual([]);
+    expect(e.lines).toEqual(["[desktop] a restart for a new receipts key was refused: it wasn't asked by DotAmi's own window"]);
+  });
+
+  it("only in the state the button shows in: never when this start's key opened, with no key store, or with the key only out of reach", async () => {
+    const states: Parameters<typeof restartForNewKey>[1]["opened"][] = [
+      null,
+      { state: "on", key: randomBytes(32), keyId: "0011223344556677", made: false, setAside: null },
+      { state: "no-key-store" },
+      // The key store unavailable for now, and nothing locked with a new key not saved yet: "key-out-of-reach".
+      { state: "key-unreadable", keyId: null, locked: 2, missing: false, storeUnavailable: true },
+      { state: "key-unreadable", keyId: "0011223344556677", locked: 0, missing: false, storeUnavailable: false },
+    ];
+    for (const opened of states) {
+      const e = electron();
+      expect(await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: false, ...e }), JSON.stringify(opened?.state)).toBe("refused");
+      expect(e.calls).toEqual([]);
+      expect(e.lines).toEqual(["[desktop] a restart for a new receipts key was refused: this start's receipts key wasn't one Start a new key replaces"]);
+    }
+  });
+
+  it("not while the app is already quitting (a restore, or a start that failed)", async () => {
+    const opened = await unreadable();
+    setAsideLockedReceipts(dir);
+    const e = electron();
+    expect(await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: true, ...e })).toBe("refused");
+    expect(e.calls).toEqual([]);
+  });
+
+  it("a relaunch Electron refuses stops nothing: the server keeps running, the app stays open, and the next start still makes the key", async () => {
+    const opened = await unreadable();
+    setAsideLockedReceipts(dir);
+    const e = electron({ relaunchFails: true });
+    expect(await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: false, ...e })).toBe("refused");
+    expect(e.calls).toEqual(["relaunch"]);
+    expect(e.lines).toEqual(["[desktop] DotAmi couldn't restart itself for the new receipts key (Error); it makes the key at its next start"]);
+    expect(await open(dir, accountStore("account-b"))).toMatchObject({ state: "on", made: true });
+  });
+
+  it("logs no path and no file name", async () => {
+    const opened = await unreadable();
+    setAsideLockedReceipts(dir);
+    const e = electron();
+    await restartForNewKey(dir, { opened, fromDotAmi: true, quitting: false, ...e });
+    for (const line of e.lines) {
+      expect(line).not.toContain(dir);
+      expect(line).not.toMatch(/[0-9a-f]{32}|receipts-locked-/);
+    }
   });
 });

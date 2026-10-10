@@ -78,7 +78,8 @@ with a test that seeded data survives.
 ## Open
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the
-  backups folder unless that box is ticked, what the desktop window stored in earlier launches (a
+  backups folder unless that box is ticked (the same box clears the receipt folders set aside there,
+  since 2026-10-10), what the desktop window stored in earlier launches (a
   later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
   removed, not overwritten, and a drive keeps its own spare copies; disk encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
   its amount in the file, and the page lists it.
@@ -252,12 +253,33 @@ receipt files itself. The design, written before the code, is
 - **Existing receipts** are encrypted once, at the first start of the version that ships this; a crash
   part-way never loses one.
 
+### Receipts set aside, and the restart after a new key (2026-10-10)
+
+The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
+([expense-records.md § 11](expense-records.md)):
+
+- **Set-aside receipts can be deleted.** `backups/receipts-locked-<time>/` (Start a new key) and
+  `backups/receipts-before-restore-<time>/` (a restore) hold receipt files, encrypted or not, outside the
+  receipts folder. Until now Delete didn't reach them and the menu said so. The box *Safety copies in the
+  backups folder* now clears them too, after a warning naming both and saying their receipts can never be
+  opened afterwards. Who could still read them before: the same people as the receipts folder (the key
+  that opens an encrypted one is this account's, when it still opens). What is fenced: only those
+  folder names, only directly in a backups folder that isn't a link, never a folder that is a link or
+  junction, and inside only the files DotAmi named; the person's own files stay. Files are removed, not
+  overwritten: the drive's free space can still hold them, as for every deleted file (disk encryption).
+  Still not reached, and said: key files set aside on their own (`receipts-key-unreadable-<time>.key`),
+  which hold only a key file that Windows protected for the person's account.
+- **The desktop app restarts itself after the move.** The only new power is a third call from DotAmi's
+  page to the desktop app's main process (`desktop/window-preload.cjs`), believed only from DotAmi's own
+  window showing its own page, and acted on only while this start's key couldn't be opened and no locked
+  receipt is left; it restarts the same app on the same data folder. Nothing leaves the computer, and
+  nothing new is kept.
+
 ### Open (for the maintainer)
 
-- Whether to offer a "start a new key" button when receipts are locked with a key that can't be
-  opened (expense-records.md § 9, "Still open"). Encrypting the `receipts/` folder itself was decided
-  on 2026-10-09 (above); encrypting the database too was decided on 2026-10-09, and how on 2026-10-10
-  (the next section).
+- No longer open (expense-records.md § 9, "Still open"): encrypting the `receipts/` folder itself was
+  decided on 2026-10-09 (above), the "start a new key" button on 2026-10-09 (expense-records.md § 10),
+  and encrypting the database too on 2026-10-09, and how on 2026-10-10 (the next section).
 - Whether the Delete menu may mention age at all, or stay silent about it; DotAmi supplies the
   information, the person decides. If it does, the CRA's wording is six years from the end of the
   last tax year a record relates to; indefinitely for long-term property, the share registry and

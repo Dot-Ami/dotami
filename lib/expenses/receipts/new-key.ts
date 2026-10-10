@@ -1,7 +1,8 @@
 /**
  * [8i] "Start a new key" on the server's side (docs/architecture/expense-records.md § 10): while the
  * receipts' key can't be opened, the person may give up the receipts it locks. The locked files and the
- * key file are moved aside, never deleted (desktop/receipt-key.mjs setAsideLockedReceipts, the same rule
+ * key file are moved aside, never deleted here (Delete's safety-copies box can clear that folder later,
+ * expense-records.md § 11) (desktop/receipt-key.mjs setAsideLockedReceipts, the same rule
  * for "locked" the desktop app uses at start), and the desktop app makes the new key at its next start:
  * only its main process can reach Windows' key store, so this server can't make one itself.
  *

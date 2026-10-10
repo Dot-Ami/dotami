@@ -10,7 +10,7 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { SENT_ELSEWHERE, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
+import { SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
 const AMOUNT_TYPED = "12,345.67";
@@ -567,6 +567,78 @@ test("Delete: the safety-copies box warns, then deletes DotAmi's own copies in t
     await page.reload();
     await removing.getByRole("button", { name: "Delete", exact: true }).click();
     await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Nothing to delete");
+  } finally {
+    rmSync(BACKUPS_DIR, { recursive: true, force: true });
+  }
+});
+
+test("Delete: the safety-copies box also clears the receipt folders set aside in the backups folder, after a warning that names them ([8i])", async ({ page }) => {
+  // What Start a new key and a restore leave in backups/ (expense-records.md § 10, § 7), as files.
+  const locked = path.join(BACKUPS_DIR, "receipts-locked-1760000000000");
+  const before = path.join(BACKUPS_DIR, "receipts-before-restore-1760000000001");
+  mkdirSync(locked, { recursive: true });
+  mkdirSync(before, { recursive: true });
+  writeFileSync(path.join(locked, `${"a1".repeat(16)}.png`), "a receipt locked with a lost key");
+  writeFileSync(path.join(locked, "receipts.key"), "{}");
+  writeFileSync(path.join(before, `${"b2".repeat(16)}.pdf`), "a receipt from before a restore");
+  writeFileSync(path.join(before, "my scan.png"), "the person's own file");
+  try {
+    const removing = await openDeleteMenu(page);
+    // Nothing on What Delete doesn't reach about them any more: the box below reaches them.
+    await expect(removing).not.toContainText("Receipts folders moved into the backups folder");
+    const box = removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) });
+    await expect(box).toContainText("Safety copies: 0 · Set-aside receipt folders: 2");
+    await expect(box).not.toContainText(WARNING);
+    await removing.getByLabel(BACKUPS_BOX).check();
+    // Ticked: the warning, in place, before anything is asked.
+    await expect(box).toContainText(WARNING);
+    await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+    const first = page.getByRole("dialog", { name: "Delete these?" });
+    await expect(first).toContainText("Set-aside receipt folders: 2 folders");
+    await expect(first).toContainText(WARNING);
+    await first.getByRole("button", { name: "Yes, continue" }).click();
+    const second = page.getByRole("dialog", { name: "Delete them now?" });
+    await expect(second).toContainText(WARNING);
+    await expect(second.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await second.getByRole("button", { name: "Delete now" }).click();
+
+    const done = removing.getByRole("status");
+    await expect(done).toContainText("Deleted.");
+    await expect(done).toContainText("Set-aside receipt folders: 2 folders deleted, 0 left");
+    // Only DotAmi's own files went; the person's file stays, and the folder with it.
+    expect(existsSync(locked)).toBe(false);
+    expect(readdirSync(before)).toEqual(["my scan.png"]);
+    expect(existsSync(WIPE_NOTE)).toBe(false);
+
+    await page.reload();
+    await removing.getByRole("button", { name: "Delete", exact: true }).click();
+    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Nothing to delete");
+  } finally {
+    rmSync(BACKUPS_DIR, { recursive: true, force: true });
+  }
+});
+
+test("Delete: with the safety-copies box unticked, the first ask says the set-aside receipt folders still hold their receipts, even with no safety copies ([8i])", async ({ page }) => {
+  // Only a restore's set-aside folder, no safety copy: the copies' own line has nothing to say.
+  const before = path.join(BACKUPS_DIR, "receipts-before-restore-1760000000001");
+  mkdirSync(before, { recursive: true });
+  writeFileSync(path.join(before, `${"c3".repeat(16)}.png`), "a receipt from before a restore");
+  expect((await page.request.post("/api/person/statements", { data: { text: "a statement for the unticked line" } })).status()).toBe(200);
+  try {
+    const removing = await openDeleteMenu(page);
+    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Safety copies: 0 · Set-aside receipt folders: 1");
+    await removing.getByLabel(STATEMENTS_BOX).check();
+    await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+    const first = page.getByRole("dialog", { name: "Delete these?" });
+    await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+    await expect(first).not.toContainText("The safety copies in the backups folder aren't ticked");
+    await expect(first).not.toContainText(WARNING);
+    // Nothing is deleted: this test only reads the first ask.
+    await first.getByRole("button", { name: "Cancel" }).click();
+    await expect(first).toBeHidden();
+    expect(readdirSync(before)).toHaveLength(1);
   } finally {
     rmSync(BACKUPS_DIR, { recursive: true, force: true });
   }
