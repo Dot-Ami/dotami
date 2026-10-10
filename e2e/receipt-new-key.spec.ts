@@ -10,6 +10,13 @@
  * desktop/main.mjs receiptLockEnv), over a data folder of its own (prisma/e2e-new-key/) holding a
  * receipt locked with a lost key and a key file this account can't open. It runs with the real rate
  * limits: the browser tests' switch is set only for the suite's own server (playwright.config.ts).
+ *
+ * After the move (expense-records.md § 11): a copy run from source has no window bridge, so nothing
+ * restarts and the amber line says to restart it by hand; in the desktop window the page says "DotAmi
+ * will restart now…" and only then asks the bridge (desktop/window-preload.cjs) to restart. The second
+ * test stands in for that bridge, answering "refused" the way the desktop app does when it won't
+ * restart, and starts its own server as the desktop app's (DOTAMI_DESKTOP=1); the real restart is the
+ * desktop test's (e2e-desktop/desktop.spec.ts).
  */
 import { spawn, execFileSync, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -70,8 +77,12 @@ function files(): Record<string, string> {
   return out;
 }
 
-test.beforeAll(async () => {
-  test.setTimeout(120_000);
+/**
+ * Starts this file's own server on a fresh data folder. `desktop` starts it as the desktop app's server
+ * (DOTAMI_DESKTOP=1, which the desktop app sets: lib/settings/today.ts), so its pages say what the
+ * desktop app says.
+ */
+async function startServer({ desktop }: { desktop: boolean }) {
   if (await portTaken()) throw new Error(`Port ${PORT} is already in use: another run's server is answering there. Stop it, then start again.`);
   prepareFolder();
   const env: NodeJS.ProcessEnv = {
@@ -83,6 +94,8 @@ test.beforeAll(async () => {
   };
   delete env.DOTAMI_E2E_RATE_LIMITS;
   delete env.DOTAMI_RECEIPT_KEY;
+  delete env.DOTAMI_DESKTOP;
+  if (desktop) env.DOTAMI_DESKTOP = "1";
   // The build the suite's own server is running (playwright.config.ts built it before starting).
   server = spawn(process.execPath, [path.join(root, "scripts", "next.mjs"), "start", "-H", "127.0.0.1", "-p", String(PORT)], {
     cwd: root,
@@ -107,9 +120,9 @@ test.beforeAll(async () => {
       reject(new Error(`the second server stopped (code ${code}):\n${said}`));
     });
   });
-});
+}
 
-test.afterAll(async () => {
+async function stopServer() {
   if (server && server.exitCode === null) {
     const stopped = new Promise((resolve) => server!.once("exit", resolve));
     server.kill();
@@ -117,7 +130,11 @@ test.afterAll(async () => {
   }
   server = null;
   rmSync(folder, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
-});
+}
+
+// The two servers run one after the other on the same port, each over a fresh data folder: a server
+// can be pressed only once (afterwards its lock is "new-key-at-restart" until it restarts).
+test.describe.configure({ mode: "serial" });
 
 const dataRegion = (page: Page) => page.getByRole("region", { name: "Data and backups" });
 
@@ -145,75 +162,147 @@ async function expectNoAddReceipt(page: Page, paidTo: string) {
   await expect(row.getByRole("button", { name: "Add a receipt" })).toHaveCount(0);
 }
 
-test("Start a new key: asked twice with the cost first, nothing moved on cancel, then the folder named on the page and on the disk", async ({ page }) => {
-  // Offered wherever the amber line shows: the Expenses page and What DotAmi knows about you, as well as Settings.
-  await page.goto(`${ORIGIN}/expenses`);
-  await expect(page.getByRole("status").filter({ hasText: "DotAmi can't open the key to your receipts." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
-  // While the key can't be opened, an agreed record offers no Add a receipt (the server would refuse it).
-  await keptRecord(page, "Corner Hardware");
-  await page.reload();
-  await expectNoAddReceipt(page, "Corner Hardware");
-  await page.goto(`${ORIGIN}/your-data`);
-  await expect(page.getByText("DotAmi can't open the key to your receipts.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
+test.describe("a copy run from source (no window bridge)", () => {
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    await startServer({ desktop: false });
+  });
+  test.afterAll(stopServer);
 
-  await page.goto(`${ORIGIN}/settings`);
-  const data = dataRegion(page);
-  await expect(data).toContainText("DotAmi can't open the key to your receipts.");
-  const before = files();
+  test("Start a new key: asked twice with the cost first, nothing moved on cancel, then the folder named on the page and on the disk", async ({ page }) => {
+    // Offered wherever the amber line shows: the Expenses page and What DotAmi knows about you, as well as Settings.
+    await page.goto(`${ORIGIN}/expenses`);
+    await expect(page.getByRole("status").filter({ hasText: "DotAmi can't open the key to your receipts." })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
+    // While the key can't be opened, an agreed record offers no Add a receipt (the server would refuse it).
+    await keptRecord(page, "Corner Hardware");
+    await page.reload();
+    await expectNoAddReceipt(page, "Corner Hardware");
+    await page.goto(`${ORIGIN}/your-data`);
+    await expect(page.getByText("DotAmi can't open the key to your receipts.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start a new key…" })).toBeVisible();
 
-  // First ask: the cost, said exactly, and Cancel changes nothing.
-  await data.getByRole("button", { name: "Start a new key…" }).click();
-  let dialog = page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" });
-  await expect(dialog).toContainText("Starting one gives those receipts up for good, unless the old key comes back");
-  await expect(dialog).toContainText("Nothing is deleted.");
-  await expect(dialog).toContainText("restore it instead (File → Restore from a backup…)");
-  // Cancel has the focus: Enter on the first sight of it doesn't go on.
-  await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
-  await dialog.getByRole("button", { name: "Cancel" }).click();
-  await expect(dialog).toBeHidden();
-  expect(files()).toEqual(before);
+    await page.goto(`${ORIGIN}/settings`);
+    const data = dataRegion(page);
+    await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+    const before = files();
 
-  // Second ask, cancelled: still nothing.
-  await data.getByRole("button", { name: "Start a new key…" }).click();
-  await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
-  dialog = page.getByRole("dialog", { name: "Are you sure?" });
-  await expect(dialog).toContainText("given up for good unless the old key comes back");
-  await page.keyboard.press("Escape");
-  await expect(dialog).toBeHidden();
-  expect(files()).toEqual(before);
+    // First ask: the cost, said exactly, and Cancel changes nothing.
+    await data.getByRole("button", { name: "Start a new key…" }).click();
+    let dialog = page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" });
+    await expect(dialog).toContainText("Starting one gives those receipts up for good, unless the old key comes back");
+    await expect(dialog).toContainText("Nothing is deleted.");
+    await expect(dialog).toContainText("restore it instead (File → Restore from a backup…)");
+    // Cancel has the focus: Enter on the first sight of it doesn't go on.
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    expect(files()).toEqual(before);
 
-  // Both answered: the locked receipt and the key file go to one folder in backups/, named on the page.
-  await data.getByRole("button", { name: "Start a new key…" }).click();
-  await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
-  await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+    // Second ask, cancelled: still nothing.
+    await data.getByRole("button", { name: "Start a new key…" }).click();
+    await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+    dialog = page.getByRole("dialog", { name: "Are you sure?" });
+    await expect(dialog).toContainText("given up for good unless the old key comes back");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    expect(files()).toEqual(before);
 
-  const backups = path.join(folder, "backups");
-  await expect.poll(() => (existsSync(backups) ? readdirSync(backups) : [])).toHaveLength(1);
-  const [aside] = readdirSync(backups);
-  expect(aside).toMatch(/^receipts-locked-\d+$/);
-  const movedTo = path.join(backups, aside);
-  expect(readdirSync(movedTo).sort()).toEqual([LOCKED, "receipts.key"]);
-  expect(readFileSync(path.join(movedTo, LOCKED)).equals(lockedBytes)).toBe(true);
-  expect(readFileSync(path.join(movedTo, "receipts.key"), "utf8")).toBe(keyFile);
-  expect(readdirSync(path.join(folder, "receipts"))).toEqual([]);
-  expect(existsSync(path.join(folder, "receipts.key"))).toBe(false);
+    // Both answered: the locked receipt and the key file go to one folder in backups/, named on the page.
+    await data.getByRole("button", { name: "Start a new key…" }).click();
+    await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+    await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
 
-  // The line now says where they went and what to do, and the button is gone.
-  await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
-  await expect(data).toContainText(movedTo);
-  await expect(data).toContainText("Close DotAmi and open it again");
-  await expect(data.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+    const backups = path.join(folder, "backups");
+    await expect.poll(() => (existsSync(backups) ? readdirSync(backups) : [])).toHaveLength(1);
+    const [aside] = readdirSync(backups);
+    expect(aside).toMatch(/^receipts-locked-\d+$/);
+    const movedTo = path.join(backups, aside);
+    expect(readdirSync(movedTo).sort()).toEqual([LOCKED, "receipts.key"]);
+    expect(readFileSync(path.join(movedTo, LOCKED)).equals(lockedBytes)).toBe(true);
+    expect(readFileSync(path.join(movedTo, "receipts.key"), "utf8")).toBe(keyFile);
+    expect(readdirSync(path.join(folder, "receipts"))).toEqual([]);
+    expect(existsSync(path.join(folder, "receipts.key"))).toBe(false);
 
-  // The other two places say the same, without the button.
-  await page.goto(`${ORIGIN}/expenses`);
-  await expect(page.getByRole("status").filter({ hasText: "DotAmi starts a new key for your receipts the next time it starts." })).toContainText(movedTo);
-  await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
-  // Nor until the restart: the page never claims there was nothing to move.
-  await expectNoAddReceipt(page, "Corner Hardware");
-  await expect(page.getByText("There were no locked receipt files left to move.")).toHaveCount(0);
-  await page.goto(`${ORIGIN}/your-data`);
-  await expect(page.getByText("DotAmi starts a new key for your receipts the next time it starts.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+    // The line now says where they went and what to do, and the button is gone. This copy has no window
+    // bridge, so nothing restarts: it says so plainly, and to restart it by hand (expense-records.md § 11).
+    await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
+    await expect(data).toContainText(movedTo);
+    await expect(data).toContainText("This copy doesn't restart by itself: stop it and start it again to start the new key.");
+    await expect(data).not.toContainText("DotAmi will restart now");
+    await expect(data.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+
+    // The other two places say the same, without the button.
+    await page.goto(`${ORIGIN}/expenses`);
+    await expect(page.getByRole("status").filter({ hasText: "DotAmi starts a new key for your receipts the next time it starts." })).toContainText(movedTo);
+    await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+    // Nor until the restart: the page never claims there was nothing to move.
+    await expectNoAddReceipt(page, "Corner Hardware");
+    await expect(page.getByText("There were no locked receipt files left to move.")).toHaveCount(0);
+    await page.goto(`${ORIGIN}/your-data`);
+    await expect(page.getByText("DotAmi starts a new key for your receipts the next time it starts.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+  });
+});
+
+test.describe("the desktop window (a stand-in for its bridge)", () => {
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    await startServer({ desktop: true });
+  });
+  test.afterAll(stopServer);
+
+  /** What the stand-in bridge was asked: when, and whether "DotAmi will restart now" was on the page then. */
+  type Asked = { lineShown: boolean };
+  const asked = (page: Page) => page.evaluate(() => (window as unknown as { __restartAsked: Asked[] }).__restartAsked);
+
+  test("after the move the page says DotAmi will restart now, then asks the bridge once; a refused restart leaves the line saying to restart by hand", async ({ page }) => {
+    // desktop/window-preload.cjs, stood in for: the same three calls, the restart answering "refused" as the
+    // desktop app does when it won't restart. It records whether the page had said so first.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __restartAsked: { lineShown: boolean }[]; dotamiDesktop: unknown };
+      w.__restartAsked = [];
+      w.dotamiDesktop = {
+        heicStopped: () => Promise.resolve(false),
+        heicFailed: () => {},
+        restartForNewKey: () => {
+          w.__restartAsked.push({ lineShown: document.body.innerText.includes("DotAmi will restart now to start the new key") });
+          return Promise.resolve("refused");
+        },
+      };
+    });
+    await page.goto(`${ORIGIN}/settings`);
+    const data = dataRegion(page);
+    await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+
+    // The second ask says beforehand that DotAmi restarts by itself; cancelling asks for nothing.
+    await data.getByRole("button", { name: "Start a new key…" }).click();
+    await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+    const sure = page.getByRole("dialog", { name: "Are you sure?" });
+    await expect(sure).toContainText("Then DotAmi restarts by itself to start the new key.");
+    await sure.getByRole("button", { name: "Cancel" }).click();
+    expect(await asked(page)).toEqual([]);
+
+    await data.getByRole("button", { name: "Start a new key…" }).click();
+    await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+    await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+
+    // What is about to happen is said first, with where the files went; the restart is asked for after it.
+    const backups = path.join(folder, "backups");
+    await expect.poll(() => (existsSync(backups) ? readdirSync(backups) : [])).toHaveLength(1);
+    const movedTo = path.join(backups, readdirSync(backups)[0]);
+    const status = data.getByRole("status").filter({ hasText: "DotAmi will restart now to start the new key…" });
+    await expect(status).toContainText(movedTo);
+    await expect.poll(() => asked(page), { timeout: 10_000 }).toHaveLength(1);
+    expect(await asked(page)).toEqual([{ lineShown: true }]);
+
+    // Refused: nothing restarted, so the page is refreshed and the amber line says what to do by hand.
+    await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
+    await expect(data).toContainText("DotAmi restarts by itself to start it. If it hasn't, close DotAmi and open it again.");
+    await expect(data).toContainText(movedTo);
+    await expect(data.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+    // Asked once only.
+    await page.waitForTimeout(3_000);
+    expect(await asked(page)).toHaveLength(1);
+  });
 });
