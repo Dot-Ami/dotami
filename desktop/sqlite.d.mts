@@ -9,4 +9,7 @@ export class CannotOpenDatabase extends Error {
 export function openDatabase(file: string, options?: { key?: Buffer | null; readonly?: boolean; fileMustExist?: boolean }): Database.Database;
 export function openImage(image: Buffer): Database.Database;
 export function runSql(db: Database.Database, sql: string): Database.Database;
+export class FileNotReadable extends Error {
+  code: string | undefined;
+}
 export function fileKind(file: string): "absent" | "plain" | "encrypted";

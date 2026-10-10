@@ -37,11 +37,14 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    same SQLite package as the server, from the server's own folder (`desktop/sqlite.mjs`). It opens
    `database.key` (`desktop/database-key.mjs`), finishes an encryption a crash left part-way
    (`desktop/encrypt-database.mjs`, the note `database-encrypting.json`), and then: an encrypted file
-   whose key can't be opened stops the start, having changed nothing, with a window that says what
+   whose key can't be opened (or whose key file opens but holds another key, checked by opening the
+   file) stops the start, having changed nothing, with a window that says what
    happened and that putting `database.key` back brings everything back (`desktop/lost-key.html`), and
    offers **Restore from a backup…** (the locked file and its key file go to `backups/`, never deleted,
    and the backup is restored under a new key); a
-   new data folder gets a key and its file is created encrypted from its first byte; an existing plain
+   data file another program holds stops the start with a sentence saying so (never taken for a
+   missing one); a
+   new data folder gets a key (a key that already opens is kept) and its file is created encrypted from its first byte; an existing plain
    file is asked about first, unless the person said "Never" (`desktop/encrypt-ask.html`: **Back up
    first…**, **Encrypt now**, **Not now**, **Never…**, with a second warning before Never); no key store
    leaves the file plain. Encrypting writes an encrypted copy straight through SQLite (never a second

@@ -88,7 +88,7 @@ describe("when the key can't be opened and something is locked with it", () => {
   });
 
   it("a missing key file is never replaced while something is locked", () => {
-    expect(open(dir, accountStore("dot"), true)).toEqual({ state: "key-unreadable", keyId: null, missing: true });
+    expect(open(dir, accountStore("dot"), true)).toEqual({ state: "key-unreadable", keyId: null, missing: true, storeUnavailable: false });
     expect(readdirSync(dir)).toEqual([]);
   });
 
@@ -106,7 +106,9 @@ describe("when the key can't be opened and something is locked with it", () => {
 
   it("no key store right now, with something locked: key-unreadable, not 'no key store'", async () => {
     await make(dir, accountStore("dot"));
-    expect(open(dir, accountStore("dot", { available: false }), true)).toMatchObject({ state: "key-unreadable" });
+    // Said apart from a lost key: a restart may bring the store back, so the window mustn't offer to give anything up.
+    expect(open(dir, accountStore("dot", { available: false }), true)).toMatchObject({ state: "key-unreadable", storeUnavailable: true });
+    expect(open(dir, accountStore("dot"), true)).toMatchObject({ state: "on" });
     expect(open(dir, accountStore("dot", { available: false }), false)).toEqual({ state: "no-key-store" });
   });
 });
