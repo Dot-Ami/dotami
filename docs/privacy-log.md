@@ -700,7 +700,7 @@ unless marked otherwise.
   `database.key` (a random key wrapped by Windows' per-user protection); a lost key loses everything
   not in a backup, and an older DotAmi can't open the file (going back needs a backup)
   ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
-  [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-not-built)).
+  [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-being-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
   the backups folder. Still open: clearing what the desktop window stored in earlier launches, and
   whether an agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).

@@ -44,7 +44,7 @@ says where it is going.
   detail; playbook export) · `/ventures` (every saved venture, its stage, notes,
   cross-references) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
-  this copy today; the settings marked live there, so far Figure reminders, can be changed and are
+  this copy today; the settings marked live there, so far Figure reminders and Encrypt the data file, can be changed and are
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
   everything else, what sits outside the database and what leaves the computer, read from the data
   file on every visit by `lib/privacy/holdings.ts`; its one control is Delete, a menu of kinds of
@@ -67,7 +67,11 @@ says where it is going.
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live).
-- Data: SQLite via Prisma, one file on the person's machine — `User` (single stub user, no
+- Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
+  it and its safety copies with a key kept only wrapped by Windows, `database.key`
+  (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), an existing plain file only after the
+  person agrees, and never replaces a key that opens; a copy run from source keeps it plain;
+  `docs/architecture/database-encryption.md`) — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
@@ -117,6 +121,13 @@ says where it is going.
   GHSA-p293-qw3h-jr36 (unauthenticated RCE on Windows hosts) or 22 other advisories.
   Self-hosted, single user, no auth — a hosted multi-user instance needs auth and tenant
   isolation that do not exist yet; do not pretend they do.
+- Every Prisma Client is made by `lib/db/client.ts` ([8i]): Prisma's adapter for `better-sqlite3`,
+  and the package behind that name is `better-sqlite3-multiple-ciphers` (SQLite with an encryption
+  extension); `tests/database-client.spec.ts` fails on one made anywhere else, and
+  `tests/database-package.spec.ts` if the real `better-sqlite3` is ever installed. `package-lock.json`
+  keeps `"gypfile": false` on that package so `npm ci` doesn't try to compile it: after any
+  `npm install <package>` or a Dependabot change to the lockfile, run `node scripts/keep-gypfile.mjs`
+  (the package test fails until it is back).
 - Every request is refused unless its Host is this computer's own name (`middleware.ts` +
   `lib/http/allowed-host.ts`, the DNS-rebinding guard) — never add a matcher exception or an early
   return before that check. Every write route reads its body through `readJsonWithLimit`.
