@@ -21,9 +21,11 @@ import { migrate } from "../desktop/migrate.mjs";
 import { missingFromNotices, NOTICES_FILE, packagesIn } from "../desktop/notices.mjs";
 import { ENCRYPTED_OVERHEAD, encryptedKeyId } from "../desktop/receipt-crypto.mjs";
 import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
+import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
+import { heic } from "../tests/helpers/heic-files";
 import { pdf, png } from "../tests/helpers/receipt-files";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
@@ -629,6 +631,110 @@ test("a PDF receipt is drawn inside the app, in a worker that can reach nothing 
   expect(await viewerWorker!.evaluate(() => fetch("/api/expenses").then(() => "reached", () => "refused"))).toBe("refused");
   // The window is still DotAmi's Expenses page: nothing in the receipt moved it.
   expect(new URL(page.url()).pathname).toBe("/expenses");
+});
+
+test("a HEIC receipt is drawn by the graphics chip where it decodes HEVC, or plainly refused; once the graphics process stops, DotAmi doesn't try again ([8i])", async () => {
+  // Option D of docs/connectors/heic-decoder-review.md, in the app's own window. The invented photo is
+  // a 2 × 2 grid of flat colours (red, green / blue, white) turned a quarter anticlockwise, so a drawn
+  // picture shows green, white / red, blue: the tiles were placed and the rotation applied.
+  const page = await launch();
+  await page.goto(new URL("/expenses", page.url()).toString());
+  // The window's bridge gives the page exactly its two HEIC calls (desktop/window-preload.cjs).
+  expect(await page.evaluate(() => Object.keys((window as unknown as { dotamiDesktop: object }).dotamiDesktop).sort())).toEqual(["heicFailed", "heicStopped"]);
+  const photo = heic({ transforms: [["irot", 1]] });
+  const id = await page.evaluate(async (file) => {
+    const post = async (url: string, body: unknown) =>
+      (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<{
+        expenses?: { id: string }[];
+      }>;
+    const day = new Date().toLocaleDateString("en-CA");
+    const proposed = await post("/api/expenses/propose", {
+      ventureId: null,
+      source: { kind: "agent", label: "the desktop test" },
+      expenses: [{ date: day, amountCents: 1_800, paidTo: "Example Corner Store desktop HEIC", whatFor: "printer paper" }],
+    });
+    const expenseId = proposed.expenses![0].id;
+    await post("/api/expenses/agree", { expenseIds: [expenseId] });
+    await post("/api/expenses/receipt", { expenseId, file });
+    return expenseId;
+  }, photo.toString("base64"));
+  expect(id).toBeTruthy();
+  const receipts = readdirSync(path.join(dataDir, "receipts"));
+  expect(receipts).toHaveLength(1);
+  expect(receipts[0]).toMatch(/^[0-9a-f]{32}\.heic$/);
+  // Encrypted on the disk like every other receipt (#128), with this data folder's key: none of the
+  // photo's own bytes, not even its ftyp box, are in the file.
+  const onDisk = readFileSync(path.join(dataDir, "receipts", receipts[0]));
+  expect(onDisk.subarray(0, 14).toString("latin1")).toBe("DOTAMI-RECEIPT");
+  expect(onDisk.length).toBe(photo.length + ENCRYPTED_OVERHEAD);
+  expect(onDisk.indexOf(photo.subarray(0, 24))).toBe(-1);
+  expect(encryptedKeyId(onDisk)).toBe(JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId);
+  // The window is handed the photo itself, decrypted in memory, which is what the HEIC reader opens below.
+  expect(await receiptBytesShown(page, "Example Corner Store desktop HEIC")).toEqual(photo.toString("base64"));
+
+  await page.reload();
+  // What this computer's graphics chip says about the photo's codec decides which answer is right.
+  const decodes = await page.evaluate(async () =>
+    typeof VideoDecoder === "undefined" ? false : (await VideoDecoder.isConfigSupported({ codec: "hvc1.1.2.L186.90", codedWidth: 128, codedHeight: 128 })).supported === true,
+  );
+  console.log(`this computer's graphics chip ${decodes ? "decodes" : "doesn't decode"} the invented HEVC`);
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  const row = page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: "Example Corner Store desktop HEIC" });
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const dialog = page.getByRole("dialog", { name: /^Receipt: / });
+  await expect(dialog).toContainText("HEIC photo, shown inside DotAmi from its copy on this computer, drawn by this computer's graphics chip.");
+  if (decodes) {
+    const drawn = dialog.getByRole("img", { name: "The receipt photo (256 × 256 pixels)" });
+    await expect(drawn).toBeVisible({ timeout: 30_000 });
+    const pixels = await drawn.evaluate((el) => {
+      const c = el as HTMLCanvasElement;
+      const g = c.getContext("2d")!;
+      return [
+        [64, 64],
+        [192, 64],
+        [64, 192],
+        [192, 192],
+      ].map(([x, y]) => Array.from(g.getImageData(x, y, 1, 1).data.slice(0, 3)));
+    });
+    const near = (got: number[], want: number[]) => got.every((v, i) => Math.abs(v - want[i]) <= 40);
+    const expected = [
+      [0, 160, 0],
+      [255, 255, 255],
+      [255, 0, 0],
+      [0, 0, 255],
+    ];
+    expect(
+      pixels.map((p, i) => near(p, expected[i])),
+      JSON.stringify(pixels),
+    ).toEqual([true, true, true, true]);
+  } else {
+    await expect(dialog.getByRole("alert")).toHaveText(VIEW_MESSAGES.heicUnsupported);
+    await expect(dialog.getByRole("img")).toHaveCount(0);
+  }
+  // The HEIC worker came from DotAmi's own files and can't reach DotAmi's server (or anything else).
+  const heicWorker = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(heicWorker, "the HEIC worker").toBeTruthy();
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(dialog).toBeHidden();
+
+  // The graphics process stops (as a crash would report it): from now on, until DotAmi restarts, no
+  // HEIC is handed to the graphics chip, even after a reload of the page.
+  await app!.evaluate(({ app: electronApp }) => {
+    electronApp.emit("child-process-gone", {}, { type: "GPU", reason: "crashed", exitCode: 1 });
+  });
+  await page.reload();
+  const started = workers.length;
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  await expect(dialog.getByRole("alert")).toHaveText(VIEW_MESSAGES.heicStopped);
+  await expect(dialog.getByRole("img")).toHaveCount(0);
+  expect(workers.length, "no HEIC worker started").toBe(started);
+  expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
+    "[desktop] the graphics process stopped (crashed); HEIC receipts won't be drawn until DotAmi restarts",
+  );
+  // The stored file is untouched, and still opens as the photo.
+  expect(readFileSync(path.join(dataDir, "receipts", receipts[0])).equals(onDisk)).toBe(true);
+  expect(await receiptBytesShown(page, "Example Corner Store desktop HEIC")).toEqual(photo.toString("base64"));
 });
 
 /** Text no real data holds, so finding it in a file's bytes can only mean the deleted statement. */

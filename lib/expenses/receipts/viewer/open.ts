@@ -12,18 +12,35 @@
  *   4. a PDF is moved, not copied, into the viewer's own worker (pdf-pages.worker.ts), which hands back
  *      finished pictures of its pages. One worker serves one open viewer; it is ended when the viewer
  *      closes, or at once when a file takes too long.
+ *   5. a HEIC photo ([8i], option D) is moved into the HEIC worker (heic-picture.worker.ts), which
+ *      checks it with DotAmi's own reader and draws it with the browser's video decoder on the graphics
+ *      chip, and hands back the finished picture. Asked only here, when the person clicks Show receipt.
+ *      Any failure, or 20 seconds, ends the worker, and no HEIC is tried again until DotAmi restarts
+ *      (heic-session.ts); a computer that can't decode HEVC is told so in plain words.
  * Nothing about the receipt goes in an address or a log.
  */
 
 import { RECEIPT_REFUSALS } from "../refusals";
 import { sniffReceipt } from "../sniff";
 import type { ReceiptType } from "../types";
+import { heicFailed, heicStopped } from "./heic-session";
 import { VIEW_MESSAGES } from "./messages";
-import { DRAW_REPLY_LABEL, VIEW_TIMEOUT_MS, type DrawReply, type PdfDrawResult } from "./types";
+import { DRAW_REPLY_LABEL, HEIC_REPLY_LABEL, VIEW_TIMEOUT_MS, type DrawReply, type HeicDrawResult, type HeicReply, type PdfDrawResult } from "./types";
 
 export type ShownReceipt =
   | { kind: "picture"; url: string; width: number; height: number }
-  | { kind: "pdf"; pages: ImageBitmap[]; pageCount: number };
+  | { kind: "pdf"; pages: ImageBitmap[]; pageCount: number }
+  /** A HEIC photo, drawn in the HEIC worker: a finished picture, never the file's bytes. */
+  | { kind: "drawn"; picture: ImageBitmap; width: number; height: number };
+
+/** The sentence for a HEIC that wasn't drawn. */
+export function heicMessage(code: Exclude<HeicDrawResult, { ok: true }>["code"]): string {
+  if (code === "unsupported") return VIEW_MESSAGES.heicUnsupported;
+  if (code === "not-shown") return VIEW_MESSAGES.heicNotShown;
+  if (code === "too-many-pixels") return RECEIPT_REFUSALS["too-many-pixels"];
+  if (code === "damaged") return VIEW_MESSAGES.unreadable;
+  return VIEW_MESSAGES.heicFailed;
+}
 
 export type OpenResult = { ok: true; shown: ShownReceipt } | { ok: false; message: string };
 
@@ -70,6 +87,8 @@ async function fetchReceipt(expenseId: string): Promise<{ ok: true; bytes: Uint8
 
 export class ReceiptOpener {
   private worker: Worker | null = null;
+  // Ends a HEIC drawing still under way when the viewer closes (closing is not a failure).
+  private cancelHeic: (() => void) | null = null;
   // Set by close(). The viewer can close while the bytes are still on their way; after that nothing
   // may start a worker, since nothing would ever end it.
   private closed = false;
@@ -85,6 +104,8 @@ export class ReceiptOpener {
   /** Never throws: every failure is one of the plain sentences. */
   async open(expenseId: string, stored: ReceiptType): Promise<OpenResult> {
     try {
+      // After a HEIC failed (or the graphics process stopped) this session, the graphics chip isn't asked again.
+      if (stored === "image/heic" && (await heicStopped())) return { ok: false, message: VIEW_MESSAGES.heicStopped };
       const fetched = await fetchReceipt(expenseId);
       if (!fetched.ok) return fetched;
       // Closed meanwhile: no one is waiting for the receipt any more.
@@ -95,6 +116,11 @@ export class ReceiptOpener {
         const drawn = await this.draw(fetched.bytes);
         if (!drawn.ok) return { ok: false, message: drawn.code === "password" ? VIEW_MESSAGES.pdfLocked : VIEW_MESSAGES.pdfFailed };
         return { ok: true, shown: { kind: "pdf", pages: drawn.pages, pageCount: drawn.pageCount } };
+      }
+      if (checked.type === "image/heic") {
+        const drawn = await this.drawHeic(fetched.bytes);
+        if (!drawn.ok) return { ok: false, message: heicMessage(drawn.code) };
+        return { ok: true, shown: { kind: "drawn", picture: drawn.picture, width: drawn.width, height: drawn.height } };
       }
       // The Blob's type is the one DotAmi read, never one taken from the file or the server's answer.
       const url = URL.createObjectURL(new Blob([fetched.bytes as BlobPart], { type: checked.type }));
@@ -133,10 +159,42 @@ export class ReceiptOpener {
     });
   }
 
-  /** Stops the worker and everything pdf.js holds in it. */
+  /**
+   * The HEIC worker, started for this one picture and ended as soon as it answers, fails or takes over
+   * VIEW_TIMEOUT_MS. A failure (not "this computer can't decode HEIC", which is no failure) is
+   * recorded so no HEIC is tried again until DotAmi restarts.
+   */
+  private drawHeic(bytes: Uint8Array): Promise<HeicDrawResult> {
+    if (this.closed) return Promise.resolve({ ok: false, code: "failed" });
+    const worker = new Worker(new URL("./heic-picture.worker.ts", import.meta.url), { type: "module", name: "dotami-receipt-heic" });
+    return new Promise<HeicDrawResult>((resolve) => {
+      let settled = false;
+      const done = (result: HeicDrawResult, cancelled = false) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        worker.terminate();
+        this.cancelHeic = null;
+        if (!cancelled && !result.ok && result.code === "failed") heicFailed();
+        resolve(result);
+      };
+      this.cancelHeic = () => done({ ok: false, code: "failed" }, true);
+      const timer = setTimeout(() => done({ ok: false, code: "failed" }), VIEW_TIMEOUT_MS);
+      worker.addEventListener("message", (event: MessageEvent<Partial<HeicReply> | null>) => {
+        if (event.data?.label === HEIC_REPLY_LABEL && event.data.result) done(event.data.result);
+      });
+      // The worker itself failed (crashed, or its script didn't load): a failure like any other.
+      worker.addEventListener("error", () => done({ ok: false, code: "failed" }));
+      // Transferred, not copied: after this the page no longer holds the file's bytes.
+      worker.postMessage({ bytes }, [bytes.buffer]);
+    });
+  }
+
+  /** Stops the workers and everything they hold. */
   close(): void {
     this.closed = true;
     this.worker?.terminate();
     this.worker = null;
+    this.cancelHeic?.();
   }
 }

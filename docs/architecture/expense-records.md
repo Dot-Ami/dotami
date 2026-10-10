@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first). The desktop app encrypts the receipt files (decided 2026-10-09; the design, § 9, written first); the other ways in are not built.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first). HEIC photos are kept and shown by the graphics chip (2026-10-09, option D of the decoder review, § 8 rule 8). The desktop app encrypts the receipt files (decided 2026-10-09; the design, § 9, written first); the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -224,8 +224,9 @@ first slice); the others are reworded when what changes them is built.
    have to reach the local server to be stored. A pointer only (option C) does not.
 
 Unchanged: the rules engine reads agreed figures only; records feed no card; DotAmi files
-nothing; the server stores a receipt's bytes (options A and B) but never parses, opens or runs
-them.
+nothing; the server stores a receipt's bytes (options A and B) but never decodes, opens or runs
+them. The one thing it parses is a HEIC photo's container structure, with DotAmi's own bounded
+reader, to learn the picture's size (section 7, rule 5).
 
 ## 4. How this connects to write-offs
 
@@ -356,21 +357,37 @@ figures, links, map progress, settings and expense records survive it).
 
 1. **The type comes from the bytes, never the name or what the browser says.** `sniff.ts` reads the
    first bytes: JPEG (`FF D8 FF`), PNG (its 8-byte signature), WebP (`RIFF....WEBP`) or PDF (`%PDF-`),
-   each only at the very first byte. Anything else is refused, with a sentence that names what it
-   most likely is: SVG and web pages (they can carry a script), GIF, HEIC (no safe decoder in the
-   window yet), BMP, TIFF, AVIF, text, archives, programs. A file that is two things at once (a JPEG
-   whose later bytes are a web page) is taken as what its first bytes say.
+   each only at the very first byte, and since 2026-10-09 HEIC: a first box `ftyp` with a major brand
+   of `heic`, `heix` or `mif1` (`mif1` only with a `heic`/`heix` compatible brand), read further by
+   DotAmi's own container reader (`heic/picture.ts`, `heicHeader`), which must find one still picture
+   whose data is inside the file. Anything else is refused, with a sentence that names what it
+   most likely is: SVG and web pages (they can carry a script), GIF, HEIF bursts, animations and
+   layered pictures, BMP, TIFF, AVIF, text, archives, programs. A file with a HEIC brand that isn't
+   one (the brand, then a JPEG or nothing) is refused as damaged. A file that is two things at once
+   (a JPEG whose later bytes are a web page) is taken as what its first bytes say.
 2. **At most 10 MB** (the maintainer's cap), checked from the size before the window reads the file
    and again on the server, whose body limit is the base64 of 10 MB.
 3. **A picture's size is read from its header and checked before anything decodes it:** at most
    50 megapixels and 20,000 pixels on a side, so a few hundred bytes that claim a 30,000 × 30,000
    picture (a "decompression bomb") are refused unopened. A picture whose header has no readable
-   size is refused as damaged.
+   size is refused as damaged. For a HEIC, the size is the primary picture's own size box (`ispe`);
+   each of its tiles' size boxes must be within the same caps, and all the tiles together at most
+   64 Mi pixels.
 4. **DotAmi names the file itself:** 32 random hex characters and the extension of the type it read
    (`3f9c….png`). The person's file name is never sent to the server and never kept; nothing a caller
    sends becomes part of a path.
-5. **The server stores the bytes and never opens them:** it reads a few header bytes to learn the
-   type and size, hashes the file, and writes it. It never decodes, renders, parses or runs it.
+5. **The server stores the bytes and never decodes them:** it reads a few header bytes to learn the
+   type and size, hashes the file, and writes it. It never decodes, renders or runs it. For a HEIC
+   photo (2026-10-09), learning the size means reading the file's container structure: which item
+   is the picture, its size box, its tiles' sizes and where their data sit. DotAmi's own reader
+   ([`lib/expenses/receipts/heic/container.ts`](../../lib/expenses/receipts/heic/container.ts)) does
+   that on the server when the receipt is added, and in the page when it is added and again when it
+   is shown; only then does the viewer's no-network worker read it a last time and hand the picture
+   data to the decoder. That is the one parse of a receipt's hostile bytes outside a no-network
+   worker. The reader never decodes the picture; it refuses anything it would have to trust, caps
+   every count, and reads no more item data than the file holds, so a small file can't make it copy
+   the same bytes over and over (tested with truncated, oversized, looping, overlapping and randomly
+   corrupted files in [`tests/heic-container.spec.ts`](../../tests/heic-container.spec.ts)).
 6. **Only an agreed record takes a receipt**, and only DotAmi's own page can add or remove one
    (`POST /api/expenses/receipt`, `POST /api/expenses/receipt/remove`, both `Sec-Fetch-Site:
    same-origin` only, like agree and attach). An agent can propose records but never add, remove or
@@ -449,13 +466,10 @@ committed on its own before any viewer code; "Built by" below names the files).
    (§ 7): JPEG, PNG, WebP or PDF, nothing else; the name and the browser's type are ignored. When it
    is shown, the window reads the bytes it was sent again with the same check and compares the answer
    with the type the row stored; any disagreement (or a refusal) and nothing is drawn. SVG, HTML, XML,
-   GIF and the rest are refused at both points. **HEIC stays refused** until there is a decoder that
-   runs the same way (no script, no network, in a worker or the browser's own decoder): Chromium can't
-   decode HEIC itself, and a WebAssembly decoder would be a new package to review first. The
-   maintainer said yes (2026-10-09) to HEIC receipts; the decoders were reviewed the same day
-   ([connectors/heic-decoder-review.md](../connectors/heic-decoder-review.md)) and none is clean on
-   every count (licence, network, reviewable, works on Windows), so HEIC stays refused until the
-   maintainer picks one of the options listed there.
+   GIF and the rest are refused at both points. **HEIC** is accepted since 2026-10-09 and drawn by
+   rule 8: the maintainer chose option D of the decoder review
+   ([connectors/heic-decoder-review.md](../connectors/heic-decoder-review.md#what-was-chosen-2026-10-09)),
+   after a double-check of the research.
 2. **How the bytes reach the page.** `POST /api/expenses/receipt/file { expenseId }`, answering only
    DotAmi's own page (`Sec-Fetch-Site: same-origin`), like adding and removing. Being a POST that
    reads a JSON body, it can't be an address that a link, an `<img>`, a frame or the window itself can
@@ -500,6 +514,41 @@ committed on its own before any viewer code; "Built by" below names the files).
 7. **Nothing leaves the computer.** The viewer makes one request, to DotAmi's own server; the PDF
    worker can't connect anywhere; a picture is never given an address outside the page. Agents can't
    read a receipt: the route answers only DotAmi's page.
+8. **HEIC photos** (added 2026-10-09; the conditions and the threat path are in
+   [the decoder review](../connectors/heic-decoder-review.md#what-was-chosen-2026-10-09)). Chromium
+   can't decode a HEIC as a picture, so DotAmi reads the container itself and has the browser's
+   video decoder (WebCodecs' `VideoDecoder`) decode the HEVC inside on the graphics chip:
+   - only on *Show receipt*; never when a receipt is added, in a list or as a thumbnail;
+   - the bytes are moved into a second worker of the viewer's own (`heic-picture.worker.ts`), served
+     under the same no-connection policy as the PDF worker (`workerPolicy`, unchanged: no WebAssembly,
+     no eval). DotAmi's own reader (`lib/expenses/receipts/heic/`, no package) takes out the one
+     primary picture, a single coded picture or a grid of tiles, and checks, before a single byte
+     reaches the decoder: one still picture (not a sequence); HEVC Main or Main Still Picture, 8-bit
+     4:2:0, with the record and its SPS agreeing; exactly one VPS, SPS and PPS; every tile a key
+     picture with no parameter set of its own; the declared tile size; no more tiles than the picture
+     needs; the pixel caps, for the picture, every tile, the coded size its SPS gives the decoder and
+     all tiles together; no more item data than the file holds. Thumbnails, depth and gain maps,
+     alpha, Exif and every other item in the file are never handed to the decoder;
+   - `isConfigSupported` is asked first; where it says no (or there is no `VideoDecoder`), the viewer
+     says this computer can't show HEIC photos and that the photo is kept, with how to see it;
+   - one decoder per picture, every tile a key chunk, every decoded frame drawn onto an
+     `OffscreenCanvas` and closed at once, the decoder closed at the end; the crop, rotation and
+     mirroring the file lists are applied; the finished picture goes to the page as an `ImageBitmap`,
+     shown in a `<canvas>`, and is never written anywhere;
+   - any decoder error, a worker that dies, or more than 20 seconds: the worker is ended, the viewer
+     says DotAmi couldn't show it and that the file is kept, and **no HEIC is drawn again until DotAmi
+     restarts**, because Chromium switches hardware graphics off after three graphics-process crashes
+     in a short window. In the desktop app the main process also stops HEIC after any crash of the
+     graphics process (`child-process-gone`, type `GPU`), and the page asks it through the window's
+     preload (`desktop/window-preload.cjs`, two calls, believed only from DotAmi's own window);
+   - the renderer's and the GPU process's sandboxes stay as they are: no switch that turns either off
+     (`tests/desktop-sandbox.spec.ts`).
+
+   **Graphics drivers and the operating system must be kept up to date.** The decoder is the graphics
+   driver (or, on a Mac, the operating system's), which DotAmi can't patch: driver decoder bugs such
+   as Apple's AppleAVD CVE-2024-44232 to 44234 and NVIDIA's CVE-2025-23345 are fixed by those updates,
+   not by DotAmi. DotAmi's part is to stay on a supported, current Electron, so Chromium's own media
+   and graphics fixes arrive with it.
 
 **Tests with hostile files** (each must fail when its rule is removed):
 
@@ -526,14 +575,23 @@ and `checkShownBytes` in `lib/expenses/receipts/viewer/open.ts`; rule 2, `app/ap
 in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/security-hardening.spec.ts`,
 `e2e/receipt-viewer.spec.ts` (every hostile file above, in a real browser on the production build) and
 `e2e-desktop/desktop.spec.ts` (a PDF receipt drawn in the app's own window, its worker unable to reach
-DotAmi's server).
+DotAmi's server). Rule 8 (2026-10-09): `lib/expenses/receipts/heic/` (the container reader and the
+HEVC checks), `viewer/draw-heic.ts`, `viewer/heic-picture.worker.ts`, `viewer/heic-session.ts`, the HEIC
+branch of `viewer/open.ts`, `desktop/window-preload.cjs` and the graphics-process watch in
+`desktop/main.mjs`; tested by `tests/heic-container.spec.ts`, `tests/heic-draw.spec.ts`,
+`tests/desktop-sandbox.spec.ts`, `tests/expenses-receipts.spec.ts`, `e2e/receipt-viewer.spec.ts` (kept,
+refused and "can't show" in a browser with no HEVC) and `e2e-desktop/desktop.spec.ts` (drawn where the
+graphics chip decodes HEVC, otherwise the plain refusal; a graphics-process crash stops HEIC).
 
 **Known limits.** The server's size check before reading is a cheap first look; the SHA-256 check after
 it catches the same files, so no test tells the two apart. The drawn pages have a total cap, but pdf.js
 itself has no overall memory cap while it reads a file: a crafted PDF can still unpack a stream far
 larger than the file and crash the worker (or the window) before the 20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
 `docs/connectors/pdf-reader-review.md`). A drawn page is a picture: its text can't be selected or
-searched, and there is no zoom beyond the window's own.
+searched, and there is no zoom beyond the window's own. A HEIC is shown only where the computer's
+graphics driver decodes HEVC (on Windows; on a Mac probably always, untested); colours are drawn as the
+decoder gives them, without the photo's colour profile; and no automatic test on GitHub's machines
+can see one drawn (they have no such graphics chip, and Playwright's Chromium has no HEVC).
 
 ## 9. Encrypting the receipts: the design (2026-10-09)
 
@@ -713,9 +771,12 @@ AES-256-GCM, one file per receipt, with Node's own `crypto` (no new package). Ea
   all fail to open, as tampering. The `Receipt` row still holds the receipt's own size and SHA-256, of
   the decrypted bytes, and they are checked after decrypting, as before.
 - **Independent of the file's type**: a file keeps its name `<id>.<extension>`, and nothing in the
-  encryption looks at the type, so a type added later (HEIC is being added separately) needs nothing
-  here. None of the accepted types' own first bytes is `DOTAMI-RECEIPT`, so a file that doesn't start
-  with it is a plain receipt.
+  encryption looks at the type, so HEIC (added the same day, § 8 rule 8) needed nothing here but its
+  extension in the list of names DotAmi gives receipt files (`desktop/backup.mjs` `RECEIPT_EXTENSIONS`),
+  which is what the first-start pass and backups go by: a `.heic` receipt is encrypted like any other,
+  and decrypted in memory on the server before the window's HEIC reader is handed its bytes. None of
+  the accepted types' own first bytes is `DOTAMI-RECEIPT` (a HEIC starts with its box size, then
+  `ftyp`), so a file that doesn't start with it is a plain receipt.
 - **Adding** (`addReceipt`): when the key is open, the server encrypts the bytes in memory, and the
   encrypted file goes through the same order of writes as § 7 (`.partial`, then the row, then the
   rename). The sweep's check of a half-finished add decrypts first, then compares size and SHA-256; a
@@ -772,7 +833,9 @@ counts only, never a name. After the first start of this version there is normal
 - The store: added receipts are encrypted on the disk and shown as the bytes that were added; a
   tampered or swapped file refused; a file from another key refused with its own sentence; from source,
   plain as before, and an encrypted file refused with its sentence; a half-finished encrypted add
-  finished by the sweep (`tests/expenses-receipts.spec.ts`).
+  finished by the sweep; a HEIC photo encrypted on the disk (nothing of its `ftyp` box left) and handed
+  to the HEIC reader decrypted (`tests/expenses-receipts.spec.ts`; the first-start pass on a `.heic`
+  file, `tests/receipt-crypto.spec.ts`; in the real app, the HEIC desktop test).
 - Backups: a backup from computer A restores on computer B with B's key, the receipt bytes the same;
   locked and unlocked; format 1 and format 2 fixtures still restore; no unencrypted receipt file in
   the staging folder (`tests/desktop-backup.spec.ts`).

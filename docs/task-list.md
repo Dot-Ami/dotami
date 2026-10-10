@@ -232,9 +232,13 @@ roadmap's build order.
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
     the person confirms (the count includes turned-down records, which no list shows, and it says so)
-  - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
-    none clean on every count, the options and their costs waiting for the maintainer's choice
-    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
+  - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
+    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)), then option D chosen after a
+    double-check and built: kept exactly as given, read by DotAmi's own container reader in a
+    no-network worker and drawn by the graphics chip through WebCodecs, on *Show receipt* only; where the
+    computer can't decode HEVC it is kept and the viewer says so. Not tried on a Mac
+  - [ ] Before DotAmi is sold: the HEVC patent questions (they cover the Electron build already shipped)
+    answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

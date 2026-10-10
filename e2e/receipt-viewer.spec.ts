@@ -11,15 +11,16 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Worker } from "@playwright/test";
 
 import { RECEIPT_REFUSALS } from "../lib/expenses/receipts/refusals";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
+import { heic, INVENTED_HVCC } from "../tests/helpers/heic-files";
 import { manyPagePdf, pdf, png } from "../tests/helpers/receipt-files";
 
 // This run's data folder (playwright.config.ts): the data file and the receipts folder beside it.
 const DATA = path.join(process.cwd(), "prisma", "e2e");
-const EXTENSION: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "application/pdf": "pdf" };
+const EXTENSION: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "application/pdf": "pdf", "image/heic": "heic" };
 
 const agreedRow = (page: Page, text: string): Locator =>
   page.getByRole("list", { name: "Records you agreed to" }).getByRole("listitem").filter({ hasText: text });
@@ -298,6 +299,95 @@ test("a hostile PDF of 20 huge pages: only as many pages as the memory limit all
   await expect(viewer(page)).toContainText("DotAmi shows the first 5 pages; this PDF has 20. The rest are kept in the file.");
   await expect(viewer(page).getByRole("img", { name: /^Page \d+ of 20$/ })).toHaveCount(5);
   await expect(viewer(page).getByRole("img", { name: "Page 6 of 20" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  expect(seen.dialogs).toEqual([]);
+});
+
+// [8i] HEIC photos, option D of docs/connectors/heic-decoder-review.md: kept exactly as given, read by
+// DotAmi's own container reader in a worker that can reach nothing, and drawn by the graphics chip
+// through WebCodecs. Playwright's Chromium has no HEVC decoder (measured in the review), so here the
+// viewer must say, plainly, that this computer can't show HEIC photos; the drawing itself is checked
+// by the desktop test on a computer whose graphics chip decodes HEVC, and by hand.
+test("a HEIC photo is kept as given; where the browser can't decode HEVC, Show receipt says so plainly and draws nothing", async ({ page }) => {
+  const PAYEE = `Example HEIC viewer test ${Date.now()}`;
+  await page.goto("/expenses");
+  const id = await keptRecord(page, PAYEE);
+  await page.reload();
+  const row = agreedRow(page, PAYEE);
+  await expect(row).toBeVisible();
+
+  // What this browser says about the invented photo's own codec: the branch below follows it.
+  const decodes = await page.evaluate(async () =>
+    typeof VideoDecoder === "undefined" ? false : (await VideoDecoder.isConfigSupported({ codec: "hvc1.1.2.L186.90", codedWidth: 128, codedHeight: 128 })).supported === true,
+  );
+
+  // Kept: the window's own check passes a HEIC, the server keeps the bytes exactly, under DotAmi's own name.
+  const photo = heic({ extras: true });
+  await addThroughPage(row, "IMG_0001.HEIC", "image/heic", photo);
+  await expect(row).toContainText("Receipt: HEIC photo · 1.2 KB");
+  const db = openData();
+  let stored: string;
+  try {
+    stored = (db.prepare(`SELECT id FROM "Receipt" WHERE expenseId = ?`).get(id) as { id: string }).id;
+  } finally {
+    db.close();
+  }
+  expect(readFileSync(path.join(DATA, "receipts", `${stored}.heic`)).equals(photo)).toBe(true);
+
+  const seen = watch(page);
+  const workers: Worker[] = [];
+  page.on("worker", (w) => workers.push(w));
+  await row.getByRole("button", { name: "Show receipt" }).click();
+  const dialog = viewer(page);
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("HEIC photo, shown inside DotAmi from its copy on this computer, drawn by this computer's graphics chip.");
+  if (decodes) {
+    // A browser with HEVC: the picture is drawn, red in the top-left tile.
+    const drawn = dialog.getByRole("img", { name: "The receipt photo (256 × 256 pixels)" });
+    await expect(drawn).toBeVisible();
+  } else {
+    await expect(dialog.getByRole("alert")).toHaveText(VIEW_MESSAGES.heicUnsupported);
+    await expect(dialog.getByRole("img")).toHaveCount(0);
+  }
+  // DotAmi's own HEIC worker read the file, from DotAmi's own files, and it can reach nothing.
+  const heicWorker = workers.find((w) => new URL(w.url()).pathname.startsWith("/_next/static/"));
+  expect(heicWorker, "the HEIC worker").toBeTruthy();
+  expect(seen.requests.filter((r) => !r.startsWith("GET /_next/static/"))).toEqual(["POST /api/expenses/receipt/file"]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  expect(seen.dialogs).toEqual([]);
+  expect(seen.popups).toBe(0);
+});
+
+test("hostile HEICs: a burst and a 900-megapixel claim are refused in the window with nothing sent; a 10-bit one put in the folder is kept but not drawn", async ({
+  page,
+}) => {
+  const stamp = Date.now();
+  await page.goto("/expenses");
+  const refused = await keptRecord(page, `Example HEIC refused ${stamp}`);
+  const tenBit = await keptRecord(page, `Example HEIC ten-bit ${stamp}`);
+  expect(refused).toBeTruthy();
+  // DotAmi keeps a 10-bit HEIC (it is a HEIC photo) but doesn't draw it: planted here with its row.
+  const record = Buffer.from(INVENTED_HVCC);
+  record[17] = 0xfa;
+  plant(tenBit, "image/heic", heic({ hvcc: record }));
+  await page.reload();
+  const seen = watch(page);
+
+  const row = agreedRow(page, `Example HEIC refused ${stamp}`);
+  await row.getByRole("button", { name: "Add a receipt" }).click();
+  seen.requests.length = 0;
+  await row.getByLabel("Choose the receipt file").setInputFiles({ name: "burst.heic", mimeType: "image/heic", buffer: heic({ major: "msf1", compatible: ["heic"] }) });
+  await expect(row.getByRole("alert")).toHaveText(RECEIPT_REFUSALS["heif-sequence"]);
+  await row.getByLabel("Choose the receipt file").setInputFiles({ name: "huge.heic", mimeType: "image/heic", buffer: heic({ primarySize: { width: 30_000, height: 30_000 } }) });
+  await expect(row.getByRole("alert")).toHaveText(RECEIPT_REFUSALS["too-many-pixels"]);
+  expect(seen.requests.filter((r) => r.startsWith("POST"))).toEqual([]);
+  await expect(row.getByRole("button", { name: "Show receipt" })).toHaveCount(0);
+
+  const kept = agreedRow(page, `Example HEIC ten-bit ${stamp}`);
+  await kept.getByRole("button", { name: "Show receipt" }).click();
+  await expect(viewer(page).getByRole("alert")).toHaveText(VIEW_MESSAGES.heicNotShown);
+  await expect(viewer(page).getByRole("img")).toHaveCount(0);
   await page.keyboard.press("Escape");
   expect(seen.dialogs).toEqual([]);
 });

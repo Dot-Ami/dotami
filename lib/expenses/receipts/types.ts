@@ -23,13 +23,16 @@ export const MAX_IMAGE_SIDE = 20_000;
 /**
  * The only kinds of file a receipt may be, decided from the file's first bytes (sniff.ts). Each
  * can be shown by something that can't run a script: the browser's image decoder for pictures, pdf.js
- * drawing onto a canvas for PDFs. SVG, HTML, GIF, HEIC and everything else are refused.
+ * drawing onto a canvas for PDFs, and for HEIC photos (iPhones' own format; the maintainer's choice of
+ * option D, 2026-10-09) DotAmi's own container reader with the browser's video decoder, on the
+ * graphics chip, in a worker (viewer/draw-heic.ts). SVG, HTML, GIF and everything else are refused.
  */
 export const RECEIPT_TYPES = [
   { type: "image/jpeg", extension: "jpg", name: "JPEG picture" },
   { type: "image/png", extension: "png", name: "PNG picture" },
   { type: "image/webp", extension: "webp", name: "WebP picture" },
   { type: "application/pdf", extension: "pdf", name: "PDF" },
+  { type: "image/heic", extension: "heic", name: "HEIC photo" },
 ] as const;
 
 export type ReceiptType = (typeof RECEIPT_TYPES)[number]["type"];
@@ -52,7 +55,7 @@ export type ReceiptRefusalCode =
   | "too-big"
   | "svg"
   | "html"
-  | "heic"
+  | "heif-sequence"
   | "gif"
   | "other-picture"
   | "not-a-receipt-type"
