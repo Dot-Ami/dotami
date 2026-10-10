@@ -53,12 +53,21 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
    account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's
    own key is in the data folder's `Local State`, which Chromium writes about ten seconds after start:
-   so the very first start of a new data folder waits about that long; then any receipt file not encrypted
+   so the very first start of a new data folder waits about that long, with a small "Preparing DotAmi…"
+   window on the screen meanwhile (`desktop/preparing.mjs`, `desktop/preparing.html`: a local page with no
+   script that can load nothing; shown only during that wait, closed when the main window shows, and
+   closed before the message when the start fails); then any receipt file not encrypted
    yet, in `receipts/` and in the receipts folders earlier restores moved into `backups/`, is
    encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
    state and counts only. A key this account can't open changes nothing on the disk when receipts are
    locked with it; with none locked, it is moved to `backups/` and a new one made. No key store: the
-   receipts stay unencrypted, and the settings page says so.
+   receipts stay unencrypted, and the settings page says so. The server is told `key-unreadable`
+   (which offers Start a new key) only when the key store is there and receipts are locked; with the
+   store unavailable for now it is told `key-out-of-reach`, which never offers it
+   (`receiptLockEnv`, `desktop/receipt-key.mjs`). After **Start a new key** (the pages'
+   button while the key can't be opened; [expense-records.md § 10](expense-records.md)) the server has
+   already moved the locked receipts and the key file into `backups/receipts-locked-<time>/`, so this
+   step finds the key file missing with nothing locked and makes a new key.
 5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
@@ -82,7 +91,12 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    Electron's defaults stay on and are set
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
-   2026-10-05).
+   2026-10-05). No switch may turn off Chromium's sandboxes or run the graphics process inside the
+   browser process (`tests/desktop-sandbox.spec.ts`), a condition of drawing HEIC receipts on the
+   graphics chip ([8i], 2026-10-09). The window's one preload (`desktop/window-preload.cjs`) gives
+   DotAmi's pages two calls about HEIC receipts and nothing else; the main process believes them only
+   from DotAmi's own window, and stops HEIC drawing for the session once the graphics process stops
+   (`child-process-gone`, type `GPU`) or a HEIC fails (desktop-tested).
 7. **Updates** (installed app only) — see below.
 8. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
    ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·
@@ -149,8 +163,9 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   (`receipts-before-restore-<time>`, beside the safety copy that describes it), the staged folder
   becomes the receipts folder, then the database is swapped in; if the swap fails, both folders go
   back. The file list may name only `dotami.db` and DotAmi's own receipt names (32 hex characters
-  and `.jpg`/`.png`/`.webp`/`.pdf`), each once and at most 10 MB, so no backup can write anywhere
-  else.
+  and `.jpg`/`.png`/`.webp`/`.pdf`/`.heic`), each once and at most 10 MB, so no backup can write
+  anywhere else. A DotAmi from before HEIC receipts doesn't have `.heic` in its list, so it refuses a
+  backup that holds one; restore it with this version or later.
 - **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
   header is authenticated too (its exact bytes are GCM's additional data), so editing any of it,
   the file list included, makes the backup refuse to open. A header that asks for different scrypt

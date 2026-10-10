@@ -5,6 +5,7 @@ import { useId, useRef, useState } from "react";
 import { Pill } from "@/components/ui";
 import { postJson } from "@/components/ventures/agree-prompt";
 import { sizeWords } from "@/components/your-data/format";
+import { RECEIPTS_CANT_BE_ADDED, receiptsCanBeAdded } from "@/lib/expenses/receipts/protection";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { MAX_RECEIPT_BYTES, typeName } from "@/lib/expenses/receipts/types";
@@ -136,14 +137,21 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
   // Only a record the person agreed to takes a receipt (the server says the same).
   if (record.status !== "confirmed") return null;
 
+  // [8i] No key to encrypt with (expense-records.md § 9, § 10): the server would refuse, so Add a receipt
+  // isn't offered; the amber line at the top of the page says why and what to do.
+  if (!receiptsCanBeAdded(protection)) {
+    return <p className="mt-1.5 text-[11px] text-paper-dim">{RECEIPTS_CANT_BE_ADDED}</p>;
+  }
+
   return (
     <div className="mt-1.5">
       {adding ? (
         <div className="rounded-sm border border-rule bg-ink px-2.5 py-2 text-[11px] text-paper-dim">
           <p>
             DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and
-            address) is kept too. A JPEG, PNG or WebP picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its name. The copy is
-            your own record; it says nothing about whether you can stop keeping the original.
+            address) is kept too. A JPEG, PNG, WebP or HEIC (iPhone) picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its
+            name. A HEIC photo is shown with this computer&apos;s graphics chip, and some computers can&apos;t show one (it is kept either way). The copy is your
+            own record; it says nothing about whether you can stop keeping the original.
           </p>
           {/* [8i] Whether the copy is encrypted here, and what losing the key means (expense-records.md § 9). */}
           <p className="mt-1.5">{receiptNoteSentence(protection)}</p>
@@ -156,7 +164,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
               id={inputId}
               type="file"
               // A hint for the file picker only; the bytes decide.
-              accept="image/jpeg,image/png,image/webp,application/pdf"
+              accept="image/jpeg,image/png,image/webp,image/heic,.heic,application/pdf"
               className="sr-only"
               disabled={busy}
               onChange={(e) => {

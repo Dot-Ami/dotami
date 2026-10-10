@@ -6,6 +6,7 @@ import { Pill } from "@/components/ui";
 import { describeFigureDates, localDay } from "@/lib/figures/age";
 import { FIGURE_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureView } from "@/lib/figures/types";
 import { parseMoneyToCents } from "@/lib/figures/money";
+import { isTaxLineKind, kindWithNewestLine, taxLineStatus, taxLineWords, taxYearHint } from "@/lib/figures/tax-line";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 
 import { AMOUNT_HELP, AgreePrompt, describePeriod, formatAmount, postJson } from "./agree-prompt";
@@ -187,6 +188,7 @@ export function FiguresPanel({
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                     <span className="font-semibold text-paper">{FIGURE_KIND_LABELS[f.kind]}</span>
                     <span className="text-stone">{describePeriod(f.periodStart, f.periodEnd)}</span>
+                    {taxLineWords(f) ? <span className="text-stone">{taxLineWords(f)}</span> : null}
                     <span className="font-mono text-paper">{formatAmount(f.amountCents, f.currency)}</span>
                     <span className="text-stone-dim">
                       from {f.sourceLabel}
@@ -237,6 +239,7 @@ export function FiguresPanel({
                     <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-stone-dim opacity-70">
                       <span>{FIGURE_KIND_LABELS[f.kind]}</span>
                       <span>{describePeriod(f.periodStart, f.periodEnd)}</span>
+                      {taxLineWords(f) ? <span>{taxLineWords(f)}</span> : null}
                       <span className="font-mono">{formatAmount(f.amountCents, f.currency)}</span>
                       <span>from {f.sourceLabel}</span>
                       <span>{describeFigureDates(f.periodEnd, today, f.confirmedAt)}</span>
@@ -309,6 +312,8 @@ function AddFigureForm({
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("CAD");
+  // [8f] Asked only for a T2125 total: the line it goes on depends on the year.
+  const [taxYear, setTaxYear] = useState("");
   const [amountError, setAmountError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -334,12 +339,27 @@ function AddFigureForm({
       setError("Write the currency as three letters, like CAD.");
       return;
     }
+    const asksTaxYear = isTaxLineKind(kind);
+    if (asksTaxYear && !/^\d{4}$/.test(taxYear.trim())) {
+      setError("Write the tax year as four digits, like 2025.");
+      return;
+    }
 
     setBusy(true);
     const result = await postJson("/api/figures/propose", {
       ventureId,
       source: { kind: "typed", label: "typed by you" },
-      figures: [{ kind, periodStart: from, periodEnd: to, amountCents: cents, currency: code }],
+      figures: [
+        {
+          kind,
+          periodStart: from,
+          periodEnd: to,
+          amountCents: cents,
+          currency: code,
+          // Typed, so there is no form line "as read": the screens look the line up from the year.
+          ...(asksTaxYear ? { taxYear: Number(taxYear.trim()) } : {}),
+        },
+      ],
     });
     setBusy(false);
     if (!result.ok) {
@@ -369,11 +389,29 @@ function AddFigureForm({
           >
             {FIGURE_KINDS.map((k) => (
               <option key={k} value={k}>
-                {FIGURE_KIND_LABELS[k]}
+                {kindWithNewestLine(k, FIGURE_KIND_LABELS[k])}
               </option>
             ))}
           </select>
         </div>
+        {isTaxLineKind(kind) ? (
+          <div>
+            <label htmlFor={`${uid}-tax-year`} className={FIELD_LABEL}>
+              Tax year
+            </label>
+            <input
+              id={`${uid}-tax-year`}
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={taxYear}
+              onChange={(e) => setTaxYear(e.target.value)}
+              aria-describedby={`${uid}-tax-year-hint`}
+              placeholder="2025"
+              className={`${FIELD} mt-1 w-20 font-mono`}
+            />
+          </div>
+        ) : null}
         <div>
           <label htmlFor={`${uid}-from`} className={FIELD_LABEL}>
             From
@@ -420,6 +458,20 @@ function AddFigureForm({
         </div>
       </div>
 
+      {isTaxLineKind(kind) ? (
+        <p
+          id={`${uid}-tax-year-hint`}
+          className={`mt-2 text-[11px] ${
+            /^\d{4}$/.test(taxYear.trim()) && taxLineStatus(kind, Number(taxYear.trim()))?.status === "not-read-yet"
+              ? "text-amber"
+              : "text-stone"
+          }`}
+        >
+          {/^\d{4}$/.test(taxYear.trim())
+            ? taxYearHint(kind, Number(taxYear.trim()))
+            : "The tax year this total is for. The CRA line it goes on can change from one year's form to the next."}
+        </p>
+      ) : null}
       {amountError ? (
         <p id={`${uid}-amount-problem`} className="mt-2 text-[11px] text-amber">
           {amountError}

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
 import { databaseProtectionText } from "@/lib/db/protection";
+import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import type { BankSourcesState } from "@/lib/figures/source-account-name";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
@@ -184,12 +185,24 @@ function SettingRow({
  * [8i] Whether the receipt files are encrypted in this copy, and what losing the key means
  * (docs/architecture/expense-records.md § 9). Read from the app's own environment on every visit.
  */
-function ReceiptProtectionLine({ state, dataFileEncrypted }: { state: SettingsToday["receipts"]; dataFileEncrypted: boolean }) {
-  const { headline, detail, tone } = receiptProtectionText(state, { dataFileEncrypted });
+function ReceiptProtectionLine({
+  state,
+  setAsideTo,
+  dataFileEncrypted,
+}: {
+  state: SettingsToday["receipts"];
+  setAsideTo: string | null;
+  dataFileEncrypted: boolean;
+}) {
+  const { headline, detail, tone } = receiptProtectionText(state, setAsideTo, { dataFileEncrypted });
   return (
-    <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
-      <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
-    </p>
+    <div>
+      <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
+        <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
+      </p>
+      {/* Offered only while the key can't be opened (expense-records.md § 10). */}
+      {state === "key-unreadable" ? <StartNewReceiptKey /> : null}
+    </div>
   );
 }
 
@@ -236,7 +249,7 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <CopyPathButton path={path} />
           </div>
           <DatabaseProtectionLine database={today.database} />
-          <ReceiptProtectionLine state={today.receipts} dataFileEncrypted={today.database.state === "on"} />
+          <ReceiptProtectionLine state={today.receipts} setAsideTo={today.receiptsSetAside} dataFileEncrypted={today.database.state === "on"} />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

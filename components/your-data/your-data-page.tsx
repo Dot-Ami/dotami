@@ -6,6 +6,7 @@ import { GhostLink, WordMark } from "@/components/ui";
 import type { FolderFacts, Holdings, SentFacts, SentState, TableCount } from "@/lib/privacy/holdings";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { databaseProtectionText } from "@/lib/db/protection";
+import { StartNewReceiptKey } from "@/components/expenses/start-new-key";
 import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, type WindowStorageEntry } from "@/lib/privacy/inventory";
 
@@ -338,7 +339,7 @@ function FolderRow({
  * describeReceiptFiles).
  */
 function ReceiptProtection({ files, dataFileEncrypted }: { files: Holdings["receiptFiles"]; dataFileEncrypted: boolean }) {
-  const { headline, detail, tone } = receiptProtectionText(files.state, { dataFileEncrypted });
+  const { headline, detail, tone } = receiptProtectionText(files.state, files.setAsideTo, { dataFileEncrypted });
   const total = files.encrypted + files.plain + files.locked;
   const counts: string[] = [];
   if (files.state === "on" && total > 0) {
@@ -358,6 +359,8 @@ function ReceiptProtection({ files, dataFileEncrypted }: { files: Holdings["rece
         <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
       </p>
       {counts.length > 0 ? <p>{counts.join(" ")}</p> : null}
+      {/* Offered only while the key can't be opened (expense-records.md § 10). */}
+      {files.state === "key-unreadable" ? <StartNewReceiptKey /> : null}
     </div>
   );
 }

@@ -167,6 +167,23 @@ describe("confirmed figures on the GST/HST card", () => {
   it("ignores figures of other kinds", () => {
     expect(readRevenue([fig(...QUARTERS[3], 99_000, { kind: "net-income" })], { today: TODAY, consecutiveQuarters: 4, thresholdCents: 3_000_000 })).toBeNull();
   });
+
+  // [8f] Line 8299 is gross income with the GST/HST collected taken back out, a different total from
+  // the one the small-supplier test counts; the other three are expenses and net income.
+  it.each(["business-gross-income", "business-total-expenses", "business-net-income-before-adjustments", "business-net-income"])(
+    "never reads a T2125 total (%s), even one shaped like a quarter over the line",
+    (kind) => {
+      const over = [fig(...QUARTERS[3], 99_000, { kind })];
+      expect(readRevenue(over, { today: TODAY, consecutiveQuarters: 4, thresholdCents: 3_000_000 })).toBeNull();
+
+      // The card is exactly what the estimate alone gives: no "from your records", nothing over.
+      const withFigure = gstCard(10_000, over);
+      const without = gstCard(10_000);
+      expect(withFigure.card).toEqual(without.card);
+      expect(withFigure.card.state).toBe("green");
+      expect(withFigure.card.fromRecords).toBeUndefined();
+    },
+  );
 });
 
 // ---- [8e] How old each figure is ------------------------------------------------------------

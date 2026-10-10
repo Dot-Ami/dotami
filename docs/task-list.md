@@ -158,6 +158,10 @@ roadmap's build order.
     with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
     or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
     ([review](connectors/pdf-reader-review.md))
+  - [x] The four T2125 totals as figure kinds, named for what they mean (business gross income, total
+    expenses, net income before adjustments, net income), cited to the CRA's 2025 form and guide
+    ([engine doc](engines/taxlines.md)); each figure keeps its tax year and the form and line as read
+    (two optional columns); a year whose form isn't read yet says so; the GST/HST card never reads them
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
@@ -228,9 +232,18 @@ roadmap's build order.
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
     the person confirms (the count includes turned-down records, which no list shows, and it says so)
-  - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
-    none clean on every count, the options and their costs waiting for the maintainer's choice
-    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
+  - [x] Start a new key while the key can't be opened (the maintainer said yes, 2026-10-09): asked twice,
+    the locked receipts and the key file moved to `backups/receipts-locked-<time>/`, never deleted, the new
+    key made at the next start; never offered while the key is only out of reach for now (the key store
+    unavailable), and no Add a receipt while none can be added; and a "Preparing DotAmi…" window during
+    the first start's wait ([expense-records.md § 10](architecture/expense-records.md)).
+  - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
+    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)), then option D chosen after a
+    double-check and built: kept exactly as given, read by DotAmi's own container reader in a
+    no-network worker and drawn by the graphics chip through WebCodecs, on *Show receipt* only; where the
+    computer can't decode HEVC it is kept and the viewer says so. Not tried on a Mac
+  - [ ] Before DotAmi is sold: the HEVC patent questions (they cover the Electron build already shipped)
+    answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
   - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
     designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
     being built in stacked pull requests: (A) the packages, the Prisma adapter and the measurements;

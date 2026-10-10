@@ -54,6 +54,42 @@ person is asked).
   answer is sent `Cache-Control: no-store` ([`next.config.mjs`](../next.config.mjs)); before, the
   desktop window's Chromium could keep one (a statement's words were found in the `Cache` folder in the
   data folder). The desktop app clears that cache once when it first encrypts the data file.
+- **Start a new key moves locked receipts aside, never deletes them ([8i], 2026-10-09).** While the
+  desktop app can't open the receipts' key, the person may press *Start a new key…* (asked twice). The
+  server then moves every receipt file locked with a key it can't open, and `receipts.key`, into a new
+  folder beside the data file, `backups/receipts-locked-<time>/`
+  ([`desktop/receipt-key.mjs`](../desktop/receipt-key.mjs) `setAsideLockedReceipts`,
+  [`lib/expenses/receipts/new-key.ts`](../lib/expenses/receipts/new-key.ts)), and the next start makes a
+  new key as for a missing key file. The `Receipt` rows stay in the data file (their size and SHA-256
+  are what the files must match if the old key comes back). No new table, column or browser-storage
+  key; the log gets a count only. *What DotAmi knows about you* names the new folder under the safety
+  copies and the key file. Tested by [`tests/receipt-key.spec.ts`](../tests/receipt-key.spec.ts),
+  [`tests/receipt-new-key.spec.ts`](../tests/receipt-new-key.spec.ts),
+  [`e2e/receipt-new-key.spec.ts`](../e2e/receipt-new-key.spec.ts) and the desktop test.
+
+- **HEIC photos as receipts ([8i], 2026-10-09).** A receipt may now also be a HEIC photo (what
+  iPhones save), kept exactly as given under a `.heic` name in the same `receipts/` folder, with the
+  same 10 MB and pixel caps, encrypted in the desktop app like every receipt (a `.heic` file is one of
+  the receipt names the first-start pass and backups go by), backed up, removed and deleted like every
+  receipt. DotAmi keeps no converted or decoded copy: the picture exists in the window only while it
+  is shown. No new table,
+  column or browser-storage key (the `Receipt` row's type is `image/heic`). In the desktop app,
+  `logs/server.log` gains at most one line a session when the graphics process stops, or a HEIC can't be
+  drawn, saying HEIC receipts won't be drawn until restart (with Electron's one-word reason, such as
+  `crashed`; nothing about the receipt). [`lib/expenses/receipts/heic/`](../lib/expenses/receipts/heic/),
+  [`desktop/main.mjs`](../desktop/main.mjs); tested by
+  [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts) and
+  [`tests/heic-container.spec.ts`](../tests/heic-container.spec.ts).
+
+- **Two more facts on a figure** ([8f]): `Figure.taxYear`, the tax year a T2125 total is for, and
+  `Figure.formLine`, the form and line it was read from ("T2125 8299"). Both are empty for every
+  figure that existed before, and for revenue figures; a typed T2125 total has a tax year and no form
+  line; only a figure read from a tax return may carry a form line, so "as printed on your return"
+  is never said of one that wasn't. Four new kinds of figure: business gross income, total expenses,
+  net income before adjustments and net income. They sit in the same table and are removed the same
+  way as every other figure; "What DotAmi knows about you" lists these figures but does not show their
+  tax year and form line yet (a later step) ([`prisma/migrations/20261010120000_figure_tax_line`](../prisma/migrations/20261010120000_figure_tax_line/migration.sql),
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). Nothing new leaves the computer.
 
 - **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
   file is read in memory inside the app's window, in a worker of DotAmi's own
@@ -116,8 +152,8 @@ person is asked).
   last digits of a card or a name and address, is in the copy), in a new `receipts/` folder beside the
   data file: `<data folder>/receipts/` in the desktop app, `prisma/receipts/` beside a copy run from
   source. DotAmi names each file itself (32 random hex characters and the extension of the type it
-  read from the bytes); the person's file name is never sent or kept. Only JPEG, PNG, WebP and PDF,
-  decided from the file's first bytes; at most 10 MB; a picture at most 50 megapixels. A new `Receipt`
+  read from the bytes); the person's file name is never sent or kept. Only JPEG, PNG, WebP and PDF
+  (and HEIC, since the HEIC entry at the top of this section), decided from the file's first bytes; at most 10 MB; a picture at most 50 megapixels. A new `Receipt`
   table describes each file: its record, type, size, SHA-256 and the day it was added
   ([`lib/expenses/receipts/`](../lib/expenses/receipts/),
   [`prisma/migrations/20261008180000_receipts`](../prisma/migrations/20261008180000_receipts/migration.sql),
@@ -203,6 +239,15 @@ person is asked).
   unencrypted. The backup format is unchanged.
 
 ### What leaves the computer, and to whom
+
+- **Showing a HEIC receipt sends nothing off the computer.** DotAmi's own reader opens the photo in a
+  worker under the same no-connection policy as the PDF viewer's, and the picture data inside goes,
+  through the browser's video decoder, to this computer's graphics driver (or, on a Mac, the operating
+  system's decoder), which decodes it on the graphics chip
+  ([`lib/expenses/receipts/viewer/draw-heic.ts`](../lib/expenses/receipts/viewer/draw-heic.ts); the
+  path in full is in [the decoder review](connectors/heic-decoder-review.md#corrections-from-the-double-check-2026-10-09)).
+  The worker's policy is unchanged; the browser tests check the viewer makes one request, to DotAmi's
+  own server ([`e2e/receipt-viewer.spec.ts`](../e2e/receipt-viewer.spec.ts)).
 
 - **The return reader sends nothing.** pdf.js is given the PDF's bytes, never an address, and
   its own data-file fetches are switched off (`PDF_OPTIONS` in
@@ -305,6 +350,12 @@ person is asked).
   prints query values when the `DEBUG` environment variable names it: the desktop app removes `DEBUG`
   from its server's environment ([`desktop/main.mjs`](../desktop/main.mjs) `serverEnv`;
   `e2e-desktop/desktop.spec.ts` checks the log).
+- **HEIC photos add no package.** The container reader is DotAmi's own code; the decoder is the
+  graphics driver's, reached through Chromium's WebCodecs, which Electron already ships. Not new: the
+  Electron build DotAmi has always shipped includes Chromium's HEVC parser and hardware-assist decoding
+  code, and ffmpeg with H.264 and AAC; whether that raises a patent question before DotAmi is sold is
+  listed for a lawyer in [the decoder review](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold).
+
 - **`pdfjs-dist` 6.4.299 (Mozilla's pdf.js), pinned exactly.** Apache-2.0. It can reach the
   network (a PDF, character maps, fonts and decoders from addresses it is given, and its own
   worker script); DotAmi gives it no address, turns its data-file fetches off and runs it in the
@@ -340,6 +391,26 @@ person is asked).
 
 ### New powers or permissions
 
+- **A page-only route that moves receipt files ([8i]).** `POST /api/expenses/receipt/new-key`
+  ([`app/api/expenses/receipt/new-key/route.ts`](../app/api/expenses/receipt/new-key/route.ts)) answers
+  only DotAmi's own window (an agent or another program gets 403 and nothing moves), reads its body
+  through `readJsonWithLimit`, needs `{ giveUp: true }`, and does anything only while the receipts' key
+  can't be opened. It moves files within the data folder; it deletes nothing and sends nothing.
+- **A second, small window at a first start ([8i]).** "Preparing DotAmi…"
+  ([`desktop/preparing.html`](../desktop/preparing.html)) is a local page with no script and a
+  Content-Security-Policy of `default-src 'none'`, listed with the app's other local loads in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `LOCAL_REQUESTS`. It shows nothing of the
+  person's and reaches nothing.
+- **The receipt viewer can start a third worker of DotAmi's own, for HEIC photos**, under the same
+  no-connection policy ([`lib/expenses/receipts/viewer/heic-picture.worker.ts`](../lib/expenses/receipts/viewer/heic-picture.worker.ts)),
+  and through it ask the computer's graphics chip to decode the photo, only when the person clicks
+  *Show receipt*. The desktop window gains a preload ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs))
+  that gives DotAmi's pages two calls and nothing else ("has a HEIC failed, or the graphics process
+  stopped, since DotAmi started?" and "a HEIC just failed"), believed only from DotAmi's own window; the
+  main process now listens for the graphics process stopping (`child-process-gone`). The window stays
+  sandboxed, and a test fails if anything turns a sandbox off
+  ([`tests/desktop-sandbox.spec.ts`](../tests/desktop-sandbox.spec.ts)).
+
 - **The page can start one worker of DotAmi's own, the return reader's.** It gets no new
   reach: DotAmi's static script files now carry a policy (`default-src 'none'; script-src
   'self'`) that lets such a worker load DotAmi's own scripts and connect nowhere
@@ -365,7 +436,8 @@ person is asked).
   agent (`refuseUnlessFromAppPage`), and the sweep that removes receipt files no record describes
   never touches a file it didn't name ([`lib/expenses/receipts/store.ts`](../lib/expenses/receipts/store.ts),
   tested by [`tests/expenses-receipts.spec.ts`](../tests/expenses-receipts.spec.ts)). The server stores
-  a receipt's bytes and never decodes, parses or runs them.
+  a receipt's bytes and never decodes or runs them; for a HEIC photo it reads the container's
+  structure with DotAmi's own bounded reader to learn the picture's size, and nothing more.
 - **The page can start a second worker of DotAmi's own, the receipt viewer's**, which runs pdf.js
   to draw a PDF receipt's pages, under the same no-connection policy as the return reader's
   ([`lib/expenses/receipts/viewer/pdf-pages.worker.ts`](../lib/expenses/receipts/viewer/pdf-pages.worker.ts),
@@ -401,6 +473,13 @@ person is asked).
   [`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html)). Settings → Data and backups has an
   **Encrypt the data file** switch (on by default; turning it off asks first). A new data folder is
   encrypted without asking. The log records that the window was shown and which button was pressed.
+- **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
+  key can't open them, so they are given up for good unless the old key comes back, that nothing is
+  deleted and where they go, and to restore a backup instead if there is one; the second asks again.
+  Cancel is focused on both, and cancelling either changes nothing
+  ([`components/expenses/start-new-key.tsx`](../components/expenses/start-new-key.tsx)).
+- **Adding a HEIC receipt** asks nothing new: the note before *Choose the receipt file* now names HEIC,
+  and says some computers can't show one, and that it is kept either way.
 
 - **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
@@ -495,6 +574,11 @@ person is asked).
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
   a backup holds, and DotAmi then says so and changes nothing. Once encrypted, the file isn't
   decrypted again by DotAmi; Delete works on it as before.
+- **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
+  person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
+  the receipts folders a restore moves there).
+- **HEIC receipts** are removed like every receipt (*Remove receipt*, or Delete's *Your receipts* /
+  *Your expense records*); there is no decoded copy to remove.
 
 - Nothing new to remove: the return reader keeps nothing (above).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
@@ -543,6 +627,10 @@ person is asked).
   as the person, and only as strong as the Windows password. Losing the key loses the data except what
   a backup holds. Backups hold the data decrypted (so they restore elsewhere); an older version can't
   open an encrypted file.
+- A HEIC photo added as a receipt is kept as given. Showing it hands the picture data to the person's
+  own graphics driver or operating system to decode, on their computer; nothing is sent elsewhere, and
+  DotAmi keeps no decoded copy. Keeping graphics drivers and the operating system up to date is part of
+  keeping that safe, and is the person's (or their computer maker's) to do.
 
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot

@@ -80,7 +80,7 @@ describe("what the pages say", () => {
 
   it("the receipts' line no longer says the data file isn't encrypted once it is", () => {
     expect(receiptProtectionText("on").detail).toContain("The data file itself isn't encrypted");
-    const both = receiptProtectionText("on", { dataFileEncrypted: true }).detail;
+    const both = receiptProtectionText("on", null, { dataFileEncrypted: true }).detail;
     expect(both).not.toContain("isn't encrypted");
     expect(both).toContain("is encrypted too, with a key of its own");
   });
