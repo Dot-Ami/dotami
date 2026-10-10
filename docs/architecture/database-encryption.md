@@ -732,3 +732,112 @@ each is handled in `lib/db/client.ts` and tested):
   one (`desktop/left-out.mjs`, `removeOtherPlatformBuilds`), and the build stops if it isn't there.
   `node-addon-api` (the package's compile-time headers) isn't copied into the server; it is listed in
   the notices as one of DotAmi's dependencies' packages, as every package they pull in is.
+
+## 15. Delete reaching what a lost key leaves in `backups/` (2026-10-10)
+
+The maintainer said yes (2026-10-10, "go along with your recommendations", and "one box", not a
+separate one): the Delete menu's **Safety copies in the backups folder** box also clears what a lost
+key leaves in `backups/`. Until now the menu listed these under *What Delete doesn't reach*. This
+section was written before the code. The receipts' side of it is in
+[expense-records.md § 12](expense-records.md).
+
+### What the box clears now
+
+Everything DotAmi itself sets aside in `backups/`, in one box:
+
+| What | Its name in `backups/` | Made by | Cleared since |
+|---|---|---|---|
+| Safety copies | `dotami-before-<what>-<time>.db` | an update, a restore | [8d] |
+| Receipts Start a new key set aside | `receipts-locked-<time>/` | Start a new key | #133 |
+| The receipts folder before a restore | `receipts-before-restore-<time>/` | a restore | #133 |
+| **The receipts folder when you started fresh** | `receipts-before-start-fresh-<time>/` | Start fresh (§ 10) | this change |
+| **Old key files** | `receipts-key-unreadable-<time>.key`, `database-key-unreadable-<time>.key` | a new key made beside one that couldn't be opened | this change |
+| **The locked data file** | `dotami-locked-<time>.db`, with its journal `dotami-locked-<time>.db-journal` if one was moved with it | Restore from a backup… or Start fresh… in the lost-key window | this change |
+
+`<time>` is always digits (`Date.now()`). The start-fresh folder is a call the maintainer can reverse
+(below, *Calls*): the approval named the key files and the locked file; the folder is added on the
+same reasoning #133 used for `receipts-before-restore-…`.
+
+### The fences (the same ones #133 uses, nothing loosened)
+
+In `desktop/wipe-pending.mjs`, which only uses the file system:
+
+- **Only directly inside a `backups/` folder that is a real folder.** A backups folder that is a link
+  or junction is refused, never followed.
+- **Only DotAmi's own names**, matched in full: `^(?:receipts|database)-key-unreadable-\d+\.key$` for the
+  key files, `^dotami-locked-\d+\.db$` (and the same name with `-journal`) for the locked file, and
+  `receipts-before-start-fresh-\d+` added to the set-aside folder names. A name with a slash or `..`
+  can't match.
+- **Only regular files**, never a link wearing the name (checked when listing, and again just before
+  each removal). Inside a set-aside folder, only the receipt files DotAmi named and `receipts.key`;
+  anything else stays, and the folder with it; the folder is removed with `rmdir`, never recursively.
+- **The locked file and its journal count as one.** The journal goes first, then the file, so a
+  removal cut short leaves the file there (still counted, still owed), never a lone journal the page
+  doesn't count. A journal whose file is already gone is still found and counted under its file's
+  name, so no part of a locked file is left out of reach.
+
+### Counted, checked, owed
+
+- **Two new counts beside the safety copies'**: *Set-aside key files* and *Locked data files*, both
+  counted as files (a locked file and its journal are one). The start-fresh folder is counted with the
+  set-aside receipt folders. `lib/privacy/holdings.ts` reads them for the page (names counted, nothing
+  opened); `lib/privacy/kept-links.ts` names their keys for the page and the server.
+- **The counts are checked** against what the page showed, like the copies' and the folders': a
+  different count deletes nothing and answers with the fresh counts.
+- **The wipe-pending note names them before anything is removed** (`keyFiles`, `lockedFiles`: DotAmi's
+  own names only). Anything another program holds stays owed, finished by *Finish it now* or at the
+  desktop app's next start, and only then. A note an earlier version wrote, without these lists, owes
+  none of them.
+
+### What the person sees
+
+- **The box's line** shows the safety copies always, and each set-aside kind only when there is some
+  ("Safety copies: 0 · Set-aside receipt folders: 1 · Set-aside key files: 2 · Locked data files: 1").
+  A zero for a kind most people never have would only puzzle them.
+- **The amber warning** (under the ticked box, and at both asks) names each kind that is there, in
+  plain words, and ends: afterwards the locked data and those receipts can never be opened, even if the
+  old key comes back. It is built from what is there (`setAsideWarning` in `lib/privacy/inventory.ts`),
+  so it never names something the folder doesn't hold.
+- **With the box unticked, the first ask says they stay**, one line per kind that is there; the locked
+  file's line adds that it could still be opened if its key comes back.
+- **The result** counts each kind deleted and left; one another program holds is said in amber, with
+  *Try the wipe again*.
+- **What Delete doesn't reach** drops its two lines about these files and says what is really left in
+  `backups/`: files and folders the person put there. Nothing DotAmi sets aside there is out of the
+  box's reach any more, and the line says so.
+- The lost-key window's own words are unchanged: Start fresh and the restore still delete nothing
+  ("kept in the backups folder, as they are"); they stay until the person ticks the box.
+
+### Why one box is safe enough
+
+Each of these files is useful only with the others or with a key that couldn't be opened: an old key
+file opens only the locked file, the safety copies and the set-aside receipts it locked, and the same
+box clears all of those. The warning names each kind and says plainly that the loss is for good.
+
+### Calls the maintainer can reverse
+
+- **The start-fresh receipts folder goes too.** Its receipts are locked with the *receipts'* key, which
+  Start fresh doesn't touch: when only the data file's key was lost, that key may still open them. But
+  the new data file describes none of them and DotAmi has no way to bring them back into the app, so
+  inside DotAmi they are as unreachable as `receipts-before-restore-…`. Clearing them gives up the only
+  copy of those receipt files in the data folder; the warning says so.
+- **Zero counts of the set-aside kinds are hidden** on the box's line and at the first ask.
+
+### Tests (each must fail when its rule is removed)
+
+- `tests/desktop-wipe-pending.spec.ts`: only the names above, never through a link or junction, the
+  journal with its file (and a lone journal), the person's own files kept, a byte scan after; a file
+  another program holds stays owed; the note names them, and an older note owes none; finishing at
+  start-up.
+- `tests/privacy-delete.spec.ts`: the counts checked (a different count deletes nothing, no note left);
+  ticked, every byte of them is gone from every file beside the data file; unticked, they stay; the note
+  owes them before the first removal; one held open stays owed and *Finish it now* finishes it; the
+  warning's words for each kind.
+- `tests/privacy-holdings.spec.ts`: the page's counts, and nothing of what is inside.
+- `e2e/your-data.spec.ts`: the box's line, the warning under it and at both asks, the unticked line,
+  the result, and *What Delete doesn't reach* no longer naming them.
+- `e2e-desktop/desktop.spec.ts`: a real Start fresh (with a receipts key file this account can't open,
+  so a real `receipts-key-unreadable-….key` is set aside too); Delete with the box unticked keeps all of
+  it and says so; ticked, the locked file (which held the person's words, readable with the old key),
+  both key files and the folder are gone, and no file in the data folder holds a byte run of any of
+  them.
