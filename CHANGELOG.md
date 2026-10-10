@@ -14,11 +14,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file, with the same four buttons: **Encrypt now** locks the file from its first byte as before, **Not
   now** keeps it unencrypted and asks again at the next start, and **Never…** keeps it unencrypted after
   a second warning, with the Settings switch unticked. **Back up first…** is shown turned off there, with
-  a line saying there's nothing to back up yet. In Settings, **Encrypt the data file** can now be
+  a line saying there's no data file yet to back up. In Settings, **Encrypt the data file** can now be
   unticked while the file is encrypted: a warning says what that exposes and that backups stay locked
   with their passphrase either way; then the next start decrypts the data file and its safety copies,
   in steps a crash can't lose data in, and deletes the key once nothing is locked with it. Only the data
-  file: receipt files keep their own encryption.
+  file: receipt files keep their own encryption. A small note records the turn-off, so a key is never
+  deleted on a guess (a data file moved out of the folder keeps its key); a data file that fails its check
+  stays encrypted and DotAmi starts as before; a decrypted copy another program blocks is wiped at once;
+  and a safety copy deleted from the Delete menu part-way no longer stops DotAmi from starting.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have

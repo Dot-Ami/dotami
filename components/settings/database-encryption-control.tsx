@@ -80,10 +80,12 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
         >
           <p className="font-medium">Turn off locking for the data file?</p>
           <p className="mt-1">
-            At DotAmi&apos;s next start, your data file and its safety copies are decrypted and their key is deleted. After
-            that, anyone who can read your data folder, a copy of it, or this computer&apos;s disk outside Windows can read
-            your ideas, figures, expense records and statements. Backups you make with File → Back up… stay locked with
-            their passphrase either way. Your receipt files keep their own encryption.
+            At DotAmi&apos;s next start, your data file and its safety copies are decrypted, and their key is deleted once
+            nothing is locked with it. After that, anyone who can read your data folder, a copy of it, or this
+            computer&apos;s disk outside Windows can read your ideas, figures, expense records and statements. A copy of the
+            whole data folder holds its own copy of the key, so it still opens on your Windows account. Backups you make
+            with File → Back up… stay locked with their passphrase either way. Your receipt files keep their own
+            encryption.
           </p>
           <div className="mt-2 flex gap-2">
             <button type="button" className="rounded-full border border-rule px-3 py-0.5 text-paper" onClick={() => setConfirming(false)}>

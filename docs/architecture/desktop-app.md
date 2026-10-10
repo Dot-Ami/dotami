@@ -51,7 +51,7 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    new data folder and an existing plain file are both asked about first, unless the person said
    "Never" (`desktop/encrypt-ask.html`: **Back up first…**, **Encrypt now**, **Not now**, **Never…**,
    with a second warning before Never; for a new folder **Back up first…** is shown turned off, with a
-   line saying there's nothing to back up yet, and it isn't asked right after **Start fresh**); for a new
+   line saying there's no data file yet, so nothing to back up, and it isn't asked right after **Start fresh**); for a new
    folder **Encrypt now** makes a key (a key that already opens is kept) and the file is created
    encrypted from its first byte; no key store leaves the file plain. Encrypting writes an encrypted copy
    straight through SQLite (never a second plain copy), checks it holds every table's rows, swaps it in
@@ -59,7 +59,11 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    plain safety copies in `backups/` are encrypted the same way. When the person has turned **Encrypt
    the data file** off in Settings, the reverse runs instead (`desktop/decrypt-database.mjs`,
    database-encryption.md § 15): the data file and the safety copies locked with its key are decrypted,
-   crash-safe the same way, and `database.key` is deleted once nothing opens with it. The receipts' key
+   crash-safe the same way, and `database.key` is deleted once nothing opens with it. A small note,
+   `database-turned-off.json`, records that locking was turned off with that key: later starts finish the
+   job (a safety copy another program held, the key) only while it is there, never by guessing from the
+   files, so a data file moved out of the folder keeps its key. A file that fails its check stays
+   encrypted, the start goes on, and the switch is ticked again. The receipts' key
    (step 4) is opened before this, so a backup made from the window carries the receipts. The log gets
    the step and which button was pressed, never a value.
 4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).

@@ -44,12 +44,23 @@ person is asked).
   plain file, and **Not now** or **Never…** leave it unencrypted (no `database.key` is made). Unticking
   **Encrypt the data file** in Settings, after a warning, makes the next start decrypt the data file and
   the safety copies locked with its key, then overwrite `database.key` with zeros and delete it, once
-  nothing opens with it any more (a safety copy another program has open keeps it until a later start).
-  While that runs, three files of DotAmi's own may be in the data folder for moments: a note,
+  nothing opens with it any more (a safety copy another program has open keeps it until a later start;
+  one an earlier Delete still owes is left encrypted for that delete, never decrypted first). A fourth file,
+  `database-turned-off.json`, records that locking was turned off: it holds only the key's id (the 16
+  characters `database.key` shows), never the key, and later starts decrypt a safety copy or delete the key
+  only while it names that key; it goes when the key is deleted or the switch is ticked again. Without it,
+  DotAmi never decrypts a safety copy or deletes a key on its own (until the review of 2026-10-10 a key
+  that opened beside a plain file after "Never" was taken for a turn-off: a data file moved out of the
+  folder, then Never for the new one, would have lost its key). A data file that fails SQLite's own check
+  isn't decrypted: it stays encrypted, DotAmi starts as before, and the switch is ticked again.
+  While a file is decrypted, three files of DotAmi's own may be in the data folder for moments: a note,
   `database-decrypting.json` (which file, the step, the copy's size and SHA-256), the decrypted copy
   being made, `dotami.db.decrypting` (everything the data file holds, unencrypted, as the person chose),
   and the encrypted original being wiped, `dotami.db.encrypted-to-wipe`; the same suffixes can follow a
-  safety copy's name in `backups/`. *What DotAmi knows about you* lists all three. Only the data file:
+  safety copy's name in `backups/`. If another program holds the file being decrypted, the decrypted copy
+  is overwritten with zeros and deleted at once (until the review of 2026-10-10 it stayed beside the
+  encrypted file until the next start, still holding what Delete removed meanwhile). *What DotAmi knows
+  about you* lists all four files. Only the data file:
   receipt files keep their own encryption and their own key. A copy run from source is unchanged
   ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
   [database-encryption.md § 15](architecture/database-encryption.md)).
@@ -500,15 +511,18 @@ person is asked).
 
 - **A brand-new data folder is asked before its data file is locked ([8i], 2026-10-10)**, with the same
   window and four buttons as an existing plain file ([`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html));
-  **Back up first…** is shown turned off, with the line "This is a new data folder, so there's nothing to
-  back up yet." It isn't asked right after **Start fresh**, whose second question already promised an
+  **Back up first…** is shown turned off, with the line "There's no data file yet, so there's nothing to
+  back up." (until the review of 2026-10-10: "This is a new data folder, so there's nothing to back up
+  yet."), and the sentence about copies already made and an old file's bytes is left out (there is none). It isn't asked right after **Start fresh**, whose second question already promised an
   encrypted file, nor when there is no key store.
 - **Turning locking off is asked first ([8i], 2026-10-10)**: unticking **Encrypt the data file** in
   Settings while the file is encrypted shows, before anything is saved, "At DotAmi's next start, your
-  data file and its safety copies are decrypted and their key is deleted. After that, anyone who can read
-  your data folder, a copy of it, or this computer's disk outside Windows can read your ideas, figures,
-  expense records and statements. Backups you make with File → Back up… stay locked with their passphrase
-  either way. Your receipt files keep their own encryption.", with **Go back** and **Turn it off**
+  data file and its safety copies are decrypted, and their key is deleted once nothing is locked with it.
+  After that, anyone who can read your data folder, a copy of it, or this computer's disk outside Windows can
+  read your ideas, figures, expense records and statements. A copy of the whole data folder holds its own
+  copy of the key, so it still opens on your Windows account. Backups you make with File → Back up… stay
+  locked with their passphrase either way. Your receipt files keep their own encryption.", with **Go back**
+  and **Turn it off**
   ([`components/settings/database-encryption-control.tsx`](../components/settings/database-encryption-control.tsx)).
 - **The restart after *Start a new key* needs no new answer ([8i], 2026-10-10)**: the second ask now says
   that DotAmi then restarts by itself, and after the move the page says "DotAmi will restart now to start
@@ -629,8 +643,12 @@ person is asked).
 - **The data file's key, `database.key` ([8i], 2026-10-10)**, is removed by DotAmi when the person turns
   **Encrypt the data file** off in Settings: the next start decrypts the data file and its safety copies,
   then overwrites the key file with zeros and deletes it, once nothing in the data folder opens with it.
-  Copies of the folder made while it was encrypted stay encrypted, and can't be opened once the key is
-  gone; passphrase-locked backups don't depend on it and restore either way.
+  Copies of the data file alone made while it was encrypted stay encrypted, and can't be opened once the
+  key is deleted. A copy of the whole data folder holds its own copy of the key (and of the file Windows
+  unwraps it with), so it still opens on this Windows account, whether or not the key here is deleted
+  (until the review of 2026-10-10 this line said folder copies couldn't be opened once the key was gone,
+  which isn't true of a whole folder). Passphrase-locked backups don't depend on it and restore either way.
+  The note `database-turned-off.json` goes with the key.
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
   the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
   folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's

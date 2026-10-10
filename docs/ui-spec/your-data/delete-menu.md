@@ -35,7 +35,9 @@ with where they are kept, before confirming.
    - **Your settings** — every saved choice goes back to its default. [8i] That includes whether to
      encrypt the data file: a "Never" is forgotten, so the desktop app's next start asks again (an
      encrypted file stays encrypted); the box says so. Since 2026-10-10 its "learn more" also says that a
-     decryption asked for in Settings (the switch turned off) that hasn't happened yet is cancelled.
+     decryption asked for in Settings (the switch turned off) that hasn't happened yet is cancelled, and
+     (since the review of 2026-10-10) its main sentence says that then the file stays encrypted and nothing
+     is asked.
    - **Safety copies in the backups folder** (added 2026-10-08) — DotAmi's own whole copies of the
      data file, made before each update and restore. Its sentence, in amber, is the warning:
      afterwards only a backup saved somewhere else could bring anything back. It counts files, not

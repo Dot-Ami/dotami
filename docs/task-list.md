@@ -268,7 +268,12 @@ roadmap's build order.
     - [x] A brand-new data folder asked the same four choices (Back up first… turned off there), and
       the Settings switch able to turn locking off: the next start decrypts the data file and its safety
       copies, crash-safe, and deletes the key once nothing opens with it (the maintainer said yes,
-      2026-10-10; [database-encryption.md § 15](architecture/database-encryption.md))
+      2026-10-10; [database-encryption.md § 15](architecture/database-encryption.md)); after review, the
+      turn-off is recorded in a note naming the key, a damaged file stays encrypted without stopping the
+      start, and a blocked swap leaves no plain copy
+    - [ ] Found in review, older than this change: an encrypted data file left with a half-written change
+      (a power cut mid-write leaves its rollback journal) fails every start, because the key is checked
+      on a read-only open that can't roll the journal back (desktop/main.mjs opensWith)
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 

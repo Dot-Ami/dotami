@@ -24,3 +24,13 @@ export function resumeDecryption(
   | { action: "restart"; file: string };
 export function filesLockedWith(dataDir: string, key: Buffer): string[];
 export function deleteKeyWhenUnused(dataDir: string, key: Buffer, options?: { remove?: (file: string) => void }): { deleted: boolean; lockedLeft: number };
+export const TURNED_OFF_NOTE: string;
+export function markTurnedOff(dataDir: string, key: Buffer): void;
+export function turnedOffWith(dataDir: string, key: Buffer): boolean;
+export function clearTurnedOff(dataDir: string): void;
+export function finishTurningOff(
+  dataDir: string,
+  dbFile: string,
+  key: Buffer,
+  options: { files: readonly string[]; log?: (line: string) => void },
+): { ran: false } | { ran: true; decrypted: number; notYet: number; skipped: number; keyDeleted: boolean; lockedLeft: number };

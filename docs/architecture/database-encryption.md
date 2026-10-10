@@ -788,10 +788,15 @@ it is now a tick-box too (it was a line of text): ticked. Unticking it doesn't s
 shows a warning first, in amber:
 
 > **Turn off locking for the data file?** At DotAmi's next start, your data file and its safety copies
-> are decrypted and their key is deleted. After that, anyone who can read your data folder, a copy of it,
-> or this computer's disk outside Windows can read your ideas, figures, expense records and statements.
-> Backups you make with File → Back up… stay locked with their passphrase either way. Your receipt files
-> keep their own encryption.
+> are decrypted, and their key is deleted once nothing is locked with it. After that, anyone who can read
+> your data folder, a copy of it, or this computer's disk outside Windows can read your ideas, figures,
+> expense records and statements. A copy of the whole data folder holds its own copy of the key, so it
+> still opens on your Windows account. Backups you make with File → Back up… stay locked with their
+> passphrase either way. Your receipt files keep their own encryption.
+
+(The two sentences about "once nothing is locked with it" and the whole data folder were added after the
+review of 2026-10-10: a safety copy another program holds keeps the key until a later start, and a copy of
+the whole folder carries its own key, § 15.3 "What it can't promise".)
 
 with **Go back** and **Turn it off**. Only **Turn it off** saves `{ "on": false }` (the same setting,
 the same value "Never" saves). The status line then says "Off: DotAmi decrypts your data file the next

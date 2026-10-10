@@ -27,7 +27,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
-import { decryptFile, DecryptionStopped, deleteKeyWhenUnused, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
+import { clearTurnedOff, decryptFile, DecryptionStopped, finishTurningOff as finishTurnOff, markTurnedOff, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
 import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
@@ -379,9 +379,10 @@ function safetyCopyFiles() {
  * - an encrypted file whose setting says off (the person unticked "Encrypt the data file" in Settings): it
  *   and the safety copies locked with its key are decrypted, and the key deleted once nothing opens with it
  *   (desktop/decrypt-database.mjs; database-encryption.md § 15);
- * - a new data folder: the window asks first, with the same four answers (Back up first… turned off: there
- *   is nothing to back up yet); Encrypt now makes a key and the migrator creates the file encrypted from its
- *   first byte; Not now and Never leave it plain (§ 15.1);
+ * - no data file (a new data folder, or one whose file was moved away): the window asks first, with the same
+ *   four answers (Back up first… turned off: there is no data file to back up); Encrypt now makes a key (or
+ *   keeps one that opens) and the migrator creates the file encrypted from its first byte; Not now and Never
+ *   leave it plain, and a key already there stays as it is (§ 15.1);
  * - an existing plain file: unless the person said "Never" (the setting), the window asks first, with
  *   Back up first…, Encrypt now, Not now and Never;
  * - no key store: the file stays plain, and Settings says why.
@@ -467,6 +468,8 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     // [8i] The person unticked "Encrypt the data file" in Settings (§ 15.2): read from the encrypted file
     // itself, with its key. A decryption still owed (a busy file) is tried again here too.
     if (!readEncryptionChoice(key)) return turnLockingOff(key, say);
+    // Ticked again before a held-up decryption could happen: the turn-off is cancelled, and its note goes.
+    clearTurnedOff(dataDir);
   } else if (opened.state === "no-key-store") {
     if (afterStartFresh) return noPlainAfterStartFresh();
     databaseLock = { state: "no-key-store", plainLeft: 0 };
@@ -492,6 +495,8 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     if (!key) return afterStartFresh ? noPlainAfterStartFresh() : true;
     databaseKey = key;
     databaseLock = { state: "on", plainLeft: 0 };
+    // A key kept from an earlier turn-off is in use again: nothing about it is left to finish.
+    clearTurnedOff(dataDir);
     say("a new data file, encrypted from its first byte");
     return true;
   } else {
@@ -499,8 +504,11 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
     if (!readEncryptionChoice()) {
       databaseLock = { state: "never", plainLeft: 0 };
       say("kept unencrypted: the person chose Never (Settings can turn it on)");
-      // [8i] A key that still opens beside a plain file after "Never": locking was turned off and a safety
-      // copy another program held is still encrypted with it, or the key couldn't be deleted yet (§ 15.3).
+      // [8i] A key that still opens beside a plain file after "Never": if locking was turned off with it, a
+      // safety copy another program held may still be encrypted with it, or the key couldn't be deleted yet
+      // (§ 15.3). Only then, and only the turn-off note says so (finishTurningOff does nothing without it): a
+      // data file moved out of the folder, then Never for the new one, leaves the same files behind, and its
+      // key and encrypted safety copies must stay.
       if (key) finishTurningOff(key, say);
       return true;
     }
@@ -517,6 +525,8 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
       const done = encryptFile(dataDir, dbFile, key, { log: say });
       databaseKey = key;
       databaseLock = { state: "on", plainLeft: done.wipePending ? 1 : 0 };
+      // A key kept from an earlier turn-off is in use again: nothing about it is left to finish.
+      clearTurnedOff(dataDir);
       say(`the data file is encrypted${done.wipePending ? "; the plain copy's wipe is owed" : ""}`);
       // What an earlier version let Chromium cache (pages and answers holding the data in plain text) is
       // cleared once, now; from now on nothing is cached (lockDown).
@@ -562,11 +572,22 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
 /**
  * [8i] Locking turned off in Settings (database-encryption.md § 15.2–15.3): the data file is decrypted,
  * crash-safe (desktop/decrypt-database.mjs), then the safety copies locked with the same key, then the key
- * is deleted once nothing opens with it. A file another program holds moves nothing: the data file then
- * stays encrypted for this start (said in a message), and the next start tries again, since the setting
- * still says off. Returns false when the start must stop (it has said why).
+ * is deleted once nothing opens with it. The turn-off note is written first (desktop/decrypt-database.mjs
+ * markTurnedOff), so what is left for later starts is finished only for this key (§ 15.2). A file another
+ * program holds moves nothing: the data file then stays encrypted for this start (said in a message), and
+ * the next start tries again, since the setting still says off. A file that fails its check (or whose copy
+ * doesn't match) stays encrypted too, and the start goes on as before, with the switch turned back on so
+ * the next start doesn't stop on it again. Returns false when the start must stop (it has said why).
  */
 async function turnLockingOff(key, say) {
+  try {
+    markTurnedOff(dataDir, key);
+  } catch (error) {
+    // Without the note a later start couldn't finish the turn-off (§ 15.2), so nothing starts: the file
+    // stays encrypted for now, and the next start tries again, since the setting still says off.
+    say(`the turn-off note couldn't be written (${describeError(error)}); kept encrypted for now`);
+    return true;
+  }
   try {
     const done = decryptFile(dataDir, dbFile, key, { log: say });
     say(`locking was turned off in Settings; the data file was decrypted${done.wipePending ? " (the encrypted original's wipe is owed)" : ""}`);
@@ -575,6 +596,22 @@ async function turnLockingOff(key, say) {
     if (error.kind === "busy" || error.kind === "pending") {
       say(error.kind === "busy" ? "the data file was busy; kept encrypted for now" : "an earlier change is still owed; kept encrypted for now");
       await dialog.showMessageBox({ type: "info", title: "DotAmi", message: "Your data file wasn't decrypted this time.", detail: error.message });
+      return true;
+    }
+    if (error.kind === "damaged" || error.kind === "mismatch") {
+      // Nothing was changed, and DotAmi ran on this file until now, so it still can. Stopping here would stop
+      // every later start too (the setting asking for this lives inside the encrypted file, and only the
+      // running app can change it), so the switch goes back on and the turn-off is cancelled.
+      saveEncryptionChoice(true);
+      clearTurnedOff(dataDir);
+      say(`the data file couldn't be decrypted (${error.kind}); kept encrypted, and the switch was turned back on`);
+      // Not awaited: the message says what happened, and the main window doesn't wait for a click.
+      void dialog.showMessageBox({
+        type: "info",
+        title: "DotAmi",
+        message: "Your data file wasn't decrypted.",
+        detail: `${error.message}\n\nDotAmi works as before, with the file still encrypted. The “Encrypt the data file” switch in Settings is ticked again; untick it to try again.`,
+      });
       return true;
     }
     fail(error.message);
@@ -588,31 +625,29 @@ async function turnLockingOff(key, say) {
 }
 
 /**
- * [8i] The rest of turning locking off, also at any later start that finds the key beside a plain file after
- * "Never": the safety copies still encrypted with `key` are decrypted one by one (one another program holds
- * stays, and is tried again at the next start), then the key file is deleted, zero-filled first, only once
- * nothing in the data folder opens with it (desktop/decrypt-database.mjs deleteKeyWhenUnused). Never a reason
+ * [8i] The rest of turning locking off, also at a later start that finds the key beside a plain file after
+ * "Never" (desktop/decrypt-database.mjs finishTurningOff): only while the turn-off note names this key, the
+ * safety copies still encrypted with it are decrypted one by one (one another program holds stays, and is
+ * tried again at the next start; one an earlier Delete still owes is left to that delete), then the key
+ * file is deleted, zero-filled first, only once nothing in the data folder opens with it. Never a reason
  * not to start. The log gets counts only.
  */
 function finishTurningOff(key, say) {
-  let decrypted = 0;
-  for (const file of safetyCopyFiles()) {
-    try {
-      if (fileKind(file) !== "encrypted" || !opensWith(file, key)) continue;
-      decryptFile(dataDir, file, key, { log: say });
-      decrypted += 1;
-    } catch (error) {
-      say(`a safety copy couldn't be decrypted yet (${error instanceof DecryptionStopped ? error.kind : describeError(error)})`);
-    }
-  }
-  if (decrypted > 0) say(`${decrypted} safety cop${decrypted === 1 ? "y" : "ies"} decrypted`);
+  let done;
   try {
-    const { deleted, lockedLeft } = deleteKeyWhenUnused(dataDir, key);
-    if (deleted) say("nothing is locked with the key any more; it was deleted");
-    else if (lockedLeft > 0) say(`the key was kept: ${lockedLeft} file${lockedLeft === 1 ? " is" : "s are"} still locked with it; tried again at the next start`);
+    done = finishTurnOff(dataDir, dbFile, key, { files: safetyCopyFiles(), log: say });
   } catch (error) {
     say(`the key couldn't be deleted yet (${describeError(error)}); tried again at the next start`);
+    return;
   }
+  if (!done.ran) {
+    say("a key that opens was kept: locking wasn't turned off with it");
+    return;
+  }
+  if (done.decrypted > 0) say(`${done.decrypted} safety cop${done.decrypted === 1 ? "y" : "ies"} decrypted`);
+  if (done.skipped > 0) say(`${done.skipped} safety cop${done.skipped === 1 ? "y" : "ies"} left encrypted: an earlier Delete still owes ${done.skipped === 1 ? "it" : "them"}`);
+  if (done.keyDeleted) say("nothing is locked with the key any more; it was deleted");
+  else if (done.lockedLeft > 0) say(`the key was kept: ${done.lockedLeft} file${done.lockedLeft === 1 ? " is" : "s are"} still locked with it; tried again at the next start`);
 }
 
 /** Whether the encrypted file opens with `key` (read-only; nothing is written). */

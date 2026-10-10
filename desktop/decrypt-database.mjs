@@ -12,11 +12,15 @@
 //   6. the note says "wipe";
 //   7. the encrypted original (and a journal beside it) is overwritten with zeros, flushed and deleted;
 //      then the note is deleted.
+// A first rename another program refuses moves nothing; the plain copy and the note are wiped at once, so
+// no plain copy waits beside the encrypted file for the session, and the next start begins again.
 // resumeDecryption reads what is on the disk at a start and finishes, redoes or stops (§ 15.3's table).
 // The data folder has one note at a time across both directions: decryptFile refuses while either note is
 // there, and encryptFile does the same (encrypt-database.mjs).
 //
 // deleteKeyWhenUnused removes database.key, zero-filled first, only once nothing DotAmi keeps opens with it.
+// finishTurningOff does the rest of a turn-off at later starts (safety copies, then the key), and only while
+// the turn-off note (database-turned-off.json, § 15.2) names the key: it is never guessed from the files.
 // The log gets the step and counts only, never a name of the person's, a value or the key.
 import { createHash } from "node:crypto";
 import { closeSync, existsSync, fsyncSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -25,7 +29,9 @@ import path from "node:path";
 import { DATABASE_KEY_FILE } from "./database-key.mjs";
 import { contentsOf, copyIntoPlainFile, differences } from "./database-copy.mjs";
 import { DECRYPTING_NOTE, ENCRYPTING_NOTE, wipeFile } from "./encrypt-database.mjs";
+import { keyIdOf } from "./receipt-crypto.mjs";
 import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase } from "./sqlite.mjs";
+import { backupsFolder, readWipePending } from "./wipe-pending.mjs";
 
 export { DECRYPTING_NOTE };
 /** The plain copy being written beside the file. lib/privacy/inventory.ts FOLDERS lists it. */
@@ -106,24 +112,33 @@ function sha256Of(file) {
 
 /** The encrypted file's contents, after it opened with `key` and passed SQLite's integrity check (step 1). */
 function checkedEncrypted(file, key) {
-  const damaged = () =>
+  // Two sentences, because they mean different things to the person: a file that opened with its key but
+  // has a bad page isn't a key problem, and saying so would send them looking for the wrong fix.
+  const noKey = () =>
+    new DecryptionStopped("damaged", "The data file didn't open with its key, so DotAmi didn't decrypt it. It is still encrypted, and nothing was changed.");
+  const failedCheck = () =>
     new DecryptionStopped(
       "damaged",
-      "The data file didn't open with its key, or didn't pass SQLite's own check, so DotAmi didn't decrypt it. It is still encrypted, and nothing was changed.",
+      "The data file didn't pass SQLite's own check (part of it may be damaged), so DotAmi didn't decrypt it. It is still encrypted, and nothing was changed.",
     );
   let db;
   try {
     db = openDatabase(file, { key, readonly: true, fileMustExist: true });
-    if (db.pragma("integrity_check", { simple: true }) !== "ok") throw damaged();
+  } catch (error) {
+    if (error instanceof CannotOpenDatabase || /^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "")) throw noKey();
+    throw error;
+  }
+  try {
+    if (db.pragma("integrity_check", { simple: true }) !== "ok") throw failedCheck();
     return contentsOf(db);
   } catch (error) {
     if (error instanceof DecryptionStopped) throw error;
-    // A wrong key, or a page whose authentication tag no longer matches (SQLite3 Multiple Ciphers reports
-    // a changed page as SQLITE_CORRUPT or "not a database").
-    if (/^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "") || error instanceof CannotOpenDatabase) throw damaged();
+    // Opened with the key, then a page whose authentication tag no longer matches (SQLite3 Multiple Ciphers
+    // reports a changed page as SQLITE_CORRUPT or "not a database").
+    if (/^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "")) throw failedCheck();
     throw error;
   } finally {
-    db?.close();
+    db.close();
   }
 }
 
@@ -198,7 +213,14 @@ function swapAndWipe(dataDir, file, { log, crashAt, rename = renameSync }) {
   try {
     rename(file, old);
   } catch (error) {
-    // Nothing has moved: another program holds the file. The next start redoes this step.
+    // Nothing has moved: another program holds the file, which is still whole and encrypted. The plain copy
+    // goes now rather than at the next start: left in place it would sit beside the encrypted file for the
+    // whole session, holding whatever Delete removes meanwhile (and a safety copy deleted from the Delete
+    // menu would leave it behind for good). The copy first, then the note: if the copy can't be wiped, the
+    // note still names it and the next start deals with it. The setting still says off, so the next start
+    // decrypts again from step 1.
+    clearLeftovers(file, dataDir);
+    removeNote(dataDir);
     throw new DecryptionStopped(
       "busy",
       `Another program has ${path.basename(file)} open (${error?.code ?? "busy"}), so DotAmi couldn't decrypt it now. It is still encrypted, and nothing was changed; DotAmi tries again at its next start.`,
@@ -275,16 +297,36 @@ export function resumeDecryption(dataDir, key, { log = () => {} } = {}) {
   };
 
   if (note.step === "swap") {
-    if (kind === "encrypted" && copyMatches()) {
-      // Something could have written to the encrypted file since the copy was made: compare again.
-      const problems = checkCopy(copy, checkedEncrypted(file, key));
+    // An encrypted F beside its own .encrypted-to-wipe isn't a state DotAmi leaves: the first rename happened,
+    // and something (an older DotAmi, which ignores this note) made a new F since. The plain copy may be the
+    // only readable copy of the person's data, so nothing is wiped: it stops below.
+    if (kind === "encrypted" && copyMatches() && !existsSync(old)) {
+      // Something could have written to the encrypted file since the copy was made, or a page of it gone bad:
+      // check and compare again. Either way the encrypted file is whole as it is, so the copy just goes.
+      let problems;
+      try {
+        problems = checkCopy(copy, checkedEncrypted(file, key));
+      } catch (error) {
+        if (!(error instanceof DecryptionStopped)) throw error;
+        problems = [error.message];
+      }
       if (problems.length > 0) {
         clearLeftovers(file, dataDir);
         removeNote(dataDir);
-        log("[decrypt] the data file changed after its decrypted copy was made; the copy was thrown away");
+        log("[decrypt] the data file changed or failed its check after its decrypted copy was made; the copy was thrown away");
         return { action: "restart", file };
       }
       return { action: "finished", file, ...swapAndWipe(dataDir, file, { log }) };
+    }
+    // A safety copy deleted from the Delete menu (lib/privacy/delete.ts, desktop/wipe-pending.mjs) after a
+    // crash left its plain copy, and before this start: the person asked for it to be gone, so its plain
+    // copy goes too. Only in backups/, and only with no .encrypted-to-wipe (the swap never began): a missing
+    // data file is never taken for a deleted one.
+    if (kind === "absent" && copyMatches() && !existsSync(old) && path.dirname(note.file) === "backups") {
+      clearLeftovers(file, dataDir);
+      removeNote(dataDir);
+      log("[decrypt] a safety copy was deleted part-way through its decryption; its decrypted copy was wiped");
+      return { action: "cleared" };
     }
     if (kind === "absent" && copyMatches() && existsSync(old)) {
       renameSync(copy, file);
@@ -369,11 +411,108 @@ export function deleteKeyWhenUnused(dataDir, key, { remove } = {}) {
   const noted = existsSync(path.join(dataDir, ENCRYPTING_NOTE)) || existsSync(notePath(dataDir));
   if (lockedLeft > 0 || noted) return { deleted: false, lockedLeft };
   const keyFile = path.join(dataDir, DATABASE_KEY_FILE);
-  if (!existsSync(keyFile)) return { deleted: false, lockedLeft: 0 };
+  if (!existsSync(keyFile)) {
+    // Nothing left to delete, so the turn-off is finished.
+    clearTurnedOff(dataDir);
+    return { deleted: false, lockedLeft: 0 };
+  }
   wipeFile(keyFile, remove ? { remove } : undefined);
   // A key file a crash left half-written (database-key.mjs writes beside the name first).
   wipeFile(`${keyFile}.partial`);
+  // The turn-off note goes with the key it names: there is nothing left for it to finish.
+  clearTurnedOff(dataDir);
   return { deleted: true, lockedLeft: 0 };
+}
+
+/**
+ * [8i] The turn-off note (database-encryption.md § 15.2): written by the desktop app just before it decrypts
+ * the data file because the person turned locking off, naming the key by its id only (keyIdOf: the same 16
+ * hex characters database.key shows). What a turn-off leaves for later starts (a safety copy another
+ * program held, a key that couldn't be deleted yet) is finished only while this note names the key that
+ * opens. It is never guessed from "a plain data file, the setting off, and a key that opens": a data file
+ * moved out of the folder leaves exactly that behind once Never is chosen for the new one, and its key and
+ * encrypted safety copies must then stay. lib/privacy/inventory.ts FOLDERS lists it.
+ */
+export const TURNED_OFF_NOTE = "database-turned-off.json";
+
+function turnedOffPath(dataDir) {
+  return path.join(dataDir, TURNED_OFF_NOTE);
+}
+
+/** Writes the turn-off note for `key` (beside its name, flushed, then renamed, like the other notes). */
+export function markTurnedOff(dataDir, key) {
+  const file = turnedOffPath(dataDir);
+  const tmp = `${file}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify({ format: 1, keyId: keyIdOf(key) }, null, 2)}\n`);
+  flush(tmp);
+  renameSync(tmp, file);
+}
+
+/** Whether the turn-off note is there and names `key`. A note that can't be read names no key. */
+export function turnedOffWith(dataDir, key) {
+  try {
+    const note = JSON.parse(readFileSync(turnedOffPath(dataDir), "utf8"));
+    return note?.format === 1 && note.keyId === keyIdOf(key);
+  } catch {
+    return false;
+  }
+}
+
+/** Removes the turn-off note (and a .tmp a crash left): the turn-off was finished or cancelled. */
+export function clearTurnedOff(dataDir) {
+  rmSync(turnedOffPath(dataDir), { force: true });
+  rmSync(`${turnedOffPath(dataDir)}.tmp`, { force: true });
+}
+
+/**
+ * [8i] The rest of a turn-off, after the data file was decrypted (at the same start, or a later one): each of
+ * `files` (the safety copies DotAmi names itself, from desktop/main.mjs) still encrypted with `key` is
+ * decrypted, one at a time; then the key file is deleted once nothing opens with it (deleteKeyWhenUnused).
+ * Does nothing at all, { ran: false }, unless the turn-off note names `key`.
+ *
+ * A safety copy an earlier Delete still owes (its "wipe pending" note names it, because another program
+ * held it) is skipped: it is about to be deleted (desktop/wipe-pending.mjs finishPendingWipe, later in the
+ * same start), and decrypting it first would write the deleted data out in plain text. It keeps the key
+ * until it is gone; the next start deletes the key.
+ *
+ * Never throws for a file it can't decrypt yet (counted in notYet, tried at the next start). Throws only if
+ * the key file can't be wiped (another program holds it); the note stays, so the next start tries again.
+ * @param {string} dataDir
+ * @param {string} dbFile  the data file, for the Delete's "wipe pending" note beside it
+ * @param {Buffer} key
+ * @param {{ files: readonly string[], log?: (line: string) => void }} options
+ */
+export function finishTurningOff(dataDir, dbFile, key, { files, log = () => {} }) {
+  if (!turnedOffWith(dataDir, key)) return { ran: false };
+  const owed = new Set((readWipePending(dbFile)?.backups ?? []).map((name) => path.join(backupsFolder(dbFile), name)));
+  let decrypted = 0;
+  let notYet = 0;
+  let skipped = 0;
+  for (const file of files) {
+    try {
+      if (fileKind(file) !== "encrypted") continue;
+      if (owed.has(file)) {
+        skipped += 1;
+        continue;
+      }
+      // Only a copy this key opens: one locked with another key (set aside after a lost key) is left alone.
+      openDatabase(file, { key, readonly: true, fileMustExist: true }).close();
+    } catch (error) {
+      if (error instanceof CannotOpenDatabase) continue;
+      notYet += 1;
+      log(`[decrypt] a safety copy couldn't be checked yet (${error?.code ?? error?.name ?? "error"})`);
+      continue;
+    }
+    try {
+      decryptFile(dataDir, file, key, { log });
+      decrypted += 1;
+    } catch (error) {
+      notYet += 1;
+      log(`[decrypt] a safety copy couldn't be decrypted yet (${error instanceof DecryptionStopped ? error.kind : (error?.code ?? error?.name ?? "error")})`);
+    }
+  }
+  const { deleted, lockedLeft } = deleteKeyWhenUnused(dataDir, key);
+  return { ran: true, decrypted, notYet, skipped, keyDeleted: deleted, lockedLeft };
 }
 
 /** The sentence for files DotAmi didn't leave in this state: what is there, and that nothing was removed. */
