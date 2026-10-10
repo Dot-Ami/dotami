@@ -565,6 +565,8 @@ also offer **Not now**, keeping the file unencrypted?
 **My recommendation** (mine, not a fact): A, measured first; backups only plus *start fresh*, with
 the warnings; the passphrase kept optional; question 4 is yours alone, since it is about what people
 are asked. Not a reason to prefer A on its own: the adapter is the direction Prisma itself is going.
+(Kept as written before the answer: the maintainer chose to require the passphrase, and to let a
+person say "Not now" or "Never"; the decisions at the top hold.)
 
 **The build, if A** (stacked pull requests, each reviewable on its own):
 

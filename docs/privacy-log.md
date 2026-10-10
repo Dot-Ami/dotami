@@ -632,10 +632,14 @@ unless marked otherwise.
   unencrypted, a lost key would lose everything not in a backup, and an older DotAmi couldn't open
   the file (going back would need a backup). It would add one thing the person must agree to: a
   window before an existing data file is first encrypted, saying what changes and what a lost key
-  costs, with **Back up first…** and **Encrypt now** (whether it also offers **Not now** is one of the
-  questions). Waiting for the maintainer's choice of package, of what happens when the key is lost,
-  and of whether a person may decline
-  ([database-encryption.md](architecture/database-encryption.md), its § 12;
+  costs. The maintainer decided the four open questions on 2026-10-10: option A
+  (`better-sqlite3-multiple-ciphers` through Prisma's adapter), measured first and stopped if a person
+  would notice a slowdown; a lost key means backups only, plus a **Start fresh** button that keeps
+  the locked file (moved aside, never deleted), asked twice; **a backup passphrase is required** from
+  then on, and older backups still restore; and a person may say no: the window offers **Back up
+  first…**, **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a
+  switch in Settings to turn it on later). Built in the pull requests that follow this design
+  ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
   [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-not-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
   the backups folder. Still open: clearing what the desktop window stored in earlier launches, and

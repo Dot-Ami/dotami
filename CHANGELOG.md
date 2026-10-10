@@ -309,8 +309,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   backups and restore would change, encrypting an existing file once without ever losing data, a
   copy run from source (stays unencrypted, and says so), and losing the key. With reviews of the
   three candidate packages (`better-sqlite3-multiple-ciphers` with Prisma's adapter, `libsql`, the
-  SQLCipher packages) and the choices left for the maintainer, with their costs. Nothing changes in
-  the app (`docs/architecture/database-encryption.md`).
+  SQLCipher packages), the choices put to the maintainer with their costs, and the maintainer's four
+  decisions of 2026-10-10 (option A, measured first; backups only plus "Start fresh"; a passphrase
+  required on every backup; "Not now" and "Never" allowed). Nothing changes in the app
+  (`docs/architecture/database-encryption.md`).
 
 ### Fixed
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
