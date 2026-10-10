@@ -35,6 +35,8 @@ import {
   waitForLocalState,
   type KeyStore,
 } from "../desktop/receipt-key.mjs";
+import { isReceiptFileName, RECEIPT_EXTENSIONS } from "../desktop/backup.mjs";
+import { heic } from "./helpers/heic-files";
 import { png } from "./helpers/receipt-files";
 
 let dir = "";
@@ -513,6 +515,29 @@ describe("setting the locked receipts aside to start a new key", () => {
     expect(contents(dir)).toEqual(everything);
     // One rule for "locked" here and at the next start: nothing is left for it to count.
     expect(countLockedReceipts(path.join(dir, "receipts"), null)).toBe(0);
+  });
+
+  it("sets aside a locked receipt of every type DotAmi keeps, a HEIC photo included (the names backups go by)", async () => {
+    const original = await open(dir, accountStore("account-a"));
+    if (original.state !== "on") throw new Error("expected a key");
+    mkdirSync(path.join(dir, "receipts"), { recursive: true });
+    // One locked file per receipt extension backup.mjs knows ([8i] #130 added "heic"), so a type added
+    // later can't be left behind in receipts/ while its key is moved away.
+    const names = Object.values(RECEIPT_EXTENSIONS).map((ext) => {
+      const id = randomBytes(16).toString("hex");
+      const name = `${id}.${ext}`;
+      const bytes = ext === "heic" ? heic() : png(2, 2);
+      writeFileSync(path.join(dir, "receipts", name), encryptReceipt(bytes, { key: original.key, id }));
+      expect(isReceiptFileName(name)).toBe(true);
+      return name;
+    });
+    expect(names.some((n) => n.endsWith(".heic"))).toBe(true);
+    expect(await open(dir, accountStore("account-b"))).toMatchObject({ state: "key-unreadable", locked: names.length });
+
+    const result = setAsideLockedReceipts(dir, { now: () => 43 });
+    expect(result).toEqual({ folder: path.join(dir, "backups", "receipts-locked-43"), receipts: names.length, keyFile: true });
+    expect(readdirSync(path.join(dir, "backups", "receipts-locked-43")).sort()).toEqual([...names, RECEIPT_KEY_FILE].sort());
+    expect(readdirSync(path.join(dir, "receipts"))).toEqual([]);
   });
 
   it("after it, the next start makes a new key; putting the folder back opens the old receipts again", async () => {
