@@ -319,6 +319,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   every WebAssembly decoder needs that policy opened first), and a list of options with their costs
   for the maintainer to choose from. Nothing changes in the app: HEIC is still refused
   (`docs/connectors/heic-decoder-review.md`).
+- **A design for encrypting the database file** ([8i]) — what it would protect and what it
+  wouldn't, the key (wrapped by Windows' per-user protection, never in a backup), why Prisma's
+  built-in engine and Node's own SQLite can't open an encrypted file, how the desktop migrator,
+  backups and restore would change, encrypting an existing file once without ever losing data, a
+  copy run from source (stays unencrypted, and says so), and losing the key. With reviews of the
+  three candidate packages (`better-sqlite3-multiple-ciphers` with Prisma's adapter, `libsql`, the
+  SQLCipher packages), the choices put to the maintainer with their costs, and the maintainer's four
+  decisions of 2026-10-10 (option A, measured first; backups only plus "Start fresh"; a passphrase
+  required on every backup; "Not now" and "Never" allowed). Nothing changes in the app
+  (`docs/architecture/database-encryption.md`).
 
 ### Fixed
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved

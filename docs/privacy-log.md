@@ -673,6 +673,23 @@ unless marked otherwise.
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
+- **Encrypting the database file** — the maintainer said yes on 2026-10-09. Designed, with the
+  candidate packages reviewed by reading only; **not built, and nothing DotAmi keeps, sends or ships
+  changes yet**: the data file still relies on the computer's disk encryption. If built as designed,
+  DotAmi would keep one new file, `database.key` (a random key wrapped by Windows' per-user
+  protection), and ship one native package; a backup without a passphrase would still hold the data
+  unencrypted, a lost key would lose everything not in a backup, and an older DotAmi couldn't open
+  the file (going back would need a backup). It would add one thing the person must agree to: a
+  window before an existing data file is first encrypted, saying what changes and what a lost key
+  costs. The maintainer decided the four open questions on 2026-10-10: option A
+  (`better-sqlite3-multiple-ciphers` through Prisma's adapter), measured first and stopped if a person
+  would notice a slowdown; a lost key means backups only, plus a **Start fresh** button that keeps
+  the locked file (moved aside, never deleted), asked twice; **a backup passphrase is required** from
+  then on, and older backups still restore; and a person may say no: the window offers **Back up
+  first…**, **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a
+  switch in Settings to turn it on later). Built in the pull requests that follow this design
+  ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
+  [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-not-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
   the backups folder. Still open: clearing what the desktop window stored in earlier launches, and
   whether an agent may ever delete ([delete-menu.md](ui-spec/your-data/delete-menu.md#cleanup--open-questions)).

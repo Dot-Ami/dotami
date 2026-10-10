@@ -250,6 +250,12 @@ roadmap's build order.
     computer can't decode HEVC it is kept and the viewer says so. Not tried on a Mac
   - [ ] Before DotAmi is sold: the HEVC patent questions (they cover the Electron build already shipped)
     answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
+  - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
+    designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
+    the four decisions (option A measured first, backups only plus "Start fresh", a passphrase required
+    on every backup, "Not now" and "Never" allowed) are at the top of that page; then the build in
+    stacked pull requests (the Prisma connection, the key and first-start encryption, backups and
+    restore, "Start fresh")
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)
