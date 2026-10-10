@@ -71,7 +71,9 @@ says where it is going.
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), an existing plain file only after the
   person agrees, and never replaces a key that opens; a copy run from source keeps it plain;
-  `docs/architecture/database-encryption.md`) — `User` (single stub user, no
+  `docs/architecture/database-encryption.md`; every backup it writes is locked with a passphrase,
+  required since [8i]: `desktop/backup.mjs` `writeBackup` refuses one without, and older backups still
+  restore) — `User` (single stub user, no
   auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
