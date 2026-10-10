@@ -38,7 +38,7 @@ vi.mock("node:fs", async (importOriginal) => {
   };
   const wrapped = {
     ...real,
-    openSync: (file: never, ...rest: never[]) => (busy(held.open, file, "open"), real.openSync(file, ...rest)),
+    openSync: (...args: Parameters<typeof real.openSync>) => (busy(held.open, args[0], "open"), real.openSync(...args)),
     renameSync: (from: never, to: never) => (busy(held.rename, from, "rename"), real.renameSync(from, to)),
     rmSync: (target: never, options?: never) => (busy(held.remove, target, "unlink"), real.rmSync(target, options)),
     unlinkSync: (target: never) => (busy(held.remove, target, "unlink"), real.unlinkSync(target)),
@@ -521,7 +521,7 @@ describe("the list of set-aside folders the page shows", () => {
   it("answers only DotAmi's own window, and only while this start's key is open", () => {
     const account = accountStore("you");
     const log = () => {};
-    expect(listSetAsideReceipts(dir, { fromDotAmi: false, opened: onKey(randomBytes(32)), store: account, platform: WINDOWS, log })).toEqual({
+    expect(listSetAsideReceipts(dir, { fromDotAmi: false, opened: onKey(randomBytes(32)), store: account, platform: WINDOWS, readRows: () => new Map(), log })).toEqual({
       outcome: "refused",
       reason: "not-dotami-window",
     });
