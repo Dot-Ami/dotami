@@ -235,9 +235,14 @@ describe("bringing set-aside receipts back", () => {
     // The row says it is a PDF; the file is named .png.
     const otherType = lockedReceipt(folder, oldKey, { row: false });
     addRow(otherType.id, "application/pdf", otherType.plain);
-    // Its bytes no longer match its row: re-encrypted (validly) over different bytes.
+    // Its bytes no longer match its row: re-encrypted (validly) over different bytes of the same size, so
+    // only the SHA-256 can tell; and another over bytes of a different size.
     const changed = lockedReceipt(folder, oldKey);
-    writeFileSync(path.join(folder, changed.name), encryptReceipt(png(5, 5), { key: oldKey, id: changed.id }));
+    const sameSize = Buffer.from(changed.plain);
+    sameSize[sameSize.length - 1] ^= 0xff;
+    writeFileSync(path.join(folder, changed.name), encryptReceipt(sameSize, { key: oldKey, id: changed.id }));
+    const resized = lockedReceipt(folder, oldKey);
+    writeFileSync(path.join(folder, resized.name), encryptReceipt(png(5, 5), { key: oldKey, id: resized.id }));
     // A file that fails to open with the key its header names: one byte flipped near the end.
     const damaged = lockedReceipt(folder, oldKey);
     const damagedBytes = readFileSync(path.join(folder, damaged.name));
@@ -248,7 +253,7 @@ describe("bringing set-aside receipts back", () => {
     mkdirSync(receiptsDir(), { recursive: true });
     writeFileSync(path.join(receiptsDir(), there.name), "already here");
 
-    const leftNames = [noRow, otherType, changed, damaged, there].map((r) => r.name);
+    const leftNames = [noRow, otherType, changed, resized, damaged, there].map((r) => r.name);
     const before = snapshot();
     const { result, lines } = call("receipts-locked-3000", account, current);
     expect(result).toMatchObject({ outcome: "done", broughtBack: [good.name], oldCopiesLeft: [] });
@@ -257,6 +262,7 @@ describe("bringing set-aside receipts back", () => {
       [noRow.name]: "no-record",
       [otherType.name]: "no-record",
       [changed.name]: "changed",
+      [resized.name]: "changed",
       [damaged.name]: "changed",
       [there.name]: "already-there",
     });
@@ -265,7 +271,7 @@ describe("bringing set-aside receipts back", () => {
     for (const name of leftNames) expect(after[path.join("backups", "receipts-locked-3000", name)]).toBe(before[path.join("backups", "receipts-locked-3000", name)]);
     expect(readFileSync(path.join(receiptsDir(), there.name), "utf8")).toBe("already here");
     expect(readdirSync(receiptsDir()).sort()).toEqual([good.name, there.name].sort());
-    expect(lines).toEqual(["[desktop] set-aside receipts: 1 brought back, 5 left where they were"]);
+    expect(lines).toEqual(["[desktop] set-aside receipts: 1 brought back, 6 left where they were"]);
   });
 
   it("a write that fails part-way leaves that receipt where it was, removes only what it made, and the next receipt is still tried", () => {
