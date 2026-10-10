@@ -27,8 +27,9 @@ import {
 } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
+import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
-import { newReceiptKey, openReceiptKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
+import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe } from "./wipe-pending.mjs";
 
@@ -62,6 +63,11 @@ let dbFile = "";
  * @type {import("./receipt-key.mjs").OpenedReceiptKey | null}
  */
 let receiptKey = null;
+/**
+ * The "Preparing DotAmi…" window ([8i], desktop/preparing.mjs): shown only while a first start waits for
+ * Windows to save its own key, closed when the main window shows or the start fails.
+ */
+const preparing = preparingWindow(openPreparingWindow, { log: (line) => log?.write(`${line}\n`) });
 
 // Only the installed app updates itself, from GitHub Releases ([7d]); a copy run from the source
 // code updates with git. Tests switch the check off so they never reach the internet.
@@ -82,7 +88,11 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(start).catch((error) => fail("DotAmi couldn't start.", error));
 }
 
-app.on("window-all-closed", () => app.quit());
+// While a start is failing (fail() closes the preparing window, then shows its message), quitting is
+// already under way: closing that last window mustn't quit again under the message.
+app.on("window-all-closed", () => {
+  if (!quitting) app.quit();
+});
 app.on("before-quit", () => {
   quitting = true;
   server?.kill();
@@ -154,8 +164,9 @@ async function start() {
   // § 9). Before the server starts, so nothing else has the files open. The log gets counts only.
   try {
     // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
-    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs).
-    receiptKey = await openReceiptKey(dataDir, safeStorage);
+    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs); the
+    // preparing window is on the screen meanwhile (preparing.mjs), and only then.
+    receiptKey = await openReceiptKey(dataDir, safeStorage, { keyStoreSaved: waitShowingWindow(dataDir, preparing) });
   } catch (error) {
     return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
@@ -197,7 +208,11 @@ async function start() {
     // (tests/desktop-sandbox.spec.ts lists the switches and fails if one appears).
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(root, "desktop", "window-preload.cjs") },
   });
-  win.once("ready-to-show", () => win?.show());
+  win.once("ready-to-show", () => {
+    win?.show();
+    // In the same step, so there is never a moment with neither window on the screen.
+    preparing.close("the main window showed");
+  });
   await win.loadURL(origin).catch((error) => {
     // ERR_ABORTED: another navigation (a menu item clicked during start-up) replaced the first
     // load. That isn't a failure; treating it as one closed the app (seen 2026-10-05).
@@ -275,23 +290,17 @@ function serverEnv(own) {
   return env;
 }
 
-/**
- * [8i] What the server is told about the receipts' key (lib/expenses/receipts/lock.ts reads it): the
- * state, and the key itself only when it is open. The server takes the key out of its environment the
- * first time it reads it.
- */
-function receiptLockEnv(opened) {
-  if (opened.state === "on") return { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: opened.key.toString("base64") };
-  return { DOTAMI_RECEIPT_LOCK: opened.state };
-}
-
 /** The log line about the key: its state and what happened to it, never the key or its id. */
 function describeReceiptKey(opened) {
   if (opened.state === "on") {
     return `key open${opened.made ? " (made now)" : ""}${opened.setAside ? "; a key file this account couldn't open was moved to the backups folder" : ""}`;
   }
   if (opened.state === "no-key-store") return "the operating system's key store isn't available, so receipts are kept unencrypted";
-  const why = opened.missing ? "the key file is missing" : "the key file can't be opened by this account (or the key store isn't available)";
+  const why = opened.storeUnavailable
+    ? "the key store isn't available right now"
+    : opened.missing
+      ? "the key file is missing"
+      : "the key file can't be opened by this account";
   return `${why}; ${opened.locked} receipt file(s) are encrypted and can't be opened; nothing was changed`;
 }
 
@@ -558,6 +567,9 @@ async function restore() {
   // this computer's own key; or, when its key file can't be opened, a new key, kept in memory and
   // saved only once the person confirms (the restore then replaces every receipt the old key locked).
   const keyLost = receiptKey?.state === "key-unreadable";
+  // Start a new key (expense-records.md § 10) may have moved receipts.key aside since this start: the
+  // dialog then says it is missing, not that it goes to the backups folder.
+  const keyFileGone = keyLost && (receiptKey.missing || !existsSync(path.join(dataDir, RECEIPT_KEY_FILE)));
   const restoreKey = receiptKey?.state === "on" ? receiptKey.key : keyLost ? newReceiptKey() : null;
   let passphrase = "";
   let header;
@@ -595,7 +607,7 @@ async function restore() {
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
       restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
       (keyLost
-        ? receiptKey.missing
+        ? keyFileGone
           ? " The key to the receipts here is missing: they go to the backups folder as they are, and the restored receipts get a new key."
           : " The key to the receipts here can't be opened on this Windows account: it goes to the backups folder with them, and the restored receipts get a new key."
         : ""),
@@ -714,11 +726,35 @@ function receiptFileCount(folder) {
   }
 }
 
+/**
+ * The "Preparing DotAmi…" window: small, local, no script (desktop/preparing.html's own policy lets it
+ * load and reach nothing), and with no working close button, since closing it would end a start half
+ * done. Not the window the app runs in; lockDown() isn't in place yet when it opens, and it has no links.
+ */
+function openPreparingWindow() {
+  const window = new BrowserWindow({
+    width: 420,
+    height: 170,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    title: PREPARING_TITLE,
+    backgroundColor: "#161619",
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
+  });
+  window.setMenu(null);
+  void window.loadFile(path.join(root, "desktop", "preparing.html"));
+  return window;
+}
+
 /** Says what went wrong in plain words, then quits — never a blank window. */
 function fail(message, error) {
   if (error) console.error(error);
   if (quitting) return;
   quitting = true;
+  // Before the message, so the preparing window can't stay behind it.
+  preparing.close("start-up failed");
   // Into the log before the dialog: the dialog waits for a click, and the person may end the app
   // from the task manager instead. DotAmi's own message (it can name the data folder) and only the
   // error's name and code, as everywhere else in the log; a failed database update has already

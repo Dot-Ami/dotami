@@ -9,6 +9,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Start a new key for your receipts** ([8i]) — when the desktop app can't open the key your
+  receipts are locked with (a Windows profile reset, a data folder from another account or computer,
+  a deleted `receipts.key`), Settings, *What DotAmi knows about you* and the Expenses page now offer
+  *Start a new key…* under the amber line, besides putting the key back, restoring a backup or
+  deleting the receipts. It asks twice, saying first that the locked receipts are given up for good
+  unless the old key comes back. Nothing is deleted: the locked receipt files and the old key file are
+  moved into a new folder in the backups folder, and the page says where. The new key is made the next
+  time DotAmi starts. Your expense records stay; a receipt that was set aside says so, and where it is,
+  when you open it. Only DotAmi's own window can do this; an agent can't. It isn't offered while the
+  key is only out of reach for now (Windows' key store not available at the moment): the page then
+  says DotAmi tries again each time it starts. While no receipt can be added, an agreed record says so
+  instead of offering *Add a receipt*.
+- **"Preparing DotAmi…"** ([8i]) — the first start of a new data folder takes about ten seconds
+  while Windows saves the key that protects your receipts, and nothing was on the screen. A small
+  window now says what is happening, and closes as soon as DotAmi's window opens. Ordinary starts
+  don't show it.
 - **The four T2125 totals in "Add a figure"** ([8f]) — the list of what you can add gains business
   gross income (T2125 line 8299), business total expenses (9368), business net income before
   adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and

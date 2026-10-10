@@ -39,7 +39,8 @@ let app: ElectronApplication | null = null;
 // from `npm run desktop:package`) instead of running this checkout with Electron.
 const packagedExe = process.env.DOTAMI_DESKTOP_EXE;
 
-async function launch(dir = dataDir): Promise<Page> {
+/** Starts the app on a data folder, without waiting for its window. */
+async function startApp(dir = dataDir): Promise<ElectronApplication> {
   // ANTHROPIC_API_KEY is set here on purpose: the app must not pass a key from the shell it was
   // started from to its server (desktop/main.mjs serverEnv) — the settings page proves it didn't.
   // DOTAMI_E2E_RATE_LIMITS is set on purpose too: the browser tests' rate-limit switch must never
@@ -55,10 +56,32 @@ async function launch(dir = dataDir): Promise<Page> {
       DOTAMI_NO_UPDATE_CHECK: "1",
     },
   });
-  const page = await app.firstWindow();
-  await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\//);
-  return page;
+  return app;
 }
+
+/**
+ * The main window, once it shows DotAmi's own server. Not simply the first window: a first start shows
+ * the small "Preparing DotAmi…" window before it ([8i], desktop/preparing.mjs).
+ */
+async function mainWindow(electronApp: ElectronApplication): Promise<Page> {
+  const isMain = (p: Page) => /^http:\/\/127\.0\.0\.1:\d+\//.test(p.url());
+  await expect.poll(() => electronApp.windows().some(isMain), { timeout: 90_000, intervals: [100] }).toBe(true);
+  return electronApp.windows().find(isMain)!;
+}
+
+async function launch(dir = dataDir): Promise<Page> {
+  return mainWindow(await startApp(dir));
+}
+
+/** The titles of the app's open windows, read in its main process. */
+const windowTitles = () =>
+  app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed()).map((w) => w.getTitle()));
+
+/** The desktop log, and how much of it there is now (to read only what a later start writes). */
+const desktopLog = (dir = dataDir) => {
+  const file = path.join(dir, "logs", "server.log");
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+};
 
 async function quit() {
   await app?.close();
@@ -524,7 +547,8 @@ test("a receipts key this Windows account can't open: nothing is changed, and th
   expect(readFileSync(path.join(dataDir, "receipts.key")).equals(keyBefore)).toBe(true);
   expect(readFileSync(path.join(dataDir, "receipts", lockedName)).equals(locked)).toBe(true);
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
-    "the key file can't be opened by this account (or the key store isn't available); 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
+    // The log now says which of the two it is: the key store was there, so this account can't open it.
+    "the key file can't be opened by this account; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
   );
 });
 
@@ -554,6 +578,125 @@ test("a deleted receipts.key with encrypted receipts: no new key is made, and Se
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain(
     "the key file is missing; 1 receipt file(s) are encrypted and can't be opened; nothing was changed",
   );
+});
+
+test("Start a new key: the locked receipt and the key file are moved aside, and the next start makes a new key ([8i])", async () => {
+  const first = await launch();
+  // Never offered while the key opens fine.
+  await first.goto(new URL("/settings", first.url()).toString());
+  await expect(first.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  await expect(first.getByRole("button", { name: "Start a new key…" })).toHaveCount(0);
+  await quit();
+  // A key file wrapped for some other account, and a receipt locked with that key (as in the test above).
+  writeFileSync(
+    path.join(dataDir, "receipts.key"),
+    JSON.stringify({ format: 1, keyId: "0011223344556677", wrapped: Buffer.from("not something this account wrapped").toString("base64") }),
+  );
+  const lockedName = `${"7".repeat(32)}.pdf`;
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  const locked = Buffer.concat([Buffer.from("DOTAMI-RECEIPT\x01", "latin1"), Buffer.from("0011223344556677", "hex"), Buffer.alloc(40, 4)]);
+  writeFileSync(path.join(dataDir, "receipts", lockedName), locked);
+  const keyBefore = readFileSync(path.join(dataDir, "receipts.key"));
+
+  const page = await launch();
+  await page.goto(new URL("/settings", page.url()).toString());
+  const data = page.getByRole("region", { name: "Data and backups" });
+  await expect(data).toContainText("DotAmi can't open the key to your receipts.");
+  await data.getByRole("button", { name: "Start a new key…" }).click();
+  await page.getByRole("dialog", { name: "Start a new key, and give up the locked receipts?" }).getByRole("button", { name: "Continue…" }).click();
+  await page.getByRole("dialog", { name: "Are you sure?" }).getByRole("button", { name: "Give up the locked receipts and start a new key" }).click();
+  await expect(data).toContainText("DotAmi starts a new key for your receipts the next time it starts.");
+
+  // Moved, not deleted: the receipt and the key file side by side in one folder in backups/, named on the page.
+  const backups = path.join(dataDir, "backups");
+  const aside = readdirSync(backups).filter((n) => n.startsWith("receipts-locked-"));
+  expect(aside).toHaveLength(1);
+  const movedTo = path.join(backups, aside[0]);
+  await expect(data).toContainText(movedTo);
+  expect(readFileSync(path.join(movedTo, lockedName)).equals(locked)).toBe(true);
+  expect(readFileSync(path.join(movedTo, "receipts.key")).equals(keyBefore)).toBe(true);
+  expect(existsSync(path.join(dataDir, "receipts", lockedName))).toBe(false);
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+  await quit();
+
+  // The next start makes the new key (Local State is already written, so it doesn't wait).
+  const logBefore = desktopLog().length;
+  const again = await launch();
+  await again.goto(new URL("/settings", again.url()).toString());
+  await expect(again.getByRole("region", { name: "Data and backups" })).toContainText("Your receipt files are encrypted on this computer.");
+  const keyId = JSON.parse(readFileSync(path.join(dataDir, "receipts.key"), "utf8")).keyId as string;
+  expect(keyId).toMatch(/^[0-9a-f]{16}$/);
+  expect(keyId).not.toBe("0011223344556677");
+  const thisStart = desktopLog().slice(logBefore);
+  expect(thisStart).toContain("[desktop] receipts: key open (made now)");
+  expect(thisStart).not.toContain("Preparing DotAmi");
+  // The set-aside folder is left exactly as it was.
+  expect(readdirSync(movedTo).sort()).toEqual([lockedName, "receipts.key"]);
+});
+
+test("the first start of a new data folder shows \"Preparing DotAmi…\" while it waits, closed when the main window shows; an ordinary start never shows it ([8i])", async () => {
+  await startApp();
+  // Up during the wait for Windows' own key (about ten seconds).
+  await expect.poll(() => windowTitles(), { timeout: 30_000, intervals: [100] }).toContain("Preparing DotAmi…");
+  const page = await mainWindow(app!);
+  // Gone once the main window shows: one window left, the app's own.
+  await expect.poll(() => windowTitles(), { timeout: 10_000 }).toHaveLength(1);
+  expect(await windowTitles()).not.toContain("Preparing DotAmi…");
+  await expect(page.getByPlaceholder(/What are you building/)).toBeVisible();
+  const first = desktopLog();
+  const shown = first.indexOf('[desktop] showing the "Preparing DotAmi…" window while Windows saves its own key');
+  const keyMade = first.indexOf("[desktop] receipts: key open (made now)");
+  const closed = first.indexOf("[desktop] the preparing window closed (the main window showed)");
+  expect(shown).toBeGreaterThan(-1);
+  expect(keyMade).toBeGreaterThan(shown);
+  expect(closed).toBeGreaterThan(keyMade);
+  await quit();
+
+  // An ordinary start: the key opens, nothing waits, and the window never opens.
+  const before = desktopLog().length;
+  await launch();
+  expect(await windowTitles()).toHaveLength(1);
+  const second = desktopLog().slice(before);
+  expect(second).toContain("[desktop] receipts: key open\n");
+  expect(second).not.toContain("Preparing DotAmi");
+  expect(second).not.toContain("preparing window");
+});
+
+test("a start that fails while \"Preparing DotAmi…\" is up closes it before the failure message, which still shows ([8i])", async () => {
+  // A folder where the new key file is first written: saving the key fails right after the wait.
+  mkdirSync(path.join(dataDir, "receipts.key.partial"));
+  await startApp();
+  await expect.poll(() => windowTitles(), { timeout: 30_000, intervals: [100] }).toContain("Preparing DotAmi…");
+  // The failure message is answered here so the test can read it, and the app is kept open to look.
+  await app!.evaluate(({ app: electronApp, BrowserWindow, dialog }) => {
+    const seen = globalThis as unknown as { __failure: unknown; __realQuit: () => void; __quitAsked: boolean };
+    seen.__failure = null;
+    seen.__quitAsked = false;
+    seen.__realQuit = electronApp.quit.bind(electronApp);
+    electronApp.quit = () => {
+      seen.__quitAsked = true;
+    };
+    dialog.showErrorBox = (_title: string, message: string) => {
+      seen.__failure = { message, windows: BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed()).map((w) => w.getTitle()) };
+    };
+  });
+  const failure = () => app!.evaluate(() => (globalThis as unknown as { __failure: { message: string; windows: string[] } | null }).__failure);
+  await expect.poll(failure, { timeout: 60_000 }).not.toBeNull();
+  const shown = (await failure())!;
+  // The message showed, and when it did, no window was left behind it.
+  expect(shown.message).toContain("DotAmi couldn't prepare the key that encrypts your receipts");
+  expect(shown.windows).toEqual([]);
+  expect(await app!.evaluate(() => (globalThis as unknown as { __quitAsked: boolean }).__quitAsked)).toBe(true);
+  const log = desktopLog();
+  expect(log.indexOf("[desktop] the preparing window closed (start-up failed)")).toBeGreaterThan(-1);
+  expect(log.indexOf("[desktop] stopped: DotAmi couldn't prepare the key")).toBeGreaterThan(log.indexOf("[desktop] the preparing window closed (start-up failed)"));
+  expect(existsSync(path.join(dataDir, "receipts.key"))).toBe(false);
+
+  // Now let it quit for real.
+  const closedApp = app!.waitForEvent("close");
+  await app!.evaluate(() => (globalThis as unknown as { __realQuit: () => void }).__realQuit()).catch(() => {});
+  await closedApp;
+  app = null;
 });
 
 test("last year's return is read inside the app, in a worker that can reach nothing ([8f])", async () => {

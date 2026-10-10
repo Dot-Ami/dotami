@@ -16,7 +16,7 @@
  * Every name and number is invented.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -396,5 +396,18 @@ describe("POST /api/expenses/receipt/file", () => {
     expect(((await res.json()) as { error: string }).error).toMatch(/isn't in the receipts folder any more/);
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
+  });
+
+  it("a receipt set aside when a new key was started says so, and in which folder (expense-records.md § 10)", async () => {
+    const { id, stored } = await withReceipt(png(4, 2));
+    const aside = path.join(path.dirname(folder), "backups", "receipts-locked-77");
+    mkdirSync(aside, { recursive: true });
+    renameSync(stored, path.join(aside, path.basename(stored)));
+    const res = await fileRoute.POST(post({ expenseId: id }));
+    expect(res.status).toBe(404);
+    const { error } = (await res.json()) as { error: string };
+    expect(error).toBe(
+      `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key. To keep a receipt on this record, remove this one and add the file again.`,
+    );
   });
 });

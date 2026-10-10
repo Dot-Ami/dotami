@@ -474,8 +474,8 @@ export const KEPT_BY_DELETE: readonly { model: string; why: string }[] = [
  */
 export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   {
-    name: "Receipts folders a restore moved into the backups folder",
-    why: "Not touched, even with “Safety copies in the backups folder” ticked: that box deletes only DotAmi's copies of the data file. Before a restore, the receipts folder is moved into the backups folder whole, as it was (receipts-before-restore-…), so it still holds the receipt files you had then. To remove them, close DotAmi and delete those folders (the backups folder's path is above).",
+    name: "Receipts folders moved into the backups folder",
+    why: "Not touched, even with “Safety copies in the backups folder” ticked: that box deletes only DotAmi's copies of the data file. Before a restore, the receipts folder is moved into the backups folder whole, as it was (receipts-before-restore-…), so it still holds the receipt files you had then. Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder there too (receipts-locked-…). To remove them, close DotAmi and delete those folders (the backups folder's path is above).",
   },
   {
     name: "What the window stored in earlier launches",
@@ -546,7 +546,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "receipts.key",
     name: "The key to your receipt files",
     holds:
-      "The key that encrypts your receipt files, itself encrypted by Windows for your Windows account only (with the protection Windows gives each account's secrets; Electron, which the desktop app is built on, keeps its own part of that in a file named Local State in the same folder). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses the receipts except those in a backup. Made the first time the desktop app starts; never removed by DotAmi. If Windows can't open it and no receipt is locked with it, it is moved to the safety copies folder and a new one is made.",
+      "The key that encrypts your receipt files, itself encrypted by Windows for your Windows account only (with the protection Windows gives each account's secrets; Electron, which the desktop app is built on, keeps its own part of that in a file named Local State in the same folder). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses the receipts except those in a backup. Made the first time the desktop app starts; never removed by DotAmi. If Windows can't open it and no receipt is locked with it, it is moved to the safety copies folder and a new one is made; if receipts are locked with it, it moves there only when you press Start a new key, beside the receipts it locks.",
     writtenBy: { file: "desktop/receipt-key.mjs", mentions: 'RECEIPT_KEY_FILE = "receipts.key"' },
     desktopOnly: true,
   },
@@ -555,7 +555,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "backups",
     name: "Safety copies",
     holds:
-      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was.",
+      "Whole copies of the data file, made before each database update and before each restore. Each one holds everything the file held at that moment, including figures you have since taken back. Before a restore, the receipts folder is moved here too, whole, as it was. Start a new key moves the receipts locked with a key that can't be opened, and that key file, into a folder here (receipts-locked-…), never deleted.",
     writtenBy: { file: "desktop/migrate.mjs", mentions: '"backups"' },
     desktopOnly: true,
   },
@@ -662,6 +662,11 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
     file: "desktop/main.mjs",
     call: 'loadFile(path.join(root, "desktop", "passphrase.html")',
     why: "The passphrase window: a page shipped in the app and loaded from disk. Its own Content-Security-Policy is default-src 'none' (desktop/passphrase.html), so the page can't make a connection, and desktop/passphrase-preload.cjs lets it send back only the passphrase or a cancel.",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: 'loadFile(path.join(root, "desktop", "preparing.html")',
+    why: "The \"Preparing DotAmi…\" window ([8i]), shown only while a first start waits for Windows to save its own key: a page shipped in the app and loaded from disk, with no script and no preload. Its own Content-Security-Policy is default-src 'none' (desktop/preparing.html), so the page can't load or reach anything.",
   },
 ];
 

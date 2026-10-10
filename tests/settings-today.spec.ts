@@ -70,7 +70,9 @@ describe("readSettingsToday", () => {
     expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "no-key-store" }, cwd).receipts).toBe("no-key-store");
     expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "key-unreadable" }, cwd).receipts).toBe("key-unreadable");
     // "on" without a usable key is not "on": nothing may claim encryption that isn't there.
-    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "on" }, cwd).receipts).toBe("key-unreadable");
+    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "key-out-of-reach" }, cwd).receipts).toBe("key-out-of-reach");
+    // ... nor "key-unreadable", which offers Start a new key: a key that isn't one is out of reach.
+    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "on" }, cwd).receipts).toBe("key-out-of-reach");
   });
 
   it("reports the version from package.json", () => {

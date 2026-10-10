@@ -60,7 +60,9 @@ says where it is going.
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
   `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
-  `receipt/remove` / `receipt/file`, the last returning a receipt's bytes only after its size and SHA-256 match) · `settings` (GET/PUT
+  `receipt/remove` / `receipt/file`, the last returning a receipt's bytes only after its size and SHA-256 match, and
+  `receipt/new-key`, which moves the locked receipt files and `receipts.key` into `backups/` and acts only while
+  the receipts' key can't be opened, lock state `key-unreadable`) · `settings` (GET/PUT
   one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers

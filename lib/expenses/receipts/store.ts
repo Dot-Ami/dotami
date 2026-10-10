@@ -43,7 +43,7 @@ import { databaseFilePath } from "@/lib/settings/today";
 import { findPersonExpense, rowToExpense } from "../store";
 import type { ExpenseView } from "../types";
 import { receiptLock, type ReceiptLock } from "./lock";
-import { LOCKED_RECEIPT_MESSAGES } from "./protection";
+import { LOCKED_RECEIPT_MESSAGES, receiptsCanBeAdded } from "./protection";
 import { RECEIPT_REFUSALS } from "./refusals";
 import { sniffReceipt } from "./sniff";
 import { extensionOf, isReceiptType, MAX_RECEIPT_BYTES, RECEIPT_ID, RECEIPT_TYPES, type ReceiptType } from "./types";
@@ -109,6 +109,8 @@ function receiptBytesOf(file: Buffer, id: string, lock: ReceiptLock): Buffer | n
     case "no-key-store":
       throw new ReceiptError(LOCKED_RECEIPT_MESSAGES.noKeyStore, 409);
     case "key-unreadable":
+    case "key-out-of-reach":
+    case "new-key-at-restart":
       throw keyUnreadable();
   }
   try {
@@ -142,7 +144,8 @@ export async function addReceipt(
   lock: ReceiptLock = receiptLock(),
 ): Promise<ExpenseView> {
   if (!folder) throw noFolder();
-  if (lock.state === "key-unreadable") throw keyUnreadable();
+  // No key to encrypt with: the old one can't be opened, or a new one comes only at the next start.
+  if (!receiptsCanBeAdded(lock.state)) throw keyUnreadable();
   if (typeof expenseId !== "string" || expenseId.length === 0) throw new ReceiptError("Say which expense record the receipt is for.", 400);
 
   const sniffed = sniffReceipt(bytes);
@@ -405,6 +408,13 @@ export async function readReceiptFile(
     handle = await open(file, "r");
   } catch (error) {
     if ((error as { code?: unknown })?.code === "ENOENT") {
+      const aside = await setAsideFolderHolding(folder, path.basename(file));
+      if (aside) {
+        throw new ReceiptError(
+          `This receipt was set aside when DotAmi started a new key, because the old key couldn't be opened. It is in ${aside}, and opens again only with the old key. To keep a receipt on this record, remove this one and add the file again.`,
+          404,
+        );
+      }
       throw new ReceiptError("The receipt file isn't in the receipts folder any more. Remove the receipt, and add it again if you have it.", 404);
     }
     throw error;
@@ -431,6 +441,32 @@ export async function readReceiptFile(
   } finally {
     await handle.close();
   }
+}
+
+/** The folders Start a new key moves locked receipts into (desktop/receipt-key.mjs setAsideLockedReceipts). */
+const SET_ASIDE_FOLDER = /^receipts-locked-\d+(?:-\d+)?$/;
+
+/**
+ * The set-aside folder in backups/ (beside the receipts folder) that holds the file `name`, or null. Only
+ * DotAmi's own folder names are looked in, and only for a name DotAmi built from a receipt row.
+ */
+async function setAsideFolderHolding(folder: string, name: string): Promise<string | null> {
+  const backups = path.join(path.dirname(folder), "backups");
+  let entries;
+  try {
+    entries = await readdir(backups, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !SET_ASIDE_FOLDER.test(entry.name)) continue;
+    try {
+      if ((await stat(path.join(backups, entry.name, name))).isFile()) return path.join(backups, entry.name);
+    } catch {
+      // Not in this one.
+    }
+  }
+  return null;
 }
 
 /** How the receipt files on the disk are kept, for What DotAmi knows about you. Counts only. */

@@ -571,6 +571,10 @@ describe("receipt files encrypted at rest (expense-records.md § 9)", () => {
     expect(await readRefusal(encrypted.e.id, { state: "key-unreadable" })).toBe(LOCKED_RECEIPT_MESSAGES.keyUnreadable);
     const plain = await added(png(2, 2), SOURCE);
     expect(await readRefusal(plain.e.id, { state: "key-unreadable" })).toBe("no error");
+    // The same while the key store is only unavailable for now: nothing plain is added beside locked ones.
+    expect(await refusal(() => addReceipt(prisma, folder, e.id, bytes(png(2, 2)), { state: "key-out-of-reach" }))).toBe(409);
+    expect(await readRefusal(encrypted.e.id, { state: "key-out-of-reach" })).toBe(LOCKED_RECEIPT_MESSAGES.keyUnreadable);
+    expect(await readRefusal(plain.e.id, { state: "key-out-of-reach" })).toBe("no error");
   });
 
   it("the sweep finishes an encrypted add the app stopped half-way, and leaves one it can't open alone", async () => {
@@ -633,7 +637,9 @@ describe("receipt files encrypted at rest (expense-records.md § 9)", () => {
       expect(readReceiptLock({})).toEqual({ state: "source" });
       expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "no-key-store" })).toEqual({ state: "no-key-store" });
       expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "key-unreadable" })).toEqual({ state: "key-unreadable" });
-      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: "c2hvcnQ=" })).toEqual({ state: "key-unreadable" });
+      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "key-out-of-reach" })).toEqual({ state: "key-out-of-reach" });
+      // A key that isn't 32 bytes: out of reach, never "key-unreadable", which would offer Start a new key.
+      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: "c2hvcnQ=" })).toEqual({ state: "key-out-of-reach" });
     } finally {
       __resetReceiptLockForTests();
       if (saved.lock === undefined) delete process.env.DOTAMI_RECEIPT_LOCK;

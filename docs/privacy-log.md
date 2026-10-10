@@ -39,6 +39,19 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Start a new key moves locked receipts aside, never deletes them ([8i], 2026-10-09).** While the
+  desktop app can't open the receipts' key, the person may press *Start a new key…* (asked twice). The
+  server then moves every receipt file locked with a key it can't open, and `receipts.key`, into a new
+  folder beside the data file, `backups/receipts-locked-<time>/`
+  ([`desktop/receipt-key.mjs`](../desktop/receipt-key.mjs) `setAsideLockedReceipts`,
+  [`lib/expenses/receipts/new-key.ts`](../lib/expenses/receipts/new-key.ts)), and the next start makes a
+  new key as for a missing key file. The `Receipt` rows stay in the data file (their size and SHA-256
+  are what the files must match if the old key comes back). No new table, column or browser-storage
+  key; the log gets a count only. *What DotAmi knows about you* names the new folder under the safety
+  copies and the key file. Tested by [`tests/receipt-key.spec.ts`](../tests/receipt-key.spec.ts),
+  [`tests/receipt-new-key.spec.ts`](../tests/receipt-new-key.spec.ts),
+  [`e2e/receipt-new-key.spec.ts`](../e2e/receipt-new-key.spec.ts) and the desktop test.
+
 - **HEIC photos as receipts ([8i], 2026-10-09).** A receipt may now also be a HEIC photo (what
   iPhones save), kept exactly as given under a `.heic` name in the same `receipts/` folder, with the
   same 10 MB and pixel caps, encrypted in the desktop app like every receipt (a `.heic` file is one of
@@ -342,6 +355,16 @@ person is asked).
 
 ### New powers or permissions
 
+- **A page-only route that moves receipt files ([8i]).** `POST /api/expenses/receipt/new-key`
+  ([`app/api/expenses/receipt/new-key/route.ts`](../app/api/expenses/receipt/new-key/route.ts)) answers
+  only DotAmi's own window (an agent or another program gets 403 and nothing moves), reads its body
+  through `readJsonWithLimit`, needs `{ giveUp: true }`, and does anything only while the receipts' key
+  can't be opened. It moves files within the data folder; it deletes nothing and sends nothing.
+- **A second, small window at a first start ([8i]).** "Preparing DotAmi…"
+  ([`desktop/preparing.html`](../desktop/preparing.html)) is a local page with no script and a
+  Content-Security-Policy of `default-src 'none'`, listed with the app's other local loads in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `LOCAL_REQUESTS`. It shows nothing of the
+  person's and reaches nothing.
 - **The receipt viewer can start a third worker of DotAmi's own, for HEIC photos**, under the same
   no-connection policy ([`lib/expenses/receipts/viewer/heic-picture.worker.ts`](../lib/expenses/receipts/viewer/heic-picture.worker.ts)),
   and through it ask the computer's graphics chip to decode the photo, only when the person clicks
@@ -400,6 +423,11 @@ person is asked).
 
 ### What the person must agree to
 
+- **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
+  key can't open them, so they are given up for good unless the old key comes back, that nothing is
+  deleted and where they go, and to restore a backup instead if there is one; the second asks again.
+  Cancel is focused on both, and cancelling either changes nothing
+  ([`components/expenses/start-new-key.tsx`](../components/expenses/start-new-key.tsx)).
 - **Adding a HEIC receipt** asks nothing new: the note before *Choose the receipt file* now names HEIC,
   and says some computers can't show one, and that it is kept either way.
 
@@ -488,6 +516,9 @@ person is asked).
 
 ### How to remove it
 
+- **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
+  person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
+  the receipts folders a restore moves there).
 - **HEIC receipts** are removed like every receipt (*Remove receipt*, or Delete's *Your receipts* /
   *Your expense records*); there is no decoded copy to remove.
 

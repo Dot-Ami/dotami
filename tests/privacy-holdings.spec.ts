@@ -361,10 +361,22 @@ describe("the folders beside the data file", () => {
     const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
 
     const h = await readHoldings(seeded.prisma, today, lock);
-    expect(h.receiptFiles).toEqual({ state: "on", encrypted: 1, plain: 1, locked: 0 });
+    expect(h.receiptFiles).toEqual({ state: "on", setAsideTo: null, encrypted: 1, plain: 1, locked: 0 });
     expect(h.folders.find((f) => f.entry.id === "receipts-key")).toMatchObject({ exists: true, files: null });
     // From source, the same encrypted file is one this copy can't open.
-    expect((await readHoldings(seeded.prisma, today, { state: "source" })).receiptFiles).toEqual({ state: "source", encrypted: 0, plain: 1, locked: 1 });
+    expect((await readHoldings(seeded.prisma, today, { state: "source" })).receiptFiles).toEqual({
+      state: "source",
+      setAsideTo: null,
+      encrypted: 0,
+      plain: 1,
+      locked: 1,
+    });
+    // After Start a new key (expense-records.md § 10), the page is told where the locked receipts went.
+    const aside = path.join(folder, "backups", "receipts-locked-5");
+    expect((await readHoldings(seeded.prisma, today, { state: "new-key-at-restart", setAsideTo: aside })).receiptFiles).toMatchObject({
+      state: "new-key-at-restart",
+      setAsideTo: aside,
+    });
     // Counts and states only: nothing from inside a receipt, and never the key.
     expect(JSON.stringify(h)).not.toContain(secret);
     expect(JSON.stringify(h)).not.toContain(key.toString("base64"));
