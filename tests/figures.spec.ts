@@ -18,7 +18,8 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { formatCents, parseMoneyToCents } from "@/lib/figures/money";
 import { agreeToFigures, listFigures, proposeFigures } from "@/lib/figures/store";
-import type { FigureView } from "@/lib/figures/types";
+import { isTaxLineKind, kindWithNewestLine, taxLineStatus, taxLineWords, taxYearHint } from "@/lib/figures/tax-line";
+import { FIGURE_KIND_LABELS, type FigureView } from "@/lib/figures/types";
 import { validateFigureInput, validateFigureSource } from "@/lib/figures/validate";
 import { demoScenarios } from "../prisma/seed-data";
 
@@ -182,6 +183,128 @@ describe("validateFigureInput", () => {
   });
 });
 
+// [8f] The four T2125 totals: a tax year is required, a form line is optional and checked.
+const t2125 = { kind: "business-gross-income", periodStart: "2025-01-01", periodEnd: "2025-12-31", amountCents: 4_825_000, taxYear: 2025 };
+
+describe("validateFigureInput: tax year and form line ([8f])", () => {
+  const TODAY = "2026-10-06";
+
+  it.each([
+    ["business-gross-income", "8299"],
+    ["business-total-expenses", "9368"],
+    ["business-net-income-before-adjustments", "9369"],
+    ["business-net-income", "9946"],
+  ])("accepts %s with its tax year, and with its 2025 line as read", (kind, line) => {
+    expect(validateFigureInput({ ...t2125, kind }, TODAY)).toEqual({ ok: true, value: { ...t2125, kind, currency: "CAD" } });
+    expect(validateFigureInput({ ...t2125, kind, formLine: `T2125 ${line}` }, TODAY)).toEqual({
+      ok: true,
+      value: { ...t2125, kind, currency: "CAD", formLine: `T2125 ${line}` },
+    });
+  });
+
+  it("takes a fiscal period that started the year before, filed for the year it ends in", () => {
+    const offCalendar = { ...t2125, periodStart: "2024-07-01", periodEnd: "2025-06-30" };
+    expect(validateFigureInput(offCalendar, TODAY)).toEqual({ ok: true, value: { ...offCalendar, currency: "CAD" } });
+  });
+
+  it("keeps a line as read for a year nobody has read yet (the CRA may have numbered it differently)", () => {
+    const old = { ...t2125, periodStart: "2018-01-01", periodEnd: "2018-12-31", taxYear: 2018, formLine: "T2125 8300" };
+    expect(validateFigureInput(old, TODAY)).toEqual({ ok: true, value: { ...old, currency: "CAD" } });
+  });
+
+  it.each([
+    ["no tax year", { taxYear: undefined }, /needs its tax year/],
+    ["a tax year as text", { taxYear: "2025" }, /needs its tax year/],
+    ["a fractional tax year", { taxYear: 2025.5 }, /needs its tax year/],
+    ["a tax year after this one", { taxYear: 2027 }, /needs its tax year, a year from 1990 to 2026/],
+    ["a tax year before 1990", { taxYear: 1989 }, /needs its tax year/],
+    ["a form line on another form", { formLine: "T2042 8299" }, /written like "T2125 8299"/],
+    ["a form line without its form", { formLine: "8299" }, /written like "T2125 8299"/],
+    ["a form line in lower case", { formLine: "t2125 8299" }, /written like "T2125 8299"/],
+    ["a form line that isn't text", { formLine: 8299 }, /written like "T2125 8299"/],
+    ["another total's line in a year that has been read", { formLine: "T2125 9946" }, /2025 T2125 this total is line 8299, not 9946/],
+    // A fiscal period belongs to the tax year it ends in, so the two have to agree.
+    [
+      "a period that ends in an earlier year",
+      { periodStart: "2024-01-01", periodEnd: "2024-12-31" },
+      /^This period ends in 2024, so it is a 2024 tax-year total, not 2025\.$/,
+    ],
+    [
+      "a tax year after the year its period ends in",
+      { taxYear: 2026 },
+      /^This period ends in 2025, so it is a 2025 tax-year total, not 2026\.$/,
+    ],
+    [
+      "a period that ends in a later year",
+      { periodStart: "2025-07-01", periodEnd: "2026-06-30" },
+      /^This period ends in 2026, so it is a 2026 tax-year total, not 2025\.$/,
+    ],
+  ])("refuses a T2125 total with %s", (_name, change, message) => {
+    const result = validateFigureInput({ ...t2125, ...change }, TODAY);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(message);
+  });
+
+  it.each([
+    ["a tax year", { taxYear: 2025 }, /Only a tax-form total has a tax year/],
+    ["a form line", { formLine: "T2125 8299" }, /Only a tax-form total has a form line/],
+  ])("refuses %s on a revenue figure (the GST/HST card's total is not a form line)", (_name, change, message) => {
+    const result = validateFigureInput({ ...good, ...change }, TODAY);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(message);
+  });
+});
+
+describe("a T2125 total's line, in words ([8f])", () => {
+  it("knows which kinds are form lines", () => {
+    expect(
+      ["business-gross-income", "business-total-expenses", "business-net-income-before-adjustments", "business-net-income"].every(isTaxLineKind),
+    ).toBe(true);
+    expect(isTaxLineKind("gross-revenue")).toBe(false);
+  });
+
+  it("shows the 2025 line, and says 'not read yet' for a year nobody has read, never borrowing 2025's number", () => {
+    expect(taxLineStatus("business-net-income", 2025)).toEqual({
+      status: "read",
+      form: "T2125",
+      line: "9946",
+      printedLabel: "Your net income (loss)",
+      taxYear: 2025,
+      lastVerified: "2026-10-10",
+    });
+    expect(taxLineStatus("business-net-income", 2023)).toEqual({ status: "not-read-yet", form: "T2125", taxYear: 2023, yearsRead: [2025] });
+    expect(taxLineStatus("gross-revenue", 2025)).toBeUndefined();
+
+    expect(taxYearHint("business-gross-income", 2025)).toBe(
+      `Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`,
+    );
+    const unread = taxYearHint("business-gross-income", 2023)!;
+    expect(unread).toBe(
+      "2023: not read yet. DotAmi has read the CRA's T2125 for 2025 only, so this figure is kept with its tax year and no line number until that year's form is read.",
+    );
+    expect(unread).not.toContain("8299");
+  });
+
+  it("puts the newest line beside each T2125 kind in the 'What' list, and nothing beside revenue", () => {
+    expect(kindWithNewestLine("business-gross-income", FIGURE_KIND_LABELS["business-gross-income"])).toBe(
+      "Business gross income (T2125), line 8299",
+    );
+    expect(kindWithNewestLine("business-total-expenses", FIGURE_KIND_LABELS["business-total-expenses"])).toBe(
+      "Business total expenses (T2125), line 9368",
+    );
+    expect(kindWithNewestLine("gross-revenue", FIGURE_KIND_LABELS["gross-revenue"])).toBe("Revenue (gross, before expenses)");
+  });
+
+  it("describes a figure by its own year, and a line read from a return as it was printed", () => {
+    expect(taxLineWords({ kind: "business-gross-income", taxYear: 2025, formLine: null })).toBe("tax year 2025 · T2125 line 8299");
+    expect(taxLineWords({ kind: "business-gross-income", taxYear: 2022, formLine: null })).toBe("tax year 2022 · T2125 line not read yet");
+    expect(taxLineWords({ kind: "business-gross-income", taxYear: 2018, formLine: "T2125 8300" })).toBe(
+      "tax year 2018 · T2125 line 8300 as printed on your return",
+    );
+    expect(taxLineWords({ kind: "gross-revenue", taxYear: null, formLine: null })).toBeUndefined();
+  });
+});
+
 describe("validateFigureSource", () => {
   it("accepts a kind, a label and an optional row count", () => {
     expect(validateFigureSource({ kind: "file", label: " sales-2025.xlsx ", rows: 312 })).toEqual({
@@ -272,6 +395,17 @@ describe("POST /api/figures/propose", () => {
     expect(((await res.json()) as { error: string }).error).toBe(
       "Figures can only be proposed here. Confirming is the person's click in the agree prompt.",
     );
+    expect(await figureCount()).toBe(before);
+  });
+
+  it("passes a T2125 total's tax year through, and refuses one without it, creating nothing ([8f])", async () => {
+    const [created] = await propose([t2125]);
+    expect(created).toMatchObject({ kind: "business-gross-income", taxYear: 2025, formLine: null });
+
+    const before = await figureCount();
+    const res = await routes.propose.POST(post("propose", { ventureId, source: SOURCE, figures: [{ ...t2125, taxYear: undefined }] }));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toMatch(/needs its tax year/);
     expect(await figureCount()).toBe(before);
   });
 
@@ -546,6 +680,46 @@ describe("the store", () => {
     expect(f.amountCents).toBe(big);
     const listed = (await listFigures(prisma, ventureId)).find((x) => x.id === f.id);
     expect(listed?.amountCents).toBe(big);
+  });
+
+  it("keeps a T2125 total's tax year and form line through proposing, agreeing and listing ([8f])", async () => {
+    const [typed, read] = await proposeFigures(
+      prisma,
+      ventureId,
+      { kind: "tax-return", label: "return-2025.pdf" },
+      [t2125, { ...t2125, kind: "business-net-income", amountCents: -120_000, formLine: "T2125 9946" }],
+      "2026-10-06",
+    );
+    expect(typed).toMatchObject({ kind: "business-gross-income", taxYear: 2025, formLine: null, status: "proposed" });
+    expect(read).toMatchObject({ kind: "business-net-income", taxYear: 2025, formLine: "T2125 9946", amountCents: -120_000 });
+
+    const agreed = await agreeToFigures(prisma, ventureId, [typed.id, read.id]);
+    expect(agreed.changed.map((f) => [f.kind, f.taxYear, f.formLine, f.status])).toEqual([
+      ["business-gross-income", 2025, null, "confirmed"],
+      ["business-net-income", 2025, "T2125 9946", "confirmed"],
+    ]);
+    const listed = (await listFigures(prisma, ventureId)).filter((f) => f.id === typed.id || f.id === read.id);
+    expect(listed.map((f) => f.taxYear)).toEqual([2025, 2025]);
+
+    // A revenue figure has neither.
+    const [revenue] = await proposeFigures(prisma, ventureId, SOURCE, [good], "2026-10-06");
+    expect(revenue).toMatchObject({ taxYear: null, formLine: null });
+  });
+
+  it.each([
+    ["typed", { kind: "typed", label: "typed by you" }],
+    ["an agent", { kind: "agent", label: "my bookkeeping agent" }],
+    ["a file", SOURCE],
+  ])("refuses a form line on a T2125 total from %s: only a return has one printed on it ([8f])", async (_name, source) => {
+    // The same total without a form line is fine from any source...
+    const [ok] = await proposeFigures(prisma, ventureId, source, [t2125], "2026-10-06");
+    expect(ok).toMatchObject({ kind: "business-gross-income", taxYear: 2025, formLine: null });
+    // ...but "as printed on your return" would be untrue, so the line is refused and nothing is kept.
+    const before = await prisma.figure.count();
+    await expect(
+      proposeFigures(prisma, ventureId, source, [t2125, { ...t2125, formLine: "T2125 8299" }], "2026-10-06"),
+    ).rejects.toThrow(/^Figure 2: Only a figure read from a tax return can carry the form line printed on it\.$/);
+    expect(await prisma.figure.count()).toBe(before);
   });
 
   it("agreeToFigures confirms only what is proposed", async () => {

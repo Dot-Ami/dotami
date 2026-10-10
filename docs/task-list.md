@@ -127,7 +127,8 @@ roadmap's build order.
     "no amount" and never guessed
   - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
     summary block no longer taken for the column names
-  - [ ] Fix the other gap those files found (follow-on slice: refunds)
+  - [x] Refunds in a ledger's Debit column taken off the month they were paid back, through an
+    optional "Refunds / money out" column, under the same rule as the bank statement totals
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs
@@ -157,6 +158,10 @@ roadmap's build order.
     with their pages, or a plain refusal (pictures only, password-locked, no T2125); nothing proposed
     or kept. Mozilla's pdf.js, pinned and reviewed, in a worker that can't connect anywhere
     ([review](connectors/pdf-reader-review.md))
+  - [x] The four T2125 totals as figure kinds, named for what they mean (business gross income, total
+    expenses, net income before adjustments, net income), cited to the CRA's 2025 form and guide
+    ([engine doc](engines/taxlines.md)); each figure keeps its tax year and the form and line as read
+    (two optional columns); a year whose form isn't read yet says so; the GST/HST card never reads them
   - [ ] In: last year's return PDF → figures tagged with form and line
   - [ ] Out: a sheet of each figure next to the line it goes on, for any tax software
   - [ ] Connector notes: Wealthsimple Tax, TurboTax
@@ -232,9 +237,13 @@ roadmap's build order.
     key made at the next start; never offered while the key is only out of reach for now (the key store
     unavailable), and no Add a receipt while none can be added; and a "Preparing DotAmi…" window during
     the first start's wait ([expense-records.md § 10](architecture/expense-records.md)).
-  - [ ] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed,
-    none clean on every count, the options and their costs waiting for the maintainer's choice
-    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)); still refused until then
+  - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
+    ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)), then option D chosen after a
+    double-check and built: kept exactly as given, read by DotAmi's own container reader in a
+    no-network worker and drawn by the graphics chip through WebCodecs, on *Show receipt* only; where the
+    computer can't decode HEVC it is kept and the viewer says so. Not tried on a Mac
+  - [ ] Before DotAmi is sold: the HEVC patent questions (they cover the Electron build already shipped)
+    answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

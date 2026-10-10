@@ -48,9 +48,10 @@ export interface Expected {
   /**
    * What the person picks where the guess leaves one empty or wrong (0-based). `headerRow` is the
    * screen's "Column names are in row" select, set when DotAmi found no column names (guess null)
-   * or took the wrong row for them.
+   * or took the wrong row for them. `refundColumn` is the optional refunds pick, which is never
+   * pre-filled, so a file that needs it always records it here.
    */
-  picks?: { headerRow?: number; dateColumn?: number; amountColumn?: number };
+  picks?: { headerRow?: number; dateColumn?: number; amountColumn?: number; refundColumn?: number };
   /** What the date column says about how its dates are written, and the answer asked of the person if it can't say. */
   dateOrder: { order: DateOrder | null; ambiguous: boolean; conflicting: boolean };
   answer?: DateOrder;

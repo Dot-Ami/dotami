@@ -20,6 +20,7 @@ import {
   discardRestore,
   isReceiptFileName,
   prepareRestore,
+  RECEIPT_EXTENSIONS,
   RECEIPTS_FOLDER,
   restoreReceiptsNote,
   writeBackup,
@@ -39,6 +40,8 @@ const serverEntry = app.isPackaged
   ? path.join(process.resourcesPath, "server", "server.js")
   : path.join(root, ".next-desktop", "standalone", "server.js");
 const migrations = path.join(root, "prisma", "migrations");
+/** A receipt file DotAmi named: 32 random hex characters and one of its receipt types' extensions (backup.mjs). */
+const RECEIPT_FILE_NAME = new RegExp(`^[0-9a-f]{32}\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
 
 app.setName("DotAmi");
 // Tests (and anyone who wants their data elsewhere) point the app at another folder. Must be set
@@ -93,6 +96,19 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   quitting = true;
   server?.kill();
+});
+
+// [8i] HEIC receipts are drawn by the graphics chip, through Chromium's video decoder (option D of
+// docs/connectors/heic-decoder-review.md). Chromium gives its graphics process three crashes in a short
+// window before it switches hardware graphics off for the rest of the session, so DotAmi never lets a
+// HEIC near the graphics chip twice in a row of trouble: once the graphics process has stopped for any
+// reason, or the page reports a HEIC that failed, no HEIC is drawn again until DotAmi restarts. The
+// page asks through desktop/window-preload.cjs (lib/expenses/receipts/viewer/heic-session.ts).
+let heicStopped = false;
+app.on("child-process-gone", (_event, details) => {
+  if (details.type !== "GPU") return;
+  if (!heicStopped) log?.write(`[desktop] the graphics process stopped (${details.reason}); HEIC receipts won't be drawn until DotAmi restarts\n`);
+  heicStopped = true;
 });
 
 async function start() {
@@ -176,6 +192,7 @@ async function start() {
   log.write(`[desktop] server answering; opening the window\n`);
   lockDown(origin);
   buildMenu(origin, dataDir);
+  answerHeicQuestions(origin);
 
   win = new BrowserWindow({
     width: 1280,
@@ -185,7 +202,11 @@ async function start() {
     title: "DotAmi",
     backgroundColor: "#161619",
     show: false,
-    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
+    // The preload gives DotAmi's pages two calls and nothing else (desktop/window-preload.cjs); the
+    // window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
+    // switch may turn off Chromium's sandboxes or run the graphics process inside the browser process
+    // (tests/desktop-sandbox.spec.ts lists the switches and fails if one appears).
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(root, "desktop", "window-preload.cjs") },
   });
   win.once("ready-to-show", () => {
     win?.show();
@@ -368,6 +389,29 @@ function lockDown(origin) {
     callback(permission === "clipboard-sanitized-write" && new URL(contents.getURL()).origin === origin);
   });
   session.defaultSession.on("will-download", (_event, item, contents) => saveDownload(item, contents, origin));
+}
+
+/**
+ * The two HEIC questions the page may ask (desktop/window-preload.cjs): "may I still draw a HEIC?" and
+ * "a HEIC just failed". Believed only from DotAmi's own window showing one of its own pages (Electron
+ * security checklist #17); anything else asking is told HEIC is stopped, and anything else reporting a
+ * failure is ignored.
+ */
+function answerHeicQuestions(origin) {
+  const fromDotAmi = (event) => {
+    if (!win || event.sender !== win.webContents) return false;
+    try {
+      return new URL(event.senderFrame?.url ?? "").origin === origin;
+    } catch {
+      return false;
+    }
+  };
+  ipcMain.handle("dotami-heic-stopped", (event) => (fromDotAmi(event) ? heicStopped : true));
+  ipcMain.on("dotami-heic-failed", (event) => {
+    if (!fromDotAmi(event)) return;
+    if (!heicStopped) log?.write(`[desktop] a HEIC receipt couldn't be drawn; HEIC receipts won't be drawn until DotAmi restarts\n`);
+    heicStopped = true;
+  });
 }
 
 /**
@@ -676,7 +720,7 @@ function askPassphrase(mode, message = "") {
  */
 function receiptFileCount(folder) {
   try {
-    return readdirSync(path.join(folder, RECEIPTS_FOLDER)).filter((name) => /^[0-9a-f]{32}\.(jpg|png|webp|pdf)$/.test(name)).length;
+    return readdirSync(path.join(folder, RECEIPTS_FOLDER)).filter((name) => RECEIPT_FILE_NAME.test(name)).length;
   } catch {
     return 0;
   }

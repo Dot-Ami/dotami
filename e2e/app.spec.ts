@@ -729,6 +729,100 @@ test.describe("how old each figure is", () => {
   });
 });
 
+// ---- [8f] The four T2125 totals ----------------------------------------------------------------
+// On the invented venture "Demo — Chinook Sign Painting", after the figures tests above; the GST card's
+// own figure is "gross-revenue", which these never touch. Amounts are invented.
+
+test("Add a figure offers the four T2125 totals with their lines, asks the tax year, and says 'not read yet' for an unread year", async ({
+  page,
+}) => {
+  await page.goto("/ventures");
+  const card = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name: "Demo — Chinook Sign Painting", level: 2 }) })
+    .first();
+  const ventureId = new URL((await card.getByRole("link", { name: /Open in cockpit/ }).getAttribute("href"))!, "http://x").searchParams.get("venture")!;
+  type Listed = { id: string; kind: string; status: string; taxYear: number | null; formLine: string | null };
+  const listed = async () => ((await (await page.request.get(`/api/figures?venture=${ventureId}`)).json()) as { figures: Listed[] }).figures;
+
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  const what = card.getByLabel("What", { exact: true });
+  // The list: revenue as before, then the four totals, each with the line it goes on.
+  await expect(what.locator("option")).toHaveText([
+    "Revenue (gross, before expenses)",
+    "Business gross income (T2125), line 8299",
+    "Business total expenses (T2125), line 9368",
+    "Business net income before adjustments (T2125), line 9369",
+    "Business net income (T2125), line 9946",
+  ]);
+
+  // A T2125 total asks for its tax year; the line it goes on depends on the year.
+  await what.selectOption({ label: "Business gross income (T2125), line 8299" });
+  const taxYear = card.getByLabel("Tax year", { exact: true });
+  await expect(taxYear).toBeVisible();
+  await expect(card.getByText("The tax year this total is for. The CRA line it goes on can change from one year's form to the next.")).toBeVisible();
+
+  // A year nobody has read: "not read yet", and no borrowed line number.
+  await taxYear.fill("2023");
+  const unread = card.getByText(
+    "2023: not read yet. DotAmi has read the CRA's T2125 for 2025 only, so this figure is kept with its tax year and no line number until that year's form is read.",
+  );
+  await expect(unread).toBeVisible();
+  await expect(taxYear).toHaveAccessibleDescription(/not read yet/);
+
+  // 2025 has been read: the line, the form's words for it and the day it was read.
+  await taxYear.fill("2025");
+  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`)).toBeVisible();
+  await expect(unread).toHaveCount(0);
+
+  // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.
+  await card.getByLabel("From", { exact: true }).fill("2024-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2024-12-31");
+  await card.getByLabel("Amount", { exact: true }).fill("48,250");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  await expect(card.getByText(/This period ends in 2024, so it is a 2024 tax-year total, not 2025\./)).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Agree to these figures?" })).toHaveCount(0);
+
+  await card.getByLabel("From", { exact: true }).fill("2025-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2025-12-31");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+
+  // The agree prompt names the tax year and the line before anything is agreed.
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt).toBeVisible();
+  await expect(prompt).toContainText("Business gross income (T2125)");
+  await expect(prompt).toContainText("tax year 2025 · T2125 line 8299");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+
+  // Kept with its tax year; typed, so there is no form line "as read".
+  const gross = (await listed()).find((f) => f.kind === "business-gross-income")!;
+  expect(gross).toMatchObject({ status: "confirmed", taxYear: 2025, formLine: null });
+  await expect(card.getByText("tax year 2025 · T2125 line 8299")).toBeVisible();
+
+  // A second total for a year nobody has read is kept too, and says so in the list.
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Business net income (T2125), line 9946" });
+  await card.getByLabel("Tax year", { exact: true }).fill("2023");
+  await card.getByLabel("From", { exact: true }).fill("2023-01-01");
+  await card.getByLabel("To", { exact: true }).fill("2023-12-31");
+  await card.getByLabel("Amount", { exact: true }).fill("-1,200");
+  await card.getByRole("button", { name: "Review this figure" }).click();
+  await expect(prompt).toContainText("tax year 2023 · T2125 line not read yet");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toBeHidden();
+  await expect(card.getByText("tax year 2023 · T2125 line not read yet")).toBeVisible();
+  expect((await listed()).find((f) => f.kind === "business-net-income")).toMatchObject({ status: "confirmed", taxYear: 2023, formLine: null });
+
+  // Revenue has no tax year to ask: the field is there for a T2125 total and goes for revenue.
+  await card.getByRole("button", { name: "Add a figure" }).click();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Business total expenses (T2125), line 9368" });
+  await expect(card.getByLabel("Tax year", { exact: true })).toBeVisible();
+  await card.getByLabel("What", { exact: true }).selectOption({ label: "Revenue (gross, before expenses)" });
+  await expect(card.getByLabel("Amount", { exact: true })).toBeVisible();
+  await expect(card.getByLabel("Tax year", { exact: true })).toHaveCount(0);
+});
+
 // ---- [8c] Add from a file -------------------------------------------------------------------
 // All three use the invented venture "Demo — Salish Trail Maps" (the figures test above uses
 // Chinook). Only the first one proposes anything for it; the other two prove their refusals and
@@ -1595,6 +1689,128 @@ test("an invoice list with a summary on top: the real column names are found, an
   await expect(
     table.getByRole("row", { name: new RegExp(`^${month.name} \\$500\\.00 2 rows$`) }),
   ).toBeVisible();
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
+test("a ledger export: refunds picked from the Debit column are taken off the month they were paid back", async ({
+  page,
+}) => {
+  const { card, ventureId, figures } = await openSalish(page);
+  const before = await figures();
+
+  // Wave-shaped Account Transactions for the Sales account (invented numbers): sales in Credit,
+  // refunds paid back in Debit. A sale in the first month, a sale and a 40.00 refund (for the first
+  // month's sale) in the second, and only a 25.00 refund in the third.
+  const [a, b, c] = [monthsAgo(4), monthsAgo(3), monthsAgo(2)];
+  const day = (m: { y: number; m: number }, d: number) => `${m.y}-${two(m.m)}-${two(d)}`;
+  const lines = [
+    "Invented Shop Ltd.",
+    "Account Transactions",
+    "",
+    "Date,Description,Debit,Credit,Balance",
+    "Sales",
+    "Starting Balance,,,,0.00",
+    `${day(a, 8)},Invoice 1 - Invented Client A,,500.00,500.00`,
+    `${day(b, 5)},Invoice 2 - Invented Client B,,320.00,820.00`,
+    `${day(b, 19)},Refund - Invented Client A,40.00,,780.00`,
+    `${day(c, 3)},Refund - Invented Client B,25.00,,755.00`,
+    "Totals,,65.00,820.00,",
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "account-transactions.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The date is pre-filled; the refunds column never is, and offers "None" until the person picks.
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText("A · Date");
+  const refunds = card.getByLabel("Refunds / money out column (optional)");
+  await expect(refunds).toBeVisible();
+  await expect(refunds.locator("option:checked")).toHaveText("None — refunds not taken off");
+  await expect(
+    card.getByText(
+      "Ledger exports, such as Wave's Account Transactions, keep sales in one column (Credit) and refunds paid back to customers in another (Debit).",
+      { exact: false },
+    ),
+  ).toBeVisible();
+
+  // With only Credit picked, the refunds are rows with no amount, and nothing is taken off.
+  await card.getByLabel("Amount column (revenue)").selectOption({ label: "D · Credit" });
+  const table = card.getByRole("table", { name: "Monthly totals from account-transactions.csv" });
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${b.name} \\$320\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/2 rows with a date but no amount/)).toBeVisible();
+  await expect(card.getByText(/taken off the month they were paid back/)).toHaveCount(0);
+
+  // Picking Debit as the refunds column takes each refund off the month it was paid back: the
+  // second month, not the first month's sale, and the third month goes below zero.
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${a.name} \\$500\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${b.name} \\$280\\.00 2 rows · 1 refund taken off \\(\\$40\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${c.name} [-−]\\$25\\.00 1 row · 1 refund taken off \\(\\$25\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "Refunds are taken off the month they were paid back, which may be a later month than the sale they refund.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByText(/with a date but no amount/)).toHaveCount(0);
+
+  // The same column as the amount is refused with a sentence, and no totals are shown.
+  await refunds.selectOption({ label: "D · Credit" });
+  await expect(
+    card.getByText("The refunds column can't be the date or the amount column."),
+  ).toBeVisible();
+  await expect(table).toHaveCount(0);
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+
+  // Review sends the netted totals, the negative month included. The request is answered here
+  // with an error so nothing is stored and the idea's figures stay as they were.
+  let sent: unknown = null;
+  await page.route("**/api/figures/propose", async (route) => {
+    sent = JSON.parse(route.request().postData() ?? "null");
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Held by the test." }),
+    });
+  });
+  // Review waits for the dates to be confirmed (the "These dates are right" tick-box).
+  await card.getByRole("checkbox", { name: "These dates are right" }).check();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  await expect(card.getByText("Held by the test.")).toBeVisible();
+  const lastDay = (m: { y: number; m: number }) => new Date(Date.UTC(m.y, m.m, 0)).getUTCDate();
+  const figure = (m: { y: number; m: number }, amountCents: number, rows: number) => ({
+    kind: "gross-revenue",
+    periodStart: `${m.y}-${two(m.m)}-01`,
+    periodEnd: `${m.y}-${two(m.m)}-${lastDay(m)}`,
+    amountCents,
+    currency: "CAD",
+    rows,
+  });
+  expect(sent).toEqual({
+    ventureId,
+    source: { kind: "file", label: "account-transactions.csv", rows: 4 },
+    figures: [figure(a, 50000, 1), figure(b, 28000, 2), figure(c, -2500, 1)],
+  });
+  await page.unroute("**/api/figures/propose");
 
   await card.getByRole("button", { name: "Cancel" }).click();
   expect(await figures()).toEqual(before);

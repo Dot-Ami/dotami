@@ -1,3 +1,5 @@
+import { taxLineEntryForKind, taxLineForYear } from "@/lib/engines/taxlines/v2026";
+
 import {
   FIGURE_KINDS,
   FIGURE_SOURCE_KINDS,
@@ -20,6 +22,13 @@ export interface ProposedFigureInput {
    * proposes one total per month, each from its own rows ([8c]). Absent: the source's count applies.
    */
   rows?: number;
+  /** [8f] The tax year a T2125 total is for. Required for those kinds, refused on any other. */
+  taxYear?: number;
+  /**
+   * [8f] The form and line as printed on the return it was read from: "T2125 8299". Optional, and
+   * only from a "tax-return" source (proposeFigures refuses it from any other).
+   */
+  formLine?: string;
 }
 
 export interface FigureSourceInput {
@@ -49,6 +58,59 @@ function checkRows(rows: unknown): Checked<number | null> {
   if (rows === undefined || rows === null) return { ok: true, value: null };
   if (typeof rows !== "number" || !Number.isSafeInteger(rows) || rows < 0) return { ok: false, error: ROWS_ERROR };
   return { ok: true, value: rows };
+}
+
+/** The oldest tax year a figure may name; well before any form DotAmi will read. */
+export const TAX_YEAR_MIN = 1990;
+
+/** "T2125 8299": the form's code, one space, the line number as printed (four or five digits). */
+const FORM_LINE = /^([A-Z0-9]{2,10}) (\d{4,5})$/;
+
+/**
+ * [8f] The tax year and form line of one figure. A T2125 total must say which tax year it is for
+ * (the line it goes on depends on the year); no other kind may carry either. A form line, when
+ * given, must be on this kind's form, and for a year a person has read it must be the line the
+ * catalog has for this kind: a "9946" sent as gross income is a mix-up, not a renumbering. For a
+ * year nobody has read yet, the line is kept as given (that's the point of keeping it as read).
+ *
+ * The tax year also has to be the year the period ends in: a business's fiscal period is reported
+ * for the tax year it ends in, so a 2024 period labelled 2025 would be shown beside the wrong
+ * year's line. (A fiscal period may start the year before, e.g. 2024-07-01 to 2025-06-30.)
+ */
+function checkTaxLine(
+  kind: FigureKind,
+  taxYear: unknown,
+  formLine: unknown,
+  periodEnd: string,
+  today: string,
+): Checked<{ taxYear?: number; formLine?: string }> {
+  const entry = taxLineEntryForKind(kind);
+  if (!entry) {
+    if (taxYear !== undefined && taxYear !== null) return { ok: false, error: "Only a tax-form total has a tax year." };
+    if (formLine !== undefined && formLine !== null) return { ok: false, error: "Only a tax-form total has a form line." };
+    return { ok: true, value: {} };
+  }
+
+  const thisYear = Number(today.slice(0, 4));
+  if (typeof taxYear !== "number" || !Number.isSafeInteger(taxYear) || taxYear < TAX_YEAR_MIN || taxYear > thisYear) {
+    return { ok: false, error: `A ${entry.form} total needs its tax year, a year from ${TAX_YEAR_MIN} to ${thisYear}.` };
+  }
+  // periodEnd is already a checked YYYY-MM-DD, so its first four characters are the year.
+  const endYear = Number(periodEnd.slice(0, 4));
+  if (endYear !== taxYear) {
+    return { ok: false, error: `This period ends in ${endYear}, so it is a ${endYear} tax-year total, not ${taxYear}.` };
+  }
+  if (formLine === undefined || formLine === null) return { ok: true, value: { taxYear } };
+
+  const match = typeof formLine === "string" ? FORM_LINE.exec(formLine) : null;
+  if (!match || match[1] !== entry.form) {
+    return { ok: false, error: `The form line has to be written like "${entry.form} 8299": the form, a space, the line number.` };
+  }
+  const read = taxLineForYear(entry, taxYear);
+  if (read && read.line !== match[2]) {
+    return { ok: false, error: `On the CRA's ${taxYear} ${entry.form} this total is line ${read.line}, not ${match[2]}.` };
+  }
+  return { ok: true, value: { taxYear, formLine: formLine as string } };
 }
 
 /**
@@ -88,6 +150,9 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
   const rows = checkRows(input.rows);
   if (!rows.ok) return rows;
 
+  const taxLine = checkTaxLine(kind as FigureKind, input.taxYear, input.formLine, periodEnd, today);
+  if (!taxLine.ok) return taxLine;
+
   return {
     ok: true,
     value: {
@@ -97,6 +162,7 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
       amountCents,
       currency,
       ...(rows.value !== null ? { rows: rows.value } : {}),
+      ...taxLine.value,
     },
   };
 }

@@ -21,6 +21,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
+import { heicHeader, heicPicture } from "@/lib/expenses/receipts/heic/picture";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
 import { ENCRYPTED_OVERHEAD, encryptReceipt, isEncryptedReceipt, keyIdOf } from "@/desktop/receipt-crypto.mjs";
@@ -39,6 +40,7 @@ import {
 import { MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE, MAX_RECEIPT_BYTES, RECEIPT_TYPES } from "@/lib/expenses/receipts/types";
 import { listExpenses } from "@/lib/expenses/store";
 import { demoScenarios } from "../prisma/seed-data";
+import { heic } from "./helpers/heic-files";
 import { jpegHeader, pdf, png, webpHeader } from "./helpers/receipt-files";
 
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
@@ -46,12 +48,14 @@ vi.setConfig({ testTimeout: 60_000, hookTimeout: 120_000 });
 const bytes = (b: Buffer | string) => new Uint8Array(typeof b === "string" ? Buffer.from(b, "latin1") : b);
 
 describe("what a receipt file is, read from its bytes", () => {
-  it("keeps the four kinds, each with its size read from the header", () => {
+  it("keeps the five kinds, each with its size read from the header", () => {
     expect(sniffReceipt(bytes(jpegHeader(800, 600)))).toEqual({ ok: true, type: "image/jpeg", width: 800, height: 600 });
     expect(sniffReceipt(bytes(png(3, 2)))).toEqual({ ok: true, type: "image/png", width: 3, height: 2 });
     expect(sniffReceipt(bytes(webpHeader(1024, 768)))).toEqual({ ok: true, type: "image/webp", width: 1024, height: 768 });
     expect(sniffReceipt(bytes(pdf()))).toEqual({ ok: true, type: "application/pdf", width: null, height: null });
-    expect(RECEIPT_TYPES.map((t) => t.type)).toEqual(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+    // A HEIC photo ([8i], option D): its size is the primary picture's, read by DotAmi's own container reader.
+    expect(sniffReceipt(bytes(heic()))).toEqual({ ok: true, type: "image/heic", width: 256, height: 256 });
+    expect(RECEIPT_TYPES.map((t) => t.type)).toEqual(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic"]);
   });
 
   it("reads a JPEG's size past its other segments and padding, and a lossy and a lossless WebP's", () => {
@@ -83,7 +87,9 @@ describe("what a receipt file is, read from its bytes", () => {
       ["a web page", "<!doctype html><html><script>alert(1)</script></html>", "html"],
       ["a web page that mentions %PDF- inside", "<html><body>%PDF-1.4</body></html>", "html"],
       ["a GIF", "GIF89a\x01\x00\x01\x00", "gif"],
-      ["an iPhone HEIC photo", Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypheic\0\0\0\0mif1heic", "latin1")]), "heic"],
+      // The HEIC brand with nothing behind it: a HEIC that isn't one (tests/heic-container.spec.ts has the rest).
+      ["a HEIC brand box and nothing else", Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypheic\0\0\0\0mif1heic", "latin1")]), "damaged"],
+      ["a HEIF burst (an image sequence)", Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypmsf1\0\0\0\0mif1heic", "latin1")]), "heif-sequence"],
       ["an AVIF picture", Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypavif\0\0\0\0", "latin1")]), "other-picture"],
       ["a BMP", "BM\x00\x00\x00\x00", "other-picture"],
       ["a TIFF", "II*\x00\x08\x00\x00\x00", "other-picture"],
@@ -250,10 +256,27 @@ describe("keeping a receipt", () => {
     expect(receiptFileName("a".repeat(32), "image/webp")).toBe(`${"a".repeat(32)}.webp`);
   });
 
+  it("keeps a HEIC photo exactly as given, named .heic, and never a converted copy ([8i], option D)", async () => {
+    const e = await record();
+    const file = heic({ extras: true });
+    const view = await addReceipt(prisma, folder, e.id, bytes(file));
+    expect(view.receipt).toMatchObject({ type: "image/heic", bytes: file.length });
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { expenseId: e.id } });
+    expect(row.sha256).toBe(createHash("sha256").update(file).digest("hex"));
+    expect(readFileSync(path.join(folder, `${row.id}.heic`)).equals(file)).toBe(true);
+    // One file for the receipt, the person's own bytes: nothing decoded or converted beside it.
+    expect(files().filter((n) => n.startsWith(row.id))).toEqual([`${row.id}.heic`]);
+    expect(receiptFileName(row.id, "image/heic")).toBe(`${row.id}.heic`);
+  });
+
   it("refuses a file DotAmi doesn't keep, and writes nothing", async () => {
     const e = await record();
     const before = files();
     for (const hostile of ['<svg onload="alert(1)"/>', "<html><script>alert(1)</script></html>", "GIF89a"]) {
+      expect(await refusal(() => addReceipt(prisma, folder, e.id, bytes(hostile)))).toBe(400);
+    }
+    // HEICs that aren't one still photo inside the caps: a burst, one cut short, one claiming 900 megapixels.
+    for (const hostile of [heic({ major: "msf1" }), heic().subarray(0, 500), heic({ primarySize: { width: 30_000, height: 30_000 } })]) {
       expect(await refusal(() => addReceipt(prisma, folder, e.id, bytes(hostile)))).toBe(400);
     }
     expect(await refusal(() => addReceipt(prisma, folder, e.id, bytes(png(1, 1, { claim: { width: 30_000, height: 30_000 } }))))).toBe(400);
@@ -475,6 +498,27 @@ describe("receipt files encrypted at rest (expense-records.md § 9)", () => {
     const shown = await readReceiptFile(prisma, folder, e.id, KEY);
     expect(shown.type).toBe("image/png");
     expect(shown.bytes.equals(file)).toBe(true);
+  });
+
+  it("a HEIC photo is encrypted like the others, and is decrypted in memory before the HEIC reader opens it ([8i])", async () => {
+    const file = heic({ extras: true });
+    const { e, row, onDisk } = await added(file, KEY);
+    expect(onDisk.endsWith(`${row.id}.heic`)).toBe(true);
+    const stored = readFileSync(onDisk);
+    expect(isEncryptedReceipt(stored)).toBe(true);
+    expect(stored.length).toBe(file.length + ENCRYPTED_OVERHEAD);
+    // Not the photo's ftyp box (its size, "ftyp" and the brand), so nothing on the disk says HEIC.
+    expect(stored.indexOf(file.subarray(0, 24))).toBe(-1);
+    expect(stored.indexOf(Buffer.from("ftypheic", "latin1"))).toBe(-1);
+    // The container reader can't make anything of the file as it lies on the disk...
+    expect(heicPicture(bytes(stored)).ok).toBe(false);
+    // ...and is handed the photo itself: decrypted in memory, checked against the row, then read.
+    const shown = await readReceiptFile(prisma, folder, e.id, KEY);
+    expect(shown.type).toBe("image/heic");
+    expect(shown.bytes.equals(file)).toBe(true);
+    expect(heicPicture(bytes(shown.bytes))).toEqual(heicPicture(bytes(file)));
+    expect(heicPicture(bytes(shown.bytes)).ok).toBe(true);
+    expect(heicHeader(bytes(shown.bytes))).toEqual({ ok: true, width: 256, height: 256 });
   });
 
   it("a changed byte in an encrypted file is refused as changed", async () => {

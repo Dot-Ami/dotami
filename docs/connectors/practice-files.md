@@ -3,7 +3,7 @@
 Status: 2026-10-09 (the request for real column names is posted, [below](#asking-for-real-column-names)). All six packages in [the connectors research](README.md) have practice files:
 Xero and QuickBooks Online (2026-10-06), then Wave, FreshBooks, Sage Accounting, Sage 50 Canadian
 and Xero's Receivable Invoice Detail (2026-10-08). The 2026-10-08 files found new gaps, pinned as
-"fails today" tests [below](#open-found-2026-10-08); they are fixed in follow-on slices.
+"fails today" tests; every one is now fixed in a follow-on slice ([below](#fixed-found-2026-10-08)).
 
 ## What these are
 
@@ -49,7 +49,7 @@ files shaped from that program's help pages, not on real exports, so check the c
 | Xero invoice export (CSV, one row per invoice line) | day-first dates, month-first dates, dates that can't say which, a French file | the date question is asked only when needed; comma decimals and Windows-1252 bytes read; a month still running is left out |
 | Xero Receivable Invoice Detail (Excel) | title rows, a Voided invoice, a line amount and the Total saved as formulas with no value | Invoice Date wins over Due Date; "Line Amount (ex)" is pre-filled and "Unit Price (ex)" is not; the Voided invoice is left out through the pre-filled Status column; the line whose formula has no saved value is listed as such, never as empty |
 | QuickBooks Online (Excel) | Sales by Customer Detail with many lines per customer, with one line per customer, and a Transaction List | title rows, customer-name rows and "Total for" rows are listed as left out, not added; a list with no totals rows; the Transaction List's Payment row is left out through the pre-filled Type column |
-| Wave (CSV) | Account Transactions for the Sales account; Income by Customer | the account's name and the Starting Balance, Totals, Balance Change and Ending Balance rows are listed, not added; Debit and Credit are never pre-filled (the person picks Credit); Income by Customer, with no dates, names Account Transactions instead; a refund in Debit is pinned as a gap |
+| Wave (CSV) | Account Transactions for the Sales account; Income by Customer | the account's name and the Starting Balance, Totals, Balance Change and Ending Balance rows are listed, not added; Debit and Credit are never pre-filled (the person picks Credit as the amount and Debit as the refunds column); Income by Customer, with no dates, names Account Transactions instead; the refund in Debit is taken off August, the month it was paid back |
 | FreshBooks (CSV) | Invoice Details with a summary on top, dates written yyyy-mm-dd, mmm d, yyyy, dd/mm/yyyy and dd.mm.yy; the old Revenue by Client with months across | the real row of column names is found under the summary, every date shape reads (dd.mm.yy once the person says the century), Issue Date, Subtotal and Status are pre-filled, and the Draft is left out; Revenue by Client starts on months across and gives July, August and September to the cent, from every client row or from its Total row |
 | Sage Accounting, Canada (CSV) | the Sales list (Invoice Number first, a Void and a credit note); the Sales Day Book with a Type column and a totals row | "Total" beside a tax column is never pre-filled (the person picks Net); a negative credit note lowers its month; a bare "Type" is not pre-filled; the Void is left out through the pre-filled Status column |
 | Sage 50 Canadian (CSV) | Customer Sales Detail grouped by customer, dates 07-14-2026; the same with 07-14-26; the same in French, semicolons, windows-1252 | the grouped report reads and "Revenue" is pre-filled; the old .xls export is refused with a sentence saying what to do, so the route is .csv ([sage-50-canada.md](sage-50-canada.md)); the two-digit years read once the person says the century; the French file, four "1 000,00" columns a line, reads on its semicolons |
@@ -58,19 +58,25 @@ files shaped from that program's help pages, not on real exports, so check the c
 
 ### Open, found 2026-10-08
 
-Each is a test written to pass only while the gap is there, so the day a fix lands it errors until
-it is turned into a normal test. One is in `tests/figures-file-packages.spec.ts`, under "gaps the
-newer practice files found, fails today", written with `it.fails`: one test, one gap. (Two-digit
-years, months across the top, a report with no dates, a French semicolon file with several amount
-columns, a formula saved with no value, a summary block above the table, Draft invoices and voided
-invoices, eight more gaps found, are fixed: see below.) They are fixed in follow-on slices, not in
-the one that found them.
-
-| Gap | What happens today | Practice file | Fixed by |
-| --- | --- | --- | --- |
-| A refund paid back sits in a ledger's Debit column | with Credit picked, the refund's row is listed as "no amount" and August reads 320.00 against a true 280.00 | `wave-account-transactions` | the refunds slice |
+None is open. Each gap was pinned by a test written to pass only while the gap was there, so
+the day a fix landed it errored until it was turned into a normal test. The last one, a refund
+paid back in a ledger's Debit column, is fixed too, and the "gaps the newer practice files
+found" block in `tests/figures-file-packages.spec.ts` no longer holds any `it.fails` test.
+(Two-digit years, months across the top, a report with no dates, a French semicolon file with
+several amount columns, a formula saved with no value, a summary block above the table, Draft
+invoices, voided invoices and the refund, nine gaps in all, are fixed: see below.) They were
+fixed in follow-on slices, not in the one that found them.
 
 ### Fixed, found 2026-10-08
+
+**A refund paid back in a ledger's Debit column** (Wave's Account Transactions; practice file
+`wave-account-transactions`). With Credit picked, the refund's row was listed as "no amount",
+so August read 320.00 against a true 280.00. An optional "Refunds / money out" column, never
+pre-filled, now takes each amount in it off the month of its own row: the person picks Debit,
+and August is 280.00. Its `it.fails` test is a normal passing test in
+`tests/figures-file-packages.spec.ts`, under "a refund in a ledger's Debit column", beside one
+showing that without the pick nothing is taken off; the rule has its own tests in
+`tests/figures-file-refunds.spec.ts`. The Debit and Credit column titles are still assumed.
 
 **A French semicolon file with several comma-decimal columns** (Sage 50 Canadian in French:
 revenue, cost, profit and margin written "1 000,00"; practice file `sage50-french`). The commas

@@ -31,7 +31,7 @@ execFileSync(process.execPath, [path.join(root, "desktop", "build.mjs")], { stdi
 // 2. Stage the app.
 rmSync(path.join(root, "dist-desktop"), { recursive: true, force: true });
 mkdirSync(stage, { recursive: true });
-for (const f of ["main.mjs", "migrate.mjs", "backup.mjs", "receipt-crypto.mjs", "receipt-key.mjs", "log.mjs", "update-notice.mjs", "wipe-pending.mjs", "preparing.mjs", "preparing.html", "passphrase.html", "passphrase.js", "passphrase-preload.cjs"]) {
+for (const f of ["main.mjs", "migrate.mjs", "backup.mjs", "receipt-crypto.mjs", "receipt-key.mjs", "log.mjs", "update-notice.mjs", "wipe-pending.mjs", "preparing.mjs", "preparing.html", "passphrase.html", "passphrase.js", "passphrase-preload.cjs", "window-preload.cjs"]) {
   cpSync(path.join(root, "desktop", f), path.join(stage, "desktop", f));
 }
 cpSync(path.join(root, "prisma", "migrations"), path.join(stage, "prisma", "migrations"), { recursive: true });

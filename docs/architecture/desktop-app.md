@@ -69,7 +69,12 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    Electron's defaults stay on and are set
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
-   2026-10-05).
+   2026-10-05). No switch may turn off Chromium's sandboxes or run the graphics process inside the
+   browser process (`tests/desktop-sandbox.spec.ts`), a condition of drawing HEIC receipts on the
+   graphics chip ([8i], 2026-10-09). The window's one preload (`desktop/window-preload.cjs`) gives
+   DotAmi's pages two calls about HEIC receipts and nothing else; the main process believes them only
+   from DotAmi's own window, and stops HEIC drawing for the session once the graphics process stops
+   (`child-process-gone`, type `GPU`) or a HEIC fails (desktop-tested).
 7. **Updates** (installed app only) — see below.
 8. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
    ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·
@@ -135,8 +140,9 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   (`receipts-before-restore-<time>`, beside the safety copy that describes it), the staged folder
   becomes the receipts folder, then the database is swapped in; if the swap fails, both folders go
   back. The file list may name only `dotami.db` and DotAmi's own receipt names (32 hex characters
-  and `.jpg`/`.png`/`.webp`/`.pdf`), each once and at most 10 MB, so no backup can write anywhere
-  else.
+  and `.jpg`/`.png`/`.webp`/`.pdf`/`.heic`), each once and at most 10 MB, so no backup can write
+  anywhere else. A DotAmi from before HEIC receipts doesn't have `.heic` in its list, so it refuses a
+  backup that holds one; restore it with this version or later.
 - **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
   header is authenticated too (its exact bytes are GCM's additional data), so editing any of it,
   the file list included, makes the backup refuse to open. A header that asks for different scrypt
