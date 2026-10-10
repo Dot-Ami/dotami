@@ -25,7 +25,7 @@ import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { fileKind, openDatabase, runSql as runOn } from "../desktop/sqlite.mjs";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
-import { SET_ASIDE_RECEIPTS_WARNING } from "../lib/privacy/inventory";
+import { NOTHING_SET_ASIDE, setAsideWarning } from "../lib/privacy/inventory";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
@@ -1164,12 +1164,12 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
   await removing.getByLabel("Your ideas, with their notes, links and map progress").check();
   await removing.getByLabel("Your statements (“In your words”)").check();
   await removing.getByLabel("Safety copies in the backups folder").check();
-  await expect(box).toContainText(SET_ASIDE_RECEIPTS_WARNING);
+  await expect(box).toContainText(setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsLocked: 1, receiptsBeforeRestore: 1 })!);
   await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
   await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
   const second = page.getByRole("dialog", { name: "Delete them now?" });
   await expect(second).toContainText("The safety copies in the backups folder go too.");
-  await expect(second).toContainText(SET_ASIDE_RECEIPTS_WARNING);
+  await expect(second).toContainText(setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsLocked: 1, receiptsBeforeRestore: 1 })!);
   await second.getByRole("button", { name: "Delete now" }).click();
   const done = removing.getByRole("status");
   await expect(done).toContainText("Safety copies: 1 file deleted, 0 left");
@@ -1482,6 +1482,112 @@ test("a lost key: Start fresh… asks twice, keeps the locked file and its key i
   expect(readFileSync(keyFile).equals(keyBytes)).toBe(false);
   expect(fileKind(path.join(dataDir, "dotami.db"))).toBe("encrypted");
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[database] started fresh: the locked data file and the receipts folder went to the backups folder");
+});
+
+test("after a real Start fresh, Delete unticked keeps the locked file, the old key files and the receipts, and says so; ticked, they are gone to the last byte ([8i])", async () => {
+  test.setTimeout(300_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  const backupsDir = path.join(dataDir, "backups");
+
+  // A data file holding the person's words, and its key while it still opens.
+  let page = await launch();
+  await describeVenture(page);
+  const said = await page.evaluate(
+    async (text) =>
+      (await fetch("/api/person/statements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) }))
+        .status,
+    `statement ${MARKER}`,
+  );
+  expect(said).toBe(200);
+  const oldKey = await dataKey();
+  await quit();
+
+  // Both key files become ones this Windows account can't open (as after a profile reset), and a receipt
+  // waits in the receipts folder. At the next start the receipts key is set aside for a new one (nothing
+  // was locked with it: receipts-key-unreadable-….key), then the lost-key window offers Start fresh.
+  const unopenable = (keyId: string) => JSON.stringify({ format: 1, keyId, wrapped: randomBytes(48).toString("base64") });
+  writeFileSync(path.join(dataDir, "database.key"), unopenable("0011223344556677"));
+  writeFileSync(path.join(dataDir, "receipts.key"), unopenable("8899aabbccddeeff"));
+  mkdirSync(path.join(dataDir, "receipts"), { recursive: true });
+  writeFileSync(path.join(dataDir, "receipts", `${"5".repeat(32)}.png`), Buffer.concat([Buffer.from("a receipt the empty file won't describe "), randomBytes(64)]));
+  const window = await launchTo("lost-key");
+  await window.getByRole("button", { name: "Start fresh…" }).click();
+  await window.getByRole("button", { name: "Start fresh", exact: true }).click();
+  page = await mainWindow(app!);
+
+  // What Start fresh really left: the locked file, both old key files, and the receipts folder.
+  const leftovers = () => readdirSync(backupsDir).filter((f) => /^(dotami-locked-|database-key-unreadable-|receipts-key-unreadable-|receipts-before-start-fresh-)/.test(f)).sort();
+  const before = leftovers();
+  expect(before.map((f) => f.replace(/\d+/, "<time>"))).toEqual([
+    "database-key-unreadable-<time>.key",
+    "dotami-locked-<time>.db",
+    "receipts-before-start-fresh-<time>",
+    "receipts-key-unreadable-<time>.key",
+  ]);
+  const lockedFile = path.join(backupsDir, before.find((f) => f.startsWith("dotami-locked-"))!);
+  const freshFolder = path.join(backupsDir, before.find((f) => f.startsWith("receipts-before-start-fresh-"))!);
+  // The "before": the locked file holds the person's words, readable with the old key if it ever came back.
+  expect(holdsMarker(lockedFile, oldKey)).toBe(true);
+  // 32 bytes from the end of each file (past any shared header): what the byte scan looks for afterwards.
+  const files = [...before.filter((f) => !f.startsWith("receipts-before-start-fresh-")).map((f) => path.join(backupsDir, f)), ...readdirSync(freshFolder).map((f) => path.join(freshFolder, f))];
+  expect(files).toHaveLength(4);
+  const needles = files.map((f) => {
+    const bytes = readFileSync(f);
+    return bytes.subarray(bytes.length - 32);
+  });
+  expect(filesHoldingAny(dataDir, needles)).toHaveLength(4);
+
+  // A statement to delete with the box unticked.
+  expect(
+    await page.evaluate(
+      async () =>
+        (await fetch("/api/person/statements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: "said after starting fresh" }) }))
+          .status,
+    ),
+  ).toBe(200);
+  await page.goto(new URL("/your-data", page.url()).toString());
+  const removing = page.getByRole("region", { name: "Taking things out" });
+  await removing.getByRole("button", { name: "Delete", exact: true }).click();
+  const box = removing.getByRole("listitem").filter({ has: page.getByLabel("Safety copies in the backups folder") });
+  await expect(box).toContainText("Set-aside receipt folders: 1 · Set-aside key files: 2 · Locked data files: 1");
+
+  // Unticked: each kind is said to stay, and stays.
+  await removing.getByLabel("Your statements (“In your words”)").check();
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  const first = page.getByRole("dialog", { name: "Delete these?" });
+  await expect(first).toContainText("The old key files set aside in the backups folder aren't ticked, so they stay.");
+  await expect(first).toContainText("The locked data file set aside in the backups folder isn't ticked, so it stays, and could still be opened if its key comes back.");
+  await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+  await first.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
+  await expect(removing.getByRole("status")).toContainText("Your statements: 1 record deleted, 0 left");
+  expect(leftovers()).toEqual(before);
+  expect(filesHoldingAny(dataDir, needles)).toHaveLength(4);
+
+  // Ticked: the warning names each kind, at the box and at both asks; then they go.
+  const warning = setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 1 })!;
+  await removing.getByRole("button", { name: "Delete", exact: true }).click();
+  await removing.getByLabel("Safety copies in the backups folder").check();
+  await expect(box).toContainText(warning);
+  await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+  const firstAgain = page.getByRole("dialog", { name: "Delete these?" });
+  await expect(firstAgain).toContainText(warning);
+  await firstAgain.getByRole("button", { name: "Yes, continue" }).click();
+  const second = page.getByRole("dialog", { name: "Delete them now?" });
+  await expect(second).toContainText(warning);
+  await second.getByRole("button", { name: "Delete now" }).click();
+  const done = removing.getByRole("status");
+  await expect(done).toContainText("Set-aside key files: 2 files deleted, 0 left");
+  await expect(done).toContainText("Locked data files: 1 file deleted, 0 left");
+  await expect(done).toContainText("Set-aside receipt folders: 1 folder deleted, 0 left");
+  await quit();
+
+  // The "after": none of them is left, no file anywhere in the data folder holds a byte run of theirs,
+  // and no wipe is still owed.
+  expect(leftovers()).toEqual([]);
+  expect(existsSync(lockedFile)).toBe(false);
+  expect(filesHoldingAny(dataDir, needles)).toEqual([]);
+  expect(existsSync(wipePendingFile(dbFile))).toBe(false);
 });
 
 test("a lost key while an encryption was part-way: Start fresh moves nothing and says why ([8i])", async () => {

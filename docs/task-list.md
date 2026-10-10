@@ -265,6 +265,9 @@ roadmap's build order.
       key, the locked file kept in backups/
     - [x] (D) Start fresh… in the lost-key window, asked twice; the locked file, its key and the receipts
       kept in backups/
+    - [x] Delete's safety-copies box also clears the old key files, the locked data file and the
+      start-fresh receipts set aside in backups/ (the maintainer said yes, 2026-10-10, "one box"), with a
+      warning naming each one that is really there, in short sentences (fixed in review) ([architecture/database-encryption.md § 15](architecture/database-encryption.md))
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 
 ## 9 — The Lens (DotAmi's built-in agent)

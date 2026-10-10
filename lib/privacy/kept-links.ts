@@ -15,14 +15,21 @@ export const keptLinkKey = (k: { model: string; field: string }) => `${k.model}.
 export const SAFETY_COPIES_KEY = "backups";
 /** The count key of the receipt folders DotAmi set aside in the backups folder ([8i], expense-records.md § 11). */
 export const SET_ASIDE_RECEIPTS_KEY = "set-aside-receipts";
+/** [8i] The count key of the old key files DotAmi set aside in the backups folder (database-encryption.md § 15). */
+export const SET_ASIDE_KEYS_KEY = "set-aside-keys";
+/** [8i] The count key of the locked data files a lost key left in the backups folder (database-encryption.md § 15). */
+export const LOCKED_FILES_KEY = "locked-data-files";
+
+/** The keys of what DotAmi set aside in the backups folder, past its safety copies: one box clears them all. */
+export const SET_ASIDE_KEYS = [SET_ASIDE_RECEIPTS_KEY, SET_ASIDE_KEYS_KEY, LOCKED_FILES_KEY] as const;
 
 /**
  * The counts a box that deletes files rather than rows travels under, on the page and in the delete
- * request: the safety copies in the backups folder, then the receipt folders set aside there, which
- * the same box clears.
+ * request: the safety copies in the backups folder, then what DotAmi set aside there, which the same
+ * box clears: receipt folders, and [8i] old key files and locked data files.
  */
 export function folderKeys(entry: Pick<DeleteMenuEntry, "folder">): string[] {
-  return entry.folder === "backups" ? [SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY] : [];
+  return entry.folder === "backups" ? [SAFETY_COPIES_KEY, ...SET_ASIDE_KEYS] : [];
 }
 
 /** Every table a set of menu entries touches: the ones they empty and the ones the database empties with them. */

@@ -8,6 +8,9 @@
  * (receipts-locked-… from Start a new key, receipts-before-restore-… from a restore;
  * docs/architecture/expense-records.md § 11): only those folders, only DotAmi's files in them, never
  * through a link, and owed in the marker like a safety copy when one can't be cleared yet.
+ *
+ * [8i] And what a lost key leaves there (docs/architecture/database-encryption.md § 15): the receipts
+ * folder Start fresh set aside, the old key files, and the locked data file with its journal.
  */
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
@@ -20,10 +23,14 @@ import { RECEIPT_EXTENSIONS } from "../desktop/backup.mjs";
 import { migrate, vacuumFile } from "../desktop/migrate.mjs";
 import {
   backupsFolder,
+  deleteLockedDataFiles,
   deleteSafetyCopies,
+  deleteSetAsideKeyFiles,
   deleteSetAsideReceiptFolders,
   finishPendingWipe,
+  listLockedDataFiles,
   listSafetyCopies,
+  listSetAsideKeyFiles,
   listSetAsideReceiptFolders,
   readWipePending,
   wipePendingFile,
@@ -180,15 +187,17 @@ describe("the wipe-pending marker", () => {
       since: "2026-10-08T00:00:00.000Z",
       backups: ["dotami-before-restore-1.db", "dotami-before-restore-2.db"],
       receiptFolders: [],
+      keyFiles: [],
+      lockedFiles: [],
     });
   });
 
   it("reads back only names DotAmi gives its copies; a damaged marker still means a wipe is owed, of no copies", () => {
     expect(readWipePending(dbFile)).toBeNull();
     writeFileSync(wipePendingFile(dbFile), JSON.stringify({ format: 1, backups: ["dotami-before-restore-1.db", "C:\\Windows\\x.db", 7] }));
-    expect(readWipePending(dbFile)).toEqual({ since: null, backups: ["dotami-before-restore-1.db"], receiptFolders: [] });
+    expect(readWipePending(dbFile)).toEqual({ since: null, backups: ["dotami-before-restore-1.db"], receiptFolders: [], keyFiles: [], lockedFiles: [] });
     writeFileSync(wipePendingFile(dbFile), "{ not json");
-    expect(readWipePending(dbFile)).toEqual({ since: null, backups: [], receiptFolders: [] });
+    expect(readWipePending(dbFile)).toEqual({ since: null, backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
   });
 });
 
@@ -218,7 +227,7 @@ describe("finishing a wipe at start-up", () => {
     const lines: string[] = [];
     const result = finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (l) => lines.push(l) });
 
-    expect(result).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [] });
+    expect(result).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [], keyFilesLeft: [], lockedFilesLeft: [] });
     expect(existsSync(copy)).toBe(false);
     expect(holdsMarker(dbFile)).toBe(false);
     expect(existsSync(wipePendingFile(dbFile))).toBe(false);
@@ -238,16 +247,16 @@ describe("finishing a wipe at start-up", () => {
       throw Object.assign(new Error(`disk full while writing ${MARKER}`), { code: "ERR_SQLITE_ERROR" });
     };
     const result = finishPendingWipe(dbFile, { vacuum: full, log: (l) => lines.push(l) });
-    expect(result).toEqual({ ran: true, wiped: false, backupsLeft: [], receiptFoldersLeft: [] });
+    expect(result).toEqual({ ran: true, wiped: false, backupsLeft: [], receiptFoldersLeft: [], keyFilesLeft: [], lockedFilesLeft: [] });
     // The copy could go, so it did; the file's wipe is still owed.
     expect(existsSync(copy)).toBe(false);
-    expect(readWipePending(dbFile)).toEqual({ since: "2026-10-08T01:02:03.000Z", backups: [], receiptFolders: [] });
+    expect(readWipePending(dbFile)).toEqual({ since: "2026-10-08T01:02:03.000Z", backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
     // The log names only the error's code, never its words.
     expect(lines.join("\n")).not.toContain(MARKER);
     expect(lines[0]).toBe("[wipe] the data file couldn't be wiped yet (ERR_SQLITE_ERROR)");
 
     // Next start, with room again: finished.
-    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile })).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [] });
+    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile })).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [], keyFilesLeft: [], lockedFilesLeft: [] });
     expect(holdsMarker(dbFile)).toBe(false);
     expect(existsSync(wipePendingFile(dbFile))).toBe(false);
   });
@@ -265,6 +274,8 @@ describe("finishing a wipe at start-up", () => {
       wiped: true,
       backupsLeft: ["dotami-before-restore-2.db"],
       receiptFoldersLeft: [],
+      keyFilesLeft: [],
+      lockedFilesLeft: [],
     });
     expect(readWipePending(dbFile)?.backups).toEqual(["dotami-before-restore-2.db"]);
   });
@@ -272,7 +283,7 @@ describe("finishing a wipe at start-up", () => {
   it("a damaged marker still finishes the wipe, deletes no copies, and is removed", () => {
     const { copy } = dataFileWithDeletedWords();
     writeFileSync(wipePendingFile(dbFile), "{ not json");
-    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile })).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [] });
+    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile })).toEqual({ ran: true, wiped: true, backupsLeft: [], receiptFoldersLeft: [], keyFilesLeft: [], lockedFilesLeft: [] });
     expect(holdsMarker(dbFile)).toBe(false);
     expect(existsSync(copy)).toBe(true);
     expect(existsSync(wipePendingFile(dbFile))).toBe(false);
@@ -450,14 +461,18 @@ describe("the receipt folders set aside in the backups folder ([8i])", () => {
       since: "2026-10-10T00:00:00.000Z",
       backups: ["dotami-before-restore-1.db"],
       receiptFolders: ["receipts-before-restore-1", "receipts-locked-2"],
+      keyFiles: [],
+      lockedFiles: [],
     });
     expect(readWipePending(dbFile)).toEqual({
       since: "2026-10-10T00:00:00.000Z",
       backups: ["dotami-before-restore-1.db"],
       receiptFolders: ["receipts-before-restore-1", "receipts-locked-2"],
+      keyFiles: [],
+      lockedFiles: [],
     });
     writeFileSync(wipePendingFile(dbFile), JSON.stringify({ format: 1, since: "2026-10-08T00:00:00.000Z", backups: [] }));
-    expect(readWipePending(dbFile)).toEqual({ since: "2026-10-08T00:00:00.000Z", backups: [], receiptFolders: [] });
+    expect(readWipePending(dbFile)).toEqual({ since: "2026-10-08T00:00:00.000Z", backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
   });
 
   it("at start-up, with the marker: clears the folders it names and removes the marker; a folder set aside since stays", () => {
@@ -471,6 +486,8 @@ describe("the receipt folders set aside in the backups folder ([8i])", () => {
       wiped: true,
       backupsLeft: [],
       receiptFoldersLeft: [],
+      keyFilesLeft: [],
+      lockedFilesLeft: [],
     });
     expect(existsSync(owed)).toBe(false);
     expect(readdirSync(newer)).toHaveLength(1);
@@ -493,8 +510,293 @@ describe("the receipt folders set aside in the backups folder ([8i])", () => {
       wiped: true,
       backupsLeft: [],
       receiptFoldersLeft: ["receipts-before-restore-1"],
+      keyFilesLeft: [],
+      lockedFilesLeft: [],
     });
     expect(readWipePending(dbFile)?.receiptFolders).toEqual(["receipts-before-restore-1"]);
     expect(lines).toEqual(["[wipe] still owed: 0 safety copies; 1 set-aside receipt folder"]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// [8i] What a lost key leaves in the backups folder (database-encryption.md § 15): the receipts folder
+// Start fresh set aside, the old key files, and the locked data file with its journal.
+
+/** A locked data file as setAsideLockedFile leaves one (encrypt-database.mjs), with its journal when asked. */
+function lockedFile(time: number, { journal = false, body = unique(`locked-${time}`) } = {}) {
+  const file = inBackups(`dotami-locked-${time}.db`);
+  writeFileSync(file, body);
+  if (journal) writeFileSync(`${file}-journal`, unique(`journal-${time}`));
+  return file;
+}
+
+describe("the receipts folder Start fresh set aside ([8i])", () => {
+  it("is listed with the other set-aside receipt folders, and cleared the same way: DotAmi's files only", () => {
+    const gone = [unique("fresh-a"), unique("fresh-b")];
+    const fresh = setAside("receipts-before-start-fresh-1760000000005", {
+      [receiptName()]: gone[0],
+      [`${receiptName("pdf")}.encrypting`]: gone[1],
+      "my scan.png": "the person's own",
+    });
+    // Names DotAmi never gives one.
+    setAside("receipts-before-start-fresh-17x", { [receiptName()]: "x" });
+    setAside("receipts-before-start-fresh", { [receiptName()]: "x" });
+    setAside("receipts-before-fresh-1", { [receiptName()]: "x" });
+    expect(listSetAsideReceiptFolders(dbFile)).toEqual({ names: ["receipts-before-start-fresh-1760000000005"] });
+
+    expect(holdingAny(gone)).toHaveLength(2);
+    expect(deleteSetAsideReceiptFolders(dbFile, ["receipts-before-start-fresh-1760000000005", "receipts-before-start-fresh"])).toEqual({
+      deleted: ["receipts-before-start-fresh-1760000000005"],
+      left: [],
+    });
+    expect(readdirSync(fresh)).toEqual(["my scan.png"]);
+    expect(holdingAny(gone)).toEqual([]);
+  });
+});
+
+describe("the old key files set aside in the backups folder ([8i])", () => {
+  it("lists only the key files DotAmi sets aside, directly in the folder, as regular files", () => {
+    inBackups("receipts-key-unreadable-1760000000000.key");
+    inBackups("database-key-unreadable-1760000000001.key");
+    // Not DotAmi's set-aside names: its live key files, a near miss, a copy, the person's own.
+    inBackups("receipts.key");
+    inBackups("database.key");
+    inBackups("database-key-unreadable-17x.key");
+    inBackups("database-key-unreadable-1760000000002.key.bak");
+    inBackups("my-key-unreadable-1.key");
+    mkdirSync(path.join(backupsFolder(dbFile), "receipts-key-unreadable-1760000000003.key"));
+    inBackups("dotami-before-restore-1760000000000.db");
+    expect(listSetAsideKeyFiles(dbFile)).toEqual({
+      names: ["database-key-unreadable-1760000000001.key", "receipts-key-unreadable-1760000000000.key"],
+    });
+  });
+
+  it("is empty when there is no backups folder, and never follows a backups folder that is a link", () => {
+    expect(listSetAsideKeyFiles(dbFile)).toEqual({ names: [] });
+    const elsewhere = path.join(dir, "someone else's folder");
+    mkdirSync(elsewhere);
+    const theirs = path.join(elsewhere, "database-key-unreadable-1.key");
+    writeFileSync(theirs, "not DotAmi's to delete");
+    symlinkSync(elsewhere, backupsFolder(dbFile), "junction");
+    expect(readdirSync(backupsFolder(dbFile))).toEqual(["database-key-unreadable-1.key"]);
+    expect(listSetAsideKeyFiles(dbFile)).toEqual({ names: [] });
+    expect(deleteSetAsideKeyFiles(dbFile, ["database-key-unreadable-1.key"])).toEqual({ deleted: [], left: ["database-key-unreadable-1.key"] });
+    expect(existsSync(theirs)).toBe(true);
+  });
+
+  it.skipIf(!fileLinksWork)("never deletes a link that wears a key file's name, or what it points at", () => {
+    const outside = path.join(dir, "database.key");
+    writeFileSync(outside, "the live key");
+    mkdirSync(backupsFolder(dbFile), { recursive: true });
+    symlinkSync(outside, path.join(backupsFolder(dbFile), "database-key-unreadable-1.key"), "file");
+    expect(listSetAsideKeyFiles(dbFile).names).toEqual([]);
+    expect(deleteSetAsideKeyFiles(dbFile, ["database-key-unreadable-1.key"]).left).toEqual(["database-key-unreadable-1.key"]);
+    expect(readFileSync(outside, "utf8")).toBe("the live key");
+  });
+
+  it("deletes the named key files only, every byte of them; never another name or a path out of the folder", () => {
+    const liveKey = path.join(path.dirname(dbFile), "database.key");
+    writeFileSync(liveKey, "the live key");
+    const gone = [unique("receipts-key"), unique("database-key")];
+    writeFileSync(inBackups("receipts-key-unreadable-1760000000000.key"), gone[0]);
+    writeFileSync(inBackups("database-key-unreadable-1760000000001.key"), gone[1]);
+    const later = inBackups("database-key-unreadable-1769999999999.key", "set aside after the person looked");
+    expect(holdingAny(gone)).toHaveLength(2);
+
+    const result = deleteSetAsideKeyFiles(dbFile, [
+      "receipts-key-unreadable-1760000000000.key",
+      "database-key-unreadable-1760000000001.key",
+      "../database.key",
+      "database.key",
+      "database-key-unreadable-1/../../database.key",
+    ]);
+    expect(result).toEqual({ deleted: ["receipts-key-unreadable-1760000000000.key", "database-key-unreadable-1760000000001.key"], left: [] });
+    expect(holdingAny(gone)).toEqual([]);
+    expect(readFileSync(later, "utf8")).toBe("set aside after the person looked");
+    expect(readFileSync(liveKey, "utf8")).toBe("the live key");
+  });
+
+  it("keeps a key file another program holds as still owed; one already gone counts as deleted", () => {
+    inBackups("receipts-key-unreadable-1.key");
+    inBackups("database-key-unreadable-2.key");
+    const busy = (file: string) => {
+      if (file.endsWith("-2.key")) throw Object.assign(new Error("busy"), { code: "EBUSY" });
+      rmSync(file);
+    };
+    expect(
+      deleteSetAsideKeyFiles(dbFile, ["receipts-key-unreadable-1.key", "database-key-unreadable-2.key", "database-key-unreadable-3.key"], { remove: busy }),
+    ).toEqual({ deleted: ["receipts-key-unreadable-1.key", "database-key-unreadable-3.key"], left: ["database-key-unreadable-2.key"] });
+    expect(existsSync(path.join(backupsFolder(dbFile), "database-key-unreadable-2.key"))).toBe(true);
+  });
+});
+
+describe("the locked data file set aside in the backups folder ([8i])", () => {
+  it("lists each locked file once, its journal with it, and a journal whose file is gone under that file's name", () => {
+    lockedFile(1760000000000, { journal: true });
+    lockedFile(1760000000001);
+    // Only the journal is left (its file was removed by hand): still DotAmi's, still counted.
+    writeFileSync(inBackups("dotami-locked-1760000000002.db-journal"), "a lone journal");
+    // Not DotAmi's set-aside names.
+    inBackups("dotami.db");
+    inBackups("dotami-locked-17x.db");
+    inBackups("dotami-locked-1760000000003.db.bak");
+    inBackups("dotami-locked-1760000000004.db-wal");
+    mkdirSync(path.join(backupsFolder(dbFile), "dotami-locked-1760000000005.db"));
+    inBackups("dotami-before-restore-1760000000000.db");
+    expect(listLockedDataFiles(dbFile)).toEqual({
+      names: ["dotami-locked-1760000000000.db", "dotami-locked-1760000000001.db", "dotami-locked-1760000000002.db"],
+    });
+  });
+
+  it("is empty when there is no backups folder, and never follows a backups folder that is a link", () => {
+    expect(listLockedDataFiles(dbFile)).toEqual({ names: [] });
+    const elsewhere = path.join(dir, "someone else's folder");
+    mkdirSync(elsewhere);
+    const theirs = path.join(elsewhere, "dotami-locked-1.db");
+    writeFileSync(theirs, "not DotAmi's to delete");
+    symlinkSync(elsewhere, backupsFolder(dbFile), "junction");
+    expect(listLockedDataFiles(dbFile)).toEqual({ names: [] });
+    expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1.db"])).toEqual({ deleted: [], left: ["dotami-locked-1.db"] });
+    expect(existsSync(theirs)).toBe(true);
+  });
+
+  it.skipIf(!fileLinksWork)("never deletes a link that wears a locked file's (or its journal's) name, or what it points at", () => {
+    const outside = path.join(dir, "important.db");
+    writeFileSync(outside, "keep me");
+    mkdirSync(backupsFolder(dbFile), { recursive: true });
+    symlinkSync(outside, path.join(backupsFolder(dbFile), "dotami-locked-1.db"), "file");
+    symlinkSync(outside, path.join(backupsFolder(dbFile), "dotami-locked-2.db-journal"), "file");
+    lockedFile(2);
+    expect(listLockedDataFiles(dbFile).names).toEqual(["dotami-locked-2.db"]);
+    expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1.db", "dotami-locked-2.db"])).toEqual({
+      deleted: [],
+      left: ["dotami-locked-1.db", "dotami-locked-2.db"],
+    });
+    expect(readFileSync(outside, "utf8")).toBe("keep me");
+  });
+
+  it("deletes the journal first, then the file, every byte of both; never the live data file or another name", () => {
+    writeFileSync(dbFile, "the live data");
+    writeFileSync(`${dbFile}-journal`, "the live journal");
+    const file = lockedFile(1760000000000, { journal: true });
+    const lone = path.join(backupsFolder(dbFile), "dotami-locked-1760000000002.db-journal");
+    writeFileSync(lone, unique("lone-journal"));
+    const kept = lockedFile(1769999999999, { body: Buffer.from("set aside after the person looked") });
+    const gone = [readFileSync(file), readFileSync(`${file}-journal`), readFileSync(lone)].map((b) => b.subarray(0, 40));
+    expect(holdingAny(gone)).toHaveLength(3);
+
+    const order: string[] = [];
+    const watching = (target: string) => {
+      order.push(path.basename(target));
+      rmSync(target);
+    };
+    const result = deleteLockedDataFiles(
+      dbFile,
+      ["dotami-locked-1760000000000.db", "dotami-locked-1760000000002.db", "../dotami.db", "dotami.db", "dotami-locked-1.db/../../dotami.db"],
+      { remove: watching },
+    );
+    expect(result).toEqual({ deleted: ["dotami-locked-1760000000000.db", "dotami-locked-1760000000002.db"], left: [] });
+    expect(order).toEqual(["dotami-locked-1760000000000.db-journal", "dotami-locked-1760000000000.db", "dotami-locked-1760000000002.db-journal"]);
+    expect(holdingAny(gone)).toEqual([]);
+    expect(readFileSync(kept, "utf8")).toBe("set aside after the person looked");
+    expect(readFileSync(dbFile, "utf8")).toBe("the live data");
+    expect(readFileSync(`${dbFile}-journal`, "utf8")).toBe("the live journal");
+  });
+
+  it("a journal another program holds keeps its file too, still listed and still owed", () => {
+    const file = lockedFile(1, { journal: true });
+    const busy = (target: string) => {
+      if (target.endsWith("-journal")) throw Object.assign(new Error("busy"), { code: "EBUSY" });
+      rmSync(target);
+    };
+    expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1.db", "dotami-locked-2.db"], { remove: busy })).toEqual({
+      deleted: ["dotami-locked-2.db"],
+      left: ["dotami-locked-1.db"],
+    });
+    expect(existsSync(file)).toBe(true);
+    expect(listLockedDataFiles(dbFile).names).toEqual(["dotami-locked-1.db"]);
+  });
+});
+
+describe("the marker and the start-up finish owe key files and locked files too ([8i])", () => {
+  it("names them by DotAmi's own names only; an earlier version's marker owes none", () => {
+    writeWipePending(dbFile, {
+      backups: [],
+      keyFiles: ["receipts-key-unreadable-2.key", "database-key-unreadable-1.key", "database.key", "../x.key"],
+      lockedFiles: ["dotami-locked-1.db", "dotami.db", "dotami-locked-1.db-journal", "../dotami-locked-2.db"],
+      since: "2026-10-10T00:00:00.000Z",
+    });
+    expect(JSON.parse(readFileSync(wipePendingFile(dbFile), "utf8"))).toEqual({
+      format: 1,
+      since: "2026-10-10T00:00:00.000Z",
+      backups: [],
+      receiptFolders: [],
+      keyFiles: ["database-key-unreadable-1.key", "receipts-key-unreadable-2.key"],
+      lockedFiles: ["dotami-locked-1.db"],
+    });
+    writeFileSync(
+      wipePendingFile(dbFile),
+      JSON.stringify({ format: 1, keyFiles: ["database-key-unreadable-1.key", "C:\\Windows\\x.key"], lockedFiles: ["dotami-locked-1.db", 7] }),
+    );
+    expect(readWipePending(dbFile)).toEqual({
+      since: null,
+      backups: [],
+      receiptFolders: [],
+      keyFiles: ["database-key-unreadable-1.key"],
+      lockedFiles: ["dotami-locked-1.db"],
+    });
+    writeFileSync(wipePendingFile(dbFile), JSON.stringify({ format: 1, since: "2026-10-08T00:00:00.000Z", backups: [], receiptFolders: [] }));
+    expect(readWipePending(dbFile)).toEqual({ since: "2026-10-08T00:00:00.000Z", backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
+  });
+
+  it("at start-up, with the marker: deletes the key files and locked files it names; ones set aside since stay", () => {
+    dataFileWithDeletedWords();
+    const owedKey = inBackups("database-key-unreadable-1760000000000.key");
+    const owedLocked = lockedFile(1760000000000, { journal: true });
+    const newerKey = inBackups("receipts-key-unreadable-1769999999999.key");
+    const newerLocked = lockedFile(1769999999999);
+    writeWipePending(dbFile, {
+      backups: ["dotami-before-restore-1760000000000.db"],
+      keyFiles: [path.basename(owedKey)],
+      lockedFiles: [path.basename(owedLocked)],
+    });
+    const lines: string[] = [];
+    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile, log: (l) => lines.push(l) })).toEqual({
+      ran: true,
+      wiped: true,
+      backupsLeft: [],
+      receiptFoldersLeft: [],
+      keyFilesLeft: [],
+      lockedFilesLeft: [],
+    });
+    expect(existsSync(owedKey)).toBe(false);
+    expect(existsSync(owedLocked)).toBe(false);
+    expect(existsSync(`${owedLocked}-journal`)).toBe(false);
+    expect(existsSync(newerKey)).toBe(true);
+    expect(existsSync(newerLocked)).toBe(true);
+    expect(existsSync(wipePendingFile(dbFile))).toBe(false);
+    expect(lines).toEqual(["[wipe] finished the wipe an earlier Delete left owed (1 safety copy, 1 set-aside key file and 1 locked data file deleted)"]);
+  });
+
+  it("at start-up, a locked file another program still holds stays named in the marker", () => {
+    dataFileWithDeletedWords();
+    const held = lockedFile(1);
+    inBackups("receipts-key-unreadable-1.key");
+    writeWipePending(dbFile, { backups: [], keyFiles: ["receipts-key-unreadable-1.key"], lockedFiles: ["dotami-locked-1.db"] });
+    const busy = (target: string) => {
+      if (target === held) throw Object.assign(new Error("busy"), { code: "EBUSY" });
+      rmSync(target);
+    };
+    const lines: string[] = [];
+    expect(finishPendingWipe(dbFile, { vacuum: vacuumFile, remove: busy, log: (l) => lines.push(l) })).toEqual({
+      ran: true,
+      wiped: true,
+      backupsLeft: [],
+      receiptFoldersLeft: [],
+      keyFilesLeft: [],
+      lockedFilesLeft: ["dotami-locked-1.db"],
+    });
+    expect(readWipePending(dbFile)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [], keyFiles: [], lockedFiles: ["dotami-locked-1.db"] });
+    expect(lines).toEqual(["[wipe] still owed: 0 safety copies; 1 locked data file"]);
   });
 });

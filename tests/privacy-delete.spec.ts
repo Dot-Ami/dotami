@@ -22,7 +22,9 @@ import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { addTypedStatement } from "@/lib/person/statements";
 import {
   DeleteInputError,
+  LOCKED_FILES_KEY,
   SAFETY_COPIES_KEY,
+  SET_ASIDE_KEYS_KEY,
   SET_ASIDE_RECEIPTS_KEY,
   affectedKeys,
   affectedTables,
@@ -33,7 +35,17 @@ import {
   pickKinds,
   wipeFreeSpace,
 } from "@/lib/privacy/delete";
-import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_WARNING, TABLES, keptLinkKey } from "@/lib/privacy/inventory";
+import {
+  DELETE_MENU,
+  KEPT_BY_DELETE,
+  NOTHING_SET_ASIDE,
+  NOT_CLEARED_BY_DELETE,
+  type SetAsideKinds,
+  TABLES,
+  keptLinkKey,
+  setAsideKindsOf,
+  setAsideWarning,
+} from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
 import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { openDatabase } from "../desktop/sqlite.mjs";
@@ -127,12 +139,19 @@ async function countAll(prisma: PrismaClient): Promise<Record<string, number>> {
  * What the page would send: the counts of every table the ticked kinds touch, as they stand, and
  * how many rows each kept link holds (an expense record's idea, when ideas are ticked), and the
  * number of safety copies when that box is ticked (`copies`, as the page counted them), with the receipt
- * folders set aside in the backups folder (`folders`).
+ * folders set aside in the backups folder (`folders`), and [8i] the old key files (`keys`) and locked
+ * data files (`locked`) set aside there.
  */
-async function seenFor(prisma: PrismaClient, kinds: string[], copies = 0, folders = 0): Promise<Record<string, number>> {
+async function seenFor(prisma: PrismaClient, kinds: string[], copies = 0, folders = 0, keys = 0, locked = 0): Promise<Record<string, number>> {
   const all = await countAll(prisma);
   const entries = pickKinds(kinds);
-  const folderCount = (m: string) => (m === SAFETY_COPIES_KEY ? copies : m === SET_ASIDE_RECEIPTS_KEY ? folders : all[m]);
+  const files: Record<string, number> = {
+    [SAFETY_COPIES_KEY]: copies,
+    [SET_ASIDE_RECEIPTS_KEY]: folders,
+    [SET_ASIDE_KEYS_KEY]: keys,
+    [LOCKED_FILES_KEY]: locked,
+  };
+  const folderCount = (m: string) => (m in files ? files[m] : all[m]);
   return {
     ...Object.fromEntries(affectedKeys(entries).map((m) => [m, folderCount(m)])),
     ...(await countKeptLinks(prisma, keptLinks(entries))),
@@ -361,11 +380,16 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     // [8i] Nor the receipt folders set aside there: the same box clears them since 2026-10-10.
     expect(names).not.toContain("Receipts folders moved into the backups folder");
     expect(NOT_CLEARED_BY_DELETE.map((n) => n.why).join(" ")).not.toMatch(/receipts-before-restore|receipts-locked/);
-    // What it still leaves there is said: the key files set aside on their own.
-    expect(NOT_CLEARED_BY_DELETE.find((n) => n.name === "Key files set aside in the backups folder")!.why).toMatch(/receipts-key-unreadable-/);
-    // [8i] What a lost key's restore or Start fresh sets aside is never deleted by DotAmi, and the list says so by name.
-    const setAside = NOT_CLEARED_BY_DELETE.find((n) => n.name === "The locked data file and key files set aside in the backups folder")!.why;
-    for (const name of ["dotami-locked-", "database-key-unreadable-", "receipts-before-start-fresh-"]) expect(setAside).toContain(name);
+    // [8i] Nor the old key files, the locked data file or the start-fresh receipts: the same box clears
+    // them since database-encryption.md § 15, so nothing here names them as out of reach.
+    expect(names).not.toContain("Key files set aside in the backups folder");
+    expect(names).not.toContain("The locked data file and key files set aside in the backups folder");
+    expect(NOT_CLEARED_BY_DELETE.map((n) => n.why).join(" ")).not.toMatch(/dotami-locked|key-unreadable|before-start-fresh/);
+    // What is really left in the backups folder is said: what the person put there, and that nothing
+    // DotAmi sets aside there is out of the box's reach.
+    const yours = NOT_CLEARED_BY_DELETE.find((n) => n.name === "What you put in the backups folder yourself")!.why;
+    expect(yours).toMatch(/^Not touched\./);
+    expect(yours).toMatch(/Nothing DotAmi sets aside there is out of its reach/);
     // The Settings box says it forgets a "Never" about encrypting the data file.
     expect(DELETE_MENU.find((e) => e.id === "settings")!.goesWithIt).toMatch(/“Never” answer about encrypting the data file/);
   });
@@ -384,9 +408,104 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(box.goesWithIt).toMatch(/receipt folders set aside/);
     expect(box.learnMore).toMatch(/receipts-locked-/);
     expect(box.learnMore).toMatch(/receipts-before-restore-/);
-    expect(SET_ASIDE_RECEIPTS_WARNING).toMatch(/receipts-locked-… \(receipts Start a new key set aside, with the old key file\)/);
-    expect(SET_ASIDE_RECEIPTS_WARNING).toMatch(/receipts-before-restore-… \(the receipts folder as it was before a restore\)/);
-    expect(SET_ASIDE_RECEIPTS_WARNING).toMatch(/can never be opened, even if the old key comes back/);
+    // [8i] And everything else DotAmi sets aside there (database-encryption.md § 15), each by name.
+    expect(box.goesWithIt).toMatch(/old key files/);
+    expect(box.goesWithIt).toMatch(/locked data file/);
+    for (const name of ["receipts-before-start-fresh-", "receipts-key-unreadable-", "database-key-unreadable-", "dotami-locked-"]) {
+      expect(box.learnMore).toContain(name);
+    }
+    // [8i] Review: Learn more says outright that they go. "a file of yours in one stays … So do the old
+    // key files …" read as if the key files and the locked file stay, which the code doesn't do.
+    expect(box.learnMore).toMatch(/old key files[^.]*go too/);
+    expect(box.learnMore).toMatch(/so does the locked data file[^.]*with everything in it/);
+    expect(box.learnMore).not.toMatch(/So do the old key files/);
+  });
+
+  it("[8i] the lost-key window and the restore question don't promise the locked file is never deleted, now that Delete can", () => {
+    const desktop = path.join(process.cwd(), "desktop");
+    const main = readFileSync(path.join(desktop, "main.mjs"), "utf8");
+    const window = readFileSync(path.join(desktop, "lost-key.html"), "utf8");
+    // What the person reads: the restore question's strings in main.mjs, and the window's text. A code
+    // comment may still say what the restore itself does.
+    const strings = main.match(/"[^"\n]*"/g) ?? [];
+    expect(strings.filter((s) => /never delet/i.test(s))).toEqual([]);
+    expect(window).not.toMatch(/never delet/i);
+    // Both say the restore doesn't delete them, and that Delete on the page can.
+    expect(main).toMatch(/the restore doesn't delete them; Delete on What DotAmi knows about you can, after a warning/);
+    expect(window).toMatch(/the restore doesn't delete them; Delete on <em>What DotAmi knows about you<\/em> can, after a warning/);
+    // Start fresh still deletes nothing, and the "can still be opened" now says until when.
+    expect(window).toMatch(/Nothing is deleted\./);
+    expect(window).toMatch(/the locked file can still be opened, unless you delete it first/);
+  });
+
+  it("[8i] warns, naming each kind of thing set aside that is there, that it can never be opened afterwards", () => {
+    const kinds = (some: Partial<SetAsideKinds>): SetAsideKinds => ({ ...NOTHING_SET_ASIDE, ...some });
+    // Nothing set aside: no warning at all.
+    expect(setAsideWarning(NOTHING_SET_ASIDE)).toBeNull();
+
+    // Review: each name is said only when it is there. The first version got three totals, so one
+    // receipts-locked folder named all three folder names, and one key file both key names.
+    const names: [keyof SetAsideKinds, string][] = [
+      ["receiptsLocked", "receipts-locked-"],
+      ["receiptsBeforeRestore", "receipts-before-restore-"],
+      ["receiptsBeforeStartFresh", "receipts-before-start-fresh-"],
+      ["receiptsKeyFiles", "receipts-key-unreadable-"],
+      ["databaseKeyFiles", "database-key-unreadable-"],
+      ["lockedFiles", "dotami-locked-"],
+    ];
+    for (const [kind, name] of names) {
+      const alone = setAsideWarning(kinds({ [kind]: 1 }))!;
+      expect(alone, kind).toMatch(/^This also deletes what DotAmi set aside in the backups folder\. /);
+      expect(alone, kind).toContain(name);
+      for (const [, other] of names.filter(([k]) => k !== kind)) expect(alone, `${kind} names ${other}`).not.toContain(other);
+    }
+
+    const locked = setAsideWarning(kinds({ receiptsLocked: 1 }))!;
+    expect(locked).toMatch(/The receipts Start a new key set aside go, with their old key \(receipts-locked-…\)\./);
+    expect(locked).toMatch(/Afterwards those receipts can never be opened, even if the old key comes back\.$/);
+    expect(setAsideWarning(kinds({ receiptsBeforeRestore: 1 }))).toMatch(/The receipts folder as it was before a restore goes \(receipts-before-restore-…\)\./);
+    expect(setAsideWarning(kinds({ receiptsBeforeRestore: 2 }))).toMatch(/The receipts folders as they were before each restore go \(receipts-before-restore-…\)\./);
+
+    // Review: Start fresh leaves receipts.key alone, so its receipts may still open today. Said for them,
+    // and only for them.
+    const fresh = setAsideWarning(kinds({ receiptsBeforeStartFresh: 1 }))!;
+    expect(fresh).toMatch(
+      /The receipts folder as it was when you started fresh goes \(receipts-before-start-fresh-…\)\. Those receipts may still open with the receipts key in use today\. This deletes the only copy of them here\./,
+    );
+    expect(setAsideWarning(kinds({ receiptsLocked: 1, receiptsBeforeRestore: 1, lockedFiles: 1 }))).not.toMatch(/may still open/);
+
+    const keys = setAsideWarning(kinds({ receiptsKeyFiles: 1, databaseKeyFiles: 2 }))!;
+    expect(keys).toMatch(/The old receipts key file goes \(receipts-key-unreadable-….key\)\./);
+    expect(keys).toMatch(/The old data file keys go \(database-key-unreadable-….key\)\./);
+    expect(keys).toMatch(/Afterwards anything those old keys locked can never be opened, even if the old key comes back\.$/);
+
+    expect(setAsideWarning(kinds({ lockedFiles: 1 }))).toMatch(
+      /The locked data file goes, with everything in it \(dotami-locked-….db\)\. Afterwards the locked data can never be opened, even if the old key comes back\.$/,
+    );
+    expect(setAsideWarning(kinds({ lockedFiles: 2 }))).toMatch(/The locked data files go, with everything in them \(dotami-locked-….db\)\./);
+
+    // Everything at once: each name, what is lost said once, and short sentences (the first version was
+    // one sentence of about ninety words).
+    const all = setAsideWarning(
+      kinds({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 1 }),
+    )!;
+    for (const [, name] of names) expect(all).toContain(name);
+    expect(all).toMatch(/Afterwards the locked data and those receipts can never be opened, even if the old key comes back\.$/);
+    // A sentence ends at ". " before a capital (the "…", ".key" and ".db" inside a name don't end one).
+    const sentences = all.split(/(?<=\.) (?=[A-Z])/);
+    expect(sentences.length).toBeGreaterThanOrEqual(8);
+    for (const s of sentences) expect(s.split(/\s+/).length, s).toBeLessThanOrEqual(22);
+  });
+
+  it("[8i] counts the set-aside things the warning names by their own names", () => {
+    expect(
+      setAsideKindsOf({
+        receiptFolders: ["receipts-before-restore-2", "receipts-before-start-fresh-3", "receipts-locked-1", "receipts-locked-4-1"],
+        keyFiles: ["database-key-unreadable-1.key", "receipts-key-unreadable-2.key", "receipts-key-unreadable-3.key"],
+        lockedFiles: ["dotami-locked-1.db"],
+      }),
+    ).toEqual({ receiptsLocked: 2, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 2, databaseKeyFiles: 1, lockedFiles: 1 });
+    expect(setAsideKindsOf({ receiptFolders: [], keyFiles: [], lockedFiles: [] })).toEqual(NOTHING_SET_ASIDE);
   });
 
   it("cites the CRA's record-keeping page, dated, with the six years as a typed field", () => {
@@ -955,17 +1074,17 @@ describe("POST /api/your-data/delete", () => {
     await lock.release();
     expect(await db.prisma.figure.count()).toBe(0);
     // The wipe the lock stopped is owed, in the note beside the data file.
-    expect(readWipePending(db.file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [] });
+    expect(readWipePending(db.file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
     const retry = await route.POST(post({ retryWipe: true }));
     expect(retry.status).toBe(200);
-    expect(await retry.json()).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
+    expect(await retry.json()).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
     expect(existsSync(wipePendingFile(db.file))).toBe(false);
   });
 
   it("runs the wipe again on its own when asked, from the page only", async () => {
     const res = await route.POST(post({ retryWipe: true }));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
+    expect(await res.json()).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
     expect((await route.POST(post({ retryWipe: true }, {}))).status).toBe(403);
   });
 
@@ -1014,16 +1133,16 @@ describe("POST /api/your-data/delete", () => {
 
   it("deletes the safety copies beside its own data file when that box is ticked", async () => {
     const copy = await makeSafetyCopy(db.prisma, db.file);
-    const stale = await route.POST(post({ kinds: ["backups"], seen: { backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0 } }));
+    const stale = await route.POST(post({ kinds: ["backups"], seen: { backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } }));
     expect(stale.status).toBe(409);
     expect(existsSync(copy)).toBe(true);
 
-    const res = await route.POST(post({ kinds: ["backups"], seen: { backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0 } }));
+    const res = await route.POST(post({ kinds: ["backups"], seen: { backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       status: "deleted",
-      deleted: { backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0 },
-      left: { backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0 },
+      deleted: { backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 },
+      left: { backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 },
       wiped: true,
     });
     expect(existsSync(copy)).toBe(false);
@@ -1078,7 +1197,7 @@ describe("the safety copies in the backups folder", () => {
     const before = await countAll(prisma);
     const kinds = ["statements", "backups"];
     const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0) }, { dataFile: file });
-    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0 } });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } });
     expect(existsSync(copy)).toBe(true);
     expect(await countAll(prisma)).toEqual(before);
     expect(existsSync(wipePendingFile(file))).toBe(false);
@@ -1093,10 +1212,10 @@ describe("the safety copies in the backups folder", () => {
     const kinds = ["statements", "backups"];
     const seen = { ...(await seenFor(prisma, kinds, 1)), PersonStatement: 5 };
     const result = await deleteData(prisma, { kinds, seen }, { dataFile: file });
-    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0 } });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 1, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } });
     expect(existsSync(copy)).toBe(true);
     // The copy the person didn't end up deleting is NOT owed: the next start must not delete it.
-    expect(readWipePending(file)).toEqual({ since: "2026-10-01T00:00:00.000Z", backups: ["dotami-before-restore-1.db"], receiptFolders: [] });
+    expect(readWipePending(file)).toEqual({ since: "2026-10-01T00:00:00.000Z", backups: ["dotami-before-restore-1.db"], receiptFolders: [], keyFiles: [], lockedFiles: [] });
   });
 
   it("refuses the box when this copy's database isn't a file (there is no folder to look in)", async () => {
@@ -1130,11 +1249,11 @@ describe("a wipe that couldn't finish stays owed in a note beside the data file"
     expectWipeMetTheLock(lock);
     await lock.release();
     expect(result).toMatchObject({ status: "deleted", wiped: false });
-    expect(readWipePending(file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [] });
+    expect(readWipePending(file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [], keyFiles: [], lockedFiles: [] });
     await prisma.$disconnect();
     expect(statementInFile(folder)).toBe(true);
 
-    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
     await prisma.$disconnect();
     expect(statementInFile(folder)).toBe(false);
     expect(existsSync(wipePendingFile(file))).toBe(false);
@@ -1161,7 +1280,7 @@ describe("a wipe that couldn't finish stays owed in a note beside the data file"
     expect(existsSync(copy)).toBe(true);
     expect(readWipePending(file)?.backups).toEqual([path.basename(copy)]);
 
-    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
     expect(existsSync(copy)).toBe(false);
     expect(existsSync(wipePendingFile(file))).toBe(false);
     await prisma.$disconnect();
@@ -1258,7 +1377,7 @@ describe("the receipt folders set aside in the backups folder", () => {
     const before = await countAll(prisma);
     const kinds = ["statements", "backups"];
     const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 0) }, { dataFile: file });
-    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1 } });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } });
     expect(readdirSync(aside)).toHaveLength(1);
     expect(await countAll(prisma)).toEqual(before);
     expect(existsSync(wipePendingFile(file))).toBe(false);
@@ -1277,14 +1396,14 @@ describe("the receipt folders set aside in the backups folder", () => {
     const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 1) }, { dataFile: file, remove: busy });
     expect(result).toMatchObject({
       status: "deleted",
-      deleted: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0 },
-      left: { PersonStatement: 0, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1 },
+      deleted: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 },
+      left: { PersonStatement: 0, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 },
       wiped: true,
     });
     expect(readdirSync(aside)).toEqual([busyName]);
-    expect(readWipePending(file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [path.basename(aside)] });
+    expect(readWipePending(file)).toEqual({ since: expect.any(String), backups: [], receiptFolders: [path.basename(aside)], keyFiles: [], lockedFiles: [] });
 
-    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0 });
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
     expect(existsSync(aside)).toBe(false);
     expect(existsSync(wipePendingFile(file))).toBe(false);
   });
@@ -1315,8 +1434,158 @@ describe("the receipt folders set aside in the backups folder", () => {
     const kinds = ["statements", "backups"];
     const seen = { ...(await seenFor(prisma, kinds, 0, 1)), PersonStatement: 5 };
     const result = await deleteData(prisma, { kinds, seen }, { dataFile: file });
-    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1 } });
+    expect(result).toEqual({ status: "changed", counts: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 } });
     expect(readdirSync(aside)).toHaveLength(1);
     expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// [8i] What a lost key leaves in the backups folder (database-encryption.md § 15): the old key files,
+// the locked data file with its journal, and the receipts folder Start fresh set aside.
+
+describe("what a lost key leaves in the backups folder", () => {
+  /** Bytes no other file holds, so finding them can only mean the file wasn't cleared. */
+  const unique = (label: string) => Buffer.concat([Buffer.from(`zq-delete-lost-key-${label}-`), randomBytes(24)]);
+  const receiptName = (extension = "png") => `${randomBytes(16).toString("hex")}.${extension}`;
+
+  /** What a restore or Start fresh in the lost-key window leaves, by DotAmi's own names: their bytes. */
+  function lostKeyLeftovers(file: string) {
+    const backups = path.join(path.dirname(file), "backups");
+    const fresh = path.join(backups, "receipts-before-start-fresh-1760000000002");
+    mkdirSync(fresh, { recursive: true });
+    const bytes = {
+      lockedFile: unique("locked-file"),
+      journal: unique("locked-journal"),
+      databaseKey: unique("database-key"),
+      receiptsKey: unique("receipts-key"),
+      receipt: unique("start-fresh-receipt"),
+    };
+    writeFileSync(path.join(backups, "dotami-locked-1760000000000.db"), bytes.lockedFile);
+    writeFileSync(path.join(backups, "dotami-locked-1760000000000.db-journal"), bytes.journal);
+    writeFileSync(path.join(backups, "database-key-unreadable-1760000000001.key"), bytes.databaseKey);
+    writeFileSync(path.join(backups, "receipts-key-unreadable-1760000000003.key"), bytes.receiptsKey);
+    writeFileSync(path.join(fresh, receiptName()), bytes.receipt);
+    return { backups, fresh, bytes, needles: Object.values(bytes) };
+  }
+
+  /** Every file under `folder` holding any of `needles`. */
+  function holdingAny(folder: string, needles: Buffer[], prefix = ""): string[] {
+    return readdirSync(folder, { withFileTypes: true }).flatMap((item) => {
+      const full = path.join(folder, item.name);
+      if (item.isDirectory()) return holdingAny(full, needles, `${prefix}${item.name}/`);
+      const bytes = readFileSync(full);
+      return needles.some((n) => bytes.includes(n)) ? [`${prefix}${item.name}`] : [];
+    });
+  }
+
+  it("shows the problem is real: Delete without that box leaves them, every byte", async () => {
+    const { prisma, file, folder } = makeDb("lost-key-untouched");
+    await seed(prisma);
+    const { needles } = lostKeyLeftovers(file);
+    const kinds = ["statements", "receipts"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds) }, { dataFile: file });
+    expect(result.status).toBe("deleted");
+    await prisma.$disconnect();
+    expect(holdingAny(folder, needles)).toHaveLength(5);
+  });
+
+  it("with the box ticked they go too, every byte of them, and the person's own files stay", async () => {
+    const { prisma, file, folder } = makeDb("lost-key-deleted");
+    await seed(prisma);
+    const { backups, fresh, needles } = lostKeyLeftovers(file);
+    writeFileSync(path.join(backups, "my own notes.txt"), "the person's own file");
+    writeFileSync(path.join(fresh, "my scan.png"), "the person's own scan");
+    await prisma.$disconnect();
+    expect(holdingAny(folder, needles)).toHaveLength(5);
+
+    const kinds = ["statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 1, 2, 1) }, { dataFile: file });
+    expect(result).toMatchObject({
+      status: "deleted",
+      deleted: { [SET_ASIDE_RECEIPTS_KEY]: 1, [SET_ASIDE_KEYS_KEY]: 2, [LOCKED_FILES_KEY]: 1 },
+      left: { [SET_ASIDE_RECEIPTS_KEY]: 0, [SET_ASIDE_KEYS_KEY]: 0, [LOCKED_FILES_KEY]: 0 },
+      wiped: true,
+    });
+    await prisma.$disconnect();
+    // The byte scan: no file anywhere beside the data file holds anything of what was cleared.
+    expect(holdingAny(folder, needles)).toEqual([]);
+    expect(readdirSync(backups).sort()).toEqual(["my own notes.txt", path.basename(fresh)]);
+    expect(readdirSync(fresh)).toEqual(["my scan.png"]);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("deletes nothing when the number of key files or locked files changed since the person looked, and leaves no note", async () => {
+    const { prisma, file, folder } = makeDb("lost-key-changed");
+    await seed(prisma);
+    const { needles } = lostKeyLeftovers(file);
+    const kinds = ["statements", "backups"];
+    for (const seen of [await seenFor(prisma, kinds, 0, 1, 1, 1), await seenFor(prisma, kinds, 0, 1, 2, 0)]) {
+      const result = await deleteData(prisma, { kinds, seen }, { dataFile: file });
+      expect(result).toEqual({
+        status: "changed",
+        counts: { PersonStatement: 2, backups: 0, [SET_ASIDE_RECEIPTS_KEY]: 1, [SET_ASIDE_KEYS_KEY]: 2, [LOCKED_FILES_KEY]: 1 },
+      });
+      expect(existsSync(wipePendingFile(file))).toBe(false);
+    }
+    expect(await prisma.personStatement.count()).toBe(2);
+    await prisma.$disconnect();
+    expect(holdingAny(folder, needles)).toHaveLength(5);
+  });
+
+  it("the note written before anything is removed already owes the key files and the locked file", async () => {
+    const { prisma, file } = makeDb("lost-key-note-first");
+    await seed(prisma);
+    lostKeyLeftovers(file);
+    let noteAtFirstRemoval: ReturnType<typeof readWipePending> | undefined;
+    const watching = (target: string) => {
+      if (noteAtFirstRemoval === undefined) noteAtFirstRemoval = readWipePending(file);
+      rmSync(target);
+    };
+    const kinds = ["statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 1, 2, 1) }, { dataFile: file, remove: watching });
+    expect(result).toMatchObject({ status: "deleted", wiped: true });
+    expect(noteAtFirstRemoval).toEqual({
+      since: expect.any(String),
+      backups: [],
+      receiptFolders: ["receipts-before-start-fresh-1760000000002"],
+      keyFiles: ["database-key-unreadable-1760000000001.key", "receipts-key-unreadable-1760000000003.key"],
+      lockedFiles: ["dotami-locked-1760000000000.db"],
+    });
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
+  it("a locked file or key file another program holds stays owed in the note, and Finish it now clears it", async () => {
+    const { prisma, file, folder } = makeDb("lost-key-busy");
+    await seed(prisma);
+    const { backups, needles } = lostKeyLeftovers(file);
+    const busy = (target: string) => {
+      if (target.endsWith(".db-journal") || target.endsWith("-1760000000003.key")) {
+        throw Object.assign(new Error("resource busy or locked"), { code: "EBUSY" });
+      }
+      rmSync(target);
+    };
+    const kinds = ["statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 1, 2, 1) }, { dataFile: file, remove: busy });
+    expect(result).toMatchObject({
+      status: "deleted",
+      deleted: { [SET_ASIDE_KEYS_KEY]: 1, [LOCKED_FILES_KEY]: 0 },
+      left: { [SET_ASIDE_KEYS_KEY]: 1, [LOCKED_FILES_KEY]: 1 },
+      wiped: true,
+    });
+    // The journal held open keeps its file there too: never a lone journal.
+    expect(existsSync(path.join(backups, "dotami-locked-1760000000000.db"))).toBe(true);
+    expect(readWipePending(file)).toEqual({
+      since: expect.any(String),
+      backups: [],
+      receiptFolders: [],
+      keyFiles: ["receipts-key-unreadable-1760000000003.key"],
+      lockedFiles: ["dotami-locked-1760000000000.db"],
+    });
+
+    expect(await finishWipe(prisma, { dataFile: file })).toEqual({ wiped: true, backupsLeft: 0, receiptFoldersLeft: 0, keyFilesLeft: 0, lockedFilesLeft: 0 });
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+    await prisma.$disconnect();
+    expect(holdingAny(folder, needles)).toEqual([]);
   });
 });

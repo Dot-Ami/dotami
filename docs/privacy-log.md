@@ -490,7 +490,19 @@ person is asked).
   folder* ([8i], 2026-10-10)**, asked twice like every Delete. While there are any, ticking the box shows
   a warning in amber, again at both asks, that names `receipts-locked-…` and `receipts-before-restore-…`
   and says those receipts can never be opened afterwards, even if the old key comes back
-  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `SET_ASIDE_RECEIPTS_WARNING`).
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `SET_ASIDE_RECEIPTS_WARNING`, since
+  replaced by `setAsideWarning`, next line).
+- **The set-aside warning names only what is there ([8i], 2026-10-10, fixed in review).** It now says one
+  short sentence for each name DotAmi set aside that is really in `backups/` (counted by name:
+  `setAsideKindsOf`), and none for a name that isn't; the first version named every folder name, or both
+  key names, when only one was there. For the receipts *Start fresh* set aside it adds that they may still
+  open with the receipts key in use today, and that this deletes the only copy of them here. *Learn more*
+  under the box now says outright that the old key files and the locked data file go too (it read as if
+  they stay). The restore question and the lost-key window no longer say the locked data file and its key
+  are "never deleted": they say the restore doesn't delete them, and Delete on *What DotAmi knows about
+  you* can, after a warning ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `setAsideWarning`,
+  [`desktop/main.mjs`](../desktop/main.mjs), [`desktop/lost-key.html`](../desktop/lost-key.html);
+  [database-encryption.md § 15](architecture/database-encryption.md)).
 - **A passphrase on every backup ([8i]).** File → Back up… asks for one and refuses to go on without
   it (`desktop/passphrase.js`; `writeBackup` refuses an empty one too). The warning stays: "lose it and
   the backup can't be opened — nobody can recover it". Older backups without one still restore.
@@ -602,7 +614,35 @@ person is asked).
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
   the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
   folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's
-  "safety copies" box doesn't match its name: removing it is the person's own act.
+  "safety copies" box doesn't match its name: removing it is the person's own act. *Changed
+  2026-10-10, next line.*
+- **Delete now reaches everything DotAmi sets aside in `backups/` ([8i], 2026-10-10, the maintainer's
+  "one box").** The box *Safety copies in the backups folder* also deletes the old key files
+  (`receipts-key-unreadable-<time>.key`, `database-key-unreadable-<time>.key`), the locked data file a
+  lost key's restore or Start fresh set aside (`dotami-locked-<time>.db`, with its journal) and the
+  receipts folder Start fresh set aside (`receipts-before-start-fresh-<time>/`, cleared like a
+  restore's: DotAmi's files only). It counts each kind, checks the counts against what the page showed,
+  and, once ticked, warns in amber, at the box and at both asks, naming each kind there and saying that
+  afterwards the locked data and those receipts can never be opened, even if the old key comes back.
+  Fenced as before: DotAmi's exact names, directly in a backups folder that isn't a link, regular files
+  only, never a link; the wipe-pending note names them before anything is removed, and anything another
+  program holds stays owed until *Finish it now* or the next start. *What Delete doesn't reach* now
+  names only what the person put in the backups folder. A call the maintainer can reverse: the
+  start-fresh receipts are locked with the receipts' key, which Start fresh didn't touch, so they may
+  still open, but nothing in the new data file points to them. Files are removed, not overwritten.
+  Design: [database-encryption.md § 15](architecture/database-encryption.md); tested by
+  [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
+  [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts),
+  [`tests/privacy-holdings.spec.ts`](../tests/privacy-holdings.spec.ts),
+  [`e2e/your-data.spec.ts`](../e2e/your-data.spec.ts) and the desktop test, which does a real Start
+  fresh and scans every file in the data folder afterwards for byte runs of what was deleted.
+- **Known limit: going back to an older version can drop what Delete still owed here ([8i],
+  2026-10-10).** If another program kept an old key file or the locked data file open, Delete leaves it
+  owed in the wipe-pending note for the next start. A version from before this change doesn't know
+  those two lists, finishes the rest and removes the note, so those files stay. Nothing is deleted that
+  wasn't asked for, and that older version lists them under *What Delete doesn't reach*; ticking the box
+  again in a newer version clears them
+  ([database-encryption.md § 15](architecture/database-encryption.md), *Known limit*).
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
@@ -619,7 +659,7 @@ person is asked).
   by *Finish it now* or at the desktop app's next start. Files are removed, not overwritten, as with
   every Delete. **Still not reached**, and the menu says so: key files set aside on their own in
   `backups/` (`receipts-key-unreadable-<time>.key`), which hold only a key file that Windows protected
-  for the person's account. Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
+  for the person's account (*reached since, above*). Tested by [`tests/desktop-wipe-pending.spec.ts`](../tests/desktop-wipe-pending.spec.ts),
   [`tests/privacy-delete.spec.ts`](../tests/privacy-delete.spec.ts), [`e2e/your-data.spec.ts`](../e2e/your-data.spec.ts)
   and the desktop test, which scans every file in the data folder afterwards for byte runs of the
   cleared files.

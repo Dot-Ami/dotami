@@ -49,7 +49,7 @@ export class KeyNotReadableAfterSave extends Error {
  *   { state: "on", key, keyId }  the key is open
  *   { state: "none", unreadable }  there is no usable key, and nothing is locked: a key may be made when
  *       something is to be encrypted (`unreadable`: a key file is there that this account can't open; it
- *       will be moved to backups/, never deleted)
+ *       will be moved to backups/, not deleted here)
  *   { state: "no-key-store" }  the operating system's protection isn't available and nothing is locked
  *   { state: "key-unreadable", keyId, missing, storeUnavailable }  something is locked, and no key here
  *       opens it: the key file can't be opened by this account, holds another key, is `missing`, or the
@@ -76,7 +76,7 @@ export function openDatabaseKey(dataDir, store, { locked, platform = process.pla
  * Makes a new key, saves it wrapped as database.key (once the operating system's own key is on the disk),
  * reads it back from the disk and opens it, and only then returns it. A key file already there (one that
  * can't be opened: the caller has checked nothing is locked with it) is moved to
- * backups/database-key-unreadable-<time>.key first, never deleted. Written beside its name, flushed,
+ * backups/database-key-unreadable-<time>.key first, not deleted here. Written beside its name, flushed,
  * then renamed into place, so a crash leaves either the old file or the whole new one.
  * Throws NoKeyStore (no real key store), KeyStoreNotSaved (Windows' own key never reached the disk) or
  * KeyNotReadableAfterSave; in each case nothing is locked with any new key.
@@ -124,7 +124,7 @@ export async function makeDatabaseKey(dataDir, store, { platform = process.platf
 }
 
 /**
- * [8i] For a restore from the lost-key window: moves the locked data file into backups/ (never deleting it;
+ * [8i] For a restore from the lost-key window: moves the locked data file into backups/ (not deleting it;
  * encrypt-database.mjs setAsideLockedFile), THEN saves `key` as the data file's key (the old key file goes
  * to backups/ too, makeDatabaseKey). In this order so a step that fails never leaves a new key beside the
  * old locked file (a key file that opens but doesn't fit, found in review): if the file can't be moved

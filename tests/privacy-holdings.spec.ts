@@ -370,7 +370,36 @@ describe("the folders beside the data file", () => {
 
     expect(h.setAsideReceiptFolders).toBe(2);
     expect(h.safetyCopies).toBe(0);
+    // [8i] Review: each name counted on its own, so the warning names only what is there.
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 0, receiptsKeyFiles: 0, databaseKeyFiles: 0, lockedFiles: 0 });
     // A count only: nothing from inside a receipt.
+    expect(JSON.stringify(h)).not.toContain(secret);
+  });
+
+  it("counts what a lost key leaves in the backups folder, which the same box clears: key files, locked files, the start-fresh receipts ([8i])", async () => {
+    const folder = path.join(root, "with-lost-key-leftovers");
+    const backups = path.join(folder, "backups");
+    const secret = "marker-inside-a-lost-key-leftover";
+    mkdirSync(path.join(backups, "receipts-before-start-fresh-1760000000002"), { recursive: true });
+    writeFileSync(path.join(backups, "receipts-before-start-fresh-1760000000002", `${"f".repeat(32)}.png`), secret);
+    writeFileSync(path.join(backups, "receipts-key-unreadable-1760000000000.key"), secret);
+    writeFileSync(path.join(backups, "database-key-unreadable-1760000000001.key"), secret);
+    // A locked file and its journal are one; a lone journal counts under its file's name.
+    writeFileSync(path.join(backups, "dotami-locked-1760000000000.db"), secret);
+    writeFileSync(path.join(backups, "dotami-locked-1760000000000.db-journal"), secret);
+    writeFileSync(path.join(backups, "dotami-locked-1760000000005.db-journal"), secret);
+    // Not DotAmi's set-aside names.
+    writeFileSync(path.join(backups, "database.key"), secret);
+    writeFileSync(path.join(backups, "dotami-locked-1.db.bak"), secret);
+    const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
+    const h = await readHoldings(seeded.prisma, today);
+
+    expect(h.setAsideReceiptFolders).toBe(1);
+    expect(h.setAsideKeyFiles).toBe(2);
+    expect(h.lockedDataFiles).toBe(2);
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 0, receiptsBeforeRestore: 0, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 2 });
+    expect(h.safetyCopies).toBe(0);
+    // Counts only: nothing from inside a file.
     expect(JSON.stringify(h)).not.toContain(secret);
   });
 
@@ -415,6 +444,8 @@ describe("the folders beside the data file", () => {
     expect(h.folders.every((f) => f.path === null && !f.exists)).toBe(true);
     expect(h.safetyCopies).toBe(0);
     expect(h.setAsideReceiptFolders).toBe(0);
+    expect(h.setAsideKeyFiles).toBe(0);
+    expect(h.lockedDataFiles).toBe(0);
     expect(h.wipePending).toBe(false);
     expect(h.dataFile.path).toBeNull();
   });
