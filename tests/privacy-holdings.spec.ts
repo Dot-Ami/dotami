@@ -370,6 +370,8 @@ describe("the folders beside the data file", () => {
 
     expect(h.setAsideReceiptFolders).toBe(2);
     expect(h.safetyCopies).toBe(0);
+    // [8i] Review: each name counted on its own, so the warning names only what is there.
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 0, receiptsKeyFiles: 0, databaseKeyFiles: 0, lockedFiles: 0 });
     // A count only: nothing from inside a receipt.
     expect(JSON.stringify(h)).not.toContain(secret);
   });
@@ -395,6 +397,7 @@ describe("the folders beside the data file", () => {
     expect(h.setAsideReceiptFolders).toBe(1);
     expect(h.setAsideKeyFiles).toBe(2);
     expect(h.lockedDataFiles).toBe(2);
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 0, receiptsBeforeRestore: 0, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 2 });
     expect(h.safetyCopies).toBe(0);
     // Counts only: nothing from inside a file.
     expect(JSON.stringify(h)).not.toContain(secret);

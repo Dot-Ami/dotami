@@ -25,7 +25,7 @@ import { localStateHoldsKey } from "../desktop/receipt-key.mjs";
 import { fileKind, openDatabase, runSql as runOn } from "../desktop/sqlite.mjs";
 import { VIEW_MESSAGES } from "../lib/expenses/receipts/viewer/messages";
 import { parseNotices } from "../lib/licences/notices";
-import { setAsideWarning } from "../lib/privacy/inventory";
+import { NOTHING_SET_ASIDE, setAsideWarning } from "../lib/privacy/inventory";
 import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/returns/cra-layout";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
@@ -1164,12 +1164,12 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
   await removing.getByLabel("Your ideas, with their notes, links and map progress").check();
   await removing.getByLabel("Your statements (“In your words”)").check();
   await removing.getByLabel("Safety copies in the backups folder").check();
-  await expect(box).toContainText(setAsideWarning({ receiptFolders: 2, keyFiles: 0, lockedFiles: 0 })!);
+  await expect(box).toContainText(setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsLocked: 1, receiptsBeforeRestore: 1 })!);
   await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
   await page.getByRole("dialog", { name: "Delete these?" }).getByRole("button", { name: "Yes, continue" }).click();
   const second = page.getByRole("dialog", { name: "Delete them now?" });
   await expect(second).toContainText("The safety copies in the backups folder go too.");
-  await expect(second).toContainText(setAsideWarning({ receiptFolders: 2, keyFiles: 0, lockedFiles: 0 })!);
+  await expect(second).toContainText(setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsLocked: 1, receiptsBeforeRestore: 1 })!);
   await second.getByRole("button", { name: "Delete now" }).click();
   const done = removing.getByRole("status");
   await expect(done).toContainText("Safety copies: 1 file deleted, 0 left");
@@ -1565,7 +1565,7 @@ test("after a real Start fresh, Delete unticked keeps the locked file, the old k
   expect(filesHoldingAny(dataDir, needles)).toHaveLength(4);
 
   // Ticked: the warning names each kind, at the box and at both asks; then they go.
-  const warning = setAsideWarning({ receiptFolders: 1, keyFiles: 2, lockedFiles: 1 })!;
+  const warning = setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 1 })!;
   await removing.getByRole("button", { name: "Delete", exact: true }).click();
   await removing.getByLabel("Safety copies in the backups folder").check();
   await expect(box).toContainText(warning);

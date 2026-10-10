@@ -11,10 +11,15 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
-import { SENT_ELSEWHERE, TABLES, WINDOW_STORAGE, setAsideWarning } from "../lib/privacy/inventory";
+import { NOTHING_SET_ASIDE, SENT_ELSEWHERE, TABLES, WINDOW_STORAGE, setAsideWarning } from "../lib/privacy/inventory";
 
-/** [8i] The amber warning when only set-aside receipt folders are there (its words don't depend on how many). */
-const WARNING = setAsideWarning({ receiptFolders: 1, keyFiles: 0, lockedFiles: 0 })!;
+/**
+ * [8i] The amber warning when one receipts-locked-… and one receipts-before-restore-… folder are there:
+ * it names those two and nothing else (database-encryption.md § 15, fixed in review).
+ */
+const WARNING = setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsLocked: 1, receiptsBeforeRestore: 1 })!;
+/** [8i] And when only a restore's folder is there. */
+const RESTORE_ONLY_WARNING = setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsBeforeRestore: 1 })!;
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
 const AMOUNT_TYPED = "12,345.67";
@@ -604,6 +609,9 @@ test("Delete: the safety-copies box also clears the receipt folders set aside in
     const first = page.getByRole("dialog", { name: "Delete these?" });
     await expect(first).toContainText("Set-aside receipt folders: 2 folders");
     await expect(first).toContainText(WARNING);
+    // [8i] Review: only the two names that are there. No start-fresh folder or key file exists here, so
+    // the ask (which has no Learn more) mustn't name one.
+    for (const absent of ["receipts-before-start-fresh-", "key-unreadable-", "dotami-locked-"]) await expect(first).not.toContainText(absent);
     await first.getByRole("button", { name: "Yes, continue" }).click();
     const second = page.getByRole("dialog", { name: "Delete them now?" });
     await expect(second).toContainText(WARNING);
@@ -641,7 +649,7 @@ test("Delete: with the safety-copies box unticked, the first ask says the set-as
     const first = page.getByRole("dialog", { name: "Delete these?" });
     await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
     await expect(first).not.toContainText("The safety copies in the backups folder aren't ticked");
-    await expect(first).not.toContainText(WARNING);
+    await expect(first).not.toContainText(RESTORE_ONLY_WARNING);
     // Nothing is deleted: this test only reads the first ask.
     await first.getByRole("button", { name: "Cancel" }).click();
     await expect(first).toBeHidden();
@@ -665,7 +673,7 @@ test("Delete: the safety-copies box also clears the old key files, the locked da
   for (const name of leftovers) writeFileSync(path.join(BACKUPS_DIR, name), `${name} made for the browser test`);
   writeFileSync(path.join(BACKUPS_DIR, "my own notes.txt"), "the person's own file");
   expect((await page.request.post("/api/person/statements", { data: { text: "a statement for the lost-key leftovers" } })).status()).toBe(200);
-  const warning = setAsideWarning({ receiptFolders: 1, keyFiles: 2, lockedFiles: 1 })!;
+  const warning = setAsideWarning({ ...NOTHING_SET_ASIDE, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 1 })!;
   try {
     const removing = await openDeleteMenu(page);
     // What Delete doesn't reach no longer names them, and says what is really left in the folder.

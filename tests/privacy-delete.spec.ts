@@ -35,7 +35,17 @@ import {
   pickKinds,
   wipeFreeSpace,
 } from "@/lib/privacy/delete";
-import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES, keptLinkKey, setAsideWarning } from "@/lib/privacy/inventory";
+import {
+  DELETE_MENU,
+  KEPT_BY_DELETE,
+  NOTHING_SET_ASIDE,
+  NOT_CLEARED_BY_DELETE,
+  type SetAsideKinds,
+  TABLES,
+  keptLinkKey,
+  setAsideKindsOf,
+  setAsideWarning,
+} from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
 import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { openDatabase } from "../desktop/sqlite.mjs";
@@ -404,36 +414,98 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     for (const name of ["receipts-before-start-fresh-", "receipts-key-unreadable-", "database-key-unreadable-", "dotami-locked-"]) {
       expect(box.learnMore).toContain(name);
     }
+    // [8i] Review: Learn more says outright that they go. "a file of yours in one stays … So do the old
+    // key files …" read as if the key files and the locked file stay, which the code doesn't do.
+    expect(box.learnMore).toMatch(/old key files[^.]*go too/);
+    expect(box.learnMore).toMatch(/so does the locked data file[^.]*with everything in it/);
+    expect(box.learnMore).not.toMatch(/So do the old key files/);
+  });
+
+  it("[8i] the lost-key window and the restore question don't promise the locked file is never deleted, now that Delete can", () => {
+    const desktop = path.join(process.cwd(), "desktop");
+    const main = readFileSync(path.join(desktop, "main.mjs"), "utf8");
+    const window = readFileSync(path.join(desktop, "lost-key.html"), "utf8");
+    // What the person reads: the restore question's strings in main.mjs, and the window's text. A code
+    // comment may still say what the restore itself does.
+    const strings = main.match(/"[^"\n]*"/g) ?? [];
+    expect(strings.filter((s) => /never delet/i.test(s))).toEqual([]);
+    expect(window).not.toMatch(/never delet/i);
+    // Both say the restore doesn't delete them, and that Delete on the page can.
+    expect(main).toMatch(/the restore doesn't delete them; Delete on What DotAmi knows about you can, after a warning/);
+    expect(window).toMatch(/the restore doesn't delete them; Delete on <em>What DotAmi knows about you<\/em> can, after a warning/);
+    // Start fresh still deletes nothing, and the "can still be opened" now says until when.
+    expect(window).toMatch(/Nothing is deleted\./);
+    expect(window).toMatch(/the locked file can still be opened, unless you delete it first/);
   });
 
   it("[8i] warns, naming each kind of thing set aside that is there, that it can never be opened afterwards", () => {
+    const kinds = (some: Partial<SetAsideKinds>): SetAsideKinds => ({ ...NOTHING_SET_ASIDE, ...some });
     // Nothing set aside: no warning at all.
-    expect(setAsideWarning({ receiptFolders: 0, keyFiles: 0, lockedFiles: 0 })).toBeNull();
+    expect(setAsideWarning(NOTHING_SET_ASIDE)).toBeNull();
 
-    const receipts = setAsideWarning({ receiptFolders: 2, keyFiles: 0, lockedFiles: 0 })!;
-    expect(receipts).toMatch(/receipts-locked-… \(receipts Start a new key set aside, with the old key file\)/);
-    expect(receipts).toMatch(/receipts-before-restore-… \(the receipts folder as it was before a restore\)/);
-    expect(receipts).toMatch(/receipts-before-start-fresh-… \(the receipts folder as it was when you started fresh\)/);
-    expect(receipts).toMatch(/Afterwards those receipts can never be opened, even if the old key comes back\.$/);
-    expect(receipts).not.toMatch(/key-unreadable|dotami-locked/);
-
-    const keys = setAsideWarning({ receiptFolders: 0, keyFiles: 2, lockedFiles: 0 })!;
-    expect(keys).toMatch(/receipts-key-unreadable-….key and database-key-unreadable-….key/);
-    expect(keys).toMatch(/Afterwards anything those old keys locked can never be opened, even if the old key comes back\.$/);
-    expect(keys).not.toMatch(/receipts-locked|dotami-locked/);
-
-    const locked = setAsideWarning({ receiptFolders: 0, keyFiles: 0, lockedFiles: 1 })!;
-    expect(locked).toMatch(/the locked data file a lost key's restore or Start fresh set aside there, with everything in it: dotami-locked-….db/);
-    expect(locked).toMatch(/Afterwards the locked data can never be opened, even if the old key comes back\.$/);
-    expect(setAsideWarning({ receiptFolders: 0, keyFiles: 0, lockedFiles: 2 })).toMatch(/the locked data files a lost key's restore or Start fresh set aside there/);
-
-    // Everything at once: each kind named, and what is lost said once.
-    const all = setAsideWarning({ receiptFolders: 1, keyFiles: 2, lockedFiles: 1 })!;
-    expect(all).toMatch(/^Also deleted from the backups folder: the receipt folders/);
-    for (const name of ["receipts-locked-", "receipts-before-restore-", "receipts-before-start-fresh-", "receipts-key-unreadable-", "database-key-unreadable-", "dotami-locked-"]) {
-      expect(all).toContain(name);
+    // Review: each name is said only when it is there. The first version got three totals, so one
+    // receipts-locked folder named all three folder names, and one key file both key names.
+    const names: [keyof SetAsideKinds, string][] = [
+      ["receiptsLocked", "receipts-locked-"],
+      ["receiptsBeforeRestore", "receipts-before-restore-"],
+      ["receiptsBeforeStartFresh", "receipts-before-start-fresh-"],
+      ["receiptsKeyFiles", "receipts-key-unreadable-"],
+      ["databaseKeyFiles", "database-key-unreadable-"],
+      ["lockedFiles", "dotami-locked-"],
+    ];
+    for (const [kind, name] of names) {
+      const alone = setAsideWarning(kinds({ [kind]: 1 }))!;
+      expect(alone, kind).toMatch(/^This also deletes what DotAmi set aside in the backups folder\. /);
+      expect(alone, kind).toContain(name);
+      for (const [, other] of names.filter(([k]) => k !== kind)) expect(alone, `${kind} names ${other}`).not.toContain(other);
     }
+
+    const locked = setAsideWarning(kinds({ receiptsLocked: 1 }))!;
+    expect(locked).toMatch(/The receipts Start a new key set aside go, with their old key \(receipts-locked-…\)\./);
+    expect(locked).toMatch(/Afterwards those receipts can never be opened, even if the old key comes back\.$/);
+    expect(setAsideWarning(kinds({ receiptsBeforeRestore: 1 }))).toMatch(/The receipts folder as it was before a restore goes \(receipts-before-restore-…\)\./);
+    expect(setAsideWarning(kinds({ receiptsBeforeRestore: 2 }))).toMatch(/The receipts folders as they were before each restore go \(receipts-before-restore-…\)\./);
+
+    // Review: Start fresh leaves receipts.key alone, so its receipts may still open today. Said for them,
+    // and only for them.
+    const fresh = setAsideWarning(kinds({ receiptsBeforeStartFresh: 1 }))!;
+    expect(fresh).toMatch(
+      /The receipts folder as it was when you started fresh goes \(receipts-before-start-fresh-…\)\. Those receipts may still open with the receipts key in use today\. This deletes the only copy of them here\./,
+    );
+    expect(setAsideWarning(kinds({ receiptsLocked: 1, receiptsBeforeRestore: 1, lockedFiles: 1 }))).not.toMatch(/may still open/);
+
+    const keys = setAsideWarning(kinds({ receiptsKeyFiles: 1, databaseKeyFiles: 2 }))!;
+    expect(keys).toMatch(/The old receipts key file goes \(receipts-key-unreadable-….key\)\./);
+    expect(keys).toMatch(/The old data file keys go \(database-key-unreadable-….key\)\./);
+    expect(keys).toMatch(/Afterwards anything those old keys locked can never be opened, even if the old key comes back\.$/);
+
+    expect(setAsideWarning(kinds({ lockedFiles: 1 }))).toMatch(
+      /The locked data file goes, with everything in it \(dotami-locked-….db\)\. Afterwards the locked data can never be opened, even if the old key comes back\.$/,
+    );
+    expect(setAsideWarning(kinds({ lockedFiles: 2 }))).toMatch(/The locked data files go, with everything in them \(dotami-locked-….db\)\./);
+
+    // Everything at once: each name, what is lost said once, and short sentences (the first version was
+    // one sentence of about ninety words).
+    const all = setAsideWarning(
+      kinds({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 1 }),
+    )!;
+    for (const [, name] of names) expect(all).toContain(name);
     expect(all).toMatch(/Afterwards the locked data and those receipts can never be opened, even if the old key comes back\.$/);
+    // A sentence ends at ". " before a capital (the "…", ".key" and ".db" inside a name don't end one).
+    const sentences = all.split(/(?<=\.) (?=[A-Z])/);
+    expect(sentences.length).toBeGreaterThanOrEqual(8);
+    for (const s of sentences) expect(s.split(/\s+/).length, s).toBeLessThanOrEqual(22);
+  });
+
+  it("[8i] counts the set-aside things the warning names by their own names", () => {
+    expect(
+      setAsideKindsOf({
+        receiptFolders: ["receipts-before-restore-2", "receipts-before-start-fresh-3", "receipts-locked-1", "receipts-locked-4-1"],
+        keyFiles: ["database-key-unreadable-1.key", "receipts-key-unreadable-2.key", "receipts-key-unreadable-3.key"],
+        lockedFiles: ["dotami-locked-1.db"],
+      }),
+    ).toEqual({ receiptsLocked: 2, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 2, databaseKeyFiles: 1, lockedFiles: 1 });
+    expect(setAsideKindsOf({ receiptFolders: [], keyFiles: [], lockedFiles: [] })).toEqual(NOTHING_SET_ASIDE);
   });
 
   it("cites the CRA's record-keeping page, dated, with the six years as a typed field", () => {
