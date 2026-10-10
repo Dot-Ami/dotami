@@ -33,6 +33,12 @@ export const workerPolicy = `default-src 'none'; script-src 'self'${dev ? " 'uns
 // RECEIPT_FILE_HEADERS policy (tests/security-hardening.spec.ts checks it).
 export const receiptFilePolicy = "default-src 'none'; frame-ancestors 'none'; sandbox";
 
+// [8i] Every answer from DotAmi's API holds the person's data, so none may be kept in a cache on the disk:
+// the desktop window's Chromium wrote one to the Cache folder in the data folder, in plain text beside the
+// encrypted data file (found 2026-10-10, e2e-desktop/desktop.spec.ts). Pages are already sent "no-store"
+// (they are dynamic); API answers had no Cache-Control at all, which a browser may store.
+export const apiCachePolicy = "no-store";
+
 // The desktop app ([7b]) runs a self-contained build of this server inside Electron. It builds
 // into its own folder so a desktop build never overwrites the `.next` a running `npm run dev`
 // or `next start` is using; every other build is unchanged. Set by desktop/build.mjs.
@@ -62,6 +68,7 @@ const nextConfig = {
       // Same key as above: for these paths Next sends the later one (its documented rule).
       { source: "/_next/static/:path*", headers: [{ key: "Content-Security-Policy", value: workerPolicy }] },
       { source: "/api/expenses/receipt/file", headers: [{ key: "Content-Security-Policy", value: receiptFilePolicy }] },
+      { source: "/api/:path*", headers: [{ key: "Cache-Control", value: apiCachePolicy }] },
     ];
   },
 };

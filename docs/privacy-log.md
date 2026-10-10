@@ -39,6 +39,22 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **The data file is encrypted in the desktop app ([8i]).** The same rows as before, in `dotami.db`,
+  now encrypted page by page (ChaCha20-Poly1305) with a 256-bit key, and its safety copies in
+  `backups/` with the same key. One new file, **`database.key`** beside it: the key wrapped by
+  Windows' per-user protection (Electron's `safeStorage`), with the key's id; the key itself is
+  written nowhere else, never in a backup or the log ([`desktop/database-key.mjs`](../desktop/database-key.mjs)).
+  While a file is being encrypted, **`database-encrypting.json`** holds which of DotAmi's own files
+  and the step (no data of the person's), and `dotami.db.encrypting` / `dotami.db.plain-to-wipe`
+  exist for moments. The plain file is overwritten with zeros, then deleted; on a solid-state disk
+  that doesn't promise the old bytes are physically gone, and copies Windows or a synced folder made
+  before aren't changed (said in Settings). A copy run from source keeps the file plain and says so.
+  Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) (`FOLDERS`).
+- **No answer from DotAmi's API is kept in a cache on the disk any more ([8i]).** Every `/api/…`
+  answer is sent `Cache-Control: no-store` ([`next.config.mjs`](../next.config.mjs)); before, the
+  desktop window's Chromium could keep one (a statement's words were found in the `Cache` folder in the
+  data folder). The desktop app clears that cache once when it first encrypts the data file.
+
 - **A return PDF the person drops ([8f], *Add from last year's return*): nothing is kept.** The
   file is read in memory inside the app's window, in a worker of DotAmi's own
   ([`lib/figures/return/`](../lib/figures/return/)); its bytes move into that worker, pdf.js's
@@ -371,6 +387,15 @@ person is asked).
 
 ### What the person must agree to
 
+- **Before an existing data file is first encrypted ([8i]),** a window says what it protects (an
+  administrator account while the person is signed out, a copy of the folder, the disk read outside
+  Windows), what it doesn't (anything running as the person; copies already made), that a lost key
+  loses everything not in a backup, and that an older DotAmi can't open the file afterwards; with
+  **Back up first…**, **Encrypt now**, **Not now** and **Never…** (a second warning first:
+  [`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html)). Settings → Data and backups has an
+  **Encrypt the data file** switch (on by default; turning it off asks first). A new data folder is
+  encrypted without asking. The log records that the window was shown and which button was pressed.
+
 - **Reading last year's return needs the person to pick or drop the PDF**, under *Add from last
   year's return*; it only shows lines, so there is nothing to agree to yet. *Close* forgets the
   file.
@@ -456,6 +481,11 @@ person is asked).
 
 ### How to remove it
 
+- **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
+  it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
+  a backup holds, and DotAmi then says so and changes nothing. Once encrypted, the file isn't
+  decrypted again by DotAmi; Delete works on it as before.
+
 - Nothing new to remove: the return reader keeps nothing (above).
 - **Expense records:** *Take back* and *Turn down* on the Expenses page stop a record counting but
   keep the row. Deleting ideas keeps them too, as "not attached yet". Only the Delete menu's *Your
@@ -497,6 +527,12 @@ person is asked).
   themselves.
 
 ### What the policy will need to say
+
+- **Encryption at rest ([8i])** protects against an administrator account while the person is signed
+  out, a copied or synced data folder, and a disk read outside Windows; not against anything running
+  as the person, and only as strong as the Windows password. Losing the key loses the data except what
+  a backup holds. Backups hold the data decrypted (so they restore elsewhere); an older version can't
+  open an encrypted file.
 
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot

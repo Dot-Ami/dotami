@@ -34,6 +34,8 @@ import {
 import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, TABLES, keptLinkKey } from "@/lib/privacy/inventory";
 import { writeSetting } from "@/lib/settings/store";
 import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
+import { openDatabase } from "../desktop/sqlite.mjs";
+import { encryptInPlace } from "./helpers/migrated-db";
 import { demoScenarios } from "../prisma/seed-data";
 
 // Each database test migrates its own file (1.5-5 s on this machine, more on a busy runner), and
@@ -590,6 +592,87 @@ describe("the deleted words are gone from the file, not just hidden", () => {
     await prisma.$disconnect();
     expect(markerOnDisk(folder)).toEqual([]);
     expect(existsSync(path.join(folder, "dotami.db-journal"))).toBe(false);
+  });
+});
+
+/**
+ * [8i] On an encrypted data file the marker is never in the file's raw bytes, wiped or not, so the raw
+ * scan above proves nothing there (docs/architecture/database-encryption.md § 5). The proof moves to the
+ * decrypted page image: the file opened with its key and its whole image read (serialize(), every page,
+ * free pages included), then searched.
+ *
+ * Found while building (2026-10-10): SQLite3 Multiple Ciphers turns SQLite's secure_delete on for every
+ * encrypted connection, so an ordinary delete already overwrites the deleted words with zeros there. The
+ * control therefore switches it off on purpose, to show the image check does see words a delete left.
+ */
+describe("on an encrypted data file, the deleted words are gone from the decrypted image ([8i])", () => {
+  const KEY = Buffer.alloc(32, 0x2c);
+
+  /** A migrated data file, encrypted with KEY, opened through DotAmi's client with the key, and seeded. */
+  async function encryptedDb(name: string) {
+    const { folder, file, url, prisma: plainClient } = makeDb(name);
+    await plainClient.$disconnect();
+    encryptInPlace(file, KEY);
+    const prisma = createDatabaseClient({ url, key: KEY });
+    clients.push(prisma);
+    await seed(prisma);
+    return { folder, file, prisma };
+  }
+
+  /** Whether the file's decrypted page image (every page, free ones too) holds the marker. */
+  function imageHoldsMarker(file: string): boolean {
+    const db = openDatabase(file, { key: KEY, readonly: true, fileMustExist: true });
+    try {
+      return db.serialize().includes(Buffer.from(MARKER, "utf8"));
+    } finally {
+      db.close();
+    }
+  }
+
+  it("the raw scan is blind on an encrypted file: the marker isn't in its bytes even before any delete", async () => {
+    const { folder, file, prisma } = await encryptedDb("encrypted-blind");
+    await prisma.$disconnect();
+    expect(markerOnDisk(folder)).toEqual([]);
+    expect(imageHoldsMarker(file)).toBe(true);
+  });
+
+  it("the control: a delete with secure_delete switched off leaves the words in the decrypted image", async () => {
+    const { file, prisma } = await encryptedDb("encrypted-insecure-delete");
+    await prisma.$disconnect();
+    const db = openDatabase(file, { key: KEY, fileMustExist: true });
+    try {
+      // On by default for an encrypted file; off here, so the delete leaves the words where they were.
+      expect(db.pragma("secure_delete", { simple: true })).toBe(1);
+      db.pragma("secure_delete = OFF");
+      db.prepare(`DELETE FROM "PersonStatement"`).run();
+    } finally {
+      db.close();
+    }
+    expect(imageHoldsMarker(file)).toBe(true);
+  });
+
+  it("an ordinary delete through DotAmi's client already zeroes the words on an encrypted file", async () => {
+    const { file, prisma } = await encryptedDb("encrypted-plain-delete");
+    await prisma.personStatement.deleteMany();
+    await prisma.figure.deleteMany();
+    await prisma.expense.deleteMany();
+    await prisma.ventureLink.deleteMany();
+    await prisma.sourceAccount.deleteMany();
+    await prisma.venture.updateMany({ data: { notes: "" } });
+    await prisma.$disconnect();
+    expect(imageHoldsMarker(file)).toBe(false);
+  });
+
+  it("after Delete, the marker is gone from the decrypted image and the file has no free pages", async () => {
+    const { folder, file, prisma } = await encryptedDb("encrypted-wiped");
+    const kinds = ["ideas", "statements", "expenses"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds) });
+    expect(result.status === "deleted" && result.wiped).toBe(true);
+    const free = await prisma.$queryRawUnsafe<{ freelist_count: number | bigint }[]>("PRAGMA freelist_count");
+    expect(Number(free[0].freelist_count)).toBe(0);
+    await prisma.$disconnect();
+    expect(imageHoldsMarker(file)).toBe(false);
+    expect(markerOnDisk(folder)).toEqual([]);
   });
 });
 

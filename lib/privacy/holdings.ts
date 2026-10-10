@@ -122,6 +122,8 @@ export interface Holdings {
     sources: HeldSource[];
   };
   dataFile: { path: string | null; exists: boolean; bytes: number | null };
+  /** [8i] Whether the data file is encrypted (lib/db/lock.ts, as lib/settings/today.ts reads it): the state and a count, never the key. */
+  database: SettingsToday["database"];
   folders: FolderFacts[];
   /**
    * How many of the files in the backups folder are DotAmi's own safety copies: what the Delete
@@ -329,6 +331,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     ideasWithNotes,
     figures,
     dataFile: { path: dataPath, exists: today.dataFile.exists, bytes: dataInfo?.bytes ?? null },
+    database: today.database,
     folders,
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),

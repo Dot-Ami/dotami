@@ -90,6 +90,19 @@ export const SETTINGS: readonly SettingEntry[] = [
     where: "File → Back up… in the desktop app",
   },
   {
+    id: "database-encryption",
+    group: "data",
+    label: "Encrypt the data file",
+    // [8i] Live in the desktop app; a copy run from source has no key store and says so beside it.
+    does: "Locks the data file and its safety copies with a key only your Windows account on this computer can open, so an administrator account while you're signed out, a copy of the data folder, or the disk read outside Windows can't read them. The desktop app does it at its next start, after asking. Once the file is encrypted, it stays encrypted.",
+    defaultValue: "on, asked first",
+    options: "on · never",
+    warning:
+      'Before encrypting: "if the key is ever lost, everything not in a backup is lost; an older DotAmi can\'t open the file afterwards". Before Never: "your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer\'s disk outside Windows can read it".',
+    story: "8i",
+    status: "live",
+  },
+  {
     id: "figure-reminders",
     group: "figures",
     label: "Figure reminders",

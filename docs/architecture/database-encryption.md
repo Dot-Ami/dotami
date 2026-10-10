@@ -251,6 +251,10 @@ adapter for files on a disk.
   **encrypted with the same key**, never plain. Which SQLite step does that (`VACUUM INTO` keeping the
   source's encryption, or the backup API into a keyed copy) isn't in the library's documentation, so
   it is measured first in the build, and a test scans the copy for a marker string.
+- **Measured 2026-10-10:** `VACUUM INTO` on an encrypted connection writes a copy encrypted with the
+  same key, so the migrator's safety copy needs nothing more (`tests/desktop-migrate.spec.ts`). And
+  SQLite3 Multiple Ciphers turns SQLite's `secure_delete` on for every encrypted connection, so an
+  ordinary delete already overwrites the deleted words with zeros there; the wipe below still runs.
 - **The Delete wipe** (`vacuumFile`, and `VACUUM` through Prisma in `lib/privacy/delete.ts`) runs on
   the encrypted file, and it still matters: deleted words stay in the file's free pages until
   `VACUUM` (`lib/privacy/delete.ts`), and anything that later reads the file with the key (a program
@@ -263,7 +267,8 @@ adapter for files on a disk.
   `serialize()` (every page, free pages included), then searched for the marker. The tests keep the
   raw-byte scan on a plain file and the `freelist_count == 0` check, and gain a fail-first control:
   on an encrypted file, Delete with the `VACUUM` switched off must leave the marker in the decrypted
-  image.
+  image. (As built: because `secure_delete` is on for an encrypted file, the control switches it off
+  for its delete; `tests/privacy-delete.spec.ts`.)
 - **The referee.** `tests/desktop-migrate.spec.ts` uses `prisma migrate status` to check the
   migrator; Prisma's schema engine can't open an encrypted file, so that comparison keeps running on
   a plain file (the migrator works the same with or without a key), and new tests run every
@@ -301,10 +306,13 @@ next.
 2. **Write the encrypted copy** to `dotami.db.encrypting` (never overwriting anything), with the key,
    then flush it to the disk. How it is made is measured first in the build: a single SQLite copy
    into a keyed new file if the library supports it; otherwise a plain copy encrypted in place with
-   `PRAGMA rekey` (documented). That fallback makes a second plain file for a moment, so: the copy is
-   disposable (a crash just means it is wiped and made again), the rekey runs with
-   `journal_mode = OFF` so no plain journal of it is written, and any leftover
-   `dotami.db.encrypting-journal` is overwritten with zeros before it is deleted.
+   `PRAGMA rekey` (documented). **Measured 2026-10-10:** `VACUUM INTO` and the backup API can't write a
+   plain source into a keyed file and there is no `sqlcipher_export`, but a keyed file attached to the
+   plain file's connection (`ATTACH … KEY`) can be written, so DotAmi copies every table, its rows and
+   its indexes into it (`desktop/database-copy.mjs`): no second plain copy is ever made, and the
+   `rekey` fallback isn't used. (The attached file is opened with the main file's flags, so the plain
+   file is opened without "must exist" for this step.) A leftover copy is overwritten with zeros
+   before it is deleted all the same.
 3. **Check the copy**: open it with the key; `integrity_check` says `ok`; every table has the same
    rows as the plain file (counted, and a SHA-256 over each table's rows in key order); Prisma's
    bookkeeping table is identical; and the copy does **not** open without the key.
@@ -581,6 +589,35 @@ are asked. Not a reason to prefer A on its own: the adapter is the direction Pri
    knows about you*.
 3. **Backups and restore** (about 2.5 to 3 days): no plain copy on the disk; the image rebuilt before
    it is written; restore writing the encrypted staging file; formats 1 and 2.
+
+## Found while building B (2026-10-10)
+
+- **The window's own cache held the data in plain text.** The desktop test that encrypts an existing
+  file found the words of a statement in Chromium's disk cache (`Cache\Cache_Data` in the data
+  folder), beside the encrypted file: DotAmi's API answers carried no `Cache-Control`, and Chromium
+  stored one. Pages were already sent `no-store`. Every `/api/…` answer is now `no-store`
+  (`next.config.mjs`, `apiCachePolicy`), and the cache an earlier version filled is cleared once, when
+  the data file is first encrypted. A first try that rewrote the header in Electron's main process
+  (`webRequest.onHeadersReceived`) didn't keep the answer out of the cache; the header has to come from
+  the server.
+- **Closing the window before the main one quit the app.** The app quits when its last window closes;
+  the window that asks first was that last window. It now quits so only once the main window exists.
+
+## The build, as split (2026-10-10)
+
+The design's three pull requests became four, stacked, each green on its own:
+
+- **A, the packages and the Prisma connection** (§ 14's measurements first). Nothing encrypted.
+- **B, the key and encrypting the file:** `database.key`; a new data folder encrypted from its first
+  byte; the window before an existing file is first encrypted, with the four answers and the Never
+  warning; the crash-safe first-start encryption of the data file and the plain safety copies; the
+  lost-key window; the Settings switch and the lines in Settings and *What DotAmi knows about you*;
+  the server opening the file with its key. The migrator, the owed wipe, **backups and restore** move
+  to the new package in B too, because once a file is encrypted `node:sqlite` can't open it: without
+  them File → Back up… would fail on the first encrypted file.
+- **C, a passphrase on every backup** (decision 3) and **restoring from the lost-key window**, under a
+  new key, on this computer or another.
+- **D, "Start fresh"** (decision 2).
 
 ## 13. Not checked
 

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 import { createDatabaseClient } from "@/lib/db/client";
+import { databaseKey } from "@/lib/db/lock";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -20,10 +21,11 @@ const globalForPrisma = globalThis as unknown as {
  * nothing it prints holds the values.
  *
  * The client opens the file through DotAmi's one database client (lib/db/client.ts, [8i]): Prisma's
- * adapter for better-sqlite3, on the file DATABASE_URL names.
+ * adapter for better-sqlite3, on the file DATABASE_URL names, with the key the desktop app gave this
+ * server when the file is encrypted (lib/db/lock.ts).
  */
 function createClient(): PrismaClient {
-  const client = createDatabaseClient({ log: [{ emit: "event" as const, level: "error" as const }] });
+  const client = createDatabaseClient({ key: databaseKey(), log: [{ emit: "event" as const, level: "error" as const }] });
   client.$on("error", (event) => {
     console.error(`[database] the database library reported an error (${describeLogTarget(event.target)})`);
   });

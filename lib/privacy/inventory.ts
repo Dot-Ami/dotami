@@ -95,7 +95,7 @@ export interface WindowStorageEntry {
 
 /** A file or folder beside the database that DotAmi writes. */
 export interface FolderEntry {
-  id: "backups" | "log" | "wipe-pending" | "receipts" | "receipts-key";
+  id: "backups" | "log" | "wipe-pending" | "receipts" | "receipts-key" | "database-key" | "database-encrypting";
   /**
    * Path relative to the folder holding the data file. The wipe-pending note is named after the
    * data file itself, so this shows the desktop app's name for it (lib/privacy/holdings.ts finds it
@@ -551,6 +551,26 @@ export const FOLDERS: readonly FolderEntry[] = [
     desktopOnly: true,
   },
   {
+    id: "database-key",
+    relativePath: "database.key",
+    name: "The key to your data file",
+    holds:
+      "The key that encrypts the data file and its safety copies, itself encrypted by Windows for your Windows account only (the same protection as the receipts' key, in a file of its own). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses everything in the data file except what a backup holds. Made the first time the desktop app encrypts the data file; never removed or replaced by DotAmi while anything is encrypted with it.",
+    writtenBy: { file: "desktop/database-key.mjs", mentions: 'DATABASE_KEY_FILE = "database.key"' },
+    desktopOnly: true,
+    whenAbsent: "None: the data file isn't encrypted (or, if it is, the key is missing, and DotAmi says so when it starts).",
+  },
+  {
+    id: "database-encrypting",
+    relativePath: "database-encrypting.json",
+    name: "A note that encrypting the data file is under way",
+    holds:
+      "Written while the desktop app encrypts the data file or a safety copy, and removed when it is done. It holds which of DotAmi's own files is being encrypted, the step it is at, and the encrypted copy's size and SHA-256, nothing of yours. If DotAmi stops part-way, the next start reads it to finish safely.",
+    writtenBy: { file: "desktop/encrypt-database.mjs", mentions: 'ENCRYPTING_NOTE = "database-encrypting.json"' },
+    desktopOnly: true,
+    whenAbsent: "None: nothing is being encrypted.",
+  },
+  {
     id: "backups",
     relativePath: "backups",
     name: "Safety copies",
@@ -662,6 +682,11 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
     file: "desktop/main.mjs",
     call: 'loadFile(path.join(root, "desktop", "passphrase.html")',
     why: "The passphrase window: a page shipped in the app and loaded from disk. Its own Content-Security-Policy is default-src 'none' (desktop/passphrase.html), so the page can't make a connection, and desktop/passphrase-preload.cjs lets it send back only the passphrase or a cancel.",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: 'loadFile(path.join(root, "desktop", `${which}.html`)',
+    why: "[8i] The two start-up windows: before an existing data file is first encrypted (desktop/encrypt-ask.html), and when the data file's key can't be opened (desktop/lost-key.html). Pages shipped in the app and loaded from disk, chosen from those two names only. Each one's own Content-Security-Policy is default-src 'none', so the page can't make a connection, and desktop/choice-preload.cjs lets it send back only one of its fixed answers.",
   },
 ];
 

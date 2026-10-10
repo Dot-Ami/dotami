@@ -21,6 +21,7 @@ Change both together.
 |---|---|---|---|---|
 | Where the data file lives | the app's own folder | any folder | moving it: "the app will close and reopen" | [7b] |
 | Backup passphrase | none | a passphrase | "lose it and the backup can't be opened — nobody can recover it" | [7c] |
+| Encrypt the data file | on, asked first | on · never | encrypting: "if the key is ever lost, everything not in a backup is lost; an older DotAmi can't open the file afterwards"; never: "your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer's disk outside Windows can read it" | [8i] |
 | Automatic updates | on | on · ask first · off | off: "you won't get fixes, including security fixes" | [7d] |
 | Figure reminders | none ticked | monthly · quarterly · yearly (tick any, or none) | — | [8e] |
 | Bank and card records | off | on · then, for each statement: allow once · always allow this account · always allow every account | turning it on: "a statement holds every purchase and payment, the names of people, balances and account numbers; DotAmi reads it in this window, keeps only the monthly totals you agree to and never keeps an account or card number"; then, before each statement from an account not always allowed: "Before DotAmi reads a bank or card statement" (below) | [8g] |

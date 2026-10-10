@@ -1,10 +1,10 @@
 # Settings (`/settings`) — page overview
 
-Last updated: 2026-10-09 ([8i] — whether the receipt files are encrypted; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
+Last updated: 2026-10-10 ([8i] — whether the data file is encrypted, and the "Encrypt the data file" switch); 2026-10-09 ([8i] — whether the receipt files are encrypted; 2026-10-08: [8g] — the bank and card accounts list; the Licences link; [8e] — Add to my calendar; 2026-10-07: the first saved setting, Figure reminders; 2026-10-05: [7g] the shell)
 
 **Route:** `/settings` · **Component:** `components/settings/settings-page.tsx` (server-rendered;
-the interactive controls are `copy-path-button.tsx`, `figure-reminders-control.tsx` and
-`bank-accounts-control.tsx`) ·
+the interactive controls are `copy-path-button.tsx`, `figure-reminders-control.tsx`,
+`bank-accounts-control.tsx` and `database-encryption-control.tsx`) ·
 **Rows:** `lib/settings/catalog.ts` · **Today facts:** `lib/settings/today.ts` · **Saved choices:**
 `lib/settings/store.ts` (read on the server on every visit; saved through `PUT /api/settings`,
 `lib/settings/client.ts`) · **Reached from:** "Settings" on the landing page header and the ideas
@@ -29,7 +29,15 @@ Each group:
    - Data and backups: the absolute path of the database file (from `DATABASE_URL`, relative
      paths read from `prisma/` as Prisma does) with a **Copy path** button; "no file there yet"
      when it's missing; a plain line when the URL isn't a SQLite file. The line above the path
-     says the receipt copies ([8i]) are in a folder named receipts beside the file. Under the path, one
+     says the receipt copies ([8i]) are in a folder named receipts beside the file. Under the path,
+     first one line from `today.database` (`lib/db/protection.ts`, database-encryption.md § 7): in the
+     desktop app with the file opened with its key, "Your data file is encrypted on this computer." with
+     what it protects and doesn't (the same precise words as the receipts'), what losing the key costs
+     (everything not in a backup), that an older DotAmi can't open it, what the overwrite of the plain
+     file can't promise on a solid-state disk, and how many plain copies are still on the disk when a
+     file was held by another program; "Your data file isn't encrypted yet." after Not now; "Your data
+     file isn't encrypted." after Never (pointing at the switch below) or with no key store; from
+     source, "This copy's data file isn't encrypted." and why. Then one
      line from `today.receipts` (`lib/expenses/receipts/protection.ts`, expense-records.md § 9): in the
      desktop app with its key open, "Your receipt files are encrypted on this computer." with what that
      protects, said precisely (Windows' folder permissions already keep other standard accounts out of
@@ -37,7 +45,7 @@ Each group:
      read outside Windows), that anything running as the person (or a program an administrator runs as
      them) can still open them, that losing the key (a Windows
      profile reset, the folder moved to another account or computer) loses the receipts except those in
-     a backup, and that the data file itself isn't encrypted; from source (or with no key store and no
+     a backup, and whether the data file is encrypted too (it says so when it is); from source (or with no key store and no
      receipt encrypted yet), "Receipts in this copy aren't encrypted." and why (the desktop app encrypts
      them; with no key store, that DotAmi tries again at each start); when the key can't be opened
      (Windows won't open it, `receipts.key` is missing, or the key store is gone while receipts are
@@ -127,3 +135,24 @@ earlier one), the settings test's count of controls (none on the page but Copy p
 three Figure reminders tick-boxes), and
 "Remind me about this idea: …" (the settings page's ticks and the ideas page's switches are one
 setting and don't undo each other).
+
+## The "Encrypt the data file" switch ([8i], 2026-10-10)
+
+The catalog row `database-encryption` (Data and backups), live, with its control
+(`components/settings/database-encryption-control.tsx`). It reads the saved value itself before it
+lets anything change, like the reminders.
+
+- **The file is encrypted** (`today.database.state` "on"): "On: your data file is encrypted, and stays
+  encrypted." No control: DotAmi doesn't decrypt a file (the maintainer's decision was a switch to
+  turn encryption on later).
+- **Run from source:** "Only the desktop app encrypts the data file; this copy, run from source,
+  can't." No control.
+- **Plain in the desktop app** (Not now, Never, or no key store): a tick-box **Encrypt the data file**.
+  Ticking it saves `{ "on": true }` at once and says "DotAmi asks to encrypt your data file the next
+  time it starts." Unticking asks first, in amber, with what it leaves unprotected, **Go back** and
+  **Keep it unencrypted**; only the second saves `{ "on": false }` ("Never: the data file stays
+  unencrypted, and DotAmi doesn't ask."). A save that fails says "Couldn't save; nothing changed."
+
+The desktop app reads the value from the data file at its next start (`desktop/main.mjs`
+`readEncryptionChoice`) and writes it when the person answers **Never** in the window before the
+first encryption. Covered by `e2e-desktop/desktop.spec.ts` ("Not now keeps the file plain…").

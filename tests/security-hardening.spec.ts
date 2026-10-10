@@ -7,15 +7,15 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { RECEIPT_FILE_HEADERS } from "@/lib/expenses/receipts/file-headers";
-import nextConfig, { receiptFilePolicy, securityHeaders, workerPolicy } from "../next.config.mjs";
+import nextConfig, { apiCachePolicy, receiptFilePolicy, securityHeaders, workerPolicy } from "../next.config.mjs";
 
 afterEach(() => __resetRateLimitStateForTests());
 
 describe("response headers on every route", () => {
   it("sets the defence-in-depth headers and hides the framework banner", async () => {
     const rules = await nextConfig.headers();
-    // The general rule, Next's static files, and the receipt bytes route ([8i]).
-    expect(rules).toHaveLength(3);
+    // The general rule, Next's static files, the receipt bytes route ([8i]), and the API's cache rule ([8i]).
+    expect(rules).toHaveLength(4);
     expect(rules[0].source).toBe("/(.*)");
     const keys = rules[0].headers.map((h) => h.key);
     for (const required of [
@@ -56,6 +56,13 @@ describe("response headers on every route", () => {
     expect(rules.indexOf(receipt!)).toBeGreaterThan(rules.findIndex((r) => r.source === "/(.*)"));
     expect(receiptFilePolicy).toBe(RECEIPT_FILE_HEADERS["Content-Security-Policy"]);
     expect(receiptFilePolicy.split(";").map((d) => d.trim())).toEqual(["default-src 'none'", "frame-ancestors 'none'", "sandbox"]);
+  });
+
+  it("keeps every API answer out of any cache on the disk ([8i]): each holds the person's data", async () => {
+    const rules = await nextConfig.headers();
+    const api = rules.find((r) => r.source === "/api/:path*");
+    expect(api?.headers).toEqual([{ key: "Cache-Control", value: "no-store" }]);
+    expect(apiCachePolicy).toBe("no-store");
   });
 });
 

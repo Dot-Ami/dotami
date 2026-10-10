@@ -12,11 +12,11 @@
 //              ciphertext as one stream
 //   16 bytes   the GCM tag (locked backups only)
 //
-// The data file is read and written in pieces of CHUNK bytes, never whole, and receipts one at a
-// time (each at most 10 MB, held whole while it is decrypted or encrypted: see [8i] below), so a
-// backup of a big data file and a few hundred receipts needs no more memory than a small one. The header lists each
-// file's size and SHA-256, so the writer reads each file twice: once to measure it, once to write
-// it (and a file that changed in between stops the backup rather than writing a wrong one).
+// The data file is held in memory, rebuilt from its live rows ([8i], below), and written in pieces of
+// CHUNK bytes; receipts one at a time (each at most 10 MB, held whole while it is decrypted or
+// encrypted), so a few hundred receipts need no more memory than one. The header lists each file's
+// size and SHA-256, so the writer reads each receipt twice: once to measure it, once to write it (and
+// a file that changed in between stops the backup rather than writing a wrong one).
 //
 // Locked backups use a key derived from the passphrase with scrypt. The header is covered too: its
 // exact bytes are GCM's "additional authenticated data", and the tag sits after the payload because
@@ -37,14 +37,23 @@
 // one they are readable by whoever has the file. A restore encrypts each receipt with this computer's
 // key as it is unpacked, after its SHA-256 is checked. The format doesn't change: a backup made before
 // receipts were encrypted reads the same. A receipt is at most 10 MB, so one is decrypted or encrypted
-// whole, one at a time; the database is still streamed in pieces.
+// whole, one at a time.
+//
+// The data file encrypted at rest ([8i], docs/architecture/database-encryption.md § 8): a backup holds the
+// data file's own, decrypted contents, so it restores on another computer, whose key differs; never
+// database.key. No plain copy is written to the disk while backing up: the file is opened with its key,
+// its page image read into memory, rebuilt there with VACUUM (so words deleted or edited over since the
+// last wipe stay out of the backup, as VACUUM INTO did before), and that rebuilt image is what goes in.
+// A restore checks the backup's data file in memory and writes the staging file encrypted with this
+// computer's key, through SQLite (desktop/database-copy.mjs), so it is never on the disk in plain text
+// either. Without a key (the person said "Not now" or "Never", no key store) the same steps run plain.
+// The format doesn't change: formats 1 and 2 restore the same way.
 import { createCipheriv, createDecipheriv, createHash, randomBytes, scryptSync } from "node:crypto";
 import {
   closeSync,
   existsSync,
   fstatSync,
   mkdirSync,
-  mkdtempSync,
   openSync,
   readdirSync,
   readFileSync,
@@ -54,11 +63,11 @@ import {
   writeFileSync,
   writeSync,
 } from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
+import { copyIntoKeyedFile } from "./database-copy.mjs";
 import { decryptReceipt, ENCRYPTED_OVERHEAD, encryptReceipt, isEncryptedReceipt, receiptIdOfName } from "./receipt-crypto.mjs";
+import { openDatabase, openImage, runSql } from "./sqlite.mjs";
 
 /** The file extension (without the dot) the app gives its backups. */
 export const BACKUP_EXTENSION = "dotami-backup";
@@ -134,33 +143,25 @@ const changedWhileWriting = () =>
  * in, and is counted in `unreadableReceipts` for the caller to say so.
  * @param {string} dbFile the live database; its receipts are in the receipts folder beside it
  * @param {string} outFile where the backup goes (replaced if it exists)
- * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null }} options an empty passphrase means "not encrypted"
+ * @param {{ passphrase?: string, appVersion: string, now?: () => number, receiptKey?: Buffer | null, databaseKey?: Buffer | null }} options an empty passphrase means "not encrypted";
+ *   `databaseKey`: the data file's key when it is encrypted ([8i])
  * @returns {{ encrypted: boolean, bytes: number, migrations: string[], receipts: number, missingReceipts: number, unreadableReceipts: number }}
  */
-export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null } = {}) {
+export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now = Date.now, receiptKey = null, databaseKey = null } = {}) {
   const receiptsDir = path.join(path.dirname(dbFile), RECEIPTS_FOLDER);
   const listed = new Set(receiptNamesIn(receiptsDir));
 
-  // VACUUM INTO writes a consistent copy even while the app has the database open; copying the
-  // file itself could catch it halfway through a write.
-  const scratch = mkdtempSync(path.join(os.tmpdir(), "dotami-backup-"));
-  const copy = path.join(scratch, "copy.db");
   const partial = `${outFile}.partial`;
   let out = null;
   try {
-    const source = new DatabaseSync(dbFile, { readOnly: true });
-    try {
-      source.prepare("VACUUM INTO ?").run(copy);
-    } finally {
-      source.close();
-    }
-    const migrations = appliedMigrations(copy);
+    // [8i] The data file's live rows, rebuilt in memory (rebuiltImage): never a plain copy on the disk.
+    const { image, migrations, described } = rebuiltImage(dbFile, databaseKey);
 
     // First pass: every file's size and fingerprint, for the header.
-    const files = [{ path: DB_ENTRY, source: copy, receipt: false, ...measure(copy) }];
+    const files = [{ path: DB_ENTRY, image, receipt: false, bytes: image.length, sha256: sha256(image) }];
     let missingReceipts = 0;
     let unreadableReceipts = 0;
-    for (const name of describedReceipts(copy)) {
+    for (const name of described) {
       const source = path.join(receiptsDir, name);
       const plain = listed.has(name) ? receiptForBackup(source, name, receiptKey) : "missing";
       if (plain === "missing") missingReceipts += 1;
@@ -197,8 +198,15 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     let written = writeAll(out, MAGIC) + writeAll(out, length) + writeAll(out, headerBytes);
 
     // Second pass: each file again, in pieces, checked against what the header says.
-    const piece = Buffer.allocUnsafe(CHUNK);
     for (const f of files) {
+      if (f.image) {
+        // The data file's rebuilt image, held in memory since the first pass.
+        for (let at = 0; at < f.image.length; at += CHUNK) {
+          const part = f.image.subarray(at, at + CHUNK);
+          written += writeAll(out, cipher ? cipher.update(part) : part);
+        }
+        continue;
+      }
       if (f.receipt) {
         // A receipt (at most 10 MB) is read, and decrypted if need be, whole; then written in pieces.
         const plain = receiptForBackup(f.source, path.basename(f.source), receiptKey);
@@ -207,29 +215,7 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
           const part = plain.subarray(at, at + CHUNK);
           written += writeAll(out, cipher ? cipher.update(part) : part);
         }
-        continue;
       }
-      const hash = createHash("sha256");
-      let count = 0;
-      let fd;
-      try {
-        fd = openSync(f.source, "r");
-      } catch {
-        throw changedWhileWriting();
-      }
-      try {
-        for (;;) {
-          const n = readSync(fd, piece, 0, CHUNK, null);
-          if (n === 0) break;
-          const plain = piece.subarray(0, n);
-          hash.update(plain);
-          count += n;
-          written += writeAll(out, cipher ? cipher.update(plain) : plain);
-        }
-      } finally {
-        closeSync(fd);
-      }
-      if (count !== f.bytes || hash.digest("hex") !== f.sha256) throw changedWhileWriting();
     }
     if (cipher) {
       written += writeAll(out, cipher.final());
@@ -243,8 +229,31 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
     if (out !== null) closeSync(out);
     rmSync(partial, { force: true });
     throw error;
+  }
+}
+
+/**
+ * [8i] The data file's contents for a backup, held only in memory: the file opened (with its key when it
+ * is encrypted), its page image read whole (serialize(): SQLite gives the decrypted pages, and the image
+ * is consistent even while the app has the file open), loaded into a second, in-memory database and
+ * rebuilt there with VACUUM, so free pages, and the words deleted or edited over that they may hold, are
+ * left out, as VACUUM INTO left them out before. Returns the rebuilt image, the migrations it has, and
+ * the receipt files it describes. Nothing is written to the disk.
+ */
+export function rebuiltImage(dbFile, key = null) {
+  const source = openDatabase(dbFile, { key, readonly: true, fileMustExist: true });
+  let image;
+  try {
+    image = source.serialize();
   } finally {
-    rmSync(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    source.close();
+  }
+  const memory = openImage(image);
+  try {
+    runSql(memory, "VACUUM");
+    return { image: memory.serialize(), migrations: appliedMigrations(memory), described: describedReceipts(memory) };
+  } finally {
+    memory.close();
   }
 }
 
@@ -256,8 +265,10 @@ export function writeBackup(dbFile, outFile, { passphrase = "", appVersion, now 
  * With `receiptKey` (this computer's key), each unpacked receipt is encrypted with it, after its
  * SHA-256 is checked; without one, receipts are unpacked as they are.
  * @param {string} file
- * @param {{ passphrase?: string, unpackTo?: { dbFile: string, receiptsDir: string } | null, receiptKey?: Buffer | null }} [options]
- * @returns {{ header: object, files: { path: string, bytes: number }[] }}
+ * The database is never written by this function: when unpacking, its bytes are returned in `database`
+ * (it is small; prepareRestore checks it and writes the staging file itself, [8i]).
+ * @param {{ passphrase?: string, unpackTo?: { receiptsDir: string } | null, receiptKey?: Buffer | null }} [options]
+ * @returns {{ header: object, files: { path: string, bytes: number }[], database: Buffer | null }}
  * @throws {BackupError}
  */
 export function readBackup(file, { passphrase = "", unpackTo = null, receiptKey = null } = {}) {
@@ -333,13 +344,16 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receip
     return null;
   };
 
+  let database = null;
   for (const entry of header.files) {
-    const target = unpackTo ? targetOf(entry.path, unpackTo) : null;
+    const isDatabase = entry.path === DB_ENTRY;
+    const target = unpackTo && !isDatabase ? targetOf(entry.path, unpackTo) : null;
     // The receipt's id, when this receipt is to be encrypted as it is unpacked.
-    const encryptFor = target && receiptKey && entry.path !== DB_ENTRY ? receiptIdOfName(path.basename(target)) : null;
+    const encryptFor = target && receiptKey ? receiptIdOfName(path.basename(target)) : null;
     let out = null;
     let whole = null;
     let filled = 0;
+    if (unpackTo && isDatabase) whole = Buffer.alloc(entry.bytes);
     if (target) {
       mkdirSync(path.dirname(target), { recursive: true });
       if (encryptFor) whole = Buffer.alloc(entry.bytes);
@@ -362,7 +376,8 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receip
       if (out !== null) closeSync(out);
     }
     if (hash.digest("hex") !== entry.sha256) throw wrong();
-    if (whole !== null) writeNewFile(target, encryptReceipt(whole, { key: receiptKey, id: encryptFor }));
+    if (isDatabase) database = whole;
+    else if (whole !== null) writeNewFile(target, encryptReceipt(whole, { key: receiptKey, id: encryptFor }));
   }
   if (decipher) {
     try {
@@ -371,7 +386,7 @@ function readFormat2(fd, size, header, headerBytes, passphrase, unpackTo, receip
       throw cannotDecrypt();
     }
   }
-  return { header, files: header.files.map((f) => ({ path: f.path, bytes: f.bytes })) };
+  return { header, files: header.files.map((f) => ({ path: f.path, bytes: f.bytes })), database };
 }
 
 /** Format 1: the database alone, read whole (these backups were written whole, too). */
@@ -401,16 +416,11 @@ function readFormat1(file, header, headerEnd, passphrase, unpackTo) {
 
   // Catches a cut-off or flipped-byte plain backup (encrypted ones already failed above).
   if (db.length !== header.payloadBytes || sha256(db) !== header.payloadSha256) throw damaged();
-  if (unpackTo) {
-    mkdirSync(path.dirname(unpackTo.dbFile), { recursive: true });
-    writeFileSync(unpackTo.dbFile, db, { flag: "wx" });
-  }
-  return { header, files: [{ path: DB_ENTRY, bytes: db.length }] };
+  return { header, files: [{ path: DB_ENTRY, bytes: db.length }], database: unpackTo ? db : null };
 }
 
-/** Where an unpacked file goes. The path was checked by isFormat2Header, so it is one of these two shapes. */
-function targetOf(entryPath, { dbFile, receiptsDir }) {
-  if (entryPath === DB_ENTRY) return dbFile;
+/** Where an unpacked receipt goes. The path was checked by isFormat2Header, so it is "receipts/<DotAmi's name>". */
+function targetOf(entryPath, { receiptsDir }) {
   return path.join(receiptsDir, entryPath.slice(RECEIPTS_FOLDER.length + 1));
 }
 
@@ -429,35 +439,42 @@ export function discardRestore(stagingFile) {
  * Checks a backup and unpacks it beside the live database, without touching the live data: the
  * database to `stagingFile`, the receipts to stagedReceiptsFolder(stagingFile). On any failure both
  * are deleted before the error is thrown. With `receiptKey` (the key the receipts here will be opened
- * with), every receipt is staged encrypted with it.
+ * with), every receipt is staged encrypted with it. With `databaseKey` ([8i]), the database is staged
+ * encrypted with it: checked in memory first, then written through SQLite into a file opened with the
+ * key, so it is never on the disk in plain text.
  * @param {string} file the backup
- * @param {{ passphrase?: string, migrationsDir: string, stagingFile: string, receiptKey?: Buffer | null }} options
+ * @param {{ passphrase?: string, migrationsDir: string, stagingFile: string, receiptKey?: Buffer | null, databaseKey?: Buffer | null }} options
  * @returns {{ header: object, receipts: number }}
  * @throws {BackupError}
  */
-export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFile, receiptKey = null }) {
+export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFile, receiptKey = null, databaseKey = null }) {
   // Whatever an earlier attempt left behind would otherwise mix with this one.
   discardRestore(stagingFile);
   try {
-    const { header, files } = readBackup(file, {
+    const { header, files, database } = readBackup(file, {
       passphrase,
-      unpackTo: { dbFile: stagingFile, receiptsDir: stagedReceiptsFolder(stagingFile) },
+      unpackTo: { receiptsDir: stagedReceiptsFolder(stagingFile) },
       receiptKey,
     });
 
     let migrations;
+    let staged = null;
     try {
-      const staged = new DatabaseSync(stagingFile);
-      try {
-        const verdict = staged.prepare("PRAGMA integrity_check").all();
-        if (verdict.length !== 1 || verdict[0].integrity_check !== "ok") throw damaged();
-        migrations = appliedMigrations(staged);
-      } finally {
-        staged.close();
-      }
+      staged = openImage(database);
+      const verdict = staged.pragma("integrity_check", { simple: true });
+      if (verdict !== "ok") throw damaged();
+      migrations = appliedMigrations(staged);
     } catch (error) {
+      staged?.close();
       // SQLite itself rejecting the bytes ("file is not a database") also means damaged.
       throw error instanceof BackupError ? error : damaged();
+    }
+    try {
+      mkdirSync(path.dirname(stagingFile), { recursive: true });
+      if (databaseKey) copyIntoKeyedFile(staged, stagingFile, databaseKey);
+      else writeFileSync(stagingFile, database, { flag: "wx" });
+    } finally {
+      staged.close();
     }
 
     // A backup with fewer migrations than this app knows is fine: the app upgrades it after the
@@ -488,16 +505,18 @@ export function prepareRestore(file, { passphrase = "", migrationsDir, stagingFi
  * restored records have no receipt files.
  * @param {string} stagingFile the file prepareRestore() wrote
  * @param {string} dbFile the live database path
- * @param {{ backupDir: string, now?: () => number }} options
+ * @param {{ backupDir: string, now?: () => number, databaseKey?: Buffer | null }} options
+ *   `databaseKey`: the live data file's key ([8i]); its safety copy is encrypted with it (VACUUM INTO
+ *   keeps the source's encryption)
  * @returns {{ safetyCopy: string | null, receiptsMovedTo: string | null, receiptsRestored: number }}
  */
-export function applyRestore(stagingFile, dbFile, { backupDir, now = Date.now }) {
+export function applyRestore(stagingFile, dbFile, { backupDir, now = Date.now, databaseKey = null }) {
   const stamp = now();
   let safetyCopy = null;
   if (existsSync(dbFile)) {
     mkdirSync(backupDir, { recursive: true });
     safetyCopy = path.join(backupDir, `dotami-before-restore-${stamp}.db`);
-    const live = new DatabaseSync(dbFile);
+    const live = openDatabase(dbFile, { key: databaseKey, fileMustExist: true });
     try {
       live.prepare("VACUUM INTO ?").run(safetyCopy);
     } finally {
@@ -596,10 +615,9 @@ function receiptNamesIn(folder) {
   }
 }
 
-/** The receipt file names a database's Receipt table describes, sorted; none when it has no such table. */
-function describedReceipts(dbFile) {
-  const db = new DatabaseSync(dbFile, { readOnly: true });
-  try {
+/** The receipt file names an open database's Receipt table describes, sorted; none when it has no such table. */
+function describedReceipts(db) {
+  {
     const table = db.prepare(`SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = 'Receipt'`).get();
     if (!table) return [];
     const names = [];
@@ -609,33 +627,6 @@ function describedReceipts(dbFile) {
       if (name && RECEIPT_NAME.test(name)) names.push(name);
     }
     return names.sort();
-  } finally {
-    db.close();
-  }
-}
-
-/** A file's size and SHA-256, read in pieces. With `missingOk`, a file that isn't there gives null. */
-function measure(file, { missingOk = false } = {}) {
-  let fd;
-  try {
-    fd = openSync(file, "r");
-  } catch (error) {
-    if (missingOk && error?.code === "ENOENT") return null;
-    throw error;
-  }
-  try {
-    const hash = createHash("sha256");
-    const piece = Buffer.allocUnsafe(CHUNK);
-    let bytes = 0;
-    for (;;) {
-      const n = readSync(fd, piece, 0, CHUNK, null);
-      if (n === 0) break;
-      hash.update(piece.subarray(0, n));
-      bytes += n;
-    }
-    return { bytes, sha256: hash.digest("hex") };
-  } finally {
-    closeSync(fd);
   }
 }
 
@@ -759,12 +750,11 @@ function isFormat2Header(h) {
 }
 
 /**
- * Names of the migrations Prisma's bookkeeping table says are applied, sorted. Takes a database
- * file path or an open database; a database with no bookkeeping table has applied none.
+ * Names of the migrations Prisma's bookkeeping table says are applied, sorted, from an open database;
+ * a database with no bookkeeping table has applied none.
  */
-function appliedMigrations(source) {
-  const db = typeof source === "string" ? new DatabaseSync(source, { readOnly: true }) : source;
-  try {
+function appliedMigrations(db) {
+  {
     const table = db.prepare(`SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = '_prisma_migrations'`).get();
     if (!table) return [];
     return db
@@ -772,8 +762,6 @@ function appliedMigrations(source) {
       .all()
       .map((r) => r.migration_name)
       .sort();
-  } finally {
-    if (typeof source === "string") db.close();
   }
 }
 

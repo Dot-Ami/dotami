@@ -113,6 +113,10 @@ test("the settings page: every group, what's true today, every setting and its w
   await expect(data).toContainText("Receipts in this copy aren't encrypted.");
   await expect(data).toContainText("The desktop app encrypts them.");
   await expect(data).not.toContainText("Your receipt files are encrypted");
+  // [8i] The same for the data file: a copy run from source keeps it plain, and says so and why.
+  await expect(data).toContainText("This copy's data file isn't encrypted.");
+  await expect(data).toContainText("The desktop app encrypts it.");
+  await expect(data).not.toContainText("Your data file is encrypted");
   const privacy = page.getByRole("region", { name: "Privacy" });
   await expect(privacy).toContainText("DotAmi sends nothing off this computer.");
   await expect(privacy).not.toContainText("sent to Anthropic");
@@ -127,7 +131,8 @@ test("the settings page: every group, what's true today, every setting and its w
 
   // Every setting is listed with its default, its warning when it has one, and the story that
   // brings it — and nothing on the page pretends to be a control that works: the only controls are
-  // the live settings' own (the three Figure reminders tick-boxes, tested below).
+  // the live settings' own (the three Figure reminders tick-boxes, tested below). [8i] "Encrypt the
+  // data file" is live too, but run from source it offers no control: only the desktop app encrypts.
   for (const s of SETTINGS) {
     const row = page
       .getByRole("listitem")
@@ -139,7 +144,10 @@ test("the settings page: every group, what's true today, every setting and its w
   }
   await expect(page.locator("main").locator("select, textarea")).toHaveCount(0);
   const liveRows = SETTINGS.filter((s) => s.status === "live");
-  expect(liveRows.map((s) => s.id)).toEqual(["figure-reminders"]);
+  expect(liveRows.map((s) => s.id)).toEqual(["database-encryption", "figure-reminders"]);
+  await expect(
+    page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Encrypt the data file", level: 3, exact: true }) }),
+  ).toContainText("Only the desktop app encrypts the data file; this copy, run from source, can't.");
   await expect(page.locator("main").locator("input")).toHaveCount(3);
   await expect(
     page
