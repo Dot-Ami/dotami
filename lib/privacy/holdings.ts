@@ -22,7 +22,9 @@ import {
   SENT_ELSEWHERE,
   TABLES,
   WINDOW_STORAGE,
+  setAsideKindsOf,
   type FolderEntry,
+  type SetAsideKinds,
   type SentElsewhereEntry,
   type TableEntry,
   type WindowStorageEntry,
@@ -140,6 +142,12 @@ export interface Holdings {
   setAsideKeyFiles: number;
   /** [8i] How many locked data files a lost key left in the backups folder (dotami-locked-….db, a journal counted with its file). */
   lockedDataFiles: number;
+  /**
+   * [8i] The same things counted by each name DotAmi gives them (receipts-locked-…, …-before-restore-…,
+   * …-before-start-fresh-…, receipts-key-…, database-key-…, dotami-locked-…), so the amber warning names
+   * only what is really there (database-encryption.md § 15).
+   */
+  setAsideKinds: SetAsideKinds;
   /** True while an earlier Delete's wipe is still owed (its note sits beside the data file). */
   wipePending: boolean;
   /**
@@ -280,15 +288,16 @@ function inspect(target: string): Pick<FolderFacts, "exists" | "files" | "bytes"
 }
 
 /**
- * How many of one kind of DotAmi's own files are in the backups folder beside this data file (safety
- * copies, set-aside receipt folders, old key files, locked data files): names counted, nothing opened;
- * 0 when the folder can't be read (the folder row says so).
+ * The names of one kind of DotAmi's own files in the backups folder beside this data file (safety
+ * copies, set-aside receipt folders, old key files, locked data files), for counting: nothing opened;
+ * none when there is no data file or the folder can't be read (the folder row says so).
  */
-function countIn(dataPath: string, list: (dbFile: string) => { names: string[] }): number {
+function namesIn(dataPath: string | null, list: (dbFile: string) => { names: string[] }): string[] {
+  if (!dataPath) return [];
   try {
-    return list(dataPath).names.length;
+    return list(dataPath).names;
   } catch {
-    return 0;
+    return [];
   }
 }
 
@@ -346,6 +355,12 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     return { entry, path: target, ...facts };
   });
   const receiptCounts = await describeReceiptFiles(dataFolder ? path.join(dataFolder, RECEIPTS_FOLDER) : null, lock);
+  // Listed once: the totals and the per-name counts come from the same names.
+  const setAside = {
+    receiptFolders: namesIn(dataPath, listSetAsideReceiptFolders),
+    keyFiles: namesIn(dataPath, listSetAsideKeyFiles),
+    lockedFiles: namesIn(dataPath, listLockedDataFiles),
+  };
 
   return {
     desktop: today.desktop,
@@ -356,10 +371,11 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     dataFile: { path: dataPath, exists: today.dataFile.exists, bytes: dataInfo?.bytes ?? null },
     database: today.database,
     folders,
-    safetyCopies: dataPath ? countIn(dataPath, listSafetyCopies) : 0,
-    setAsideReceiptFolders: dataPath ? countIn(dataPath, listSetAsideReceiptFolders) : 0,
-    setAsideKeyFiles: dataPath ? countIn(dataPath, listSetAsideKeyFiles) : 0,
-    lockedDataFiles: dataPath ? countIn(dataPath, listLockedDataFiles) : 0,
+    safetyCopies: namesIn(dataPath, listSafetyCopies).length,
+    setAsideReceiptFolders: setAside.receiptFolders.length,
+    setAsideKeyFiles: setAside.keyFiles.length,
+    lockedDataFiles: setAside.lockedFiles.length,
+    setAsideKinds: setAsideKindsOf(setAside),
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
     receiptFiles: { state: lock.state, setAsideTo: receiptsSetAsideTo(lock), ...receiptCounts },
     windowStorage: WINDOW_STORAGE,

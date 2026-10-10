@@ -1122,4 +1122,6 @@ The maintainer said yes (2026-10-10) to the same box clearing everything else Do
   with `database-key-unreadable-<time>.key`, counted as *Set-aside key files*. § 11's "still not
   reached" line no longer holds.
 - The warning names each kind there and says afterwards the locked data and those receipts can never
-  be opened, even if the old key comes back.
+  be opened, even if the old key comes back. Since review (2026-10-10) it names each folder name only
+  when such a folder is there, and for the start-fresh folder adds that its receipts may still open with
+  the receipts key in use today, and that this deletes the only copy of them here (§ 15 there).

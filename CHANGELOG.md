@@ -15,11 +15,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the locked data file a restore or *Start fresh* moved there when its key was lost (`dotami-locked-….db`,
   with its journal), and the receipts folder *Start fresh* moved there (`receipts-before-start-fresh-…`;
   only the files DotAmi put in it). The box counts each kind (a kind that isn't there isn't shown), and
-  once ticked it warns, there and at both asks, naming each kind and saying that afterwards the locked
-  data and those receipts can never be opened, even if the old key comes back. With the box unticked,
-  the first "are you sure" step says each one stays. *What Delete doesn't reach* no longer lists them; it
-  now says only what you put in the backups folder yourself is left there. Anything another program has
-  open is finished by *Finish it now* or the next time the desktop app starts.
+  once ticked it warns, there and at both asks, in one short sentence for each one that is really there
+  (never one that isn't), and says that afterwards the locked data and those receipts can never be
+  opened, even if the old key comes back. For the receipts *Start fresh* set aside it adds that they may
+  still open with today's receipts key, and that this deletes the only copy of them. With the box
+  unticked, the first "are you sure" step says each one stays. *What Delete doesn't reach* no longer
+  lists them; it now says only what you put in the backups folder yourself is left there. Anything
+  another program has open is finished by *Finish it now* or the next time the desktop app starts. The
+  lost-key window and the restore question no longer call the locked data file "never deleted": they
+  say the restore doesn't delete it, and Delete can, after a warning.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have
@@ -34,7 +38,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   file of yours in one stays. A folder that can't be cleared yet (another program has a file open) is
   finished by *Finish it now* or the next time the desktop app starts. *What Delete doesn't reach* no
   longer lists them; it now names the key files set aside on their own
-  (`receipts-key-unreadable-….key`), which Delete still leaves (it clears them too now, above). With the box unticked, the first
+  (`receipts-key-unreadable-….key`), which Delete then still left (the entry above clears them now). With the box unticked, the first
   "are you sure" step says the set-aside receipt folders still hold their receipt files.
 - **Start fresh when the data file's key is lost** ([8i], the maintainer's decision of 2026-10-10) — the
   window that says the key can't be opened offers **Start fresh…**, asked twice, saying plainly what is

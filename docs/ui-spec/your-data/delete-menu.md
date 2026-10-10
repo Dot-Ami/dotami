@@ -44,10 +44,8 @@ with where they are kept, before confirming.
      `receipts-locked-…` (Start a new key) and `receipts-before-restore-…` (a restore), counted as folders
      beside the copies ("Safety copies: 1 · Set-aside receipt folders: 2"); only folders holding a file
      DotAmi named (or nothing) are counted, and only DotAmi's files in them are deleted. Once ticked
-     while there are some, an amber warning shows under the box (`SET_ASIDE_RECEIPTS_WARNING`): "The
-     receipt folders set aside in the backups folder go too: receipts-locked-… (receipts Start a new key
-     set aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was
-     before a restore). Afterwards those receipts can never be opened, even if the old key comes back."
+     while there are some, an amber warning shows under the box. (#133 had a fixed sentence for it,
+     `SET_ASIDE_RECEIPTS_WARNING`; replaced on 2026-10-10 by `setAsideWarning`, described below.)
      Since 2026-10-10 ([8i], database-encryption.md § 15, the maintainer's "one box") it also clears
      **what a lost key left there**: the receipts folder Start fresh set aside
      (`receipts-before-start-fresh-…`, counted with the set-aside receipt folders), the **old key files**
@@ -57,11 +55,19 @@ with where they are kept, before confirming.
      counted as one file: "Locked data files"). The box's line shows the safety copies always and each
      set-aside kind only when there is some ("Safety copies: 0 · Set-aside receipt folders: 1 · Set-aside
      key files: 2 · Locked data files: 1"). The amber warning is built from what is there
-     (`setAsideWarning` in `lib/privacy/inventory.ts`): "Also deleted from the backups folder: …" naming
-     each kind present (the receipt folders with their three names and what each was; the old key files
-     by name; the locked data file by name, "with everything in it"), then "Afterwards the locked data and
-     those receipts can never be opened, even if the old key comes back." (only the parts that are
-     there; with only key files, "anything those old keys locked").
+     (`setAsideWarning` in `lib/privacy/inventory.ts`, from the page's count of each name,
+     `setAsideKindsOf`): "This also deletes what DotAmi set aside in the backups folder." then one short
+     sentence for each name that is there and none for a name that isn't: "The receipts Start a new key
+     set aside go, with their old key (receipts-locked-…)."; "The receipts folder as it was before a
+     restore goes (receipts-before-restore-…)."; "The receipts folder as it was when you started fresh
+     goes (receipts-before-start-fresh-…). Those receipts may still open with the receipts key in use
+     today. This deletes the only copy of them here."; "The old receipts key file goes
+     (receipts-key-unreadable-….key)."; "The old data file key goes (database-key-unreadable-….key).";
+     "The locked data file goes, with everything in it (dotami-locked-….db)." (plural for more than one);
+     then "Afterwards the locked data and those receipts can never be opened, even if the old key comes
+     back." (only the parts that are there; with only key files, "anything those old keys locked").
+     **Learn more** says the old key files go too, and so does the locked data file, with everything in
+     it, and that the start-fresh receipts may still open today.
      Switched off ("Nothing to delete") when there is none of these, which is always the case in a copy
      run from source.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
@@ -105,8 +111,9 @@ with where they are kept, before confirming.
    touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
    expense records that stay; and a line that everything not ticked stays, as does what Delete
    doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
-   backup saved somewhere else could bring anything back; and, when there are set-aside receipt
-   folders, the same amber warning as under the box ("Set-aside receipt folders: 2 folders" in the list;
+   backup saved somewhere else could bring anything back; and, when anything DotAmi set aside is there
+   (receipt folders, old key files or a locked data file), the same amber warning as under the box
+   ("Set-aside receipt folders: 2 folders" in the list;
    [8i] "Set-aside key files: 2 files", "Locked data files: 1 file", each only when there is some). Without them, when there are any, a line
    that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
    receipt folders (even with no safety copy), a line that those folders aren't ticked and still hold
@@ -116,7 +123,7 @@ with where they are kept, before confirming.
    back." (plural for more than one). **Yes, continue** or
    **Cancel** (back to the menu, boxes still ticked).
 4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
-   ticked, the amber warning again, and the set-aside receipt folders' warning when there are some. In the desktop app it points to File → Back up… first and File →
+   ticked, the amber warning again, and the set-aside warning when anything DotAmi set aside is there. In the desktop app it points to File → Back up… first and File →
    Restore; from source, to copying the data file. Focus starts on **Cancel**, so Enter can't delete
    by accident. **Delete now** sends the request.
 5. **Result**: "Deleted." with each table's count deleted and left (0), a line for what was kept

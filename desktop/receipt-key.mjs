@@ -193,7 +193,7 @@ export function receiptLockEnv(opened) {
 /**
  * Writes `key`, wrapped, as the data folder's receipts key. A key file already there (one that can't
  * be opened: this is only called for a new folder, or to replace such a file) is moved first to
- * backups/receipts-key-unreadable-<time>.key, never deleted. Written beside its name, flushed, then
+ * backups/receipts-key-unreadable-<time>.key, not deleted here. Written beside its name, flushed, then
  * renamed into place, so a crash leaves either the old file or the whole new one. Nothing is written
  * until `keyStoreSaved` says the operating system's own key is on the disk (KeyStoreNotSaved otherwise),
  * and never anything when the key store wouldn't really protect the key (NoKeyStore: Linux's fixed

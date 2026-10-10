@@ -453,7 +453,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt:
       "Deletes the whole copies of the data file DotAmi made before each update and restore, the receipt folders set aside in the backups folder, and the old key files and locked data file set aside there. Afterwards, only a backup you saved somewhere else could bring anything back.",
     learnMore:
-      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh). Only the files DotAmi put in them are deleted; a file of yours in one stays, and so does that folder. So do the old key files DotAmi moved there when it made a new key (receipts-key-unreadable-….key and database-key-unreadable-….key), and the locked data file a restore or Start fresh moved there when its key was lost (dotami-locked-….db), with everything that was in it. Once they are gone, that locked data and those receipts can never be opened, even if the old key comes back. If one of them can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh). Only the files DotAmi put in those folders are deleted; a file of yours in one stays, and so does that folder. The old key files go too, and so does the locked data file, with everything in it. The key files are the ones DotAmi moved there when it made a new key (receipts-key-unreadable-….key and database-key-unreadable-….key). The locked data file is the one a restore or Start fresh moved there when its key was lost (dotami-locked-….db). Start fresh leaves the receipts' key alone, so the receipts it set aside may still open with the key in use today; this deletes the only copy of them here. Once they are gone, that locked data and those receipts can never be opened, even if the old key comes back. If one of them can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
     built: true,
   },
   {
@@ -508,33 +508,105 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
 ];
 
 /**
+ * [8i] What DotAmi has set aside in the backups folder, counted by the name it gives each thing
+ * (desktop/wipe-pending.mjs decides which names are its own). The amber warning reads this, so it can
+ * name only what is really there.
+ */
+export interface SetAsideKinds {
+  /** receipts-locked-…: the receipts and old key Start a new key moved aside. */
+  receiptsLocked: number;
+  /** receipts-before-restore-…: the receipts folder as it was before a restore. */
+  receiptsBeforeRestore: number;
+  /** receipts-before-start-fresh-…: the receipts folder as it was when the person started fresh. */
+  receiptsBeforeStartFresh: number;
+  /** receipts-key-unreadable-….key: an old receipts key set aside for a new one. */
+  receiptsKeyFiles: number;
+  /** database-key-unreadable-….key: an old data file key set aside for a new one. */
+  databaseKeyFiles: number;
+  /** dotami-locked-….db: a data file whose key was lost (its journal counted with it). */
+  lockedFiles: number;
+}
+
+/** Nothing set aside: the counts in a copy run from source, or a backups folder holding none of these. */
+export const NOTHING_SET_ASIDE: Readonly<SetAsideKinds> = Object.freeze({
+  receiptsLocked: 0,
+  receiptsBeforeRestore: 0,
+  receiptsBeforeStartFresh: 0,
+  receiptsKeyFiles: 0,
+  databaseKeyFiles: 0,
+  lockedFiles: 0,
+});
+
+/**
+ * [8i] Sorts the names the page listed (lib/privacy/holdings.ts) into SetAsideKinds. The lists hold only
+ * DotAmi's own names already, so a name's start says which kind it is.
+ */
+export function setAsideKindsOf(names: { receiptFolders: readonly string[]; keyFiles: readonly string[]; lockedFiles: readonly string[] }): SetAsideKinds {
+  const starting = (list: readonly string[], start: string) => list.filter((n) => n.startsWith(start)).length;
+  return {
+    receiptsLocked: starting(names.receiptFolders, "receipts-locked-"),
+    receiptsBeforeRestore: starting(names.receiptFolders, "receipts-before-restore-"),
+    receiptsBeforeStartFresh: starting(names.receiptFolders, "receipts-before-start-fresh-"),
+    receiptsKeyFiles: starting(names.keyFiles, "receipts-key-unreadable-"),
+    databaseKeyFiles: starting(names.keyFiles, "database-key-unreadable-"),
+    lockedFiles: names.lockedFiles.length,
+  };
+}
+
+/**
  * [8i] Said in amber under the safety-copies box once it is ticked, and at both asks, while the backups
  * folder holds things DotAmi set aside (docs/architecture/expense-records.md § 11, database-encryption.md
- * § 15): it names each kind that is there, and says what is in them can never be opened afterwards.
- * Built from the counts the page shows, so it never names a kind the folder doesn't hold; null when
- * there is nothing set aside (the box's own sentence then says enough).
+ * § 15). One short sentence for each name that is there, never one that isn't, then what can never be
+ * opened afterwards. null when nothing is set aside (the box's own sentence then says enough).
  */
-export function setAsideWarning(counts: { receiptFolders: number; keyFiles: number; lockedFiles: number }): string | null {
-  const { receiptFolders, keyFiles, lockedFiles } = counts;
-  const parts: string[] = [];
-  if (receiptFolders > 0) {
-    parts.push(
-      "the receipt folders DotAmi set aside there: receipts-locked-… (receipts Start a new key set aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh)",
+export function setAsideWarning(kinds: SetAsideKinds): string | null {
+  const k = kinds;
+  const sentences: string[] = [];
+  if (k.receiptsLocked > 0) sentences.push("The receipts Start a new key set aside go, with their old key (receipts-locked-…).");
+  if (k.receiptsBeforeRestore > 0) {
+    sentences.push(
+      k.receiptsBeforeRestore === 1
+        ? "The receipts folder as it was before a restore goes (receipts-before-restore-…)."
+        : "The receipts folders as they were before each restore go (receipts-before-restore-…).",
     );
   }
-  if (keyFiles > 0) {
-    parts.push("the old key files DotAmi set aside there when it made a new key: receipts-key-unreadable-….key and database-key-unreadable-….key");
+  if (k.receiptsBeforeStartFresh > 0) {
+    sentences.push(
+      k.receiptsBeforeStartFresh === 1
+        ? "The receipts folder as it was when you started fresh goes (receipts-before-start-fresh-…)."
+        : "The receipts folders as they were each time you started fresh go (receipts-before-start-fresh-…).",
+      // Start fresh moves the receipts folder but leaves receipts.key alone, so when only the data file's
+      // key was lost these still open with today's key. Say so: the person is giving up working files.
+      "Those receipts may still open with the receipts key in use today.",
+      "This deletes the only copy of them here.",
+    );
   }
-  if (lockedFiles > 0) {
-    const files = lockedFiles === 1 ? "file" : "files";
-    parts.push(`the locked data ${files} a lost key's restore or Start fresh set aside there, with everything in ${lockedFiles === 1 ? "it" : "them"}: dotami-locked-….db`);
+  if (k.receiptsKeyFiles > 0) {
+    sentences.push(
+      k.receiptsKeyFiles === 1 ? "The old receipts key file goes (receipts-key-unreadable-….key)." : "The old receipts key files go (receipts-key-unreadable-….key).",
+    );
   }
-  if (parts.length === 0) return null;
+  if (k.databaseKeyFiles > 0) {
+    sentences.push(k.databaseKeyFiles === 1 ? "The old data file key goes (database-key-unreadable-….key)." : "The old data file keys go (database-key-unreadable-….key).");
+  }
+  if (k.lockedFiles > 0) {
+    sentences.push(
+      k.lockedFiles === 1
+        ? "The locked data file goes, with everything in it (dotami-locked-….db)."
+        : "The locked data files go, with everything in them (dotami-locked-….db).",
+    );
+  }
+  if (sentences.length === 0) return null;
   // What can never be opened afterwards: the locked data and the receipts when they are there; with
   // only key files, whatever those keys locked (somewhere DotAmi doesn't keep any more).
-  const lost = [lockedFiles > 0 ? "the locked data" : null, receiptFolders > 0 ? "those receipts" : null].filter((s): s is string => s !== null);
+  const receipts = k.receiptsLocked + k.receiptsBeforeRestore + k.receiptsBeforeStartFresh > 0;
+  const lost = [k.lockedFiles > 0 ? "the locked data" : null, receipts ? "those receipts" : null].filter((s): s is string => s !== null);
   const subject = lost.length > 0 ? lost.join(" and ") : "anything those old keys locked";
-  return `Also deleted from the backups folder: ${parts.join("; ")}. Afterwards ${subject} can never be opened, even if the old key comes back.`;
+  return [
+    "This also deletes what DotAmi set aside in the backups folder.",
+    ...sentences,
+    `Afterwards ${subject} can never be opened, even if the old key comes back.`,
+  ].join(" ");
 }
 
 /** The browser-storage keys. Each is a string constant in the code, so the test can find it. */

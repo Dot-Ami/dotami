@@ -190,11 +190,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                   retention={recordRetentionV2026}
                   desktop={holdings.desktop}
                   wipePending={holdings.wipePending}
-                  setAsideWarning={setAsideWarning({
-                    receiptFolders: holdings.setAsideReceiptFolders,
-                    keyFiles: holdings.setAsideKeyFiles,
-                    lockedFiles: holdings.lockedDataFiles,
-                  })}
+                  setAsideWarning={setAsideWarning(holdings.setAsideKinds)}
                 />
               </Section>
             </div>
