@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
 
-import { listSafetyCopies, wipePendingFile } from "@/desktop/wipe-pending.mjs";
+import { listSafetyCopies, listSetAsideReceiptFolders, wipePendingFile } from "@/desktop/wipe-pending.mjs";
 
 import { receiptLock, receiptsSetAsideTo, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import { describeReceiptFiles, RECEIPTS_FOLDER, type ReceiptFilesProtection } from "@/lib/expenses/receipts/store";
@@ -130,6 +130,11 @@ export interface Holdings {
    * menu's "Safety copies" box would delete (desktop/wipe-pending.mjs decides which files count).
    */
   safetyCopies: number;
+  /**
+   * [8i] How many receipt folders DotAmi set aside in the backups folder (Start a new key's
+   * receipts-locked-…, a restore's receipts-before-restore-…): what the same box clears too.
+   */
+  setAsideReceiptFolders: number;
   /** True while an earlier Delete's wipe is still owed (its note sits beside the data file). */
   wipePending: boolean;
   /**
@@ -278,6 +283,15 @@ function safetyCopiesIn(dataPath: string): number {
   }
 }
 
+/** The receipt folders DotAmi set aside beside this data file; 0 when the backups folder can't be read. */
+function setAsideReceiptFoldersIn(dataPath: string): number {
+  try {
+    return listSetAsideReceiptFolders(dataPath).names.length;
+  } catch {
+    return 0;
+  }
+}
+
 function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
   switch (entry.id) {
     case "intake-sentence":
@@ -343,6 +357,7 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     database: today.database,
     folders,
     safetyCopies: dataPath ? safetyCopiesIn(dataPath) : 0,
+    setAsideReceiptFolders: dataPath ? setAsideReceiptFoldersIn(dataPath) : 0,
     wipePending: folders.some((f) => f.entry.id === "wipe-pending" && f.exists),
     receiptFiles: { state: lock.state, setAsideTo: receiptsSetAsideTo(lock), ...receiptCounts },
     windowStorage: WINDOW_STORAGE,

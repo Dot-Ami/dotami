@@ -39,8 +39,17 @@ with where they are kept, before confirming.
      data file, made before each update and restore. Its sentence, in amber, is the warning:
      afterwards only a backup saved somewhere else could bring anything back. It counts files, not
      records ("Safety copies: 2"), and only the files DotAmi names itself (`dotami-before-….db`
-     directly in `backups/`); anything else in the folder stays and isn't counted. Switched off
-     ("Nothing to delete") when there are none, which is always the case in a copy run from source.
+     directly in `backups/`); anything else in the folder stays and isn't counted. Since 2026-10-10
+     ([8i], expense-records.md § 11) it also clears the **receipt folders DotAmi set aside** there,
+     `receipts-locked-…` (Start a new key) and `receipts-before-restore-…` (a restore), counted as folders
+     beside the copies ("Safety copies: 1 · Set-aside receipt folders: 2"); only folders holding a file
+     DotAmi named (or nothing) are counted, and only DotAmi's files in them are deleted. Once ticked
+     while there are some, an amber warning shows under the box (`SET_ASIDE_RECEIPTS_WARNING`): "The
+     receipt folders set aside in the backups folder go too: receipts-locked-… (receipts Start a new key
+     set aside, with the old key file) and receipts-before-restore-… (the receipts folder as it was
+     before a restore). Afterwards those receipts can never be opened, even if the old key comes back."
+     Switched off ("Nothing to delete") when there are neither, which is always the case in a copy run
+     from source.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
      file's columns yet. This is its place on the menu when it does.
 
@@ -67,13 +76,15 @@ with where they are kept, before confirming.
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
    last tax year they relate to, with exceptions, linked to the CRA's page with the day it was read.
-   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): the receipts folders a restore
-   moved into the backups folder (the safety-copies box deletes only DotAmi's copies of the data
-   file); [8i] the locked data file, the key file that couldn't open it and the receipts folder a
-   lost key's restore or Start fresh set aside (`dotami-locked-…db`, `database-key-unreadable-…key`,
-   `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window stored in earlier launches ("Not cleared yet"), the log, anything that
-   already left the computer, and the disk under the data file (which can still hold older pieces
-   of the file, a removed receipt's bytes and deleted safety copies).
+   Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): key files set aside on their own in
+   the backups folder (`receipts-key-unreadable-….key`; before 2026-10-10 this line was the receipt
+   folders set aside there, which the safety-copies box now clears); [8i] the locked data file and the
+   key file that couldn't open it, which a lost key's restore or Start fresh set aside, and the
+   receipts folder Start fresh set aside (`dotami-locked-…db`, `database-key-unreadable-…key`,
+   `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window stored in earlier
+   launches ("Not cleared yet"), the log, anything that already left the computer, and the disk under
+   the data file (which can still hold older pieces of the file, a removed receipt's bytes, deleted
+   safety copies and set-aside receipts).
 
    **Delete what's ticked…** (off until a box is ticked) goes to the first ask. **Cancel** closes
    the menu and unticks everything.
@@ -81,11 +92,14 @@ with where they are kept, before confirming.
    touches (and of safety copies, as files); under **Kept, not deleted**, the same warning on the
    expense records that stay; and a line that everything not ticked stays, as does what Delete
    doesn't reach. With the safety copies ticked, an amber line: they go too, so afterwards only a
-   backup saved somewhere else could bring anything back. Without them, when there are any, a line
-   that the safety copies aren't ticked and still hold what is deleted. **Yes, continue** or
+   backup saved somewhere else could bring anything back; and, when there are set-aside receipt
+   folders, the same amber warning as under the box ("Set-aside receipt folders: 2 folders" in the list). Without them, when there are any, a line
+   that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
+   receipt folders (even with no safety copy), a line that those folders aren't ticked and still hold
+   their receipt files. **Yes, continue** or
    **Cancel** (back to the menu, boxes still ticked).
 4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
-   ticked, the amber warning again. In the desktop app it points to File → Back up… first and File →
+   ticked, the amber warning again, and the set-aside receipt folders' warning when there are some. In the desktop app it points to File → Back up… first and File →
    Restore; from source, to copying the data file. Focus starts on **Cancel**, so Enter can't delete
    by accident. **Delete now** sends the request.
 5. **Result**: "Deleted." with each table's count deleted and left (0), a line for what was kept
@@ -95,7 +109,8 @@ with where they are kept, before confirming.
    space isn't wiped yet (it needs free disk space about the size of the file and nothing else
    using it), with **Try the wipe again**. Safety copies are counted as files ("Safety copies: 2 files
    deleted, 0 left"); a copy another program holds open is left, and an amber line says so, with
-   the same button. In the desktop app a line adds that it finishes the next time the app starts. If
+   the same button. Set-aside receipt folders likewise ("Set-aside receipt folders: 2 folders deleted,
+   0 left"); one whose file another program holds open is left, said in amber, with the same button. In the desktop app a line adds that it finishes the next time the app starts. If
    the server deleted but couldn't read the file back to count what is left, the "left" counts are
    dropped and an amber line says to reload and check.
    When receipts were deleted, a line "Receipt files: N files removed from the receipts folder";
@@ -103,7 +118,7 @@ with where they are kept, before confirming.
    an amber note says so and that DotAmi removes them the next time a receipt is added or deleted.
    The page's counts are read again from the file.
 6. **An earlier Delete that hasn't finished.** When the "wipe pending" note is beside the data file
-   (an earlier wipe couldn't finish, or a safety copy couldn't be deleted), an amber note under the
+   (an earlier wipe couldn't finish, or a safety copy or set-aside receipt folder couldn't be deleted), an amber note under the
    button says so ("An earlier Delete hasn't finished…"; in the desktop app, that it finishes the
    next time it starts) with **Finish it now**, which runs the same retry. Done, it says "Finished:
    the earlier Delete's wipe is done."; still not done, it says to close any program using DotAmi's
@@ -136,9 +151,11 @@ by the cascade, `Receipt`), `Receipt`, `SourceAccount`, `PersonStatement`, `Sett
 (`KEPT_BY_DELETE`). On disk: when receipts were deleted, the files in `receipts/` beside the data
 file that no row describes any more (`sweepOrphanReceipts` in `lib/expenses/receipts/store.ts`; a
 file not named the way DotAmi names receipts is never touched); the safety copies DotAmi made in
-`backups/` beside the data file (when ticked); and the "wipe pending" note beside the data file
-(`<data file>.wipe-pending`, written before the wipe and removed once it has worked; it holds a time
-and safety-copy file names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
+`backups/` beside the data file (when ticked), and, with them, DotAmi's files in the receipt folders
+set aside there (`receipts-locked-…`, `receipts-before-restore-…`; an emptied folder is removed, one still
+holding the person's own files stays); and the "wipe pending" note beside the data file
+(`<data file>.wipe-pending`, written before the wipe and removed once it has worked; it holds a time,
+safety-copy file names and set-aside folder names only). In the window: after deleting ideas, the intake in progress (`dotami-journey-v3`)
 is reset through the journey provider, so a Save on the map can't bring a deleted idea back.
 
 ## Downstream consumers (where the data goes today)
@@ -170,11 +187,13 @@ unless the request comes from DotAmi's own page (`refuseUnlessFromAppPage`), bod
 `readJsonWithLimit` (JSON only, 8 KB). `{ kinds, seen }` runs `deleteData` (`lib/privacy/delete.ts`):
 the counts are checked against `seen` and the tables emptied in one transaction (409 with fresh
 counts on a mismatch, 400 for a kind it can't delete), then `VACUUM` outside the transaction.
-`{ retryWipe: true }` runs `finishWipe`: the safety copies the "wipe pending" note still owes,
-then the wipe, and removes the note once both have worked (`{ wiped, backupsLeft }`). With the
-safety-copies box ticked, the route passes the data file it uses (`DATABASE_URL`) so the copies and
-the note are found beside it; their count is checked against `seen.backups` first (409 on a
-mismatch), the note is written before anything is deleted, and the copies are deleted after the
-rows (`desktop/wipe-pending.mjs`, which only deletes `dotami-before-….db` files directly in a
-`backups/` folder that isn't a link). The desktop app finishes what the note owes at its next start
+`{ retryWipe: true }` runs `finishWipe`: the safety copies and set-aside receipt folders the "wipe
+pending" note still owes, then the wipe, and removes the note once all of it has worked (`{ wiped,
+backupsLeft, receiptFoldersLeft }`). With the safety-copies box ticked, the route passes the data file it
+uses (`DATABASE_URL`) so the copies, the set-aside folders and the note are found beside it; their
+counts are checked against `seen.backups` and `seen["set-aside-receipts"]` first (409 on a mismatch),
+the note is written before anything is deleted, and the copies and folders are deleted after the rows
+(`desktop/wipe-pending.mjs`, which only deletes `dotami-before-….db` files directly in a `backups/`
+folder that isn't a link, and, in folders named `receipts-locked-…` or `receipts-before-restore-…` that
+aren't links either, only the receipt files and `receipts.key` DotAmi put there). The desktop app finishes what the note owes at its next start
 (`desktop/main.mjs`), and only when the note is there. A failure logs the error's name and code only.

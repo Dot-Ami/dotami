@@ -63,7 +63,7 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
     }
   });
 
-  it("ships every preload a window names, and the main window's gives a page only its two HEIC calls", () => {
+  it("ships every preload a window names, and the main window's gives a page only its two HEIC calls and the restart for a new key", () => {
     const main = readFileSync(path.join(desktop, "main.mjs"), "utf8");
     const pack = readFileSync(path.join(desktop, "package.mjs"), "utf8");
     const preloads = [...main.matchAll(/preload: path\.join\(root, "desktop", "([^"]+)"\)/g)].map((m) => m[1]);
@@ -73,11 +73,14 @@ describe("the desktop app keeps Chromium's sandboxes", () => {
 
     const preload = readFileSync(path.join(desktop, "window-preload.cjs"), "utf8");
     expect(preload.match(/exposeInMainWorld\(/g)).toHaveLength(1);
-    expect([...preload.matchAll(/ipcRenderer\.(\w+)\(/g)].map((m) => m[1]).sort()).toEqual(["invoke", "send"]);
-    expect([...preload.matchAll(/"(dotami-[a-z-]+)"/g)].map((m) => m[1]).sort()).toEqual(["dotami-heic-failed", "dotami-heic-stopped"]);
+    expect([...preload.matchAll(/ipcRenderer\.(\w+)\(/g)].map((m) => m[1]).sort()).toEqual(["invoke", "invoke", "send"]);
+    expect([...preload.matchAll(/"(dotami-[a-z-]+)"/g)].map((m) => m[1]).sort()).toEqual(["dotami-heic-failed", "dotami-heic-stopped", "dotami-restart-for-new-key"]);
     // The main process believes them only from DotAmi's own window, and keeps the graphics-process watch.
     expect(main).toMatch(/app\.on\("child-process-gone"/);
     expect(main).toMatch(/details\.type !== "GPU"/);
     expect(main).toMatch(/event\.sender !== win\.webContents/);
+    // The restart for a new key (expense-records.md § 11) is asked of the same check, and the main
+    // process makes its own decision (desktop/receipt-key.mjs restartForNewKey).
+    expect(main).toMatch(/ipcMain\.handle\("dotami-restart-for-new-key", \(event\) =>[\s\S]{0,200}fromDotAmi: fromDotAmi\(event\)/);
   });
 });

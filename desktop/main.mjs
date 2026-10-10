@@ -32,7 +32,7 @@ import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
-import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
+import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, restartForNewKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe, SAFETY_COPY_NAME } from "./wipe-pending.mjs";
@@ -193,7 +193,7 @@ async function start() {
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
   const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
-  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
@@ -236,7 +236,7 @@ async function start() {
   log.write(`[desktop] server answering; opening the window\n`);
   lockDown(origin);
   buildMenu(origin, dataDir);
-  answerHeicQuestions(origin);
+  answerWindowCalls(origin);
 
   starting = false;
   win = new BrowserWindow({
@@ -247,8 +247,8 @@ async function start() {
     title: "DotAmi",
     backgroundColor: "#161619",
     show: false,
-    // The preload gives DotAmi's pages two calls and nothing else (desktop/window-preload.cjs); the
-    // window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
+    // The preload gives DotAmi's pages three calls and nothing else (desktop/window-preload.cjs: two
+    // about HEIC, one to restart after Start a new key); the window stays sandboxed and isolated. No window here may turn its sandbox off, and no command-line
     // switch may turn off Chromium's sandboxes or run the graphics process inside the browser process
     // (tests/desktop-sandbox.spec.ts lists the switches and fails if one appears).
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(root, "desktop", "window-preload.cjs") },
@@ -837,12 +837,16 @@ function lockDown(origin) {
 }
 
 /**
- * The two HEIC questions the page may ask (desktop/window-preload.cjs): "may I still draw a HEIC?" and
- * "a HEIC just failed". Believed only from DotAmi's own window showing one of its own pages (Electron
- * security checklist #17); anything else asking is told HEIC is stopped, and anything else reporting a
- * failure is ignored.
+ * The three calls the page may make (desktop/window-preload.cjs). Each is believed only from DotAmi's
+ * own window showing one of its own pages (Electron security checklist #17).
+ *   - The two HEIC questions: "may I still draw a HEIC?" and "a HEIC just failed". Anything else asking
+ *     is told HEIC is stopped, and anything else reporting a failure is ignored.
+ *   - The restart after Start a new key ([8i], docs/architecture/expense-records.md § 11): the page asks
+ *     once the server has moved the locked receipts aside, and restartForNewKey (receipt-key.mjs)
+ *     decides from what this process knows: this start's key, the receipts folder on the disk, whether
+ *     the app is already quitting. Anything else asking is refused, and nothing restarts.
  */
-function answerHeicQuestions(origin) {
+function answerWindowCalls(origin) {
   const fromDotAmi = (event) => {
     if (!win || event.sender !== win.webContents) return false;
     try {
@@ -857,6 +861,25 @@ function answerHeicQuestions(origin) {
     if (!heicStopped) log?.write(`[desktop] a HEIC receipt couldn't be drawn; HEIC receipts won't be drawn until DotAmi restarts\n`);
     heicStopped = true;
   });
+  ipcMain.handle("dotami-restart-for-new-key", (event) =>
+    restartForNewKey(dataDir, {
+      fromDotAmi: fromDotAmi(event),
+      opened: receiptKey,
+      quitting,
+      relaunch: () => app.relaunch(),
+      // Like a restore: the server has the data file open, so it is stopped and waited for first, with
+      // `quitting` set so its exit isn't taken for a failure.
+      stopServer: async () => {
+        quitting = true;
+        if (!server) return;
+        const stopped = new Promise((resolve) => server.once("exit", resolve));
+        server.kill();
+        await stopped;
+      },
+      exit: (code) => app.exit(code),
+      log: (line) => log?.write(`${line}\n`),
+    }),
+  );
 }
 
 /**
