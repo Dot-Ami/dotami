@@ -311,7 +311,7 @@ function FolderRow({
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
       <h3 className="font-semibold text-paper">{entry.name}</h3>
       <p className="mt-1 text-[12.5px] text-paper-dim">{entry.holds}</p>
-      {receiptFiles ? <ReceiptProtection files={receiptFiles} /> : null}
+      {receiptFiles ? <ReceiptProtection files={receiptFiles} desktop={desktop} /> : null}
       {status}
     </li>
   );
@@ -322,8 +322,8 @@ function FolderRow({
  * folder are kept right now, counted from their first bytes (lib/expenses/receipts/store.ts
  * describeReceiptFiles).
  */
-function ReceiptProtection({ files }: { files: Holdings["receiptFiles"] }) {
-  const { headline, detail, tone } = receiptProtectionText(files.state, files.setAsideTo);
+function ReceiptProtection({ files, desktop }: { files: Holdings["receiptFiles"]; desktop: boolean }) {
+  const { headline, detail, tone } = receiptProtectionText(files.state, files.setAsideTo, { desktop });
   const total = files.encrypted + files.plain + files.locked;
   const counts: string[] = [];
   if (files.state === "on" && total > 0) {

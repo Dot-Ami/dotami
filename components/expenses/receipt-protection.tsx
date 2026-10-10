@@ -38,11 +38,12 @@ export function receiptNoteSentence(state: ReceiptLockState): string {
  * The amber line at the top of the Expenses page while the receipts' key can't be opened, with Start a
  * new key… (expense-records.md § 10) only when the key store is there ("key-unreadable", not
  * "key-out-of-reach"); after that, until the restart, where the locked receipts went. Nothing otherwise.
+ * `desktop`: the desktop app, which restarts by itself after the button (§ 11).
  */
-export function ReceiptKeyProblem({ setAsideTo = null }: { setAsideTo?: string | null }) {
+export function ReceiptKeyProblem({ setAsideTo = null, desktop = false }: { setAsideTo?: string | null; desktop?: boolean }) {
   const state = useReceiptProtection();
   if (state !== "key-unreadable" && state !== "key-out-of-reach" && state !== "new-key-at-restart") return null;
-  const { headline, detail } = receiptProtectionText(state, setAsideTo);
+  const { headline, detail } = receiptProtectionText(state, setAsideTo, { desktop });
   return (
     <div className="mt-4 max-w-2xl rounded-sm border border-amber/40 px-3 py-2 text-[12.5px] text-amber">
       <p role="status">
