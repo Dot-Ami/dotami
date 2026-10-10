@@ -11,6 +11,7 @@
  * it can't carry a stranger's details or an account number anywhere (see types.ts).
  * Nothing here logs, and the one error message carries no amount.
  */
+import { revenueEffect } from "../refunds";
 import { isRealCalendarDay } from "../validate";
 import { coverageChecker, lastDayOfMonth, monthOf } from "./coverage";
 import { LEFT_OUT_REASONS } from "./types";
@@ -146,9 +147,10 @@ export function bankMonthlyTotals(
     if (reasonAt[i] !== null) return;
     if (!ticks.has(row.id) && !tickedViaCopy.has(i)) return setReason(i, "not-ticked");
     // Only money in counts. Money out counts only when refunds are allowed, and then it lowers the
-    // month it left the account in (a bank statement only knows when money moved).
-    if (row.cents === 0 || (row.cents < 0 && !options.allowRefunds))
-      return setReason(i, "not-money-in");
+    // month it left the account in (a bank statement only knows when money moved). The rule is the
+    // one the spreadsheet screen's refunds column uses: lib/figures/refunds.ts.
+    const cents = revenueEffect(row.cents, options.allowRefunds === true);
+    if (cents === null) return setReason(i, "not-money-in");
     if (row.currency !== options.currency) return setReason(i, "other-currency");
     const month = monthOf(row.day);
     const hold = monthHold(month);
@@ -156,7 +158,7 @@ export function bankMonthlyTotals(
 
     // BigInt, so a very long statement can never silently lose a cent to floating point.
     const sum = sums.get(month) ?? { cents: 0n, rows: 0 };
-    sum.cents += BigInt(row.cents);
+    sum.cents += BigInt(cents);
     sum.rows += 1;
     sums.set(month, sum);
     rowsCounted += 1;

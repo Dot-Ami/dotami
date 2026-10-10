@@ -48,6 +48,9 @@ export function middleware(request: NextRequest) {
     "font-src 'self'",
     "connect-src 'self'",
     "object-src 'none'",
+    // DotAmi has no frames. A receipt is never shown in one, so not even a mistake could hand one to
+    // Chromium's built-in PDF viewer (docs/architecture/expense-records.md § 8, rule 5).
+    "frame-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",

@@ -20,9 +20,10 @@
  * Income by Customer only the title rows above the three documented columns are assumed.
  *
  * In a sales (income) account money in is a CREDIT and a refund paid back is a DEBIT, so the sales
- * are in one column and the refunds in another. DotAmi adds up one column, so with Credit picked
- * the refund row has nothing in it and is listed as "no amount": August comes out 40.00 too high.
- * That is pinned as a "fails today" test; refunds are their own slice.
+ * are in one column and the refunds in another. The person picks Credit as the amount and Debit as
+ * the "Refunds / money out" column, and the refund is taken off August, the month it was paid back:
+ * 280.00. With no refunds column the refund row has nothing in its Credit cell and is listed as
+ * "no amount", so August reads 320.00 (tests/figures-file-packages.spec.ts checks both).
  */
 import { csv } from "./csv";
 import { utf8 } from "../../helpers/encode";
@@ -196,8 +197,8 @@ function incomeByCustomerText(): string {
 
 /**
  * What the sales add up to once refunds are taken off in the month they were paid back: July 750.00,
- * August 320.00 - 40.00 = 280.00, September 180.00. Pinned in tests/figures-file-packages.spec.ts as
- * what the ledger should give; today it gives August 320.00.
+ * August 320.00 - 40.00 = 280.00, September 180.00. What the ledger gives once Debit is picked as the
+ * refunds column (tests/figures-file-packages.spec.ts); without that pick it gives August 320.00.
  */
 export const LEDGER_NET_OF_REFUNDS = [
   { periodStart: "2026-07-01", amountCents: 75000 },
@@ -215,21 +216,27 @@ export const files: PracticeFile[] = [
     columns: LEDGER_COLUMNS,
     expected: {
       // "Date" is pre-filled. Debit and Credit match no amount name, so nothing is pre-filled as the
-      // amount and the person picks Credit, where the sales are.
+      // amount and the person picks Credit, where the sales are. The refunds column is never
+      // pre-filled either: the person picks Debit, where the refund paid back is.
       guess: { headerRow: 5, dateColumn: 0, amountColumn: null },
-      picks: { amountColumn: LEDGER_CREDIT },
+      picks: { amountColumn: LEDGER_CREDIT, refundColumn: LEDGER_DEBIT },
       dateOrder: { order: null, ambiguous: false, conflicting: false },
       decimalStyle: "point",
       months: [
         { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 75000, rows: 2 },
-        // WRONG TODAY: the 40.00 refund is in the Debit column, so it isn't taken off. True: 280.00.
-        { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 32000, rows: 1 },
+        // 320.00 of sales less the 40.00 refund paid back on 19 August (row 12, the Debit column).
+        {
+          periodStart: "2026-08-01",
+          periodEnd: "2026-08-31",
+          amountCents: 28000,
+          rows: 2,
+          refunds: { rows: 1, cents: 4000 },
+        },
         { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 18000, rows: 1 },
       ],
       skipped: [
         { row: 7, reason: "no-date" }, // Sales, the account's name
         { row: 8, reason: "no-date" }, // Starting Balance
-        { row: 12, reason: "no-amount" }, // the refund: its Credit cell is empty
         { row: 14, reason: "not-over" }, // 2 October
         { row: 15, reason: "total" }, // Totals
         { row: 16, reason: "no-date" }, // Balance Change
@@ -244,9 +251,10 @@ export const files: PracticeFile[] = [
     bytes: () => utf8(incomeByCustomerText()),
     columns: INCOME_COLUMNS,
     expected: {
-      // No row of column names has a date under it, so DotAmi finds none. The person picks row 5,
-      // and with no date column at all, every row is "no date": nothing can be added up by month.
-      // Fails today: the screen should say which report to export instead (Account Transactions).
+      // No row of column names has a date under it, so DotAmi finds none, and the screen names
+      // the report to export instead (Account Transactions; exportInsteadSentence in
+      // lib/figures/file/preview.ts). A person who picks row 5 anyway gets every row as "no date":
+      // with no date column at all, nothing can be added up by month.
       guess: null,
       picks: { headerRow: 4, dateColumn: 0, amountColumn: 1 },
       dateOrder: { order: null, ambiguous: false, conflicting: false },

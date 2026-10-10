@@ -19,12 +19,15 @@
  * Format setting (the variants below try four of the six), and that the old Revenue by Client CSV
  * puts the months ACROSS the top, one column per month.
  *
- * Today's wrong answers, pinned as "fails today" tests in tests/figures-file-packages.spec.ts:
- *  - the summary block's two titles are taken for the column names, and "Total Paid" is pre-filled as
- *    the amount over a column of invoice numbers (the person has to pick the right row);
- *  - the Draft invoice is counted as a sale;
- *  - dd.mm.yy dates (a two-digit year) are not read at all;
- *  - months across the top can't be added up.
+ * Today's wrong answers: none left in these files (there used to be four, pinned as "fails today"
+ * tests in tests/figures-file-packages.spec.ts).
+ * Fixed since: dd.mm.yy dates (a two-digit year) are read once the person says which century the
+ * year is in, and until then nothing is added up; and months across the top are read, one total
+ * per month column (lib/figures/file/across.ts). And (the maintainer's decision, 2026-10-07) the
+ * summary block's two titles used to be taken for the column names, with "Total Paid" pre-filled as
+ * the amount over the invoice numbers, and the Draft invoice used to be counted as a sale. The real
+ * column-names row is now found under the summary, and the pre-filled Status column leaves the
+ * Draft out.
  */
 import { csv } from "./csv";
 import { utf8 } from "../../helpers/encode";
@@ -130,7 +133,7 @@ export const INVOICES: Invoice[] = [
     taxCents: 2381,
     paidCents: 0,
   },
-  // Never sent: a draft is not a sale. Counted today.
+  // Never sent: a draft is not a sale. Left out through the Status column.
   {
     client: "Invented Client B",
     number: "0000004",
@@ -241,7 +244,8 @@ function revenueByClientText(): string {
 
 /**
  * What the invoices add up to with the Draft left out: July 500.00, August 476.19 (not 726.19),
- * September 300.00. The months-across file holds the same three figures in its Total row.
+ * September 300.00. The months-across file holds the same three figures in its Total row, and its
+ * client rows add up to them too.
  */
 export const ISSUED_NOT_DRAFT = [
   { periodStart: "2026-07-01", amountCents: 50000 },
@@ -249,28 +253,28 @@ export const ISSUED_NOT_DRAFT = [
   { periodStart: "2026-09-01", amountCents: 30000 },
 ];
 
-/** Today's months once the person has picked the real column-names row: the Draft is counted. */
-const MONTHS_WITH_DRAFT = [
+/** The months with the Draft left out: the same three figures as ISSUED_NOT_DRAFT, with their rows. */
+const MONTHS_NOT_DRAFT = [
   { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 50000, rows: 2 },
-  // WRONG TODAY: 476.19 + the Draft's 250.00. True: 476.19.
-  { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 72619, rows: 2 },
+  // 476.19 alone: the Draft's 250.00 is left out (it used to be counted, giving 726.19).
+  { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 47619, rows: 1 },
   { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 30000, rows: 1 },
 ];
 
 /**
- * Today's guess for every Invoice Details file whose dates DotAmi can read: WRONG. Row 2's two
- * summary titles look like column names with dates below, so that row is taken for them (row 1,
- * 0-based); the date column is the one column that is mostly dates; and "Total Paid" sits over
- * the invoice numbers ("0000001" reads as an amount), so it is pre-filled as the amount.
+ * The guess for every Invoice Details file whose dates DotAmi can read. Row 2's two summary titles
+ * look like column names with dates below, but the wider row of real column names under them wins
+ * (row 5, 0-based 4); Issue Date and Subtotal are pre-filled, and Status too (see the spec).
  */
-const SUMMARY_TAKEN_FOR_HEADER = { headerRow: 1, dateColumn: ISSUE_DATE, amountColumn: 1 };
-/** The person picks the real row of column names; Issue Date and Subtotal are then pre-filled. */
-const PICK_REAL_HEADER = { headerRow: INVOICE_HEADER_ROW };
+const REAL_HEADER_GUESS = { headerRow: INVOICE_HEADER_ROW, dateColumn: ISSUE_DATE, amountColumn: SUBTOTAL };
+/** 1-based row of the Draft invoice (0000004): the header is row 5, the invoices rows 6 to 11. */
+const DRAFT_ROW = 9;
 
 const invoiceFile = (
   id: string,
   format: DateFormat,
   dateOrder: PracticeFile["expected"]["dateOrder"],
+  century?: PracticeFile["expected"]["century"],
 ): PracticeFile => ({
   id,
   shape: `Invoice Details by Issue Date, a summary on top, dates written ${format}`,
@@ -278,13 +282,16 @@ const invoiceFile = (
   bytes: () => utf8(invoiceDetailsText(format)),
   columns: INVOICE_COLUMNS,
   expected: {
-    guess: SUMMARY_TAKEN_FOR_HEADER,
-    picks: PICK_REAL_HEADER,
+    guess: REAL_HEADER_GUESS,
     dateOrder,
+    century,
     decimalStyle: "point",
-    months: MONTHS_WITH_DRAFT,
-    // Row 11 is 1 October, a month not over yet.
-    skipped: [{ row: 11, reason: "not-over" }],
+    months: MONTHS_NOT_DRAFT,
+    skipped: [
+      { row: DRAFT_ROW, reason: "void-or-draft" },
+      // Row 11 is 1 October, a month not over yet.
+      { row: 11, reason: "not-over" },
+    ],
   },
 });
 
@@ -299,25 +306,14 @@ export const files: PracticeFile[] = [
     ambiguous: false,
     conflicting: false,
   }),
-  {
-    id: "freshbooks-invoices-two-digit-year",
-    shape: "Invoice Details with dates written dd.mm.yy, one of the six Date Format choices",
-    fileName: "invoice_details.csv",
-    bytes: () => utf8(invoiceDetailsText("dd.mm.yy")),
-    columns: INVOICE_COLUMNS,
-    expected: {
-      // WRONG TODAY: 06.07.26 has a two-digit year, which DotAmi refuses to guess, so no row has a
-      // date and no row of column names is found. The person picks the row and the columns, and
-      // every invoice is still "no date". True: the three months of ISSUED_NOT_DRAFT (with the
-      // Draft, until that is fixed too).
-      guess: null,
-      picks: { headerRow: INVOICE_HEADER_ROW, dateColumn: ISSUE_DATE, amountColumn: SUBTOTAL },
-      dateOrder: noOrder,
-      decimalStyle: "point",
-      months: [],
-      skipped: [5, 6, 7, 8, 9, 10].map((row) => ({ row: row + 1, reason: "no-date" as const })),
-    },
-  },
+  // dd.mm.yy, one of the six Date Format choices: 21.07.26 can only be day-first, and the person
+  // answers that 26 is 2026. Read like the others since, the summary and the Draft included.
+  invoiceFile(
+    "freshbooks-invoices-two-digit-year",
+    "dd.mm.yy",
+    { order: "dmy", ambiguous: false, conflicting: false },
+    2000,
+  ),
   {
     id: "freshbooks-revenue-by-client",
     shape: "the old Revenue by Client CSV, months across the top (assumed), one row per client",
@@ -325,20 +321,34 @@ export const files: PracticeFile[] = [
     bytes: () => utf8(revenueByClientText()),
     columns: REVENUE_COLUMNS,
     expected: {
-      // WRONG TODAY: no date sits under any column, so no column names are found, and the person
-      // has nothing to pick as a date: every row is left out. True: July 500.00, August 476.19,
-      // September 300.00, one total per month column.
+      // No date sits under any column, so no row of column names is found for the usual reading.
+      // The screen starts on "months across" instead: row 4 holds the month names, and Client and
+      // Total are not months, so they are not added.
       guess: null,
-      picks: { headerRow: 3, dateColumn: 0, amountColumn: 4 },
       dateOrder: noOrder,
       decimalStyle: "point",
       months: [],
-      skipped: [
-        { row: 5, reason: "no-date" },
-        { row: 6, reason: "no-date" },
-        { row: 7, reason: "no-date" },
-        { row: 8, reason: "total" },
-      ],
+      skipped: [],
+      across: {
+        monthsRow: 3,
+        monthColumns: [
+          { column: 1, month: "2026-07" },
+          { column: 2, month: "2026-08" },
+          { column: 3, month: "2026-09" },
+        ],
+        // Every client row added down each month's column; a 0.00 cell is read and counted.
+        months: [
+          { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 50000, rows: 3 },
+          { periodStart: "2026-08-01", periodEnd: "2026-08-31", amountCents: 47619, rows: 3 },
+          { periodStart: "2026-09-01", periodEnd: "2026-09-30", amountCents: 30000, rows: 3 },
+        ],
+        // The report's own Total row would count everything twice.
+        skippedRows: [{ row: 8, reason: "total" }],
+        skippedCells: [],
+      },
     },
   },
 ];
+
+/** 0-based row of the Revenue by Client file's own Total row, which the person can take instead. */
+export const REVENUE_TOTAL_ROW = 7;

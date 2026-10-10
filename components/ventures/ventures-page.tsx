@@ -56,6 +56,9 @@ export function VenturesPage() {
         </GhostLink>
         <WordMark />
         <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your ideas</p>
+        <GhostLink href="/expenses" tone="stone">
+          Your expenses
+        </GhostLink>
         <GhostLink href="/settings" tone="stone">
           Settings
         </GhostLink>
@@ -270,6 +273,18 @@ function VentureCard({
       </div>
 
       <FiguresPanel ventureId={venture.id} ventureName={venture.name} reminders={reminders} openAddSignal={addSignal} />
+
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule-soft pt-3">
+        <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Expense records</p>
+        <p className="text-[11px] text-stone-dim">Single business expenses you keep for this idea, typed and agreed to one list at a time.</p>
+        {/* Only the idea's id goes in the address; the records themselves load in the page's request bodies. */}
+        <Link
+          href={`/expenses?idea=${encodeURIComponent(venture.id)}`}
+          className="ml-auto text-[11px] text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
+        >
+          Expense records for this idea →
+        </Link>
+      </div>
 
       <div className="mt-3 border-t border-rule-soft pt-3">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Cross-references</p>

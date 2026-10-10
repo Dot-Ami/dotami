@@ -23,7 +23,16 @@ const SEPTEMBER_BANNER = "Figure reminder, monthly: September 2026";
 const OCTOBER_BANNER = "Figure reminder, monthly: October 2026";
 const QUARTER_BANNER = "Figure reminder, quarterly: July to September 2026";
 
-test.use({ timezoneId: "America/Vancouver" });
+// The settings routes take 120 requests a minute from one caller (app/api/settings/route.ts), and
+// the browser tests that run just before this file spend part of that same minute: one more test
+// in app.spec.ts was enough to tip a write here into "429 Too many requests". This file reads and
+// writes the setting more than any other, so it gets a caller of its own. The limiter tells
+// callers apart by X-Forwarded-For (lib/api/rate-limit.ts), which Next.js keeps when the request
+// already has one; the limit itself is unchanged.
+test.use({
+  timezoneId: "America/Vancouver",
+  extraHTTPHeaders: { "X-Forwarded-For": "e2e-figure-reminders" },
+});
 
 function cardOf(page: Page, name: RegExp | string): Locator {
   return page

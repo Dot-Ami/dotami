@@ -7,7 +7,7 @@
 
   $("title").textContent = backup ? "Back up DotAmi" : "This backup is locked";
   $("intro").textContent = backup
-    ? "Choose a passphrase to lock this backup, or leave both boxes empty for a backup anyone with the file can open."
+    ? "Choose a passphrase to lock this backup, or leave both boxes empty for a backup anyone with the file can open, your receipts included: they aren't encrypted inside a backup without a passphrase."
     : "Enter the passphrase it was locked with.";
   $("ok").textContent = backup ? "Back up" : "Open";
   $("confirm-row").hidden = !backup;

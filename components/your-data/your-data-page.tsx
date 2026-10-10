@@ -5,6 +5,7 @@ import { CopyPathButton } from "@/components/settings/copy-path-button";
 import { GhostLink, WordMark } from "@/components/ui";
 import type { FolderFacts, Holdings, SentFacts, SentState, TableCount } from "@/lib/privacy/holdings";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import { DELETE_MENU, NOT_CLEARED_BY_DELETE, type WindowStorageEntry } from "@/lib/privacy/inventory";
 
 import { DeleteMenu } from "./delete-menu";
@@ -106,7 +107,12 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                 <DataFileRow holdings={holdings} />
                 <ul className="mt-3 space-y-3">
                   {holdings.folders.map((f) => (
-                    <FolderRow key={f.entry.id} facts={f} desktop={holdings.desktop} />
+                    <FolderRow
+                      key={f.entry.id}
+                      facts={f}
+                      desktop={holdings.desktop}
+                      receiptFiles={f.entry.id === "receipts" ? holdings.receiptFiles : null}
+                    />
                   ))}
                 </ul>
                 <h3 className="mt-5 font-semibold text-paper">In this window</h3>
@@ -158,11 +164,20 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
                 </div>
                 <DeleteMenu
                   menu={DELETE_MENU}
-                  counts={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count]))}
-                  tableNames={Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name]))}
+                  counts={{
+                    ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.count])),
+                    // The safety-copies box counts files, under its folder's name.
+                    backups: holdings.safetyCopies,
+                  }}
+                  keptCounts={holdings.keptLinks}
+                  tableNames={{
+                    ...Object.fromEntries(holdings.tables.map((t) => [t.entry.model, t.entry.name])),
+                    backups: "Safety copies",
+                  }}
                   notCleared={NOT_CLEARED_BY_DELETE}
                   retention={recordRetentionV2026}
                   desktop={holdings.desktop}
+                  wipePending={holdings.wipePending}
                 />
               </Section>
             </div>
@@ -241,7 +256,16 @@ function DataFileRow({ holdings }: { holdings: Holdings }) {
   );
 }
 
-function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean }) {
+function FolderRow({
+  facts,
+  desktop,
+  receiptFiles,
+}: {
+  facts: FolderFacts;
+  desktop: boolean;
+  /** For the receipts folder only: how its files are kept ([8i], expense-records.md § 9). */
+  receiptFiles: Holdings["receiptFiles"] | null;
+}) {
   const { entry } = facts;
   let status: ReactNode;
   if (facts.path === null) {
@@ -249,9 +273,10 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
   } else if (!facts.exists) {
     status = (
       <p className="mt-2 text-[12px] text-stone">
-        {desktop
-          ? "None yet."
-          : "None here. This copy runs from source; the desktop app is what makes it."}
+        {entry.whenAbsent ??
+          (desktop || !entry.desktopOnly
+            ? "None yet."
+            : "None here. This copy runs from source; the desktop app is what makes it.")}
       </p>
     );
   } else if (!facts.readable) {
@@ -273,7 +298,11 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
           <Code>{facts.path}</Code>
           <CopyPathButton path={facts.path} />
         </div>
-        <p className="text-[11.5px] text-stone-dim">DotAmi only counted the files and read their dates; it never opened them.</p>
+        <p className="text-[11.5px] text-stone-dim">
+          {receiptFiles
+            ? "DotAmi counted the files, read their dates and the first few bytes of each (enough to tell an encrypted receipt from a plain one); it never opened a receipt."
+            : "DotAmi only counted the files and read their dates; it never opened them."}
+        </p>
       </div>
     );
   }
@@ -281,8 +310,39 @@ function FolderRow({ facts, desktop }: { facts: FolderFacts; desktop: boolean })
     <li className="rounded-lg border border-rule bg-ink2 px-4 py-3">
       <h3 className="font-semibold text-paper">{entry.name}</h3>
       <p className="mt-1 text-[12.5px] text-paper-dim">{entry.holds}</p>
+      {receiptFiles ? <ReceiptProtection files={receiptFiles} /> : null}
       {status}
     </li>
+  );
+}
+
+/**
+ * [8i] Whether this copy encrypts receipt files, what losing the key means, and how the files in the
+ * folder are kept right now, counted from their first bytes (lib/expenses/receipts/store.ts
+ * describeReceiptFiles).
+ */
+function ReceiptProtection({ files }: { files: Holdings["receiptFiles"] }) {
+  const { headline, detail, tone } = receiptProtectionText(files.state);
+  const total = files.encrypted + files.plain + files.locked;
+  const counts: string[] = [];
+  if (files.state === "on" && total > 0) {
+    counts.push(`${files.encrypted} of ${plural(total, "receipt file")} encrypted with this computer's key.`);
+    if (files.plain > 0) counts.push(`${plural(files.plain, "file")} not encrypted yet: DotAmi encrypts ${files.plain === 1 ? "it" : "them"} the next time it starts.`);
+  }
+  if (files.locked > 0) {
+    counts.push(
+      files.state === "source"
+        ? `${plural(files.locked, "file")} encrypted by the DotAmi desktop app; this copy can't open ${files.locked === 1 ? "it" : "them"}.`
+        : `${plural(files.locked, "file")} locked with a key this computer can't open.`,
+    );
+  }
+  return (
+    <div className={`mt-2 space-y-1 text-[12px] ${tone === "problem" ? "text-amber" : "text-paper-dim"}`}>
+      <p>
+        <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
+      </p>
+      {counts.length > 0 ? <p>{counts.join(" ")}</p> : null}
+    </div>
   );
 }
 

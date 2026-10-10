@@ -21,13 +21,37 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    name and code only). A log that can't be opened (a read-only file, a full disk) is skipped, never
    a reason not to start. Until 0.2.1 the log was a stream that
    wrote in the background while start-up ran synchronously, so a start killed or failed before the
-   server left no line at all (seen 2026-10-08). Then `dotami.db` in that folder is created or
+   server left no line at all (seen 2026-10-08). Then, **only if Delete left a "wipe pending" note**
+   beside the data file (`dotami.db.wipe-pending`: its wipe couldn't finish because the computer
+   was busy, the disk was full or it was switched off), the app finishes that wipe before the server
+   opens the file: it deletes the safety copies the note names (DotAmi's own `dotami-before-….db`
+   files in `backups/`, never through a link), rebuilds the file with `VACUUM`, and removes the note
+   (`desktop/wipe-pending.mjs`, `vacuumFile` in `desktop/migrate.mjs`). Whatever still fails stays
+   in the note for the next start and never stops this one; the log says which. An ordinary start,
+   with no note, does nothing here: free space in the file is normal after any edit, and rebuilding
+   the file on every start would slow it for nothing. Then `dotami.db` in that folder is created or
    brought up to date by `desktop/migrate.mjs` (below).
-4. **The server.** The self-contained Next.js server, started as an Electron utility process on a
+4. **The receipts' key** ([8i], [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
+   `receipts.key` in the data folder is opened with Electron's `safeStorage` (DPAPI for this Windows
+   account), or made the first time (`desktop/receipt-key.mjs`), and then saved only once Electron's
+   own key is in the data folder's `Local State`, which Chromium writes about ten seconds after start:
+   so the very first start of a new data folder waits about that long; then any receipt file not encrypted
+   yet, in `receipts/` and in the receipts folders earlier restores moved into `backups/`, is
+   encrypted, one file at a time, crash-safe (`desktop/receipt-crypto.mjs`). The log gets the key's
+   state and counts only. A key this account can't open changes nothing on the disk when receipts are
+   locked with it; with none locked, it is moved to `backups/` and a new one made. No key store: the
+   receipts stay unencrypted, and the settings page says so.
+5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
    free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
    DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
-5. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
+   Nor does it carry the browser tests' rate-limit switch (`DOTAMI_E2E_RATE_LIMITS` is removed in
+   `serverEnv`, `desktop/main.mjs`), so the real rate limits always apply in the app, even when the
+   shell that started it set the switch (desktop-tested in `e2e-desktop/desktop.spec.ts`).
+   It is told the receipts' key state (`DOTAMI_RECEIPT_LOCK`) and, when the key is open, the key
+   itself (`DOTAMI_RECEIPT_KEY`), which it takes out of its own environment the first time it
+   reads it; a receipt key in the shell that started the app is never passed on.
+6. **The window.** It shows only DotAmi's own pages. New windows are refused; an `https` link to
    anywhere else opens in the person's own browser. The only permission granted is writing to
    the clipboard (the settings page's *Copy path*). A file the page saves (the calendar file, a
    playbook) goes where the person picks in a Save dialog, and Cancel saves nothing; a download that
@@ -37,9 +61,10 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    explicitly: context isolation, sandbox, no Node in pages
    ([Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), read
    2026-10-05).
-6. **Updates** (installed app only) — see below.
-7. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
-   ideas · Settings; View; Help → About · Check for updates · Source on GitHub.
+7. **Updates** (installed app only) — see below.
+8. **Menu.** File → Back up… · Restore from a backup… · Open data folder · Quit; Go → Home · Your
+   ideas · Settings; View; Help → About · Check for updates · Licences (the `/licences` page) ·
+   Source on GitHub.
 
 Anything that goes wrong says what happened in a dialog and quits — never a blank window.
 
@@ -59,7 +84,9 @@ which is about 146 MB of engines for five kinds of database and reports usage to
   migrated must need nothing from the app. (Checked that the referee bites: with the migrator
   not marking a migration finished, Prisma's check fails the test on its own.)
 - **Refuses, untouched:** a database a newer DotAmi has migrated ("update the app first"), and one
-  where an update was left half-done.
+  where an update was left half-done. One exception: when a Delete left a "wipe pending" note, the
+  start finishes that wipe first (`VACUUM`, which keeps the contents and frees the deleted space), so
+  such a file is rebuilt before these checks refuse it.
 - **Backs up first:** before changing a database that already has data, a full copy goes to
   `backups/` in the data folder (`VACUUM INTO`, consistent even if the file is open).
 - **All or nothing per migration:** each runs in a transaction; SQLite undoes schema changes too,
@@ -73,23 +100,62 @@ can't be opened — nobody can recover it"* is shown first), then where to save,
 locked, checks it, asks for confirmation, keeps a safety copy of the current data in `backups/`,
 swaps it in and restarts the app (an older backup is then upgraded by the migrator).
 
-- **The file:** `DOTAMI-BACKUP` + a JSON header (format, app version, date, the migrations it
-  holds, the SHA-256 of the database) + the database — made with `VACUUM INTO`, consistent even
-  while the app has it open. Written beside its real name and renamed, so a crash never leaves a
-  half-written file that looks finished.
+- **The file (format 2, since receipts are kept, [8i]):** `DOTAMI-BACKUP` + a JSON header (format 2,
+  app version, date, the migrations it holds, and a list of the files it holds, each with its size
+  and SHA-256: `dotami.db` first, then `receipts/<DotAmi's own name>` for every receipt file the
+  database describes) + those files' bytes one after another + for a locked backup, the 16-byte GCM
+  tag. The database is copied with `VACUUM INTO`, consistent even while the app has it open; the
+  receipts folder is listed before that copy is taken, so a receipt removed in between is in
+  neither, and one the copy describes but the folder doesn't have is counted and named in the
+  message afterwards ("1 receipt file DotAmi has a record of wasn't in the receipts folder"). Files
+  in the folder that no row describes, and files DotAmi didn't name, are left out.
+- **It streams.** The data file is read, hashed, encrypted and written in 1 MB pieces, never whole,
+  so memory use doesn't grow with the data file or the number of receipts (format 1 read the whole
+  database into memory). Each receipt (at most 10 MB) is read whole, one at a time, because it is
+  decrypted with this computer's key in memory on the way in, and encrypted with it on the way out
+  at a restore ([8i], below); it is still written to the backup in 1 MB pieces. The writer reads each file twice (once to measure it for the header, once
+  to write it) and stops, with nothing saved, if a file changed in between. Written beside its real
+  name and renamed, so a crash never leaves a half-written file that looks finished.
+- **Old backups still restore.** A format-1 backup (`DOTAMI-BACKUP` + a header with the database's
+  SHA-256 and the GCM tag inside it + the database) is still read, the old way. It holds no receipts:
+  restoring one moves the receipts folder here into `backups/` as it is, and the question before the
+  restore says so. Two real format-1 backups (plain and locked), made by the earlier writer, are
+  kept in `tests/fixtures/backups/` and restored by the tests.
+- **Restoring the receipts:** the backup's receipts are unpacked, checked, into a staging folder
+  beside the staged database. On confirm, the receipts folder here moves into `backups/`
+  (`receipts-before-restore-<time>`, beside the safety copy that describes it), the staged folder
+  becomes the receipts folder, then the database is swapped in; if the swap fails, both folders go
+  back. The file list may name only `dotami.db` and DotAmi's own receipt names (32 hex characters
+  and `.jpg`/`.png`/`.webp`/`.pdf`), each once and at most 10 MB, so no backup can write anywhere
+  else.
 - **Locked backups:** AES-256-GCM, key from the passphrase with scrypt (N 131072, r 8, p 1). The
-  header is authenticated too, so editing any of it makes the backup refuse to open. A header that
-  asks for different scrypt settings is refused, so a hostile file can't make the app hang.
+  header is authenticated too (its exact bytes are GCM's additional data), so editing any of it,
+  the file list included, makes the backup refuse to open. A header that asks for different scrypt
+  settings is refused, so a hostile file can't make the app hang.
 - **Checked before anything changes:** not a backup · damaged (cut short, a changed byte, or a
   database SQLite's `integrity_check` rejects) · locked and the passphrase is wrong (GCM can't tell
   a wrong passphrase from a damaged file, so the message says both) · made by a newer DotAmi. All
   checks run on a temporary copy; the live data is untouched until the person confirms.
+- **Receipts encrypted at rest** ([8i], 2026-10-09; [expense-records.md § 9](expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09)).
+  The format doesn't change. Back up decrypts each receipt in memory with this computer's key and
+  writes its own bytes (the size and SHA-256 the file list gives), so the backup restores on a computer
+  whose key differs; one this computer can't open is left out and named in the message. An unlocked
+  backup's receipts are readable by whoever has it, and the passphrase window and the message say so.
+  Restore encrypts each receipt with this computer's key as it is unpacked, after its SHA-256 is
+  checked, so nothing is staged unencrypted. When this computer's key file can't be opened, a restore
+  makes a new key, saves it only once the person confirms (the old key file goes to `backups/`), and
+  encrypts the restored receipts with it. Format 2 backups made before this change (by the earlier
+  writer, kept as fixtures) and format 1 backups restore as before.
 - **The passphrase window** is a local page with no network access (its own CSP) that can send
   back only the passphrase or "cancel"; the app checks the message came from that window.
-- **Tests:** `tests/desktop-backup.spec.ts` (9 cases; checked that it bites — without header
-  authentication, the edited-header case fails) and the desktop test "back up on one computer →
-  restore on another", through the real passphrase window, a wrong passphrase first (checked: with
-  the swap skipped it fails).
+- **Tests:** `tests/desktop-backup.spec.ts` (28 cases: receipts round-trip plain and locked, a
+  changed tag, file list or receipt byte refused, hostile file lists, the put-back, both format-1
+  fixtures; since 2026-10-09 receipts encrypted on one computer restored with another's key, one this
+  computer can't open left out, and two format-2 fixtures made by the earlier writer; checked that it bites — without header authentication, the edited-header case fails, and
+  each receipt case fails with its line of the code removed) and the desktop test "back up on one
+  computer → restore on another", through the real passphrase window, a wrong passphrase first, now
+  carrying a receipt from computer A to computer B byte for byte (checked: with the swap skipped it
+  fails).
 
 ## Building and packaging
 
@@ -100,6 +166,20 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   and `next-env.d.ts`, which `next build` rewrites for a new folder. (Not
   `outputFileTracingExcludes`: Next 15.5 joins those globs with the OS path separator, so on
   Windows they never match — `collect-build-traces.js:503`.)
+- **What the server leaves out** (`desktop/left-out.mjs`). Next's file tracer copies in every
+  package Next's own code could `require`, including ones only reached on paths DotAmi never takes.
+  The build deletes two families of them from the server's `node_modules`: **sharp** (Next's image
+  library, with its prebuilt libvips, LGPL-3.0-or-later; only Next's image optimiser loads it) and
+  **typescript** (only Next's build loads it: type checks, `tsconfig.json`, a `next.config.ts`), with
+  what only they pull in (`@img/*`, `detect-libc`, `@emnapi/runtime`, `source-map-support`,
+  `buffer-from`, `source-map`). The desktop build also sets `images.unoptimized` in
+  `next.config.mjs`, so `/_next/image` answers 404 instead of reaching for sharp; DotAmi uses no
+  `next/image` and serves no images. Before deleting, the build **fails if the app's own server
+  code requires one of them or a package that stays names one as a dependency it needs**; after,
+  it fails if any copy is left, nested ones included. Vercel's own builds leave sharp out the same
+  way (the `hasNextSupport` ignores in `collect-build-traces.js`). Measured on 0.2.1, Windows,
+  2026-10-08: server 89.1 MB → 59.4 MB, installed app 476.7 MB → 446.8 MB, installer
+  133.8 MB → 126.1 MB. A package to add to the list needs a reason there and a desktop test run.
 - `npm run desktop:package` — an unpacked app in `dist-desktop/out/win-unpacked/`.
   `npm run desktop:installer` — the installer, `DotAmi Setup <version>.exe` (about 126 MB), plus
   `latest.yml`. `desktop/package.mjs` stages only what ships: the main process, the migrator, the
@@ -107,6 +187,23 @@ swaps it in and restarts the app (an older backup is then upgraded by the migrat
   finished app for private files again. The server is copied in after electron-builder assembles
   the app, because electron-builder's file filters drop `node_modules` from both `files` and
   `extraResources` (both tried: the first package was 5 MB and couldn't have started).
+- **Third-party notices** (`desktop/notices.mjs`). The built code is minified and the server's
+  `node_modules` keeps only the files it runs, so the packages' own licence files don't travel with
+  them. `desktop:build` writes `THIRD-PARTY-NOTICES.txt` beside `server.js`: one entry per package
+  in the server's `node_modules`, per package in DotAmi's dependencies (what the page code bundles,
+  such as pdf.js and ofx-js), per package the app itself carries (electron-updater and what it pulls
+  in), the code Next.js carries inside itself, Tailwind's base styles, the two fonts and Electron —
+  each with its version, licence and the licence and notice files from the package, word for word
+  (third-party notice files such as TypeScript's `ThirdPartyNoticeText.txt` included). The packages
+  the server leaves out get no entry, even where a dependency names them (next names sharp as
+  optional); the list for a copy run from source keeps sharp, since npm installs it there with Next.
+  A package with no licence file stops the build until `LICENCE_ELSEWHERE` in that file says where
+  its terms are. `desktop:package` then refuses to package if any package in the app's or the
+  server's `node_modules` has no entry for its exact version, copies the file beside `DotAmi.exe`,
+  and checks that electron-builder put Electron's `LICENSE.electron.txt` and Chromium's
+  `LICENSES.chromium.html` there too (it copies both from Electron's download). The app shows the
+  file at Help → Licences (`/licences`). `npm run build` writes the same kind of list, without
+  Electron, for a copy run from source.
 - **Installs per user**, no administrator rights (`%LOCALAPPDATA%\Programs\DotAmi`). **Uninstalling
   leaves the data folder alone** — whether to offer deleting it is an open decision (settings doc,
   Part 4 §6). Not code-signed: Windows shows "Windows protected your PC" on first install (signing
@@ -198,7 +295,12 @@ to the data.
 2. After it merges: `git tag v0.1.1 && git push origin v0.1.1`.
 3. `.github/workflows/release.yml` checks the tag matches `package.json`, packages the app, runs
    the desktop test on the packaged app, builds the installer and uploads it to a **draft** release.
+   Packaging writes the third-party notices from the packages it ships and stops if one has no
+   entry (see *Building and packaging*); a new dependency with no licence file stops it here, so
+   add that package to `LICENCE_ELSEWHERE` in `desktop/notices.mjs` in a PR first.
 4. Read the draft on GitHub (for a pre-release, tick *Set as a pre-release*), then **Publish**.
+   Before publishing, open the unpacked app's Help → Licences (or `THIRD-PARTY-NOTICES.txt` beside
+   `DotAmi.exe` in a test install) and check it lists the version's new packages.
    Installed apps pick it up the next time they start.
 
 ## Tests
@@ -209,7 +311,29 @@ to the data.
   and "nothing leaves this computer" although the app was started with a model key in its
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
-  "Desktop app (Windows)").
+  "Desktop app (Windows)"). Delete ([8d]): an idea and a statement holding a marker string, a backup
+  saved elsewhere and restored (which leaves a safety copy) → Delete with ideas, statements and the
+  safety copies ticked → after closing, the marker is in no byte of `dotami.db` or `backups/` → the
+  backup saved elsewhere still restores. And a wipe Delete couldn't finish: an ordinary start leaves
+  the deleted words in the file (the control), a start with the "wipe pending" note removes them and
+  the owed safety copy. The same run opens Help → Licences (Electron, the server's packages and
+  electron-updater are listed) and checks every package in the server's `node_modules` has an entry
+  for its exact version; on a packaged app, also that the notices, `LICENSE.electron.txt` and
+  `LICENSES.chromium.html` sit beside `DotAmi.exe`. Another test describes a venture in the app,
+  then checks the server (built or packaged) holds none of the packages `desktop/left-out.mjs`
+  names, its notices list none of them and nothing under the LGPL, and `/_next/image` answers 404.
+- `tests/desktop-wipe-pending.spec.ts` — which files count as safety copies, that a link out of
+  `backups/` is never followed, and that a start finishes a wipe only when the note is there.
+- `tests/desktop-left-out.spec.ts` — which packages are left out (and which look-alikes aren't),
+  the removal on an invented `node_modules` (nested copies, empty scope folders), the two checks
+  that stop the build, the desktop notices without them, and that `desktop/build.mjs` and
+  `next.config.mjs` still do their part. (Checked that it bites: eleven deliberate breaks, each
+  fails it.)
+- `tests/third-party-notices.spec.ts` — the notices generator and the packaging check on invented
+  `node_modules` folders (a missing package, a nested or scoped one, another version, a package with
+  no licence file), plus this checkout's own list: every dependency, every package the page code or
+  the style sheet imports, and what `desktop/package.mjs` copies in. (Checked that it bites: six
+  deliberate breaks, each fails it.)
 - `tests/desktop-migrate.spec.ts` — the migrator against Prisma's own status check, plus the
   refuse / back up / undo cases.
 - `tests/desktop-startup-log.spec.ts` — replays a start in its own process and kills it the moment
@@ -217,6 +341,11 @@ to the data.
   line and the backup line, and the database must be unchanged. (Checked that it bites: with the
   old background stream the log file isn't even there.) Also that `main.mjs` ships every file of
   its own that it imports.
+- `tests/receipt-crypto.spec.ts` and `tests/receipt-key.spec.ts` ([8i]) — the encrypted receipt file
+  (tamper, wrong key, a renamed file), the first-start pass with a real process ended after each step
+  of each file, and the key: made once, kept only wrapped, what happens when it can't be opened, no key
+  store. The desktop test also starts the real app on a folder an earlier DotAmi left (a plain receipt,
+  no key) and on one whose key file this account can't open.
 - `tests/desktop-update-notice.spec.ts` — the update messages and taskbar progress, driven by a fake
   updater sending electron-updater's events: told at once, progress, the same *Restart and update* /
   *Later* question, installing only on that click, a failed download. (Checked that it bites: with

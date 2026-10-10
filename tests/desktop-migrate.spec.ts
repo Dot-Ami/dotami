@@ -276,7 +276,10 @@ describe("desktop migrator — the expenses table", () => {
     // Everything before the expenses table, as a person on the last release has it.
     const before = path.join(dir, "migrations-before-expenses");
     cpSync(migrations, before, { recursive: true });
-    rmSync(path.join(before, expensesMigration!), { recursive: true, force: true });
+    // This one and every later one (a later migration may change the Expense table it creates).
+    for (const name of localNames.filter((n) => n >= expensesMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
     migrate(dbFile, before);
     expect(tables(dbFile)).not.toContain("Expense");
     expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
@@ -350,14 +353,419 @@ describe("desktop migrator — the expenses table", () => {
     expect(status.out).toContain("Database schema is up to date");
     expect(status.code).toBe(0);
 
-    // Deleting an idea still cascades to its own figures, links, progress and now expense records,
-    // and to nothing else: the other idea's figure and expense, and the setting, are untouched.
+    // Deleting an idea still cascades to its own figures, links and progress, and to nothing else.
+    // Its expense records stay, no longer attached to an idea (the newer typed-expenses migration
+    // makes that link ON DELETE SET NULL); the other idea's figure and expense, and the setting,
+    // are untouched.
     runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f3" }]);
-    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Expense" ORDER BY id`)).toEqual([{ id: "e2" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense" ORDER BY id`)).toEqual([
+      { id: "e1", ventureId: null },
+      { id: "e2", ventureId: "v2" },
+    ]);
     expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
     expect(query(dbFile, `SELECT * FROM "ScenarioState"`)).toEqual([]);
     expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
+  }, 60_000);
+});
+
+describe("desktop migrator — typed expenses (an optional idea, refunds, a business share)", () => {
+  const typedMigration = localNames.find((name) => name.endsWith("_expenses_typed"));
+
+  it("rebuilds the Expense table and nothing else: Venture is never copied, dropped or renamed", () => {
+    expect(typedMigration, "no migration ending in _expenses_typed").toBeDefined();
+    const statements = statementsOf(typedMigration!);
+    // SQLite can't make a column nullable in place, so Expense alone is rebuilt: new table, copy,
+    // drop, rename, its two indexes. Each statement is pinned so a regenerated file that also
+    // "redefines" another table fails here.
+    expect(statements).toHaveLength(6);
+    expect(statements[0]).toMatch(/^CREATE TABLE "new_Expense" \(/);
+    // The maintainer's decision (2026-10-08): deleting an idea keeps its expense records, "not
+    // attached yet", so the idea link clears instead of cascading. A refund's link to its purchase
+    // clears the same way.
+    expect(statements[0]).toContain(
+      'CONSTRAINT "Expense_ventureId_fkey" FOREIGN KEY ("ventureId") REFERENCES "Venture" ("id") ON DELETE SET NULL ON UPDATE CASCADE',
+    );
+    expect(statements[0]).toContain(
+      'CONSTRAINT "Expense_refundOfId_fkey" FOREIGN KEY ("refundOfId") REFERENCES "Expense" ("id") ON DELETE SET NULL ON UPDATE CASCADE',
+    );
+    expect(statements[0]).not.toMatch(/ON DELETE CASCADE/);
+    expect(statements[1]).toMatch(/^INSERT INTO "new_Expense" \([^)]*\) SELECT [^;]* FROM "Expense"$/);
+    expect(statements[2]).toBe('DROP TABLE "Expense"');
+    expect(statements[3]).toBe('ALTER TABLE "new_Expense" RENAME TO "Expense"');
+    expect(statements[4]).toMatch(/^CREATE INDEX "Expense_ventureId_status_idx" ON "Expense"/);
+    expect(statements[5]).toMatch(/^CREATE INDEX "Expense_refundOfId_idx" ON "Expense"/);
+    for (const statement of statements) {
+      // No PRAGMA: the desktop migrator runs inside a transaction with foreign keys on, where
+      // "foreign_keys=OFF" does nothing, so a file that relied on it would behave differently there.
+      expect(statement).not.toMatch(/\bPRAGMA\b|\bDELETE\s+FROM\b/i);
+      // Venture appears only as the parent the new table's link points at.
+      expect(statement.replace(/REFERENCES "Venture"/g, "")).not.toMatch(/Venture/);
+      for (const other of ["Figure", "VentureLink", "ScenarioState", "Setting", "User", "PersonStatement"]) {
+        expect(statement).not.toContain(`"${other}"`);
+      }
+    }
+  });
+
+  it("keeps every idea, figure, link, map progress, setting and expense record, and the old records read the same", () => {
+    // Everything before this migration, as a person on 0.2.1 has it.
+    const before = path.join(dir, "migrations-before-typed-expenses");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= typedMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(columns(dbFile, "Expense")).not.toContain("businessSharePercent");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // One of everything, with invented values: two ideas, a statement, a link, map progress,
+    // figures, a setting, and expense records in three states on both ideas.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'in my words', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'my note', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed'),
+               ('f2', 'v2', 'gross-revenue', 4, 5, 99, 'typed', 'typed by you', 'retracted');
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, currency, paidTo, whatFor, category, sellerAddress, vendorGstNumber, sourceKind, sourceLabel, status, editedByPerson, proposedAt, agreedAt, retractedAt)
+        VALUES ('e1', 'v1', 10, 4599, 'CAD', 'Example Stationery Ltd', 'printer paper', 'Office supplies', '1 Example Street', '123456789 RT 0001', 'typed', 'typed by you', 'confirmed', 1, 11, 12, NULL),
+               ('e2', 'v2', 20, 1200, 'USD', 'Example Cafe', 'client coffee', NULL, NULL, NULL, 'agent', 'an agent', 'proposed', 0, 21, NULL, NULL),
+               ('e3', 'v1', 30, 99999, 'CAD', 'Example Hardware', 'a ladder', NULL, NULL, NULL, 'file', 'receipts.csv', 'retracted', 0, 31, 32, 33);
+    `,
+    );
+    const OLD_COLUMNS = `id, ventureId, date, CAST(amountCents AS TEXT) AS amount, currency, paidTo, whatFor, category, sellerAddress,
+      vendorGstNumber, sourceKind, sourceLabel, status, editedByPerson, proposedAt, agreedAt, retractedAt`;
+    const everything = () => ({
+      users: query(dbFile, `SELECT * FROM "User" ORDER BY id`),
+      statements: query(dbFile, `SELECT * FROM "PersonStatement" ORDER BY id`),
+      ventures: query(dbFile, `SELECT * FROM "Venture" ORDER BY id`),
+      links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
+      progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
+      settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      figures: query(dbFile, `SELECT id, ventureId, kind, CAST(amountCents AS TEXT) AS amount, status FROM "Figure" ORDER BY id`),
+      expenses: query(dbFile, `SELECT ${OLD_COLUMNS} FROM "Expense" ORDER BY id`),
+    });
+    const held = everything();
+    expect(held.expenses).toHaveLength(3);
+    expect(held.figures).toHaveLength(2);
+
+    // Apply it the way the app does: one transaction, foreign keys on, a safety copy first.
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 11 });
+    // This one and every later one (the bank and card accounts and receipts tables sort after it).
+    expect(applied).toEqual(localNames.filter((n) => n >= typedMigration!));
+    expect(backup).not.toBeNull();
+
+    // Every row of every table is still there and unchanged.
+    expect(everything()).toEqual(held);
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+    // The old records gain the new fields empty: a plain expense, no share, no refund link.
+    expect(
+      query(dbFile, `SELECT id, recordKind, refundOfId, gstHstCents, creditNote, businessSharePercent FROM "Expense" ORDER BY id`),
+    ).toEqual(
+      ["e1", "e2", "e3"].map((id) => ({ id, recordKind: "expense", refundOfId: null, gstHstCents: null, creditNote: null, businessSharePercent: null })),
+    );
+    // The database's own consistency checks agree.
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
+
+    // Prisma's own referee agrees the file matches the schema.
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // What the change is for: a record not attached to any idea, and a refund linked to its expense.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, businessSharePercent)
+        VALUES ('e4', NULL, 40, 5000, 'Example Phone Co', 'phone bill', 'typed', 'typed by you', 40);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId, gstHstCents, creditNote)
+        VALUES ('r1', 'v1', 50, 1000, 'Example Stationery Ltd', 'returned paper', 'typed', 'typed by you', 'refund', 'e1', 50, 'CN-1');
+    `,
+    );
+    expect(query(dbFile, `SELECT ventureId, businessSharePercent FROM "Expense" WHERE id = 'e4'`)).toEqual([{ ventureId: null, businessSharePercent: 40 }]);
+    // A refund kept as a negative amount, on the other idea, linked to the first idea's purchase too.
+    runSql(
+      dbFile,
+      `INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId)
+        VALUES ('r2', 'v2', 60, -500, 'Example Stationery Ltd', 'price adjustment', 'typed', 'typed by you', 'expense', 'e1')`,
+    );
+
+    // What the database itself says about the two links, read from the rebuilt table.
+    const links = query<{ table: string; from: string; on_delete: string }>(dbFile, `PRAGMA foreign_key_list("Expense")`)
+      .map((k) => ({ table: k.table, from: k.from, on_delete: k.on_delete }))
+      .sort((a, b) => a.from.localeCompare(b.from));
+    expect(links).toEqual([
+      { table: "Expense", from: "refundOfId", on_delete: "SET NULL" },
+      { table: "Venture", from: "ventureId", on_delete: "SET NULL" },
+    ]);
+
+    // Deleting an idea (the maintainer's decision of 2026-10-08): its figures, links and map
+    // progress go with it, and nothing of the other idea's. Its expense records STAY, every field as
+    // it was, now "not attached yet"; the refund links between records still hold.
+    const expenseRows = () =>
+      query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, status, recordKind, refundOfId, creditNote FROM "Expense" ORDER BY id`);
+    const beforeDelete = expenseRows() as { id: string; ventureId: string | null }[];
+    expect(beforeDelete.filter((r) => r.ventureId === "v1").map((r) => r.id)).toEqual(["e1", "e3", "r1"]);
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Venture" ORDER BY id`)).toEqual([{ id: "v2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f2" }]);
+    expect(expenseRows()).toEqual(beforeDelete.map((r) => (r.ventureId === "v1" ? { ...r, ventureId: null } : r)));
+    expect(query(dbFile, `SELECT id, refundOfId FROM "Expense" WHERE refundOfId IS NOT NULL ORDER BY id`)).toEqual([
+      { id: "r1", refundOfId: "e1" },
+      { id: "r2", refundOfId: "e1" },
+    ]);
+    expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
+    expect(query(dbFile, `SELECT * FROM "ScenarioState"`)).toEqual([]);
+    expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
+    expect(query(dbFile, `SELECT id, text FROM "PersonStatement"`)).toEqual([{ id: "s1", text: "in my words" }]);
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+  }, 60_000);
+
+  it("deleting an expense keeps a refund that points at it, with the link cleared (a delete of every record still works)", () => {
+    migrate(dbFile, migrations);
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', '', 0);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel)
+        VALUES ('e1', 'v1', 10, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you');
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId)
+        VALUES ('r1', NULL, 20, 1000, 'Example Stationery Ltd', 'returned paper', 'typed', 'typed by you', 'refund', 'e1');
+    `,
+    );
+    runSql(dbFile, `DELETE FROM "Expense" WHERE id = 'e1'`);
+    expect(query(dbFile, `SELECT id, recordKind, refundOfId FROM "Expense"`)).toEqual([{ id: "r1", recordKind: "refund", refundOfId: null }]);
+    // And one statement that deletes every record (what a "delete all expense records" choice would run).
+    runSql(
+      dbFile,
+      `INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId)
+        VALUES ('e2', 'v1', 10, 500, 'Example Cafe', 'coffee', 'typed', 'typed by you', 'expense', NULL),
+               ('r2', 'v1', 11, 100, 'Example Cafe', 'coffee refund', 'typed', 'typed by you', 'refund', 'e2')`,
+    );
+    runSql(dbFile, `DELETE FROM "Expense"`);
+    expect(query(dbFile, `SELECT * FROM "Expense"`)).toEqual([]);
+    expect(query<{ n: number }>(dbFile, `SELECT count(*) AS n FROM "Venture"`)).toEqual([{ n: 1 }]);
+  });
+});
+
+describe("desktop migrator — the bank and card accounts table", () => {
+  const accountsMigration = localNames.find((name) => name.endsWith("_source_accounts"));
+
+  it("is one plain CREATE TABLE with no link to anything, so nothing else in the database is rebuilt", () => {
+    expect(accountsMigration, "no migration ending in _source_accounts").toBeDefined();
+    const statements = statementsOf(accountsMigration!);
+    expect(statements).toHaveLength(1);
+    expect(statements[0]).toMatch(/^CREATE TABLE "SourceAccount" \(/);
+    // Nothing links to it and it links to nothing yet: a later link INTO this table must be
+    // hand-written SQL with its own test (the migrator runs with foreign keys on).
+    expect(statements[0]).not.toMatch(/\b(FOREIGN KEY|REFERENCES)\b/i);
+    expect(statements[0]).not.toMatch(/\b(DROP|ALTER|RENAME|INSERT|PRAGMA)\b|\bDELETE\s+FROM\b/i);
+    // No column for a number of any kind, and no hash of one: the person's name for the account, the button, the dates.
+    expect(statements[0]).not.toMatch(/number|acct|hash|digits|institution|transit|branch/i);
+  });
+
+  it("keeps every idea, figure, expense record, link, map progress and setting when it is applied to a database that has them", () => {
+    // Everything before the accounts table, as a person on the last release has it.
+    const before = path.join(dir, "migrations-before-source-accounts");
+    cpSync(migrations, before, { recursive: true });
+    rmSync(path.join(before, accountsMigration!), { recursive: true, force: true });
+    migrate(dbFile, before);
+    expect(tables(dbFile)).not.toContain("SourceAccount");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // One of every table, with invented values.
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'in my words', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'my note', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed'),
+               ('f2', 'v2', 'gross-revenue', 4, 5, 99, 'typed', 'typed by you', 'retracted');
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status)
+        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+    `,
+    );
+    const everything = () => ({
+      users: query(dbFile, `SELECT * FROM "User" ORDER BY id`),
+      statements: query(dbFile, `SELECT * FROM "PersonStatement" ORDER BY id`),
+      ventures: query(dbFile, `SELECT * FROM "Venture" ORDER BY id`),
+      links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
+      progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
+      settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      figures: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, status FROM "Figure" ORDER BY id`),
+      expenses: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, paidTo, status FROM "Expense" ORDER BY id`),
+    });
+    const held = everything();
+    expect(held.figures).toHaveLength(2);
+    expect(held.expenses).toHaveLength(1);
+
+    // Apply the accounts table (and anything newer) the way the app does.
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 9 });
+    expect(applied).toContain(accountsMigration);
+    expect(backup).not.toBeNull();
+
+    // Every row is still there, unchanged, and the new table is empty and usable.
+    expect(everything()).toEqual(held);
+    expect(tables(dbFile)).toContain("SourceAccount");
+    expect(columns(dbFile, "SourceAccount")).toEqual(["id", "name", "allowance", "agreedAt", "retiredAt", "createdAt"]);
+    expect(query(dbFile, `SELECT * FROM "SourceAccount"`)).toEqual([]);
+    runSql(dbFile, `INSERT INTO "SourceAccount" (id, name, allowance, agreedAt) VALUES ('a1', 'Visa ending 1234', 'always', 0);`);
+    expect(query(dbFile, `SELECT id, name, allowance, retiredAt FROM "SourceAccount"`)).toEqual([
+      { id: "a1", name: "Visa ending 1234", allowance: "always", retiredAt: null },
+    ]);
+    expect(tables(backup!)).not.toContain("SourceAccount");
+
+    // Prisma's own referee agrees the file matches the schema.
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // Deleting an idea still cascades to its own rows only, and never to the accounts, which belong to no idea.
+    // Its expense record stays, no longer attached to an idea (the typed-expenses migration makes that
+    // link ON DELETE SET NULL).
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f2" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense"`)).toEqual([{ id: "e1", ventureId: null }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SourceAccount"`)).toEqual([{ id: "a1" }]);
+    expect(query<{ key: string }>(dbFile, `SELECT key FROM "Setting"`)).toEqual([{ key: "figure-reminders" }]);
+  }, 60_000);
+});
+
+describe("desktop migrator — receipts (a table describing each receipt file)", () => {
+  const receiptsMigration = localNames.find((name) => name.endsWith("_receipts"));
+
+  it("is a plain CREATE TABLE and its unique index, so nothing else in the database is rebuilt", () => {
+    expect(receiptsMigration, "no migration ending in _receipts").toBeDefined();
+    const statements = statementsOf(receiptsMigration!);
+    expect(statements).toHaveLength(2);
+    expect(statements[0]).toMatch(/^CREATE TABLE "Receipt" \(/);
+    // Deleting a record deletes its receipt's row; nothing else points at Receipt.
+    expect(statements[0]).toContain(
+      'CONSTRAINT "Receipt_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense" ("id") ON DELETE CASCADE ON UPDATE CASCADE',
+    );
+    expect(statements[1]).toBe('CREATE UNIQUE INDEX "Receipt_expenseId_key" ON "Receipt"("expenseId")');
+    for (const statement of statements) {
+      // With foreign keys on (the desktop migrator), copying and dropping a table would cascade: so
+      // nothing here may drop, rename, alter or fill anything.
+      expect(statement).toMatch(/^CREATE (TABLE|UNIQUE INDEX) /);
+      expect(statement).not.toMatch(/\b(DROP|ALTER|RENAME|INSERT|PRAGMA)\b|\bDELETE\s+FROM\b/i);
+      for (const other of ["Venture", "Figure", "VentureLink", "ScenarioState", "Setting", "User", "PersonStatement"]) {
+        expect(statement).not.toContain(`"${other}"`);
+      }
+    }
+  });
+
+  it("keeps every idea, figure, link, map progress, setting and expense record when applied to a database that has them", () => {
+    // Everything before the receipts table, as a person on the typed-expenses version has it.
+    const before = path.join(dir, "migrations-before-receipts");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= receiptsMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(tables(dbFile)).not.toContain("Receipt");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt) VALUES ('s1', 'u1', 'in my words', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'EMPLOYEE', 'my note', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '', 0);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '[]', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status, businessSharePercent)
+        VALUES ('e1', 'v1', 10, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed', 40),
+               ('e2', NULL, 20, 1200, 'Example Cafe', 'client coffee', 'agent', 'an agent', 'proposed', NULL);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, recordKind, refundOfId)
+        VALUES ('r1', 'v1', 30, 1000, 'Example Stationery Ltd', 'returned paper', 'typed', 'typed by you', 'refund', 'e1');
+    `,
+    );
+    const everything = () => ({
+      users: query(dbFile, `SELECT * FROM "User" ORDER BY id`),
+      statements: query(dbFile, `SELECT * FROM "PersonStatement" ORDER BY id`),
+      ventures: query(dbFile, `SELECT * FROM "Venture" ORDER BY id`),
+      links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
+      progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
+      settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      figures: query(dbFile, `SELECT id, ventureId, kind, CAST(amountCents AS TEXT) AS amount, status FROM "Figure" ORDER BY id`),
+      expenses: query(
+        dbFile,
+        `SELECT id, ventureId, date, CAST(amountCents AS TEXT) AS amount, paidTo, whatFor, status, recordKind, refundOfId, businessSharePercent FROM "Expense" ORDER BY id`,
+      ),
+    });
+    const held = everything();
+    expect(held.expenses).toHaveLength(3);
+
+    // Apply it the way the app does: one transaction, foreign keys on, a safety copy first.
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 12 });
+    // This one and every later one (the Figure tax-year columns sort after it).
+    expect(applied).toEqual(localNames.filter((n) => n >= receiptsMigration!));
+    expect(backup).not.toBeNull();
+    expect(everything()).toEqual(held);
+    expect(query(dbFile, `SELECT * FROM "Receipt"`)).toEqual([]);
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // What the table is for: one receipt per record, and a second one for the same record refused.
+    const sha = "a".repeat(64);
+    runSql(
+      dbFile,
+      `INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES ('${"1".repeat(32)}', 'e1', 'image/jpeg', 1234, '${sha}'),
+                                                                     ('${"2".repeat(32)}', 'e2', 'application/pdf', 99, '${sha}')`,
+    );
+    expect(() => runSql(dbFile, `INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES ('${"3".repeat(32)}', 'e1', 'image/png', 1, '${sha}')`)).toThrow(
+      /UNIQUE/,
+    );
+
+    // Deleting an idea keeps its expense records "not attached yet" (the maintainer's decision of
+    // 2026-10-08), and so their receipts stay too.
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense" ORDER BY id`)).toEqual([
+      { id: "e1", ventureId: null },
+      { id: "e2", ventureId: null },
+      { id: "r1", ventureId: null },
+    ]);
+    expect(query(dbFile, `SELECT expenseId FROM "Receipt" ORDER BY expenseId`)).toEqual([{ expenseId: "e1" }, { expenseId: "e2" }]);
+    // Deleting a record deletes its receipt's row (DotAmi's sweep removes the file); the refund that
+    // pointed at it stays, its link cleared, as before.
+    runSql(dbFile, `DELETE FROM "Expense" WHERE id = 'e1'`);
+    expect(query(dbFile, `SELECT expenseId FROM "Receipt"`)).toEqual([{ expenseId: "e2" }]);
+    expect(query(dbFile, `SELECT id, refundOfId FROM "Expense" WHERE id = 'r1'`)).toEqual([{ id: "r1", refundOfId: null }]);
+    // Deleting every record (the Delete menu's expense records box) empties the table.
+    runSql(dbFile, `DELETE FROM "Expense"`);
+    expect(query(dbFile, `SELECT * FROM "Receipt"`)).toEqual([]);
+    expect(query<{ n: number }>(dbFile, `SELECT count(*) AS n FROM "Figure"`)).toEqual([{ n: 0 }]);
+    expect(query<{ n: number }>(dbFile, `SELECT count(*) AS n FROM "Venture"`)).toEqual([{ n: 1 }]);
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
   }, 60_000);
 });
 
@@ -376,8 +784,8 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
     ]);
   });
 
-  it("keeps every idea's figures, links, map progress, settings and expense records, and old figures get no tax year", () => {
-    // Everything before this migration, as a person on the last release has it.
+  it("keeps every idea's figures, links, map progress, settings, accounts, expense records and receipts, and old figures get no tax year", () => {
+    // Everything before this migration, as a person on the version before it has it.
     const before = path.join(dir, "migrations-before-tax-line");
     cpSync(migrations, before, { recursive: true });
     for (const name of localNames.filter((n) => n >= taxLineMigration!)) {
@@ -387,7 +795,8 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
     expect(columns(dbFile, "Figure")).not.toContain("taxYear");
     expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
 
-    // One of every table with a parent, with invented values.
+    // One of every table, with invented values.
+    const sha = "a".repeat(64);
     runSql(
       dbFile,
       `
@@ -404,8 +813,11 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
                ('f2', 'v1', 'gross-revenue', 2, 3, -50, 'file', 'sales.xlsx', 12, 'proposed', 0, NULL),
                ('f3', 'v2', 'gross-revenue', 4, 5, 99, 'typed', 'typed by you', NULL, 'retracted', 0, 6);
       INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+      INSERT INTO "SourceAccount" (id, name, allowance, agreedAt) VALUES ('a1', 'Visa ending 1234', 'always', 0);
       INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status)
-        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed');
+        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed'),
+               ('e2', 'v2', 20, 1200, 'Example Cafe', 'client coffee', 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES ('${"1".repeat(32)}', 'e2', 'image/jpeg', 1234, '${sha}');
     `,
     );
     // Every column of every figure, so a column the migration lost or changed shows up here.
@@ -416,7 +828,9 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
       links: query(dbFile, `SELECT * FROM "VentureLink" ORDER BY id`),
       progress: query(dbFile, `SELECT * FROM "ScenarioState" ORDER BY id`),
       settings: query(dbFile, `SELECT * FROM "Setting" ORDER BY key`),
+      accounts: query(dbFile, `SELECT * FROM "SourceAccount" ORDER BY id`),
       expenses: query(dbFile, `SELECT id, ventureId, CAST(amountCents AS TEXT) AS amount, paidTo, status FROM "Expense" ORDER BY id`),
+      receipts: query(dbFile, `SELECT * FROM "Receipt" ORDER BY id`),
       // The amount is read back as text so a BigInt column can't trip the comparison.
       figures: query(
         dbFile,
@@ -426,9 +840,10 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
     });
     const held = everything();
     expect(held.figures).toHaveLength(3);
+    expect(held.receipts).toHaveLength(1);
 
     const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 11 });
-    expect(applied).toContain(taxLineMigration);
+    expect(applied).toEqual(localNames.filter((n) => n >= taxLineMigration!));
     expect(backup).not.toBeNull();
 
     // Every row is still there, unchanged, and the figures that were there have no tax year or line.
@@ -453,17 +868,24 @@ describe("desktop migrator — a T2125 total's tax year and form line on Figure 
     // The safety copy taken first holds the same figures, without the new columns.
     expect(query<{ n: number }>(backup!, `SELECT count(*) AS n FROM "Figure"`)).toEqual([{ n: 3 }]);
     expect(columns(backup!, "Figure")).not.toContain("taxYear");
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
 
     // Prisma's own referee agrees the file matches the schema.
     const status = prisma(["migrate", "status"], dbFile);
     expect(status.out).toContain("Database schema is up to date");
     expect(status.code).toBe(0);
 
-    // Deleting an idea still cascades to its own figures (old and new), links, progress and expense
-    // records, and to nothing else.
+    // Deleting an idea still cascades to its own figures (old and new), links and progress, and to
+    // nothing else: its expense record stays "not attached yet" (ON DELETE SET NULL), with its receipt.
     runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v2'`);
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure" ORDER BY id`)).toEqual([{ id: "f1" }, { id: "f2" }]);
-    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Expense" ORDER BY id`)).toEqual([{ id: "e1" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense" ORDER BY id`)).toEqual([
+      { id: "e1", ventureId: "v1" },
+      { id: "e2", ventureId: null },
+    ]);
+    expect(query(dbFile, `SELECT expenseId FROM "Receipt"`)).toEqual([{ expenseId: "e2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SourceAccount"`)).toEqual([{ id: "a1" }]);
     expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "ScenarioState"`)).toEqual([{ id: "p1" }]);
   }, 60_000);

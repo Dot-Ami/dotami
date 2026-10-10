@@ -35,10 +35,19 @@ export class FigureInputError extends Error {
 /** Throws unless the venture belongs to the stub user — same ownership rule as lib/db/ventures.ts. */
 export async function requireVenture(prisma: PrismaClient, ventureId: string): Promise<void> {
   if (typeof ventureId !== "string" || ventureId.length === 0) throw new VentureNotFoundError();
-  const user = await prisma.user.findUnique({ where: { email: STUB_EMAIL } });
-  if (!user) throw new VentureNotFoundError();
-  const venture = await prisma.venture.findFirst({ where: { id: ventureId, userId: user.id }, select: { id: true } });
+  const userId = await personUserId(prisma);
+  if (!userId) throw new VentureNotFoundError();
+  const venture = await prisma.venture.findFirst({ where: { id: ventureId, userId }, select: { id: true } });
   if (!venture) throw new VentureNotFoundError();
+}
+
+/**
+ * The id of the one person this copy belongs to (the stub user; there is no sign-in), or null when
+ * nothing has been saved yet. The expense store uses it for records that may not be attached to an idea.
+ */
+export async function personUserId(prisma: PrismaClient): Promise<string | null> {
+  const user = await prisma.user.findUnique({ where: { email: STUB_EMAIL }, select: { id: true } });
+  return user?.id ?? null;
 }
 
 const toDay = (d: Date) => d.toISOString().slice(0, 10);

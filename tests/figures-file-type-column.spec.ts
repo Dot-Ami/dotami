@@ -211,7 +211,13 @@ describe("the preview with a type column", () => {
 
   it("pre-fills the Transaction Type column and totals July as $700.00, listing the payment", async () => {
     const run = await previewFile("Transaction List.csv", QUICKBOOKS_SHAPED, TODAY);
-    expect(run.picks).toEqual({ headerRow: 0, dateColumn: 0, amountColumn: 3, typeColumn: 1 });
+    expect(run.picks).toEqual({
+      headerRow: 0,
+      dateColumn: 0,
+      amountColumn: 3,
+      typeColumn: 1,
+      statusColumn: null,
+    });
     expect(run.state).toBe("ready");
     expect(run.result!.months).toEqual([
       { periodStart: "2026-07-01", periodEnd: "2026-07-31", amountCents: 70000, rows: 2 },
@@ -292,7 +298,7 @@ describe("the preview with a type column", () => {
   });
 
   it("works from previewSheet directly, the way the screen calls it", () => {
-    const picks = { headerRow: 0, dateColumn: 0, amountColumn: 2, typeColumn: 1 };
+    const picks = { headerRow: 0, dateColumn: 0, amountColumn: 2, typeColumn: 1, statusColumn: null };
     expect(previewSheet(JULY, picks, {}, TODAY).result!.months[0].amountCents).toBe(70000);
     expect(
       previewSheet(JULY, { ...picks, typeColumn: null }, {}, TODAY).result!.months[0].amountCents,

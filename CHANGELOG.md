@@ -20,11 +20,139 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   have one). Every line is cited to the CRA's own 2025 T2125 and
   Guide T4002, checked by the maintainer on 2026-10-10 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
   collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
+- **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
+  (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
+  expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
+  part, the seller's address and GST/HST number if you like) and add it to a list; type as many as
+  you like, then *Review* them and *Agree to all* at once. Untick any you want to leave out: they stay
+  on your typed list. Nothing is kept until you agree, and closing the window forgets the typed list.
+  There is no box for a bank or card number.
+- **Not attached yet** — a record can be kept without an idea and attached to one later (*Attach* /
+  *Move* on each record).
+- **Deleting an idea keeps its expense records** (the maintainer's decision of 2026-10-08) — they
+  stay in DotAmi's data file on your computer as "not attached yet", refund links included, and you
+  can attach them to another idea. Before you delete, the Delete menu says how many stay, where they
+  are kept and how to delete them too (tick *Your expense records*). The count includes records you
+  turned down, which are kept but not listed on the Expenses page, and the warning says so.
+- **Your business share** — an optional whole percent from 1 to 100 per record, kept as you typed it
+  beside the full amount. DotAmi shows both; it never sets the share or works out a "deductible"
+  amount from it. A share an agent or a file proposed is shown as theirs ("proposed by …"), never as
+  your number.
+- **Refunds and credits, your way** — keep each one as a negative amount on a record, or as a
+  separate refund record linked to the purchase it came from (*Record a refund for this*). Either way
+  it keeps the refund's date, the purchase, the GST/HST part and the credit note's details when you
+  give them. DotAmi doesn't say how a refund is taxed.
+- **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
+  (or turn them down), exactly as before.
+- **Refunds taken off the month they were paid back** ([8c-3]) — ledger exports such as Wave's
+  Account Transactions keep sales in one column (Credit) and refunds paid back to customers in
+  another (Debit), and "Add from a file" only ever added up one, so a month with a refund read too
+  high (the Wave practice file's August: 320.00 against a true 280.00). It now has an optional
+  "Refunds / money out" column. It is never pre-filled, not even for a column named Debit or
+  Refunds: you pick it. Each amount in it is taken off the month of its own row, the month the
+  money went back, which may be later than the sale's; the preview says how many refunds each
+  month had and what they took off, and says that a refund lowers the month it was paid back. A
+  month can go below zero. The rule is the same one the bank statement totals use, kept in one
+  place so the two screens can't disagree. Choosing "None" takes nothing off, as before. Nothing
+  about the column is stored.
+- **A "Status column" for invoice lists** ([8c-3]) — invoice lists from FreshBooks, Sage Accounting
+  and Xero can include void, deleted and draft invoices, which were added up as sales. "Add from a
+  file" now has an optional Status column, pre-filled only when a column is headed exactly "Status"
+  or "Statut". Rows marked Void, Voided, Deleted or Draft (and, assumed for French files, Annulé,
+  Supprimé or Brouillon) are left out of the totals and listed with the reason, beside the other
+  left-out rows; any other status counts as before, only the chosen column is read, and choosing
+  "None" counts every row. Nothing about the column is stored.
+- **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
+  compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
+  account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
+  since an income account can also hold interest or GST/HST you collected. The monthly totals of
+  the ticked accounts follow, one list per currency, exact to the cent, with what was left out and
+  why, and the note "DotAmi read your last save" (changes not yet saved in GnuCash aren't in it).
+  Review sends only those totals to the agree prompt; nothing counts until you agree. Books up to
+  50 MB are read in the background, so the window stays usable, and a read is stopped after a
+  minute. A book from a newer GnuCash, with a feature, account type or part DotAmi doesn't know,
+  is turned away with that thing's name. Figures from a book are listed under **Books / file**.
+- **A note beside a ticked book account that isn't income** ([8h]) — tick a bank, expense or other
+  account GnuCash doesn't mark as income, and a plain note appears under it: "This isn't an income
+  account in your book. If a sale also lands here, it may be counted twice." A sale is posted to
+  both the income account and the bank, so ticking both adds it up twice. The note is all it does:
+  the tick stays yours, the account is still counted, and nothing is blocked.
+- **Bank and card accounts, the groundwork** ([8g]; nothing new to see until the statement screen
+  arrives) — DotAmi can now keep a list of the bank and card accounts you allow it to read
+  statements from, each under your own name for it ("Business chequing", "Visa ending 1234"), with
+  which button you pressed on the warning (Allow once, Always allow this account, Always allow
+  every account) and the day. A name may hold four digits only as "ending" plus four digits at the
+  end; any other run of four or more digits is refused, so an account number can't slip in, and no
+  account or card number is ever kept. Settings lists each account under *Bank and card records*
+  with a *Take back*, and the Delete menu on *What DotAmi knows about you* gets a *Your bank and
+  card accounts* box. The *Bank and card records* switch itself stays marked "not built yet": it,
+  the warning and the statement screen arrive together, so no switch shows that does nothing, and
+  until then nothing can add an account. The words of both warnings are written and reviewed now,
+  in the settings list. Only DotAmi's own window can list, allow or take back an account, never an
+  agent.
+- **Licences** — a new page listing every piece of other people's work DotAmi ships with: each
+  package, its version, its licence, where it ships, and the licence's own words (open an entry to
+  read it). Reached from Settings → Updates, and in the desktop app from Help → Licences. The
+  installer now carries the same list as `THIRD-PARTY-NOTICES.txt` beside DotAmi.exe, next to
+  Electron's licence and Chromium's notices. The list is written from the packages themselves each
+  time the app is built, and building the installer stops if a package that ships has no entry, so
+  the minified app no longer drops the notices its packages' licences ask to be kept.
+- **Delete can clear the safety copies, and finishes a wipe that was cut short** ([8d]) — the Delete
+  list gets one more tick-box, "Safety copies in the backups folder", warning that afterwards only a
+  backup you saved somewhere else could bring anything back. Only the copies DotAmi made itself are
+  deleted; anything else in that folder stays, and a link out of the folder is never followed. If a
+  wipe can't finish (the computer is busy, the disk is full), DotAmi leaves a small note beside the
+  data file and the desktop app finishes the wipe the next time it starts. It does this only when
+  that note is there, never on an ordinary start. The page also says when an earlier Delete hasn't
+  finished, with "Finish it now".
+- **Receipts** ([8i]) — *Add a receipt* on a record you agreed to keeps a copy of the file in a
+  `receipts` folder beside DotAmi's data file: a JPEG, PNG or WebP picture or a PDF, up to 10 MB.
+  DotAmi decides what a file is from what is inside it, not its name, refuses anything else (an SVG
+  or a web page can carry a script), and refuses a picture too large to show safely. It names the copy
+  itself with a random string; your file's name is never sent or kept. You are told first that the copy
+  is kept exactly as you give it, so whatever is printed on it is kept too. *Remove receipt* deletes
+  DotAmi's copy and keeps the record.
+- **Show receipt** — a receipt opens inside DotAmi: a picture as it is, a PDF drawn page by page.
+  Nothing in a receipt can be clicked or run (a PDF's links, forms and scripts do nothing), nothing
+  is fetched from the internet, and DotAmi checks the file is the one you added before showing it;
+  a file changed or replaced on your computer since then is refused, with what to do. A PDF shows at
+  most 20 pages, and fewer when its pages are very large (80 megapixels in all), saying how many.
+- **Backups hold your receipts** — *File → Back up…* now puts every receipt file in the backup with
+  the data, locked by the same passphrase if you chose one, and says how many went in. *Restore*
+  brings them back; the receipts already on this computer go to the backups folder beside the safety
+  copy. Backups are now written and read a piece at a time, so a big data file or many receipts
+  don't need more memory. Backups made by earlier versions still restore (they hold no receipts,
+  and the question before restoring says so).
+- **Your receipts on the Delete menu** — a box of its own that removes every receipt, files
+  included, and keeps the records. *Your expense records* now takes their receipts with them.
+  Deleting your ideas keeps their records and so their receipts. A receipt file left behind (another
+  program had it open) is removed the next time you add or delete one; a file you put in the
+  folder yourself is never touched. If DotAmi stopped half-way through adding a receipt, the next
+  add or delete finishes it (after checking the file is the one it started with) instead of
+  throwing the only copy away. The Settings page now says the receipts folder sits beside the data
+  file, and that copying both is a backup when running from source.
+- **Your receipts are encrypted in the desktop app** ([8i], the maintainer's decision of 2026-10-09)
+  — each receipt file is locked (AES-256-GCM) with a key that Windows keeps for your Windows account
+  only. Windows already keeps other standard accounts out of your data folder; the encryption means
+  an administrator account, a copy of the data folder, or the disk read outside Windows can't read
+  them either. Receipts you already have are encrypted the first time this version starts, one at a
+  time, without ever risking one. Backups still hold your receipts and still restore on another
+  computer; without a passphrase the receipts in a backup aren't encrypted, and the backup window
+  says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses
+  the receipts except those in a backup; Settings, *What DotAmi knows about you* and the note before
+  adding a receipt say so. If the key can't be opened, or the key file `receipts.key` is deleted while
+  receipts are encrypted, DotAmi changes nothing and never makes a new key over them: Settings, *What
+  DotAmi knows about you* and the Expenses page say so in amber, and what to do (put the file back,
+  restore a backup, or delete the receipts). The data file itself is **not** encrypted, and Settings says that too. A
+  copy run from source has no key store, so its receipts stay unencrypted, and it says so. The very
+  first start of a new data folder takes about ten seconds longer: the key is saved only once Windows
+  has saved its own part of it.
+  Design: [expense-records.md § 9](docs/architecture/expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
-  settings. Each box says what else goes with it (deleting ideas also deletes their figures, expense
-  records and map progress) and has a Learn more. A cited line says Delete doesn't touch your own
+  settings. Each box says what else goes with it (deleting ideas also deletes their figures and map
+  progress; their expense records stay, counted, as "not attached yet") and has a Learn more. A cited line says Delete doesn't touch your own
   books, and that the CRA says business records are generally kept six years. DotAmi asks twice,
   refuses if anything changed in between, deletes in one step (a failure part-way deletes nothing),
   then wipes the deleted records out of the data file so they can't be dug back out of it. Only
@@ -68,8 +196,58 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Saving a file in the desktop app asks where** — a file made in the page (the calendar file, a
   playbook) now opens a Save dialog with the file's own name; Cancel saves nothing. Only DotAmi's
   own pages can start a save.
+- **Two-digit years on "Add from a file"** ([8c-3]) — a file with dates like 12-03-05 (Sage 50) or
+  03.12.26 (FreshBooks) used to find no dates at all. Now it gets one question, "Is 05 the year
+  2005?", with Yes and No, and no totals until it is answered. DotAmi never picks the century
+  itself. The answer is for that file only: the next file is asked again. The year is taken to be
+  the last number, as in those programs' short dates.
+- **Every file's preview says how its dates were read** — above the monthly totals, the earliest
+  and latest date in words ("Dates read: 3 December 2005 to 28 February 2006"), to check against
+  the file. A date in a month that isn't over yet is included, so a year read wrong can't hide there.
+- **"These dates are right" on "Add from a file"** ([8c-3]) — a tick-box beside the "Dates read"
+  line that must be ticked before Review opens the agree prompt ("These months are right" for a
+  report with the months across the top). Choosing another file, date column, date order or
+  century answer empties it again, and going back to an earlier answer doesn't tick it again by
+  itself. Retyping the currency or changing the amount column leaves it ticked. The tick is held
+  only on the screen; nothing new is kept or sent.
+- **Reports with the months across the top on "Add from a file"** ([8c-3]) — a report with one
+  column per month, like FreshBooks' Revenue by Client, used to find no column names and add up
+  nothing. A new "The file has" choice says whether the file has one row per sale with a date, or
+  the months across the top; DotAmi starts on months across only when it finds no dates on the
+  rows and a row of month names above some amounts, and says to check it. You pick the row holding
+  the month names and where the totals come from: every row added down each month (the file's own
+  totals rows left out, while a client whose name starts with "Total" is still counted), or one
+  row only, such as the file's Total row. The screen lists the
+  columns it read as months and the ones it didn't add (Client, Total). Month names are read in
+  English and French with a four-digit year (Jul 2026, juillet 2026, 2026-07, 07/2026); a name
+  that only looks like a month (Jul, Jul 26, a whole date) stops the table and the screen names
+  the column, rather than guess the year. Left-out cells are listed the way Excel names them (C6).
+  These figures go to the agree prompt without a row count: one client row goes into every month,
+  so adding the months' counts would show more rows than the file has.
+- **A report with no dates says which report to export instead** — Wave's Income by Customer (one
+  total per customer, no dates) now gets a sentence naming Wave's Account Transactions report,
+  which has a date on every line. Any other file with no date and no month at all is told to
+  export a report that has a date on every sale.
 
 ### Changed
+- **Requests up to 16 MB reach DotAmi's routes whole** (`next.config.mjs`,
+  `middlewareClientMaxBodySize`). Next cut every request body at 10 MiB on its way through
+  `middleware.ts`, so a receipt near the 10 MB cap (sent as base64, about 14 MB) arrived broken and
+  was refused with "Invalid JSON". Each route still has its own, smaller limit.
+- **A database update** adds one table, `Receipt`, describing each receipt file; nothing else in
+  the data file is touched (a test seeds ideas, figures, links, map progress, settings and expense
+  records and checks each after the update), and the app backs the file up first.
+- **A database update** rebuilds the expense records table only, so a record's idea can be empty
+  (and is emptied, not deleted, when its idea is deleted) and the new fields fit; your ideas, figures, links, map progress, settings and existing expense records
+  are kept as they are (a test seeds each and checks it after the update), and the app backs the
+  file up first.
+- **The desktop app is about 30 MB smaller once installed** (the installer about 8 MB smaller). Its
+  server no longer carries the image library sharp (with libvips, LGPL-3.0-or-later) or the
+  TypeScript compiler, which Next.js's build copied in although DotAmi never resizes an image and
+  never compiles code while it runs, nor the small packages only those two needed. Next's image
+  optimiser is switched off in the desktop app, so its address answers "not found" instead of
+  reaching for the missing library. Their entries leave the app's licence list; nothing changes on
+  screen otherwise. A copy run from the source code is unchanged.
 - **A PDF dropped on "Add from a file"** now says it is a PDF and points to *Add from last year's
   return*, instead of "That isn't a spreadsheet".
 - **Running DotAmi from its source code no longer reports to Next.js.** `npm run dev`, `npm run build`,
@@ -84,16 +262,43 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   help pages, plus Xero's Receivable Invoice Detail, each checked to the cent. They found nine
   things DotAmi gets wrong today, now written down as tests that fail the day each is fixed: a
   refund in a Wave ledger, voided and draft invoices counted as sales, FreshBooks' summary block
-  taken for the column names, two-digit years, months across the top, a Wave report with no dates,
-  a French Sage 50 file with several comma-decimal columns split on its commas, and a formula saved
-  with no value reported as an empty amount. See docs/connectors/practice-files.md.
+  taken for the column names, two-digit years, months across the top and a Wave report with no
+  dates (those three since fixed, under Added), a French Sage 50 file with several comma-decimal columns split on its
+  commas, and a formula saved with no value reported as an empty amount (those two since fixed,
+  under Fixed). See docs/connectors/practice-files.md.
 
 ### Documented
 - **The privacy log** (`docs/privacy-log.md`) — what each version keeps, sends, ships and asks you to
   agree to, from 0.1.0 on, and what the future privacy policy will need to say. Every change that
   affects it adds a line under [Unreleased]; a test fails when a version has no section.
+- **A review of the ways to show iPhone (HEIC) photos as receipts** ([8i]) — every decoder found
+  (libheif in WebAssembly, the packages labelled MIT that carry it, two new permissive decoders, the
+  graphics chip through Chromium's WebCodecs, Windows' own codec), with its licence, security, size
+  and which computers it works on (including that DotAmi's worker policy blocks WebAssembly today, so
+  every WebAssembly decoder needs that policy opened first), and a list of options with their costs
+  for the maintainer to choose from. Nothing changes in the app: HEIC is still refused
+  (`docs/connectors/heic-decoder-review.md`).
 
 ### Fixed
+- **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
+  with semicolons and amounts like "1 000,00" in several columns (Sage 50 Canadian in French) was
+  split on its commas, so no column names were found and nothing was added up. When the commas on
+  the lines that split on semicolons sit mostly inside amounts, DotAmi now reads the file on its
+  semicolons, also when a description holds a comma ("Design, impressions"). A comma file whose
+  commas sit in its text still reads on its commas when a semicolon turns up in it.
+- **An Excel formula with no saved value is no longer called an empty amount** ([8c-3]) — some
+  programs (Xero says so for its Excel reports) leave a sum for Excel to work out when the file is
+  opened, so the cell holds a formula and no number until the file is saved again in Excel. Such a
+  row was listed as "a date but no amount". Now it is listed as a formula Excel didn't save a value
+  for, with what to do: open the file in Excel, click Enable Editing if it asks, save it, and drop
+  it again. DotAmi still never works a formula out itself, so nothing is guessed for that row. The
+  same goes for a cell under a month in a report with the months across the top.
+- **A FreshBooks file with a summary on top opens on its real column names** ([8c-3]) — FreshBooks'
+  Invoice Details puts a short summary ("Total Invoiced, Total Paid" over two figures) above the
+  table, and "Add from a file" took the summary's two titles for the column names, with "Total
+  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary,
+  the one that names the date column. A sheet whose first row of names already says "Date" keeps
+  it, and a row you pick yourself is never moved.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading
@@ -109,11 +314,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   disk straight away, including what stopped the start (DotAmi's message and the error's name and
   code), and a start made by the updater says so. If the log itself can't be opened, DotAmi starts
   without it instead of refusing to start.
+- **The browser tests no longer trip the app's own rate limits** (developers only; the app's limits
+  are unchanged). Every browser test reaches the test server as the same client, so as the suite
+  grew it made more settings calls in a minute than a person would, and on a fast computer tests
+  failed with "Too many requests" (429). The test server now starts with
+  `DOTAMI_E2E_RATE_LIMITS=opt-in` (set only in `playwright.config.ts`; the desktop app removes it
+  from its server): a request counts toward a limit only when it names its own bucket in the
+  `x-dotami-e2e-rate-limit` header. `e2e/rate-limit.spec.ts` does, and shows the settings limit of
+  120 a minute still refusing the 121st request, and that the suite's other requests aren't counted;
+  the desktop test shows the switch never reaches the desktop app.
+- **A browser-test run can no longer use another run's server.** The run used to start testing as
+  soon as anything answered on its port, so when runs from two checkouts overlapped, the second
+  one's tests reached the first one's server and database, and the two tests that put bank and card
+  accounts straight into the test database found their lists missing. A run now waits for its own
+  server to say it is ready, and stops with a plain message when the port is already taken
+  (`e2e/port-free.mjs`).
 
 ### Security
 - **Workers started from DotAmi's own script files can't connect anywhere.** A browser applies a
   worker's own response policy, not the page's, so Next's static files now carry one that allows
   DotAmi's scripts and nothing else. No worker before the return reader loaded from those files.
+- **The answer carrying a receipt's bytes has a sandbox policy** (`default-src 'none';
+  frame-ancestors 'none'; sandbox`), set in `next.config.mjs` as well as the route, since Next's
+  general headers would otherwise replace the route's own. Were it ever loaded as a page, nothing in
+  it could run or load.
 
 ## [0.2.1] — 2026-10-08
 
