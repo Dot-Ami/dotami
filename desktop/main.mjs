@@ -26,7 +26,7 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, plainLeftovers, resumeEncryption } from "./encrypt-database.mjs";
+import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
