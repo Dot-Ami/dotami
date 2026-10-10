@@ -469,11 +469,15 @@ When the app starts and can't open the key:
   that opens is never replaced because `dotami.db` is missing: a new data file gets the same key, so
   the safety copies locked with it (or the data file, put back) still open.
 - **Windows' key store not available right now** (it can be, briefly, after signing in or an
-  update) is said apart from a lost key: restart Windows or sign in again. Nothing is given up for it.
+  update) is said apart from a lost key: restart Windows or sign in again. Nothing is given up for it:
+  the window doesn't offer **Restore from a backup…** then, and the app refuses that answer.
 - **It says so before any window opens**, in plain words: what happened, that nothing was changed,
   that putting `database.key` back (if it was moved or deleted) brings everything back, and the way
   forward that needs no new decision: **File → Restore from a backup…**, which moves the locked data
   file and its key file into `backups/` (never deleting them) and restores the backup under a new key.
+  The locked file moves first and the new key is saved only after it (`setAsideLockedFileUnderNewKey`):
+  a file another program holds changes nothing, and a key that can't be saved puts the file back, so a
+  failure never leaves a new key beside the old locked file (found in review, 2026-10-10).
 - **Start fresh, keeping the locked file** (the maintainer's decision 2, 2026-10-10): a button in
   the same window, asked twice, which says plainly what is given up (everything in the locked file
   not in a backup, unless its key comes back), then moves the locked data file and its key file into

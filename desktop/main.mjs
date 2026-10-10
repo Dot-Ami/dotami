@@ -26,8 +26,8 @@ import {
   restoreReceiptsNote,
   writeBackup,
 } from "./backup.mjs";
-import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey } from "./database-key.mjs";
-import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
+import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
+import { encryptFile, EncryptionStopped, plainLeftovers, readNote, resumeEncryption } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
@@ -643,8 +643,12 @@ async function showLostKey(opened) {
       : opened.wrongKey
         ? `The key file (${DATABASE_KEY_FILE}, beside the data file) opens, but holds another key, not this data file's.`
         : "Windows won't open its key for this Windows account, or the key file holds another key.";
+  // While Windows' key store is only unavailable for now, a restart may bring the key back: nothing that sets
+  // the locked file aside is offered, and the answer is refused here too.
+  const answers = opened.storeUnavailable ? ["quit", "open-folder"] : ["quit", "open-folder", "restore"];
+  const status = opened.storeUnavailable ? "store-unavailable" : "";
   for (;;) {
-    const answer = await askInWindow("lost-key", ["quit", "open-folder", "restore"], "quit", { detail: why, height: 460 });
+    const answer = await askInWindow("lost-key", answers, "quit", { detail: why, status, height: 460 });
     if (answer === "open-folder") {
       await shell.openPath(dataDir);
       continue;
@@ -1030,17 +1034,22 @@ async function restore({ databaseKeyLost = false } = {}) {
     }
   }
   if (databaseKeyLost) {
-    // [8i] The new key first (a key file this account can't open is moved into backups/ by makeDatabaseKey,
-    // never deleted), then the locked data file beside it; only then the restore. Nothing is deleted on
-    // any path: if a step fails, the locked file and its key are in backups/ or still in place.
+    // [8i] The locked data file into backups/ first (never deleted), then the new key (the old key file goes
+    // there too); only then the restore. In that order so a failure never leaves a new key beside the old
+    // locked file: a move that fails changes nothing, and a key that can't be saved puts the file back
+    // (desktop/database-key.mjs setAsideLockedFileUnderNewKey).
     try {
-      const made = await makeDatabaseKey(dataDir, safeStorage, { key: stagingKey });
-      const lockedTo = setAsideLockedFile(dataDir, dbFile);
-      log?.write(`[restore] a new key for the data file was saved; the locked data file and its key went to the backups folder${made.setAside || lockedTo ? "" : " (there were none)"}\n`);
+      const { lockedTo, keySetAside } = await setAsideLockedFileUnderNewKey(dataDir, dbFile, safeStorage, stagingKey);
+      log?.write(`[restore] the locked data file and its key went to the backups folder${keySetAside || lockedTo ? "" : " (there were none)"}; a new key for the data file was saved\n`);
     } catch (error) {
-      log?.write(`[restore] the locked data file couldn't be set aside under a new key: ${describeError(error)}\n`);
+      log?.write(`[restore] the locked data file couldn't be set aside under a new key (step: ${error?.step ?? "?"}): ${describeError(error)}\n`);
       discardRestore(staging);
-      dialog.showErrorBox("DotAmi", "The restore didn't happen: DotAmi couldn't save a new key for your data. Nothing was deleted. DotAmi will restart.");
+      dialog.showErrorBox(
+        "DotAmi",
+        error?.step === "set-aside"
+          ? `The restore didn't happen: DotAmi couldn't move the locked data file into the backups folder (${error?.code ?? "error"}; another program may have it open). Nothing was changed. DotAmi will restart.`
+          : "The restore didn't happen: DotAmi couldn't save a new key for your data, so the locked data file was put back where it was. Nothing was changed. DotAmi will restart.",
+      );
       app.relaunch();
       app.exit(0);
       return;

@@ -16,6 +16,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Restore from a backup… when the data file's key is lost** ([8i]) — the window that says the key
   can't be opened now offers it: the locked data file and its key file are moved into the backups
   folder, never deleted (in case the key comes back), and the backup is restored under a new key.
+  The locked file moves before the new key is saved, so a step that fails changes nothing; while
+  Windows' key store is only unavailable for now, the window offers no restore and says to restart.
 - **Your data file is encrypted in the desktop app** ([8i], the maintainer's decisions of 2026-10-10)
   — with a key only your Windows account on this computer can open, kept wrapped by Windows (the
   same protection as the receipts' key, in a file of its own, `database.key`), and its safety copies
