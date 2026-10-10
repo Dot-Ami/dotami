@@ -799,6 +799,21 @@ In `desktop/wipe-pending.mjs`, which only uses the file system:
   plain words, and ends: afterwards the locked data and those receipts can never be opened, even if the
   old key comes back. It is built from what is there (`setAsideWarning` in `lib/privacy/inventory.ts`),
   so it never names something the folder doesn't hold.
+  *Fixed in review (2026-10-10):* the first version was handed only three totals, so one
+  `receipts-locked-…` folder made it name all three folder names, and one key file both key names. The
+  page now counts each name on its own (`receipts-locked-…`, `receipts-before-restore-…`,
+  `receipts-before-start-fresh-…`, `receipts-key-unreadable-….key`, `database-key-unreadable-….key`,
+  `dotami-locked-….db`; `setAsideKindsOf`), and the warning says one short sentence for each name that is
+  there and nothing about one that isn't. It opens "This also deletes what DotAmi set aside in the backups
+  folder." and each sentence says what goes and its name.
+- **The start-fresh receipts may still open today, and the warning says so.** Start fresh leaves
+  `receipts.key` alone, so when only the data file's key was lost, the receipts it set aside are locked
+  with the key in use now. Their sentence adds: "Those receipts may still open with the receipts key in
+  use today. This deletes the only copy of them here." The closing "even if the old key comes back"
+  stays true of the others.
+- **Learn more under the box says each of them goes**, in so many words: "The old key files … go too,
+  and so does the locked data file … with everything in it." (The first version read "a file of yours in
+  one stays … So do the old key files …", which reads as if they stay.)
 - **With the box unticked, the first ask says they stay**, one line per kind that is there; the locked
   file's line adds that it could still be opened if its key comes back.
 - **The result** counts each kind deleted and left; one another program holds is said in amber, with
@@ -806,8 +821,12 @@ In `desktop/wipe-pending.mjs`, which only uses the file system:
 - **What Delete doesn't reach** drops its two lines about these files and says what is really left in
   `backups/`: files and folders the person put there. Nothing DotAmi sets aside there is out of the
   box's reach any more, and the line says so.
-- The lost-key window's own words are unchanged: Start fresh and the restore still delete nothing
-  ("kept in the backups folder, as they are"); they stay until the person ticks the box.
+- **The lost-key window and the restore question no longer say "never deleted".** Start fresh and the
+  restore still delete nothing, and they say that. But "never deleted" (the restore question in
+  `desktop/main.mjs`) and "never deleting them" (`desktop/lost-key.html`) were promises about the file's
+  whole future, which this box breaks. They now say the restore doesn't delete them, and that Delete on
+  *What DotAmi knows about you* can, after a warning. Start fresh's panel keeps "Nothing is deleted." and
+  its "if the key comes back, the locked file can still be opened" adds "unless you delete it first", with where.
 
 ### Why one box is safe enough
 
@@ -821,8 +840,21 @@ box clears all of those. The warning names each kind and says plainly that the l
   Start fresh doesn't touch: when only the data file's key was lost, that key may still open them. But
   the new data file describes none of them and DotAmi has no way to bring them back into the app, so
   inside DotAmi they are as unreachable as `receipts-before-restore-…`. Clearing them gives up the only
-  copy of those receipt files in the data folder; the warning says so.
+  copy of those receipt files in the data folder; the warning says so, in its own sentence, shown only
+  when such a folder is there.
 - **Zero counts of the set-aside kinds are hidden** on the box's line and at the first ask.
+
+### Known limit: going back to an older version
+
+The wipe-pending note keeps `format: 1` and only gains two lists (`keyFiles`, `lockedFiles`). A version
+from before this change reads such a note, doesn't know those lists, and removes the note once what it
+does know is finished. So if Delete left a key file or the locked data file owed (another program had it
+open) and the person then installs an older version, that older version's start drops the debt and the
+files stay. Nothing is deleted that wasn't asked for, and the older version's page lists those files
+under *What Delete doesn't reach*, so it doesn't claim they are gone; but the newer page's "it finishes
+at the next start" isn't kept. An older version can't be changed. Ticking the box again in a newer
+version clears them. If downgrades come to matter, a later note format can make a reader refuse to
+remove a note it doesn't fully understand.
 
 ### Tests (each must fail when its rule is removed)
 
@@ -833,7 +865,9 @@ box clears all of those. The warning names each kind and says plainly that the l
 - `tests/privacy-delete.spec.ts`: the counts checked (a different count deletes nothing, no note left);
   ticked, every byte of them is gone from every file beside the data file; unticked, they stay; the note
   owes them before the first removal; one held open stays owed and *Finish it now* finishes it; the
-  warning's words for each kind.
+  warning's words for each kind, and (since review) only for the names that are there, in short
+  sentences, with the start-fresh sentence; Learn more saying the key files and the locked file go;
+  the lost-key window and the restore question no longer promising "never deleted".
 - `tests/privacy-holdings.spec.ts`: the page's counts, and nothing of what is inside.
 - `e2e/your-data.spec.ts`: the box's line, the warning under it and at both asks, the unticked line,
   the result, and *What Delete doesn't reach* no longer naming them.
