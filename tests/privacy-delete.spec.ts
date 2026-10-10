@@ -1200,6 +1200,25 @@ describe("the receipt folders set aside in the backups folder", () => {
     expect(existsSync(wipePendingFile(file))).toBe(false);
   });
 
+  it("the note written before anything is removed already owes the ticked folders, so a removal cut short is finished later", async () => {
+    const { prisma, file } = makeDb("set-aside-note-first");
+    await seed(prisma);
+    const aside = setAside(file, "receipts-locked-1760000000000", { [receiptName()]: "locked" });
+    // Read the note at the moment the first file is about to go: that is what a computer switched
+    // off mid-removal would leave behind for the next start.
+    let noteAtFirstRemoval: ReturnType<typeof readWipePending> | undefined;
+    const watching = (target: string) => {
+      if (noteAtFirstRemoval === undefined) noteAtFirstRemoval = readWipePending(file);
+      rmSync(target);
+    };
+    const kinds = ["statements", "backups"];
+    const result = await deleteData(prisma, { kinds, seen: await seenFor(prisma, kinds, 0, 1) }, { dataFile: file, remove: watching });
+    expect(result).toMatchObject({ status: "deleted", wiped: true });
+    expect(noteAtFirstRemoval?.receiptFolders).toEqual([path.basename(aside)]);
+    expect(existsSync(aside)).toBe(false);
+    expect(existsSync(wipePendingFile(file))).toBe(false);
+  });
+
   it("when a table's count changed, the folders stay, and none is owed", async () => {
     const { prisma, file } = makeDb("set-aside-table-changed");
     await seed(prisma);

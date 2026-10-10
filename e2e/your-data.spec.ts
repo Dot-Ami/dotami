@@ -619,6 +619,31 @@ test("Delete: the safety-copies box also clears the receipt folders set aside in
   }
 });
 
+test("Delete: with the safety-copies box unticked, the first ask says the set-aside receipt folders still hold their receipts, even with no safety copies ([8i])", async ({ page }) => {
+  // Only a restore's set-aside folder, no safety copy: the copies' own line has nothing to say.
+  const before = path.join(BACKUPS_DIR, "receipts-before-restore-1760000000001");
+  mkdirSync(before, { recursive: true });
+  writeFileSync(path.join(before, `${"c3".repeat(16)}.png`), "a receipt from before a restore");
+  expect((await page.request.post("/api/person/statements", { data: { text: "a statement for the unticked line" } })).status()).toBe(200);
+  try {
+    const removing = await openDeleteMenu(page);
+    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Safety copies: 0 · Set-aside receipt folders: 1");
+    await removing.getByLabel(STATEMENTS_BOX).check();
+    await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
+
+    const first = page.getByRole("dialog", { name: "Delete these?" });
+    await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+    await expect(first).not.toContainText("The safety copies in the backups folder aren't ticked");
+    await expect(first).not.toContainText(WARNING);
+    // Nothing is deleted: this test only reads the first ask.
+    await first.getByRole("button", { name: "Cancel" }).click();
+    await expect(first).toBeHidden();
+    expect(readdirSync(before)).toHaveLength(1);
+  } finally {
+    rmSync(BACKUPS_DIR, { recursive: true, force: true });
+  }
+});
+
 test("Delete: a wipe an earlier Delete left owed is said on the page, and Finish it now finishes it", async ({ page }) => {
   writeFileSync(WIPE_NOTE, `${JSON.stringify({ format: 1, since: "2026-10-08T12:00:00.000Z", backups: [] })}\n`);
   try {
