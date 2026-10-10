@@ -19,7 +19,7 @@
 //
 // The log gets the step and counts only, never a name of the person's, a value or the key.
 import { createHash } from "node:crypto";
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
+import { closeSync, existsSync, fstatSync, fsyncSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
 import path from "node:path";
 
 import { contentsOf, copyIntoKeyedFile, differences } from "./database-copy.mjs";
@@ -108,14 +108,16 @@ function sha256Of(file) {
  * physical disk (§ 1); DotAmi says so in Settings.
  */
 export function wipeFile(file) {
-  let size;
+  // Opened once and measured through the same handle, so the zeros cover the whole of the file opened.
+  let fd;
   try {
-    size = statSync(file).size;
-  } catch {
-    return;
+    fd = openSync(file, "r+");
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
   }
-  const fd = openSync(file, "r+");
   try {
+    const size = fstatSync(fd).size;
     const zeros = Buffer.alloc(64 * 1024);
     for (let at = 0; at < size; ) {
       const n = Math.min(zeros.length, size - at);

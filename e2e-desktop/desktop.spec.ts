@@ -1257,7 +1257,7 @@ test("a data file whose key can't be opened: nothing changes, the app says what 
   app = null;
   // Nothing on the disk changed, and no new key was made.
   expect(readFileSync(dbFile).equals(before)).toBe(true);
-  expect(existsSync(keyFile)).toBe(false);
+  expect(readdirSync(dataDir)).not.toContain("database.key");
   expect(readFileSync(path.join(dataDir, "logs", "server.log"), "utf8")).toContain("[database] the key file is missing; nothing was changed");
 
   // Put back (as from the Recycle Bin): everything comes back.
