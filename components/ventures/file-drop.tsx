@@ -128,6 +128,12 @@ function rowWord(n: number): string {
   return n === 1 ? "row" : "rows";
 }
 
+/** Beside a month's total: what its refunds took off, e.g. "1 refund taken off ($40.00)". */
+function refundsText(refunds: { rows: number; cents: number }, currency: string): string {
+  const word = refunds.rows === 1 ? "refund" : "refunds";
+  return `${refunds.rows} ${word} taken off (${formatAmount(refunds.cents, currency)})`;
+}
+
 /** "1 row 7" / "2 rows 3, 9" / "6 rows 3, 4, 5, 6, 7, …": the first few row numbers or cell names. */
 function placesText(word: string, plural: string, places: string[]): string {
   const shown = places.slice(0, MAX_ROW_NUMBERS_SHOWN);
@@ -1073,6 +1079,36 @@ export function FileDrop({
                     </p>
                   </div>
                   <div>
+                    <label htmlFor={`${uid}-refund`} className={FIELD_LABEL}>
+                      Refunds / money out column (optional)
+                    </label>
+                    {/* Never pre-filled: a column that takes money off the totals is only ever the
+                        person's own pick (lib/figures/file/preview.ts, Picks.refundColumn). */}
+                    <select
+                      id={`${uid}-refund`}
+                      value={picks.refundColumn ?? ""}
+                      onChange={(e) => {
+                        setPicks({ ...picks, refundColumn: asNumber(e.target.value) });
+                        setGuessed(false);
+                      }}
+                      aria-describedby={`${uid}-refund-hint`}
+                      className={`${FIELD} mt-1`}
+                    >
+                      <option value="">None — refunds not taken off</option>
+                      {columns.map((c) => (
+                        <option key={c.index} value={c.index}>
+                          {c.letter} · {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p id={`${uid}-refund-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                      Ledger exports, such as Wave&apos;s Account Transactions, keep sales in one column
+                      (Credit) and refunds paid back to customers in another (Debit). Pick the refunds
+                      column and each amount in it is taken off the month it was paid back. Choose
+                      None to leave refunds out.
+                    </p>
+                  </div>
+                  <div>
                     <label htmlFor={`${uid}-type`} className={FIELD_LABEL}>
                       Type column (optional)
                     </label>
@@ -1290,6 +1326,7 @@ export function FileDrop({
                         </td>
                         <td className="text-stone-dim">
                           {m.rows} {rowWord(m.rows)}
+                          {m.refunds ? ` · ${refundsText(m.refunds, code)}` : null}
                         </td>
                       </tr>
                     ))}
@@ -1298,6 +1335,15 @@ export function FileDrop({
               ) : (
                 <p className="text-xs text-paper-dim">Nothing new to propose from this file.</p>
               )}
+
+              {split.fresh.some((m) => m.refunds) ? (
+                // The refund rule's one surprise, said where the totals are: a refund lowers the
+                // month the money went back, which can be a later month than the sale's.
+                <p className="mt-2 text-[11px] text-stone-dim">
+                  Refunds are taken off the month they were paid back, which may be a later month
+                  than the sale they refund.
+                </p>
+              ) : null}
 
               {split.known.length > 0 ? (
                 <ul className="mt-2 space-y-0.5 text-[11px] text-stone-dim">

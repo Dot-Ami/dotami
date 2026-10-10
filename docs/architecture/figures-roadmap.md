@@ -120,7 +120,7 @@ Gaps already found by running the real code:
 - Xero `InvoiceDate` is not pre-filled. *Fixed 2026-10-07.*
 - An Invoice and its Payment are counted twice. *Fixed 2026-10-07 (#89, the Type column).*
 - A FreshBooks summary row is taken as the header. *Fixed 2026-10-08 (the Status column slice).*
-- A Wave refund sits in a Debit column.
+- A Wave refund sits in a Debit column. *Fixed 2026-10-08 (the refunds slice: an optional refunds column, the rule shared with 8g).*
 - A Sage void invoice is counted (and a FreshBooks Draft, and a Xero Voided line). *Fixed 2026-10-08 (the Status column).*
 - Two-digit years are refused. *Fixed 2026-10-08 ([8c-3]): one question per file, "Is 05 the year 2005?".*
 - Months-across reports can't be read. *Fixed 2026-10-08 ([8c-3]): the person picks the row of month names and where the totals come from; Wave's Income by Customer names Account Transactions instead.*

@@ -127,7 +127,8 @@ roadmap's build order.
     "no amount" and never guessed
   - [x] Void, deleted and draft invoices left out through an optional Status column, and the FreshBooks
     summary block no longer taken for the column names
-  - [ ] Fix the other gap those files found (follow-on slice: refunds)
+  - [x] Refunds in a ledger's Debit column taken off the month they were paid back, through an
+    optional "Refunds / money out" column, under the same rule as the bank statement totals
 - 🔄 **[8d] Sources, and "What DotAmi knows about me"** — every figure, where it came from;
   *forget this source*; *delete everything*.
   - [x] The read-only page, a test that fails when something DotAmi keeps isn't listed on it, and logs

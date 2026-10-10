@@ -1600,6 +1600,128 @@ test("an invoice list with a summary on top: the real column names are found, an
   expect(await figures()).toEqual(before);
 });
 
+test("a ledger export: refunds picked from the Debit column are taken off the month they were paid back", async ({
+  page,
+}) => {
+  const { card, ventureId, figures } = await openSalish(page);
+  const before = await figures();
+
+  // Wave-shaped Account Transactions for the Sales account (invented numbers): sales in Credit,
+  // refunds paid back in Debit. A sale in the first month, a sale and a 40.00 refund (for the first
+  // month's sale) in the second, and only a 25.00 refund in the third.
+  const [a, b, c] = [monthsAgo(4), monthsAgo(3), monthsAgo(2)];
+  const day = (m: { y: number; m: number }, d: number) => `${m.y}-${two(m.m)}-${two(d)}`;
+  const lines = [
+    "Invented Shop Ltd.",
+    "Account Transactions",
+    "",
+    "Date,Description,Debit,Credit,Balance",
+    "Sales",
+    "Starting Balance,,,,0.00",
+    `${day(a, 8)},Invoice 1 - Invented Client A,,500.00,500.00`,
+    `${day(b, 5)},Invoice 2 - Invented Client B,,320.00,820.00`,
+    `${day(b, 19)},Refund - Invented Client A,40.00,,780.00`,
+    `${day(c, 3)},Refund - Invented Client B,25.00,,755.00`,
+    "Totals,,65.00,820.00,",
+  ];
+  await card.getByRole("button", { name: "Add from a file" }).click();
+  await answerAccounting(card);
+  await card.getByLabel("Choose a file").setInputFiles({
+    name: "account-transactions.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(lines.join("\n") + "\n", "utf8"),
+  });
+
+  // The date is pre-filled; the refunds column never is, and offers "None" until the person picks.
+  await expect(card.getByLabel("Date column").locator("option:checked")).toHaveText("A · Date");
+  const refunds = card.getByLabel("Refunds / money out column (optional)");
+  await expect(refunds).toBeVisible();
+  await expect(refunds.locator("option:checked")).toHaveText("None — refunds not taken off");
+  await expect(
+    card.getByText(
+      "Ledger exports, such as Wave's Account Transactions, keep sales in one column (Credit) and refunds paid back to customers in another (Debit).",
+      { exact: false },
+    ),
+  ).toBeVisible();
+
+  // With only Credit picked, the refunds are rows with no amount, and nothing is taken off.
+  await card.getByLabel("Amount column (revenue)").selectOption({ label: "D · Credit" });
+  const table = card.getByRole("table", { name: "Monthly totals from account-transactions.csv" });
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${b.name} \\$320\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(card.getByText(/2 rows with a date but no amount/)).toBeVisible();
+  await expect(card.getByText(/taken off the month they were paid back/)).toHaveCount(0);
+
+  // Picking Debit as the refunds column takes each refund off the month it was paid back: the
+  // second month, not the first month's sale, and the third month goes below zero.
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(
+    table.getByRole("row", { name: new RegExp(`^${a.name} \\$500\\.00 1 row$`) }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${b.name} \\$280\\.00 2 rows · 1 refund taken off \\(\\$40\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("row", {
+      name: new RegExp(`^${c.name} [-−]\\$25\\.00 1 row · 1 refund taken off \\(\\$25\\.00\\)$`),
+    }),
+  ).toBeVisible();
+  await expect(
+    card.getByText(
+      "Refunds are taken off the month they were paid back, which may be a later month than the sale they refund.",
+    ),
+  ).toBeVisible();
+  await expect(card.getByText(/with a date but no amount/)).toHaveCount(0);
+
+  // The same column as the amount is refused with a sentence, and no totals are shown.
+  await refunds.selectOption({ label: "D · Credit" });
+  await expect(
+    card.getByText("The refunds column can't be the date or the amount column."),
+  ).toBeVisible();
+  await expect(table).toHaveCount(0);
+  await refunds.selectOption({ label: "C · Debit" });
+  await expect(table.getByRole("row")).toHaveCount(3);
+
+  // Review sends the netted totals, the negative month included. The request is answered here
+  // with an error so nothing is stored and the idea's figures stay as they were.
+  let sent: unknown = null;
+  await page.route("**/api/figures/propose", async (route) => {
+    sent = JSON.parse(route.request().postData() ?? "null");
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Held by the test." }),
+    });
+  });
+  // Review waits for the dates to be confirmed (the "These dates are right" tick-box).
+  await card.getByRole("checkbox", { name: "These dates are right" }).check();
+  await card.getByRole("button", { name: "Review these 3 figures" }).click();
+  await expect(card.getByText("Held by the test.")).toBeVisible();
+  const lastDay = (m: { y: number; m: number }) => new Date(Date.UTC(m.y, m.m, 0)).getUTCDate();
+  const figure = (m: { y: number; m: number }, amountCents: number, rows: number) => ({
+    kind: "gross-revenue",
+    periodStart: `${m.y}-${two(m.m)}-01`,
+    periodEnd: `${m.y}-${two(m.m)}-${lastDay(m)}`,
+    amountCents,
+    currency: "CAD",
+    rows,
+  });
+  expect(sent).toEqual({
+    ventureId,
+    source: { kind: "file", label: "account-transactions.csv", rows: 4 },
+    figures: [figure(a, 50000, 1), figure(b, 28000, 2), figure(c, -2500, 1)],
+  });
+  await page.unroute("**/api/figures/propose");
+
+  await card.getByRole("button", { name: "Cancel" }).click();
+  expect(await figures()).toEqual(before);
+});
+
 test("an .xlsx is read in the window; a renamed picture and a macro workbook are refused", async ({
   page,
 }) => {

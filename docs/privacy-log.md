@@ -120,6 +120,12 @@ person is asked).
   [`e2e-desktop/desktop.spec.ts`](../e2e-desktop/desktop.spec.ts)). While a restore is being checked,
   the backup's receipts are unpacked into a staging folder beside the data file
   (`restore-staging.db-receipts`), removed if the person cancels or the backup is refused.
+- ***Add from a file*'s Refunds / money out column ([8c-3]) keeps nothing.** It is one more
+  optional pick on the panel, never pre-filled: no new table, column, file or browser-storage key.
+  What leaves the page is unchanged in kind: the monthly totals, now with any picked refunds taken
+  off (a month can be below zero), go to the agree prompt as before, and only the ones the person
+  agrees to are kept ([`lib/figures/file/totals.ts`](../lib/figures/file/totals.ts),
+  [`lib/figures/refunds.ts`](../lib/figures/refunds.ts)).
 - ***Add from a file*'s Status column ([8c-3]) keeps nothing.** It is a pick on the panel only,
   like the Type column: no new table, column, file or browser-storage key, and only the monthly
   totals the person agrees to are kept, as before
