@@ -43,6 +43,18 @@ export interface Picks {
    * Pre-filled only for a header that is exactly "Transaction Type" or "Type" (see guessColumns).
    */
   typeColumn: number | null;
+  /**
+   * The optional column of invoice statuses. Null leaves it unused, and then every row counts.
+   * Pre-filled only for a header that is exactly "Status" or "Statut" (see guessColumns).
+   */
+  statusColumn: number | null;
+  /**
+   * The optional column of refunds paid back (a ledger's Debit column). Unset or null: refunds are
+   * not taken off. NEVER pre-filled, so guessPicks leaves it unset: a column that subtracts money
+   * from the person's revenue is only ever their own choice, and "Debit" means money in on a bank
+   * account's ledger, so its name alone proves nothing.
+   */
+  refundColumn?: number | null;
 }
 
 /** What the date column says about how its dates are written (see detectDateOrder). */
@@ -83,6 +95,7 @@ export function guessPicks(
     dateColumn: null,
     amountColumn: null,
     typeColumn: null,
+    statusColumn: null,
   };
   if (forcedHeader === undefined) {
     const guess = guessColumns(rows);
@@ -94,12 +107,14 @@ export function guessPicks(
         dateColumn: guess.dateColumn,
         amountColumn: guess.amountColumn,
         typeColumn: guess.typeColumn,
+        statusColumn: guess.statusColumn,
       },
       guessed: true,
     };
   }
   // Looking from the chosen row down keeps every column index the same as in the whole sheet.
-  const guess = guessColumns(rows.slice(forcedHeader));
+  // keepFirstRow: the person's row stays the header even when a wider row of names sits under it.
+  const guess = guessColumns(rows.slice(forcedHeader), { keepFirstRow: true });
   if (!guess || guess.headerRow !== 0) return { guess, picks: none, guessed: false };
   return {
     guess,
@@ -108,9 +123,14 @@ export function guessPicks(
       dateColumn: guess.dateColumn,
       amountColumn: guess.amountColumn,
       typeColumn: guess.typeColumn,
+      statusColumn: guess.statusColumn,
     },
     // A forced row that gave no columns at all is not a guess worth announcing.
-    guessed: guess.dateColumn !== null || guess.amountColumn !== null || guess.typeColumn !== null,
+    guessed:
+      guess.dateColumn !== null ||
+      guess.amountColumn !== null ||
+      guess.typeColumn !== null ||
+      guess.statusColumn !== null,
   };
 }
 
@@ -156,6 +176,7 @@ export interface SheetPreview {
 }
 
 const DIFFERENT_COLUMNS_MESSAGE = "The date and the amount can't be the same column.";
+const REFUND_COLUMN_MESSAGE = "The refunds column can't be the date or the amount column.";
 const DATE_ORDER_MESSAGE = "Say how the dates are written to see the totals.";
 const centuryMessage = (year: string) => `Say which year ${year} is to see the totals.`;
 const FAILED_MESSAGE = "DotAmi couldn't read that file. Nothing was kept.";
@@ -181,11 +202,18 @@ export function previewSheet(
       : [];
   const detectedOrder = detectDateOrder(dateCells);
 
+  const refundColumn = picks.refundColumn ?? null;
   const amountCells =
     picks.headerRow !== null && picks.amountColumn !== null
       ? columnCells(rows, picks.headerRow, picks.amountColumn)
       : [];
-  const detectedStyle = detectDecimalStyle(amountCells);
+  // The refunds column is written the same way as the amounts, so its cells help tell 1,234.56
+  // from 1 234,56 (in a ledger, a month of refunds may be the only amounts in a stretch of rows).
+  const refundCells =
+    picks.headerRow !== null && picks.amountColumn !== null && refundColumn !== null
+      ? columnCells(rows, picks.headerRow, refundColumn)
+      : [];
+  const detectedStyle = detectDecimalStyle([...amountCells, ...refundCells]);
   const decimalStyle = answers.decimalStyle ?? detectedStyle;
 
   // Asked (or conflicting) dates follow the person's answer; otherwise whatever the dates prove.
@@ -222,6 +250,11 @@ export function previewSheet(
   if (picks.dateColumn === picks.amountColumn) {
     return outcome("waiting", "different-columns", DIFFERENT_COLUMNS_MESSAGE, null);
   }
+  // A refunds column that is also the amounts would take every sale off again; one that is the
+  // dates would read every date as an amount.
+  if (refundColumn === picks.amountColumn || refundColumn === picks.dateColumn) {
+    return outcome("waiting", "different-columns", REFUND_COLUMN_MESSAGE, null);
+  }
   if (needsAnswer && dateOrder === null) {
     return outcome("waiting", "date-order-answer", DATE_ORDER_MESSAGE, null);
   }
@@ -235,6 +268,8 @@ export function previewSheet(
     dateColumn: picks.dateColumn,
     amountColumn: picks.amountColumn,
     typeColumn: picks.typeColumn,
+    statusColumn: picks.statusColumn,
+    refundColumn,
     dateOrder,
     century,
     decimalStyle,
@@ -571,6 +606,10 @@ export interface FileAnswers extends PreviewAnswers {
   amountColumn?: number;
   /** 0-based column they pick for the transaction types; null clears it (the select's empty choice). */
   typeColumn?: number | null;
+  /** 0-based column they pick for the invoice statuses; null clears it (the select's empty choice). */
+  statusColumn?: number | null;
+  /** 0-based column they pick for refunds paid back; null clears it. Never guessed, so unset = none. */
+  refundColumn?: number | null;
   /** The screen's "The file has" select: one row per sale, or months across the top. */
   layout?: Layout;
   /** 0-based row they say holds the month names (months across only). */
@@ -625,6 +664,10 @@ export async function previewFile(
     amountColumn: answers.amountColumn ?? guessed.amountColumn,
     // Unlike the others, null here is an answer: the person cleared the select.
     typeColumn: answers.typeColumn === undefined ? guessed.typeColumn : answers.typeColumn,
+    statusColumn:
+      answers.statusColumn === undefined ? guessed.statusColumn : answers.statusColumn,
+    // Never guessed: only the person's own pick sets it.
+    ...(answers.refundColumn != null ? { refundColumn: answers.refundColumn } : {}),
   };
   const preview = previewSheet(rows, picks, answers, today, false, unsaved);
 

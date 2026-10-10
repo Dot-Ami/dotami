@@ -14,6 +14,11 @@ import type { ConfirmedFigure } from "./types";
  * covering the same month are never added together: that quarter is left out until the person
  * chooses which one counts.
  *
+ * [8f] Only "gross-revenue" figures are read here, never the T2125 totals: line 8299 (business
+ * gross income) is worked out after taking the GST/HST collected back out (lib/engines/taxlines/),
+ * so it is a different total from the one the small-supplier test counts.
+ * tests/brain-records.spec.ts checks the card ignores all four.
+ *
  * [8e] A figure whose period ends after today is never counted (a wrong clock when it was typed,
  * a clock set back since, a restored backup): it is listed as not counted, with its date. And a
  * figure from before the quarters this rule reads is listed in `outsideWindow` instead of

@@ -5,6 +5,7 @@
  * listed as skipped with the reason, so the person can see exactly what the totals leave out.
  * Nothing here logs, and no error message ever carries an amount or a cell's text.
  */
+import { refundPaidOut, revenueEffect } from "../refunds";
 import type { FigureView } from "../types";
 import { cellToCents } from "./amounts";
 import { cellToDay } from "./dates";
@@ -15,6 +16,7 @@ import type {
   ColumnChoice,
   MonthTotal,
   SkippedRow,
+  SkipReason,
   TotalsResult,
 } from "./types";
 
@@ -43,6 +45,65 @@ export function isPaymentType(cell: Cell | undefined): boolean {
   return typeof cell === "string" && PAYMENT_TYPES.has(cell.trim().toLowerCase());
 }
 
+/**
+ * What an invoice's status cell says when the invoice was never a sale: voided, deleted or never
+ * sent. Matched on the whole cell, trimmed, ignoring case and accents, so "Draft sent to client" or
+ * "Not void" is not one, and only the column the person chose is ever read: a memo that happens to
+ * say "Draft" can't hide a sale.
+ *
+ * Where each word comes from (see tests/fixtures/packages/ and docs/connectors/practice-files.md):
+ *  - "Draft" is published: FreshBooks' Invoice Details help page names it as a status (read 2026-10-08).
+ *  - "Void" (Sage Accounting) and "Voided" (Xero) are ASSUMED. Sage's help page says to void an
+ *    invoice rather than delete it (read 2026-10-08), and Xero's says its Receivable Invoice Detail
+ *    report includes voided and deleted invoices by default (as of 2026-10-06), but neither page
+ *    shows the word the status cell holds.
+ *  - "Deleted" is ASSUMED the same way, from that Xero page.
+ *  - The French words (annulé / annulée, supprimé / supprimée, brouillon) are ASSUMED: no French
+ *    export has been seen, so they are the obvious translations, nothing more. They are kept
+ *    without accents here because the cell is compared with its accents taken off ("Annulée" and
+ *    "annulee" both match).
+ */
+const LEFT_OUT_STATUSES = new Set([
+  "void",
+  "voided",
+  "deleted",
+  "draft",
+  "annule",
+  "annulee",
+  "supprime",
+  "supprimee",
+  "brouillon",
+]);
+
+/** A cell's text trimmed, lower-cased and with its accents taken off ("Annulée" -> "annulee"). */
+function plainWord(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+/** True when a status cell says the invoice is void, deleted or a draft (see LEFT_OUT_STATUSES). */
+export function isLeftOutStatus(cell: Cell | undefined): boolean {
+  return typeof cell === "string" && LEFT_OUT_STATUSES.has(plainWord(cell));
+}
+
+/**
+ * The shared "which rows count" rule: why the person's optional columns leave a row out, or null
+ * when they don't. Both columns are optional and each reads only its own cell. A status column is
+ * checked first, so a voided payment is listed as void (it is neither a sale nor money received).
+ * Called before the date and amount are read, so a row left out here is told so even when its
+ * date or amount couldn't be read.
+ */
+export function leftOutByColumns(row: Cell[], choice: ColumnChoice): SkipReason | null {
+  if (choice.statusColumn != null && isLeftOutStatus(row[choice.statusColumn])) {
+    return "void-or-draft";
+  }
+  if (choice.typeColumn != null && isPaymentType(row[choice.typeColumn])) return "payment";
+  return null;
+}
+
 function isEmpty(cell: Cell | undefined): boolean {
   return cell === null || cell === undefined || (typeof cell === "string" && cell.trim() === "");
 }
@@ -54,6 +115,15 @@ export function lastDayOfMonth(month: string): string {
   // Day 0 of the next month is the last day of this one.
   const last = new Date(Date.UTC(year, m, 0)).getUTCDate();
   return `${month}-${String(last).padStart(2, "0")}`;
+}
+
+/** A BigInt sum as a number of cents, or the "too large" error (which carries no amount). */
+function exactCents(cents: bigint): number {
+  const amount = Number(cents);
+  if (!Number.isSafeInteger(amount) || BigInt(amount) !== cents) {
+    throw new Error("A month's total is too large to hold exactly.");
+  }
+  return amount;
 }
 
 /**
@@ -86,7 +156,10 @@ export function monthlyTotals(
   let lastRow = rows.length - 1;
   while (lastRow > choice.headerRow && isBlankRow(rows[lastRow])) lastRow -= 1;
 
-  const sums = new Map<string, { cents: bigint; rows: number }>();
+  const sums = new Map<
+    string,
+    { cents: bigint; rows: number; refundRows: number; refundCents: bigint }
+  >();
   const skipped: SkippedRow[] = [];
   let rowsCounted = 0;
   let firstDay: string | null = null;
@@ -101,11 +174,13 @@ export function monthlyTotals(
       continue;
     }
 
-    // In QuickBooks a Payment or Deposit is usually money received for a sale on another row (a
-    // Deposit can also be the only record of a sale — the screen's hint says so). Leave it out,
-    // whatever else is wrong with the row, so the person is told why rather than "no date".
-    if (choice.typeColumn != null && isPaymentType(row[choice.typeColumn])) {
-      skip("payment");
+    // The optional Status and Type columns come first. A void, deleted or draft invoice was never
+    // a sale; in QuickBooks a Payment or Deposit is usually money received for a sale on another
+    // row (a Deposit can also be the only record of a sale — the screen's hint says so). Either is
+    // left out whatever else is wrong with the row, so the person is told why rather than "no date".
+    const byColumns = leftOutByColumns(row, choice);
+    if (byColumns !== null) {
+      skip(byColumns);
       continue;
     }
 
@@ -123,16 +198,39 @@ export function monthlyTotals(
     if (firstDay === null || day < firstDay) firstDay = day;
     if (lastDay === null || day > lastDay) lastDay = day;
 
+    // The amount column counts as written, a negative credit note included, as it always has.
+    // With a refunds column picked, a ledger row holds its money in one of the two: the sale in
+    // the amount column (Credit), a refund in the refunds column (Debit).
     const amountCell = row[choice.amountColumn];
-    if (isEmpty(amountCell)) {
-      // A formula Excel never worked out looks empty, but the person needs to hear that it is a
-      // sum to recalculate in Excel, not a gap in their records.
-      skip(isUnsavedFormula(i, choice.amountColumn) ? "unsaved-formula" : "no-amount");
+    const refundCell = choice.refundColumn != null ? row[choice.refundColumn] : undefined;
+    // A formula Excel never worked out looks empty, but the person needs to hear that it is a sum
+    // to recalculate in Excel, not a gap in their records. In either column nothing is guessed for
+    // it, so the row is left out rather than read as a zero.
+    const unsavedAmount = isEmpty(amountCell) && isUnsavedFormula(i, choice.amountColumn);
+    const unsavedRefund =
+      choice.refundColumn != null && isEmpty(refundCell) && isUnsavedFormula(i, choice.refundColumn);
+    if (unsavedAmount || unsavedRefund) {
+      skip("unsaved-formula");
       continue;
     }
-    const cents = cellToCents(amountCell ?? null, choice.decimalStyle);
-    if (cents === null) {
+    if (isEmpty(amountCell) && isEmpty(refundCell)) {
+      skip("no-amount");
+      continue;
+    }
+    const cents = isEmpty(amountCell) ? 0 : cellToCents(amountCell ?? null, choice.decimalStyle);
+    const refundRead = isEmpty(refundCell)
+      ? 0
+      : cellToCents(refundCell ?? null, choice.decimalStyle);
+    if (cents === null || refundRead === null) {
       skip("bad-amount");
+      continue;
+    }
+    // The shared rule: a refund is money out, and it counts because the person picked the column.
+    // Zero ("0.00" in the unused one of the two columns) moves nothing.
+    const refund = revenueEffect(refundPaidOut(refundRead), true);
+    if (isEmpty(amountCell) && refund === null) {
+      // Only a refunds cell, and it says 0.00: nothing moved, so there is no amount to add.
+      skip("no-amount");
       continue;
     }
 
@@ -143,10 +241,15 @@ export function monthlyTotals(
       continue;
     }
 
-    // BigInt, so a very long sheet can never silently lose a cent to floating point.
-    const sum = sums.get(month) ?? { cents: 0n, rows: 0 };
-    sum.cents += BigInt(cents);
+    // BigInt, so a very long sheet can never silently lose a cent to floating point. A refund lowers
+    // the month of its own row's date: the month the money left, not the month of the sale.
+    const sum = sums.get(month) ?? { cents: 0n, rows: 0, refundRows: 0, refundCents: 0n };
+    sum.cents += BigInt(cents) + BigInt(refund ?? 0);
     sum.rows += 1;
+    if (refund !== null) {
+      sum.refundRows += 1;
+      sum.refundCents -= BigInt(refund);
+    }
     sums.set(month, sum);
     rowsCounted += 1;
   }
@@ -154,16 +257,17 @@ export function monthlyTotals(
   const months: MonthTotal[] = [];
   for (const month of [...sums.keys()].sort()) {
     const sum = sums.get(month)!;
-    const amount = Number(sum.cents);
-    if (!Number.isSafeInteger(amount) || BigInt(amount) !== sum.cents) {
-      throw new Error("A month's total is too large to hold exactly.");
-    }
-    months.push({
+    const total: MonthTotal = {
       periodStart: `${month}-01`,
       periodEnd: lastDayOfMonth(month),
-      amountCents: amount,
+      amountCents: exactCents(sum.cents),
       rows: sum.rows,
-    });
+    };
+    // Only months a refund lowered carry the note, so a file without refunds reads exactly as before.
+    if (sum.refundRows > 0) {
+      total.refunds = { rows: sum.refundRows, cents: exactCents(sum.refundCents) };
+    }
+    months.push(total);
   }
 
   const datesRead =

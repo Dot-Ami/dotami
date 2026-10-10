@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GhostLink, WordMark } from "@/components/ui";
+import { receiptProtectionText } from "@/lib/expenses/receipts/protection";
 import type { BankSourcesState } from "@/lib/figures/source-account-name";
 import { SETTING_GROUPS, settingsInGroup, type SettingEntry, type SettingGroupId } from "@/lib/settings/catalog";
 import type { SettingsToday } from "@/lib/settings/today";
@@ -170,6 +171,19 @@ function SettingRow({
   );
 }
 
+/**
+ * [8i] Whether the receipt files are encrypted in this copy, and what losing the key means
+ * (docs/architecture/expense-records.md § 9). Read from the app's own environment on every visit.
+ */
+function ReceiptProtectionLine({ state }: { state: SettingsToday["receipts"] }) {
+  const { headline, detail, tone } = receiptProtectionText(state);
+  return (
+    <p className={tone === "problem" ? "text-amber" : "text-paper-dim"}>
+      <strong className={tone === "problem" ? "font-semibold" : "font-semibold text-paper"}>{headline}</strong> {detail}
+    </p>
+  );
+}
+
 function Code({ children }: { children: ReactNode }) {
   return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
 }
@@ -198,6 +212,7 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
             <Code>{path}</Code>
             <CopyPathButton path={path} />
           </div>
+          <ReceiptProtectionLine state={today.receipts} />
           {today.desktop ? (
             <p className="text-paper-dim">
               <strong className="font-semibold text-paper">File → Back up…</strong> makes one file you

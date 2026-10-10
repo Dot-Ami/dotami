@@ -11,7 +11,7 @@
  * is its own too. Every name and number is invented.
  */
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -21,9 +21,22 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
+import { heicHeader, heicPicture } from "@/lib/expenses/receipts/heic/picture";
 import { RECEIPT_REFUSALS } from "@/lib/expenses/receipts/refusals";
 import { sniffReceipt } from "@/lib/expenses/receipts/sniff";
-import { addReceipt, ReceiptError, receiptFileName, receiptsFolder, removeReceipt, sweepOrphanReceipts } from "@/lib/expenses/receipts/store";
+import { ENCRYPTED_OVERHEAD, encryptReceipt, isEncryptedReceipt, keyIdOf } from "@/desktop/receipt-crypto.mjs";
+import { __resetReceiptLockForTests, readReceiptLock, receiptLock, type ReceiptLock } from "@/lib/expenses/receipts/lock";
+import { LOCKED_RECEIPT_MESSAGES } from "@/lib/expenses/receipts/protection";
+import {
+  addReceipt,
+  describeReceiptFiles,
+  readReceiptFile,
+  ReceiptError,
+  receiptFileName,
+  receiptsFolder,
+  removeReceipt,
+  sweepOrphanReceipts,
+} from "@/lib/expenses/receipts/store";
 import { MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE, MAX_RECEIPT_BYTES, RECEIPT_TYPES } from "@/lib/expenses/receipts/types";
 import { listExpenses } from "@/lib/expenses/store";
 import { demoScenarios } from "../prisma/seed-data";
@@ -434,6 +447,199 @@ describe("the sweep: DotAmi's own files that no record describes", () => {
     expect((await prisma.expense.findUniqueOrThrow({ where: { id: e.id } })).ventureId).toBeNull();
     expect(await prisma.receipt.count({ where: { id: row.id } })).toBe(1);
     expect(files()).toContain(`${row.id}.pdf`);
+  });
+});
+
+// The desktop app opens a key and encrypts every receipt file it writes (expense-records.md § 9); a copy
+// run from source has none and keeps them plain. These pass the lock explicitly; everything above runs
+// as a copy from source (no DOTAMI_RECEIPT_LOCK in the test environment).
+describe("receipt files encrypted at rest (expense-records.md § 9)", () => {
+  const KEY: ReceiptLock = (() => {
+    const key = randomBytes(32);
+    return { state: "on", key, keyId: keyIdOf(key) };
+  })();
+  const OTHER_KEY: ReceiptLock = (() => {
+    const key = randomBytes(32);
+    return { state: "on", key, keyId: keyIdOf(key) };
+  })();
+  const SOURCE: ReceiptLock = { state: "source" };
+  const CHANGED = /changed on this computer since you added it/;
+
+  /** Adds `file` with `lock` to a new agreed record; returns the record, the row and the path on the disk. */
+  async function added(file: Buffer, lock: ReceiptLock) {
+    const e = await record();
+    await addReceipt(prisma, folder, e.id, bytes(file), lock);
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { expenseId: e.id } });
+    return { e, row, onDisk: path.join(folder, receiptFileName(row.id, row.type)) };
+  }
+
+  /** The sentence a read refused with, or "no error". */
+  async function readRefusal(expenseId: string, lock: ReceiptLock): Promise<string> {
+    try {
+      await readReceiptFile(prisma, folder, expenseId, lock);
+      return "no error";
+    } catch (error) {
+      return error instanceof ReceiptError ? error.message : `other error: ${(error as Error).message}`;
+    }
+  }
+
+  it("with the key open, the file on the disk is encrypted, and it opens as exactly the bytes that were added", async () => {
+    const file = png(6, 4);
+    const { e, row, onDisk } = await added(file, KEY);
+    const stored = readFileSync(onDisk);
+    expect(isEncryptedReceipt(stored)).toBe(true);
+    expect(stored.length).toBe(file.length + ENCRYPTED_OVERHEAD);
+    // None of the picture's own bytes are in the file: not its signature, not its pixels' chunk.
+    expect(stored.indexOf(file.subarray(0, 8))).toBe(-1);
+    expect(stored.indexOf(file.subarray(file.length - 24))).toBe(-1);
+    // The row describes the receipt itself, so a backup and the viewer check the same bytes.
+    expect(row.bytes).toBe(file.length);
+    expect(row.sha256).toBe(createHash("sha256").update(file).digest("hex"));
+    const shown = await readReceiptFile(prisma, folder, e.id, KEY);
+    expect(shown.type).toBe("image/png");
+    expect(shown.bytes.equals(file)).toBe(true);
+  });
+
+  it("a HEIC photo is encrypted like the others, and is decrypted in memory before the HEIC reader opens it ([8i])", async () => {
+    const file = heic({ extras: true });
+    const { e, row, onDisk } = await added(file, KEY);
+    expect(onDisk.endsWith(`${row.id}.heic`)).toBe(true);
+    const stored = readFileSync(onDisk);
+    expect(isEncryptedReceipt(stored)).toBe(true);
+    expect(stored.length).toBe(file.length + ENCRYPTED_OVERHEAD);
+    // Not the photo's ftyp box (its size, "ftyp" and the brand), so nothing on the disk says HEIC.
+    expect(stored.indexOf(file.subarray(0, 24))).toBe(-1);
+    expect(stored.indexOf(Buffer.from("ftypheic", "latin1"))).toBe(-1);
+    // The container reader can't make anything of the file as it lies on the disk...
+    expect(heicPicture(bytes(stored)).ok).toBe(false);
+    // ...and is handed the photo itself: decrypted in memory, checked against the row, then read.
+    const shown = await readReceiptFile(prisma, folder, e.id, KEY);
+    expect(shown.type).toBe("image/heic");
+    expect(shown.bytes.equals(file)).toBe(true);
+    expect(heicPicture(bytes(shown.bytes))).toEqual(heicPicture(bytes(file)));
+    expect(heicPicture(bytes(shown.bytes)).ok).toBe(true);
+    expect(heicHeader(bytes(shown.bytes))).toEqual({ ok: true, width: 256, height: 256 });
+  });
+
+  it("a changed byte in an encrypted file is refused as changed", async () => {
+    const { e, onDisk } = await added(pdf({ text: "tampered" }), KEY);
+    const stored = readFileSync(onDisk);
+    stored[stored.length - 30] ^= 0x01;
+    writeFileSync(onDisk, stored);
+    expect(await readRefusal(e.id, KEY)).toMatch(CHANGED);
+  });
+
+  it("another receipt's encrypted file put in this one's place is refused, even with the very same bytes inside", async () => {
+    // Both receipts are the same picture, so the size and the SHA-256 alone couldn't tell them apart:
+    // only the file's id, authenticated inside the encryption, can.
+    const same = png(5, 5, { rgb: [10, 20, 30] });
+    const first = await added(same, KEY);
+    const second = await added(same, KEY);
+    writeFileSync(first.onDisk, readFileSync(second.onDisk));
+    expect(await readRefusal(first.e.id, KEY)).toMatch(CHANGED);
+    expect((await readReceiptFile(prisma, folder, second.e.id, KEY)).bytes.equals(same)).toBe(true);
+  });
+
+  it("a file encrypted with another key (a lost one) is refused with its own sentence, which points to a backup", async () => {
+    const { e } = await added(png(3, 3), OTHER_KEY);
+    expect(await readRefusal(e.id, KEY)).toBe(LOCKED_RECEIPT_MESSAGES.otherKey);
+    expect(LOCKED_RECEIPT_MESSAGES.otherKey).toContain("backup");
+  });
+
+  it("from source: kept plain, as before; an encrypted file is refused, saying the desktop app can open it", async () => {
+    const file = pdf({ text: "from source" });
+    const plain = await added(file, SOURCE);
+    expect(readFileSync(plain.onDisk).equals(file)).toBe(true);
+    expect((await readReceiptFile(prisma, folder, plain.e.id, SOURCE)).bytes.equals(file)).toBe(true);
+    // A plain file opens in the desktop app too (one added before this version, not encrypted yet).
+    expect((await readReceiptFile(prisma, folder, plain.e.id, KEY)).bytes.equals(file)).toBe(true);
+
+    const encrypted = await added(png(2, 3), KEY);
+    expect(await readRefusal(encrypted.e.id, SOURCE)).toBe(LOCKED_RECEIPT_MESSAGES.source);
+    expect(await readRefusal(encrypted.e.id, { state: "no-key-store" })).toBe(LOCKED_RECEIPT_MESSAGES.noKeyStore);
+    // Refusing changed nothing: the file is still the encrypted one, and still opens with the key.
+    expect(isEncryptedReceipt(readFileSync(encrypted.onDisk))).toBe(true);
+    expect((await readReceiptFile(prisma, folder, encrypted.e.id, KEY)).bytes.length).toBeGreaterThan(0);
+  });
+
+  it("while the key can't be opened, nothing is added and an encrypted receipt isn't shown; a plain one still is", async () => {
+    const before = files();
+    const e = await record();
+    expect(await refusal(() => addReceipt(prisma, folder, e.id, bytes(png(2, 2)), { state: "key-unreadable" }))).toBe(409);
+    expect(files()).toEqual(before);
+    const encrypted = await added(png(2, 2), KEY);
+    expect(await readRefusal(encrypted.e.id, { state: "key-unreadable" })).toBe(LOCKED_RECEIPT_MESSAGES.keyUnreadable);
+    const plain = await added(png(2, 2), SOURCE);
+    expect(await readRefusal(plain.e.id, { state: "key-unreadable" })).toBe("no error");
+  });
+
+  it("the sweep finishes an encrypted add the app stopped half-way, and leaves one it can't open alone", async () => {
+    const file = pdf({ text: "half-way" });
+    const sha = createHash("sha256").update(file).digest("hex");
+    const elevenMinutesAgo = new Date(Date.now() - 11 * 60_000);
+    async function abandoned(id: string, key: Buffer) {
+      const e = await record();
+      await prisma.receipt.create({ data: { id, expenseId: e.id, type: "application/pdf", bytes: file.length, sha256: sha } });
+      mkdirSync(folder, { recursive: true });
+      const partial = path.join(folder, `${id}.pdf.partial`);
+      writeFileSync(partial, encryptReceipt(file, { key, id }));
+      utimesSync(partial, elevenMinutesAgo, elevenMinutesAgo);
+      return e;
+    }
+    const ours = await abandoned("1".repeat(32), (KEY as { key: Buffer }).key);
+    const theirs = await abandoned("2".repeat(32), (OTHER_KEY as { key: Buffer }).key);
+
+    await sweepOrphanReceipts(prisma, folder, Date.now, KEY);
+    // Ours: checked by decrypting, then given its final name; it opens.
+    expect(files()).toContain(`${"1".repeat(32)}.pdf`);
+    expect((await readReceiptFile(prisma, folder, ours.id, KEY)).bytes.equals(file)).toBe(true);
+    // Another key's: possibly the only copy, so neither it nor its row is removed.
+    expect(files()).toContain(`${"2".repeat(32)}.pdf.partial`);
+    expect(await prisma.receipt.count({ where: { expenseId: theirs.id } })).toBe(1);
+    // From source, the same: it can't check it, so it leaves it.
+    await sweepOrphanReceipts(prisma, folder, Date.now, SOURCE);
+    expect(files()).toContain(`${"2".repeat(32)}.pdf.partial`);
+  });
+
+  it("counts the files by how they are kept, from their first bytes only", async () => {
+    // A folder of its own, so the other tests' files don't count.
+    const own = path.join(root, "counted-receipts");
+    mkdirSync(own, { recursive: true });
+    const put = (id: string, content: Buffer) => writeFileSync(path.join(own, `${id}.png`), content);
+    put("3".repeat(32), encryptReceipt(png(2, 2), { key: (KEY as { key: Buffer }).key, id: "3".repeat(32) }));
+    put("4".repeat(32), encryptReceipt(png(2, 2), { key: (KEY as { key: Buffer }).key, id: "4".repeat(32) }));
+    put("5".repeat(32), png(2, 2));
+    put("6".repeat(32), encryptReceipt(png(2, 2), { key: (OTHER_KEY as { key: Buffer }).key, id: "6".repeat(32) }));
+    writeFileSync(path.join(own, "not-dotamis.png"), "DOTAMI-RECEIPT, but not a name DotAmi gives");
+    expect(await describeReceiptFiles(own, KEY)).toEqual({ encrypted: 2, plain: 1, locked: 1 });
+    // From source, every encrypted file is one it can't open.
+    expect(await describeReceiptFiles(own, SOURCE)).toEqual({ encrypted: 0, plain: 1, locked: 3 });
+    expect(await describeReceiptFiles(null, KEY)).toEqual({ encrypted: 0, plain: 0, locked: 0 });
+  });
+
+  it("the server reads its lock from the desktop app once, and takes the key out of its environment", () => {
+    const key = randomBytes(32);
+    const saved = { lock: process.env.DOTAMI_RECEIPT_LOCK, key: process.env.DOTAMI_RECEIPT_KEY };
+    try {
+      __resetReceiptLockForTests();
+      process.env.DOTAMI_RECEIPT_LOCK = "on";
+      process.env.DOTAMI_RECEIPT_KEY = key.toString("base64");
+      const lock = receiptLock();
+      expect(lock.state === "on" && lock.key.equals(key) && lock.keyId === keyIdOf(key)).toBe(true);
+      expect(process.env.DOTAMI_RECEIPT_KEY).toBeUndefined();
+      // Read again: the same lock, from memory.
+      expect(receiptLock()).toBe(lock);
+      // The other states, read from an environment of their own; a key that isn't 32 bytes is never used.
+      expect(readReceiptLock({})).toEqual({ state: "source" });
+      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "no-key-store" })).toEqual({ state: "no-key-store" });
+      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "key-unreadable" })).toEqual({ state: "key-unreadable" });
+      expect(readReceiptLock({ DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: "c2hvcnQ=" })).toEqual({ state: "key-unreadable" });
+    } finally {
+      __resetReceiptLockForTests();
+      if (saved.lock === undefined) delete process.env.DOTAMI_RECEIPT_LOCK;
+      else process.env.DOTAMI_RECEIPT_LOCK = saved.lock;
+      if (saved.key !== undefined) process.env.DOTAMI_RECEIPT_KEY = saved.key;
+    }
   });
 });
 

@@ -9,6 +9,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The four T2125 totals in "Add a figure"** ([8f]) — the list of what you can add gains business
+  gross income (T2125 line 8299), business total expenses (9368), business net income before
+  adjustments (9369) and business net income (9946). Choosing one asks for the tax year it is for and
+  says which line of the CRA's form it goes on that year. DotAmi has read the CRA's 2025 form so far;
+  for any other year it says "not read yet" instead of guessing the number, and still keeps the
+  figure with its year. The tax year has to be the year the figure's period ends in, so a 2024
+  total can't be filed under 2025 by a slip. Each figure remembers its tax year, and, once figures
+  can be read from a return, the form and line printed on it (only a figure read from a return can
+  have one). Every line is cited to the CRA's own 2025 T2125 and
+  Guide T4002, checked by the maintainer on 2026-10-10 (`lib/engines/taxlines/`). Line 8299 leaves out the GST/HST you
+  collected, so the GST/HST card never counts these totals; it still reads only your revenue figures.
 - **Your expenses** ([8i], typed records) — a new page, *Your expenses*, reached from the ideas page
   (the link at the top, and *Expense records for this idea* on each idea's card). Type a business
   expense (the day, the amount, who you paid and what for; a category, a business share, the GST/HST
@@ -33,6 +44,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   give them. DotAmi doesn't say how a refund is taxed.
 - **Waiting for you** — records an agent or a file proposes wait on the same page until you agree
   (or turn them down), exactly as before.
+- **Refunds taken off the month they were paid back** ([8c-3]) — ledger exports such as Wave's
+  Account Transactions keep sales in one column (Credit) and refunds paid back to customers in
+  another (Debit), and "Add from a file" only ever added up one, so a month with a refund read too
+  high (the Wave practice file's August: 320.00 against a true 280.00). It now has an optional
+  "Refunds / money out" column. It is never pre-filled, not even for a column named Debit or
+  Refunds: you pick it. Each amount in it is taken off the month of its own row, the month the
+  money went back, which may be later than the sale's; the preview says how many refunds each
+  month had and what they took off, and says that a refund lowers the month it was paid back. A
+  month can go below zero. The rule is the same one the bank statement totals use, kept in one
+  place so the two screens can't disagree. Choosing "None" takes nothing off, as before. Nothing
+  about the column is stored.
+- **A "Status column" for invoice lists** ([8c-3]) — invoice lists from FreshBooks, Sage Accounting
+  and Xero can include void, deleted and draft invoices, which were added up as sales. "Add from a
+  file" now has an optional Status column, pre-filled only when a column is headed exactly "Status"
+  or "Statut". Rows marked Void, Voided, Deleted or Draft (and, assumed for French files, Annulé,
+  Supprimé or Brouillon) are left out of the totals and listed with the reason, beside the other
+  left-out rows; any other status counts as before, only the chosen column is read, and choosing
+  "None" counts every row. Nothing about the column is stored.
 - **Add from a file reads a GnuCash book** ([8h]) — drop a GnuCash book (the `.gnucash` file,
   compressed as GnuCash saves it, or plain XML) where you drop a spreadsheet. DotAmi lists every
   account in it, with the ones GnuCash marks as income already ticked; tick or untick any of them,
@@ -111,6 +140,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   add or delete finishes it (after checking the file is the one it started with) instead of
   throwing the only copy away. The Settings page now says the receipts folder sits beside the data
   file, and that copying both is a backup when running from source.
+- **Your receipts are encrypted in the desktop app** ([8i], the maintainer's decision of 2026-10-09)
+  — each receipt file is locked (AES-256-GCM) with a key that Windows keeps for your Windows account
+  only. Windows already keeps other standard accounts out of your data folder; the encryption means
+  an administrator account, a copy of the data folder, or the disk read outside Windows can't read
+  them either. Receipts you already have are encrypted the first time this version starts, one at a
+  time, without ever risking one. Backups still hold your receipts and still restore on another
+  computer; without a passphrase the receipts in a backup aren't encrypted, and the backup window
+  says so. Losing the key (a Windows profile reset, the data folder moved to another account) loses
+  the receipts except those in a backup; Settings, *What DotAmi knows about you* and the note before
+  adding a receipt say so. If the key can't be opened, or the key file `receipts.key` is deleted while
+  receipts are encrypted, DotAmi changes nothing and never makes a new key over them: Settings, *What
+  DotAmi knows about you* and the Expenses page say so in amber, and what to do (put the file back,
+  restore a backup, or delete the receipts). The data file itself is **not** encrypted, and Settings says that too. A
+  copy run from source has no key store, so its receipts stay unencrypted, and it says so. The very
+  first start of a new data folder takes about ten seconds longer: the key is saved only once Windows
+  has saved its own part of it.
+  Design: [expense-records.md § 9](docs/architecture/expense-records.md#9-encrypting-the-receipts-the-design-2026-10-09).
 - **Delete** ([8d]) — "What DotAmi knows about you" gets one Delete button. It opens a list of what
   you can delete: your ideas (with their notes, links and map progress), your figures, your expense
   records, your statements ("In your words", all of them at once, never one by one) and your
@@ -256,6 +302,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   for, with what to do: open the file in Excel, click Enable Editing if it asks, save it, and drop
   it again. DotAmi still never works a formula out itself, so nothing is guessed for that row. The
   same goes for a cell under a month in a report with the months across the top.
+- **A FreshBooks file with a summary on top opens on its real column names** ([8c-3]) — FreshBooks'
+  Invoice Details puts a short summary ("Total Invoiced, Total Paid" over two figures) above the
+  table, and "Add from a file" took the summary's two titles for the column names, with "Total
+  Paid" pre-filled as the amount. It now takes the wider row of column names under the summary,
+  the one that names the date column. A sheet whose first row of names already says "Date" keeps
+  it, and a row you pick yourself is never moved.
 - **The desktop app says an update is coming as soon as it finds one.** It used to download the
   new version (about 130 MB) in silence and speak only when it was ready, so at start-up the
   update seemed slow to appear. Now a message says *"DotAmi (new version) is available, downloading

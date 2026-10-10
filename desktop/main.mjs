@@ -10,7 +10,7 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell, utilityProcess } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell, utilityProcess } from "electron";
 
 import {
   applyRestore,
@@ -18,6 +18,7 @@ import {
   BackupError,
   backupReceiptsNote,
   discardRestore,
+  isReceiptFileName,
   prepareRestore,
   RECEIPT_EXTENSIONS,
   RECEIPTS_FOLDER,
@@ -26,6 +27,8 @@ import {
 } from "./backup.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
+import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
+import { newReceiptKey, openReceiptKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe } from "./wipe-pending.mjs";
 
@@ -53,6 +56,12 @@ let quitting = false;
 let log = null;
 let dataDir = "";
 let dbFile = "";
+/**
+ * The receipts' key ([8i], desktop/receipt-key.mjs), opened at start: "on" with the key, "no-key-store",
+ * or "key-unreadable". Never written anywhere but receipts.key, wrapped.
+ * @type {import("./receipt-key.mjs").OpenedReceiptKey | null}
+ */
+let receiptKey = null;
 
 // Only the installed app updates itself, from GitHub Releases ([7d]); a copy run from the source
 // code updates with git. Tests switch the check off so they never reach the internet.
@@ -141,12 +150,24 @@ async function start() {
     return fail(`DotAmi couldn't prepare its database:\n${dbFile}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
   }
 
+  // [8i] The receipts' key, then any receipt file not encrypted yet (docs/architecture/expense-records.md
+  // § 9). Before the server starts, so nothing else has the files open. The log gets counts only.
+  try {
+    // On the very first start of a data folder this waits (about ten seconds) for Windows' own key to
+    // reach the disk, so a crash can never leave a receipts key nothing can open (receipt-key.mjs).
+    receiptKey = await openReceiptKey(dataDir, safeStorage);
+  } catch (error) {
+    return fail(`DotAmi couldn't prepare the key that encrypts your receipts, in:\n${dataDir}\n\nNothing was changed. Details are in ${path.join(logDir, "server.log")}.`, error);
+  }
+  log.write(`[desktop] receipts: ${describeReceiptKey(receiptKey)}\n`);
+  if (receiptKey.state === "on") encryptExistingReceipts(receiptKey.key);
+
   const port = await freePort();
   server = utilityProcess.fork(serverEntry, [], {
     cwd: path.dirname(serverEntry),
     stdio: "pipe",
     serviceName: "DotAmi server",
-    env: serverEnv({ PORT: String(port), HOSTNAME: "127.0.0.1", DATABASE_URL: databaseUrl }),
+    env: serverEnv({ PORT: String(port), HOSTNAME: "127.0.0.1", DATABASE_URL: databaseUrl, ...receiptLockEnv(receiptKey) }),
   });
   log.follow(server.stdout);
   log.follow(server.stderr);
@@ -244,11 +265,67 @@ function serverEnv(own) {
   // DOTAMI_UPDATES tells the settings page what this copy does about updates (lib/settings/today.ts).
   // DOTAMI_DESKTOP tells it this is the desktop app, which has Back up and Restore in its File menu.
   const updates = updatesOn ? "github" : "";
-  const env = { ...process.env, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
+  // A receipt key never comes from the shell either: only the one this app opened (receiptLockEnv).
+  const { DOTAMI_RECEIPT_KEY: _fromShell, ...inherited } = process.env;
+  void _fromShell;
+  const env = { ...inherited, ...own, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", DOTAMI_UPDATES: updates, DOTAMI_DESKTOP: "1" };
   delete env.ANTHROPIC_API_KEY;
   delete env.DOTAMI_DATA_DIR;
   delete env.DOTAMI_E2E_RATE_LIMITS;
   return env;
+}
+
+/**
+ * [8i] What the server is told about the receipts' key (lib/expenses/receipts/lock.ts reads it): the
+ * state, and the key itself only when it is open. The server takes the key out of its environment the
+ * first time it reads it.
+ */
+function receiptLockEnv(opened) {
+  if (opened.state === "on") return { DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: opened.key.toString("base64") };
+  return { DOTAMI_RECEIPT_LOCK: opened.state };
+}
+
+/** The log line about the key: its state and what happened to it, never the key or its id. */
+function describeReceiptKey(opened) {
+  if (opened.state === "on") {
+    return `key open${opened.made ? " (made now)" : ""}${opened.setAside ? "; a key file this account couldn't open was moved to the backups folder" : ""}`;
+  }
+  if (opened.state === "no-key-store") return "the operating system's key store isn't available, so receipts are kept unencrypted";
+  const why = opened.missing ? "the key file is missing" : "the key file can't be opened by this account (or the key store isn't available)";
+  return `${why}; ${opened.locked} receipt file(s) are encrypted and can't be opened; nothing was changed`;
+}
+
+/**
+ * Encrypts every receipt file still kept plain (desktop/receipt-crypto.mjs): the receipts folder, and
+ * the ones earlier restores moved into backups/. A file it can't do now stays plain, still opens, and is
+ * tried at the next start. Never a reason not to start.
+ */
+function encryptExistingReceipts(key) {
+  const backups = path.join(dataDir, "backups");
+  let folders = [path.join(dataDir, RECEIPTS_FOLDER)];
+  try {
+    folders = folders.concat(
+      readdirSync(backups, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && e.name.startsWith("receipts-before-restore-"))
+        .map((e) => path.join(backups, e.name)),
+    );
+  } catch {
+    // No backups folder yet.
+  }
+  const total = { encrypted: 0, already: 0, failed: 0 };
+  for (const folder of folders) {
+    try {
+      const done = encryptReceiptsIn(folder, key, { isReceiptName: isReceiptFileName });
+      total.encrypted += done.encrypted;
+      total.already += done.already;
+      total.failed += done.failed;
+    } catch (error) {
+      log?.write(`[desktop] receipts: a folder couldn't be read to encrypt it (${describeError(error)})\n`);
+    }
+  }
+  if (total.encrypted > 0 || total.failed > 0) {
+    log?.write(`[desktop] receipts: ${total.encrypted} file(s) encrypted now, ${total.failed} couldn't be yet (tried again at the next start)\n`);
+  }
 }
 
 /** A port nothing is using right now, on this computer only. */
@@ -434,15 +511,27 @@ async function backUp() {
   });
   if (canceled || !filePath) return;
   try {
-    const { encrypted, receipts, missingReceipts } = writeBackup(dbFile, filePath, { passphrase, appVersion: app.getVersion() });
-    log?.write(`[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing)\n`);
+    // [8i] Receipts go in as their own bytes, decrypted with this computer's key, so the backup restores
+    // on a computer whose key differs (expense-records.md § 9).
+    const key = receiptKey?.state === "on" ? receiptKey.key : null;
+    const { encrypted, receipts, missingReceipts, unreadableReceipts } = writeBackup(dbFile, filePath, {
+      passphrase,
+      appVersion: app.getVersion(),
+      receiptKey: key,
+    });
+    log?.write(
+      `[backup] wrote ${filePath} (${encrypted ? "locked" : "not locked"}; ${receipts} receipt files, ${missingReceipts} missing, ${unreadableReceipts} couldn't be opened)\n`,
+    );
     await dialog.showMessageBox(win ?? undefined, {
       type: "info",
       title: "Backed up",
       message: `Backed up to ${filePath}`,
       detail:
         (encrypted ? "It's locked with your passphrase. " : "It isn't locked: anyone with the file can open it. ") +
-        backupReceiptsNote(receipts, missingReceipts) +
+        backupReceiptsNote(receipts, missingReceipts, { unreadable: unreadableReceipts, locked: encrypted }) +
+        (key && receipts > 0
+          ? "Your receipts here are encrypted with a key Windows keeps for your account: if that key is ever lost (a Windows profile reset), a backup is how they come back. "
+          : "") +
         "Keep a copy somewhere other than this computer. To protect the data that stays here, turn on your computer's disk encryption (see Settings → Data and backups).",
     });
   } catch (error) {
@@ -465,12 +554,17 @@ async function restore() {
   });
   if (canceled || filePaths.length === 0) return;
   const staging = path.join(dataDir, "restore-staging.db");
+  // [8i] The key the restored receipts are encrypted with as they are unpacked (expense-records.md § 9):
+  // this computer's own key; or, when its key file can't be opened, a new key, kept in memory and
+  // saved only once the person confirms (the restore then replaces every receipt the old key locked).
+  const keyLost = receiptKey?.state === "key-unreadable";
+  const restoreKey = receiptKey?.state === "on" ? receiptKey.key : keyLost ? newReceiptKey() : null;
   let passphrase = "";
   let header;
   let receipts = 0;
   for (;;) {
     try {
-      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging }));
+      ({ header, receipts } = prepareRestore(filePaths[0], { passphrase, migrationsDir: migrations, stagingFile: staging, receiptKey: restoreKey }));
       break;
     } catch (error) {
       if (error instanceof BackupError && (error.kind === "needs-passphrase" || error.kind === "cannot-decrypt")) {
@@ -499,7 +593,12 @@ async function restore() {
     message: "This replaces everything in DotAmi on this computer with the backup.",
     detail:
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. A safety copy of what's here now goes to the backups folder first.` +
-      restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)),
+      restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
+      (keyLost
+        ? receiptKey.missing
+          ? " The key to the receipts here is missing: they go to the backups folder as they are, and the restored receipts get a new key."
+          : " The key to the receipts here can't be opened on this Windows account: it goes to the backups folder with them, and the restored receipts get a new key."
+        : ""),
   });
   if (response !== 0) {
     discardRestore(staging);
@@ -513,6 +612,23 @@ async function restore() {
     server.kill();
     await stopped;
   }
+  /** Where the unreadable key file went when a new key was saved below (null: there was none). */
+  let newKeySaved = null;
+  if (keyLost) {
+    // Saved before the swap: the staged receipts are encrypted with this key, so without it saved they
+    // would be lost. The unreadable key file moves into backups/, never deleted.
+    try {
+      newKeySaved = await saveReceiptKey(dataDir, safeStorage, restoreKey);
+      log?.write(`[restore] a new receipts key was saved; the one this account couldn't open went to the backups folder\n`);
+    } catch (error) {
+      log?.write(`[restore] the new receipts key couldn't be saved: ${describeError(error)}\n`);
+      discardRestore(staging);
+      dialog.showErrorBox("DotAmi", "The restore didn't happen: DotAmi couldn't save a new key for your receipts. Nothing was changed. DotAmi will restart.");
+      app.relaunch();
+      app.exit(0);
+      return;
+    }
+  }
   try {
     const { safetyCopy, receiptsMovedTo, receiptsRestored } = applyRestore(staging, dbFile, { backupDir: path.join(dataDir, "backups") });
     log?.write(
@@ -522,7 +638,21 @@ async function restore() {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
     // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
     log?.write(`[restore] failed to replace the data: ${error}\n`);
-    dialog.showErrorBox("DotAmi", `The restore didn't finish: ${error?.message ?? error}\n\nYour data was copied to the backups folder first. DotAmi will restart.`);
+    let keyNote = "";
+    if (newKeySaved) {
+      // The old receipts are back in place (applyRestore undoes its moves), and they need the old key
+      // file, not the one saved for the restored receipts: otherwise the next start says "encrypted"
+      // over receipts it can't open.
+      try {
+        const outcome = revertReceiptKey(dataDir, keyIdOf(restoreKey), newKeySaved.setAside);
+        log?.write(`[restore] the new receipts key was ${outcome === "reverted" ? "taken back; the old key file is in place again" : "kept: restored receipts are locked with it"}\n`);
+        if (outcome === "kept" && newKeySaved.setAside) keyNote = `\n\nThe key file this Windows account couldn't open was moved to:\n${newKeySaved.setAside}`;
+      } catch (revertError) {
+        log?.write(`[restore] the new receipts key couldn't be taken back: ${describeError(revertError)}\n`);
+        if (newKeySaved.setAside) keyNote = `\n\nThe key file this Windows account couldn't open was moved to:\n${newKeySaved.setAside}`;
+      }
+    }
+    dialog.showErrorBox("DotAmi", `The restore didn't finish: ${error?.message ?? error}\n\nYour data was copied to the backups folder first.${keyNote ? `${keyNote}\n\n` : " "}DotAmi will restart.`);
   }
   app.relaunch();
   app.exit(0);
@@ -540,7 +670,7 @@ function askPassphrase(mode, message = "") {
       parent: win ?? undefined,
       modal: Boolean(win),
       width: 460,
-      height: mode === "backup" ? 360 : 270,
+      height: mode === "backup" ? 480 : 270,
       resizable: false,
       minimizable: false,
       maximizable: false,

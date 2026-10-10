@@ -60,6 +60,19 @@ describe("readSettingsToday", () => {
     expect(readSettingsToday({}, cwd).desktop).toBe(false);
   });
 
+  it("says whether receipts are encrypted only from what the desktop app passed, and never carries the key ([8i])", () => {
+    const key = Buffer.alloc(32, 7).toString("base64");
+    const on = readSettingsToday({ DOTAMI_RECEIPT_LOCK: "on", DOTAMI_RECEIPT_KEY: key }, cwd);
+    expect(on.receipts).toBe("on");
+    expect(JSON.stringify(on)).not.toContain(key);
+    // A copy run from source passes nothing: its receipts are not encrypted, and the page says so.
+    expect(readSettingsToday({}, cwd).receipts).toBe("source");
+    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "no-key-store" }, cwd).receipts).toBe("no-key-store");
+    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "key-unreadable" }, cwd).receipts).toBe("key-unreadable");
+    // "on" without a usable key is not "on": nothing may claim encryption that isn't there.
+    expect(readSettingsToday({ DOTAMI_RECEIPT_LOCK: "on" }, cwd).receipts).toBe("key-unreadable");
+  });
+
   it("reports the version from package.json", () => {
     expect(readSettingsToday({}, cwd).version).toMatch(/^\d+\.\d+\.\d+/);
   });
