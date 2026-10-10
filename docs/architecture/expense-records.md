@@ -1,6 +1,6 @@
 # Business expense records and receipts — design ([8i])
 
-Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first). The desktop app encrypts the receipt files (decided 2026-10-09; the design, § 9, written first); the other ways in are not built.** It exists
+Status: design, 2026-10-07; **decided the same day and on 2026-10-08 (section 0). The store for typed records is built (the first slice: the table, the checks, the routes and the privacy list), and so is the screen to type them, *Your expenses* (`/expenses`, the second slice, 2026-10-08; [ui-spec](../ui-spec/expenses/_index.md)); receipts are kept too (the third slice, 2026-10-08: a copy of each file in a `receipts/` folder beside the data file, added and removed on the Expenses page, a box on the Delete menu and a sweep for files no record describes; § 7). Backups carry the receipts (2026-10-08, a backup format that streams; old backups still restore; § 7). Receipts open inside DotAmi (2026-10-08; the security design, § 8, written first). HEIC photos are kept and shown by the graphics chip (2026-10-09, option D of the decoder review, § 8 rule 8). The desktop app encrypts the receipt files (decided 2026-10-09; the design, § 9, written first); the other ways in are not built.** It exists
 because the maintainer said (2026-10-07, on the "keep expense records?" question): if it is a
 business expense, keep a record of it, with as much detail as possible, so DotAmi can later help
 people see what is, or could be, a business expense. This page is the design and privacy review
@@ -224,8 +224,9 @@ first slice); the others are reworded when what changes them is built.
    have to reach the local server to be stored. A pointer only (option C) does not.
 
 Unchanged: the rules engine reads agreed figures only; records feed no card; DotAmi files
-nothing; the server stores a receipt's bytes (options A and B) but never parses, opens or runs
-them.
+nothing; the server stores a receipt's bytes (options A and B) but never decodes, opens or runs
+them. The one thing it parses is a HEIC photo's container structure, with DotAmi's own bounded
+reader, to learn the picture's size (section 7, rule 5).
 
 ## 4. How this connects to write-offs
 
@@ -356,21 +357,37 @@ figures, links, map progress, settings and expense records survive it).
 
 1. **The type comes from the bytes, never the name or what the browser says.** `sniff.ts` reads the
    first bytes: JPEG (`FF D8 FF`), PNG (its 8-byte signature), WebP (`RIFF....WEBP`) or PDF (`%PDF-`),
-   each only at the very first byte. Anything else is refused, with a sentence that names what it
-   most likely is: SVG and web pages (they can carry a script), GIF, HEIC (no safe decoder in the
-   window yet), BMP, TIFF, AVIF, text, archives, programs. A file that is two things at once (a JPEG
-   whose later bytes are a web page) is taken as what its first bytes say.
+   each only at the very first byte, and since 2026-10-09 HEIC: a first box `ftyp` with a major brand
+   of `heic`, `heix` or `mif1` (`mif1` only with a `heic`/`heix` compatible brand), read further by
+   DotAmi's own container reader (`heic/picture.ts`, `heicHeader`), which must find one still picture
+   whose data is inside the file. Anything else is refused, with a sentence that names what it
+   most likely is: SVG and web pages (they can carry a script), GIF, HEIF bursts, animations and
+   layered pictures, BMP, TIFF, AVIF, text, archives, programs. A file with a HEIC brand that isn't
+   one (the brand, then a JPEG or nothing) is refused as damaged. A file that is two things at once
+   (a JPEG whose later bytes are a web page) is taken as what its first bytes say.
 2. **At most 10 MB** (the maintainer's cap), checked from the size before the window reads the file
    and again on the server, whose body limit is the base64 of 10 MB.
 3. **A picture's size is read from its header and checked before anything decodes it:** at most
    50 megapixels and 20,000 pixels on a side, so a few hundred bytes that claim a 30,000 × 30,000
    picture (a "decompression bomb") are refused unopened. A picture whose header has no readable
-   size is refused as damaged.
+   size is refused as damaged. For a HEIC, the size is the primary picture's own size box (`ispe`);
+   each of its tiles' size boxes must be within the same caps, and all the tiles together at most
+   64 Mi pixels.
 4. **DotAmi names the file itself:** 32 random hex characters and the extension of the type it read
    (`3f9c….png`). The person's file name is never sent to the server and never kept; nothing a caller
    sends becomes part of a path.
-5. **The server stores the bytes and never opens them:** it reads a few header bytes to learn the
-   type and size, hashes the file, and writes it. It never decodes, renders, parses or runs it.
+5. **The server stores the bytes and never decodes them:** it reads a few header bytes to learn the
+   type and size, hashes the file, and writes it. It never decodes, renders or runs it. For a HEIC
+   photo (2026-10-09), learning the size means reading the file's container structure: which item
+   is the picture, its size box, its tiles' sizes and where their data sit. DotAmi's own reader
+   ([`lib/expenses/receipts/heic/container.ts`](../../lib/expenses/receipts/heic/container.ts)) does
+   that on the server when the receipt is added, and in the page when it is added and again when it
+   is shown; only then does the viewer's no-network worker read it a last time and hand the picture
+   data to the decoder. That is the one parse of a receipt's hostile bytes outside a no-network
+   worker. The reader never decodes the picture; it refuses anything it would have to trust, caps
+   every count, and reads no more item data than the file holds, so a small file can't make it copy
+   the same bytes over and over (tested with truncated, oversized, looping, overlapping and randomly
+   corrupted files in [`tests/heic-container.spec.ts`](../../tests/heic-container.spec.ts)).
 6. **Only an agreed record takes a receipt**, and only DotAmi's own page can add or remove one
    (`POST /api/expenses/receipt`, `POST /api/expenses/receipt/remove`, both `Sec-Fetch-Site:
    same-origin` only, like agree and attach). An agent can propose records but never add, remove or
@@ -449,13 +466,10 @@ committed on its own before any viewer code; "Built by" below names the files).
    (§ 7): JPEG, PNG, WebP or PDF, nothing else; the name and the browser's type are ignored. When it
    is shown, the window reads the bytes it was sent again with the same check and compares the answer
    with the type the row stored; any disagreement (or a refusal) and nothing is drawn. SVG, HTML, XML,
-   GIF and the rest are refused at both points. **HEIC stays refused** until there is a decoder that
-   runs the same way (no script, no network, in a worker or the browser's own decoder): Chromium can't
-   decode HEIC itself, and a WebAssembly decoder would be a new package to review first. The
-   maintainer said yes (2026-10-09) to HEIC receipts; the decoders were reviewed the same day
-   ([connectors/heic-decoder-review.md](../connectors/heic-decoder-review.md)) and none is clean on
-   every count (licence, network, reviewable, works on Windows), so HEIC stays refused until the
-   maintainer picks one of the options listed there.
+   GIF and the rest are refused at both points. **HEIC** is accepted since 2026-10-09 and drawn by
+   rule 8: the maintainer chose option D of the decoder review
+   ([connectors/heic-decoder-review.md](../connectors/heic-decoder-review.md#what-was-chosen-2026-10-09)),
+   after a double-check of the research.
 2. **How the bytes reach the page.** `POST /api/expenses/receipt/file { expenseId }`, answering only
    DotAmi's own page (`Sec-Fetch-Site: same-origin`), like adding and removing. Being a POST that
    reads a JSON body, it can't be an address that a link, an `<img>`, a frame or the window itself can
@@ -500,6 +514,41 @@ committed on its own before any viewer code; "Built by" below names the files).
 7. **Nothing leaves the computer.** The viewer makes one request, to DotAmi's own server; the PDF
    worker can't connect anywhere; a picture is never given an address outside the page. Agents can't
    read a receipt: the route answers only DotAmi's page.
+8. **HEIC photos** (added 2026-10-09; the conditions and the threat path are in
+   [the decoder review](../connectors/heic-decoder-review.md#what-was-chosen-2026-10-09)). Chromium
+   can't decode a HEIC as a picture, so DotAmi reads the container itself and has the browser's
+   video decoder (WebCodecs' `VideoDecoder`) decode the HEVC inside on the graphics chip:
+   - only on *Show receipt*; never when a receipt is added, in a list or as a thumbnail;
+   - the bytes are moved into a second worker of the viewer's own (`heic-picture.worker.ts`), served
+     under the same no-connection policy as the PDF worker (`workerPolicy`, unchanged: no WebAssembly,
+     no eval). DotAmi's own reader (`lib/expenses/receipts/heic/`, no package) takes out the one
+     primary picture, a single coded picture or a grid of tiles, and checks, before a single byte
+     reaches the decoder: one still picture (not a sequence); HEVC Main or Main Still Picture, 8-bit
+     4:2:0, with the record and its SPS agreeing; exactly one VPS, SPS and PPS; every tile a key
+     picture with no parameter set of its own; the declared tile size; no more tiles than the picture
+     needs; the pixel caps, for the picture, every tile, the coded size its SPS gives the decoder and
+     all tiles together; no more item data than the file holds. Thumbnails, depth and gain maps,
+     alpha, Exif and every other item in the file are never handed to the decoder;
+   - `isConfigSupported` is asked first; where it says no (or there is no `VideoDecoder`), the viewer
+     says this computer can't show HEIC photos and that the photo is kept, with how to see it;
+   - one decoder per picture, every tile a key chunk, every decoded frame drawn onto an
+     `OffscreenCanvas` and closed at once, the decoder closed at the end; the crop, rotation and
+     mirroring the file lists are applied; the finished picture goes to the page as an `ImageBitmap`,
+     shown in a `<canvas>`, and is never written anywhere;
+   - any decoder error, a worker that dies, or more than 20 seconds: the worker is ended, the viewer
+     says DotAmi couldn't show it and that the file is kept, and **no HEIC is drawn again until DotAmi
+     restarts**, because Chromium switches hardware graphics off after three graphics-process crashes
+     in a short window. In the desktop app the main process also stops HEIC after any crash of the
+     graphics process (`child-process-gone`, type `GPU`), and the page asks it through the window's
+     preload (`desktop/window-preload.cjs`, two calls, believed only from DotAmi's own window);
+   - the renderer's and the GPU process's sandboxes stay as they are: no switch that turns either off
+     (`tests/desktop-sandbox.spec.ts`).
+
+   **Graphics drivers and the operating system must be kept up to date.** The decoder is the graphics
+   driver (or, on a Mac, the operating system's), which DotAmi can't patch: driver decoder bugs such
+   as Apple's AppleAVD CVE-2024-44232 to 44234 and NVIDIA's CVE-2025-23345 are fixed by those updates,
+   not by DotAmi. DotAmi's part is to stay on a supported, current Electron, so Chromium's own media
+   and graphics fixes arrive with it.
 
 **Tests with hostile files** (each must fail when its rule is removed):
 
@@ -526,14 +575,23 @@ and `checkShownBytes` in `lib/expenses/receipts/viewer/open.ts`; rule 2, `app/ap
 in `middleware.ts`. Tested by `tests/expenses-receipt-viewer.spec.ts`, `tests/security-hardening.spec.ts`,
 `e2e/receipt-viewer.spec.ts` (every hostile file above, in a real browser on the production build) and
 `e2e-desktop/desktop.spec.ts` (a PDF receipt drawn in the app's own window, its worker unable to reach
-DotAmi's server).
+DotAmi's server). Rule 8 (2026-10-09): `lib/expenses/receipts/heic/` (the container reader and the
+HEVC checks), `viewer/draw-heic.ts`, `viewer/heic-picture.worker.ts`, `viewer/heic-session.ts`, the HEIC
+branch of `viewer/open.ts`, `desktop/window-preload.cjs` and the graphics-process watch in
+`desktop/main.mjs`; tested by `tests/heic-container.spec.ts`, `tests/heic-draw.spec.ts`,
+`tests/desktop-sandbox.spec.ts`, `tests/expenses-receipts.spec.ts`, `e2e/receipt-viewer.spec.ts` (kept,
+refused and "can't show" in a browser with no HEVC) and `e2e-desktop/desktop.spec.ts` (drawn where the
+graphics chip decodes HEVC, otherwise the plain refusal; a graphics-process crash stops HEIC).
 
 **Known limits.** The server's size check before reading is a cheap first look; the SHA-256 check after
 it catches the same files, so no test tells the two apart. The drawn pages have a total cap, but pdf.js
 itself has no overall memory cap while it reads a file: a crafted PDF can still unpack a stream far
 larger than the file and crash the worker (or the window) before the 20-second limit; nothing is lost, nothing was being saved (the same limit as the return reader,
 `docs/connectors/pdf-reader-review.md`). A drawn page is a picture: its text can't be selected or
-searched, and there is no zoom beyond the window's own.
+searched, and there is no zoom beyond the window's own. A HEIC is shown only where the computer's
+graphics driver decodes HEVC (on Windows; on a Mac probably always, untested); colours are drawn as the
+decoder gives them, without the photo's colour profile; and no automatic test on GitHub's machines
+can see one drawn (they have no such graphics chip, and Playwright's Chromium has no HEVC).
 
 ## 9. Encrypting the receipts: the design (2026-10-09)
 
@@ -686,8 +744,8 @@ available, or `receipts.key` is **missing**):
   decision: **restore a backup** (File → Restore from a backup… brings the receipts back under a new
   key; the unreadable key file moves into `backups/` beside the receipts folder it locks), or **delete
   the receipts** (the Delete menu's *Your receipts*), after which the next start makes a new key.
-  A button to start a new key while keeping the unreadable receipts is a question for the maintainer
-  (below), not built.
+  A third, **Start a new key**, sets the locked receipts aside and starts a new key at the next start
+  (added later the same day: § 10).
 - **A restore that saves a new key and then can't swap the data in** (the last step of a restore
   fails, and the old receipts folder goes back where it was) takes the new key back: the old key file
   returns from `backups/` (or, if there was none, the new one is removed), so the next start says the
@@ -713,9 +771,12 @@ AES-256-GCM, one file per receipt, with Node's own `crypto` (no new package). Ea
   all fail to open, as tampering. The `Receipt` row still holds the receipt's own size and SHA-256, of
   the decrypted bytes, and they are checked after decrypting, as before.
 - **Independent of the file's type**: a file keeps its name `<id>.<extension>`, and nothing in the
-  encryption looks at the type, so a type added later (HEIC is being added separately) needs nothing
-  here. None of the accepted types' own first bytes is `DOTAMI-RECEIPT`, so a file that doesn't start
-  with it is a plain receipt.
+  encryption looks at the type, so HEIC (added the same day, § 8 rule 8) needed nothing here but its
+  extension in the list of names DotAmi gives receipt files (`desktop/backup.mjs` `RECEIPT_EXTENSIONS`),
+  which is what the first-start pass and backups go by: a `.heic` receipt is encrypted like any other,
+  and decrypted in memory on the server before the window's HEIC reader is handed its bytes. None of
+  the accepted types' own first bytes is `DOTAMI-RECEIPT` (a HEIC starts with its box size, then
+  `ftyp`), so a file that doesn't start with it is a plain receipt.
 - **Adding** (`addReceipt`): when the key is open, the server encrypts the bytes in memory, and the
   encrypted file goes through the same order of writes as § 7 (`.partial`, then the row, then the
   rename). The sweep's check of a half-finished add decrypts first, then compares size and SHA-256; a
@@ -772,7 +833,9 @@ counts only, never a name. After the first start of this version there is normal
 - The store: added receipts are encrypted on the disk and shown as the bytes that were added; a
   tampered or swapped file refused; a file from another key refused with its own sentence; from source,
   plain as before, and an encrypted file refused with its sentence; a half-finished encrypted add
-  finished by the sweep (`tests/expenses-receipts.spec.ts`).
+  finished by the sweep; a HEIC photo encrypted on the disk (nothing of its `ftyp` box left) and handed
+  to the HEIC reader decrypted (`tests/expenses-receipts.spec.ts`; the first-start pass on a `.heic`
+  file, `tests/receipt-crypto.spec.ts`; in the real app, the HEIC desktop test).
 - Backups: a backup from computer A restores on computer B with B's key, the receipt bytes the same;
   locked and unlocked; format 1 and format 2 fixtures still restore; no unencrypted receipt file in
   the staging folder (`tests/desktop-backup.spec.ts`).
@@ -811,6 +874,125 @@ restore's key never taken back fails two, and taken back over restored receipts 
 ### Still open (for the maintainer)
 
 - Whether to encrypt the database too (the option above, with its cost).
-- Whether to offer a button that starts a new key while receipts are locked with one that can't be
-  opened (giving up those receipts for good unless the old key comes back), or keep the two ways
-  forward above.
+- ~~Whether to offer a button that starts a new key while receipts are locked with one that can't be
+  opened.~~ Yes (the maintainer, 2026-10-09): § 10.
+
+## 10. Starting a new key, and the window during the first start (2026-10-09)
+
+The maintainer said yes (2026-10-09) to both: a button that starts a new key while receipts are locked
+with one that can't be opened, and a small window during the first start's wait for Windows' own key
+(§ 9, "The key"), which showed nothing for about ten seconds. This section was written before the code.
+
+### "Start a new key": what it does
+
+Before this, the only ways forward while the key can't be opened were putting `receipts.key` back,
+restoring a backup, or deleting the receipts (§ 9, "Losing the key"). The button is a fourth, for
+someone who has no backup and wants to go on adding receipts without deleting the old ones.
+
+- **Shown only while the key can't be opened and receipts are locked with it** (the server's lock
+  state `key-unreadable`): wherever the amber line "DotAmi can't open the key to your receipts." shows
+  today, on Settings → Data and backups, on *What DotAmi knows about you* (under the receipts folder)
+  and at the top of the Expenses page. Never while the key opens, never in a copy run from source, and
+  never with no key store and nothing encrypted (those keep receipts unencrypted; there is no key to
+  start again).
+- **Never while the key is only out of reach for now** (lock state `key-out-of-reach`, added after
+  review the same day). The desktop app tells its server `key-unreadable` only when the key store is
+  there and receipts are locked: the key file is missing, or this account can't open it
+  (`receiptLockEnv` in `desktop/receipt-key.mjs`). When the key store itself isn't available, the
+  key file may still open at a later start, and no new key could be made while the store is down, so
+  setting the key aside would only lose a key that works; the same when nothing is locked and a new key
+  just wasn't saved yet (the next start tries again by itself), and when the key the server is handed
+  isn't 32 bytes. Those say "DotAmi can't open the key to your receipts right now.", that nothing was
+  changed, and that DotAmi tries again each time it starts; no button. A Mac's Keychain prompt answered
+  "Deny" can't be told apart from a key this account can't open, so there the button is offered; the
+  files are moved, not deleted, so putting them back still works.
+- **Add a receipt isn't offered** while no receipt can be added (`key-unreadable`,
+  `key-out-of-reach`, `new-key-at-restart`): an agreed record says "Receipts can't be added now: the
+  amber line at the top of this page says why." instead (`receiptsCanBeAdded`,
+  `lib/expenses/receipts/protection.ts`; the server refuses an add in those states all the same).
+- **Asked twice, with the cost said first.** The first press opens a warning that says exactly what
+  is given up: a new key can't open the receipts locked with the old one, so they are given up for
+  good unless the old key comes back (`receipts.key` found again, or the Windows profile that could open
+  it). It says that nothing is deleted, where the files will go, that the expense records stay, and
+  that a backup made before the key was lost is the way to get those receipts back inside DotAmi, so
+  restoring one is the better answer for someone who has one. The second press asks once more. Cancel at
+  either step changes nothing.
+- **Moved aside, never deleted.** The server moves every receipt file the next start would count as
+  locked (`desktop/receipt-key.mjs` `countLockedReceipts`: DotAmi's own names in `receipts/`, encrypted,
+  whatever key they name, unfinished writes included) into a new folder,
+  `backups/receipts-locked-<time>/`, and then the key file, `receipts.key`, into the same folder under
+  the same name, if it is there. One definition of "locked" for both, so after the move the next start
+  finds nothing locked. Plain receipt files (never encrypted) stay where they are: they open without a
+  key, and the next start encrypts them with the new key. Each move is a rename inside the data folder.
+  The key file goes last, so a move cut short (the computer switched off) leaves the key file beside
+  whatever was not moved yet; pressing the button again moves the rest into a second folder.
+- **Where they went is said**: the answer names the folder by its full path, and until DotAmi is
+  restarted, Settings, *What DotAmi knows about you* and the Expenses page say, in place of the amber
+  line, that a new key is started at the next start, with that path.
+- **The new key is made at the next start, by the desktop app**, exactly as for a data folder whose key
+  file is missing and holds no locked receipt (§ 9: "with the file missing, a new key is simply made").
+  The server can't make one: only the desktop app's main process can reach Windows' key store. So the
+  page asks the person to close DotAmi and open it again; until then, receipts can't be shown or added.
+  If Windows' key store still isn't available at that start, receipts are kept unencrypted, as on any
+  computer without one, and the pages say so.
+- **The expense records stay, with their receipt rows.** Each receipt that was set aside still shows on
+  its record; opening it says it was set aside when a new key was started, and in which folder, rather
+  than "isn't in the receipts folder any more". Removing it and adding the file again works as before.
+  The rows are kept on purpose: a receipt row holds the size and SHA-256 the file must match, so if the
+  old key ever comes back, the files can be put back and open again.
+- **Getting them back later** (no button for it, said here so it isn't lost): with DotAmi closed, move
+  the files in that folder back into `receipts/` and its `receipts.key` back beside the data file, over
+  the new one. They open again if Windows can open that key on this account. Receipts added under the
+  new key are then locked in turn, so first make a backup (File → Back up…), which holds those decrypted,
+  and restore it afterwards only if they are wanted more than the old ones. Not built into the app.
+- **The route** is `POST /api/expenses/receipt/new-key` with `{ "giveUp": true }`: page-only like the
+  agree and delete routes (`refuseUnlessFromAppPage`: an agent or another program gets 403 and nothing
+  moves), its body read through `readJsonWithLimit` (1 KB), rate-limited, and refused (409, nothing
+  moved) unless this server's lock is `key-unreadable` (`key-out-of-reach` included). Once the files are moved, the server's lock
+  becomes `new-key-at-restart` for the rest of its run, so a second press is refused and the pages say
+  what happened. The log gets the count only, never a name.
+- **Delete** (the Delete menu) doesn't reach these folders, like the receipts folders a restore moves
+  into `backups/`; *What DotAmi knows about you* says so, and how to remove them by hand.
+
+### The "Preparing DotAmi…" window
+
+The first start of a new data folder waits about ten seconds before its window opens (§ 9, "The key":
+the receipts' key is saved only once Electron's own key is in `Local State`). Nothing was on the screen
+in those seconds, which looks like DotAmi didn't start.
+
+- **A small window, "Preparing DotAmi…"**, saying that DotAmi is setting up the key that protects its
+  receipt files and that this takes about ten seconds. A local page shipped with the app
+  (`desktop/preparing.html`), with no script and a Content-Security-Policy of `default-src 'none'`, so
+  it can't load or reach anything; its close button is greyed out (closing it would end a start that is
+  half done), and it isn't the window the rest of the app runs in.
+- **Shown only when the start is about to wait**: the desktop app shows it when it is about to save a
+  new receipts key and `Local State` doesn't hold Electron's key yet (on Windows; a Mac doesn't wait).
+  An ordinary start opens the key that is there, saves nothing and so never shows it; a start that
+  makes a new key in a folder whose `Local State` is already written doesn't wait either.
+- **Closed as soon as the main window shows**, in the same step that shows it.
+- **Never left behind**: when the start fails anywhere after it opened, the window is closed before the
+  failure message is shown, and that message still shows (`fail()` in `desktop/main.mjs`).
+- `desktop/preparing.mjs` decides when it shows and closes (plain Node, unit-tested with a stand-in
+  window); `desktop/main.mjs` makes the real window.
+
+### Tests (each must fail when its rule is removed)
+
+- What the server is told: `key-unreadable` (the button) only with the key store there and receipts
+  locked; `key-out-of-reach` with the store unavailable (the key then opens again once it is back) or
+  nothing locked (`tests/receipt-key.spec.ts`); a malformed key is `key-out-of-reach` too, and no
+  receipt is added in that state (`tests/expenses-receipts.spec.ts`).
+- Setting aside: every locked file moved (another key's, an unfinished write's), plain files and files
+  DotAmi didn't name left alone, the key file moved last into the same folder, nothing deleted; after
+  it, the next start makes a new key; putting the folder's files and key back opens the old receipts
+  again (`tests/receipt-key.spec.ts`).
+- The route: refused for a caller that isn't DotAmi's page, for a body without `giveUp: true`, for a
+  body over the limit, and whenever the lock isn't `key-unreadable` (open key, from source, no key store,
+  key out of reach for now, already pressed), each with nothing moved; then the lock's new state and the pages' sentence with the
+  path (`tests/receipt-new-key.spec.ts`); a set-aside receipt opened from its record says where it is.
+- The browser: the button's warning flow, asked twice, cancel changing nothing, then the folder named on
+  the page and the files moved on the disk, and an agreed record offering no Add a receipt before or after, on the production build started with the lock the desktop
+  app gives a key it can't open (`e2e/receipt-new-key.spec.ts`).
+- The desktop app: the button in the real app, then a restart that makes a new key; the preparing window
+  shown at a first start and closed when the main window shows, never at an ordinary start, and closed
+  before the failure message when the start fails (`e2e-desktop/desktop.spec.ts`), with its rules
+  unit-tested in `tests/desktop-preparing.spec.ts`.

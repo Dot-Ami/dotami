@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- The "Preparing DotAmi…" window (desktop/preparing.mjs, made by desktop/main.mjs): shown only while the
+     first start of a new data folder waits for Windows to save its own key. A local page with no script:
+     its CSP lets it load and reach nothing. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'" />
+    <title>Preparing DotAmi…</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { height: 100%; }
+      body { margin: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 26px; background: #161619; color: #efe7d6; font: 13px/1.5 system-ui, sans-serif; }
+      h1 { margin: 0 0 8px; font: 700 18px Georgia, serif; }
+      p { margin: 0; color: #cfc6b3; }
+      .bar { margin-top: 16px; height: 3px; border-radius: 2px; background: #32303a; overflow: hidden; }
+      .bar::after { content: ""; display: block; width: 30%; height: 100%; background: #b94a2c; animation: slide 1.4s ease-in-out infinite; }
+      @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+      @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; opacity: 0.5; } }
+    </style>
+  </head>
+  <body>
+    <h1>Preparing DotAmi…</h1>
+    <p>Setting up the key that protects your receipt files. This takes about ten seconds, and only happens when DotAmi starts with a new key.</p>
+    <div class="bar" role="presentation"></div>
+  </body>
+</html>
