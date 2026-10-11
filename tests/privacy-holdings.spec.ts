@@ -370,6 +370,9 @@ describe("the folders beside the data file", () => {
 
     expect(h.setAsideReceiptFolders).toBe(2);
     expect(h.safetyCopies).toBe(0);
+    // [8i] Of those, the one Start a new key made with a receipt in it is what "Bring these receipts back"
+    // looks at (expense-records.md § 12); the restore's folder and the folder holding only the person's file aren't.
+    expect(h.receiptFiles.lockedFolders).toBe(1);
     // A count only: nothing from inside a receipt.
     expect(JSON.stringify(h)).not.toContain(secret);
   });
@@ -387,12 +390,13 @@ describe("the folders beside the data file", () => {
     const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
 
     const h = await readHoldings(seeded.prisma, today, lock);
-    expect(h.receiptFiles).toEqual({ state: "on", setAsideTo: null, encrypted: 1, plain: 1, locked: 0 });
+    expect(h.receiptFiles).toEqual({ state: "on", setAsideTo: null, lockedFolders: 0, encrypted: 1, plain: 1, locked: 0 });
     expect(h.folders.find((f) => f.entry.id === "receipts-key")).toMatchObject({ exists: true, files: null });
     // From source, the same encrypted file is one this copy can't open.
     expect((await readHoldings(seeded.prisma, today, { state: "source" })).receiptFiles).toEqual({
       state: "source",
       setAsideTo: null,
+      lockedFolders: 0,
       encrypted: 0,
       plain: 1,
       locked: 1,

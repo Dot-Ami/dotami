@@ -243,6 +243,16 @@ roadmap's build order.
     clears the receipt folders set aside in `backups/` (`receipts-locked-…`, `receipts-before-restore-…`),
     with a warning, owed in the wipe-pending note if cut short
     ([expense-records.md § 11](architecture/expense-records.md))
+  - [x] The third follow-up (the maintainer said yes, 2026-10-10): **Bring these receipts back**, in the
+    desktop app, for each `backups/receipts-locked-…` folder whose old key this Windows account can open
+    again; asked once; each receipt checked against its record, locked again with the current key, put
+    back, and only then removed from the folder; anything that fails stays and is named; the button only
+    for receipts that could really come back, never for a folder an earlier Delete still owes (review fix
+    round, 2026-10-10); an unfinished add set aside with the rest comes back too, a key file in another
+    set-aside folder is said as such, and "already back" only when that copy opens (second review fix
+    round, 2026-10-10)
+    ([expense-records.md § 12](architecture/expense-records.md)). Not done, with the reasons there: the
+    receipt folders a restore or Start fresh set aside
   - [x] iPhone (HEIC) photos as receipts (the maintainer said yes, 2026-10-09): the decoders reviewed
     ([connectors/heic-decoder-review.md](connectors/heic-decoder-review.md)), then option D chosen after a
     double-check and built: kept exactly as given, read by DotAmi's own container reader in a

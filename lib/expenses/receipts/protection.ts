@@ -111,6 +111,191 @@ export function receiptsCanBeAdded(state: ReceiptLockState): boolean {
 /** What an agreed record says instead of Add a receipt while receiptsCanBeAdded is false. */
 export const RECEIPTS_CANT_BE_ADDED = "Receipts can't be added now: the amber line at the top of this page says why.";
 
+// [8i] Bringing set-aside receipts back (expense-records.md § 12): the sentences Settings and What DotAmi
+// knows about you show beside each folder Start a new key set receipts aside in, and after the button.
+
+/** A copy run from source has no key store, so it can't open an old key: said instead of a button. */
+export const SET_ASIDE_FROM_SOURCE =
+  "Receipts were set aside in the backups folder when a new key was started. This copy runs from source and has no key store, so it can't bring them back. The desktop app can, if Windows can open their old key on your account again.";
+
+/** The desktop app while its own key isn't open: there is no key to lock them with again. */
+export const SET_ASIDE_NEEDS_OPEN_KEY =
+  "Receipts were set aside in the backups folder when a new key was started. They can be brought back only while DotAmi's own receipts key opens.";
+
+/** The desktop app didn't answer the list (it always should): said instead of the folders. */
+export const SET_ASIDE_LIST_FAILED =
+  "Receipts were set aside in the backups folder, but the desktop app didn't say whether they can be brought back. Reload this page to ask again.";
+
+const receiptFiles = (n: number) => `${n} receipt file${n === 1 ? "" : "s"}`;
+
+/** Where a found old key file goes: said whenever a folder has receipts and no receipts.key of its own. */
+const PUT_FOUND_KEY_HERE = "If you find the old receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page.";
+
+/** One set-aside folder as the desktop app lists it (desktop/receipt-bring-back.mjs listSetAsideReceipts). */
+export interface SetAsideFolderCounts {
+  path: string;
+  receipts: number;
+  /** Could come back now: a row of the right type, not already back, and a key here opens it. */
+  canBringBack: number;
+  /** No key here opens them, though a set-aside folder holds their key file (it won't open on this account). */
+  noKey: number;
+  /** No key here opens them, and no set-aside folder holds their key file. */
+  noKeyFile: number;
+  noRecord: number;
+  /** The copy in the receipts folder opens and matches: the one here is old. */
+  alreadyBack: number;
+  /** A different file with the same name is in the receipts folder; DotAmi won't write over it. */
+  otherCopy: number;
+  changed: number;
+  unreadable: number;
+  keyFile: boolean;
+  deleteOwed: boolean;
+}
+
+/**
+ * One set-aside folder's line: where it is, how many receipts, how many can come back, and why each of
+ * the others can't. `canBringBack` is whether the button is offered: only while at least one receipt
+ * could really come back, so a folder of receipts that never can doesn't keep its button for good.
+ */
+export function setAsideFolderText(f: SetAsideFolderCounts): { summary: string; canBringBack: boolean } {
+  // Delete told the person these can never be opened again; its unfinished wipe still owes the folder.
+  if (f.deleteOwed) {
+    return {
+      summary: `Receipts set aside in ${f.path} are being cleared by an earlier Delete that hasn't finished, so they can't be brought back. What DotAmi knows about you can finish it (Finish it now).`,
+      canBringBack: false,
+    };
+  }
+  const one = (n: number, single: string, many: string) => (n === 1 ? `1 of them ${single}` : `${n} of them ${many}`);
+  const parts = [`${receiptFiles(f.receipts)} set aside in ${f.path}.`];
+  if (f.canBringBack > 0 && f.canBringBack >= f.receipts) parts.push("This Windows account can open their old key again.");
+  else if (f.canBringBack > 0) parts.push(`${f.canBringBack} of them can be brought back now.`);
+
+  // The key file is there (here, or in another set-aside folder after a move cut short), but won't open:
+  // the account is the problem, so the person is never sent looking for a file that isn't lost.
+  if (f.noKey > 0 && f.noKey >= f.receipts) {
+    parts.push(
+      f.keyFile
+        ? "Their old key still can't be opened on this Windows account, so they can't be brought back."
+        : "Their old key file is in another set-aside folder beside this one, and this Windows account still can't open it, so they can't be brought back.",
+    );
+  } else if (f.noKey > 0) {
+    parts.push(
+      f.keyFile
+        ? `${one(f.noKey, "is", "are")} locked with an old key this Windows account still can't open.`
+        : `${one(f.noKey, "is", "are")} locked with an old key whose file is in another set-aside folder beside this one, and this Windows account still can't open it.`,
+    );
+  }
+  // No key file for their key anywhere. "Put it in this folder" only when the folder has none of its own:
+  // a second receipts.key can't go beside the first.
+  if (f.noKeyFile > 0 && f.noKeyFile >= f.receipts) {
+    parts.push(
+      f.keyFile
+        ? "DotAmi can't find the key file for their old key in the backups folder, so they can't be brought back."
+        : `Their old key file isn't in this folder, so they can't be brought back. ${PUT_FOUND_KEY_HERE}`,
+    );
+  } else if (f.noKeyFile > 0) {
+    parts.push(
+      f.keyFile
+        ? `${one(f.noKeyFile, "is", "are")} locked with an old key whose file DotAmi can't find in the backups folder.`
+        : `${one(f.noKeyFile, "is", "are")} locked with an old key whose file isn't in this folder. ${PUT_FOUND_KEY_HERE}`,
+    );
+  }
+  if (f.noRecord > 0) {
+    parts.push(
+      one(f.noRecord, "can't come back: its expense record was deleted, or no longer has that receipt.", "can't come back: their expense records were deleted, or no longer have those receipts."),
+    );
+  }
+  if (f.alreadyBack > 0) {
+    parts.push(
+      one(f.alreadyBack, "is already back in the receipts folder; the copy here is an old one.", "are already back in the receipts folder; the copies here are old ones."),
+    );
+  }
+  if (f.otherCopy > 0) {
+    parts.push(
+      f.otherCopy === 1
+        ? "1 of them can't come back yet: a different file with the same name is in the receipts folder, and DotAmi won't write over it. Move that file out of the receipts folder and reload this page."
+        : `${f.otherCopy} of them can't come back yet: different files with the same names are in the receipts folder, and DotAmi won't write over them. Move those files out of the receipts folder and reload this page.`,
+    );
+  }
+  if (f.changed > 0) {
+    parts.push(
+      one(
+        f.changed,
+        "changed or was damaged since it was set aside, so DotAmi won't bring it back.",
+        "changed or were damaged since they were set aside, so DotAmi won't bring them back.",
+      ),
+    );
+  }
+  if (f.unreadable > 0) {
+    parts.push(
+      `${one(f.unreadable, "couldn't be read just now (another program may have it open).", "couldn't be read just now (another program may have them open).")} Reload this page to check again.`,
+    );
+  }
+  // Delete is pointed to only when nothing left in the folder could ever come back. Never beside a
+  // different file in the receipts folder: the copy here may be the only one that opens.
+  if (f.canBringBack === 0 && f.noKey === 0 && f.noKeyFile === 0 && f.otherCopy === 0 && f.unreadable === 0 && f.noRecord + f.alreadyBack + f.changed > 0) {
+    parts.push("Delete (“Safety copies in the backups folder”) on What DotAmi knows about you can clear this folder.");
+  }
+  return { summary: parts.join(" "), canBringBack: f.canBringBack > 0 };
+}
+
+/** Why one receipt stayed in the set-aside folder (desktop/receipt-bring-back.mjs bringBackReceipts `left`). */
+export const BRING_BACK_LEFT = {
+  "no-record": "Its expense record was deleted since, or no longer has this receipt, so it wasn't brought back.",
+  "no-key": "Its old key can't be opened on this Windows account.",
+  changed: "It changed or was damaged since it was set aside, so DotAmi won't bring it back.",
+  "already-there": "A file of the same name is already in the receipts folder, so it was left as it is.",
+  "not-written": "It couldn't be written to the receipts folder (another program may have the folder open). Try again.",
+  "in-use": "Another program had it open, so it couldn't be read. Try again.",
+  // Renamed into place, then neither read back nor taken out again: it may be back, so not "Try again".
+  unchecked:
+    "It was put in the receipts folder, but DotAmi couldn't check that it opens, and another program kept DotAmi from taking it out again. Its set-aside copy was kept. Reload this page to see whether it is back.",
+} as const;
+
+/**
+ * Why the desktop app refused the whole request: every one of them moves nothing. "no-answer" is the
+ * page's own, for no answer at all, and doesn't claim nothing moved: the page can't know.
+ */
+export const BRING_BACK_REFUSED = {
+  "not-dotami-window": "Only DotAmi's own window can bring receipts back. Nothing was moved.",
+  "no-current-key": "DotAmi's own receipts key isn't open right now, so there is no key to lock them with again. Nothing was moved.",
+  closing: "DotAmi is closing. Nothing was moved.",
+  "not-a-set-aside-folder": "That folder isn't one DotAmi set receipts aside in, or it is no longer there. Nothing was moved.",
+  "data-file-unreadable": "DotAmi couldn't read its data file to check the receipts against their records. Nothing was moved.",
+  "delete-owed": "An earlier Delete is still clearing that folder, so its receipts can't be brought back. Nothing was moved.",
+  "no-answer": "The desktop app didn't answer. Reload this page to see which receipts are still set aside.",
+} as const;
+
+export type BringBackLeftReason = keyof typeof BRING_BACK_LEFT;
+export type BringBackRefusal = keyof typeof BRING_BACK_REFUSED;
+
+/**
+ * The line after the button: how many came back, an old copy still in the folder, and any put back but not
+ * checked (never counted as back, never hidden behind "No receipt was brought back."). Each one left is
+ * named under it.
+ */
+export function bringBackDoneText({
+  broughtBack,
+  oldCopiesLeft,
+  left,
+}: {
+  broughtBack: readonly string[];
+  oldCopiesLeft: readonly string[];
+  left: readonly { name: string; why: string }[];
+}): string {
+  const unchecked = left.filter((l) => l.why === "unchecked").length;
+  const notChecked = (more: boolean) =>
+    unchecked === 1
+      ? `${more ? "1 more was" : "1 was"} put back but couldn't be checked: it is named below.`
+      : `${unchecked} ${more ? "more " : ""}were put back but couldn't be checked: they are named below.`;
+  if (broughtBack.length === 0) return unchecked === 0 ? "No receipt was brought back." : `No receipt was brought back for certain. ${notChecked(false)}`;
+  const n = broughtBack.length;
+  const head = n === 1 ? "1 receipt brought back. It opens from its record again." : `${n} receipts brought back. They open from their records again.`;
+  const done =
+    oldCopiesLeft.length === 0 ? head : `${head} The old copy of ${oldCopiesLeft.length} is still in the set-aside folder, because another program had it open.`;
+  return unchecked === 0 ? done : `${done} ${notChecked(true)}`;
+}
+
 /** Why one encrypted receipt can't be shown (the viewer says it in amber). */
 export const LOCKED_RECEIPT_MESSAGES = {
   otherKey:

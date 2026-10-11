@@ -77,6 +77,40 @@ person is asked).
   ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
   [database-encryption.md § 15.3](architecture/database-encryption.md)).
 
+- **Bringing set-aside receipts back also brings back an unfinished add, and checks a same-named file in
+  `receipts/` before calling a receipt "already back" ([8i], 2026-10-10, second review fix round).** An
+  unfinished add (`<name>.partial`, the only copy of a receipt when DotAmi stopped between writing its row
+  and renaming it) that *Start a new key* set aside is now brought back like any receipt, checked against
+  its `Receipt` row and written as `receipts/<name>` with the current key; before, it was left in the
+  set-aside folder without a word. When a file with a set-aside receipt's name is already in `receipts/`,
+  the main process now reads it whole and opens it with the current key, in memory only, to check it
+  against its row; only then does the page say the receipt is already back. It reads the key id of every
+  set-aside `receipts.key` (not the key itself, when Windows won't open it) to say where a receipt's key
+  file is. It removes a leftover `receipts/<name>.encrypting` of an earlier press (DotAmi's own encrypted
+  temporary file) before writing that receipt again. Nothing new is kept, and nothing is sent anywhere
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)).
+- **The list of set-aside receipts reads their records, and a folder Delete still owes is never offered
+  (listed with a line saying an earlier Delete is still clearing it) ([8i], 2026-10-10, review fix
+  round).** To offer *Bring these receipts back* only for receipts that
+  could come back, the desktop app's main process now also reads the `Receipt` table (read-only) when the
+  page asks for the list, and checks whether a file of the same name is already in `receipts/`. It
+  remembers, in memory only and until it closes, which set-aside files a press found changed (their
+  path, size and time), so they aren't offered again. A folder named in the wipe-pending note (an
+  earlier Delete that hasn't finished) is never offered, and the button refuses it, so receipts Delete
+  said were gone can't come back before the wipe finishes. The page gets counts, never a key. Nothing new
+  is kept on the disk, and nothing is sent anywhere
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)).
+- **Set-aside receipts can come back into the receipts folder ([8i], 2026-10-10).** In the desktop app,
+  once Windows can open the old key of receipts *Start a new key* set aside in
+  `backups/receipts-locked-<time>/` again, *Bring these receipts back* opens each with that key in the main
+  process's memory, checks it against its `Receipt` row (size and SHA-256), locks it again with the current
+  key, writes it into `receipts/` (through `<name>.encrypting`, removed by the next start if left behind)
+  and only then removes the set-aside copy; the old key file stays in that folder
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)). Nothing is decrypted onto the
+  disk. No new table, column, file kind or browser-storage key; the log gets counts only. A copy run from
+  source can't do it and says so. Listed in [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
+  (`FOLDERS`: the receipts folder, the safety copies folder and the receipts key). Tested by
+  [`tests/receipt-bring-back.spec.ts`](../tests/receipt-bring-back.spec.ts) and the desktop test.
 - **The "wipe pending" note can also name set-aside receipt folders ([8i], 2026-10-10).** When Delete is
   asked to clear the receipt folders set aside in `backups/` (below, *How to remove it*), the note it
   leaves beside the data file until the work is done lists those folders' names (`receiptFolders`:
@@ -439,6 +473,16 @@ person is asked).
 
 ### New powers or permissions
 
+- **The window can ask the desktop app about set-aside receipts, and to bring them back ([8i],
+  2026-10-10).** The window's bridge ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs)) gains
+  two calls, `listSetAsideReceipts` and `bringBackReceipts(folder)`, five in all. The main process answers
+  only DotAmi's own window showing one of its own pages, only while this start's receipts key is open, and
+  for the second only a folder named exactly as Start a new key names it, directly inside a real backups
+  folder (never a link or junction), only while the app isn't closing and only when the data file can be
+  read; otherwise it refuses and moves nothing. The main process now also asks Windows to open old key
+  files found in `backups/receipts-locked-…/` (the same per-account protection as `receipts.key`), and
+  reads the `Receipt` table read-only. The page gets back folder paths, counts and DotAmi's own file
+  names, never a key. Nothing is sent anywhere.
 - **The desktop app can restart itself after *Start a new key* ([8i], 2026-10-10).** The window's bridge
   ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs)) gains a third call, `restartForNewKey`.
   The main process restarts only when the call comes from DotAmi's own window showing one of its own
@@ -536,6 +580,10 @@ person is asked).
   locked with their passphrase either way. Your receipt files keep their own encryption.", with **Go back**
   and **Turn it off**
   ([`components/settings/database-encryption-control.tsx`](../components/settings/database-encryption-control.tsx)).
+- ***Bring these receipts back* is asked once ([8i], 2026-10-10)**: a dialog says what happens (each receipt
+  opened with its old key, checked against its record, locked again with the current key and put back,
+  and only then removed from the set-aside folder), that a receipt whose record was deleted since stays
+  and is named, and that the old key file stays. Nothing is given up, so there is no second ask.
 - **The restart after *Start a new key* needs no new answer ([8i], 2026-10-10)**: the second ask now says
   that DotAmi then restarts by itself, and after the move the page says "DotAmi will restart now to start
   the new key…" before the restart is asked for.
@@ -663,6 +711,9 @@ person is asked).
   (until the review of 2026-10-10 this line said folder copies couldn't be opened once the key was gone,
   which isn't true of a whole folder). Passphrase-locked backups don't depend on it and restore either way.
   The note `database-turned-off.json` goes with the key.
+- **A set-aside folder after *Bring these receipts back* ([8i], 2026-10-10)** keeps the old key file and
+  any receipt that didn't come back. The Delete box *Safety copies in the backups folder* still counts it
+  and clears it, as before; the receipts that came back are in the receipts folder, removed like any other.
 - **A data file whose key was lost ([8i])** is kept in `backups/` as `dotami-locked-<time>.db` (with
   the unreadable key file beside it) after a restore or **Start fresh** (which also moves the receipts
   folder there, as `receipts-before-start-fresh-<time>`); DotAmi never deletes it, and Delete's
