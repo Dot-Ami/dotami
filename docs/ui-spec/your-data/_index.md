@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-10 ([8i] — Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-10 ([8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -73,12 +73,24 @@ jump links, then five sections in this order:
    backup. [8i] The data file's box says whether the file is encrypted, in the same words as Settings
    (`lib/db/protection.ts`); a row for **the key to your data file** (`database.key`, desktop app only:
    what it is, that losing it loses everything not in a backup, never removed or replaced while
-   anything is locked with it); and a row for **the note that encrypting is under way**
+   anything is locked with it, and never removed unless the person turned locking off with it: then
+   the next start decrypts the data file and its safety copies, overwrites it with zeros and deletes it
+   once nothing opens with it, a safety copy another program had open keeping it until a later start);
+   and a row for **the note that encrypting is under way**
    (`database-encrypting.json`, "None: nothing is being encrypted." when it isn't there); and rows for
    **the encrypted copy being made** (`dotami.db.encrypting`) and **the unencrypted data file being
    wiped** (`dotami.db.plain-to-wipe`, which holds everything unencrypted and can stay across starts
-   while another program holds it; Delete doesn't remove it, the next start does). The receipts
-   row says whether the data file is encrypted too.
+   while another program holds it; Delete doesn't remove it, the next start does). [8i] Turning
+   locking off adds four rows (database-encryption.md § 15): **the note that decrypting is under way**
+   (`database-decrypting.json`, "None: nothing is being decrypted."), **the decrypted copy being made**
+   (`dotami.db.decrypting`: everything unencrypted, as the person chose; wiped at once if the swap or the
+   copy can't finish, "None: nothing is being decrypted."), **the encrypted data file being wiped**
+   (`dotami.db.encrypted-to-wipe`, which keeps the key while it is there and can stay across starts while
+   another program holds it; Delete doesn't remove it, the next start does, also when the safety copy it
+   came from was deleted, "None: no encrypted copy is waiting to be wiped.") and **the note that the
+   person turned locking off** (`database-turned-off.json`, the key's id only, "None: locking wasn't
+   turned off, or turning it off is finished."). The receipts row says whether the data file is
+   encrypted too.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
    is, and that DotAmi can't take it back), the desktop update check (GitHub sees the computer's

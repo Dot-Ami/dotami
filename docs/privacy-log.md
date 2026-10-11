@@ -545,7 +545,9 @@ person is asked).
   **Back up first…**, **Encrypt now**, **Not now** and **Never…** (a second warning first:
   [`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html)). Settings → Data and backups has an
   **Encrypt the data file** switch (on by default; turning it off asks first). A new data folder is
-  encrypted without asking. The log records that the window was shown and which button was pressed.
+  asked too, with the same window and buttons (**Back up first…** turned off there); until 2026-10-10 it
+  was encrypted without asking (*Changed 2026-10-10*, see the first entry under *What DotAmi keeps, and
+  where*). The log records that the window was shown and which button was pressed.
 
 - **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
   key can't open them, so they are given up for good unless the old key comes back, that nothing is
@@ -656,8 +658,10 @@ person is asked).
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
-  a backup holds, and DotAmi then says so and changes nothing. Once encrypted, the file isn't
-  decrypted again by DotAmi; Delete works on it as before.
+  a backup holds, and DotAmi then says so and changes nothing. Delete works on the encrypted file as
+  before. *Changed 2026-10-10, see the first entry of this section:* the person can now turn locking
+  off in Settings; the next start then decrypts the file and its safety copies, and deletes the key once
+  nothing opens with it (until then this line said an encrypted file was never decrypted again).
 - **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
   person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
   the receipts folders a restore moves there). *Changed 2026-10-10, next line.*
