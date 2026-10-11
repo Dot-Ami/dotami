@@ -179,14 +179,18 @@ export function listSetAsideReceiptFolders(dbFile) {
 
 /** Start a new key's folders only (`receipts-locked-<time>`, `-<n>`): what "Bring these receipts back" reads. */
 export const LOCKED_FOLDER_NAME = /^receipts-locked-\d+(?:-\d+)?$/;
-/** A finished receipt file DotAmi named (no unfinished write, no key file). */
-const RECEIPT_FILE_NAME = /^[0-9a-f]{32}\.(?:jpg|png|webp|pdf|heic)$/;
+/**
+ * A receipt file DotAmi named, finished or an unfinished add (".partial", which can be the only copy of a
+ * receipt: expense-records.md § 12, second fix round). Not the first-start pass's ".encrypting" leftovers
+ * (never the only copy) and not the key file.
+ */
+const RECEIPT_FILE_NAME = /^[0-9a-f]{32}\.(?:jpg|png|webp|pdf|heic)(?:\.partial)?$/;
 
 /**
  * [8i] The folders Start a new key set receipts aside in that still hold a receipt file, by name, sorted:
  * real `receipts-locked-<time>` folders directly inside a real backups folder, with at least one regular
- * receipt file DotAmi named in them (expense-records.md § 12). A folder holding only the old key file
- * (every receipt was brought back) isn't listed. The server counts these for the pages; the desktop app's
+ * receipt file DotAmi named in them, an unfinished add included (expense-records.md § 12). A folder
+ * holding only the old key file (every receipt was brought back) isn't listed. The server counts these for the pages; the desktop app's
  * main process lists them to bring receipts back (desktop/receipt-bring-back.mjs).
  * @param {string} dbFile
  * @returns {{ names: string[] }}

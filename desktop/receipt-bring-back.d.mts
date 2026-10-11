@@ -9,7 +9,7 @@ export interface ReceiptRow {
 }
 
 export type BringBackRefusal = "not-dotami-window" | "no-current-key" | "closing" | "not-a-set-aside-folder" | "data-file-unreadable" | "delete-owed";
-export type BringBackLeft = "no-record" | "no-key" | "changed" | "already-there" | "not-written" | "in-use";
+export type BringBackLeft = "no-record" | "no-key" | "changed" | "already-there" | "not-written" | "in-use" | "unchecked";
 
 /** One set-aside folder as the page is told about it: only `canBringBack` receipts are offered the button. */
 export interface SetAsideFolder {
@@ -17,9 +17,14 @@ export interface SetAsideFolder {
   path: string;
   receipts: number;
   canBringBack: number;
+  /** No key here opens them, though a set-aside folder holds their key file. */
   noKey: number;
+  /** No key here opens them, and no set-aside folder holds their key file. */
+  noKeyFile: number;
   noRecord: number;
   alreadyBack: number;
+  /** A different file with their name is in receipts/. */
+  otherCopy: number;
   changed: number;
   unreadable: number;
   /** Whether the folder holds a receipts.key of its own. */

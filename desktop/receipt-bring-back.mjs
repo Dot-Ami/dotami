@@ -14,8 +14,9 @@
 // receipt's failure never ends the run, so the answer always says what really moved.
 //
 // The list the page shows counts for the button only receipts that could come back (a row of the right
-// type, not already in receipts/, a key here that opens it, not found changed by an earlier press), and
-// counts the others apart so the page can say why. A folder an earlier Delete still owes (its wipe-pending
+// type, nothing of its name in receipts/, a key here that opens it, not found changed by an earlier press),
+// and counts the others apart so the page can say why. An unfinished add ("<name>.partial") that Start a
+// new key moved with the rest is handled like a finished receipt: it can be the only copy. A folder an earlier Delete still owes (its wipe-pending
 // note names it) is never offered, and the button refuses it: Delete said those receipts can't come back.
 //
 // Plain Node and no Electron import (`store` is safeStorage in the app, a stand-in in
@@ -33,8 +34,14 @@ import { listLockedReceiptFolders, LOCKED_FOLDER_NAME, readWipePending } from ".
 
 /** The receipts folder beside the data file (lib/expenses/receipts/store.ts RECEIPTS_FOLDER). */
 const RECEIPTS_FOLDER = "receipts";
-/** A finished receipt file DotAmi named: its id and the extension of its type. Nothing else is touched. */
-const RECEIPT_NAME = new RegExp(`^([0-9a-f]{32})\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})$`);
+/** The suffix addReceipt writes a new receipt under before its row exists (lib/expenses/receipts/store.ts). */
+const PARTIAL = ".partial";
+/**
+ * A receipt file DotAmi named: its id and the extension of its type, finished or an unfinished add
+ * ("<name>.partial", § 12, second fix round: it can be the only copy of a receipt its record still has).
+ * Nothing else is touched.
+ */
+const RECEIPT_NAME = new RegExp(`^([0-9a-f]{32})\\.(${Object.values(RECEIPT_EXTENSIONS).join("|")})(?:\\.partial)?$`);
 /** The suffix of the file written before it is renamed into place: the same one the first-start pass uses, so its leftovers are removed by the next start. */
 const IN_PROGRESS = ".encrypting";
 /** Receipts are at most 10 MB (the maintainer's cap); a bigger file is not one DotAmi kept. */
@@ -146,22 +153,37 @@ function readReceiptFile(file) {
   }
 }
 
-/** The receipt files DotAmi named in a set-aside folder: regular files only, never a link, sorted. */
+/**
+ * The receipt files DotAmi named in a set-aside folder: regular files only, never a link, sorted. An
+ * unfinished add ("<name>.partial") is one of them, unless its own finished file is in the same folder:
+ * then it is a leftover beside the copy that counts, and is left alone.
+ */
 function receiptNamesIn(folder) {
-  return readdirSync(folder, { withFileTypes: true })
+  const names = readdirSync(folder, { withFileTypes: true })
     .filter((e) => e.isFile() && RECEIPT_NAME.test(e.name))
-    .map((e) => e.name)
-    .sort();
+    .map((e) => e.name);
+  const finished = new Set(names.filter((name) => !name.endsWith(PARTIAL)));
+  return names.filter((name) => !name.endsWith(PARTIAL) || !finished.has(name.slice(0, -PARTIAL.length))).sort();
+}
+
+/** A set-aside file's id and the name it has in receipts/ (a ".partial" comes back under its finished name). */
+function receiptParts(name) {
+  const [, id, extension] = name.match(RECEIPT_NAME);
+  return { id, extension, finalName: `${id}.${extension}` };
 }
 
 /**
  * Every key that can open a set-aside receipt, by its id: the old key file in each receipts-locked
  * folder that this account can open, and this start's own key. All the folders' keys, not only the
  * folder's own: a move cut short leaves receipts in one folder and the key file in the next (§ 10).
+ * `fileIds` is the id of every key file found there, opened or not, so the list can tell "its key file
+ * is here but won't open" from "no key file for it anywhere" (§ 12, second fix round).
+ * @returns {{ keys: Map<string, Buffer>, fileIds: Set<string> }}
  */
 function keysFor(backups, store, platform, currentKey) {
   const keys = new Map([[keyIdOf(currentKey), currentKey]]);
-  if (!isRealFolder(backups)) return keys;
+  const fileIds = new Set();
+  if (!isRealFolder(backups)) return { keys, fileIds };
   for (const entry of readdirSync(backups, { withFileTypes: true })) {
     if (!entry.isDirectory() || !LOCKED_FOLDER_NAME.test(entry.name)) continue;
     const file = path.join(backups, entry.name, RECEIPT_KEY_FILE);
@@ -170,10 +192,39 @@ function keysFor(backups, store, platform, currentKey) {
     } catch {
       continue;
     }
-    const { key } = openKeyFile(file, store, platform);
+    // openKeyFile reads the id even when Windows won't open the key (or the key store isn't usable).
+    const { keyId, key } = openKeyFile(file, store, platform);
+    if (keyId) fileIds.add(keyId);
     if (key) keys.set(keyIdOf(key), key);
   }
-  return keys;
+  return { keys, fileIds };
+}
+
+/**
+ * What is in receipts/ under a receipt's name, for the list (§ 12, second fix round):
+ *   "none"       nothing there
+ *   "back"       a regular file that opens with the current key and matches the row: really back
+ *   "other"      anything else (still locked with the old key, damaged, plain, a folder or link)
+ *   "unreadable" it couldn't be read just now (another program has it open)
+ * Only a file with a clashing name is read whole and opened, so the list's cost stays with that rare case.
+ */
+function copyInReceipts(target, { id, row, current }) {
+  let info;
+  try {
+    info = lstatSync(target);
+  } catch (error) {
+    return error?.code === "ENOENT" || error?.code === "ENOTDIR" ? "none" : "unreadable";
+  }
+  if (!info.isFile()) return "other";
+  const read = readReceiptFile(target);
+  if (read.status === "unreadable") return "unreadable";
+  if (read.status === "too-big" || !isEncryptedReceipt(read.bytes) || encryptedKeyId(read.bytes) !== keyIdOf(current)) return "other";
+  try {
+    const plain = decryptReceipt(read.bytes, { key: current, id });
+    return plain.length === row.bytes && sha256(plain) === row.sha256 ? "back" : "other";
+  } catch {
+    return "other";
+  }
 }
 
 /**
@@ -207,12 +258,18 @@ function refusedFor({ fromDotAmi, opened }) {
  * The set-aside folders the page lists (expense-records.md § 12, "Where it shows"): each receipts-locked
  * folder still holding encrypted receipt files, how many, and what each one is, so the page offers the
  * button only for receipts that could really come back and says why the others can't:
- *   canBringBack  a row of the right type, not already in receipts/, and a key here opens it
- *   noKey         no key here opens it (`keyFile` says whether the folder has a receipts.key of its own)
+ *   canBringBack  a row of the right type, nothing of its name in receipts/, and a key here opens it
+ *   noKey         no key here opens it, though a set-aside folder holds a key file with its key id
+ *   noKeyFile     no key here opens it, and no set-aside folder holds a key file with its key id
+ *                 (`keyFile` says whether the folder has a receipts.key of its own: where a found one goes)
  *   noRecord      no Receipt row with its id, or a row of another type
- *   alreadyBack   a file of that name is already in receipts/ (this is an old copy)
+ *   alreadyBack   the file of that name in receipts/ opens with the current key and matches the row
+ *                 (this is an old copy)
+ *   otherCopy     a different file of that name is in receipts/ (an old-key copy put there by hand, or
+ *                 a damaged one): it is never written over, and this copy may be the only one that opens
  *   changed       bigger than any receipt, or found changed by a press while DotAmi runs
- *   unreadable    it couldn't be read just now (another program has it open)
+ *   unreadable    it, or the file of its name in receipts/, couldn't be read just now
+ * An unfinished add ("<name>.partial") is sorted the same way, under its finished name.
  * A folder an earlier Delete still owes is listed with `deleteOwed` and nothing counted for the button.
  * Answers only DotAmi's own window, only while this start's key is open, and only when the data file's
  * rows can be read. Reads the first bytes of each file (the key id) and its size, never more; changes
@@ -237,12 +294,12 @@ export function listSetAsideReceipts(dataDir, { fromDotAmi, opened, store, platf
   } catch {
     return refuse("data-file-unreadable");
   }
-  const keys = keysFor(backups, store, platform, opened.key);
+  const { keys, fileIds } = keysFor(backups, store, platform, opened.key);
   const owed = owedFolders(dataDir);
   const folders = [];
   for (const name of names) {
     const folder = path.join(backups, name);
-    const counts = { receipts: 0, canBringBack: 0, noKey: 0, noRecord: 0, alreadyBack: 0, changed: 0, unreadable: 0 };
+    const counts = { receipts: 0, canBringBack: 0, noKey: 0, noKeyFile: 0, noRecord: 0, alreadyBack: 0, otherCopy: 0, changed: 0, unreadable: 0 };
     const deleteOwed = owed.has(name);
     for (const file of receiptNamesIn(folder)) {
       const full = path.join(folder, file);
@@ -258,13 +315,25 @@ export function listSetAsideReceipts(dataDir, { fromDotAmi, opened, store, platf
       counts.receipts += 1;
       // A folder Delete still owes isn't sorted: none of it is offered.
       if (deleteOwed) continue;
-      const [, id, extension] = file.match(RECEIPT_NAME);
+      const { id, extension, finalName } = receiptParts(file);
       const row = rows.get(id);
-      if (read.size > MAX_FILE_BYTES || (foundChanged.has(full) && foundChanged.get(full) === stamp(full))) counts.changed += 1;
-      else if (!row || RECEIPT_EXTENSIONS[row.type] !== extension) counts.noRecord += 1;
-      else if (somethingAt(path.join(receiptsDir, file))) counts.alreadyBack += 1;
-      else if (!keys.has(encryptedKeyId(read.head))) counts.noKey += 1;
-      else counts.canBringBack += 1;
+      if (read.size > MAX_FILE_BYTES || (foundChanged.has(full) && foundChanged.get(full) === stamp(full))) {
+        counts.changed += 1;
+        continue;
+      }
+      if (!row || RECEIPT_EXTENSIONS[row.type] !== extension) {
+        counts.noRecord += 1;
+        continue;
+      }
+      // Something of its name in receipts/: "already back" only if that copy really opens and matches.
+      const there = copyInReceipts(path.join(receiptsDir, finalName), { id, row, current: opened.key });
+      if (there === "back") counts.alreadyBack += 1;
+      else if (there === "other") counts.otherCopy += 1;
+      else if (there === "unreadable") counts.unreadable += 1;
+      else if (keys.has(encryptedKeyId(read.head))) counts.canBringBack += 1;
+      // No key here opens it: is its key file somewhere (won't open on this account), or nowhere at all?
+      else if (fileIds.has(encryptedKeyId(read.head))) counts.noKey += 1;
+      else counts.noKeyFile += 1;
     }
     if (counts.receipts > 0) {
       if (deleteOwed) counts.unreadable = 0;
@@ -321,7 +390,12 @@ function readHead(file) {
  *   "in-use"        it couldn't be read (another program has it open)
  *   "not-written"   it couldn't be written into receipts/ (undone: only what this step made is removed),
  *                   or anything else went wrong on its way back
+ *   "unchecked"     it was renamed into receipts/, but couldn't be read back and checked, and couldn't be
+ *                   taken out again either (another program holds it): it may well be back, so it isn't
+ *                   called "not written", and it isn't counted as brought back; its set-aside copy stays
  * `oldCopiesLeft`: brought back, but the set-aside copy couldn't be removed (another program had it open).
+ * Each is named by its file's own name in the folder; an unfinished add ("<name>.partial") comes back as
+ * receipts/<name>.
  *
  * One receipt's failure never ends the run: whatever throws while one receipt is handled, it is named
  * "not-written" and the next is tried, so the answer always says what really moved.
@@ -366,7 +440,7 @@ export function bringBackReceipts(dataDir, folderName, { fromDotAmi, opened, qui
 
   const step = {
     rows,
-    keys: keysFor(backups, store, platform, opened.key),
+    keys: keysFor(backups, store, platform, opened.key).keys,
     current: opened.key,
     receiptsDir: path.join(dataDir, RECEIPTS_FOLDER),
     onStep,
@@ -394,7 +468,11 @@ export function bringBackReceipts(dataDir, folderName, { fromDotAmi, opened, qui
     if (result.oldCopyLeft) oldCopiesLeft.push(name);
   }
 
-  log(`[desktop] set-aside receipts: ${broughtBack.length} brought back, ${left.length} left where they were`);
+  // A receipt placed but not checked is in neither count: it may be back, and its set-aside copy stays.
+  const unchecked = left.filter((l) => l.why === "unchecked").length;
+  log(
+    `[desktop] set-aside receipts: ${broughtBack.length} brought back, ${unchecked > 0 ? `${unchecked} put back but not checked, ` : ""}${left.length - unchecked} left where they were`,
+  );
   return { outcome: "done", folder, broughtBack, oldCopiesLeft, left };
 }
 
@@ -404,7 +482,7 @@ export function bringBackReceipts(dataDir, folderName, { fromDotAmi, opened, qui
  * is back in receipts/.
  */
 function bringBackOne(from, name, { rows, keys, current, receiptsDir, onStep }) {
-  const [, id, extension] = name.match(RECEIPT_NAME);
+  const { id, extension, finalName } = receiptParts(name);
   const read = readReceiptFile(from);
   // Another program holding it is said, never skipped: the page names it and the person can try again.
   if (read.status === "unreadable") return { left: "in-use" };
@@ -429,7 +507,7 @@ function bringBackOne(from, name, { rows, keys, current, receiptsDir, onStep }) 
     if (at) foundChanged.set(from, at);
     return { left: "changed" };
   }
-  const target = path.join(receiptsDir, name);
+  const target = path.join(receiptsDir, finalName);
   // Never over a file already there (put back by hand, or a copy brought back before).
   if (somethingAt(target)) return { left: "already-there" };
 
@@ -438,7 +516,11 @@ function bringBackOne(from, name, { rows, keys, current, receiptsDir, onStep }) 
   let made = null;
   try {
     const locked = encryptReceipt(plain, { key: current, id });
-    // "wx": never overwrite anything, even a leftover of an earlier try (the next start removes those).
+    // A regular file at the temporary name can only be DotAmi's own encrypted temp file, left by an earlier
+    // press whose clean-up failed: removed first, or it would fail every press until the next start's pass.
+    // If it can't be removed, the open below fails and the receipt is named "not-written".
+    if (isFileAt(temp)) rmSync(temp);
+    // "wx": never overwrite anything else at that name (a folder in the way stops the write here).
     const fd = openSync(temp, "wx");
     made = temp;
     try {
@@ -462,9 +544,11 @@ function bringBackOne(from, name, { rows, keys, current, receiptsDir, onStep }) 
       try {
         rmSync(made, { force: true });
       } catch {
-        // Another program has the new file open too. A `.encrypting` leftover is removed by the next
-        // start's pass over receipts/ (§ 9); a placed file stays, and the list then counts this receipt
-        // as already back. Either way its set-aside copy is untouched.
+        // Another program has the new file open too. A `.encrypting` leftover is removed by the next press
+        // or the next start's pass over receipts/ (§ 9). A placed file stays: it may be a good copy that
+        // simply couldn't be read back, so it is said apart, and the list checks it in full later.
+        // Either way its set-aside copy is untouched.
+        if (made === target) return { left: "unchecked" };
       }
     }
     return { left: "not-written" };
