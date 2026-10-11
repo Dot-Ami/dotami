@@ -48,7 +48,11 @@ Vulnerabilities go through [SECURITY.md](SECURITY.md), never a public issue.
 ## The rules (short)
 
 - **Not the biggest list — the most relevant.** A node earns its place by mattering to
-  someone starting or running a small Canadian business *today*. Prefer fewer, better.
+  someone starting or running a small Canadian business, or working toward a career or a
+  business of their own, *today*. Prefer fewer, better. (2026-10-11: careers added. The
+  maintainer's goal of 2026-10-10 is a "dream business or career", and the first written
+  future joins an apprenticeship to a shop of your own:
+  [future-cockpit.md](docs/architecture/future-cockpit.md).)
 - **Do not add what you have not verified yourself.** Read the section, the CRA page, the
   program page. If you are summarising someone else's summary, it does not go in.
 - **No entry without a citation.** Anything that states a rule, a rate, a threshold, a date
@@ -124,11 +128,39 @@ Rates, thresholds and deadlines change. Cite the consolidated statute where the 
 and the CRA page that administers it; the entry's typed field carries the figure and
 `lastVerified` carries the day you confirmed it.
 
+### One more kind of source: the government's skills list for a job (added 2026-10-11)
+
+The maintainer decided on 2026-10-11 that the future cockpit
+([docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md)) may show the
+government's list of skills for a job. The source is the **Occupational and Skills Information
+System (OaSIS)**, published by Employment and Social Development Canada on
+[open.canada.ca](https://open.canada.ca/data/en/dataset/eeb3e442-9f19-4d12-8b38-c488fe4f6e5e) as CSV
+files, under the [Open Government Licence – Canada](https://open.canada.ca/en/open-government-licence-canada)
+(version 2.0). It is allowed only this way:
+
+- **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
+  do yourself", and the list for that job is shown tagged *your pick of job*. No entry, road or step
+  may link a business or a future to a job by itself: no official source says which skills a business
+  needs, and the lists describe employees, not owners.
+- **Cited by dataset version and record date,** like any other source: the dataset's title and version
+  (at the time of writing, *OaSIS 2022 Version 1.0*), the file it came from (for example the skills
+  file), the occupation code, the dataset's *record modified* date as the page shows it, and
+  `lastVerified` as the day you read it. `authority` is `"federal"`, `jurisdiction` is `"CA"`.
+- **Its licence travels with it.** The imported lists stay in their own data file carrying the
+  licence's attribution line — *"Contains information licensed under the Open Government Licence –
+  Canada."* — and are not copied into catalog text under CC BY-SA, because nobody has checked yet how
+  the two licences fit together. Nothing may suggest the government endorses DotAmi or the person's
+  use of the list (the licence forbids implying official status).
+- **Not a source for anything else.** Wages, job outlooks and industry averages from the same family
+  of datasets are not allowed: start-up costs are official fees plus the person's own quotes only
+  (the same decision).
+
 ## Proposing a new roadmap or a new node
 
 - **A new node** (a step, lever or fork the map lacks): open an issue with the *New node*
   template — what it is, which tier/stage it belongs under, the sources, and why it matters
-  to a small-business founder today. A maintainer confirms the shape before you write the PR.
+  to someone starting a business or working toward a career today (careers added 2026-10-11,
+  as above). A maintainer confirms the shape before you write the PR.
 - **A new roadmap** (a kind of business, or one skill done properly — "GST/HST from zero"):
   open an issue with the *New roadmap* template. List the tiers and the 20–40 nodes you
   would put in it, with a source for each. Roadmaps are built from nodes; the nodes come

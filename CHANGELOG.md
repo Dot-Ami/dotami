@@ -8,6 +8,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documented
+- **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
+  a person starts from where they want to be (a business or a career), picks one future to look
+  inside, and sees its whole road at once: steps, the skills they need, official fees and the cost
+  lines they price themselves; the cockpit becomes the one screen where they plan it and do it. The
+  journey screen by screen, the cockpit's regions, overlays and interactions, what DotAmi asks and
+  why, receipts that show what each answer changed, where the data comes from, the road data model
+  and storage, how each of the repo's rules is met, six fixes from the final check (the uncited
+  $80,000 incorporation trigger comes off the map; federal and Alberta incorporation side by side;
+  the CRA's exact GST/HST test; a model never writes into the person's own words; the job for a
+  skills list is always the person's pick; every *done when* line cited), and the four phases. No
+  code changes (`docs/architecture/future-cockpit.md`).
+- **A new kind of source: the government's skills list for a job** — OaSIS (Employment and Social
+  Development Canada, Open Government Licence – Canada), allowed only through the person's own pick
+  of job, cited by dataset version and record date, its licence line kept with it (`CONTRIBUTING.md`).
+- **The task list** gains the future cockpit's four phases with phase 1's tasks, and three later
+  stories: real examples of how people started, your own test results, and DotAmi getting better
+  over time (`docs/task-list.md` § 14–17).
+- **Older pages corrected in place, each with a dated note**: the roadmap's "In-app AI is off by
+  design" (out of date since the Lens came back on 2026-09-27) and pointers from §1–§3 to the new
+  design (`docs/roadmap.md`); the cockpit page's wrong back-link line and the retired Track tab
+  (`docs/ui-spec/cockpit/_index.md`); the people DotAmi is for now include careers
+  (`docs/architecture/use-cases.md`, `CONTRIBUTING.md`).
+
 ## [0.3.0] — 2026-10-10
 
 Your data file can be locked to your Windows account (asked first, can be turned off), backups take
