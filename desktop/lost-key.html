@@ -34,7 +34,8 @@
     <p><strong>Nothing was changed.</strong> If you deleted or moved <code>database.key</code> (beside the data file),
       put it back — it may be in the Recycle Bin — and start DotAmi again: everything comes back. Otherwise, a
       backup brings back what it holds: <strong>Restore from a backup…</strong> moves the locked data file and its
-      key file into the backups folder (never deleting them) and restores the backup under a new key.</p>
+      key file into the backups folder and restores the backup under a new key
+      (the restore doesn't delete them; Delete on <em>What DotAmi knows about you</em> can, after a warning).</p>
     <p id="store-unavailable" class="warning" hidden>
       Windows' key store isn't answering right now, so your key may well be fine. Nothing is given up for
       that: restart Windows (or sign out and in again) and start DotAmi again. Restoring a backup and
@@ -55,8 +56,9 @@
       </p>
       <p>
         Nothing is deleted. The locked data file and its key file are kept in the backups folder, as they are,
-        and so is your receipts folder; if the key comes back, the locked file can still be opened. DotAmi then
-        starts with an empty data file and a new key.
+        and so is your receipts folder. If the key comes back, the locked file can still be opened, unless you delete it first
+        (Delete on <em>What DotAmi knows about you</em> can, after a warning). DotAmi then starts with an empty data
+        file and a new key.
       </p>
       <div class="buttons">
         <button type="button" id="back">Go back</button>

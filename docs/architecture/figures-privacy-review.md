@@ -268,12 +268,29 @@ The maintainer said yes (2026-10-10) to two follow-ups to *Start a new key*
   junction, and inside only the files DotAmi named; the person's own files stay. Files are removed, not
   overwritten: the drive's free space can still hold them, as for every deleted file (disk encryption).
   Still not reached, and said: key files set aside on their own (`receipts-key-unreadable-<time>.key`),
-  which hold only a key file that Windows protected for the person's account.
+  which hold only a key file that Windows protected for the person's account. *Reached since: next
+  section.*
 - **The desktop app restarts itself after the move.** The only new power is a third call from DotAmi's
   page to the desktop app's main process (`desktop/window-preload.cjs`), believed only from DotAmi's own
   window showing its own page, and acted on only while this start's key couldn't be opened and no locked
   receipt is left; it restarts the same app on the same data folder. Nothing leaves the computer, and
   nothing new is kept.
+
+### What a lost key leaves in `backups/` (2026-10-10)
+
+The maintainer said yes (2026-10-10, "one box") to the same box deleting the rest of what DotAmi sets
+aside there ([database-encryption.md § 15](database-encryption.md)): the old key files
+(`receipts-key-unreadable-<time>.key`, `database-key-unreadable-<time>.key`), the locked data file
+(`dotami-locked-<time>.db` and its journal: everything the data file held when its key was lost,
+encrypted with that key) and the receipts folder Start fresh moved there
+(`receipts-before-start-fresh-<time>/`). Who could read them before: the locked file and the key files,
+nobody, unless the old key came back (a Windows profile that loads again, a key file put back); the
+start-fresh receipts, the same people as the receipts folder, since they are locked with the receipts'
+key, which Start fresh doesn't touch. Nothing new is kept or sent. What is fenced is unchanged: DotAmi's
+exact names, directly in a backups folder that isn't a link, regular files only, a set-aside folder's
+own files only, `rmdir` never recursive, the counts checked, the note written before anything is
+removed. The amber warning names each kind there and says the loss is for good. Files are removed, not
+overwritten (disk encryption protects the free space).
 
 ### Open (for the maintainer)
 

@@ -193,7 +193,12 @@ async function start() {
   // the file is normal after any edit, and rebuilding it on every start would only slow it down.
   // It never stops the start: what still can't be done stays owed for the next one.
   const wipe = finishPendingWipe(dbFile, { vacuum: (file) => vacuumFile(file, databaseKey), log: (line) => log.write(`${line}\n`) });
-  if (wipe.ran) log.write(`[desktop] wipe-pending note ${wipe.wiped && wipe.backupsLeft.length === 0 && wipe.receiptFoldersLeft.length === 0 ? "cleared" : "kept for the next start"}\n`);
+  if (wipe.ran) {
+    // Cleared only when the wipe worked and nothing it owed in backups/ is left ([8i]: key files and locked data files too).
+    const cleared =
+      wipe.wiped && [wipe.backupsLeft, wipe.receiptFoldersLeft, wipe.keyFilesLeft, wipe.lockedFilesLeft].every((names) => names.length === 0);
+    log.write(`[desktop] wipe-pending note ${cleared ? "cleared" : "kept for the next start"}\n`);
+  }
 
   // A fresh data folder gets its database here; an existing one gets any new migrations, after a
   // backup copy in backups/. A database from a newer DotAmi, or a half-done update, is refused
@@ -713,10 +718,11 @@ class StartFreshRefused extends Error {
 
 /**
  * [8i] "Start fresh" (the maintainer's decision 2 of 2026-10-10): the locked data file goes to
- * backups/dotami-locked-<time>.db, never deleted (desktop/encrypt-database.mjs setAsideLockedFile), so it
- * can still be opened if its key comes back; the receipts folder goes beside it, whole, as a restore moves
+ * backups/dotami-locked-<time>.db, not deleted here (desktop/encrypt-database.mjs setAsideLockedFile), so it
+ * can still be opened if its key comes back until the person clears it with Delete's safety-copies box;
+ * the receipts folder goes beside it, whole, as a restore moves
  * it (an empty data file describes none of the receipts, and DotAmi's sweep would take them for leftovers).
- * The key file stays where it is: the new key made next moves it into backups/ (makeDatabaseKey), never
+ * The key file stays where it is: the new key made next moves it into backups/ (makeDatabaseKey), not
  * deleting it. Then the start goes on as for a new data folder: a new key, an empty encrypted file.
  */
 function startFresh() {
@@ -1031,7 +1037,7 @@ async function backUp() {
 /**
  * @param {{ databaseKeyLost?: boolean }} [options] `databaseKeyLost` ([8i]): from the lost-key window, the
  * data file here is encrypted with a key that can't be opened. The backup is then staged under a new key,
- * and once the person confirms, the locked data file and its key file go to backups/ (never deleted) and
+ * and once the person confirms, the locked data file and its key file go to backups/ (not deleted here) and
  * the new key is saved before the restore is put in place (database-encryption.md § 10).
  */
 async function restore({ databaseKeyLost = false } = {}) {
@@ -1089,7 +1095,7 @@ async function restore({ databaseKeyLost = false } = {}) {
     detail:
       `The backup was made ${new Date(header.createdAt).toLocaleString()} by DotAmi ${header.appVersion}. ` +
       (databaseKeyLost
-        ? "The data file here, which can't be opened, and its key file go to the backups folder as they are, never deleted, and the restored data gets a new key."
+        ? "The data file here, which can't be opened, and its key file go to the backups folder as they are (the restore doesn't delete them; Delete on What DotAmi knows about you can, after a warning), and the restored data gets a new key."
         : "A safety copy of what's here now goes to the backups folder first.") +
       restoreReceiptsNote(header.format, receipts, receiptFileCount(dataDir)) +
       (keyLost
@@ -1114,7 +1120,7 @@ async function restore({ databaseKeyLost = false } = {}) {
   let newKeySaved = null;
   if (keyLost) {
     // Saved before the swap: the staged receipts are encrypted with this key, so without it saved they
-    // would be lost. The unreadable key file moves into backups/, never deleted.
+    // would be lost. The unreadable key file moves into backups/, not deleted here.
     try {
       newKeySaved = await saveReceiptKey(dataDir, safeStorage, restoreKey);
       log?.write(`[restore] a new receipts key was saved; the one this account couldn't open went to the backups folder\n`);
@@ -1128,7 +1134,7 @@ async function restore({ databaseKeyLost = false } = {}) {
     }
   }
   if (databaseKeyLost) {
-    // [8i] The locked data file into backups/ first (never deleted), then the new key (the old key file goes
+    // [8i] The locked data file into backups/ first (not deleted here), then the new key (the old key file goes
     // there too); only then the restore. In that order so a failure never leaves a new key beside the old
     // locked file: a move that fails changes nothing, and a key that can't be saved puts the file back
     // (desktop/database-key.mjs setAsideLockedFileUnderNewKey).

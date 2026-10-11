@@ -364,8 +364,10 @@ function filesEndingIn(dataDir, endings) {
 /**
  * [8i] Moves a data file that can't be opened (its key is lost) out of the way, into backups/, never
  * deleting it: `dotami-locked-<time>.db`, with its journal beside it if there is one. The name isn't one
- * DotAmi gives its safety copies (`dotami-before-…`), so Delete's "safety copies" box never deletes it
- * and nothing tries to encrypt it again; if its key ever comes back, it can still be opened. Used by
+ * DotAmi gives its safety copies (`dotami-before-…`), so nothing tries to encrypt it again; if its key
+ * ever comes back, it can still be opened. It stays until the person ticks Delete's "Safety copies in the
+ * backups folder" box, which warns that it can never be opened afterwards (desktop/wipe-pending.mjs,
+ * docs/architecture/database-encryption.md § 15). Used by
  * "Restore from a backup…" and "Start fresh…" in the lost-key window (desktop/main.mjs). Returns where it
  * went, or null when there was no file.
  * @param {string} dataDir

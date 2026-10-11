@@ -1104,3 +1104,24 @@ warning. This section was written before the code.
   (`tests/privacy-holdings.spec.ts`); the warning, the unticked line and the result in a real browser (`e2e/your-data.spec.ts`);
   and in the real app, after Delete, no byte of a cleared folder's files is left in any file under the
   data folder (`e2e-desktop/desktop.spec.ts`).
+
+## 12. Delete reaching the start-fresh receipts and the old key files (2026-10-10)
+
+The maintainer said yes (2026-10-10) to the same box clearing everything else DotAmi sets aside in
+`backups/`. The design, written before the code, is
+[database-encryption.md § 15](database-encryption.md); the receipts' part of it:
+
+- **`receipts-before-start-fresh-<time>/`** (Start fresh moves the receipts folder there, whole) is
+  cleared like `receipts-before-restore-…` (§ 11): only DotAmi's receipt files in it, the person's own
+  files kept, the folder removed only when empty. Counted with the set-aside receipt folders. This one
+  is a call the maintainer can reverse: those receipts are locked with the receipts' key, which Start
+  fresh doesn't touch, so they may still open; but the new data file describes none of them and DotAmi
+  can't bring them back into the app.
+- **`receipts-key-unreadable-<time>.key`** (§ 9: a key file this account couldn't open, moved when
+  nothing was locked with it, or by a restore that gave the receipts a new key) is now cleared too,
+  with `database-key-unreadable-<time>.key`, counted as *Set-aside key files*. § 11's "still not
+  reached" line no longer holds.
+- The warning names each kind there and says afterwards the locked data and those receipts can never
+  be opened, even if the old key comes back. Since review (2026-10-10) it names each folder name only
+  when such a folder is there, and for the start-fresh folder adds that its receipts may still open with
+  the receipts key in use today, and that this deletes the only copy of them here (§ 15 there).

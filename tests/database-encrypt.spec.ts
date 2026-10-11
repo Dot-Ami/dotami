@@ -225,8 +225,8 @@ describe("stopped at every step, the next start finishes it", () => {
   });
 });
 
-describe("a data file whose key is lost is set aside, never deleted ([8i])", () => {
-  it("moves it and its journal into backups/ under a name Delete's safety-copies box never matches", async () => {
+describe("a data file whose key is lost is set aside, not deleted ([8i])", () => {
+  it("moves it and its journal into backups/ under a name that isn't a safety copy's (Delete's box clears it as a locked data file, not as a copy)", async () => {
     const before = await seededFolder();
     encryptFile(before.dir, before.file, KEY);
     writeFileSync(`${before.file}-journal`, "journal");
