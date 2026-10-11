@@ -1037,6 +1037,15 @@ describe("the scan refuses a package that package.json doesn't declare", () => {
     expect([...seen]).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "electron", "electron-updater", "electron-builder", "fs", "path"]));
   });
 
+  it("gives the same imports when asked again, however the last caller changed its list", () => {
+    // importedModules keeps its answer per file text (most tests here ask it about the same ~280 files).
+    const code = `import a from "next/server";\nconst b = require("node:fs");`;
+    const first = importedModules(code, PROBE_FILE);
+    first.push("changed-by-a-caller");
+    first.reverse();
+    expect(importedModules(code, PROBE_FILE)).toEqual(["next/server", "node:fs"]);
+  });
+
   it.each(UNLISTED_PACKAGE_PROBES.map((p) => [p.what, p] as const))("refuses %s", (_what, probe) => {
     expect(undeclaredImports([{ file: probe.file, code: probe.code }], declared)).toEqual([`${probe.file}: ${probe.name}`]);
   });

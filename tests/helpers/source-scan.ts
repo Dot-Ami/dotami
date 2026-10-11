@@ -999,9 +999,19 @@ export function networkCalls(source: string, wrappers: readonly string[] = [], f
   return scan(source, wrappers, file, options).calls;
 }
 
+/** importedModules' answers, by file name and text: the privacy spec asks it about the same ~280 files in test after test, and each answer is a full scan. */
+const modulesKept = new Map<string, readonly string[]>();
+
 /** Every module the file loads by a plain name, as the file spells it, each listed once: `import … from "x"`, `export … from "x"`, `import("x")`, `require("x")`, `import type …`. */
 export function importedModules(source: string, file = "source.tsx"): string[] {
-  return scan(source, [], file, {}).modules;
+  const key = `${file}\0${source}`;
+  let modules = modulesKept.get(key);
+  if (!modules) {
+    modules = scan(source, [], file, {}).modules;
+    modulesKept.set(key, modules);
+  }
+  // A copy, so a caller that sorts or adds to its list can't change the next caller's.
+  return [...modules];
 }
 
 /**
