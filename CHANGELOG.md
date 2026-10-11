@@ -28,9 +28,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   over time (`docs/task-list.md` § 14–17).
 - **Older pages corrected in place, each with a dated note**: the roadmap's "In-app AI is off by
   design" (out of date since the Lens came back on 2026-09-27) and pointers from §1–§3 to the new
-  design (`docs/roadmap.md`); the cockpit page's wrong back-link line and the retired Track tab
-  (`docs/ui-spec/cockpit/_index.md`); the people DotAmi is for now include careers
-  (`docs/architecture/use-cases.md`, `CONTRIBUTING.md`).
+  design (`docs/roadmap.md`); the cockpit page's wrong back-link lines and the retired Track tab
+  (`docs/ui-spec/cockpit/_index.md`, `docs/ui-spec/cockpit/01-header.md`).
+- **Careers are now in scope for new content**, not only small businesses: the relevance rule for a
+  new node, the *New node* issue template and the people DotAmi is for say "starting a business, or
+  working toward a career or a business of their own" (`CONTRIBUTING.md`,
+  `.github/ISSUE_TEMPLATE/new-node.md`, `docs/architecture/use-cases.md`).
 
 ## [0.3.0] — 2026-10-10
 

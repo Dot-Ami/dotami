@@ -27,7 +27,7 @@ in `lib/brain/node-items.ts` — see CONTRIBUTING.)
 
 Rate / threshold / expiry — each with the source above that states it.
 
-## Why it matters to someone starting a small Canadian business today
+## Why it matters to someone starting a small Canadian business, or working toward a career or a business of their own, today
 
 ## Checklist
 

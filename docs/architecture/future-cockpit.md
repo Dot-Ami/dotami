@@ -41,8 +41,9 @@ to give people value first. This design adds no new permission screens, warnings
    *stay employed* or *open your own shop* — with the two endings side by side.
 2. **Start-up costs are official fees plus the person's own quotes. No averages.** A fee with an
    official source is filled in, with the source and the day it was read. Everything else is a named
-   blank ("tools: add your quote"). DotAmi adds up only what the person agreed to and always says how
-   many lines are not priced yet.
+   blank ("tools: add your quote"). DotAmi adds up only official fees and what the person agreed to,
+   and always says how many lines are not priced yet. (The approved plan suggested this for phase 1
+   and asking again before phase 2 whether to show typical numbers; that question is open, § 13.)
 3. **"The best path forward" means the person picks one thing to sort by,** and the screen says so:
    *"Sorted by fewest steps left: your choice. DotAmi doesn't rank futures."* (Built in phase 2;
    phase 1 shows road order and the order added.)
@@ -121,8 +122,8 @@ where it came from.
   - **Skills:** *have · learning · not yet · not marked*, out of the items listed. Counts, not a grade.
   - **Start-up money:** *savings you typed · lines you priced + official fees · difference · N lines
     not priced yet*. Any part not given reads *not given yet: add*.
-  - **Your date:** *May 2029 · 31 months from today* — calendar arithmetic, shown only when the
-    person set a date.
+  - **Your date:** for example *May 2029 · 31 months from today* — calendar arithmetic, shown only
+    when the person set a date.
 
   Clicking a gauge switches on its overlay and opens its list. *Export plan* sits here too.
 - **Left — What you've told DotAmi / Not told yet.** *Told:* one row per answer, with its date and
@@ -176,8 +177,10 @@ strip from today to their date). Under decision 2 there is no *typical numbers* 
 - *Take back* a row in the left list: the answer is withdrawn (a figure goes to *retracted*, as
   today) and the screen shows what went dark.
 - Open *Compare* and click *This is mine*.
-- Branch toggles (sales-tax timing, incorporation timing) work as today, but card colours now follow
-  the person's own pick (a fix carried into phase 1, § 9).
+- Branch toggles (sales-tax timing, incorporation timing) stay, with two changes carried into phase 1
+  (§ 9): card colours follow the person's own pick, and the incorporation toggle's option labels
+  change. Today they read *$80K net* / *Liability / SR&ED*; the first becomes *At your own number*,
+  so no uncited figure is left on the map or in the export, which copies the label.
 - The last overlay used is remembered for that person.
 
 ### First visit and return visits
@@ -203,7 +206,7 @@ gauges on *not given yet*.
 | Where you want to be, in your own words | So the top of the plan is the person's goal, exactly as said | The quote in the destination bar, on Compare, and as the export's first line | Your destination, question 1; editable from the destination bar | No | A dated, word-for-word statement (today's `PersonStatement`, marked as the destination). Never summarised, never read by a rule. A change adds a new version |
 | A business, a job or career, or both / not sure | It decides which futures are offered | The cards on Pick a future; *both / not sure* offers futures with an employed / own-business fork | Your destination, question 2 | Yes (*not sure* is an answer) | One choice saved on the future |
 | Province or territory | Fees, licences and tax rules differ by place | Provincial fee lines and rule cards, or *"federal rules only; this province isn't written yet"* | Your destination, question 3 | Yes | Today's `Venture.province` |
-| Yearly income you want, before tax | So every future sits next to the person's own number | *Your target* in the destination bar; the target row on Compare | Your destination, question 4, or later | No | A figure of the new kind `income-wanted`, typed then agreed. Never judged as pass or fail |
+| Yearly income you want, before tax | So every future sits next to the person's own number | *Your target* in the destination bar; the target row on Compare | Your destination, question 4, or later | No | One number for the person, not for one future: kept in a small new per-person table (§ 7), typed then agreed through the agree prompt like a figure. Never judged as pass or fail |
 | Which future to look inside, and the ending at a fork | It is the future being looked into | The whole road; Compare at the fork; *This is mine* | Pick a future; the ending in Compare | Yes | A road id on the saved future; the ending in today's branch picks |
 | Kind of work, name, venture type, equipment purchase, structure, hiring first | These already switch which cards apply | Rules & tax cards; licence requirements on the Skills overlay | Pick a future, then the cockpit's left list, as today | No | Today's `Venture` columns |
 | Your current work situation | It shows where on the road the person starts | The *You are here* marker | A *Not told yet* question in the cockpit | No | Today's `Venture.employmentStatus`, moved from a required intake question to an optional one |
@@ -213,7 +216,8 @@ gauges on *not given yet*.
 | The job closest to the work you'd do yourself | No official source lists the skills a business needs, so the person picks the closest job and sees the government's list for it | That job's OaSIS list, tagged *your pick of job* | Pick a future (skippable); changeable from the Skills overlay | No | An occupation code on the saved future, marked *chosen by you* |
 | Your quotes for named start-up cost lines | No official source prices opening a specific business; only the person can | Money badges, the Start-up money gauge, Compare rows | Step panel or Money overlay, on each blank line | No | A figure of the new kind `start-up-cost-line` linked to the future and step, with where it came from (quote, link, receipt, your guess), proposed then agreed |
 | Savings you'd put toward this | So the person sees their own money beside the lines they priced | The *savings* and *difference* parts of the Start-up money gauge (arithmetic, no verdict) | The gauge's invitation or the Money overlay | No | A figure of the new kind `savings-for-start`, agreed, dated. Never account records |
-| Sales what-if (first year, third year) | Tax rules switch on at cited thresholds | The GST/HST and incorporation cards relight under *your what-if, not a forecast* | The what-if bar | No | Today's Year 1 / Year 3 fields when kept. Agreed real figures still take over, as today |
+| Sales what-if (first year, third year) | GST/HST registration switches on at the CRA's cited $30,000 tests (§ 9, fix 3) | The GST/HST card relights under *your what-if, not a forecast*; the *Incorporating* step relights only against your own number (next row) | The what-if bar | No | Today's Year 1 / Year 3 fields when kept. Agreed real figures still take over, as today |
+| The yearly sales at which you'd incorporate (*"I'd incorporate at $___"*) | No law sets a sales or income level for incorporating, so DotAmi has no number of its own; the uncited $80,000 is removed (§ 9, fix 1) | The *Incorporating* step lights when your third-year sales what-if (or agreed sales) passes your number; with no number it stays *check first* and says *"set your own number to see this light"* | The *Incorporating* step's panel, or a *Not told yet* row once a sales what-if is kept | No | A new nullable column on `Venture` (whole dollars, like today's Year 1 / Year 3 fields), labelled *your number*. A what-if setting, not a figure; never filled in by DotAmi |
 | Step status, *done when* ticks, your own dates on steps | The doing half: progress and timing are the person's | Steps gauge, status chips, *Next on your road*, *Since last time* | Step panel, any time | No | One progress record per future and step. Never used to rank anything |
 | By when (month and year) | Without it there is no honest timeline; DotAmi never projects one | The *Your date* gauge | A destination-bar invitation | No | A target date on the saved future, labelled *your date* |
 | Agreed business figures and tax-form totals (existing) | Real numbers take over from what-ifs | *From your records* lines on threshold cards, as today | As today | No | Today's `Figure` records |
@@ -269,7 +273,7 @@ and how a gap is filled:
 | Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), read and cited by a person, one citation per *done when* line | A person reads the official page and writes the step; until then the future isn't offered. *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read |
 | Skills for a job | OaSIS 2022 version 1.0 (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says modified 2025-09-04, read 2026-10-11), through the person's pick of job | The person adds their own skills (*added by you*) |
-| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees through registry agents) | A named blank: *"set by your registry agent: add what you were quoted"* |
+| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
 | Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
 | Rules and tax cards | Today's catalogs | — |
@@ -339,7 +343,8 @@ type CostLine =
   training; the *Certified* fork with *Stay employed* and *Open your own shop*; open the doors) joined
   onto road 0's later columns. Whether certification is legally required, and any training periods or
   hours, are read from the Alberta trade body's current pages, not assumed. This adds roughly 15–20
-  citations to be read word for word; today the app has 74, of which 9 are checked word for word.
+  citations to be read word for word; today the app has 74, of which 9 have been checked against the
+  law's text, 4 of them word for word (`status: "confirmed"` in `lib/engines/shared/types.ts`).
 
 **The map draws any road.** Today `components/cockpit/strategy-map.tsx` only knows the ten-step tax
 map (it imports `CFENode` and `cfeTiersV2026`). Phase 1 first changes it to draw a `Road`, with road 0
@@ -360,9 +365,10 @@ themselves, and nothing about the person is put in a link.
 |---|---|---|
 | **Skill marks, per person** | A new table: the person, the skill item's id (or the person's own label for an added skill), the mark (*have · learning · not yet · don't know*), *you said* for a held licence, the date | Per person, not per future, so a mark carries across every future that lists the item |
 | **Step progress, per future and step** | A new table: the future, the road and step ids, the status (*doing · done · not for me*), the ticked *done when* line ids, an optional *your date*, a list of changes with their dates | Never used to rank anything |
-| **The road, the ending, the target date, the job picked** | New nullable columns on `Venture`: road id (empty = today's general road), target date, occupation code and the day the person picked it, the business / career / both choice, and a *This is mine* pin. The ending pick is a branch pick in today's `ScenarioState.activeBranches` | Added with `ALTER TABLE … ADD COLUMN` |
+| **The road, the ending, the target date, the job picked, your incorporation number** | New nullable columns on `Venture`: road id (empty = today's general road), target date, occupation code and the day the person picked it, the business / career / both choice, a *This is mine* pin, and the sales at which the person would incorporate (§ 3). The ending pick is a branch pick in today's `ScenarioState.activeBranches` | Added with `ALTER TABLE … ADD COLUMN` |
 | **The destination** | Today's `PersonStatement`, with a new nullable column saying it is the destination | A change adds a new statement; none is written over |
-| **Three new figure kinds** | `income-wanted`, `savings-for-start`, `start-up-cost-line`, added to `FIGURE_KINDS` (added, never renamed). A cost-line figure gets new nullable columns naming its road step and cost line, and where its amount came from (quote, link, receipt, your guess) | Through the agree prompt, like every figure. The definition of a figure in `lib/figures/types.ts` ("a total about the person's business") and its privacy note are reworded in the same pull request |
+| **Income wanted, per person** | A small new per-person table: the amount in cents, its period (a year), its state (*proposed · agreed · retracted*, as figures have), where it came from (typed) and the dates | It belongs to the person, asked before any future is saved, so it can't be a `Figure`: `Figure.ventureId` is required and a figure is deleted with its venture. Loosening that column was ruled out, because SQLite can only do it by rebuilding the `Figure` table and every figure reader expects a venture. The agree prompt shows it the same way as a figure |
+| **Two new figure kinds** | `savings-for-start` and `start-up-cost-line`, added to `FIGURE_KINDS` (added, never renamed), each belonging to one future. A cost-line figure gets new nullable columns naming its road step and cost line, and where its amount came from (quote, link, receipt, your guess) | Through the agree prompt, like every figure. The definition of a figure in `lib/figures/types.ts` ("a total about the person's business") and its privacy note are reworded in the same pull request |
 
 *What you've told DotAmi* needs no table of its own: each row is a stored answer with its date, and its
 *what it unlocked* line is worked out again by running the rules with and without that answer (§ 13
@@ -406,11 +412,27 @@ phase it names.
 
 1. **The uncited $80,000 incorporation trigger comes off the map.** Today the step
    `stage-3a-incorporation-80k-net` is labelled *Incorporation at $80K net*, and its own entry calls
-   the figure a "DotAmi v0 heuristic … rather than a statutory threshold"
-   ([`lib/engines/cfe/v2026/nodes.ts`](../../lib/engines/cfe/v2026/nodes.ts), the step from line 214).
-   `lib/brain/evaluate.ts` compares third-year *sales* against it (lines 471 and 495). The step is
-   renamed *Incorporating* (the id stays: ids are forever), shows cited facts only, and lights from the
-   person's own pick and their own *"I'd incorporate at $___"* what-if — never a DotAmi threshold.
+   the figure a "DotAmi v0 heuristic … rather than a statutory threshold". The step is renamed
+   *Incorporating* (the id stays: ids are forever, and the id is never shown on screen), shows cited
+   facts only, and lights from the person's own pick and their own *"I'd incorporate at $___"* number
+   (§ 3, § 7) — never a DotAmi threshold. Every place the figure reaches the screen or the export
+   changes in the same pull request (found with `grep -rn "80K\|80,000\|\$80" lib components app` on
+   2026-10-11):
+   - [`lib/engines/cfe/v2026/nodes.ts`](../../lib/engines/cfe/v2026/nodes.ts) lines 214–257: the
+     step's label, its trigger (*"roughly $80,000"*) and its metric (*"~$80,000 net income"*).
+   - The same file, line 278: the sibling step `stage-3b-incorporation-liability-sred`'s trigger,
+     drawn on its card and in the detail panel, compares itself to *"the $80K net-income heuristic"*.
+   - [`lib/brain/evaluate.ts`](../../lib/brain/evaluate.ts) lines 471 and 495: the constant
+     `incorporationNetTrigger = 80000` and the comparison of third-year *sales* against it.
+   - [`lib/scenarios/branches.ts`](../../lib/scenarios/branches.ts) line 38: the incorporation
+     toggle's option label *$80K net*, drawn by `components/cockpit/strategy-map.tsx` and copied into
+     the export by `lib/playbook/build-skeleton.ts` (`selectedLabel`). It becomes *At your own
+     number* (§ 2, Interactions). Line 50: the default-picks comment.
+   - Text that describes it, updated to match: the comment at the top of `prisma/seed-data.ts`,
+     `docs/engines/cfe.md`, `docs/engines/structure.md` and `docs/verification/golden-scenarios.md`.
+
+   A test reads every label, trigger, metric and branch option label the map and the export can show
+   and fails on an `80K` or `80,000` (its control: put the old label back, see it fail, restore).
 2. **Federal and Alberta incorporation are shown side by side, and the person picks.** Showing only
    the federal fee would choose federal for them. Each side lists its own official fee lines, read
    from its own page (the federal side also names the name search report, which a numbered company
@@ -419,10 +441,13 @@ phase it names.
    picked yet"*.
 3. **The GST/HST card uses the CRA's exact test, quoted from the cited page.** The CRA's *When to
    register for and start charging the GST/HST* page (read 2026-10-11; the page says it was modified
-   2026-06-16) gives two tests: *"You exceed the $30,000 threshold in a single calendar quarter"* and
-   *"You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar
-   quarters"*. The card quotes both. It never says *"four quarters in a row"*, which drops the
-   single-quarter test and can be read as *each* quarter.
+   2026-06-16) gives two tests: *"You exceed the $30,000 threshold in a single calendar quarter."* and
+   *"You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters
+   (but not in a single calendar quarter)."* The card quotes both sentences in full. The page gives
+   the two tests different start dates (registration no later than the day of the sale that crossed
+   the line in one quarter; otherwise no longer a small supplier at the end of the month after the
+   quarter), and the card takes those from the same page too. It never says *"four quarters in a
+   row"*, which drops the single-quarter test and can be read as *each* quarter.
 4. **A model never writes into the person's own words, and anything it drafts is tagged.** When the
    Lens arrives (phase 3), it may propose an answer, but the destination and every statement are only
    ever what the person typed or ticked. A checklist or note the Lens drafts is kept apart from the
@@ -496,7 +521,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 ## 12. Not in phase 1
 
 - Any number that isn't an official fee or the person's own agreed number: no averages, no
-  government wage or industry figures, no survival rates (decision 2).
+  government wage or industry figures, no survival rates (decision 2; whether phase 2 shows typical
+  numbers is asked again before it starts, § 13).
 - The sort-by-one-thing control (decision 3 is phase 2), *Possible futures*, *Peek inside*, *Side by
   side* across saved futures, *Keep as a copy*.
 - Dates beyond the target date: the time strip, the Dates overlay, step dates on a timeline.
@@ -508,9 +534,14 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 
 ## 13. Open items
 
-- **The period a new figure kind carries.** Figures have a period today. Proposed: `income-wanted` is
-  "a year" with the period the person names; `savings-for-start` and `start-up-cost-line` carry the
-  day agreed as both ends. To settle in the storage pull request.
+- **Typical numbers, before phase 2.** The approved plan recommended official fees and the person's
+  own quotes for phase 1 (decision 2), then asking the maintainer again, once a real future with
+  blanks can be clicked through, whether to also show typical numbers (the plan's options B and C).
+  Ask before phase 2 is locked.
+- **The period a new number carries.** Figures have a period today. Proposed: income wanted (on its
+  own per-person table, § 7) is "a year" with the period the person names; `savings-for-start` and
+  `start-up-cost-line` carry the day agreed as both ends. To settle in the storage pull request,
+  along with the per-person table's exact shape.
 - **Whether *What you've told DotAmi* stays fast** when every row's *what it unlocked* is worked out
   again on each visit. If not, the line is saved with the answer when it is made.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
@@ -546,7 +577,8 @@ what's still missing."* On *Set up your shop* she adds her own quotes, $3,400 fo
 $2,000 for a space deposit, and $12,000 of savings. The gauge reads *savings you typed $12,000 · lines
 you priced $5,400 + official fees · difference · 4 lines not priced yet*, plain arithmetic.
 *Incorporating* shows federal and Alberta incorporation side by side, each with its own cited fee lines
-or named blanks, and *"2 ways to incorporate, not picked yet"*.
+or named blanks, and *"2 ways to incorporate, not picked yet"*; the step stays *check first*, with
+*"set your own number to see this light"*, because she hasn't said at what sales she'd incorporate.
 
 She tries first-year sales of $45,000. Under *Your what-if, not a forecast*, the GST/HST card quotes
 the CRA's two tests: over $30,000 in a single calendar quarter, or over the previous four (or fewer)
@@ -554,5 +586,5 @@ consecutive calendar quarters, with the page and the day it was read.
 
 She opens *Compare*: *Stay employed* and *Open your own shop* on the same rows, *"In the order the road
 shows them"*, no score. She clicks *This is mine* on the shop and exports her plan to show her partner.
-Nine days later the cockpit opens on her future: *"Since last time: 1 step marked done · a date you set
-is in 5 days."*
+Nine days later the cockpit opens on her future: *"Since last time: 1 step marked done."* (She hasn't
+set a date, so there is nothing coming up to list and *Your date* still shows **?**.)

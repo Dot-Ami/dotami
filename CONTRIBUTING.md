@@ -152,8 +152,9 @@ files, under the [Open Government Licence – Canada](https://open.canada.ca/en/
   the two licences fit together. Nothing may suggest the government endorses DotAmi or the person's
   use of the list (the licence forbids implying official status).
 - **Not a source for anything else.** Wages, job outlooks and industry averages from the same family
-  of datasets are not allowed: start-up costs are official fees plus the person's own quotes only
-  (the same decision).
+  of datasets are not allowed under the maintainer's decision of 2026-10-11: start-up costs are
+  official fees plus the person's own quotes only. Whether typical numbers are shown later is asked
+  again before the cockpit's second phase.
 
 ## Proposing a new roadmap or a new node
 

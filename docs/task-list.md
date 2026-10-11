@@ -35,16 +35,17 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
   - [ ] Fixes carried in: the uncited $80,000 incorporation trigger off the map (the step becomes
     *Incorporating*, cited facts only, and lights from your own pick and your own "I'd incorporate at
-    $___"); federal and Alberta incorporation side by side for you to pick; the GST/HST card quoting
-    the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
+    $___"; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure
+    too, and a test keeps it off); federal and Alberta incorporation side by side for you to pick; the
+    GST/HST card quoting the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
     type at the start saved, dated and word for word
   - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta*
   - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
-    step, the future's road, ending and your date, and three new kinds of number you agree to (income
-    you want, savings for starting, a start-up cost line); listed and deletable on *What DotAmi knows
-    about you*
+    step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
+    kinds of number you agree to (income you want, kept once for you rather than on one future;
+    savings for starting; a start-up cost line); listed and deletable on *What DotAmi knows about you*
   - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
     steps now say needs 0 more"), worked out by running the rules before and after
   - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);
@@ -68,7 +69,8 @@ and the maintainer's six decisions of 2026-10-11:
   side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
   a what-if; a time strip from your own dates; hours you want, things you won't do, and a dream-life
   list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
-  planned cost.
+  planned cost. Before this phase is locked, the maintainer is asked again whether to show typical
+  numbers beside the official fees and your own quotes (the approved plan's follow-up to decision 2).
 - ⏸ **[14c] Phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
   sits, proposing skill marks that quote the line they came from, for you to tick; *Ask the Lens* on a
   step, its drafts tagged "drafted by your model, not from DotAmi's sources"; it never writes into your
@@ -494,8 +496,10 @@ library of those stories, each one cited and labelled, kept apart from the offic
   [CONTRIBUTING.md](../CONTRIBUTING.md) before the first entry.
 - ⬜ **[15b] The AI answers from the library, with links.** When the Lens suggests a way to start, it
   looks the examples up and quotes them with their links, so every suggestion points at a real source.
-  Not by training the stories into a model, which would lose the sources and could blend stories into
-  something nobody did. A test that every answer cites an example or an official page.
+  A test that every answer cites an example or an official page. How the AI learns from the library is
+  for the maintainer to confirm (he raised training or fine-tuning it on 2026-10-11). The recommended
+  way is looking the examples up rather than training them into a model, because a trained model
+  can't point back to the source it learned from and could blend stories into something nobody did.
 - ⬜ **[15c] Finding examples.** A search proposes candidate stories from public articles, videos and
   testimonials; a person (or the creator) checks each one before it enters the library.
 - ⬜ **[15d] Creators as contributors.** People who already show others how to start businesses can add
@@ -503,8 +507,10 @@ library of those stories, each one cited and labelled, kept apart from the offic
 - ⬜ **[15e] Permissions.** Beyond a link and a short quote, using someone's video or article needs their
   permission; the terms are checked by a professional before anything more is republished.
 - ⬜ **[15f] "What I have right now."** You say what you could put in (money you have on hand, skills,
-  tools, time); futures and examples that started with similar means are shown, sorted by one thing you
-  pick ("lowest start-up money", "could start this month"), said on screen. What you type stays yours.
+  tools, time). Every future and example stays listed; you can sort them by one thing you pick
+  ("lowest start-up money", "could start this month") or turn on a filter for ones that started with
+  means like yours, said on screen and cleared with one click. DotAmi never narrows the list on its
+  own. What you type stays yours.
 
 ## 16 — Your own test results (later)
 
