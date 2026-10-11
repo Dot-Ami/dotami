@@ -856,6 +856,44 @@ at the next start" isn't kept. An older version can't be changed. Ticking the bo
 version clears them. If downgrades come to matter, a later note format can make a reader refuse to
 remove a note it doesn't fully understand.
 
+### Second review (2026-10-10)
+
+Two more reviewers read the branch after the first fixes. What changes, written before the code:
+
+- **A folder or link wearing the journal's name no longer keeps the real locked file.** It isn't
+  DotAmi's and isn't counted (the listing counts regular files only), so it isn't part of the locked
+  file. Before, deleting it was refused, the real file stayed, the note owed it at every start, and the
+  page said another program had it open, which closing a program can't fix. Now the thing wearing the
+  journal's name is left alone (never followed, never removed) and the real locked file is deleted. A
+  real journal still goes first, and one that can't go still keeps its file, as before.
+- **An empty set-aside receipts folder gets no sentence about receipts.** A folder can be empty (a move
+  cut short before its first file, or a receipts folder that was empty when it was moved). The listing
+  still counts it, so the box clears it, but the warning now counts the empty ones on their own
+  (`emptyReceiptFolders`, from `listEmptySetAsideReceiptFolders` in `desktop/wipe-pending.mjs`) and says
+  only "An empty receipts folder DotAmi set aside goes too." The per-name sentences, the start-fresh
+  "may still open … only copy" sentences and "those receipts can never be opened" count only folders that
+  hold a receipt file.
+- **The closing sentence fits what is there.** With key files only, it says "that old key" for one and
+  "those old keys" for more, and drops "even if the old key comes back" (the key file is the old key,
+  and it is what goes). With only empty folders, there is no closing sentence: nothing can be lost.
+- **The start-fresh sentence is hedged honestly.** A Windows profile reset loses both keys, and then
+  the receipts key in use today is a new one that can't open the start-fresh receipts. The sentence now
+  reads "Those receipts may still open with the receipts key in use today, unless it was lost too."
+- **The first ask's unticked lines count.** One old key file, or one set-aside receipt folder, is
+  said in the singular ("The old key file … isn't ticked, so it stays."), as the locked file's line
+  already was.
+- **The docs stop promising "never deleted".** `docs/privacy-log.md` (the receipts key moved aside),
+  `docs/architecture/desktop-app.md` (the restore and Start fresh) and this file's section 10 (and the
+  decision record at the top) said the locked file and the key files are never deleted. The restore and
+  Start fresh still delete nothing; each line now says so and adds that Delete's safety-copies box can,
+  after a warning (this section). Older dated privacy-log lines get the same "*Changed 2026-10-10*" note.
+- **Smaller words.** *What DotAmi knows* says `receipts.key`, once moved to the safety copies folder,
+  can be deleted by the box. The ui-spec and the route's header say a retry also finishes the owed key
+  files and locked data files.
+- **Not changed: going back to an older version** (the known limit above). Keeping the debt across a
+  downgrade needs a second note file that older versions neither read nor remove; that is a new format
+  for a case nobody has met, and nothing is deleted that wasn't asked for. It stays a known limit.
+
 ### Tests (each must fail when its rule is removed)
 
 - `tests/desktop-wipe-pending.spec.ts`: only the names above, never through a link or junction, the
@@ -876,3 +914,9 @@ remove a note it doesn't fully understand.
   it and says so; ticked, the locked file (which held the person's words, readable with the old key),
   both key files and the folder are gone, and no file in the data folder holds a byte run of any of
   them.
+- Second review: `tests/desktop-wipe-pending.spec.ts` (a folder wearing the journal's name stays,
+  and the real locked file goes; empty folders listed apart);
+  `tests/privacy-delete.spec.ts` (the empty-folder sentence and no receipts sentences for it, "that old
+  key", no "even if the old key comes back" with keys only, the "unless it was lost too" hedge, the
+  receipts key's entry, the docs no longer promising "never deleted"); `tests/privacy-holdings.spec.ts`
+  (empty folders counted apart); `e2e/your-data.spec.ts` (the singular unticked lines).
