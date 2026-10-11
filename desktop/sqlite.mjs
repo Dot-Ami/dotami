@@ -8,7 +8,7 @@
 // that folder before anything opens a file. A copy run from the source code, and the tests, load it from
 // the top folder's node_modules. (Not `import.meta.url`: Playwright loads desktop files for the desktop
 // test through its CommonJS transform, where import.meta is a syntax error.)
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
+import { closeSync, existsSync, fstatSync, openSync, readSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -61,6 +61,31 @@ export function openDatabase(file, { key = null, readonly = false, fileMustExist
     throw error;
   }
   return db;
+}
+
+/**
+ * [8i] Lets SQLite undo a write that was cut off part-way (a power cut, a crash of the server) before a
+ * read-only open: when SQLite's rollback journal is beside `file`, the file is opened once read-write with
+ * `key`, which plays the journal back and deletes it. A read-only open can't do that, and fails with
+ * SQLITE_READONLY_ROLLBACK for as long as the journal is there (docs/architecture/database-encryption.md
+ * § 15.3, "A write the server didn't finish").
+ *
+ * A key that doesn't open the file throws CannotOpenDatabase, and no committed data is touched: SQLite3
+ * Multiple Ciphers refuses the journal's first page before writing any page back, so the journal stays as
+ * it was (still hot, for the right key later) and so does the file up to its committed length; SQLite has
+ * only cut off what the unfinished write added past that length, its usual first step of a rollback
+ * (measured, and pinned by tests/database-decrypt.spec.ts).
+ * @param {string} file
+ * @param {Buffer | null} key
+ */
+export function rollBackJournal(file, key) {
+  if (!existsSync(`${file}-journal`)) return;
+  try {
+    openDatabase(file, { key, fileMustExist: true }).close();
+  } catch (error) {
+    if (/^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "")) throw new CannotOpenDatabase(Boolean(key));
+    throw error;
+  }
 }
 
 /** A database held only in memory, made from a page image (the bytes serialize() gives). */

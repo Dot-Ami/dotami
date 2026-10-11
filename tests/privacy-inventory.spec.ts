@@ -219,6 +219,27 @@ describe("the privacy inventory lists what the desktop app writes beside the dat
       folder.writtenBy.mentions,
     );
   });
+
+  // The other direction: a name the desktop app declares for a file it keeps beside the data file (a key
+  // file, a note, a suffix after the data file's name) must be listed, or /your-data stops showing it.
+  // Found in the second review of 2026-10-10: removing the three decryption entries failed no test, and
+  // one of them names a whole unencrypted copy of the data.
+  const DECLARED = /export const ([A-Z_]+(?:_NOTE|_SUFFIX|_KEY_FILE)) = "([^"]+)"/g;
+  const declared = ["desktop/database-key.mjs", "desktop/receipt-key.mjs", "desktop/encrypt-database.mjs", "desktop/decrypt-database.mjs"].flatMap((file) =>
+    [...readFileSync(path.join(process.cwd(), file), "utf8").matchAll(DECLARED)].map((m) => ({ file, name: m[1], value: m[2] })),
+  );
+
+  it("finds the names it checks (so the check below can't pass on none)", () => {
+    expect(declared.map((d) => d.name)).toEqual(
+      expect.arrayContaining(["DATABASE_KEY_FILE", "DECRYPTING_NOTE", "DECRYPT_COPY_SUFFIX", "ENCRYPTED_SUFFIX", "ENCRYPTING_NOTE", "PLAIN_SUFFIX", "TURNED_OFF_NOTE"]),
+    );
+  });
+
+  it.each(declared)("$name ($value, in $file) is listed", ({ value }) => {
+    // A suffix follows the data file's name; every other name is the file's own.
+    const listed = FOLDERS.some((f) => f.relativePath === value || f.relativePath === `dotami.db${value}`);
+    expect(listed, `add an entry for ${value} to FOLDERS in lib/privacy/inventory.ts`).toBe(true);
+  });
 });
 
 // Every file the scan reads (tests/helpers/source-scan.ts, networkSourceFiles): all TypeScript and

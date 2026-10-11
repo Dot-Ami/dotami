@@ -17,6 +17,8 @@ const allowed = ANSWERS[which] ?? [];
 contextBridge.exposeInMainWorld("dotamiChoice", {
   status: query.get("status") ?? "",
   detail: query.get("detail") ?? "",
+  // "new-folder" for the window before a brand-new data file is created (desktop/encrypt-ask.js).
+  mode: query.get("mode") ?? "",
   answer: (choice) => {
     if (allowed.includes(choice)) ipcRenderer.send("dotami-choice", { which, answer: choice });
   },

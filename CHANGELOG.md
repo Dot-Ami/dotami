@@ -9,6 +9,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **A new data folder is asked first, and locking the data file can be turned off** ([8i], the
+  maintainer's decision of 2026-10-10) — a brand-new install now gets the same window as an existing
+  file, with the same four buttons: **Encrypt now** locks the file from its first byte as before, **Not
+  now** keeps it unencrypted and asks again at the next start, and **Never…** keeps it unencrypted after
+  a second warning, with the Settings switch unticked. **Back up first…** is shown turned off there, with
+  a line saying there's no data file yet to back up. In Settings, **Encrypt the data file** can now be
+  unticked while the file is encrypted: a warning says what that exposes and that backups stay locked
+  with their passphrase either way; then the next start decrypts the data file and its safety copies,
+  in steps a crash can't lose data in, and deletes the key once nothing is locked with it. Only the data
+  file: receipt files keep their own encryption. A small note records the turn-off, so a key is never
+  deleted on a guess (a data file moved out of the folder keeps its key); a data file that fails its check
+  stays encrypted and DotAmi starts as before; a decrypted copy another program blocks is wiped at once;
+  and a safety copy deleted from the Delete menu part-way no longer stops DotAmi from starting.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have
@@ -377,6 +390,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`docs/architecture/database-encryption.md`).
 
 ### Fixed
+- **An encrypted data file left mid-write by a power cut no longer stops every start** ([8i]) — when
+  the server was cut off in the middle of a write, SQLite leaves a journal beside the file to undo it,
+  and the start's check that the key opens the file was read-only, so SQLite couldn't undo the write and
+  every start stopped with "DotAmi couldn't start.". The check now lets SQLite undo the half-done write
+  first, with the file's key; a wrong key is refused there and touches none of the data. This bug was on main
+  since the data file was first encrypted, and 0.3.0 would have been the first release with it.
+- **Turning locking off can't lock DotAmi out** ([8i]) — a safety copy deleted from the Delete menu
+  while its encrypted original was still waiting to be wiped no longer stops every later start; a
+  readable data file is no longer shown as locked (the lost-key window) just because a wipe was still
+  owed; and anything that goes wrong before the swap, such as a full disk, now leaves the file encrypted,
+  removes the half-made copy and says why ("Free up some space"), instead of stopping every start with
+  "DotAmi couldn't start.". A second rename another program refuses puts the encrypted file back.
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
   with semicolons and amounts like "1 000,00" in several columns (Sage 50 Canadian in French) was
   split on its commas, so no column names were found and nothing was added up. When the commas on

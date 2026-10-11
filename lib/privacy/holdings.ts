@@ -307,11 +307,13 @@ function sentFacts(entry: SentElsewhereEntry, today: SettingsToday): SentFacts {
   }
 }
 
-/** The entries whose file is named after the data file (desktop/wipe-pending.mjs, desktop/encrypt-database.mjs). */
+/** The entries whose file is named after the data file (desktop/wipe-pending.mjs, desktop/encrypt-database.mjs, desktop/decrypt-database.mjs). */
 const NAMED_AFTER_DATA_FILE: Partial<Record<FolderEntry["id"], (dataPath: string) => string>> = {
   "wipe-pending": wipePendingFile,
   "database-encrypting-copy": (dataPath) => `${dataPath}.encrypting`,
   "database-plain-to-wipe": (dataPath) => `${dataPath}.plain-to-wipe`,
+  "database-decrypting-copy": (dataPath) => `${dataPath}.decrypting`,
+  "database-encrypted-to-wipe": (dataPath) => `${dataPath}.encrypted-to-wipe`,
 };
 
 /**

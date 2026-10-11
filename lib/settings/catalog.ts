@@ -95,11 +95,12 @@ export const SETTINGS: readonly SettingEntry[] = [
     group: "data",
     label: "Encrypt the data file",
     // [8i] Live in the desktop app; a copy run from source has no key store and says so beside it.
-    does: "Locks the data file and its safety copies with a key only your Windows account on this computer can open, so an administrator account while you're signed out, a copy of the data folder, or the disk read outside Windows can't read them. The desktop app does it at its next start, after asking. Once the file is encrypted, it stays encrypted.",
+    // [8i] Turning it off once encrypted (database-encryption.md § 15) unlocks the data file only; the receipts' own lock stays.
+    does: "Locks the data file and its safety copies with a key only your Windows account on this computer can open, so an administrator account while you're signed out, a copy of the data folder, or the disk read outside Windows can't read them. The desktop app does it at its next start, after asking, for a new data folder as for an existing one. Turned off once the file is encrypted, the desktop app decrypts the file and its safety copies at its next start and deletes the key. Only the data file: receipt files keep their own encryption.",
     defaultValue: "on, asked first",
-    options: "on · never",
+    options: "on · off",
     warning:
-      'Before encrypting: "if the key is ever lost, everything not in a backup is lost; an older DotAmi can\'t open the file afterwards". Before Never: "your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer\'s disk outside Windows can read it".',
+      'Before encrypting: "if the key is ever lost, everything not in a backup is lost; an older DotAmi can\'t open the file afterwards". Before Never: "your data file stays unencrypted: anyone who can read your data folder, a copy of it, or this computer\'s disk outside Windows can read it". Before turning it off once encrypted: "anyone who can read your data folder, a copy of it, or this computer\'s disk outside Windows can read your ideas, figures, expense records and statements; backups stay locked with their passphrase either way".',
     story: "8i",
     status: "live",
   },
