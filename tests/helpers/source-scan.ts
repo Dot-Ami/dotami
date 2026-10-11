@@ -832,15 +832,50 @@ function walk(node: ts.Node, visit: (node: ts.Node) => void) {
   ts.forEachChild(node, (child) => walk(child, visit));
 }
 
+/**
+ * Trees already parsed, by file name and text. The privacy spec reads the same ~280 files again for
+ * every probe it adds, and nothing here changes a tree once it is made, so each text is parsed once
+ * (all of them together hold about 40 MB). A file that doesn't parse isn't kept: it throws every time.
+ */
+const parsedTrees = new Map<string, ts.SourceFile>();
+
 /** Reads a file's text as the TypeScript parser would (the extension picks TypeScript, JSX or plain JavaScript). Throws when it doesn't parse: a file the scan can't read must not pass for a clean one. */
 function parseSource(source: string, file: string): ts.SourceFile {
+  const key = `${file}\0${source}`;
+  const kept = parsedTrees.get(key);
+  if (kept) return kept;
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   const problems = (tree as unknown as { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
   if (problems.length > 0) {
     const { line } = tree.getLineAndCharacterOfPosition(problems[0].start ?? 0);
     throw new Error(`${file}:${line + 1} doesn't parse (${ts.flattenDiagnosticMessageText(problems[0].messageText, " ")}), so the network scan can't read it`);
   }
+  parsedTrees.set(key, tree);
   return tree;
+}
+
+const namesInTree = new WeakMap<ts.SourceFile, ReadonlySet<string>>();
+
+/**
+ * Every name and string a file's code writes, as the parser reads them: each identifier (a unicode
+ * escape decoded, so `send` is "send"), property and key names, and the text of every string and
+ * plain template. A word only in a comment isn't code, so it isn't here. Every name the network scan
+ * compares with a wrapper or another name for one comes off one of these nodes, so a name a file
+ * doesn't write can't change what the scan finds in it: wrapperNamesAcross skips such files, and the
+ * privacy spec re-reads a file only when a new name is one it writes. Throws when the file doesn't parse.
+ */
+export function namesWritten(source: string, file = "source.tsx"): ReadonlySet<string> {
+  const tree = parseSource(source, file);
+  let names = namesInTree.get(tree);
+  if (!names) {
+    const found = new Set<string>();
+    walk(tree, (node) => {
+      if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node) || ts.isStringLiteralLike(node) || ts.isNumericLiteral(node)) found.add(node.text);
+    });
+    names = found;
+    namesInTree.set(tree, names);
+  }
+  return names;
 }
 
 /** What a name in the file stands for: a whole module (`member` null), or one thing taken from it. */
@@ -911,8 +946,10 @@ export function wrapperNamesAcross(sources: readonly { file: string; code: strin
   for (let grew = names.size > 0; grew; ) {
     grew = false;
     for (const { file, code } of sources) {
-      // A file can only re-export a wrapper if it writes the name of one (or of a name already found): no need to parse the rest.
-      if (![...names].some((name) => code.includes(name))) continue;
+      // A file can only re-export a wrapper if it writes the name of one (or of a name already found).
+      // Asked of the parsed names, not the text: `postJson` is postJson but doesn't contain the word.
+      const written = namesWritten(code, file);
+      if (![...names].some((name) => written.has(name))) continue;
       for (const name of exportedWrapperNames(code, [...names], file)) {
         if (!names.has(name)) {
           names.add(name);
