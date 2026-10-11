@@ -39,8 +39,21 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
-- **The list of set-aside receipts reads their records, and a folder Delete still owes stays out of it
-  ([8i], 2026-10-10, review fix round).** To offer *Bring these receipts back* only for receipts that
+- **Bringing set-aside receipts back also brings back an unfinished add, and checks a same-named file in
+  `receipts/` before calling a receipt "already back" ([8i], 2026-10-10, second review fix round).** An
+  unfinished add (`<name>.partial`, the only copy of a receipt when DotAmi stopped between writing its row
+  and renaming it) that *Start a new key* set aside is now brought back like any receipt, checked against
+  its `Receipt` row and written as `receipts/<name>` with the current key; before, it was left in the
+  set-aside folder without a word. When a file with a set-aside receipt's name is already in `receipts/`,
+  the main process now reads it whole and opens it with the current key, in memory only, to check it
+  against its row; only then does the page say the receipt is already back. It reads the key id of every
+  set-aside `receipts.key` (not the key itself, when Windows won't open it) to say where a receipt's key
+  file is. It removes a leftover `receipts/<name>.encrypting` of an earlier press (DotAmi's own encrypted
+  temporary file) before writing that receipt again. Nothing new is kept, and nothing is sent anywhere
+  ([`desktop/receipt-bring-back.mjs`](../desktop/receipt-bring-back.mjs)).
+- **The list of set-aside receipts reads their records, and a folder Delete still owes is never offered
+  (listed with a line saying an earlier Delete is still clearing it) ([8i], 2026-10-10, review fix
+  round).** To offer *Bring these receipts back* only for receipts that
   could come back, the desktop app's main process now also reads the `Receipt` table (read-only) when the
   page asks for the list, and checks whether a file of the same name is already in `receipts/`. It
   remembers, in memory only and until it closes, which set-aside files a press found changed (their

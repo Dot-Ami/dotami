@@ -23,6 +23,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   program has them open, or their old key can't be opened), and when a folder has no `receipts.key` of its
   own it says to put a found one there. A folder an earlier Delete is still clearing is never offered.
   One receipt that fails never stops the others, and the answer always says what really moved.
+  A receipt whose only copy was an unfinished add when it was set aside comes back too. A folder whose key
+  file is in the next set-aside folder (a move cut short) says so, instead of pointing to the Recycle Bin.
+  "Already back" is said only when the copy in the receipts folder really opens; a different file there is
+  named, with what to do. A receipt put back but not checked (another program held it) is said as such,
+  not as "couldn't be written". A leftover from an earlier try no longer blocks the button.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have

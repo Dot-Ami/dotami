@@ -1440,3 +1440,24 @@ list always saying the folder has its key file. And for three tests that came in
 rather than before it (the server's folder count in `tests/settings-today.spec.ts`,
 `tests/privacy-holdings.spec.ts` and the extensions check in `tests/receipt-bring-back.spec.ts`): the count
 made to find no folder, and all three fail.
+
+**Second review fix round (2026-10-10).** Each should-fix finding was first reproduced with the
+reviewers' own scripts on the code before it (a `.partial` left without a word and its folder gone from
+the list; folder A sent to the Recycle Bin for a key file sitting in folder B; an old-key copy in
+`receipts/` called "already back" and pointed to Delete; a good placed file called "couldn't be written …
+Try again"; a leftover `.encrypting` failing three presses in a row), then again on the code after (each
+now as this section says). Built by: `desktop/receipt-bring-back.mjs` (`receiptNamesIn` and `receiptParts`
+for an unfinished add; `keysFor` returning every key file's id; `copyInReceipts`, the full check of a
+same-named file in `receipts/`; the leftover temporary file removed first; "unchecked"; the log),
+`desktop/wipe-pending.mjs` `listLockedReceiptFolders` (counts a `.partial`), and
+`lib/expenses/receipts/protection.ts` (the sentences for no key file, a key file elsewhere, a different
+file, unchecked, and the line after the button). The tests went in first: 24 failed and 44 passed on the
+code before. **Checked that the tests bite** (each rule broken on purpose, the two test files run and
+seen to fail, the file put back from git, `git diff --quiet` clean each time): the size and SHA-256
+comparison after the rename removed (this first passed: the damaged file the test placed also failed to
+open, which throws by itself; the test now also places other bytes of the same size that do open, and it
+fails); the whole read-back removed; the name pattern not matching a `.partial`; the server's count not
+counting one; a `.partial` beside its finished file not left alone; every key file's id ignored; a file in
+`receipts/` judged by its name alone; "unchecked" dropped; the leftover not removed first; the Recycle Bin
+sentence for a key file in another folder; Delete pointed to beside a different file; an unchecked receipt
+hidden behind "No receipt was brought back.". With nothing broken, all 69 pass.

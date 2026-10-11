@@ -248,6 +248,8 @@ roadmap's build order.
     again; asked once; each receipt checked against its record, locked again with the current key, put
     back, and only then removed from the folder; anything that fails stays and is named; the button only
     for receipts that could really come back, never for a folder an earlier Delete still owes (review fix
+    round, 2026-10-10); an unfinished add set aside with the rest comes back too, a key file in another
+    set-aside folder is said as such, and "already back" only when that copy opens (second review fix
     round, 2026-10-10)
     ([expense-records.md § 12](architecture/expense-records.md)). Not done, with the reasons there: the
     receipt folders a restore or Start fresh set aside
