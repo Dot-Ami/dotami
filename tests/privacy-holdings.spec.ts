@@ -371,7 +371,7 @@ describe("the folders beside the data file", () => {
     expect(h.setAsideReceiptFolders).toBe(2);
     expect(h.safetyCopies).toBe(0);
     // [8i] Review: each name counted on its own, so the warning names only what is there.
-    expect(h.setAsideKinds).toEqual({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 0, receiptsKeyFiles: 0, databaseKeyFiles: 0, lockedFiles: 0 });
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 1, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 0, receiptsKeyFiles: 0, databaseKeyFiles: 0, lockedFiles: 0, emptyReceiptFolders: 0 });
     // A count only: nothing from inside a receipt.
     expect(JSON.stringify(h)).not.toContain(secret);
   });
@@ -382,6 +382,9 @@ describe("the folders beside the data file", () => {
     const secret = "marker-inside-a-lost-key-leftover";
     mkdirSync(path.join(backups, "receipts-before-start-fresh-1760000000002"), { recursive: true });
     writeFileSync(path.join(backups, "receipts-before-start-fresh-1760000000002", `${"f".repeat(32)}.png`), secret);
+    // Second review: an empty one (the receipts folder was empty when Start fresh moved it) is counted,
+    // so the box clears it, but apart, so the warning says nothing about receipts for it.
+    mkdirSync(path.join(backups, "receipts-before-start-fresh-1760000000003"));
     writeFileSync(path.join(backups, "receipts-key-unreadable-1760000000000.key"), secret);
     writeFileSync(path.join(backups, "database-key-unreadable-1760000000001.key"), secret);
     // A locked file and its journal are one; a lone journal counts under its file's name.
@@ -394,10 +397,10 @@ describe("the folders beside the data file", () => {
     const today: SettingsToday = { ...seededToday, dataFile: { path: path.join(folder, "dotami.db"), exists: true }, desktop: true };
     const h = await readHoldings(seeded.prisma, today);
 
-    expect(h.setAsideReceiptFolders).toBe(1);
+    expect(h.setAsideReceiptFolders).toBe(2);
     expect(h.setAsideKeyFiles).toBe(2);
     expect(h.lockedDataFiles).toBe(2);
-    expect(h.setAsideKinds).toEqual({ receiptsLocked: 0, receiptsBeforeRestore: 0, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 2 });
+    expect(h.setAsideKinds).toEqual({ receiptsLocked: 0, receiptsBeforeRestore: 0, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 1, databaseKeyFiles: 1, lockedFiles: 2, emptyReceiptFolders: 1 });
     expect(h.safetyCopies).toBe(0);
     // Counts only: nothing from inside a file.
     expect(JSON.stringify(h)).not.toContain(secret);

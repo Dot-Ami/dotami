@@ -37,6 +37,7 @@ import {
 } from "@/lib/privacy/delete";
 import {
   DELETE_MENU,
+  FOLDERS,
   KEPT_BY_DELETE,
   NOTHING_SET_ASIDE,
   NOT_CLEARED_BY_DELETE,
@@ -470,14 +471,35 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     // and only for them.
     const fresh = setAsideWarning(kinds({ receiptsBeforeStartFresh: 1 }))!;
     expect(fresh).toMatch(
-      /The receipts folder as it was when you started fresh goes \(receipts-before-start-fresh-…\)\. Those receipts may still open with the receipts key in use today\. This deletes the only copy of them here\./,
+      // Second review: hedged, because a Windows profile reset loses the receipts key too, and then
+      // today's receipts key is a new one that can't open them.
+      /The receipts folder as it was when you started fresh goes \(receipts-before-start-fresh-…\)\. Those receipts may still open with the receipts key in use today, unless it was lost too\. This deletes the only copy of them here\./,
     );
     expect(setAsideWarning(kinds({ receiptsLocked: 1, receiptsBeforeRestore: 1, lockedFiles: 1 }))).not.toMatch(/may still open/);
 
+    // Second review: with key files only, the key file is the old key and it is what goes, so "even if
+    // the old key comes back" means nothing there; and one key is "that old key", not "those old keys".
     const keys = setAsideWarning(kinds({ receiptsKeyFiles: 1, databaseKeyFiles: 2 }))!;
     expect(keys).toMatch(/The old receipts key file goes \(receipts-key-unreadable-….key\)\./);
     expect(keys).toMatch(/The old data file keys go \(database-key-unreadable-….key\)\./);
-    expect(keys).toMatch(/Afterwards anything those old keys locked can never be opened, even if the old key comes back\.$/);
+    expect(keys).toMatch(/Afterwards anything those old keys locked can never be opened\.$/);
+    for (const kind of ["receiptsKeyFiles", "databaseKeyFiles"] as const) {
+      const one = setAsideWarning(kinds({ [kind]: 1 }))!;
+      expect(one, kind).toMatch(/Afterwards anything that old key locked can never be opened\.$/);
+      expect(one, kind).not.toMatch(/those old keys|even if the old key comes back/);
+    }
+
+    // Second review: an empty set-aside receipts folder (a move cut short, or an empty receipts folder
+    // moved) holds no receipts, so nothing is said about receipts for it, and nothing is lost by it.
+    expect(setAsideWarning(kinds({ emptyReceiptFolders: 1 }))).toBe(
+      "This also deletes what DotAmi set aside in the backups folder. An empty receipts folder DotAmi set aside goes too.",
+    );
+    expect(setAsideWarning(kinds({ emptyReceiptFolders: 2 }))).toBe(
+      "This also deletes what DotAmi set aside in the backups folder. The empty receipts folders DotAmi set aside go too.",
+    );
+    const emptyAndLocked = setAsideWarning(kinds({ emptyReceiptFolders: 1, lockedFiles: 1 }))!;
+    expect(emptyAndLocked).toMatch(/Afterwards the locked data can never be opened, even if the old key comes back\.$/);
+    expect(emptyAndLocked).not.toMatch(/those receipts|receipts-before-|receipts-locked-/);
 
     expect(setAsideWarning(kinds({ lockedFiles: 1 }))).toMatch(
       /The locked data file goes, with everything in it \(dotami-locked-….db\)\. Afterwards the locked data can never be opened, even if the old key comes back\.$/,
@@ -504,8 +526,43 @@ describe("the Delete menu covers every table, and says what goes with each", () 
         keyFiles: ["database-key-unreadable-1.key", "receipts-key-unreadable-2.key", "receipts-key-unreadable-3.key"],
         lockedFiles: ["dotami-locked-1.db"],
       }),
-    ).toEqual({ receiptsLocked: 2, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 2, databaseKeyFiles: 1, lockedFiles: 1 });
+    ).toEqual({ receiptsLocked: 2, receiptsBeforeRestore: 1, receiptsBeforeStartFresh: 1, receiptsKeyFiles: 2, databaseKeyFiles: 1, lockedFiles: 1, emptyReceiptFolders: 0 });
     expect(setAsideKindsOf({ receiptFolders: [], keyFiles: [], lockedFiles: [] })).toEqual(NOTHING_SET_ASIDE);
+    // Second review: the empty ones are counted apart, never under their name's kind.
+    expect(
+      setAsideKindsOf({
+        receiptFolders: ["receipts-before-start-fresh-3", "receipts-before-start-fresh-5", "receipts-locked-1"],
+        emptyReceiptFolders: ["receipts-before-start-fresh-3", "receipts-locked-1"],
+        keyFiles: [],
+        lockedFiles: [],
+      }),
+    ).toEqual({ ...NOTHING_SET_ASIDE, receiptsBeforeStartFresh: 1, emptyReceiptFolders: 2 });
+  });
+
+  it("[8i] the receipts key's entry says the box can delete it once it is moved to the safety copies folder", () => {
+    // Second review: it said "never removed by DotAmi", then that it is moved to the safety copies
+    // folder, and left out that Delete's box now clears it from there.
+    const entry = FOLDERS.find((f) => f.id === "receipts-key")!;
+    expect(entry.holds).toMatch(/once there, Delete's “Safety copies in the backups folder” box can delete it, after a warning/);
+    expect(entry.holds).not.toMatch(/never removed by DotAmi\./);
+  });
+
+  it("[8i] the design docs and the privacy log don't promise the locked file or the old key files are never deleted, now that Delete can", () => {
+    // Second review: the app's own words were fixed, but three docs still said "never deleted" about
+    // what Delete's safety-copies box now clears. A line may still say the restore or Start fresh
+    // doesn't delete them, as long as it says the box can (or carries the dated "Changed" note).
+    for (const doc of ["docs/privacy-log.md", "docs/architecture/desktop-app.md", "docs/architecture/database-encryption.md"]) {
+      const text = readFileSync(path.join(process.cwd(), doc), "utf8").replace(/\r\n/g, "\n");
+      // One block per paragraph or list item. Words in quotes are words reported, not promised.
+      const promises = text
+        .split(/\n(?=\s*\n|\s*(?:[-*]|\d+\.) )/)
+        .map((block) => block.replace(/"[^"\n]*"/g, "").replace(/“[^”]*”/g, ""))
+        .filter((block) => /never delet/i.test(block))
+        .filter((block) => /dotami-locked|locked (data )?file|key-unreadable|its key file|unreadable key file/i.test(block))
+        .filter((block) => !/safety-copies box|Changed\s+2026-10-10/i.test(block))
+        .map((block) => block.trim().slice(0, 120));
+      expect(promises, doc).toEqual([]);
+    }
   });
 
   it("cites the CRA's record-keeping page, dated, with the six years as a typed field", () => {

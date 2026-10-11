@@ -31,6 +31,7 @@ import {
   listLockedDataFiles,
   listSafetyCopies,
   listSetAsideKeyFiles,
+  listEmptySetAsideReceiptFolders,
   listSetAsideReceiptFolders,
   readWipePending,
   wipePendingFile,
@@ -342,6 +343,27 @@ describe("the receipt folders set aside in the backups folder ([8i])", () => {
         "receipts-locked-1760000000002",
       ],
     });
+  });
+
+  it("[8i] names apart the listed folders that hold nothing at all, so the warning says nothing about receipts for them", () => {
+    // Second review: an empty receipts-before-start-fresh-… folder got "those receipts may still open …
+    // this deletes the only copy of them here" about receipts that don't exist.
+    expect(listEmptySetAsideReceiptFolders(dbFile)).toEqual({ names: [] });
+    setAside("receipts-before-start-fresh-1760000000003");
+    setAside("receipts-before-start-fresh-1760000000004", { [receiptName()]: "a receipt from before Start fresh" });
+    setAside("receipts-locked-1760000000002");
+    setAside("receipts-before-restore-1760000000001", { [receiptName("pdf")]: "a receipt from before a restore" });
+    // Only the person's own file: not listed at all, so not listed as empty either.
+    setAside("receipts-locked-1760000000003", { "my scan.png": "the person's own" });
+    // Not a name DotAmi gives a set-aside folder.
+    setAside("receipts-old");
+    expect(listSetAsideReceiptFolders(dbFile).names).toEqual([
+      "receipts-before-restore-1760000000001",
+      "receipts-before-start-fresh-1760000000003",
+      "receipts-before-start-fresh-1760000000004",
+      "receipts-locked-1760000000002",
+    ]);
+    expect(listEmptySetAsideReceiptFolders(dbFile)).toEqual({ names: ["receipts-before-start-fresh-1760000000003", "receipts-locked-1760000000002"] });
   });
 
   it("is empty when there is no backups folder, or when the backups folder is a link to somewhere else", () => {
@@ -666,13 +688,41 @@ describe("the locked data file set aside in the backups folder ([8i])", () => {
     mkdirSync(backupsFolder(dbFile), { recursive: true });
     symlinkSync(outside, path.join(backupsFolder(dbFile), "dotami-locked-1.db"), "file");
     symlinkSync(outside, path.join(backupsFolder(dbFile), "dotami-locked-2.db-journal"), "file");
-    lockedFile(2);
+    const real = lockedFile(2);
     expect(listLockedDataFiles(dbFile).names).toEqual(["dotami-locked-2.db"]);
+    // Second review: the link wearing the journal's name isn't part of the real locked file (it isn't
+    // counted), so it stays and the real file goes. The link wearing the file's own name stays, owed.
     expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1.db", "dotami-locked-2.db"])).toEqual({
-      deleted: [],
-      left: ["dotami-locked-1.db", "dotami-locked-2.db"],
+      deleted: ["dotami-locked-2.db"],
+      left: ["dotami-locked-1.db"],
     });
+    expect(existsSync(real)).toBe(false);
     expect(readFileSync(outside, "utf8")).toBe("keep me");
+  });
+
+  it("[8i] a folder wearing a locked file's journal name stays, and the real locked file still goes", () => {
+    // Second review: before, the folder made the real file stay, owed at every start, and the page said
+    // another program had it open, which closing a program can't fix.
+    const real = lockedFile(1760000000000);
+    const notAJournal = path.join(backupsFolder(dbFile), "dotami-locked-1760000000000.db-journal");
+    mkdirSync(notAJournal);
+    writeFileSync(path.join(notAJournal, "inside.txt"), "not DotAmi's");
+    expect(listLockedDataFiles(dbFile)).toEqual({ names: ["dotami-locked-1760000000000.db"] });
+    expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1760000000000.db"])).toEqual({ deleted: ["dotami-locked-1760000000000.db"], left: [] });
+    expect(existsSync(real)).toBe(false);
+    expect(readFileSync(path.join(notAJournal, "inside.txt"), "utf8")).toBe("not DotAmi's");
+    // Nothing of DotAmi's is left to count, so nothing is owed.
+    expect(listLockedDataFiles(dbFile)).toEqual({ names: [] });
+  });
+
+  it("[8i] a real journal that can't go still keeps its file", () => {
+    const real = lockedFile(1760000000000, { journal: true });
+    const busy = (target: string) => {
+      if (target.endsWith("-journal")) throw Object.assign(new Error("busy"), { code: "EBUSY" });
+      rmSync(target);
+    };
+    expect(deleteLockedDataFiles(dbFile, ["dotami-locked-1760000000000.db"], { remove: busy })).toEqual({ deleted: [], left: ["dotami-locked-1760000000000.db"] });
+    expect(existsSync(real)).toBe(true);
   });
 
   it("deletes the journal first, then the file, every byte of both; never the live data file or another name", () => {

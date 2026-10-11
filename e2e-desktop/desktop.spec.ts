@@ -1557,7 +1557,8 @@ test("after a real Start fresh, Delete unticked keeps the locked file, the old k
   const first = page.getByRole("dialog", { name: "Delete these?" });
   await expect(first).toContainText("The old key files set aside in the backups folder aren't ticked, so they stay.");
   await expect(first).toContainText("The locked data file set aside in the backups folder isn't ticked, so it stays, and could still be opened if its key comes back.");
-  await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+  // One start-fresh folder: the singular (second review).
+  await expect(first).toContainText("The receipt folder set aside in the backups folder isn't ticked, so it still holds its receipt files.");
   await first.getByRole("button", { name: "Yes, continue" }).click();
   await page.getByRole("dialog", { name: "Delete them now?" }).getByRole("button", { name: "Delete now" }).click();
   await expect(removing.getByRole("status")).toContainText("Your statements: 1 record deleted, 0 left");

@@ -639,15 +639,20 @@ test("Delete: with the safety-copies box unticked, the first ask says the set-as
   const before = path.join(BACKUPS_DIR, "receipts-before-restore-1760000000001");
   mkdirSync(before, { recursive: true });
   writeFileSync(path.join(before, `${"c3".repeat(16)}.png`), "a receipt from before a restore");
+  // [8i] And one old key file, so the key files' line is read with a count of one too.
+  writeFileSync(path.join(BACKUPS_DIR, "database-key-unreadable-1760000000009.key"), "an old key made for the browser test");
   expect((await page.request.post("/api/person/statements", { data: { text: "a statement for the unticked line" } })).status()).toBe(200);
   try {
     const removing = await openDeleteMenu(page);
-    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Safety copies: 0 · Set-aside receipt folders: 1");
+    await expect(removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) })).toContainText("Safety copies: 0 · Set-aside receipt folders: 1 · Set-aside key files: 1");
     await removing.getByLabel(STATEMENTS_BOX).check();
     await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
 
     const first = page.getByRole("dialog", { name: "Delete these?" });
-    await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+    // Second review: one folder and one key file are said in the singular, as the locked file's line is.
+    await expect(first).toContainText("The receipt folder set aside in the backups folder isn't ticked, so it still holds its receipt files.");
+    await expect(first).toContainText("The old key file set aside in the backups folder isn't ticked, so it stays.");
+    await expect(first).not.toContainText("aren't ticked, so they");
     await expect(first).not.toContainText("The safety copies in the backups folder aren't ticked");
     await expect(first).not.toContainText(RESTORE_ONLY_WARNING);
     // Nothing is deleted: this test only reads the first ask.
@@ -688,7 +693,8 @@ test("Delete: the safety-copies box also clears the old key files, the locked da
     await removing.getByLabel(STATEMENTS_BOX).check();
     await removing.getByRole("button", { name: "Delete what's ticked…" }).click();
     let first = page.getByRole("dialog", { name: "Delete these?" });
-    await expect(first).toContainText("The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files.");
+    await expect(first).toContainText("The receipt folder set aside in the backups folder isn't ticked, so it still holds its receipt files.");
+    // Two key files: the plural.
     await expect(first).toContainText("The old key files set aside in the backups folder aren't ticked, so they stay.");
     await expect(first).toContainText("The locked data file set aside in the backups folder isn't ticked, so it stays, and could still be opened if its key comes back.");
     await expect(first).not.toContainText(warning);
