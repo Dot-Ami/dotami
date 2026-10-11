@@ -68,6 +68,88 @@ test("one sentence becomes a saved map", async ({ page }) => {
   await expect(card.getByText("Trades", { exact: true })).toBeVisible();
 });
 
+// 2026-10-11: the sentence typed on the front door used to live only in the tab and was lost when it
+// closed. It is now kept with the idea, dated and word for word (docs/ui-spec/landing/01-free-text-entry.md).
+test("the sentence typed on the front door is kept with the idea, word for word and dated, after the tab is gone", async ({ page, browser }) => {
+  // Odd spacing and quotation marks: word for word means all of it.
+  const sentence = `Hand-lettered  signs for “food trucks” in Calgary ${Date.now()}`;
+  await page.goto("/", { waitUntil: "networkidle" });
+  const today = await page.evaluate(() => new Date().toLocaleDateString("en-CA"));
+  await page.getByPlaceholder(/What are you building/).fill(sentence);
+  await page.getByRole("button", { name: "Map it →" }).click();
+  await expect(page).toHaveURL(/\/intake/);
+  await page.getByRole("button", { name: "Continue →" }).click();
+  // A goal the person picks themselves.
+  await page.getByRole("button", { name: "Replace income", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Replace income", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Looks right →" }).click();
+  await groupSelect(page, "Current employment").selectOption("self-employed");
+  await page.getByPlaceholder(/What the map should call this venture/).fill("Invented — first words test");
+  await page.getByRole("button", { name: "Open my map →" }).click();
+  await expect(page).toHaveURL(/\/cockpit/);
+
+  // A new window with nothing in its tab storage: what shows comes from the data file.
+  const context = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  const fresh = await context.newPage();
+  await fresh.goto("/ventures");
+  const card = fresh.getByRole("listitem").filter({ has: fresh.getByRole("heading", { name: "Invented — first words test", level: 2 }) });
+  await expect(card.getByText(`In your words, ${today}`, { exact: true })).toBeVisible();
+  await expect(card.getByText(`“${sentence}”`, { exact: true })).toBeVisible();
+  await expect(card.getByText(/^Goals you picked: /)).toContainText("Replace income");
+
+  // It is one of the person's statements, so What DotAmi knows counts it and Delete takes it with them.
+  const statements = (await (await fresh.request.get("/api/person/statements")).json()) as { statements: { text: string; saidAt: string }[] };
+  expect(statements.statements.filter((s) => s.text === sentence)).toEqual([expect.objectContaining({ text: sentence, saidAt: today })]);
+  await context.close();
+});
+
+// 2026-10-11: the cockpit ran the rules on the default picks, so flipping a toggle moved the chips but
+// not the colours; and "Incorporation at $80K net" lit from an amount no page sets. A stage card says
+// its colour in words, so this reads the map the way a screen reader would.
+test("the map's colours follow your own picks, and Incorporating lights from no amount", async ({ page }) => {
+  // An invented idea over the GST/HST line (first-year estimate $45,000) and far past the old $80K one.
+  const scenario = {
+    id: `picks-${Date.now()}`,
+    profile: {
+      name: "Invented — picks test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 45_000,
+      targetRevenueY3: 500_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "self-employed",
+      hireFirst: false,
+      activityTags: ["Trades"],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
+  // The defaults: waiting for the $30K line applies as answered; Incorporating is "check first",
+  // though the third-year estimate is $500,000.
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, applies as answered, opens detail$/);
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, your pick, check first, opens detail");
+  await expect(page.getByText("DotAmi doesn't pick a point to incorporate. You do, with your accountant or lawyer.").first()).toBeVisible();
+
+  // Flip GST timing: the voluntary card is now the one that applies, and the other one is a fork.
+  await page.getByRole("button", { name: "Voluntary now", exact: true }).click();
+  await expect(stage("Voluntary GST registration")).toHaveAccessibleName(/^Voluntary GST registration, your pick, applies as answered, opens detail$/);
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, not on your path, check first, opens detail$/);
+
+  // Flip Incorporation timing: Incorporating leaves the person's path and goes grey.
+  await page.getByRole("button", { name: "Liability / SR&ED", exact: true }).click();
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, not on your path, doesn't apply as answered, opens detail");
+  await expect(stage("Incorporation for liability/SR&ED")).toHaveAccessibleName(/, your pick, check first, opens detail$/);
+});
+
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
   await page.goto("/ventures");
   const card = page

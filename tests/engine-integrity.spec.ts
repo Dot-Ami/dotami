@@ -133,6 +133,41 @@ describe("engine catalog integrity", () => {
       }
     }
   });
+
+  // 2026-10-11: "Incorporation at $80K net" lit a stage from $80,000, a number of DotAmi's own (the
+  // catalog called it a "v0 heuristic") that no page sets. A dollar figure on the map has to be one
+  // an official page sets, and the catalog has to cite that page. Adding an amount here means naming
+  // the page it comes from; docs/engines/cfe.md, authoring rule 2.
+  it("every dollar figure on the map comes from a page the catalog cites — none is DotAmi's own", () => {
+    const CITED_AMOUNTS: Record<string, string> = {
+      // GST/HST small-supplier line: taxable supplies over $30,000 (CRA).
+      "$30,000": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
+      // The small business deduction's federal business limit (CRA, T2 guide chapter 4).
+      "$500,000":
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
+    };
+    const cited = new Set(cfeCatalogV2026.nodes.flatMap((n) => n.citations.map((c) => c.url)));
+    for (const url of Object.values(CITED_AMOUNTS)) expect(cited.has(url), url).toBe(true);
+
+    for (const node of cfeCatalogV2026.nodes) {
+      // Everything the node says, not its citations' notes (those describe the page).
+      const said = { ...node, citations: [] };
+      // "$80K", "$80,000", "$ 500,000", "$1.5M": every way a dollar figure is written.
+      const amounts = JSON.stringify(said).match(/\$\s?\d+(?:,\d{3})*(?:\.\d+)?(?:\s?[KkMm]\b)?/g) ?? [];
+      for (const raw of amounts) {
+        const amount = raw.replace(/\s/g, "");
+        // "$0" is the absence of revenue before a venture starts, not a threshold.
+        if (amount === "$0") continue;
+        expect(Object.keys(CITED_AMOUNTS), `${node.id} says ${amount}, which no cited page in this list sets`).toContain(amount);
+      }
+      // And no estimate may present a number of DotAmi's own as a "heuristic".
+      for (const estimate of node.financialImpact.estimates) {
+        if (/heuristic/i.test(estimate.basis)) {
+          expect(estimate.value, `${node.id}: "${estimate.label}" is a heuristic with a number`).not.toMatch(/\d/);
+        }
+      }
+    }
+  });
 });
 
 // [8f] The tax-line catalog: which CRA line each tax-form figure kind goes on, one read year at a time.
