@@ -420,6 +420,8 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(box.learnMore).toMatch(/old key files[^.]*go too/);
     expect(box.learnMore).toMatch(/so does the locked data file[^.]*with everything in it/);
     expect(box.learnMore).not.toMatch(/So do the old key files/);
+    // [8i] Second review: hedged like the warning, since a Windows profile reset loses the receipts key too.
+    expect(box.learnMore).toMatch(/may still open with the key in use today, unless that key was lost too/);
   });
 
   it("[8i] the lost-key window and the restore question don't promise the locked file is never deleted, now that Delete can", () => {
