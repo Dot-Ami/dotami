@@ -13,9 +13,11 @@ structure-ladder rail.
 Seed research (maintainers' notes, 2026-07-01) locked the gating logic:
 
 - **Rungs are gated by triggers, not ambition.** First revenue dollar unlocks Sole Prop;
-  ~$30K revenue forces the GST decision; ~$80K net income or liability/SR&ED needs make
-  incorporation worth modeling; Holdco protects *existing* profits; Trust handles
-  succession/income-splitting.
+  taxable supplies over $30,000 (the CRA's small-supplier test) force the GST decision;
+  incorporating is the person's own call — DotAmi sets no income at which it becomes "worth
+  modeling" (an uncited "~$80K net income" line was removed on 2026-10-11), while
+  liability/SR&ED needs are facts the person states; Holdco protects *existing* profits; Trust
+  handles succession/income-splitting.
 - **Skipping rungs doesn't solve spending problems.** Holdco/Trust do not make equipment
   affordable and don't add liability protection beyond what basic incorporation provides.
   A profile with a small capital purchase and no retained earnings should *never* see
@@ -26,8 +28,9 @@ Seed research (maintainers' notes, 2026-07-01) locked the gating logic:
 
 ## How it should reason (target)
 
-- Transition triggers become typed thresholds (`{ trigger: "net-income", gte: 80000 }`,
-  `{ trigger: "liability-exposure" }`, `{ trigger: "sred-refundability" }`) so the rules
+- Transition triggers become typed thresholds — only amounts a cited page sets, never one
+  DotAmi picks — or typed facts the person states (`{ trigger: "liability-exposure" }`,
+  `{ trigger: "sred-refundability" }`, the person's own "I'd incorporate at $___") so the rules
   engine can compute "current rung + next rung worth modeling" from the profile.
 - Structure is the **gating field** for other engines (SR&ED rates, IRAP eligibility,
   income-splitting). When a lever is structure-gated, the correct surface is the *fork*

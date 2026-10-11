@@ -8,9 +8,9 @@ Original v0 success criteria: five golden scenarios; structure exact; illustrati
 
 | ID | Intent | Profile highlights | Branch picks |
 | --- | --- | --- | --- |
-| `example-service` | Golden example / default canvas | AB service, apprentice, 60k → 180k Y1–Y3 | Voluntary GST, incorporation at $80K net |
+| `example-service` | Golden example / default canvas | AB service, apprentice, 60k → 180k Y1–Y3 | Voluntary GST, incorporating when the person decides |
 | `golden-bc-product-sred` | Product + SR&ED-style incorporation timing | BC, self-employed, 90k → 200k | Voluntary GST, liability / SR&ED incorporation |
-| `golden-on-mandatory-low-ramp` | Mandatory GST + small-supplier curve | ON employee, 20k → 50k | Wait for $30K, incorporation at $80K net |
+| `golden-on-mandatory-low-ramp` | Mandatory GST + small-supplier curve | ON employee, 20k → 50k | Wait for $30K, incorporating when the person decides |
 | `golden-ab-hire-first` | Hire-first branch visible | AB apprentice, hire-first | Same defaults as v0 intake |
 | `golden-intake-on-sidegig` | Intake → `Scenario` pipeline | ON side-gig, employee | Defaults from `v0ScenarioDefaultActiveBranches` |
 
@@ -18,9 +18,9 @@ Original v0 success criteria: five golden scenarios; structure exact; illustrati
 
 - CFE node count = 8.
 - Each fixture: `buildPlaybookSkeleton` produces two branch summaries, non-empty disclaimer, unique visible node IDs, every slice id exists in the catalog.
-- Example service venture: visible playbook node set equals the five-node default path (baseline, sole prop, voluntary GST, $80K incorporation, service vs productize).
+- Example service venture: visible playbook node set equals the five-node default path (baseline, sole prop, voluntary GST, Incorporating (node id `stage-3a-incorporation-80k-net`), service vs productize). Since 2026-10-11 that node lights from no amount: DotAmi doesn't pick a point to incorporate.
 - Hire-first fixture: playbook includes `branch-hire-first-employee`.
-- Projection: Example service venture five-year rows match the locked baseline array; mandatory low-ramp has `gstEnvelope === 0` in Y1 and positive by Y2; SR&ED path shows lower Y3 incorporation slice than the $80K path for the same profile.
+- Projection: Example service venture five-year rows match the locked baseline array; mandatory low-ramp has `gstEnvelope === 0` in Y1 and positive by Y2; SR&ED path shows lower Y3 incorporation slice than the other incorporation path for the same profile (the projection footer was removed on 2026-09-14; kept as the record).
 - Graph: inactive GST option ghosted on Example service venture; `updateScenarioBranch` swaps ghost/active; `buildScenarioGraph` yields eight nodes.
 
 ## Manual / API-key smoke (not in CI)

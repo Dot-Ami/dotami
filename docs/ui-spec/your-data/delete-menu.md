@@ -22,7 +22,10 @@ with where they are kept, before confirming.
    - **Your ideas, with their notes, links and map progress** — also takes every link, map
      progress and figure (they belong to an idea; the database deletes them with it). Its expense
      records **stay**, as "not attached yet": the database clears each record's idea instead
-     (`keeps` in `DELETE_MENU`).
+     (`keeps` in `DELETE_MENU`). So do the sentences typed on the front door for them (added
+     2026-10-11): each is one of the person's statements, linked to its idea, and stays among
+     "Your statements" with the link cleared, as "not tied to an idea"; ticking "Your statements"
+     too deletes them.
    - **Your figures** — every figure, in every state; cards go back to the estimates.
    - **Your expense records** — every record, attached to an idea or not, in every state, and every
      receipt added to one (the `Receipt` rows by the schema's cascade, the files by the sweep).
@@ -32,6 +35,8 @@ with where they are kept, before confirming.
      back, with its days. Figures read from their statements stay; "Always allow every account" goes
      with Your settings, and the tick-box line says so.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
+     Since 2026-10-11 that includes the sentence typed on the front door for each idea, which the
+     idea's card then no longer shows.
    - **Your settings** — every saved choice goes back to its default. [8i] That includes whether to
      encrypt the data file: a "Never" is forgotten, so the desktop app's next start asks again (an
      encrypted file stays encrypted); the box says so. Since 2026-10-10 its "learn more" also says that a
@@ -59,7 +64,10 @@ with where they are kept, before confirming.
    Each box shows the count of every table it touches ("Your ideas: 2 · Links between ideas: 1 ·
    …"); each of those tables is emptied completely, so these are whole-table counts and true (a
    test fails if a table a box goes with could be only partly emptied). The ideas box adds a line
-   for what it keeps: "Expense records attached to them: 2 (they stay, as “not attached yet”)". The
+   for each link it keeps: "Expense records attached to them: 2 (they stay, as “not attached yet”)"
+   and, since 2026-10-11, "Statements attached to them: 1 (they stay, as “not tied to an idea”)",
+   with the same warning under the ticked box (where they are kept: under "Your statements" on this
+   page; to delete them too, tick "Your statements"). The
    expense records box counts every record. Then the sentence on what else goes with it, and
    **Learn more** (a `<details>`, no script). A box with nothing in it is switched off ("Nothing
    to delete").
