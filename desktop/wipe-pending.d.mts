@@ -21,6 +21,8 @@ export function deleteSafetyCopies(
 
 export function listSetAsideReceiptFolders(dbFile: string): { names: string[] };
 
+export function listEmptySetAsideReceiptFolders(dbFile: string): { names: string[] };
+
 export function deleteSetAsideReceiptFolders(
   dbFile: string,
   names: readonly string[],

@@ -17,13 +17,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only the files DotAmi put in it). The box counts each kind (a kind that isn't there isn't shown), and
   once ticked it warns, there and at both asks, in one short sentence for each one that is really there
   (never one that isn't), and says that afterwards the locked data and those receipts can never be
-  opened, even if the old key comes back. For the receipts *Start fresh* set aside it adds that they may
-  still open with today's receipts key, and that this deletes the only copy of them. With the box
-  unticked, the first "are you sure" step says each one stays. *What Delete doesn't reach* no longer
-  lists them; it now says only what you put in the backups folder yourself is left there. Anything
-  another program has open is finished by *Finish it now* or the next time the desktop app starts. The
-  lost-key window and the restore question no longer call the locked data file "never deleted": they
-  say the restore doesn't delete it, and Delete can, after a warning.
+  opened, even if the old key comes back (with only old key files, that anything that old key locked
+  can never be opened). For the receipts *Start fresh* set aside it adds that they may still open with
+  today's receipts key, unless that key was lost too, and that this deletes the only copy of them. An
+  empty set-aside receipts folder is only said to go, with nothing about receipts. With the box
+  unticked, the first "are you sure" step says each one stays (in the singular when there is one).
+  *What Delete doesn't reach* no longer lists them; it now says only what you put in the backups folder
+  yourself is left there. Anything another program has open is finished by *Finish it now* or the next
+  time the desktop app starts; something else wearing a locked file's journal name is left alone and
+  doesn't keep the locked file. The lost-key window, the restore question and the docs no longer call
+  the locked data file or the old key files "never deleted": they say the restore and *Start fresh*
+  don't delete them, and Delete can, after a warning.
 - **DotAmi restarts by itself after *Start a new key*** ([8i]) — once the locked receipts are moved
   aside, the page says where they went and "DotAmi will restart now to start the new key…", and the
   desktop app closes and opens again by itself, making the new key on the way up. You no longer have

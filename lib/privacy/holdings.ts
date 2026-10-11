@@ -3,7 +3,14 @@ import path from "node:path";
 
 import type { PrismaClient } from "@prisma/client";
 
-import { listLockedDataFiles, listSafetyCopies, listSetAsideKeyFiles, listSetAsideReceiptFolders, wipePendingFile } from "@/desktop/wipe-pending.mjs";
+import {
+  listEmptySetAsideReceiptFolders,
+  listLockedDataFiles,
+  listSafetyCopies,
+  listSetAsideKeyFiles,
+  listSetAsideReceiptFolders,
+  wipePendingFile,
+} from "@/desktop/wipe-pending.mjs";
 
 import { receiptLock, receiptsSetAsideTo, type ReceiptLock, type ReceiptLockState } from "@/lib/expenses/receipts/lock";
 import { describeReceiptFiles, RECEIPTS_FOLDER, type ReceiptFilesProtection } from "@/lib/expenses/receipts/store";
@@ -355,9 +362,11 @@ export async function readHoldings(prisma: PrismaClient, today: SettingsToday, l
     return { entry, path: target, ...facts };
   });
   const receiptCounts = await describeReceiptFiles(dataFolder ? path.join(dataFolder, RECEIPTS_FOLDER) : null, lock);
-  // Listed once: the totals and the per-name counts come from the same names.
+  // Listed once: the totals and the per-name counts come from the same names. The empty receipt folders
+  // are among receiptFolders (the box clears them too) and named again so the warning counts them apart.
   const setAside = {
     receiptFolders: namesIn(dataPath, listSetAsideReceiptFolders),
+    emptyReceiptFolders: namesIn(dataPath, listEmptySetAsideReceiptFolders),
     keyFiles: namesIn(dataPath, listSetAsideKeyFiles),
     lockedFiles: namesIn(dataPath, listLockedDataFiles),
   };

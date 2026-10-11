@@ -453,7 +453,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt:
       "Deletes the whole copies of the data file DotAmi made before each update and restore, the receipt folders set aside in the backups folder, and the old key files and locked data file set aside there. Afterwards, only a backup you saved somewhere else could bring anything back.",
     learnMore:
-      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh). Only the files DotAmi put in those folders are deleted; a file of yours in one stays, and so does that folder. The old key files go too, and so does the locked data file, with everything in it. The key files are the ones DotAmi moved there when it made a new key (receipts-key-unreadable-….key and database-key-unreadable-….key). The locked data file is the one a restore or Start fresh moved there when its key was lost (dotami-locked-….db). Start fresh leaves the receipts' key alone, so the receipts it set aside may still open with the key in use today; this deletes the only copy of them here. Once they are gone, that locked data and those receipts can never be opened, even if the old key comes back. If one of them can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
+      "Each safety copy holds everything the data file held at that moment, including what you delete with the other boxes, so while they stay, what you deleted can be brought back from them. Tick this and they go: only a backup you saved somewhere else (File → Back up…) can bring anything back after that, and DotAmi can't. Only the copies DotAmi made itself are deleted (their names start with dotami-before-); anything else you put in that folder stays, and so does a backup you saved anywhere else. The receipt folders DotAmi set aside there go too: receipts-locked-… (the receipts Start a new key moved aside, with the old key file), receipts-before-restore-… (the receipts folder as it was before a restore) and receipts-before-start-fresh-… (the receipts folder as it was when you started fresh). Only the files DotAmi put in those folders are deleted; a file of yours in one stays, and so does that folder. The old key files go too, and so does the locked data file, with everything in it. The key files are the ones DotAmi moved there when it made a new key (receipts-key-unreadable-….key and database-key-unreadable-….key). The locked data file is the one a restore or Start fresh moved there when its key was lost (dotami-locked-….db). Start fresh leaves the receipts' key alone, so the receipts it set aside may still open with the key in use today, unless that key was lost too; this deletes the only copy of them here. Once they are gone, that locked data and those receipts can never be opened, even if the old key comes back. If one of them can't be deleted because another program has it open, DotAmi says so and deletes it the next time the desktop app starts.",
     built: true,
   },
   {
@@ -513,11 +513,11 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
  * name only what is really there.
  */
 export interface SetAsideKinds {
-  /** receipts-locked-…: the receipts and old key Start a new key moved aside. */
+  /** receipts-locked-… holding a file: the receipts and old key Start a new key moved aside. */
   receiptsLocked: number;
-  /** receipts-before-restore-…: the receipts folder as it was before a restore. */
+  /** receipts-before-restore-… holding a file: the receipts folder as it was before a restore. */
   receiptsBeforeRestore: number;
-  /** receipts-before-start-fresh-…: the receipts folder as it was when the person started fresh. */
+  /** receipts-before-start-fresh-… holding a file: the receipts folder as it was when the person started fresh. */
   receiptsBeforeStartFresh: number;
   /** receipts-key-unreadable-….key: an old receipts key set aside for a new one. */
   receiptsKeyFiles: number;
@@ -525,6 +525,8 @@ export interface SetAsideKinds {
   databaseKeyFiles: number;
   /** dotami-locked-….db: a data file whose key was lost (its journal counted with it). */
   lockedFiles: number;
+  /** Set-aside receipt folders of any of the three names that hold nothing at all: no receipts to lose. */
+  emptyReceiptFolders: number;
 }
 
 /** Nothing set aside: the counts in a copy run from source, or a backups folder holding none of these. */
@@ -535,21 +537,32 @@ export const NOTHING_SET_ASIDE: Readonly<SetAsideKinds> = Object.freeze({
   receiptsKeyFiles: 0,
   databaseKeyFiles: 0,
   lockedFiles: 0,
+  emptyReceiptFolders: 0,
 });
 
 /**
  * [8i] Sorts the names the page listed (lib/privacy/holdings.ts) into SetAsideKinds. The lists hold only
- * DotAmi's own names already, so a name's start says which kind it is.
+ * DotAmi's own names already, so a name's start says which kind it is. Folders named in
+ * `emptyReceiptFolders` (desktop/wipe-pending.mjs listEmptySetAsideReceiptFolders) are counted apart,
+ * never under their name's kind, so the warning says nothing about receipts that aren't there.
  */
-export function setAsideKindsOf(names: { receiptFolders: readonly string[]; keyFiles: readonly string[]; lockedFiles: readonly string[] }): SetAsideKinds {
+export function setAsideKindsOf(names: {
+  receiptFolders: readonly string[];
+  emptyReceiptFolders?: readonly string[];
+  keyFiles: readonly string[];
+  lockedFiles: readonly string[];
+}): SetAsideKinds {
+  const empty = new Set(names.emptyReceiptFolders ?? []);
+  const holding = names.receiptFolders.filter((n) => !empty.has(n));
   const starting = (list: readonly string[], start: string) => list.filter((n) => n.startsWith(start)).length;
   return {
-    receiptsLocked: starting(names.receiptFolders, "receipts-locked-"),
-    receiptsBeforeRestore: starting(names.receiptFolders, "receipts-before-restore-"),
-    receiptsBeforeStartFresh: starting(names.receiptFolders, "receipts-before-start-fresh-"),
+    receiptsLocked: starting(holding, "receipts-locked-"),
+    receiptsBeforeRestore: starting(holding, "receipts-before-restore-"),
+    receiptsBeforeStartFresh: starting(holding, "receipts-before-start-fresh-"),
     receiptsKeyFiles: starting(names.keyFiles, "receipts-key-unreadable-"),
     databaseKeyFiles: starting(names.keyFiles, "database-key-unreadable-"),
     lockedFiles: names.lockedFiles.length,
+    emptyReceiptFolders: names.receiptFolders.length - holding.length,
   };
 }
 
@@ -576,9 +589,17 @@ export function setAsideWarning(kinds: SetAsideKinds): string | null {
         ? "The receipts folder as it was when you started fresh goes (receipts-before-start-fresh-…)."
         : "The receipts folders as they were each time you started fresh go (receipts-before-start-fresh-…).",
       // Start fresh moves the receipts folder but leaves receipts.key alone, so when only the data file's
-      // key was lost these still open with today's key. Say so: the person is giving up working files.
-      "Those receipts may still open with the receipts key in use today.",
+      // key was lost these still open with today's key. Say so: the person may be giving up working
+      // files. Hedged, because a Windows profile reset loses the receipts key too, and the key in use
+      // today is then a new one that can't open them.
+      "Those receipts may still open with the receipts key in use today, unless it was lost too.",
       "This deletes the only copy of them here.",
+    );
+  }
+  if (k.emptyReceiptFolders > 0) {
+    // Nothing in them, so nothing about receipts: just that the folder goes.
+    sentences.push(
+      k.emptyReceiptFolders === 1 ? "An empty receipts folder DotAmi set aside goes too." : "The empty receipts folders DotAmi set aside go too.",
     );
   }
   if (k.receiptsKeyFiles > 0) {
@@ -597,16 +618,20 @@ export function setAsideWarning(kinds: SetAsideKinds): string | null {
     );
   }
   if (sentences.length === 0) return null;
-  // What can never be opened afterwards: the locked data and the receipts when they are there; with
-  // only key files, whatever those keys locked (somewhere DotAmi doesn't keep any more).
+  // What can never be opened afterwards: the locked data and the receipts when they are there (empty
+  // folders hold none). With only key files, whatever those keys locked, somewhere DotAmi doesn't keep
+  // any more; "even if the old key comes back" is left off there, since the key file is the old key and
+  // it is what goes. With only empty folders nothing can be lost, so nothing more is said.
   const receipts = k.receiptsLocked + k.receiptsBeforeRestore + k.receiptsBeforeStartFresh > 0;
   const lost = [k.lockedFiles > 0 ? "the locked data" : null, receipts ? "those receipts" : null].filter((s): s is string => s !== null);
-  const subject = lost.length > 0 ? lost.join(" and ") : "anything those old keys locked";
-  return [
-    "This also deletes what DotAmi set aside in the backups folder.",
-    ...sentences,
-    `Afterwards ${subject} can never be opened, even if the old key comes back.`,
-  ].join(" ");
+  const keys = k.receiptsKeyFiles + k.databaseKeyFiles;
+  const closing =
+    lost.length > 0
+      ? `Afterwards ${lost.join(" and ")} can never be opened, even if the old key comes back.`
+      : keys > 0
+        ? `Afterwards anything ${keys === 1 ? "that old key" : "those old keys"} locked can never be opened.`
+        : null;
+  return ["This also deletes what DotAmi set aside in the backups folder.", ...sentences, ...(closing ? [closing] : [])].join(" ");
 }
 
 /** The browser-storage keys. Each is a string constant in the code, so the test can find it. */
@@ -660,7 +685,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "receipts.key",
     name: "The key to your receipt files",
     holds:
-      "The key that encrypts your receipt files, itself encrypted by Windows for your Windows account only (with the protection Windows gives each account's secrets; Electron, which the desktop app is built on, keeps its own part of that in a file named Local State in the same folder). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses the receipts except those in a backup. Made the first time the desktop app starts; never removed by DotAmi. If Windows can't open it and no receipt is locked with it, it is moved to the safety copies folder and a new one is made; if receipts are locked with it, it moves there only when you press Start a new key, beside the receipts it locks.",
+      "The key that encrypts your receipt files, itself encrypted by Windows for your Windows account only (with the protection Windows gives each account's secrets; Electron, which the desktop app is built on, keeps its own part of that in a file named Local State in the same folder). The key itself is never written anywhere else: not in the data file, not in a backup, not in the log. Losing this file, or the Windows profile that can open it, loses the receipts except those in a backup. Made the first time the desktop app starts; DotAmi never removes it from here. If Windows can't open it and no receipt is locked with it, it is moved to the safety copies folder and a new one is made; if receipts are locked with it, it moves there only when you press Start a new key, beside the receipts it locks; once there, Delete's “Safety copies in the backups folder” box can delete it, after a warning.",
     writtenBy: { file: "desktop/receipt-key.mjs", mentions: 'RECEIPT_KEY_FILE = "receipts.key"' },
     desktopOnly: true,
   },

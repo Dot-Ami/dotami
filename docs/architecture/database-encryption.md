@@ -22,7 +22,8 @@ section below still describes the choice as open, this list is what holds.
    backup against today's numbers before anything else is built, and the build **stops for the
    maintainer's word** if a person would notice the slowdown.
 2. **When the key is lost: backups only, plus a "Start fresh" button** that keeps the locked file
-   (moved aside into `backups/`, never deleted), asked twice, saying plainly what is given up. No
+   (moved aside into `backups/`, not deleted by Start fresh; since § 15, Delete's safety-copies box can
+   delete it, after a warning), asked twice, saying plainly what is given up. No
    recovery key.
 3. **Backups: a passphrase is required from now on**, because a backup without one holds the data
    decrypted and would undo the encryption. Backups made before this change, with or without a
@@ -474,14 +475,16 @@ When the app starts and can't open the key:
 - **It says so before any window opens**, in plain words: what happened, that nothing was changed,
   that putting `database.key` back (if it was moved or deleted) brings everything back, and the way
   forward that needs no new decision: **File → Restore from a backup…**, which moves the locked data
-  file and its key file into `backups/` (never deleting them) and restores the backup under a new key.
+  file and its key file into `backups/` (deleting neither; Delete's safety-copies box can, after a
+  warning, § 15) and restores the backup under a new key.
   The locked file moves first and the new key is saved only after it (`setAsideLockedFileUnderNewKey`):
   a file another program holds changes nothing, and a key that can't be saved puts the file back, so a
   failure never leaves a new key beside the old locked file (found in review, 2026-10-10).
 - **Start fresh, keeping the locked file** (the maintainer's decision 2, 2026-10-10): a button in
   the same window, asked twice, which says plainly what is given up (everything in the locked file
   not in a backup, unless its key comes back), then moves the locked data file and its key file into
-  `backups/` (never deleting them) and starts with an empty, encrypted data file under a new key.
+  `backups/` (deleting neither; Delete's safety-copies box can, after a warning, § 15) and starts with
+  an empty, encrypted data file under a new key.
   There is no recovery key. Three guards, found in review (2026-10-10): it isn't offered while
   Windows' key store is only unavailable for now (a restart may bring the key back); it is refused,
   moving nothing, while an encryption note is on disk (an unencrypted copy waiting to be wiped may be

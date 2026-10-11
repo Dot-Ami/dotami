@@ -61,13 +61,18 @@ with where they are kept, before confirming.
      set aside go, with their old key (receipts-locked-…)."; "The receipts folder as it was before a
      restore goes (receipts-before-restore-…)."; "The receipts folder as it was when you started fresh
      goes (receipts-before-start-fresh-…). Those receipts may still open with the receipts key in use
-     today. This deletes the only copy of them here."; "The old receipts key file goes
-     (receipts-key-unreadable-….key)."; "The old data file key goes (database-key-unreadable-….key).";
+     today, unless it was lost too. This deletes the only copy of them here."; "The old receipts key file
+     goes (receipts-key-unreadable-….key)."; "The old data file key goes (database-key-unreadable-….key).";
      "The locked data file goes, with everything in it (dotami-locked-….db)." (plural for more than one);
      then "Afterwards the locked data and those receipts can never be opened, even if the old key comes
-     back." (only the parts that are there; with only key files, "anything those old keys locked").
+     back." (only the parts that are there). With only key files it ends "Afterwards anything that old key
+     locked can never be opened." ("those old keys" for more than one; no "even if the old key comes
+     back", since the key file is the old key). A receipt folder that holds nothing at all is counted
+     apart (`listEmptySetAsideReceiptFolders`) and gets only "An empty receipts folder DotAmi set aside
+     goes too." ("The empty receipts folders … go too." for more), with no sentence about receipts; with
+     only empty folders there is no closing sentence.
      **Learn more** says the old key files go too, and so does the locked data file, with everything in
-     it, and that the start-fresh receipts may still open today.
+     it, and that the start-fresh receipts may still open today, unless that key was lost too.
      Switched off ("Nothing to delete") when there is none of these, which is always the case in a copy
      run from source.
    - **Remembered columns** — shown switched off ("Not kept yet"): DotAmi doesn't remember a
@@ -117,10 +122,11 @@ with where they are kept, before confirming.
    [8i] "Set-aside key files: 2 files", "Locked data files: 1 file", each only when there is some). Without them, when there are any, a line
    that the safety copies aren't ticked and still hold what is deleted; and, when there are set-aside
    receipt folders (even with no safety copy), a line that those folders aren't ticked and still hold
-   their receipt files; [8i] when there are old key files, "The old key files set aside in the backups
-   folder aren't ticked, so they stay."; when there is a locked data file, "The locked data file set
-   aside in the backups folder isn't ticked, so it stays, and could still be opened if its key comes
-   back." (plural for more than one). **Yes, continue** or
+   their receipt files ("The receipt folder … isn't ticked, so it still holds its receipt files." for
+   one); [8i] when there are old key files, "The old key files set aside in the backups folder aren't
+   ticked, so they stay." ("The old key file … isn't ticked, so it stays." for one); when there is a
+   locked data file, "The locked data file set aside in the backups folder isn't ticked, so it stays,
+   and could still be opened if its key comes back." (plural for more than one). **Yes, continue** or
    **Cancel** (back to the menu, boxes still ticked).
 4. **Second ask** (dialog, "Delete them now?"): "This can't be undone." With the safety copies
    ticked, the amber warning again, and the set-aside warning when anything DotAmi set aside is there. In the desktop app it points to File → Back up… first and File →
@@ -219,8 +225,8 @@ unless the request comes from DotAmi's own page (`refuseUnlessFromAppPage`), bod
 `readJsonWithLimit` (JSON only, 8 KB). `{ kinds, seen }` runs `deleteData` (`lib/privacy/delete.ts`):
 the counts are checked against `seen` and the tables emptied in one transaction (409 with fresh
 counts on a mismatch, 400 for a kind it can't delete), then `VACUUM` outside the transaction.
-`{ retryWipe: true }` runs `finishWipe`: the safety copies and set-aside receipt folders the "wipe
-pending" note still owes, then the wipe, and removes the note once all of it has worked (`{ wiped,
+`{ retryWipe: true }` runs `finishWipe`: the safety copies, set-aside receipt folders, [8i] old key
+files and locked data files the "wipe pending" note still owes, then the wipe, and removes the note once all of it has worked (`{ wiped,
 backupsLeft, receiptFoldersLeft, keyFilesLeft, lockedFilesLeft }`). With the safety-copies box ticked, the route passes the data file it
 uses (`DATABASE_URL`) so the copies, the set-aside things and the note are found beside it; their
 counts are checked against `seen.backups`, `seen["set-aside-receipts"]`, [8i] `seen["set-aside-keys"]`
@@ -228,7 +234,8 @@ and `seen["locked-data-files"]` first (409 on a mismatch of any),
 the note is written before anything is deleted, and the files are deleted after the rows
 (`desktop/wipe-pending.mjs`, which only deletes `dotami-before-….db`, `…-key-unreadable-<digits>.key`
 and `dotami-locked-<digits>.db` (with its `-journal`) files directly in a `backups/` folder that isn't
-a link, never a link wearing those names, and, in folders named `receipts-locked-…`,
+a link, never a link wearing those names (a folder or link wearing a journal's name is left alone, and
+the real locked file still goes), and, in folders named `receipts-locked-…`,
 `receipts-before-restore-…` or `receipts-before-start-fresh-…` that aren't links either, only the
 receipt files and `receipts.key` DotAmi put there). The desktop app finishes what the note owes at its next start
 (`desktop/main.mjs`), and only when the note is there. A failure logs the error's name and code only.

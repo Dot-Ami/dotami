@@ -200,11 +200,13 @@ export function listLockedDataFiles(dbFile) {
 
 /**
  * [8i] Deletes the named locked data files, each with its journal. The journal goes first, then the file:
- * if the journal can't go (another program holds it, or a link wears its name), the file stays too, so
- * the page never shows a file gone while part of it is left uncounted, and the name stays owed. A name
- * that isn't LOCKED_DATA_FILE_NAME (so also anything with a slash or "..") is never touched, nor is a
- * link, nor anything behind a backups folder that is a link. One already gone, journal and all, counts
- * as deleted. `remove` is unlinkSync, replaceable in tests.
+ * if a real journal can't go (another program holds it), the file stays too, so the page never shows a
+ * file gone while part of it is left uncounted, and the name stays owed. A folder or link wearing the
+ * journal's name isn't part of the locked file (the listing doesn't count it): it is left alone and the
+ * file still goes, so it can't keep the file owed forever. A name that isn't LOCKED_DATA_FILE_NAME (so
+ * also anything with a slash or "..") is never touched, nor is a link, nor anything behind a backups
+ * folder that is a link. One already gone, journal and all, counts as deleted. `remove` is unlinkSync,
+ * replaceable in tests.
  * @param {string} dbFile
  * @param {readonly string[]} names
  * @param {{ remove?: (file: string) => void }} [options]
@@ -225,10 +227,14 @@ export function deleteLockedDataFiles(dbFile, names, { remove = unlinkSync } = {
     }
     const file = path.join(folder, name);
     let stuck = false;
-    for (const part of [`${file}${JOURNAL}`, file]) {
+    const journal = `${file}${JOURNAL}`;
+    for (const part of [journal, file]) {
       if (!existsSync(part) && !isSymlink(part)) continue;
       // Once more just before it goes: a regular file, not a link (or folder) put there since.
       if (!isRealFile(part)) {
+        // Something else wearing the journal's name isn't DotAmi's to delete, and isn't a journal
+        // SQLite wrote: leave it and still delete the file. The file's own name taken is owed.
+        if (part === journal) continue;
         stuck = true;
         break;
       }
@@ -319,6 +325,26 @@ export function listSetAsideReceiptFolders(dbFile) {
     }
   }
   return { names: names.sort() };
+}
+
+/**
+ * [8i] Of the folders listSetAsideReceiptFolders lists, the ones that hold nothing at all (a move cut
+ * short before its first file, or a receipts folder that was already empty when it was moved). Counted
+ * apart so the page's warning says nothing about receipts for them: there are none to lose.
+ * @param {string} dbFile
+ * @returns {{ names: string[] }}
+ */
+export function listEmptySetAsideReceiptFolders(dbFile) {
+  const backups = backupsFolder(dbFile);
+  const names = listSetAsideReceiptFolders(dbFile).names.filter((name) => {
+    try {
+      return readdirSync(path.join(backups, name)).length === 0;
+    } catch {
+      // Gone or unreadable since it was listed: not counted as empty, so the warning errs on saying more.
+      return false;
+    }
+  });
+  return { names };
 }
 
 /**

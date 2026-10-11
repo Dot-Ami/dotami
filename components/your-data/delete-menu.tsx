@@ -417,13 +417,18 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               : null}
             {/* The set-aside receipt folders ride on the same box, and can be there with no safety
                 copy at all (a restore's receipts-before-restore-…), so they get their own line. */}
+            {/* Each line counts: one is said in the singular. */}
             {!copiesTicked && (counts[SET_ASIDE] ?? 0) > 0
-              ? " The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files."
+              ? (counts[SET_ASIDE] ?? 0) === 1
+                ? " The receipt folder set aside in the backups folder isn't ticked, so it still holds its receipt files."
+                : " The receipt folders set aside in the backups folder aren't ticked, so they still hold their receipt files."
               : null}
             {/* [8i] Likewise what a lost key left there: the old key files, and the locked data file,
                 which could still be opened if its key comes back. */}
             {!copiesTicked && (counts[KEY_FILES] ?? 0) > 0
-              ? " The old key files set aside in the backups folder aren't ticked, so they stay."
+              ? (counts[KEY_FILES] ?? 0) === 1
+                ? " The old key file set aside in the backups folder isn't ticked, so it stays."
+                : " The old key files set aside in the backups folder aren't ticked, so they stay."
               : null}
             {!copiesTicked && (counts[LOCKED] ?? 0) > 0
               ? (counts[LOCKED] ?? 0) === 1

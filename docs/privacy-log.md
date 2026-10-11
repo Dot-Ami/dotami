@@ -234,7 +234,8 @@ person is asked).
   ten seconds after start), so the very first start of a new data folder waits about that long.
   Receipts kept before this version are encrypted at the first start, crash-safe, including the
   receipts folders earlier restores moved into `backups/`. A key file Windows can't open, when no
-  receipt is encrypted, is moved to `backups/receipts-key-unreadable-<time>.key` (never deleted)
+  receipt is encrypted, is moved to `backups/receipts-key-unreadable-<time>.key` (the move deletes
+  nothing; *Changed 2026-10-10:* Delete's safety-copies box can delete it from there, after a warning)
   and a new one made; while any receipt is encrypted, a key file that can't be opened, a missing
   `receipts.key` or a key store that isn't available changes nothing on the disk and makes no key, and
   the pages say so in amber. A restore whose last step fails puts the old key file back. **Not encrypted:** the data file itself (every expense record, and each
@@ -503,6 +504,20 @@ person is asked).
   you* can, after a warning ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `setAsideWarning`,
   [`desktop/main.mjs`](../desktop/main.mjs), [`desktop/lost-key.html`](../desktop/lost-key.html);
   [database-encryption.md § 15](architecture/database-encryption.md)).
+- **The set-aside box, second review ([8i], 2026-10-10).** A folder or link that has a locked data file's
+  journal name is now left alone, and the real `dotami-locked-<time>.db` is still deleted; before, it
+  kept the real file, owed at every start, and the page blamed another program
+  ([`desktop/wipe-pending.mjs`](../desktop/wipe-pending.mjs) `deleteLockedDataFiles`). A set-aside receipts
+  folder that holds nothing is counted apart (`listEmptySetAsideReceiptFolders`; still cleared by the box)
+  and the warning says only that it goes, nothing about receipts. With only old key files the warning
+  ends "anything that old key locked can never be opened" (or "those old keys"), without "even if the old
+  key comes back". The start-fresh receipts "may still open with the receipts key in use today, unless it
+  was lost too". The first ask's unticked lines are singular for one folder or one key file. *What DotAmi
+  knows* adds that `receipts.key`, once moved to the safety copies folder, can be deleted by the box. The
+  lines in this log, `desktop-app.md` and `database-encryption.md` that called the locked file or the old
+  key files "never deleted" now say the restore and *Start fresh* don't delete them and the box can. No new
+  file, table or browser-storage key. Not changed: an older version reading the note still drops what it
+  owed of these files (the known limit in [database-encryption.md § 15](architecture/database-encryption.md)).
 - **A passphrase on every backup ([8i]).** File → Back up… asks for one and refuses to go on without
   it (`desktop/passphrase.js`; `writeBackup` refuses an empty one too). The warning stays: "lose it and
   the backup can't be opened — nobody can recover it". Older backups without one still restore.
@@ -781,7 +796,8 @@ unless marked otherwise.
   carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
 - **Encrypting the database file** — the maintainer said yes on 2026-10-09, and on 2026-10-10 chose
   how: the package above (installed, and measured first); when the key is lost, backups only plus a
-  **Start fresh** button that keeps the locked file (moved aside, never deleted), asked twice; **a
+  **Start fresh** button that keeps the locked file (moved aside, not deleted by Start fresh; *Changed
+  2026-10-10:* Delete's safety-copies box can delete it, after a warning), asked twice; **a
   passphrase required on every backup** from then on (older backups still restore); and a person free
   to say no: the window before an existing data file is first encrypted offers **Back up first…**,
   **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a switch in
