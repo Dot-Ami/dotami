@@ -860,7 +860,27 @@ describe("second fix round: already back means the copy in receipts/ opens and m
 });
 
 describe("second fix round: the check after the placed file, and what a press says when it can't finish", () => {
-  it("a placed file that doesn't open and match is taken out again; the receipt is named not-written and its set-aside copy is byte for byte unchanged", () => {
+  // Two ways the placed file can be wrong just after it was renamed into place: damaged (it no longer opens
+  // with the current key), or a whole other receipt of the same size that does open (only the size and
+  // SHA-256 comparison with the row can tell; the first case alone passed with that comparison removed).
+  it.each([
+    [
+      "one byte flipped near the end",
+      (placed: string) => {
+        const bytes = readFileSync(placed);
+        bytes[bytes.length - 3] ^= 0xff;
+        writeFileSync(placed, bytes);
+      },
+    ],
+    [
+      "other bytes of the same size, locked with the current key",
+      (placed: string, r: { id: string; plain: Buffer }, current: Buffer) => {
+        const other = Buffer.from(r.plain);
+        other[other.length - 1] ^= 0xff;
+        writeFileSync(placed, encryptReceipt(other, { key: current, id: r.id }));
+      },
+    ],
+  ])("a placed file that doesn't open and match (%s) is taken out again; the receipt is named not-written and its set-aside copy is byte for byte unchanged", (_label, damage) => {
     makeDataFile();
     const account = accountStore("you");
     const oldKey = randomBytes(32);
@@ -870,12 +890,7 @@ describe("second fix round: the check after the placed file, and what a press sa
     const setAsideBefore = readFileSync(path.join(folder, a.name));
     const { result, lines } = call("receipts-locked-9960", account, current, {
       onStep: (step: string, name: string) => {
-        // Damaged on the disk just after it was renamed into place: one byte flipped near the end.
-        if (step !== "placed" || name !== a.name) return;
-        const placed = path.join(receiptsDir(), a.name);
-        const bytes = readFileSync(placed);
-        bytes[bytes.length - 3] ^= 0xff;
-        writeFileSync(placed, bytes);
+        if (step === "placed" && name === a.name) damage(path.join(receiptsDir(), a.name), a, current);
       },
     });
     expect(result).toEqual({ outcome: "done", folder, broughtBack: [], oldCopiesLeft: [], left: [{ name: a.name, why: "not-written" }] });
