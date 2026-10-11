@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-10
+
+Your data file can be locked to your Windows account (asked first, can be turned off), backups take
+a passphrase, and a lost key offers Restore from a backup or Start fresh. Receipts (iPhone photos too)
+are kept encrypted; DotAmi restarts after a new key, set-aside receipts can come back, Delete clears
+them. Also: Your expenses, the four T2125 totals, a reader for last year's return PDF, GnuCash files.
+
 ### Added
 - **A new data folder is asked first, and locking the data file can be turned off** ([8i], the
   maintainer's decision of 2026-10-10) — a brand-new install now gets the same window as an existing

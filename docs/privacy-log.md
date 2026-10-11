@@ -37,6 +37,13 @@ person is asked).
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] — 2026-10-10
+
+Your data file and receipts locked to your Windows account, passphrase-locked backups, your
+expenses and receipts, the Delete menu and the four T2125 totals ([CHANGELOG](../CHANGELOG.md)).
+
 ### What DotAmi keeps, and where
 
 - **Locking the data file can be turned off, and a new data folder is asked first ([8i], 2026-10-10).**
@@ -804,7 +811,7 @@ person is asked).
 - A receipt is a copy of the person's own file, kept as given: it can hold their name, address,
   the last digits of a card or another person's details, which DotAmi never asks for and cannot
   remove. It stays on the computer, encrypted by the desktop app (not by a copy run from source); a
-  backup carries it, locked only if the person set a passphrase for that backup.
+  backup carries it, locked with the passphrase every backup now takes.
 - The desktop app's log can hold the location of the data folder and, after a failed database
   update, the database's description of what failed; it holds nothing the person typed.
 - People who build DotAmi from its source code: the project's own commands switch off the usage
@@ -833,9 +840,9 @@ person is asked).
   Windows account can open. Other standard accounts are already kept out of the data folder by
   Windows' folder permissions; what encryption adds is protection from an administrator account,
   copies of the folder and a disk read outside Windows, not from programs the person runs (or an
-  administrator runs as them). The data file is not encrypted. A backup
-  without a passphrase holds the receipts unencrypted. Losing the key (a Windows profile reset) loses
-  the receipts except those in a backup. A copy run from source doesn't encrypt them.
+  administrator runs as them). The data file is encrypted the same way, with a key of its own,
+  when the person agrees (they are asked first, and Settings can turn it off). Losing the key (a
+  Windows profile reset) loses the receipts except those in a backup. A copy run from source doesn't encrypt them.
 
 ### Still open (carried forward until decided)
 
@@ -855,16 +862,16 @@ unless marked otherwise.
 - **Accessibility target** — a published standard to test against (§9).
 - **Exporting all your data** in an open format, beyond backups (§5).
 - **Receipt files** for expense records — decided 2026-10-07 to keep copies in the data folder,
-  carried by backups; not built ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
+  carried by backups; built in this version (the [8i] entries above)
+  ([figures-privacy-review.md](architecture/figures-privacy-review.md#receipts-still-proposed)).
 - **Encrypting the database file** — the maintainer said yes on 2026-10-09, and on 2026-10-10 chose
   how: the package above (installed, and measured first); when the key is lost, backups only plus a
   **Start fresh** button that keeps the locked file (moved aside, never deleted), asked twice; **a
   passphrase required on every backup** from then on (older backups still restore); and a person free
   to say no: the window before an existing data file is first encrypted offers **Back up first…**,
   **Encrypt now**, **Not now** (asked again later) and **Never** (a plain warning, and a switch in
-  Settings to turn it on later). **Built** in the stacked pull requests that end with "Start fresh"
-  (the [8i] entries above say what is kept and asked); until they merge, the data file still relies on
-  the computer's disk encryption. DotAmi keeps one new file, `database.key` (a random key wrapped by
+  Settings to turn it on later). **Built** in this version (the [8i] entries
+  above say what is kept and asked). DotAmi keeps one new file, `database.key` (a random key wrapped by
   Windows' per-user protection); a lost key loses everything not in a backup, and an older DotAmi
   can't open the file (going back needs a backup). Decided 2026-10-10 (the maintainer's decision 5): a
   brand-new data folder is asked too, and the Settings switch can turn locking off, decrypting the data
