@@ -39,6 +39,44 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Locking the data file can be turned off, and a new data folder is asked first ([8i], 2026-10-10).**
+  A brand-new data folder is no longer encrypted without asking: it gets the same window as an existing
+  plain file, and **Not now** or **Never…** leave it unencrypted (no `database.key` is made). Unticking
+  **Encrypt the data file** in Settings, after a warning, makes the next start decrypt the data file and
+  the safety copies locked with its key, then overwrite `database.key` with zeros and delete it, once
+  nothing opens with it any more (a safety copy another program has open keeps it until a later start;
+  one an earlier Delete still owes is left encrypted for that delete, never decrypted first). A fourth file,
+  `database-turned-off.json`, records that locking was turned off: it holds only the key's id (the 16
+  characters `database.key` shows), never the key, and later starts decrypt a safety copy or delete the key
+  only while it names that key; it goes when the key is deleted or the switch is ticked again. Without it,
+  DotAmi never decrypts a safety copy or deletes a key on its own (until the review of 2026-10-10 a key
+  that opened beside a plain file after "Never" was taken for a turn-off: a data file moved out of the
+  folder, then Never for the new one, would have lost its key). A data file that fails SQLite's own check
+  isn't decrypted: it stays encrypted, DotAmi starts as before, and the switch is ticked again.
+  While a file is decrypted, three files of DotAmi's own may be in the data folder for moments: a note,
+  `database-decrypting.json` (which file, the step, the copy's size and SHA-256), the decrypted copy
+  being made, `dotami.db.decrypting` (everything the data file holds, unencrypted, as the person chose),
+  and the encrypted original being wiped, `dotami.db.encrypted-to-wipe`; the same suffixes can follow a
+  safety copy's name in `backups/`. If another program holds the file being decrypted, the decrypted copy
+  is overwritten with zeros and deleted at once (until the review of 2026-10-10 it stayed beside the
+  encrypted file until the next start, still holding what Delete removed meanwhile). *What DotAmi knows
+  about you* lists all four files. Only the data file:
+  receipt files keep their own encryption and their own key. A copy run from source is unchanged
+  ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
+  [database-encryption.md § 15](architecture/database-encryption.md)).
+
+- **What a second review of turning locking off changed ([8i], 2026-10-10).** A decrypted copy that
+  can't be finished (a full disk, say) is overwritten with zeros and deleted at once, as one another
+  program blocks is: the data file stays encrypted, and a message says why. When a safety copy is deleted
+  from the Delete menu while its encrypted original (`backups/<copy>.encrypted-to-wipe`) was still
+  waiting to be wiped because another program held it, the next start overwrites that original with
+  zeros and deletes it too (before, every start stopped on it). The rollback journal SQLite leaves
+  beside an encrypted data file when a write is cut off (`dotami.db-journal`, encrypted like the file)
+  is rolled back by SQLite at the next start and removed; before, every start stopped on it (a bug on
+  main since the data file was first encrypted). Nothing new is kept or sent
+  ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
+  [database-encryption.md § 15.3](architecture/database-encryption.md)).
+
 - **Bringing set-aside receipts back also brings back an unfinished add, and checks a same-named file in
   `receipts/` before calling a receipt "already back" ([8i], 2026-10-10, second review fix round).** An
   unfinished add (`<name>.partial`, the only copy of a receipt when DotAmi stopped between writing its row
@@ -527,6 +565,21 @@ person is asked).
 
 ### What the person must agree to
 
+- **A brand-new data folder is asked before its data file is locked ([8i], 2026-10-10)**, with the same
+  window and four buttons as an existing plain file ([`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html));
+  **Back up first…** is shown turned off, with the line "There's no data file yet, so there's nothing to
+  back up." (until the review of 2026-10-10: "This is a new data folder, so there's nothing to back up
+  yet."), and the sentence about copies already made and an old file's bytes is left out (there is none). It isn't asked right after **Start fresh**, whose second question already promised an
+  encrypted file, nor when there is no key store.
+- **Turning locking off is asked first ([8i], 2026-10-10)**: unticking **Encrypt the data file** in
+  Settings while the file is encrypted shows, before anything is saved, "At DotAmi's next start, your
+  data file and its safety copies are decrypted, and their key is deleted once nothing is locked with it.
+  After that, anyone who can read your data folder, a copy of it, or this computer's disk outside Windows can
+  read your ideas, figures, expense records and statements. A copy of the whole data folder holds its own
+  copy of the key, so it still opens on your Windows account. Backups you make with File → Back up… stay
+  locked with their passphrase either way. Your receipt files keep their own encryption.", with **Go back**
+  and **Turn it off**
+  ([`components/settings/database-encryption-control.tsx`](../components/settings/database-encryption-control.tsx)).
 - ***Bring these receipts back* is asked once ([8i], 2026-10-10)**: a dialog says what happens (each receipt
   opened with its old key, checked against its record, locked again with the current key and put back,
   and only then removed from the set-aside folder), that a receipt whose record was deleted since stays
@@ -552,7 +605,9 @@ person is asked).
   **Back up first…**, **Encrypt now**, **Not now** and **Never…** (a second warning first:
   [`desktop/encrypt-ask.html`](../desktop/encrypt-ask.html)). Settings → Data and backups has an
   **Encrypt the data file** switch (on by default; turning it off asks first). A new data folder is
-  encrypted without asking. The log records that the window was shown and which button was pressed.
+  asked too, with the same window and buttons (**Back up first…** turned off there); until 2026-10-10 it
+  was encrypted without asking (*Changed 2026-10-10*, see the first entry under *What DotAmi keeps, and
+  where*). The log records that the window was shown and which button was pressed.
 
 - **Giving up receipts locked with a lost key is asked twice ([8i]).** The first ask says that a new
   key can't open them, so they are given up for good unless the old key comes back, that nothing is
@@ -647,6 +702,15 @@ person is asked).
 
 ### How to remove it
 
+- **The data file's key, `database.key` ([8i], 2026-10-10)**, is removed by DotAmi when the person turns
+  **Encrypt the data file** off in Settings: the next start decrypts the data file and its safety copies,
+  then overwrites the key file with zeros and deletes it, once nothing in the data folder opens with it.
+  Copies of the data file alone made while it was encrypted stay encrypted, and can't be opened once the
+  key is deleted. A copy of the whole data folder holds its own copy of the key (and of the file Windows
+  unwraps it with), so it still opens on this Windows account, whether or not the key here is deleted
+  (until the review of 2026-10-10 this line said folder copies couldn't be opened once the key was gone,
+  which isn't true of a whole folder). Passphrase-locked backups don't depend on it and restore either way.
+  The note `database-turned-off.json` goes with the key.
 - **A set-aside folder after *Bring these receipts back* ([8i], 2026-10-10)** keeps the old key file and
   any receipt that didn't come back. The Delete box *Safety copies in the backups folder* still counts it
   and clears it, as before; the receipts that came back are in the receipts folder, removed like any other.
@@ -657,8 +721,10 @@ person is asked).
 
 - **`database.key` ([8i])** is never removed or replaced by DotAmi while anything is encrypted with
   it; deleting it by hand (or a Windows profile reset) loses everything in the data file except what
-  a backup holds, and DotAmi then says so and changes nothing. Once encrypted, the file isn't
-  decrypted again by DotAmi; Delete works on it as before.
+  a backup holds, and DotAmi then says so and changes nothing. Delete works on the encrypted file as
+  before. *Changed 2026-10-10, see the first entry of this section:* the person can now turn locking
+  off in Settings; the next start then decrypts the file and its safety copies, and deletes the key once
+  nothing opens with it (until then this line said an encrypted file was never decrypted again).
 - **Receipts set aside by Start a new key ([8i])** stay in `backups/receipts-locked-<time>/` until the
   person deletes that folder with DotAmi closed; the Delete menu doesn't reach it (it says so, beside
   the receipts folders a restore moves there). *Changed 2026-10-10, next line.*
@@ -800,9 +866,10 @@ unless marked otherwise.
   (the [8i] entries above say what is kept and asked); until they merge, the data file still relies on
   the computer's disk encryption. DotAmi keeps one new file, `database.key` (a random key wrapped by
   Windows' per-user protection); a lost key loses everything not in a backup, and an older DotAmi
-  can't open the file (going back needs a backup). Still open, for the maintainer: whether a brand-new
-  data folder should be asked too (today it is encrypted from its first byte without a question), and
-  whether a switch to turn encryption off should exist
+  can't open the file (going back needs a backup). Decided 2026-10-10 (the maintainer's decision 5): a
+  brand-new data folder is asked too, and the Settings switch can turn locking off, decrypting the data
+  file at the next start (above). Still open, for the maintainer: whether receipt encryption should be
+  able to be turned off too (it isn't; the receipts keep their own key)
   ([database-encryption.md](architecture/database-encryption.md), "The maintainer's decisions";
   [the privacy review](architecture/figures-privacy-review.md#privacy-review-encrypting-the-database-file-design-2026-10-09-being-built)).
 - **Deleting things.** The Delete menu is built ([8d], above), and can clear the safety copies in
