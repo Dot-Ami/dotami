@@ -4,7 +4,7 @@ Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx` (`
 + `components/shared/person-statements.tsx` (`PersonStatements`, `variant="full"`)
 Type: free-text composer + dated record list (wizard step, skippable)
 
-Last updated: 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
+Last updated: 2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
 Workshop status: **built 2026-09-13; the behaviour below is the shipped surface**
 
 ## What it is
@@ -12,22 +12,30 @@ Workshop status: **built 2026-09-13; the behaviour below is the shipped surface*
 The first intake screen, before anything about the venture. Its framing (decided 2026-09-13):
 **get to know the person first.** It asks one thing — what should DotAmi know about you — and
 keeps the answer as a **dated statement in the person's own words**. Below the composer it
-shows everything already on record, newest first: statements typed here (the database) and, when a
+shows everything already on record, newest first: statements typed in DotAmi (the database) and, when a
 self-hosted build configures one, an external read-only source (see "External sources" below).
+Since 2026-10-11 the database half includes the sentence typed on the front door (or in the intake's
+box) for each idea: the intake's first save keeps it as one of the person's statements, linked to the
+idea (docs/ui-spec/landing/01-free-text-entry.md § Persistence). It is listed here like any other
+statement, tagged with the idea it was typed for, because it is the person's own words and "Your
+statements" deletes it.
 
 ## What it does (behavior on interact)
 
 - **Composer** — textarea (max `STATEMENT_MAX_CHARS` = 2000, live counter), a "Said on" date
   input defaulting to today (max today), and `Keep this`. Click → `POST /api/person/statements`
   `{ text, saidAt }`.
-  - 200 → the statement is prepended to the list with source `typed here`; note "Kept, with
-    the date." (sage).
+  - 200 → the statement is prepended to the list with source `typed in DotAmi`; note "Kept,
+    with the date." (sage).
   - 400 → the server's plain-English reason shows under the composer (empty, too long, bad date).
   - 503 / network failure → **kept in this tab only**: written to `sessionStorage`
     (`dotami-person-unsaved`), rendered in the list tagged `TYPED · NOT SAVED` (amber), note
     "Kept in this tab only." The cockpit rail reads the same key, so it still shows up there.
-- **Record list** — one card per statement: `saidAt` (mono), source tag (`typed here` ·
-  `typed · not saved` · `vault · <file>`), the text in serif, and a `+`/`−` toggle when a
+- **Record list** — one card per statement: `saidAt` (mono), source tag (`typed for your idea
+  “<idea name>”` for a front-door sentence whose idea still exists · `typed in DotAmi` for every
+  other typed one, including a front-door sentence whose idea was deleted, which can't be told
+  apart from one typed here · `typed · not saved` · `vault · <file>`; `statementSourceLabel` in
+  `lib/person/types.ts`), the text in serif, and a `+`/`−` toggle when a
   verbatim body exists (a constraint's paragraph, a question's "why this is open").
 - **Status lines (guardrails visible on the surface):**
   `db.available === false` → amber "No database reachable — nothing typed here will be
@@ -74,7 +82,9 @@ pretend to use).
 
 - **Database:** `PersonStatement` model (`prisma/schema.prisma`), migration
   `prisma/migrations/20260913000000_person_statements/`. Columns: `text`, `saidAt` (DATE —
-  the person's claim), `createdAt`. **No UPDATE or DELETE path exists** — the contract's
+  the person's claim), `createdAt`, and since 2026-10-11 `ventureId` (nullable: the idea a
+  front-door sentence was typed for, cleared when the idea is deleted; migration
+  `20261011120000_first_words`). `listTypedStatements` returns it as `idea: { id, name }`. **No UPDATE or DELETE path exists** — the contract's
   "newer beats older, never overwritten" is enforced by the absence of the code, not by a
   check. Helpers: `lib/person/statements.ts` (`listTypedStatements`, `addTypedStatement`;
   stub user upserted on first write, same pattern as the venture save).

@@ -5,7 +5,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: location + optional numbers screen
 
-Last updated: 2026-09-21 (employment context is explicitly chosen before opening the map)
+Last updated: 2026-10-11 (Open my map saves the typed sentence and the goal picks with the idea; 2026-09-21: employment context is explicitly chosen before opening the map)
 Workshop status: **signed off**
 
 ## What it is
@@ -46,6 +46,12 @@ straight to the cockpit.
   (`lib/journey/save-scenario.ts` → `POST /api/scenario/save`), button reads *"Opening…"*
   and is disabled meanwhile; a failed save (no database) still opens the map — the cockpit's
   save line reports it. The venture therefore exists in `/ventures` the moment the map opens.
+  **2026-10-11:** that first save also carries the sentence typed on the front door (or in
+  Screen A's box), with the day it was typed, and the goal picks
+  (`lib/journey/first-save.ts` `firstSaveFromIntake`): the sentence is kept word for word as a
+  dated statement linked to the idea, the goals on the idea, and the idea's card on `/ventures`
+  shows both under "In your words". No sentence typed (the intake reached directly) → no
+  statement. Design: [landing/01-free-text-entry.md § Persistence](../landing/01-free-text-entry.md).
   If `intake.goals` includes `discover-now`, a secondary `Compare starting points →` link
   offers `openMap("/explore")` instead — same gate, same seeding.
 

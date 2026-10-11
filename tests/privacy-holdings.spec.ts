@@ -148,7 +148,7 @@ describe("readHoldings on a database with nothing in it", () => {
     expect(h.figures.total).toBe(0);
     expect(h.figures.sources).toEqual([]);
     expect(h.figures.byStatus).toEqual({ proposed: 0, confirmed: 0, retracted: 0, discarded: 0 });
-    expect(h.keptLinks).toEqual({ "Expense.ventureId": 0 });
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 0, "PersonStatement.ventureId": 0 });
   });
 
   it("says there is no safety-copy folder and no log, rather than a count of zero files", async () => {
@@ -182,7 +182,8 @@ describe("readHoldings on a seeded database", () => {
 
   it("counts the records the Delete menu would keep with their link cleared: only those attached to an idea", async () => {
     const h = await readHoldings(seeded.prisma, seededToday);
-    expect(h.keptLinks).toEqual({ "Expense.ventureId": 1 });
+    // The seeded statements were typed on the intake, not on the front door, so none is tied to an idea.
+    expect(h.keptLinks).toEqual({ "Expense.ventureId": 1, "PersonStatement.ventureId": 0 });
   });
 
   it("counts bank and card accounts, the taken-back ones too, but carries none of their names", async () => {

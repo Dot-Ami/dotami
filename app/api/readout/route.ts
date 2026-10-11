@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { logRouteError } from "@/lib/api/log-error";
-import { evaluateProfile } from "@/lib/brain";
 import { NODE_ENGINE_HINTS } from "@/lib/brain/node-items";
 import { loadLatestVentureScenarioForStubUser } from "@/lib/db/load-latest-venture-for-stub-user";
 import { listVentures, loadVentureScenarioById } from "@/lib/db/ventures";
@@ -9,7 +8,7 @@ import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { listTypedStatements } from "@/lib/person/statements";
 import { sortStatementsNewestFirst } from "@/lib/person/types";
 import { prisma } from "@/lib/prisma";
-import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-profile";
+import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 
 export const runtime = "nodejs";
@@ -58,10 +57,8 @@ export async function GET(request: Request) {
   }
 
   const venture = ventures.find((v) => v.scenarioId === scenario.id) ?? null;
-  const evaluation = evaluateProfile(buildEvaluationProfileFromScenario(scenario), {
-    today,
-    activeBranches: scenario.state.activeBranches,
-  });
+  // The venture's own branch picks, the same way the cockpit colours its map.
+  const evaluation = evaluateScenario(scenario, { today });
 
   const nodes = cfeCatalogV2026.nodes.map((node) => ({
     id: node.id,

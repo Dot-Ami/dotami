@@ -11,6 +11,7 @@ import { FiguresPanel } from "@/components/ventures/figures-panel";
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import type { VentureLinkKind, VentureSummary } from "@/lib/db/ventures";
 import { VENTURE_LINK_KINDS, VENTURE_LINK_LABELS } from "@/lib/db/ventures";
+import { INTAKE_GOAL_LABELS, type IntakeGoalId } from "@/lib/journey/types";
 import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/scenarios/types";
 
 /**
@@ -208,6 +209,7 @@ function VentureCard({
               ))}
             </div>
           ) : null}
+          <FirstWords venture={venture} />
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <label className="flex items-center gap-2 text-[11px] text-stone">
@@ -346,5 +348,32 @@ function VentureCard({
         ) : null}
       </div>
     </li>
+  );
+}
+
+/**
+ * What the person said when they started this idea (2026-10-11): the sentence they typed on the front
+ * door, word for word in quotation marks with the day they typed it, and the goal chips as they stood on
+ * the intake when the map opened, under the chips' own names. Some chips can be marked from the sentence
+ * and confirmed on the intake's "Did we get this right?", so the line doesn't say "you picked".
+ * Shown, never edited or summarised. Nothing can change the sentence yet; "Your statements" on What
+ * DotAmi knows removes it. Nothing on the map reads either.
+ */
+function FirstWords({ venture }: { venture: VentureSummary }) {
+  const goals = venture.goals.filter((g): g is IntakeGoalId => g in INTAKE_GOAL_LABELS).map((g) => INTAKE_GOAL_LABELS[g]);
+  if (!venture.firstWords && goals.length === 0) return null;
+  return (
+    <div className="mt-3 max-w-[60ch]">
+      {venture.firstWords ? (
+        <>
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">In your words, {venture.firstWords.saidAt}</p>
+          {/* whitespace-pre-wrap: the sentence is shown exactly as typed, spaces and line breaks too. */}
+          <p className="mt-1 whitespace-pre-wrap font-serif text-[14px] italic leading-snug text-paper-dim">
+            “{venture.firstWords.text}”
+          </p>
+        </>
+      ) : null}
+      {goals.length > 0 ? <p className="mt-1.5 text-[11px] text-stone">Goals marked on the intake: {goals.join(" · ")}</p> : null}
+    </div>
   );
 }

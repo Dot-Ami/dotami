@@ -5,7 +5,7 @@
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
-Last updated: 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+Last updated: 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
 Workshop status: documented, sign-off pending
 
 ## What it is
@@ -54,6 +54,9 @@ spot in the product — it carries 6+ unrelated concerns.
   switcher: dated verbatim statements newest-first (typed + vault), a collapsed
   "+ Add something" composer, and the same on-surface status lines as intake Screen 0.
   Full behaviour: `docs/ui-spec/intake/screen-0-about-you.md`. Holds no venture state.
+  Since 2026-10-11 the list includes the sentence typed on the front door for every idea, not
+  only the one on the map, each tagged "typed for your idea “<name>”" so it is clear which idea
+  it belongs to; other typed statements are tagged "typed in DotAmi".
 - **Venture block + FieldRows** — display-only. Reads `currentScenario.profile` (name,
   type, province, targetRevenueY1/Y3 via `Intl.NumberFormat` CAD, structure,
   employmentStatus) plus `archetype.label` and `archetype.planningFocus`.

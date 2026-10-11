@@ -37,7 +37,7 @@ function stageHeading(stage: CFEStage): string {
     case "stage-2b":
       return "Stage 2b — Mandatory GST path";
     case "stage-3a":
-      return "Stage 3a — Incorporation at net threshold";
+      return "Stage 3a — Incorporating";
     case "stage-3b":
       return "Stage 3b — Incorporation (liability / SR&ED)";
     case "branch":

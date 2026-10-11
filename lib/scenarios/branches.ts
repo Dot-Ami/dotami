@@ -34,8 +34,9 @@ export const branchDecisions = [
     label: "Incorporation timing",
     options: [
       {
+        // The id still says "80k-net" (ids are forever); since 2026-10-11 no amount is behind it.
         id: "stage-3a-incorporation-80k-net",
-        label: "$80K net",
+        label: "When you decide",
       },
       {
         id: "stage-3b-incorporation-liability-sred",
@@ -47,7 +48,7 @@ export const branchDecisions = [
 
 /**
  * S2.5.4h: the one default branch bundle, now that archetypes are gone. Both picks are the
- * "nothing decided yet" reading — wait for the $30K line, incorporate on the $80K-net trigger —
+ * "nothing decided yet" reading — wait for the $30K line, incorporate when the person decides —
  * and mirror the evaluator's own defaults (`evaluateProfile`). The rail labels them "default,
  * not your pick yet" until the person clicks.
  */

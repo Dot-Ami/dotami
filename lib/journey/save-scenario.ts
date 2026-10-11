@@ -1,3 +1,4 @@
+import type { FirstSave } from "@/lib/journey/first-save";
 import type { Scenario } from "@/lib/scenarios/types";
 
 export type SaveScenarioResult = { ok: true; ventureId: string } | { ok: false; status: number | null };
@@ -10,13 +11,16 @@ export type SaveScenarioResult = { ok: true; ventureId: string } | { ok: false; 
  * it (debounced) after every edit — nothing the person did should live only in the tab.
  * Fails soft: a 503 (no database) or a network error returns `{ ok: false }` and the caller
  * decides what to show; it never throws.
+ *
+ * `firstSave` (the typed sentence and the goal picks) is passed only by the intake, on the save that
+ * creates the idea; the server writes it only when the idea is new (lib/journey/first-save.ts).
  */
-export async function saveScenario(scenario: Scenario): Promise<SaveScenarioResult> {
+export async function saveScenario(scenario: Scenario, firstSave?: FirstSave): Promise<SaveScenarioResult> {
   try {
     const response = await fetch("/api/scenario/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenario }),
+      body: JSON.stringify({ scenario, ...firstSave }),
     });
     if (!response.ok) return { ok: false, status: response.status };
     const body = (await response.json()) as { ventureId?: unknown };

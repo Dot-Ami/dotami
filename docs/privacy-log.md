@@ -37,6 +37,44 @@ person is asked).
 
 ## [Unreleased]
 
+### What DotAmi keeps, and where
+
+- **The sentence typed on the front door, and the goal chips, are kept with the idea (2026-10-11).**
+  Until now both lived only in the browser tab (`dotami-journey-v3` in sessionStorage) and went when it
+  closed. When the intake first saves an idea, the sentence becomes one of the person's statements
+  (`PersonStatement`), word for word, dated the day they typed it in their own calendar, with a new
+  optional link to the idea (`PersonStatement.ventureId`); the goal chips as they stood on the intake go
+  on the idea (`Venture.goals`, a list of the four chip ids; some can be marked by the parser from the
+  sentence and confirmed on the intake, so the card says "Goals marked on the intake", not "you picked").
+  The sentence is written once per sentence typed: only by the save that creates an idea
+  ([`lib/db/ensure-venture-from-scenario.ts`](../lib/db/ensure-venture-from-scenario.ts)), and only until
+  a save has kept it or the person has deleted their statements; after either, the tab's draft marks it
+  done (`manualEntryDone`, [`lib/journey/first-save.ts`](../lib/journey/first-save.ts)) and never sends it
+  again, so a second "Open my map" from the same tab neither copies it nor writes back one the person
+  deleted. A new sentence typed afterwards is kept with the next idea. Later saves of an idea never write
+  either again. Shown back on the idea's card, and in "In your words" on About you and the map's rail as
+  "typed for your idea “…”"; neither feeds any rule. The migration is
+  two plain column additions ([`prisma/migrations/20261011120000_first_words`](../prisma/migrations/20261011120000_first_words/migration.sql)).
+  Nothing about what leaves the computer changes: the sentence was already sent to the intake's parser
+  as before (only when a model key is set), and is now also kept in the data file.
+
+### How to remove it
+
+- **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
+  statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
+  ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements
+  attached to them: N (they stay, as “not tied to an idea”)",
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). Deleting statements also marks
+  the sentence still in that tab's intake draft as done, so that tab can't write it back; another tab
+  open at the time keeps its own draft, and writes its sentence only if no save there had kept it yet.
+  **The goal chips** are part of the idea and go with "Your ideas". Neither can be removed one by one,
+  like every statement.
+
+### What the policy will need to say
+
+- The words a person types on the front door to describe an idea are kept in the data file, with the day
+  they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
+
 ---
 
 ## [0.3.0] — 2026-10-10

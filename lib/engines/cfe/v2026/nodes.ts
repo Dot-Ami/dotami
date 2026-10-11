@@ -211,13 +211,17 @@ export const cfeNodesV2026 = [
     branches: ["stage-3a-incorporation-80k-net", "stage-3b-incorporation-liability-sred"],
   },
   {
+    // The id keeps its old words because ids are forever (saved ideas and exports name it). Until
+    // 2026-10-11 this stage was "Incorporation at $80K net" and lit once the third-year SALES estimate
+    // reached $80,000 — a "v0 heuristic" no official page sets, written as NET income. DotAmi doesn't
+    // pick a point to incorporate: the person does, so no amount lights this card
+    // (lib/brain/evaluate.ts computeNodeStates; docs/ui-spec/cockpit/03-canvas.md § Incorporating).
     id: "stage-3a-incorporation-80k-net",
-    label: "Incorporation at $80K net",
+    label: "Incorporating",
     stage: "stage-3a",
-    trigger:
-      "Projected net business income reaches roughly $80,000 and retained earnings, tax deferral, or reinvestment becomes material.",
+    trigger: "DotAmi doesn't pick a point to incorporate. You do, with your accountant or lawyer.",
     description:
-      "Incorporation creates a separate legal taxpayer. If net income is high enough to leave money inside the business after owner cash needs, this unlocks CCPC planning, small business deduction modeling, corporate filings, and salary/dividend tradeoff analysis.",
+      "Incorporation creates a separate legal taxpayer. If the business keeps money inside it after what the owner takes out personally, this unlocks CCPC planning, small business deduction modeling, corporate filings, and salary/dividend tradeoff analysis.",
     taxImpact:
       "Active business income earned by a qualifying CCPC may access the small business deduction up to the business limit, changing tax timing and reinvestment capacity compared with sole-prop income taxed personally.",
     lensAnnotations: {
@@ -245,18 +249,12 @@ export const cfeNodesV2026 = [
     ],
     financialImpact: {
       summary:
-        "At higher net income, incorporation may shift timing: some earnings can be taxed corporately and retained for reinvestment instead of all profit being taxed personally each year.",
+        "Incorporation may shift timing: some earnings can be taxed corporately and retained for reinvestment instead of all profit being taxed personally each year.",
       projectionNotes: [
         "Model owner cash needs before treating incorporation as useful.",
         "Include recurring corporation filing, bookkeeping, and professional costs in the comparison.",
       ],
       estimates: [
-        {
-          label: "Planning trigger",
-          value: "~$80,000 net income",
-          basis:
-            "DotAmi v0 heuristic from the PRD, used as a modeling trigger rather than a statutory threshold.",
-        },
         {
           label: "Federal SBD business limit",
           value: "$500,000",
@@ -275,9 +273,9 @@ export const cfeNodesV2026 = [
     label: "Incorporation for liability/SR&ED",
     stage: "stage-3b",
     trigger:
-      "Liability exposure, enterprise contracts, external funding, or SR&ED-style product development becomes more important than the $80K net-income heuristic.",
+      "Liability exposure, enterprise contracts, external funding, or SR&ED-style product development makes the corporation itself matter, whatever the income.",
     description:
-      "Some ventures incorporate before the income threshold because the structure itself matters. If risk, contracting, IP ownership, or SR&ED eligibility becomes central, this unlocks corporation planning even when pure tax deferral is not yet the main driver.",
+      "Some ventures incorporate because the structure itself matters. If risk, contracting, IP ownership, or SR&ED eligibility becomes central, this unlocks corporation planning even when pure tax deferral is not yet the main driver.",
     taxImpact:
       "A CCPC structure can affect SR&ED investment tax credit access and corporate tax planning. The benefit depends on eligibility, associated corporations, expenditures, and whether the activity meets SR&ED criteria.",
     lensAnnotations: {

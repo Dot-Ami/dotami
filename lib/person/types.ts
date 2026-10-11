@@ -25,10 +25,28 @@ export interface PersonStatement {
   /** ISO datetime when it entered the store; undefined for vault rows (the file's own date is `saidAt`). */
   recordedAt?: string;
   /**
+   * The idea a typed statement was typed for: set only on the sentence typed on the front door (or in
+   * the intake's box), which the intake's first save links to the idea it made (2026-10-11). Absent
+   * for statements typed on About you or in the map's rail, and once the idea is deleted.
+   */
+  idea?: { id: string; name: string };
+  /**
    * Client-only: false while a typed statement lives only in this browser tab because the
    * save failed (no database reachable). Never sent by the server.
    */
   persisted?: boolean;
+}
+
+/**
+ * The small tag over each statement in "In your words" (About you, the map's rail). A sentence typed
+ * for an idea names it; every other typed one says only "typed in DotAmi", because once its idea is
+ * deleted a front-door sentence can't be told apart from one typed on About you, and "typed here" would
+ * then be wrong on one screen or the other.
+ */
+export function statementSourceLabel(s: PersonStatement): string {
+  if (s.source === "vault") return `vault · ${s.sourceRef}`;
+  if (s.persisted === false) return "typed · not saved";
+  return s.idea ? `typed for your idea “${s.idea.name}”` : "typed in DotAmi";
 }
 
 /** Newest first by `saidAt`, then by `recordedAt` for same-day rows. Pure. */
@@ -53,3 +71,10 @@ export function isValidSaidAt(value: unknown, today: string): value is string {
 }
 
 export const STATEMENT_MAX_CHARS = 2000;
+
+/**
+ * Said under the front door's and the intake's box once it is full. The browser silently drops what
+ * is typed or pasted past `maxLength`, so the person is told rather than left with a cut sentence.
+ */
+export const STATEMENT_FULL_NOTE =
+  "That's the most this box holds: 2,000 characters. Anything typed or pasted past that wasn't taken, so check the end of your text.";

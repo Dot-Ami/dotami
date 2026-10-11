@@ -4,6 +4,7 @@ import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
+import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -48,7 +49,9 @@ export function LandingPage() {
     // draft; React batches these so `applyIntentToDraft` sees the fresh default, not the
     // stale one.
     resetJourney();
-    setIntake((prev) => applyIntentToDraft(prev, result, trimmed));
+    // The day the person typed it, in their own calendar, goes with the sentence: it is saved with the
+    // idea, word for word, when the intake first saves it.
+    setIntake((prev) => applyIntentToDraft(prev, result, trimmed, new Date().toLocaleDateString("en-CA")));
     router.push("/intake");
   }
 
@@ -90,6 +93,8 @@ export function LandingPage() {
               }}
               placeholder="What are you building — or what do you want to write off? Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
               rows={3}
+              // The most a statement holds; the browser drops anything past it, so a note says so below.
+              maxLength={STATEMENT_MAX_CHARS}
               className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
             />
             <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
@@ -98,6 +103,11 @@ export function LandingPage() {
               </Pill>
             </div>
           </div>
+          {text.length >= STATEMENT_MAX_CHARS ? (
+            <p role="status" className="mt-2 text-[12px] text-amber">
+              {STATEMENT_FULL_NOTE}
+            </p>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {EXAMPLE_PROMPTS.map((prompt) => (
