@@ -326,6 +326,169 @@ describe("stopped at every step, the next start finishes it", () => {
   });
 });
 
+/**
+ * Leaves `file` the way a power cut in the middle of a write does: part of an unfinished write already in
+ * the file, and SQLite's rollback journal (the pages as they were before it) beside it. Made by copying
+ * both mid-transaction and putting the copies back once the real transaction was rolled back.
+ */
+function leaveHotJournal(file: string, key: Buffer) {
+  const aside = `${file}.aside`;
+  const db = openDatabase(file, { key });
+  try {
+    // A one-page cache, so the unfinished write reaches the file itself, not only memory.
+    db.pragma("cache_size = 1");
+    db.exec("BEGIN");
+    db.exec("CREATE TABLE half_written (id INTEGER PRIMARY KEY, t TEXT)");
+    const add = db.prepare("INSERT INTO half_written (t) VALUES (?)");
+    for (let i = 0; i < 300; i++) add.run("w".repeat(500));
+    copyFileSync(file, aside);
+    copyFileSync(`${file}-journal`, `${aside}-journal`);
+    db.exec("ROLLBACK");
+  } finally {
+    db.close();
+  }
+  renameSync(aside, file);
+  renameSync(`${aside}-journal`, `${file}-journal`);
+}
+
+/** The SQLite error code a read-only open with `key` fails with, or "opens". */
+function readOnlyOpen(file: string, key: Buffer) {
+  try {
+    openDatabase(file, { key, readonly: true, fileMustExist: true }).close();
+    return "opens";
+  } catch (error) {
+    return (error as { code?: string }).code ?? (error as Error).name;
+  }
+}
+
+describe("found in the second review (2026-10-10)", () => {
+  it("a safety copy deleted from the Delete menu while its encrypted original's wipe was owed: the next start wipes that original and goes on", async () => {
+    const before = await encryptedFolder();
+    mkdirSync(path.join(before.dir, "backups"));
+    const copy = path.join(before.dir, "backups", "dotami-before-001-x.db");
+    copyFileSync(before.file, copy);
+    decryptFile(before.dir, copy, KEY, { crashAt: "note-wipe" });
+    const old = `${copy}${ENCRYPTED_SUFFIX}`;
+    // Another program holds the encrypted original (stood in for by a folder of its name): its wipe stays
+    // owed, and DotAmi starts and runs as normal.
+    renameSync(old, `${old}.aside`);
+    mkdirSync(old);
+    expect(resumeDecryption(before.dir, KEY)).toMatchObject({ action: "finished", wipePending: true });
+    expect(readDecryptNote(before.dir)).toMatchObject({ step: "wipe" });
+    // While it runs, the person ticks "Safety copies in the backups folder" on the Delete menu.
+    const names = listSafetyCopies(before.file).names;
+    expect(names).toEqual(["dotami-before-001-x.db"]);
+    expect(deleteSafetyCopies(before.file, names)).toEqual({ deleted: names, left: [] });
+    // The other program lets go before the next start.
+    rmSync(old, { recursive: true });
+    renameSync(`${old}.aside`, old);
+
+    // The next start: the deleted copy's encrypted original goes too, the note with it, and nothing stops.
+    expect(resumeDecryption(before.dir, KEY)).toMatchObject({ action: "cleared", wipePending: false });
+    expect(readdirSync(path.join(before.dir, "backups"))).toEqual([]);
+    expect(readDecryptNote(before.dir)).toBeNull();
+    expectStillEncrypted(before.file, before);
+  });
+
+  it("at the wipe step, the data file itself missing is still a state DotAmi didn't leave: it stops and removes nothing", async () => {
+    const before = await encryptedFolder();
+    decryptFile(before.dir, before.file, KEY, { crashAt: "note-wipe" });
+    // Only a safety copy is ever taken for one the person deleted; a data file that vanished never is.
+    renameSync(before.file, path.join(root, `moved-at-wipe-${n}.db`));
+    const left = readdirSync(before.dir).sort();
+    expect(() => resumeDecryption(before.dir, KEY)).toThrow(/didn't change or remove anything/);
+    expect(readdirSync(before.dir).sort()).toEqual(left);
+    expect(left).toContain(`dotami.db${ENCRYPTED_SUFFIX}`);
+  });
+
+  it("a note at the wipe step beside a plain file is finished without the key (one that can't be opened, or none at all)", async () => {
+    const before = await encryptedFolder();
+    decryptFile(before.dir, before.file, KEY, { crashAt: "note-wipe" });
+    expect(resumeDecryption(before.dir, null)).toEqual({ action: "finished", file: before.file, wipePending: false });
+    await expectPlainWhole(before.dir, before.file, before);
+  });
+
+  it("a plain copy that can't be written (a full disk) changes nothing, leaves nothing behind, and says why", async () => {
+    const before = await encryptedFolder();
+    const full = (_source: unknown, copy: string) => {
+      // Part of the copy was written before the disk filled up.
+      writeFileSync(copy, `SQLite format 3\0 ${MARKER}`);
+      throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" });
+    };
+    let stopped: unknown = null;
+    try {
+      decryptFile(before.dir, before.file, KEY, { copyInto: full });
+    } catch (error) {
+      stopped = error;
+    }
+    expect(stopped).toBeInstanceOf(DecryptionStopped);
+    expect((stopped as DecryptionStopped).kind).toBe("failed");
+    expect((stopped as Error).message).toMatch(/isn't enough free space on the disk/);
+    expect((stopped as Error).message).toMatch(/It is still encrypted, and nothing was changed/);
+    expectStillEncrypted(before.file, before);
+    expect(readdirSync(before.dir).sort()).toEqual(["dotami.db"]);
+    expect(filesHoldingMarker(before.dir)).toEqual([]);
+    // Nothing is owed, and the next try (with room on the disk) decrypts it whole.
+    expect(resumeDecryption(before.dir, KEY)).toEqual({ action: "none" });
+    expect(decryptFile(before.dir, before.file, KEY)).toEqual({ wipePending: false });
+    await expectPlainWhole(before.dir, before.file, before);
+  });
+
+  it("a second rename another program refuses puts the encrypted file back, and leaves no plain copy and no note", async () => {
+    const before = await encryptedFolder();
+    // An antivirus scanning the new copy refuses only the rename of the plain copy into place.
+    const refuseSecond = (from: string, to: string) => {
+      if (from.endsWith(DECRYPT_COPY_SUFFIX)) throw Object.assign(new Error("operation not permitted"), { code: "EPERM" });
+      renameSync(from, to);
+    };
+    let stopped: unknown = null;
+    try {
+      decryptFile(before.dir, before.file, KEY, { rename: refuseSecond });
+    } catch (error) {
+      stopped = error;
+    }
+    expect(stopped).toBeInstanceOf(DecryptionStopped);
+    expect((stopped as DecryptionStopped).kind).toBe("busy");
+    expect((stopped as Error).message).toMatch(/It is still encrypted, and nothing was changed/);
+    expectStillEncrypted(before.file, before);
+    expect(readdirSync(before.dir).sort()).toEqual(["dotami.db"]);
+    expect(readDecryptNote(before.dir)).toBeNull();
+    expect(filesHoldingMarker(before.dir)).toEqual([]);
+  });
+
+  it("an encrypted file left with a hot journal (a power cut mid-write) is rolled back first, then decrypted whole", async () => {
+    const before = await encryptedFolder();
+    leaveHotJournal(before.file, KEY);
+    // The control: the journal is hot, so a read-only open (what the check did) is refused.
+    expect(readOnlyOpen(before.file, KEY)).toBe("SQLITE_READONLY_ROLLBACK");
+
+    expect(decryptFile(before.dir, before.file, KEY)).toEqual({ wipePending: false });
+    // The unfinished write is gone (the contents are as they were), and so is the journal.
+    await expectPlainWhole(before.dir, before.file, before);
+  });
+
+  it("with a wrong key, a hot journal and the file stay exactly as they were", async () => {
+    const before = await encryptedFolder();
+    leaveHotJournal(before.file, KEY);
+    const journal = `${before.file}-journal`;
+    const was = [sha(before.file), sha(journal)];
+    let stopped: unknown = null;
+    try {
+      decryptFile(before.dir, before.file, OTHER_KEY);
+    } catch (error) {
+      stopped = error;
+    }
+    expect(stopped).toBeInstanceOf(DecryptionStopped);
+    expect((stopped as Error).message).toMatch(/didn't open with its key/);
+    // Not a byte written to either: the read-write open with the wrong key was refused before the rollback.
+    expect([sha(before.file), sha(journal)]).toEqual(was);
+    expect(readdirSync(before.dir).sort()).toEqual(["dotami.db", "dotami.db-journal"]);
+    // The right key then rolls it back and decrypts it whole.
+    expect(decryptFile(before.dir, before.file, KEY)).toEqual({ wipePending: false });
+    await expectPlainWhole(before.dir, before.file, before);
+  });
+});
+
 describe("one note at a time, across both directions", () => {
   it("decryptFile doesn't start while an encryption's note is there, and encryptFile doesn't while a decryption's is", async () => {
     const before = await encryptedFolder();

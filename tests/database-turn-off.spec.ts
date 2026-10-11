@@ -16,13 +16,27 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFile
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 
-import { clearTurnedOff, decryptFile, finishTurningOff, markTurnedOff, TURNED_OFF_NOTE, turnedOffWith } from "../desktop/decrypt-database.mjs";
+import { clearTurnedOff, decryptFile, filesLockedWith, finishTurningOff, markTurnedOff, TURNED_OFF_NOTE, turnedOffWith } from "../desktop/decrypt-database.mjs";
 import { encryptFile } from "../desktop/encrypt-database.mjs";
 import { keyIdOf } from "../desktop/receipt-crypto.mjs";
 import { fileKind, openDatabase } from "../desktop/sqlite.mjs";
 import { clearWipePending, deleteSafetyCopies, writeWipePending } from "../desktop/wipe-pending.mjs";
+
+// Files "another program holds": the first-bytes check throws FileNotReadable for them, as it does for a
+// file opened elsewhere without sharing (an antivirus scan, a sync app). Everything else is the real code.
+const held = vi.hoisted(() => new Set<string>());
+vi.mock("../desktop/sqlite.mjs", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../desktop/sqlite.mjs")>();
+  return {
+    ...real,
+    fileKind: (file: string) => {
+      if (held.has(file)) throw new real.FileNotReadable(file, "EBUSY");
+      return real.fileKind(file);
+    },
+  };
+});
 
 const root = mkdtempSync(path.join(tmpdir(), "dotami-turn-off-"));
 afterAll(() => rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
@@ -142,6 +156,26 @@ describe("with a turn-off note naming the key", () => {
     expect(fileKind(f.copy)).toBe("encrypted");
     expect(existsSync(f.keyFile)).toBe(true);
     expect(turnedOffWith(f.dir, KEY)).toBe(true);
+  });
+
+  it("a safety copy another program holds keeps the key (DotAmi can't tell what it is), and is decrypted once it is let go", () => {
+    const f = lockedFolder();
+    markTurnedOff(f.dir, KEY);
+    decryptFile(f.dir, f.dbFile, KEY);
+    held.add(f.copy);
+    try {
+      // Deleting the key now would leave that copy unreadable for good, if it is locked with it.
+      expect(filesLockedWith(f.dir, KEY)).toEqual([path.join("backups", COPY_NAME)]);
+      expect(finishTurningOff(f.dir, f.dbFile, KEY, { files: [f.copy] })).toEqual({ ran: true, decrypted: 0, notYet: 1, skipped: 0, keyDeleted: false, lockedLeft: 1 });
+      expect(existsSync(f.keyFile)).toBe(true);
+      expect(turnedOffWith(f.dir, KEY)).toBe(true);
+    } finally {
+      held.delete(f.copy);
+    }
+    // A later start, with the copy let go: decrypted, then the key goes.
+    expect(finishTurningOff(f.dir, f.dbFile, KEY, { files: [f.copy] })).toEqual({ ran: true, decrypted: 1, notYet: 0, skipped: 0, keyDeleted: true, lockedLeft: 0 });
+    expect(fileKind(f.copy)).toBe("plain");
+    expect(readFileSync(f.copy).includes(Buffer.from(MARKER))).toBe(true);
   });
 });
 

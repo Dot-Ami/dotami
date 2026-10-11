@@ -1608,6 +1608,104 @@ test("a turned-off data file that fails its integrity check: DotAmi still opens,
   expect(desktopLog().slice(again)).not.toContain("couldn't be decrypted");
 });
 
+test("an encrypted data file left with a write cut off part-way (a hot journal, as after a power cut): DotAmi starts, rolls it back, and every idea is there ([8i])", async () => {
+  test.setTimeout(240_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  const journal = `${dbFile}-journal`;
+  let page = await launch();
+  await describeVenture(page);
+  const key = await dataKey();
+  await quit();
+  // What a power cut in the middle of the server's write leaves: part of the write already in the file,
+  // and SQLite's rollback journal beside it. Copied mid-transaction, then put back after the real rollback.
+  const aside = path.join(tmp, "mid-write");
+  mkdirSync(aside);
+  const db = openDatabase(dbFile, { key });
+  try {
+    db.pragma("cache_size = 1");
+    runOn(db, "BEGIN");
+    runOn(db, "CREATE TABLE half_written (id INTEGER PRIMARY KEY, t TEXT)");
+    const add = db.prepare("INSERT INTO half_written (t) VALUES (?)");
+    for (let i = 0; i < 300; i++) add.run("w".repeat(500));
+    writeFileSync(path.join(aside, "dotami.db"), readFileSync(dbFile));
+    writeFileSync(path.join(aside, "dotami.db-journal"), readFileSync(journal));
+    runOn(db, "ROLLBACK");
+  } finally {
+    db.close();
+  }
+  writeFileSync(dbFile, readFileSync(path.join(aside, "dotami.db")));
+  writeFileSync(journal, readFileSync(path.join(aside, "dotami.db-journal")));
+  // The control: the journal is hot, so a read-only open (the start's key check used one) is refused.
+  let readOnly = "opens";
+  try {
+    openDatabase(dbFile, { key, readonly: true, fileMustExist: true }).close();
+  } catch (error) {
+    readOnly = (error as { code?: string }).code ?? "error";
+  }
+  expect(readOnly).toBe("SQLITE_READONLY_ROLLBACK");
+
+  // The start goes on (every start used to stop with "DotAmi couldn't start."), and nothing was lost.
+  const before = desktopLog().length;
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+  expect(desktopLog().slice(before)).not.toContain("[desktop] stopped:");
+  await quit();
+  expect(existsSync(journal)).toBe(false);
+  expect(fileKind(dbFile)).toBe("encrypted");
+  const after = openDatabase(dbFile, { key, readonly: true, fileMustExist: true });
+  try {
+    expect(after.pragma("integrity_check", { simple: true })).toBe("ok");
+    // The unfinished write was rolled back, not kept half-done.
+    expect(after.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name = 'half_written'").get()).toEqual({ n: 0 });
+  } finally {
+    after.close();
+  }
+});
+
+test("a plain data file beside a decryption's owed wipe, and no key at all: DotAmi starts (not the lost-key window) and wipes the encrypted original ([8i])", async () => {
+  test.setTimeout(240_000);
+  const dbFile = path.join(dataDir, "dotami.db");
+  let page = await launch();
+  await describeVenture(page);
+  const key = await dataKey();
+  await quit();
+  const encrypted = readFileSync(dbFile);
+  // Locking turned off, as Settings saves it; the next start decrypts the file and deletes the key.
+  const db = openDatabase(dbFile, { key });
+  try {
+    db.prepare(`INSERT INTO "Setting" (key, value, updatedAt) VALUES ('database-encryption', '{"on":false}', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(Date.now());
+  } finally {
+    db.close();
+  }
+  page = await launch();
+  await quit();
+  expect(fileKind(dbFile)).toBe("plain");
+  expect(existsSync(path.join(dataDir, "database.key"))).toBe(false);
+  // What that start leaves when another program holds the encrypted original during step 7: the original
+  // beside the plain file, and the note at the wipe step (the same note DotAmi writes).
+  const old = `${dbFile}.encrypted-to-wipe`;
+  writeFileSync(old, encrypted);
+  const plain = readFileSync(dbFile);
+  writeFileSync(
+    path.join(dataDir, "database-decrypting.json"),
+    `${JSON.stringify({ format: 1, step: "wipe", file: "dotami.db", size: plain.length, sha256: createHash("sha256").update(plain).digest("hex") }, null, 2)}\n`,
+  );
+
+  // The key is gone, but nothing that needs it is left: the start goes on and finishes the wipe.
+  const before = desktopLog().length;
+  page = await launch();
+  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+  await quit();
+  const thisStart = desktopLog().slice(before);
+  expect(thisStart).toContain("[database] a decryption left part-way: finished");
+  expect(thisStart).not.toContain("nothing was changed");
+  expect(existsSync(old)).toBe(false);
+  expect(existsSync(path.join(dataDir, "database-decrypting.json"))).toBe(false);
+  expect(fileKind(dbFile)).toBe("plain");
+});
+
 test("a data file whose key can't be opened: nothing changes, the app says what to do, and putting the key back brings everything back ([8i])", async () => {
   let page = await launch();
   await describeVenture(page);
