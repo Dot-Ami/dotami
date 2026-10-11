@@ -88,18 +88,35 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await page.getByRole("button", { name: "Open my map →" }).click();
   await expect(page).toHaveURL(/\/cockpit/);
 
+  // Back through the intake from the map, in the same tab: "Open my map" makes a second idea, and the
+  // sentence, already kept with the first, is not written again (review of 2026-10-11).
+  await page.getByRole("link", { name: "Edit venture profile" }).click();
+  await expect(page).toHaveURL(/\/intake/);
+  await page.getByRole("button", { name: "Continue →" }).click();
+  await page.getByRole("button", { name: "Looks right →" }).click();
+  await page.getByPlaceholder(/What the map should call this venture/).fill("Invented — first words test, again");
+  await page.getByRole("button", { name: "Open my map →" }).click();
+  await expect(page).toHaveURL(/\/cockpit/);
+
   // A new window with nothing in its tab storage: what shows comes from the data file.
   const context = await browser.newContext({ baseURL: new URL(page.url()).origin });
   const fresh = await context.newPage();
   await fresh.goto("/ventures");
-  const card = fresh.getByRole("listitem").filter({ has: fresh.getByRole("heading", { name: "Invented — first words test", level: 2 }) });
+  const card = fresh.getByRole("listitem").filter({ has: fresh.getByRole("heading", { name: "Invented — first words test", exact: true, level: 2 }) });
   await expect(card.getByText(`In your words, ${today}`, { exact: true })).toBeVisible();
   await expect(card.getByText(`“${sentence}”`, { exact: true })).toBeVisible();
-  await expect(card.getByText(/^Goals you picked: /)).toContainText("Replace income");
+  // The goal chips as they stood on the intake (some may have been marked from the sentence, and confirmed there).
+  await expect(card.getByText(/^Goals marked on the intake: /)).toContainText("Replace income");
+  // Once on the whole page: the second idea carries no copy.
+  await expect(fresh.getByText(`“${sentence}”`, { exact: true })).toHaveCount(1);
 
   // It is one of the person's statements, so What DotAmi knows counts it and Delete takes it with them.
   const statements = (await (await fresh.request.get("/api/person/statements")).json()) as { statements: { text: string; saidAt: string }[] };
   expect(statements.statements.filter((s) => s.text === sentence)).toEqual([expect.objectContaining({ text: sentence, saidAt: today })]);
+  // About you lists it with the idea it was typed for, not as "typed here".
+  await fresh.goto("/intake");
+  const row = fresh.getByRole("listitem").filter({ hasText: sentence });
+  await expect(row.getByText("typed for your idea “Invented — first words test”", { exact: true })).toBeVisible();
   await context.close();
 });
 

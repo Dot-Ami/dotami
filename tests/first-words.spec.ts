@@ -4,7 +4,8 @@
  * Until 2026-10-11 it, and the intake's goal picks, lived only in the browser tab (sessionStorage)
  * and were gone when the tab closed. Now the save that first creates the idea carries them: the
  * sentence becomes one dated statement in the person's own words, linked to the idea; the goals go
- * on the idea. Written once, on that save only, so nothing the person deleted comes back.
+ * on the idea. Written once per sentence typed: only by the save that creates an idea, and only until
+ * a save has kept it or the person has deleted their statements, so nothing they deleted comes back.
  */
 import { randomUUID } from "node:crypto";
 import { existsSync, rmSync } from "node:fs";
@@ -20,10 +21,10 @@ import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { listVentures } from "@/lib/db/ventures";
 import { applyIntentToDraft } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
-import { firstSaveFromIntake } from "@/lib/journey/first-save";
+import { afterFirstSave, afterStatementsDeleted, firstSaveFromIntake } from "@/lib/journey/first-save";
 import { defaultIntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { listTypedStatements } from "@/lib/person/statements";
-import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
+import { STATEMENT_MAX_CHARS, statementSourceLabel, type PersonStatement } from "@/lib/person/types";
 import { recomputeScenarioState, defaultActiveBranches } from "@/lib/scenarios/branches";
 import type { Scenario } from "@/lib/scenarios/types";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
@@ -54,6 +55,57 @@ describe("the intake's first save: what it carries", () => {
       goals: ["discover-now"],
     });
     expect(firstSaveFromIntake({ ...defaultIntakeDraft(), manualEntry: "   " }, "2026-10-11")).toEqual({ goals: [] });
+  });
+});
+
+// Review of 2026-10-11: every "Open my map" makes a new idea (a new scenario id), so "written only when
+// the save creates the idea" let one tab write the same sentence again on each re-open, and bring back
+// a sentence the person had deleted. Now it goes once per sentence typed: after a save that kept it, or
+// after the person deleted their statements, the tab's draft never carries it again.
+describe("one tab, many ideas: the sentence goes once", () => {
+  const typed = () => applyIntentToDraft(defaultIntakeDraft(), parseIntentFallback(SENTENCE), SENTENCE, "2026-10-09");
+
+  it("is not carried again once a save kept it (the next “Open my map” makes a new idea)", () => {
+    const draft = typed();
+    const sent = firstSaveFromIntake(draft, "2026-10-11");
+    expect(sent.firstWords?.text).toBe(SENTENCE);
+    const next = afterFirstSave(draft, sent, { ok: true });
+    expect(firstSaveFromIntake(next, "2026-10-11").firstWords).toBeUndefined();
+    // The sentence itself stays in the tab: the intake still shows what was typed.
+    expect(next.manualEntry).toBe(SENTENCE);
+  });
+
+  it("is carried again when the save failed, so a retry can still keep it", () => {
+    const draft = typed();
+    const sent = firstSaveFromIntake(draft, "2026-10-11");
+    expect(firstSaveFromIntake(afterFirstSave(draft, sent, { ok: false }), "2026-10-11").firstWords?.text).toBe(SENTENCE);
+  });
+
+  it("is never carried after the person deleted their statements, even if no save had kept it yet", () => {
+    expect(firstSaveFromIntake(afterStatementsDeleted(typed()), "2026-10-11").firstWords).toBeUndefined();
+  });
+
+  it("a new sentence typed afterwards is carried with the next idea", () => {
+    const settled = afterStatementsDeleted(typed());
+    const retyped = applyIntentToDraft(settled, parseIntentFallback("A mobile welding rig"), "A mobile welding rig", "2026-10-11");
+    expect(firstSaveFromIntake(retyped, "2026-10-11").firstWords).toEqual({ text: "A mobile welding rig", saidAt: "2026-10-11" });
+  });
+});
+
+describe("how a statement says where it was typed", () => {
+  const base: PersonStatement = { id: "x", text: "t", saidAt: "2026-10-11", source: "typed", sourceRef: "app" };
+
+  it("names the idea a front-door sentence was typed for, instead of “typed here”", () => {
+    expect(statementSourceLabel({ ...base, idea: { id: "v1", name: "Sign shop" } })).toBe("typed for your idea “Sign shop”");
+  });
+
+  it("says only “typed in DotAmi” when no idea is linked (typed on About you, or its idea was deleted)", () => {
+    expect(statementSourceLabel(base)).toBe("typed in DotAmi");
+  });
+
+  it("keeps the unsaved and vault tags", () => {
+    expect(statementSourceLabel({ ...base, persisted: false })).toBe("typed · not saved");
+    expect(statementSourceLabel({ ...base, source: "vault", sourceRef: "notes/a.md" })).toBe("vault · notes/a.md");
   });
 });
 
@@ -155,6 +207,40 @@ describe("saved with the idea (SQLite)", () => {
     await ensureVentureFromScenario(prisma, scenario, FIRST);
     expect(await prisma.personStatement.count()).toBe(0);
     expect((await listVentures(prisma))[0].firstWords).toBeNull();
+  });
+
+  // What the intake's "Open my map" does, from one tab's draft: a new idea each time (new scenario id),
+  // the first-save extras read from the draft, and the draft updated from the save's answer.
+  async function openMap(draft: ReturnType<typeof applyIntentToDraft>) {
+    const sent = firstSaveFromIntake(draft, "2026-10-11");
+    await ensureVentureFromScenario(prisma, idea(), sent);
+    return afterFirstSave(draft, sent, { ok: true });
+  }
+
+  it("two “Open my map” from one tab keep the sentence once, not once per idea", async () => {
+    let draft = applyIntentToDraft(defaultIntakeDraft(), parseIntentFallback(SENTENCE), SENTENCE, "2026-10-09");
+    draft = await openMap(draft);
+    draft = await openMap(draft); // "Edit venture profile" → the intake again → "Open my map"
+    expect((await prisma.personStatement.findMany()).map((r) => r.text)).toEqual([SENTENCE]);
+    expect(await prisma.venture.count()).toBe(2);
+  });
+
+  it("a sentence deleted with “Your statements” doesn't come back from the next “Open my map” in the same tab", async () => {
+    let draft = applyIntentToDraft(defaultIntakeDraft(), parseIntentFallback(SENTENCE), SENTENCE, "2026-10-09");
+    draft = await openMap(draft);
+    // Delete → Your statements (lib/privacy/delete.ts removes every row); the Delete menu settles the tab too.
+    await prisma.personStatement.deleteMany();
+    draft = afterStatementsDeleted(draft);
+    await openMap(draft);
+    expect(await prisma.personStatement.count()).toBe(0);
+  });
+
+  it("lists a front-door sentence with the idea it was typed for, and with none once the idea is deleted", async () => {
+    const scenario = idea();
+    const { ventureId } = await ensureVentureFromScenario(prisma, scenario, FIRST);
+    expect((await listTypedStatements(prisma)).map((s) => s.idea)).toEqual([{ id: ventureId, name: scenario.profile.name }]);
+    await prisma.venture.delete({ where: { id: ventureId } });
+    expect((await listTypedStatements(prisma)).map((s) => s.idea)).toEqual([undefined]);
   });
 
   it("an idea saved without a sentence has none, and an empty goal list", async () => {
