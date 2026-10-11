@@ -1,6 +1,8 @@
 # Header: back link, tabs, fork chips, Focus / Lens / Export / ?
 
 > **S2.5.4h (2026-09-14) — removed.** Tabs, fork chips, Lens, Focus and ? are removed; the header is Back · wordmark · venture name · Export. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
+>
+> **Corrected 2026-10-11 — the back link.** This banner said the header starts with "Back". The shipped header (read in `components/cockpit/cockpit-page.tsx` on 2026-10-11) starts with **"← Ideas"**, a link to `/ventures`; the only "← Back" is on the empty state shown with no saved venture, and it goes to `/`.
 
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: nav + tab group + chip strip + button group

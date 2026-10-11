@@ -7,6 +7,14 @@ edge cases each story must test), [connectors-and-agents.md](connectors-and-agen
 Where this page and those disagree, this page is newer, and the older page gets updated in
 the pull request that builds the piece.
 
+> **2026-10-11 — a newer page on the journey and planning.** The maintainer named the *future
+> cockpit* the top priority on 2026-10-10 and made its six decisions on 2026-10-11:
+> [future-cockpit.md](future-cockpit.md). It widens who DotAmi is for — a person may start from a
+> **career** as well as a business, and from where they want to be rather than from an idea — and
+> it moves progress and tasks (build order item 9 below) to the front. Where the two pages overlap
+> (the front door, the questions, progress, tasks), future-cockpit.md is newer. The people below,
+> the Lens, figures and the desktop app are unchanged.
+
 The method: start from the people, not the features. For each kind of person the page says
 what they do in DotAmi, what DotAmi needs to know, where that comes from, and what is kept.
 The back-end plan at the end is what those people add up to.

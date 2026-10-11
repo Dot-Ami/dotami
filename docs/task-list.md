@@ -16,9 +16,71 @@ English. A story is done when its tasks are ticked **and** its edge cases have t
 need a maintainer's decision first (⏸); those are marked.
 
 **Order:** the desktop app → your figures → the Lens → the questionnaire and planning. The map's
-content and the project itself run alongside everything.
+content and the project itself run alongside everything. **Changed 2026-10-11:** the future
+cockpit (§ 14) is now first, because the maintainer named it the top priority on 2026-10-10; it
+takes in the planning pieces of § 10 ([10b] progress, [10c] tasks) and starts § 11's roadmaps as
+data. Its design: [architecture/future-cockpit.md](architecture/future-cockpit.md).
 
 ---
+
+## 14 — Look inside your future (the future cockpit) · first priority since 2026-10-10
+
+A person starts from where they want to be, in their own words, picks one business or career to look
+inside, and sees its whole road at once: every step, the skills it needs, the official fees and the
+blank cost lines they price themselves. The cockpit is where they plan it and then do it. The design
+and the maintainer's six decisions of 2026-10-11:
+[architecture/future-cockpit.md](architecture/future-cockpit.md).
+
+- 🔄 **[14a] Phase 1 — Look inside one future (Alberta).** About two calendar weeks.
+  - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
+  - [ ] Fixes carried in: the uncited $80,000 incorporation trigger off the map (the step becomes
+    *Incorporating*, cited facts only, and lights from your own pick and your own "I'd incorporate at
+    $___"; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure
+    too, and a test keeps it off); federal and Alberta incorporation side by side for you to pick; the
+    GST/HST card quoting the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
+    type at the start saved, dated and word for word
+  - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
+    and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
+    Alberta*
+  - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
+    step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
+    kinds of number you agree to (income you want, kept once for you rather than on one future;
+    savings for starting; a start-up cost line); listed and deletable on *What DotAmi knows about you*
+  - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
+    steps now say needs 0 more"), worked out by running the rules before and after
+  - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);
+    *What you've told DotAmi / Not told yet*; the Road, Skills, Money and Rules & tax overlays; the
+    step panel with its *done when* checklist, skill marks and three kinds of cost; *Next on your
+    road*; the what-if bar; compare the two endings and *This is mine*; the export gains all of it
+  - [ ] The way in: three doors on the front page, *Your destination* (four short questions, a receipt
+    after each), *Pick a future*, and *Your ideas* renamed *Your futures*
+  - [ ] The first written future, *From apprentice to your own shop (Alberta)*: steps read from
+    Alberta's current trade pages, every *done when* line cited to its step's official page, official
+    fees, cost-line names, legal requirements
+  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*
+  - [ ] *Show me an example first*: a filled-in, clearly invented example future
+  - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
+    skill → price a line → what-if → compare → *This is mine*
+  - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's
+    Alberta road, for the maintainer to click through
+- ⬜ **[14b] Phase 2 — Compare futures, dates and your dream numbers.** A second written future; a
+  shelf of *Possible futures* (business, career, side gig) with *Peek inside*: what the work looks like
+  running, the road, skills, costs to start, and your own numbers beside it with no verdict; *Side by
+  side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
+  a what-if; a time strip from your own dates; hours you want, things you won't do, and a dream-life
+  list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
+  planned cost. Before this phase is locked, the maintainer is asked again whether to show typical
+  numbers beside the official fees and your own quotes (the approved plan's follow-up to decision 2).
+- ⏸ **[14c] Phase 3 — The Lens helps, on your own model.** Waits on § 9. Your résumé read where it
+  sits, proposing skill marks that quote the line they came from, for you to tick; *Ask the Lens* on a
+  step, its drafts tagged "drafted by your model, not from DotAmi's sources"; it never writes into your
+  own words; where to find a licensed professional for steps that need one.
+- ⬜ **[14d] Phase 4 — More futures, more places.** More businesses and careers; B.C. and Ontario
+  versions; futures written by contributors, one cited file per step, through a checker that refuses an
+  uncited step.
+- ⬜ **[14e] Built to change.** Roads, overlays and questions kept as data the screens read, so the
+  layout can change as the cockpit grows without rewriting the rules; each phase reviewed with the
+  maintainer before the next is locked.
 
 ## 7 — The desktop app (one download, everything on your computer)
 
@@ -320,8 +382,10 @@ roadmap's build order.
   - [ ] "I don't know" always allowed
   - [ ] Asked in the order a professional would
   - [ ] A test that every path ends somewhere
-- ⬜ **[10b] Progress per step** — done · doing · not for me · roadmap §2 · #43
-- ⬜ **[10c] Tasks and questions per step** · roadmap §3 · #44
+- ⬜ **[10b] Progress per step** — done · doing · not for me · roadmap §2 · #43 (2026-10-11: built as
+  part of [14a], in the cockpit)
+- ⬜ **[10c] Tasks and questions per step** · roadmap §3 · #44 (2026-10-11: each step's *done when*
+  checklist is built in [14a]; the questions per step come later)
 - ⬜ **[10d] Deadlines and reminders** — cited, with a reminder before each.
 - ⬜ **[10e] The accountant package** — one export of the map, confirmed figures, open questions · extends #41
 - 🔄 **[10f] Look inside your future** (the maintainer's plan of 2026-10-11) — start from where you want to
@@ -350,6 +414,7 @@ roadmap's build order.
 ## 11 — The map's content: the tools, tactics and tricks
 
 - ⬜ **[11a] Roadmaps as data** — one file per step; a checker refuses a step with no source · roadmap §1 · #42
+  (2026-10-11: the road type in [14a] is the first part; the contributor files and the checker are [14d])
 - ⬜ **[11b] Check sources against the law's own words** — a model quotes, code checks the quote
   appears word for word in the official text, a person decides.
 - ⬜ **[11c] Flag stale sources automatically** — with #37
@@ -438,3 +503,57 @@ roadmap's build order.
   - [ ] **Tested:** a browser test covers its main path and edge cases
   - Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't name them).
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
+
+## 15 — Real examples: how real people started (later)
+
+There are endless ways to start something. Besides the official road, people want to see how real
+people actually began — often with very little — so they can find a way to start soon. This is a
+library of those stories, each one cited and labelled, kept apart from the official rules. Recorded
+2026-10-11 at the maintainer's request; not started.
+
+- ⬜ **[15a] What one real example is.** One business a real person started: what it was, what it took
+  in their own words (money, skills, tools, time), where and when, the link to where they said it (a
+  video, an article, a testimonial) and the day it was read. Shown labelled "a real example of what one
+  person says they did — not advice, not a promise". A new kind of source, with its own section in
+  [CONTRIBUTING.md](../CONTRIBUTING.md) before the first entry.
+- ⬜ **[15b] The AI answers from the library, with links.** When the Lens suggests a way to start, it
+  looks the examples up and quotes them with their links, so every suggestion points at a real source.
+  A test that every answer cites an example or an official page. How the AI learns from the library is
+  for the maintainer to confirm (he raised training or fine-tuning it on 2026-10-11). The recommended
+  way is looking the examples up rather than training them into a model, because a trained model
+  can't point back to the source it learned from and could blend stories into something nobody did.
+- ⬜ **[15c] Finding examples.** A search proposes candidate stories from public articles, videos and
+  testimonials; a person (or the creator) checks each one before it enters the library.
+- ⬜ **[15d] Creators as contributors.** People who already show others how to start businesses can add
+  or approve their own entries, credited and linked back, through a simple submission form or GitHub.
+- ⬜ **[15e] Permissions.** Beyond a link and a short quote, using someone's video or article needs their
+  permission; the terms are checked by a professional before anything more is republished.
+- ⬜ **[15f] "What I have right now."** You say what you could put in (money you have on hand, skills,
+  tools, time). Every future and example stays listed; you can sort them by one thing you pick
+  ("lowest start-up money", "could start this month") or turn on a filter for ones that started with
+  means like yours, said on screen and cleared with one click. DotAmi never narrows the list on its
+  own. What you type stays yours.
+
+## 16 — Your own test results (later)
+
+Recorded 2026-10-11 at the maintainer's request; not started.
+
+- ⬜ **[16a] Bring in a test result.** Import (and export again) the results of an IQ or personality test
+  you took elsewhere, kept as your own document, dated and exactly as given; shown, exported and deleted
+  like everything else.
+- ⬜ **[16b] You choose what it may inform.** For each result: "may the Lens use this when suggesting
+  futures?" DotAmi never turns it into a type or label of you, and anything suggested from it is a
+  proposal you tick.
+
+## 17 — DotAmi gets better over time (later)
+
+Recorded 2026-10-11 at the maintainer's request; not started. Today everything stays on each person's
+computer and DotAmi runs no server.
+
+- ⬜ **[17a] What gets better, and how we know.** Which parts improve with use (the examples library's
+  coverage, the questions, the suggestions), measured against the test set ([9c]).
+- ⬜ **[17b] Keeping the library clean.** Duplicates merged, sources and dates checked, examples and
+  roads filed, so the library stays trustworthy as it grows.
+- ⏸ **[17c] Learning from many people — only if each person says yes.** Nothing is pooled unless the
+  person agrees (off unless they say yes, as decided for usage sharing in [13f]); it needs anonymising,
+  a place for it to go, and the privacy policy and terms first ([13f]).

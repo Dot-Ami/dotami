@@ -196,3 +196,7 @@ usage reports; never call `next` or `prisma` directly in a `package.json` script
   the file, same commit.
 - Catalog conventions: `docs/engines/README.md` and `docs/engines/<engine>.md`.
 - Architecture: `docs/architecture/`. The rules engine: `docs/brain/`.
+- The future cockpit (the top priority since 2026-10-10: the journey from where a person wants to
+  be, the cockpit's job, regions and overlays, the road data model and its storage, and the
+  maintainer's six decisions of 2026-10-11): `docs/architecture/future-cockpit.md`. Read it before
+  changing the front door, the intake, the cockpit, *Your ideas* or the CFE map.

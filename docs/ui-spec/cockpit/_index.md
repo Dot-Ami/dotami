@@ -1,6 +1,10 @@
 # Cockpit shell + Plan tab — page overview
 
-> **S2.5.4h (2026-09-14) — removed.** Track/Compare tabs, the Lens panel, the projection footer, header fork chips, Focus / ? / Graph-language controls and the `?sample=` labeled examples are gone; `← Back` goes to `/intake`; with no saved venture the cockpit shows an empty state pointing at the intake. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
+> **S2.5.4h (2026-09-14) — removed.** Track/Compare tabs, the Lens panel, the projection footer, header fork chips, Focus / ? / Graph-language controls and the `?sample=` labeled examples are gone; with no saved venture the cockpit shows an empty state pointing at the intake. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
+>
+> **Corrected 2026-10-11 — the back links.** This banner said "`← Back` goes to `/intake`". The shipped cockpit (read in `components/cockpit/cockpit-page.tsx` on 2026-10-11) has no such link: the header's link is **"← Ideas"**, to `/ventures`, and the empty state's link is **"← Back"**, to `/`. The empty state's two buttons go to `/intake` and `/ventures`.
+>
+> **Changed 2026-10-11 — the cockpit's job, and planning.** The maintainer's decision of 2026-10-11 gives the cockpit one job: *"the cockpit shows one future you're considering, whole, and is where you work through it."* Planning and doing both happen in the cockpit. The July plan of a separate Track tab for progress (surface 8 below, cut on 2026-09-14) is retired for good, not waiting to come back. The new regions (destination bar and gauges, overlays, the told / not-told list, *Next on your road*, Compare) are designed in [docs/architecture/future-cockpit.md](../../architecture/future-cockpit.md) § 2; each gets its control file here in the pull request that builds it.
 
 Last updated: 2026-07-05 (page-mechanics workshop, surface 6/11 — verified against shipped code)
 
