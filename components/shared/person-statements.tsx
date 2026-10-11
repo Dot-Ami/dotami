@@ -1,7 +1,7 @@
 "use client";
 
 import { Pill } from "@/components/ui";
-import { sortStatementsNewestFirst, STATEMENT_MAX_CHARS, type PersonStatement } from "@/lib/person/types";
+import { sortStatementsNewestFirst, STATEMENT_MAX_CHARS, statementSourceLabel, type PersonStatement } from "@/lib/person/types";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -48,11 +48,6 @@ function writeUnsaved(items: PersonStatement[]) {
 /** The person's LOCAL calendar day — `toISOString()` is UTC and reads as tomorrow in the evening anywhere west of UTC. */
 function todayIso(): string {
   return new Date().toLocaleDateString("en-CA"); // en-CA formats as YYYY-MM-DD
-}
-
-function sourceLabel(s: PersonStatement): string {
-  if (s.source === "vault") return `vault · ${s.sourceRef}`;
-  return s.persisted === false ? "typed · not saved" : "typed here";
 }
 
 export function PersonStatements({ variant = "full" }: { variant?: "full" | "rail" }) {
@@ -227,7 +222,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                       s.persisted === false ? "text-amber" : "text-stone-dim"
                     }`}
                   >
-                    {sourceLabel(s)}
+                    {statementSourceLabel(s)}
                   </span>
                   {s.body ? (
                     <button

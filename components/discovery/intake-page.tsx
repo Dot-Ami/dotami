@@ -9,9 +9,9 @@ import type { UnlockItem } from "@/lib/brain";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { saveScenario } from "@/lib/journey/save-scenario";
-import { firstSaveFromIntake } from "@/lib/journey/first-save";
+import { afterFirstSave, firstSaveFromIntake } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
-import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
+import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import {
   FULL_COVERAGE_PROVINCES,
@@ -188,9 +188,12 @@ export function IntakePage() {
     // the cockpit rail. Fail-soft — with no database the tab copy still opens and the cockpit
     // says so on its own save line.
     setOpening(true);
-    // This first save also keeps the sentence the person typed, word for word with its day, and their
-    // goal picks, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them.
-    await saveScenario(scenario, firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA")));
+    // This first save also keeps the sentence the person typed, word for word with its day, and the goal
+    // chips, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them, and once
+    // a save has kept the sentence this tab never sends it again: the next "Open my map" is a new idea.
+    const sent = firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA"));
+    const saved = await saveScenario(scenario, sent);
+    setIntake((prev) => afterFirstSave(prev, sent, saved));
     router.push("/cockpit");
   }
 
@@ -567,7 +570,7 @@ function ConfirmEmptyState({
           }}
           placeholder="Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
           rows={3}
-          // The most a statement holds, so the sentence saved with the idea is always the whole one.
+          // The most a statement holds; the browser drops anything past it, so a note says so below.
           maxLength={STATEMENT_MAX_CHARS}
           className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
         />
@@ -577,6 +580,11 @@ function ConfirmEmptyState({
           </Pill>
         </div>
       </div>
+      {freeText.length >= STATEMENT_MAX_CHARS ? (
+        <p role="status" className="text-[12px] text-amber">
+          {STATEMENT_FULL_NOTE}
+        </p>
+      ) : null}
     </>
   );
 }

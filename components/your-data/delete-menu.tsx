@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
+import { afterStatementsDeleted } from "@/lib/journey/first-save";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
 
@@ -87,7 +88,7 @@ const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  */
 export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, retention, desktop, wipePending, setAsideWarning }: DeleteMenuProps) {
   const router = useRouter();
-  const { resetJourney } = useJourney();
+  const { resetJourney, setIntake } = useJourney();
   const panelId = useId();
   const [step, setStep] = useState<Step>("closed");
   const [ticked, setTicked] = useState<DeleteKindId[]>([]);
@@ -142,6 +143,9 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
     setOutcome({ deleted: body.deleted, left: body.left, kept: body.kept, wiped: body.wiped, receiptFiles: body.receiptFiles });
     // The intake in progress can still hold a deleted idea; a Save on the map would bring it back.
     if (ticked.includes("ideas")) resetJourney();
+    // The sentence typed on the front door may still sit in this tab's draft: once the statements are
+    // deleted, a later "Open my map" must not write it back (lib/journey/first-save.ts).
+    else if (ticked.includes("statements")) setIntake(afterStatementsDeleted);
     setTicked([]);
     setStep("done");
     router.refresh();

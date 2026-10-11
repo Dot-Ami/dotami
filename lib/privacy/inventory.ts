@@ -219,7 +219,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals you picked, how far along it is, and your notes on it.",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it.",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -548,7 +548,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence and the goals you picked are also saved with the idea in the data file.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file.",
     lasts: "Until this window or tab closes.",
   },
   {

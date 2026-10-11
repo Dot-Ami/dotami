@@ -2,7 +2,7 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-10-11 (the sentence is saved with the idea, dated and word for word; the box takes up to 2,000 characters)
+Last updated: 2026-10-11 (the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
 
 ## What it is
 
@@ -12,8 +12,11 @@ control exists to help fill or bypass this one.
 ## What it does (behavior on interact)
 
 - Typing updates local `text` state only. The box takes up to 2,000 characters (`maxLength`,
-  `STATEMENT_MAX_CHARS`), the most a statement can hold, so what is saved is always the whole
-  sentence, never a cut one.
+  `STATEMENT_MAX_CHARS`), the most a statement can hold. The browser drops anything typed or
+  pasted past that, so once the box is full an amber line under it says so (`STATEMENT_FULL_NOTE`:
+  "That's the most this box holds: 2,000 characters. Anything typed or pasted past that wasn't
+  taken, so check the end of your text."). The intake's own "What are you building?" box does the
+  same.
 - Submit via click on `Map it →` or ⌘/Ctrl+Enter. Button disabled while `text` is empty or
   a request is in flight (`parsing`, label swaps to "Reading…").
 - On submit (`handleMapIt`):
@@ -37,6 +40,7 @@ translate it, but never decide for them — Screen A is where they confirm.
 
 `intake.ventureType`, `intake.activityTags`, `intake.goals`, `intake.province`,
 `intake.capitalPurchasePlanned`, `intake.manualEntry`, `intake.manualEntrySaidAt`,
+`intake.manualEntryDone` (cleared: a new sentence isn't kept with any idea yet),
 `intake.description`, `intake.intentParse`.
 
 ## Data source
@@ -51,17 +55,33 @@ browser-tab-scoped, no server log. Since 2026-10-11 the sentence is also **saved
 when the intake's "Open my map →" first saves the idea (`POST /api/scenario/save` with
 `firstWords: { text, saidAt }` and `goals`), the sentence becomes one dated statement in the
 person's own words (`PersonStatement`, linked to the idea by a nullable `ventureId`), and the goal
-picks go on the idea (`Venture.goals`). Until then they lived only in the tab and were lost when it
-closed.
+chips as they stand on the intake go on the idea (`Venture.goals`). Until then they lived only in the
+tab and were lost when it closed.
 
 Why a statement and not a column on the idea: a statement already is "the person's words, dated,
 never edited" — the store the charter names for them. So it is listed on What DotAmi knows under
 "Your statements" and deleted with them, with no new kind of data to explain, and the venture card
 reads it back through the link. Deleting the idea keeps the statement (the link is cleared,
-`onDelete: SetNull`), like every other statement; deleting "Your statements" takes it. Written
-once: only the save that creates the idea carries it, so a later save of the same idea (the
-cockpit's autosave) can never write it again, even after the person deleted it. A save that fails
-(no database) loses it, as it loses the idea; the cockpit's save line says the save failed.
+`onDelete: SetNull`), like every other statement; deleting "Your statements" takes it.
 
-The goals are picks, not words, so they belong to the idea (deleted with "Your ideas").
+Written once per sentence typed, in two places (`lib/journey/first-save.ts`):
+
+- **The server** writes it only when the save creates the idea, so a later save of the same idea
+  (the cockpit's autosave) can never write it again.
+- **The tab** sends it only while it isn't done. Every "Open my map →" makes a new idea (a new
+  scenario id), for instance after "Edit venture profile" on the map leads back through the intake,
+  so the server's rule alone would copy the sentence onto every new idea and write back one the
+  person deleted. The draft's `manualEntryDone` is set once a save that carried the sentence
+  succeeds (`afterFirstSave`), and when Delete on `/your-data` removes "Your statements" from this
+  tab (`afterStatementsDeleted`; "Your ideas" resets the whole draft already). A done sentence
+  stays in the draft, so the intake still shows it, but is never sent again. A new sentence typed
+  here or in the intake's box clears the mark and goes with the next idea.
+
+A save that fails (no database) leaves the sentence not done, so the next "Open my map →" from
+this tab can still keep it; the cockpit's save line says the save failed. Another tab open at the
+time of a Delete keeps its own draft: it writes its sentence only if no save there had kept it yet.
+
+The goals are chips, not words, so they belong to the idea (deleted with "Your ideas") and go with
+every new idea as they stand. Some can be marked by the parser from the sentence (step 3 above) and
+confirmed on Screen A, so the idea's card reads "Goals marked on the intake", not "you picked".
 Neither feeds the map: the cockpit's rules still don't read goals (`lib/scenarios/evaluation-profile.ts`).

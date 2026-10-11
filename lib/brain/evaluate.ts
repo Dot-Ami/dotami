@@ -58,7 +58,11 @@ const STRUCTURE_RUNG: Record<StructureEntityType, number> = {
   "family-trust": 4,
 };
 
-/** Revenue within this fraction of a threshold counts as "approaching it". */
+/**
+ * Revenue within this fraction of a threshold counts as "approaching it". No cited page sets 70%: it is
+ * a known uncited watch line, kept until the GST/HST card rework uses only the CRA's own test
+ * (docs/engines/cfe.md, authoring rule 2).
+ */
 const THRESHOLD_WATCH_RATIO = 0.7;
 
 export function buildEvaluationProfile(intake: IntakeDraft): EvaluationProfile {
@@ -496,7 +500,8 @@ function computeNodeStates(
   // 2026-10-11 a third-year SALES estimate of $80,000 turned it green: a net-income heuristic with no
   // source (docs/engines/cfe.md, authoring rule 2).
   states["stage-3a-incorporation-80k-net"] = incPick === "stage-3a-incorporation-80k-net" ? "yellow" : "gray";
-  // Liability / SR&ED (stage-3b) still reads a fact the person stated: their activity tags.
+  // Liability / SR&ED (stage-3b) reads the activity tags (confirmed on the intake, often marked by the
+  // parser from the sentence), not a liability or SR&ED need the person stated: an open item (docs/task-list.md [10f]).
   const sredPath = "stage-3b-incorporation-liability-sred";
   if (incPick === sredPath) {
     states[sredPath] = rdTags ? "green" : "yellow";

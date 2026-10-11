@@ -15,9 +15,12 @@ Seed research (maintainers' notes, 2026-07-01) locked the gating logic:
 - **Rungs are gated by triggers, not ambition.** First revenue dollar unlocks Sole Prop;
   taxable supplies over $30,000 (the CRA's small-supplier test) force the GST decision;
   incorporating is the person's own call — DotAmi sets no income at which it becomes "worth
-  modeling" (an uncited "~$80K net income" line was removed on 2026-10-11), while
-  liability/SR&ED needs are facts the person states; Holdco protects *existing* profits; Trust
-  handles succession/income-splitting.
+  modeling" (an uncited "~$80K net income" line was removed on 2026-10-11). The
+  liability/SR&ED stage reads no stated need: it lights from the idea's activity tags (Software /
+  SaaS, Manufacturing or AI / ML / R&D), which the intake's parser can mark from the sentence and
+  the person confirms on the intake. That tag-means-SR&ED reading is an open item for the cockpit
+  build (docs/task-list.md, [10f]). Holdco protects *existing* profits; Trust handles
+  succession/income-splitting.
 - **Skipping rungs doesn't solve spending problems.** Holdco/Trust do not make equipment
   affordable and don't add liability protection beyond what basic incorporation provides.
   A profile with a small capital purchase and no retained earnings should *never* see

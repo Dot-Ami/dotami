@@ -353,9 +353,11 @@ function VentureCard({
 
 /**
  * What the person said when they started this idea (2026-10-11): the sentence they typed on the front
- * door, word for word in quotation marks with the day they typed it, and the goals they picked on the
- * intake, under the chips' own names. Shown, never edited or summarised: a newer statement is how the
- * person changes what they said. Nothing on the map reads either.
+ * door, word for word in quotation marks with the day they typed it, and the goal chips as they stood on
+ * the intake when the map opened, under the chips' own names. Some chips can be marked from the sentence
+ * and confirmed on the intake's "Did we get this right?", so the line doesn't say "you picked".
+ * Shown, never edited or summarised. Nothing can change the sentence yet; "Your statements" on What
+ * DotAmi knows removes it. Nothing on the map reads either.
  */
 function FirstWords({ venture }: { venture: VentureSummary }) {
   const goals = venture.goals.filter((g): g is IntakeGoalId => g in INTAKE_GOAL_LABELS).map((g) => INTAKE_GOAL_LABELS[g]);
@@ -371,7 +373,7 @@ function FirstWords({ venture }: { venture: VentureSummary }) {
           </p>
         </>
       ) : null}
-      {goals.length > 0 ? <p className="mt-1.5 text-[11px] text-stone">Goals you picked: {goals.join(" · ")}</p> : null}
+      {goals.length > 0 ? <p className="mt-1.5 text-[11px] text-stone">Goals marked on the intake: {goals.join(" · ")}</p> : null}
     </div>
   );
 }

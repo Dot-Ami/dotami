@@ -60,6 +60,8 @@ export function applyIntentToDraft(
     capitalPurchasePlanned: draft.capitalPurchasePlanned || result.capitalPurchasePlanned,
     manualEntry: originalText,
     manualEntrySaidAt: typedOn ?? draft.manualEntrySaidAt,
+    // A sentence just typed hasn't been kept with any idea yet.
+    manualEntryDone: false,
     description: originalText,
     intentParse: result,
   };

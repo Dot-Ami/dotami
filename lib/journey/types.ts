@@ -45,6 +45,13 @@ export interface IntakeDraft {
   manualEntry?: string;
   /** The person's own calendar day (YYYY-MM-DD) they typed it; saved with it when the idea is first saved. */
   manualEntrySaidAt?: string;
+  /**
+   * True once this sentence is done with: a save kept it with an idea, or the person deleted their
+   * statements since. A done sentence is never sent again, so a second "Open my map" from the same tab
+   * (a new idea each time) neither copies it nor brings back one the person deleted. A new sentence
+   * typed on the front door or in the intake's box clears it.
+   */
+  manualEntryDone?: boolean;
   /** Latest intent-parse result — Screen A renders/edits it; null once confirmed. */
   intentParse?: IntentParseResult | null;
 }

@@ -38,13 +38,20 @@ in v0 of the brain; merging the two systems is its own reviewed change.
 2. **Triggers should be authored predicate-ready**: "taxable supplies over $30,000 in one
    calendar quarter or over the last four" (the CRA's own test, cited) is translatable to a
    threshold; "when it feels right" is not. Vague triggers block the brain.
-   **A number on a node comes from a page the node cites.** DotAmi never picks a point of its
-   own (a revenue at which to incorporate, a "planning trigger"): where no official page sets
-   one, the choice is the person's, the node says so in its trigger, and it stays amber
-   (check first) instead of lighting from an amount. Removed on 2026-10-11: "Incorporation at
-   $80K net", whose $80,000 was a heuristic with no source and was compared against
-   third-year *sales*. `tests/engine-integrity.spec.ts` fails on a dollar figure in a node's
-   text that isn't one of the cited amounts it lists, or whose page the node doesn't cite.
+   **A number on a node comes from a page the node cites.** DotAmi doesn't pick a point of its
+   own at which to take a step (a revenue at which to incorporate, a "planning trigger"): where
+   no official page sets one, the choice is the person's, the node says so in its trigger, and
+   it stays amber (check first) instead of lighting from an amount. Removed on 2026-10-11:
+   "Incorporation at $80K net", whose $80,000 was a heuristic with no source and was compared
+   against third-year *sales*. `tests/engine-integrity.spec.ts` fails on a dollar figure in a
+   node's text that isn't one of the cited amounts it lists, or whose page the node doesn't cite.
+   **One known exception is left, in the evaluator, not on a node,** so that test can't see it:
+   `THRESHOLD_WATCH_RATIO` (0.7) in `lib/brain/evaluate.ts`. A first-year estimate, or a
+   complete run of confirmed quarters, at 70% of the GST/HST line or more (about $21,000) turns
+   the GST/HST card the person didn't pick from grey to amber, and makes the GST/HST compliance
+   item say the estimate is "approaching" the line. No cited page sets that 70%. It predates this
+   rule and goes in the GST/HST card rework, where the card uses only the CRA's own test
+   (docs/task-list.md, [10f]); until then it is an uncited watch line, not a rule.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes
    without maintainer approval.
 4. `financialImpact.projectionNotes` feed the modeling footer — numbers there must agree
