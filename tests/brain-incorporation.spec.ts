@@ -69,7 +69,8 @@ describe("Incorporating — no amount DotAmi chose lights it", () => {
     // Nothing on it, the other incorporation card or the toggle mentions the old line.
     const other = cfeCatalogV2026.nodes.find((n) => n.id === LIABILITY_SRED)!;
     const toggle = branchDecisions.find((d) => d.id === "incorporationTiming")!;
-    const words = JSON.stringify([node, other, toggle]);
+    // The id itself keeps "80k" (ids are forever), so it is taken out before reading the words.
+    const words = JSON.stringify([node, other, toggle]).replaceAll(INCORPORATING, "");
     expect(words).not.toMatch(/80\s?K|80,000|80000|heuristic/i);
     expect(toggle.options.map((o) => o.label)).toEqual(["When you decide", "Liability / SR&ED"]);
   });

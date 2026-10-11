@@ -37,6 +37,34 @@ person is asked).
 
 ## [Unreleased]
 
+### What DotAmi keeps, and where
+
+- **The sentence typed on the front door, and the goal picks, are kept with the idea (2026-10-11).**
+  Until now both lived only in the browser tab (`dotami-journey-v3` in sessionStorage) and went when it
+  closed. When the intake first saves an idea, the sentence becomes one of the person's statements
+  (`PersonStatement`), word for word, dated the day they typed it in their own calendar, with a new
+  optional link to the idea (`PersonStatement.ventureId`); the goal chips they picked go on the idea
+  (`Venture.goals`, a list of the four chip ids). Written once, by that save only
+  ([`lib/db/ensure-venture-from-scenario.ts`](../lib/db/ensure-venture-from-scenario.ts)); later saves of
+  the idea never write either again. Shown back on the idea's card; neither feeds any rule. The migration is
+  two plain column additions ([`prisma/migrations/20261011120000_first_words`](../prisma/migrations/20261011120000_first_words/migration.sql)).
+  Nothing about what leaves the computer changes: the sentence was already sent to the intake's parser
+  as before (only when a model key is set), and is now also kept in the data file.
+
+### How to remove it
+
+- **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
+  statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
+  ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements
+  attached to them: N (they stay, as “not tied to an idea”)",
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). **The goal picks** are part of
+  the idea and go with "Your ideas". Neither can be removed one by one, like every statement.
+
+### What the policy will need to say
+
+- The words a person types on the front door to describe an idea are kept in the data file, with the day
+  they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
+
 ---
 
 ## [0.3.0] — 2026-10-10

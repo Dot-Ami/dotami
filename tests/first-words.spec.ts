@@ -21,7 +21,7 @@ import { listVentures } from "@/lib/db/ventures";
 import { applyIntentToDraft } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { firstSaveFromIntake } from "@/lib/journey/first-save";
-import { defaultIntakeDraft } from "@/lib/journey/types";
+import { defaultIntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
 import { listTypedStatements } from "@/lib/person/statements";
 import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { recomputeScenarioState, defaultActiveBranches } from "@/lib/scenarios/branches";
@@ -120,7 +120,7 @@ describe("saved with the idea (SQLite)", () => {
     };
   }
 
-  const FIRST = { firstWords: { text: SENTENCE, saidAt: "2026-10-09" }, goals: ["write-offs", "replace-income"] as string[] };
+  const FIRST = { firstWords: { text: SENTENCE, saidAt: "2026-10-09" }, goals: ["write-offs", "replace-income"] as IntakeGoalId[] };
 
   it("keeps the sentence as one dated statement linked to the idea, and the goals on the idea", async () => {
     const { ventureId } = await ensureVentureFromScenario(prisma, idea(), FIRST);

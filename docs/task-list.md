@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-09. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-11. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -324,6 +324,23 @@ roadmap's build order.
 - ⬜ **[10c] Tasks and questions per step** · roadmap §3 · #44
 - ⬜ **[10d] Deadlines and reminders** — cited, with a reminder before each.
 - ⬜ **[10e] The accountant package** — one export of the map, confirmed figures, open questions · extends #41
+- 🔄 **[10f] Look inside your future** (the maintainer's plan of 2026-10-11) — start from where you want to
+  be, in your own words; pick one business or career; see its whole road at once: every step, the skills it
+  needs, the official fees and the blank cost lines for your own quotes. The first written future is "From
+  apprentice to your own shop (Alberta)"; the cockpit becomes one map with layers you switch on.
+  - [x] Three fixes first: no invented point to incorporate (the stage is now "Incorporating"); the map's
+    colours follow your own picks; the sentence typed on the front door is kept with the idea, dated and
+    word for word, with the goal picks
+  - [ ] Federal and Alberta incorporation side by side, from their official pages, and your own "I'd
+    incorporate at $___"
+  - [ ] The GST/HST card worded with the CRA's exact test, quoted from the cited page
+  - [ ] A road any future can use; the map draws any road; today's map becomes "Starting any business in
+    Alberta"
+  - [ ] Skill marks, step progress, your target date and cost lines, kept on your computer
+  - [ ] The front door's three doors, Your destination, Pick a future
+  - [ ] The first written future, every step's "done when" written from its official page and cited
+  - [ ] The government's skills list for the job you pick (Open Government Licence – Canada)
+  - [ ] A browser test for the whole path
 
 ## 11 — The map's content: the tools, tactics and tricks
 

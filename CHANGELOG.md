@@ -8,6 +8,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
+  **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
+  the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point
+  to incorporate; the person does, and the card says so: "DotAmi doesn't pick a point to incorporate.
+  You do, with your accountant or lawyer." It is amber (check first) while it is the person's pick and
+  grey when they picked the other option, whatever their estimates. Its detail keeps only cited facts
+  (the CRA's corporation page, the T2 guide's $500,000 business limit). The Incorporation timing toggle
+  reads **When you decide** / **Liability / SR&ED**; Retained earnings planning lights only for an idea
+  the person said is a corporation. The node's id is unchanged, so saved ideas keep their picks. A test
+  now fails on any dollar figure on the map that isn't one a cited page sets
+  ([`tests/engine-integrity.spec.ts`](tests/engine-integrity.spec.ts); docs/engines/cfe.md).
+- **Stage cards say their colour in words** to a screen reader ("applies as answered", "check first",
+  "doesn't apply as answered"), so the colour is never the only way to tell.
+
+### Fixed
+- **The map's colours follow your own picks.** The cockpit ran the rules on the default GST and
+  incorporation picks, so flipping **GST timing** or **Incorporation timing** moved the chips but not the
+  card colours. It now runs them on the idea's own picks, through one function the readout API uses too
+  ([`lib/scenarios/evaluate-scenario.ts`](lib/scenarios/evaluate-scenario.ts)); a test refuses any other
+  way of colouring a saved idea's map.
+- **The sentence you type on the front door is kept.** It, and the goals picked on the intake, lived only
+  in the browser tab and were lost when it closed. When the map first opens, the sentence is saved with the
+  idea, word for word and dated the day you typed it, as one of your statements, and the goal picks on the
+  idea; the idea's card shows both under "In your words". It is listed and deleted with "Your statements"
+  on What DotAmi knows about you; deleting the idea keeps it, tied to no idea. The front door's box takes up
+  to 2,000 characters, the most a statement holds. One hand-written migration adds the two columns
+  (`prisma/migrations/20261011120000_first_words`).
+
 ## [0.3.0] — 2026-10-10
 
 Your data file can be locked to your Windows account (asked first, can be turned off), backups take

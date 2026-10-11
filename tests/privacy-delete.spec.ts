@@ -488,14 +488,16 @@ describe("deleteData", () => {
     await unattachedExpense(prisma);
     const kinds = ["ideas", "expenses"];
     const seen = await seenFor(prisma, kinds);
-    // The expense records are counted whole, once, and no "kept" count is asked for. Their receipts
-    // (none here) go with them.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 });
+    // The expense records are counted whole, once, and no "kept" count is asked for them. Their receipts
+    // (none here) go with them. Statements aren't ticked, so the ones typed for an idea (none here,
+    // 2026-10-11) are still counted as kept.
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
       deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 },
       left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0, Receipt: 0 },
+      kept: { PersonStatement: { unlinked: 0, total: 2 } },
       wiped: true,
     });
   });

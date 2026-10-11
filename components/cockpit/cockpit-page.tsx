@@ -11,7 +11,7 @@ import { FigureReminderBanners } from "@/components/ventures/figure-reminder-ban
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
-import { evaluateProfile, type ConfirmedFigure } from "@/lib/brain";
+import type { ConfirmedFigure } from "@/lib/brain";
 import type { FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import { itemsForNode } from "@/lib/brain/node-items";
@@ -24,7 +24,7 @@ import {
   updateScenarioBranch,
   type BranchDecision,
 } from "@/lib/scenarios/branches";
-import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-profile";
+import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
 import Link from "next/link";
 
@@ -141,15 +141,14 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     };
   }, [scenarioId]);
 
-  // S2.5.4e: the cockpit runs the same evaluator the intake preview runs — on this scenario.
+  // S2.5.4e: the cockpit runs the same evaluator the intake preview runs — on this scenario, with
+  // the person's own GST and incorporation picks (until 2026-10-11 it ran on the default picks, so a
+  // flipped toggle didn't recolour the cards).
   // [8e] Today is the person's own day and moves on with the clock: a window left open past
   // midnight or a quarter end re-reads the figures against the new day instead of the old one.
   const today = useLocalToday();
   const evaluation = useMemo(
-    () =>
-      currentScenario
-        ? evaluateProfile(buildEvaluationProfileFromScenario(currentScenario), { today, figures: confirmedFigures })
-        : null,
+    () => (currentScenario ? evaluateScenario(currentScenario, { today, figures: confirmedFigures }) : null),
     [currentScenario, today, confirmedFigures],
   );
   const nodeItems = useMemo(

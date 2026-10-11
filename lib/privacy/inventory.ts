@@ -211,15 +211,15 @@ export const TABLES: readonly TableEntry[] = [
     model: "PersonStatement",
     name: "Your statements",
     holds:
-      "Things you told DotAmi about yourself, word for word, each with the day you say you said it. They are never summarised or used to rank anything.",
+      "Things you told DotAmi about yourself, word for word, each with the day you say you said it, and the sentence you typed on the front door for each idea, word for word, with the day you typed it and the idea it was for. They are never summarised or used to rank anything.",
     removedBy:
-      "Delete, at the bottom of this page, with “Your statements” ticked: all of them at once, wiped from the file. Nothing removes one by itself, by design: a newer statement beats an older one by its date, and old ones are never edited away.",
+      "Delete, at the bottom of this page, with “Your statements” ticked: all of them at once, wiped from the file. Nothing removes one by itself, by design: a newer statement beats an older one by its date, and old ones are never edited away. Deleting your ideas keeps the sentences typed for them here, tied to no idea.",
   },
   {
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags you picked, how far along it is, and your notes on it.",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals you picked, how far along it is, and your notes on it.",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -368,11 +368,21 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
         whereAndHow:
           "They are kept in DotAmi's data file on this computer: this page counts them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”, where you can attach them to another idea. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too. DotAmi can't delete a single record yet.",
       },
+      {
+        // The sentence typed on the front door for an idea is one of the person's statements; their
+        // words outlive the idea, like every other statement (2026-10-11).
+        model: "PersonStatement",
+        field: "ventureId",
+        one: "statement",
+        becomes: "not tied to an idea",
+        whereAndHow:
+          "These are the sentences you typed on the front door for these ideas. They are your words, so they stay among your statements in DotAmi's data file on this computer, and this page counts them under “Your statements”. To delete them as well, tick “Your statements” too; statements go all at once, never one by one.",
+      },
     ],
     goesWithIt:
-      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too.",
+      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too. So do the sentences you typed on the front door for them, among your statements, unless you tick “Your statements” too.",
     learnMore:
-      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, goals, stage and your notes. Its figures go with it. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them, including the sentence you typed on the front door for each idea, which stays tied to no idea. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
   },
   {
@@ -432,7 +442,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt:
       "All of them go at once. DotAmi never deletes one statement by itself: a newer statement is how you change an older one.",
     learnMore:
-      "These are the things you told DotAmi about yourself, word for word, with their dates. Nothing else uses them to decide anything, so nothing else changes, but the “In your words” panel is empty afterwards and there is no record that you said them. A statement you kept in this tab only, because it couldn't be saved, isn't in the data file and stays until the tab closes.",
+      "These are the things you told DotAmi about yourself, word for word, with their dates, and the sentence you typed on the front door for each idea. Nothing else uses them to decide anything, so nothing else changes, but the “In your words” panel is empty afterwards, your ideas' cards no longer show what you typed, and there is no record that you said them. A statement you kept in this tab only, because it couldn't be saved, isn't in the data file and stays until the tab closes.",
     built: true,
   },
   {
@@ -538,7 +548,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence and the goals you picked are also saved with the idea in the data file.",
     lasts: "Until this window or tab closes.",
   },
   {

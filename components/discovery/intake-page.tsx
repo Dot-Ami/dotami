@@ -9,7 +9,9 @@ import type { UnlockItem } from "@/lib/brain";
 import { ACTIVITY_TAXONOMY, applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { saveScenario } from "@/lib/journey/save-scenario";
-import type { IntakeDraft, IntakeGoalId } from "@/lib/journey/types";
+import { firstSaveFromIntake } from "@/lib/journey/first-save";
+import { INTAKE_GOAL_IDS, INTAKE_GOAL_LABELS, type IntakeDraft, type IntakeGoalId } from "@/lib/journey/types";
+import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import {
   FULL_COVERAGE_PROVINCES,
@@ -46,12 +48,8 @@ const VENTURE_TYPES: { id: VentureType; label: string }[] = [
   { id: "side-gig", label: "Side gig" },
 ];
 
-const GOAL_CHIPS: { id: IntakeGoalId; label: string }[] = [
-  { id: "write-offs", label: "Write things off" },
-  { id: "replace-income", label: "Replace income" },
-  { id: "scale-ccpc", label: "Scale to a corporation" },
-  { id: "discover-now", label: "Show me what's available" },
-];
+// The names live in lib/journey/types.ts, so the idea's card shows the picks under the same names.
+const GOAL_CHIPS: { id: IntakeGoalId; label: string }[] = INTAKE_GOAL_IDS.map((id) => ({ id, label: INTAKE_GOAL_LABELS[id] }));
 
 const EMPLOYMENT_OPTIONS: { id: EmploymentStatus; label: string }[] = [
   { id: "employee", label: "Employed (full- or part-time)" },
@@ -133,7 +131,7 @@ export function IntakePage() {
     } catch {
       result = parseIntentFallback(trimmed);
     }
-    setIntake((prev) => applyIntentToDraft(prev, result, trimmed));
+    setIntake((prev) => applyIntentToDraft(prev, result, trimmed, new Date().toLocaleDateString("en-CA")));
     setParsing(false);
   }
 
@@ -190,7 +188,9 @@ export function IntakePage() {
     // the cockpit rail. Fail-soft — with no database the tab copy still opens and the cockpit
     // says so on its own save line.
     setOpening(true);
-    await saveScenario(scenario);
+    // This first save also keeps the sentence the person typed, word for word with its day, and their
+    // goal picks, with the idea (lib/journey/first-save.ts). Later saves of the idea never carry them.
+    await saveScenario(scenario, firstSaveFromIntake(intake, new Date().toLocaleDateString("en-CA")));
     router.push("/cockpit");
   }
 
@@ -567,6 +567,8 @@ function ConfirmEmptyState({
           }}
           placeholder="Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
           rows={3}
+          // The most a statement holds, so the sentence saved with the idea is always the whole one.
+          maxLength={STATEMENT_MAX_CHARS}
           className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
         />
         <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
