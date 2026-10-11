@@ -388,6 +388,28 @@ roadmap's build order.
   checklist is built in [14a]; the questions per step come later)
 - ⬜ **[10d] Deadlines and reminders** — cited, with a reminder before each.
 - ⬜ **[10e] The accountant package** — one export of the map, confirmed figures, open questions · extends #41
+- 🔄 **[10f] Look inside your future** (the maintainer's plan of 2026-10-11) — start from where you want to
+  be, in your own words; pick one business or career; see its whole road at once: every step, the skills it
+  needs, the official fees and the blank cost lines for your own quotes. The first written future is "From
+  apprentice to your own shop (Alberta)"; the cockpit becomes one map with layers you switch on.
+  - [x] Three fixes first: no invented point to incorporate (the stage is now "Incorporating"); the map's
+    colours follow your own picks; the sentence typed on the front door is kept with the idea, dated and
+    word for word, once, with the goal chips as they stood on the intake
+  - [ ] Federal and Alberta incorporation side by side, from their official pages, and your own "I'd
+    incorporate at $___"
+  - [ ] The GST/HST card worded with the CRA's exact test, quoted from the cited page; the uncited 70%
+    "approaching the line" watch (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) goes with it
+  - [ ] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
+    AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
+  - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"
+  - [ ] A stage card's chip says "default" until the person clicks its toggle, not "your pick"
+  - [ ] A road any future can use; the map draws any road; today's map becomes "Starting any business in
+    Alberta"
+  - [ ] Skill marks, step progress, your target date and cost lines, kept on your computer
+  - [ ] The front door's three doors, Your destination, Pick a future
+  - [ ] The first written future, every step's "done when" written from its official page and cited
+  - [ ] The government's skills list for the job you pick (Open Government Licence – Canada)
+  - [ ] A browser test for the whole path
 
 ## 11 — The map's content: the tools, tactics and tricks
 

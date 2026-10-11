@@ -1,3 +1,6 @@
+import type { FirstSave } from "@/lib/journey/first-save";
+import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
+import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
@@ -122,4 +125,33 @@ export function parseScenarioInput(data: unknown): Scenario | null {
     profile,
     state: recomputeScenarioState(activeBranches, profile.hireFirst),
   };
+}
+
+/**
+ * The extras the intake's first save of an idea carries (lib/journey/first-save.ts): the sentence typed
+ * on the front door and the goal picks. Whatever can't be kept honestly is left out, never cut or
+ * changed: a sentence that is empty, longer than a statement holds, or dated in the future (one day of
+ * slack, as the statements route allows, because the person's own day can be ahead of UTC); goals
+ * other than the intake's own chips. The cockpit's autosaves send neither, which reads as `{}`.
+ */
+export function parseFirstSave(data: unknown, now: Date): FirstSave {
+  if (!data || typeof data !== "object") return {};
+  const root = data as Record<string, unknown>;
+  const out: FirstSave = {};
+
+  const words = root.firstWords as Record<string, unknown> | undefined;
+  if (words && typeof words === "object" && typeof words.text === "string") {
+    const latestAllowed = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const { text, saidAt } = words;
+    if (text.trim().length > 0 && text.length <= STATEMENT_MAX_CHARS && isValidSaidAt(saidAt, latestAllowed)) {
+      // Word for word: the text is kept exactly as sent.
+      out.firstWords = { text, saidAt };
+    }
+  }
+
+  if (Array.isArray(root.goals)) {
+    const known = new Set<string>(INTAKE_GOAL_IDS);
+    out.goals = [...new Set(root.goals.filter((g): g is IntakeGoalId => typeof g === "string" && known.has(g)))];
+  }
+  return out;
 }

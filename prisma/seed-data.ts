@@ -5,8 +5,9 @@ import type { Scenario } from "@/lib/scenarios/types";
  * Two invented ventures so a fresh clone has something on the map before you type anything.
  *
  * Everything here is made up. The businesses do not exist, the revenue figures are round
- * numbers chosen to cross the thresholds the map reasons about ($30K GST, $80K net
- * incorporation), and none of it is advice — the catalogs supply the cited content, this file
+ * numbers chosen to cross the GST/HST line the map reasons about ($30,000; incorporating has no
+ * amount of DotAmi's own since 2026-10-11, so the third-year numbers light nothing by themselves),
+ * and none of it is advice — the catalogs supply the cited content, this file
  * only supplies answers a person might give. Ids are prefixed `demo-` so they are obvious in
  * the database and easy to delete.
  *

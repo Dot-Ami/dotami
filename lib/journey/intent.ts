@@ -40,11 +40,16 @@ export interface IntentParseResult {
   source: "llm" | "fallback";
 }
 
-/** Applies a parse result onto the journey draft. Additive/mergey — user edits survive. */
+/**
+ * Applies a parse result onto the journey draft. Additive/mergey — user edits survive. `typedOn` is
+ * the person's own calendar day they typed the sentence, kept with it so the statement saved with the
+ * idea carries the day it was said, not the day the map opened.
+ */
 export function applyIntentToDraft(
   draft: IntakeDraft,
   result: IntentParseResult,
   originalText: string,
+  typedOn?: string,
 ): IntakeDraft {
   return {
     ...draft,
@@ -54,6 +59,9 @@ export function applyIntentToDraft(
     province: result.province ?? draft.province,
     capitalPurchasePlanned: draft.capitalPurchasePlanned || result.capitalPurchasePlanned,
     manualEntry: originalText,
+    manualEntrySaidAt: typedOn ?? draft.manualEntrySaidAt,
+    // A sentence just typed hasn't been kept with any idea yet.
+    manualEntryDone: false,
     description: originalText,
     intentParse: result,
   };

@@ -8,6 +8,17 @@ export type IntakeGoalId =
   | "scale-ccpc"
   | "discover-now";
 
+/** Every goal chip, in the order the intake shows them. The save route keeps only these. */
+export const INTAKE_GOAL_IDS: readonly IntakeGoalId[] = ["write-offs", "replace-income", "scale-ccpc", "discover-now"];
+
+/** The chips' own names, on the intake and wherever the picks are shown back (the idea's card). */
+export const INTAKE_GOAL_LABELS: Record<IntakeGoalId, string> = {
+  "write-offs": "Write things off",
+  "replace-income": "Replace income",
+  "scale-ccpc": "Scale to a corporation",
+  "discover-now": "Show me what's available",
+};
+
 export interface IntakeDraft {
   goals: IntakeGoalId[];
   ventureType: VentureType;
@@ -30,7 +41,17 @@ export interface IntakeDraft {
   hireFirst: boolean;
   /** Equipment/tools/vehicle purchase on the path — feeds Class 50 / CSBFP logic. */
   capitalPurchasePlanned: boolean;
+  /** The sentence the person typed on the front door (or in the intake's own box), word for word. */
   manualEntry?: string;
+  /** The person's own calendar day (YYYY-MM-DD) they typed it; saved with it when the idea is first saved. */
+  manualEntrySaidAt?: string;
+  /**
+   * True once this sentence is done with: a save kept it with an idea, or the person deleted their
+   * statements since. A done sentence is never sent again, so a second "Open my map" from the same tab
+   * (a new idea each time) neither copies it nor brings back one the person deleted. A new sentence
+   * typed on the front door or in the intake's box clears it.
+   */
+  manualEntryDone?: boolean;
   /** Latest intent-parse result — Screen A renders/edits it; null once confirmed. */
   intentParse?: IntentParseResult | null;
 }

@@ -1,6 +1,8 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-06 (card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
+Last updated: 2026-10-11 (the cards' colours follow the person's own branch picks; a stage card's
+accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
+longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
 **Component:** `components/cockpit/strategy-map.tsx` · **Tier data:**
@@ -19,15 +21,40 @@ relevant to that stage (`itemsForNode(...).forThisStage`, S2.5.4e).
 
 | Card | Shows | Click |
 |---|---|---|
-| Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a) | opens node detail |
+| Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
-Stage and lever buttons have explicit accessible names. Stage names include the current status
-and the action; lever names identify the item whose details open. Stage selection remains exposed
-as `aria-pressed`.
+Stage and lever buttons have explicit accessible names. Stage names include the current status,
+the left bar's colour in words and the action — "Sole Prop activation, now, applies as answered,
+opens detail"; the words are **applies as answered** (green), **check first** (amber) and
+**doesn't apply as answered** (grey), so the colour is never the only way to tell. Lever names
+identify the item whose details open. Stage selection remains exposed as `aria-pressed`.
+
+**The colours follow the person's own picks (2026-10-11).** The cockpit runs the rules with the
+venture's own `activeBranches` (`lib/scenarios/evaluate-scenario.ts` `evaluateScenario`, which the
+cockpit and the readout API both call), so flipping GST timing or Incorporation timing recolours
+the cards at once. Until then the cockpit ran the rules on the default picks, so a flipped toggle
+moved the chips but not the colours. `tests/scenario-evaluation.spec.ts` fails if any screen or
+route runs the map's rules on a saved venture without its picks.
+
+**Incorporating (Tier 3, node id `stage-3a-incorporation-80k-net`, kept: ids are forever).** Until
+2026-10-11 this card was "Incorporation at $80K net" and turned green when the third-year revenue
+estimate reached $80,000 — a number no cited page sets, compared against sales although it was
+written as net income. Now it is **Incorporating**, its trigger line reads "DotAmi doesn't pick a
+point to incorporate. You do, with your accountant or lawyer.", and it is amber (**check first**)
+while it is the selected option of Incorporation timing (the person's pick, or the default until
+they click; its chip says "your pick" either way, a known wording gap, docs/task-list.md [10f]) and
+grey when the other option is selected. No amount lights it. Its
+detail keeps only cited facts: the CRA's corporation page and the small business deduction's
+$500,000 business limit from the T2 guide. The toggle's options read **When you decide** and
+**Liability / SR&ED**. Retained earnings planning (Tier 4) lights only when the person set their
+structure to a corporation. Not yet: federal and Alberta incorporation side by side, and the
+person's own "I'd incorporate at $___" (both come with the future cockpit).
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
-are never drawn. A legend sits under the grid.
+are never drawn. A legend sits under the grid, with the three colours in the same words as the
+cards' accessible names: **applies as answered**, **check first — confirm, time-boxed, or one fork
+away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
 an SVG overlay of arrows from that card along `CFENode.branches` — solid to the next step,
