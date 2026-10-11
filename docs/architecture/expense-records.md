@@ -1128,7 +1128,8 @@ shows one, so a receipt brought back opens at once.
 - **In the desktop app only, while this start's own receipts key opens** (lock state `on`): on
   Settings → Data and backups, under the line about the receipt files, and on *What DotAmi knows about
   you*, in the "Your receipt files" row. Only when the backups folder holds at least one
-  `receipts-locked-<time>/` folder with a receipt file in it.
+  `receipts-locked-<time>/` folder with a receipt file in it (a finished one, or an unfinished add,
+  `<name>.partial`, since the second fix round).
 - **One line per such folder**, with its full path and how many receipt files it holds, then either:
   - **all of them can come back**: "This Windows account can open their old key again." and a **Bring
     these receipts back** button; or
@@ -1145,22 +1146,49 @@ shows one, so a receipt brought back opens at once.
     was deleted since; also what "remove this one and add the file again" in the viewer leads to):
     "1 of them can't come back: its expense record was deleted, or no longer has that receipt."
   - **already back**: a file of that name is already in `receipts/` (an earlier press brought it back
-    but its old copy couldn't be removed, or the app stopped between the two): "1 of them is already
-    back in the receipts folder; the copy here is an old one."
+    but its old copy couldn't be removed, or the app stopped between the two), **and that file opens
+    with the current key and matches the row** (second fix round: before, the name alone decided):
+    "1 of them is already back in the receipts folder; the copy here is an old one." Only such a file
+    is read whole and opened, in the main process's memory, so the cost stays with the rare name clash.
+  - **a different file with its name in `receipts/`** (second fix round): a file of that name is there
+    but it doesn't open with the current key, or doesn't match the row (the old by-hand route of § 10
+    half done, so a copy still locked with the old key; or a file a press placed whose check failed
+    and that couldn't be taken out again). "1 of them can't come back yet: a different file with the
+    same name is in the receipts folder, and DotAmi won't write over it. Move that file out of the
+    receipts folder and reload this page." The viewer can't show that file anyway (it opens only a file
+    that matches its row), so moving it out loses nothing it could show, and the button then works.
+    Never pointed to Delete: the set-aside copy may be the only one that opens. A file there that can't
+    be read just now is counted as "can't be read right now".
   - **changed**: bigger than any receipt DotAmi keeps, or found changed or damaged by an earlier press
     while DotAmi was running (the main process remembers those files, by size and time, until it
     closes, so it doesn't offer them again): "1 of them changed or was damaged since it was set aside,
     so DotAmi won't bring it back."
   - **can't be read right now** (another program has it open): "1 of them couldn't be read just now
     (another program may have it open). Reload this page to check again."
-  - **no key**: no key here opens it. When the folder has **no `receipts.key` of its own** the line
-    says where a found key goes: "Their old key file isn't in this folder. If you find the old
-    receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page." (The
-    key file is moved "if it was there": a key that went missing leaves none, and § 10 names the
-    Recycle Bin as where it may turn up.)
+  - **no key**: no key here opens it. Second fix round: which sentence depends on whether **any**
+    `receipts-locked-…` folder holds a key file with that receipt's key id (each key file's id is read
+    even when Windows won't open it), not only the folder itself, because a move cut short (§ 10) leaves
+    the receipts in one folder and the key file in the next:
+    - a key file with its id is there, but this account can't open it: "Their old key still can't be
+      opened on this Windows account, so they can't be brought back." When this folder has no
+      `receipts.key` of its own (so that key file is in another folder): "Their old key file is in
+      another set-aside folder beside this one, and this Windows account still can't open it, so they
+      can't be brought back." Never the Recycle Bin advice: the file isn't lost.
+    - no folder holds a key file with its id, and this folder has **no `receipts.key` of its own**: the
+      line says where a found key goes: "Their old key file isn't in this folder, so they can't be
+      brought back. If you find the old receipts.key (it may be in the Recycle Bin), put it in this
+      folder and reload this page." (The key file is moved "if it was there": a key that went missing
+      leaves none, and § 10 names the Recycle Bin as where it may turn up.)
+    - no folder holds a key file with its id, but this folder has a `receipts.key` (of another key):
+      "DotAmi can't find the key file for their old key in the backups folder, so they can't be brought
+      back." No "put it in this folder": one is already there.
+
+    When only some of the folder's receipts are in one of these, the same reason is said for "1 of
+    them" or "N of them".
   - otherwise **can come back**: counted for the button.
 
-  When something in the folder can never come back (no record, already back, changed), the line ends:
+  When something in the folder can never come back (no record, already back, changed), and nothing
+  else is waiting on the person (no key, a different file in `receipts/`, can't be read), the line ends:
   "Delete (“Safety copies in the backups folder”) on What DotAmi knows about you can clear this
   folder." The button is offered only while at least one can come back. A "changed" receipt that an
   older version of the file passes is found only when the button is pressed (checking every receipt's
@@ -1205,7 +1233,19 @@ protect a key (`keyStoreAvailable`, § 9) opens nothing.
   names it. Receipts added since the new key was started are not touched. The old key file stays in the
   folder. Cancel, Escape or a click outside sends nothing.
 - **Each receipt, one at a time** (only files DotAmi named, `<32 hex>.<jpg|png|webp|pdf|heic>`, regular
-  files, never a link; plain files and unfinished writes are left alone):
+  files, never a link; plain files are left alone). **An unfinished add, `<name>.partial`**, is handled
+  like a finished receipt (second fix round): `addReceipt` writes the `.partial`, then the row, then
+  renames it (§ 7), so if the app stopped between the row and the rename, the `.partial` is the only copy
+  of a receipt its record still has. The server's sweep would have finished that add, but it runs only at
+  the next add or remove, which can't happen while the key can't be opened, and Start a new key moves
+  every locked file, unfinished writes included. So a `.partial` is found its row by its id, opened with
+  its id, checked against the row like any receipt, and written as `receipts/<name>`; the answer names it
+  by its own file name. One whose finished file is in the same folder too is a leftover beside its copy,
+  and is left alone. One with no row is an add stopped before its row: counted and named as "no record"
+  (the list's "Delete … can clear this folder" then covers it). Before, a `.partial` was left without a
+  word, and a folder holding only one dropped out of the list. The first-start pass's `.encrypting`
+  leftovers are still left alone: that pass writes one beside the plain original, so it is never the only
+  copy:
   0. it is read whole. **Can't be read** (another program has it open): left, reported as "another
      program had it open, so it couldn't be read; try again". **Bigger than any receipt** and encrypted:
      reported as changed. Only a file that opens and turns out plain is skipped without a word;
@@ -1226,11 +1266,31 @@ protect a key (`keyStoreAvailable`, § 9) opens nothing.
      leftover `.encrypting` file is left for the next start's pass, and the receipt is still reported
      and the next one tried: **one receipt's failure never ends the run**, whatever throws, so the
      answer always says what really moved (before this fix round a failed clean-up threw out of the
-     loop, and the page said "Nothing was moved" after a receipt had moved);
+     loop, and the page said "Nothing was moved" after a receipt had moved).
+     Second fix round, three more cases:
+     - **A leftover `receipts/<name>.encrypting`** that is a regular file (an earlier press's clean-up
+       failed) is removed first: only DotAmi's own encrypted temporary file ever has that name. Before,
+       every later press failed on it ("try again") until DotAmi restarted, while the button stayed.
+       Anything else at that name (a folder) still stops the write, and the receipt is reported as
+       before; so does a leftover that can't be removed.
+     - **The placed file fails its check and can't be taken out again** (another program, such as a
+       virus scan, has the new file open, so both the read-back and the removal fail): the receipt is
+       reported apart, as **"unchecked"**: "It was put in the receipts folder, but DotAmi couldn't check
+       that it opens, and another program kept DotAmi from taking it out again. Its set-aside copy was
+       kept. Reload this page to see whether it is back." It isn't counted as brought back, nor as
+       "couldn't be written … Try again" (before, the page said that while the receipt was in place and
+       opened). The set-aside copy stays, and the list then checks the placed file in full (above): it
+       says "already back" when it opens and matches, and "a different file" when it doesn't.
+     - The check after the rename is **held in place by a test** that damages the placed file at that
+       moment (before, no test failed when the check was removed).
   6. **only then** the set-aside copy is removed. If it can't be (another program has it open), the
      receipt is back all the same, and the answer says the old copy is still in the folder.
 - **Anything that fails is left exactly where it was**, and the next receipt is tried. The answer counts
   what came back and names each one that didn't, by the name DotAmi gave its file, with its reason.
+  The line after the button: "1 receipt brought back. It opens from its record again." (or "N receipts
+  …"), or "No receipt was brought back."; with an "unchecked" one, "No receipt was brought back for
+  certain. 1 was put back but couldn't be checked: it is named below." or, after the receipts that did
+  come back, "1 more was put back but couldn't be checked: it is named below." (second fix round).
 - **The folder afterwards**: the receipts that came back are gone from it; the old key file and anything
   that didn't come back stay. Nothing in it is deleted by this step but each receipt's old copy, once its
   new one is in place. A folder with no receipt file left is no longer listed here; Delete's safety-copies
@@ -1273,7 +1333,9 @@ in the main process in one go, without waiting on anything, so two presses can't
 
 ### The log
 
-`[desktop] set-aside receipts: 2 brought back, 1 left where they were` (counts only), or
+`[desktop] set-aside receipts: 2 brought back, 1 left where they were` (counts only; with
+`, 1 put back but not checked` before the last part when a placed file couldn't be checked, and that one
+isn't in either other count), or
 `[desktop] bringing set-aside receipts back was refused: <the rule>` (and `listing set-aside receipts
 was refused: <the rule>` for the list). Never a path, a name or a key id.
 
@@ -1290,6 +1352,11 @@ was refused: <the rule>` for the list). Never a path, a name or a key id.
   for it.
 - **A key file set aside on its own** (`receipts-key-unreadable-<time>.key`) isn't used: no receipt was
   locked with it when it was moved (§ 9), or a restore replaced the receipts it locked.
+- **A `receipts-locked-…` folder holding only plain files with receipt names** (second fix round, a
+  reviewer's note): the server counts it from the names, the main process lists only encrypted files, so
+  the page shows nothing for it. Left as it is: Start a new key moves only encrypted files, so DotAmi
+  never makes such a folder, and making the server's count read every file's first bytes on each page
+  visit would cost more than the case is worth.
 
 ### Tests (each must fail when its rule is removed)
 
@@ -1310,7 +1377,21 @@ was refused: <the rule>` for the list). Never a path, a name or a key id.
   ("in-use"), and a too-big encrypted one is named "changed"; the list counts for the button only
   receipts that could come back (a row-less one, one already in `receipts/`, one found changed by a
   press, and one with no key are each counted apart, and a folder of them offers no button); a folder
-  with no key file says so; a folder an earlier Delete still owes is left out of the list and refused.
+  with no key file says so; a folder an earlier Delete still owes is never offered (listed with a line
+  saying an earlier Delete is still clearing it) and refused.
+- Second fix round (2026-10-10), in the same file, each written and seen failing before its code: a
+  `.partial` with a row, set aside by the real `setAsideLockedReceipts`, is counted, offered, brought back
+  as `receipts/<name>` and opens, and its folder stays in the server's count until then; one with no row
+  is named "no record"; a `.partial` beside its finished file is left alone; a folder whose receipts'
+  key file is in another set-aside folder is counted "no key" (its key file is there), and one with no
+  key file anywhere "no key file"; a file in `receipts/` with the receipt's name that is locked with the
+  old key, or damaged, is counted as a different file, never "already back", and one that opens and
+  matches is "already back"; a placed file damaged at the "placed" step is taken out again, the receipt
+  named "not-written" and its set-aside copy byte for byte unchanged (and the test fails when the
+  read-back check is removed); a placed file that can't be read back or removed is named "unchecked",
+  not brought back, its set-aside copy kept, and the log says "1 put back but not checked"; a leftover
+  `.encrypting` file from an earlier press is removed and the receipt comes back. The sentences for each
+  (`tests/receipt-protection.spec.ts`).
 - The browser (`e2e/set-aside-receipts.spec.ts`): a copy run from source with a set-aside folder shows the
   sentence and no button.
 - The real app (`e2e-desktop/desktop.spec.ts`): a receipt added in the app; its key file made
