@@ -93,7 +93,7 @@ describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
   const folder = "/home/someone/DotAmi/backups/receipts-locked-1760000000000";
 
   /** A folder as the desktop app lists it, nothing counted: each case names only what it holds. */
-  const listed = { receipts: 0, canBringBack: 0, noKey: 0, noRecord: 0, alreadyBack: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
+  const listed = { receipts: 0, canBringBack: 0, noKey: 0, noKeyFile: 0, noRecord: 0, alreadyBack: 0, otherCopy: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
   const at = (counts: Partial<typeof listed>) => setAsideFolderText({ ...listed, path: folder, ...counts });
 
   it("says, for each set-aside folder, how many receipts it holds and whether their old key opens again", () => {
@@ -133,13 +133,51 @@ describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
   });
 
   it("fix round: a folder with no key file of its own says where a found receipts.key goes", () => {
-    expect(at({ receipts: 1, noKey: 1, keyFile: false })).toEqual({
+    expect(at({ receipts: 1, noKeyFile: 1, keyFile: false })).toEqual({
       summary: `1 receipt file set aside in ${folder}. Their old key file isn't in this folder, so they can't be brought back. If you find the old receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page.`,
       canBringBack: false,
     });
-    expect(at({ receipts: 2, canBringBack: 1, noKey: 1, keyFile: false }).summary).toContain(
+    expect(at({ receipts: 2, canBringBack: 1, noKeyFile: 1, keyFile: false }).summary).toContain(
       "1 of them is locked with an old key whose file isn't in this folder. If you find the old receipts.key (it may be in the Recycle Bin), put it in this folder and reload this page.",
     );
+  });
+
+  it("second fix round: a key file in another set-aside folder (a move cut short) is never sent to the Recycle Bin", () => {
+    // The receipts' key file is in the next folder, and this account can't open it.
+    expect(at({ receipts: 1, noKey: 1, keyFile: false })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. Their old key file is in another set-aside folder beside this one, and this Windows account still can't open it, so they can't be brought back.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 2, canBringBack: 1, noKey: 1, keyFile: false }).summary).toContain(
+      "1 of them is locked with an old key whose file is in another set-aside folder beside this one, and this Windows account still can't open it.",
+    );
+    for (const counts of [{ noKey: 1, keyFile: false }, { noKey: 1 }, { noKeyFile: 1 }]) {
+      const { summary } = at({ receipts: 1, ...counts });
+      expect(summary).not.toContain("Recycle Bin");
+      expect(summary).not.toContain("Delete");
+    }
+    // No key file for that key anywhere, but the folder has a receipts.key of another key: no "put it here".
+    expect(at({ receipts: 1, noKeyFile: 1 })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. DotAmi can't find the key file for their old key in the backups folder, so they can't be brought back.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 3, canBringBack: 1, noKeyFile: 2 }).summary).toContain(
+      "2 of them are locked with an old key whose file DotAmi can't find in the backups folder.",
+    );
+  });
+
+  it("second fix round: a different file with the receipt's name in the receipts folder is said apart, and never pointed to Delete", () => {
+    expect(at({ receipts: 1, otherCopy: 1 })).toEqual({
+      summary: `1 receipt file set aside in ${folder}. 1 of them can't come back yet: a different file with the same name is in the receipts folder, and DotAmi won't write over it. Move that file out of the receipts folder and reload this page.`,
+      canBringBack: false,
+    });
+    expect(at({ receipts: 2, otherCopy: 2 }).summary).toContain(
+      "2 of them can't come back yet: different files with the same names are in the receipts folder, and DotAmi won't write over them. Move those files out of the receipts folder and reload this page.",
+    );
+    // Even beside receipts that can never come back, Delete isn't suggested: the copy here may be the only one that opens.
+    expect(at({ receipts: 2, otherCopy: 1, noRecord: 1 }).summary).not.toContain("Delete");
+    // Control: without the different file, the same folder does point to Delete.
+    expect(at({ receipts: 2, alreadyBack: 1, noRecord: 1 }).summary).toContain("Delete");
   });
 
   it("fix round: a folder an earlier Delete still owes is never offered", () => {
@@ -156,7 +194,12 @@ describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
   });
 
   it("has a plain sentence for every reason a receipt stays, and every reason the desktop app refuses", () => {
-    for (const why of ["no-key", "no-record", "changed", "already-there", "not-written", "in-use"] as const) expect(BRING_BACK_LEFT[why]).toMatch(/^[A-Z].+\.$/);
+    const left: Record<string, string> = BRING_BACK_LEFT;
+    for (const why of ["no-key", "no-record", "changed", "already-there", "not-written", "in-use", "unchecked"]) expect(left[why]).toMatch(/^[A-Z].+\.$/);
+    // Second fix round: a placed file that couldn't be checked or taken out again isn't "couldn't be written, try again".
+    expect(left.unchecked).toBe(
+      "It was put in the receipts folder, but DotAmi couldn't check that it opens, and another program kept DotAmi from taking it out again. Its set-aside copy was kept. Reload this page to see whether it is back.",
+    );
     for (const reason of ["not-dotami-window", "no-current-key", "closing", "not-a-set-aside-folder", "data-file-unreadable", "delete-owed"] as const) {
       expect(BRING_BACK_REFUSED[reason]).toMatch(/Nothing was moved\.$/);
     }
@@ -176,5 +219,22 @@ describe("bringing set-aside receipts back (expense-records.md § 12)", () => {
       "2 receipts brought back. They open from their records again. The old copy of 1 is still in the set-aside folder, because another program had it open.",
     );
     expect(bringBackDoneText({ broughtBack: [], oldCopiesLeft: [], left: [{ name: "a.png", why: "no-key" }] })).toBe("No receipt was brought back.");
+  });
+
+  it("second fix round: a receipt put back but not checked is neither counted as back nor hidden behind the no-receipt line", () => {
+    expect(bringBackDoneText({ broughtBack: [], oldCopiesLeft: [], left: [{ name: "a.png", why: "unchecked" }] })).toBe(
+      "No receipt was brought back for certain. 1 was put back but couldn't be checked: it is named below.",
+    );
+    expect(
+      bringBackDoneText({
+        broughtBack: ["b.pdf"],
+        oldCopiesLeft: [],
+        left: [
+          { name: "a.png", why: "unchecked" },
+          { name: "c.png", why: "unchecked" },
+          { name: "d.png", why: "no-key" },
+        ],
+      }),
+    ).toBe("1 receipt brought back. It opens from its record again. 2 more were put back but couldn't be checked: they are named below.");
   });
 });

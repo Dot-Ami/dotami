@@ -18,7 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decryptReceipt, encryptedKeyId, encryptReceipt, encryptReceiptsIn, keyIdOf } from "../desktop/receipt-crypto.mjs";
 import { isReceiptFileName, RECEIPT_EXTENSIONS } from "../desktop/backup.mjs";
 import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "../desktop/receipt-bring-back.mjs";
-import { RECEIPT_KEY_FILE, type KeyStore } from "../desktop/receipt-key.mjs";
+import { RECEIPT_KEY_FILE, setAsideLockedReceipts, type KeyStore } from "../desktop/receipt-key.mjs";
 import { openDatabase, runSql } from "../desktop/sqlite.mjs";
 import { listLockedReceiptFolders, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { pdf, png } from "./helpers/receipt-files";
@@ -367,14 +367,14 @@ describe("bringing set-aside receipts back", () => {
     expect(readdirSync(receiptsDir())).toEqual([]);
   });
 
-  it("leaves plain files, unfinished writes and files DotAmi didn't name alone", () => {
+  it("leaves plain files, the first-start pass's unfinished writes and files DotAmi didn't name alone", () => {
     makeDataFile();
     const account = accountStore("you");
     const oldKey = randomBytes(32);
     const folder = setAsideFolder("receipts-locked-4200", oldKey, account);
     const a = lockedReceipt(folder, oldKey);
-    const partialId = randomBytes(16).toString("hex");
-    writeFileSync(path.join(folder, `${partialId}.pdf.partial`), encryptReceipt(pdf(), { key: oldKey, id: partialId }));
+    const leftoverId = randomBytes(16).toString("hex");
+    writeFileSync(path.join(folder, `${leftoverId}.pdf.encrypting`), encryptReceipt(pdf(), { key: oldKey, id: leftoverId }));
     writeFileSync(path.join(folder, `${randomBytes(16).toString("hex")}.png`), png(2, 2));
     writeFileSync(path.join(folder, "my-notes.txt"), "mine");
     const { result } = call("receipts-locked-4200", account, randomBytes(32));
@@ -537,7 +537,7 @@ describe("the list of set-aside folders the page shows", () => {
 });
 
 /** A listed folder with nothing in it counted: each test spreads this and names only what it expects. */
-const none = { receipts: 0, canBringBack: 0, noKey: 0, noRecord: 0, alreadyBack: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
+const none = { receipts: 0, canBringBack: 0, noKey: 0, noKeyFile: 0, noRecord: 0, alreadyBack: 0, otherCopy: 0, changed: 0, unreadable: 0, keyFile: true, deleteOwed: false };
 
 /** The list as the page asks for it, with the data file's rows. */
 function list(store: KeyStore, current: Buffer) {
@@ -665,7 +665,7 @@ describe("fix round: the list counts for the button only receipts that could com
     lockedReceipt(folder, oldKey);
     expect(list(account, randomBytes(32))).toEqual({
       outcome: "listed",
-      folders: [{ ...none, name: "receipts-locked-9600", path: folder, receipts: 1, noKey: 1, keyFile: false }],
+      folders: [{ ...none, name: "receipts-locked-9600", path: folder, receipts: 1, noKeyFile: 1, keyFile: false }],
     });
   });
 
@@ -714,5 +714,209 @@ describe("fix round: a folder an earlier Delete still owes is never offered or b
     const a = lockedReceipt(folder, oldKey);
     writeWipePending(dbFile(), { backups: [], receiptFolders: ["receipts-locked-1"] });
     expect(call("receipts-locked-9801", account, randomBytes(32)).result).toMatchObject({ outcome: "done", broughtBack: [a.name] });
+  });
+});
+
+describe("second fix round: an unfinished add set aside by Start a new key comes back like a finished receipt", () => {
+  it("a .partial with its row (the app stopped between the row and the rename) is counted, offered, brought back as its finished name and opens; its folder stays listed until then", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    // receipts/ as an add cut short leaves it, while the old key still opened: the .partial and its row.
+    mkdirSync(receiptsDir(), { recursive: true });
+    const id = randomBytes(16).toString("hex");
+    const plain = pdf();
+    writeFileSync(path.join(receiptsDir(), `${id}.pdf.partial`), encryptReceipt(plain, { key: oldKey, id }));
+    addRow(id, "application/pdf", plain);
+    writeFileSync(path.join(dir, RECEIPT_KEY_FILE), keyFileFor(oldKey, account));
+    // Start a new key, the real move: unfinished writes go with the rest.
+    const moved = setAsideLockedReceipts(dir, { now: () => 9900 });
+    const folder = path.join(backups(), "receipts-locked-9900");
+    expect(moved).toEqual({ folder, receipts: 1, keyFile: true });
+    expect(readdirSync(folder).sort()).toEqual([`${id}.pdf.partial`, RECEIPT_KEY_FILE].sort());
+
+    // The server counts the folder, and the list offers it.
+    expect(listLockedReceiptFolders(dbFile()).names).toEqual(["receipts-locked-9900"]);
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9900", path: folder, receipts: 1, canBringBack: 1 }] });
+
+    const { result, lines } = call("receipts-locked-9900", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [`${id}.pdf.partial`], oldCopiesLeft: [], left: [] });
+    expect(lines).toEqual(["[desktop] set-aside receipts: 1 brought back, 0 left where they were"]);
+    // Back under its finished name, locked with the current key, opening to the bytes its row describes.
+    expect(readdirSync(receiptsDir())).toEqual([`${id}.pdf`]);
+    const onDisk = readFileSync(path.join(receiptsDir(), `${id}.pdf`));
+    expect(encryptedKeyId(onDisk)).toBe(keyIdOf(current));
+    expect(decryptReceipt(onDisk, { key: current, id }).equals(plain)).toBe(true);
+    expect(readdirSync(folder)).toEqual([RECEIPT_KEY_FILE]);
+    expect(listLockedReceiptFolders(dbFile()).names).toEqual([]);
+  });
+
+  it("a .partial with no row (an add stopped before its row) is counted and named as no record, and stays", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9910", oldKey, account);
+    const id = randomBytes(16).toString("hex");
+    const name = `${id}.png.partial`;
+    writeFileSync(path.join(folder, name), encryptReceipt(png(2, 2), { key: oldKey, id }));
+    expect(listLockedReceiptFolders(dbFile()).names).toEqual(["receipts-locked-9910"]);
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9910", path: folder, receipts: 1, noRecord: 1 }] });
+    const before = snapshot();
+    const { result } = call("receipts-locked-9910", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [], oldCopiesLeft: [], left: [{ name, why: "no-record" }] });
+    expect(snapshot()).toEqual(before);
+  });
+
+  it("a .partial beside its own finished file is a leftover: the finished one comes back, the leftover is left alone", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9920", oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    writeFileSync(path.join(folder, `${a.name}.partial`), readFileSync(path.join(folder, a.name)));
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9920", path: folder, receipts: 1, canBringBack: 1 }] });
+    const { result } = call("receipts-locked-9920", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [a.name], oldCopiesLeft: [], left: [] });
+    expect(readdirSync(folder).sort()).toEqual([`${a.name}.partial`, RECEIPT_KEY_FILE].sort());
+  });
+});
+
+describe("second fix round: where a receipt's old key file is", () => {
+  it("a move cut short: the first folder's receipts have their key file in the next folder, so they are counted as no key, not as a missing key file", () => {
+    makeDataFile();
+    const oldKey = randomBytes(32);
+    // Wrapped by an account this one isn't: the key file is there, Windows won't open it.
+    const oldProfile = accountStore("the old profile");
+    const first = setAsideFolder("receipts-locked-9930", oldKey, oldProfile, { keyFile: false });
+    const second = setAsideFolder("receipts-locked-9931", oldKey, oldProfile);
+    lockedReceipt(first, oldKey);
+    lockedReceipt(second, oldKey);
+    lockedReceipt(second, oldKey);
+    expect(list(accountStore("you"), randomBytes(32))).toEqual({
+      outcome: "listed",
+      folders: [
+        { ...none, name: "receipts-locked-9930", path: first, receipts: 1, noKey: 1, keyFile: false },
+        { ...none, name: "receipts-locked-9931", path: second, receipts: 2, noKey: 2 },
+      ],
+    });
+  });
+
+  it("control: with no key file for that key in any folder, the receipts are counted as no key file", () => {
+    makeDataFile();
+    const oldKey = randomBytes(32);
+    const elsewhere = randomBytes(32);
+    const first = setAsideFolder("receipts-locked-9940", oldKey, accountStore("the old profile"), { keyFile: false });
+    // A folder with a key file of another key: it doesn't count for the first folder's receipts.
+    setAsideFolder("receipts-locked-9941", elsewhere, accountStore("the old profile"));
+    lockedReceipt(first, oldKey);
+    expect(list(accountStore("you"), randomBytes(32))).toEqual({
+      outcome: "listed",
+      folders: [{ ...none, name: "receipts-locked-9940", path: first, receipts: 1, noKeyFile: 1, keyFile: false }],
+    });
+  });
+});
+
+describe("second fix round: already back means the copy in receipts/ opens and matches", () => {
+  function ready(name: string) {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder(name, oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    mkdirSync(receiptsDir(), { recursive: true });
+    return { account, oldKey, current, folder, a };
+  }
+
+  it("a copy still locked with the old key (the by-hand route half done) is a different file, never already back", () => {
+    const { account, current, folder, a } = ready("receipts-locked-9950");
+    writeFileSync(path.join(receiptsDir(), a.name), readFileSync(path.join(folder, a.name)));
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9950", path: folder, receipts: 1, otherCopy: 1 }] });
+  });
+
+  it("a copy locked with the current key that doesn't match its row is a different file too", () => {
+    const { account, current, folder, a } = ready("receipts-locked-9951");
+    const other = Buffer.from(a.plain);
+    other[other.length - 1] ^= 0xff;
+    writeFileSync(path.join(receiptsDir(), a.name), encryptReceipt(other, { key: current, id: a.id }));
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9951", path: folder, receipts: 1, otherCopy: 1 }] });
+  });
+
+  it("control: a copy locked with the current key that matches its row is already back", () => {
+    const { account, current, folder, a } = ready("receipts-locked-9952");
+    writeFileSync(path.join(receiptsDir(), a.name), encryptReceipt(a.plain, { key: current, id: a.id }));
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9952", path: folder, receipts: 1, alreadyBack: 1 }] });
+  });
+
+  it("a copy in receipts/ that can't be read just now is counted as can't be read", () => {
+    const { account, current, folder, a } = ready("receipts-locked-9953");
+    writeFileSync(path.join(receiptsDir(), a.name), encryptReceipt(a.plain, { key: current, id: a.id }));
+    held.open.add(path.join("receipts", a.name));
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9953", path: folder, receipts: 1, unreadable: 1 }] });
+  });
+});
+
+describe("second fix round: the check after the placed file, and what a press says when it can't finish", () => {
+  it("a placed file that doesn't open and match is taken out again; the receipt is named not-written and its set-aside copy is byte for byte unchanged", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9960", oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    const setAsideBefore = readFileSync(path.join(folder, a.name));
+    const { result, lines } = call("receipts-locked-9960", account, current, {
+      onStep: (step: string, name: string) => {
+        // Damaged on the disk just after it was renamed into place: one byte flipped near the end.
+        if (step !== "placed" || name !== a.name) return;
+        const placed = path.join(receiptsDir(), a.name);
+        const bytes = readFileSync(placed);
+        bytes[bytes.length - 3] ^= 0xff;
+        writeFileSync(placed, bytes);
+      },
+    });
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [], oldCopiesLeft: [], left: [{ name: a.name, why: "not-written" }] });
+    expect(existsSync(path.join(receiptsDir(), a.name))).toBe(false);
+    expect(readFileSync(path.join(folder, a.name)).equals(setAsideBefore)).toBe(true);
+    expect(lines).toEqual(["[desktop] set-aside receipts: 0 brought back, 1 left where they were"]);
+  });
+
+  it("a placed file that can't be read back or taken out again (another program holds it) is named unchecked, not brought back; its set-aside copy is kept, and the list then finds it already back", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9970", oldKey, account);
+    const [a, b] = [lockedReceipt(folder, oldKey), lockedReceipt(folder, oldKey)].sort((x, y) => x.name.localeCompare(y.name));
+    const setAsideBefore = readFileSync(path.join(folder, a.name));
+    held.open.add(path.join("receipts", a.name));
+    held.remove.add(path.join("receipts", a.name));
+    const { result, lines } = call("receipts-locked-9970", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [b.name], oldCopiesLeft: [], left: [{ name: a.name, why: "unchecked" }] });
+    expect(lines).toEqual(["[desktop] set-aside receipts: 1 brought back, 1 put back but not checked, 0 left where they were"]);
+    expect(readFileSync(path.join(folder, a.name)).equals(setAsideBefore)).toBe(true);
+    held.open.clear();
+    held.remove.clear();
+    // The placed file is a good copy: the list says so, and offers no button for it.
+    expect(decryptReceipt(readFileSync(path.join(receiptsDir(), a.name)), { key: current, id: a.id }).equals(a.plain)).toBe(true);
+    expect(list(account, current)).toEqual({ outcome: "listed", folders: [{ ...none, name: "receipts-locked-9970", path: folder, receipts: 1, alreadyBack: 1 }] });
+  });
+
+  it("a leftover temporary file of an earlier press is removed first, so the receipt comes back", () => {
+    makeDataFile();
+    const account = accountStore("you");
+    const oldKey = randomBytes(32);
+    const current = randomBytes(32);
+    const folder = setAsideFolder("receipts-locked-9980", oldKey, account);
+    const a = lockedReceipt(folder, oldKey);
+    mkdirSync(receiptsDir(), { recursive: true });
+    writeFileSync(path.join(receiptsDir(), `${a.name}.encrypting`), "what an earlier press left");
+    const { result } = call("receipts-locked-9980", account, current);
+    expect(result).toEqual({ outcome: "done", folder, broughtBack: [a.name], oldCopiesLeft: [], left: [] });
+    expect(readdirSync(receiptsDir())).toEqual([a.name]);
+    expect(decryptReceipt(readFileSync(path.join(receiptsDir(), a.name)), { key: current, id: a.id }).equals(a.plain)).toBe(true);
   });
 });
