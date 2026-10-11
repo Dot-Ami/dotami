@@ -390,6 +390,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`docs/architecture/database-encryption.md`).
 
 ### Fixed
+- **An encrypted data file left mid-write by a power cut no longer stops every start** ([8i]) — when
+  the server was cut off in the middle of a write, SQLite leaves a journal beside the file to undo it,
+  and the start's check that the key opens the file was read-only, so SQLite couldn't undo the write and
+  every start stopped with "DotAmi couldn't start.". The check now lets SQLite undo the half-done write
+  first, with the file's key; a wrong key is refused there and touches none of the data. This bug was on main
+  since the data file was first encrypted, and 0.3.0 would have been the first release with it.
+- **Turning locking off can't lock DotAmi out** ([8i]) — a safety copy deleted from the Delete menu
+  while its encrypted original was still waiting to be wiped no longer stops every later start; a
+  readable data file is no longer shown as locked (the lost-key window) just because a wipe was still
+  owed; and anything that goes wrong before the swap, such as a full disk, now leaves the file encrypted,
+  removes the half-made copy and says why ("Free up some space"), instead of stopping every start with
+  "DotAmi couldn't start.". A second rename another program refuses puts the encrypted file back.
 - **A French CSV with several amount columns is read on "Add from a file"** ([8c-3]) — a file saved
   with semicolons and amounts like "1 000,00" in several columns (Sage 50 Canadian in French) was
   split on its commas, so no column names were found and nothing was added up. When the commas on

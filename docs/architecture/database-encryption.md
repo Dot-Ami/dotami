@@ -477,7 +477,7 @@ When the app starts and can't open the key:
   that opens is never replaced because `dotami.db` is missing: a new data file gets the same key, so
   the safety copies locked with it (or the data file, put back) still open. When SQLite's rollback
   journal is beside the file, this check rolls the unfinished write back first (§ 15.3, "A write the
-  server didn't finish"); a wrong key changes nothing there either.
+  server didn't finish"); a wrong key changes nothing the file's data or its journal hold there either.
 - **Windows' key store not available right now** (it can be, briefly, after signing in or an
   update) is said apart from a lost key: restart Windows or sign in again. Nothing is given up for it:
   the window doesn't offer **Restore from a backup…** then, and the app refuses that answer.
@@ -938,10 +938,15 @@ above both opened the encrypted file read-only, so after a power cut mid-write e
 file) got past it. Both now first open the file **once read-write, with its key**, when a journal is
 beside it, so SQLite rolls the write back and deletes the journal, as the plain path's step 1 always did
 (§ 6, "A journal SQLite rolls back itself"); then the read-only check runs as before. *Measured
-2026-10-10 with SQLite3 Multiple Ciphers:* that read-write open with a **wrong** key is refused
-(`SQLITE_CORRUPT`) and writes nothing: the file and its journal stay byte for byte as they were. It is
-then treated as "doesn't open with this key", the lost-key case of § 10, never as permission to touch the
-file. A test pins this, so a future version of the library that behaved differently would fail it.
+2026-10-10 with SQLite3 Multiple Ciphers 2.4.0:* that read-write open with a **wrong** key is refused
+(`SQLITE_NOTADB` or `SQLITE_CORRUPT`) before any page is written back: the journal stays byte for byte as
+it was, and so does every byte of the file up to its committed length. The only change is SQLite's own
+first step of any rollback: it cuts off the pages the unfinished write had added past that length, which
+never held committed data. (A first measurement on a write that didn't grow the file saw no change at
+all, and this paragraph said "writes nothing" until the test showed the cut.) The journal is still there
+and still hot, so the right key finishes the rollback later, whole. A wrong key is then treated as
+"doesn't open with this key", the lost-key case of § 10. A test pins all of this, so a future version of
+the library that behaved differently would fail it.
 
 **When the key is deleted.** Only once nothing is locked with it any more: after the decryptions, the
 start looks at every database file DotAmi keeps in the data folder and in `backups/` (names ending

@@ -636,7 +636,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "dotami.db.decrypting",
     name: "The decrypted copy being made",
     holds:
-      "Made only while the desktop app decrypts the data file, after you turned locking off: everything the data file holds, unencrypted, written by SQLite from the encrypted file. Once it is checked against the encrypted file it takes the data file's place, a moment later. If DotAmi stops before that, its next start overwrites it with zeros and deletes it (or finishes the swap). The same name with “.decrypting” after a safety copy's name can appear in the safety copies folder for the same moments; a journal SQLite keeps beside it (“-journal”) goes with it.",
+      "Made only while the desktop app decrypts the data file, after you turned locking off: everything the data file holds, unencrypted, written by SQLite from the encrypted file. Once it is checked against the encrypted file it takes the data file's place, a moment later. If another program holds the data file so the two can't be swapped, or the copy can't be finished (a full disk), it is overwritten with zeros and deleted at once, and the data file stays encrypted. If DotAmi stops before that, its next start overwrites it with zeros and deletes it (or finishes the swap). The same name with “.decrypting” after a safety copy's name can appear in the safety copies folder for the same moments; a journal SQLite keeps beside it (“-journal”) goes with it.",
     writtenBy: { file: "desktop/decrypt-database.mjs", mentions: 'DECRYPT_COPY_SUFFIX = ".decrypting"' },
     desktopOnly: true,
     whenAbsent: "None: nothing is being decrypted.",
@@ -646,7 +646,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "dotami.db.encrypted-to-wipe",
     name: "The encrypted data file being wiped",
     holds:
-      "The data file as it was before it was decrypted, still encrypted with the data file's key. It is there from the moment the decrypted copy takes its place until it is overwritten with zeros and deleted, normally a moment later; while it is there, the key is kept. If another program holds it, it stays until a later start can wipe it. A safety copy's own (its name with “.encrypted-to-wipe” after it, in the safety copies folder) is handled the same way. Delete doesn't remove these files; the desktop app's next start does.",
+      "The data file as it was before it was decrypted, still encrypted with the data file's key. It is there from the moment the decrypted copy takes its place until it is overwritten with zeros and deleted, normally a moment later; while it is there, the key is kept. If another program holds it, it stays until a later start can wipe it. A safety copy's own (its name with “.encrypted-to-wipe” after it, in the safety copies folder) is handled the same way, also when that safety copy was deleted from the Delete menu meanwhile. Delete doesn't remove these files; the desktop app's next start does.",
     writtenBy: { file: "desktop/decrypt-database.mjs", mentions: 'ENCRYPTED_SUFFIX = ".encrypted-to-wipe"' },
     desktopOnly: true,
     whenAbsent: "None: no encrypted copy is waiting to be wiped.",

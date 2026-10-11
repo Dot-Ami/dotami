@@ -13,7 +13,11 @@
 //   7. the encrypted original (and a journal beside it) is overwritten with zeros, flushed and deleted;
 //      then the note is deleted.
 // A first rename another program refuses moves nothing; the plain copy and the note are wiped at once, so
-// no plain copy waits beside the encrypted file for the session, and the next start begins again.
+// no plain copy waits beside the encrypted file for the session, and the next start begins again. A second
+// rename refused puts the first one back, and is then the same. Anything else that fails in steps 1 to 4 (a
+// full disk) changes nothing either: the same clean-up, and DecryptionStopped("failed") says why.
+// A rollback journal beside the encrypted file (a write the server didn't finish) is rolled back with the key
+// before step 1's read-only check, which can't do it itself (sqlite.mjs rollBackJournal).
 // resumeDecryption reads what is on the disk at a start and finishes, redoes or stops (§ 15.3's table).
 // The data folder has one note at a time across both directions: decryptFile refuses while either note is
 // there, and encryptFile does the same (encrypt-database.mjs).
@@ -30,7 +34,7 @@ import { DATABASE_KEY_FILE } from "./database-key.mjs";
 import { contentsOf, copyIntoPlainFile, differences } from "./database-copy.mjs";
 import { DECRYPTING_NOTE, ENCRYPTING_NOTE, wipeFile } from "./encrypt-database.mjs";
 import { keyIdOf } from "./receipt-crypto.mjs";
-import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase } from "./sqlite.mjs";
+import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, rollBackJournal } from "./sqlite.mjs";
 import { backupsFolder, readWipePending } from "./wipe-pending.mjs";
 
 export { DECRYPTING_NOTE };
@@ -50,7 +54,11 @@ const JOURNAL = "-journal";
 
 /** Thrown when a file can't be decrypted now and nothing was changed; `message` is written for the person. */
 export class DecryptionStopped extends Error {
-  /** @param {"damaged" | "busy" | "stuck" | "mismatch" | "pending"} kind @param {string} message */
+  /**
+   * "failed": anything else went wrong before the swap (a full disk, an input/output error); nothing was
+   * changed, and a later start can try again.
+   * @param {"damaged" | "busy" | "stuck" | "mismatch" | "pending" | "failed"} kind @param {string} message
+   */
   constructor(kind, message) {
     super(message);
     this.name = "DecryptionStopped";
@@ -81,6 +89,26 @@ export function readDecryptNote(dataDir) {
     // Falls through: a note that can't be read.
   }
   return { unreadable: true };
+}
+
+/**
+ * Whether a decryption left part-way still needs the data file's key (§ 15.3, "Which of these need the
+ * key"): its note says "swap" (resumeDecryption may have to check the encrypted file again), or the file it
+ * names is still encrypted (or can't be read now, so DotAmi can't tell). A note at "wipe" beside a plain file
+ * (or beside a safety copy the person deleted) needs none: step 7 wipes without reading. desktop/main.mjs
+ * counts a decryption note as "something is locked" only when this says so, so a plain, readable data file
+ * is never shown as locked because a wipe is still owed. A note that can't be read needs none either.
+ * @param {string} dataDir
+ */
+export function decryptionNeedsKey(dataDir) {
+  const note = readDecryptNote(dataDir);
+  if (note === null || "unreadable" in note) return false;
+  if (note.step === "swap") return true;
+  try {
+    return fileKind(path.join(dataDir, note.file)) === "encrypted";
+  } catch {
+    return true;
+  }
 }
 
 /** Writes the note so it is never half there: beside its name, flushed, then renamed into place. */
@@ -123,9 +151,14 @@ function checkedEncrypted(file, key) {
     );
   let db;
   try {
+    // A write the server didn't finish is rolled back first: the read-only open below can't, and would fail
+    // with SQLITE_READONLY_ROLLBACK at every start. A wrong key touches no committed data (CannotOpenDatabase).
+    rollBackJournal(file, key);
     db = openDatabase(file, { key, readonly: true, fileMustExist: true });
   } catch (error) {
     if (error instanceof CannotOpenDatabase || /^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "")) throw noKey();
+    // Any other SQLite error (busy, an input/output error) is "not this time", never a guess at the file.
+    if (/^SQLITE_/.test(error?.code ?? "")) throw couldNotDecrypt(file, error);
     throw error;
   }
   try {
@@ -136,10 +169,28 @@ function checkedEncrypted(file, key) {
     // Opened with the key, then a page whose authentication tag no longer matches (SQLite3 Multiple Ciphers
     // reports a changed page as SQLITE_CORRUPT or "not a database").
     if (/^SQLITE_(CORRUPT|NOTADB)/.test(error?.code ?? "")) throw failedCheck();
+    if (/^SQLITE_/.test(error?.code ?? "")) throw couldNotDecrypt(file, error);
     throw error;
   } finally {
     db.close();
   }
+}
+
+/**
+ * The DecryptionStopped("failed") for anything that went wrong before the swap other than a damaged file, a
+ * busy file or a copy that didn't match. A full disk is the likely one (the plain copy is as big as the data
+ * file), so it is said in words the person can act on.
+ */
+function couldNotDecrypt(file, error) {
+  const code = String(error?.code ?? error?.name ?? "error");
+  const name = path.basename(file);
+  if (/^SQLITE_FULL/.test(code) || code === "ENOSPC") {
+    return new DecryptionStopped(
+      "failed",
+      `There isn't enough free space on the disk for a decrypted copy of ${name}, so DotAmi didn't decrypt it. It is still encrypted, and nothing was changed. Free up some space; DotAmi tries again at its next start.`,
+    );
+  }
+  return new DecryptionStopped("failed", `DotAmi couldn't decrypt ${name} this time (${code}). It is still encrypted, and nothing was changed; DotAmi tries again at its next start.`);
 }
 
 /** What is wrong with the plain copy: [] when it is plain, opens without a key, is whole and holds what `expected` says (step 3). */
@@ -172,10 +223,11 @@ function clearLeftovers(file, dataDir) {
  * @param {string} dataDir
  * @param {string} file
  * @param {Buffer} key
- * @param {{ log?: (line: string) => void, crashAt?: DecryptCrashPoint, rename?: (from: string, to: string) => void }} [options]
- *   `rename` replaces the first rename in the tests (a file another program holds).
+ * @param {{ log?: (line: string) => void, crashAt?: DecryptCrashPoint, rename?: (from: string, to: string) => void, copyInto?: typeof copyIntoPlainFile }} [options]
+ *   `rename` replaces the two renames of step 5 in the tests (a file another program holds); `copyInto`
+ *   replaces step 2's copy (a disk that fills up part-way).
  */
-export function decryptFile(dataDir, file, key, { log = () => {}, crashAt, rename = renameSync } = {}) {
+export function decryptFile(dataDir, file, key, { log = () => {}, crashAt, rename = renameSync, copyInto = copyIntoPlainFile } = {}) {
   // One note per data folder, across both directions: a new note would replace one that is still owed.
   if (readDecryptNote(dataDir) !== null || existsSync(path.join(dataDir, ENCRYPTING_NOTE))) {
     throw new DecryptionStopped(
@@ -184,24 +236,39 @@ export function decryptFile(dataDir, file, key, { log = () => {}, crashAt, renam
     );
   }
   clearLeftovers(file, dataDir);
-  const expected = checkedEncrypted(file, key);
   const copy = `${file}${DECRYPT_COPY_SUFFIX}`;
-  // Opened read-write and without fileMustExist on purpose: an attached file is opened with the main file's
-  // flags, and the copy has to be created. Nothing is written to the encrypted file itself.
-  const source = openDatabase(file, { key });
   try {
-    copyIntoPlainFile(source, copy);
-  } finally {
-    source.close();
+    const expected = checkedEncrypted(file, key);
+    // Opened read-write and without fileMustExist on purpose: an attached file is opened with the main file's
+    // flags, and the copy has to be created. Nothing is written to the encrypted file itself.
+    const source = openDatabase(file, { key });
+    try {
+      copyInto(source, copy);
+    } finally {
+      source.close();
+    }
+    if (crashAt === "copied") return { crashed: true };
+    const problems = checkCopy(copy, expected);
+    if (problems.length > 0) {
+      clearLeftovers(file, dataDir);
+      throw new DecryptionStopped("mismatch", `The decrypted copy didn't match the data file (${problems.join("; ")}), so it was thrown away. The file is still encrypted, and nothing was changed.`);
+    }
+    if (crashAt === "checked") return { crashed: true };
+    writeNote(dataDir, { step: "swap", file: path.relative(dataDir, file), size: statSync(copy).size, sha256: sha256Of(copy) });
+  } catch (error) {
+    if (error instanceof DecryptionStopped) throw error;
+    // Steps 1 to 4 never touch the encrypted file, so whatever failed here (a full disk while the copy was
+    // written, an input/output error) changed nothing the person relies on. What was made so far goes now:
+    // the plain copy, then a note that may already name it. Only if that clean-up fails too does the error
+    // reach the start as it is (the next start's resumeDecryption clears what is left).
+    try {
+      clearLeftovers(file, dataDir);
+      removeNote(dataDir);
+    } catch {
+      throw error;
+    }
+    throw couldNotDecrypt(file, error);
   }
-  if (crashAt === "copied") return { crashed: true };
-  const problems = checkCopy(copy, expected);
-  if (problems.length > 0) {
-    clearLeftovers(file, dataDir);
-    throw new DecryptionStopped("mismatch", `The decrypted copy didn't match the data file (${problems.join("; ")}), so it was thrown away. The file is still encrypted, and nothing was changed.`);
-  }
-  if (crashAt === "checked") return { crashed: true };
-  writeNote(dataDir, { step: "swap", file: path.relative(dataDir, file), size: statSync(copy).size, sha256: sha256Of(copy) });
   if (crashAt === "note-swap") return { crashed: true };
   return swapAndWipe(dataDir, file, { log, crashAt, rename });
 }
@@ -227,7 +294,21 @@ function swapAndWipe(dataDir, file, { log, crashAt, rename = renameSync }) {
     );
   }
   if (crashAt === "first-rename") return { crashed: true };
-  renameSync(copy, file);
+  try {
+    rename(copy, file);
+  } catch (error) {
+    // Another program (an antivirus scanning the new copy) refused the plain copy's rename into place. The
+    // encrypted original goes back to its own name, so the folder is never left without its data file, and
+    // then it is the same as a refused first rename. If even that rename is refused, the error goes on as it
+    // is: the note says "swap", and the next start finishes the swap (§ 15.3, "between the two renames").
+    rename(old, file);
+    clearLeftovers(file, dataDir);
+    removeNote(dataDir);
+    throw new DecryptionStopped(
+      "busy",
+      `Another program has ${path.basename(file)} open (${error?.code ?? "busy"}), so DotAmi couldn't decrypt it now. It is still encrypted, and nothing was changed; DotAmi tries again at its next start.`,
+    );
+  }
   if (crashAt === "second-rename") return { crashed: true };
   const note = readDecryptNote(dataDir);
   writeNote(dataDir, { step: "wipe", file: path.relative(dataDir, file), size: note?.size ?? 0, sha256: note?.sha256 ?? "0".repeat(64) });
@@ -255,11 +336,12 @@ function finishWipe(dataDir, file, { log, crashAt }) {
  * file) left part-way, by what is on the disk (§ 15.3's table). Returns:
  *   { action: "none" }  nothing was under way (or the key isn't open, and nothing that needs it was done)
  *   { action: "cleared" }  a plain copy an unfinished decryption left was wiped; the encrypted file is as it was
+ *       (with `file` and `wipePending`: a deleted safety copy's encrypted original was wiped, or is still owed)
  *   { action: "finished", file, wipePending }  the decryption of `file` is finished (or only its wipe is owed)
  *   { action: "restart", file }  the encrypted file changed after its copy was made: the copy was thrown away
  * Throws DecryptionStopped("stuck") when the files are in a state DotAmi didn't leave; nothing is removed.
  * @param {string} dataDir
- * @param {Buffer | null} key  null when the key can't be opened: nothing is changed
+ * @param {Buffer | null} key  null when the key can't be opened: only what needs no key is done (step 7)
  * @param {{ log?: (line: string) => void }} [options]
  */
 export function resumeDecryption(dataDir, key, { log = () => {} } = {}) {
@@ -278,12 +360,18 @@ export function resumeDecryption(dataDir, key, { log = () => {} } = {}) {
     removeNote(dataDir);
     return { action: had ? "cleared" : "none" };
   }
-  // Every step from here either needs the key to check the encrypted file or follows one that did.
-  if (!key) return { action: "none" };
   const file = path.join(dataDir, note.file);
   const copy = `${file}${DECRYPT_COPY_SUFFIX}`;
   const old = `${file}${ENCRYPTED_SUFFIX}`;
-  const kind = fileKind(file);
+  let kind;
+  try {
+    kind = fileKind(file);
+  } catch (error) {
+    // Another program holds the file the note names: nothing can be decided now. Without the key nothing was
+    // going to be done anyway (as before step 7 was finished without one); with it, the start says so.
+    if (error instanceof FileNotReadable && !key) return { action: "none" };
+    throw error;
+  }
   const copyMatches = () => existsSync(copy) && statSync(copy).size === note.size && sha256Of(copy) === note.sha256;
   const fileMatches = () => kind === "plain" && statSync(file).size === note.size && sha256Of(file) === note.sha256;
   const opensPlain = () => {
@@ -295,6 +383,22 @@ export function resumeDecryption(dataDir, key, { log = () => {} } = {}) {
       return false;
     }
   };
+
+  // Step 7 only wipes files, without reading them, so a note at "wipe" is finished whether or not the key
+  // opens (decryptionNeedsKey says the same to the start: then a key that can't be opened stops nothing).
+  if (note.step === "wipe" && !existsSync(copy)) {
+    if (opensPlain()) return { action: "finished", file, ...finishWipe(dataDir, file, { log }) };
+    // The safety copy was deleted from the Delete menu while its encrypted original's wipe was owed (another
+    // program held it, and DotAmi ran on): the person asked for that copy to be gone, so its encrypted
+    // original goes too. Only in backups/: a missing data file is never taken for a deleted one.
+    if (kind === "absent" && path.dirname(note.file) === "backups") {
+      const wiped = finishWipe(dataDir, file, { log });
+      if (!wiped.wipePending) log("[decrypt] a safety copy was deleted while its encrypted original's wipe was owed; that original was wiped too");
+      return { action: "cleared", file, ...wiped };
+    }
+  }
+  // Every step from here either needs the key to check the encrypted file or follows one that did.
+  if (!key) return { action: "none" };
 
   if (note.step === "swap") {
     // An encrypted F beside its own .encrypted-to-wipe isn't a state DotAmi leaves: the first rename happened,
@@ -337,9 +441,6 @@ export function resumeDecryption(dataDir, key, { log = () => {} } = {}) {
       writeNote(dataDir, { step: "wipe", file: note.file, size: note.size, sha256: note.sha256 });
       return { action: "finished", file, ...finishWipe(dataDir, file, { log }) };
     }
-  }
-  if (note.step === "wipe" && opensPlain() && !existsSync(copy)) {
-    return { action: "finished", file, ...finishWipe(dataDir, file, { log }) };
   }
   throw new DecryptionStopped("stuck", stuckMessage(dataDir, [DECRYPTING_NOTE, note.file, `${note.file}${DECRYPT_COPY_SUFFIX}`, `${note.file}${ENCRYPTED_SUFFIX}`]));
 }

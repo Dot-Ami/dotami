@@ -27,14 +27,14 @@ import {
   writeBackup,
 } from "./backup.mjs";
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
-import { clearTurnedOff, decryptFile, DecryptionStopped, finishTurningOff as finishTurnOff, markTurnedOff, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
+import { clearTurnedOff, decryptFile, DecryptionStopped, decryptionNeedsKey, finishTurningOff as finishTurnOff, markTurnedOff, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
 import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
 import { describeError, openLog } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, restartForNewKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
-import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, useSqliteFrom } from "./sqlite.mjs";
+import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, rollBackJournal, useSqliteFrom } from "./sqlite.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe, SAFETY_COPY_NAME } from "./wipe-pending.mjs";
 
@@ -413,8 +413,10 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
   };
   // Whether the key must be the one that opens what is here: the data file, or one being encrypted. A safety
   // copy left encrypted with a key that is lost (after "Start fresh") doesn't count: it is kept as it is, and
-  // must not stop a new key for the new data file.
-  const locked = fileKind(dbFile) === "encrypted" || readNote(dataDir) !== null || readDecryptNote(dataDir) !== null;
+  // must not stop a new key for the new data file. A decryption's note counts only while the key is still
+  // needed (decryptionNeedsKey): one left at its wipe step beside a plain file needs none, and counting it
+  // made a readable file look locked whenever the key couldn't be opened (the second review, 2026-10-10).
+  const locked = fileKind(dbFile) === "encrypted" || readNote(dataDir) !== null || decryptionNeedsKey(dataDir);
   const opened = openDatabaseKey(dataDir, safeStorage, { locked });
   if (opened.state === "key-unreadable") {
     say(
@@ -574,8 +576,9 @@ async function prepareDatabase({ afterStartFresh = false } = {}) {
  * crash-safe (desktop/decrypt-database.mjs), then the safety copies locked with the same key, then the key
  * is deleted once nothing opens with it. The turn-off note is written first (desktop/decrypt-database.mjs
  * markTurnedOff), so what is left for later starts is finished only for this key (§ 15.2). A file another
- * program holds moves nothing: the data file then stays encrypted for this start (said in a message), and
- * the next start tries again, since the setting still says off. A file that fails its check (or whose copy
+ * program holds moves nothing, and nor does anything else that fails before the swap (a full disk): the data
+ * file then stays encrypted for this start (said in a message, with the reason), and the next start tries
+ * again, since the setting still says off. A file that fails its check (or whose copy
  * doesn't match) stays encrypted too, and the start goes on as before, with the switch turned back on so
  * the next start doesn't stop on it again. Returns false when the start must stop (it has said why).
  */
@@ -592,9 +595,21 @@ async function turnLockingOff(key, say) {
     const done = decryptFile(dataDir, dbFile, key, { log: say });
     say(`locking was turned off in Settings; the data file was decrypted${done.wipePending ? " (the encrypted original's wipe is owed)" : ""}`);
   } catch (error) {
+    // decryptFile turns anything that fails before the swap into DecryptionStopped (nothing changed then); an
+    // error that still reaches here came after the first rename, and the next start's resumeDecryption
+    // finishes from the note.
     if (!(error instanceof DecryptionStopped)) throw error;
-    if (error.kind === "busy" || error.kind === "pending") {
-      say(error.kind === "busy" ? "the data file was busy; kept encrypted for now" : "an earlier change is still owed; kept encrypted for now");
+    // Busy, an earlier change still owed, or anything else before the swap (a full disk): the file is still
+    // encrypted and whole, so DotAmi runs on it as before and says why; the switch still says off, so the
+    // next start tries again (after the person frees some space, say).
+    if (error.kind === "busy" || error.kind === "pending" || error.kind === "failed") {
+      say(
+        error.kind === "busy"
+          ? "the data file was busy; kept encrypted for now"
+          : error.kind === "pending"
+            ? "an earlier change is still owed; kept encrypted for now"
+            : "the data file couldn't be decrypted this time; kept encrypted for now",
+      );
       await dialog.showMessageBox({ type: "info", title: "DotAmi", message: "Your data file wasn't decrypted this time.", detail: error.message });
       return true;
     }
@@ -650,9 +665,15 @@ function finishTurningOff(key, say) {
   else if (done.lockedLeft > 0) say(`the key was kept: ${done.lockedLeft} file${done.lockedLeft === 1 ? " is" : "s are"} still locked with it; tried again at the next start`);
 }
 
-/** Whether the encrypted file opens with `key` (read-only; nothing is written). */
+/**
+ * Whether the encrypted file opens with `key`. Read-only, except that a write the server didn't finish (a
+ * power cut mid-write leaves SQLite's rollback journal beside the file) is rolled back first with the key:
+ * a read-only open can't, and failed every start with SQLITE_READONLY_ROLLBACK until the second review of
+ * 2026-10-10 (sqlite.mjs rollBackJournal; database-encryption.md § 15.3). A wrong key touches no committed data.
+ */
 function opensWith(file, key) {
   try {
+    rollBackJournal(file, key);
     openDatabase(file, { key, readonly: true, fileMustExist: true }).close();
     return true;
   } catch (error) {

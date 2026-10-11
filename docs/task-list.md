@@ -270,10 +270,13 @@ roadmap's build order.
       copies, crash-safe, and deletes the key once nothing opens with it (the maintainer said yes,
       2026-10-10; [database-encryption.md § 15](architecture/database-encryption.md)); after review, the
       turn-off is recorded in a note naming the key, a damaged file stays encrypted without stopping the
-      start, and a blocked swap leaves no plain copy
-    - [ ] Found in review, older than this change: an encrypted data file left with a half-written change
-      (a power cut mid-write leaves its rollback journal) fails every start, because the key is checked
-      on a read-only open that can't roll the journal back (desktop/main.mjs opensWith)
+      start, and a blocked swap leaves no plain copy; after a second review, a safety copy deleted while
+      its encrypted original's wipe was owed, a readable file shown as locked, and a full disk no longer
+      stop DotAmi from starting
+    - [x] Found in review, older than this change (on main): an encrypted data file left with a
+      half-written change (a power cut mid-write leaves its rollback journal) failed every start, because
+      the key was checked on a read-only open that can't roll the journal back (desktop/main.mjs
+      opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
 

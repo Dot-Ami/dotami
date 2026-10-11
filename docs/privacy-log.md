@@ -65,6 +65,18 @@ person is asked).
   ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
   [database-encryption.md § 15](architecture/database-encryption.md)).
 
+- **What a second review of turning locking off changed ([8i], 2026-10-10).** A decrypted copy that
+  can't be finished (a full disk, say) is overwritten with zeros and deleted at once, as one another
+  program blocks is: the data file stays encrypted, and a message says why. When a safety copy is deleted
+  from the Delete menu while its encrypted original (`backups/<copy>.encrypted-to-wipe`) was still
+  waiting to be wiped because another program held it, the next start overwrites that original with
+  zeros and deletes it too (before, every start stopped on it). The rollback journal SQLite leaves
+  beside an encrypted data file when a write is cut off (`dotami.db-journal`, encrypted like the file)
+  is rolled back by SQLite at the next start and removed; before, every start stopped on it (a bug on
+  main since the data file was first encrypted). Nothing new is kept or sent
+  ([`desktop/decrypt-database.mjs`](../desktop/decrypt-database.mjs),
+  [database-encryption.md § 15.3](architecture/database-encryption.md)).
+
 - **The "wipe pending" note can also name set-aside receipt folders ([8i], 2026-10-10).** When Delete is
   asked to clear the receipt folders set aside in `backups/` (below, *How to remove it*), the note it
   leaves beside the data file until the work is done lists those folders' names (`receiptFolders`:

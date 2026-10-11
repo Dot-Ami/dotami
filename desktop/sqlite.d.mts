@@ -10,6 +10,8 @@ export function openDatabase(file: string, options?: { key?: Buffer | null; read
 export function openImage(image: Buffer): Database.Database;
 export function runSql(db: Database.Database, sql: string): Database.Database;
 export class FileNotReadable extends Error {
+  constructor(file: string, code?: string);
   code: string | undefined;
 }
 export function fileKind(file: string): "absent" | "plain" | "encrypted";
+export function rollBackJournal(file: string, key: Buffer | null): void;
