@@ -332,7 +332,9 @@ describe("the privacy inventory lists what can leave this computer", () => {
     expect(SENT_ELSEWHERE.map((s) => s.id)).toContain("intake-sentence");
   });
 
-  it("sees the requests the app makes today (a guard against the scan silently finding nothing)", () => {
+  // Slow on purpose: it scans all ~280 files in full once more, keeping the calls to DotAmi's own
+  // server that the kept results leave out. ~1.8 s alone, so it gets room under a busy full run.
+  it("sees the requests the app makes today (a guard against the scan silently finding nothing)", { timeout: 20_000 }, () => {
     const names = wrapperNamesAcross(networkSources, WRAPPERS);
     const aliases = names.filter((n) => !WRAPPERS.includes(n));
     const calls = networkSources.flatMap(({ file, code }) =>
