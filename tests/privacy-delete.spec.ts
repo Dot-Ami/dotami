@@ -552,17 +552,22 @@ describe("the Delete menu covers every table, and says what goes with each", () 
   it("[8i] the design docs and the privacy log don't promise the locked file or the old key files are never deleted, now that Delete can", () => {
     // Second review: the app's own words were fixed, but three docs still said "never deleted" about
     // what Delete's safety-copies box now clears. A line may still say the restore or Start fresh
-    // doesn't delete them, as long as it says the box can (or carries the dated "Changed" note).
+    // doesn't delete them, as long as it says the box can (or carries the dated "Changed" note) close
+    // after: a long list item that says so once, further on, doesn't excuse a "never deleted" earlier in
+    // it (found by breaking desktop-app.md on purpose: a block-wide check let it through).
     for (const doc of ["docs/privacy-log.md", "docs/architecture/desktop-app.md", "docs/architecture/database-encryption.md"]) {
       const text = readFileSync(path.join(process.cwd(), doc), "utf8").replace(/\r\n/g, "\n");
       // One block per paragraph or list item. Words in quotes are words reported, not promised.
       const promises = text
         .split(/\n(?=\s*\n|\s*(?:[-*]|\d+\.) )/)
         .map((block) => block.replace(/"[^"\n]*"/g, "").replace(/“[^”]*”/g, ""))
-        .filter((block) => /never delet/i.test(block))
         .filter((block) => /dotami-locked|locked (data )?file|key-unreadable|its key file|unreadable key file/i.test(block))
-        .filter((block) => !/safety-copies box|Changed\s+2026-10-10/i.test(block))
-        .map((block) => block.trim().slice(0, 120));
+        .flatMap((block) =>
+          [...block.matchAll(/never delet/gi)]
+            .map((m) => block.slice(m.index, m.index + 200))
+            .filter((after) => !/safety-copies box|Changed\s+2026-10-10/i.test(after)),
+        )
+        .map((after) => after.slice(0, 120));
       expect(promises, doc).toEqual([]);
     }
   });
