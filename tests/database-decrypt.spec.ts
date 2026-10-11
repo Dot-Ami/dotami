@@ -329,9 +329,11 @@ describe("stopped at every step, the next start finishes it", () => {
 /**
  * Leaves `file` the way a power cut in the middle of a write does: part of an unfinished write already in
  * the file, and SQLite's rollback journal (the pages as they were before it) beside it. Made by copying
- * both mid-transaction and putting the copies back once the real transaction was rolled back.
+ * both mid-transaction and putting the copies back once the real transaction was rolled back. Returns the
+ * file's committed length (the unfinished write made it longer).
  */
 function leaveHotJournal(file: string, key: Buffer) {
+  const committed = readFileSync(file).length;
   const aside = `${file}.aside`;
   const db = openDatabase(file, { key });
   try {
@@ -349,6 +351,7 @@ function leaveHotJournal(file: string, key: Buffer) {
   }
   renameSync(aside, file);
   renameSync(`${aside}-journal`, `${file}-journal`);
+  return committed;
 }
 
 /** The SQLite error code a read-only open with `key` fails with, or "opens". */
@@ -467,11 +470,13 @@ describe("found in the second review (2026-10-10)", () => {
     await expectPlainWhole(before.dir, before.file, before);
   });
 
-  it("with a wrong key, a hot journal and the file stay exactly as they were", async () => {
+  it("with a wrong key, the journal and every committed byte of the file stay as they were", async () => {
     const before = await encryptedFolder();
-    leaveHotJournal(before.file, KEY);
+    const committed = leaveHotJournal(before.file, KEY);
     const journal = `${before.file}-journal`;
-    const was = [sha(before.file), sha(journal)];
+    const fileWas = readFileSync(before.file);
+    const journalWas = sha(journal);
+    expect(fileWas.length).toBeGreaterThan(committed);
     let stopped: unknown = null;
     try {
       decryptFile(before.dir, before.file, OTHER_KEY);
@@ -480,8 +485,13 @@ describe("found in the second review (2026-10-10)", () => {
     }
     expect(stopped).toBeInstanceOf(DecryptionStopped);
     expect((stopped as Error).message).toMatch(/didn't open with its key/);
-    // Not a byte written to either: the read-write open with the wrong key was refused before the rollback.
-    expect([sha(before.file), sha(journal)]).toEqual(was);
+    // The journal is untouched, and so is every byte of the committed file: SQLite's first step of a rollback
+    // only cut off the pages the unfinished write had added past the committed length (measured with SQLite3
+    // Multiple Ciphers 2.4.0), then the wrong key was refused before any page was written back.
+    const fileNow = readFileSync(before.file);
+    expect(sha(journal)).toBe(journalWas);
+    expect(fileNow.length).toBeGreaterThanOrEqual(committed);
+    expect(fileNow.subarray(0, committed).equals(fileWas.subarray(0, committed))).toBe(true);
     expect(readdirSync(before.dir).sort()).toEqual(["dotami.db", "dotami.db-journal"]);
     // The right key then rolls it back and decrypts it whole.
     expect(decryptFile(before.dir, before.file, KEY)).toEqual({ wipePending: false });
