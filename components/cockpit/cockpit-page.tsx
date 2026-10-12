@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { FoldButton, FoldedStrip, useFolds } from "@/components/cockpit/folding";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
@@ -17,7 +18,9 @@ import { FigureReminderBanners } from "@/components/ventures/figure-reminder-ban
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
+import { allFolded } from "@/lib/cockpit/folds";
 import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCounts, type GaugeId, type Overlays } from "@/lib/cockpit/view";
+import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
@@ -49,7 +52,22 @@ import Link from "next/link";
  * step panel in place of node detail, the lists behind the gauges, and "Next on your road", all drawn
  * from one run of road evaluation (lib/roads/) on what is kept for this idea (lib/futures/). The left
  * rail is unchanged until part 2 brings "What you've told DotAmi / Not told yet".
+ *
+ * 2026-10-12, folding and phone width (future-cockpit.md § 2, "Folding and phone width"; issue #4): the
+ * rail, the goal bar, the right-hand panel and the map's legend each fold with their own button, the
+ * answers remembered in this browser (lib/cockpit/folds.ts). Below 768 px (Tailwind's `md`) the rail is
+ * a full-width sheet opened from the header and the page scrolls down instead of squeezing the road;
+ * below 1024 px (`lg`) the right-hand panel opens over the road (a full-width sheet on a phone, a 420 px
+ * drawer between the two) instead of taking a column from it.
  */
+
+/** The regions' ids, for the fold buttons' aria-controls. */
+const RAIL_ID = "cockpit-rail";
+const PANEL_ID = "cockpit-panel";
+const ALL_REGION_IDS = `${RAIL_ID} cockpit-goal-bar ${PANEL_ID} cockpit-map-legend`;
+
+/** A folded rail or panel on a wide window is a strip this wide. */
+const STRIP = "44px";
 
 /** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
 type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date";
@@ -94,6 +112,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   const [overlays, setOverlays] = useState<Overlays>(FIRST_OVERLAYS);
   const [activeGauge, setActiveGauge] = useState<GaugeId | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  // Which regions are folded (remembered in this browser), and, below 768 px, whether the rail's sheet is
+  // open (not remembered: it starts closed so the road is what a phone shows first).
+  const { folds, toggle, toggleAll } = useFolds();
+  const [railSheet, setRailSheet] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
   // Numbers the person just gave (a quote, their savings), waiting in the agree prompt.
@@ -338,18 +360,43 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     rightPanel === "date" ||
     (rightPanel === "node" && selectedStep !== undefined && selectedStepEvaluation !== undefined);
 
+  /** What the right-hand panel holds, named on its folded strip. */
+  const panelTitle =
+    rightPanel === "node"
+      ? (selectedStep?.label ?? "")
+      : rightPanel === "skills"
+        ? words.lists.skillsTitle
+        : rightPanel === "money"
+          ? words.lists.moneyTitle
+          : rightPanel === "date"
+            ? words.lists.dateTitle
+            : words.folds.exportTitle;
+
+  // The body's columns from 768 px (the rail and the road) and from 1024 px (with the panel, when one is
+  // open). A folded rail or panel keeps a narrow strip, so its way back stays where it was.
+  const railColumn = folds.rail ? STRIP : "minmax(200px,240px)";
+  const panelColumn = folds.panel ? STRIP : "minmax(280px,380px)";
+  const bodyColumns = {
+    "--cockpit-cols-md": `${railColumn} minmax(0,1fr)`,
+    "--cockpit-cols-lg": showRightSlot ? `${railColumn} minmax(0,1fr) ${panelColumn}` : `${railColumn} minmax(0,1fr)`,
+  } as CSSProperties;
+  const everythingFolded = allFolded(folds);
+
   return (
-    <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_auto_1fr] overflow-hidden bg-ink">
+    <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
-      <header className="grid grid-cols-[240px_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12]">
-        <div className="flex min-w-0 items-center gap-[18px] border-r border-rule px-[22px]">
+      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]">
+        <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
           <Link href="/ventures" className="font-mono text-[11px] text-stone transition hover:text-paper">
             ← Ideas
           </Link>
-          <WordMark size="sm" />
+          {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
+          <span className="max-md:hidden">
+            <WordMark size="sm" />
+          </span>
         </div>
 
-        <div className="flex min-w-0 items-center px-5">
+        <div className="flex min-w-0 items-center px-3 md:px-5">
           <span
             className="min-w-0 truncate font-serif text-sm font-bold tracking-tight text-paper"
             title={scenario.profile.name}
@@ -358,7 +405,19 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           </span>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 border-l border-rule px-5">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-l border-rule px-3 md:px-5">
+          {/* Below 768 px the rail is a sheet, opened here. */}
+          <Pill variant="ghost" size="small" className="md:hidden" aria-expanded={railSheet} aria-controls={RAIL_ID} onClick={() => setRailSheet(true)}>
+            {words.folds.railSheet.open}
+          </Pill>
+          <span className="hidden md:inline-flex">
+            <FoldButton
+              folded={everythingFolded}
+              label={everythingFolded ? words.folds.all.show : words.folds.all.fold}
+              controls={ALL_REGION_IDS}
+              onClick={toggleAll}
+            />
+          </span>
           <Pill
             variant={rightPanel === "playbook" ? "maple" : "maple-out"}
             size="small"
@@ -378,132 +437,154 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           target={kept?.incomeWanted ?? null}
           active={activeGauge}
           onGauge={handleGauge}
+          folded={folds.goal}
+          onToggleFold={() => toggle("goal")}
         />
       ) : (
         <div />
       )}
 
-      {/* Body */}
+      {/* Body: one column below 768 px, the rail and the road from 768 px, and the panel too from 1024 px. */}
       <div
-        className={`grid min-h-0 overflow-hidden ${
-          showRightSlot
-            ? "grid-cols-[minmax(200px,240px)_minmax(0,1fr)_minmax(280px,380px)]"
-            : "grid-cols-[minmax(200px,240px)_minmax(0,1fr)]"
-        }`}
+        style={bodyColumns}
+        className="grid min-h-0 grid-cols-1 overflow-hidden md:grid-cols-[var(--cockpit-cols-md)] lg:grid-cols-[var(--cockpit-cols-lg)] max-md:overflow-visible"
       >
-        {/* Left rail */}
-        <aside className="flex min-w-0 flex-col gap-3.5 overflow-y-auto border-r border-rule bg-ink3 p-5">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Venture</p>
-            <h3 className="mt-0.5 font-serif text-[22px] font-bold tracking-tight">
-              {scenario.profile.name}
-            </h3>
-            <p className="text-[11px] text-stone capitalize">
-              {scenario.profile.type} · {scenario.profile.province}
-            </p>
-          </div>
-
-          {/* [8e] A period has ended that this idea's agreed figures don't cover. */}
-          {ideaFigures ? (
-            <FigureReminderBanners
-              ideaId={ideaFigures.ideaId}
-              ideaName={scenario.profile.name}
-              figures={ideaFigures.figures}
-              today={today}
-              reminders={reminders}
-              // The entry form lives on the ideas page; this opens it on this idea's card.
-              addFiguresHref={`/ventures#figures-${encodeURIComponent(ideaFigures.ideaId)}`}
-            />
+        {/* Left rail: a column from 768 px, folding to a strip; below that a full-width sheet, closed until
+            the header's button opens it. */}
+        <aside
+          id={RAIL_ID}
+          aria-label={words.folds.railSheet.open}
+          className={`min-w-0 border-r border-rule bg-ink3 ${folds.rail ? "md:overflow-hidden" : "md:overflow-y-auto"} ${
+            railSheet ? "max-md:fixed max-md:inset-0 max-md:z-40 max-md:overflow-y-auto" : "max-md:hidden"
+          }`}
+        >
+          {folds.rail ? (
+            <div className="hidden h-full md:block">
+              <FoldedStrip label={words.folds.rail.show} controls={RAIL_ID} onClick={() => toggle("rail")} />
+            </div>
           ) : null}
-
-          <FieldRow label="Type" value={scenario.profile.type} />
-          <FieldRow label="Province" value={scenario.profile.province} />
-          <FieldRow label="Target Y1" value={formatCurrency(scenario.profile.targetRevenueY1)} />
-          <FieldRow label="Target Y3" value={formatCurrency(scenario.profile.targetRevenueY3)} />
-          <div className="border-t border-rule-soft py-2 text-xs">
-            <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
-                Structure
+          {/* Folded on a wide window, this is hidden, never removed: what it holds is there when it opens. */}
+          <div className={`flex min-h-full flex-col gap-3.5 p-5 ${folds.rail ? "md:hidden" : ""}`}>
+            <div className="flex justify-end">
+              <span className="hidden md:inline-flex">
+                <FoldButton folded={false} label={words.folds.rail.fold} controls={RAIL_ID} onClick={() => toggle("rail")} />
               </span>
-              <select
-                aria-label="Structure"
-                value={structureAssumed ? "" : scenario.profile.structure}
-                onChange={(e) => handleStructureChange(e.target.value as "" | VentureStructure)}
-                className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
-              >
-                <option value="">Not set</option>
-                <option value="sole-prop">Sole prop</option>
-                <option value="corporation">Corporation</option>
-              </select>
+              <Pill variant="ghost" size="small" className="md:hidden" onClick={() => setRailSheet(false)}>
+                {words.folds.railSheet.close}
+              </Pill>
             </div>
-            {structureAssumed ? (
-              <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-                Map assumes sole prop until you set it.
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Venture</p>
+              <h3 className="mt-0.5 font-serif text-[22px] font-bold tracking-tight">
+                {scenario.profile.name}
+              </h3>
+              <p className="text-[11px] text-stone capitalize">
+                {scenario.profile.type} · {scenario.profile.province}
               </p>
-            ) : null}
-          </div>
-          <FieldRow label="Employed" value={scenario.profile.employmentStatus} />
-
-          {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. */}
-          <section className="border-t border-rule-soft pt-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-              In your words
-            </p>
-            <div className="mt-2">
-              <PersonStatements variant="rail" />
             </div>
-          </section>
 
-          <StructureLadderRail activeStepId={ladderStepId} />
-          {structureAssumed ? (
+            {/* [8e] A period has ended that this idea's agreed figures don't cover. */}
+            {ideaFigures ? (
+              <FigureReminderBanners
+                ideaId={ideaFigures.ideaId}
+                ideaName={scenario.profile.name}
+                figures={ideaFigures.figures}
+                today={today}
+                reminders={reminders}
+                // The entry form lives on the ideas page; this opens it on this idea's card.
+                addFiguresHref={`/ventures#figures-${encodeURIComponent(ideaFigures.ideaId)}`}
+              />
+            ) : null}
+
+            <FieldRow label="Type" value={scenario.profile.type} />
+            <FieldRow label="Province" value={scenario.profile.province} />
+            <FieldRow label="Target Y1" value={formatCurrency(scenario.profile.targetRevenueY1)} />
+            <FieldRow label="Target Y3" value={formatCurrency(scenario.profile.targetRevenueY3)} />
+            <div className="border-t border-rule-soft py-2 text-xs">
+              <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
+                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+                  Structure
+                </span>
+                <select
+                  aria-label="Structure"
+                  value={structureAssumed ? "" : scenario.profile.structure}
+                  onChange={(e) => handleStructureChange(e.target.value as "" | VentureStructure)}
+                  className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
+                >
+                  <option value="">Not set</option>
+                  <option value="sole-prop">Sole prop</option>
+                  <option value="corporation">Corporation</option>
+                </select>
+              </div>
+              {structureAssumed ? (
+                <p className="mt-1 text-[10px] leading-snug text-stone-dim">
+                  Map assumes sole prop until you set it.
+                </p>
+              ) : null}
+            </div>
+            <FieldRow label="Employed" value={scenario.profile.employmentStatus} />
+
+            {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. */}
             <section className="border-t border-rule-soft pt-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-                Prep-tool references
+                In your words
               </p>
-              <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-                Appear once your structure is set.
-              </p>
+              <div className="mt-2">
+                <PersonStatements variant="rail" />
+              </div>
             </section>
-          ) : (
-            <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
-          )}
 
-          <div className="mt-4 flex flex-col gap-2.5">
-            <Pill variant="maple" className="w-full justify-center" onClick={() => handleSave()}>
-              {saveState === "saving" ? "Saving…" : "Save now"}
-            </Pill>
-            {/* The save line — always truthful about where the person's edits are. */}
-            {saveState === "dirty" ? (
-              <p className="text-center font-mono text-[10px] text-stone">Unsaved changes…</p>
-            ) : null}
-            {saveState === "saved" && savedAt ? (
-              <p className="text-center font-mono text-[10px] text-sage">Saved · {formatSavedAt(savedAt)}</p>
-            ) : null}
-            {saveState === "error" ? (
-              <p className="text-center text-[10px] text-maple">
-                Save unavailable — kept in this tab. Save now retries.
-              </p>
-            ) : null}
-            {saveState === "idle" ? (
-              <p className="text-center font-mono text-[10px] text-stone-dim">Edits save automatically.</p>
-            ) : null}
-            <Link href="/intake">
-              <Pill variant="ghost" className="w-full justify-center">
-                Edit venture profile
+            <StructureLadderRail activeStepId={ladderStepId} />
+            {structureAssumed ? (
+              <section className="border-t border-rule-soft pt-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
+                  Prep-tool references
+                </p>
+                <p className="mt-1 text-[10px] leading-snug text-stone-dim">
+                  Appear once your structure is set.
+                </p>
+              </section>
+            ) : (
+              <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
+            )}
+
+            <div className="mt-4 flex flex-col gap-2.5">
+              <Pill variant="maple" className="w-full justify-center" onClick={() => handleSave()}>
+                {saveState === "saving" ? "Saving…" : "Save now"}
               </Pill>
-            </Link>
-            <Link href="/ventures">
-              <Pill variant="ghost" className="w-full justify-center">
-                All ideas
-              </Pill>
-            </Link>
+              {/* The save line — always truthful about where the person's edits are. */}
+              {saveState === "dirty" ? (
+                <p className="text-center font-mono text-[10px] text-stone">Unsaved changes…</p>
+              ) : null}
+              {saveState === "saved" && savedAt ? (
+                <p className="text-center font-mono text-[10px] text-sage">Saved · {formatSavedAt(savedAt)}</p>
+              ) : null}
+              {saveState === "error" ? (
+                <p className="text-center text-[10px] text-maple">
+                  Save unavailable — kept in this tab. Save now retries.
+                </p>
+              ) : null}
+              {saveState === "idle" ? (
+                <p className="text-center font-mono text-[10px] text-stone-dim">Edits save automatically.</p>
+              ) : null}
+              <Link href="/intake">
+                <Pill variant="ghost" className="w-full justify-center">
+                  Edit venture profile
+                </Pill>
+              </Link>
+              <Link href="/ventures">
+                <Pill variant="ghost" className="w-full justify-center">
+                  All ideas
+                </Pill>
+              </Link>
+            </div>
+
+            <p className="mt-auto border-t border-rule-soft pt-4 text-[10.5px] leading-snug text-stone">
+              <span className="font-serif italic text-paper">Compass, not GPS.</span> Profile drives
+              which surfaces appear on the map. DotAmi never files, predicts, or replaces an
+              accountant.
+            </p>
           </div>
-
-          <p className="mt-auto border-t border-rule-soft pt-4 text-[10.5px] leading-snug text-stone">
-            <span className="font-serif italic text-paper">Compass, not GPS.</span> Profile drives
-            which surfaces appear on the map. DotAmi never files, predicts, or replaces an
-            accountant.
-          </p>
         </aside>
 
         {/* Canvas — S2.5.4j: tier columns, not a graph; the overlay switches over it and "Next on your
@@ -531,6 +612,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
                   linkedSkillId={selectedSkillId}
+                  cockpit={{ legendFolded: folds.legend, onToggleLegend: () => toggle("legend") }}
                 />
               </div>
               <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
@@ -538,95 +620,124 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           ) : null}
         </div>
 
-        {/* Right panel: one thing at a time. */}
-        {showRightSlot && rightPanel === "node" && selectedStep && selectedStepEvaluation && evaluation ? (
-          <div className="overflow-y-auto border-l border-rule bg-ink3">
-            <StepPanel
-              road={road}
-              step={selectedStep}
-              evaluation={selectedStepEvaluation}
-              rules={evaluation.rules}
-              skillItems={skillItemsV2026}
-              marks={markOf}
-              selectedSkillId={selectedSkillId}
-              branch={
-                selectedDecision
-                  ? {
-                      decision: selectedDecision,
-                      activeOptionId: scenario.state.activeBranches[selectedDecision.id],
-                      isDefault: !isBranchDecided(selectedDecision.id, scenario.state),
-                      onChange: (optionId) => handleBranchChange(selectedDecision, optionId),
+        {/* Right panel: one thing at a time. A column from 1024 px; below that it opens over the road, a
+            full-width sheet on a phone and a 420 px drawer between. Folded, it is a strip (or a bar along
+            the bottom on a narrow window) naming what it holds; what it holds stays, hidden. */}
+        {showRightSlot ? (
+          <div
+            id={PANEL_ID}
+            className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
+              folds.panel
+                ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
+                : "max-lg:fixed max-lg:inset-0 max-lg:z-40 md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
+            }`}
+          >
+            {folds.panel ? (
+              <>
+                <div className="hidden h-full border-l border-rule lg:block">
+                  <FoldedStrip label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
+                </div>
+                <div className="flex justify-center px-3 py-2 lg:hidden">
+                  <FoldButton folded label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-end border-b border-l border-rule px-3 py-1 max-lg:border-l-0">
+                <FoldButton folded={false} label={words.folds.panel.fold} controls={PANEL_ID} onClick={() => toggle("panel")} />
+              </div>
+            )}
+            <div className={`min-h-0 flex-1 ${folds.panel ? "hidden" : ""}`}>
+              {rightPanel === "node" && selectedStep && selectedStepEvaluation && evaluation ? (
+                <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
+                  <StepPanel
+                    road={road}
+                    step={selectedStep}
+                    evaluation={selectedStepEvaluation}
+                    rules={evaluation.rules}
+                    skillItems={skillItemsV2026}
+                    marks={markOf}
+                    selectedSkillId={selectedSkillId}
+                    branch={
+                      selectedDecision
+                        ? {
+                            decision: selectedDecision,
+                            activeOptionId: scenario.state.activeBranches[selectedDecision.id],
+                            isDefault: !isBranchDecided(selectedDecision.id, scenario.state),
+                            onChange: (optionId) => handleBranchChange(selectedDecision, optionId),
+                          }
+                        : null
                     }
-                  : null
-              }
-              canSave={canSave}
-              error={answerError}
-              onStatus={handleStatus}
-              onTicks={handleTicks}
-              onMark={(skillItemId, mark) => handleMark({ skillItemId }, mark)}
-              onSelectSkill={setSelectedSkillId}
-              onProposeQuote={handleProposeQuote}
-              province={scenario.profile.province}
-              ownNumber={scenario.state.incorporateAt ?? null}
-              onOwnNumberChange={handleIncorporateAtChange}
-              onClose={() => {
-                setSelectedNodeId(null);
-                setRightPanel(null);
-              }}
-            />
-          </div>
-        ) : null}
+                    canSave={canSave}
+                    error={answerError}
+                    onStatus={handleStatus}
+                    onTicks={handleTicks}
+                    onMark={(skillItemId, mark) => handleMark({ skillItemId }, mark)}
+                    onSelectSkill={setSelectedSkillId}
+                    onProposeQuote={handleProposeQuote}
+                    province={scenario.profile.province}
+                    ownNumber={scenario.state.incorporateAt ?? null}
+                    onOwnNumberChange={handleIncorporateAtChange}
+                    onClose={() => {
+                      setSelectedNodeId(null);
+                      setRightPanel(null);
+                    }}
+                  />
+                </div>
+              ) : null}
 
-        {showRightSlot && rightPanel === "skills" ? (
-          <SkillsListPanel
-            road={road}
-            skillItems={skillItemsV2026}
-            marks={kept?.skillMarks ?? []}
-            selectedSkillId={selectedSkillId}
-            canSave={canSave}
-            error={answerError}
-            onMark={handleMark}
-            onSelectSkill={setSelectedSkillId}
-            onClose={() => {
-              setRightPanel(null);
-              setActiveGauge(null);
-            }}
-          />
-        ) : null}
+              {rightPanel === "skills" ? (
+                <SkillsListPanel
+                  road={road}
+                  skillItems={skillItemsV2026}
+                  marks={kept?.skillMarks ?? []}
+                  selectedSkillId={selectedSkillId}
+                  canSave={canSave}
+                  error={answerError}
+                  onMark={handleMark}
+                  onSelectSkill={setSelectedSkillId}
+                  onClose={() => {
+                    setRightPanel(null);
+                    setActiveGauge(null);
+                  }}
+                />
+              ) : null}
 
-        {showRightSlot && rightPanel === "money" && evaluation ? (
-          <MoneyListPanel
-            road={road}
-            evaluation={evaluation}
-            canSave={canSave}
-            error={answerError}
-            onProposeSavings={(amountCents) => proposeNumber({ kind: "savings-for-start", amountCents })}
-            onSelectStep={openStep}
-            onClose={() => {
-              setRightPanel(null);
-              setActiveGauge(null);
-            }}
-          />
-        ) : null}
+              {rightPanel === "money" && evaluation ? (
+                <MoneyListPanel
+                  road={road}
+                  evaluation={evaluation}
+                  canSave={canSave}
+                  error={answerError}
+                  onProposeSavings={(amountCents) => proposeNumber({ kind: "savings-for-start", amountCents })}
+                  onSelectStep={openStep}
+                  onClose={() => {
+                    setRightPanel(null);
+                    setActiveGauge(null);
+                  }}
+                />
+              ) : null}
 
-        {showRightSlot && rightPanel === "date" && evaluation ? (
-          <DatePanel
-            targetMonth={kept?.future.targetMonth ?? null}
-            monthsFromToday={evaluation.gauges.date?.monthsFromToday ?? null}
-            today={today}
-            canSave={canSave}
-            error={answerError}
-            onSave={handleSaveDate}
-            onClose={() => {
-              setRightPanel(null);
-              setActiveGauge(null);
-            }}
-          />
-        ) : null}
+              {rightPanel === "date" && evaluation ? (
+                <DatePanel
+                  targetMonth={kept?.future.targetMonth ?? null}
+                  monthsFromToday={evaluation.gauges.date?.monthsFromToday ?? null}
+                  today={today}
+                  canSave={canSave}
+                  error={answerError}
+                  onSave={handleSaveDate}
+                  onClose={() => {
+                    setRightPanel(null);
+                    setActiveGauge(null);
+                  }}
+                />
+              ) : null}
 
-        {showRightSlot && rightPanel === "playbook" ? (
-          <div className="overflow-y-auto border-l border-rule bg-ink3">
-            <PlaybookExportPanel scenario={scenario} onClose={() => setRightPanel(null)} />
+              {rightPanel === "playbook" ? (
+                <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
+                  <PlaybookExportPanel scenario={scenario} onClose={() => setRightPanel(null)} />
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </div>

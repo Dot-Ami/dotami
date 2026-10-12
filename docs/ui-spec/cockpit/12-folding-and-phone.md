@@ -32,7 +32,9 @@ Each fold button carries `aria-expanded` (open = true) and `aria-controls` namin
 - **Remembered per browser.** Every click writes the four answers to this browser's storage
   (`localStorage`, key `dotami-cockpit-folds`, a JSON object such as `{"rail":true,"goal":false,"panel":false,"legend":true}`).
   The cockpit reads it when it opens. If storage can't be read or written, everything opens and folding
-  still works until the window closes. Anything in the stored value other than `true` reads as open.
+  still works until the window closes. Anything in the stored value other than `true` reads as open. In
+  the desktop app each launch has its own local address and so its own empty storage: the folds last until
+  the app closes.
 - **The panel stays folded** while the person picks other steps, gauges or Export: the new thing goes in
   the folded panel and the strip names it. **Close** inside the panel closes it and clears what it held,
   as before; the fold answer is kept for the next thing opened.

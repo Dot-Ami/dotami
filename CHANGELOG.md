@@ -11,6 +11,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Every region of the cockpit folds, and the cockpit works at phone width** (closes #4) — the
+  venture details on the left, the goal bar with its four gauges, the right-hand panel and the map's
+  legend each fold and open again with a button that says what it does (*Fold venture details*, *Show
+  goal and gauges*, *Show the panel: Sole Prop activation*…), and *Fold all panels* in the header folds
+  all four. A folded region keeps its button where it was and hides nothing for good; the goal bar folds
+  to one line that still holds the four gauges. The answers are remembered in this browser
+  (`localStorage`, `dotami-cockpit-folds`). With everything folded at 1280x720, every card on the road
+  fits in the window once the road is scrolled to it, in a road area at least 400 px tall (296 px with
+  everything open). Below 768 px the page never scrolls sideways: the road scrolls sideways in its own
+  area one column at a time, the venture details and the right-hand panel open as full-width sheets, and
+  the legend sits under the road instead of squeezing it to 20 px; from 768 to 1024 px the panel opens as
+  a drawer over the road. Design: [docs/architecture/future-cockpit.md § 2, "Folding and phone
+  width"](docs/architecture/future-cockpit.md); controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
+  `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;

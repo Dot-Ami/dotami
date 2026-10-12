@@ -327,6 +327,9 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   (private windows, storage switched off) gets a cockpit with everything open and folding that works
   until the window closes. Nothing goes in the data file and nothing leaves the computer; the privacy
   inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
+  In the desktop app each launch is served from its own local address, so its storage starts empty: the
+  folds last until the app closes and it opens with everything showing (the same as the intake's list of
+  typed job descriptions).
 - **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
   road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
   least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before
