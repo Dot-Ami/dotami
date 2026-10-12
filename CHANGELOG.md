@@ -360,6 +360,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
+  hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
+  server runs on the person's own computer, who can reach it, what the limit is for (a runaway loop in
+  a script or an agent), that the counts live in memory, and that Next.js fills in the caller's address
+  ([`lib/api/rate-limit.ts`](lib/api/rate-limit.ts); a check in
+  [`tests/rate-limit.spec.ts`](tests/rate-limit.spec.ts)). No behaviour changes.
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
   inside, and sees its whole road at once: steps, the skills they need, official fees and the cost
