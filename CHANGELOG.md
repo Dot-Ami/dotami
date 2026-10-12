@@ -85,6 +85,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   0.3.0 (`docs/architecture/expense-records.md`, `docs/architecture/figures-privacy-review.md`), and
   the settings edge cases say the warning before turning off locking is desktop-tested
   (`docs/architecture/settings-and-edge-cases.md`).
+- **A source's date says who looked at it.** Following the maintainer's decision of 2026-10-11, a
+  source is either *read by a person on* a date or *checked by a tool on* a date (a tool fetched the
+  live page and the quoted words were found on it). The OaSIS 2025 record and the CRA's *When to
+  register for and start charging the GST/HST* page were fetched by a tool, so their dates now say
+  *checked by a tool on 2026-10-11* instead of *read 2026-10-11*
+  (`docs/architecture/future-cockpit.md`).
 
 ## [0.3.0] — 2026-10-10
 
