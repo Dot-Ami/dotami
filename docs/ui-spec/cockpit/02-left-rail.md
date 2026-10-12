@@ -59,7 +59,11 @@ spot in the product — it carries 6+ unrelated concerns.
   it belongs to; other typed statements are tagged "typed in DotAmi".
 - **Venture block + FieldRows** — display-only. Reads `currentScenario.profile` (name,
   type, province, targetRevenueY1/Y3 via `Intl.NumberFormat` CAD, structure,
-  employmentStatus) plus `archetype.label` and `archetype.planningFocus`.
+  employmentStatus) plus `archetype.label` and `archetype.planningFocus`. Since 2026-10-12 an
+  idea picked on *Pick a future* was saved without the kind of venture or its sales targets
+  (`profile.notSaid`): those rows, and the line under the name, say *Not said* instead of the
+  intake's starting values (*service*, *$0*); its work situation says *Not said* the same way.
+  The link to every idea reads **Your futures**, as the header's back link does.
   `archetype = resolveArchetypeForScenario(currentScenario)` — matches
   `scenario.archetypeId` (or legacy `scenario.id`) against the 4 archetypes, else
   falls back to the default example archetype. **Custom intake ventures therefore show

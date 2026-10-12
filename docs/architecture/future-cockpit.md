@@ -131,65 +131,97 @@ each choice that differs from the table above says why.
   1. *"In a few years, what do you want your work and life to look like? Use your own words."*
      **Keep my words** saves it at once as the person's destination (a dated, word-for-word statement,
      `kind: "destination"`, through the statements route, which now accepts that one kind). Receipt:
-     *"Kept word for word, dated 2026-10-12. It goes at the top of each future you open."*, with the
-     words shown back in quotes. **I don't know yet** keeps nothing: *"Nothing kept. You can say it
-     later; nothing here waits on it."* With no database: *"Not kept: no database reachable. It stays
-     in this tab only."* Changing it adds a new statement; none is written over.
+     *"Kept word for word, dated 2026-10-12. It goes at the top of each future you pick on Pick a
+     future; an idea you describe in your own sentence shows that sentence instead."*, with the words
+     shown back in quotes (the goal bar shows an idea's own first sentence when it has one, below).
+     **I don't know yet** keeps nothing new: *"Nothing kept. You can say it later; nothing here waits on
+     it."*, or, when words of the person's are already kept (said before, in this tab or another),
+     *"Nothing new kept. Your words of 2026-10-12 are still kept and still show on top of your futures;
+     Delete on What DotAmi knows about you removes them, with all your statements."* (statements are
+     deleted all at once, never one by one, by design). With no database: *"Not kept: no database
+     reachable. It stays in this tab only."* Changing it adds a new statement; none is written over.
   2. *"Are you after a business of your own, a job or career, or both?"*: **A business of my own** ·
      **A job or career** · **Both, or not sure** (the last is the *I don't know*). The receipt counts the
-     written futures that have that in them, by each road's `kind` (a *both* road has a business and a
-     career): *"2 of the 2 written futures include a business of your own."* It filters nothing: *Pick
-     a future* lists every written future (*Every path, in the open*). Kept on the future when one is
-     picked (below).
+     futures *Pick a future* lists that have that in them, by each road's `kind` (a *both* road has a
+     business and a career): *"Of the 1 future listed, 1 includes a business of your own."* It filters
+     nothing: *Pick a future* shows every future it lists. Kept on the future when one is picked (below).
   3. *"Which province or territory are you in?"*, required, no *I don't know*: fees, licences and tax
      rules differ by place and no road can be drawn without one. Choices are the thirteen places as
      codes (`CA-AB` …, the maintainer's decision of 2026-10-11). Receipt, from the catalogs' own
-     coverage: *"Alberta's rules and the federal rules apply. 2 futures are written for Alberta."*, or,
-     for a place whose rules aren't written, *"The federal rules apply; Yukon's own rules aren't written
-     yet. No future is written for Yukon yet: the ones shown are written for other places, and each
-     says which."*
+     coverage: *"Alberta's rules and the federal rules apply. 1 future listed is written for
+     Alberta."*, or, for a place whose rules aren't written, *"The federal rules apply; Yukon's own rules
+     aren't written yet. No future listed is written for Yukon yet: the ones shown are written for other
+     places, and each says which."* § 3 says *I don't know* is always an answer, and its own table marks
+     the province as required: the design contradicts itself here, and which one wins is an open item
+     for the maintainer (§ 13).
   4. *"What yearly income do you want, before tax?"*, optional. The amount is proposed (a new route,
      `POST /api/person-figures/propose`) and an agree prompt opens; it counts only when the person
      clicks **Agree** (`/api/person-figures/agree`, which answers only DotAmi's own window, like the
      figures' agree route). The prompt is a small one of its own, because today's figures prompt is
      built for a total over a period on one idea and this number belongs to the person. Receipt:
      *"Your target: $70,000 a year, before tax, agreed 2026-10-12. Nothing compares it with
-     anything."* **No, I'll do it myself** turns it down (*"Not kept."*); **Skip** keeps nothing (*"Not
-     given. Nothing here waits on it."*).
+     anything."* **No, I'll do it myself** turns it down, and the receipt says what that leaves in the
+     file: *"Turned down. It stays in your data file, marked turned down and shown nowhere, until Delete
+     on What DotAmi knows about you removes it."* **Skip** keeps nothing new: *"Not given. Nothing here
+     waits on it."* When a target agreed before is still current, both say so too: *"Your target of
+     $70,000, agreed 2026-10-12, still stands; Delete on What DotAmi knows about you removes it."*
+     The prompt's own line is about the person's own number: *"Double-check the number you typed before
+     you agree."*, and Enter in the amount box does what **Keep it** does.
 
-  The answers to 2 and 3, and what 1 and 4 came to, wait in the tab (the journey draft) until a future
-  is picked; 1 and 4 are already in the data file. **Pick a future →** shows once 3 is answered and 4
-  answered or skipped.
-- **Pick a future (`/futures`).** Every written future, as a card, in the order added (`roadsV2026`),
-  never ranked: *"In the order they were written, not ranked. More futures are being written."* Each
-  card shows its name; what it holds (*"A business"*, *"A career and a business"*); where it is
-  written for, and, when that isn't the person's place, *"Written for Alberta. You said Yukon."*; counts
-  only (steps · skills listed · official fees found · cost lines you'd price); and how its sources were
-  checked, counted through `lib/engines/shared/citation-check.ts`: *"Sources: n read · m checked by a
-  tool only, not read by a person yet"*, the second part in amber. That last line is how this screen
-  lists the first written future, whose sources are all tool checks: the open item *Listing a road
-  nobody has read* (§ 13) is answered here by saying so on the card; the maintainer may still decide to
-  hold it back until a person has read its pages. An optional **Name it** box (default: the road's
-  name), then **Look inside →** on each card.
+  **What is already kept counts as answered.** `/start` is drawn on the server, which reads the person's
+  newest destination and the income they agreed to (`lib/front-door/kept.ts`), so a returning person
+  (a new tab, the desktop app started again, or after door 2's *Map it*, which starts the tab's journey
+  afresh) sees 1 and 4 answered from the data file, with **Change**, and is asked only 2 and 3, which
+  live in the tab until a future is picked. The answers to 2 and 3, and what 1 and 4 came to, wait in
+  the tab (the journey draft); 1 and 4 are already in the data file. **Pick a future →** shows once 3
+  is answered and 4 answered or skipped.
+
+  For the keyboard and a screen reader: the page has one level 1 heading, *Your destination* (seen only
+  by a screen reader, since the nav says it), and after each answer focus moves to the next question's
+  heading, or to **Pick a future →** when none is left; **Change** moves it to the question it opens.
+  Closing the income prompt without deciding gives focus back to the amount box.
+- **Pick a future (`/futures`).** The futures it lists, as cards, in the order added (`roadsV2026`),
+  never ranked: *"In the order they were written, not ranked. More futures are being written."* Which
+  roads it lists is one list, `LISTED_ROAD_IDS` in `lib/front-door/futures.ts`: road 0 only, because
+  whether a road nobody has read may be listed is the maintainer's call (§ 13, *Listing a road nobody
+  has read*); the first written future, whose sources are all tool checks, is added to that list, one
+  line, once he decides. Each card shows its name; what it holds (*"A business"*, *"A career and a
+  business"*); where it is written for, and, when that isn't the person's place, *"Written for Alberta.
+  You said Yukon."*; counts only (steps · skills listed · official fees found · cost lines you'd price);
+  and how its sources were checked, counted through `lib/engines/shared/citation-check.ts`: *"Sources: n
+  read · m checked by a tool only, not read by a person yet"*, the second part in amber. An optional
+  **Name it** box (default: the road's name), then **Look inside →** on each card.
   Picking saves a new idea in one request, the intake's first save: the road (`Venture.roadId` and the
   moment), the *business / career / both* answer (the one added column the task list names, with its
   moment: `Venture.lookingFor`, `lookingForSetAt`), the place and the name. Then the cockpit opens on it
   (`/cockpit?venture=<id>`), drawing that road from its first line. **Not here yet?** keeps a note in
-  the person's own words (one of their statements) and opens the general road the same way.
-  Two answers the cockpit's idea needs are not asked on this path, and nothing is made up for them:
+  the person's own words (one of their statements) and opens the general road the same way; when the
+  note is kept but the road can't be opened, it says so (*"Your note is kept. The general road couldn't
+  be opened: no database reachable."*) and empties the box, so pressing again doesn't keep it twice.
+  Answers the cockpit's idea needs are not asked on this path, and nothing is made up for them:
   - *Your current work situation* (§ 3 moves it from a required intake question to an optional one) is
     kept as **not said**, a new value of the column (`NOT_SAID`; SQLite keeps it as text, so no table
     changes). The rules read it as unanswered, road evaluation lists it as not told, and the screens
     write *Not said*.
-  - *Venture type* (service, product, side gig) starts at *Service*, the intake's own starting value,
-    as it does for every idea today; no rule in the catalogs reads it. Part 2's *Not told yet* list is
-    where it is asked.
+  - *The kind of venture* (service, product, side gig), *buying equipment, a vehicle or tools* and the
+    *first- and third-year sales targets* are kept as **not said** too, listed by permanent id
+    (`venture-type`, `equipment`, `sales-targets`) in a new column, `Venture.notSaid` (a JSON list,
+    `[]` for every other idea; added by hand-written SQL, one `ADD COLUMN`). The columns themselves
+    still hold the intake's starting values (*Service*, no, 0), which the rules read as they read an
+    intake idea before it is touched: no rule in the catalogs reads the kind of venture, equipment
+    reads as no and a 0 target as none. What changes is what DotAmi says the person told it: road
+    evaluation lists the kind of venture and equipment as not told (*given: false*), so part 2's
+    *What you've told DotAmi* won't say *"you told us…"*, and the cockpit's rail and the playbook write
+    *Not said* for the kind of venture and both targets. A save that carries no list (the intake, which
+    asks all three) clears it.
 
   The job closest to the person's work (decision 5) comes with the OaSIS import; *Pick a future* doesn't
   ask it yet, and doesn't show the road drawn in grey before the pick: the cockpit draws it whole.
 - **A second idea skips *About you* (issue #38).** The intake opens on *About you* only for a person
   with no saved idea yet. Anyone with one starts on the screen they came for (*Did we get this right?*,
-  or *What are you building?* with nothing typed), and **← Back** still reaches *About you*. Whether the
+  or *What are you building?* with nothing typed), and **← Back** still reaches *About you*. That
+  includes a person whose only idea came from *Pick a future*, who has never seen *About you*: it is
+  optional, one click back, and asking it again of everyone with an idea is what issue #38 removed. Whether the
   person has a saved idea is read on the server when the page is drawn, so the first screen never
   flickers. *Your futures*' button is **+ Another future**, which opens the front door, where both ways
   in are.
@@ -1018,8 +1050,9 @@ row per answer with its date (§ 2); `Venture.updatedAt` is not used for that, b
 The job picked (an occupation code and its day), the *business / career / both* answer and the *This
 is mine* pin are **not** added yet: each comes with the screen that asks it, as one more plain added
 column. The occupation code's shape waits on the OaSIS import (§ 13). *(2026-10-12: the business / career
-/ both answer came with Your destination and Pick a future, as `lookingFor` and `lookingForSetAt`; § 1,
-The way in as built.)*
+/ both answer came with Your destination and Pick a future, as `lookingFor` and `lookingForSetAt`; and
+`notSaid`, the idea's answers a picked future was saved without (`venture-type`, `equipment`,
+`sales-targets`), so nothing reads them as said; § 1, The way in as built.)*
 
 **The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
 statement written as the answer to *where you want to be*. It is one of the person's statements like
@@ -1275,9 +1308,14 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
   has read its pages, is the maintainer's call; no screen lists any road but road 0 until then.
-  *(2026-10-12: Pick a future lists it, each card saying how many of its sources were read and how many
-  only checked by a tool, in amber; § 1, The way in as built. Holding it back is still the maintainer's
-  call.)*
+  *(2026-10-12: Pick a future is built and lists road 0 only, from one list, `LISTED_ROAD_IDS` in
+  `lib/front-door/futures.ts`; each card already says how many of its sources were read and how many
+  only checked by a tool, in amber, so listing the first written future is one line once the maintainer
+  decides. § 1, The way in as built.)*
+- **"I don't know" on the place.** § 3 says *I don't know* is always an answer, and the same section's
+  table marks the province as required. *Your destination* follows the table (no road can be drawn
+  without a place). The other choice: an *I don't know* that lists the futures and asks for the place
+  again before **Look inside**. The maintainer's call.
 - **Four of today's map stages cite pages that have moved** (found 2026-10-12 while writing road 0's
   *done when* lines): the CRA's *Employees* page, the line 4600 page cited twice under *Retained
   earnings planning*, and the two SR&ED pages under *SR&ED deepening* answer "page not found". Their

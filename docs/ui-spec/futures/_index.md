@@ -18,7 +18,10 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 - The `looking-for` receipt again, so the person sees what their answer counted.
 - **Name it (optional)**: one box above the cards, up to 80 characters; left empty, the idea is named
   after the road.
-- One card per written future (`roadsV2026`, in the order added; `role="list"`).
+- One card per future it lists (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`, in the catalog's
+  order; `role="list"`). Today that is road 0 only: whether the first written future, whose sources
+  are all tool checks, may be listed is the maintainer's call (docs/architecture/future-cockpit.md
+  § 13, *Listing a road nobody has read*); adding its id to the list is the whole change.
 - **Not here yet?** under the cards.
 
 ## Controls
@@ -26,8 +29,8 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 | Control | Behaviour | Persists to |
 |---|---|---|
 | A card | display: the road's name (level 2 heading); what it holds (*A business* · *A career and a business* · *A career*); *Written for Alberta*, plus *"You said <place>."* when that isn't the person's place; counts only: *n steps · n skills listed · n official fees found · n cost lines you'd price*; and *Sources: n read · m checked by a tool only, not read by a person yet* (the second part amber, and left out when it is 0), counted through `lib/engines/shared/citation-check.ts` over every citation on the road (its steps, *done when* lines, official fees and named lines' sources) and the skill items it lists | — |
-| **Look inside →** (one per card, named *Look inside <road's name>*) | builds the idea (the place answered, the name typed or the road's name, the kind of venture *Service* as the intake starts, the work situation *not said*), saves it with `POST /api/scenario/save` carrying `roadId` and `lookingFor` in the first save, then opens `/cockpit?venture=<id>`. Disabled while saving. With no database the page says so and stays: a future that couldn't be saved isn't opened | `Venture` (with `roadId`, `roadChosenAt`, `lookingFor`, `lookingForSetAt`, `province`, `employmentStatus = NOT_SAID`), `ScenarioState` |
-| **Not here yet?** box + **Keep my note and look inside the general road** | keeps the note as one of the person's statements (`POST /api/person/statements`), then does what **Look inside** does on the general road (*Starting any business in Alberta*) | `PersonStatement`, then as above |
+| **Look inside →** (one per card, named *Look inside <road's name>*) | builds the idea (the place answered, the name typed or the road's name; the work situation *not said*; the kind of venture, equipment and both sales targets *not said*, listed in `notSaid`, with the intake's starting values in their columns), saves it with `POST /api/scenario/save` carrying `roadId` and `lookingFor` in the first save, then opens `/cockpit?venture=<id>`. Disabled while saving. With no database the page says so and stays: a future that couldn't be saved isn't opened | `Venture` (with `roadId`, `roadChosenAt`, `lookingFor`, `lookingForSetAt`, `province`, `employmentStatus = NOT_SAID`, `notSaid`), `ScenarioState` |
+| **Not here yet?** box + **Keep my note and look inside the general road** | keeps the note as one of the person's statements (`POST /api/person/statements`) and empties the box, then does what **Look inside** does on the general road (*Starting any business in Alberta*). Note not kept: *"Not saved: no database reachable. Nothing was opened."* Note kept but the road not opened: *"Your note is kept. The general road couldn't be opened: no database reachable."* | `PersonStatement`, then as above |
 | No place answered yet | the cards are replaced by *"Say which province or territory you're in first."* and a link back to `/start` | — |
 
 ## Page-level state
