@@ -116,7 +116,7 @@ export interface SkillItem {
  * A fee with an official source: either read there (the citation's read date is the day the fee was
  * read), or checked by a tool whose quotes include the amount as the page writes it ("$150.00"), so
  * the number is one the tool found on the page. The amount is whole cents, never a range or an
- * average. A fee that applies only sometimes (a rewrite after a failed exam) says so in its label.
+ * average, and a tool-checked quote may not write it as one end of a range.
  */
 export interface OfficialFeeLine {
   id: string;
@@ -124,6 +124,13 @@ export interface OfficialFeeLine {
   label: string;
   amountCents: number;
   citation: EngineCitation;
+  /**
+   * Set only on a fee that applies only sometimes: the condition, in plain words ("You failed an exam
+   * and choose to rewrite it"). A total must leave the fee out unless the person says the condition
+   * holds, and a screen shows the condition next to the fee. The checks refuse a label that says
+   * "only if" without one, so a conditional fee can't hide in prose.
+   */
+  onlyIf?: string;
 }
 
 /** A cost the person prices themselves ("tools: add your quote"). Named, never given an amount here. */
@@ -144,6 +151,14 @@ export type CatalogCostLine = OfficialFeeLine | NamedCostLine;
  * which has no amount at all so it can never be added up as $0.
  */
 export type CostLineAsShown =
-  | { kind: "official-fee"; lineId: string; label: string; amountCents: number; citation: EngineCitation }
+  | {
+      kind: "official-fee";
+      lineId: string;
+      label: string;
+      amountCents: number;
+      citation: EngineCitation;
+      /** The fee's condition, when it applies only sometimes (`OfficialFeeLine.onlyIf`). */
+      onlyIf?: string;
+    }
   | { kind: "your-quote"; lineId: string; label: string; amountCents: number }
   | { kind: "named-not-priced"; lineId: string; label: string };

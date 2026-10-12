@@ -177,6 +177,8 @@ export function costLineAsShown(line: CatalogCostLine, agreedQuoteCents?: number
       label: line.label,
       amountCents: line.amountCents,
       citation: line.citation,
+      // Only when there is one: a fee that always applies has no condition, not an empty one.
+      ...(line.onlyIf !== undefined ? { onlyIf: line.onlyIf } : {}),
     };
   }
   if (
@@ -197,6 +199,13 @@ function costProblems(cost: CatalogCostLine, today: string): string[] {
       problems.push(
         `Official fee "${cost.id}" is not a whole, non-negative number of cents: ${cost.amountCents}.`,
       );
+    }
+    // A fee that applies only sometimes must say so in a field a total can read, not just in words a
+    // person reads: otherwise a sum of a step's fees would count it for everyone.
+    if (cost.onlyIf !== undefined && cost.onlyIf.trim() === "") {
+      problems.push(`Official fee "${cost.id}" has a blank onlyIf condition.`);
+    } else if (cost.onlyIf === undefined && /\bonly if\b/i.test(cost.label)) {
+      problems.push(`Official fee "${cost.id}" says "only if" in its label but has no onlyIf condition.`);
     }
     if (!cost.citation) problems.push(`Official fee "${cost.id}" has no citation.`);
     else {
@@ -248,9 +257,15 @@ function amountAsWritten(amountCents: number): string[] {
   return forms;
 }
 
+// An amount written as one end of a range: "$125-$200", "$125 – $200", "$125 to $200" (the low end),
+// and "$100-$125", "$100 to $125", "between $100 and $125", "between $125", "from $125" (either end).
+const RANGE_AFTER = /^\s*(?:[-–—]|to\b)\s*\$/i;
+const RANGE_BEFORE = /(?:\$[\d,.]+\s*(?:[-–—]|to)\s*|\bbetween\s+(?:\$[\d,.]+\s+and\s+)?|\bfrom\s+)$/i;
+
 /**
- * True when the quote holds the amount as a whole number: "$125" counts in "is $125 a year" but not in
- * "$1250", "$125.50" or "$12,500" (each a different number).
+ * True when the quote holds the amount as one whole number: "$125" counts in "is $125 a year" but not
+ * in "$1250", "$125.50" or "$12,500" (each a different number), nor as one end of a range ("$125-$200",
+ * "between $100 and $125"), since an official fee is one amount, never a range.
  */
 function quotesAmount(quote: string, amountCents: number): boolean {
   return amountAsWritten(amountCents).some((form) => {
@@ -260,6 +275,7 @@ function quotesAmount(quote: string, amountCents: number): boolean {
       // "$12,500" holds "$12" followed by ",500"; "$1250" holds "$125" followed by "0".
       if (/^[\d]/.test(after) || /^[.,]\d/.test(after)) continue;
       if (/\d$/.test(before)) continue;
+      if (RANGE_AFTER.test(after) || RANGE_BEFORE.test(before)) continue;
       return true;
     }
     return false;

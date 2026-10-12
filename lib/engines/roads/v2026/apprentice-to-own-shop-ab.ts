@@ -146,13 +146,6 @@ const PAGES = {
     url: `${TRADESECRETS}/become-certified/interprovincial-red-seal/`,
     note: "Writing the interprovincial Red Seal exam from Alberta, and applying for it.",
   },
-  journeyperson: {
-    title: "About Journeyperson Certification (Tradesecrets, Alberta)",
-    authority: "provincial",
-    jurisdiction: "AB",
-    url: `${TRADESECRETS}/become-certified/learn-about-journeyperson-certification/`,
-    note: "What Alberta journeyperson certification is.",
-  },
   blueSeal: {
     title: "Blue Seal Program (Tradesecrets, Alberta)",
     authority: "provincial",
@@ -280,7 +273,16 @@ const Q = {
   certificationOptional:
     "working at a journeyperson level in the opinion of your employer (journeyperson certification optional).",
   holdsCertificate: "any individual who holds a trade certificate in the designated trade;",
-  ticketToWork: "Journeyperson certification is your ticket to work.",
+  periodYear: "Each period designed to take ~1 year",
+  legalAdvice:
+    "If you need help deciding if a sole proprietorship, partnership or corporation is the best form of business, we highly recommended you get legal advice.",
+  asnBlueSeal: "and have, or have applied for, an Alberta Student Number (ASN).",
+  blueSealHours: "have completed at least 150 hours of study though any combination of:",
+  gstFourQuarters: "over the previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter).",
+  gstSoleProprietor:
+    "If you are a sole proprietor, include the total amount of all revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
+  gstPartnership:
+    "If you are a partnership or a corporation, include the total amount of all revenues (before expenses) from your worldwide taxable supplies and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
   redSealApply: "Complete, pay for, and submit your application following the prompts on the screen.",
   blueSealFee: "There is a $150.00 non-refundable application fee.",
   proofOfFiling: "it will be entered into the Corporate Registry and you will get a proof of filing.",
@@ -298,7 +300,8 @@ const Q = {
 
 const SKILL_ASN = "skill-ab-alberta-student-number";
 const SKILL_AGREEMENT = "skill-ab-apprenticeship-education-agreement";
-const SKILL_OUTSIDE_CERTIFICATE = "skill-recognized-trade-certificate-outside-ab";
+// Skill item ids are skill-<place>-…, so a person's mark on one is easy to trace to where it applies.
+const SKILL_OUTSIDE_CERTIFICATE = "skill-ab-recognized-outside-trade-certificate";
 
 /**
  * Things an official page says a person must hold or have for a step. The Journeyperson Certificate is
@@ -319,6 +322,12 @@ export const skillItemsApprenticeToOwnShopAB: readonly SkillItem[] = [
         PAGES.tqWorkExperience,
         "You will need a basic Alberta.ca Account and an Alberta Student Number to begin your application",
       ),
+      // The other two steps that need it: the Recognized Credential route and the Blue Seal.
+      checked(
+        PAGES.tqCredential,
+        "You will need a basic Alberta.ca Account and an Alberta Student Number to begin your application.",
+      ),
+      checked(PAGES.blueSeal, Q.asnBlueSeal),
     ],
   },
   {
@@ -394,7 +403,8 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "step-shop-register-apprentice",
       label: "Register as a Cabinetmaker apprentice",
-      summary: "You sign up online as a registered apprentice and pay the application fee.",
+      summary:
+        "You sign up online as a registered apprentice and pay the application fee; the program has 4 periods (levels), each designed to take about a year.",
       next: ["step-shop-sponsor-hours"],
       doneWhen: [
         {
@@ -463,7 +473,14 @@ export const roadApprenticeToOwnShopAB: Road = {
         { label: "Career and Technology Studies (high school)", url: PAGES.cts.url },
       ],
       citations: [
-        checked(PAGES.profile, "4-Period Apprenticeship Program", "Apprenticeship Education Program", Q.certificationOptional),
+        checked(
+          PAGES.profile,
+          "4-Period Apprenticeship Program",
+          "Apprenticeship Education Program",
+          "4 periods (levels)",
+          Q.periodYear,
+          Q.certificationOptional,
+        ),
         checked(PAGES.apply, "Use your Alberta.ca Account to access the online application.", Q.applicationFee),
       ],
     },
@@ -507,7 +524,8 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "step-shop-classroom-exams",
       label: "Classroom instruction and period exams",
-      summary: "Each period, you spend 8 weeks in class (at NAIT or SAIT) and pass a theory exam.",
+      summary:
+        "Each period, you spend 8 weeks in class at NAIT (the Northern Alberta Institute of Technology) or SAIT (the Southern Alberta Institute of Technology) and pass a theory exam.",
       next: ["step-shop-journeyperson-certificate"],
       doneWhen: [
         {
@@ -688,11 +706,12 @@ export const roadApprenticeToOwnShopAB: Road = {
           citation: checked(PAGES.profile, Q.practicalExam),
         },
         {
-          // Conditional: road evaluation must not add it to a total unless the person says they'll rewrite.
+          // Conditional, and typed so: a total leaves it out unless the person says they'll rewrite.
           id: "cost-shop-tqrc-rewrite",
           kind: "official-fee",
           label: "Exam rewrite fee for a second attempt (only if you fail an exam)",
           amountCents: 50_00,
+          onlyIf: "You failed an exam and choose to rewrite it.",
           citation: checked(
             PAGES.tqCredential,
             "If you fail an exam (pass mark is 70%), you may pay a $50 rewrite fee for a second attempt.",
@@ -707,12 +726,13 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "step-shop-journeyperson-certificate",
       label: "Journeyperson Certificate",
-      summary: "Each way to train ends in the same Alberta Journeyperson Certificate in Cabinetmaker; tick the line for yours.",
+      summary:
+        "Each way to train ends in the same Alberta Journeyperson Certificate in Cabinetmaker (the trade profile calls certification in this trade optional); tick the line for yours.",
       next: ["step-shop-red-seal", "step-shop-stay-employed", "step-shop-open-own-shop"],
       doneWhen: [
         {
           id: "dw-shop-jp-apprenticeship",
-          text: "Apprenticeship: you finished all four periods and graduated.",
+          text: "Apprenticeship: you finished your apprenticeship and graduated.",
           citation: checked(
             PAGES.certificationThroughApprenticeship,
             "When you graduate from your apprenticeship, you'll earn your journeyperson certification.",
@@ -777,6 +797,16 @@ export const roadApprenticeToOwnShopAB: Road = {
             "You will need to complete and submit a Training Plan with your Interprovincial Red Seal Application.",
           ),
         },
+        {
+          // Writing or applying isn't the endorsement: this line is what makes the step done.
+          id: "dw-shop-red-seal-passed",
+          text: "You passed the Red Seal exam, so you hold a trade certificate with a Red Seal (if you don't pass, your application is cancelled and you send a new one).",
+          citation: checked(
+            PAGES.redSeal,
+            "Tradespeople who hold a trade certificate with a Red Seal have demonstrated that they have met the national standard in that trade.",
+            "If you are unsuccessful in your Red Seal exam, your application will be cancelled and you will need to submit another Interprovincial Red Seal Application",
+          ),
+        },
       ],
       needs: [],
       costs: [
@@ -801,7 +831,7 @@ export const roadApprenticeToOwnShopAB: Road = {
         {
           id: "dw-shop-employed-certificate",
           text: "You hold your Journeyperson Certificate.",
-          citation: checked(PAGES.journeyperson, Q.ticketToWork),
+          citation: checked(PAGES.classesOfIndividuals, Q.holdsCertificate),
         },
         {
           id: "dw-shop-employed-mentor",
@@ -815,12 +845,17 @@ export const roadApprenticeToOwnShopAB: Road = {
       needs: [],
       costs: [],
       officialLinks: [],
-      citations: [checked(PAGES.journeyperson, Q.ticketToWork)],
+      // The trade's own pages: who may do its restricted work, and that certification is optional.
+      citations: [checked(PAGES.classesOfIndividuals, Q.holdsCertificate), checked(PAGES.profile, Q.certificationOptional)],
     },
     {
       id: "step-shop-open-own-shop",
       label: "Open your own shop",
-      summary: "You decide to work for yourself; the next columns are the steps to open.",
+      // A step's `next` names steps on this road only, so the way to a corporation is said in words:
+      // incorporating sits on road 0, where this road joins it (roadStartingAnyBusinessAB, its
+      // "Incorporating" column; a test keeps these names in step with road 0).
+      summary:
+        "You decide to work for yourself. The next columns open the shop as a sole proprietorship or partnership; if you choose a corporation, see Incorporating on Starting any business in Alberta, where this road joins it.",
       next: ["step-shop-register-name", "step-shop-blue-seal"],
       doneWhen: [
         {
@@ -830,11 +865,8 @@ export const roadApprenticeToOwnShopAB: Road = {
         },
         {
           id: "dw-shop-own-business-form",
-          text: "You've chosen a business form (sole proprietorship, partnership or corporation); alberta.ca strongly recommends legal advice for this choice.",
-          citation: checked(
-            PAGES.registerName,
-            "If you need help deciding if a sole proprietorship, partnership or corporation is the best form of business, we highly recommended you get legal advice.",
-          ),
+          text: "You've chosen a business form (sole proprietorship, partnership or corporation); if you need help deciding, alberta.ca highly recommends legal advice.",
+          citation: checked(PAGES.registerName, Q.legalAdvice),
         },
         {
           id: "dw-shop-own-no-shield",
@@ -853,7 +885,11 @@ export const roadApprenticeToOwnShopAB: Road = {
         named("cost-shop-vehicle", "Vehicle"),
         named("cost-shop-first-materials", "First materials"),
         named("cost-shop-design-software", "Design or CAD software"),
-        named("cost-shop-lawyer-business-form", "Lawyer (for the business form choice)"),
+        named(
+          "cost-shop-lawyer-business-form",
+          "Legal advice on the business form (if you want help choosing)",
+          checked(PAGES.registerName, Q.legalAdvice),
+        ),
         named("cost-shop-living-while-starting", "Money to live on while starting"),
       ],
       officialLinks: [{ label: "Register a business name", url: PAGES.registerName.url }],
@@ -877,7 +913,7 @@ export const roadApprenticeToOwnShopAB: Road = {
           text: "You completed at least 150 hours of study through approved programs, courses in the approved subject areas from a recognized training provider, or both.",
           citation: checked(
             PAGES.blueSeal,
-            "have completed at least 150 hours of study though any combination of:",
+            Q.blueSealHours,
             "approved programs of study and/or",
             "courses in one or more of the 18 approved subject areas through a recognized training provider",
           ),
@@ -895,7 +931,7 @@ export const roadApprenticeToOwnShopAB: Road = {
         {
           id: "dw-shop-blue-seal-asn",
           text: "You have, or have applied for, an Alberta Student Number.",
-          citation: checked(PAGES.blueSeal, "and have, or have applied for, an Alberta Student Number (ASN)."),
+          citation: checked(PAGES.blueSeal, Q.asnBlueSeal),
         },
         {
           id: "dw-shop-blue-seal-applied",
@@ -930,7 +966,11 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       officialLinks: [{ label: "Blue Seal Program", url: PAGES.blueSeal.url }],
       citations: [
-        checked(PAGES.blueSeal, "drive to succeed in managerial, supervisory, entrepreneurial or other leadership roles."),
+        checked(
+          PAGES.blueSeal,
+          "drive to succeed in managerial, supervisory, entrepreneurial or other leadership roles.",
+          Q.blueSealHours,
+        ),
       ],
     },
 
@@ -938,15 +978,17 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "step-shop-register-name",
       label: "Register your business name",
-      summary: "You register a trade name (sole proprietorship) or a partnership, and get proof of filing.",
+      summary:
+        "You register a trade name (sole proprietorship) or a partnership, and get proof of filing; if you chose a corporation, see Incorporating on Starting any business in Alberta instead.",
       next: ["step-shop-business-number"],
       doneWhen: [
         {
           id: "dw-shop-name-ending",
-          text: "You picked a name that doesn't end in 'limited', 'incorporated' or 'corporation'.",
+          text: "You picked a name that doesn't end in 'limited', 'incorporated' or 'corporation', and doesn't use their short forms (such as Ltd., Inc. or Corp.) or their French forms.",
           citation: checked(
             PAGES.registerName,
             "cannot use the words 'limited', 'incorporated' or 'corporation' at the end of the business name",
+            "cannot use the abbreviated forms of these words (such as Ltd., Inc., or Corp., or the French forms/abbreviations of those words)",
           ),
         },
         {
@@ -1075,26 +1117,31 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "step-shop-gst-small-supplier",
       label: "GST/HST: the small-supplier test",
-      summary: "You watch your taxable sales against the CRA's small-supplier tests, and register for GST/HST when the CRA says you have to (or earlier, by choice).",
+      summary:
+        "You watch your taxable revenues against the small-supplier tests of the CRA (the Canada Revenue Agency), and register for GST/HST (the Goods and Services Tax / Harmonized Sales Tax) when the CRA says you have to (or earlier, by choice).",
       next: [],
       doneWhen: [
         {
+          // What counts is wider than this shop's sales: the CRA counts every business, and associates.
           id: "dw-shop-gst-checked",
-          text: "You checked your taxable sales against both of the CRA's tests: a single calendar quarter on its own, and the previous four (or fewer) consecutive calendar quarters. A calendar quarter is three months starting on the first of January, April, July or October.",
+          text: "You checked your taxable revenues against both of the CRA's tests: a single calendar quarter on its own, and the previous four (or fewer) consecutive calendar quarters. What counts is all revenues before expenses from your worldwide taxable supplies, and those of your associates (the CRA's word); as a sole proprietor, from all your businesses, not just this shop. A calendar quarter is three months starting on the first of January, April, July or October.",
           citation: checked(
             PAGES.craGstRegister,
             "in a single calendar quarter.",
-            "over the previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter).",
+            Q.gstFourQuarters,
+            Q.gstSoleProprietor,
+            Q.gstPartnership,
             "Calendar quarter means a period of three months beginning on the first day of January, April, July, or October in each calendar year.",
           ),
         },
         {
           id: "dw-shop-gst-registered",
-          text: "If your sales went over $30,000 in a single calendar quarter, you registered (the CRA says you must); if they went over $30,000 across the previous four (or fewer) quarters, you registered (the CRA says you have to).",
+          text: "If those revenues went over $30,000 in a single calendar quarter, you registered (the CRA says you must); if they went over $30,000 across the previous four (or fewer) quarters, you registered (the CRA says you have to).",
           citation: checked(
             PAGES.craGstRegister,
             "You are no longer a small supplier and have to charge GST/HST on the supply that made you exceed $30,000 within the calendar quarter.",
             "You must register for the GST/HST.",
+            Q.gstFourQuarters,
             "You are no longer a small supplier at the end of the month following the quarter in which you exceed $30,000.",
             "You have to register for the GST/HST.",
           ),
@@ -1112,14 +1159,20 @@ export const roadApprenticeToOwnShopAB: Road = {
       costs: [],
       officialLinks: [{ label: "When to register for and start charging the GST/HST", url: PAGES.craGstRegister.url }],
       citations: [
-        checked(PAGES.craGstRegister, "You have to register for a GST/HST account if both situations apply:", "You are not a small supplier"),
+        checked(
+          PAGES.craGstRegister,
+          "You have to register for a GST/HST account if both situations apply:",
+          "You are not a small supplier",
+          Q.gstSoleProprietor,
+        ),
         checked(PAGES.craBusinessNumber, "You need a GST/HST, payroll or another CRA program account"),
       ],
     },
     {
       id: "step-shop-first-hire",
       label: "Hiring your first worker",
-      summary: "When you hire, you register a CRA payroll account, and a WCB-Alberta account if your industry must have coverage.",
+      summary:
+        "When you hire, you register a CRA payroll account, and an account with WCB-Alberta (the Workers' Compensation Board of Alberta) if your industry must have coverage.",
       next: ["step-shop-sponsor-apprentice"],
       doneWhen: [
         {
@@ -1158,9 +1211,12 @@ export const roadApprenticeToOwnShopAB: Road = {
       needs: [],
       costs: [
         named("cost-shop-wages", "Wages"),
+        // Two WCB lines, because the pages back two different costs: the premium for your workers, and
+        // optional personal coverage for you as the owner (the only page with a cost sentence).
+        named("cost-shop-wcb-premium", "WCB premium for your workers (your quote)"),
         named(
-          "cost-shop-wcb-premium",
-          "WCB premium (your quote)",
+          "cost-shop-wcb-personal-coverage",
+          "WCB personal coverage for yourself, if you choose it (your quote)",
           checked(PAGES.wcbPersonalCoverage, "Cost will vary based on the amount of coverage you purchase and the industry you're in."),
         ),
         named("cost-shop-payroll-bookkeeping", "Payroll software or bookkeeping"),
@@ -1195,13 +1251,18 @@ export const roadApprenticeToOwnShopAB: Road = {
         },
         {
           id: "dw-shop-sponsor-own-ratio",
-          text: "You keep to two apprentices for every one assigned mentor.",
+          // A ceiling ("may employ two"), not a quota: one apprentice with one mentor is fine.
+          text: "You have no more than two apprentices for each assigned mentor.",
           citation: checked(PAGES.profile, "Employers may employ two apprentices for every one assigned mentor (2:1)."),
         },
         {
           id: "dw-shop-sponsor-own-wages",
-          text: "You pay your apprentices wages in line with Schedule 1.",
-          citation: checked(PAGES.sponsor, Q.scheduleOneWages),
+          text: "You pay your apprentices wages in line with Schedule 1 of Alberta's Apprenticeship Education and Industry Training Programs Regulation (its pages 20 and 21).",
+          citation: checked(
+            PAGES.sponsor,
+            Q.scheduleOneWages,
+            "Review the required apprentice wages in Schedule 1 (pages 20 and 21) of the Apprenticeship Education and Industry Training Programs Regulation.",
+          ),
         },
       ],
       needs: [],

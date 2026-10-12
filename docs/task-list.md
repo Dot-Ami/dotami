@@ -69,7 +69,8 @@ and the maintainer's six decisions of 2026-10-11:
     `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; no screen lists it until *Pick a future*)
     - [ ] Still open on it: Alberta's registry fees (the Registry Agent Product Catalogue stops
       tools, so a person reads them); the apprentice wage percentages per period (they need a typed
-      field); a person's read of each page, which turns its "checked by a tool" into a read
+      field); a person's read of each page, which turns its "checked by a tool" into a read; whether
+      *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13)
   - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*
   - [ ] *Show me an example first*: a filled-in, clearly invented example future
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
