@@ -1,15 +1,18 @@
 import type { UnlockState } from "@/lib/brain/types";
 
 import type { RoadEvaluation, StepEvaluation, StepState, ToldAnswer } from "./evaluate-road";
-import { changed, listOf, manyAnswers, receiptLine, type AnswerGroup } from "./words";
+import { changed, listOf, manyAnswers, manyTakenBack, receiptLine, type AnswerGroup } from "./words";
 
 /**
  * Receipts (docs/architecture/future-cockpit.md § 4 and § 6, "Road evaluation as built"): after an
  * answer, the cockpit runs road evaluation before and after it, and this compares the two results.
  * Each change is one plain line that starts with the answers that differ between the two runs:
- * "Because you told us you have “Welding”, 3 steps now need nothing more from you." Built only from the
- * two results (catalog words, the person's values, counts), so the same two runs always give the same
- * lines, and no model ever writes one. No change gives no lines.
+ * "Because you told us you have “Welding”, 3 steps now have every skill they list marked have." Built
+ * only from the two results (catalog words, the person's values, counts), so the same two runs always
+ * give the same lines, and no model ever writes one. No change gives no lines.
+ *
+ * Meant for one answer at a time, as each screen saves one: every line names every answer that
+ * differs, so with two answers changed at once a line can name one that couldn't have caused it.
  */
 export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): string[] {
   const because = answersThatChanged(before.answers, after.answers);
@@ -23,12 +26,13 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
     if (n > 0) changes.push(changed.stepsNow(n, state));
   }
 
-  // Steps whose every listed need the person now has, and the other way round.
-  const complete = (s: StepEvaluation) => s.needs.listed > 0 && s.needs.have === s.needs.listed;
-  const nowComplete = both.filter(([b, a]) => !complete(b) && complete(a)).length;
-  const noLonger = both.filter(([b, a]) => complete(b) && !complete(a)).length;
-  if (nowComplete > 0) changes.push(changed.needNothingMore(nowComplete));
-  if (noLonger > 0) changes.push(changed.needSomethingAgain(noLonger));
+  // Steps whose every listed skill is now marked have, and the other way round. A count of skills
+  // only: the step's "done when" lines and money are counted elsewhere.
+  const allHave = (s: StepEvaluation) => s.needs.listed > 0 && s.needs.have === s.needs.listed;
+  const nowAllHave = both.filter(([b, a]) => !allHave(b) && allHave(a)).length;
+  const noLonger = both.filter(([b, a]) => allHave(b) && !allHave(a)).length;
+  if (nowAllHave > 0) changes.push(changed.allSkillsHave(nowAllHave));
+  if (noLonger > 0) changes.push(changed.notAllSkillsHave(noLonger));
 
   const g0 = before.gauges;
   const g1 = after.gauges;
@@ -89,24 +93,34 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
 
 /**
  * The answers that differ between two runs, as the "Because …" part of a line: an answer given or
- * changed reads as said, one that is gone reads as taken back. Three or more of one kind are counted
- * ("you marked 9 skills"). Null when no answer changed (the month turned over, say).
+ * changed reads as said, one that is gone reads as taken back. Three or more of one kind are counted,
+ * those given apart from those taken back ("you marked 9 skills", "you took back 3 skill marks").
+ * Null when no answer changed (the month turned over, say).
  */
 function answersThatChanged(before: readonly ToldAnswer[], after: readonly ToldAnswer[]): string | null {
   const was = new Map(before.map((a) => [a.id, a]));
   const now = new Map(after.map((a) => [a.id, a]));
-  const differ: { group: AnswerGroup; clause: string }[] = [];
+  type Way = "said" | "taken-back";
+  const differ: { group: AnswerGroup; way: Way; clause: string }[] = [];
   for (const a of after) {
     const b = was.get(a.id);
-    if (!b || b.said !== a.said) differ.push({ group: a.group, clause: a.said });
+    if (!b || b.said !== a.said) differ.push({ group: a.group, way: "said", clause: a.said });
   }
   for (const b of before) {
-    if (!now.has(b.id)) differ.push({ group: b.group, clause: b.takenBack });
+    if (!now.has(b.id)) differ.push({ group: b.group, way: "taken-back", clause: b.takenBack });
   }
   if (differ.length === 0) return null;
 
-  const groups = new Map<AnswerGroup, string[]>();
-  for (const d of differ) groups.set(d.group, [...(groups.get(d.group) ?? []), d.clause]);
-  const parts = [...groups].flatMap(([group, clauses]) => (clauses.length >= 3 ? [manyAnswers(group, clauses.length)] : clauses));
+  // Grouped by kind and by which way it went, so three marks taken back never read as "you marked".
+  const groups = new Map<string, { group: AnswerGroup; way: Way; clauses: string[] }>();
+  for (const d of differ) {
+    const key = `${d.way}:${d.group}`;
+    const entry = groups.get(key) ?? { group: d.group, way: d.way, clauses: [] };
+    entry.clauses.push(d.clause);
+    groups.set(key, entry);
+  }
+  const parts = [...groups.values()].flatMap(({ group, way, clauses }) =>
+    clauses.length >= 3 ? [way === "said" ? manyAnswers(group, clauses.length) : manyTakenBack(group, clauses.length)] : clauses,
+  );
   return listOf(parts);
 }

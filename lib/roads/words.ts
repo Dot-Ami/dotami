@@ -110,11 +110,19 @@ export const answer = {
     takenBack: `you took back your pick at ${quoted(fork)}`,
     fact: `your pick at ${quoted(fork)} (${quoted(side)})`,
   }),
-  mapPick: (fork: string, side: string): AnswerWords => ({
-    said: `you picked ${quoted(side)} at ${quoted(fork)} on the map`,
-    takenBack: `the map's pick at ${quoted(fork)} was cleared`,
-    fact: `the map's pick at ${quoted(fork)} (${quoted(side)})`,
-  }),
+  // byPerson: the person clicked it this session; otherwise it is the map's default, and says so.
+  mapPick: (fork: string, side: string, byPerson: boolean): AnswerWords =>
+    byPerson
+      ? {
+          said: `you picked ${quoted(side)} at ${quoted(fork)} on the map`,
+          takenBack: `the map's pick at ${quoted(fork)} was cleared`,
+          fact: `your pick at ${quoted(fork)} on the map (${quoted(side)})`,
+        }
+      : {
+          said: `the map's default pick at ${quoted(fork)} is ${quoted(side)}, not your pick yet`,
+          takenBack: `the map's pick at ${quoted(fork)} was cleared`,
+          fact: `the map's default pick at ${quoted(fork)} (${quoted(side)})`,
+        },
   costLine: (line: string, step: string, cents: number): AnswerWords => ({
     said: `you told us your number for ${quoted(line)} on ${quoted(step)} is ${formatMoney(cents)}`,
     takenBack: `you took back your number for ${quoted(line)} on ${quoted(step)}`,
@@ -172,9 +180,10 @@ export const answer = {
     takenBack: "you took back the kinds of work",
     fact: `the kinds of work you confirmed (${tags.join(", ")})`,
   }),
+  // Off may be the default (the idea keeps no record of a touch), so off is a state, not an act.
   hireFirst: (on: boolean): AnswerWords => ({
-    said: on ? "you switched on the hire-first path" : "you switched off the hire-first path",
-    takenBack: "you switched off the hire-first path",
+    said: on ? "you switched on the hire-first path" : "the hire-first path is switched off",
+    takenBack: "the hire-first path is switched off",
     fact: on ? "the hire-first path (switched on)" : "the hire-first path (switched off)",
   }),
   equipment: (on: boolean): AnswerWords => ({
@@ -183,6 +192,11 @@ export const answer = {
       : "you told us you're not buying equipment, a vehicle or tools",
     takenBack: "you took back your answer on buying equipment, a vehicle or tools",
     fact: on ? "buying equipment, a vehicle or tools (yes)" : "buying equipment, a vehicle or tools (no)",
+  }),
+  equipmentUnanswered: (): AnswerWords => ({
+    said: "buying equipment, a vehicle or tools is not answered yet, so the rules read it as no",
+    takenBack: "you took back your answer on buying equipment, a vehicle or tools",
+    fact: "buying equipment, a vehicle or tools (not answered, read as no)",
   }),
   salesYear: (year: 1 | 3, dollars: number): AnswerWords => {
     const which = year === 1 ? "first-year" : "third-year";
@@ -237,6 +251,30 @@ export function manyAnswers(group: AnswerGroup, n: number): string {
   }
 }
 
+/** Three or more answers of one kind taken back, counted apart from those given: "you took back 3 skill marks". */
+export function manyTakenBack(group: AnswerGroup, n: number): string {
+  switch (group) {
+    case "skill":
+      return `you took back ${count(n, "skill mark", "skill marks")}`;
+    case "own-skill":
+      return `you took back your marks on ${count(n, "skill", "skills")} of your own`;
+    case "step":
+      return `you took back your status on ${count(n, "step", "steps")}`;
+    case "ticks":
+      return `you took back your ticks on ${count(n, "step", "steps")}`;
+    case "fork":
+      return `you took back ${count(n, "pick", "picks")}`;
+    case "map-pick":
+      return `the map's picks at ${count(n, "fork", "forks")} were cleared`;
+    case "cost-line":
+      return `you took back ${count(n, "cost-line number", "cost-line numbers")}`;
+    case "idea":
+      return `you took back ${count(n, "answer", "answers")} about your idea`;
+    default:
+      return `you took back ${count(n, "answer", "answers")}`;
+  }
+}
+
 // --- What changed, one clause per change; a receipt line is "Because <answers>, <clause>."
 
 export const changed = {
@@ -246,8 +284,14 @@ export const changed = {
       : state === "check-first"
         ? `${count(n, "step", "steps")} now ${n === 1 ? "says" : "say"} check first`
         : `${count(n, "step", "steps")} ${n === 1 ? "is" : "are"} now not on your path`,
-  needNothingMore: (n: number) => `${count(n, "step", "steps")} now ${n === 1 ? "needs" : "need"} nothing more from you`,
-  needSomethingAgain: (n: number) => `${count(n, "step", "steps")} ${n === 1 ? "needs" : "need"} something from you again`,
+  // About skills only: a step with every skill marked can still have "done when" lines and money to go,
+  // so these never say the step needs nothing more, or that it is ready.
+  allSkillsHave: (n: number) =>
+    n === 1 ? "1 step now has every skill it lists marked have" : `${n} steps now have every skill they list marked have`,
+  notAllSkillsHave: (n: number) =>
+    n === 1
+      ? "1 step no longer has every skill it lists marked have"
+      : `${n} steps no longer have every skill they list marked have`,
   stepsDone: (done: number, total: number) => `${done} of ${count(total, "step is", "steps are")} now done`,
   skills: (have: number, learning: number, notYet: number, notMarked: number) =>
     `the skills now read ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,

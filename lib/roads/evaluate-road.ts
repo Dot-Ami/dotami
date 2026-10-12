@@ -59,8 +59,10 @@ export interface RoadEvaluationInput {
   /** Every skill mark the person set (lib/futures/skill-marks.ts). */
   skillMarks: readonly { skillItemId: string | null; ownLabel: string | null; mark: SkillMarkValue }[];
   /**
-   * The person's progress on this road's steps. On today's general road a step's status is the map's
-   * (active is doing, done is done, set aside is not for me), and the caller passes it in here.
+   * The person's progress on this road's steps: the status they set and the "done when" lines they
+   * ticked. On today's general road (road 0) the person sets no status yet. The map's active, done and
+   * set-aside lists are worked out from its toggles, not set by anyone, so they must not be passed in
+   * here as statuses; a status given for road 0 is ignored, and only its ticks are read.
    */
   progress: readonly { stepId: string; status: StepStatus | null; doneWhenIds: readonly string[] }[];
   /** The planning numbers the person agreed to (./agreed.ts). */
@@ -120,6 +122,12 @@ export interface ToldAnswer extends AnswerWords {
   /** Stable for the same question: "skill:<id>", "step:<id>", "what-if", "idea:place" … */
   id: string;
   group: AnswerGroup;
+  /**
+   * False for a default the person hasn't set (a map pick not clicked, the hire-first path while off,
+   * the structure the map assumes, buying equipment unanswered); its words say it is a default. A
+   * "What you've told DotAmi" list shows only the given ones.
+   */
+  given: boolean;
 }
 
 export interface RoadGauges {
@@ -157,7 +165,7 @@ export interface RoadEvaluation {
   whatIf: { firstYearSalesDollars: number } | null;
   /** Today's rules and tax cards, from the same run (the Rules & tax overlay). */
   rules: EvaluationResult;
-  /** Every answer this run read, in plain words, in a fixed order. */
+  /** Every answer this run read, in plain words, in a fixed order; defaults are marked `given: false`. */
   answers: ToldAnswer[];
 }
 
@@ -177,9 +185,13 @@ interface RulesAnswer {
 const MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
 function runRules(run: RulesRun, today: string): EvaluationResult {
-  const scenario =
-    run.whatIf === null ? run.scenario : { ...run.scenario, profile: { ...run.scenario.profile, targetRevenueY1: run.whatIf } };
-  return evaluateScenario(scenario, { today, figures: run.figures });
+  // The what-if goes to the rules as a what-if, not written into the idea's own sales, so a card it
+  // lights says "your what-if", never "your Y1 revenue target".
+  return evaluateScenario(run.scenario, {
+    today,
+    figures: run.figures,
+    ...(run.whatIf === null ? {} : { whatIfFirstYearSales: run.whatIf }),
+  });
 }
 
 /**
@@ -196,8 +208,11 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
     scenario: { ...scenario, profile: { ...profile, ...change } },
   });
   const out: RulesAnswer[] = [];
-  const add = (id: string, words: AnswerWords, variants: RulesRun[]) =>
-    out.push({ answer: { id, group: id.startsWith("map-pick:") ? "map-pick" : id === "what-if" ? "what-if" : "idea", ...words }, variants });
+  const add = (id: string, words: AnswerWords, variants: RulesRun[], given = true) =>
+    out.push({
+      answer: { id, group: id.startsWith("map-pick:") ? "map-pick" : id === "what-if" ? "what-if" : "idea", given, ...words },
+      variants,
+    });
 
   add(
     "idea:place",
@@ -224,12 +239,23 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
     (Object.keys(STRUCTURE_WORDS) as (keyof typeof STRUCTURE_WORDS)[])
       .filter((s) => s !== profile.structure)
       .map((structure) => withProfile({ structure, structureSource: "user" })),
+    // "assumed" is the map's first rung until the person sets one; undefined is an older complete row.
+    profile.structureSource !== "assumed",
   );
   const tags = profile.activityTags ?? [];
   if (tags.length > 0) add("idea:kinds-of-work", answer.kindsOfWork(tags), [withProfile({ activityTags: [] })]);
-  add("idea:hire-first", answer.hireFirst(profile.hireFirst), [withProfile({ hireFirst: !profile.hireFirst })]);
+  // The idea keeps no record of whether the hire-first toggle was touched: on means the person
+  // switched it on; off may be the default, so it is worded as a state, not as something they did.
+  add("idea:hire-first", answer.hireFirst(profile.hireFirst), [withProfile({ hireFirst: !profile.hireFirst })], profile.hireFirst);
+  // Unanswered reads as "no" to the rules (lib/brain), and says so.
+  const equipmentAnswered = profile.capitalPurchasePlanned !== undefined;
   const equipment = profile.capitalPurchasePlanned ?? false;
-  add("idea:equipment", answer.equipment(equipment), [withProfile({ capitalPurchasePlanned: !equipment })]);
+  add(
+    "idea:equipment",
+    equipmentAnswered ? answer.equipment(equipment) : answer.equipmentUnanswered(),
+    [withProfile({ capitalPurchasePlanned: !equipment })],
+    equipmentAnswered,
+  );
   if (profile.targetRevenueY1 > 0) {
     add("idea:sales-year-1", answer.salesYear(1, profile.targetRevenueY1), [withProfile({ targetRevenueY1: 0 })]);
   }
@@ -240,13 +266,16 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
   if (base.whatIf !== null) add("what-if", answer.whatIf(base.whatIf), [{ ...base, whatIf: null }]);
 
   // The map's own picks (today's general road's two forks, kept with the map): flipping one is the
-  // other answer the person can give there.
+  // other answer the person can give there. A pick the person hasn't clicked is the map's default; the
+  // map keeps its clicks for the session only, so after a reload every pick reads as a default.
+  const clicked = new Set(scenario.state.decidedBranchIds ?? []);
   for (const fork of generalRoadV2026.forks) {
     const picked = scenario.state.activeBranches[fork.id];
     if (!fork.sides.includes(picked)) continue;
     const other = fork.sides.find((side) => side !== picked)!;
     const label = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)?.label ?? id;
-    add(`map-pick:${fork.id}`, answer.mapPick(fork.label, label(picked)), [
+    const byPerson = clicked.has(fork.id);
+    add(`map-pick:${fork.id}`, answer.mapPick(fork.label, label(picked), byPerson), [
       {
         ...base,
         scenario: {
@@ -254,7 +283,7 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
           state: { ...scenario.state, activeBranches: { ...scenario.state.activeBranches, [fork.id]: other as typeof picked } },
         },
       },
-    ]);
+    ], byPerson);
   }
   return out;
 }
@@ -344,10 +373,18 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
     stepById.has(id),
   );
 
+  // On road 0 the rules decide every step, and the person sets no status yet (see `progress`).
+  const onRoadZero = road.id === generalRoadV2026.id;
+  // Whether this road's own forks put a step off the path or leave it waiting on a pick. On another
+  // road that reuses a road 0 step, that comes before the rules' colour: the rules know nothing of
+  // this road's forks, and a step after the side not picked must not be drawn on the path.
+  const forkDecides = (stepId: string) =>
+    notPicked.has(stepId) || pending.has(stepId) || (reachable.has(stepId) && !settled.has(stepId));
+
   const steps: StepEvaluation[] = roadOrder.map((stepId) => {
     const step = stepById.get(stepId)!;
     const progress = progressOf.get(stepId);
-    const status = progress?.status ?? null;
+    const status = onRoadZero ? null : (progress?.status ?? null);
 
     let state: StepState;
     let reason: StepReason;
@@ -357,7 +394,7 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
       state = "not-on-your-path";
       reason = { kind: "not-for-me" };
       text = because.notForMe();
-    } else if (stepId in ruleColours) {
+    } else if (stepId in ruleColours && (onRoadZero || !forkDecides(stepId))) {
       state = STATE_OF_COLOUR[ruleColours[stepId]];
       const answerIds = dependsOn.get(stepId) ?? [];
       reason = { kind: "rules", answerIds };
@@ -495,9 +532,9 @@ function gauges(
   };
 }
 
-/** The person's own answers about this road, in plain words, for the receipts. */
+/** The person's own answers about this road, in plain words, for the receipts. Each one was given. */
 function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
-  const out: ToldAnswer[] = [];
+  const out: Omit<ToldAnswer, "given">[] = [];
   const stepById = new Map(road.steps.map((s) => [s.id, s]));
   const listed = new Set(road.steps.flatMap((s) => s.needs));
   const itemLabel = new Map(input.skillItems.map((item) => [item.id, item.label]));
@@ -523,7 +560,10 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   for (const p of input.progress) {
     const step = stepById.get(p.stepId);
     if (!step) continue;
-    if (p.status !== null) out.push({ id: `step:${step.id}`, group: "step", ...answer.stepStatus(step.label, p.status) });
+    // No status is read on road 0 (see `progress`), so none is an answer there either.
+    if (p.status !== null && road.id !== generalRoadV2026.id) {
+      out.push({ id: `step:${step.id}`, group: "step", ...answer.stepStatus(step.label, p.status) });
+    }
     const ticked = new Set(p.doneWhenIds.filter((id) => step.doneWhen.some((line) => line.id === id))).size;
     if (ticked > 0) out.push({ id: `ticks:${step.id}`, group: "ticks", ...answer.ticks(step.label, ticked, step.doneWhen.length) });
   }
@@ -541,5 +581,5 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   if (input.targetMonth !== null && MONTH.test(input.targetMonth)) {
     out.push({ id: "date", group: "date", ...answer.date(input.targetMonth) });
   }
-  return out;
+  return out.map((told) => ({ ...told, given: true }));
 }
