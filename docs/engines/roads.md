@@ -1,6 +1,6 @@
 # Roads — Reasoning Conventions
 
-Catalog: `lib/engines/roads/v2026/` (1 road as of 2026-10-11) · Design:
+Catalog: `lib/engines/roads/v2026/` (2 roads as of 2026-10-12) · Design:
 [../architecture/future-cockpit.md](../architecture/future-cockpit.md) § 6 · Checks:
 `lib/engines/roads/v2026/validate.ts`, run on every road by `tests/roads.spec.ts`
 
@@ -15,21 +15,28 @@ cockpit draws whatever road it is given and holds no steps of its own.
 | Road | Id | What it is |
 |---|---|---|
 | Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, unchanged. The general road every saved future is drawn on until it names another |
+| From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. No screen lists it yet |
 
-The first written future, *From apprentice to your own shop (Alberta)*, joins later in phase 1.
+A road may name where it carries on after its last column: `joins: { roadId, columnId }`
+(`roadJoinProblems` checks the road and column exist).
 
 ## Authoring rules
 
 1. **Every step is cited.** At least one citation per step, and each *done when* line carries its own:
-   the page that says that line, read by a person. A step with no citation, or a *done when* line
-   without one, fails the checks.
+   the page that says that line, read or checked by a tool (rule 2). A step with no citation, or a
+   *done when* line without one, fails the checks. A line says only what its quotes or its read
+   support.
 2. **A citation is an https page, checked the way every catalog's citations are**
    ([citations.md](./citations.md)): a real read date (`lastVerified`, `YYYY-MM-DD`, a day that
    exists, with `readBy` when who read it is on record), a tool check (`toolCheck`) with its quotes,
    or both. A read date is the day the page was read, never the day the file was edited, so it can't
    be a day that hasn't come yet (the checks take "today" as the newest date anywhere on Earth). The
-   road's own `lastVerified` must be the newest read date in it (a tool check is not a read); road 0's
-   is worked out from its nodes. A step's official links (pages the person opens themselves) must be
+   road's own `lastVerified` must be the newest read date in it (a tool check is not a read), and
+   empty when none of its sources has been read yet; road 0's is worked out from its nodes. A tool
+   check is recorded only after `node scripts/check-quotes.mjs --url … --quote …` found every quote
+   that day; a quote it can't find (the page changed, a PDF, a page that blocks tools) is not
+   recorded, and the line is rewritten to what the page says now or left out. Never write a read
+   date for a page nobody read. A step's official links (pages the person opens themselves) must be
    https pages too. Screens say how each source was checked in the same words as everywhere else
    (`howCheckedWords`, `lib/engines/shared/citation-check.ts`).
 3. **Ids are forever.** Road, column, step, fork, *done when* line and cost line ids are what a
@@ -40,8 +47,14 @@ The first written future, *From apprentice to your own shop (Alberta)*, joins la
 4. **Every step sits in exactly one column**, and columns name only real steps. `next` and a fork's
    two sides name real steps; a column's `forkId` names a real fork.
 5. **Three kinds of cost, two in the catalog** (decision 2 of 2026-10-11). An *official fee* has an
-   amount in whole cents (never a range or an average) and one citation whose `lastVerified` is the
-   day the fee was read there. A *named* line has a name and no amount ("tools: add your quote"); it
+   amount in whole cents (never a range or an average) and one citation: a read (its `lastVerified`
+   is the day the fee was read there), or a tool check whose quotes include the amount as the page
+   writes it (`$150`, `$150.00`, `$1,500`; a $0 fee is exempt, since pages say "no cost"), and not as
+   one end of a range (`$150-$200`, `$150 to $200`, `between $100 and $150`, `from $150` are refused).
+   A fee that applies only sometimes (a rewrite after a failed exam) carries `onlyIf`, the condition in
+   plain words, and says so in its label too; the checks refuse a label saying "only if" with no
+   `onlyIf`, and a blank `onlyIf`. A total must leave such a fee out unless the person says the
+   condition holds. A *named* line has a name and no amount ("tools: add your quote"); it
    may cite where the name comes from (a blank cash-flow template, linked, not copied). The third kind,
    *your quote*, is the person's agreed number and is never written into a catalog.
    `costLineAsShown` turns a line plus the person's agreed amount into what a screen shows; a named
@@ -51,6 +64,8 @@ The first written future, *From apprentice to your own shop (Alberta)*, joins la
    official fee on a step; the design's § 6 ("The road type as built") names the two ways to add it.
 6. **Skill items are one shared list** (`skillItemsV2026`) so a person's mark carries across roads.
    Each item is cited, and so is its *how to get it* line. A step's `needs` must name items on the list.
+   A `legal-requirement` is something an official page says a person must hold or have for that step
+   (a registration number, an agreement, a certificate); a certificate a page calls optional is not one.
    Skills for a job come only from the job the person picked (OaSIS, *your pick of job*); DotAmi never
    claims which skills a business needs.
 7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines, cost lines,

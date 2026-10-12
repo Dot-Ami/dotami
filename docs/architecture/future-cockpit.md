@@ -221,7 +221,9 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
     count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
     behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
-    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
+    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
+    up* (an `onlyIf` fee is in neither part: the badges leave it out of a step's sum and say so, and the
+    step panel and the money list show its condition); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
     savings; and *savings minus both* only when road evaluation gives that difference. A road with no
     cost lines says so.
   - **Your date** (*yours*): *May 2029 · 31 months from today*, only when the person set a month;
@@ -372,8 +374,8 @@ and how a gap is filled:
 
 | Content | Source | If we don't have it |
 |---|---|---|
-| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), read and cited by a person, one citation per *done when* line | A person reads the official page and writes the step; until then the future isn't offered. *"More futures are being written"* says so |
-| Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read |
+| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. Whether *Pick a future* may list a road none of whose sources a person has read is the maintainer's call (§ 13). *"More futures are being written"* says so |
+| Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read by a person or its quotes are found on it by the tool |
 | Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
 | Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
 | Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
@@ -447,6 +449,8 @@ type CostLine =
   hours, are read from the Alberta trade body's current pages, not assumed. This adds roughly 15–20
   citations to be read word for word; today the app has 74, of which 9 have been checked against the
   law's text, 4 of them word for word (`status: "confirmed"` in `lib/engines/shared/types.ts`).
+  (As built on 2026-10-12, its citations are tool checks, not reads: see "The first written future
+  as built" below.)
 
 **The map draws any road.** Today `components/cockpit/strategy-map.tsx` only knows the ten-step tax
 map (it imports `CFENode` and `cfeTiersV2026`). Phase 1 first changes it to draw a `Road`, with road 0
@@ -589,8 +593,9 @@ lives in `lib/roads/`.
 - **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
   are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
   as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
-  *Start-up money:* the official fees, the person's own numbers, how many named lines are not priced
-  yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
+  *Start-up money:* the official fees, how many official fees apply only sometimes (`onlyIf`, counted
+  and never added up, since nothing yet lets the person say the condition holds), the person's own
+  numbers, how many named lines are not priced yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
   pick (with the fork's name), the savings, and savings minus (official fees + the person's numbers),
   given only when there are savings and at least one line with an amount. *Your date:* the months from
   this month to the person's month, given only when they set one. The yearly income wanted is passed
@@ -644,6 +649,70 @@ lives in `lib/roads/`.
   money counted, so both endings are off while what comes after one of them applies. Whether those
   steps should go grey too, or the fork should read as unpicked, is the maintainer's call; until then
   it is built the simple way. (§ 13.)
+
+### The first written future as built (2026-10-12)
+
+Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalog
+(`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`, id `road-apprentice-to-own-shop-ab`, kind
+`both`, `AB`). It is in the catalog only: no screen lists it until *Pick a future* is built. Choices
+made while writing it, each for a reason:
+
+- **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
+  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
+  Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
+  are steps side by side in the first column that all lead to the certificate, not a fork, because a
+  fork has two sides. The Blue Seal certificate, which the content shows under both endings, is one
+  optional step both endings lead to, so it is written (and its ids kept) once.
+- **Where it joins road 0.** After its last column the road carries on along road 0 from
+  *Incorporating*. `Road` gains an optional `joins: { roadId, columnId }`, and `roadJoinProblems`
+  checks that the road and column it names exist (a road on its own can't see the others, so this is a
+  check over the whole catalog). How a screen draws the join is decided with the screens.
+- **Every source is a tool check.** Each citation was checked on 2026-10-12 with
+  `node scripts/check-quotes.mjs --url … --quote …` (option B, [citations.md](../engines/citations.md));
+  only quotes the script found are recorded, and none is recorded as read. Because nothing in it has
+  been read yet, the road's own `lastVerified` is empty, and the checks now hold a road with no read
+  source to an empty date instead of letting it carry any date.
+- **A fee checked only by a tool quotes its amount.** An official fee whose citation has no read must
+  have a quote with the amount as the page writes it (`$150`, `$150.00`, `$1,500`), so the typed
+  number is one the tool found on the page. A $0 fee is exempt (pages say "no cost"). A fee with a
+  read keeps today's rule.
+- **Alberta's registry fees stay named lines.** The government fee and the agent's service fee to
+  register a name are named lines with no amount: the Registry Agent Product Catalogue that holds them
+  stops tools with a human check, which is never bypassed. A person can read it and fill them in.
+- **Skill items are the legal requirements only:** an Alberta Student Number, an apprenticeship
+  education agreement with a sponsor, and a recognized trade certificate from outside Alberta, each
+  cited. Their ids share one pattern, `skill-<place>-…` (`skill-ab-…` for these three). Skills from the government's list (OaSIS, occupation 72311 *Cabinetmakers*, profile
+  72311.00) come with the OaSIS import, a separate change.
+- **Left out, not guessed:** the apprentice wage percentages per period (they need a typed field, not
+  prose); WCB-Alberta's $200 minimum annual premium (a minimum, not a fee, and it would be added on
+  top of the person's own premium quote); the WCB industry a shop falls in (WCB classifies); the Red
+  Seal application fee (the page gives no amount); the federal and Alberta incorporation card (it
+  belongs to road 0's *Incorporating* column); the limited partnership and the limited liability
+  partnership (Alberta's register-a-name page lists them beside the trade name and the partnership;
+  an LLP is for eligible professions such as accounting or law); whether a sole proprietorship counts
+  as "a legal entity recognized in Alberta" for sponsoring an apprentice (the sponsor page doesn't say).
+- **The shop opens unincorporated; a corporation is pointed to road 0.** *Open your own shop* asks for
+  a business form, and alberta.ca names sole proprietorship, partnership and corporation side by side;
+  the road picks none. Its next steps register a trade name or partnership, so *Open your own shop* and
+  *Register your business name* both say, in their one line, that someone who chose a corporation goes
+  to *Incorporating* on road 0, where this road joins it. A step's `next` names steps on its own road
+  only, so the pointer is in words, and a test keeps it naming road 0 and that column.
+- **A fee that applies only sometimes is typed so.** `OfficialFeeLine` gains an optional `onlyIf`: the
+  condition in plain words (the $50 rewrite fee on the Recognized Credential route: you failed an exam
+  and choose to rewrite it). Road evaluation must leave such a fee out of a total unless the person says
+  the condition holds, and a screen shows the condition with the fee (`costLineAsShown` passes it on).
+  The checks refuse a fee whose label says "only if" with no `onlyIf`, and an `onlyIf` that is blank.
+- **A fee's quote can't be one end of a range.** The tool-check fee rule (above) also refuses an amount
+  the quote writes as one end of a range (`$150-$200`, `$150 to $200`, `between $100 and $150`,
+  `from $150`): an official fee is one amount, never a range.
+- **Certification is optional in this trade.** The trade profile says so ("journeyperson
+  certification optional"), and the certificate step's one line repeats it; the road's two endings
+  still follow the certificate, as the maintainer's first future lays them out. The *Stay employed*
+  side cites the trade's own classes of individuals, not a general page's "ticket to work".
+- **Plain words.** Each abbreviation (NAIT, SAIT, the CRA, WCB-Alberta, GST/HST) is spelled out once in
+  a one-line summary, a *period* is explained as a level designed to take about a year (the profile's
+  words), and *Schedule 1* names the regulation it belongs to.
 
 ## 7. Storage
 
@@ -1008,6 +1077,10 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.
+- **Listing a road nobody has read.** The first written future's sources are all tool checks (option B):
+  every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
+  future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
+  has read its pages, is the maintainer's call; no screen lists any road but road 0 until then.
 - **Reuse terms not yet read** for the Red Seal standard and Alberta's apprenticeship site: link and
   cite only until read.
 

@@ -145,15 +145,19 @@ function StepSections({
   const [quoting, setQuoting] = useState<string | null>(null);
   // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
   // before that read-back would send a list without the first, so the boxes wait until it lands.
-  const [ticking, setTicking] = useState(false);
+  // While they wait they show the list just sent, so a click ticks the box at once; once the save is
+  // read back (or refused, with the reason shown above) they show what is kept again, so a refused
+  // tick never stays on screen. Kept per step: the person can open another step meanwhile.
+  const [pending, setPending] = useState<{ stepId: string; ids: string[] } | null>(null);
   async function tick(doneWhenIds: string[]) {
-    setTicking(true);
+    setPending({ stepId: step.id, ids: doneWhenIds });
     try {
       await onTicks(doneWhenIds);
     } finally {
-      setTicking(false);
+      setPending(null);
     }
   }
+  const ticking = pending !== null;
   const fork = road.forks.find((f) => f.sides.includes(step.id));
   const pickedSide =
     evaluation.reason.kind === "fork-picked"
@@ -162,6 +166,8 @@ function StepSections({
         ? evaluation.reason.pickedStepId
         : null;
   const ticked = new Set(evaluation.doneWhen.tickedIds);
+  // What the boxes show: the list on its way for this step, else what is kept.
+  const shown = pending?.stepId === step.id ? new Set(pending.ids) : ticked;
   const itemById = new Map(skillItems.map((item) => [item.id, item]));
 
   return (
@@ -222,7 +228,7 @@ function StepSections({
             <p className="mb-1.5 font-mono text-[10px] text-stone">{words.panel.doneWhenTicked(evaluation.doneWhen.ticked, evaluation.doneWhen.total)}</p>
             <ul className="space-y-2">
               {step.doneWhen.map((line) => {
-                const on = ticked.has(line.id);
+                const on = shown.has(line.id);
                 const boxId = `done-when-${step.id}-${line.id}`;
                 return (
                   <li key={line.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
@@ -300,6 +306,10 @@ function StepSections({
                         {words.panel.costKind[line.kind]}
                       </span>
                     </div>
+                    {/* A fee that applies only sometimes shows its condition; no total on the screen adds it. */}
+                    {line.kind === "official-fee" && line.onlyIf !== undefined ? (
+                      <p className="mt-1 text-[11px] text-amber">{words.panel.onlyIf(line.onlyIf)}</p>
+                    ) : null}
                     {line.kind === "official-fee" ? (
                       <div className="mt-1.5">
                         <CitationLinks citations={[line.citation]} compact />

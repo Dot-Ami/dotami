@@ -346,6 +346,7 @@ describe("the four gauges are counts and sums", () => {
     expect(money).toEqual({
       officialFeesCents: 180_000,
       officialFeeLines: 2,
+      onlyIfFeeLines: 0,
       yourNumbersCents: 0,
       yourNumberLines: 0,
       notPricedLines: 1,
@@ -379,6 +380,7 @@ describe("the four gauges are counts and sums", () => {
     expect(result.gauges.money).toEqual({
       officialFeesCents: 186_000,
       officialFeeLines: 3,
+      onlyIfFeeLines: 0,
       yourNumbersCents: 540_000,
       yourNumberLines: 2,
       notPricedLines: 3,

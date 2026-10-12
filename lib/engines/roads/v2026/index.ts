@@ -1,4 +1,5 @@
 import type { Road, SkillItem } from "./types";
+import { roadApprenticeToOwnShopAB, skillItemsApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
 import { roadStartingAnyBusinessAB } from "./starting-any-business-ab";
 
 export type {
@@ -11,29 +12,30 @@ export type {
   OfficialLink,
   Road,
   RoadColumn,
+  RoadJoin,
   RoadKind,
   RoadStep,
   SkillItem,
 } from "./types";
-export { costLineAsShown, newestReadDate, roadProblems, skillItemProblems } from "./validate";
+export { costLineAsShown, newestReadDate, roadJoinProblems, roadProblems, skillItemProblems } from "./validate";
 export { roadFromCfe } from "./from-cfe";
+export { roadApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
 export { roadStartingAnyBusinessAB } from "./starting-any-business-ab";
 
 /**
  * Every road, in the order added (never ranked: docs/architecture/future-cockpit.md, decision 3).
- * The first written future, "From apprentice to your own shop (Alberta)", joins this list later in
- * phase 1.
+ * No screen lists them yet: the map draws road 0, and *Pick a future* comes later in phase 1.
  */
-export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB];
+export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB, roadApprenticeToOwnShopAB];
 
 /** The road a saved future is drawn on when it names none: today's map. */
 export const generalRoadV2026: Road = roadStartingAnyBusinessAB;
 
 /**
- * Skill items, shared by every road so a person's mark carries across them. Empty until the first
- * written future lists its legal requirements and skills, each cited.
+ * Skill items, shared by every road so a person's mark carries across them. So far the first written
+ * future's legal requirements, each cited; skills from the government's list come with the OaSIS import.
  */
-export const skillItemsV2026: readonly SkillItem[] = [];
+export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToOwnShopAB];
 
 export const roadsCatalogV2026 = {
   version: "v2026",

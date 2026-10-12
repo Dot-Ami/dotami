@@ -308,6 +308,10 @@ export const changed = {
     lines === 0
       ? "no official fee is counted now"
       : `the official fees now add up to ${formatMoney(cents)} across ${count(lines, "line", "lines")}`,
+  onlyIfFees: (lines: number) =>
+    lines === 0
+      ? "no official fee that applies only sometimes is on your path now"
+      : `${count(lines, "official fee applies", "official fees apply")} only sometimes and ${lines === 1 ? "is" : "are"} not added up`,
   yourNumbers: (cents: number, lines: number) =>
     lines === 0
       ? "none of your own numbers is counted now"
