@@ -387,6 +387,10 @@ describe("the overlays on the road", () => {
     expect(stepBadges(stepOf(result, "step-eval-own"), { skills: false, money: true, rules: true })).toEqual([
       "$60 · 2 not priced · waits on a pick",
     ]);
+    // A step whose lines are all blank shows no amount at all: a blank is never $0.
+    expect(stepBadges(stepOf(result, "step-eval-open"), { skills: false, money: true, rules: true })).toEqual([
+      "1 not priced · waits on a pick",
+    ]);
   });
 
   it("the switches carry the road's own counts", () => {
