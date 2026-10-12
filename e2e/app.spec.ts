@@ -40,9 +40,8 @@ test("one sentence becomes a saved map", async ({ page }) => {
   await page.getByPlaceholder(/What are you building/).fill("A mobile bike repair business with a van in Calgary");
   await page.getByRole("button", { name: "Map it →" }).click();
 
-  // About you → continue.
+  // The demo ideas are saved, so the intake skips About you and opens on the screen we came for (#38).
   await expect(page).toHaveURL(/\/intake/);
-  await page.getByRole("button", { name: "Continue →" }).click();
 
   // Confirm what was understood: "repair" is a trade, not AI (#2), and the chips say so to a
   // screen reader (#12).
@@ -99,7 +98,6 @@ test("words typed on the front page before it has finished loading are kept, and
 
   // The intake got the words: "repair" was read as a trade.
   await expect(page).toHaveURL(/\/intake/);
-  await page.getByRole("button", { name: "Continue →" }).click();
   await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -138,7 +136,6 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await page.getByPlaceholder(/What are you building/).fill(sentence);
   await page.getByRole("button", { name: "Map it →" }).click();
   await expect(page).toHaveURL(/\/intake/);
-  await page.getByRole("button", { name: "Continue →" }).click();
   // A goal the person picks themselves.
   await page.getByRole("button", { name: "Replace income", exact: true }).click();
   await expect(page.getByRole("button", { name: "Replace income", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -152,7 +149,6 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   // sentence, already kept with the first, is not written again (review of 2026-10-11).
   await page.getByRole("link", { name: "Edit venture profile" }).click();
   await expect(page).toHaveURL(/\/intake/);
-  await page.getByRole("button", { name: "Continue →" }).click();
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByPlaceholder(/What the map should call this venture/).fill("Invented — first words test, again");
   await page.getByRole("button", { name: "Open my map →" }).click();
@@ -173,8 +169,10 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   // It is one of the person's statements, so What DotAmi knows counts it and Delete takes it with them.
   const statements = (await (await fresh.request.get("/api/person/statements")).json()) as { statements: { text: string; saidAt: string }[] };
   expect(statements.statements.filter((s) => s.text === sentence)).toEqual([expect.objectContaining({ text: sentence, saidAt: today })]);
-  // About you lists it with the idea it was typed for, not as "typed here".
+  // About you lists it with the idea it was typed for, not as "typed here". With ideas saved the intake
+  // opens on the screen after it (#38), and Back reaches it.
   await fresh.goto("/intake");
+  await fresh.getByRole("button", { name: "← Back" }).click();
   const row = fresh.getByRole("listitem").filter({ hasText: sentence });
   await expect(row.getByText("typed for your idea “Invented — first words test”", { exact: true })).toBeVisible();
   await context.close();
