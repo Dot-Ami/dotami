@@ -124,6 +124,9 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] The server leaves out what it never loads: sharp with libvips (LGPL) and the TypeScript compiler,
     with what only they pull in (about 30 MB; the build stops if something still needs one, a desktop
     test fails if one comes back)
+  - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
+    data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
+    earlier; a desktop test checks it); reaches installed copies with the next release
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
