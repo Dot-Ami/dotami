@@ -18,7 +18,12 @@ interface EngineCatalog<TEntry> {
 Every entry must include at least one citation with:
 
 - `title`, `authority` (`CRA` | `federal` | `provincial`), `jurisdiction` (`AB` | `BC` | `ON` | `CA`)
-- `url`, `lastVerified`, `note`
+- `url`, `note`
+- how it was checked, at least one of: `lastVerified` (the day it was read; `readBy` says who,
+  only when that is on record) and
+  `toolCheck: { checkedOn, quotes }` (the day `scripts/check-quotes.mjs` found the quoted words on
+  the live page; decided 2026-10-11). Shape, names and rules:
+  [docs/engines/citations.md](../engines/citations.md).
 
 ## Lens annotations
 
@@ -47,4 +52,4 @@ Entries that affect tax or legal decisions include `lensAnnotations: { tax, lega
 
 ## Integrity tests
 
-`tests/engine-integrity.spec.ts` validates: unique ids, citations present, lastVerified set, archetype ids resolve to real engine entries.
+`tests/engine-integrity.spec.ts` validates: unique ids, citations present, every citation read or checked by a tool with its quotes (no read or check dated after today, no quote under three words), every tax-line year's form read by a person, archetype ids resolve to real engine entries.

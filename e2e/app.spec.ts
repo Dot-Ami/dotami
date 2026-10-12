@@ -292,6 +292,71 @@ test("the map draws today's road unchanged: columns, cards, toggles and hover ar
   await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText("Employee/Apprentice baseline");
 });
 
+// 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every
+// source on the map today was read, and for the map's own stages nobody recorded who read it, so the
+// stage's sources and the playbook export say "Read on <date>. Who read it wasn't recorded." and never
+// claim a person; the readout says the same words as the screens, and none says "verified" any more.
+test("every source says how it was checked: the map's sources, the playbook export and the readout", async ({ page }) => {
+  const scenario = {
+    id: `checked-${Date.now()}`,
+    profile: {
+      name: "Invented — sources test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 10_000,
+      targetRevenueY3: 20_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "self-employed",
+      hireFirst: false,
+      activityTags: ["Trades"],
+      stage: "idea",
+    },
+    // The same picks as the test above: the save refuses a scenario without them.
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  // A stage's own sources.
+  await page.getByRole("button", { name: /^Sole Prop activation, / }).click();
+  // The fold's summary reads "▸ Sources for this stage · 2".
+  await page.locator("summary", { hasText: /Sources for this stage · \d+/ }).click();
+  const sources = page.locator("details[open]").filter({ has: page.locator("summary", { hasText: "Sources for this stage" }) }).getByRole("listitem");
+  expect(await sources.count()).toBeGreaterThan(0);
+  for (const item of await sources.all()) {
+    await expect(item).toContainText(/Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./i);
+    await expect(item).not.toContainText(/Read by a person/i);
+    await expect(item).not.toContainText(/verified/i);
+  }
+
+  // The playbook export, in the same words.
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const markdown = page.locator("pre");
+  await expect(markdown).toContainText("### Citations");
+  await expect(markdown).toContainText(/ · Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./);
+  await expect(markdown).toContainText(/sources_read_by_a_person: \d+ of \d+/);
+  await expect(markdown).not.toContainText("· verified ");
+
+  // The readout, for an agent: each citation carries the same words beside its dates.
+  const readout = (await (await page.request.get(`/api/readout?venture=${ventureId}`)).json()) as {
+    evaluation: { unlocks: { citations: { howChecked: string; lastVerified?: string }[] }[] };
+  };
+  const citations = readout.evaluation.unlocks.flatMap((u) => u.citations);
+  expect(citations.length).toBeGreaterThan(0);
+  for (const c of citations) {
+    expect([
+      `Read by a person on ${c.lastVerified}`,
+      `Read on ${c.lastVerified}. Who read it wasn't recorded.`,
+      `Read by an AI model on ${c.lastVerified}. Not read by a person yet.`,
+    ]).toContain(c.howChecked);
+  }
+});
+
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
   await page.goto("/ventures");
   const card = page
@@ -1005,7 +1070,7 @@ test("Add a figure offers the four T2125 totals with their lines, asks the tax y
 
   // 2025 has been read: the line, the form's words for it and the day it was read.
   await taxYear.fill("2025");
-  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"), read 2026-10-10.`)).toBeVisible();
+  await expect(card.getByText(`Line 8299 on the CRA's 2025 T2125 ("Gross business or professional income"). Read by a person on 2026-10-10.`)).toBeVisible();
   await expect(unread).toHaveCount(0);
 
   // Dates from the wrong year: a period is filed for the year it ends in, so this is refused.

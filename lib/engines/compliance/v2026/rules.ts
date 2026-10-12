@@ -22,9 +22,12 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
-        lastVerified: LAST_VERIFIED,
+        // The last read of the page this links to was an AI model's (see the note), so the card says
+        // so instead of dating an earlier read of the old address (docs/engines/citations.md).
+        lastVerified: "2026-10-06",
+        readBy: "model",
         note:
-          "CRA small-supplier registration rules. The page moved: the old address (…/when-register.html) answered 404 on 2026-10-06. Its content was re-read by a model that day (page modified 2026-06-16) and matches this entry, including the exclusions; lastVerified stays the last human read — a human re-check is owed.",
+          "CRA small-supplier registration rules. The page moved: the old address (…/when-register.html) answered 404 on 2026-10-06. Its content was re-read by a model that day (page modified 2026-06-16) and matches this entry, including the exclusions. No person has read the new address yet; a person's re-check is owed.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],

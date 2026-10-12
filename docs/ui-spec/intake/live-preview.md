@@ -33,7 +33,9 @@ unlocks, live, as the user edits any field.
   caution / keep-records, GAAR flag, why + mitigation), and **every citation as a link to
   its official URL** (`CitationLinks`, `components/shared/citation-links.tsx` — S2.5.4f,
   2026-09-13; replaces the single `item.source` label): title ↗ · authority · jurisdiction ·
-  verified date · statute-check status chip where one exists. A **PARTIAL** chip also sits
+  how it was checked ("Read by a person on <date>", "Read on <date>. Who read it wasn't
+  recorded.", or the amber AI-model or "Checked by a tool on <date>: …" line; since 2026-10-11, [../shared/citation-links.md](../shared/citation-links.md)) ·
+  statute-check status chip where one exists. A **PARTIAL** chip also sits
   on the collapsed row header when any citation is partial (`worstStatus`), so the
   Regulations gap (S2.5.2g) is visible before expanding.
 - Province coverage banner: if `coverage === "federal-only"`, shows "Federal rules only

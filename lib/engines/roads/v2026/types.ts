@@ -27,7 +27,10 @@ export interface Road {
   steps: RoadStep[];
   /** Each fork once: two steps a person chooses between. */
   forks: Fork[];
-  /** The newest read date of any source in the road (the checks hold it to that). */
+  /**
+   * The newest read date of any source in the road (the checks hold it to that). The road's own date,
+   * not a citation's: a tool check is not a read and doesn't count (docs/engines/citations.md).
+   */
   lastVerified: string;
 }
 
