@@ -6,10 +6,12 @@ import { __resetRateLimitStateForTests, checkRateLimit, clientKeyFromRequest } f
 
 // 2026-10-12: the module's comments described Vercel's hosted servers ("one map per warm serverless
 // instance", "a durable per-key store (Vercel KV / Upstash) is the Phase 7 upgrade"). DotAmi runs on
-// the person's own computer, one server bound to 127.0.0.1, and CLAUDE.md points to this file as
-// the example of how to comment. Its comments now say how it works there.
+// the person's own computer, and CLAUDE.md points to this file as the example of how to comment.
+// Its comments now say how it works there.
 describe("what lib/api/rate-limit.ts says about itself", () => {
   const source = readFileSync(new URL("../lib/api/rate-limit.ts", import.meta.url), "utf8");
+  // The comment's words as one line, without the " * " that starts each comment line.
+  const prose = source.replace(/\r?\n\s*\*\s?/g, " ");
 
   it("describes no hosted server", () => {
     for (const word of [/Vercel/i, /serverless/i, /warm/i, /cold start/i, /Upstash/i, /Phase 7/i, /multi-tenant/i]) {
@@ -21,6 +23,20 @@ describe("what lib/api/rate-limit.ts says about itself", () => {
     expect(source).toContain("the person's own computer");
     expect(source).toContain("127.0.0.1");
     expect(source).toContain("x-forwarded-for");
+  });
+
+  // 2026-10-12, review: the first rewrite said only programs on the same computer can reach the
+  // server. `npm run dev` binds 127.0.0.1, but `npm start` passes no -H, and Next.js then listens on
+  // 0.0.0.0, every network interface; the Host check stops web pages (DNS rebinding), not another
+  // machine that sends "Host: localhost" itself.
+  it("says which ways of starting the server listen beyond this computer, and what the Host check stops", () => {
+    const scripts = (JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { scripts: Record<string, string> }).scripts;
+    expect(scripts.dev).toContain("-H 127.0.0.1");
+    if (!/\s-H\s/.test(scripts.start)) {
+      expect(prose).toContain("`npm start` listens on every network interface");
+    }
+    expect(prose).toContain("DNS rebinding");
+    expect(prose).not.toContain("So the callers are the person's own DotAmi window and programs on the same computer");
   });
 });
 
