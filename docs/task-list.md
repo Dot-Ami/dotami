@@ -485,6 +485,9 @@ roadmap's build order.
     only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
+  - [x] The desktop test types into the front page only once it has finished loading, and words a
+    person types before then are kept by the page (a browser test holds the page's scripts back) —
+    2026-10-11; the desktop test had failed on CI three times in about 15 hours with "Map it" greyed out
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a

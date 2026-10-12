@@ -42,6 +42,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
