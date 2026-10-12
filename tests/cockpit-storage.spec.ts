@@ -298,23 +298,32 @@ describe("step progress, per future and step", () => {
     expect(await prisma.stepProgress.count({ where: { ventureId } })).toBe(1);
   });
 
-  it("refuses a status on road 0's steps: the map keeps it, so one step can't say two things", async () => {
-    // The reviewer's case: a step the map has as done, then "not for me" sent here for the same step.
+  it("keeps the person's status on road 0's steps here, and leaves the map's worked-out lists alone", async () => {
+    // 2026-10-12, the cockpit screen: the map works out its active, done and set-aside lists from its
+    // toggles on every load, so they were never the person's word; the person's own status for a road 0
+    // step is kept here, like any other road's (docs/architecture/future-cockpit.md § 2, Cockpit screen
+    // as built). The reviewer's case from before: a step the map has as done, then "not for me" sent here.
     const scratch = (await ensureVentureFromScenario(prisma, { ...demoScenarios[0], id: "scratch-road0-status" })).ventureId;
     const doneOnMap = demoScenarios[0].state.completedNodeIds[0];
     expect(roadStartingAnyBusinessAB.steps.some((s) => s.id === doneOnMap)).toBe(true);
     const mapBefore = await prisma.scenarioState.findUniqueOrThrow({ where: { ventureId: scratch } });
-    for (const status of [...STEP_STATUSES, null]) {
-      await expect(setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, status }, catalog)).rejects.toThrow(/on the map/);
-    }
-    expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(0);
+    for (const status of STEP_STATUSES) await setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, status }, catalog);
+    const [row] = await listStepProgress(prisma, scratch, catalog);
+    expect(row).toMatchObject({ roadId: ROAD0, stepId: doneOnMap, status: "not-for-me" });
+    expect(row.changes.map((c) => c.status)).toEqual([...STEP_STATUSES]);
+    // Taking it back keeps the history for "Since last time".
+    await setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, status: null }, catalog);
+    expect((await listStepProgress(prisma, scratch, catalog))[0]).toMatchObject({ status: null });
+    // The map's own lists are not touched: they are still what its toggles work out.
     expect((await prisma.scenarioState.findUniqueOrThrow({ where: { ventureId: scratch } })).completedNodeIds).toEqual(mapBefore.completedNodeIds);
-    // The done-when ticks are still this table's on road 0; road 0 has no done-when lines yet, so there is nothing to keep.
+    // Road 0 has no done-when lines yet, so there is still no line to tick.
     await expect(setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, doneWhenIds: ["dw-invented-1"] }, catalog)).rejects.toThrow(
       FutureInputError,
     );
-    await setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, doneWhenIds: [] }, catalog);
-    expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(0);
+    // A step that isn't on road 0 is still refused.
+    await expect(setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: "step-invented-train", status: "done" }, catalog)).rejects.toThrow(
+      FutureInputError,
+    );
     await prisma.venture.delete({ where: { id: scratch } });
   });
 

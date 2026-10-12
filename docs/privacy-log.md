@@ -93,6 +93,20 @@ person is asked).
   one agreed before (kept, as *taken back*). A savings number or a start-up cost has to be dated the
   day it is given. On today's Alberta road a step's status stays with the map, as before, and the new
   step-progress table doesn't keep a second one. Nothing new leaves the computer or is asked.
+- **The cockpit now asks, and keeps what the person gives (2026-10-12).** The cockpit's first screen
+  ([docs/architecture/future-cockpit.md § 2, Cockpit screen as built](architecture/future-cockpit.md))
+  writes to the storage above for the first time. It asks, all optional and one click or one box at a
+  time: a step's status (*doing*, *done*, *not for me*) and its *done when* ticks (`StepProgress`); a mark
+  on each skill a road lists and on skills the person adds in their own words (`SkillMark`); their own
+  number for a named start-up cost line, with where it came from, and their savings for starting (two
+  figures, proposed and then agreed in the agree prompt, never counted before); and their own month and
+  year (`Venture.targetMonth`). **Changed from the line above:** on today's Alberta road a step's status
+  the person sets is now kept in `StepProgress` too, because the map's own *active, done, set aside*
+  lists are worked out from its toggles on every load and never held a status the person set; those
+  lists are untouched. Three new routes answer only DotAmi's own window (`POST /api/futures/<id>/progress`,
+  `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
+  answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
+  any program on this computer, like the figures list. Nothing new leaves the computer.
 
 ### Packages that ship
 
@@ -126,14 +140,19 @@ person is asked).
   answers to "where do you want to be" go with "Your statements", all at once
   ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). No screen removes one mark,
   one step's progress or one income target yet; the cockpit's screens will.
+- **From the cockpit (2026-10-12):** *I don't know* on a skill removes its mark; pressing a step's status
+  that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
+  removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
+  figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
 
 ### What the policy will need to say
 
 - The words a person types on the front door to describe an idea are kept in the data file, with the day
   they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
-- Once the cockpit's screens ship: the person's marks on skills, their progress on each step, the yearly
-  income they want and their own numbers for savings and start-up costs are kept in the data file on
-  their computer. The skill marks and the income target are kept for the person, not for an idea, so
+- Since the cockpit's first screen (2026-10-12): the person's marks on skills, their progress on each step
+  (on every road, today's Alberta road included), their own month and their own numbers for savings and
+  start-up costs are kept in the data file on their computer; the yearly income they want will be, once
+  a screen asks it. The skill marks and the income target are kept for the person, not for an idea, so
   deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
 
 ---

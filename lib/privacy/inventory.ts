@@ -219,7 +219,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; nothing on screen sets those yet. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta).",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12); nothing on screen sets the road or the endings yet. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta).",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -233,15 +233,17 @@ export const TABLES: readonly TableEntry[] = [
   {
     model: "ScenarioState",
     name: "Map progress",
-    holds: "Which steps on each idea's map you marked active, done or set aside, and which branches you took.",
+    holds:
+      "Which branches you took on each idea's map, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
     model: "StepProgress",
     name: "Your progress on each step",
     holds:
-      "For each idea, the steps on its road you marked doing, done or not for me (on today's Alberta road the map keeps those, so only the ticked lines are here), the “done when” lines you ticked on each, and when you changed each step's status (the newest 100 changes per step). It is never used to rank anything. Nothing on screen sets it yet: the cockpit's step panel, coming next, will.",
-    removedBy: "Nothing on screen changes or removes it yet. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
+      "For each idea, the steps on its road you marked doing, done or not for me (on every road, today's Alberta road included, since 2026-10-12), the “done when” lines you ticked on each, and when you changed each step's status (the newest 100 changes per step). Set from the cockpit's step panel. It is never used to rank anything.",
+    removedBy:
+      "Pressing a step's status that is on takes it back, and unticking a line removes the tick, in the cockpit's step panel; the list of changes stays. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
     model: "Setting",
@@ -255,7 +257,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Figure",
     name: "Your figures",
     holds:
-      "Totals about your business that you typed, read from a file or from your GnuCash book, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. For a tax-form total (such as business net income from a T2125), also the tax year it is for and, when it was read from a return, the form and line printed there. Since 2026-10-11 it can also hold two of your own planning numbers for an idea, each one day's amount: the savings you'd put toward starting it, and your number for a start-up cost on its road, with the cost it is for and where the amount came from (a quote, a link, a receipt or your guess); nothing on screen adds those yet. Never the file or the book itself, and never which accounts you ticked. A single purchase is not a figure: if you agree to keep one, it is an expense record.",
+      "Totals about your business that you typed, read from a file or from your GnuCash book, or an agent proposed: the amount, the period, the currency, where it came from, and the days it was proposed, agreed to and taken back. For a tax-form total (such as business net income from a T2125), also the tax year it is for and, when it was read from a return, the form and line printed there. Since 2026-10-11 it can also hold two of your own planning numbers for an idea, each one day's amount: the savings you'd put toward starting it, and your number for a start-up cost on its road, with the cost it is for and where the amount came from (a quote, a link, a receipt or your guess); the cockpit adds those through the agree prompt (since 2026-10-12). Never the file or the book itself, and never which accounts you ticked. A single purchase is not a figure: if you agree to keep one, it is an expense record.",
     removedBy:
       "Retract (an agreed figure) or Discard (a waiting one) stops a figure counting, but the row, its amount included, stays in the data file and on this page. Delete, at the bottom of this page, erases every figure from the file (tick “Your figures”, or “Your ideas”, which takes their figures with them). Nothing erases a single figure yet.",
   },
@@ -263,9 +265,9 @@ export const TABLES: readonly TableEntry[] = [
     model: "SkillMark",
     name: "Your skill marks",
     holds:
-      "Your own mark on each skill or requirement a road lists (have, learning or not yet), and on skills you added in your own words, with the day you set each. Kept once for you, not for one idea, so a mark carries across every road that lists the skill. Only you set a mark; DotAmi never guesses one, and “I don't know” keeps no mark at all. Nothing on screen sets them yet: the cockpit's skills screens, coming next, will.",
+      "Your own mark on each skill or requirement a road lists (have, learning or not yet), and on skills you added in your own words, with the day you set each. Kept once for you, not for one idea, so a mark carries across every road that lists the skill. Only you set a mark, in the cockpit's step panel or its skills list; DotAmi never guesses one, and “I don't know” keeps no mark at all.",
     removedBy:
-      "Delete, at the bottom of this page, with “Your skill marks” ticked: every mark at once, wiped from the file. Deleting your ideas leaves them, because they are yours, not an idea's.",
+      "“I don't know” on a skill in the cockpit removes its mark. Delete, at the bottom of this page, with “Your skill marks” ticked: every mark at once, wiped from the file. Deleting your ideas leaves them, because they are yours, not an idea's.",
   },
   {
     model: "PersonFigure",

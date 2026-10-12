@@ -11,6 +11,8 @@ import { newestReadDate } from "./validate";
  * step's one line, as the card already showed it; its `branches` are where the step leads). A node
  * lands in the column whose tier lists its stage, in catalog order, exactly as the old map placed it.
  *
+ * The rules and tax cards each step names come in as `engineHints`, by step id.
+ *
  * Done-when lines, cost lines, skill items and official links start empty: they are written from the
  * official pages in their own pull request, never filled in here.
  */
@@ -22,6 +24,8 @@ export function roadFromCfe(input: {
   nodes: readonly CFENode[];
   tiers: readonly CFETier[];
   forks: Fork[];
+  /** The rules and tax cards each step names, by step id (a step left out names none). */
+  engineHints?: Readonly<Record<string, readonly string[]>>;
 }): Road {
   const road: Road = {
     id: input.id,
@@ -45,6 +49,7 @@ export function roadFromCfe(input: {
       costs: [],
       officialLinks: [],
       citations: [...node.citations],
+      ...(input.engineHints?.[node.id] ? { engineHints: [...input.engineHints[node.id]!] } : {}),
     })),
     forks: input.forks,
     lastVerified: "",
