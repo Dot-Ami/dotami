@@ -108,7 +108,16 @@ and the maintainer's six decisions of 2026-10-11:
     the gauges, *Next on your road*, and the lever cards on the road step; a road 0 step's status is kept
     with the step progress, not the map, the line below; [§ 2, Cockpit screen as built](architecture/future-cockpit.md).
     Part 2: *What you've told DotAmi / Not told yet* with a receipt after each answer, the what-if bar,
-    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all)
+    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all.
+    2026-10-12, part 2 built: *What you've told DotAmi* (each answer with its day and what it unlocked,
+    **Change** and **Take back**), *Not told yet* with *I don't know* and the one-question box, a receipt
+    after every answer where it was given, the what-if bar with **Keep** and **Clear**, *Compare the two
+    endings* with **This is mine** (an ending on a road other than today's kept through its own route);
+    [§ 2, Cockpit screen as built, part 2](architecture/future-cockpit.md))
+    - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates
+      coming up, figure reminders: it needs the day of the last visit, which isn't kept; today the line
+      holds this visit's receipts only); the export gaining the told list, the what-ifs and the ending
+      picked; the yearly income question, and taking it back; remembering the last overlay used
   - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
     [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the

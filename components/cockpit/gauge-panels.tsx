@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AmountForm } from "@/components/cockpit/amount-form";
+import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
@@ -24,7 +25,20 @@ import { monthsFromToday } from "@/lib/roads/words";
 /** Which skill a mark is on: one from the road's list, or one of the person's own, by its words. */
 export type SkillKey = { skillItemId: string } | { ownLabel: string };
 
-function PanelShell({ title, onClose, error, children }: { title: string; onClose: () => void; error: string | null; children: ReactNode }) {
+function PanelShell({
+  title,
+  onClose,
+  error,
+  receipt,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  error: string | null;
+  /** The receipt of the last answer given in this list (part 2, 2026-10-12), or null. */
+  receipt?: readonly string[] | null;
+  children: ReactNode;
+}) {
   return (
     <section aria-label={title} className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-[13px] leading-snug">
       <div className="flex items-start justify-between gap-4">
@@ -43,6 +57,11 @@ function PanelShell({ title, onClose, error, children }: { title: string; onClos
           {error}
         </p>
       ) : null}
+      {receipt ? (
+        <div className="mt-3">
+          <ReceiptLines lines={receipt} />
+        </div>
+      ) : null}
       <div className="mt-4 space-y-5">{children}</div>
     </section>
   );
@@ -60,7 +79,9 @@ export function SkillsListPanel({
   onMark,
   onSelectSkill,
   onClose,
+  receipt,
 }: {
+  receipt?: readonly string[] | null;
   road: Road;
   skillItems: readonly SkillItem[];
   marks: readonly SkillMarkView[];
@@ -80,7 +101,7 @@ export function SkillsListPanel({
   const own = marks.filter((m) => m.ownLabel !== null);
 
   return (
-    <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error}>
+    <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error} receipt={receipt}>
       {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
       {listed.length === 0 ? (
         <p className="text-[12px] text-stone">{words.lists.skillsNone}</p>
@@ -163,7 +184,9 @@ export function MoneyListPanel({
   onProposeSavings,
   onSelectStep,
   onClose,
+  receipt,
 }: {
+  receipt?: readonly string[] | null;
   road: Road;
   evaluation: RoadEvaluation;
   canSave: boolean;
@@ -179,7 +202,7 @@ export function MoneyListPanel({
   const label = (id: string) => road.steps.find((s) => s.id === id)?.label ?? id;
 
   return (
-    <PanelShell title={words.lists.moneyTitle} onClose={onClose} error={error}>
+    <PanelShell title={words.lists.moneyTitle} onClose={onClose} error={error} receipt={receipt}>
       {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
       <div>
         <h3 className={heading}>{words.lists.savingsTitle}</h3>
@@ -254,7 +277,9 @@ export function DatePanel({
   error,
   onSave,
   onClose,
+  receipt,
 }: {
+  receipt?: readonly string[] | null;
   targetMonth: string | null;
   monthsFromToday: number | null;
   /** The person's own day, YYYY-MM-DD: the box offers no month before this one. */
@@ -275,7 +300,7 @@ export function DatePanel({
   }
 
   return (
-    <PanelShell title={words.lists.dateTitle} onClose={onClose} error={problem ?? error}>
+    <PanelShell title={words.lists.dateTitle} onClose={onClose} error={problem ?? error} receipt={receipt}>
       {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
       {targetMonth && months !== null ? (
         <p className="text-[13px] text-paper">

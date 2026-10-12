@@ -6,6 +6,8 @@ Type: panel (display + toggle buttons + checkboxes + form)
 
 Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
+> **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)). The *I'd incorporate at* box saves as the person types and gives no receipt.
+
 ## What it is
 
 The right-hand panel when a step is selected, a region named *Step*. It replaces node detail and keeps

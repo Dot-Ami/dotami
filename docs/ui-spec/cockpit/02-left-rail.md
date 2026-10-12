@@ -6,6 +6,8 @@ Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
 Last updated: 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+
+> **Changed 2026-10-12 — part 2 of the cockpit screen.** The rail is a little wider (up to 280 px) and opens with *What you've told DotAmi* and *Not told yet*, with the one-question box ([12-told-list.md](./12-told-list.md)). Everything below is the rail as it was, now under them and unfolded. Changing the structure here gives a receipt at the top of the told list ([13-receipts.md](./13-receipts.md)).
 Workshop status: documented, sign-off pending
 
 ## What it is

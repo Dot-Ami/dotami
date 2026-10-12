@@ -25,7 +25,10 @@ export function GoalBar({
   target,
   active,
   onGauge,
+  onCompare,
 }: {
+  /** Opens "Compare the two endings" (part 2, 2026-10-12); the button shows only on a road with a fork. */
+  onCompare?: () => void;
   road: Road;
   evaluation: RoadEvaluation;
   /** The idea: its place, and the map's own chips for the Steps gauge's next step. */
@@ -54,6 +57,11 @@ export function GoalBar({
         <span>
           {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
         </span>
+        {onCompare && road.forks.length > 0 ? (
+          <button type="button" onClick={onCompare} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
+            {words.compare.open}
+          </button>
+        ) : null}
       </p>
       {/* Four across at any width: on a narrow window the row scrolls sideways rather than stacking, so
           the bar stays one row tall and the map keeps its room (phone width is its own next piece of work). */}

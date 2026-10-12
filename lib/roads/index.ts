@@ -16,3 +16,4 @@ export {
 } from "./evaluate-road";
 export { columnNumbers, firstSteps, futureEdges, futureSet, reachableAvoiding, type FutureEdge } from "./paths";
 export { roadReceipt } from "./receipts";
+export { REQUIRED_ANSWER_IDS, withoutAnswer, withoutIdeaAnswer } from "./without-answer";

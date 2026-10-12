@@ -51,7 +51,10 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; part 2, since 2026-10-12: *What you've told DotAmi /
+  Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
+  runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`) and *Since last time*, the what-if
+  bar, and *Compare the two endings* with *This is mine*; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
@@ -84,9 +87,9 @@ says where it is going.
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
   (GET what the cockpit keeps for an idea: its road, picks, month and step progress, the person's skill
-  marks, their agreed yearly income and the idea's first sentence; + `/progress` and `/date`, POST a
-  step's status or ticks and the person's month) · `skill-marks` (POST one mark); the three writes
-  answer only DotAmi's own window.
+  marks, their agreed yearly income and the idea's first sentence; + `/progress`, `/date` and `/ending`,
+  POST a step's status or ticks, the person's month, and the ending picked at a fork of a road other than
+  road 0) · `skill-marks` (POST one mark); the four writes answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the

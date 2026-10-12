@@ -73,7 +73,10 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   // A default is never listed as said: the structure the map assumes is a question instead.
   await expect(told(page).getByText(/the map assumes/i)).toHaveCount(0);
   await expect(notTold(page).getByText("In the order DotAmi asks them, not importance.")).toBeVisible();
-  await expect(notTold(page).getByText("Your structure", { exact: true })).toBeVisible();
+  // At most five questions show; the rest wait behind "n more".
+  await expect(notTold(page).getByText(/^Your structure →/)).toHaveCount(0);
+  await notTold(page).getByRole("button", { name: /^\d+ more$/ }).click();
+  await expect(notTold(page).getByText(/^Your structure →/)).toBeVisible();
 
   // Answer one question in its box: the receipt says exactly what changed, and the row moves.
   const dateRow = notTold(page).getByRole("listitem").filter({ hasText: "By when?" });

@@ -107,6 +107,19 @@ person is asked).
   `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
   answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
   any program on this computer, like the figures list. Nothing new leaves the computer.
+- **The cockpit's second part asks a few more things, and keeps one more (2026-10-12).** The cockpit now
+  lists *What you've told DotAmi* (every answer kept, with its day, worked out from what is already
+  stored; nothing new is stored for the list) and *Not told yet*, whose one-question box asks, one at a
+  time and each optional with *I don't know*: the month and year, savings for starting (through the agree
+  prompt, as before), the structure, whether the person is buying equipment, a vehicle or tools, a pick at
+  each of today's map forks, and the yearly sales at which they'd incorporate. Each is kept where the same
+  answer is already kept (the idea's saved map, `Venture.targetMonth`, a figure). **New:** *This is mine*
+  under *Compare the two endings* keeps the ending the person picked at a fork of a road other than today's
+  in `Venture.forkPicks` (a column already listed) through a new route that answers only DotAmi's own
+  window (`POST /api/futures/<id>/ending`, [`app/api/futures/[id]/ending/route.ts`](../app/api/futures/[id]/ending/route.ts)).
+  The what-if bar's number is kept nowhere; only **Keep** writes it, as the idea's own first-year sales
+  (the intake's Year 1 field, kept with the map), never as a figure. Receipts and *Since last time* are
+  worked out on screen and kept nowhere. Nothing new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
@@ -154,6 +167,12 @@ person is asked).
   that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
   removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
   figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
+- **From *What you've told DotAmi* (2026-10-12):** **Take back** on a row removes that one answer the same
+  way: a mark or a status through its route, ticks emptied, a quote or savings retracted (kept as
+  retracted), the month cleared, an ending picked on a road other than today's removed from
+  `Venture.forkPicks`, and the idea's own answers returned to not given (the structure, a map pick back to
+  the map's default, kinds of work, sales, hire-first, equipment, the incorporation number). The place, the
+  kind of venture and the work situation can be changed but not taken back (the map needs them).
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
 

@@ -146,6 +146,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or cost lines yet, so those parts show one line saying so until its content lands
   ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
+- **The cockpit screen, part 2** ([14a]) — at the top of the left rail, **What you've told DotAmi**: every
+  answer you gave (never a default you haven't set, never a what-if), with its day (or *day not kept*
+  where nothing keeps one), what it unlocked (road evaluation run without it and with it, in the
+  receipt's own words, from a new pure `withoutAnswer` in [`lib/roads/`](lib/roads/without-answer.ts)), and
+  **Change** and **Take back**; under it, **Not told yet**: each missing answer as *question → unlocks
+  what*, at most five showing, in the order DotAmi asks them, each with **I don't know**, which keeps
+  nothing, and a **one-question box** for the month, savings, structure, equipment, a map pick and your
+  own incorporation number. After every answer, wherever you give it, a **receipt** says what it changed
+  (two runs of the rules compared, never written by a model), and the newest five lines of the visit stay
+  in **Since last time** under the map. The **what-if bar** (*Try first-year sales of $___*) relights the
+  rules under *Your what-if, not a forecast*, moves no money sum and is kept nowhere; **Keep** makes it
+  the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
+  step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
+  score and no highlighted column, with **This is mine**: today's road keeps it as the map's toggle, any
+  other road through a new route that answers only DotAmi's own window (`/api/futures/<id>/ending`)
+  ([docs/architecture/future-cockpit.md § 2, part 2](docs/architecture/future-cockpit.md),
+  [docs/ui-spec/cockpit/12–15](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
   to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report

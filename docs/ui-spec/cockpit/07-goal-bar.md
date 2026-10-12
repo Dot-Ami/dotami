@@ -6,6 +6,8 @@ Type: display + button group
 
 Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
+> **Changed 2026-10-12 — part 2.** After the future's name, on a road with a fork, a **Compare** button opens *Compare the two endings* in the right-hand panel ([15-compare.md](./15-compare.md)).
+
 ## What it is
 
 A band under the header, across the whole page, named *Your goal and gauges* for a screen reader:

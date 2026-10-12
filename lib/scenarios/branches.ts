@@ -118,6 +118,25 @@ export function updateScenarioBranch(
 }
 
 /**
+ * Takes the person's pick at one of the map's forks back (2026-10-12, the cockpit's "Take back"): the
+ * fork returns to the map's default and is no longer marked as decided, so it reads as "the map's
+ * default pick, not your pick yet" again. Nothing else changes.
+ */
+export function clearScenarioBranch(scenario: Scenario, decisionId: BranchDecisionId): Scenario {
+  return {
+    ...scenario,
+    state: {
+      ...recomputeScenarioState(
+        { ...scenario.state.activeBranches, [decisionId]: defaultActiveBranches[decisionId] },
+        scenario.profile.hireFirst,
+      ),
+      decidedBranchIds: (scenario.state.decidedBranchIds ?? []).filter((id) => id !== decisionId),
+      incorporateAt: scenario.state.incorporateAt ?? null,
+    },
+  };
+}
+
+/**
  * Sets (or, with null, clears) the person's own "I'd incorporate at $___". Whole dollars; the
  * branch picks are untouched. The cockpit calls it from the person's typing on the Incorporating
  * stage. It cleans the number the way a save does (`cleanIncorporateAt`), so a number the save would
