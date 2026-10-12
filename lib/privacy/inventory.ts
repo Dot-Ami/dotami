@@ -997,7 +997,7 @@ export interface UnscannedFolder {
 export const UNSCANNED_FOLDERS: readonly UnscannedFolder[] = [
   {
     folder: "scripts",
-    why: "Developer scripts run by hand through npm scripts (scripts/next.mjs and scripts/prisma.mjs run Next.js and the Prisma command-line tool with their usage reports switched off). Not staged into the desktop app and not part of the server build.",
+    why: "Developer scripts run by hand, through npm scripts or with node (scripts/next.mjs and scripts/prisma.mjs run Next.js and the Prisma command-line tool with their usage reports switched off; scripts/check-quotes.mjs fetches the source pages a builder names, or the pages behind recorded tool checks, when a builder runs it). Not staged into the desktop app and not part of the server build.",
   },
   {
     folder: "prisma",
