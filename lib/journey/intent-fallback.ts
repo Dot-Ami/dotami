@@ -9,6 +9,25 @@ import { ACTIVITY_TAXONOMY, type ActivityTag, type IntentParseResult } from "./i
  * Pure and unit-tested; keep synonyms lowercase.
  */
 
+// The ways people spell ride-sharing. On their own they also fit someone building a rideshare app, and
+// the CRA's rule is about the drivers who give the rides, so they count only in a phrase about driving.
+const RIDE_SHARE_SPELLINGS = ["ride-share", "ride share", "rideshare", "ride-sharing", "ride sharing", "ridesharing"];
+const RIDE_SHARE_DRIVING = RIDE_SHARE_SPELLINGS.flatMap((w) => [
+  `${w} driv`, `drive ${w}`, `driving ${w}`, `drive for a ${w}`, `driving for a ${w}`,
+]);
+
+/**
+ * Keywords that stop counting when the next word makes them another service: "drive for uber" is
+ * driving passengers, "drive for uber eats" is food delivery, which the CRA counts separately from
+ * ride-sharing (its example driver's Uber Eats income goes toward the general $30,000 total).
+ */
+const NOT_FOLLOWED_BY: Readonly<Record<string, readonly string[]>> = {
+  "drive for uber": ["eats"],
+  "driving for uber": ["eats"],
+  "drive uber": ["eats"],
+  "driving uber": ["eats"],
+};
+
 const TAG_SYNONYMS: Record<ActivityTag, string[]> = {
   "Software / SaaS": [
     "software", "saas", "app", "web", "website", "platform", "api", "video game", "game",
@@ -40,6 +59,16 @@ const TAG_SYNONYMS: Record<ActivityTag, string[]> = {
   "Creator / influencer": ["influencer", "creator", "instagram", "brand deal", "sponsorship"],
   "Healthcare / wellness": [
     "massage", "therapy", "fitness", "personal train", "wellness", "nutrition", "clinic", "yoga",
+  ],
+  // No bare "uber": the CRA counts Uber Eats food delivery separately from driving passengers, and the
+  // Uber phrases here don't count before "eats" (NOT_FOLLOWED_BY). No bare "taxi" either: keywords
+  // match from the start of a word, so it would also catch "taxidermy". No bare "rideshare": see
+  // RIDE_SHARE_DRIVING.
+  "Ride-share or taxi driving": [
+    ...RIDE_SHARE_DRIVING,
+    "taxi driv", "taxi operat", "taxi business", "taxi company", "drive a taxi", "driving a taxi",
+    "drive taxi", "driving taxi", "my taxi", "cab driv", "drive a cab", "driving a cab", "lyft",
+    "uber driv", "drive for uber", "driving for uber", "drive uber", "driving uber",
   ],
 };
 
@@ -78,6 +107,14 @@ function matchesKeyword(text: string, keyword: string): boolean {
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   if (keyword.length <= 3) {
     const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}s?(?:[^a-z0-9]|$)`, "i");
+    return pattern.test(text);
+  }
+  const cancelledBy = NOT_FOLLOWED_BY[keyword];
+  if (cancelledBy) {
+    // A whole-word match whose next word isn't one of the cancelling ones. The regex tries every place
+    // the keyword appears, so "drive for uber eats and drive for uber" still matches the second.
+    const next = cancelledBy.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}(?![a-z0-9])(?!\\s+(?:${next})(?![a-z0-9]))`, "i");
     return pattern.test(text);
   }
   const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}`, "i");
