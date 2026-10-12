@@ -143,24 +143,25 @@ describe("each step's state and its reason", () => {
     expect(answers.find((a) => a.id === "idea:sales-year-3")).toBeUndefined();
   });
 
-  it("on road 0 the map's worked-out lists are not the person's statuses: nothing says 'You marked'", () => {
+  it("on road 0 the map's worked-out lists are not the person's statuses: with no progress, nothing says 'You marked'", () => {
     // The map's active, done and set-aside lists come from its toggles alone (lib/scenarios/branches.ts):
-    // stage 0 is always done, stage 1 always active, the side not picked set aside. Passed in as
-    // progress, the way the first version's comment said to, they must not read as the person's word.
+    // stage 0 is always done, stage 1 always active, the side not picked set aside. Road evaluation never
+    // reads them; only the person's own status, kept in step progress, counts (2026-10-12, the cockpit
+    // screen: the person can set one on road 0 now). tests/cockpit-screen.spec.ts checks the cockpit
+    // never passes the map's lists in as progress.
     const idea = inventedIdea();
-    const fromMap = { ghost: "not-for-me", complete: "done", active: "doing" } as const;
-    const progress = generalRoadV2026.steps.flatMap((s) => {
-      const status = fromMap[getScenarioNodeStatus(s.id, idea) as keyof typeof fromMap];
-      return status ? [{ stepId: s.id, status, doneWhenIds: [] }] : [];
-    });
-    expect(progress.length).toBeGreaterThan(0);
-    const result = evaluateRoad(road0({ scenario: idea, progress }));
+    expect(generalRoadV2026.steps.some((s) => getScenarioNodeStatus(s.id, idea) === "complete")).toBe(true);
+    const result = evaluateRoad(road0({ scenario: idea }));
     expect(result.steps.filter((s) => s.reason.kind === "not-for-me")).toEqual([]);
     expect(result.steps.every((s) => s.status === null)).toBe(true);
     expect(result.gauges.steps).toMatchObject({ done: 0, doing: 0 });
     expect(result.answers.filter((a) => a.group === "step")).toEqual([]);
-    // The colours are the map's, exactly as with no progress at all.
-    expect(stateOf(result)).toEqual(stateOf(evaluateRoad(road0({ scenario: idea }))));
+  });
+
+  it("on road 0 a status the person set counts, as on any road", () => {
+    const result = evaluateRoad(road0({ progress: [{ stepId: "stage-1-sole-prop-activation", status: "done", doneWhenIds: [] }] }));
+    expect(result.gauges.steps.done).toBe(1);
+    expect(result.answers.find((a) => a.id === "step:stage-1-sole-prop-activation")?.said).toBe("you told us “Sole Prop activation” is done");
   });
 
   it("on another road the person's own status still counts", () => {
