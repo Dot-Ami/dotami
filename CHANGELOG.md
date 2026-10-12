@@ -49,6 +49,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
   the page's scripts back while it types. The same race made the desktop test fail on CI three times in
   about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —

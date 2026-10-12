@@ -351,6 +351,10 @@ roadmap's build order.
       opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
+  - [ ] Words typed into the *Your expenses* form before the page has finished loading are emptied
+    when it loads (found 2026-10-11 by the review of the front page's same fix; only on a reload or a
+    typed address). The front page's way, reading what is already in each box as the page loads, with
+    its own browser test that holds the page's scripts back
 
 ## 9 — The Lens (DotAmi's built-in agent)
 

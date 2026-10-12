@@ -24,6 +24,11 @@ control exists to help fill or bypass this one.
   2026-10-11 the button stayed greyed out and the next redraw emptied the box (CI's desktop test hit
   it three times in about 15 hours). Browser test: `e2e/app.spec.ts`, "words typed on the front page
   before it has finished loading…", which holds the page's scripts back while it types.
+  The same goes for words the browser itself puts back in the box: leave the front page with a full
+  page load (a typed address, a reload elsewhere) and press Back, and the browser refills the box
+  before the scripts run. Those words now stay and `Map it →` works with them; before, they showed for
+  a moment and were emptied. Leaving by an in-app link or `Map it →` draws the page fresh, with an
+  empty box. Browser test: "words the browser puts back in the front page's box after Back stay…".
 - Submit via click on `Map it →` or ⌘/Ctrl+Enter. Button disabled while `text` is empty or
   a request is in flight (`parsing`, label swaps to "Reading…").
 - On submit (`handleMapIt`):

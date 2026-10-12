@@ -15,7 +15,14 @@
  */
 import { expect, type Locator } from "@playwright/test";
 
-/** True once React has taken over this element. Runs in the page, so it must stand alone. */
+/**
+ * True once React has taken over this element. Runs in the page, so it must stand alone.
+ *
+ * Strictly, React attaches the property as it hydrates the element, which can be a moment before it
+ * has finished with the whole page. That is enough here: if the person types in that moment, React
+ * finishes hydrating before it handles the keystroke, and the front page reads its box as React
+ * finishes, so nothing typed is lost either way.
+ */
 export function ownedByReact(element: Element): boolean {
   return Object.keys(element).some((key) => key.startsWith("__reactProps$"));
 }
