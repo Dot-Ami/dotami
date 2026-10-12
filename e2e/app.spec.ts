@@ -48,12 +48,18 @@ test("one sentence becomes a saved map", async ({ page }) => {
   // screen reader (#12).
   await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "AI / ML / R&D", exact: true })).toHaveAttribute("aria-pressed", "false");
+  // The "add your own" box has a name of its own, not only its placeholder, which a screen reader
+  // may not read and which disappears once something is typed.
+  await expect(page.getByPlaceholder("Add your own — press Enter")).toHaveAttribute("aria-label", "Add your own kind of work");
   await page.getByRole("button", { name: "Looks right →" }).click();
 
   // Ground it: Calgary was read as Alberta; the map won't open until employment is chosen (#7).
   await expect(groupSelect(page, "Province / territory")).toHaveValue("AB");
   const openMap = page.getByRole("button", { name: "Open my map →" });
   await expect(openMap).toBeDisabled();
+  // The box "Other…" opens is named the same way.
+  await groupSelect(page, "Current employment").selectOption("other");
+  await expect(page.getByPlaceholder("Tell us in your words")).toHaveAttribute("aria-label", "Your employment, in your words");
   await groupSelect(page, "Current employment").selectOption("self-employed");
   await expect(openMap).toBeEnabled();
   // The name box is named by its label too, not only by its placeholder.
