@@ -448,6 +448,10 @@ lives in `lib/roads/`.
      with one answer changed (taken away, given each other value it can have, or the fork's other side
      picked), and an answer is named when that changes the step's colour. When no single answer changes
      it, the reason says exactly that, never that the step is "for everyone".
+     On another road that reuses a road 0 step (road 1 joins road 0's later columns), the fork walk
+     below comes first: a road 0 step there takes the rules' colour only when no fork of that road
+     puts it off the path or leaves it waiting on a pick, so a step after the side not picked is never
+     drawn on the path or counted in the money (fixed 2026-10-12, before merge).
   3. The step is a side of a fork: the side picked **applies**, the other side is **not on your path**,
      and while no side is picked both are **check first**. A step reached only through a side not
      picked is not on your path too, and one reached only through a fork with no pick yet is check
@@ -458,6 +462,22 @@ lives in `lib/roads/`.
   A step's status (*doing · done · not for me*) is given beside its state and changes it only through
   *not for me*. Readiness is never a state: what a step needs is a count on the step (*needs 3 · you
   have 2*), never a reason to turn it green.
+  On road 0 the person sets no status yet. The map's lists of active, done and set-aside steps are
+  worked out from its toggles alone (stage 0 is always done, stage 1 always active, the side of each
+  fork not picked and the hire-first step while it is off are set aside), not set by the person, so
+  passing them in as progress would make the evaluation say *"You marked this step not for me"* about
+  steps nobody touched. Road evaluation therefore reads no status on road 0 (its ticked *done when*
+  lines still count), and a caller passes none until the person can set one (fixed 2026-10-12, before
+  merge; § 7's *a step's status is the map's* describes where it would be kept, not a status anyone
+  has set).
+- **The answers it read.** `answers` lists every answer the run read, in a fixed order, each marked
+  `given`. An answer is not given when it is a default the person hasn't set, and its words say so: a
+  map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
+  clicks only for the session, so after a reload every pick reads as a default, as the map's rail
+  already says), the hire-first path while it is off (*the hire-first path is switched off*: the map
+  can't tell switched off from never switched on), the structure the map assumes, and buying equipment
+  while unanswered (*not answered, read as no*). *What you've told DotAmi* lists the given ones; the
+  others still name themselves in a step's reason, worded as defaults.
 - **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
   are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
   as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
@@ -470,15 +490,24 @@ lives in `lib/roads/`.
 - **What-if.** First-year sales, in whole dollars. It replaces the idea's own first-year sales for this
   run of the rules and is never a figure: it touches no money sum and nothing is kept. A what-if that
   isn't a whole, non-negative number of dollars is ignored, and the result says no what-if is on.
+  The rules know it is a what-if (`evaluateScenario`'s `whatIfFirstYearSales`), so a rules and tax
+  card it lights says *"your what-if of first-year sales (not a forecast)"*, never *"your Y1 revenue
+  target"*: the person never gave that number as a target (fixed 2026-10-12, before merge).
 - **Receipts.** `roadReceipt(before, after)` (`lib/roads/receipts.ts`) compares two results and gives
-  one plain line per change: steps whose state changed (counted by their new state), steps that now
-  need nothing more from the person (every skill they need marked *have*) or need something again,
-  steps done, the skills counts, the money sums, the date, the target, and rules and tax cards whose
-  colour changed. Each line starts with the answers that differ between the two results: *"Because you
-  told us you have “Welding”, 3 steps now need nothing more from you."*, *"Because you took back …"*,
-  and for a what-if *"Because you tried first-year sales of $45,000 (your what-if, not a forecast), …"*.
-  Three or more answers of one kind are counted (*"you marked 9 skills"*). With no answer changed (the
-  month turned over), the line is the change alone.
+  one plain line per change: steps whose state changed (counted by their new state), steps whose every
+  listed skill is now marked *have* and steps where that stopped being so, steps done, the skills
+  counts, the money sums, the date, the target, and rules and tax cards whose colour changed. The
+  skills line is about skills only: a step can have every skill marked and still have *done when*
+  lines and money to go, so it never says the step needs nothing more (the design's *"needs 0 more"*
+  above is the same count). Each line starts with the answers that differ between the two results:
+  *"Because you told us you have “Welding”, 3 steps now have every skill they list marked have."*,
+  *"Because you took back …"*, and for a what-if *"Because you tried first-year sales of $45,000 (your
+  what-if, not a forecast), …"*. Three or more answers of one kind are counted (*"you marked 9
+  skills"*), and answers taken back are counted apart from answers given (*"you took back 3 skill
+  marks"*). With no answer changed (the month turned over), the line is the change alone.
+  A receipt is meant for one answer at a time, as each screen saves one: when two answers change
+  between the runs, every line names both, even a line only one of them could have caused (a what-if
+  named beside a money sum). A screen that ever saves two answers at once runs a receipt per answer.
 - **Words and numbers in one place each.** Every sentence the evaluation and the receipts write comes
   from `lib/roads/words.ts`, filled in with catalog labels, the person's own values and counts; money and
   months are written by `lib/format/money-and-months.ts`. A test runs every kind of sentence past a list
@@ -495,10 +524,18 @@ lives in `lib/roads/`.
   measurement.
 - **Not in this pull request:** any screen; the lever cards moving onto the road step (`engineHints`,
   above), which comes with the step panel, the first place the cards are drawn for a road other than
-  road 0; reading road 0's step statuses from the map, which the cockpit does when it calls this (its
-  caller passes them in as progress, § 7); and fix 2's fee lines (§ 9): no road has cost lines yet, and
-  when each way to incorporate is a side of a fork, the sums already leave both out until the person
-  picks.
+  road 0; a status the person sets on a road 0 step (none exists yet, above); the *with and without
+  one answer* run that gives each row of *What you've told DotAmi* its *what it unlocked* line (a pure
+  `withoutAnswer(input, answerId)` in `lib/roads/` that maps an answer's id back to the input with
+  that answer taken away, with its tests; the told-list pull request adds it); and fix 2's fee lines
+  (§ 9): no road has cost lines yet, and when each way to incorporate is a side of a fork, the sums
+  already leave both out until the person picks.
+- **Open question for the maintainer: *not for me* on the side picked.** *Not for me* greys its own
+  step only. When the person marks the side they picked at a fork *not for me*, the other side stays
+  off the path (it wasn't picked) and the steps only the picked side leads to still apply, with their
+  money counted, so both endings are off while what comes after one of them applies. Whether those
+  steps should go grey too, or the fork should read as unpicked, is the maintainer's call; until then
+  it is built the simple way. (§ 13.)
 
 ## 7. Storage
 
@@ -849,6 +886,9 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   one run of the rules took about 0.01 ms, so the line is worked out on each visit; checked again when
   road evaluation landed (2026-10-12: about 0.36 ms a run on today's general road, about 30 ms for 40
   answers, § 6 *Road evaluation as built*).
+- ***Not for me* on the side picked at a fork.** Whether the steps only that side leads to go grey
+  too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
+  evaluation as built*).
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
 - **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
