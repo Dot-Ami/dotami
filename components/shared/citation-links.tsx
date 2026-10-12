@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 
+import { howChecked, howCheckedWords } from "@/lib/engines/shared/citation-check";
 import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "@/lib/engines/shared/types";
 import { httpsOnly } from "@/lib/http/safe-url";
 
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
  * Every citation is a link to its official URL (Justice Canada for the Act, canada.ca for
- * CRA), with authority · jurisdiction · verified date, and the statute-check status where one
- * exists. PARTIAL is amber on purpose: it is the gap the UI must show, not hide.
+ * CRA), with authority · jurisdiction · how it was checked ("Read by a person on <date>" or
+ * "Checked by a tool on <date>: …", 2026-10-11), and the statute-check status where one exists.
+ * PARTIAL is amber on purpose: it is the gap the UI must show, not hide.
  *
  * S2.5.4i (decided 2026-09-14) — "Show the words". A citation that carries
  * `corpus` pointers grows one button per provision; each fetches the provision's own text from
@@ -60,9 +62,21 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
               <span className="min-w-0 flex-1 font-semibold text-paper">{c.title} ↗</span>
               {c.verification ? <StatusChip status={c.verification.status} className="shrink-0" /> : null}
             </span>
-            <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-stone">
-              {c.authority} · {c.jurisdiction} · verified {c.lastVerified}
-            </span>
+            {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read
+                keeps its place on the one line; a tool check gets its own line, in amber, because
+                it says no person has read the page yet. */}
+            {howChecked(c).kind === "person" ? (
+              <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-stone">
+                {c.authority} · {c.jurisdiction} · {howCheckedWords(c)}
+              </span>
+            ) : (
+              <>
+                <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-stone">
+                  {c.authority} · {c.jurisdiction}
+                </span>
+                <span className="mt-1 block text-[10px] leading-4 text-amber">{howCheckedWords(c)}</span>
+              </>
+            )}
             {c.verification?.status === "partial" ? (
               <span className="mt-1 block text-[10px] leading-4 text-amber">{c.verification.method}</span>
             ) : null}

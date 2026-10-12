@@ -35,17 +35,41 @@ export interface CorpusPointer {
   sub?: string;
 }
 
-export interface EngineCitation {
+/**
+ * A tool check (decided 2026-10-11, docs/engines/citations.md): a script fetched the live page and
+ * found every quote on it, word for word (scripts/check-quotes.mjs). It says the words are there;
+ * it doesn't say anyone read the page for meaning.
+ */
+export interface ToolCheck {
+  /** The day the script found every quote on the page, YYYY-MM-DD. Never after today. */
+  checkedOn: string;
+  /** The exact words the entry relies on, copied from the page. One or more, none empty. */
+  quotes: readonly string[];
+}
+
+/**
+ * How a source was checked: a person's read, a tool check, or both, never neither. The union makes
+ * a citation with neither a type error; tests/engine-integrity.spec.ts checks the catalogs again at
+ * run time. Read it through lib/engines/shared/citation-check.ts, never directly on a screen.
+ */
+export type CitationCheck =
+  | {
+      /** The day a person read the source. Its meaning is unchanged since the first catalog. */
+      lastVerified: string;
+      toolCheck?: ToolCheck;
+    }
+  | { lastVerified?: undefined; toolCheck: ToolCheck };
+
+export type EngineCitation = {
   title: string;
   authority: CitationAuthority;
   jurisdiction: Province;
   url: string;
-  lastVerified: string;
   note: string;
   verification?: CitationVerification;
   /** S2.5.4i: one pointer per provision the title names; absent on CRA/provincial pages. */
   corpus?: CorpusPointer[];
-}
+} & CitationCheck;
 
 export interface LensAnnotations {
   tax: string;

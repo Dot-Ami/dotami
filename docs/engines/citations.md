@@ -9,13 +9,13 @@ card always says which one it had.
 
 On 2026-10-11 the maintainer chose between two ways of keeping up with new sources:
 
-- **A** — he reads every page before its change merges;
+- **A** — the maintainer reads every page before its change merges;
 - **B** — every citation records how it was checked: *read by a person* on a date, or *checked by a
   tool* on a date, where a tool check means the live page was fetched and code confirmed that the
-  quoted words appear on it word for word. He reads whatever he chooses, and the card always says
+  quoted words appear on it word for word. The maintainer chooses which pages to read, and the card always says
   which kind of check it had.
 
-His words: "yah, im cool with option B". This page is option B.
+The maintainer's words: "yah, im cool with option B". This page is option B.
 
 ## The shape
 
@@ -108,7 +108,8 @@ and tags removed, entities decoded), and looks for each quote. Before comparing 
 
 - runs of whitespace (spaces, tabs, line breaks, non-breaking spaces) into one space;
 - typographic quotes into straight ones (‘ ’ ‚ ‛ ′ → `'`, “ ” „ ‟ ″ → `"`);
-- dashes into a hyphen (‐ ‑ ‒ – — ― − → `-`).
+- dashes into a hyphen (‐ ‑ ‒ – — ― − → `-`);
+- the invisible soft hyphen (a line-break hint a reader never sees) is removed.
 
 Nothing else: not letter case, not punctuation, not accents. It prints *found* or *not found* for
 every quote and exits with code 1 if any quote is missing or a page couldn't be fetched. When every

@@ -29,7 +29,13 @@ says where it is going.
   key. The Lens may change the person's answers, plan and settings at the permission level the
   person chose; it never changes a catalog. Plan: `docs/architecture/use-cases.md`.
 - **Every claim is cited and dated.** A rule, rate, threshold, date or eligibility condition
-  without a typed citation is a bug. `lastVerified` is the day a human read the source.
+  without a typed citation is a bug. `lastVerified` is the day a human read the source. Since the
+  maintainer's decision of 2026-10-11 (option B) a citation may instead, or also, carry a
+  `toolCheck`: the day `scripts/check-quotes.mjs` fetched the live page and found the quoted words
+  on it word for word, and those quotes. It needs one of the two; a person's read wins on screen,
+  and every screen says which kind of check a source had ("Read by a person on …" / "Checked by a
+  tool on …"), through `lib/engines/shared/citation-check.ts` only. Rules:
+  `docs/engines/citations.md`.
 - **Legal but honest.** Every lever ships with its audit/GAAR read. Nothing is presented as
   legal or tax advice; the app is a prep tool for the person's accountant and lawyer. It
   never files, never generates a binding document, never claims a qualification.

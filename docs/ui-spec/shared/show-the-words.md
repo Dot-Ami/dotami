@@ -1,6 +1,7 @@
 # "Show the words" — a provision's text on every statute citation
 
-Last updated: 2026-09-16 (S2.5.4i — built and verified in the pane)
+Last updated: 2026-10-11 (the citation above the button says how it was checked; 2026-09-16:
+S2.5.4i — built and verified in the pane)
 
 **Component:** `components/shared/citation-links.tsx` (`ProvisionWords`) · **API:**
 `GET /api/law/provision?source=&label=&sub=` (`app/api/law/provision/route.ts`) ·
@@ -12,6 +13,11 @@ let the app say something is legal or not without a deep dive into whether it ac
 This is the deep dive's first half: the law's own words, on the screen, dated.
 
 ## What it does
+
+**2026-10-11:** the citation line above the button now says how the citation was checked, "Read by
+a person on <date>" or "Checked by a tool on <date>: …" ([citation-links.md](./citation-links.md)).
+The button and its panel are unchanged: the panel's "current to <date>" is the law store's date for
+the Act, not a check of the citation.
 
 Every citation whose title names a section of the Income Tax Act or the Income Tax
 Regulations carries one or more `corpus` pointers (`{ source, label, sub? }`). Each pointer

@@ -1,6 +1,7 @@
 # Changelog
 
-Every catalog entry carries its own `lastVerified` date — the day a human read its source.
+Every catalog entry carries its own dates: `lastVerified`, the day a human read its source, or
+since 2026-10-11 a tool check, the day a script found the quoted words on the page.
 This file is the other half: what changed in the project between snapshots. A version here is
 a dated snapshot, not a promise of stability.
 
@@ -9,6 +10,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- **Every source says how it was checked: read by a person, or checked by a tool.** The maintainer
+  decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read by a person
+  before it merges, as long as every card says which. A card's "verified 2026-10-10" now reads
+  **"Read by a person on 2026-10-10"**; a source checked only by a tool would read **"Checked by a
+  tool on <date>: the quoted words were found on the page. Not read by a person yet."**, in amber.
+  The same words show in the map's sources, the intake's preview, the Delete menu's record-keeping
+  line, the Tax year hint, the playbook export and the readout API (`howChecked` on each citation);
+  one function writes them (`lib/engines/shared/citation-check.ts`) and a test refuses any other file
+  reading a citation's date. Every source on the map today was read by a person, and none changed
+  kind. A tool check is recorded only after the new developer script
+  `node scripts/check-quotes.mjs --url … --quote …` (never shipped) found every quote on the live page
+  word for word; run with no arguments it checks every recorded one again. The integrity test now
+  fails on a citation with neither kind of check, a tool check with no quote or an empty one, or one
+  dated after today ([docs/engines/citations.md](docs/engines/citations.md)).
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
   the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point

@@ -5,6 +5,8 @@
 > **Corrected 2026-10-11 — the back links.** This banner said "`← Back` goes to `/intake`". The shipped cockpit (read in `components/cockpit/cockpit-page.tsx` on 2026-10-11) has no such link: the header's link is **"← Ideas"**, to `/ventures`, and the empty state's link is **"← Back"**, to `/`. The empty state's two buttons go to `/intake` and `/ventures`.
 >
 > **Changed 2026-10-11 — the cockpit's job, and planning.** The maintainer's decision of 2026-10-11 gives the cockpit one job: *"the cockpit shows one future you're considering, whole, and is where you work through it."* Planning and doing both happen in the cockpit. The July plan of a separate Track tab for progress (surface 8 below, cut on 2026-09-14) is retired for good, not waiting to come back. The new regions (destination bar and gauges, overlays, the told / not-told list, *Next on your road*, Compare) are designed in [docs/architecture/future-cockpit.md](../../architecture/future-cockpit.md) § 2; each gets its control file here in the pull request that builds it.
+>
+> **Changed 2026-10-11 — how a source was checked.** In node detail (each item's sources and *Sources for this stage*) and in the playbook export (Export), every citation's "verified <date>" now reads **"Read by a person on <date>"**, or, for a source checked only by a tool, **"Checked by a tool on <date>: the quoted words were found on the page. Not read by a person yet."** (the maintainer's decision of 2026-10-11, option B). Details: [../shared/citation-links.md](../shared/citation-links.md).
 
 Last updated: 2026-07-05 (page-mechanics workshop, surface 6/11 — verified against shipped code)
 

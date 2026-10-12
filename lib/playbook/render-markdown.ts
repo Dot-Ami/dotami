@@ -1,3 +1,5 @@
+import { howChecked, howCheckedWords, oldestPersonRead } from "@/lib/engines/shared/citation-check";
+
 import type { PlaybookSkeleton } from "./types";
 
 function escapeYamlScalar(value: string): string {
@@ -28,14 +30,18 @@ function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
  * citations, disclaimer. S2.5.4h: catalog facts only, no LLM narrative.
  */
 export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
-  const citationDates = skeleton.sections.flatMap((s) => s.citations.map((c) => c.lastVerified));
-  const oldestVerified = citationDates.length > 0 ? [...citationDates].sort()[0] : undefined;
+  const citations = skeleton.sections.flatMap((s) => s.citations);
+  // The catalog's date is the oldest day a person read one of these sources; a tool check is not a
+  // read (docs/engines/citations.md), so those are counted on their own line instead.
+  const oldestVerified = oldestPersonRead(citations);
+  const notReadByAPerson = citations.filter((c) => howChecked(c).kind === "tool").length;
 
   const frontMatter = [
     "---",
     `title: ${escapeYamlScalar(`${skeleton.profile.name} — DotAmi playbook`)}`,
     `scenario_id: ${escapeYamlScalar(skeleton.scenarioId)}`,
     `catalog_last_verified: ${oldestVerified ? escapeYamlScalar(oldestVerified) : "n/a"}`,
+    ...(notReadByAPerson > 0 ? [`sources_not_read_by_a_person: ${notReadByAPerson}`] : []),
     "generator: dotami-playbook",
     "---",
     "",
@@ -95,7 +101,7 @@ export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
 
       for (const c of section.citations) {
         body.push(
-          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · verified ${c.lastVerified}`,
+          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · ${howCheckedWords(c)}`,
         );
         body.push(`  - *Note:* ${c.note}`);
       }

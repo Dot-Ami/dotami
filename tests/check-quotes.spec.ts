@@ -66,6 +66,8 @@ describe("what counts as the same words", () => {
     expect(normaliseForMatch("a  \t\n b")).toBe("a b");
     expect(normaliseForMatch("“operator test” — it’s")).toBe('"operator test" - it\'s');
     expect(normaliseForMatch("food‑truck – −")).toBe("food-truck - -");
+    // The soft hyphen is a line-break hint no reader sees.
+    expect(normaliseForMatch("regis­tration")).toBe("registration");
   });
 
   it("case, punctuation, numbers and accents still have to match", () => {
@@ -170,7 +172,12 @@ describe("the script itself", () => {
   });
 
   it("says in its header that it is never shipped and sits outside the app's network check", () => {
-    const header = source.slice(0, source.indexOf("*/"));
+    // The comment lines before the first line of code, joined into one text.
+    const lines = source.split(/\r?\n/);
+    const header = lines
+      .slice(0, lines.findIndex((l) => !l.startsWith("//")))
+      .map((l) => l.replace(/^\/\/ ?/, ""))
+      .join(" ");
     expect(header).toMatch(/never shipped/i);
     expect(header).toMatch(/outside the app's network check/i);
   });

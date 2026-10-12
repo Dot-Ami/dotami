@@ -76,11 +76,11 @@ describe("the rules a citation's check follows", () => {
 
   it("dates are written YYYY-MM-DD and are real days", () => {
     expect(citationCheckProblems({ ...BASE, lastVerified: "10/10/2026" } as EngineCitation, TODAY)).toEqual([
-      'person\'s read date "10/10/2026" is not written YYYY-MM-DD',
+      'person\'s read date "10/10/2026" is not a real day written YYYY-MM-DD',
     ]);
     expect(
       citationCheckProblems({ ...BASE, toolCheck: { checkedOn: "2026-02-30", quotes: ["x"] } } as EngineCitation, TODAY),
-    ).toEqual(['tool check date "2026-02-30" is not written YYYY-MM-DD']);
+    ).toEqual(['tool check date "2026-02-30" is not a real day written YYYY-MM-DD']);
   });
 });
 

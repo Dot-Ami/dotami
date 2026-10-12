@@ -1,4 +1,5 @@
 import type { CFENode, CFENodeId, CFEStage } from "@/lib/engines/cfe/v2026";
+import { checkFields } from "@/lib/engines/shared/citation-check";
 import { branchDecisions } from "@/lib/scenarios/branches";
 import type { Scenario } from "@/lib/scenarios/types";
 
@@ -86,7 +87,8 @@ function mergeCitations(existing: PlaybookCitationRef[], node: CFENode): Playboo
         authority: c.authority,
         jurisdiction: c.jurisdiction,
         url: c.url,
-        lastVerified: c.lastVerified,
+        // How it was checked travels with it: a person's read, a tool check, or both.
+        ...checkFields(c),
         note: c.note,
       });
     }

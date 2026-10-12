@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useJourney } from "@/components/shared/journey-provider";
 import { postJson } from "@/components/ventures/agree-prompt";
 import type { RecordRetentionEntry } from "@/lib/engines/compliance/v2026";
+import { howCheckedWords } from "@/lib/engines/shared/citation-check";
 import { afterStatementsDeleted } from "@/lib/journey/first-save";
 import type { DeleteKindId, DeleteMenuEntry, KeptLink } from "@/lib/privacy/inventory";
 import { folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, SET_ASIDE_RECEIPTS_KEY } from "@/lib/privacy/kept-links";
@@ -309,7 +310,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               >
                 CRA: {citation.title}
               </a>{" "}
-              <span className="text-stone">(read {citation.lastVerified})</span>
+              {/* How the page was checked, in the same words as every source (docs/engines/citations.md). */}
+              <span className="text-stone">({howCheckedWords(citation)})</span>
             </p>
           </div>
 

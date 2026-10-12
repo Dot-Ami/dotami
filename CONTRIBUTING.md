@@ -111,7 +111,7 @@ Every citation is:
   authority: "federal" | "CRA" | "provincial",
   jurisdiction: "CA" | "AB" | "BC" | "ON",
   url: "https://laws-lois.justice.gc.ca/…",                 // the OFFICIAL text, not a blog
-  lastVerified: "2026-09-16",                               // the day YOU read it
+  lastVerified: "2026-09-16",                               // the day YOU read it (or a toolCheck, below)
   note: "What you read there, in one line, and anything the entry leaves out.",
   verification: { status: "confirmed" | "supported" | "partial", method: "How you checked." }, // for statute
   corpus: [{ source: "ita", label: "18", sub: "(12)" }],    // optional: lets the app show the words
@@ -127,6 +127,38 @@ itself cites the law. Blogs, forums and generated content are not sources.
 Rates, thresholds and deadlines change. Cite the consolidated statute where the figure lives
 and the CRA page that administers it; the entry's typed field carries the figure and
 `lastVerified` carries the day you confirmed it.
+
+### Read by a person, or checked by a tool (added 2026-10-11)
+
+Every citation says how it was checked, and the card shows it. The maintainer decided on
+2026-10-11 that there are two kinds of check
+([docs/engines/citations.md](docs/engines/citations.md)):
+
+- **Read by a person**: you read the page and it says what the entry says. Set `lastVerified` to
+  that day. The card shows *"Read by a person on 2026-10-10"*.
+- **Checked by a tool**: you copy the exact words the entry relies on from the page (one or more
+  short quotes, never a paraphrase), then run
+
+  ```bash
+  node scripts/check-quotes.mjs --url "https://www.canada.ca/…" --quote "the exact words" --quote "more exact words"
+  ```
+
+  The script fetches the live page and says *found* or *NOT FOUND* for each quote. Only when every
+  quote is found, copy what it prints into the citation:
+
+  ```ts
+  toolCheck: { checkedOn: "2026-10-11", quotes: ["the exact words", "more exact words"] },
+  ```
+
+  The card shows *"Checked by a tool on 2026-10-11: the quoted words were found on the page. Not
+  read by a person yet."* The script changes no file; you record the result. It doesn't read PDFs,
+  so a PDF needs a person's read.
+
+A citation needs one of the two and may have both; when both exist, the card shows the person's
+read. A tool check only proves the words are on the page. Whether the entry reads them right is
+still for a person, so the maintainer may read any source before it merges. Run
+`node scripts/check-quotes.mjs` with no arguments to check every recorded tool check again (it
+fails when a page has changed under one).
 
 ### One more kind of source: the government's skills list for a job (added 2026-10-11)
 
@@ -185,8 +217,8 @@ npm run dev
 Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI runs:
 `prisma generate → typecheck → lint → test → build`. Stop the dev server first. The test
 suite includes `tests/engine-integrity.spec.ts`, which fails on an entry without a citation,
-a citation without an official URL or `lastVerified`, a duplicate id, or a corpus pointer
-that cannot resolve. Green is the floor, not the bar — a maintainer still reads the sources.
+a citation without an official URL or without a person's read or a tool check, a duplicate id, or a corpus pointer
+that cannot resolve. Green is the floor, not the bar: a tool check proves only that the quoted words are on the page, and the maintainer chooses which sources to read.
 The scenarios those deterministic tests lock are described in
 [docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
 
