@@ -1,11 +1,15 @@
 /**
  * Places as international codes (the maintainer's decision of 2026-10-11): CA for Canada, CA-AB for
- * Alberta, so Canada never collides with another country's code. lib/places/codes.ts maps today's
- * values (the AB of `Venture.province`, the CA of a federal catalog entry) to the codes and back.
+ * Alberta, so Canada never collides with another country's code. The data file stores each idea's place
+ * as its code (prisma/schema.prisma maps each `Province` value to one); lib/places/codes.ts maps the
+ * app's own values (AB, and the CA of a federal catalog entry) to the codes.
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { PLACE_CODES, placeCodeFor, todaysValueFor } from "@/lib/places/codes";
+import { PLACE_CODES, placeCodeFor } from "@/lib/places/codes";
 import { PROVINCES } from "@/lib/scenarios/types";
 
 describe("place codes", () => {
@@ -20,11 +24,18 @@ describe("place codes", () => {
     expect([...PLACE_CODES].sort()).toEqual(["CA", ...PROVINCES.map((p) => `CA-${p}`)].sort());
   });
 
-  it("passes a code through, and goes back to today's value", () => {
-    expect(placeCodeFor("CA-AB")).toBe("CA-AB");
-    for (const code of PLACE_CODES) expect(placeCodeFor(todaysValueFor(code))).toBe(code);
-    expect(todaysValueFor("CA-AB")).toBe("AB");
-    expect(todaysValueFor("CA")).toBe("CA");
+  it("passes a code through", () => {
+    for (const code of PLACE_CODES) expect(placeCodeFor(code)).toBe(code);
+  });
+
+  it("the data file stores every province and territory as its code: each Province value is mapped to one", () => {
+    const schema = readFileSync(path.join(process.cwd(), "prisma", "schema.prisma"), "utf8");
+    const block = /enum Province \{([^}]*)\}/.exec(schema)![1];
+    const values = block
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line !== "" && !line.startsWith("//"));
+    expect(values).toEqual(PROVINCES.map((p) => `${p} @map("${placeCodeFor(p)}")`));
   });
 
   it("refuses what isn't a place it knows, rather than guessing", () => {

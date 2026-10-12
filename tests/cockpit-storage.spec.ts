@@ -29,6 +29,7 @@ import {
   proposeIncomeWanted,
   retractPersonFigures,
 } from "@/lib/futures/person-figures";
+import { dayOnThisComputer } from "@/lib/futures/person";
 import { listSkillMarks, markSkill } from "@/lib/futures/skill-marks";
 import { listStepProgress, setStepProgress, STEP_CHANGES_KEPT } from "@/lib/futures/step-progress";
 import { FutureInputError, SKILL_MARKS, STEP_STATUSES, type RoadsCatalog } from "@/lib/futures/types";
@@ -61,6 +62,14 @@ afterAll(async () => {
   for (const f of [dbFile, `${dbFile}-journal`]) if (existsSync(f)) rmSync(f);
 });
 
+/** Road 0's picks as reading a future gives them: the map's toggles, marked as the map's, with no day. */
+const fromMap = (branches: Record<string, string>) =>
+  Object.fromEntries(
+    roadStartingAnyBusinessAB.forks.filter((fork) => fork.sides.includes(branches[fork.id])).map((fork) => [fork.id, { stepId: branches[fork.id], pickedOn: null, from: "map" }]),
+  );
+/** A pick the person made on a road other than road 0, today. */
+const picked = (stepId: string) => ({ stepId, pickedOn: dayOnThisComputer(new Date()), from: "you" });
+
 describe("the saved future: its road, the endings picked on it, the person's month", () => {
   it("reads today's general road for an idea saved before roads, with its place as a code", async () => {
     const future = await readFuture(prisma, ventureId, catalog);
@@ -68,11 +77,22 @@ describe("the saved future: its road, the endings picked on it, the person's mon
       ventureId,
       roadId: ROAD0,
       roadChosen: false,
-      // demoScenarios[0] is an Alberta idea: stored as "AB", read as the international code.
+      roadChosenOn: null,
+      // demoScenarios[0] is an Alberta idea: stored as "CA-AB" in the file, read as the international code.
       place: "CA-AB",
-      forkPicks: {},
+      // Road 0's picks are the map's own toggles, read from where the map keeps them.
+      forkPicks: fromMap(demoScenarios[0].state.activeBranches),
       targetMonth: null,
+      targetMonthSetOn: null,
     });
+    expect(Object.keys(future.forkPicks).sort()).toEqual(["gstTiming", "incorporationTiming"]);
+  });
+
+  it("stores the place in the data file as its international code, and the app still reads today's value", async () => {
+    const [raw] = await prisma.$queryRawUnsafe<{ province: string }[]>(`SELECT province FROM "Venture" WHERE id = ?`, ventureId);
+    expect(raw.province).toBe("CA-AB");
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).province).toBe("AB");
+    expect(await prisma.venture.count({ where: { id: ventureId, province: "AB" } })).toBe(1);
   });
 
   it("keeps a road from the catalog, refuses one that isn't there, and goes back to the general road", async () => {
@@ -89,7 +109,7 @@ describe("the saved future: its road, the endings picked on it, the person's mon
   it("keeps the ending picked at a fork of the future's own road, by permanent ids", async () => {
     await chooseRoad(prisma, ventureId, INVENTED, catalog);
     await pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: "step-invented-own" }, catalog);
-    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": "step-invented-own" });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": picked("step-invented-own") });
 
     // Not a side of that fork, a fork that isn't on the road, a malformed request: refused, nothing changes.
     await expect(pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: "step-invented-train" }, catalog)).rejects.toThrow(
@@ -97,7 +117,7 @@ describe("the saved future: its road, the endings picked on it, the person's mon
     );
     await expect(pickEnding(prisma, ventureId, { forkId: "fork-elsewhere", stepId: "step-invented-own" }, catalog)).rejects.toThrow(FutureInputError);
     await expect(pickEnding(prisma, ventureId, "own shop", catalog)).rejects.toThrow(FutureInputError);
-    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": "step-invented-own" });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": picked("step-invented-own") });
 
     // A pick can be taken back.
     await pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: null }, catalog);
@@ -115,19 +135,33 @@ describe("the saved future: its road, the endings picked on it, the person's mon
     expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).forkPicks).toEqual({});
   });
 
+  it("reads road 0's picks from the map, so a future has one set of picks whatever its road", async () => {
+    await chooseRoad(prisma, ventureId, null, catalog);
+    const branches = { gstTiming: "stage-2a-voluntary-gst-registration", incorporationTiming: "stage-3b-incorporation-liability-sred", notAFork: "x" };
+    await prisma.scenarioState.update({ where: { ventureId }, data: { activeBranches: branches } });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({
+      gstTiming: { stepId: "stage-2a-voluntary-gst-registration", pickedOn: null, from: "map" },
+      incorporationTiming: { stepId: "stage-3b-incorporation-liability-sred", pickedOn: null, from: "map" },
+    });
+    // A value that isn't a side of its fork is left out, never guessed at.
+    await prisma.scenarioState.update({ where: { ventureId }, data: { activeBranches: { gstTiming: "stage-1-sole-prop-activation" } } });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({});
+    await ensureVentureFromScenario(prisma, demoScenarios[0]);
+  });
+
   it("shows only the current road's picks, and keeps another road's for when the person goes back", async () => {
     await chooseRoad(prisma, ventureId, INVENTED, catalog);
     await pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: "step-invented-employed" }, catalog);
     await chooseRoad(prisma, ventureId, null, catalog);
-    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({});
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual(fromMap(demoScenarios[0].state.activeBranches));
     await chooseRoad(prisma, ventureId, INVENTED, catalog);
-    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": "step-invented-employed" });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": picked("step-invented-employed") });
   });
 
   it("saving the map again leaves another road's ending alone", async () => {
     // The map's save rewrites ScenarioState.activeBranches whole; the ending lives elsewhere for that reason.
     await ensureVentureFromScenario(prisma, demoScenarios[0]);
-    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": "step-invented-employed" });
+    expect((await readFuture(prisma, ventureId, catalog)).forkPicks).toEqual({ "fork-invented-ending": picked("step-invented-employed") });
   });
 
   it("keeps the person's own month and year, never one that has already gone", async () => {
@@ -141,6 +175,34 @@ describe("the saved future: its road, the endings picked on it, the person's mon
     expect((await readFuture(prisma, ventureId, catalog)).targetMonth).toBe("2026-10");
     await setTargetMonth(prisma, ventureId, null, TODAY);
     expect((await readFuture(prisma, ventureId, catalog)).targetMonth).toBeNull();
+  });
+
+  it("dates every answer kept on the future: the road chosen, each ending picked, the month", async () => {
+    const today = dayOnThisComputer(new Date());
+    await chooseRoad(prisma, ventureId, INVENTED, catalog);
+    await pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: "step-invented-own" }, catalog);
+    await setTargetMonth(prisma, ventureId, "2029-05", TODAY);
+    expect(await readFuture(prisma, ventureId, catalog)).toMatchObject({
+      roadChosen: true,
+      roadChosenOn: today,
+      forkPicks: { "fork-invented-ending": { stepId: "step-invented-own", pickedOn: today, from: "you" } },
+      targetMonth: "2029-05",
+      targetMonthSetOn: today,
+    });
+    // In the file: a moment for the road and the month, and one inside each pick.
+    const row = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } });
+    expect(row.roadChosenAt).toBeInstanceOf(Date);
+    expect(row.targetMonthSetAt).toBeInstanceOf(Date);
+    const pick = (row.forkPicks as Record<string, { stepId: string; pickedAt: string }>)["fork-invented-ending"];
+    expect(pick.stepId).toBe("step-invented-own");
+    expect(Number.isNaN(Date.parse(pick.pickedAt))).toBe(false);
+
+    // Going back to the general road, or clearing the month, leaves no date behind for an answer that isn't there.
+    await chooseRoad(prisma, ventureId, null, catalog);
+    await setTargetMonth(prisma, ventureId, null, TODAY);
+    expect(await readFuture(prisma, ventureId, catalog)).toMatchObject({ roadChosenOn: null, targetMonthSetOn: null });
+    await chooseRoad(prisma, ventureId, INVENTED, catalog);
+    await pickEnding(prisma, ventureId, { forkId: "fork-invented-ending", stepId: null }, catalog);
   });
 
   it("answers an unknown idea with the same not-found as the figures", async () => {
@@ -189,6 +251,14 @@ describe("skill marks, kept once for the person", () => {
     expect(await listSkillMarks(prisma)).toEqual([]);
   });
 
+  it("treats a skill of the person's own as one skill whatever its capital letters, kept under the spelling typed last", async () => {
+    await markSkill(prisma, { ownLabel: "Welding", mark: "have" }, catalog);
+    await markSkill(prisma, { ownLabel: "welding", mark: "not-yet" }, catalog);
+    expect((await listSkillMarks(prisma)).map((m) => [m.ownLabel, m.mark])).toEqual([["welding", "not-yet"]]);
+    await markSkill(prisma, { ownLabel: "WELDING", mark: null }, catalog);
+    expect(await listSkillMarks(prisma)).toEqual([]);
+  });
+
   it("outlive every future: a mark belongs to the person, so deleting ideas leaves it", async () => {
     const scratch = (await ensureVentureFromScenario(prisma, { ...demoScenarios[1], id: "scratch-for-marks" })).ventureId;
     await markSkill(prisma, { skillItemId: "skill-invented-ticket", mark: "have" }, catalog);
@@ -228,26 +298,62 @@ describe("step progress, per future and step", () => {
     expect(await prisma.stepProgress.count({ where: { ventureId } })).toBe(1);
   });
 
-  it("keeps progress on the general road too, by today's step ids", async () => {
-    await setStepProgress(prisma, otherVentureId, { roadId: ROAD0, stepId: "stage-1-sole-prop-activation", status: "doing" }, catalog);
-    expect(await listStepProgress(prisma, otherVentureId)).toEqual([
-      expect.objectContaining({ roadId: ROAD0, stepId: "stage-1-sole-prop-activation", status: "doing", doneWhenIds: [] }),
-    ]);
+  it("refuses a status on road 0's steps: the map keeps it, so one step can't say two things", async () => {
+    // The reviewer's case: a step the map has as done, then "not for me" sent here for the same step.
+    const scratch = (await ensureVentureFromScenario(prisma, { ...demoScenarios[0], id: "scratch-road0-status" })).ventureId;
+    const doneOnMap = demoScenarios[0].state.completedNodeIds[0];
+    expect(roadStartingAnyBusinessAB.steps.some((s) => s.id === doneOnMap)).toBe(true);
+    const mapBefore = await prisma.scenarioState.findUniqueOrThrow({ where: { ventureId: scratch } });
+    for (const status of [...STEP_STATUSES, null]) {
+      await expect(setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, status }, catalog)).rejects.toThrow(/on the map/);
+    }
+    expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(0);
+    expect((await prisma.scenarioState.findUniqueOrThrow({ where: { ventureId: scratch } })).completedNodeIds).toEqual(mapBefore.completedNodeIds);
+    // The done-when ticks are still this table's on road 0; road 0 has no done-when lines yet, so there is nothing to keep.
+    await expect(setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, doneWhenIds: ["dw-invented-1"] }, catalog)).rejects.toThrow(
+      FutureInputError,
+    );
+    await setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: doneOnMap, doneWhenIds: [] }, catalog);
+    expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(0);
+    await prisma.venture.delete({ where: { id: scratch } });
+  });
+
+  it("keeps nothing when the status is taken off a step that was never touched", async () => {
+    await chooseRoad(prisma, otherVentureId, INVENTED, catalog);
+    const view = await setStepProgress(prisma, otherVentureId, { roadId: INVENTED, stepId: "step-invented-own", status: null }, catalog);
+    expect(view).toMatchObject({ roadId: INVENTED, stepId: "step-invented-own", status: null, doneWhenIds: [], changes: [] });
+    expect(await prisma.stepProgress.count({ where: { ventureId: otherVentureId } })).toBe(0);
+    expect(await listStepProgress(prisma, otherVentureId)).toEqual([]);
   });
 
   it("keeps a status taken back as none, and only the newest status changes", async () => {
-    await setStepProgress(prisma, otherVentureId, { roadId: ROAD0, stepId: "stage-1-sole-prop-activation", status: null }, catalog);
+    const step = { roadId: INVENTED, stepId: "step-invented-train" };
+    await setStepProgress(prisma, otherVentureId, { ...step, status: "doing" }, catalog);
+    await setStepProgress(prisma, otherVentureId, { ...step, status: null }, catalog);
+    expect((await listStepProgress(prisma, otherVentureId))[0]).toMatchObject({ status: null });
     for (let i = 0; i < STEP_CHANGES_KEPT + 5; i++) {
-      await setStepProgress(prisma, otherVentureId, { roadId: ROAD0, stepId: "stage-1-sole-prop-activation", status: i % 2 ? "done" : "doing" }, catalog);
+      await setStepProgress(prisma, otherVentureId, { ...step, status: i % 2 ? "done" : "doing" }, catalog);
     }
     const [row] = await listStepProgress(prisma, otherVentureId);
     expect(row.changes).toHaveLength(STEP_CHANGES_KEPT);
     expect(row.changes.at(-1)!.status).toBe((STEP_CHANGES_KEPT + 4) % 2 ? "done" : "doing");
   });
 
+  it("lists only the current road's progress, and brings another road's back when the person goes back", async () => {
+    expect((await listStepProgress(prisma, otherVentureId)).map((p) => p.roadId)).toEqual([INVENTED]);
+    await chooseRoad(prisma, otherVentureId, null, catalog);
+    expect(await listStepProgress(prisma, otherVentureId)).toEqual([]);
+    // Kept, not deleted.
+    expect(await prisma.stepProgress.count({ where: { ventureId: otherVentureId } })).toBe(1);
+    await chooseRoad(prisma, otherVentureId, INVENTED, catalog);
+    expect((await listStepProgress(prisma, otherVentureId)).map((p) => p.stepId)).toEqual(["step-invented-train"]);
+  });
+
   it("goes with its future: deleting the idea deletes its progress", async () => {
     const scratch = (await ensureVentureFromScenario(prisma, { ...demoScenarios[1], id: "scratch-for-progress" })).ventureId;
-    await setStepProgress(prisma, scratch, { roadId: ROAD0, stepId: "stage-1-sole-prop-activation", status: "done" }, catalog);
+    await chooseRoad(prisma, scratch, INVENTED, catalog);
+    await setStepProgress(prisma, scratch, { roadId: INVENTED, stepId: "step-invented-train", status: "done" }, catalog);
+    expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(1);
     await prisma.venture.delete({ where: { id: scratch } });
     expect(await prisma.stepProgress.count({ where: { ventureId: scratch } })).toBe(0);
   });
@@ -396,6 +502,63 @@ describe("two new figure kinds: savings for starting and a start-up cost line", 
         catalog,
       ),
     ).rejects.toThrow(/Figure 1:/);
+  });
+
+  it("dates savings and a cost line to the day they were given: another day is refused", async () => {
+    const line = { roadId: INVENTED, stepId: "step-invented-train", lineId: "cost-invented-tools", amountFrom: "quote" };
+    for (const day of ["2019-03-01", "2026-10-10"]) {
+      await expect(
+        proposeFigures(prisma, ventureId, typed, [{ kind: "savings-for-start", periodStart: day, periodEnd: day, amountCents: 100 }], TODAY, catalog),
+      ).rejects.toThrow(/Figure 1:/);
+      await expect(
+        proposeFigures(prisma, ventureId, typed, [{ kind: "start-up-cost-line", periodStart: day, periodEnd: day, amountCents: 100, costLine: line }], TODAY, catalog),
+      ).rejects.toThrow(/Figure 1:/);
+    }
+  });
+
+  it("keeps one current number per cost line and per idea's savings: agreeing a new one takes back the old", async () => {
+    await chooseRoad(prisma, otherVentureId, INVENTED, catalog);
+    const line = (lineId: string, amountFrom: string, amountCents: number) => ({
+      kind: "start-up-cost-line",
+      periodStart: TODAY,
+      periodEnd: TODAY,
+      amountCents,
+      costLine: { roadId: INVENTED, stepId: "step-invented-train", lineId, amountFrom },
+    });
+    const confirmed = async () =>
+      (await listFigures(prisma, otherVentureId))
+        .filter((f) => f.status === "confirmed" && (f.kind === "start-up-cost-line" || f.kind === "savings-for-start"))
+        .map((f) => [f.kind, f.amountCents, f.costLine?.amountFrom ?? null]);
+
+    const [quote] = await proposeFigures(prisma, otherVentureId, typed, [line("cost-invented-tools", "quote", 340_000)], TODAY, catalog);
+    await agreeToFigures(prisma, otherVentureId, [quote.id]);
+    const [receipt] = await proposeFigures(prisma, otherVentureId, typed, [line("cost-invented-tools", "receipt", 410_000)], TODAY, catalog);
+    // Proposing alone changes nothing: the agreed quote is still the current number.
+    expect(await confirmed()).toEqual([["start-up-cost-line", 340_000, "quote"]]);
+    await agreeToFigures(prisma, otherVentureId, [receipt.id]);
+    expect(await confirmed()).toEqual([["start-up-cost-line", 410_000, "receipt"]]);
+    // The quote stays in the history, taken back with the day.
+    const old = (await listFigures(prisma, otherVentureId)).find((f) => f.id === quote.id)!;
+    expect(old.status).toBe("retracted");
+    expect(old.retractedAt).not.toBeNull();
+
+    // Two numbers for one line agreed at once: the one proposed last stays.
+    const [a] = await proposeFigures(prisma, otherVentureId, typed, [line("cost-invented-tools", "your-guess", 1_000)], TODAY, catalog);
+    const [b] = await proposeFigures(prisma, otherVentureId, typed, [line("cost-invented-tools", "link", 2_000)], TODAY, catalog);
+    await agreeToFigures(prisma, otherVentureId, [b.id, a.id]);
+    expect(await confirmed()).toEqual([["start-up-cost-line", 2_000, "link"]]);
+
+    // Savings: one per idea; another idea's savings are its own.
+    const savings = (amountCents: number) => [{ kind: "savings-for-start", periodStart: TODAY, periodEnd: TODAY, amountCents }];
+    const [s1] = await proposeFigures(prisma, otherVentureId, typed, savings(500_000), TODAY, catalog);
+    await agreeToFigures(prisma, otherVentureId, [s1.id]);
+    const [s2] = await proposeFigures(prisma, otherVentureId, typed, savings(650_000), TODAY, catalog);
+    await agreeToFigures(prisma, otherVentureId, [s2.id]);
+    expect(await confirmed()).toEqual([
+      ["start-up-cost-line", 2_000, "link"],
+      ["savings-for-start", 650_000, null],
+    ]);
+    expect((await listFigures(prisma, ventureId)).filter((f) => f.kind === "savings-for-start" && f.status === "confirmed")).toHaveLength(1);
   });
 
   it("leaves every existing kind exactly as it was: a business total still has no cost line", async () => {

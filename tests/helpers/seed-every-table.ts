@@ -8,11 +8,13 @@ import type { PrismaClient } from "@prisma/client";
 
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-figures";
+import { chooseRoad } from "@/lib/futures/future";
 import { markSkill } from "@/lib/futures/skill-marks";
 import { setStepProgress } from "@/lib/futures/step-progress";
 import { addDestination, addTypedStatement } from "@/lib/person/statements";
 import { writeSetting } from "@/lib/settings/store";
 import { demoScenarios } from "../../prisma/seed-data";
+import { inventedRoad, inventedSkillItems } from "./invented-road";
 
 /**
  * Two ideas, a link between them, statements (a destination among them), a setting, a bank account, a
@@ -28,7 +30,10 @@ export async function seedEveryTable(prisma: PrismaClient, marker: string) {
   await addDestination(prisma, { text: `destination ${marker}`, saidAt: "2026-09-01" });
   // The shipped skill list is empty until the first written future, so the mark is on a skill of the person's own.
   await markSkill(prisma, { ownLabel: `skill ${marker}`, mark: "learning" });
-  await setStepProgress(prisma, a, { roadId: "road-starting-any-business-ab", stepId: "stage-1-sole-prop-activation", status: "done" });
+  // Road 0's step statuses are the map's (kept in ScenarioState), so the progress row is on the invented test road.
+  const catalog = { roads: [inventedRoad()], skillItems: inventedSkillItems };
+  await chooseRoad(prisma, a, "road-invented-test-only", catalog);
+  await setStepProgress(prisma, a, { roadId: "road-invented-test-only", stepId: "step-invented-train", status: "done" }, catalog);
   const [income] = await proposeIncomeWanted(prisma, { amountCents: 7_000_000 });
   await agreeToPersonFigures(prisma, [income.id]);
   await writeSetting(prisma, "figure-reminders", { cadences: ["yearly"], ideaIds: [a] });

@@ -19,6 +19,10 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { chooseRoad } from "@/lib/futures/future";
+import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-figures";
+import { markSkill } from "@/lib/futures/skill-marks";
+import { setStepProgress } from "@/lib/futures/step-progress";
 import { addTypedStatement } from "@/lib/person/statements";
 import {
   DeleteInputError,
@@ -37,6 +41,7 @@ import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_
 import { writeSetting } from "@/lib/settings/store";
 import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { openDatabase } from "../desktop/sqlite.mjs";
+import { inventedRoad, inventedSkillItems } from "./helpers/invented-road";
 import { encryptInPlace } from "./helpers/migrated-db";
 import { demoScenarios } from "../prisma/seed-data";
 
@@ -436,6 +441,37 @@ describe("deleteData", () => {
     const result = await deleteData(prisma, { kinds: ["statements"], seen: await seenFor(prisma, ["statements"]) });
     expect(result).toEqual({ status: "deleted", deleted: { PersonStatement: 2 }, left: { PersonStatement: 0 }, wiped: true });
     expect(await countAll(prisma)).toEqual({ ...before, PersonStatement: 0 });
+  });
+
+  it("phase 1 storage with real rows: ideas take their step progress; skill marks and the income target go only with their own boxes", async () => {
+    const { prisma, file } = makeDb("cockpit-rows");
+    const { a, b } = await seed(prisma);
+    const catalog = { roads: [inventedRoad()], skillItems: inventedSkillItems };
+    for (const ventureId of [a, b]) await chooseRoad(prisma, ventureId, "road-invented-test-only", catalog);
+    await setStepProgress(prisma, a, { roadId: "road-invented-test-only", stepId: "step-invented-train", status: "done" }, catalog);
+    await markSkill(prisma, { ownLabel: `skill ${MARKER}`, mark: "learning" });
+    await markSkill(prisma, { skillItemId: "skill-invented-ticket", mark: "have" }, catalog);
+    const [income] = await proposeIncomeWanted(prisma, { amountCents: 7_000_000 });
+    await agreeToPersonFigures(prisma, [income.id]);
+    await proposeIncomeWanted(prisma, { amountCents: 8_000_000 });
+    expect(await countAll(prisma)).toMatchObject({ StepProgress: 1, SkillMark: 2, PersonFigure: 2 });
+
+    // Ideas: the step progress goes with them; the person's marks and income target stay.
+    let result = await deleteData(prisma, { kinds: ["ideas"], seen: await seenFor(prisma, ["ideas"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { StepProgress: 1 }, left: { StepProgress: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ Venture: 0, StepProgress: 0, SkillMark: 2, PersonFigure: 2 });
+
+    // Each of the person's own boxes takes its whole table and nothing else.
+    result = await deleteData(prisma, { kinds: ["skill-marks"], seen: await seenFor(prisma, ["skill-marks"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { SkillMark: 2 }, left: { SkillMark: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ SkillMark: 0, PersonFigure: 2 });
+    result = await deleteData(prisma, { kinds: ["income-wanted"], seen: await seenFor(prisma, ["income-wanted"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { PersonFigure: 2 }, left: { PersonFigure: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ PersonFigure: 0, PersonStatement: 2 });
+
+    // The skill named in the person's words is gone from the file's bytes too.
+    await prisma.$disconnect();
+    expect(readFileSync(file).includes(Buffer.from(`skill ${MARKER}`))).toBe(false);
   });
 
   it("deleting ideas takes their links, map progress and figures, keeps every expense record (not attached yet), and leaves statements and settings", async () => {

@@ -108,9 +108,11 @@ describe("database round trip (SQLite)", () => {
       create: { email: "raw@test.local" },
       update: {},
     });
-    await prisma.$executeRaw`INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, updatedAt) VALUES ('raw-default', ${user.id}, 'raw', 'SERVICE', 'AB', 0, 0, 'OTHER', CURRENT_TIMESTAMP)`;
+    await prisma.$executeRaw`INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, updatedAt) VALUES ('raw-default', ${user.id}, 'raw', 'SERVICE', 'CA-AB', 0, 0, 'OTHER', CURRENT_TIMESTAMP)`;
     const row = await prisma.venture.findUniqueOrThrow({ where: { id: "raw-default" } });
     expect(row.activityTags).toEqual([]);
+    // The file holds the place as its code (2026-10-12); the app reads today's value.
+    expect(row.province).toBe("AB");
   });
 });
 
