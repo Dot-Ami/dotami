@@ -60,9 +60,10 @@ export interface RoadEvaluationInput {
   skillMarks: readonly { skillItemId: string | null; ownLabel: string | null; mark: SkillMarkValue }[];
   /**
    * The person's progress on this road's steps: the status they set and the "done when" lines they
-   * ticked. On today's general road (road 0) the person sets no status yet. The map's active, done and
-   * set-aside lists are worked out from its toggles, not set by anyone, so they must not be passed in
-   * here as statuses; a status given for road 0 is ignored, and only its ticks are read.
+   * ticked, from step progress (lib/futures/step-progress.ts) only. On today's general road (road 0) the
+   * map's active, done and set-aside lists are worked out from its toggles, not set by anyone, so they
+   * must never be passed in here as statuses (lib/cockpit/view.ts `cockpitInput` doesn't). Since
+   * 2026-10-12 the person sets road 0's statuses in the cockpit, kept in step progress like any road's.
    */
   progress: readonly { stepId: string; status: StepStatus | null; doneWhenIds: readonly string[] }[];
   /** The planning numbers the person agreed to (./agreed.ts). */
@@ -104,7 +105,8 @@ export interface StepEvaluation {
   because: string;
   /** The status the person set (doing, done, not for me), or null. */
   status: StepStatus | null;
-  doneWhen: { ticked: number; total: number };
+  /** The "done when" lines ticked, as a count and by id in the step's own order (the step panel's boxes). */
+  doneWhen: { ticked: number; total: number; tickedIds: string[] };
   /** What the step needs from the shared skill list, against the person's marks: "needs 3 · you have 2". */
   needs: MarkCounts;
   /** Each cost line as a screen shows it: official fee, your quote, or named and not priced yet. */
@@ -378,7 +380,7 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
     stepById.has(id),
   );
 
-  // On road 0 the rules decide every step, and the person sets no status yet (see `progress`).
+  // On road 0 the rules colour every step the person hasn't marked not for me (see `progress`).
   const onRoadZero = road.id === generalRoadV2026.id;
   // Whether this road's own forks put a step off the path or leave it waiting on a pick. On another
   // road that reuses a road 0 step, that comes before the rules' colour: the rules know nothing of
@@ -389,7 +391,7 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
   const steps: StepEvaluation[] = roadOrder.map((stepId) => {
     const step = stepById.get(stepId)!;
     const progress = progressOf.get(stepId);
-    const status = onRoadZero ? null : (progress?.status ?? null);
+    const status = progress?.status ?? null;
 
     let state: StepState;
     let reason: StepReason;
@@ -443,10 +445,12 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
       reason,
       because: text,
       status,
-      doneWhen: {
-        ticked: new Set((progress?.doneWhenIds ?? []).filter((id) => step.doneWhen.some((line) => line.id === id))).size,
-        total: step.doneWhen.length,
-      },
+      doneWhen: (() => {
+        // Only this step's own lines, in its own order: a stale id from a rewritten step never shows.
+        const given = new Set(progress?.doneWhenIds ?? []);
+        const tickedIds = step.doneWhen.filter((line) => given.has(line.id)).map((line) => line.id);
+        return { ticked: tickedIds.length, total: step.doneWhen.length, tickedIds };
+      })(),
       needs: countMarks(step.needs, itemMarks),
       costs: step.costs.map((line) => costLineAsShown(line, quoteOf.get(`${stepId}/${line.id}`))),
       money: state === "not-on-your-path" ? "left-out" : waitsOn !== null ? "waits-on-a-pick" : "counted",
@@ -569,8 +573,7 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   for (const p of input.progress) {
     const step = stepById.get(p.stepId);
     if (!step) continue;
-    // No status is read on road 0 (see `progress`), so none is an answer there either.
-    if (p.status !== null && road.id !== generalRoadV2026.id) {
+    if (p.status !== null) {
       out.push({ id: `step:${step.id}`, group: "step", ...answer.stepStatus(step.label, p.status) });
     }
     const ticked = new Set(p.doneWhenIds.filter((id) => step.doneWhen.some((line) => line.id === id))).size;

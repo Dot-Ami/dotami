@@ -126,6 +126,21 @@ export async function listVentures(prisma: PrismaClient): Promise<VentureSummary
   }));
 }
 
+/**
+ * The sentence typed on the front door for one idea, word for word with its day, or null: the same
+ * statement, picked the same way, as the idea's card on the Ideas page shows (`listVentures`). The
+ * cockpit's goal bar shows it.
+ */
+export async function firstWordsOf(prisma: PrismaClient, ventureId: string): Promise<{ text: string; saidAt: string } | null> {
+  const first = await prisma.personStatement.findFirst({
+    where: { ventureId },
+    orderBy: [{ saidAt: "asc" }, { createdAt: "asc" }],
+    select: { text: true, saidAt: true },
+  });
+  // A statement's day is stored as midnight UTC of that day, so its UTC date is the day itself.
+  return first ? { text: first.text, saidAt: first.saidAt.toISOString().slice(0, 10) } : null;
+}
+
 /** The cockpit's `?venture=<id>` loader: one venture by its row id, as a Scenario. */
 export async function loadVentureScenarioById(prisma: PrismaClient, ventureId: string): Promise<Scenario | null> {
   const row = await prisma.venture.findUnique({

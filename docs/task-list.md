@@ -75,9 +75,16 @@ and the maintainer's six decisions of 2026-10-11:
     column); the export gains all of it. On today's Alberta road the step panel sets a step's status
     through the map, which keeps it ([§ 7](architecture/future-cockpit.md)); the step panel also moves
     today's lever cards onto the road step, so any road can name its own ([§ 6](architecture/future-cockpit.md))
-  - [ ] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
+    (2026-10-12, part 1 built: the goal bar and four gauges, the four overlays, the step panel with status,
+    *done when* checklist, skill marks and three kinds of cost through the agree prompt, the lists behind
+    the gauges, *Next on your road*, and the lever cards on the road step; a road 0 step's status is kept
+    with the step progress, not the map, the line below; [§ 2, Cockpit screen as built](architecture/future-cockpit.md).
+    Part 2: *What you've told DotAmi / Not told yet* with a receipt after each answer, the what-if bar,
+    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all)
+  - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
-    [§ 7](architecture/future-cockpit.md)). Until then *Since last time* has no history for that road's steps
+    [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the
+    person's status where they set one; the map's own lists stay worked out from its toggles)
   - [ ] The way in: three doors on the front page, *Your destination* (four short questions, a receipt
     after each), *Pick a future*, and *Your ideas* renamed *Your futures*. The *business / career /
     both* answer is kept on the future (one added column) when this screen asks it

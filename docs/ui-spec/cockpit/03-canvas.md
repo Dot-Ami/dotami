@@ -1,6 +1,11 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (the map draws a road, and today's map is the road "Starting any business in
+Last updated: 2026-10-12 (the cockpit screen, part 1: the overlay switches over the map, colours from
+road evaluation's states, the chip showing the person's own status where they set one, the Skills and
+Money badges, Rules & tax showing or hiding the lever cards, the fork's *The road splits here: you
+choose*, and a selected skill dimming the steps that don't list it, all in [08-overlays.md](./08-overlays.md);
+a step's lever cards now come from its own `engineHints`; *Next on your road* under the map,
+[11-next-on-your-road.md](./11-next-on-your-road.md); 2026-10-11: the map draws a road, and today's map is the road "Starting any business in
 Alberta", unchanged; the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React

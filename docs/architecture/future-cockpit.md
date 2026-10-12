@@ -195,6 +195,108 @@ Click anything to see where it comes from."*
 overlay on, scrolled to the first step not done, with *"Since last time: …"*. The left list folds to
 a count (*"12 things you've told DotAmi"*).
 
+### Cockpit screen as built (2026-10-12, part 1 of 2)
+
+The first cockpit pull request builds the top, the centre, the right panel and *Next on your road* on
+the cockpit page for a saved idea (`/cockpit?venture=<id>`), drawn on the idea's road through road
+evaluation (§ 6). Every saved idea is on road 0 until *Pick a future* lets a person choose another, so
+road 0 is what a person sees today; nothing in the screen knows which road it draws. Part 2, a later
+pull request, adds the left list (*What you've told DotAmi / Not told yet* with a receipt after each
+answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as it is until then.
+
+- **One run, one picture.** The page reads what is kept (below), passes it to `evaluateRoad`, and draws
+  the gauges, the step colours, the badges, the step panel and *Next on your road* from that one result.
+  The map's lever cards come from the same run's rules. Only business totals the person agreed to go to
+  the rules; the planning numbers go to the money sums through `agreedPlanning`.
+- **The goal bar.** The idea's first sentence (the one typed on the front door, kept since 2026-10-11)
+  in quotes, word for word, with its day; the yearly income the person agreed to, only when there is
+  one, labelled *your target* with the day agreed; the future, by its road's name. A road not written for
+  the idea's province (nor for all of Canada) is named as the map drawn, not as the person's future:
+  *Map drawn: <name> · written for AB; this idea is in BC*. Then four gauges, each a button tagged with
+  where its numbers come from:
+  - **Steps** (*count*): *x of y marked done* (and *n doing* when any), and the first step of *Next on
+    your road*. A step counts as done only when the person marked it done.
+  - **Skills** (*your marks*): *have · learning · not yet*, and *n not marked, out of m listed*; the
+    skills the person added are counted apart. A road that lists none says so.
+  - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
+    count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
+    behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
+    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
+    savings; and *savings minus both* only when road evaluation gives that difference. A road with no
+    cost lines says so.
+  - **Your date** (*yours*): *May 2029 · 31 months from today*, only when the person set a month;
+    otherwise *not set* and one invitation to add it.
+
+  Clicking **Steps** opens the first step of *Next on your road*; **Skills** and **Money** switch their
+  overlay on and open their list in the right panel; **Your date** opens the month box there. Clicking
+  the pressed gauge again closes what it opened (the overlay stays on), so its pressed state toggles. No gauge
+  shows a verdict word: the words file is tested against the same list road evaluation is.
+- **The road with overlays.** A row of switches over the map: *Road* (always on), *Skills*, *Money*,
+  *Rules & tax*, each with its count (skills listed and cost lines for the whole road; the rules and tax
+  cards the map draws, each once, so none from a card drawn dashed).
+  *Rules & tax* starts on, so the map looks as it does today; *Skills* and *Money* start off. On, *Skills*
+  puts *needs 3 · you have 2* on each step that lists skills, and *Money* puts the step's priced sum and
+  *n not priced* on each step with cost lines; off, *Rules & tax* hides the lever cards. The badges are in
+  each card's accessible name too. The last overlay used is not remembered yet.
+  Step colours are road evaluation's states (*applies*, *check first*, *not on your path*), which on
+  road 0 are exactly the rules' colours. A step the person marked *not for me* is grey by their choice,
+  so its card's name says *set aside by you* rather than *doesn't apply as answered*, and the legend says
+  so while any card is set aside. A column that decides a fork says *The road splits here: you
+  choose*. Selecting a skill (in the step panel or the skills list) dims every step that doesn't list it.
+  Drawn without the cockpit's overlays (no new props), the map is the same HTML as before, byte for byte.
+- **The step panel** replaces today's node detail when a step is selected and keeps all of it (the two
+  lines, the rules and tax cards for the stage and elsewhere, *More about this stage*, the sources
+  through `CitationLinks` with *Show the words*). Above the cards, in this order: why the step has its
+  colour (road evaluation's sentence); at a fork, *The road splits here: you choose* with that column's
+  toggle; *Your status*: **Doing**, **Done**, **Not for me** (pressing the one already on takes it back);
+  *Done when*: each line with a box and its citation, ticks saved as they're made (the boxes wait while a
+  save is read back, since each save sends the whole list); *Skills it needs*: each item with **Have**,
+  **Learning**, **Not yet** and **I don't know** (which removes the mark) and the item's own sources,
+  *you said you hold this* on a legal requirement marked have, and the cited way to get one marked *not
+  yet*; *Costs*: the three kinds, an official fee with its source and day read, the person's agreed
+  number, or *not priced yet* with **Add your quote** (the amount and where it came from: a quote, a
+  link, a receipt or your guess), and a named line's name source when it has one; then *Official pages
+  you open yourself*, the step's own links, when it has any. A quote is proposed, then the agree prompt opens; it counts only once the
+  person clicks **Agree**. A list that is empty on this road says so in one line.
+- **The lists behind the gauges.** *Skills*: every skill the road lists, with the same marks and sources,
+  and *Your own skills*: **Add a skill** (in the person's words, up to 120 characters) and a mark on each,
+  with **Remove** where the road's skills say *I don't know*, since taking the mark off a typed skill
+  removes it. *Money*: every cost line by step in road order, each official fee with its citation, and
+  **Add your savings**, through the agree prompt.
+  *Your date*: a month and year box, **Save** and **Clear**; a month already gone is refused.
+- **Next on your road**, under the map: the first three steps, in road order, that are on the person's
+  path and not done, labelled *the order steps happen, not importance*. Clicking one opens it. *On the
+  path* and *done* are read the way each card's chip reads them (`lib/cockpit/view.ts` `mapPlace`): the
+  person's own status where they set one, else the map's worked-out place. So the list never names a card
+  the map shows *done* (stage 0, worked out from the toggles) or *not on your path* (the side of a fork
+  not picked), nor one road evaluation greys. The Steps gauge's *next on your road* is its first.
+- **Road 0's statuses are the person's now** (the task list's open line; § 7 said a later pull request
+  may do it). The map's *active, done, set aside* lists are worked out from its toggles on every load,
+  so a status set "through the map" couldn't be kept, and road evaluation already refused to read those
+  lists as the person's (§ 6). So the person's status for a road 0 step is kept in step progress like
+  any other road's: the storage code accepts it, road evaluation reads it, and the map's chip shows it
+  (*doing*, *done*, *not for me*) where the person set one, and the worked-out chip everywhere else. The
+  toggles and their worked-out lists are untouched. *Since last time* gets road 0's history from here.
+- **The lever cards move onto the road step** (§ 6). A step names its rules and tax cards in
+  `engineHints`; road 0's are today's `NODE_ENGINE_HINTS`, written into its catalog file, and the old
+  name is now read from the road, so the readout API and the tests see the same lists.
+- **Where things are kept, and who may write them.** One read, `GET /api/futures/<idea id>`: the
+  idea's road, picks and month, its step progress, the person's skill marks, the agreed yearly income
+  and the first sentence. Three writes: `POST /api/futures/<idea id>/progress` (a status or ticks),
+  `POST /api/futures/<idea id>/date` (the month) and `POST /api/skill-marks`. Each reads its body through
+  `readJsonWithLimit`, has a rate limit, and answers only DotAmi's own window, as the settings routes do:
+  each is the person's own click, and an agent's way to propose one is the Lens's, later. Quotes and
+  savings go through the figures routes already there (propose, then the agree prompt's agree). The
+  read has a rate limit and no window check, like the figures list.
+- **Words and numbers.** Every sentence the new controls show is in `lib/cockpit/words.ts`; every amount
+  and month goes through `lib/format/money-and-months.ts`.
+- **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
+  last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
+  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
+  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
+  road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
+  empty line until the road content lands; the tests use an invented road for them.
+
 ## 3. What DotAmi asks, why, and how it's kept
 
 No question is asked unless something on screen depends on it. Each says why it is asked and what it
@@ -393,7 +495,8 @@ for a reason:
   request moves those hints onto the step, so a road's content stays in the road catalog (§ 8) and a
   contributor-written road can name its own cards; until then a step from any other road gets no
   lever cards. *(2026-10-12: the road-evaluation pull request left them where they are; the step panel
-  pull request moves them, below.)*
+  pull request moves them: a step's optional `engineHints` names its cards, and road 0's are written in
+  its catalog file. § 2, Cockpit screen as built.)*
 - **Skill items are one shared list** (`skillItemsV2026`), so a mark carries across every road that
   lists the item. It is empty until the first written future.
 - **The checks** (`validate.ts`, run on every road by the tests): every step has a citation; every
@@ -471,7 +574,9 @@ lives in `lib/roads/`.
   steps nobody touched. Road evaluation therefore reads no status on road 0 (its ticked *done when*
   lines still count), and a caller passes none until the person can set one (fixed 2026-10-12, before
   merge; § 7's *a step's status is the map's* describes where it would be kept, not a status anyone
-  has set).
+  has set). *(2026-10-12, the cockpit screen: the person can now set one, kept in step progress, so
+  road evaluation reads the person's own status on road 0 too. The map's worked-out lists are still
+  never passed in as progress. § 2, Cockpit screen as built.)*
 - **The answers it read.** `answers` lists every answer the run read, in a fixed order, each marked
   `given`. An answer is not given when it is a default the person hasn't set, and its words say so: a
   map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
@@ -679,7 +784,10 @@ beyond the target date are not in phase 1 (§ 12), and it is a plain added colum
   has none until its content is written), and the cockpit reads and sets road 0's statuses through the
   map: active is *doing*, done is *done*, set aside is *not for me*. One cost: the map keeps no list of
   changes, so *Since last time* has no status history for road 0's steps until the map's statuses move
-  here, which a later pull request may do (the map would then read this table).
+  here, which a later pull request may do (the map would then read this table). *(2026-10-12: the
+  cockpit screen's pull request does it. The map's lists are worked out from its toggles on every load,
+  so they can't hold a status the person sets; a road 0 step's status is now kept here like any other
+  road's, and the map's chip shows it. § 2, Cockpit screen as built.)*
 - The list of a future's progress gives only the steps of the road the future is drawn on now. Another
   road's rows are kept, so going back to that road brings them back.
 - Taking the status off a step that was never touched keeps nothing: no empty row is written.

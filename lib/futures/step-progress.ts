@@ -1,7 +1,6 @@
 import type { Prisma, PrismaClient, StepProgress } from "@prisma/client";
 
 import { toStringList } from "@/lib/db/json-list";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 import { requireVenture } from "@/lib/figures/store";
 
 import { FutureInputError, isRecord, roadForFuture, SHIPPED_ROADS_CATALOG, STEP_STATUSES, type RoadsCatalog, type StepStatus } from "./types";
@@ -12,8 +11,11 @@ import { FutureInputError, isRecord, roadForFuture, SHIPPED_ROADS_CATALOG, STEP_
  * and the status changes with their moments for "Since last time". Kept against the road's and the
  * step's permanent ids, never a position or a title, and never used to rank anything.
  *
- * On road 0 a step's status is the map's (ScenarioState: active, done, set aside), so it is refused here
- * and only that step's "done when" ticks are kept: one step's status lives in one place.
+ * On road 0 too (2026-10-12, the cockpit screen): the map's active, done and set-aside lists are worked
+ * out from its toggles on every load, so they never held a status the person set. The person's own
+ * status for a road 0 step is kept here like any other road's, and the map's chip shows it
+ * (docs/architecture/future-cockpit.md § 2, Cockpit screen as built). One step's status still lives in
+ * one place: this table.
  */
 
 /** How many status changes a step keeps: the newest ones. Plenty for "Since last time". */
@@ -96,10 +98,6 @@ export async function setStepProgress(
   if (!step) throw new FutureInputError("That step isn't on this road.");
 
   const statusGiven = input.status !== undefined;
-  // Road 0's statuses are the map's; a second one here could contradict it (docs/architecture/future-cockpit.md § 7).
-  if (statusGiven && road.id === generalRoadV2026.id) {
-    throw new FutureInputError("On this road a step's status is set on the map, with its own buttons, and kept with the map.");
-  }
   if (statusGiven && input.status !== null && !isStatus(input.status)) {
     throw new FutureInputError(`The status has to be one of: ${STEP_STATUSES.join(", ")}, or none.`);
   }

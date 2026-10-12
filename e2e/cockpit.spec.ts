@@ -1,0 +1,197 @@
+/**
+ * The cockpit screen, part 1 (docs/architecture/future-cockpit.md § 2, "Cockpit screen as built"), in a
+ * real browser against the production build: open a saved idea, read the gauges, switch the overlays,
+ * open a step and work on it, mark a skill, give a number through the agree prompt, and see it all
+ * kept after a reload.
+ */
+import path from "node:path";
+
+import type { PrismaClient } from "@prisma/client";
+import { expect, test, type Page } from "@playwright/test";
+
+import { createDatabaseClient } from "../lib/db/client";
+import { roadsV2026 } from "../lib/engines/roads/v2026";
+
+/** The run's own data file, for the one test that draws an idea on another road. */
+async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
+  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
+  const db = createDatabaseClient({ url: `file:${file}` });
+  try {
+    return await fn(db);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+/** An invented Alberta idea, saved the way the intake saves one; returns its id. */
+async function saveIdea(page: Page, name: string): Promise<string> {
+  const scenario = {
+    id: `cockpit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    profile: {
+      name,
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 20_000,
+      targetRevenueY3: 60_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "employee",
+      hireFirst: false,
+      activityTags: ["Software / SaaS"],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  return ((await saved.json()) as { ventureId: string }).ventureId;
+}
+
+const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and gauges" });
+const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { name: new RegExp(`^${name}`) });
+const overlays = (page: Page) => page.getByRole("group", { name: "Overlays" });
+const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
+const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
+
+test("the cockpit: gauges, overlays, a step's status, your own skill, your savings and your date, kept after a reload", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — cockpit test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  // The goal bar: the future by name and four gauges, counts only.
+  await expect(goalBar(page).getByText("Future: Starting any business in Alberta (tax and structure)")).toBeVisible();
+  await expect(gauge(page, "Steps")).toContainText("0 of 10 marked done");
+  await expect(gauge(page, "Skills")).toContainText("No skills are listed on this road yet");
+  await expect(gauge(page, "Start-up money")).toContainText("No cost lines on this road yet");
+  await expect(gauge(page, "Your date")).toContainText("not set");
+
+  // Next on your road agrees with the map's chips: stage 0 is drawn done and voluntary GST is the side
+  // not picked, so neither is listed; the Steps gauge names the same first step.
+  const next = page.getByRole("region", { name: "Next on your road" });
+  await expect(next.getByRole("button")).toHaveText(["1 · Sole Prop activation", "2 · Mandatory GST registration", "3 · Incorporating"]);
+  await expect(gauge(page, "Steps")).toContainText("next on your road: “Sole Prop activation”");
+
+  // The overlays: Road is always on; Rules & tax starts on, so the map looks as it did.
+  await expect(overlays(page).getByText("always on")).toBeVisible();
+  const rules = overlays(page).getByRole("button", { name: /^Rules & tax/ });
+  await expect(rules).toHaveAttribute("aria-pressed", "true");
+  const lever = page.getByRole("button", { name: /^Write-off: .*, opens detail$/ }).first();
+  await expect(lever).toBeVisible();
+  await rules.click();
+  await expect(rules).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("button", { name: /^Write-off: / })).toHaveCount(0);
+  await rules.click();
+  await expect(lever).toBeVisible();
+  for (const name of ["Skills", "Money"]) {
+    const toggle = overlays(page).getByRole("button", { name: new RegExp(`^${name}`) });
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  }
+
+  // A step: the step panel keeps node detail and adds the person's status.
+  await stage(page, "Sole Prop activation").click();
+  await expect(stepPanel(page).getByText("For you on this stage", { exact: false })).toBeVisible();
+  await expect(stepPanel(page).getByText(/Sources for this stage · \d+/)).toBeVisible();
+  const done = stepPanel(page).getByRole("button", { name: "Done", exact: true });
+  await expect(done).toHaveAttribute("aria-pressed", "false");
+  await done.click();
+  await expect(done).toHaveAttribute("aria-pressed", "true");
+  await expect(gauge(page, "Steps")).toContainText("1 of 10 marked done");
+  await expect(stage(page, "Sole Prop activation")).toHaveAccessibleName(/^Sole Prop activation, done, /);
+  await expect(stepPanel(page).getByText("No “done when” lines are written for this step yet.")).toBeVisible();
+
+  // Next on your road: in road order, and never the step marked done.
+  await expect(next.getByText("the order steps happen, not importance")).toBeVisible();
+  await expect(next.getByRole("button", { name: /Sole Prop activation/ })).toHaveCount(0);
+
+  // Skills: the gauge opens the list; a skill of your own, marked have.
+  await gauge(page, "Skills").click();
+  const skills = page.getByRole("region", { name: "Skills on this road" });
+  await skills.getByLabel("A skill in your own words").fill("Welding (invented)");
+  await skills.getByRole("button", { name: "Add as have" }).click();
+  const welding = skills.getByRole("listitem").filter({ hasText: "Welding (invented)" });
+  await expect(welding.getByRole("button", { name: "Have", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(gauge(page, "Skills")).toContainText("your own skills: 1 have · 0 learning · 0 not yet");
+  // A skill the person typed is taken away by a button that says so.
+  await expect(welding.getByRole("button", { name: "Remove", exact: true })).toBeVisible();
+  await expect(welding.getByRole("button", { name: "I don't know" })).toHaveCount(0);
+  // A second press on the gauge closes its list and un-presses it.
+  await expect(gauge(page, "Skills")).toHaveAttribute("aria-pressed", "true");
+  await gauge(page, "Skills").click();
+  await expect(gauge(page, "Skills")).toHaveAttribute("aria-pressed", "false");
+  await expect(skills).toHaveCount(0);
+
+  // Money: savings go through the agree prompt and count only once agreed.
+  await gauge(page, "Start-up money").click();
+  const money = page.getByRole("region", { name: "Start-up money" });
+  await money.getByRole("button", { name: "Add your savings" }).click();
+  await money.getByLabel("Amount").fill("12,000");
+  await money.getByRole("button", { name: "Next: agree" }).click();
+  const prompt = page.getByRole("dialog", { name: "Agree to these figures?" });
+  await expect(prompt.getByText("Savings you'd put toward starting", { exact: false })).toBeVisible();
+  await expect(gauge(page, "Start-up money")).toContainText("savings: not given yet");
+  await prompt.getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(prompt).toHaveCount(0);
+  await expect(gauge(page, "Start-up money")).toContainText("savings $12,000");
+
+  // Your date: a month and year, counted from today.
+  await gauge(page, "Your date").click();
+  const date = page.getByRole("region", { name: "Your date" });
+  await date.getByLabel("Month and year").fill("2099-05");
+  await date.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(gauge(page, "Your date")).toContainText("May 2099");
+  await expect(gauge(page, "Your date")).toContainText(/\d+ months from today/);
+
+  // A reload reads everything back from the data file.
+  await page.reload();
+  await expect(gauge(page, "Steps")).toContainText("1 of 10 marked done");
+  await expect(gauge(page, "Skills")).toContainText("your own skills: 1 have · 0 learning · 0 not yet");
+  await expect(gauge(page, "Start-up money")).toContainText("savings $12,000");
+  await expect(gauge(page, "Your date")).toContainText("May 2099");
+  await stage(page, "Sole Prop activation").click();
+  await expect(stepPanel(page).getByRole("button", { name: "Done", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // Pressing the status that's on takes it back.
+  await stepPanel(page).getByRole("button", { name: "Done", exact: true }).click();
+  await expect(gauge(page, "Steps")).toContainText("0 of 10 marked done");
+});
+
+// A "done when" line and a quote need a road that has them. Road 0's are written in their own pull
+// request, and so is the first written future; until one ships, this test says so and is skipped, and
+// tests/cockpit-screen.spec.ts covers both on an invented road. Once a shipped road has both, it runs
+// as it is, with nothing to change here.
+const withLines = roadsV2026.find(
+  (road) => road.steps.some((s) => s.doneWhen.length > 0) && road.steps.some((s) => s.costs.some((c) => c.kind === "named")),
+);
+test("a done-when line ticked and a quote agreed on a step are kept after a reload", async ({ page }) => {
+  test.skip(!withLines, "No shipped road has a “done when” line and a named cost line yet.");
+  const road = withLines!;
+  const ventureId = await saveIdea(page, "Invented — done when test");
+  await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
+  const lineStep = road.steps.find((s) => s.doneWhen.length > 0)!;
+  const costStep = road.steps.find((s) => s.costs.some((c) => c.kind === "named"))!;
+  const costLine = costStep.costs.find((c) => c.kind === "named")!;
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  await stage(page, lineStep.label).click();
+  const box = stepPanel(page).getByRole("checkbox", { name: lineStep.doneWhen[0]!.text });
+  await box.check();
+  await expect(stepPanel(page).getByText(`1 of ${lineStep.doneWhen.length} ticked`)).toBeVisible();
+
+  await stage(page, costStep.label).click();
+  const line = stepPanel(page).getByRole("listitem").filter({ hasText: costLine.label });
+  await line.getByRole("button", { name: "Add your quote" }).click();
+  await line.getByLabel("Amount").fill("3,400");
+  await line.getByLabel("Where it came from").selectOption("quote");
+  await line.getByRole("button", { name: "Next: agree" }).click();
+  await page.getByRole("dialog", { name: "Agree to these figures?" }).getByRole("button", { name: "Agree", exact: true }).click();
+  await expect(line).toContainText("$3,400");
+  await expect(line).toContainText("your quote · agreed");
+
+  await page.reload();
+  await stage(page, lineStep.label).click();
+  await expect(stepPanel(page).getByRole("checkbox", { name: lineStep.doneWhen[0]!.text })).toBeChecked();
+  await stage(page, costStep.label).click();
+  await expect(stepPanel(page).getByRole("listitem").filter({ hasText: costLine.label })).toContainText("$3,400");
+});

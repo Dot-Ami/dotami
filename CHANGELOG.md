@@ -87,6 +87,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   it your what-if, never your target. No screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
   [docs/architecture/future-cockpit.md § 6](docs/architecture/future-cockpit.md)). The map's hover
   arrows now walk the road through the same code, and draw exactly as before.
+- **The cockpit screen, part 1** ([14a]) — the cockpit for a saved idea now shows, from one run of road
+  evaluation: a **goal bar** with the sentence you typed for the idea, word for word with its day, your
+  yearly target only if you agreed to one (labelled yours), the future's name (or, on a road not written
+  for the idea's province, which map is drawn), and four **gauges** as counts and sums (steps marked done
+  and the next step; skills by your mark; official fees and your own numbers, each with its count of lines
+  and never a $0 for a part with none, lines not priced yet, your savings and, only when both exist, the
+  plain difference; months to your own date, only when you set one); a second press on a gauge closes what
+  it opened; **overlay switches** over the map (Road always on; Skills puts *needs 3 · you have 2* on each
+  step, Money its priced sum and lines not priced, Rules & tax shows or hides the cards, counting only the
+  ones drawn); a step you mark *not for me* reads *set aside by you*, not *doesn't apply as answered*; a
+  **step panel** in place of node detail that keeps all of it and adds why the step has its colour, the
+  fork's toggle, **Doing / Done / Not for me**, the *done when* checklist, the skills it needs with **Have
+  / Learning / Not yet / I don't know** and their sources, its costs in three kinds with **Add your
+  quote** through the agree prompt, and the step's official pages; the **lists behind the gauges** (the
+  road's skills and your own, with **Add a skill** and **Remove**; every cost line with its source and
+  **Add your savings**; your month and year); and **Next on your road**, the next three steps in road
+  order, read the way each card's chip reads (never one the map shows done or off your path), labelled
+  *the order steps happen, not importance*. Every
+  answer is saved as you give it and read back after a reload. Every sentence is in one words file
+  ([`lib/cockpit/words.ts`](lib/cockpit/words.ts)) and every amount and month goes through the one
+  formatter; a test fails on a verdict word. Three new routes answer only DotAmi's own window
+  (`/api/futures/<id>/progress`, `/api/futures/<id>/date`, `/api/skill-marks`), and one reads an idea's
+  kept answers back (`/api/futures/<id>`). Today's Alberta road has no *done when* lines, listed skills
+  or cost lines yet, so those parts show one line saying so until its content lands
+  ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
+  [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
@@ -110,6 +136,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   integrity test now fails on a citation with neither kind of check, a read or tool check dated
   after today, a tool check with no quote or a quote under three words, or a tax-line year's form
   that no person is recorded as having read ([docs/engines/citations.md](docs/engines/citations.md)).
+- **Your own status on a step of today's Alberta road is kept with your step progress** ([14a]). The map's
+  *active, done, set aside* lists are worked out from its toggles on every load, so they never held a
+  status you set; the cockpit's **Doing / Done / Not for me** is now kept with the rest of your step
+  progress on every road, the map's chip shows it where you set one, and road evaluation counts it. The
+  toggles and their lists are unchanged.
+- **A road step names its own rules and tax cards** (`engineHints`), so any road can name the cards that
+  belong on its steps. Today's map's cards moved there unchanged from `lib/brain/node-items.ts`, which now
+  reads them from the road.
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
   the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point
