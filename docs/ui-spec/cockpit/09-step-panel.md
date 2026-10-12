@@ -30,14 +30,18 @@ The sections, in order:
    for this step yet.*
 5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
-   **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none). A legal
-   requirement marked have reads *you said you hold this*; one marked not yet shows *The official way to
-   get it:* with its cited route. Empty: *No skills are listed for this step yet.*
+   **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
+   item's own sources through `CitationLinks`, mark or no mark. A legal requirement marked have reads
+   *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
+   Empty: *No skills are listed for this step yet.*
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation; the person's agreed number with *your quote · agreed* and
-   **Change your number**; or a named line with *not priced yet* and **Add your quote**. Above them, *Not
+   **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
+   name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*
    when road evaluation leaves them out. Empty: *No cost lines are written for this step yet.*
+7. **Official pages you open yourself** — the step's own links (a registry, BizPaL), each opening in a new
+   tab. Drawn only when the step has any; no shipped step has one yet.
 
 **Add your quote** opens a box: **Amount** (read like 12,500 or 12500.50; *Write it like 12,500 or
 12500.50.* otherwise; never below zero), **Where it came from** (a quote, a link, a receipt, your
@@ -47,7 +51,9 @@ guess), *Nothing counts until you agree to it.*, **Next: agree** and **Cancel**.
 
 - Status and ticks: `POST /api/futures/<id>/progress { roadId, stepId, status }` or `{ roadId, stepId,
   doneWhenIds }`; on success the page reads back what is kept and the map, gauges and *Next on your road*
-  change. A refusal shows in an amber line at the top of the panel, in the server's words.
+  change. A refusal shows in an amber line at the top of the panel, in the server's words. Each save of
+  ticks sends the step's whole list, so the boxes are off from a tick until that save is read back (a
+  second quick tick would otherwise send a list without the first).
 - Marks: `POST /api/skill-marks { skillItemId, mark }` (`mark: null` for I don't know).
 - **Next: agree**: `POST /api/figures/propose` with source *typed by you*, one figure of kind
   `start-up-cost-line`, dated today at both ends, with `costLine { roadId, stepId, lineId, amountFrom }`;

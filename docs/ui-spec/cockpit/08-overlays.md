@@ -10,8 +10,8 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 
 A row over the map, a group named *Overlays*: **Road · always on** (not a button), then three toggle
 buttons, each with its count for the whole road: **Skills · 5 listed**, **Money · 8 cost lines**,
-**Rules & tax · 6 cards** (the rules and tax cards that apply to the person and belong to a step on this
-road, each counted once).
+**Rules & tax · 6 cards** (the rules and tax cards the map draws, each counted once: none from a card drawn
+dashed, so none from a step the person marked not for me or the side of a fork not picked).
 
 First visit: **Rules & tax** on, so the map looks as it did before the overlays; **Skills** and **Money**
 off. The choice is not remembered between visits yet.
@@ -31,7 +31,9 @@ Also on the map, from road evaluation (`evaluateRoad`):
 
 - **Colours** are each step's state: green *applies*, amber *check first*, grey *not on your path*. On
   today's general road these are exactly the rules' colours, so nothing changes until the person marks
-  a step *not for me*, which greys it.
+  a step *not for me*, which greys it. That grey is the person's choice, not the rules': the card's name
+  reads *set aside by you* in place of *doesn't apply as answered*, and the legend adds *not for me = set
+  aside by you, not a reading of your answers* while any card is set aside.
 - **The chip** shows the person's own status where they set one (*doing*, *done*, *not for me*; *not for
   me* draws the card dashed and hides its lever cards). Where they set none, the map's worked-out chip
   is shown as before (*now · your pick · done · ahead · not on your path*).

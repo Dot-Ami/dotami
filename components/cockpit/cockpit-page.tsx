@@ -231,12 +231,21 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     setAnswerError(null);
   }
 
-  /** A gauge opens its overlay and its list (Steps opens the next step on the road). */
+  /**
+   * A gauge opens its overlay and its list (Steps opens the next step on the road). Pressed again, it
+   * closes what it opened, so its pressed state is a real toggle; the overlay it switched on stays on.
+   */
   function handleGauge(gauge: GaugeId) {
-    setActiveGauge(gauge);
     setAnswerError(null);
+    if (activeGauge === gauge) {
+      setActiveGauge(null);
+      if (gauge === "steps") setSelectedNodeId(null);
+      setRightPanel(null);
+      return;
+    }
+    setActiveGauge(gauge);
     if (gauge === "steps") {
-      const next = evaluation ? nextOnYourRoad(evaluation, 1)[0] : undefined;
+      const next = evaluation ? nextOnYourRoad(evaluation, scenario, 1)[0] : undefined;
       if (next) openStep(next.stepId);
       return;
     }
@@ -263,10 +272,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }));
   }
 
-  function handleTicks(doneWhenIds: string[]) {
-    if (!ventureId || !selectedNodeId) return;
+  /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
+  function handleTicks(doneWhenIds: string[]): Promise<unknown> {
+    if (!ventureId || !selectedNodeId) return Promise.resolve();
     const stepId = selectedNodeId;
-    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }));
+    return saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }));
   }
 
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null) {
@@ -354,6 +364,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         <GoalBar
           road={road}
           evaluation={evaluation}
+          scenario={scenario}
           firstWords={kept?.firstWords ?? null}
           target={kept?.incomeWanted ?? null}
           active={activeGauge}
@@ -493,7 +504,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             <>
               <OverlaySwitches
                 overlays={overlays}
-                counts={overlayCounts(road, evaluation)}
+                counts={overlayCounts(road, evaluation, scenario)}
                 onToggle={(overlay) => setOverlays((o) => ({ ...o, [overlay]: !o[overlay] }))}
               />
               <div className="min-h-0 flex-1">
@@ -514,7 +525,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                   linkedSkillId={selectedSkillId}
                 />
               </div>
-              <NextOnYourRoad road={road} evaluation={evaluation} onSelectStep={openStep} />
+              <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
             </>
           ) : null}
         </div>

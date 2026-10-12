@@ -210,30 +210,38 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   the rules; the planning numbers go to the money sums through `agreedPlanning`.
 - **The goal bar.** The idea's first sentence (the one typed on the front door, kept since 2026-10-11)
   in quotes, word for word, with its day; the yearly income the person agreed to, only when there is
-  one, labelled *your target* with the day agreed; the future, by its road's name. Then four gauges,
-  each a button tagged with where its numbers come from:
+  one, labelled *your target* with the day agreed; the future, by its road's name. A road not written for
+  the idea's province (nor for all of Canada) is named as the map drawn, not as the person's future:
+  *Map drawn: <name> · written for AB; this idea is in BC*. Then four gauges, each a button tagged with
+  where its numbers come from:
   - **Steps** (*count*): *x of y marked done* (and *n doing* when any), and the first step of *Next on
     your road*. A step counts as done only when the person marked it done.
   - **Skills** (*your marks*): *have · learning · not yet*, and *n not marked, out of m listed*; the
     skills the person added are counted apart. A road that lists none says so.
   - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
-    lines; *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
+    count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
+    behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
+    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
     savings; and *savings minus both* only when road evaluation gives that difference. A road with no
     cost lines says so.
   - **Your date** (*yours*): *May 2029 · 31 months from today*, only when the person set a month;
     otherwise *not set* and one invitation to add it.
 
   Clicking **Steps** opens the first step of *Next on your road*; **Skills** and **Money** switch their
-  overlay on and open their list in the right panel; **Your date** opens the month box there. No gauge
+  overlay on and open their list in the right panel; **Your date** opens the month box there. Clicking
+  the pressed gauge again closes what it opened (the overlay stays on), so its pressed state toggles. No gauge
   shows a verdict word: the words file is tested against the same list road evaluation is.
 - **The road with overlays.** A row of switches over the map: *Road* (always on), *Skills*, *Money*,
-  *Rules & tax*, each with its count for the whole road (skills listed, cost lines, rules and tax cards).
+  *Rules & tax*, each with its count (skills listed and cost lines for the whole road; the rules and tax
+  cards the map draws, each once, so none from a card drawn dashed).
   *Rules & tax* starts on, so the map looks as it does today; *Skills* and *Money* start off. On, *Skills*
   puts *needs 3 · you have 2* on each step that lists skills, and *Money* puts the step's priced sum and
   *n not priced* on each step with cost lines; off, *Rules & tax* hides the lever cards. The badges are in
   each card's accessible name too. The last overlay used is not remembered yet.
   Step colours are road evaluation's states (*applies*, *check first*, *not on your path*), which on
-  road 0 are exactly the rules' colours. A column that decides a fork says *The road splits here: you
+  road 0 are exactly the rules' colours. A step the person marked *not for me* is grey by their choice,
+  so its card's name says *set aside by you* rather than *doesn't apply as answered*, and the legend says
+  so while any card is set aside. A column that decides a fork says *The road splits here: you
   choose*. Selecting a skill (in the step panel or the skills list) dims every step that doesn't list it.
   Drawn without the cockpit's overlays (no new props), the map is the same HTML as before, byte for byte.
 - **The step panel** replaces today's node detail when a step is selected and keeps all of it (the two
@@ -241,20 +249,27 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   through `CitationLinks` with *Show the words*). Above the cards, in this order: why the step has its
   colour (road evaluation's sentence); at a fork, *The road splits here: you choose* with that column's
   toggle; *Your status*: **Doing**, **Done**, **Not for me** (pressing the one already on takes it back);
-  *Done when*: each line with a box and its citation, ticks saved as they're made; *Skills it needs*: each
-  item with **Have**, **Learning**, **Not yet** and **I don't know** (which removes the mark), *you said
-  you hold this* on a legal requirement marked have, and the cited way to get one marked *not yet*;
-  *Costs*: the three kinds, an official fee with its source and day read, the person's agreed number,
-  or *not priced yet* with **Add your quote** (the amount and where it came from: a quote, a link, a
-  receipt or your guess). A quote is proposed, then the agree prompt opens; it counts only once the
+  *Done when*: each line with a box and its citation, ticks saved as they're made (the boxes wait while a
+  save is read back, since each save sends the whole list); *Skills it needs*: each item with **Have**,
+  **Learning**, **Not yet** and **I don't know** (which removes the mark) and the item's own sources,
+  *you said you hold this* on a legal requirement marked have, and the cited way to get one marked *not
+  yet*; *Costs*: the three kinds, an official fee with its source and day read, the person's agreed
+  number, or *not priced yet* with **Add your quote** (the amount and where it came from: a quote, a
+  link, a receipt or your guess), and a named line's name source when it has one; then *Official pages
+  you open yourself*, the step's own links, when it has any. A quote is proposed, then the agree prompt opens; it counts only once the
   person clicks **Agree**. A list that is empty on this road says so in one line.
-- **The lists behind the gauges.** *Skills*: every skill the road lists, with the same marks, and *Your
-  own skills*: **Add a skill** (in the person's words, up to 120 characters) and a mark on each.
-  *Money*: every cost line by step in road order, and **Add your savings**, through the agree prompt.
+- **The lists behind the gauges.** *Skills*: every skill the road lists, with the same marks and sources,
+  and *Your own skills*: **Add a skill** (in the person's words, up to 120 characters) and a mark on each,
+  with **Remove** where the road's skills say *I don't know*, since taking the mark off a typed skill
+  removes it. *Money*: every cost line by step in road order, each official fee with its citation, and
+  **Add your savings**, through the agree prompt.
   *Your date*: a month and year box, **Save** and **Clear**; a month already gone is refused.
 - **Next on your road**, under the map: the first three steps, in road order, that are on the person's
-  path and not marked done or not for me, labelled *the order steps happen, not importance*. Clicking one
-  opens it.
+  path and not done, labelled *the order steps happen, not importance*. Clicking one opens it. *On the
+  path* and *done* are read the way each card's chip reads them (`lib/cockpit/view.ts` `mapPlace`): the
+  person's own status where they set one, else the map's worked-out place. So the list never names a card
+  the map shows *done* (stage 0, worked out from the toggles) or *not on your path* (the side of a fork
+  not picked), nor one road evaluation greys. The Steps gauge's *next on your road* is its first.
 - **Road 0's statuses are the person's now** (the task list's open line; § 7 said a later pull request
   may do it). The map's *active, done, set aside* lists are worked out from its toggles on every load,
   so a status set "through the map" couldn't be kept, and road evaluation already refused to read those

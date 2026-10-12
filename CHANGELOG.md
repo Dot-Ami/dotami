@@ -65,17 +65,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   arrows now walk the road through the same code, and draw exactly as before.
 - **The cockpit screen, part 1** ([14a]) — the cockpit for a saved idea now shows, from one run of road
   evaluation: a **goal bar** with the sentence you typed for the idea, word for word with its day, your
-  yearly target only if you agreed to one (labelled yours), the future's name, and four **gauges** as
-  counts and sums (steps marked done and the next step; skills by your mark; official fees, your own
-  numbers, lines not priced yet, your savings and, only when both exist, the plain difference; months to
-  your own date, only when you set one); **overlay switches** over the map (Road always on; Skills puts
-  *needs 3 · you have 2* on each step, Money its priced sum and lines not priced, Rules & tax shows or
-  hides the cards); a **step panel** in place of node detail that keeps all of it and adds why the step
-  has its colour, the fork's toggle, **Doing / Done / Not for me**, the *done when* checklist, the skills
-  it needs with **Have / Learning / Not yet / I don't know**, and its costs in three kinds with **Add your
-  quote** through the agree prompt; the **lists behind the gauges** (the road's skills and your own, with
-  **Add a skill**; every cost line and **Add your savings**; your month and year); and **Next on your
-  road**, the next three steps in road order, labelled *the order steps happen, not importance*. Every
+  yearly target only if you agreed to one (labelled yours), the future's name (or, on a road not written
+  for the idea's province, which map is drawn), and four **gauges** as counts and sums (steps marked done
+  and the next step; skills by your mark; official fees and your own numbers, each with its count of lines
+  and never a $0 for a part with none, lines not priced yet, your savings and, only when both exist, the
+  plain difference; months to your own date, only when you set one); a second press on a gauge closes what
+  it opened; **overlay switches** over the map (Road always on; Skills puts *needs 3 · you have 2* on each
+  step, Money its priced sum and lines not priced, Rules & tax shows or hides the cards, counting only the
+  ones drawn); a step you mark *not for me* reads *set aside by you*, not *doesn't apply as answered*; a
+  **step panel** in place of node detail that keeps all of it and adds why the step has its colour, the
+  fork's toggle, **Doing / Done / Not for me**, the *done when* checklist, the skills it needs with **Have
+  / Learning / Not yet / I don't know** and their sources, its costs in three kinds with **Add your
+  quote** through the agree prompt, and the step's official pages; the **lists behind the gauges** (the
+  road's skills and your own, with **Add a skill** and **Remove**; every cost line with its source and
+  **Add your savings**; your month and year); and **Next on your road**, the next three steps in road
+  order, read the way each card's chip reads (never one the map shows done or off your path), labelled
+  *the order steps happen, not importance*. Every
   answer is saved as you give it and read back after a reload. Every sentence is in one words file
   ([`lib/cockpit/words.ts`](lib/cockpit/words.ts)) and every amount and month goes through the one
   formatter; a test fails on a verdict word. Three new routes answer only DotAmi's own window

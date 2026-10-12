@@ -44,7 +44,8 @@ export interface StepPanelProps {
   /** The last save's refusal, in the server's own words, or null. */
   error: string | null;
   onStatus: (status: StepStatus | null) => void;
-  onTicks: (doneWhenIds: string[]) => void;
+  /** Saves the step's ticks; when it returns a promise, the boxes wait for it (see "Done when" below). */
+  onTicks: (doneWhenIds: string[]) => Promise<unknown> | void;
   onMark: (skillItemId: string, mark: SkillMarkValue | null) => void;
   onSelectSkill: (skillItemId: string | null) => void;
   /** Proposes the person's number for a named cost line; resolves to an error, or null once the agree prompt opened. */
@@ -127,6 +128,17 @@ function StepSections({
   onProposeQuote,
 }: StepPanelProps) {
   const [quoting, setQuoting] = useState<string | null>(null);
+  // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
+  // before that read-back would send a list without the first, so the boxes wait until it lands.
+  const [ticking, setTicking] = useState(false);
+  async function tick(doneWhenIds: string[]) {
+    setTicking(true);
+    try {
+      await onTicks(doneWhenIds);
+    } finally {
+      setTicking(false);
+    }
+  }
   const fork = road.forks.find((f) => f.sides.includes(step.id));
   const pickedSide =
     evaluation.reason.kind === "fork-picked"
@@ -204,8 +216,8 @@ function StepSections({
                         type="checkbox"
                         id={boxId}
                         checked={on}
-                        disabled={!canSave}
-                        onChange={() => onTicks(on ? [...ticked].filter((id) => id !== line.id) : [...ticked, line.id])}
+                        disabled={!canSave || ticking}
+                        onChange={() => void tick(on ? [...ticked].filter((id) => id !== line.id) : [...ticked, line.id])}
                         className="mt-0.5 accent-[#c2593a]"
                       />
                       <label htmlFor={boxId} className="text-[12px] leading-5 text-paper">
@@ -278,6 +290,12 @@ function StepSections({
                         <CitationLinks citations={[line.citation]} compact />
                       </div>
                     ) : null}
+                    {/* Where a named line's name comes from (a blank template), when it has a source. */}
+                    {catalogLine?.kind === "named" && catalogLine.nameSource ? (
+                      <div className="mt-1.5">
+                        <CitationLinks citations={[catalogLine.nameSource]} compact />
+                      </div>
+                    ) : null}
                     {catalogLine?.kind === "named" ? (
                       quoting === line.lineId ? (
                         <AmountForm
@@ -308,6 +326,22 @@ function StepSections({
           </>
         )}
       </div>
+
+      {/* Pages the person opens themselves (a registry, BizPaL); drawn only when the step has any. */}
+      {step.officialLinks.length > 0 ? (
+        <div>
+          <h3 className={heading}>{words.panel.officialLinks}</h3>
+          <ul className="space-y-1">
+            {step.officialLinks.map((link) => (
+              <li key={link.url}>
+                <a href={link.url} target="_blank" rel="noreferrer" className="text-[12px] text-maple hover:underline">
+                  {link.label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -347,6 +381,10 @@ export function SkillRow({
         {mark === "have" && item.kind === "legal-requirement" ? <span className="font-mono text-[9px] text-sage">{words.panel.youHold}</span> : null}
       </div>
       <MarkButtons mark={mark} canSave={canSave} onMark={onMark} />
+      {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law. */}
+      <div className="mt-1.5">
+        <CitationLinks citations={item.citations} compact />
+      </div>
       {mark === "not-yet" && item.howToGetIt ? (
         <div className="mt-1.5 text-[11px] text-stone">
           <p>
@@ -361,8 +399,22 @@ export function SkillRow({
   );
 }
 
-/** Have · Learning · Not yet · I don't know. Pressing the mark that's on leaves it on; I don't know removes it. */
-export function MarkButtons({ mark, canSave, onMark }: { mark: SkillMarkValue | null; canSave: boolean; onMark: (mark: SkillMarkValue | null) => void }) {
+/**
+ * Have · Learning · Not yet · I don't know. Pressing the mark that's on leaves it on; I don't know removes
+ * it. On a skill the person typed, removing the mark removes the skill, so that button says Remove
+ * (`clearLabel`).
+ */
+export function MarkButtons({
+  mark,
+  canSave,
+  onMark,
+  clearLabel = words.panel.dontKnow,
+}: {
+  mark: SkillMarkValue | null;
+  canSave: boolean;
+  onMark: (mark: SkillMarkValue | null) => void;
+  clearLabel?: string;
+}) {
   return (
     <div className="mt-1.5 flex flex-wrap gap-1">
       {SKILL_MARKS.map((value) => (
@@ -371,7 +423,7 @@ export function MarkButtons({ mark, canSave, onMark }: { mark: SkillMarkValue | 
         </button>
       ))}
       <button type="button" disabled={!canSave || mark === null} onClick={() => onMark(null)} className={toggle(false)}>
-        {words.panel.dontKnow}
+        {clearLabel}
       </button>
     </div>
   );

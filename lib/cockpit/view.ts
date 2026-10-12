@@ -6,7 +6,8 @@ import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } f
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
 import { agreedPlanning, type RoadEvaluation, type RoadEvaluationInput, type StepEvaluation } from "@/lib/roads";
-import type { Scenario } from "@/lib/scenarios/types";
+import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
+import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
 
 import { cockpitWords as words } from "./words";
 
@@ -101,12 +102,39 @@ export function cockpitInput(args: {
 }
 
 /**
- * "Next on your road": the first steps in road order that are on the person's path and not marked done
- * or not for me. Road order is the order steps happen, never importance, and the screen says so.
+ * Where a step sits as its card's chip shows it: the person's own status where they set one, else the
+ * place the map works out from its toggles (road 0's lists; a step of another road is "upcoming" there).
+ * The map, "Next on your road", the Steps gauge and the Rules & tax count all read it from here, so the
+ * screen never lists as next a card it calls done or not on your path.
  */
-export function nextOnYourRoad(evaluation: RoadEvaluation, count = 3): StepEvaluation[] {
+export type MapPlace = { from: "you"; status: StepStatus } | { from: "map"; status: ScenarioNodeStatus };
+
+export function mapPlace(stepId: string, scenario: Scenario, evaluated: StepEvaluation | undefined): MapPlace {
+  const status = evaluated?.status ?? null;
+  return status ? { from: "you", status } : { from: "map", status: getScenarioNodeStatus(stepId, scenario) };
+}
+
+/** A card drawn dashed with no lever cards: the person set it aside, or the map puts it off the path. */
+export function setAsideOnMap(place: MapPlace): boolean {
+  return place.from === "you" ? place.status === "not-for-me" : place.status === "ghost";
+}
+
+/** A card whose chip says done: the person marked it, or (with no status of theirs) the map worked it out. */
+function doneOnMap(place: MapPlace): boolean {
+  return place.from === "you" ? place.status === "done" : place.status === "complete";
+}
+
+/**
+ * "Next on your road": the first steps in road order that are on the person's path and not done or set
+ * aside, by the card's own chip, and that road evaluation doesn't put off the path. Road order is the
+ * order steps happen, never importance, and the screen says so.
+ */
+export function nextOnYourRoad(evaluation: RoadEvaluation, scenario: Scenario, count = 3): StepEvaluation[] {
   return evaluation.steps
-    .filter((s) => s.state !== "not-on-your-path" && s.status !== "done" && s.status !== "not-for-me")
+    .filter((s) => {
+      const place = mapPlace(s.stepId, scenario, s);
+      return s.state !== "not-on-your-path" && !setAsideOnMap(place) && !doneOnMap(place);
+    })
     .slice(0, count);
 }
 
@@ -133,10 +161,21 @@ export function stepBadges(step: StepEvaluation, overlays: Overlays): string[] {
   return badges;
 }
 
-/** The counts on the overlay switches, for the whole road. */
-export function overlayCounts(road: Road, evaluation: RoadEvaluation): { skillsListed: number; costLines: number; rulesCards: number } {
+/**
+ * The counts on the overlay switches: skills listed and cost lines for the whole road, and the rules and
+ * tax cards the map draws, each once (none from a card it draws dashed: set aside, or off the path).
+ */
+export function overlayCounts(
+  road: Road,
+  evaluation: RoadEvaluation,
+  scenario: Scenario,
+): { skillsListed: number; costLines: number; rulesCards: number } {
+  const evaluated = new Map(evaluation.steps.map((s) => [s.stepId, s]));
   const cards = new Set<string>();
-  for (const step of road.steps) for (const item of itemsForStep(evaluation.rules.unlocks, step).forThisStage) cards.add(item.id);
+  for (const step of road.steps) {
+    if (setAsideOnMap(mapPlace(step.id, scenario, evaluated.get(step.id)))) continue;
+    for (const item of itemsForStep(evaluation.rules.unlocks, step).forThisStage) cards.add(item.id);
+  }
   return {
     skillsListed: evaluation.gauges.skills.listed,
     costLines: road.steps.reduce((n, s) => n + s.costs.length, 0),
@@ -153,11 +192,11 @@ export interface GaugeLines {
 }
 
 /** The four gauges' words, from one road evaluation. */
-export function gaugeView(evaluation: RoadEvaluation, road: Road): Record<GaugeId, GaugeLines> {
+export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scenario): Record<GaugeId, GaugeLines> {
   const g = evaluation.gauges;
   const label = (id: string) => road.steps.find((s) => s.id === id)?.label ?? id;
 
-  const next = nextOnYourRoad(evaluation, 1)[0];
+  const next = nextOnYourRoad(evaluation, scenario, 1)[0];
   const steps: GaugeLines = {
     value: words.gauges.steps.value(g.steps.done, g.steps.total),
     lines: [
@@ -182,8 +221,14 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road): Record<GaugeI
   const m = g.money;
   const anyLines = road.steps.some((step) => step.costs.length > 0);
   const savingsLine = m.savingsCents === null ? words.gauges.money.noSavings : words.gauges.money.savings(m.savingsCents);
+  // Each part only with lines behind it, and its count: no line means no amount, so never "$0 your numbers"
+  // for a person who gave none (the same rule as the badges, where a blank is never $0).
+  const moneyParts = [
+    ...(m.officialFeeLines > 0 ? [words.gauges.money.fees(m.officialFeesCents, m.officialFeeLines)] : []),
+    m.yourNumberLines > 0 ? words.gauges.money.yours(m.yourNumbersCents, m.yourNumberLines) : words.gauges.money.yoursNone,
+  ];
   const money: GaugeLines = {
-    value: anyLines ? words.gauges.money.value(m.officialFeesCents, m.yourNumbersCents) : words.gauges.money.noLines,
+    value: anyLines ? moneyParts.join(" · ") : words.gauges.money.noLines,
     lines: [
       ...(m.notPricedLines > 0 ? [words.gauges.money.notPriced(m.notPricedLines)] : []),
       ...(m.leftOutLines > 0 ? [words.gauges.money.leftOut(m.leftOutLines)] : []),

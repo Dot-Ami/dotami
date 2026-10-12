@@ -21,6 +21,9 @@ export const cockpitWords = {
     yourWords: (day: string) => `your words · ${day}`,
     target: (cents: number, day: string) => `Your target: ${formatMoney(cents)} a year, before tax (yours, agreed ${day})`,
     future: (roadLabel: string) => `Future: ${roadLabel}`,
+    /** A road written for other places than the idea's: it is the map drawn, not the person's future. */
+    drawnOnly: (roadLabel: string, roadPlaces: readonly string[], ideaPlace: string) =>
+      `Map drawn: ${roadLabel} · written for ${roadPlaces.join(", ")}; this idea is in ${ideaPlace}`,
   },
 
   gauges: {
@@ -45,7 +48,10 @@ export const cockpitWords = {
     money: {
       label: "Start-up money",
       tag: "yours + cited",
-      value: (feesCents: number, yoursCents: number) => `${formatMoney(feesCents)} official fees · ${formatMoney(yoursCents)} your numbers`,
+      // Each part with its lines; a part with no lines is never shown as $0.
+      fees: (cents: number, lines: number) => `${formatMoney(cents)} official fees (${count(lines, "line", "lines")})`,
+      yours: (cents: number, lines: number) => `${formatMoney(cents)} your numbers (${count(lines, "line", "lines")})`,
+      yoursNone: "your numbers: not given yet",
       noLines: "No cost lines on this road yet",
       notPriced: (n: number) => `${n} not priced yet`,
       leftOut: (n: number) => `${n} left out: not on your path`,
@@ -81,6 +87,9 @@ export const cockpitWords = {
     leftOut: "not counted: not on your path",
     forkSplits: "The road splits here: you choose",
     statusChip: { doing: "doing", done: "done", "not-for-me": "not for me" },
+    /** In place of the colour's words on a card the person set aside: their choice, not the rules'. */
+    setAside: "set aside by you",
+    setAsideLegend: "not for me = set aside by you, not a reading of your answers",
   },
 
   next: {
@@ -123,6 +132,7 @@ export const cockpitWords = {
     costsWaiting: (fork: string) => `Not counted yet: it waits on a pick at ${quoted(fork)}.`,
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
+    officialLinks: "Official pages you open yourself",
   },
 
   amounts: {
@@ -145,6 +155,8 @@ export const cockpitWords = {
     addOwn: "Add a skill",
     ownBox: "A skill in your own words",
     addOwnAs: (mark: string) => `Add as ${mark}`,
+    /** On a skill the person typed, the button that takes it away (the road's own skills say "I don't know"). */
+    removeOwn: "Remove",
     moneyTitle: "Start-up money",
     moneyNone: "No cost lines on this road yet.",
     savingsTitle: "Your savings for starting",

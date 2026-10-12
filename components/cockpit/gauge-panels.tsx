@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { AmountForm } from "@/components/cockpit/amount-form";
 import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
+import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { Road, SkillItem } from "@/lib/engines/roads/v2026";
@@ -107,7 +108,13 @@ export function SkillsListPanel({
             <li key={m.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
               <span className="text-[12px] font-semibold text-paper">{m.ownLabel}</span>{" "}
               <span className="font-mono text-[9px] uppercase tracking-wider text-stone">{words.lists.ownTag}</span>
-              <MarkButtons mark={m.mark} canSave={canSave} onMark={(mark) => onMark({ ownLabel: m.ownLabel! }, mark)} />
+              <MarkButtons
+                mark={m.mark}
+                canSave={canSave}
+                onMark={(mark) => onMark({ ownLabel: m.ownLabel! }, mark)}
+                // Taking the mark off a skill the person typed removes the skill; the button says so.
+                clearLabel={words.lists.removeOwn}
+              />
             </li>
           ))}
         </ul>
@@ -207,16 +214,26 @@ export function MoneyListPanel({
               </button>
             </h3>
             <ul className="space-y-1">
-              {step.costs.map((line) => (
-                <li key={line.lineId} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-rule-soft py-1">
-                  <span className="text-[12px] text-paper">{line.label}</span>
-                  {/* A blank has no amount at all, never $0: its kind says it isn't priced yet. */}
-                  <span className="font-mono text-[12px] text-paper">{line.kind === "named-not-priced" ? "" : formatMoney(line.amountCents)}</span>
-                  <span className={`font-mono text-[9px] uppercase tracking-wider ${line.kind === "named-not-priced" ? "text-amber" : "text-stone"}`}>
-                    {words.panel.costKind[line.kind]}
-                  </span>
-                </li>
-              ))}
+              {step.costs.map((line) => {
+                const catalogLine = road.steps.find((s) => s.id === step.stepId)?.costs.find((c) => c.id === line.lineId);
+                // The source behind the line, as in the step panel: an official fee's, or a named line's name.
+                const source = line.kind === "official-fee" ? line.citation : catalogLine?.kind === "named" ? catalogLine.nameSource : undefined;
+                return (
+                  <li key={line.lineId} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-rule-soft py-1">
+                    <span className="text-[12px] text-paper">{line.label}</span>
+                    {/* A blank has no amount at all, never $0: its kind says it isn't priced yet. */}
+                    <span className="font-mono text-[12px] text-paper">{line.kind === "named-not-priced" ? "" : formatMoney(line.amountCents)}</span>
+                    <span className={`font-mono text-[9px] uppercase tracking-wider ${line.kind === "named-not-priced" ? "text-amber" : "text-stone"}`}>
+                      {words.panel.costKind[line.kind]}
+                    </span>
+                    {source ? (
+                      <div className="col-span-2 mt-1">
+                        <CitationLinks citations={[source]} compact />
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))

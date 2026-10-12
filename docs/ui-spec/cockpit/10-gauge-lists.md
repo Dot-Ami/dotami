@@ -12,18 +12,20 @@ Clicking the Skills, Start-up money or Your date gauge opens one of these in the
 place of a step, each a region named by its title with a × button named *Close*:
 
 - **Skills on this road**: every skill item the road lists, once, in the order the road first needs it,
-  each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, *you
-  said you hold this*, the official way to get it). With none: *No skills are listed on this road yet.
+  each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, its
+  sources, *you said you hold this*, the official way to get it). With none: *No skills are listed on this road yet.
   Your own skills are below.* Then **Your own skills**: each one the person added, tagged *added by you*,
-  with its marks (*None added yet.* when empty); and **Add a skill**: a box (*A skill in your own words*,
+  with **Have / Learning / Not yet** and **Remove** in place of *I don't know*, since taking the mark off
+  a skill the person typed removes the skill (*None added yet.* when empty); and **Add a skill**: a box (*A skill in your own words*,
   up to 120 characters) and **Add as have**, **Add as learning**, **Add as not yet** (off until something
-  is typed). A skill of one's own is kept only with a mark: *I don't know* keeps nothing.
+  is typed). A skill of one's own is kept only with a mark.
 - **Start-up money**: **Your savings for starting** (the agreed amount or *Not given yet.*, then
   *Nothing counts until you agree to it.*) with **Add your savings** / **Change your savings**, which opens
   the amount box (no *where it came from*); then every step with cost lines, in road order, its name a
   button that opens the step, and each line with its amount and kind (*official fee · source and day
-  read*, *your quote · agreed*, *not priced yet*, a blank with no amount). With none: *No cost lines on
-  this road yet.*
+  read*, *your quote · agreed*, *not priced yet*, a blank with no amount); an official fee's citation, and
+  a named line's name source when it has one, under the line through `CitationLinks`. With none: *No cost
+  lines on this road yet.*
 - **Your date**: the month and the count (*May 2029 · 31 months from today*) or *not set*; **Month and
   year** (a month box that offers nothing before this month); *Only you set it. DotAmi counts the months
   to it and nothing else.*; **Save** and **Clear** (off while none is set).
