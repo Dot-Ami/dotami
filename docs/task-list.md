@@ -401,6 +401,12 @@ roadmap's build order.
     the Registry agent product catalogue; picking a route and totalling fees come with the cost lines)
   - [x] The GST/HST card worded with the CRA's exact test, quoted from the cited page; the uncited 70%
     "approaching the line" watch (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) goes with it
+  - [x] Ride-share and taxi drivers: a kind of work of their own, GST/HST registration from the first
+    paid ride (the $30,000 line doesn't apply to them, Excise Tax Act s.240(1.1)), and a card on the
+    platforms' reporting to the CRA (2026-10-11; docs/engines/compliance.md)
+  - [ ] Ride-share and taxi follow-ons: the keyword reader still marks "platform" and "app" as Software /
+    SaaS, so a driver "using the Uber platform" gets that tag too; the platform-reporting card for the
+    other activities the CRA lists (selling goods, renting property, personal services)
   - [x] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
     AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
     (2026-10-11: the card says so, naming the tag; asking instead is tracked on its own line below)

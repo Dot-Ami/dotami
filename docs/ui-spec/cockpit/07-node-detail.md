@@ -4,8 +4,9 @@ Page: Cockpit (`/cockpit`) · Component: `components/node-detail-panel.tsx`
 (quotes: `components/shared/official-words.tsx`)
 Type: side panel with one text input
 
-Last updated: 2026-10-11 (written with the honest-map fixes, docs/task-list.md [10f]; the panel
-itself is from 2026-09-13)
+Last updated: 2026-10-11 (the ride-share and taxi cards and the GST/HST stages' lines for them;
+written the same day with the honest-map fixes, docs/task-list.md [10f]; the panel itself is from
+2026-09-13)
 
 ## What it is
 
@@ -24,6 +25,21 @@ show, each only when the catalog gives it for that stage:
 The GST/HST lever card in *For you on this stage* carries the same official-words box as the
 mandatory stage, always in view under its *why* line (outside its show-details button, because the
 box has a link).
+
+**Ride-share or taxi driving (2026-10-11).** For an idea with that activity tag, Mandatory GST
+registration's *For you on this stage* adds *GST/HST for ride-share and taxi driving: from the first
+paid ride*, whose official-words box quotes the CRA's sharing-economy page ("You must register for a
+GST/HST account the moment you start earning money from commercial ridesharing services." and "The
+$30,000 small supplier threshold does not apply for commercial ridesharing services."). Its *Your
+answers* line reads "Lit because your intake has the activity tag Ride-share or taxi driving. The CRA
+says the $30,000 small-supplier line doesn't apply to commercial ride-sharing or to a taxi business, so
+it doesn't decide when your rides need registering." Voluntary GST registration's line is what the line
+still decides: "The $30,000 line still counts for your other sales: the CRA says that while your
+combined sales stay under $30,000, the required registration generally covers only the ride-sharing,
+unless you ask for more." Sole Prop activation adds *Ride-share platforms report drivers' information
+to the CRA*, quoting the CRA's page on the reporting rules for digital platforms. Both sentences and
+both cards come from the catalog (`lib/engines/compliance/v2026/rules.ts`,
+`ride-share-official-words.ts`).
 
 ## What it does (behavior on interact)
 

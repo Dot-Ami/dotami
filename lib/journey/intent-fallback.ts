@@ -41,6 +41,14 @@ const TAG_SYNONYMS: Record<ActivityTag, string[]> = {
   "Healthcare / wellness": [
     "massage", "therapy", "fitness", "personal train", "wellness", "nutrition", "clinic", "yoga",
   ],
+  // No bare "uber": the CRA counts Uber Eats food delivery separately from driving passengers. No
+  // bare "taxi" either: keywords match from the start of a word, so it would also catch "taxidermy".
+  "Ride-share or taxi driving": [
+    "ride-share", "ride share", "rideshare", "ride-sharing", "ride sharing", "ridesharing",
+    "taxi driv", "taxi operat", "taxi business", "taxi company", "drive a taxi", "driving a taxi",
+    "drive taxi", "driving taxi", "my taxi", "cab driv", "drive a cab", "driving a cab", "lyft",
+    "uber driv", "drive for uber", "driving for uber", "drive uber", "driving uber",
+  ],
 };
 
 const GOAL_KEYWORDS: Record<IntakeGoalId, string[]> = {

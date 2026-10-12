@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (a stage chip says "default" until its toggle is clicked and "open choice"
+Last updated: 2026-10-11 (for ride-share and taxi driving the GST/HST stages don't wait for the
+$30,000 line; a stage chip says "default" until its toggle is clicked and "open choice"
 on the fork every map shows, issue #5; Incorporating and Liability / SR&ED say which answers set their
 colour; no GST/HST amber before a CRA test is met; the GST toggle's "Wait for $30K" became "When the
 CRA's tests say"; earlier the same day: the cards' colours follow the person's own branch picks; a stage card's
@@ -62,6 +63,14 @@ the other one is amber once a test is met and grey before. Until then a first-ye
 complete year of figures at 70% of the line (about $21,000) also turned the unpicked card amber and
 the GST/HST lever "approaching": a number of DotAmi's own, now gone. Mandatory GST registration's
 detail quotes the CRA's two tests word for word (07-node-detail.md).
+
+**Except for ride-share and taxi driving (2026-10-11).** The CRA says the $30,000 line doesn't apply to
+commercial ride-sharing or a taxi business, so for an idea with the **Ride-share or taxi driving** tag
+Mandatory GST registration is green (**applies as answered**) and Voluntary GST registration amber
+(**check first**) at any estimate and whichever GST timing is picked, each with a line saying why (the
+tag and the CRA's words, 07-node-detail.md). The GST/HST small-supplier lever is amber, never green,
+for that idea. Ideas without the tag are unchanged. The rule and both sentences are catalog data
+(`setsAsideThreshold` in `lib/engines/compliance/v2026/rules.ts`, read by `computeNodeStates`).
 
 **Incorporating (Tier 3, node id `stage-3a-incorporation-80k-net`, kept: ids are forever).** Until
 2026-10-11 this card was "Incorporation at $80K net" and turned green when the third-year revenue

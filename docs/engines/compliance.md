@@ -1,11 +1,13 @@
 # Compliance Engine (+ planned Risk) — Reasoning Conventions
 
-Catalog: `lib/engines/compliance/v2026/rules.ts` (7 rules as of 2026-07-02) · Priority: **high**
+Catalog: `lib/engines/compliance/v2026/rules.ts` (9 rules as of 2026-10-11) · Priority: **high**
 
 ## What it holds
 
 Threshold rules (GST/HST small supplier), province tax facts (BC PST, ON HST, AB no-PST),
-the hobby-vs-business test, and two licensing rules. Annotation-only today.
+the hobby-vs-business test, two licensing rules, and, since 2026-10-11, GST/HST registration from the
+first paid ride for ride-share and taxi driving and the platform-reporting card for the same work
+(§ Work the $30,000 line doesn't cover). Annotation-only today.
 
 ## Relationship to the Risk Calculator (read this before touching either)
 
@@ -78,6 +80,13 @@ How it is modelled, all in the catalog, none of it in a component:
   and delivery services among the activities whose sellers may be reported. It says "information",
   as the page does, not "earnings". Its rule type, `platform-reporting`, is new (authoring rule 1);
   the maintainer approves it with this change or asks for it to be folded into another type.
+
+- **A card for a kind of work says so.** Every compliance card scoped by `industryTags` now gives the
+  tag that lit it as its reason ("Shown because your intake has the activity tag Ride-share or taxi
+  driving."), adding the province only when the rule is provincial ("… tag Trades and you selected
+  Alberta."). Until 2026-10-11 these cards said only "Shown because you selected <province>.", which
+  left out the answer that actually lit them; this changes the hobby-vs-business and licensing cards'
+  reason lines too.
 
 What it doesn't do: it doesn't ask whether the person is self-employed or an employee driver (the
 CRA's pages are about self-employed drivers; the intake's employment question is about the

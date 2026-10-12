@@ -30,6 +30,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The Liability / SR&ED card says what lit it**: "Lit because your intake has the activity tag
   Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or
   that none of its three tags is on the intake).
+- **A "Ride-share or taxi driving" kind of work**, with a card for the platforms' reporting: on the intake
+  it is its own chip, and the keyword reader marks it from words like "rideshare", "Lyft", "taxi driver"
+  or "driving for Uber", but not from "Uber Eats" alone (the CRA counts food delivery separately). With
+  it, the map adds *Ride-share platforms report drivers' information to the CRA*, quoting the CRA's page
+  on the reporting rules for digital platforms ("These platform operators have to collect detailed
+  information on certain sellers.", and "Rideshare and delivery services" among the activities listed).
+  It says "information", as the page does
+  ([`lib/engines/compliance/v2026/rules.ts`](lib/engines/compliance/v2026/rules.ts)).
+- **A compliance card for a kind of work names the tag that lit it** ("Shown because your intake has the
+  activity tag Trades and you selected Alberta."), instead of naming only the province.
 
 ### Changed
 - **The GST/HST cards quote the Canada Revenue Agency's two tests, word for word** ("You exceed the
@@ -55,6 +65,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
+  ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
+  than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
+  $30,000 small-supplier line doesn't apply to commercial ride-sharing or a taxi business (Excise Tax Act
+  s.240(1.1)). A new card, *GST/HST for ride-share and taxi driving: from the first paid ride*, quotes
+  the CRA ("You must register for a GST/HST account the moment you start earning money from commercial
+  ridesharing services."); Mandatory GST registration applies whatever the estimate, saying which tag
+  lit it; the small-supplier card is "check first" and says what the line still decides (the person's
+  other sales). Ideas without the tag are unchanged
+  ([`tests/rideshare-gst.spec.ts`](tests/rideshare-gst.spec.ts); docs/engines/compliance.md).
 - **No "getting close" warning of DotAmi's own.** A first-year estimate (or a complete year of agreed
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's

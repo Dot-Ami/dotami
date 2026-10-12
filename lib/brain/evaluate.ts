@@ -63,6 +63,9 @@ const STRUCTURE_RUNG: Record<StructureEntityType, number> = {
 // 70%, so it was a number of DotAmi's own. A threshold card now changes only when the cited test itself
 // is met (docs/engines/cfe.md, authoring rule 2; tests/honest-map.spec.ts).
 
+/** The GST/HST small-supplier rule, whose line the map's two GST/HST stages read. */
+const GST_SMALL_SUPPLIER_ID = "compliance-gst-small-supplier";
+
 /** The activity tags the Liability / SR&ED stage reads. Named on its card, so the person sees what lit it. */
 const LIABILITY_SRED_TAGS = ["Software / SaaS", "Manufacturing", "AI / ML / R&D"] as const;
 
@@ -333,8 +336,30 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
 
 /** The GST small-supplier rule's verdict, for the map's GST stages (same rule as its card). */
 function gstRecordsVerdict(figures: readonly ConfirmedFigure[] | undefined, today: string): RecordsVerdict | null {
-  const rule = complianceCatalogV2026.entries.find((e) => e.id === "compliance-gst-small-supplier");
+  const rule = complianceCatalogV2026.entries.find((e) => e.id === GST_SMALL_SUPPLIER_ID);
   return rule ? recordsVerdict(rule, figures, today) : null;
+}
+
+/** Does a compliance rule apply to this person at all: their province, and the kind of work it names? */
+function complianceRuleApplies(profile: EvaluationProfile, entry: ComplianceRule): boolean {
+  if (!provinceMatches(profile, entry.provinces)) return false;
+  return !entry.industryTags || tagsIntersect(profile.activityTags, entry.industryTags);
+}
+
+/**
+ * The rules that apply to this person and take away the named threshold rule's "not yet" (2026-10-11:
+ * ride-share and taxi driving, for which the CRA says the $30,000 small-supplier line doesn't apply).
+ * Read from the catalog's typed `setsAsideThreshold`, so nothing here knows about drivers.
+ */
+function thresholdSetAsides(profile: EvaluationProfile, ruleId: string): ComplianceRule[] {
+  return (complianceCatalogV2026.entries as readonly ComplianceRule[]).filter(
+    (e) => e.setsAsideThreshold?.ruleId === ruleId && complianceRuleApplies(profile, e),
+  );
+}
+
+/** The activity tags of the person's that a rule's `industryTags` matched, for naming them on a card. */
+function matchedTags(profile: EvaluationProfile, entryTags: readonly string[]): string[] {
+  return entryTags.filter((t) => tagsIntersect(profile.activityTags, [t]));
 }
 
 function evaluateComplianceRule(
@@ -343,14 +368,19 @@ function evaluateComplianceRule(
   figures: readonly ConfirmedFigure[] | undefined,
   today: string,
 ): UnlockItem | null {
-  if (!provinceMatches(profile, entry.provinces)) return null;
-  if (entry.industryTags && !tagsIntersect(profile.activityTags, entry.industryTags)) return null;
+  if (!complianceRuleApplies(profile, entry)) return null;
 
   let state: UnlockState = "green";
   let typeChip: UnlockTypeChip = "Compliance";
   let step: IntakeStep = "location";
   let payoff = entry.lensAnnotations.tax;
   let why = `Shown because you selected ${provinceName(profile.province)}.`;
+  if (entry.industryTags) {
+    // A rule for a kind of work says so: the tag lit it, and the province only if the rule is provincial.
+    const tags = matchedTags(profile, entry.industryTags);
+    const where = entry.provinces.includes("CA") ? "" : ` and you selected ${provinceName(profile.province)}`;
+    why = `Shown because your intake has the activity ${tags.length === 1 ? "tag" : "tags"} ${andList(tags)}${where}.`;
+  }
   let fromRecords: RecordsBasis | undefined;
 
   if (entry.thresholdAmount !== undefined) {
@@ -380,6 +410,17 @@ function evaluateComplianceRule(
       if (verdict) {
         why = `${why} ${verdict.why}`;
         fromRecords = verdict.basis;
+      }
+    }
+
+    // Work this line doesn't cover (ride-share and taxi driving): the card stays, because the line
+    // still counts for the person's other sales, but it is never the green "not yet" for them.
+    const setAside = thresholdSetAsides(profile, entry.id)[0]?.setsAsideThreshold;
+    if (setAside) {
+      why = `${why} ${setAside.why}`;
+      if (state === "green") {
+        state = "yellow";
+        payoff = setAside.stillDecides;
       }
     }
   }
@@ -470,7 +511,7 @@ function computeNodeStates(
   const reasons: Partial<Record<CFENodeId, string>> = {};
   // The line the cited CRA page sets, read from the rule rather than typed again here.
   const gstThreshold =
-    complianceCatalogV2026.entries.find((e) => e.id === "compliance-gst-small-supplier")?.thresholdAmount ?? Infinity;
+    complianceCatalogV2026.entries.find((e) => e.id === GST_SMALL_SUPPLIER_ID)?.thresholdAmount ?? Infinity;
   const rdMatched = LIABILITY_SRED_TAGS.filter((t) => tagsIntersect(profile.activityTags, [t]));
   const rdTags = rdMatched.length > 0;
 
@@ -489,6 +530,19 @@ function computeNodeStates(
       // The other GST path stays visible as a fork once a CRA test is met, and only then.
       states[nodeId] = gstTriggered ? "yellow" : "gray";
     }
+  }
+  // Work the $30,000 line doesn't cover (2026-10-11: ride-share and taxi driving). Registration is
+  // required from the first paid ride whatever the pick, so the mandatory stage applies; registering
+  // the person's other sales by choice is still open, so the voluntary stage is "check first". Each
+  // says why, in the catalog's own sentences.
+  const setAsideRule = thresholdSetAsides(profile, GST_SMALL_SUPPLIER_ID)[0];
+  if (setAsideRule?.setsAsideThreshold) {
+    const tags = matchedTags(profile, setAsideRule.industryTags ?? []);
+    const lit = tags.length > 0 ? `Lit because your intake has the activity tag ${andList(tags)}. ` : "";
+    states["stage-2b-mandatory-gst-registration"] = "green";
+    reasons["stage-2b-mandatory-gst-registration"] = `${lit}${setAsideRule.setsAsideThreshold.why}`;
+    states["stage-2a-voluntary-gst-registration"] = "yellow";
+    reasons["stage-2a-voluntary-gst-registration"] = setAsideRule.setsAsideThreshold.stillDecides;
   }
 
   const incPick = activeBranches["incorporationTiming"];
