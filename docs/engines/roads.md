@@ -67,7 +67,9 @@ A road may name where it carries on after its last column: `joins: { roadId, col
    A `legal-requirement` is something an official page says a person must hold or have for that step
    (a registration number, an agreement, a certificate); a certificate a page calls optional is not one.
    Skills for a job come only from the job the person picked (OaSIS, *your pick of job*); DotAmi never
-   claims which skills a business needs.
+   claims which skills a business needs, so the government's list is its own catalog
+   (`lib/engines/oasis/v2026/`), never in `needs`. A legal requirement the compliance catalog already
+   cites is built from that entry and carries its citations (road 0's GST/HST registration, 2026-10-12).
 7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines and its
    *before you open* steps are written (2026-10-12, in `starting-any-business-ab.ts`, passed to
    `roadFromCfe` as `doneWhen` by step id and `addedSteps` by column); its map stages' cost lines,

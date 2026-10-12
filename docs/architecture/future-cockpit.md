@@ -880,8 +880,12 @@ for the job the person picks (*your pick of job*; decision 5). Choices made, eac
   do); *Alberta trades licensing* (no road 0 step, and it applies to some trades only); voluntary
   registration (a choice, not a requirement); the ride-share rule (the same registration, already a card
   on the step, and only for that work).
-- **Size.** The data module is about 120 KB of text; what it adds to the installer is measured in the pull
-  request and written there.
+- **Size.** The data module is 129 KB of text (28 KB gzipped). Measured on 2026-10-12 in a production build
+  (`npm run build`): it is compiled into three files, the cockpit page's script (335 KB, 87 KB gzipped,
+  with the rest of that page), the cockpit's server page and one server chunk the cockpit's routes share,
+  about 120 KB of each being the list. So it adds roughly 360 KB to the installed app and roughly 85 KB
+  gzipped; the installer itself was not built to measure what it adds there. Nothing of it is fetched:
+  the list is in the app.
 - **Not in this pull request:** the *Pick a future* screen (which will ask for the job too, § 1 row 3); the
   ratings (item 20); *Work Activities* for *Peek inside*; the French files (the screens are English only
   today); the export gaining the pick and the list.

@@ -11,6 +11,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Pick the job closest to your work, and see the government's skills list for it** ([14a]) — in the
+  cockpit's Skills list, an optional search over the 900 jobs of the government's *Occupational and
+  Skills Information System* (OaSIS 2025 Version 1.0, Employment and Social Development Canada, under the
+  Open Government Licence – Canada); once picked, that job's skills and knowledge areas, every item
+  tagged *your pick of job*, with **Have / Learning / Not yet / I don't know** on each, the dataset's page
+  as its source (checked by a tool), the line that the list describes people employed in the job, not
+  owners, and the licence's attribution line. Names only: the government's ratings are kept in the data
+  and not shown while the maintainer decides (item 20). The Skills gauge counts the list apart (*your
+  pick of job: 1 have · 0 learning · 0 not yet, of 44 listed*), and the step panel counts it and opens it
+  without tying it to a step. The pick is kept on the idea (two added columns), set and taken back
+  through `POST /api/futures/<id>/job`, from DotAmi's own window only. The list is built by
+  `node scripts/import-oasis.mjs` from four files committed as downloaded (`data/oasis-2025-v1.0/`),
+  and a test redoes the import on every run
+  ([`lib/engines/oasis/v2026/`](lib/engines/oasis/v2026/),
+  [design § 6](docs/architecture/future-cockpit.md)). The third-party notices and `/licences` list it
+  under *Data*.
+- **Today's road lists its one legal requirement** — *Mandatory GST registration* needs *A GST/HST
+  registration with the Canada Revenue Agency*, carrying the compliance catalog's own source for it
+  (`compliance-gst-small-supplier`), so the Skills gauge on today's road now counts one item.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;

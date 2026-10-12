@@ -124,8 +124,13 @@ and the maintainer's six decisions of 2026-10-11:
       tools, so a person reads them); the apprentice wage percentages per period (they need a typed
       field); a person's read of each page, which turns its "checked by a tool" into a read; whether
       *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13)
-  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
+  - [x] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
+    (2026-10-12: picked from the cockpit's Skills list, names only; today's road lists its GST/HST
+    registration as a legal requirement from the compliance catalog;
+    [§ 6](architecture/future-cockpit.md))
+    - [ ] Still open on it: whether the government's ratings are shown beside the names (the
+      maintainer's call); *Pick a future* asking for the job too, once that screen is built
   - [ ] *Show me an example first*: a filled-in, clearly invented example future
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine*
