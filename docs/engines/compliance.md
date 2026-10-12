@@ -83,16 +83,29 @@ How it is modelled, all in the catalog, none of it in a component:
   information on certain sellers and report it to the CRA each year, and the CRA lists rideshare
   and delivery services among the activities whose sellers "may" be reported. Its title hedges the
   same way (*Ride-share platforms may report drivers' information to the CRA*), and it says
-  "information", as the page does, not "earnings". Its rule type, `platform-reporting`, is new and
-  not yet approved (authoring rule 1 below still lists only the four approved types): the
-  maintainer approves it or asks for it to be folded into another type. Nothing reads rule types
-  today, so the answer changes no screen.
+  "information", as the page does, not "earnings". Its rule type, `platform-reporting`, is new: the
+  maintainer approved it on 2026-10-12 (authoring rule 1 below). Nothing reads rule types today, so
+  it changes no screen.
 - **The two cards name the tag that lit them.** Both ride-share cards carry `reasonNamesTags`, so
   their reason is "Shown because your intake has the activity tag Ride-share or taxi driving." rather
   than "Shown because you selected <province>.", which would say nothing about why they show. The
   older cards scoped by `industryTags` (hobby vs. business, the licensing cards) don't carry it and
   keep naming the province; whether they should name their tag too is a separate decision
   (`tests/rideshare-gst.spec.ts` pins their lines).
+
+**The maintainer's answers (2026-10-12).** The new rule type `platform-reporting` is approved. A
+driver who picked *Voluntary now* on the GST timing toggle still sees Mandatory GST registration in
+the CRA rule's colour, green: the registration is required from the first paid ride whatever the
+pick. Both are as built.
+
+**How its sources are checked (option B, [citations.md](citations.md)).** The maintainer read the
+CRA's page on the reporting rules for digital platforms himself on 2026-10-11, so that citation has
+the read date and `readBy: "person"`. Every other page these two rules cite (the CRA's
+sharing-economy page, its taxi and ride-sharing page, GI-196, and the Excise Tax Act's s.240 and
+s.123) carries a tool check instead: `node scripts/check-quotes.mjs` found the words each entry
+relies on, on the live page, on 2026-10-12, and none is recorded as read by a person. The quotes are
+in [`ride-share-official-words.ts`](../../lib/engines/compliance/v2026/ride-share-official-words.ts);
+the tool found every one as typed, so none was rewritten or left out.
 
 What it doesn't do: it doesn't ask whether the person is self-employed or an employee driver (the
 CRA's pages are about self-employed drivers; the intake's employment question is about the
@@ -103,8 +116,8 @@ personal services). Each is a separate change.
 ## Authoring rules specific to this engine
 
 1. Rule types stay within the existing union (`gst-threshold`, `pst-hst`,
-   `hobby-vs-business`, `licensing`) unless a maintainer approves a new type — types are
-   consumed by UI grouping.
+   `hobby-vs-business`, `licensing`, and `platform-reporting`, approved 2026-10-12) unless a
+   maintainer approves a new type — types are consumed by UI grouping.
 2. Licensing rules are industry-scoped via `industryTags`; keep them narrow and cited to
    the actual regulation (the ON food-premises entry citing O. Reg. 562 is the model).
 3. Compass language is *most* load-bearing here — compliance copy that reads as legal

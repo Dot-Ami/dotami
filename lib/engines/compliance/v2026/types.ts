@@ -5,8 +5,8 @@ export type ComplianceRuleType =
   | "pst-hst"
   | "licensing"
   | "hobby-vs-business"
-  // 2026-10-11: a platform's own duty to report its sellers to the CRA. New, so it waits on the
-  // maintainer's yes (docs/engines/compliance.md, authoring rule 1); nothing reads rule types yet.
+  // 2026-10-11: a platform's own duty to report its sellers to the CRA. Approved by the maintainer on
+  // 2026-10-12 (docs/engines/compliance.md, authoring rule 1); nothing reads rule types yet.
   | "platform-reporting";
 
 /**

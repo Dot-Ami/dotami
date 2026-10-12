@@ -7,7 +7,9 @@
  * card saying most businesses "need not register yet", and her sentence was tagged Software / SaaS
  * because it says "platform".
  *
- * The example wording below is the CRA's own, read on its pages on 2026-10-11.
+ * The example wording below is the CRA's own, found on its pages by scripts/check-quotes.mjs on
+ * 2026-10-12 (the maintainer's option B: a tool check, not a read; docs/engines/citations.md). The
+ * platform-reporting page is the one the maintainer read himself, on 2026-10-11.
  */
 import { describe, expect, it } from "vitest";
 
@@ -15,11 +17,16 @@ import { evaluateProfile, type EvaluationProfile } from "@/lib/brain";
 import { itemsForNode } from "@/lib/brain/node-items";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
+import { howChecked } from "@/lib/engines/shared/citation-check";
+import type { EngineCitation } from "@/lib/engines/shared/types";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 
 const TODAY = "2026-10-11";
-const READ_ON = "2026-10-11";
+/** The day scripts/check-quotes.mjs found the quoted words on the pages this PR cites. */
+const TOOL_CHECKED_ON = "2026-10-12";
+/** The day the maintainer read the platform-reporting page himself. */
+const PLATFORM_READ_ON = "2026-10-11";
 const TAG = "Ride-share or taxi driving";
 const RULE = "compliance-gst-taxi-ride-sharing";
 const PLATFORM_RULE = "compliance-platform-reporting-rideshare";
@@ -34,6 +41,7 @@ const TAXI_PAGE =
 const GI_196 =
   "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/gi-196/gst-hst-commercial-ride-sharing-services.html";
 const ETA_240 = "https://laws-lois.justice.gc.ca/eng/acts/E-15/section-240.html";
+const ETA_123 = "https://laws-lois.justice.gc.ca/eng/acts/E-15/section-123.html";
 const PLATFORM_PAGE =
   "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/compliance/reporting-rules-digital-platforms.html";
 
@@ -130,22 +138,35 @@ describe("the rule: GST/HST from the first paid ride, cited", () => {
     expect(r!.thresholdAmount).toBeUndefined();
   });
 
-  it("quotes the CRA's sharing-economy page word for word, from a citation read on the day", () => {
+  it("quotes the CRA's sharing-economy page word for word, every sentence covered by its tool check", () => {
     const r = rule()!;
     expect(r.officialWords?.url).toBe(SHARING_PAGE);
     const sentences = r.officialWords!.passages.flatMap((p) => p.sentences);
     expect(sentences).toContain(MUST_REGISTER);
     expect(sentences).toContain(LINE_DOES_NOT_APPLY);
-    expect(r.citations.find((c) => c.url === SHARING_PAGE)?.lastVerified).toBe(READ_ON);
+    // Option B: a tool found these words on the page; no read date claims a person read it.
+    const citation: EngineCitation = r.citations.find((c) => c.url === SHARING_PAGE)!;
+    expect(citation.lastVerified).toBeUndefined();
+    expect(citation.readBy).toBeUndefined();
+    const check = howChecked(citation);
+    expect(check).toMatchObject({ kind: "tool", on: TOOL_CHECKED_ON });
+    for (const sentence of sentences) expect(citation.toolCheck!.quotes, sentence).toContain(sentence);
   });
 
-  it("cites the CRA's taxi and ride-sharing page, GI-196 and the Act, each read on the day", () => {
+  it("cites the CRA's taxi and ride-sharing page, GI-196 and the Act, each with a tool check, none claiming a read", () => {
     const r = rule()!;
-    for (const url of [TAXI_PAGE, GI_196, ETA_240]) {
-      const citation = r.citations.find((c) => c.url === url);
+    for (const url of [TAXI_PAGE, GI_196, ETA_240, ETA_123]) {
+      const citation: EngineCitation | undefined = r.citations.find((c) => c.url === url);
       expect(citation, url).toBeDefined();
-      expect(citation!.lastVerified, url).toBe(READ_ON);
+      expect(citation!.lastVerified, url).toBeUndefined();
+      expect(howChecked(citation!), url).toMatchObject({ kind: "tool", on: TOOL_CHECKED_ON });
+      expect(citation!.toolCheck!.quotes.length, url).toBeGreaterThan(0);
     }
+    // s.240(1.1) in the Act's own words, as the tool found them.
+    const eta240: EngineCitation = r.citations.find((c) => c.url === ETA_240)!;
+    expect(eta240.toolCheck!.quotes).toContain(
+      "Notwithstanding subsection (1), every small supplier who carries on a taxi business is required to be registered for the purposes of this Part in respect of that business.",
+    );
     // GI-196's own words on when registration takes effect, kept with its citation.
     expect(r.citations.find((c) => c.url === GI_196)!.note).toContain(
       "the effective date of registration will be the particular day on which the self-employed commercial ride-sharing driver starts to make taxable supplies",
@@ -279,7 +300,11 @@ describe("platforms may report drivers' information to the CRA", () => {
     expect(sentences).toContain("These platform operators have to collect detailed information on certain sellers.");
     expect(sentences).toContain("This information needs to be verified and reported to the Canada Revenue Agency (CRA) annually.");
     expect(sentences).toContain("Rideshare and delivery services");
-    expect(p!.citations.find((c) => c.url === PLATFORM_PAGE)?.lastVerified).toBe(READ_ON);
+    // The maintainer read this page himself on 2026-10-11, so it is the one recorded as read by a person.
+    const citation: EngineCitation = p!.citations.find((c) => c.url === PLATFORM_PAGE)!;
+    expect(citation.lastVerified).toBe(PLATFORM_READ_ON);
+    expect(citation.readBy).toBe("person");
+    expect(howChecked(citation)).toEqual({ kind: "person", on: PLATFORM_READ_ON });
   });
 
   it("shows on Abby's map, and says information, as the page does, not earnings", () => {

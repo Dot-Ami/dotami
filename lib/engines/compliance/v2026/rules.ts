@@ -1,12 +1,19 @@
 import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import {
+  CRA_GI_196_TOOL_CHECK,
   CRA_GI_196_URL,
   CRA_PLATFORM_REPORTING,
+  CRA_PLATFORM_REPORTING_READ,
   CRA_PLATFORM_REPORTING_URL,
   CRA_RIDESHARING_REGISTRATION,
+  CRA_SHARING_ECONOMY_TOOL_CHECK,
   CRA_SHARING_ECONOMY_URL,
+  CRA_TAXI_RIDE_SHARING_TOOL_CHECK,
   CRA_TAXI_RIDE_SHARING_URL,
-  RIDE_SHARE_PAGES_READ,
+  ETA_123_TOOL_CHECK,
+  ETA_123_URL,
+  ETA_240_TOOL_CHECK,
+  ETA_240_URL,
 } from "./ride-share-official-words";
 import type { ComplianceRule } from "./types";
 
@@ -212,46 +219,48 @@ export const complianceRulesV2026 = [
         "The $30,000 line still counts for your other sales: the CRA says that while your combined sales stay under $30,000, the required registration generally covers only the ride-sharing, unless you ask for more.",
     },
     reasonNamesTags: true,
+    // Option B (docs/engines/citations.md): each page below carries a tool check, the words this entry
+    // relies on found on the live page on 2026-10-12. No person is recorded as having read them.
     citations: [
       {
         title: "Sharing economy: commercial ridesharing",
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_SHARING_ECONOMY_URL,
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11, page details dated 2025-10-20. The two sentences on the card are copied from its \"Commercial ridesharing\" section, as is the line on combined sales under $30,000 (\"your mandatory GST/HST registration will generally only apply to your commercial ridesharing services unless you request otherwise\").",
+        toolCheck: CRA_SHARING_ECONOMY_TOOL_CHECK,
+        note: "Page details dated 2025-10-20. The two sentences on the card are copied from its \"Commercial ridesharing\" section, as is the line on combined sales under $30,000 (\"your mandatory GST/HST registration will generally only apply to your commercial ridesharing services unless you request otherwise\"); scripts/check-quotes.mjs found those words on the page on 2026-10-12.",
       },
       {
         title: "GST/HST information for taxi operators and commercial ride-sharing drivers",
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_TAXI_RIDE_SHARING_URL,
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11, page details dated 2026-08-31: \"If you are a self-employed taxi operator or commercial ride-sharing driver who supplies taxable passenger transportation services, you must register for a GST/HST account even if you are a small supplier.\"",
+        toolCheck: CRA_TAXI_RIDE_SHARING_TOOL_CHECK,
+        note: "Page details dated 2026-08-31: \"If you are a self-employed taxi operator or commercial ride-sharing driver who supplies taxable passenger transportation services, you must register for a GST/HST account even if you are a small supplier.\" scripts/check-quotes.mjs found that sentence on the page on 2026-10-12.",
       },
       {
         title: "GI-196, GST/HST and Commercial Ride-sharing Services",
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_GI_196_URL,
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11 (info sheet dated February 2023, page details 2025-04-24): \"Although the effective date of registration will be the particular day on which the self-employed commercial ride-sharing driver starts to make taxable supplies, they are only required to apply to the CRA for registration before the thirtieth day after that particular day.\" Its example: a first ride on September 1, 2022, an application due by September 30, 2022, and registration effective September 1, 2022.",
+        toolCheck: CRA_GI_196_TOOL_CHECK,
+        note: "Info sheet dated February 2023, page details 2025-04-24: \"Although the effective date of registration will be the particular day on which the self-employed commercial ride-sharing driver starts to make taxable supplies, they are only required to apply to the CRA for registration before the thirtieth day after that particular day.\" Its example: a first ride on September 1, 2022, an application due by September 30, 2022, and registration effective September 1, 2022. scripts/check-quotes.mjs found those words on the page on 2026-10-12.",
       },
       {
         title: "Excise Tax Act s.240(1.1) — taxi business",
         authority: "federal",
         jurisdiction: "CA",
-        url: "https://laws-lois.justice.gc.ca/eng/acts/E-15/section-240.html",
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11 (Act current to 2026-09-21): \"Notwithstanding subsection (1), every small supplier who carries on a taxi business is required to be registered for the purposes of this Part in respect of that business.\"",
+        url: ETA_240_URL,
+        toolCheck: ETA_240_TOOL_CHECK,
+        note: "Act current to 2026-09-21: \"Notwithstanding subsection (1), every small supplier who carries on a taxi business is required to be registered for the purposes of this Part in respect of that business.\" scripts/check-quotes.mjs found that sentence on the page on 2026-10-12.",
       },
       {
         title: "Excise Tax Act s.123(1) — definition of taxi business",
         authority: "federal",
         jurisdiction: "CA",
-        url: "https://laws-lois.justice.gc.ca/eng/acts/E-15/section-123.html",
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11: paragraph (b) of the definition takes in transporting passengers for fares by motor vehicle within a municipality and its environs when the transportation is arranged or coordinated through an electronic platform or system.",
+        url: ETA_123_URL,
+        toolCheck: ETA_123_TOOL_CHECK,
+        note: "Paragraph (b) of the definition takes in transporting passengers for fares by motor vehicle within a municipality and its environs when the transportation is arranged or coordinated through an electronic platform or system; scripts/check-quotes.mjs found its words on the page on 2026-10-12.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],
@@ -262,7 +271,7 @@ export const complianceRulesV2026 = [
     // "may", "certain sellers": the page says the sellers reported "may include" rideshare drivers.
     id: "compliance-platform-reporting-rideshare",
     label: "Ride-share platforms may report drivers' information to the CRA",
-    // A new type, waiting on the maintainer's yes (docs/engines/compliance.md, authoring rule 1).
+    // A type of its own, approved by the maintainer on 2026-10-12 (docs/engines/compliance.md, authoring rule 1).
     ruleType: "platform-reporting",
     description:
       "Under the reporting rules for digital platform operators (Part XX of the Income Tax Act), certain platform operators collect information on certain sellers who use them, verify it and report it to the CRA each year. The CRA lists rideshare and delivery services among the activities whose sellers may be reported.",
@@ -277,8 +286,10 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_PLATFORM_REPORTING_URL,
-        lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11, page details dated 2025-08-01. The sentences on the card are copied from it, with the list item \"Rideshare and delivery services\" from the list of activities whose sellers \"may\" be reported; the page says \"The rules are contained in Part XX of the Income Tax Act\".",
+        // The maintainer read this page himself on 2026-10-11.
+        lastVerified: CRA_PLATFORM_REPORTING_READ,
+        readBy: "person",
+        note: "Read by the maintainer on 2026-10-11, page details dated 2025-08-01. The sentences on the card are copied from it, with the list item \"Rideshare and delivery services\" from the list of activities whose sellers \"may\" be reported; the page says \"The rules are contained in Part XX of the Income Tax Act\".",
       },
     ],
     reasonNamesTags: true,

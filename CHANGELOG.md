@@ -145,7 +145,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   information on certain sellers.", and "Rideshare and delivery services" among the activities listed).
   It says "information" and "may", as the page does
   ([`lib/engines/compliance/v2026/rules.ts`](lib/engines/compliance/v2026/rules.ts)). The two ride-share
-  cards say the tag lit them; the other cards for a kind of work keep naming the province.
+  cards say the tag lit them; the other cards for a kind of work keep naming the province. Its rule
+  type, `platform-reporting`, is new; the maintainer approved it on 2026-10-12.
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
@@ -213,7 +214,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ridesharing services."); Mandatory GST registration applies whatever the estimate, saying which tag
   lit it; the small-supplier card is "check first" and says what the line still decides (the person's
   other sales). Ideas without the tag are unchanged
-  ([`tests/rideshare-gst.spec.ts`](tests/rideshare-gst.spec.ts); docs/engines/compliance.md).
+  ([`tests/rideshare-gst.spec.ts`](tests/rideshare-gst.spec.ts); docs/engines/compliance.md). How
+  its sources were checked (option B): the CRA's page on the reporting rules for digital platforms
+  says "Read by a person on 2026-10-11" (the maintainer read it); the sharing-economy page, the taxi
+  and ride-sharing page, GI-196 and the Excise Tax Act's s.240 and s.123 each say "Checked by a tool on
+  2026-10-12" in amber, with the words the tool found listed under it.
 - **No "getting close" warning of DotAmi's own.** A first-year estimate (or a complete year of agreed
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
