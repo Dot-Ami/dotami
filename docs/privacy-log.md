@@ -117,6 +117,17 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **The desktop app's log keeps less when an update check, a backup or a restore fails (2026-10-12).**
+  Four lines in [`desktop/main.mjs`](../desktop/main.mjs) wrote the whole error into the log
+  (`logs/server.log` in the data folder): a failed update check, a failed backup, a refused restore and
+  a restore that couldn't replace the data. An error's message can name the file the person chose and
+  the folders around it, which hold their Windows account name. They now write the error's name and
+  code, as DotAmi's routes already did (for a refused restore, which of a few kinds of refusal, such as
+  "damaged"). The update checker's own error report, which it writes with the error's stack, now leaves
+  one fixed line. The dialogs the person sees are unchanged. One write keeps the error's words on
+  purpose, as before: a failed database update, which update failed and what the database objected to.
+  [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
+  for the same rule, writes to the log file included.
 
 ### Packages that ship
 

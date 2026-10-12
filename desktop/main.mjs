@@ -297,7 +297,9 @@ async function checkForUpdates(byHand) {
     autoUpdater.logger = {
       info: (m) => log?.write(`[update] ${m}\n`),
       warn: (m) => log?.write(`[update] ${m}\n`),
-      error: (m) => log?.write(`[update] ${m}\n`),
+      // electron-updater hands this `Error: <stack>` for every failure, and a stack names folders on
+      // this computer; the check's own line below says which error it was, by name and code.
+      error: () => log?.write("[update] the updater reported an error\n"),
       debug: () => {},
     };
     // "Downloading now" the moment a newer version is found, the taskbar button as progress, then
@@ -311,7 +313,9 @@ async function checkForUpdates(byHand) {
       void dialog.showMessageBox({ type: "info", title: "Updates", message: `You have the latest version (${app.getVersion()}).` });
     }
   } catch (error) {
-    log?.write(`[update] check failed: ${error}\n`);
+    // The name and code only (desktop/log.mjs): an update error's message can carry the address it
+    // tried and folders on this computer.
+    log?.write(`[update] check failed (${describeError(error)})\n`);
     if (byHand) {
       void dialog.showMessageBox({ type: "warning", title: "Updates", message: "DotAmi couldn't check for updates right now.", detail: "Check your internet connection and try again from Help → Check for updates." });
     }
@@ -1205,7 +1209,9 @@ async function backUp() {
     });
     return filePath;
   } catch (error) {
-    log?.write(`[backup] failed: ${error}\n`);
+    // The dialog shows the person the whole message; the log keeps only the name and code, since the
+    // message can name the file they chose and the folders around it.
+    log?.write(`[backup] failed (${describeError(error)})\n`);
     await dialog.showMessageBox(win ?? undefined, { type: "error", title: "Backup failed", message: "DotAmi couldn't write the backup.", detail: String(error?.message ?? error) });
     return null;
   }
@@ -1258,7 +1264,9 @@ async function restore({ databaseKeyLost = false } = {}) {
         passphrase = again;
         continue;
       }
-      log?.write(`[restore] refused: ${error}\n`);
+      // A BackupError's kind is one of a fixed few words ("damaged", "newer-app", …); anything else,
+      // its name and code.
+      log?.write(`[restore] refused (${error instanceof BackupError ? error.kind : describeError(error)})\n`);
       await dialog.showMessageBox(win ?? undefined, {
         type: "error",
         title: "Can't restore",
@@ -1347,7 +1355,7 @@ async function restore({ databaseKeyLost = false } = {}) {
   } catch (error) {
     // The swap is the last step: if it fails, the data is still what it was (or, at worst, the
     // safety copy in backups/ holds it). Say so and restart either way — the server is stopped.
-    log?.write(`[restore] failed to replace the data: ${error}\n`);
+    log?.write(`[restore] failed to replace the data (${describeError(error)})\n`);
     let keyNote = "";
     if (newKeySaved) {
       // The old receipts are back in place (applyRestore undoes its moves), and they need the old key

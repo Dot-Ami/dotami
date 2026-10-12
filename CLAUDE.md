@@ -147,8 +147,10 @@ says where it is going.
   `DEPENDENCY_REVIEW` is `on`), the browser's Content-Security-Policy (`connect-src`, `img-src`,
   `default-src`, `form-action`; not WebRTC, navigation, the server or the desktop main process), and
   code review; the header of `tests/helpers/source-scan.ts` has the full lists. Nothing may write an
-  error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
-  report is switched off in `lib/prisma.ts` because it quotes the values it was given.
+  error object to the log (`tests/error-logging.spec.ts`; since 2026-10-12 it also reads `desktop/`,
+  where a failure writes `describeError(error)`, the name and code, into `logs/server.log`, with two
+  listed exceptions), and the database library's own error report is switched off in `lib/prisma.ts`
+  because it quotes the values it was given.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 
