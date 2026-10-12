@@ -81,7 +81,7 @@ says where it is going.
   linked to the idea it was typed for by `ventureId`, written once per sentence typed by the intake's
   first save of an idea (the tab marks it done after, `lib/journey/first-save.ts`), kept, tied to no
   idea, when the idea is deleted) · `Venture` (with `goals`, the intake's goal chips as they stood when
-  the map opened, shown back and read by no rule) · `VentureLink` · `ScenarioState` · `Figure` (the totals
+  the map opened, shown back and read by no rule) · `VentureLink` · `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
   optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed

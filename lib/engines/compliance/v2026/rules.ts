@@ -1,3 +1,4 @@
+import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_READ, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import type { ComplianceRule } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -8,12 +9,14 @@ export const complianceRulesV2026 = [
     label: "GST/HST small-supplier threshold",
     ruleType: "gst-threshold",
     description:
-      "Most Canadian businesses need not register for GST/HST until worldwide taxable supplies exceed $30,000 in a single calendar quarter or over four consecutive calendar quarters. Supplies of financial services, sales of capital property and goodwill from selling a business don't count.",
-    threshold: "$30,000 rolling four-quarter / single quarter",
+      "Most Canadian businesses need not register for GST/HST while they are small suppliers: until their worldwide taxable supplies are over $30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters. Supplies of financial services, sales of capital property and goodwill from selling a business don't count.",
+    threshold: "$30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters",
     thresholdAmount: 30000,
     thresholdTest: { singleQuarter: true, consecutiveQuarters: 4 },
+    // Quoted on the card, word for word; until 2026-10-11 the card paraphrased them.
+    officialWords: CRA_SMALL_SUPPLIER_TESTS,
     lensAnnotations: {
-      tax: "If revenue stays under $30K, small-supplier status may defer GST registration — voluntary registration remains an option for ITCs.",
+      tax: "While neither of the CRA's two $30,000 tests is met, you are a small supplier and need not register; registering voluntarily remains an option for input tax credits.",
       legal: "If B2B customers require a GST number, registration may be needed before the threshold.",
     },
     citations: [
@@ -21,10 +24,10 @@ export const complianceRulesV2026 = [
         title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
-        lastVerified: LAST_VERIFIED,
+        url: CRA_WHEN_TO_REGISTER_URL,
+        lastVerified: CRA_WHEN_TO_REGISTER_READ,
         note:
-          "CRA small-supplier registration rules. The page moved: the old address (…/when-register.html) answered 404 on 2026-10-06. Its content was re-read by a model that day (page modified 2026-06-16) and matches this entry, including the exclusions; lastVerified stays the last human read — a human re-check is owed.",
+          "CRA small-supplier registration rules (the old address, …/when-register.html, answered 404 on 2026-10-06). Re-read 2026-10-11, page details dated 2026-06-16: the two tests on the card are copied from its table, and the exclusions from its footnote 1.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],

@@ -24,6 +24,8 @@ export function evaluateScenario(
   return evaluateProfile(buildEvaluationProfileFromScenario(scenario), {
     today: options.today,
     activeBranches: scenario.state.activeBranches,
+    // The person's own incorporation number, kept with the picks (2026-10-11).
+    incorporateAt: scenario.state.incorporateAt ?? null,
     figures: options.figures,
   });
 }

@@ -24,8 +24,9 @@ export const branchDecisions = [
         label: "Voluntary now",
       },
       {
+        // Until 2026-10-11 "Wait for $30K", a shorthand of the CRA's two tests.
         id: "stage-2b-mandatory-gst-registration",
-        label: "Wait for $30K",
+        label: "When the CRA's tests say",
       },
     ],
   },
@@ -48,7 +49,8 @@ export const branchDecisions = [
 
 /**
  * S2.5.4h: the one default branch bundle, now that archetypes are gone. Both picks are the
- * "nothing decided yet" reading — wait for the $30K line, incorporate when the person decides —
+ * "nothing decided yet" reading — register when the CRA's small-supplier tests say so, incorporate
+ * when the person decides —
  * and mirror the evaluator's own defaults (`evaluateProfile`). The rail labels them "default,
  * not your pick yet" until the person clicks.
  */
@@ -108,6 +110,17 @@ export function updateScenarioBranch(
         scenario.profile.hireFirst,
       ),
       decidedBranchIds: [...decided],
+      // A pick never clears the person's own number.
+      incorporateAt: scenario.state.incorporateAt ?? null,
     },
   };
+}
+
+/**
+ * Sets (or, with null, clears) the person's own "I'd incorporate at $___". Whole dollars; the
+ * branch picks are untouched. Only the person's typing reaches this.
+ */
+export function setIncorporateAt(scenario: Scenario, value: number | null): Scenario {
+  const clean = value === null || !Number.isFinite(value) || value < 0 ? null : Math.round(value);
+  return { ...scenario, state: { ...scenario.state, incorporateAt: clean } };
 }

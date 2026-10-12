@@ -27,19 +27,21 @@ describe("GST small-supplier boundary ($30,000) — H3", () => {
   const atRevenue = (targetRevenueY1: number) =>
     evaluateProfile({ ...baseProfile, targetRevenueY1 }, { today: TODAY });
 
-  it("$29,999 (under threshold, in the watch band): compliance yellow, mandatory node yellow", () => {
+  // 2026-10-11: no "watch band" any more. Under the line the card is green and says nothing of being
+  // close; the 70% band that turned it amber was a number of DotAmi's own (tests/honest-map.spec.ts).
+  it("$29,999 (under threshold): compliance green, the picked mandatory node 'check first'", () => {
     const result = atRevenue(29_999);
     const gst = result.unlocks.find((u) => u.id === "compliance-gst-small-supplier");
-    expect(gst!.state).toBe("yellow");
-    expect(gst!.why).toContain("approaches");
+    expect(gst!.state).toBe("green");
+    expect(gst!.why).not.toContain("over $30,000");
     expect(result.nodeStates["stage-2b-mandatory-gst-registration"]).toBe("yellow");
   });
 
-  it("$30,000 exactly (reached but not exceeded): still a watch state, never a false green", () => {
+  it("$30,000 exactly (reached but not exceeded): no test met, never a false green node", () => {
     const result = atRevenue(30_000);
     const gst = result.unlocks.find((u) => u.id === "compliance-gst-small-supplier");
-    expect(gst!.state).toBe("yellow");
-    expect(gst!.why).toContain("approaches");
+    expect(gst!.state).toBe("green");
+    expect(gst!.why).not.toContain("over $30,000");
     // CRA's rule is EXCEED, not reach — exactly $30K has not yet triggered mandatory
     // registration, so the picked (mandatory) branch must not claim "green".
     expect(result.nodeStates["stage-2b-mandatory-gst-registration"]).toBe("yellow");
@@ -49,7 +51,7 @@ describe("GST small-supplier boundary ($30,000) — H3", () => {
     const result = atRevenue(30_001);
     const gst = result.unlocks.find((u) => u.id === "compliance-gst-small-supplier");
     expect(gst!.state).toBe("yellow"); // registration timing is always a confirm-worthy checkpoint
-    expect(gst!.why).toContain("crosses");
+    expect(gst!.why).toContain("is over $30,000");
     expect(result.nodeStates["stage-2b-mandatory-gst-registration"]).toBe("green");
   });
 
@@ -58,7 +60,7 @@ describe("GST small-supplier boundary ($30,000) — H3", () => {
       const result = atRevenue(revenue);
       const gst = result.unlocks.find((u) => u.id === "compliance-gst-small-supplier");
       const triggered = revenue > 30_000;
-      expect(gst!.why.includes("crosses")).toBe(triggered);
+      expect(gst!.why.includes("is over $30,000")).toBe(triggered);
       expect(result.nodeStates["stage-2b-mandatory-gst-registration"]).toBe(
         triggered ? "green" : "yellow",
       );

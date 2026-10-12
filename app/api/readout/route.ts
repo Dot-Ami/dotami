@@ -66,6 +66,8 @@ export async function GET(request: Request) {
     stage: node.stage,
     status: getScenarioNodeStatus(node.id, scenario),
     evaluatorColour: evaluation.nodeStates[node.id],
+    // Which of the person's answers set that colour, in the rules' own sentence (2026-10-11).
+    evaluatorReason: evaluation.nodeReasons[node.id] ?? null,
     trigger: node.trigger,
     relevantEntryIds: NODE_ENGINE_HINTS[node.id] ?? [],
   }));

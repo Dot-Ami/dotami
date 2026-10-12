@@ -87,6 +87,13 @@ export interface ScenarioState {
    * store it, so a reloaded venture shows its picks as defaults again (honest: we don't know).
    */
   decidedBranchIds?: string[];
+  /**
+   * The person's own "I'd incorporate at $___": yearly sales in whole dollars, or null/undefined when
+   * they haven't given one (2026-10-11). Theirs, never DotAmi's: no law sets such a number, so the
+   * map has no default. Saved in the same database column as `activeBranches` (the idea's map
+   * answers), under its own key, so no migration was needed; lib/db/scenario-state-json.ts.
+   */
+  incorporateAt?: number | null;
 }
 
 export interface Scenario {

@@ -1,4 +1,4 @@
-import type { EngineCitation } from "@/lib/engines/shared/types";
+import type { EngineCitation, OfficialWords } from "@/lib/engines/shared/types";
 import type { StructureEntityType } from "@/lib/engines/structure/v2026/types";
 import type { IntakeGoalId } from "@/lib/journey/types";
 import type { EmploymentStatus, Province, VentureType } from "@/lib/scenarios/types";
@@ -25,7 +25,7 @@ export interface EvaluationProfile {
   capitalPurchasePlanned: boolean;
 }
 
-/** Green = conditions met; yellow = plausible but needs confirmation / near threshold / one fork away; gray = not applicable. */
+/** Green = conditions met; yellow = plausible but needs confirmation / a cited threshold passed / one fork away; gray = not applicable. */
 export type UnlockState = "green" | "yellow" | "gray";
 
 /** Card type chips — matches the signed-off intake preview vocabulary. */
@@ -117,6 +117,8 @@ export interface UnlockItem {
   risk?: UnlockRisk;
   /** [8a] Present when confirmed figures decided this card (or were read and fell short). */
   fromRecords?: RecordsBasis;
+  /** The official test in its own words, from a page in `citations` (2026-10-11: the GST/HST card). */
+  officialWords?: OfficialWords;
 }
 
 export type NodeStateColor = "green" | "yellow" | "gray";
@@ -127,6 +129,12 @@ export type ProvinceCoverage = "full" | "federal-only" | "unknown";
 export interface EvaluationResult {
   unlocks: UnlockItem[];
   nodeStates: Record<CFENodeId, NodeStateColor>;
+  /**
+   * One plain sentence per stage whose colour comes from the person's own answers, saying which ones
+   * (2026-10-11: Liability / SR&ED lit from activity tags and never said so; Incorporating from the
+   * person's own number). Written by the rules, shown as is.
+   */
+  nodeReasons: Partial<Record<CFENodeId, string>>;
   /** "full" = provincial catalog entries exist (AB/BC/ON); "federal-only" = CA-wide rules
    * only, provincial coverage pending; "unknown" = no province selected yet. */
   provinceCoverage: ProvinceCoverage;

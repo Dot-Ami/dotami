@@ -31,7 +31,8 @@ straight to the cockpit.
   is **no longer** in the fallback chain, because it was usually a sentence about the
   person (a sentence like "I'm an apprentice in Calgary" used to become the venture name).
 - **Optional numbers** — Y1/Y3 revenue targets with a one-line why-we-ask: *"Numbers
-  unlock threshold watches — like the $30K GST line — on your map."* Digit-only input,
+  let the map check your estimates against official tests, like the Canada Revenue Agency's GST/HST
+  small-supplier tests."* (until 2026-10-11: "…threshold watches — like the $30K GST line —…") Digit-only input,
   skippable (defaults to 0, not required for submit).
 - **Capital purchase toggle** — same `intake.capitalPurchasePlanned` field Screen A also
   has a toggle for (feeds the rules engine's Class 50 / CSBFP logic; pre-set if the parse

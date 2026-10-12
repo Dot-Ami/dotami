@@ -88,9 +88,11 @@ describe("confirmed figures on the GST/HST card", () => {
     const figures = QUARTERS.map(([s, e]) => fig(s, e, 6_850));
     const { card, nodes } = gstCard(45_000, figures);
     // Estimate alone: "crosses" (45,000 > 30,000). The person's own four quarters: $27,400.
-    expect(card.why).toContain("October 2025 to September 2026 is $27,400 — approaching $30,000");
+    // 2026-10-11: under the line is "not over" it, and the card stays green; until then a 70% band of
+    // DotAmi's own called this "approaching" and turned it amber.
+    expect(card.why).toContain("October 2025 to September 2026 is $27,400 — not over $30,000");
     expect(card.why).not.toContain("Y1 revenue target");
-    expect(card.state).toBe("yellow");
+    expect(card.state).toBe("green");
     expect(card.fromRecords?.summary).toBe("From your records · 4 figures");
     expect(nodes["stage-2b-mandatory-gst-registration"]).toBe("yellow");
   });
@@ -98,12 +100,12 @@ describe("confirmed figures on the GST/HST card", () => {
   it("well under the line, a complete year turns the card green", () => {
     const { card } = gstCard(45_000, QUARTERS.map(([s, e]) => fig(s, e, 2_000)));
     expect(card.state).toBe("green");
-    expect(card.why).toContain("is $8,000 — under $30,000");
+    expect(card.why).toContain("is $8,000 — not over $30,000");
   });
 
   it("counts exactly $30,000 as not over (exceed, not reach)", () => {
     const { card, nodes } = gstCard(0, QUARTERS.map(([s, e]) => fig(s, e, 7_500)));
-    expect(card.why).toContain("is $30,000 — approaching $30,000");
+    expect(card.why).toContain("is $30,000 — not over $30,000");
     expect(nodes["stage-2b-mandatory-gst-registration"]).toBe("yellow");
   });
 
@@ -121,7 +123,7 @@ describe("confirmed figures on the GST/HST card", () => {
 
   it("with only part of the year covered and under the line, leaves the estimate deciding — and says so", () => {
     const { card } = gstCard(45_000, [fig(...QUARTERS[2], 5_000), fig(...QUARTERS[3], 5_000)]);
-    expect(card.why).toContain("Y1 revenue target crosses");
+    expect(card.why).toContain("Y1 revenue target ($45,000) is over $30,000");
     expect(card.why).toContain("Your confirmed figures cover 2 of the last four calendar quarters ($10,000 so far) — not enough to replace the estimate yet.");
     expect(card.fromRecords?.summary).toBe("From your records · 2 figures");
   });

@@ -1,6 +1,9 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (the cards' colours follow the person's own branch picks; a stage card's
+Last updated: 2026-10-11 (a stage chip says "default" until its toggle is clicked and "open choice"
+on the fork every map shows, issue #5; Incorporating and Liability / SR&ED say which answers set their
+colour; no GST/HST amber before a CRA test is met; the GST toggle's "Wait for $30K" became "When the
+CRA's tests say"; earlier the same day: the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
@@ -14,14 +17,15 @@ A CSS grid of tier columns (four in v2026: Before the venture · Sole proprietor
 Incorporating · Corporation running). No edges, no free-form layout, no React Flow.
 
 Each column: `TIER n` · label · one-line subtitle · the branch toggle that belongs to it
-(GST timing in Tier 2, Incorporation timing in Tier 3 — "default, not your pick yet" until
-clicked, S2.5.4d). Then, in catalog order, one **stage card** per lifecycle node whose
+(GST timing in Tier 2: **Voluntary now** · **When the CRA's tests say**; Incorporation timing in
+Tier 3: **When you decide** · **Liability / SR&ED** — "default, not your pick yet" until clicked,
+S2.5.4d). Then, in catalog order, one **stage card** per lifecycle node whose
 `stage` the tier lists, and under each stage card one **lever card** per evaluator item
 relevant to that stage (`itemsForNode(...).forThisStage`, S2.5.4e).
 
 | Card | Shows | Click |
 |---|---|---|
-| Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
+| Stage | name · chip (**now · your pick · default · open choice · done · ahead · not on your path**, from the branch picks; `stageChipFor` in `lib/scenarios/graph.ts`) · trigger (2 lines) · on Incorporating and Liability / SR&ED, one line saying which of the person's answers set the colour (`EvaluationResult.nodeReasons`) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
 Stage and lever buttons have explicit accessible names. Stage names include the current status,
@@ -37,19 +41,40 @@ the cards at once. Until then the cockpit ran the rules on the default picks, so
 moved the chips but not the colours. `tests/scenario-evaluation.spec.ts` fails if any screen or
 route runs the map's rules on a saved venture without its picks.
 
+**The stage chip says "your pick" only for what the person picked (issue #5, 2026-10-11).** A side of
+a toggle reads **default** until the person clicks that toggle, and **your pick** after (clicking the
+default itself counts). A saved idea whose pick isn't the default keeps **your pick** after a reload:
+the database keeps the picks but not the clicks, and only a click can move a pick off the default
+(`isBranchDecided`; the toggle's "default, not your pick yet" follows the same rule). *Hire first
+employee* reads **your pick** (it is on the map only when the person turned on "Show a hire-first
+path"), and *Service vs. productize*, drawn on every map, reads **open choice**. Until then every
+such card said "your pick", so the GST/HST card said "your pick" under a toggle saying "default, not
+your pick yet". `tests/template-voice.spec.ts` and `e2e/app.spec.ts` check.
+
+**The GST/HST cards change only when a CRA test is met (2026-10-11).** The picked GST/HST card is green
+once the first-year estimate (or the person's confirmed figures) is over $30,000, and amber before;
+the other one is amber once a test is met and grey before. Until then a first-year estimate or a
+complete year of figures at 70% of the line (about $21,000) also turned the unpicked card amber and
+the GST/HST lever "approaching": a number of DotAmi's own, now gone. Mandatory GST registration's
+detail quotes the CRA's two tests word for word (07-node-detail.md).
+
 **Incorporating (Tier 3, node id `stage-3a-incorporation-80k-net`, kept: ids are forever).** Until
 2026-10-11 this card was "Incorporation at $80K net" and turned green when the third-year revenue
 estimate reached $80,000 — a number no cited page sets, compared against sales although it was
 written as net income. Now it is **Incorporating**, its trigger line reads "DotAmi doesn't pick a
-point to incorporate. You do, with your accountant or lawyer.", and it is amber (**check first**)
-while it is the selected option of Incorporation timing (the person's pick, or the default until
-they click; its chip says "your pick" either way, a known wording gap, docs/task-list.md [10f]) and
-grey when the other option is selected. No amount lights it. Its
-detail keeps only cited facts: the CRA's corporation page and the small business deduction's
-$500,000 business limit from the T2 guide. The toggle's options read **When you decide** and
-**Liability / SR&ED**. Retained earnings planning (Tier 4) lights only when the person set their
-structure to a corporation. Not yet: federal and Alberta incorporation side by side, and the
-person's own "I'd incorporate at $___" (both come with the future cockpit).
+point to incorporate. You do, with your accountant or lawyer.". While it is the selected option of
+Incorporation timing (the person's pick, or the default until they click, and its chip says which)
+it is amber (**check first**), and green once the third-year revenue estimate reaches the person's
+own **I'd incorporate at $___** (typed in its detail, 07-node-detail.md); grey when the other option
+is selected. No amount of DotAmi's own lights it. Its detail keeps only cited facts: the CRA's
+corporation page, the small business deduction's $500,000 business limit from the T2 guide, and,
+since 2026-10-11, the federal and Alberta ways to incorporate side by side from their own pages. The
+toggle's options read **When you decide** and **Liability / SR&ED**. Retained earnings planning
+(Tier 4) lights only when the person set their structure to a corporation.
+
+**Liability / SR&ED (Tier 3)** lights from the idea's activity tags (Software / SaaS, Manufacturing,
+AI / ML / R&D), not from a need the person stated, and since 2026-10-11 its card says so under the
+trigger, naming the tag that lit it, or that none of the three is on the intake.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid, with the three colours in the same words as the

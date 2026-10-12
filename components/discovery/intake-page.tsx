@@ -444,7 +444,7 @@ export function IntakePage() {
 
                 <FieldGroup label="Numbers — optional">
                   <p className="mb-3 text-[11px] leading-snug text-stone">
-                    Numbers unlock threshold watches — like the $30K GST line — on your map.
+                    Numbers let the map check your estimates against official tests, like the Canada Revenue Agency&apos;s GST/HST small-supplier tests.
                     Skippable.
                   </p>
                   <div className="grid max-w-sm grid-cols-2 gap-3">

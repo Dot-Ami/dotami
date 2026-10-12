@@ -34,7 +34,7 @@ import type {
  * callers pass `today` so time-boxed incentives evaluate reproducibly.
  *
  * Semantics: green = conditions met as answered; yellow = plausible but needs
- * professional confirmation, is time-boxed, is near a threshold, or is ONE fork away
+ * professional confirmation, is time-boxed, has passed a cited threshold, or is ONE fork away
  * (the near-miss rule — e.g. "incorporating would unlock IRAP"); gray = not applicable.
  * Aggressive-but-legal levers are never hidden — they surface yellow with the honest read.
  */
@@ -58,12 +58,18 @@ const STRUCTURE_RUNG: Record<StructureEntityType, number> = {
   "family-trust": 4,
 };
 
-/**
- * Revenue within this fraction of a threshold counts as "approaching it". No cited page sets 70%: it is
- * a known uncited watch line, kept until the GST/HST card rework uses only the CRA's own test
- * (docs/engines/cfe.md, authoring rule 2).
- */
-const THRESHOLD_WATCH_RATIO = 0.7;
+// 2026-10-11: there is no "getting close" line any more. Until then a revenue at 70% of the GST/HST
+// line (about $21,000) turned the card amber, saying the estimate was close to it; no cited page sets
+// 70%, so it was a number of DotAmi's own. A threshold card now changes only when the cited test itself
+// is met (docs/engines/cfe.md, authoring rule 2; tests/honest-map.spec.ts).
+
+/** The activity tags the Liability / SR&ED stage reads. Named on its card, so the person sees what lit it. */
+const LIABILITY_SRED_TAGS = ["Software / SaaS", "Manufacturing", "AI / ML / R&D"] as const;
+
+/** "A, B and C", for naming tags in a sentence. */
+function andList(items: readonly string[]): string {
+  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
 
 export function buildEvaluationProfile(intake: IntakeDraft): EvaluationProfile {
   return {
@@ -232,8 +238,6 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
 interface RecordsVerdict {
   decides: boolean;
   crossed: boolean;
-  /** At or above the watch ratio but not over. */
-  near: boolean;
   why: string;
   basis: RecordsBasis;
 }
@@ -254,7 +258,6 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
 
   let decides = true;
   let crossed = false;
-  let near = false;
   let why: string;
   if (single) {
     crossed = true;
@@ -263,8 +266,8 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
     crossed = true;
     why = `Shown because your confirmed revenue for ${span} is ${read.windowComplete ? "" : "at least "}${total} — over ${line}.`;
   } else if (read.windowComplete) {
-    near = read.windowCents >= thresholdCents * THRESHOLD_WATCH_RATIO;
-    why = `Shown because your confirmed revenue for ${span} is ${total} — ${near ? "approaching" : "under"} ${line}.`;
+    // Exactly on the line is not over it (the CRA's test is "exceed"), so "not over" covers both.
+    why = `Shown because your confirmed revenue for ${span} is ${total} — not over ${line}.`;
   } else {
     decides = false;
     const covered = read.window.filter((q) => q.monthsCovered === 3).length;
@@ -316,7 +319,6 @@ function recordsVerdict(entry: ComplianceRule, figures: readonly ConfirmedFigure
   return {
     decides,
     crossed,
-    near,
     why,
     basis: {
       summary: `From your records · ${count} figure${count === 1 ? "" : "s"}${rows > 0 ? ` · ${rows} rows` : ""}`,
@@ -362,10 +364,6 @@ function evaluateComplianceRule(
         state = "yellow";
         step = "refine";
         payoff = "If this holds, registration may already be required — the CRA page says from when. Take it to your accountant.";
-      } else if (verdict.near) {
-        state = "yellow";
-        step = "refine";
-        payoff = "If revenue keeps near this line, the voluntary-vs-mandatory registration fork is worth modeling now.";
       }
     } else {
       const y1 = profile.targetRevenueY1;
@@ -375,13 +373,8 @@ function evaluateComplianceRule(
       if (y1 > entry.thresholdAmount) {
         state = "yellow";
         step = "refine";
-        why = `Shown because your Y1 revenue target crosses the ${entry.threshold ?? "registration"} threshold.`;
+        why = `Shown because your Y1 revenue target (${formatCad(y1 * 100)}) is over ${formatCad(entry.thresholdAmount * 100)}, the amount in the CRA's tests.`;
         payoff = "If your assumptions hold, registration timing becomes a checkpoint on the map, not a surprise.";
-      } else if (y1 >= entry.thresholdAmount * THRESHOLD_WATCH_RATIO) {
-        state = "yellow";
-        step = "refine";
-        why = `Shown because your Y1 revenue target approaches the ${entry.threshold ?? "registration"} threshold.`;
-        payoff = "If revenue lands near this line, the voluntary-vs-mandatory registration fork is worth modeling early.";
       }
       // Figures that were read but couldn't decide still say so, next to the estimate's reason.
       if (verdict) {
@@ -403,6 +396,8 @@ function evaluateComplianceRule(
     citations: entry.citations,
     step,
     ...(fromRecords ? { fromRecords } : {}),
+    // The official test in its own words, whatever the card's state (2026-10-11).
+    ...(entry.officialWords ? { officialWords: entry.officialWords } : {}),
   };
 }
 
@@ -469,10 +464,15 @@ function computeNodeStates(
   activeBranches: Record<string, CFENodeId>,
   today: string,
   gstRecords: RecordsVerdict | null,
-): Record<CFENodeId, NodeStateColor> {
+  incorporateAt: number | null,
+): { states: Record<CFENodeId, NodeStateColor>; reasons: Partial<Record<CFENodeId, string>> } {
   const states: Record<string, NodeStateColor> = {};
-  const gstThreshold = 30000;
-  const rdTags = tagsIntersect(profile.activityTags, ["AI / ML / R&D", "Software / SaaS", "Manufacturing"]);
+  const reasons: Partial<Record<CFENodeId, string>> = {};
+  // The line the cited CRA page sets, read from the rule rather than typed again here.
+  const gstThreshold =
+    complianceCatalogV2026.entries.find((e) => e.id === "compliance-gst-small-supplier")?.thresholdAmount ?? Infinity;
+  const rdMatched = LIABILITY_SRED_TAGS.filter((t) => tagsIntersect(profile.activityTags, [t]));
+  const rdTags = rdMatched.length > 0;
 
   states["stage-0-employee-apprentice-baseline"] = "green";
   states["stage-1-sole-prop-activation"] = "green";
@@ -482,32 +482,49 @@ function computeNodeStates(
   // person's confirmed figures settle it ([8a]), they decide instead of the estimate.
   const recordsDecide = gstRecords?.decides === true;
   const gstTriggered = recordsDecide ? gstRecords.crossed : profile.targetRevenueY1 > gstThreshold;
-  const gstNear = recordsDecide
-    ? gstRecords.crossed || gstRecords.near
-    : profile.targetRevenueY1 >= gstThreshold * THRESHOLD_WATCH_RATIO;
   for (const nodeId of ["stage-2a-voluntary-gst-registration", "stage-2b-mandatory-gst-registration"]) {
     if (nodeId === gstPick) {
       states[nodeId] = gstTriggered ? "green" : "yellow";
     } else {
-      // Alternate GST path stays visible as a fork when revenue is near the line.
-      states[nodeId] = gstNear ? "yellow" : "gray";
+      // The other GST path stays visible as a fork once a CRA test is met, and only then.
+      states[nodeId] = gstTriggered ? "yellow" : "gray";
     }
   }
 
   const incPick = activeBranches["incorporationTiming"];
-  // "Incorporating" (stage-3a): DotAmi doesn't pick a point to incorporate, the person does, so no
-  // amount lights it. It is "check first" while it is their pick and off their path otherwise. Until
-  // 2026-10-11 a third-year SALES estimate of $80,000 turned it green: a net-income heuristic with no
-  // source (docs/engines/cfe.md, authoring rule 2).
-  states["stage-3a-incorporation-80k-net"] = incPick === "stage-3a-incorporation-80k-net" ? "yellow" : "gray";
+  // "Incorporating" (stage-3a): DotAmi doesn't pick a point to incorporate, the person does. No amount
+  // of DotAmi's own lights it (until 2026-10-11 a third-year SALES estimate of $80,000 did: a
+  // net-income heuristic with no source). It lights only from the person's own "I'd incorporate at
+  // $___": green once their third-year estimate reaches it, "check first" without it, and grey off
+  // their path. "At" reads as reaching the number, so it is >=, not >.
+  const incPath = "stage-3a-incorporation-80k-net";
+  const y3 = formatCad(profile.targetRevenueY3 * 100);
+  if (incPick !== incPath) {
+    states[incPath] = "gray";
+    reasons[incPath] = "Not on your path: Incorporation timing is set to the other way.";
+  } else if (incorporateAt === null) {
+    states[incPath] = "yellow";
+    reasons[incPath] = "Check first: set your own number to see this light. DotAmi has no number of its own for this.";
+  } else if (profile.targetRevenueY3 >= incorporateAt) {
+    states[incPath] = "green";
+    reasons[incPath] = `Lit because your third-year revenue estimate (${y3}) reaches your own number (${formatCad(incorporateAt * 100)}).`;
+  } else {
+    states[incPath] = "yellow";
+    reasons[incPath] = `Check first: your third-year revenue estimate (${y3}) is under your own number (${formatCad(incorporateAt * 100)}).`;
+  }
+
   // Liability / SR&ED (stage-3b) reads the activity tags (confirmed on the intake, often marked by the
-  // parser from the sentence), not a liability or SR&ED need the person stated: an open item (docs/task-list.md [10f]).
+  // parser from the sentence), not a liability or SR&ED need the person stated: an open item
+  // (docs/task-list.md [10f]). Its card says so, naming the tags that lit it (2026-10-11).
   const sredPath = "stage-3b-incorporation-liability-sred";
   if (incPick === sredPath) {
     states[sredPath] = rdTags ? "green" : "yellow";
   } else {
     states[sredPath] = rdTags ? "yellow" : "gray";
   }
+  reasons[sredPath] = rdTags
+    ? `Lit because your intake has the activity ${rdMatched.length === 1 ? "tag" : "tags"} ${andList(rdMatched)}. This card reads only those tags, not a liability or research need you stated.`
+    : `Your intake has none of the activity tags this card reads: ${andList(LIABILITY_SRED_TAGS)}.`;
 
   // Corporation-stage planning lights only for an idea the person said is a corporation.
   const incorporated = profile.structure === "ccpc";
@@ -519,7 +536,7 @@ function computeNodeStates(
 
   void today; // reserved: stage-state expiries (none in v2026 CFE yet)
 
-  return states as Record<CFENodeId, NodeStateColor>;
+  return { states: states as Record<CFENodeId, NodeStateColor>, reasons };
 }
 
 const SEVERITY_ORDER = { info: 0, caution: 1, "professional-required": 2 } as const;
@@ -593,6 +610,11 @@ export interface EvaluateOptions {
    * `fromRecords`.
    */
   figures?: readonly ConfirmedFigure[];
+  /**
+   * The person's own "I'd incorporate at $___", in whole dollars, or null when they haven't given one.
+   * Kept with the branch picks (`ScenarioState.incorporateAt`). DotAmi never supplies a default.
+   */
+  incorporateAt?: number | null;
 }
 
 export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
@@ -619,9 +641,17 @@ export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOpt
       .filter((item): item is UnlockItem => item !== null),
   ];
 
+  const { states, reasons } = computeNodeStates(
+    profile,
+    activeBranches,
+    today,
+    gstRecordsVerdict(options.figures, today),
+    options.incorporateAt ?? null,
+  );
   return {
     unlocks: attachRisk(profile, unlocks),
-    nodeStates: computeNodeStates(profile, activeBranches, today, gstRecordsVerdict(options.figures, today)),
+    nodeStates: states,
+    nodeReasons: reasons,
     provinceCoverage: provinceCoverageFor(profile.province),
   };
 }

@@ -48,6 +48,7 @@ laid out left-to-right by dagre. Node status comes from `scenario.state`
 | Right panel slot (node / lens / playbook switching) | [04-right-panel-slot.md](./04-right-panel-slot.md) |
 | Rails: structure ladder + templates (surface 7) | [05-rails-ladder-templates.md](./05-rails-ladder-templates.md) |
 | Projection footer (surface 7) | [06-projection-footer.md](./06-projection-footer.md) |
+| Node detail: your answers line, official words, "I'd incorporate at $___", ways side by side (2026-10-11) | [07-node-detail.md](./07-node-detail.md) |
 
 ## Flow in / out
 

@@ -59,5 +59,5 @@ Since then `exploration-page.tsx`, `cockpit-projection-footer.tsx` and `lib/arch
 were deleted (S2.5.4h, 2026-09-14); the node→engine hint map now lives in
 `lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` (convention 9 below).
 
-Residual to sweep: the "$30K GST line" copy in `components/discovery/intake-page.tsx`,
-and the `lib/brain/goal-effects.ts` cards that still carry empty citations.
+Residual to sweep: the `lib/brain/goal-effects.ts` cards that still carry empty citations. (The
+"$30K GST line" copy in `components/discovery/intake-page.tsx` went on 2026-10-11.)

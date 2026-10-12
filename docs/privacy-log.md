@@ -57,6 +57,14 @@ person is asked).
   two plain column additions ([`prisma/migrations/20261011120000_first_words`](../prisma/migrations/20261011120000_first_words/migration.sql)).
   Nothing about what leaves the computer changes: the sentence was already sent to the intake's parser
   as before (only when a model key is set), and is now also kept in the data file.
+- **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
+  amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
+  map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
+  its own key `incorporateAt`, so no table or column was added
+  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)). Only the person's typing sets it;
+  it lights one stage and is read by nothing else. It is also in the browser tab's saved draft
+  (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
+  the computer.
 
 ### How to remove it
 
@@ -69,11 +77,15 @@ person is asked).
   open at the time keeps its own draft, and writes its sentence only if no save there had kept it yet.
   **The goal chips** are part of the idea and go with "Your ideas". Neither can be removed one by one,
   like every statement.
+- **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
+  save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
 
 ### What the policy will need to say
 
 - The words a person types on the front door to describe an idea are kept in the data file, with the day
   they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
+- A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
+  their own planning number, never set by DotAmi.
 
 ---
 

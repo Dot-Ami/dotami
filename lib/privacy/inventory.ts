@@ -233,7 +233,8 @@ export const TABLES: readonly TableEntry[] = [
   {
     model: "ScenarioState",
     name: "Map progress",
-    holds: "Which steps on each idea's map you marked active, done or set aside, and which branches you took.",
+    holds:
+      "Which steps on each idea's map you marked active, done or set aside, which branches you took, and your own “I'd incorporate at” amount if you typed one.",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
@@ -548,7 +549,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one.",
     lasts: "Until this window or tab closes.",
   },
   {

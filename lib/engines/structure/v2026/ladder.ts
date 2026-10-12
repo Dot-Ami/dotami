@@ -1,3 +1,4 @@
+import { CRA_WHEN_TO_REGISTER_READ, CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
 import type { StructureStep } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -35,13 +36,14 @@ export const structureLadderV2026 = [
     id: "structure-sole-prop-gst",
     label: "Sole prop + GST/HST",
     entityType: "sole-prop-gst",
-    trigger: "Voluntary registration or mandatory $30K small-supplier threshold exceeded.",
+    trigger:
+      "Registering by choice, or taxable supplies over $30,000 in a single calendar quarter or over the previous four (or fewer) consecutive calendar quarters (the CRA's small-supplier tests).",
     description:
       "GST/HST registration changes cash-flow timing and customer pricing. If registration is active, it unlocks charging/collecting GST/HST and claiming input tax credits on eligible business purchases.",
     taxImpact:
       "Registered sole props remit net GST/HST. ITCs can offset GST/HST paid on business inputs. Small-supplier status ends once mandatory registration applies.",
     lensAnnotations: {
-      tax: "If ITCs on startup costs matter, voluntary registration before $30K may unlock earlier credit claims — subject to filing and remittance obligations.",
+      tax: "If ITCs on startup costs matter, registering voluntarily before either of the CRA's $30,000 tests is met may unlock earlier credit claims — subject to filing and remittance obligations.",
       legal:
         "If contracts require a GST number, registration may unlock B2B eligibility regardless of the small-supplier threshold.",
     },
@@ -55,12 +57,14 @@ export const structureLadderV2026 = [
         note: "CRA guidance on registering for GST/HST.",
       },
       {
-        title: "When to register for GST/HST",
+        title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register.html",
-        lastVerified: LAST_VERIFIED,
-        note: "CRA small-supplier and mandatory registration thresholds.",
+        // The old address (…/when-register.html) answers 404 since at least 2026-10-06; this rung's
+        // wording now follows the page's two tests, read there on 2026-10-11.
+        url: CRA_WHEN_TO_REGISTER_URL,
+        lastVerified: CRA_WHEN_TO_REGISTER_READ,
+        note: "CRA small-supplier tests and mandatory registration (page details 2026-06-16).",
       },
     ],
     transitionTrigger: "Net income, liability, SR&ED, or SBD planning may favour incorporation.",

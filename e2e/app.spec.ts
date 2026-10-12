@@ -863,7 +863,8 @@ test.describe("how old each figure is", () => {
     ).toBeVisible();
     await expect(page.getByText("October to December 2025 and 3 earlier quarters aren't fully covered yet.").first()).toBeVisible();
     // ...and never reads the future-dated figure as this quarter's revenue.
-    await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
+    // (The card's own sentence, not the CRA's test quoted on the cards since 2026-10-11, which uses the same words.)
+    await expect(page.getByText(/your confirmed revenue for .* over \$30,000 in a single calendar quarter/)).toHaveCount(0);
   });
 
   test("a map left open past midnight on a quarter's last day moves to the new four-quarter window without a reload", async ({

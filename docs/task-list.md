@@ -38,7 +38,8 @@ and the maintainer's six decisions of 2026-10-11:
     $___"; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure
     too, and a test keeps it off); federal and Alberta incorporation side by side for you to pick; the
     GST/HST card quoting the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
-    type at the start saved, dated and word for word
+    type at the start saved, dated and word for word (2026-10-11: all built except picking
+    a route: federal and Alberta are shown side by side, and the pick comes with the cost lines)
   - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta*
@@ -395,14 +396,16 @@ roadmap's build order.
   - [x] Three fixes first: no invented point to incorporate (the stage is now "Incorporating"); the map's
     colours follow your own picks; the sentence typed on the front door is kept with the idea, dated and
     word for word, once, with the goal chips as they stood on the intake
-  - [ ] Federal and Alberta incorporation side by side, from their official pages, and your own "I'd
-    incorporate at $___"
-  - [ ] The GST/HST card worded with the CRA's exact test, quoted from the cited page; the uncited 70%
+  - [x] Federal and Alberta incorporation side by side, from their official pages, and your own "I'd
+    incorporate at $___" (2026-10-11; Alberta's registry fees stay named blanks until a person reads
+    the Registry agent product catalogue; picking a route and totalling fees come with the cost lines)
+  - [x] The GST/HST card worded with the CRA's exact test, quoted from the cited page; the uncited 70%
     "approaching the line" watch (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) goes with it
-  - [ ] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
+  - [x] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
     AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
+    (2026-10-11: the card says so, naming the tag; asking instead is still open)
   - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"
-  - [ ] A stage card's chip says "default" until the person clicks its toggle, not "your pick"
+  - [x] A stage card's chip says "default" until the person clicks its toggle, not "your pick" (#5)
   - [ ] A road any future can use; the map draws any road; today's map becomes "Starting any business in
     Alberta"
   - [ ] Skill marks, step progress, your target date and cost lines, kept on your computer

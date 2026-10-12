@@ -9,8 +9,8 @@ import type { EvaluationResult, UnlockItem } from "@/lib/brain/types";
 import type { CFENode, CFENodeId } from "@/lib/engines/cfe/v2026";
 import { cfeTiersV2026, tierForStage, type CFETier } from "@/lib/engines/cfe/v2026/tiers";
 import { branchDecisions, type BranchDecision } from "@/lib/scenarios/branches";
-import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
-import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
+import { getScenarioNodeStatus, isBranchDecided, stageChipFor, type StageChipKind } from "@/lib/scenarios/graph";
+import type { Scenario } from "@/lib/scenarios/types";
 
 /**
  * S2.5.4j — the map as tier columns (decided 2026-09-16: the free-form graph was hard to
@@ -32,16 +32,22 @@ interface StrategyMapProps {
   evaluation: EvaluationResult;
   selectedNodeId: CFENodeId | null;
   onSelectNode: (nodeId: CFENodeId) => void;
-  decidedBranchIds: ReadonlySet<string>;
   onBranchChange: (decision: BranchDecision, optionId: CFENodeId) => void;
 }
 
-const STAGE_CHIP: Record<ScenarioNodeStatus, { label: string; className: string }> = {
-  active: { label: "now", className: "text-maple bg-maple/15" },
-  decision: { label: "your pick", className: "text-amber bg-amber/15" },
-  complete: { label: "done", className: "text-sage bg-sage/15" },
-  upcoming: { label: "ahead", className: "text-stone bg-rule/30" },
-  ghost: { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
+/**
+ * The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which). Issue #5, 2026-10-11:
+ * "your pick" only on what the person picked; an untouched toggle's side says "default", and the fork
+ * drawn on every map says "open choice".
+ */
+const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = {
+  now: { label: "now", className: "text-maple bg-maple/15" },
+  "your-pick": { label: "your pick", className: "text-amber bg-amber/15" },
+  default: { label: "default", className: "text-stone border border-amber/50" },
+  "open-choice": { label: "open choice", className: "text-stone border border-rule" },
+  done: { label: "done", className: "text-sage bg-sage/15" },
+  ahead: { label: "ahead", className: "text-stone bg-rule/30" },
+  "not-on-your-path": { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
 };
 
 /**
@@ -67,7 +73,6 @@ export function StrategyMap({
   evaluation,
   selectedNodeId,
   onSelectNode,
-  decidedBranchIds,
   onBranchChange,
 }: StrategyMapProps) {
   const [hoveredId, setHoveredId] = useState<CFENodeId | null>(null);
@@ -113,7 +118,6 @@ export function StrategyMap({
                 evaluation={evaluation}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={onSelectNode}
-                decidedBranchIds={decidedBranchIds}
                 onBranchChange={onBranchChange}
                 focus={focus}
               />
@@ -142,7 +146,6 @@ function TierColumn({
   evaluation,
   selectedNodeId,
   onSelectNode,
-  decidedBranchIds,
   onBranchChange,
   focus,
 }: StrategyMapProps & { tier: CFETier; focus: MapFocus }) {
@@ -160,7 +163,7 @@ function TierColumn({
           <BranchToggle
             decision={decision}
             activeOptionId={scenario.state.activeBranches[decision.id]}
-            isDefault={!decidedBranchIds.has(decision.id)}
+            isDefault={!isBranchDecided(decision.id, scenario.state)}
             onChange={(optionId) => onBranchChange(decision, optionId)}
           />
         ) : null}
@@ -168,6 +171,7 @@ function TierColumn({
 
       {nodes.map((node) => {
         const status = getScenarioNodeStatus(node.id as CFENodeId, scenario);
+        const chip = stageChipFor(node.id as CFENodeId, scenario);
         const colour = evaluation.nodeStates[node.id as CFENodeId] ?? "gray";
         const levers = itemsForNode(evaluation.unlocks, node.id as CFENodeId).forThisStage;
         const selected = selectedNodeId === node.id;
@@ -177,7 +181,8 @@ function TierColumn({
           <div key={node.id} className={`flex flex-col gap-1.5 transition-opacity ${dimmed ? "opacity-35" : ""}`}>
             <StageCard
               node={node}
-              status={status}
+              chip={chip}
+              reason={evaluation.nodeReasons[node.id as CFENodeId]}
               colour={colour}
               selected={selected}
               onClick={() => onSelectNode(node.id as CFENodeId)}
@@ -200,7 +205,8 @@ function TierColumn({
 
 function StageCard({
   node,
-  status,
+  chip: chipKind,
+  reason,
   colour,
   selected,
   onClick,
@@ -208,15 +214,17 @@ function StageCard({
   registerCard,
 }: {
   node: CFENode;
-  status: ScenarioNodeStatus;
+  chip: StageChipKind;
+  /** The rules' one sentence on which of the person's answers set this card's colour, if any. */
+  reason?: string;
   colour: "green" | "yellow" | "gray";
   selected: boolean;
   onClick: () => void;
   onHover: (on: boolean) => void;
   registerCard: (el: HTMLElement | null) => void;
 }) {
-  const chip = STAGE_CHIP[status];
-  const ghost = status === "ghost";
+  const chip = STAGE_CHIP[chipKind];
+  const ghost = chipKind === "not-on-your-path";
   return (
     <button
       ref={registerCard}
@@ -239,12 +247,13 @@ function StageCard({
         </span>
       </div>
       <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{node.trigger}</p>
+      {reason ? <p className="mt-1.5 text-[10.5px] leading-snug text-paper-dim">{reason}</p> : null}
     </button>
   );
 }
 
 /** The one dated fact the evaluator carries for this item, or nothing — never an invented range.
- * (Figures like the $30K line stay in the catalog and reach the screen through `item.why`.) */
+ * (Figures like the GST/HST line stay in the catalog and reach the screen through `item.why`.) */
 function leverFact(item: UnlockItem): string | null {
   return item.expires ? `in use before ${item.expires.slice(0, 4)}` : null;
 }

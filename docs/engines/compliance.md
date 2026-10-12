@@ -18,18 +18,18 @@ Compliance and Risk answer different questions and must not blur:
   strategy* — severity, GAAR exposure, mitigation. Risk entries **reference** engine entry
   ids (including compliance ids) via `appliesTo`.
 
-Example of the split: "GST registration required over $30K" = Compliance. "Repeated losses
+Example of the split: "GST registration required over $30,000 (the CRA's two tests)" = Compliance. "Repeated losses
 invite hobby reclassification" = the *fact* of the test is Compliance
 (`compliance-hobby-vs-business`); the *audit-sensitivity of claiming losses year after
 year* is a Risk entry pointing at it.
 
 ## How it should reason (target)
 
-- **Thresholds become typed data**: `threshold` is currently a display string
-  (`"$30,000 rolling four-quarter"`). The rules engine needs `{ amount: 30000, basis:
-  "rolling-4-quarters" }` to power "threshold watch" behavior (revenue assumption within
-  ~70% of a threshold → yellow watch card, which the intake preview already fakes).
-- **Forks, not verdicts.** GST voluntary-vs-mandatory is the canonical fork: under $30K
+- **Thresholds are typed data** (`thresholdAmount`, `thresholdTest`), and the official test is
+  quoted in its own words (`officialWords`). A card changes only when the cited test is met: there
+  is no "getting close" band of DotAmi's own (a 70% one was removed on 2026-10-11, because no
+  cited page sets it).
+- **Forks, not verdicts.** GST voluntary-vs-mandatory is the canonical fork: under $30,000
   the engine surfaces *both* "small supplier — registration may be deferred" *and*
   "voluntary registration may unlock ITCs" (the aggressive option), with the trade-off
   stated. Never collapse a fork into advice.
