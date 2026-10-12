@@ -92,35 +92,73 @@ describe("what counts as the same words", () => {
   it("words that sit only in a script or the head are never found", () => {
     expect(findQuotes(pageToText(GOVERNMENT), ["register within thirty days of your first sale"])[0].found).toBe(false);
   });
+
+  // A match has to be whole words: a dropped leading digit or a dropped prefix changes exactly the
+  // numbers and conditions an entry relies on.
+  it("a quote is found only as whole words, never inside a longer word or number", () => {
+    const found = (body: string, quote: string) => findQuotes(pageToText(body), [quote])[0].found;
+    expect(found("<p>revenue over $130,000 in a year</p>", "30,000 in a year")).toBe(false);
+    expect(found("<p>the rule is inapplicable here</p>", "applicable here")).toBe(false);
+    expect(found("<p>the rule is applicable hereafter</p>", "rule is applicable here")).toBe(false);
+    expect(found("<p>a limit of $30,000.50 a year</p>", "a limit of $30,000")).toBe(false);
+    expect(found("<p>a limit of 1.5 per cent</p>", "5 per cent")).toBe(false);
+    // The same words standing alone are still found, with punctuation or the text's edge around them.
+    expect(found("<p>revenue over $30,000 in a year.</p>", "30,000 in a year")).toBe(true);
+    expect(found("<p>(the rule is applicable here)</p>", "applicable here")).toBe(true);
+    expect(found("<p>applicable here</p>", "applicable here")).toBe(true);
+    // A second, whole-word place on the page is found even when the first was inside a word.
+    expect(found("<p>inapplicable here, but applicable here too</p>", "applicable here")).toBe(true);
+  });
+
+  it("a quote can't be stitched together from separate cells, list items or paragraphs", () => {
+    const found = (body: string, quote: string) => findQuotes(pageToText(body), [quote])[0].found;
+    expect(found("<table><tr><td>$30,000</td><td>or less</td></tr></table>", "$30,000 or less")).toBe(false);
+    expect(found("<ul><li>You must register</li><li>within 29 days</li></ul>", "You must register within 29 days")).toBe(false);
+    expect(found("<p>You must register</p><p>within 29 days</p>", "You must register within 29 days")).toBe(false);
+    // Inside one block, line breaks in the page's source still don't matter.
+    expect(found("<td>$30,000\n   or less</td>", "$30,000 or less")).toBe(true);
+  });
+
+  it("text the page hides (the hidden attribute, an inline display:none) is never found", () => {
+    const found = (body: string, quote: string) => findQuotes(pageToText(body), [quote])[0].found;
+    expect(found("<p hidden>register within thirty days</p>", "register within thirty days")).toBe(false);
+    expect(found('<div style="color: red; display:none"><p>register within thirty days</p></div>', "register within thirty days")).toBe(false);
+    expect(found("<div hidden><div>register within</div> thirty days</div><p>after</p>", "register within thirty days")).toBe(false);
+    // Nested elements of the same name close at the right place: the text after them still counts.
+    expect(found("<div hidden><div>gone</div></div><div>register within thirty days</div>", "register within thirty days")).toBe(true);
+    // aria-hidden hides an element from screen readers, not from the eye, and type="hidden" is a form field.
+    expect(found('<p aria-hidden="true">register within thirty days</p>', "register within thirty days")).toBe(true);
+    expect(found('<input type="hidden" value="x"><p>register within thirty days</p>', "register within thirty days")).toBe(true);
+  });
 });
 
 describe("checking one page before recording a tool check (--url, --quote)", () => {
   it("every quote found: exit 0, each one listed, and the date to record", async () => {
-    const r = await run(["--url", URL_A, "--quote", "small operator", "--quote", "$40,000 or less"], { [URL_A]: html(GOVERNMENT) });
+    const r = await run(["--url", URL_A, "--quote", "a small operator", "--quote", "$40,000 or less"], { [URL_A]: html(GOVERNMENT) });
     expect(r.code).toBe(0);
-    expect(r.out).toContain(`found      "small operator"`);
+    expect(r.out).toContain(`found      "a small operator"`);
     expect(r.out).toContain(`found      "$40,000 or less"`);
     expect(r.out).toContain('All 2 quotes were found. To record: toolCheck: { checkedOn: "2026-10-11", quotes: [');
     expect(r.asked).toEqual([URL_A]);
   });
 
   it("a quote the page no longer has: exit 1 and nothing to record", async () => {
-    const r = await run(["--url", URL_A, "--quote", "small operator", "--quote", "$40,000 or less"], { [URL_A]: html(CHANGED) });
+    const r = await run(["--url", URL_A, "--quote", "a small operator", "--quote", "$40,000 or less"], { [URL_A]: html(CHANGED) });
     expect(r.code).toBe(1);
-    expect(r.out).toContain(`found      "small operator"`);
+    expect(r.out).toContain(`found      "a small operator"`);
     expect(r.out).toContain(`NOT FOUND  "$40,000 or less"`);
     expect(r.out).toContain("1 of 2 quotes not found. Nothing to record.");
     expect(r.out).not.toContain("checkedOn");
   });
 
   it("a page that can't be fetched is not checked: exit 1", async () => {
-    const r = await run(["--url", URL_A, "--quote", "small operator"], {});
+    const r = await run(["--url", URL_A, "--quote", "a small operator"], {});
     expect(r.code).toBe(1);
     expect(r.out).toContain("could not be checked: the server answered 404");
   });
 
   it("a PDF is left to a person: exit 1", async () => {
-    const r = await run(["--url", URL_A, "--quote", "small operator"], {
+    const r = await run(["--url", URL_A, "--quote", "a small operator"], {
       [URL_A]: { ok: true, status: 200, contentType: "application/pdf", body: "%PDF-1.7" },
     });
     expect(r.code).toBe(1);
@@ -131,6 +169,15 @@ describe("checking one page before recording a tool check (--url, --quote)", () 
     for (const argv of [["--url", URL_A], ["--url", URL_A, "--quote", "  "], ["--url", "http://example.com", "--quote", "x"], ["--quote", "x"]]) {
       const r = await run(argv, { [URL_A]: html(GOVERNMENT) });
       expect(r.code, argv.join(" ")).toBe(2);
+      expect(r.asked).toEqual([]);
+    }
+  });
+
+  it("a quote of fewer than three words is a usage error: one letter or a bare number proves little", async () => {
+    for (const quote of ["a", "30", "or less", "$40,000 —"]) {
+      const r = await run(["--url", URL_A, "--quote", quote], { [URL_A]: html(GOVERNMENT) });
+      expect(r.code, quote).toBe(2);
+      expect(r.out).toContain("a quote needs at least 3 words");
       expect(r.asked).toEqual([]);
     }
   });

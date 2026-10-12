@@ -16,7 +16,7 @@ import { T2125_LINES } from "@/lib/figures/return/lines";
 import { FIGURE_KINDS } from "@/lib/figures/types";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
-import { citationCheckProblems } from "@/lib/engines/shared/citation-check";
+import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
 
 describe("engine catalog integrity", () => {
   it("CFE has unique ids, citations, and 10 nodes", () => {
@@ -81,9 +81,9 @@ describe("engine catalog integrity", () => {
   }
 
   // Decided 2026-10-11 (option B, docs/engines/citations.md): every citation says how it was
-  // checked. A person's read (lastVerified), or a tool check (the day a script found the quoted
-  // words on the live page, and those quotes), or both.
-  it("every citation was read by a person or checked by a tool with its quotes, and no check is dated after today", () => {
+  // checked. A read (lastVerified, with readBy saying who when that is on record), or a tool check
+  // (the day a script found the quoted words on the live page, and those quotes), or both.
+  it("every citation was read or checked by a tool with its quotes, and no read or check is dated after today", () => {
     const today = new Date().toLocaleDateString("en-CA");
     const problems = allCatalogCitations().flatMap(({ where, citation }) =>
       citationCheckProblems(citation, today).map((p) => `${where}: ${p}`),
@@ -246,6 +246,10 @@ describe("tax-line catalog ([8f])", () => {
         expect(year.citations.length).toBeGreaterThan(0);
         // The first citation is that year's form; lib/figures/tax-line.ts shows its date.
         expect(year.citations[0].url).toContain(`t2125-${String(year.taxYear).slice(2)}e.pdf`);
+        // The Tax year screens say DotAmi "has read" a year's form and show its line numbers, so that
+        // form must have been read by a person: a tool check, an AI model's read or a read nobody
+        // recorded isn't enough (docs/engines/citations.md).
+        expect(howChecked(year.citations[0]).kind, `${entry.id} ${year.taxYear}`).toBe("person");
         for (const c of year.citations) {
           expect(c.url).toMatch(/^https:\/\/www\.canada\.ca\//);
           expect(c.authority).toBe("CRA");

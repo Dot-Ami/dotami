@@ -167,10 +167,10 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await expect(stage("Incorporation for liability/SR&ED")).toHaveAccessibleName(/, your pick, check first, opens detail$/);
 });
 
-// 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked, read by a
-// person or checked by a tool. Every source on the map today was read by a person, so the stage's
-// sources, the playbook export and the readout all say "Read by a person on <date>", and none says
-// "verified" any more.
+// 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every
+// source on the map today was read, and for the map's own stages nobody recorded who read it, so the
+// stage's sources and the playbook export say "Read on <date>. Who read it wasn't recorded." and never
+// claim a person; the readout says the same words as the screens, and none says "verified" any more.
 test("every source says how it was checked: the map's sources, the playbook export and the readout", async ({ page }) => {
   const scenario = {
     id: `checked-${Date.now()}`,
@@ -204,7 +204,8 @@ test("every source says how it was checked: the map's sources, the playbook expo
   const sources = page.locator("details[open]").filter({ has: page.locator("summary", { hasText: "Sources for this stage" }) }).getByRole("listitem");
   expect(await sources.count()).toBeGreaterThan(0);
   for (const item of await sources.all()) {
-    await expect(item).toContainText(/Read by a person on \d{4}-\d{2}-\d{2}/);
+    await expect(item).toContainText(/Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./i);
+    await expect(item).not.toContainText(/Read by a person/i);
     await expect(item).not.toContainText(/verified/i);
   }
 
@@ -212,7 +213,8 @@ test("every source says how it was checked: the map's sources, the playbook expo
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const markdown = page.locator("pre");
   await expect(markdown).toContainText("### Citations");
-  await expect(markdown).toContainText(/ · Read by a person on \d{4}-\d{2}-\d{2}/);
+  await expect(markdown).toContainText(/ · Read on \d{4}-\d{2}-\d{2}\. Who read it wasn't recorded\./);
+  await expect(markdown).toContainText(/sources_read_by_a_person: \d+ of \d+/);
   await expect(markdown).not.toContainText("· verified ");
 
   // The readout, for an agent: each citation carries the same words beside its dates.
@@ -221,7 +223,13 @@ test("every source says how it was checked: the map's sources, the playbook expo
   };
   const citations = readout.evaluation.unlocks.flatMap((u) => u.citations);
   expect(citations.length).toBeGreaterThan(0);
-  for (const c of citations) expect(c.howChecked).toBe(`Read by a person on ${c.lastVerified}`);
+  for (const c of citations) {
+    expect([
+      `Read by a person on ${c.lastVerified}`,
+      `Read on ${c.lastVerified}. Who read it wasn't recorded.`,
+      `Read by an AI model on ${c.lastVerified}. Not read by a person yet.`,
+    ]).toContain(c.howChecked);
+  }
 });
 
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
