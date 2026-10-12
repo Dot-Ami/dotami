@@ -375,8 +375,9 @@ function evaluateComplianceRule(
   let step: IntakeStep = "location";
   let payoff = entry.lensAnnotations.tax;
   let why = `Shown because you selected ${provinceName(profile.province)}.`;
-  if (entry.industryTags) {
-    // A rule for a kind of work says so: the tag lit it, and the province only if the rule is provincial.
+  if (entry.industryTags && entry.reasonNamesTags) {
+    // A rule for a kind of work that says so: the tag lit it, and the province only if the rule is
+    // provincial. Opt-in per rule (`reasonNamesTags`), so the older work-scoped cards keep their line.
     const tags = matchedTags(profile, entry.industryTags);
     const where = entry.provinces.includes("CA") ? "" : ` and you selected ${provinceName(profile.province)}`;
     why = `Shown because your intake has the activity ${tags.length === 1 ? "tag" : "tags"} ${andList(tags)}${where}.`;

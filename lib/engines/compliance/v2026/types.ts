@@ -5,7 +5,8 @@ export type ComplianceRuleType =
   | "pst-hst"
   | "licensing"
   | "hobby-vs-business"
-  // 2026-10-11: a platform's own duty to report its sellers to the CRA (docs/engines/compliance.md).
+  // 2026-10-11: a platform's own duty to report its sellers to the CRA. New, so it waits on the
+  // maintainer's yes (docs/engines/compliance.md, authoring rule 1); nothing reads rule types yet.
   | "platform-reporting";
 
 /**
@@ -43,6 +44,13 @@ export interface ComplianceRule {
   citations: EngineCitation[];
   provinces: Province[];
   industryTags?: string[];
+  /**
+   * The card's reason names the activity tag that lit it ("Shown because your intake has the activity
+   * tag …") instead of only the province. Set on the ride-share and taxi cards (2026-10-11), whose
+   * province says nothing about why they show; the older cards for a kind of work keep naming the
+   * province until the maintainer decides whether they should change too.
+   */
+  reasonNamesTags?: true;
   /** Present when this rule, wherever it applies, takes away another rule's threshold "not yet". */
   setsAsideThreshold?: ThresholdSetAside;
 }

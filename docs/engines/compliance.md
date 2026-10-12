@@ -53,9 +53,13 @@ How it is modelled, all in the catalog, none of it in a component:
 
 - **A kind of work.** `Ride-share or taxi driving` is an activity tag (`lib/journey/intent.ts`),
   with keywords for the keyword parser (`lib/journey/intent-fallback.ts`). The keywords don't
-  include a bare "uber", because the CRA's own example counts Uber Eats food delivery separately
-  from driving passengers, and they don't include a bare "taxi", which would also match
-  "taxidermy".
+  include a bare "uber", because the CRA's own example counts Uber Eats food delivery toward the
+  general $30,000 total, and its Uber phrases ("drive for uber", "driving uber", …) don't count
+  when the next word is "eats", so "I drive for Uber Eats" isn't read as ride-share driving. They
+  don't include a bare "rideshare" (or its other spellings) either, only phrases about driving
+  ("rideshare driver", "drive rideshare", "driving for a rideshare …"), so "I'm building a rideshare
+  app" isn't read as driving: the CRA's rule is about the drivers who give the rides. And no bare
+  "taxi", which would also match "taxidermy".
 - **A rule for that work.** `compliance-gst-taxi-ride-sharing` (`rules.ts`) is scoped to the tag
   by `industryTags`, applies in every province (`CA`), has no `thresholdAmount`, and quotes the
   CRA's sharing-economy page word for word (`officialWords`). It cites that page, the CRA's taxi
@@ -77,16 +81,18 @@ How it is modelled, all in the catalog, none of it in a component:
 - **The platform card.** `compliance-platform-reporting-rideshare`, for the same tag, quotes the
   CRA's page on the reporting rules for digital platform operators: platform operators collect
   information on certain sellers and report it to the CRA each year, and the CRA lists rideshare
-  and delivery services among the activities whose sellers may be reported. It says "information",
-  as the page does, not "earnings". Its rule type, `platform-reporting`, is new (authoring rule 1);
-  the maintainer approves it with this change or asks for it to be folded into another type.
-
-- **A card for a kind of work says so.** Every compliance card scoped by `industryTags` now gives the
-  tag that lit it as its reason ("Shown because your intake has the activity tag Ride-share or taxi
-  driving."), adding the province only when the rule is provincial ("… tag Trades and you selected
-  Alberta."). Until 2026-10-11 these cards said only "Shown because you selected <province>.", which
-  left out the answer that actually lit them; this changes the hobby-vs-business and licensing cards'
-  reason lines too.
+  and delivery services among the activities whose sellers "may" be reported. Its title hedges the
+  same way (*Ride-share platforms may report drivers' information to the CRA*), and it says
+  "information", as the page does, not "earnings". Its rule type, `platform-reporting`, is new and
+  not yet approved (authoring rule 1 below still lists only the four approved types): the
+  maintainer approves it or asks for it to be folded into another type. Nothing reads rule types
+  today, so the answer changes no screen.
+- **The two cards name the tag that lit them.** Both ride-share cards carry `reasonNamesTags`, so
+  their reason is "Shown because your intake has the activity tag Ride-share or taxi driving." rather
+  than "Shown because you selected <province>.", which would say nothing about why they show. The
+  older cards scoped by `industryTags` (hobby vs. business, the licensing cards) don't carry it and
+  keep naming the province; whether they should name their tag too is a separate decision
+  (`tests/rideshare-gst.spec.ts` pins their lines).
 
 What it doesn't do: it doesn't ask whether the person is self-employed or an employee driver (the
 CRA's pages are about self-employed drivers; the intake's employment question is about the
@@ -97,9 +103,8 @@ personal services). Each is a separate change.
 ## Authoring rules specific to this engine
 
 1. Rule types stay within the existing union (`gst-threshold`, `pst-hst`,
-   `hobby-vs-business`, `licensing`, and `platform-reporting` since 2026-10-11) unless a
-   maintainer approves a new type — types are meant for UI grouping (no screen groups by them
-   yet).
+   `hobby-vs-business`, `licensing`) unless a maintainer approves a new type — types are
+   consumed by UI grouping.
 2. Licensing rules are industry-scoped via `industryTags`; keep them narrow and cited to
    the actual regulation (the ON food-premises entry citing O. Reg. 562 is the model).
 3. Compass language is *most* load-bearing here — compliance copy that reads as legal

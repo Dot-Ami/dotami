@@ -188,7 +188,7 @@ export const complianceRulesV2026 = [
     // The GST/HST registration family the small-supplier rule is in, although this rule has no line.
     ruleType: "gst-threshold",
     description:
-      "The CRA says self-employed taxi operators and commercial ride-sharing drivers have to register for GST/HST even if they are small suppliers: the $30,000 line doesn't apply to those rides. For commercial ride-sharing, its info sheet GI-196 says registration takes effect the day the driver starts making taxable supplies, and the driver has until the thirtieth day after that to apply.",
+      "The CRA says self-employed taxi operators and commercial ride-sharing drivers have to register for GST/HST even if they are small suppliers: the $30,000 line doesn't apply to those rides. For commercial ride-sharing, its info sheet GI-196 says registration takes effect the day the driver starts making taxable supplies, and the driver has to apply before the thirtieth day after that.",
     officialWords: CRA_RIDESHARING_REGISTRATION,
     lensAnnotations: {
       tax: "If you drive passengers for fares arranged through an app, or run a taxi business, the CRA says registration for those rides is needed whatever you earn, from the day of your first paid ride, with 30 days to apply (GI-196, for ride-sharing). That date is worth taking to your accountant.",
@@ -201,6 +201,7 @@ export const complianceRulesV2026 = [
       stillDecides:
         "The $30,000 line still counts for your other sales: the CRA says that while your combined sales stay under $30,000, the required registration generally covers only the ride-sharing, unless you ask for more.",
     },
+    reasonNamesTags: true,
     citations: [
       {
         title: "Sharing economy: commercial ridesharing",
@@ -247,12 +248,14 @@ export const complianceRulesV2026 = [
     industryTags: ["Ride-share or taxi driving"],
   },
   {
-    // 2026-10-11. Says "information", as the CRA's page does: the page doesn't say "earnings".
+    // 2026-10-11. Says "information", as the CRA's page does: the page doesn't say "earnings". And
+    // "may", "certain sellers": the page says the sellers reported "may include" rideshare drivers.
     id: "compliance-platform-reporting-rideshare",
-    label: "Ride-share platforms report drivers' information to the CRA",
+    label: "Ride-share platforms may report drivers' information to the CRA",
+    // A new type, waiting on the maintainer's yes (docs/engines/compliance.md, authoring rule 1).
     ruleType: "platform-reporting",
     description:
-      "Under the reporting rules for digital platform operators (Part XX of the Income Tax Act), certain platform operators collect information on the sellers who use them, verify it and report it to the CRA each year. The CRA lists rideshare and delivery services among the activities whose sellers may be reported.",
+      "Under the reporting rules for digital platform operators (Part XX of the Income Tax Act), certain platform operators collect information on certain sellers who use them, verify it and report it to the CRA each year. The CRA lists rideshare and delivery services among the activities whose sellers may be reported.",
     officialWords: CRA_PLATFORM_REPORTING,
     lensAnnotations: {
       tax: "If you drive through an app, its operator may report information about you to the CRA each year, apart from anything you report yourself.",
@@ -265,9 +268,10 @@ export const complianceRulesV2026 = [
         jurisdiction: "CA",
         url: CRA_PLATFORM_REPORTING_URL,
         lastVerified: RIDE_SHARE_PAGES_READ,
-        note: "Read 2026-10-11, page details dated 2025-08-01. The sentences on the card are copied from it, with the list item \"Rideshare and delivery services\" under \"What is a relevant service\"; the page says \"The rules are contained in Part XX of the Income Tax Act\".",
+        note: "Read 2026-10-11, page details dated 2025-08-01. The sentences on the card are copied from it, with the list item \"Rideshare and delivery services\" from the list of activities whose sellers \"may\" be reported; the page says \"The rules are contained in Part XX of the Income Tax Act\".",
       },
     ],
+    reasonNamesTags: true,
     provinces: ["AB", "BC", "ON", "CA"],
     industryTags: ["Ride-share or taxi driving"],
   },

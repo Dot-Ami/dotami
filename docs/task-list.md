@@ -407,6 +407,10 @@ roadmap's build order.
   - [ ] Ride-share and taxi follow-ons: the keyword reader still marks "platform" and "app" as Software /
     SaaS, so a driver "using the Uber platform" gets that tag too; the platform-reporting card for the
     other activities the CRA lists (selling goods, renting property, personal services)
+  - [ ] Waiting on the maintainer: approve the new `platform-reporting` rule type or fold it into
+    another (docs/engines/compliance.md, authoring rule 1); and decide whether the older cards for a
+    kind of work (hobby vs. business, the licensing cards) should name the tag that lit them, as the
+    two ride-share cards do, instead of only the province
   - [x] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
     AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
     (2026-10-11: the card says so, naming the tag; asking instead is tracked on its own line below)

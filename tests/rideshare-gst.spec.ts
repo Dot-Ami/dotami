@@ -267,7 +267,7 @@ describe("the control: the same $10,000 without the driving tag is unchanged", (
   });
 });
 
-describe("platforms report drivers' information to the CRA", () => {
+describe("platforms may report drivers' information to the CRA", () => {
   const platform = () => complianceCatalogV2026.entries.find((e) => e.id === PLATFORM_RULE);
 
   it("is a cited card for the same kind of work, quoting the CRA's page on the reporting rules", () => {

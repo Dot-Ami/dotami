@@ -31,15 +31,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or
   that none of its three tags is on the intake).
 - **A "Ride-share or taxi driving" kind of work**, with a card for the platforms' reporting: on the intake
-  it is its own chip, and the keyword reader marks it from words like "rideshare", "Lyft", "taxi driver"
-  or "driving for Uber", but not from "Uber Eats" alone (the CRA counts food delivery separately). With
-  it, the map adds *Ride-share platforms report drivers' information to the CRA*, quoting the CRA's page
-  on the reporting rules for digital platforms ("These platform operators have to collect detailed
+  it is its own chip, and the keyword reader marks it from words like "rideshare driver", "Lyft", "taxi
+  driver" or "driving for Uber", but not from "driving for Uber Eats" (the CRA counts food delivery
+  toward the general $30,000 total) or "building a rideshare app" (the rule is about drivers). With
+  it, the map adds *Ride-share platforms may report drivers' information to the CRA*, quoting the CRA's
+  page on the reporting rules for digital platforms ("These platform operators have to collect detailed
   information on certain sellers.", and "Rideshare and delivery services" among the activities listed).
-  It says "information", as the page does
-  ([`lib/engines/compliance/v2026/rules.ts`](lib/engines/compliance/v2026/rules.ts)).
-- **A compliance card for a kind of work names the tag that lit it** ("Shown because your intake has the
-  activity tag Trades and you selected Alberta."), instead of naming only the province.
+  It says "information" and "may", as the page does
+  ([`lib/engines/compliance/v2026/rules.ts`](lib/engines/compliance/v2026/rules.ts)). The two ride-share
+  cards say the tag lit them; the other cards for a kind of work keep naming the province.
 
 ### Changed
 - **The GST/HST cards quote the Canada Revenue Agency's two tests, word for word** ("You exceed the

@@ -36,8 +36,8 @@ says the $30,000 small-supplier line doesn't apply to commercial ride-sharing or
 it doesn't decide when your rides need registering." Voluntary GST registration's line is what the line
 still decides: "The $30,000 line still counts for your other sales: the CRA says that while your
 combined sales stay under $30,000, the required registration generally covers only the ride-sharing,
-unless you ask for more." Sole Prop activation adds *Ride-share platforms report drivers' information
-to the CRA*, quoting the CRA's page on the reporting rules for digital platforms. Both sentences and
+unless you ask for more." Sole Prop activation adds *Ride-share platforms may report drivers'
+information to the CRA*, quoting the CRA's page on the reporting rules for digital platforms. Both sentences and
 both cards come from the catalog (`lib/engines/compliance/v2026/rules.ts`,
 `ride-share-official-words.ts`).
 
