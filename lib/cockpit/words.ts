@@ -194,6 +194,9 @@ export const cockpitWords = {
     noRoute: "This can't be taken back here yet.",
     change: "Change",
     takeBack: "Take back",
+    // Each row's buttons named with the row for a screen reader, which otherwise hears "Take back" ten times.
+    changeFor: (said: string) => `Change: ${said}`,
+    takeBackFor: (said: string) => `Take back: ${said}`,
   },
 
   /** "Not told yet": each missing answer and the one thing it would unlock. */
@@ -211,6 +214,8 @@ export const cockpitWords = {
     fewer: "Show fewer",
     dontKnowFolded: (n: number) => `${n} you don't know yet`,
     showThem: "Show them",
+    /** A question's button named with its question, for a screen reader. */
+    forQuestion: (button: string, question: string) => `${button}: ${question}`,
   },
 
   /** Each question: what it asks, why it is asked, and the part of the screen the answer feeds. */
@@ -277,7 +282,18 @@ export const cockpitWords = {
   receipts: {
     region: "What changed",
     nothing: "Saved. Nothing on the road changed.",
-    sinceLastTime: "Since last time",
+    /** A take back that changed nothing on the road still says what was taken back. */
+    nothingAfter: (what: string) => `Saved: ${what}. Nothing on the road changed.`,
+    /** The idea's own answers wait for the map's save before their receipt is worked out. */
+    saving: "Saving your answer…",
+    notSaved: "Not saved yet: the save didn't go through. Your answer stays in this tab, and Save now tries again.",
+    /**
+     * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
+     * time" is kept for the return visit's list, which isn't built).
+     */
+    thisVisit: "This visit",
+    moreThisVisit: (n: number) => `${n} more this visit`,
+    fewer: "Show fewer",
   },
 
   /** "Try first-year sales of $___": relights the rules for one run, never a figure. */
@@ -305,6 +321,10 @@ export const cockpitWords = {
     nonePicked: "No side picked yet.",
     noForks: "This road has no fork to compare.",
     thisIsMine: "This is mine",
+    thisIsMineFor: (side: string) => `This is mine: ${side}`,
+    /** On road 0, the map toggle's own short name for the same side. */
+    onTheMap: (toggle: string) => `on the map: ${quoted(toggle)}`,
+    noRowDiffers: "None of these rows differ between the two endings today.",
     rows: {
       "steps-on-path": "Steps on your path",
       "not-done": "Not marked done",
@@ -325,5 +345,11 @@ export const cockpitWords = {
     lines: (n: number) => count(n, "line", "lines"),
     onlyIf: (n: number) => (n === 0 ? "none" : `${count(n, "line", "lines")}, not added up`),
     cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
+  },
+
+  /** The left rail's own fields. */
+  rail: {
+    /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target (2026-10-12, after review). */
+    salesTarget: (dollars: number) => (dollars > 0 ? formatMoney(dollars * 100) : "not given"),
   },
 };

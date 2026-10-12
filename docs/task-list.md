@@ -113,11 +113,17 @@ and the maintainer's six decisions of 2026-10-11:
     **Change** and **Take back**), *Not told yet* with *I don't know* and the one-question box, a receipt
     after every answer where it was given, the what-if bar with **Keep** and **Clear**, *Compare the two
     endings* with **This is mine** (an ending on a road other than today's kept through its own route);
-    [§ 2, Cockpit screen as built, part 2](architecture/future-cockpit.md))
+    [§ 2, Cockpit screen as built, part 2](architecture/future-cockpit.md). After review the same day:
+    the forks picked are kept with the map, the default side included; the intake's equipment chip left
+    off is not an answer; receipts of answers kept with the map wait for the save; *This visit* named for
+    what it holds; Compare without the what-if)
     - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates
-      coming up, figure reminders: it needs the day of the last visit, which isn't kept; today the line
-      holds this visit's receipts only); the export gaining the told list, the what-ifs and the ending
-      picked; the yearly income question, and taking it back; remembering the last overlay used
+      coming up, figure reminders: it needs the day of the last visit, which isn't kept; today *This
+      visit* holds this visit's receipts only); the export gaining the told list, the what-ifs and the
+      ending picked; the yearly income question, and taking it back; remembering the last overlay used;
+      a *Change* on one of the intake's answers opening that question instead of the intake's first
+      screen; receipt lines that name the steps and cards they count; a No to buying equipment survives
+      a later save from the intake only if the chip is then switched on or answered again in the box
   - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
     [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the

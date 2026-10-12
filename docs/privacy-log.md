@@ -118,8 +118,18 @@ person is asked).
   in `Venture.forkPicks` (a column already listed) through a new route that answers only DotAmi's own
   window (`POST /api/futures/<id>/ending`, [`app/api/futures/[id]/ending/route.ts`](../app/api/futures/[id]/ending/route.ts)).
   The what-if bar's number is kept nowhere; only **Keep** writes it, as the idea's own first-year sales
-  (the intake's Year 1 field, kept with the map), never as a figure. Receipts and *Since last time* are
+  (the intake's Year 1 field, kept with the map), never as a figure. Receipts and *This visit* are
   worked out on screen and kept nowhere. Nothing new leaves the computer.
+- **The idea's saved map keeps two more of the person's own answers (2026-10-12, after review).** In the
+  same JSON as the GST and incorporation picks (`ScenarioState.activeBranches`), each under its own key
+  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)): `decided`, the forks the person
+  picked a side at (until now kept in the browser tab only, so a pick of the map's default side was lost
+  on reload), and `equipmentNo`, set only when the person answered No to buying equipment, a vehicle or
+  tools in the one-question box. A Yes is kept where it was (`Venture.capitalPurchasePlanned`); the
+  intake's chip left off is no longer saved as a no. Both are written only by the idea's save, read
+  wherever the idea is read (the cockpit, its export, `/api/readout`), and deleted with the idea. The save route (`/api/scenario/save`) now
+  also puts the idea as it was kept, read back from the data file, in its answer to whatever saved it on
+  this computer (the cockpit or the intake); nothing new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under

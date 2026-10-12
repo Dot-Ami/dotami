@@ -274,7 +274,8 @@ describe("receipts while the save is on its way, and after it", () => {
     expect(saving).toContain(cockpitWords.receipts.saving);
     expect(saving).not.toContain("Saved.");
     const failed = renderToStaticMarkup(createElement(ReceiptLines, { lines: [], status: "failed" }));
-    expect(failed).toContain(cockpitWords.receipts.notSaved);
+    // The markup escapes the apostrophe in "didn't".
+    expect(failed).toContain(cockpitWords.receipts.notSaved.replace(/'/g, "&#x27;"));
     expect(failed).not.toContain("Saved.");
   });
 

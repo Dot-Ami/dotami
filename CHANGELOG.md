@@ -154,8 +154,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   what*, at most five showing, in the order DotAmi asks them, each with **I don't know**, which keeps
   nothing, and a **one-question box** for the month, savings, structure, equipment, a map pick and your
   own incorporation number. After every answer, wherever you give it, a **receipt** says what it changed
-  (two runs of the rules compared, never written by a model), and the newest five lines of the visit stay
-  in **Since last time** under the map. The **what-if bar** (*Try first-year sales of $___*) relights the
+  (two runs of the rules compared, never written by a model; for an answer kept with the map, worked out
+  from the idea the save read back, and *Saving your answer…* or *Not saved yet* until then), and the
+  newest lines of the visit stay in **This visit** under the map (its newest line, the rest behind *n more
+  this visit*). The **what-if bar** (*Try first-year sales of $___*) relights the
   rules under *Your what-if, not a forecast*, moves no money sum and is kept nowhere; **Keep** makes it
   the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
   step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
@@ -255,6 +257,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
+  the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
+  starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
+  say so); a No you give in the one-question box is kept as yours, and Take back removes it for good. A
+  pick of the map's default side (in the box, or with *This is mine*) said *Saved* and was gone after a
+  reload, because the map kept your clicks for the tab only; the forks you picked are now kept with the
+  map's answers, so it reads *Your pick* after a reload (and the export no longer calls it a default).
+  Compare is worked out without the what-if, says when no row differs and gives today's road's toggle
+  names; a ticked *done when* line no longer borrows the step's last-change day; the rail says *not
+  given* for no sales target, never $0; the left list's receipt takes the focus where the row you used
+  was; and every *Change*, *Take back*, *Answer*, *I don't know* and *This is mine* names its row for a
+  screen reader ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
+  [`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the

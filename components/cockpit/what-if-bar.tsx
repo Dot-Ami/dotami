@@ -8,11 +8,15 @@ import { parseWhatIf } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 
 /**
- * The what-if bar and "Since last time" (docs/architecture/future-cockpit.md § 2, "Cockpit screen as
- * built, part 2"), under the map. "Try first-year sales of $___" relights the rules for the screen's run
- * under a fixed banner, "Your what-if, not a forecast"; it never touches a money sum or a figure and is
- * kept nowhere, until Keep makes it the idea's own first-year sales. "Since last time" keeps this visit's
- * newest receipt lines, so one closed with its panel isn't lost; a reload starts it empty.
+ * The what-if bar and "This visit" (docs/architecture/future-cockpit.md § 2, "Cockpit screen as built,
+ * part 2"), under the map. "Try first-year sales of $___" relights the rules for the screen's run under a
+ * fixed banner, "Your what-if, not a forecast"; it never touches a money sum or a figure and is kept
+ * nowhere, until Keep makes it the idea's own first-year sales. "This visit" keeps this visit's newest
+ * receipt lines, so one closed with its panel isn't lost; a reload starts it empty.
+ *
+ * 2026-10-12, after review: named "This visit" (it was "Since last time", which reads as "since my last
+ * visit"), and it shows only the newest line, the rest behind "n more this visit": five lines took the
+ * map down to its tier headings at 1280 by 720. Keep also empties the Try box, as the number is kept.
  */
 export function WhatIfBar({
   whatIf,
@@ -26,7 +30,7 @@ export function WhatIfBar({
   whatIf: number | null;
   /** What the what-if relit, when it was the last answer; null for none. */
   receipt: readonly string[] | null;
-  /** This visit's newest receipt lines, newest first. */
+  /** This visit's newest receipt lines, newest first. (The prop keeps its first name.) */
   sinceLastTime: readonly string[];
   onTry: (dollars: number) => void;
   onKeep: () => void;
@@ -35,6 +39,9 @@ export function WhatIfBar({
   const id = useId();
   const [text, setText] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  // "This visit" shows its newest line until the person asks for the rest.
+  const [allLines, setAllLines] = useState(false);
+  const shownLines = allLines ? sinceLastTime : sinceLastTime.slice(0, 1);
 
   function tryIt(event: React.FormEvent) {
     event.preventDefault();
@@ -75,7 +82,15 @@ export function WhatIfBar({
             <p className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</p>
             {receipt ? <ReceiptLines lines={receipt} empty={words.whatIf.nothingChanged} /> : null}
             <div className="flex flex-wrap items-center gap-2">
-              <Pill size="small" variant="maple" onClick={onKeep}>
+              <Pill
+                size="small"
+                variant="maple"
+                onClick={() => {
+                  // The number is the idea's own now; the box is for the next what-if.
+                  setText("");
+                  onKeep();
+                }}
+              >
                 {words.whatIf.keep}
               </Pill>
               <Pill size="small" variant="ghost" onClick={onClear}>
@@ -90,10 +105,17 @@ export function WhatIfBar({
         ) : null}
       </section>
       {sinceLastTime.length > 0 ? (
-        <section aria-label={words.receipts.sinceLastTime} className="border-t border-rule bg-ink2 px-5 py-1.5 text-[11px]">
-          <h2 className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone">{words.receipts.sinceLastTime}</h2>
+        <section aria-label={words.receipts.thisVisit} className="border-t border-rule bg-ink2 px-5 py-1.5 text-[11px]">
+          <div className="flex items-baseline gap-3">
+            <h2 className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone">{words.receipts.thisVisit}</h2>
+            {sinceLastTime.length > 1 ? (
+              <button type="button" className="text-[10.5px] text-stone underline hover:text-paper" aria-expanded={allLines} onClick={() => setAllLines((v) => !v)}>
+                {allLines ? words.receipts.fewer : words.receipts.moreThisVisit(sinceLastTime.length - 1)}
+              </button>
+            ) : null}
+          </div>
           <div className="mt-0.5 space-y-0.5 text-stone">
-            {sinceLastTime.map((line, i) => (
+            {shownLines.map((line, i) => (
               // The same line can come twice (an answer given, taken back, given again), so the key keeps its place too.
               <p key={`${i}-${line}`}>{line}</p>
             ))}

@@ -234,7 +234,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "ScenarioState",
     name: "Map progress",
     holds:
-      "Which branches you took on each idea's map, your own “I'd incorporate at” amount if you typed one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
+      "Which branches you took on each idea's map and which of them you picked yourself, your own “I'd incorporate at” amount if you typed one, your No to buying equipment, a vehicle or tools if you gave one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {

@@ -8,7 +8,7 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 
 ## What it is
 
-A band under the map, above *Since last time* and *Next on your road*, named *What-if* for a screen
+A band under the map, above *This visit* and *Next on your road*, named *What-if* for a screen
 reader:
 
 - **Try first-year sales of $** and a box (whole dollars), then **Try**.
@@ -25,6 +25,8 @@ reader:
   with the map), never a figure, and clears the what-if; a receipt follows, and the answer is a row in
   *What you've told DotAmi*.
 - **Clear**: takes the what-if off; nothing was kept.
+- After **Keep** the *Try* box is emptied (the number is the idea's own now), and the receipt shows once
+  the map's save has answered (2026-10-12, after review).
 
 ## Why it exists (user purpose)
 

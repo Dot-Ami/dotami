@@ -5,7 +5,8 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/told-l
 `lib/roads/` `withoutAnswer` + `roadReceipt`)
 Type: list + buttons + inline form
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
+Last updated: 2026-10-12 (built; after review the same day: what the save keeps, the receipt's focus,
+buttons named by row; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
 ## What it is
 
@@ -17,8 +18,8 @@ ladder, the save line). Two regions:
   order; a default the person hasn't set (the map's default pick, the structure the map assumes) is never
   a row, and a what-if never is. Each row:
   - the answer in its own words: *You told us your date is May 2099*;
-  - its day (*2026-10-12*), or *day not kept* for the intake's answers and road 0's map picks, which keep
-    no day of their own;
+  - its day (*2026-10-12*), or *day not kept* for the intake's answers, road 0's map picks and ticked
+    *done when* lines, which keep no day of their own (none is borrowed);
   - *What it unlocked*: the receipt lines of road evaluation run without the answer and with it (the same
     words a receipt uses), or *Nothing on the road changes with or without it.*; for the place, the kind
     of venture and the work situation, *The map needs this answer: it can be changed, not taken back.*;
@@ -27,7 +28,8 @@ ladder, the save line). Two regions:
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
   your savings; your numbers for the cost lines not priced yet; your marks on the skills not marked; an
   ending at each fork with no pick (roads other than road 0); your pick at each of road 0's forks while
-  it is the map's default; your structure while the map assumes one; buying equipment while unanswered;
+  it is the map's default and not picked by you; your structure while the map assumes one; buying
+  equipment while unanswered (the intake's chip left off is unanswered: off is the chip not picked);
   your own *I'd incorporate at* number (road 0). At most five show; **n more** shows the rest. Each row
   has **Answer** (or **Open the list** / **Compare the endings** for the rows answered elsewhere) and
   **I don't know**. With none missing: *Nothing missing that DotAmi asks here.*
@@ -40,9 +42,9 @@ the same kinds: the question, its *why we ask* line, one control, **Save**, **I 
 |---|---|---|
 | By when? (month and year) | a month box, nothing before this month | `POST /api/futures/<id>/date` |
 | Savings you'd put toward starting | the amount box | `POST /api/figures/propose`, then the agree prompt |
-| Your pick at “<fork>” (road 0) | its two sides | the map's toggle, saved with the map |
+| Your pick at “<fork>” (road 0) | its two sides | the map's toggle, saved with the map; either side is the person's pick, kept as decided (key `decided`) |
 | Your structure | Sole prop · Corporation | the map's save |
-| Buying equipment, a vehicle or tools? | Yes · No | the map's save |
+| Buying equipment, a vehicle or tools? | Yes · No | the map's save (Yes in `Venture.capitalPurchasePlanned`, No under the map's key `equipmentNo`) |
 | The yearly sales at which you'd incorporate | whole dollars | the map's save |
 
 ## What it does (behavior on interact)
@@ -60,8 +62,11 @@ the same kinds: the question, its *why we ask* line, one control, **Save**, **I 
   hire-first off, equipment unanswered, *I'd incorporate at* cleared). No take back for the place, the
   kind of venture and the work situation (the map needs them), for agreed business figures (taken back on
   *Your ideas*), or for the yearly income target (no route yet).
-- Every save and take back shows its receipt at the top of the list (a status line) and adds it to
-  *Since last time* (13-receipts.md).
+- Every save and take back shows its receipt at the top of the list (a status line), which takes the
+  keyboard focus and is scrolled into view, and adds it to *This visit* (13-receipts.md). Answers kept
+  with the map say *Saving your answer…* until the map's save answers, or *Not saved yet* if it fails.
+- Each button is named with its row for a screen reader: *Change: You told us …*, *Take back: You told
+  us …*, *Answer: By when? …*, *I don't know: By when? …*.
 - **I don't know** keeps nothing: it folds the row (or closes the box) for this visit.
 - An idea not saved yet: the buttons are off and the not-saved line shows.
 

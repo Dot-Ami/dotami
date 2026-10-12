@@ -5,6 +5,7 @@ import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
+import { loadVentureScenarioById } from "@/lib/db/ventures";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -38,7 +39,10 @@ export async function POST(request: Request) {
 
   try {
     const { ventureId } = await ensureVentureFromScenario(prisma, scenario, firstSave);
-    return NextResponse.json({ ok: true as const, ventureId });
+    // The idea as the data file now holds it, read back the way a reload reads it, so the cockpit builds
+    // a receipt from what was kept, never from what it sent (2026-10-12).
+    const kept = await loadVentureScenarioById(prisma, ventureId);
+    return NextResponse.json({ ok: true as const, ventureId, scenario: kept });
   } catch (error) {
     logRouteError("scenario/save", error);
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });

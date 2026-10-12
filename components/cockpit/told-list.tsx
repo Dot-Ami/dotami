@@ -2,7 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 
-import { ReceiptLines } from "@/components/cockpit/receipt-lines";
+import { ReceiptLines, type ShownReceipt } from "@/components/cockpit/receipt-lines";
 import type { BoxQuestion, NotToldRow, ToldRow } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { parseMoneyToCents } from "@/lib/figures/money";
@@ -13,6 +13,10 @@ import { parseMoneyToCents } from "@/lib/figures/money";
  * without it against with it), Change and Take back; and "Not told yet", each missing answer with the one
  * thing it would unlock and "I don't know". The rows are worked out by lib/cockpit/told.ts; this draws
  * them and hands every click to the page, which saves it and shows the receipt at the top.
+ *
+ * After an answer here the row or box the person used is gone, so the receipt takes the keyboard focus and
+ * scrolls into view (2026-10-12, after review: it sat out of sight above the row, and the focus fell to
+ * the page). Every button names its row or question for a screen reader.
  */
 
 /** Questions not told yet that show before "n more". */
@@ -35,7 +39,7 @@ export function ToldList({
   rows: readonly ToldRow[];
   notTold: readonly NotToldRow[];
   /** The last answer's receipt, when it was given here; null for none. */
-  receipt: readonly string[] | null;
+  receipt: ShownReceipt | null;
   canSave: boolean;
   error: string | null;
   /** "Change" for a row answered elsewhere (a step, the skills list, Compare, the intake, Your ideas). */
@@ -72,7 +76,7 @@ export function ToldList({
         ) : null}
         {receipt ? (
           <div className="mt-2">
-            <ReceiptLines lines={receipt} />
+            <ReceiptLines {...receipt} />
           </div>
         ) : null}
         {rows.length === 0 ? <p className="mt-2 text-[11.5px] text-stone">{words.told.none}</p> : null}
@@ -92,13 +96,14 @@ export function ToldList({
                       type="button"
                       className={small}
                       disabled={!canSave}
+                      aria-label={words.told.changeFor(row.said)}
                       onClick={() => (row.change.kind === "box" ? setOpen(boxOpen ? null : `told:${row.id}`) : onChange(row))}
                     >
                       {words.told.change}
                     </button>
                   ) : null}
                   {row.takeBack.kind !== "none" ? (
-                    <button type="button" className={small} disabled={!canSave} onClick={() => onTakeBack(row)}>
+                    <button type="button" className={small} disabled={!canSave} aria-label={words.told.takeBackFor(row.said)} onClick={() => onTakeBack(row)}>
                       {words.told.takeBack}
                     </button>
                   ) : null}
@@ -126,6 +131,14 @@ export function ToldList({
               setOpen(null);
               setDontKnow((s) => new Set([...s, q.id]));
             };
+            const answerWord =
+              q.answer === "box"
+                ? words.notTold.answer
+                : q.answer === "skills"
+                  ? words.notTold.openSkills
+                  : q.answer === "money"
+                    ? words.notTold.openMoney
+                    : words.notTold.compare;
             return (
               <li key={q.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
                 <p className="text-[12px] leading-snug text-paper">
@@ -136,18 +149,13 @@ export function ToldList({
                     type="button"
                     className={small}
                     disabled={!canSave}
+                    aria-label={words.notTold.forQuestion(answerWord, q.question)}
                     onClick={() => (q.answer === "box" ? setOpen(boxOpen ? null : `ask:${q.id}`) : onAnswer(q))}
                   >
-                    {q.answer === "box"
-                      ? words.notTold.answer
-                      : q.answer === "skills"
-                        ? words.notTold.openSkills
-                        : q.answer === "money"
-                          ? words.notTold.openMoney
-                          : words.notTold.compare}
+                    {answerWord}
                   </button>
                   {!dontKnow.has(q.id) ? (
-                    <button type="button" className={small} onClick={fold}>
+                    <button type="button" className={small} aria-label={words.notTold.forQuestion(words.notTold.dontKnow, q.question)} onClick={fold}>
                       {words.notTold.dontKnow}
                     </button>
                   ) : null}

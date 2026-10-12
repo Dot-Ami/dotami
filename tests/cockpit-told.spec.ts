@@ -249,9 +249,10 @@ describe("What you've told DotAmi", () => {
     // A number: the day it was agreed, on this computer.
     expect(row("savings").day).toBe(dayOf("2026-10-09T12:00:00.000Z"));
     expect(row(`cost-line:${OWN}/cost-eval-saw`).day).toBe(dayOf("2026-10-10T12:00:00.000Z"));
-    // A status: the day of its last change; ticks: the day the step was last changed.
+    // A status: the day of its last change. Ticks keep no day of their own, and the step's last change
+    // isn't the tick's, so none is borrowed (2026-10-12, after review).
     expect(row("step:step-eval-train").day).toBe(dayOf("2026-10-03T15:00:00.000Z"));
-    expect(row("ticks:step-eval-train").day).toBe(dayOf("2026-10-04T15:00:00.000Z"));
+    expect(row("ticks:step-eval-train").day).toBeNull();
     // The intake's answers keep no day of their own: never borrowed from somewhere else.
     for (const id of ["idea:place", "idea:structure", "idea:sales-year-1"]) expect(row(id).day, id).toBeNull();
   });
@@ -387,7 +388,8 @@ describe("Compare the two endings", () => {
   });
 
   it("no score, no total, no verdict anywhere in it", () => {
-    expect(Object.keys(view).sort()).toEqual(["forkId", "forkLabel", "picked", "rows", "sides"]);
+    // `sameOnEveryRow` (2026-10-12) says whether the rows differ at all, never which side is better.
+    expect(Object.keys(view).sort()).toEqual(["forkId", "forkLabel", "picked", "rows", "sameOnEveryRow", "sides"]);
     for (const r of view.rows) expect(`${r.label} ${r.values.join(" ")}`, r.id).not.toMatch(VERDICT);
   });
 

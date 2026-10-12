@@ -46,7 +46,9 @@ export function buildScenarioFromIntake(
     employmentStatus: input.employmentStatus,
     hireFirst: input.hireFirst,
     activityTags: input.activityTags ?? [],
-    capitalPurchasePlanned: input.capitalPurchasePlanned ?? false,
+    // The intake's chip starts off, and off is the chip not picked, never the person saying no: only on is
+    // an answer (2026-10-12; until then every idea made here said "you told us you're not buying").
+    capitalPurchasePlanned: input.capitalPurchasePlanned === true ? true : undefined,
     stage: input.stage ?? "idea",
   };
 

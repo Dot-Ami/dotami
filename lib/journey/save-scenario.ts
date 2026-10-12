@@ -1,7 +1,11 @@
 import type { FirstSave } from "@/lib/journey/first-save";
 import type { Scenario } from "@/lib/scenarios/types";
 
-export type SaveScenarioResult = { ok: true; ventureId: string } | { ok: false; status: number | null };
+/**
+ * `kept` is the idea as the save read it back from the data file (null if the answer didn't carry it),
+ * which is what a receipt's "after" is built from: never from what the screen sent.
+ */
+export type SaveScenarioResult = { ok: true; ventureId: string; kept: Scenario | null } | { ok: false; status: number | null };
 
 /**
  * Client-side write of a scenario to the person's own database (`POST /api/scenario/save`,
@@ -23,8 +27,9 @@ export async function saveScenario(scenario: Scenario, firstSave?: FirstSave): P
       body: JSON.stringify({ scenario, ...firstSave }),
     });
     if (!response.ok) return { ok: false, status: response.status };
-    const body = (await response.json()) as { ventureId?: unknown };
-    return { ok: true, ventureId: typeof body.ventureId === "string" ? body.ventureId : "" };
+    const body = (await response.json()) as { ventureId?: unknown; scenario?: unknown };
+    const kept = body.scenario && typeof body.scenario === "object" ? (body.scenario as Scenario) : null;
+    return { ok: true, ventureId: typeof body.ventureId === "string" ? body.ventureId : "", kept };
   } catch {
     return { ok: false, status: null };
   }

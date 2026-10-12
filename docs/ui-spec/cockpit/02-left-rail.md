@@ -60,7 +60,8 @@ spot in the product — it carries 6+ unrelated concerns.
   only the one on the map, each tagged "typed for your idea “<name>”" so it is clear which idea
   it belongs to; other typed statements are tagged "typed in DotAmi".
 - **Venture block + FieldRows** — display-only. Reads `currentScenario.profile` (name,
-  type, province, targetRevenueY1/Y3 via `Intl.NumberFormat` CAD, structure,
+  type, province, targetRevenueY1/Y3 through `lib/cockpit/words.ts` `rail.salesTarget` (an amount,
+  or *not given* for none, never $0: 2026-10-12, after review), structure,
   employmentStatus) plus `archetype.label` and `archetype.planningFocus`.
   `archetype = resolveArchetypeForScenario(currentScenario)` — matches
   `scenario.archetypeId` (or legacy `scenario.id`) against the 4 archetypes, else

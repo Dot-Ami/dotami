@@ -11,6 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { branchDecisions } from "../lib/scenarios/branches";
 
 const road0Steps = generalRoadV2026.steps.length;
 const label0 = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)!.label;
@@ -123,7 +124,12 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await compare(page).getByRole("button", { name: gstFork.label, exact: true }).click();
   await expect(compare(page).getByText("In the order the road shows them.")).toBeVisible();
   const [first, second] = gstFork.sides;
-  await expect(compare(page).getByRole("columnheader")).toHaveText([label0(first), label0(second)]);
+  // Each column: the step's name, and on today's road the map toggle's own name for the same side.
+  const toggle = (id: string) => branchDecisions.find((d) => d.id === gstFork.id)!.options.find((o) => o.id === id)!.label;
+  await expect(compare(page).getByRole("columnheader")).toHaveText([
+    `${label0(first)}on the map: “${toggle(first)}”`,
+    `${label0(second)}on the map: “${toggle(second)}”`,
+  ]);
   await expect(compare(page).getByText(`The map's default pick: “${label0(second)}”, not yours yet`)).toBeVisible();
   const mine = compare(page).getByRole("button", { name: "This is mine" });
   await expect(mine).toHaveCount(2);

@@ -84,6 +84,8 @@ export interface ToldRow {
   id: string;
   /** The answer in its own words: "You told us your date is May 2029". */
   said: string;
+  /** Its take back in road evaluation's own words ("you took back your date"), for a receipt with no lines. */
+  takenBack: string;
   /** The day kept with the answer, YYYY-MM-DD; null where nothing keeps one. */
   day: string | null;
   /** Receipt lines of road evaluation without the answer against with it; null where it can't be taken away. */
@@ -111,6 +113,7 @@ export function toldRows(input: RoadEvaluationInput, evaluation: RoadEvaluation,
       return {
         id: a.id,
         said: capitalised(a.said),
+        takenBack: a.takenBack,
         day: dayFor(a.id, input, kept),
         unlocked: without === null ? null : roadReceipt(evaluateRoad(without), evaluation),
         change: changeFor(a.id),
@@ -131,8 +134,9 @@ function dayFor(id: string, input: RoadEvaluationInput, kept: KeptAnswers): stri
       // The day the status last changed.
       return dayOfMoment(kept.progress.find((p) => p.stepId === key)?.changes.at(-1)?.at);
     case "ticks":
-      // Ticks keep no day of their own: the day the step was last changed is the nearest kept one.
-      return dayOfMoment(kept.progress.find((p) => p.stepId === key)?.updatedAt);
+      // Ticks keep no day of their own, and the step's last change (a status, say) isn't the tick's, so
+      // none is borrowed: the row says the day isn't kept (2026-10-12, after review).
+      return null;
     case "fork":
       return kept.forkPickedOn[key] ?? null;
     case "cost-line": {
@@ -332,12 +336,18 @@ const COMPARE_ROWS: readonly CompareRowId[] = ["steps-on-path", "not-done", "not
 export interface CompareView {
   forkId: string;
   forkLabel: string;
-  /** The fork's two sides, in the fork's own order. */
-  sides: { stepId: string; label: string }[];
+  /**
+   * The fork's two sides, in the fork's own order: the step's name, and on road 0 the map toggle's own
+   * short name for the same side (the two differ: "Mandatory GST registration" is "When the CRA's tests
+   * say" on the toggle), else null.
+   */
+  sides: { stepId: string; label: string; toggleLabel: string | null }[];
   /** The pick that stands, and whether it is the person's (on road 0, a pick still on the map's default isn't). */
   picked: { stepId: string; byPerson: boolean } | null;
   /** The same rows for both sides: counts and sums only. */
   rows: { id: CompareRowId; label: string; values: [string, string] }[];
+  /** True when no row differs between the two sides, which the panel says rather than leave it to look broken. */
+  sameOnEveryRow: boolean;
 }
 
 /** The input with one side of the fork picked: on road 0 the map's toggle, on any other road the future's pick. */
@@ -350,8 +360,13 @@ function withSide(input: RoadEvaluationInput, fork: Fork, stepId: string): RoadE
 /**
  * "Compare the two endings": road evaluation run once with each side of the fork picked, and the same
  * rows read from both runs. No score, no total, no order but the fork's own. Null for a fork not on the road.
+ *
+ * Worked out without the what-if (2026-10-12, after review): a what-if relights the rules and tax cards on
+ * both sides alike, and the Compare panel carries no "your what-if" banner, so its counts must be the
+ * ones the person's own answers give.
  */
-export function compareEndings(input: RoadEvaluationInput, forkId: string): CompareView | null {
+export function compareEndings(withWhatIf: RoadEvaluationInput, forkId: string): CompareView | null {
+  const input: RoadEvaluationInput = { ...withWhatIf, whatIf: null };
   const fork = input.road.forks.find((f) => f.id === forkId);
   if (!fork) return null;
   const stepById = new Map(input.road.steps.map((s) => [s.id, s]));
@@ -399,11 +414,19 @@ export function compareEndings(input: RoadEvaluationInput, forkId: string): Comp
         }
       : null;
 
+  // On road 0 the fork is one of the map's toggles, whose sides have short names of their own.
+  const toggle = input.road.id === generalRoadV2026.id ? branchDecisions.find((d) => d.id === fork.id) : undefined;
+  const rows = COMPARE_ROWS.map((id) => ({ id, label: words.compare.rows[id], values: [columns[0][id], columns[1][id]] as [string, string] }));
   return {
     forkId: fork.id,
     forkLabel: fork.label,
-    sides: fork.sides.map((id) => ({ stepId: id, label: stepById.get(id)?.label ?? id })),
+    sides: fork.sides.map((id) => ({
+      stepId: id,
+      label: stepById.get(id)?.label ?? id,
+      toggleLabel: toggle?.options.find((o) => o.id === id)?.label ?? null,
+    })),
     picked,
-    rows: COMPARE_ROWS.map((id) => ({ id, label: words.compare.rows[id], values: [columns[0][id], columns[1][id]] })),
+    rows,
+    sameOnEveryRow: rows.every((r) => r.values[0] === r.values[1]),
   };
 }

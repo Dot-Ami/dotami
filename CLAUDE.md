@@ -53,8 +53,8 @@ says where it is going.
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
   `evaluateRoad`, words in `lib/cockpit/words.ts`; part 2, since 2026-10-12: *What you've told DotAmi /
   Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
-  runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`) and *Since last time*, the what-if
-  bar, and *Compare the two endings* with *This is mine*; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
+  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
@@ -109,8 +109,10 @@ says where it is going.
   in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
   its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
-  `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
-  same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
+  `ScenarioState` (the map's progress and branch picks, and, each under its own key in the same JSON
+  (`lib/db/scenario-state-json.ts`), the person's own "I'd incorporate at" amount (since 2026-10-11),
+  the forks they picked a side at, `decided`, and their No to buying equipment, `equipmentNo` (both since
+  2026-10-12; a Yes is `Venture.capitalPurchasePlanned`, whose false alone is no answer)) ·
   `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
   when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
   included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the

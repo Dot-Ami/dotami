@@ -69,7 +69,13 @@ export interface VentureProfile {
    * (their tags derive from the paths they are bound to) and on pre-2026-09-13 saved rows.
    */
   activityTags?: string[];
-  /** S2.5.4e: the intake capital-purchase toggle, persisted for the same reason. */
+  /**
+   * S2.5.4e: buying equipment, a vehicle or tools. True: the person said yes (the intake's chip switched
+   * on, or Yes in the cockpit's one-question box). False: the person said No in the box. Undefined: not
+   * answered, which the rules read as no and say so; the intake's chip left off is not answered
+   * (2026-10-12). Kept in `Venture.capitalPurchasePlanned` (yes) and the map's answers (no,
+   * lib/db/scenario-state-json.ts).
+   */
   capitalPurchasePlanned?: boolean;
   /** S2.5.4i: idea -> prototype -> first customers -> established. Undefined on pre-09-16 rows = idea. */
   stage?: VentureStage;
@@ -83,9 +89,10 @@ export interface ScenarioState {
   activeBranches: Record<string, CFENodeId>;
   /**
    * S2.5.4d: decisions the person has actually clicked. Everything else in `activeBranches`
-   * is a template default and is labelled as one. Session-persisted only — the database does not
-   * store it, so after a reload a pick that is the default reads "default" again, even if the person
-   * clicked it; a saved pick off the default still reads "your pick" (`isBranchDecided`, 2026-10-11).
+   * is a template default and is labelled as one. Since 2026-10-12 it is saved with the map's answers
+   * (key `decided`, lib/db/scenario-state-json.ts), so a pick of the default side is still the person's
+   * after a reload; until then it lived for the session only. A saved pick off the default reads "your
+   * pick" either way (`isBranchDecided`, 2026-10-11), which covers rows saved before the key existed.
    */
   decidedBranchIds?: string[];
   /**

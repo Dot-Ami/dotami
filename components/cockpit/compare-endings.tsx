@@ -10,6 +10,10 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * evaluation run with that side picked (lib/cockpit/told.ts `compareEndings`). No score, no total, no
  * badge, and no highlighted column: both columns are drawn with the same classes, and the only thing
  * that differs between them is which "This is mine" is pressed. The person picks; DotAmi doesn't.
+ *
+ * 2026-10-12, after review: on road 0 each column head also gives the map toggle's own short name, a line
+ * says so when no row differs (two identical columns otherwise read as a fault), and each "This is mine"
+ * names its side for a screen reader.
  */
 
 const heading = "font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";
@@ -95,6 +99,7 @@ export function CompareEndings({
           </p>
           <p className="text-[11px] text-stone">{words.compare.order}</p>
           {receipt ? <ReceiptLines lines={receipt} /> : null}
+          {view.sameOnEveryRow ? <p className="text-[11px] text-stone">{words.compare.noRowDiffers}</p> : null}
           <table className="w-full table-fixed border-collapse">
             <thead>
               <tr>
@@ -102,6 +107,9 @@ export function CompareEndings({
                 {view.sides.map((side) => (
                   <th key={side.stepId} scope="col" className={columnHead}>
                     {side.label}
+                    {side.toggleLabel ? (
+                      <span className="mt-0.5 block font-mono text-[10px] font-normal text-stone">{words.compare.onTheMap(side.toggleLabel)}</span>
+                    ) : null}
                   </th>
                 ))}
               </tr>
@@ -128,6 +136,7 @@ export function CompareEndings({
                       <button
                         type="button"
                         aria-pressed={mine}
+                        aria-label={words.compare.thisIsMineFor(side.label)}
                         disabled={!canSave}
                         // The pressed one is already the person's: pressing it again changes nothing.
                         onClick={() => (mine ? undefined : onThisIsMine(side.stepId))}

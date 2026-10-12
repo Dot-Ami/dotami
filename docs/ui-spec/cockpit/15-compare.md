@@ -32,12 +32,19 @@ in the step panel at a fork, or a *Not told yet* ending row.
 | Official fees that apply only sometimes | 1 line, not added up |
 | Rules and tax cards | 6 apply · 2 check first |
 
-- Under each column, **This is mine**. No score, no total, no badge and no highlighted column: both
-  columns are drawn the same; only which **This is mine** is pressed differs.
+- Under each column, **This is mine**, named for a screen reader with its side (*This is mine: Open
+  your own shop*). No score, no total, no badge and no highlighted column: both columns are drawn the
+  same; only which **This is mine** is pressed differs.
+- On road 0 each column head also gives the map toggle's own short name for that side (*on the map:
+  “Voluntary now”*), as the step's name and the toggle's differ.
+- When no row differs between the two sides: *None of these rows differ between the two endings today.*
+- Worked out without the what-if (2026-10-12, after review): a what-if relights the rules and tax cards
+  on both sides alike, and this panel carries no what-if banner.
 
 ## What it does (behavior on interact)
 
-- **This is mine**: on road 0, sets the map's toggle for that fork (saved with the map, as the toggle
+- **This is mine**: on road 0, sets the map's toggle for that fork, on either side, the default side
+  included, which is kept as the person's pick (key `decided`) and reads *Your pick* after a reload (saved with the map, as the toggle
   on the map does); on any other road, `POST /api/futures/<id>/ending { forkId, stepId }`. Then the
   receipt shows in the panel. Pressing the pressed one again does nothing; an ending is taken back from
   *What you've told DotAmi*.

@@ -14,6 +14,7 @@ import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { QuestionBox, ToldList, type BoxControl } from "@/components/cockpit/told-list";
 import { useCockpitData, type KeptForIdea } from "@/components/cockpit/use-cockpit-data";
 import { WhatIfBar } from "@/components/cockpit/what-if-bar";
+import type { ShownReceipt } from "@/components/cockpit/receipt-lines";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
 import { AgreePrompt, postJson } from "@/components/ventures/agree-prompt";
@@ -68,18 +69,32 @@ import Link from "next/link";
  *
  * 2026-10-12, part 2 (§ 2, "Cockpit screen as built, part 2"): "What you've told DotAmi / Not told yet"
  * with the one-question box at the top of the left rail, a receipt after every answer (road evaluation
- * before and after it, compared) where it was given and in "Since last time", the what-if bar under the
+ * before and after it, compared) where it was given and in "This visit", the what-if bar under the
  * map, and "Compare the two endings" with "This is mine" in the right-hand panel.
+ *
+ * After review (2026-10-12): the idea's own answers, kept with the map, wait for the map's save before
+ * their receipt is worked out, from the idea the save read back; until then it says so, and a failed save
+ * says it wasn't kept.
  */
 
 /** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
 type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare";
 
-/** Where an answer was given, so its receipt shows there (the map's own toggles show theirs in "Since last time" only). */
+/** Where an answer was given, so its receipt shows there (the map's own toggles show theirs in "This visit" only). */
 type ReceiptPlace = "step" | "skills" | "money" | "date" | "told" | "compare" | "what-if" | "map";
 
-/** "Since last time" keeps this many of this visit's receipt lines, newest first. */
-const SINCE_LAST_TIME_LINES = 5;
+/** The receipt on screen: where, its lines, and whether its save has answered yet. */
+type Receipt = { place: ReceiptPlace } & ShownReceipt;
+
+/**
+ * An answer kept with the map whose save hasn't answered yet: the input before it, where it was given,
+ * the what-if the "after" run uses, and what to say if nothing changed. `seq` counts the edits, so a save
+ * that answers after a newer edit leaves the receipt to that edit's own save.
+ */
+type PendingReceipt = { before: RoadEvaluationInput; place: ReceiptPlace; whatIf: number | null; empty?: string; focusKey?: number; seq: number };
+
+/** "This visit" keeps this many of this visit's receipt lines, newest first. */
+const THIS_VISIT_LINES = 5;
 
 /** The days kept with each answer, from what GET /api/futures/<id> and the figures list gave. */
 function keptAnswers(kept: KeptForIdea | null, figures: FigureView[] | null): KeptAnswers {
@@ -137,8 +152,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   const [answerError, setAnswerError] = useState<string | null>(null);
   // Part 2: the last answer's receipt and where it was given; this visit's newest receipt lines; the
   // what-if on now (whole dollars, kept nowhere); and the fork shown in Compare.
-  const [receipt, setReceipt] = useState<{ place: ReceiptPlace; lines: string[] } | null>(null);
-  const [sinceLastTime, setSinceLastTime] = useState<string[]>([]);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [thisVisit, setThisVisit] = useState<string[]>([]);
+  // The receipt of an answer kept with the map, until its save answers; and a counter for focus keys and edits.
+  const pendingReceipt = useRef<PendingReceipt | null>(null);
+  const counter = useRef(0);
   const [whatIf, setWhatIf] = useState<number | null>(null);
   const [compareForkId, setCompareForkId] = useState<string | null>(null);
   // Road evaluation's input before a number went into the agree prompt: its receipt comes once it is agreed.
@@ -238,15 +256,30 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       ? "structure-ccpc"
       : "structure-sole-prop";
 
-  /** Writes `target` to the database and reports the outcome on the save line. Never throws. */
+  /**
+   * Writes `target` to the database and reports the outcome on the save line. Never throws. A receipt
+   * waiting on this save is worked out from the idea as the save read it back, or marked not saved.
+   */
   async function persist(target: Scenario) {
     setSaveState("saving");
+    const waiting = pendingReceipt.current;
     const result = await saveScenario(target);
     if (result.ok) {
       setSaveState("saved");
       setSavedAt(new Date());
+      // Only when no newer edit came in meanwhile: that edit's own save brings its receipt.
+      if (waiting && pendingReceipt.current === waiting) {
+        pendingReceipt.current = null;
+        // The route answers with the idea as kept; `target` only if an older server left it out.
+        const after = inputFor({ scenario: result.kept ?? target, whatIf: waiting.whatIf });
+        if (after) showReceipt(waiting.place, answerReceipt(waiting.before, after), { empty: waiting.empty, focusKey: waiting.focusKey });
+      }
     } else {
       setSaveState("error");
+      // Kept waiting, so "Save now" succeeding still brings the receipt; until then it says not saved.
+      if (waiting && pendingReceipt.current === waiting) {
+        setReceipt({ place: waiting.place, lines: [], status: "failed", focusKey: waiting.focusKey });
+      }
     }
   }
 
@@ -260,24 +293,52 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     }, AUTOSAVE_DELAY_MS);
   }
 
-  /** Shows a receipt where the answer was given, and keeps its lines in "Since last time". */
-  function showReceipt(place: ReceiptPlace, lines: string[]) {
-    setReceipt({ place, lines });
-    if (lines.length > 0) setSinceLastTime((kept) => [...lines, ...kept].slice(0, SINCE_LAST_TIME_LINES));
+  /** A new focus key for a receipt in the left list, where the control used is gone once answered. */
+  function focusKeyFor(place: ReceiptPlace): number | undefined {
+    counter.current += 1;
+    return place === "told" ? counter.current : undefined;
+  }
+
+  /** Shows a kept answer's receipt where it was given, and keeps its lines in "This visit". */
+  function showReceipt(place: ReceiptPlace, lines: string[], extra: { empty?: string; focusKey?: number } = {}) {
+    setReceipt({ place, lines, status: "saved", empty: extra.empty, focusKey: extra.focusKey ?? focusKeyFor(place) });
+    if (lines.length > 0) setThisVisit((kept) => [...lines, ...kept].slice(0, THIS_VISIT_LINES));
   }
 
   /**
    * One of the idea's own answers (kept with the map: the structure, a map pick, buying equipment, the
-   * person's own incorporation number, first-year sales): shown at once, saved after the usual pause,
-   * and, unless `place` is null, its receipt worked out from the idea before and after.
+   * person's own incorporation number, first-year sales): shown at once and saved after the usual pause.
+   * Unless `place` is null, its receipt waits for that save and is worked out from the idea before and the
+   * idea the save read back (`persist`); until then the receipt says the answer is being saved.
+   * `opts.before` and `opts.whatIf` set the two runs' what-if (Keep compares without one).
    */
-  function changeScenario(next: Scenario, place: ReceiptPlace | null) {
-    const before = inputFor();
-    const after = inputFor({ scenario: next });
+  function changeScenario(
+    next: Scenario,
+    place: ReceiptPlace | null,
+    opts: { before?: RoadEvaluationInput | null; whatIf?: number | null; empty?: string } = {},
+  ) {
+    const before = opts.before !== undefined ? opts.before : inputFor();
     setCurrentScenario(next);
     setScenario(next);
+    if (place && before) {
+      counter.current += 1;
+      const seq = counter.current;
+      const earlier = pendingReceipt.current;
+      // Edits within one pause go in one save: the receipt runs from before the first of them.
+      pendingReceipt.current = {
+        before: earlier?.before ?? before,
+        place,
+        whatIf: opts.whatIf !== undefined ? opts.whatIf : whatIf,
+        empty: opts.empty,
+        focusKey: place === "told" ? seq : undefined,
+        seq,
+      };
+      setReceipt({ place, lines: [], status: "saving", focusKey: pendingReceipt.current.focusKey });
+    } else if (pendingReceipt.current) {
+      // An edit with no receipt of its own (typing a number) still goes in the waiting one's save.
+      pendingReceipt.current = { ...pendingReceipt.current, seq: (counter.current += 1) };
+    }
     scheduleSave(next);
-    if (place && before && after) showReceipt(place, answerReceipt(before, after));
   }
 
   function handleBranchChange(decision: BranchDecision, optionId: CFENodeId, place: ReceiptPlace = "map") {
@@ -372,7 +433,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
    * receipt where it was given (road evaluation before the save against after it, from what was read
    * back), else shows the refusal.
    */
-  async function saveAnswer(pending: ReturnType<typeof postJson>, place: ReceiptPlace): Promise<string | null> {
+  async function saveAnswer(pending: ReturnType<typeof postJson>, place: ReceiptPlace, empty?: string): Promise<string | null> {
     setAnswerError(null);
     const before = inputFor();
     const result = await pending;
@@ -382,7 +443,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     }
     const fresh = await reload();
     const after = fresh ? inputFor({ kept: fresh.kept, figures: fresh.figures }) : null;
-    if (before && after) showReceipt(place, answerReceipt(before, after));
+    if (before && after) showReceipt(place, answerReceipt(before, after), { empty });
     return null;
   }
 
@@ -467,19 +528,21 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   function handleTakeBack(row: ToldRow) {
     const back = row.takeBack;
     const id = ventureId ? encodeURIComponent(ventureId) : null;
+    // A take back that changes nothing on the road still says what was taken back.
+    const empty = words.receipts.nothingAfter(row.takenBack);
     if (back.kind === "idea") {
       const next = withoutIdeaAnswer(scenario, row.id);
-      if (next) changeScenario(next, "told");
+      if (next) changeScenario(next, "told", { empty });
       return;
     }
     if (!id) return;
-    if (back.kind === "skill-mark") void saveAnswer(postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told");
-    else if (back.kind === "own-skill") void saveAnswer(postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told");
-    else if (back.kind === "step-status") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told");
-    else if (back.kind === "step-ticks") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told");
-    else if (back.kind === "figures") void saveAnswer(postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told");
-    else if (back.kind === "date") void saveAnswer(postJson(`/api/futures/${id}/date`, { month: null }), "told");
-    else if (back.kind === "ending") void saveAnswer(postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told");
+    if (back.kind === "skill-mark") void saveAnswer(postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
+    else if (back.kind === "own-skill") void saveAnswer(postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
+    else if (back.kind === "step-status") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
+    else if (back.kind === "step-ticks") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
+    else if (back.kind === "figures") void saveAnswer(postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
+    else if (back.kind === "date") void saveAnswer(postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
+    else if (back.kind === "ending") void saveAnswer(postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);
   }
 
   function handleNotToldAnswer(row: NotToldRow) {
@@ -588,12 +651,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   function handleKeepWhatIf() {
     if (whatIf === null) return;
     const next = keepWhatIf(scenario, whatIf);
-    // Compared without the what-if on either side, so the receipt names only the number kept.
-    const before = inputFor({ whatIf: null });
-    const after = inputFor({ scenario: next, whatIf: null });
     setWhatIf(null);
-    changeScenario(next, null);
-    if (before && after) showReceipt("what-if", answerReceipt(before, after));
+    // Compared without the what-if on either side, so the receipt names only the number kept; it waits
+    // for the save like every answer kept with the map.
+    changeScenario(next, "what-if", { before: inputFor({ whatIf: null }), whatIf: null });
   }
 
   function handleClearWhatIf() {
@@ -601,7 +662,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     if (receipt?.place === "what-if") setReceipt(null);
   }
 
-  const receiptAt = (place: ReceiptPlace) => (receipt?.place === place ? receipt.lines : null);
+  // The lists, the step panel, Compare and the what-if bar show a receipt once its save has answered (the
+  // save line says while it is on its way, or failed); the left list shows each state, as its row is gone.
+  const receiptAt = (place: ReceiptPlace) => (receipt?.place === place && receipt.status === "saved" ? receipt.lines : null);
+  const toldReceipt: ShownReceipt | null = receipt?.place === "told" ? receipt : null;
   const compareView = rightPanel === "compare" && compareForkId && evaluation ? compareEndings(inputFor()!, compareForkId) : null;
 
   // Road 0's toggle for the fork the selected step is a side of, so it can be flipped from the panel too.
@@ -678,7 +742,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             <ToldList
               rows={told.rows}
               notTold={told.notTold}
-              receipt={receiptAt("told")}
+              receipt={toldReceipt}
               canSave={canSave}
               error={rightPanel === null ? answerError : null}
               onChange={handleToldChange}
@@ -713,8 +777,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
           <FieldRow label="Type" value={scenario.profile.type} />
           <FieldRow label="Province" value={scenario.profile.province} />
-          <FieldRow label="Target Y1" value={formatCurrency(scenario.profile.targetRevenueY1)} />
-          <FieldRow label="Target Y3" value={formatCurrency(scenario.profile.targetRevenueY3)} />
+          {/* No number is "not given", never a $0 target (2026-10-12, after review). */}
+          <FieldRow label="Target Y1" value={words.rail.salesTarget(scenario.profile.targetRevenueY1)} />
+          <FieldRow label="Target Y3" value={words.rail.salesTarget(scenario.profile.targetRevenueY3)} />
           <div className="border-t border-rule-soft py-2 text-xs">
             <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
               <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
@@ -831,7 +896,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               <WhatIfBar
                 whatIf={whatIf}
                 receipt={receiptAt("what-if")}
-                sinceLastTime={sinceLastTime}
+                sinceLastTime={thisVisit}
                 onTry={handleTryWhatIf}
                 onKeep={handleKeepWhatIf}
                 onClear={handleClearWhatIf}
@@ -1004,12 +1069,4 @@ function EmptyCockpit() {
       </div>
     </div>
   );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
 }
