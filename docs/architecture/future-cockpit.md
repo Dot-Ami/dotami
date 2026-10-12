@@ -487,6 +487,65 @@ made while writing it, each for a reason:
   a one-line summary, a *period* is explained as a level designed to take about a year (the profile's
   words), and *Schedule 1* names the regulation it belongs to.
 
+### Road 0's content as built (2026-10-12)
+
+Road 0, *Starting any business in Alberta (tax and structure)*, gets its *done when* lines and the three
+*before you open* steps this page names (§ 6, "The roads in phase 1"). Choices made while writing them,
+each for a reason:
+
+- **Where it lives.** The lines and the new steps are written in road 0's own file
+  (`lib/engines/roads/v2026/starting-any-business-ab.ts`). `roadFromCfe` gains two optional inputs:
+  *done when* lines by step id, and steps to add to a column after that column's map stages. Everything
+  else it builds from today's catalog is unchanged: the ten steps keep their ids, names, one-line
+  summaries, sources and `next`, so their hover arrows go where they went.
+- **About three lines per step, each from an official page.** 33 lines on the ten steps (three or
+  four each) and 12 on the three new steps, 45 in all. Each line is written from the page its quotes come
+  from, on the CRA's, Alberta's, Corporations Canada's, WCB-Alberta's and BizPaL's sites, and says only
+  what those quotes say. A line that is a fact to know rather than a thing to do ("You know that a
+  corporation files a T2 return every year…") says so in its words; none says "you should".
+- **Every source is a tool check made on 2026-10-12** (option B, [citations.md](../engines/citations.md)):
+  each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none is
+  recorded as read. A tool check is not a read, so road 0's own `lastVerified` stays the newest read
+  among the map stages' sources (2026-05-01).
+- **Four of the stages' own pages have moved.** The CRA's *Employees* page (under *Employee/Apprentice
+  baseline*), the line 4600 page both of *Retained earnings planning*'s sources point at, and the two
+  SR&ED pages under *SR&ED deepening* answer "page not found" today. Those steps' *done when* lines cite
+  the pages where that content is now (the CRA's *Employment and self-employment income*, the T5 Guide,
+  *Completing the T5 slip*, *Amend, cancel, add, or replace slips*, the SR&ED program's T661 page and its
+  Filing Requirements Policy). The stages' own sources are the tax map's (`lib/engines/cfe/v2026/`) and
+  carry read dates, which only a person's or a model's new read can change, so they are left as they
+  are and listed as an open item for the maintainer.
+- **Three *before you open* steps, in the first column.** *Register your business name, if you use one*
+  (`step-start-register-name`), *Look up your permits and licences (BizPaL)*
+  (`step-start-permits-bizpal`) and *A separate bank account for the business*
+  (`step-start-business-account`) sit in *Before the venture*, under *Employee/Apprentice baseline*, and
+  each leads to *Sole Prop activation*. The baseline's own `next` is not changed, so no existing card's
+  arrows move; hovering the baseline dims the three new cards, as it dims every card not on its arrows.
+- **The bank account step says what the CRA says, with its condition.** The CRA's sole proprietorship
+  page says a business with a name other than your own needs a separate bank account for cheques payable
+  to it; it doesn't say every business needs one. The step's one line repeats that condition, and its
+  other lines are what the page and the CRA's *Business records* page say about billing and keeping the
+  account's statements.
+- **Costs are named lines only.** Alberta's registry fees (the government fee and the agent's service
+  fee to register a name) stay named blanks: the catalogue that holds them stops tools with a human
+  check. Permit and licence fees "vary" (BizPaL's own word), and a bank's fees are the bank's. No
+  amount is written anywhere in this content. The ten map stages get no cost lines, skill items or
+  official links yet; the incorporation fees belong to Fix 2 (§ 9).
+- **New ids, all permanent.** Steps `step-start-…`, lines `dw-start-…`, cost lines `cost-start-…`
+  ("start" for *Starting any business*). `tests/roads.spec.ts` keeps every one on its shipped list.
+- **What the map shows changes, and only by the three new cards.** The map colours a card from the
+  rules (`evaluateProfile`'s node states) and places its chip from the branch picks; neither knows the
+  three new steps. Drawing them grey would say "doesn't apply as answered", which no rule decided, and
+  the chip would say "ahead" for a step nobody placed. So a step the rules don't colour is drawn with no
+  colour claim: a neutral left bar, the chip **no rule yet**, the accessible name
+  "*<name>*, no rule reads this step yet, shows where it leads", and a legend line for it. Clicking it
+  selects it and keeps its arrows; no panel opens, because the node detail panel shows today's catalog
+  entries and these steps have none (the step panel, § 1 row 5, replaces it later in phase 1, and road
+  evaluation gives such steps states of their own). Their *done when* lines are on no screen yet; the
+  step panel shows them. `tests/road-map.spec.ts` draws the six saved states again and, with the three
+  new cards cut out, the HTML is byte for byte what the old map drew; the before pictures are not
+  re-recorded.
+
 ## 7. Storage
 
 Everything lives in the existing local data file (encrypted by the desktop app when the person chose
@@ -688,6 +747,11 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
   has read its pages, is the maintainer's call; no screen lists any road but road 0 until then.
+- **Four of today's map stages cite pages that have moved** (found 2026-10-12 while writing road 0's
+  *done when* lines): the CRA's *Employees* page, the line 4600 page cited twice under *Retained
+  earnings planning*, and the two SR&ED pages under *SR&ED deepening* answer "page not found". Their
+  read dates are the tax map's; pointing them at the new pages needs a read (or a tool check in place of
+  the read), which is the maintainer's call.
 - **Reuse terms not yet read** for the Red Seal standard and Alberta's apprenticeship site: link and
   cite only until read.
 
