@@ -203,6 +203,7 @@ evaluation (§ 6). Every saved idea is on road 0 until *Pick a future* lets a pe
 road 0 is what a person sees today; nothing in the screen knows which road it draws. Part 2, a later
 pull request, adds the left list (*What you've told DotAmi / Not told yet* with a receipt after each
 answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as it is until then.
+*(2026-10-12: part 2 built; see "Cockpit screen as built, part 2" below.)*
 
 - **One run, one picture.** The page reads what is kept (below), passes it to `evaluateRoad`, and draws
   the gauges, the step colours, the badges, the step panel and *Next on your road* from that one result.
@@ -298,6 +299,109 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
   road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
   empty line until the road content lands; the tests use an invented road for them.
+
+### Cockpit screen as built, part 2 (2026-10-12)
+
+The second cockpit pull request adds the pieces part 1 left out: the left list, a receipt after every
+answer, the what-if bar, *Compare* with *This is mine*, and the one-question box. Everything still comes
+from road evaluation (`lib/roads/`), now run more than once: once for the screen, and once more for each
+answer, before and after it or with and without it. Choices made while building it, each for a reason:
+
+- **The left list sits at the top of the left rail.** *What you've told DotAmi* first, then *Not told
+  yet*, then the rail as it was (the venture's details, the structure picker, *In your words*, the
+  ladder, the save line and the *Compass, not GPS* line), unfolded. The design folds that part away;
+  folding is the separate *open and close every panel* work, so this pull request doesn't fold anything,
+  and the two don't change the same lines twice. The rail is a little wider (up to 280 px) so a row and
+  its receipt fit. *Your starting point* (place, work situation, licences held) is not a section of its
+  own: each of those is a row of *What you've told DotAmi*, as the person said it.
+- **What you've told DotAmi** is every answer road evaluation read that the person gave (`answers`,
+  `given: true`; a default the person hasn't set, such as the map's default pick, is never listed), in
+  road evaluation's fixed order, except a what-if, which is never kept. A row is the answer in its own
+  words (*You told us your date is May 2099*), its day, and what it unlocked. The day is the day kept
+  with the answer: a skill mark's day, the day a step's status last changed (ticks: the day the step was
+  last changed), the day an ending was picked, a number's day agreed, the day the month was set. The
+  idea's own answers from the intake, and road 0's map picks, keep no day of their own (the idea's
+  last-saved time moves with any edit, § 7), so those rows say *day not kept* rather than borrowing one.
+- **What it unlocked is worked out, never written.** `withoutAnswer(input, answerId)` (`lib/roads/`,
+  pure) gives road evaluation's input with that one answer taken away, and the row shows
+  `roadReceipt(without, with)`: the same lines a receipt shows, so the row's words and the receipt's are
+  the same by construction. Three answers have no *without* (the place, the kind of venture and the work
+  situation: the map can't be drawn without them), so `withoutAnswer` gives null and the row says it can
+  be changed but not taken back. Measured cost: one extra run per row (§ 6: about 0.36 ms a run on
+  today's general road).
+- **Change and Take back.** *Change* goes to where the answer is given: the step (status, ticks, a
+  quote), the Skills list (marks), *Compare* (an ending), the one-question box (the month, savings, the
+  structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers)
+  or the idea's figures on *Your ideas* (agreed business figures). *Take back* removes the answer the
+  same way `withoutAnswer` does: a mark or a status through its route with *I don't know* / none; ticks
+  emptied; a quote or savings retracted through `/api/figures/retract` (kept in the history as
+  retracted, as today); the month cleared; an ending through the new ending route; and the idea's own
+  answers through the map's save (the structure back to *not set*, a map pick back to the map's default,
+  the person's *I'd incorporate at* number cleared, and so on). The receipt for a take back is therefore
+  exactly the row's *what it unlocked*, read the other way. Rows with no take back say why (*the map
+  needs it*; *take back figures on Your ideas*). A yearly income target has no route to take it back
+  yet, and no screen asks for it yet, so its row shows no buttons.
+- **Not told yet** lists, in a fixed order that is the order DotAmi asks them and never importance: your
+  date; your savings; your numbers for the cost lines not priced yet; your marks on the skills not
+  marked; an ending at each fork of the road with no pick (not road 0, whose forks always have the map's
+  pick); your pick at each of road 0's forks while it is still the map's default; your structure while
+  the map assumes one; buying equipment while unanswered; and, on road 0, your own *I'd incorporate at*
+  number. Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
+  answer feeds (a gauge part, a step that can light, the map reading your pick instead of its default),
+  never a promise of a result. At most five show; the rest are behind *n more*. Every row has **I don't
+  know**, which keeps nothing: it folds the row away for this visit (*n you don't know yet · Show them*),
+  and the gauges and cards it feeds stay as they were.
+- **The one-question box** (§ 2, *Overlays on top of everything*, named for phase 1) opens under the row,
+  in the left list, not as a window over the map: the question, its *why we ask* line, one control,
+  **Save** and **I don't know**. It takes the month, the savings (then the agree prompt, as everywhere),
+  a map pick (its two sides), the structure (sole prop or corporation), buying equipment (yes or no) and
+  *I'd incorporate at* (whole dollars). Questions with more than one answer in them (cost lines, skills)
+  or a choice that needs the two sides seen together (an ending) open their list or *Compare* instead.
+  The gauges' own invitations still open their lists, as in part 1.
+- **A receipt after each answer.** Every answer saved anywhere on the screen (a status, ticks, a mark, a
+  skill of one's own, a quote or savings once agreed, the month, a map toggle, the structure, an ending,
+  a take back, an answer in the box, a what-if kept) runs road evaluation on the input before and after
+  it, and shows `roadReceipt(before, after)` where it was given: in the step panel, the list it came
+  from, *Compare*, the left list or the what-if bar, as a status line read out by a screen reader. *After*
+  is built from what the save read back, never from what the screen hoped would be kept. A save that
+  changes nothing on the road says *Saved. Nothing on the road changed.* The *I'd incorporate at* box in
+  a step's panel saves as the person types, so it gives no receipt per keystroke; the same answer given
+  in the one-question box does.
+- **Since last time, kept briefly.** The newest five receipt lines of this visit stay in a line under the
+  map, *Since last time*, newest first, so a receipt closed with its panel isn't lost. They are kept
+  nowhere: a reload starts the line empty. The return visit's list (steps marked since the person's last
+  visit, dates coming up, figure reminders) needs the day of the last visit, which DotAmi doesn't keep;
+  it is left for a later pull request.
+- **The what-if bar** sits under the map, above *Next on your road*: *Try first-year sales of $___* and
+  **Try**. While a what-if is on, the bar says **Your what-if, not a forecast**, shows its receipt (what
+  it relit), and offers **Keep** and **Clear**. It goes to road evaluation's `whatIf` only, so it relights
+  the rules and tax cards and the steps the rules colour, and never touches a money sum or a figure; it
+  is kept nowhere. **Keep** writes the number as the idea's own first-year sales, the Year 1 field the
+  intake already keeps with the map (§ 3: *"Today's Year 1 / Year 3 fields when kept"*), never a figure,
+  then clears the what-if; it is then an answer like any other, with its receipt and a row in *What
+  you've told DotAmi*. A number that isn't a whole, non-negative number of dollars is refused on screen.
+- **Compare the two endings** opens in the right-hand panel (one thing at a time, as part 1's lists do),
+  from a **Compare** button on the goal bar, from the step panel at a fork, and from a *Not told yet*
+  ending row. With more than one fork on the road, the person picks which fork, in road order. Each side
+  is a column with its step's name; the rows are the same in both, all counts and sums from road
+  evaluation run with that side picked (`compareEndings`, `lib/cockpit/`): steps on your path, of those
+  not marked done, steps not on your path; skills listed on your path as *have · learning · not yet · not
+  marked*, and the legal requirements among them; official fees and your numbers, each with its lines;
+  lines not priced yet; fees that apply only sometimes; and the rules and tax cards that apply and that
+  say check first. A line says *In the order the road shows them*. No score, no total, no badge and no
+  highlighted column: both columns are drawn the same, and the only difference on screen is which
+  **This is mine** button is pressed. Above the table one line says whose pick stands (*Your pick*, *the
+  map's default pick, not yours yet* on road 0, or *no side picked yet*). The person's target and
+  what-if rows are left out: neither changes with the ending, and no screen asks for the target yet.
+- **This is mine** keeps the pick where each road keeps it (§ 7): on road 0 it is the map's toggle, saved
+  with the map; on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:
+  null` to take it back, which the told list's *Take back* uses), through `pickEnding`, guarded like the
+  other writes (DotAmi's own window, `readJsonWithLimit`, a rate limit). Then the receipt.
+- **Words and numbers.** Every new sentence is in `lib/cockpit/words.ts` and every amount and month goes
+  through `lib/format/money-and-months.ts`; the copy test covers the new components too.
+- **Not in part 2:** the return visit's *Since last time* list (above); remembering the last overlay;
+  the export gaining the told list; the yearly income question and taking it back; a receipt per
+  keystroke in the *I'd incorporate at* box; folding the rail and phone width (their own items).
 
 ## 3. What DotAmi asks, why, and how it's kept
 
@@ -640,7 +744,8 @@ lives in `lib/roads/`.
   road 0; a status the person sets on a road 0 step (none exists yet, above); the *with and without
   one answer* run that gives each row of *What you've told DotAmi* its *what it unlocked* line (a pure
   `withoutAnswer(input, answerId)` in `lib/roads/` that maps an answer's id back to the input with
-  that answer taken away, with its tests; the told-list pull request adds it); and fix 2's fee lines
+  that answer taken away, with its tests; the told-list pull request adds it, *2026-10-12: built, § 2,
+  Cockpit screen as built, part 2*); and fix 2's fee lines
   (§ 9): no road has cost lines yet, and when each way to incorporate is a side of a fork, the sums
   already leave both out until the person picks.
 - **Open question for the maintainer: *not for me* on the side picked.** *Not for me* greys its own
