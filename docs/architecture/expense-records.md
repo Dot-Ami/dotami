@@ -640,7 +640,8 @@ It does **not** protect against:
   record in full (the day, the amount, who was paid and what for, the seller's address and GST/HST
   number when given), every figure, the person's own statements, and for each receipt its kind, size,
   fingerprint and the day it was added. A copied data folder still gives all of that away. Encrypting
-  the database is a separate option for the maintainer, with its cost below.
+  the database is a separate option for the maintainer, with its cost below. *(2026-10-11: the desktop
+  app has encrypted it since 0.3.0, asked first; see the note below.)*
 - **What was on the disk before.** A receipt's bytes written before this version (the plain copy that
   encrypting replaces, a receipt removed earlier) can stay in the disk's free space until overwritten,
   as any deleted file can; disk encryption covers that. While a receipt is shown, its bytes are in the
@@ -659,6 +660,11 @@ each would change; a copy run from source would need a key too. About 8 to 12 da
 the package review. A cheaper half-step on Windows Pro only is the operating system's own file
 encryption (EFS) on the data folder, which Windows Home doesn't have. The maintainer decides whether
 either is worth it.
+
+*(2026-10-11: since decided and built. The maintainer said yes on 2026-10-09 and chose how on
+2026-10-10; the desktop app now encrypts the data file and its safety copies, asked first, and it was
+released in 0.3.0. A copy run from source keeps the file unencrypted. The design and what was built:
+[database-encryption.md](database-encryption.md).)*
 
 ### The key
 
@@ -873,7 +879,9 @@ restore's key never taken back fails two, and taken back over restored receipts 
 
 ### Still open (for the maintainer)
 
-- Whether to encrypt the database too (the option above, with its cost).
+- ~~Whether to encrypt the database too (the option above, with its cost).~~ Yes (the maintainer,
+  2026-10-09; how, 2026-10-10): built in the desktop app and released in 0.3.0,
+  [database-encryption.md](database-encryption.md).
 - ~~Whether to offer a button that starts a new key while receipts are locked with one that can't be
   opened.~~ Yes (the maintainer, 2026-10-09): § 10.
 

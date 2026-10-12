@@ -69,6 +69,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new node, the *New node* issue template and the people DotAmi is for say "starting a business, or
   working toward a career or a business of their own" (`CONTRIBUTING.md`,
   `.github/ISSUE_TEMPLATE/new-node.md`, `docs/architecture/use-cases.md`).
+- **The public pages catch up with what shipped.** The README no longer calls the desktop app "not
+  yet released": it links the installer on the
+  [latest release](https://github.com/Dot-Ami/dotami/releases/latest), says it isn't code-signed yet,
+  and says the future cockpit is being built (`README.md`). The government skills list is cited as
+  *OaSIS 2025 Version 1.0*, which has a Knowledge file, instead of the 2022 version, which doesn't;
+  which files the import uses is still open (`docs/architecture/future-cockpit.md`, `CONTRIBUTING.md`).
+  The task list ticks what is done: the incorporation fixes of #142, a setting that survives a restart,
+  the figures' ages, the data file's encryption (released in 0.3.0), the 0.2.1 and 0.3.0 releases and
+  the `source-map-js` update; it lists the cockpit's plan once, under [14a], with [10f] pointing there,
+  and says the privacy policy and terms are still owed after the first download (`docs/task-list.md`).
+  CONTRIBUTING's "what we need" points to the task list, and the receipts design no longer lists
+  encrypting the data file as open (`CONTRIBUTING.md`, `docs/architecture/expense-records.md`).
 
 ## [0.3.0] — 2026-10-10
 
