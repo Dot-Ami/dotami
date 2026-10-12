@@ -103,6 +103,31 @@ test("words typed on the front page before it has finished loading are kept, and
   await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
+// The same fix seen from the other side: leave the front page with a full page load and press Back,
+// and the browser itself puts the old words back in the box before the page's scripts run. Until
+// 2026-10-11 they showed for a moment and were emptied, with "Map it" greyed out; now they stay and
+// Map it takes them (docs/ui-spec/landing/01-free-text-entry.md).
+test("words the browser puts back in the front page's box after Back stay, and Map it takes them", async ({ page }) => {
+  const sentence = "A mobile bike repair business with a van in Calgary";
+  await page.goto("/");
+  const box = page.getByPlaceholder(/What are you building/);
+  await waitForReact(box);
+  await box.fill(sentence);
+  // A full page load away (not an in-app link, which would draw the front page fresh and empty).
+  await page.goto("/settings");
+  await page.goBack();
+
+  const back = page.getByPlaceholder(/What are you building/);
+  await waitForReact(back);
+  await page.waitForLoadState("networkidle");
+  const mapIt = page.getByRole("button", { name: "Map it →" });
+  await expect.soft(back).toHaveValue(sentence);
+  await expect.soft(mapIt).toBeEnabled();
+  expect(test.info().errors).toHaveLength(0);
+  await mapIt.click();
+  await expect(page).toHaveURL(/\/intake/);
+});
+
 // 2026-10-11: the sentence typed on the front door used to live only in the tab and was lost when it
 // closed. It is now kept with the idea, dated and word for word (docs/ui-spec/landing/01-free-text-entry.md).
 test("the sentence typed on the front door is kept with the idea, word for word and dated, after the tab is gone", async ({ page, browser }) => {
