@@ -58,6 +58,20 @@ person is asked).
   Nothing about what leaves the computer changes: the sentence was already sent to the intake's parser
   as before (only when a model key is set), and is now also kept in the data file.
 
+### Packages that ship
+
+- **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine
+  version (Chromium 152.0.7977.130) and Node (24.21.0), with 55 fixes Electron copied from Chromium
+  and the parts it is built from ([electron/electron#54666](https://github.com/electron/electron/pull/54666),
+  [#54657](https://github.com/electron/electron/pull/54657); release notes for
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0), read 2026-10-11). Nothing about
+  what DotAmi keeps, sends or asks changes: neither release's notes mention `safeStorage`, which wraps
+  the data file's and the receipts' keys, and the one `net.fetch` fix is for a call DotAmi doesn't
+  make. The desktop build's `THIRD-PARTY-NOTICES.txt` names the new version
+  ([`desktop/notices.mjs`](../desktop/notices.mjs) reads it from the installed package). What
+  Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
+
 ### How to remove it
 
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your

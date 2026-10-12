@@ -30,6 +30,7 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
 import { pdf, png } from "../tests/helpers/receipt-files";
+import { waitForReact } from "../tests/helpers/react-ready";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
 const root = path.resolve(__dirname, "..");
@@ -170,7 +171,13 @@ function filesHolding(dir: string, words: string): string[] {
 
 /** Describe a venture and open its map — the same path as e2e/app.spec.ts; it's saved as "My venture". */
 async function describeVenture(page: Page) {
-  await page.getByPlaceholder(/What are you building/).fill("A mobile bike repair business with a van in Calgary");
+  const box = page.getByPlaceholder(/What are you building/);
+  // Type into the live page, not the one the server drew before the scripts ran: on CI's slower
+  // Windows machines this used to type too early, and "Map it" stayed greyed out (three failures on
+  // 10-11 October 2026). Typing before the page has loaded is now handled by the page itself and has
+  // its own browser test (e2e/app.spec.ts); this path tests the ordinary one.
+  await waitForReact(box);
+  await box.fill("A mobile bike repair business with a van in Calgary");
   await page.getByRole("button", { name: "Map it →" }).click();
   await page.getByRole("button", { name: "Continue →" }).click();
   await page.getByRole("button", { name: "Looks right →" }).click();
@@ -394,6 +401,43 @@ test("the rate limits are the real ones, even when the shell sets the browser te
   expect(firstRefused).toBeLessThanOrEqual(120);
   expect(statuses.slice(0, firstRefused).every((s) => s === 200)).toBe(true);
   expect(statuses.slice(firstRefused).every((s) => s === 429)).toBe(true);
+});
+
+test("the person's day follows the time-zone data Electron ships: British Columbia stays on UTC-7 from November 2026", async () => {
+  // DotAmi's "today" (lib/figures/age.ts localDay: the line for refusing a future-dated expense or
+  // figure, and the day shown for one agreed to or retracted) is worked out in two places: the server,
+  // which the desktop app starts with utilityProcess.fork (desktop/main.mjs), and the page itself (the
+  // figures list, the file drop). Both run on Electron's own time-zone data, not the system Node's.
+  // The main process is the same binary as the server, so it is asked here, and so is the window, with
+  // the options localDay uses. Electron 44.6.0 moved to tzdata 2026d, which has British Columbia's
+  // permanent UTC-7 (electron/electron#54623, 44.6.0 release notes, read 2026-10-11); on 44.5.1
+  // (tzdata 2025c) the clocks went back on 2026-11-01 and the last two moments fell a day earlier.
+  const asked = {
+    moments: ["2026-07-01T07:30:00Z", "2026-11-02T07:30:00Z", "2027-01-15T07:30:00Z"],
+    options: {
+      timeZone: "America/Vancouver",
+      calendar: "gregory",
+      numberingSystem: "latn",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    } satisfies Intl.DateTimeFormatOptions,
+  };
+  const page = await launch();
+  // app.evaluate hands the electron module first and the argument second; the window's evaluate
+  // takes the argument only. Each function is sent to its process as text, so neither can share code.
+  const main = await app!.evaluate((_electron, { moments, options }) => {
+    const day = new Intl.DateTimeFormat("en-CA", options);
+    return { tz: process.versions.tz, days: moments.map((m) => day.format(new Date(m))) };
+  }, asked);
+  const inWindow = await page.evaluate(({ moments, options }) => {
+    const day = new Intl.DateTimeFormat("en-CA", options);
+    return moments.map((m) => day.format(new Date(m)));
+  }, asked);
+  // 07:30 UTC is 12:30 a.m. at UTC-7: the new day has started in Vancouver. July was UTC-7 either way.
+  const expected = ["2026-07-01", "2026-11-02", "2027-01-15"];
+  expect(main.days, `main process, time-zone data ${main.tz}`).toEqual(expected);
+  expect(inWindow, "DotAmi's window").toEqual(expected);
 });
 
 test("Add to my calendar asks where to save with a Save dialog, writes the file there, and writes nothing when cancelled", async () => {

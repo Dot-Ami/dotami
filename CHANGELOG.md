@@ -80,6 +80,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
+
+### Security
+- **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
+  2026-10-07, carries 55 fixes Electron copied from Chrome's engine and the parts it is built from
+  (ANGLE, Chromium, Dawn, fontconfig, Skia, V8 and WebRTC): 47 in
+  [electron/electron#54666](https://github.com/electron/electron/pull/54666) and 8 in
+  [#54657](https://github.com/electron/electron/pull/54657): one of them, by its title, a fix for memory
+  used after being freed, and a few more for objects that could be used after they went away.
+  Electron's release notes call them "backported fixes", not security fixes. The Chromium version
+  number (152.0.7977.130) and Node (24.21.0) stay the same. Read in the
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0) notes on 2026-10-11: the change
+  to the built-in `autoUpdater` is for Macs, and DotAmi updates through electron-updater; the
+  `net.fetch` fix is for a call DotAmi doesn't make; `protocol.registerSource` is new and unused. One
+  change does reach DotAmi, below. The installed app gets all of this with the next release
+  (`package.json`, `package-lock.json`).
+- **In the desktop app, "today" follows British Columbia's permanent UTC-7 from November 2026.**
+  Electron 44.6.0 updated its time-zone data to tzdata 2026d, "including British Columbia's move to
+  permanent UTC-7" ([electron/electron#54623](https://github.com/electron/electron/pull/54623), 44.6.0
+  release notes, read 2026-10-11). DotAmi works out the person's own day (`lib/figures/age.ts`
+  `localDay`) in the desktop app's server, which is started with `utilityProcess.fork`
+  (`desktop/main.mjs`), and in its window, and both run on Electron's own copy of that data. That day
+  is the line for refusing an expense or figure dated after today, and the day shown for one agreed to
+  or retracted. On a computer set to Vancouver time,
+  from 2026-11-01 that day now turns over at midnight UTC-7, one hour earlier than on 44.5.1, which
+  still moved the clocks back to UTC-8. Measured 2026-10-11 by formatting 2026-11-02 07:30 UTC in
+  `America/Vancouver`: 44.5.1 (tzdata 2025c) gave 2026-11-01, 11:30 p.m. GMT-8; 44.7.0 (tzdata 2026d)
+  gives 2026-11-02, 12:30 a.m. GMT-7. A desktop test checks it (`e2e-desktop/desktop.spec.ts`, "the
+  person's day follows the time-zone data Electron ships"). Copies run from source with `npm run dev`
+  use the system Node's time-zone data, as before.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
