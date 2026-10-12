@@ -137,6 +137,11 @@ export interface RoadGauges {
   money: {
     officialFeesCents: number;
     officialFeeLines: number;
+    /**
+     * Official fees that apply only sometimes (`onlyIf`, such as a rewrite after a failed exam): counted,
+     * never added to the official fees, since nothing yet lets the person say the condition holds.
+     */
+    onlyIfFeeLines: number;
     yourNumbersCents: number;
     yourNumberLines: number;
     /** Named lines with no number yet: counted, never added up as $0. */
@@ -472,6 +477,7 @@ function gauges(
   const money: RoadGauges["money"] = {
     officialFeesCents: 0,
     officialFeeLines: 0,
+    onlyIfFeeLines: 0,
     yourNumbersCents: 0,
     yourNumberLines: 0,
     notPricedLines: 0,
@@ -487,7 +493,10 @@ function gauges(
       waiting.set(step.waitsOnForkId!, (waiting.get(step.waitsOnForkId!) ?? 0) + step.costs.length);
     } else {
       for (const line of step.costs) {
-        if (line.kind === "official-fee") {
+        if (line.kind === "official-fee" && line.onlyIf !== undefined) {
+          // A fee that applies only sometimes stays out of the total (docs/engines/roads.md).
+          money.onlyIfFeeLines += 1;
+        } else if (line.kind === "official-fee") {
           money.officialFeesCents += line.amountCents;
           money.officialFeeLines += 1;
         } else if (line.kind === "your-quote") {

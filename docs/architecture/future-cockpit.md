@@ -483,8 +483,9 @@ lives in `lib/roads/`.
 - **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
   are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
   as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
-  *Start-up money:* the official fees, the person's own numbers, how many named lines are not priced
-  yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
+  *Start-up money:* the official fees, how many official fees apply only sometimes (`onlyIf`, counted
+  and never added up, since nothing yet lets the person say the condition holds), the person's own
+  numbers, how many named lines are not priced yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
   pick (with the fork's name), the savings, and savings minus (official fees + the person's numbers),
   given only when there are savings and at least one line with an amount. *Your date:* the months from
   this month to the person's month, given only when they set one. The yearly income wanted is passed
