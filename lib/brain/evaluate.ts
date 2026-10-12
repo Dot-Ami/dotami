@@ -501,7 +501,7 @@ function computeNodeStates(
   // source (docs/engines/cfe.md, authoring rule 2).
   states["stage-3a-incorporation-80k-net"] = incPick === "stage-3a-incorporation-80k-net" ? "yellow" : "gray";
   // Liability / SR&ED (stage-3b) reads the activity tags (confirmed on the intake, often marked by the
-  // parser from the sentence), not a liability or SR&ED need the person stated: an open item (docs/task-list.md [10f]).
+  // parser from the sentence), not a liability or SR&ED need the person stated: an open item (docs/task-list.md [14a]).
   const sredPath = "stage-3b-incorporation-liability-sred";
   if (incPick === sredPath) {
     states[sredPath] = rdTags ? "green" : "yellow";

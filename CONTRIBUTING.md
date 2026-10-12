@@ -36,9 +36,13 @@ Vulnerabilities go through [SECURITY.md](SECURITY.md), never a public issue.
    issue with the source that shows it; a PR is even better.
 4. **Freshness.** Every entry has a `lastVerified` date. Re-checking an entry against its
    official source and bumping the date, with a note of what changed, is a real contribution.
-5. **The roadmap.** `docs/roadmap.md` lists the bigger pieces — roadmaps as data, progress,
-   connecting to accounting software and financial records locally, complex strategies and
-   structures as roadmaps. Each is open; say in an issue which one you are taking.
+5. **The roadmap and the task list.** `docs/roadmap.md` lists the bigger pieces — roadmaps as
+   data, progress, connecting to accounting software and financial records locally, complex
+   strategies and structures as roadmaps. Some are under way: roadmaps as data and progress are
+   part of the future cockpit, the first priority since 2026-10-10
+   ([future-cockpit.md](docs/architecture/future-cockpit.md)), and reading figures from files and
+   accounting books has started. [docs/task-list.md](docs/task-list.md) says what is done, what is
+   open and what waits on a maintainer's decision; say in an issue which piece you are taking.
 6. **Your export's column names.** "Add from a file" has only been tested on invented files
    shaped from each accounting program's help pages. If you use QuickBooks Online, Xero, Wave,
    FreshBooks, Sage Accounting or Sage 50 Canadian, paste the **one row of column names** from
@@ -133,9 +137,9 @@ and the CRA page that administers it; the entry's typed field carries the figure
 The maintainer decided on 2026-10-11 that the future cockpit
 ([docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md)) may show the
 government's list of skills for a job. The source is the **Occupational and Skills Information
-System (OaSIS)**, published by Employment and Social Development Canada on
-[open.canada.ca](https://open.canada.ca/data/en/dataset/eeb3e442-9f19-4d12-8b38-c488fe4f6e5e) as CSV
-files, under the [Open Government Licence – Canada](https://open.canada.ca/en/open-government-licence-canada)
+System (OaSIS)**, published by Employment and Social Development Canada on open.canada.ca as
+[*Occupational and Skills Information System (OaSIS) - 2025 Version 1.0*](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec),
+CSV files in English and French, under the [Open Government Licence – Canada](https://open.canada.ca/en/open-government-licence-canada)
 (version 2.0). It is allowed only this way:
 
 - **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
@@ -143,8 +147,10 @@ files, under the [Open Government Licence – Canada](https://open.canada.ca/en/
   may link a business or a future to a job by itself: no official source says which skills a business
   needs, and the lists describe employees, not owners.
 - **Cited by dataset version and record date,** like any other source: the dataset's title and version
-  (at the time of writing, *OaSIS 2022 Version 1.0*), the file it came from (for example the skills
-  file), the occupation code, the dataset's *record modified* date as the page shows it, and
+  (at the time of writing, *OaSIS 2025 Version 1.0*: unlike the older *OaSIS 2022 Version 1.0*, it has
+  a Knowledge file), the file it came from (for example the skills file; which files the import uses
+  is still open, [future-cockpit.md](docs/architecture/future-cockpit.md) § 13), the occupation
+  code, the dataset's *record modified* date as the page shows it, and
   `lastVerified` as the day you read it. `authority` is `"federal"`, `jurisdiction` is `"CA"`.
 - **Its licence travels with it.** The imported lists stay in their own data file carrying the
   licence's attribution line — *"Contains information licensed under the Open Government Licence –

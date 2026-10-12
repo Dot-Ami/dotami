@@ -100,6 +100,8 @@ with a test that seeded data survives.
   wouldn't change that (they can read the file directly), so it isn't proposed.
 - An unlocked backup is readable by whoever holds it; the default stays "no passphrase" because a
   forgotten passphrase loses the data for good. The maintainer may want this the other way round.
+  *(2026-10-11: he chose the other way on 2026-10-10. Since 0.3.0 every new backup needs a
+  passphrase; older backups without one still restore.)*
 
 ---
 

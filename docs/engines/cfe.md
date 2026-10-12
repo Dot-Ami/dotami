@@ -52,7 +52,7 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    the GST/HST card the person didn't pick from grey to amber, and makes the GST/HST compliance
    item say the estimate is "approaching" the line. No cited page sets that 70%. It predates this
    rule and goes in the GST/HST card rework, where the card uses only the CRA's own test
-   (docs/task-list.md, [10f]); until then it is an uncited watch line, not a rule.
+   (docs/task-list.md, [14a]); until then it is an uncited watch line, not a rule.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes
    without maintainer approval.
 4. `financialImpact.projectionNotes` feed the modeling footer — numbers there must agree
