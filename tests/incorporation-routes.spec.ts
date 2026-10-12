@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { incorporationRoutesFor, incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-routes";
+import { howChecked, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 
 const MANDATORY = "stage-2b-mandatory-gst-registration" satisfies CFENodeId;
 const INCORPORATING = "stage-3a-incorporation-80k-net" satisfies CFENodeId;
@@ -35,8 +36,11 @@ describe("federal and Alberta incorporation, side by side, from their own pages"
         expect(ids.has(line.id), line.id).toBe(false);
         ids.add(line.id);
         expect(line.citation.url, line.id).toMatch(/^https:\/\//);
-        expect(line.citation.lastVerified, line.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(line.quotes.length, line.id).toBeGreaterThan(0);
+        // Option B (2026-10-12): the page's words were found there by scripts/check-quotes.mjs, and every
+        // quote the line shows is one of them; nothing claims a person read the page.
+        expect(howChecked(line.citation).kind, line.id).toBe("tool");
+        for (const quote of line.quotes) expect(toolCheckQuotes(line.citation), `${line.id}: ${quote}`).toContain(quote);
         if (line.kind === "official-fee") {
           const written = `$${line.amountCad!.toLocaleString("en-CA")}`;
           expect(line.quotes.join(" "), `${line.id}: ${written} is not in its quote`).toContain(written);

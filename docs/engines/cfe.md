@@ -8,7 +8,8 @@ Catalog: `lib/engines/cfe/v2026/nodes.ts` (10 nodes as of 2026-07-02) · Priorit
 Lifecycle nodes Stage 0–4 (employee baseline → sole-prop activation → GST fork →
 incorporation fork → SR&ED deepening / retained-earnings planning) plus branch nodes
 (hire-first, service-vs-productize). Each node: trigger, financial impact, citations,
-lens annotations, branch ids. This is the graph the cockpit renders.
+lens annotations, branch ids. The cockpit draws it as road 0, *Starting any business in Alberta (tax
+and structure)* ([roads.md](./roads.md), since 2026-10-11): tiers become columns, nodes become steps.
 
 ## Node state semantics (today vs target)
 
@@ -59,6 +60,10 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    **Ways of taking a stage sit side by side** (`lib/engines/cfe/v2026/incorporation-routes.ts`,
    2026-10-11): each line is an official fee whose amount is inside the quoted words of its own
    page, a named blank, or "not needed"; DotAmi totals nothing and picks no way.
+   **Quoted words are tool-checked** (option B, [citations.md](citations.md)): since 2026-10-12 the
+   page behind every official-words box and every way's line carries a `toolCheck` whose quotes are
+   the words relied on, found on the live page by `scripts/check-quotes.mjs`, never a read date
+   that would claim a person read it.
    **A number only the person can give** is asked on the node (`asksOwnNumber`): Incorporating's
    "I'd incorporate at $___" is the only thing that can light it green.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Pill } from "@/components/ui";
 import { describeFigureDates, localDay } from "@/lib/figures/age";
-import { FIGURE_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureView } from "@/lib/figures/types";
+import { BUSINESS_TOTAL_KINDS, FIGURE_KIND_LABELS, type FigureKind, type FigureView } from "@/lib/figures/types";
 import { parseMoneyToCents } from "@/lib/figures/money";
 import { isTaxLineKind, kindWithNewestLine, taxLineStatus, taxLineWords, taxYearHint } from "@/lib/figures/tax-line";
 import { useLocalToday } from "@/lib/figures/use-local-today";
@@ -307,7 +307,8 @@ function AddFigureForm({
   onProposed: (figures: FigureView[]) => void;
 }) {
   const uid = useId();
-  const [kind, setKind] = useState<FigureKind>(FIGURE_KINDS[0]);
+  // Only the business totals are typed here; the person's planning numbers come from the cockpit.
+  const [kind, setKind] = useState<FigureKind>(BUSINESS_TOTAL_KINDS[0]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
@@ -387,7 +388,7 @@ function AddFigureForm({
             onChange={(e) => setKind(e.target.value as FigureKind)}
             className={`${FIELD} mt-1`}
           >
-            {FIGURE_KINDS.map((k) => (
+            {BUSINESS_TOTAL_KINDS.map((k) => (
               <option key={k} value={k}>
                 {kindWithNewestLine(k, FIGURE_KIND_LABELS[k])}
               </option>

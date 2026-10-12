@@ -25,8 +25,14 @@ with where they are kept, before confirming.
      (`keeps` in `DELETE_MENU`). So do the sentences typed on the front door for them (added
      2026-10-11): each is one of the person's statements, linked to its idea, and stays among
      "Your statements" with the link cleared, as "not tied to an idea"; ticking "Your statements"
-     too deletes them.
-   - **Your figures** — every figure, in every state; cards go back to the estimates.
+     too deletes them. Since 2026-10-11 (the future cockpit's phase 1 storage) it also takes **Your
+     progress on each step** (`StepProgress`, counted on the box like the rest), and the road, endings
+     and month kept on each idea; the box's sentence ends "and your progress on each step of their roads", and its
+     Learn more says the skill marks and the yearly income wanted stay, because they are the person's,
+     not an idea's.
+   - **Your figures** — every figure, in every state; cards go back to the estimates. Since
+     2026-10-11 that includes the person's own planning numbers for an idea (savings toward starting,
+     start-up costs), and its Learn more says so.
    - **Your expense records** — every record, attached to an idea or not, in every state, and every
      receipt added to one (the `Receipt` rows by the schema's cascade, the files by the sweep).
    - **Your receipts** — every receipt file in the receipts folder and its `Receipt` row; the records
@@ -36,7 +42,16 @@ with where they are kept, before confirming.
      with Your settings, and the tick-box line says so.
    - **Your statements ("In your words")** — all of them at once; DotAmi never deletes one alone.
      Since 2026-10-11 that includes the sentence typed on the front door for each idea, which the
-     idea's card then no longer shows.
+     idea's card then no longer shows, and the answers to "where do you want to be".
+   - **Your skill marks** (added 2026-10-11) — every mark the person set (have, learning, not yet), on
+     skills from a road's list and on their own. "Every mark goes at once, on skills from a road's list
+     and on skills you added yourself. Your ideas stay, and so does everything else." Learn more: they
+     are kept once for the person, which is why deleting ideas doesn't remove them; afterwards every
+     skill counts as not marked. Switched off ("Nothing to delete") until a screen sets a mark.
+   - **The yearly income you said you want** (added 2026-10-11) — every income target, in every
+     state. "Every one goes, whether agreed, waiting, taken back or turned down. Your ideas stay, and so
+     do their figures." Learn more: kept once for the person, not for one idea; afterwards the cockpit
+     has no target of theirs until they give one again. Switched off until a screen asks for one.
    - **Your settings** — every saved choice goes back to its default. [8i] That includes whether to
      encrypt the data file: a "Never" is forgotten, so the desktop app's next start asks again (an
      encrypted file stays encrypted); the box says so. Since 2026-10-10 its "learn more" also says that a
@@ -86,7 +101,7 @@ with where they are kept, before confirming.
    Under the boxes: the cited line (from `lib/engines/compliance/v2026/record-keeping.ts`): Delete
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
-   last tax year they relate to, with exceptions, linked to the CRA's page with the day it was read.
+   last tax year they relate to, with exceptions, linked to the CRA's page, then how the page was checked in brackets, "(Read on 2026-10-08. Who read it wasn't recorded.)", grey (the same words and colour as every source since 2026-10-11, amber for a model's read or a tool check, [../shared/citation-links.md](../shared/citation-links.md); it said "(read 2026-10-08)").
    Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): key files set aside on their own in
    the backups folder (`receipts-key-unreadable-….key`; before 2026-10-10 this line was the receipt
    folders set aside there, which the safety-copies box now clears); [8i] the locked data file and the

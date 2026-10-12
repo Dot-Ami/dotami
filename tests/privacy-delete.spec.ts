@@ -19,6 +19,10 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { chooseRoad } from "@/lib/futures/future";
+import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-figures";
+import { markSkill } from "@/lib/futures/skill-marks";
+import { setStepProgress } from "@/lib/futures/step-progress";
 import { addTypedStatement } from "@/lib/person/statements";
 import {
   DeleteInputError,
@@ -37,6 +41,7 @@ import { DELETE_MENU, KEPT_BY_DELETE, NOT_CLEARED_BY_DELETE, SET_ASIDE_RECEIPTS_
 import { writeSetting } from "@/lib/settings/store";
 import { readWipePending, wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 import { openDatabase } from "../desktop/sqlite.mjs";
+import { inventedRoad, inventedSkillItems } from "./helpers/invented-road";
 import { encryptInPlace } from "./helpers/migrated-db";
 import { demoScenarios } from "../prisma/seed-data";
 
@@ -318,6 +323,17 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     }
   });
 
+  it("phase 1 storage (2026-10-11): step progress goes with ideas; skill marks and the income target each have a box", () => {
+    // Step progress belongs to a future, so the database deletes it with one.
+    expect(DELETE_MENU.find((e) => e.id === "ideas")!.alsoDeletes).toContain("StepProgress");
+    // Skill marks and the income target belong to the person: deleting ideas leaves them, so each has its own box.
+    const marks = DELETE_MENU.find((e) => e.id === "skill-marks")!;
+    expect(marks).toMatchObject({ tables: ["SkillMark"], alsoDeletes: [], built: true });
+    const income = DELETE_MENU.find((e) => e.id === "income-wanted")!;
+    expect(income).toMatchObject({ tables: ["PersonFigure"], alsoDeletes: [], built: true });
+    for (const box of [marks, income]) expect(box.goesWithIt).toMatch(/your ideas stay/i);
+  });
+
   it("says what goes with each box and has a Learn more for it; a box not built yet deletes nothing", () => {
     for (const e of DELETE_MENU) {
       expect(e.label.trim()).not.toBe("");
@@ -427,6 +443,37 @@ describe("deleteData", () => {
     expect(await countAll(prisma)).toEqual({ ...before, PersonStatement: 0 });
   });
 
+  it("phase 1 storage with real rows: ideas take their step progress; skill marks and the income target go only with their own boxes", async () => {
+    const { prisma, file } = makeDb("cockpit-rows");
+    const { a, b } = await seed(prisma);
+    const catalog = { roads: [inventedRoad()], skillItems: inventedSkillItems };
+    for (const ventureId of [a, b]) await chooseRoad(prisma, ventureId, "road-invented-test-only", catalog);
+    await setStepProgress(prisma, a, { roadId: "road-invented-test-only", stepId: "step-invented-train", status: "done" }, catalog);
+    await markSkill(prisma, { ownLabel: `skill ${MARKER}`, mark: "learning" });
+    await markSkill(prisma, { skillItemId: "skill-invented-ticket", mark: "have" }, catalog);
+    const [income] = await proposeIncomeWanted(prisma, { amountCents: 7_000_000 });
+    await agreeToPersonFigures(prisma, [income.id]);
+    await proposeIncomeWanted(prisma, { amountCents: 8_000_000 });
+    expect(await countAll(prisma)).toMatchObject({ StepProgress: 1, SkillMark: 2, PersonFigure: 2 });
+
+    // Ideas: the step progress goes with them; the person's marks and income target stay.
+    let result = await deleteData(prisma, { kinds: ["ideas"], seen: await seenFor(prisma, ["ideas"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { StepProgress: 1 }, left: { StepProgress: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ Venture: 0, StepProgress: 0, SkillMark: 2, PersonFigure: 2 });
+
+    // Each of the person's own boxes takes its whole table and nothing else.
+    result = await deleteData(prisma, { kinds: ["skill-marks"], seen: await seenFor(prisma, ["skill-marks"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { SkillMark: 2 }, left: { SkillMark: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ SkillMark: 0, PersonFigure: 2 });
+    result = await deleteData(prisma, { kinds: ["income-wanted"], seen: await seenFor(prisma, ["income-wanted"]) });
+    expect(result).toMatchObject({ status: "deleted", deleted: { PersonFigure: 2 }, left: { PersonFigure: 0 } });
+    expect(await countAll(prisma)).toMatchObject({ PersonFigure: 0, PersonStatement: 2 });
+
+    // The skill named in the person's words is gone from the file's bytes too.
+    await prisma.$disconnect();
+    expect(readFileSync(file).includes(Buffer.from(`skill ${MARKER}`))).toBe(false);
+  });
+
   it("deleting ideas takes their links, map progress and figures, keeps every expense record (not attached yet), and leaves statements and settings", async () => {
     // The case that made the counts wrong: 2 records attached to an idea and 1 not attached.
     const { prisma } = makeDb("ideas");
@@ -440,13 +487,13 @@ describe("deleteData", () => {
     expect(before.Expense).toBe(3);
 
     // What the page shows and sends: whole-table counts for what goes, and how many records are attached.
-    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
+    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
     expect(await seenFor(prisma, ["ideas"])).toEqual(seen);
     const result = await deleteData(prisma, { kinds: ["ideas"], seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2 },
-      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, Figure: 0 },
       kept: { Expense: { unlinked: 2, total: 3 }, PersonStatement: { unlinked: 1, total: 2 } },
       wiped: true,
     });
@@ -491,12 +538,12 @@ describe("deleteData", () => {
     // The expense records are counted whole, once, and no "kept" count is asked for them. Their receipts
     // (none here) go with them. Statements aren't ticked, so the ones typed for an idea (none here,
     // 2026-10-11) are still counted as kept.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 },
-      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0, Receipt: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, Expense: 3, Receipt: 0 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, Figure: 0, Expense: 0, Receipt: 0 },
       kept: { PersonStatement: { unlinked: 0, total: 2 } },
       wiped: true,
     });

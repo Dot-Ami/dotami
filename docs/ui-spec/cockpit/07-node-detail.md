@@ -4,9 +4,10 @@ Page: Cockpit (`/cockpit`) · Component: `components/node-detail-panel.tsx`
 (quotes: `components/shared/official-words.tsx`)
 Type: side panel with one text input
 
-Last updated: 2026-10-11 (the ride-share and taxi cards and the GST/HST stages' lines for them;
-written the same day with the honest-map fixes, docs/task-list.md [10f]; the panel itself is from
-2026-09-13)
+Last updated: 2026-10-12 (inside the cockpit's step panel on today's road, 09-step-panel.md; 2026-10-11:
+the ride-share and taxi cards and the GST/HST stages' lines for them; written the same day with
+the honest-map fixes, docs/task-list.md [14a]; the panel
+itself is from 2026-09-13)
 
 ## What it is
 
@@ -20,7 +21,7 @@ show, each only when the catalog gives it for that stage:
 | **Your answers** line | One sentence on which of the person's answers set the stage's colour. Liability / SR&ED: "Lit because your intake has the activity tag Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or that none of its three tags is on the intake). Incorporating: "Check first: set your own number to see this light. DotAmi has no number of its own for this." / "Lit because your third-year revenue estimate ($150,000) reaches your own number ($100,000)." / "…is under your own number…" / "Check first: there's no third-year revenue estimate on your intake to compare with your own number ($100,000)." (the intake's Year 3 was skipped, which is stored as 0; never quoted back as "$0", and never green) / "Not on your path…" | The rules (`lib/brain/evaluate.ts` `computeNodeStates`, `EvaluationResult.nodeReasons`); the stage card shows the same sentence under its trigger, and its button points to it as its accessible description (`aria-describedby`), so a screen reader hears it too |
 | **Official words** box | An official page's own sentences, each in its own quotation marks, under a lead line naming whose words they are, with *Read it on the page*. Mandatory GST registration: the CRA's two small-supplier tests, each with what follows and from when. Voluntary GST registration: the CRA's line on registering by choice | `CFENode.officialWords` (`lib/engines/compliance/v2026/gst-official-words.ts`) |
 | **I'd incorporate at $___** | A text input (digits only; anything else typed is dropped; at most 9 digits, the most a save keeps, `ownNumberFromTyping`; empty clears it), tagged **your number**, with one line under it: "Your own yearly sales number, kept as yours. No law sets one, so DotAmi has none. With it, this card applies once your third-year estimate reaches it." Only on Incorporating | `CFENode.asksOwnNumber`; kept in `ScenarioState.incorporateAt` |
-| **Ways to do this, side by side** | One column per way of taking the stage, under "2 ways to do this, side by side · DotAmi doesn't pick one". Incorporating, for an Alberta idea: **Federal (Corporations Canada)** and **Alberta (Corporate Registry)**. Each row: its name, its amount column (**$200 once**, **$12 a year**, **not needed**, or **no amount read**), the page's own words in quotation marks, and *source, read 2026-10-11*. Alberta's column ends: "Alberta's government and service fees are in the Registry agent product catalogue, which DotAmi hasn't read yet, so none is shown. The NUANS report comes from a NUANS service provider; the Alberta page states no cost for it." No totals. For an idea in a province with no written route: the heading reads "Ways to do this · only the federal one is written for British Columbia yet" (never "1 way to do this, side by side"), then the federal column, and "Incorporating under British Columbia law isn't written yet, so only the federal way is shown." | `lib/engines/cfe/v2026/incorporation-routes.ts` (the routes, `routesHeading`, `provinceNotWrittenNote`) |
+| **Ways to do this, side by side** | One column per way of taking the stage, under "2 ways to do this, side by side · DotAmi doesn't pick one". Incorporating, for an Alberta idea: **Federal (Corporations Canada)** and **Alberta (Corporate Registry)**. Each row: its name, its amount column (**$200 once**, **$12 a year**, **not needed**, or **no amount read**), the page's own words in quotation marks, *source*, and under it how that source was checked, in the words every screen uses (`howCheckedWords`): since 2026-10-12, in amber, *Checked by a tool on 2026-10-12: it found on the page the exact words this entry relies on. Not read by a person yet.* (option B, docs/engines/citations.md). Alberta's column ends: "Alberta's government and service fees are in the Registry agent product catalogue, which DotAmi hasn't read yet, so none is shown. The NUANS report comes from a NUANS service provider; the Alberta page states no cost for it." No totals. For an idea in a province with no written route: the heading reads "Ways to do this · only the federal one is written for British Columbia yet" (never "1 way to do this, side by side"), then the federal column, and "Incorporating under British Columbia law isn't written yet, so only the federal way is shown." | `lib/engines/cfe/v2026/incorporation-routes.ts` (the routes, `routesHeading`, `provinceNotWrittenNote`) |
 
 The GST/HST lever card in *For you on this stage* carries the same official-words box as the
 mandatory stage, always in view under its *why* line (outside its show-details button, because the
@@ -69,7 +70,8 @@ may light that card (docs/architecture/future-cockpit.md § 9, fixes 1 to 3).
 Agency, on the same page:" · "Read it on the page" · "I'd incorporate at" · "$" · "your number" ·
 "2 ways to do this, side by side · DotAmi doesn't pick one" · "Ways to do this · only the federal one is
 written for <province> yet" · "not needed" · "no amount read" ·
-"source, read <date>".
+"source" · "Checked by a tool on <date>: it found on the page the exact words this entry relies on. Not
+read by a person yet.".
 
 ## State touched (field names only)
 

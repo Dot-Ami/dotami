@@ -19,6 +19,8 @@ export function evaluateScenario(
     today: string;
     /** The venture's CONFIRMED figures only; see `EvaluateOptions.figures`. */
     figures?: readonly ConfirmedFigure[];
+    /** A what-if of first-year sales, whole dollars, for this run only; see `EvaluateOptions.whatIfFirstYearSales`. */
+    whatIfFirstYearSales?: number;
   },
 ): EvaluationResult {
   return evaluateProfile(buildEvaluationProfileFromScenario(scenario), {
@@ -27,5 +29,6 @@ export function evaluateScenario(
     // The person's own incorporation number, kept with the picks (2026-10-11).
     incorporateAt: scenario.state.incorporateAt ?? null,
     figures: options.figures,
+    whatIfFirstYearSales: options.whatIfFirstYearSales,
   });
 }

@@ -7,13 +7,14 @@
  * from a return, the form and line printed on that return (`formLine`) are shown as they were read.
  */
 
+import { howCheckedWords } from "@/lib/engines/shared/citation-check";
 import { newestYearRead, taxLineEntryForKind, taxLineForYear } from "@/lib/engines/taxlines/v2026";
 import type { TaxLineEntry } from "@/lib/engines/taxlines/v2026";
 
 import type { FigureKind } from "./types";
 
 export type TaxLineStatus =
-  | { status: "read"; form: string; line: string; printedLabel: string; taxYear: number; lastVerified: string }
+  | { status: "read"; form: string; line: string; printedLabel: string; taxYear: number; checked: string }
   | { status: "not-read-yet"; form: string; taxYear: number; yearsRead: number[] };
 
 /** True for the kinds that are a line on a tax form (the four T2125 totals). */
@@ -41,8 +42,10 @@ export function taxLineStatus(kind: string, taxYear: number): TaxLineStatus | un
     line: year.line,
     printedLabel: year.printedLabel,
     taxYear,
-    // The first citation is always the form itself (tests/engine-integrity.spec.ts checks).
-    lastVerified: year.citations[0].lastVerified,
+    // The first citation is always the form itself, read by a person (tests/engine-integrity.spec.ts
+    // checks both, since these sentences say DotAmi "has read" the form). How it was checked, in the
+    // same words as every other source (docs/engines/citations.md).
+    checked: howCheckedWords(year.citations[0]),
   };
 }
 
@@ -61,7 +64,7 @@ export function taxYearHint(kind: string, taxYear: number): string | undefined {
   const s = taxLineStatus(kind, taxYear);
   if (!s) return undefined;
   if (s.status === "read") {
-    return `Line ${s.line} on the CRA's ${s.taxYear} ${s.form} ("${s.printedLabel}"), read ${s.lastVerified}.`;
+    return `Line ${s.line} on the CRA's ${s.taxYear} ${s.form} ("${s.printedLabel}"). ${s.checked}${s.checked.endsWith(".") ? "" : "."}`;
   }
   return `${s.taxYear}: not read yet. DotAmi has read the CRA's ${s.form} for ${yearList(s.yearsRead)} only, so this figure is kept with its tax year and no line number until that year's form is read.`;
 }

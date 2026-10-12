@@ -1,16 +1,34 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (for ride-share and taxi driving the GST/HST stages don't wait for the
-$30,000 line; a stage chip says "default" until its toggle is clicked and "open choice"
-on the fork every map shows, issue #5; Incorporating and Liability / SR&ED say which answers set their
-colour; no GST/HST amber before a CRA test is met; the GST toggle's "Wait for $30K" became "When the
-CRA's tests say"; earlier the same day: the cards' colours follow the person's own branch picks; a stage card's
+Last updated: 2026-10-12 (the cockpit screen, part 1: the overlay switches over the map, colours from
+road evaluation's states, the chip showing the person's own status where they set one, the Skills and
+Money badges, Rules & tax showing or hiding the lever cards, the fork's *The road splits here: you
+choose*, and a selected skill dimming the steps that don't list it, all in [08-overlays.md](./08-overlays.md);
+a step's lever cards now come from its own `engineHints`; *Next on your road* under the map,
+[11-next-on-your-road.md](./11-next-on-your-road.md); 2026-10-11: for ride-share and taxi driving the
+GST/HST stages don't wait for the $30,000 line; a stage chip says "default" until its toggle is clicked and "open
+choice" on the fork every map shows, issue #5; Incorporating and Liability / SR&ED say which answers
+set their colour; no GST/HST amber before a CRA test is met; the GST toggle's "Wait for $30K" became
+"When the CRA's tests say"; the map draws a road, and today's map is the road "Starting any business in
+Alberta", unchanged; the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
-**Component:** `components/cockpit/strategy-map.tsx` · **Tier data:**
-`lib/engines/cfe/v2026/tiers.ts` · **Design record:** this file (decided 2026-09-16).
+**Component:** `components/cockpit/strategy-map.tsx` · **Road data:** `lib/engines/roads/v2026/`
+(today: `generalRoadV2026`, built from `lib/engines/cfe/v2026/tiers.ts` and `nodes.ts` by `roadFromCfe`)
+· **Design record:** this file (decided 2026-09-16) and docs/architecture/future-cockpit.md § 6.
+
+**The map draws any road (2026-10-11).** The component takes a `Road` and imports nothing from the
+CFE catalog: a column is a road column (`TIER n` is its place from the left, its name and the line
+under it are the column's `label` and `summary`), a stage card is a road step (its name, and its
+`summary` as the two-line text), the toggle in a column is the one for the column's `forkId`, and the
+hover arrows follow the steps' `next`. Every saved idea is drawn on road 0 until storage lets it name
+another road. Nothing a person sees or does on the map changed: `tests/road-map.spec.ts` draws six saved
+states through the road and compares the HTML, byte for byte, with what the old map drew, and a browser
+test checks the columns, cards, toggles and arrows. (The old map's HTML was re-recorded on 2026-10-12
+from the honest-map change, #145, which changed its chips and added its reason lines on purpose; the
+road draws that, byte for byte.)
 
 ## What it is
 
@@ -19,10 +37,10 @@ Incorporating · Corporation running). No edges, no free-form layout, no React F
 
 Each column: `TIER n` · label · one-line subtitle · the branch toggle that belongs to it
 (GST timing in Tier 2: **Voluntary now** · **When the CRA's tests say**; Incorporation timing in
-Tier 3: **When you decide** · **Liability / SR&ED** — "default, not your pick yet" until clicked,
-S2.5.4d). Then, in catalog order, one **stage card** per lifecycle node whose
-`stage` the tier lists, and under each stage card one **lever card** per evaluator item
-relevant to that stage (`itemsForNode(...).forThisStage`, S2.5.4e).
+Tier 3: **When you decide** · **Liability / SR&ED** — "default, not your pick yet" until clicked). Then, in the column's order, one **stage card** per step the column lists
+(for road 0, the catalog's nodes whose `stage` the tier lists, in catalog order), and under each
+stage card one **lever card** per evaluator item relevant to that stage
+(`itemsForNode(...).forThisStage`).
 
 | Card | Shows | Click |
 |---|---|---|
@@ -96,7 +114,8 @@ cards' accessible names: **applies as answered**, **check first — confirm, tim
 away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
-an SVG overlay of arrows from that card along `CFENode.branches` — solid to the next step,
+an SVG overlay of arrows from that card along the road's `RoadStep.next` (road 0: the nodes'
+`branches`, unchanged) — solid to the next step,
 dashed and fainter for each step after, to the end of the tree; rightwards when the target is
 in a later tier, downwards inside a tier. Cards off that future dim to 35%. Hover wins while
 the pointer is on a card; the selected card keeps its arrows otherwise. Arrows reach "not on

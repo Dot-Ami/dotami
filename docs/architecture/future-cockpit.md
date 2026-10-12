@@ -195,6 +195,110 @@ Click anything to see where it comes from."*
 overlay on, scrolled to the first step not done, with *"Since last time: …"*. The left list folds to
 a count (*"12 things you've told DotAmi"*).
 
+### Cockpit screen as built (2026-10-12, part 1 of 2)
+
+The first cockpit pull request builds the top, the centre, the right panel and *Next on your road* on
+the cockpit page for a saved idea (`/cockpit?venture=<id>`), drawn on the idea's road through road
+evaluation (§ 6). Every saved idea is on road 0 until *Pick a future* lets a person choose another, so
+road 0 is what a person sees today; nothing in the screen knows which road it draws. Part 2, a later
+pull request, adds the left list (*What you've told DotAmi / Not told yet* with a receipt after each
+answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as it is until then.
+
+- **One run, one picture.** The page reads what is kept (below), passes it to `evaluateRoad`, and draws
+  the gauges, the step colours, the badges, the step panel and *Next on your road* from that one result.
+  The map's lever cards come from the same run's rules. Only business totals the person agreed to go to
+  the rules; the planning numbers go to the money sums through `agreedPlanning`.
+- **The goal bar.** The idea's first sentence (the one typed on the front door, kept since 2026-10-11)
+  in quotes, word for word, with its day; the yearly income the person agreed to, only when there is
+  one, labelled *your target* with the day agreed; the future, by its road's name. A road not written for
+  the idea's province (nor for all of Canada) is named as the map drawn, not as the person's future:
+  *Map drawn: <name> · written for AB; this idea is in BC*. Then four gauges, each a button tagged with
+  where its numbers come from:
+  - **Steps** (*count*): *x of y marked done* (and *n doing* when any), and the first step of *Next on
+    your road*. A step counts as done only when the person marked it done.
+  - **Skills** (*your marks*): *have · learning · not yet*, and *n not marked, out of m listed*; the
+    skills the person added are counted apart. A road that lists none says so.
+  - **Start-up money** (*yours + cited*): official fees and the person's own numbers, each with its
+    count of lines (*$1,860 official fees (3 lines) · $3,400 your numbers (1 line)*). A part with no line
+    behind it shows no amount: no official fee part when no fee counts, and *your numbers: not given yet*
+    when the person agreed to none, never *$0* (the badges' rule: a blank is never $0); *n official fees apply only sometimes, not added
+    up* (an `onlyIf` fee is in neither part: the badges leave it out of a step's sum and say so, and the
+    step panel and the money list show its condition); *n not priced yet*; the lines left out (off the path, or waiting on a fork with no pick); the
+    savings; and *savings minus both* only when road evaluation gives that difference. A road with no
+    cost lines says so.
+  - **Your date** (*yours*): *May 2029 · 31 months from today*, only when the person set a month;
+    otherwise *not set* and one invitation to add it.
+
+  Clicking **Steps** opens the first step of *Next on your road*; **Skills** and **Money** switch their
+  overlay on and open their list in the right panel; **Your date** opens the month box there. Clicking
+  the pressed gauge again closes what it opened (the overlay stays on), so its pressed state toggles. No gauge
+  shows a verdict word: the words file is tested against the same list road evaluation is.
+- **The road with overlays.** A row of switches over the map: *Road* (always on), *Skills*, *Money*,
+  *Rules & tax*, each with its count (skills listed and cost lines for the whole road; the rules and tax
+  cards the map draws, each once, so none from a card drawn dashed).
+  *Rules & tax* starts on, so the map looks as it does today; *Skills* and *Money* start off. On, *Skills*
+  puts *needs 3 · you have 2* on each step that lists skills, and *Money* puts the step's priced sum and
+  *n not priced* on each step with cost lines; off, *Rules & tax* hides the lever cards. The badges are in
+  each card's accessible name too. The last overlay used is not remembered yet.
+  Step colours are road evaluation's states (*applies*, *check first*, *not on your path*), which on
+  road 0 are exactly the rules' colours. A step the person marked *not for me* is grey by their choice,
+  so its card's name says *set aside by you* rather than *doesn't apply as answered*, and the legend says
+  so while any card is set aside. A column that decides a fork says *The road splits here: you
+  choose*. Selecting a skill (in the step panel or the skills list) dims every step that doesn't list it.
+  Drawn without the cockpit's overlays (no new props), the map is the same HTML as before, byte for byte.
+- **The step panel** replaces today's node detail when a step is selected and keeps all of it (the two
+  lines, the rules and tax cards for the stage and elsewhere, *More about this stage*, the sources
+  through `CitationLinks` with *Show the words*). Above the cards, in this order: why the step has its
+  colour (road evaluation's sentence); at a fork, *The road splits here: you choose* with that column's
+  toggle; *Your status*: **Doing**, **Done**, **Not for me** (pressing the one already on takes it back);
+  *Done when*: each line with a box and its citation, ticks saved as they're made (the boxes wait while a
+  save is read back, since each save sends the whole list); *Skills it needs*: each item with **Have**,
+  **Learning**, **Not yet** and **I don't know** (which removes the mark) and the item's own sources,
+  *you said you hold this* on a legal requirement marked have, and the cited way to get one marked *not
+  yet*; *Costs*: the three kinds, an official fee with its source and day read, the person's agreed
+  number, or *not priced yet* with **Add your quote** (the amount and where it came from: a quote, a
+  link, a receipt or your guess), and a named line's name source when it has one; then *Official pages
+  you open yourself*, the step's own links, when it has any. A quote is proposed, then the agree prompt opens; it counts only once the
+  person clicks **Agree**. A list that is empty on this road says so in one line.
+- **The lists behind the gauges.** *Skills*: every skill the road lists, with the same marks and sources,
+  and *Your own skills*: **Add a skill** (in the person's words, up to 120 characters) and a mark on each,
+  with **Remove** where the road's skills say *I don't know*, since taking the mark off a typed skill
+  removes it. *Money*: every cost line by step in road order, each official fee with its citation, and
+  **Add your savings**, through the agree prompt.
+  *Your date*: a month and year box, **Save** and **Clear**; a month already gone is refused.
+- **Next on your road**, under the map: the first three steps, in road order, that are on the person's
+  path and not done, labelled *the order steps happen, not importance*. Clicking one opens it. *On the
+  path* and *done* are read the way each card's chip reads them (`lib/cockpit/view.ts` `mapPlace`): the
+  person's own status where they set one, else the map's worked-out place. So the list never names a card
+  the map shows *done* (stage 0, worked out from the toggles) or *not on your path* (the side of a fork
+  not picked), nor one road evaluation greys. The Steps gauge's *next on your road* is its first.
+- **Road 0's statuses are the person's now** (the task list's open line; § 7 said a later pull request
+  may do it). The map's *active, done, set aside* lists are worked out from its toggles on every load,
+  so a status set "through the map" couldn't be kept, and road evaluation already refused to read those
+  lists as the person's (§ 6). So the person's status for a road 0 step is kept in step progress like
+  any other road's: the storage code accepts it, road evaluation reads it, and the map's chip shows it
+  (*doing*, *done*, *not for me*) where the person set one, and the worked-out chip everywhere else. The
+  toggles and their worked-out lists are untouched. *Since last time* gets road 0's history from here.
+- **The lever cards move onto the road step** (§ 6). A step names its rules and tax cards in
+  `engineHints`; road 0's are today's `NODE_ENGINE_HINTS`, written into its catalog file, and the old
+  name is now read from the road, so the readout API and the tests see the same lists.
+- **Where things are kept, and who may write them.** One read, `GET /api/futures/<idea id>`: the
+  idea's road, picks and month, its step progress, the person's skill marks, the agreed yearly income
+  and the first sentence. Three writes: `POST /api/futures/<idea id>/progress` (a status or ticks),
+  `POST /api/futures/<idea id>/date` (the month) and `POST /api/skill-marks`. Each reads its body through
+  `readJsonWithLimit`, has a rate limit, and answers only DotAmi's own window, as the settings routes do:
+  each is the person's own click, and an agent's way to propose one is the Lens's, later. Quotes and
+  savings go through the figures routes already there (propose, then the agree prompt's agree). The
+  read has a rate limit and no window check, like the figures list.
+- **Words and numbers.** Every sentence the new controls show is in `lib/cockpit/words.ts`; every amount
+  and month goes through `lib/format/money-and-months.ts`.
+- **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
+  last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
+  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
+  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
+  road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
+  empty line until the road content lands; the tests use an invented road for them.
+
 ## 3. What DotAmi asks, why, and how it's kept
 
 No question is asked unless something on screen depends on it. Each says why it is asked and what it
@@ -270,9 +374,9 @@ and how a gap is filled:
 
 | Content | Source | If we don't have it |
 |---|---|---|
-| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), read and cited by a person, one citation per *done when* line | A person reads the official page and writes the step; until then the future isn't offered. *"More futures are being written"* says so |
-| Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read |
-| Skills for a job | OaSIS 2022 version 1.0 (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says modified 2025-09-04, read 2026-10-11), through the person's pick of job | The person adds their own skills (*added by you*) |
+| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. Whether *Pick a future* may list a road none of whose sources a person has read is the maintainer's call (§ 13). *"More futures are being written"* says so |
+| Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read by a person or its quotes are found on it by the tool |
+| Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
 | Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
 | Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
@@ -345,6 +449,8 @@ type CostLine =
   hours, are read from the Alberta trade body's current pages, not assumed. This adds roughly 15–20
   citations to be read word for word; today the app has 74, of which 9 have been checked against the
   law's text, 4 of them word for word (`status: "confirmed"` in `lib/engines/shared/types.ts`).
+  (As built on 2026-10-12, its citations are tool checks, not reads: see "The first written future
+  as built" below.)
 
 **The map draws any road.** Today `components/cockpit/strategy-map.tsx` only knows the ten-step tax
 map (it imports `CFENode` and `cfeTiersV2026`). Phase 1 first changes it to draw a `Road`, with road 0
@@ -354,6 +460,259 @@ drawn exactly as today (about 1.5 build days).
 agreed figures and any what-if, and returns step states, gauge counts and the money arithmetic. It
 reuses `evaluateProfile` for the rules and tax cards. A small helper diffs two results for receipts
 (about 1.5 build days with unit tests).
+
+### The road type as built (2026-10-11)
+
+The first phase-1 pull request turns the sketch above into real types, with these differences, each
+for a reason:
+
+- **Where it lives:** `lib/engines/roads/v2026/` (`types.ts`, `validate.ts`, `from-cfe.ts`, one file
+  per road, `index.ts`). Like every catalog it imports nothing from the app, the rules engine or the
+  screens.
+- **A road holds its own steps and forks.** `Road` gains `steps` (every step, by id) and `forks` (each
+  fork once, with its two sides). The sketch's `forkId` on a step is dropped, so a fork is written in
+  one place only. A column gains `summary` (the line under its name) and an optional `forkId`: the
+  fork decided in that column. It is data, not layout: it carries today's two toggles over (the map
+  shows each in its column's header), and for other roads the pick is made on Compare (§ 1, row 6).
+- **A step says where it leads:** `next` lists the steps it opens. The map's hover arrows walk it;
+  before, they walked `CFENode.branches`.
+- **A fork's id is the key its pick is kept under.** Road 0's two forks are `gstTiming` and
+  `incorporationTiming`, the keys today's `ScenarioState.activeBranches` already stores, so every
+  saved pick stays attached with no storage change. A fork's sides must match today's toggle options
+  exactly; a test checks.
+- **Costs:** an official fee carries one citation, and that citation's `lastVerified` is the day the
+  fee was read (the sketch had the date twice). A catalog holds only *official fee* and *named* lines;
+  the third kind, *your quote*, is the person's agreed number and never in a catalog. One pure
+  function turns a catalog line plus the person's agreed amount (if any) into the three kinds a
+  screen shows: *official fee*, *your quote*, *named, not priced yet*. A quote that isn't a whole,
+  non-negative number of cents is shown as *named, not priced yet*, never added up.
+- **Two fee lines can't yet be marked as alternatives.** A step's `costs` is a flat list, so a total
+  that added every official fee on one step would count both sides of a choice. Fix 2 (§ 9: federal and
+  Alberta incorporation side by side, neither counted until the person picks) needs one of two
+  additions, and the pull request that writes those fee lines picks between them: two steps under a
+  `Fork` (one per way to incorporate, each with its own fee lines), or an optional choice-group field
+  on a cost line that road evaluation reads. Either adds to the type; nothing in it changes shape.
+- **`engineHints` is not on `RoadStep` yet.** Today's lever cards are matched to a step by its id
+  through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, as before. The road-evaluation pull
+  request moves those hints onto the step, so a road's content stays in the road catalog (§ 8) and a
+  contributor-written road can name its own cards; until then a step from any other road gets no
+  lever cards. *(2026-10-12: the road-evaluation pull request left them where they are; the step panel
+  pull request moves them: a step's optional `engineHints` names its cards, and road 0's are written in
+  its catalog file. § 2, Cockpit screen as built.)*
+- **Skill items are one shared list** (`skillItemsV2026`), so a mark carries across every road that
+  lists the item. It is empty until the first written future.
+- **The checks** (`validate.ts`, run on every road by the tests): every step has a citation; every
+  citation is an https page with a real read date that has already come (the newest date anywhere
+  on Earth, so a reader east of UTC isn't refused their own today); every official link is an https
+  page; every id is unique within its road; every step sits in exactly one column and every column
+  names real steps; `next`, fork sides and a column's fork name real steps and forks; an official fee
+  is a whole, non-negative number of cents; `needs` names real skill items; the road's `lastVerified`
+  is the newest read date in it. A separate list in the tests holds every road, column, step, fork,
+  *done when* line, cost line and skill item id ever shipped: removing or renaming one fails. The
+  checks don't yet look at a citation's title, an empty road, or whether a column's fork has a side
+  in that column.
+- **Road 0 is today's map, unchanged.** `roadFromCfe` builds *Starting any business in Alberta (tax and
+  structure)* from `cfeNodesV2026` and `cfeTiersV2026`: the four tiers become its columns, the ten
+  nodes its steps (same ids, labels, trigger lines as the step's one line, citations, and `branches`
+  as `next`). Its *done when* lines, cost lines and the *before you open* steps are content work for a
+  later pull request; until then those lists are empty, which the checks allow.
+- **The map draws a `Road`.** `components/cockpit/strategy-map.tsx` takes a road and no longer imports
+  the CFE tiers or nodes. Card colours, chips and lever cards still come from today's rules by step
+  id, so road 0 looks and behaves exactly as before: a test draws the map through the road in six
+  saved states and compares the HTML, byte for byte, with what the old map drew from `main`. The node
+  detail panel still opens on today's catalog entry for a step; the step panel (§ 1, row 5) replaces
+  it later in phase 1.
+- **Not in this pull request:** which road a saved future uses (storage, § 7; until then every map is
+  road 0), road evaluation (above), and any new screen. Saved fork picks are still typed as tax-map
+  step ids (`activeBranches: Record<string, CFENodeId>` in `lib/scenarios/types.ts`); the storage pull
+  request widens the value to any road's step id so another road's pick can be kept. Places stay
+  today's values (`AB`, `BC`, `ON`, `CA`); how places are stored is an open decision of the
+  maintainer's. *(2026-10-11: the storage pull request keeps another road's picks in a column of their
+  own instead and leaves the type as it is; the maintainer decided places are stored as codes such as
+  `CA-AB`. Both in § 7, Storage as built.)*
+
+### Road evaluation as built (2026-10-12)
+
+The road-evaluation pull request builds the pure function above and the receipts, with no screen. It
+stacks on the storage pull request (§ 7, *Storage as built*), because it reads what that keeps. It
+lives in `lib/roads/`.
+
+- **One function, no I/O.** `evaluateRoad` (`lib/roads/evaluate-road.ts`) takes the road, the shared
+  skill list, the idea's answers as the rules read them (its saved map: the answers and the map's picks,
+  and the business figures the person agreed to), the ending picked at each fork, the person's skill
+  marks, step progress, their agreed planning numbers (income wanted, savings, their number for each
+  named cost line), their own month, an optional what-if and today's date. It reads no file, database
+  or clock and keeps nothing; a test fails if `lib/roads/` imports anything that does.
+  `agreedPlanning` (same folder) picks those numbers out of the stored ones: agreed only, never a
+  proposed, taken-back or turned-down number, and only cost lines on this future's own road.
+- **Each step gets one of today's three states, with the reason in the person's own answers.** In this
+  order, the first that fits decides:
+  1. The person marked the step *not for me*: **not on your path** (*not for me* greys a step; it
+     doesn't remove it, § 8).
+  2. Today's rules colour the step (every step of road 0, by its id): the rules' colour, exactly as
+     the map shows it today. Green is **applies**, amber **check first**, grey **not on your path**. The
+     reason names the answers that colour depends on, found the way receipts are: the rules run again
+     with one answer changed (taken away, given each other value it can have, or the fork's other side
+     picked), and an answer is named when that changes the step's colour. When no single answer changes
+     it, the reason says exactly that, never that the step is "for everyone".
+     On another road that reuses a road 0 step (road 1 joins road 0's later columns), the fork walk
+     below comes first: a road 0 step there takes the rules' colour only when no fork of that road
+     puts it off the path or leaves it waiting on a pick, so a step after the side not picked is never
+     drawn on the path or counted in the money (fixed 2026-10-12, before merge).
+  3. The step is a side of a fork: the side picked **applies**, the other side is **not on your path**,
+     and while no side is picked both are **check first**. A step reached only through a side not
+     picked is not on your path too, and one reached only through a fork with no pick yet is check
+     first. This is walked along `next` from the road's first steps, so a step both endings lead to
+     stays on the path.
+  4. Anything else **applies**: it is on the road the person chose.
+
+  A step's status (*doing · done · not for me*) is given beside its state and changes it only through
+  *not for me*. Readiness is never a state: what a step needs is a count on the step (*needs 3 · you
+  have 2*), never a reason to turn it green.
+  On road 0 the person sets no status yet. The map's lists of active, done and set-aside steps are
+  worked out from its toggles alone (stage 0 is always done, stage 1 always active, the side of each
+  fork not picked and the hire-first step while it is off are set aside), not set by the person, so
+  passing them in as progress would make the evaluation say *"You marked this step not for me"* about
+  steps nobody touched. Road evaluation therefore reads no status on road 0 (its ticked *done when*
+  lines still count), and a caller passes none until the person can set one (fixed 2026-10-12, before
+  merge; § 7's *a step's status is the map's* describes where it would be kept, not a status anyone
+  has set). *(2026-10-12, the cockpit screen: the person can now set one, kept in step progress, so
+  road evaluation reads the person's own status on road 0 too. The map's worked-out lists are still
+  never passed in as progress. § 2, Cockpit screen as built.)*
+- **The answers it read.** `answers` lists every answer the run read, in a fixed order, each marked
+  `given`. An answer is not given when it is a default the person hasn't set, and its words say so: a
+  map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
+  clicks only for the session, so after a reload a pick still on the default reads as a default, as the
+  map's rail already says, while a saved pick off the default counts as the person's, `isBranchDecided`
+  in `lib/scenarios/graph.ts`, since the honest-map pull request), the hire-first path while it is off (*the hire-first path is switched off*: the map
+  can't tell switched off from never switched on), the structure the map assumes, and buying equipment
+  while unanswered (*not answered, read as no*). *What you've told DotAmi* lists the given ones; the
+  others still name themselves in a step's reason, worded as defaults. The person's own *I'd
+  incorporate at $___* on road 0, once typed, is one of the given answers (`idea:incorporate-at`;
+  taking it away is the only alternative tried, since DotAmi has no number of its own for it).
+- **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
+  are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
+  as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
+  *Start-up money:* the official fees, how many official fees apply only sometimes (`onlyIf`, counted
+  and never added up, since nothing yet lets the person say the condition holds), the person's own
+  numbers, how many named lines are not priced yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
+  pick (with the fork's name), the savings, and savings minus (official fees + the person's numbers),
+  given only when there are savings and at least one line with an amount. *Your date:* the months from
+  this month to the person's month, given only when they set one. The yearly income wanted is passed
+  through as *your target* and compared with nothing.
+- **What-if.** First-year sales, in whole dollars. It replaces the idea's own first-year sales for this
+  run of the rules and is never a figure: it touches no money sum and nothing is kept. A what-if that
+  isn't a whole, non-negative number of dollars is ignored, and the result says no what-if is on.
+  The rules know it is a what-if (`evaluateScenario`'s `whatIfFirstYearSales`), so a rules and tax
+  card it lights says *"your what-if of first-year sales (not a forecast)"*, never *"your Y1 revenue
+  target"*: the person never gave that number as a target (fixed 2026-10-12, before merge).
+- **Receipts.** `roadReceipt(before, after)` (`lib/roads/receipts.ts`) compares two results and gives
+  one plain line per change: steps whose state changed (counted by their new state), steps whose every
+  listed skill is now marked *have* and steps where that stopped being so, steps done, the skills
+  counts, the money sums, the date, the target, and rules and tax cards whose colour changed. The
+  skills line is about skills only: a step can have every skill marked and still have *done when*
+  lines and money to go, so it never says the step needs nothing more (the design's *"needs 0 more"*
+  above is the same count). Each line starts with the answers that differ between the two results:
+  *"Because you told us you have “Welding”, 3 steps now have every skill they list marked have."*,
+  *"Because you took back …"*, and for a what-if *"Because you tried first-year sales of $45,000 (your
+  what-if, not a forecast), …"*. Three or more answers of one kind are counted (*"you marked 9
+  skills"*), and answers taken back are counted apart from answers given (*"you took back 3 skill
+  marks"*). With no answer changed (the month turned over), the line is the change alone.
+  A receipt is meant for one answer at a time, as each screen saves one: when two answers change
+  between the runs, every line names both, even a line only one of them could have caused (a what-if
+  named beside a money sum). A screen that ever saves two answers at once runs a receipt per answer.
+- **Words and numbers in one place each.** Every sentence the evaluation and the receipts write comes
+  from `lib/roads/words.ts`, filled in with catalog labels, the person's own values and counts; money and
+  months are written by `lib/format/money-and-months.ts`. A test runs every kind of sentence past a list
+  of verdict words (*enough, ready, best, should, recommend, on track, behind*) and fails on any.
+- **The arrows' walk moved out of the screen.** `futureEdges` and `columnNumbers` (the steps that lie
+  ahead of a step, and each step's column) moved from `components/cockpit/map-arrows.tsx` to
+  `lib/roads/paths.ts`, because road evaluation walks the same `next` arrows. The map imports them from
+  there and draws exactly as before (the byte-for-byte map test is unchanged).
+- **Speed.** Measured by hand on 2026-10-12 on a Windows development computer, timing 200 runs after
+  a 50-run warm-up: about 0.36 ms a run on today's general road (the rules run about 30 times, once per
+  changed answer, to name each colour's answers), 0.06 ms on the invented test road, and 0.02 ms for a
+  receipt. So *What you've told DotAmi* with 40 answers, each worked out with and without, is about 30
+  ms on today's general road: still quick enough to work out on each visit (§ 7). No script keeps this
+  measurement.
+- **Not in this pull request:** any screen; the lever cards moving onto the road step (`engineHints`,
+  above), which comes with the step panel, the first place the cards are drawn for a road other than
+  road 0; a status the person sets on a road 0 step (none exists yet, above); the *with and without
+  one answer* run that gives each row of *What you've told DotAmi* its *what it unlocked* line (a pure
+  `withoutAnswer(input, answerId)` in `lib/roads/` that maps an answer's id back to the input with
+  that answer taken away, with its tests; the told-list pull request adds it); and fix 2's fee lines
+  (§ 9): no road has cost lines yet, and when each way to incorporate is a side of a fork, the sums
+  already leave both out until the person picks.
+- **Open question for the maintainer: *not for me* on the side picked.** *Not for me* greys its own
+  step only. When the person marks the side they picked at a fork *not for me*, the other side stays
+  off the path (it wasn't picked) and the steps only the picked side leads to still apply, with their
+  money counted, so both endings are off while what comes after one of them applies. Whether those
+  steps should go grey too, or the fork should read as unpicked, is the maintainer's call; until then
+  it is built the simple way. (§ 13.)
+
+### The first written future as built (2026-10-12)
+
+Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalog
+(`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`, id `road-apprentice-to-own-shop-ab`, kind
+`both`, `AB`). It is in the catalog only: no screen lists it until *Pick a future* is built. Choices
+made while writing it, each for a reason:
+
+- **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
+  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
+  Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
+  are steps side by side in the first column that all lead to the certificate, not a fork, because a
+  fork has two sides. The Blue Seal certificate, which the content shows under both endings, is one
+  optional step both endings lead to, so it is written (and its ids kept) once.
+- **Where it joins road 0.** After its last column the road carries on along road 0 from
+  *Incorporating*. `Road` gains an optional `joins: { roadId, columnId }`, and `roadJoinProblems`
+  checks that the road and column it names exist (a road on its own can't see the others, so this is a
+  check over the whole catalog). How a screen draws the join is decided with the screens.
+- **Every source is a tool check.** Each citation was checked on 2026-10-12 with
+  `node scripts/check-quotes.mjs --url … --quote …` (option B, [citations.md](../engines/citations.md));
+  only quotes the script found are recorded, and none is recorded as read. Because nothing in it has
+  been read yet, the road's own `lastVerified` is empty, and the checks now hold a road with no read
+  source to an empty date instead of letting it carry any date.
+- **A fee checked only by a tool quotes its amount.** An official fee whose citation has no read must
+  have a quote with the amount as the page writes it (`$150`, `$150.00`, `$1,500`), so the typed
+  number is one the tool found on the page. A $0 fee is exempt (pages say "no cost"). A fee with a
+  read keeps today's rule.
+- **Alberta's registry fees stay named lines.** The government fee and the agent's service fee to
+  register a name are named lines with no amount: the Registry Agent Product Catalogue that holds them
+  stops tools with a human check, which is never bypassed. A person can read it and fill them in.
+- **Skill items are the legal requirements only:** an Alberta Student Number, an apprenticeship
+  education agreement with a sponsor, and a recognized trade certificate from outside Alberta, each
+  cited. Their ids share one pattern, `skill-<place>-…` (`skill-ab-…` for these three). Skills from the government's list (OaSIS, occupation 72311 *Cabinetmakers*, profile
+  72311.00) come with the OaSIS import, a separate change.
+- **Left out, not guessed:** the apprentice wage percentages per period (they need a typed field, not
+  prose); WCB-Alberta's $200 minimum annual premium (a minimum, not a fee, and it would be added on
+  top of the person's own premium quote); the WCB industry a shop falls in (WCB classifies); the Red
+  Seal application fee (the page gives no amount); the federal and Alberta incorporation card (it
+  belongs to road 0's *Incorporating* column); the limited partnership and the limited liability
+  partnership (Alberta's register-a-name page lists them beside the trade name and the partnership;
+  an LLP is for eligible professions such as accounting or law); whether a sole proprietorship counts
+  as "a legal entity recognized in Alberta" for sponsoring an apprentice (the sponsor page doesn't say).
+- **The shop opens unincorporated; a corporation is pointed to road 0.** *Open your own shop* asks for
+  a business form, and alberta.ca names sole proprietorship, partnership and corporation side by side;
+  the road picks none. Its next steps register a trade name or partnership, so *Open your own shop* and
+  *Register your business name* both say, in their one line, that someone who chose a corporation goes
+  to *Incorporating* on road 0, where this road joins it. A step's `next` names steps on its own road
+  only, so the pointer is in words, and a test keeps it naming road 0 and that column.
+- **A fee that applies only sometimes is typed so.** `OfficialFeeLine` gains an optional `onlyIf`: the
+  condition in plain words (the $50 rewrite fee on the Recognized Credential route: you failed an exam
+  and choose to rewrite it). Road evaluation must leave such a fee out of a total unless the person says
+  the condition holds, and a screen shows the condition with the fee (`costLineAsShown` passes it on).
+  The checks refuse a fee whose label says "only if" with no `onlyIf`, and an `onlyIf` that is blank.
+- **A fee's quote can't be one end of a range.** The tool-check fee rule (above) also refuses an amount
+  the quote writes as one end of a range (`$150-$200`, `$150 to $200`, `between $100 and $150`,
+  `from $150`): an official fee is one amount, never a range.
+- **Certification is optional in this trade.** The trade profile says so ("journeyperson
+  certification optional"), and the certificate step's one line repeats it; the road's two endings
+  still follow the certificate, as the maintainer's first future lays them out. The *Stay employed*
+  side cites the trade's own classes of individuals, not a general page's "ticket to work".
+- **Plain words.** Each abbreviation (NAIT, SAIT, the CRA, WCB-Alberta, GST/HST) is spelled out once in
+  a one-line summary, a *period* is explained as a level designed to take about a year (the profile's
+  words), and *Schedule 1* names the regulation it belongs to.
 
 ## 7. Storage
 
@@ -371,8 +730,8 @@ themselves, and nothing about the person is put in a link.
 | **Two new figure kinds** | `savings-for-start` and `start-up-cost-line`, added to `FIGURE_KINDS` (added, never renamed), each belonging to one future. A cost-line figure gets new nullable columns naming its road step and cost line, and where its amount came from (quote, link, receipt, your guess) | Through the agree prompt, like every figure. The definition of a figure in `lib/figures/types.ts` ("a total about the person's business") and its privacy note are reworded in the same pull request |
 
 *What you've told DotAmi* needs no table of its own: each row is a stored answer with its date, and its
-*what it unlocked* line is worked out again by running the rules with and without that answer (§ 13
-has the open question if that turns out slow).
+*what it unlocked* line is worked out again by running the rules with and without that answer (settled
+below, in *Storage as built*).
 
 **The rules for the migration.** One hand-checked migration. New tables are created; `Venture`,
 `PersonStatement` and `Figure` only gain nullable columns through `ALTER TABLE … ADD COLUMN`. `Venture`
@@ -384,6 +743,168 @@ it and checks every row survives.
 **What else changes in the same pull request:** every new table in `lib/privacy/inventory.ts` (the
 privacy test fails until it is), new rows and counts on `/your-data`, the new kinds on the Delete menu,
 and a line in `docs/privacy-log.md` [Unreleased] saying what is now kept.
+
+### Storage as built (2026-10-11)
+
+The storage pull request builds the tables and columns above and the server-side code that reads and
+writes them (`lib/futures/`), with no new screen: the cockpit's screens come later in phase 1 and call
+this code. It differs from the table above in these ways, each for a reason, and it settles three of the
+open items in § 13.
+
+**Two migrations, hand-written.** `…_cockpit_storage` creates three new tables; `Venture`,
+`PersonStatement` and `Figure` only gain nullable columns (or one with a default) through `ALTER TABLE …
+ADD COLUMN`. `…_place_codes` is one `UPDATE` of `Venture.province` (below). No table is copied, dropped or
+renamed. `tests/desktop-migrate.spec.ts` seeds a row in every table on the version before, migrates, and
+checks every row is still there, unchanged except for the place now written as its code.
+
+**Skill marks, per person (`SkillMark`).** The person (their `User` row), then either a skill item's
+permanent id from the shared list or the person's own label for a skill they added (never both), the
+mark, and the day it was set. One mark per skill item and one per own label, so marking again replaces
+the mark rather than adding a second one.
+
+- A skill the person added is one skill whatever its capital letters: *Welding* and *welding* are the
+  same mark, kept under the spelling typed last.
+- The marks are **have · learning · not yet**. *I don't know* is not stored: it removes the mark, and
+  the item is counted as *not marked*, so every stored mark is something the person said. (The table
+  above listed *don't know* as a fourth mark; the gauge already counts *not marked* on its own, so a
+  fourth value would only be a second way of saying the same thing.)
+- *You said* for a held licence is not a column: it is how a screen labels *have* on an item of the
+  kind *legal requirement*.
+- A mark for an id that isn't in the shared list is refused, so a mark can't point at nothing. The list
+  is empty until the first written future, so until then only the person's own skills can be marked.
+
+**Step progress, per future and step (`StepProgress`).** The future, the road id and the step id (never
+a position or a title), the status (**doing · done · not for me**, or none), the *done when* line ids
+the person ticked, and a list of status changes with the moment of each (the newest 100 per step), for
+*Since last time*. One row per future, road and step. Every id is checked against the road catalog when
+it is written: the road must be the future's own road, the step must be on it, and each ticked line must
+be one of that step's *done when* lines. The step's own date (*your date* on a step) is left out: dates
+beyond the target date are not in phase 1 (§ 12), and it is a plain added column when they are.
+
+- **On road 0 a step's status is the map's, kept in one place (settled 2026-10-12).** The map already
+  keeps which of road 0's steps the person marked active, done or set aside, in `ScenarioState`. A
+  second status for the same step here could say something else (*done* on the map, *not for me* here)
+  with nothing to say which is true, so the storage code refuses a status on a road 0 step, the same
+  way it refuses road 0's forks. On road 0 this table keeps only the ticked *done when* lines (road 0
+  has none until its content is written), and the cockpit reads and sets road 0's statuses through the
+  map: active is *doing*, done is *done*, set aside is *not for me*. One cost: the map keeps no list of
+  changes, so *Since last time* has no status history for road 0's steps until the map's statuses move
+  here, which a later pull request may do (the map would then read this table). *(2026-10-12: the
+  cockpit screen's pull request does it. The map's lists are worked out from its toggles on every load,
+  so they can't hold a status the person sets; a road 0 step's status is now kept here like any other
+  road's, and the map's chip shows it. § 2, Cockpit screen as built.)*
+- The list of a future's progress gives only the steps of the road the future is drawn on now. Another
+  road's rows are kept, so going back to that road brings them back.
+- Taking the status off a step that was never touched keeps nothing: no empty row is written.
+
+**On the saved future (`Venture`).** Three new columns, all optional:
+
+- `roadId`: the road it is drawn on. Empty means today's general road, so every idea saved before
+  this keeps its map. Only a road in the catalog is accepted. `roadChosenAt` keeps the moment the
+  person chose it (empty for the general road), so *What you've told DotAmi* can show the answer with
+  its date.
+- `forkPicks`: the ending picked at each fork of that road, as `{ fork id: { step id, moment picked } }`
+  (empty `{}` by default), so each pick has its date too.
+  **This differs from the table above**, which put the ending in `ScenarioState.activeBranches`.
+  That column is rewritten whole every time the map is saved, from the tax map's two toggles (and, from
+  the honest-map pull request, the person's own *I'd incorporate at* number), so another road's ending
+  kept there would be wiped by the next save of the map. Road 0's two forks stay exactly where they are,
+  in `activeBranches`, picked on the map as today, and the storage code refuses them so there is one
+  place for each pick. Every other road's picks go in `forkPicks`. The app's scenario type
+  (`activeBranches: Record<string, CFENodeId>`) is therefore left as it is, not widened.
+  Reading a future still gives one set of picks whatever its road: on road 0 they are read from the
+  map's `activeBranches` and marked *from the map*, with no date, because the map keeps neither the
+  day of a pick nor whether a toggle was set by the person or is still its default (the map's
+  `decidedBranchIds` is not saved). Road evaluation, *Compare* and *This is mine* read that one set.
+- `targetMonth`: the person's own date, a month and year (`2029-05`), because the question asks *by
+  when (month and year)*. A month before the current one is refused. `targetMonthSetAt` keeps the
+  moment it was set.
+
+Every answer kept on the saved future therefore has its date, as *What you've told DotAmi* shows one
+row per answer with its date (§ 2); `Venture.updatedAt` is not used for that, because any edit moves it.
+
+The job picked (an occupation code and its day), the *business / career / both* answer and the *This
+is mine* pin are **not** added yet: each comes with the screen that asks it, as one more plain added
+column. The occupation code's shape waits on the OaSIS import (§ 13).
+
+**The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
+statement written as the answer to *where you want to be*. It is one of the person's statements like
+any other: word for word, dated, never edited (a change is a new statement, and the newest is the
+destination), shown in *In your words*, deleted with *Your statements*.
+
+**Income wanted, per person: the per-person table's shape (`PersonFigure`, settles § 13).** One row
+per number the person gives about themselves rather than about one future: the person, the kind of
+number (`income-wanted` is the only kind today), the amount in whole cents, the currency, what it is per
+(`year`), where it came from (`typed`), the state (**proposed · confirmed · retracted · discarded**, as
+figures have), whether the person changed the amount when agreeing, and the days it was proposed,
+agreed and taken back. A kind column, rather than a table for income alone, so the phase 2 numbers that
+also belong to the person (the dream-life list's monthly amounts) are new kinds, not new tables. Hours a
+week are not money and will need their own column when they come.
+
+- Only the person agrees to it. The storage code has *propose*, *agree*, *discard* and *take back*, and
+  no way to write a confirmed number directly. No route calls it yet; when the screen comes, its agree
+  route answers only DotAmi's own window, like the figures' agree route.
+- Agreeing to a new income target takes back the one agreed before it (state *retracted*, with the
+  day), so there is one current number and the old one stays in the history, as a retracted figure does.
+- The kind column means a new kind lands in this table, and the Delete box *The yearly income you said
+  you want* wipes every row of it. The pull request that adds a second kind renames or splits that box
+  in the same change, so ticking it never takes a number the person didn't mean.
+
+**Two new figure kinds.** `savings-for-start` and `start-up-cost-line`, added to `FIGURE_KINDS` after the
+five business totals (added, never renamed). `Figure` gains four optional columns, used only by a
+cost-line figure: `roadId`, `roadStepId` and `costLineId` (the *named* line on the future's own road it
+prices: an official fee is never quoted) and `amountFrom` (**quote · link · receipt · your guess**). Both
+kinds are a whole, non-negative number of cents. The *Your figures* form on the Ideas page still offers
+only the five business totals: the new kinds are entered from the cockpit's screens, later in phase 1.
+
+There is **one current number** for each cost line and one savings number for each idea, because road
+evaluation takes a line plus the person's agreed amount (§ 6) and the *Start-up money* gauge needs one
+savings figure. Agreeing to a new number for the same idea, road, step and cost line (or a new savings
+number for the same idea) takes back the one agreed before it in the same step (state *retracted*,
+with the day), as the income target does; it stays in the history. If two numbers for the same line
+are agreed at once, the one proposed last is kept. The five business totals are not changed by this.
+
+**The time period each new number covers (settles § 13).**
+
+- **Income wanted:** *per year*, kept as `per: "year"` on its own row, and never a period with two
+  dates: it is a target, not a total of anything that happened.
+- **Savings for starting and a start-up cost line:** one day, both ends the same: the day the person
+  gave the number. The design proposed the day agreed; the day given is used instead because agreeing
+  never changes what a number is, and the day agreed is kept anyway (`confirmedAt`). The check holds
+  it to that: both ends have to be today, so a number can't be dated to a day it wasn't given.
+
+**Places stored as international codes (the maintainer's decision of 2026-10-11).** The data file now
+stores each idea's place as its code: `CA-AB` for Alberta, and each province and territory's code from
+ISO 3166-2:CA (`CA` is Canada itself). A second migration, `…_place_codes`, rewrites the one column that
+holds a place with a single `UPDATE "Venture" SET "province" = 'CA-' || "province"` (only on a value that
+is still two letters), so an idea saved before keeps its place, and an older backup is moved over when it
+is restored and upgraded. Nothing is copied, dropped or renamed. The Prisma enum `Province` keeps its
+names (`AB`, `BC`, …) and maps each to its code in the file (`AB @map("CA-AB")`), so the app's code, the
+catalogs (which still key a rule by `AB` and `CA`) and every reply and export keep today's values; only
+what is written in the file changed. `lib/places/codes.ts` turns today's values into codes for new
+storage code, and the storage code's reading of a future gives its place as a code, so the cockpit's
+screens use codes from their first line. Moving the catalogs' keys and the app's own type to codes is a
+later pull request; everything else about other countries stays parked.
+
+**Whether *What you've told DotAmi* stays fast (settles § 13).** It does, so the *what it unlocked* line
+is worked out on each visit and not stored. Measured by hand on 2026-10-11 and 2026-10-12 on a
+Windows development computer, timing one run of today's rules over 2,000 runs after a 200-run warm-up: about
+0.01 ms a run (0.007 to 0.016 ms on the two demo ideas), so 40 answers, each run with and without, is
+about a millisecond. No script keeps this measurement. Road evaluation adds to that and is measured again in its own pull
+request; if it ever stops being quick, the line is saved with the answer when it is made, as planned.
+*(2026-10-12: measured, about 0.36 ms a run on today's general road, so about 30 ms for 40 answers;
+still worked out on each visit. § 6, Road evaluation as built.)*
+
+**What Delete and *What DotAmi knows about you* gain.** The three tables are listed in
+`lib/privacy/inventory.ts` and counted on `/your-data`. Step progress goes with *Your ideas* (it belongs
+to a future, and the database deletes it with one). Skill marks and the income target each get a box of
+their own on the Delete menu (*Your skill marks*, *The yearly income you said you want*), because they
+belong to the person, not to any future, and deleting ideas leaves them.
+
+**Not in this pull request:** any screen or route; the occupation code, the *business / career / both*
+answer and the *This is mine* pin; a step's own date; moving the catalogs' keys and the app's own
+`Province` type to place codes; and moving the person's *I'd incorporate at* number, which the honest-map pull request keeps in
+`ScenarioState.activeBranches` under its own key, to a column of its own (a later pull request may).
 
 ## 8. The rules check — how each binding rule in CLAUDE.md is met
 
@@ -440,7 +961,7 @@ phase it names.
    neither side counts in the Start-up money total, and the gauge says *"2 ways to incorporate, not
    picked yet"*.
 3. **The GST/HST card uses the CRA's exact test, quoted from the cited page.** The CRA's *When to
-   register for and start charging the GST/HST* page (read 2026-10-11; the page says it was modified
+   register for and start charging the GST/HST* page (checked by a tool on 2026-10-11; the page says it was modified
    2026-06-16) gives two tests: *"You exceed the $30,000 threshold in a single calendar quarter."* and
    *"You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters
    (but not in a single calendar quarter)."* The card quotes both sentences in full. The page gives
@@ -538,20 +1059,28 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   own quotes for phase 1 (decision 2), then asking the maintainer again, once a real future with
   blanks can be clicked through, whether to also show typical numbers (the plan's options B and C).
   Ask before phase 2 is locked.
-- **The period a new number carries.** Figures have a period today. Proposed: income wanted (on its
-  own per-person table, § 7) is "a year" with the period the person names; `savings-for-start` and
-  `start-up-cost-line` carry the day agreed as both ends. To settle in the storage pull request,
-  along with the per-person table's exact shape.
-- **Whether *What you've told DotAmi* stays fast** when every row's *what it unlocked* is worked out
-  again on each visit. If not, the line is saved with the answer when it is made.
+- ~~**The period a new number carries**, and the per-person table's exact shape.~~ Settled in the
+  storage pull request (2026-10-11, § 7 *Storage as built*): income wanted is per year on a per-person
+  table with a kind column; savings and a cost line cover the day the person gave them.
+- ~~**Whether *What you've told DotAmi* stays fast.**~~ Settled (2026-10-11, § 7 *Storage as built*):
+  one run of the rules took about 0.01 ms, so the line is worked out on each visit; checked again when
+  road evaluation landed (2026-10-12: about 0.36 ms a run on today's general road, about 30 ms for 40
+  answers, § 6 *Road evaluation as built*).
+- ***Not for me* on the side picked at a fork.** Whether the steps only that side leads to go grey
+  too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
+  evaluation as built*).
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
-- **The OaSIS import's shape.** Which files of the dataset (skills, abilities, work activities) and
-  how much of each list to show; the lists describe employees, not owners, so the *your pick of job*
-  tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
+- **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
+  abilities, work activities) and how much of each list to show; the lists describe employees, not
+  owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.
+- **Listing a road nobody has read.** The first written future's sources are all tool checks (option B):
+  every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
+  future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
+  has read its pages, is the maintainer's call; no screen lists any road but road 0 until then.
 - **Reuse terms not yet read** for the Red Seal standard and Alberta's apprenticeship site: link and
   cite only until read.
 
@@ -582,7 +1111,7 @@ or named blanks, and *"2 ways to incorporate, not picked yet"*; the step stays *
 
 She tries first-year sales of $45,000. Under *Your what-if, not a forecast*, the GST/HST card quotes
 the CRA's two tests: over $30,000 in a single calendar quarter, or over the previous four (or fewer)
-consecutive calendar quarters, with the page and the day it was read.
+consecutive calendar quarters, with the page and how it was checked (a tool found those words on it).
 
 She opens *Compare*: *Stay employed* and *Open your own shop* on the same rows, *"In the order the road
 shows them"*, no score. She clicks *This is mine* on the shop and exports her plan to show her partner.

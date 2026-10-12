@@ -6,21 +6,34 @@ import type { CFECitation, CFERoute } from "./types";
  * the person, so every route a province has written is listed next to it with the same kinds of rows,
  * and DotAmi picks none.
  *
- * Every line rests on words read on that route's own page on the day in its citation. A fee is shown
- * only when the page states the amount, and the amount is inside the quoted words
- * (tests/incorporation-routes.spec.ts checks). Alberta's registry fees sit in the "Registry agent
+ * Every line rests on words found on that route's own page: each citation carries a tool check (the
+ * maintainer's option B, docs/engines/citations.md), the day `node scripts/check-quotes.mjs` found
+ * every quote below on the live page, and those quotes. A tool check says the words are there, not that
+ * a person read the page. A fee is shown only when the page states the amount, and the amount is
+ * inside the quoted words (tests/incorporation-routes.spec.ts checks both). Alberta's registry fees sit in the "Registry agent
  * product catalogue", which no tool could open on 2026-10-11 (it answers with a bot check), so they
  * are named blanks until a person reads them there. Never fill one in from a search snippet.
  */
 
-const READ = "2026-10-11";
+/** The day scripts/check-quotes.mjs found every quote below on its page. */
+const CHECKED_ON = "2026-10-12";
 
 const ISED_FEES: CFECitation = {
   title: "Corporations Canada: Services, fees and processing times",
   authority: "federal",
   jurisdiction: "CA",
   url: "https://ised-isde.canada.ca/site/corporations-canada/en/services-fees-and-processing-times",
-  lastVerified: READ,
+  toolCheck: {
+    checkedOn: CHECKED_ON,
+    quotes: [
+      "It will cost $200 and will take 1 day.",
+      "Add $100 for express service in 4 hours.",
+      "You don't need to order a Nuans report before incorporating online with a word name.",
+      "The corporate name search is now part of the federal incorporation process.",
+      "It will cost $12 and will take 1 day.",
+      "All processing times mentioned are business days or hours.",
+    ],
+  },
   note: "Online fees for incorporating a business corporation and filing its annual return (date modified 2025-05-06). The page adds: \"All processing times mentioned are business days or hours.\"",
 };
 
@@ -29,7 +42,13 @@ const ISED_PROVINCES: CFECitation = {
   authority: "federal",
   jurisdiction: "CA",
   url: "https://ised-isde.canada.ca/site/corporations-canada/en/register-federal-corporation-province-or-territory",
-  lastVerified: READ,
+  toolCheck: {
+    checkedOn: CHECKED_ON,
+    quotes: [
+      "Provincial and territorial legislation requires you to register your federal corporation in each province and territory in which it will conduct business.",
+      "Most provinces and territories charge for registering a corporation.",
+    ],
+  },
   note: "A federal corporation registers in each province or territory where it does business (date modified 2022-06-26). Alberta is one of the partner provinces the page lists.",
 };
 
@@ -38,7 +57,13 @@ const AB_INCORPORATE: CFECitation = {
   authority: "provincial",
   jurisdiction: "AB",
   url: "https://www.alberta.ca/incorporate-alberta-corporation",
-  lastVerified: READ,
+  toolCheck: {
+    checkedOn: CHECKED_ON,
+    quotes: [
+      "The service provider that processes your application will charge a government fee and a service fee.",
+      "You do not need a NUANS report when the proposed name will be a 'number name' assigned by Corporate Registry",
+    ],
+  },
   note: "Steps and costs to incorporate in Alberta. The amounts are in the Registry agent product catalogue it links to, which was not read. No date modified is shown.",
 };
 
@@ -47,7 +72,10 @@ const AB_REGISTRY: CFECitation = {
   authority: "provincial",
   jurisdiction: "AB",
   url: "https://www.alberta.ca/find-business-registry",
-  lastVerified: READ,
+  toolCheck: {
+    checkedOn: CHECKED_ON,
+    quotes: ["Service fees are not regulated and may vary from one agent to another."],
+  },
   note: "Registry agents charge their own service fee. No date modified is shown.",
 };
 
@@ -56,7 +84,13 @@ const AB_ANNUAL_RETURNS: CFECitation = {
   authority: "provincial",
   jurisdiction: "AB",
   url: "https://www.alberta.ca/corporations-cooperatives-organizations-annual-returns",
-  lastVerified: READ,
+  toolCheck: {
+    checkedOn: CHECKED_ON,
+    quotes: [
+      "You must submit an annual return to an authorized Corporate Registry service provider.",
+      "Service providers will charge a government fee and a service fee for filing annual returns",
+    ],
+  },
   note: "An Alberta corporation files an annual return through a registry service provider. No date modified is shown.",
 };
 

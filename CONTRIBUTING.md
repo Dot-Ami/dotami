@@ -36,9 +36,13 @@ Vulnerabilities go through [SECURITY.md](SECURITY.md), never a public issue.
    issue with the source that shows it; a PR is even better.
 4. **Freshness.** Every entry has a `lastVerified` date. Re-checking an entry against its
    official source and bumping the date, with a note of what changed, is a real contribution.
-5. **The roadmap.** `docs/roadmap.md` lists the bigger pieces — roadmaps as data, progress,
-   connecting to accounting software and financial records locally, complex strategies and
-   structures as roadmaps. Each is open; say in an issue which one you are taking.
+5. **The roadmap and the task list.** `docs/roadmap.md` lists the bigger pieces — roadmaps as
+   data, progress, connecting to accounting software and financial records locally, complex
+   strategies and structures as roadmaps. Some are under way: roadmaps as data and progress are
+   part of the future cockpit, the first priority since 2026-10-10
+   ([future-cockpit.md](docs/architecture/future-cockpit.md)), and reading figures from files and
+   accounting books has started. [docs/task-list.md](docs/task-list.md) says what is done, what is
+   open and what waits on a maintainer's decision; say in an issue which piece you are taking.
 6. **Your export's column names.** "Add from a file" has only been tested on invented files
    shaped from each accounting program's help pages. If you use QuickBooks Online, Xero, Wave,
    FreshBooks, Sage Accounting or Sage 50 Canadian, paste the **one row of column names** from
@@ -111,7 +115,7 @@ Every citation is:
   authority: "federal" | "CRA" | "provincial",
   jurisdiction: "CA" | "AB" | "BC" | "ON",
   url: "https://laws-lois.justice.gc.ca/…",                 // the OFFICIAL text, not a blog
-  lastVerified: "2026-09-16",                               // the day YOU read it
+  lastVerified: "2026-09-16",                               // the day YOU read it (or a toolCheck, below)
   note: "What you read there, in one line, and anything the entry leaves out.",
   verification: { status: "confirmed" | "supported" | "partial", method: "How you checked." }, // for statute
   corpus: [{ source: "ita", label: "18", sub: "(12)" }],    // optional: lets the app show the words
@@ -128,14 +132,48 @@ Rates, thresholds and deadlines change. Cite the consolidated statute where the 
 and the CRA page that administers it; the entry's typed field carries the figure and
 `lastVerified` carries the day you confirmed it.
 
+### Read by a person, or checked by a tool (added 2026-10-11)
+
+Every citation says how it was checked, and the card shows it. The maintainer decided on
+2026-10-11 that there are two kinds of check
+([docs/engines/citations.md](docs/engines/citations.md)):
+
+- **Read by a person**: you read the page and it says what the entry says. Set `lastVerified` to
+  that day and `readBy: "person"`. The card shows *"Read by a person on 2026-10-10"*. If an AI
+  model did the reading, say `readBy: "model"` instead; the card then says so, in amber. Without
+  `readBy` the card says *"Read on 2026-10-10. Who read it wasn't recorded."*
+- **Checked by a tool**: you copy the exact words the entry relies on from the page (one or more
+  short quotes of at least three words each, never a paraphrase), then run
+
+  ```bash
+  node scripts/check-quotes.mjs --url "https://www.canada.ca/…" --quote "the exact words" --quote "more exact words"
+  ```
+
+  The script fetches the live page and says *found* or *NOT FOUND* for each quote. Only when every
+  quote is found, copy what it prints into the citation:
+
+  ```ts
+  toolCheck: { checkedOn: "2026-10-11", quotes: ["the exact words", "more exact words"] },
+  ```
+
+  The card shows *"Checked by a tool on 2026-10-11: it found on the page the exact words this
+  entry relies on. Not read by a person yet."*, with the words it found under it. The script
+  matches whole words only, inside one block of the page. It changes no file; you record the result. It doesn't read PDFs,
+  so a PDF needs a person's read.
+
+A citation needs one of the two and may have both; when both exist, the card shows the read. A tool check only proves the words are on the page. Whether the entry reads them right is
+still for a person, so the maintainer may read any source before it merges. Run
+`node scripts/check-quotes.mjs` with no arguments to check every recorded tool check again (it
+fails when a page has changed under one).
+
 ### One more kind of source: the government's skills list for a job (added 2026-10-11)
 
 The maintainer decided on 2026-10-11 that the future cockpit
 ([docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md)) may show the
 government's list of skills for a job. The source is the **Occupational and Skills Information
-System (OaSIS)**, published by Employment and Social Development Canada on
-[open.canada.ca](https://open.canada.ca/data/en/dataset/eeb3e442-9f19-4d12-8b38-c488fe4f6e5e) as CSV
-files, under the [Open Government Licence – Canada](https://open.canada.ca/en/open-government-licence-canada)
+System (OaSIS)**, published by Employment and Social Development Canada on open.canada.ca as
+[*Occupational and Skills Information System (OaSIS) - 2025 Version 1.0*](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec),
+CSV files in English and French, under the [Open Government Licence – Canada](https://open.canada.ca/en/open-government-licence-canada)
 (version 2.0). It is allowed only this way:
 
 - **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
@@ -143,8 +181,10 @@ files, under the [Open Government Licence – Canada](https://open.canada.ca/en/
   may link a business or a future to a job by itself: no official source says which skills a business
   needs, and the lists describe employees, not owners.
 - **Cited by dataset version and record date,** like any other source: the dataset's title and version
-  (at the time of writing, *OaSIS 2022 Version 1.0*), the file it came from (for example the skills
-  file), the occupation code, the dataset's *record modified* date as the page shows it, and
+  (at the time of writing, *OaSIS 2025 Version 1.0*: unlike the older *OaSIS 2022 Version 1.0*, it has
+  a Knowledge file), the file it came from (for example the skills file; which files the import uses
+  is still open, [future-cockpit.md](docs/architecture/future-cockpit.md) § 13), the occupation
+  code, the dataset's *record modified* date as the page shows it, and
   `lastVerified` as the day you read it. `authority` is `"federal"`, `jurisdiction` is `"CA"`.
 - **Its licence travels with it.** The imported lists stay in their own data file carrying the
   licence's attribution line — *"Contains information licensed under the Open Government Licence –
@@ -185,8 +225,8 @@ npm run dev
 Before opening a PR, run **`npm run ci:quality`** — it is the exact chain CI runs:
 `prisma generate → typecheck → lint → test → build`. Stop the dev server first. The test
 suite includes `tests/engine-integrity.spec.ts`, which fails on an entry without a citation,
-a citation without an official URL or `lastVerified`, a duplicate id, or a corpus pointer
-that cannot resolve. Green is the floor, not the bar — a maintainer still reads the sources.
+a citation without an official URL or without a person's read or a tool check, a duplicate id, or a corpus pointer
+that cannot resolve. Green is the floor, not the bar: a tool check proves only that the quoted words are on the page, and the maintainer chooses which sources to read.
 The scenarios those deterministic tests lock are described in
 [docs/verification/golden-scenarios.md](docs/verification/golden-scenarios.md).
 

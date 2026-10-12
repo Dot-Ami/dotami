@@ -10,6 +10,14 @@ Confirmed totals only, each with: what it is, the period or date, the amount and
 came from (a source name, the file name, how many rows were summed), who confirmed it and when. A
 T2125 total also keeps its tax year and, only when read from a return, the form and line printed
 there ([8f], 2026-10-08); /your-data does not show those two yet.
+*Added 2026-10-11 (the future cockpit's phase 1 storage, [future-cockpit.md § 7](future-cockpit.md)):* a
+figure is no longer only a total about the business. Two kinds are the person's own planning numbers for
+an idea, each one day's amount and never negative: the savings they'd put toward starting, and their
+number for one named start-up cost on the idea's road (which line, and whether it came from a quote, a
+link, a receipt or their guess). A third number belongs to the person rather than to an idea, the
+yearly income they want, so it is kept in its own table (`PersonFigure`) under the same rules: proposed,
+then agreed only by the person's click, never an amount in a log or a URL, wiped by its own Delete box.
+None of these is a transaction or an account record.
 **Not stored:** individual transactions (apart from the business expense records the person agrees to keep, reviewed in the last section), the imported files (not even sent to the local server — [8c] reads them in the app's window; the one file DotAmi keeps is a receipt the person adds to an expense record, reviewed in the last section), bank or card numbers ([8g]), login
 details for anything. All of it in the one database file on the person's computer.
 
@@ -92,6 +100,8 @@ with a test that seeded data survives.
   wouldn't change that (they can read the file directly), so it isn't proposed.
 - An unlocked backup is readable by whoever holds it; the default stays "no passphrase" because a
   forgotten passphrase loses the data for good. The maintainer may want this the other way round.
+  *(2026-10-11: he chose the other way on 2026-10-10. Since 0.3.0 every new backup needs a
+  passphrase; older backups without one still restore.)*
 
 ---
 

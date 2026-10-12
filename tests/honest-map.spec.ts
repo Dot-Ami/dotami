@@ -18,6 +18,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateProfile, type ConfirmedFigure, type EvaluationProfile } from "@/lib/brain";
 import { cfeCatalogV2026, type CFENodeId } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
+import { howChecked, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
@@ -32,7 +33,8 @@ const MANDATORY = "stage-2b-mandatory-gst-registration" satisfies CFENodeId;
 const INCORPORATING = "stage-3a-incorporation-80k-net" satisfies CFENodeId;
 const LIABILITY_SRED = "stage-3b-incorporation-liability-sred" satisfies CFENodeId;
 
-// The CRA's two small-supplier tests, as read on its page on 2026-10-11 (page details: 2026-06-16).
+// The CRA's two small-supplier tests, as on its page (page details: 2026-06-16), without the footnote
+// numbers the page puts after "threshold"; tool-checked on 2026-10-12.
 const SINGLE_QUARTER = "You exceed the $30,000 threshold in a single calendar quarter.";
 const FOUR_QUARTERS =
   "You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter).";
@@ -124,8 +126,37 @@ describe("the GST/HST card quotes the CRA's two tests, word for word", () => {
     expect(passages[1].sentences).toContain(
       "Your effective date of registration is no later than the day of the first supply you make after you are no longer a small supplier.",
     );
-    // The day a person read the page that these words were copied from.
-    expect(rule.citations.find((c) => c.url === CRA_PAGE)!.lastVerified).toBe("2026-10-11");
+    // How these words were checked on the page: a tool check (option B), never a read date that would
+    // claim a person read them.
+    const check = howChecked(rule.citations.find((c) => c.url === CRA_PAGE)!);
+    expect(check.kind).toBe("tool");
+    expect(check.on).toBe("2026-10-12");
+  });
+
+  it("every quoted sentence, on every card that quotes the page, is covered by that page's tool check", () => {
+    // Each place that quotes the page, with the citation of the page it carries.
+    const quoting = [
+      { where: "compliance rule", words: rule.officialWords!, citations: rule.citations },
+      ...cfeCatalogV2026.nodes
+        .filter((n) => n.officialWords)
+        .map((n) => ({ where: n.id, words: n.officialWords!, citations: n.citations })),
+    ];
+    expect(quoting.length).toBe(3);
+    for (const { where, words, citations } of quoting) {
+      const citation = citations.find((c) => c.url === words.url);
+      expect(citation, where).toBeDefined();
+      const found = toolCheckQuotes(citation!);
+      for (const sentence of words.passages.flatMap((p) => p.sentences)) {
+        // A sentence the tool found whole, or one of the two tests: the page puts a footnote number
+        // straight after "threshold" ("threshold1"), so the tool found the words on each side of it.
+        const whole = found.includes(sentence);
+        const aroundFootnote =
+          sentence.startsWith("You exceed the $30,000 threshold ") &&
+          found.includes("You exceed the $30,000") &&
+          found.some((q) => q !== sentence && sentence.endsWith(` ${q}`));
+        expect(whole || aroundFootnote, `${where}: "${sentence}"`).toBe(true);
+      }
+    }
   });
 
   it("the card on the map carries the same words, wherever it lights", () => {

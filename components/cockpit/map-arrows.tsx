@@ -2,51 +2,18 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
-import type { CFENode, CFENodeId } from "@/lib/engines/cfe/v2026";
+import type { FutureEdge } from "@/lib/roads/paths";
 
 /**
  * S2.5.4j (decided 2026-09-16): hovering a stage card shows arrows along the paths that lead
  * from it — how completing this step opens the next ones, all the way down the tree. The
- * arrows are the catalog's own `CFENode.branches`, walked to the end of the tree: solid for
- * the next step, dashed and fainter for every step after.
+ * arrows are the road's own `RoadStep.next`, walked to the end of the road: solid for the next
+ * step, dashed and fainter for every step after. (Until 2026-10-11 they walked the tax map's
+ * `CFENode.branches`; road 0 carries those over unchanged.)
+ *
+ * The walk itself (which steps lie ahead, each step's column) is in lib/roads/paths.ts, shared with
+ * road evaluation, since 2026-10-12; this file only draws it.
  */
-
-export interface FutureEdge {
-  from: CFENodeId;
-  to: CFENodeId;
-  /** 1 = the next step from the focused card; 2+ = further into the future. */
-  depth: number;
-}
-
-/** Breadth-first over `branches` from one node. Cycles cannot occur in v2026 but are guarded. */
-export function futureEdges(nodesById: ReadonlyMap<string, CFENode>, startId: CFENodeId): FutureEdge[] {
-  const edges: FutureEdge[] = [];
-  const seen = new Set<string>([startId]);
-  let frontier: string[] = [startId];
-  let depth = 1;
-  while (frontier.length > 0) {
-    const next: string[] = [];
-    for (const id of frontier) {
-      const node = nodesById.get(id);
-      for (const target of node?.branches ?? []) {
-        if (!nodesById.has(target)) continue;
-        edges.push({ from: id as CFENodeId, to: target as CFENodeId, depth });
-        if (!seen.has(target)) {
-          seen.add(target);
-          next.push(target);
-        }
-      }
-    }
-    frontier = next;
-    depth += 1;
-  }
-  return edges;
-}
-
-/** Every node reachable from `startId`, the card itself excluded. */
-export function futureSet(edges: FutureEdge[]): Set<string> {
-  return new Set(edges.map((e) => e.to));
-}
 
 interface Rect {
   x: number;
@@ -58,9 +25,9 @@ interface Rect {
 interface ArrowOverlayProps {
   /** The element the SVG is positioned inside — cards are measured relative to it. */
   container: HTMLElement | null;
-  /** Registered stage-card elements by node id. */
+  /** Registered stage-card elements by step id. */
   cards: ReadonlyMap<string, HTMLElement>;
-  /** Column ordinal per node id, so an arrow knows whether to go right or down. */
+  /** Column number per step id, so an arrow knows whether to go right or down. */
   columnOf: (id: string) => number;
   edges: FutureEdge[];
 }
