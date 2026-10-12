@@ -206,7 +206,14 @@ describe("every new source is a tool check made on 2026-10-12, and none claims a
       expect(citation.readBy, where).toBeUndefined();
     }
     // A tool check is not a read: the road's date stays the newest read among the map stages' sources.
-    const newestStageRead = cfeNodesV2026.flatMap((n) => n.citations.map((c) => c.lastVerified)).sort().at(-1);
+    // Some stage sources are tool checks too (the CRA's small-supplier page, since #145), so they have no
+    // read date and are skipped here; sort() would otherwise put their undefined last.
+    const newestStageRead = cfeNodesV2026
+      .flatMap((n) => n.citations.map((c) => c.lastVerified))
+      .filter((d): d is string => d !== undefined)
+      .sort()
+      .at(-1);
+    expect(newestStageRead).toBeDefined();
     expect(road.lastVerified).toBe(newestStageRead);
   });
 
@@ -214,7 +221,13 @@ describe("every new source is a tool check made on 2026-10-12, and none claims a
     const listed = allCatalogCitations().filter(
       ({ where, citation }) => where.startsWith("roads road-starting-any-business-ab ") && citation.toolCheck !== undefined,
     );
-    expect(listed).toHaveLength(all.length);
+    // The map stages' own sources ride along on the road's steps, and since #145 a few of them are tool
+    // checks as well (the CRA's small-supplier page), so the checker's list holds those plus this content's.
+    const fromStages = road.steps
+      .filter((s) => !BEFORE_YOU_OPEN.includes(s.id))
+      .flatMap((s) => s.citations.filter((c) => c.toolCheck !== undefined));
+    expect(listed.map((l) => l.citation)).toEqual(expect.arrayContaining(all.map((a) => a.citation)));
+    expect(listed).toHaveLength(all.length + fromStages.length);
   });
 });
 
