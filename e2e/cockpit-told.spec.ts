@@ -84,7 +84,8 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   // Answer one question in its box: the receipt says exactly what changed, and the row moves.
   const dateRow = notTold(page).getByRole("listitem").filter({ hasText: "By when?" });
   await dateRow.getByRole("button", { name: "Answer" }).click();
-  await dateRow.getByLabel("Month and year").fill("2099-05");
+  // Exact: the row's buttons name the question, "By when? Your month and year", for a screen reader.
+  await dateRow.getByLabel("Month and year", { exact: true }).fill("2099-05");
   await dateRow.getByRole("button", { name: "Save", exact: true }).click();
   const dateReceipt = /Because you told us your date is May 2099, your date now reads May 2099, \d+ months from today\./;
   await expect(told(page).getByRole("status")).toContainText(dateReceipt);
