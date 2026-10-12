@@ -389,6 +389,46 @@ export function streamWrites(code: string, within: string = code): { method: str
   return writes;
 }
 
+/**
+ * Every write to DotAmi's own log file in the desktop code (logs/server.log, desktop/log.mjs): a
+ * `.write(…)` on the object openLog gives, held as `log` (`log.write(…)`, `log?.write(…)`); a call
+ * of the `log` callback the desktop modules are handed (`log(…)`, `log?.(…)`); and a call of a
+ * wrapper the file defines as an arrow straight onto either (`const say = (line) => log.write(…)`).
+ * `code` must be simplify(…, false); `within` is the whole file when `code` is only a part of it,
+ * as for consoleCalls, since a wrapper is defined outside the catch that calls it.
+ */
+export function logFileWrites(code: string, within: string = code): { method: string; args: string }[] {
+  const writes: { method: string; args: string }[] = [];
+  for (const m of code.matchAll(new RegExp(String.raw`(?<![\w$.])log\s*${WRITE}${CALL}`, "g"))) {
+    writes.push({ method: "log.write", args: argumentsAt(code, openingOf(m)) });
+  }
+  for (const m of code.matchAll(callOf("log"))) writes.push({ method: "log", args: argumentsAt(code, openingOf(m)) });
+  for (const w of within.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*log\b/g)) {
+    for (const m of code.matchAll(callOf(w[1]))) writes.push({ method: w[1], args: argumentsAt(code, openingOf(m)) });
+  }
+  return writes;
+}
+
+/**
+ * The desktop code's way of naming an error in the log, taken out of a write's arguments before
+ * they are checked: describeError(…) (desktop/log.mjs: the name and the code, never the message),
+ * an error's `.code`, `.name`, `.kind` or `.step` (a code word: `kind` and `step` are set by
+ * DotAmi's own error classes, EncryptionStopped, DecryptionStopped and the restore's steps), an
+ * `instanceof` test, and a test of whether there is one at all (`error ? … : …`). What is left
+ * still fails the check if it names the error.
+ */
+function withoutNamedParts(args: string, names: readonly string[]): string {
+  let rest = args.replace(/\bdescribeError\s*\([^()]*\)/g, "describeError()");
+  for (const name of names) {
+    const n = escapeForRegExp(name);
+    rest = rest
+      .replace(new RegExp(String.raw`(?<![\w$])${n}\s*\??\.\s*(?:code|name|kind|step)\b`, "g"), "…")
+      .replace(new RegExp(String.raw`(?<![\w$])${n}\s+instanceof\s+[\w$.]+`, "g"), "…")
+      .replace(new RegExp(String.raw`(?<![\w$])${n}\s*\?(?![.?])`, "g"), "… ?");
+  }
+  return rest;
+}
+
 /** The `{ … }` block whose opening brace is at `open`: what is inside it. `code` must be simplify(…, false), so every brace is code. */
 function blockAt(code: string, open: number): string {
   let depth = 0;
@@ -456,8 +496,13 @@ function namesPattern(names: readonly string[]): RegExp {
  * or something taken from one: any call that names one of the usual error variables, and any call
  * inside a catch that names the variable that catch binds, whatever it is called. Each is returned
  * as the call's text. `code` must be simplify(…, false).
+ *
+ * `desktop: true` is the reading for desktop/ (2026-10-12): writes to DotAmi's own log file count
+ * too (logFileWrites), and an error may be named there through describeError(…), its code, name,
+ * kind or step, or an instanceof test (withoutNamedParts), which is how the desktop code says which
+ * error it was without its message.
  */
-export function errorWrites(code: string): string[] {
+export function errorWrites(code: string, options: { desktop?: boolean } = {}): string[] {
   // `text` is the whole file or a catch's part of it; a console method or stream the file holds under
   // another name is declared outside the catch, so the whole file is what names them.
   const writesIn = (text: string) => [
@@ -466,16 +511,28 @@ export function errorWrites(code: string): string[] {
       args: c.args,
     })),
     ...streamWrites(text, code).map((w) => ({ call: `${w.method}(${w.args.trim()})`, args: w.args })),
+    ...(options.desktop ? logFileWrites(text, code).map((w) => ({ call: `${w.method}(${w.args.trim()})`, args: w.args })) : []),
   ];
-  const found = new Set<string>();
+  const checked = (args: string, names: readonly string[]) => (options.desktop ? withoutNamedParts(args, names) : args);
+  // Every write that names a usual error name is listed, as often as it occurs (four lines writing
+  // the same `${error}` are four findings, so a listed exception covers one of them, not all). A
+  // write found only through a catch's own name is listed once: the catch pass reads each catch
+  // body again, and the same text would otherwise be counted from both passes.
+  const found: string[] = [];
   const usual = namesPattern(USUAL_ERROR_NAMES);
-  for (const w of writesIn(code)) if (usual.test(w.args)) found.add(w.call);
+  for (const w of writesIn(code)) if (usual.test(checked(w.args, USUAL_ERROR_NAMES))) found.push(w.call);
+  const listed = new Set(found);
   for (const scope of catchScopes(code)) {
     if (scope.names.length === 0) continue;
     const caught = namesPattern(scope.names);
-    for (const w of writesIn(scope.body)) if (caught.test(w.args)) found.add(w.call);
+    for (const w of writesIn(scope.body)) {
+      if (caught.test(checked(w.args, scope.names)) && !listed.has(w.call)) {
+        found.push(w.call);
+        listed.add(w.call);
+      }
+    }
   }
-  return [...found];
+  return found;
 }
 
 // ---------------------------------------------------------------------------------------------
