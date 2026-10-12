@@ -7,6 +7,7 @@ import { CitationLinks, StatusChip, worstStatus } from "@/components/shared/cita
 import { OfficialWordsBlock } from "@/components/shared/official-words";
 import type { CFENode, CFEOwnNumber, CFERoute, CFERouteLine } from "@/lib/engines/cfe/v2026";
 import { incorporationRoutesFor, provinceNotWrittenNote, routesHeading } from "@/lib/engines/cfe/v2026/incorporation-routes";
+import { howCheckedWords, isCheckFirst } from "@/lib/engines/shared/citation-check";
 import { ownNumberFromTyping } from "@/lib/scenarios/branches";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
@@ -342,8 +343,12 @@ function RoutesSideBySide({ routes, provinceNotWritten }: { routes: CFERoute[]; 
                       rel="noreferrer"
                       className="font-mono text-[10px] text-maple underline decoration-maple/40 underline-offset-2"
                     >
-                      source, read {line.citation.lastVerified}
+                      source
                     </a>
+                  </p>
+                  {/* How the source was checked, in the words every screen uses (a tool check, since 2026-10-12). */}
+                  <p className={`mt-0.5 font-mono text-[10px] ${isCheckFirst(line.citation) ? "text-amber" : "text-stone-dim"}`}>
+                    {howCheckedWords(line.citation)}
                   </p>
                 </li>
               ))}

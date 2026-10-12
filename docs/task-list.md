@@ -43,7 +43,9 @@ and the maintainer's six decisions of 2026-10-11:
     (Alberta's registry fees stay named blanks until a person reads the Registry agent product
     catalogue; picking a route and totalling fees come with the cost lines); the GST/HST card quoting
     the CRA's exact two tests, with the uncited 70% "approaching the line" watch
-    (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) gone with it
+    (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) gone with it. 2026-10-12: the six pages
+    these quote carry a tool check instead of a read date (option B, docs/engines/citations.md § Tool
+    checks in the catalogs); none is read by a person yet
   - [x] Smaller follow-ups from the same fixes (#145, 2026-10-11): "Incorporation for liability/SR&ED"
     lights from an activity tag (Software / SaaS, Manufacturing, AI / ML / R&D) the intake's parser can
     mark from the sentence, and the card now says so, naming the tag; a stage card's chip says

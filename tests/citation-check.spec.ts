@@ -71,11 +71,17 @@ describe("the words every screen shows", () => {
 describe("what the catalogs say about who read them", () => {
   const all = allCatalogCitations();
 
-  it("the GST/HST small-supplier page, which moved and was re-read only by a model, says so", () => {
+  // Until 2026-10-12 this page was "read by an AI model on 2026-10-06". The honest map (#145) quotes
+  // its two tests on the card, and those words are now tool-checked (option B), so the card says a tool
+  // found them and that no person has read the page, never a person's read.
+  it("the GST/HST small-supplier page, whose quoted tests a tool found on the page, says so", () => {
     const gst = all.filter(({ where }) => where === "compliance compliance-gst-small-supplier");
     expect(gst.length).toBe(1);
     expect(gst[0].citation.url).toMatch(/\/when-register-charge\.html$/);
-    expect(howChecked(gst[0].citation)).toEqual({ kind: "model", on: "2026-10-06" });
+    const check = howChecked(gst[0].citation);
+    expect(check.kind).toBe("tool");
+    expect(check.on).toBe("2026-10-12");
+    expect(howCheckedWords(gst[0].citation)).toMatch(/Not read by a person yet\.$/);
   });
 
   it("the record-keeping page under Delete doesn't claim a person read it", () => {

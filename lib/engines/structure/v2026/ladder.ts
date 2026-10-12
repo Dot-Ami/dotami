@@ -1,4 +1,4 @@
-import { CRA_WHEN_TO_REGISTER_READ, CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
+import { CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "@/lib/engines/compliance/v2026/gst-official-words";
 import type { StructureStep } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -61,9 +61,10 @@ export const structureLadderV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         // The old address (…/when-register.html) answers 404 since at least 2026-10-06; this rung's
-        // wording now follows the page's two tests, read there on 2026-10-11.
+        // wording now follows the page's two tests, which a tool found there on 2026-10-12 (option B;
+        // no person has read the page).
         url: CRA_WHEN_TO_REGISTER_URL,
-        lastVerified: CRA_WHEN_TO_REGISTER_READ,
+        toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA small-supplier tests and mandatory registration (page details 2026-06-16).",
       },
     ],

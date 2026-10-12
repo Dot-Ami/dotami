@@ -1,4 +1,4 @@
-import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_READ, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
+import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import type { ComplianceRule } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -27,9 +27,19 @@ export const complianceRulesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
-        lastVerified: CRA_WHEN_TO_REGISTER_READ,
+        // Option B (docs/engines/citations.md): a tool found the words this entry relies on, the two
+        // tests on the card and the exclusions in its description, on the live page. No person has read it.
+        toolCheck: {
+          checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
+          quotes: [
+            ...CRA_WHEN_TO_REGISTER_TOOL_CHECK.quotes,
+            "do not include revenues from supplies of financial services",
+            "sales of capital property",
+            "goodwill from the sale of a business.",
+          ],
+        },
         note:
-          "CRA small-supplier registration rules (the old address, …/when-register.html, answered 404 on 2026-10-06). Re-read 2026-10-11, page details dated 2026-06-16: the two tests on the card are copied from its table, and the exclusions from its footnote 1.",
+          "CRA small-supplier registration rules (the old address, …/when-register.html, answered 404 on 2026-10-06; an AI model read the new one that day). The two tests on the card are copied from its table, and the exclusions from its footnote 1; scripts/check-quotes.mjs found those words on the page on 2026-10-12.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],

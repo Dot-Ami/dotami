@@ -1,7 +1,7 @@
 import {
   CRA_SMALL_SUPPLIER_TESTS,
   CRA_VOLUNTARY_REGISTRATION,
-  CRA_WHEN_TO_REGISTER_READ,
+  CRA_WHEN_TO_REGISTER_TOOL_CHECK,
   CRA_WHEN_TO_REGISTER_URL,
 } from "@/lib/engines/compliance/v2026/gst-official-words";
 
@@ -138,7 +138,8 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
-        lastVerified: CRA_WHEN_TO_REGISTER_READ,
+        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA page with the small-supplier tests and the line on registering voluntarily (page details 2026-06-16).",
       },
       {
@@ -199,7 +200,8 @@ export const cfeNodesV2026 = [
         authority: "CRA",
         jurisdiction: "CA",
         url: CRA_WHEN_TO_REGISTER_URL,
-        lastVerified: CRA_WHEN_TO_REGISTER_READ,
+        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
         note: "CRA guidance on small supplier status, mandatory registration, and timing (page details 2026-06-16). The two tests in this stage's detail are copied from its table.",
       },
       {

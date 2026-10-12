@@ -344,7 +344,7 @@ test("every source says how it was checked: the map's sources, the playbook expo
 
   // The readout, for an agent: each citation carries the same words beside its dates.
   const readout = (await (await page.request.get(`/api/readout?venture=${ventureId}`)).json()) as {
-    evaluation: { unlocks: { citations: { howChecked: string; lastVerified?: string }[] }[] };
+    evaluation: { unlocks: { citations: { howChecked: string; lastVerified?: string; toolCheck?: { checkedOn: string } }[] }[] };
   };
   const citations = readout.evaluation.unlocks.flatMap((u) => u.citations);
   expect(citations.length).toBeGreaterThan(0);
@@ -353,6 +353,8 @@ test("every source says how it was checked: the map's sources, the playbook expo
       `Read by a person on ${c.lastVerified}`,
       `Read on ${c.lastVerified}. Who read it wasn't recorded.`,
       `Read by an AI model on ${c.lastVerified}. Not read by a person yet.`,
+      // Since 2026-10-12 the GST/HST card's CRA page is checked by a tool (option B), not read.
+      `Checked by a tool on ${c.toolCheck?.checkedOn}: it found on the page the exact words this entry relies on. Not read by a person yet.`,
     ]).toContain(c.howChecked);
   }
 });
@@ -418,6 +420,8 @@ test("the map quotes the CRA, shows both ways to incorporate, and lights Incorpo
   await expect(inc.getByRole("heading", { name: "Alberta (Corporate Registry)" })).toBeVisible();
   await expect(inc.getByText("It will cost $200 and will take 1 day.", { exact: false }).first()).toBeVisible();
   await expect(inc.getByText(/no amount read/i).first()).toBeVisible();
+  // Each line says how its source was checked (option B): a tool found the words, no person read the page.
+  await expect(inc.getByText(/^Checked by a tool on 2026-10-12: .* Not read by a person yet\.$/).first()).toBeVisible();
 
   // The person's own number lights it; DotAmi never does.
   const own = inc.getByLabel("I'd incorporate at");

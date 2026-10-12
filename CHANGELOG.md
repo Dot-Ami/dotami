@@ -96,8 +96,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report
   needed), and Alberta's Corporate Registry costs as named blanks ("no amount read": Alberta lists its
   government and service fees in its Registry agent product catalogue, which DotAmi hasn't read, and
-  sends the NUANS name report to a NUANS service provider with no cost stated). Every quote shows the
-  day it was read; nothing is totalled and DotAmi picks neither. An idea in a province with no written
+  sends the NUANS name report to a NUANS service provider with no cost stated). Under every quote, its
+  source says how it was checked: **"Checked by a tool on 2026-10-12"**, in amber, because
+  `node scripts/check-quotes.mjs` found those words on each of the five pages and no person has read
+  them yet (option B); nothing is totalled and DotAmi picks neither. An idea in a province with no written
   route sees the federal one under "Ways to do this · only the federal one is written for <province>
   yet" and is told the other isn't written yet
   ([`lib/engines/cfe/v2026/incorporation-routes.ts`](lib/engines/cfe/v2026/incorporation-routes.ts)).
@@ -146,8 +148,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The GST/HST cards quote the Canada Revenue Agency's two tests, word for word** ("You exceed the
   $30,000 threshold in a single calendar quarter." and "You exceed the $30,000 threshold over the
   previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter)."), each
-  with what the page says follows and from when, read on the cited page on 2026-10-11. The old paraphrase
-  dropped "(or fewer)". The "$30K" shorthand is gone from the map and the intake: the GST timing toggle's
+  with what the page says follows and from when. The old paraphrase dropped "(or fewer)". The words are
+  checked by a tool, not read by a person (option B): the CRA page's source line, on both GST/HST stages,
+  the compliance card and the sole proprietor + GST/HST rung, now says **"Checked by a tool on
+  2026-10-12"** in amber, where the compliance card said "Read by an AI model on 2026-10-06". The page
+  puts a footnote number after "threshold" in both tests, so the tool check holds the words on each side
+  of it; the card shows the sentences without the footnote numbers. The "$30K" shorthand is gone from the map and the intake: the GST timing toggle's
   "Wait for $30K" now reads **When the CRA's tests say**.
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
