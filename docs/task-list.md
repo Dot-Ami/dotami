@@ -39,9 +39,10 @@ and the maintainer's six decisions of 2026-10-11:
     too, and a test keeps it off); federal and Alberta incorporation side by side for you to pick; the
     GST/HST card quoting the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
     type at the start saved, dated and word for word
-  - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
+  - [x] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
-    Alberta*
+    Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
+    *done when* lines, cost lines and *before you open* steps come with the content)
   - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;

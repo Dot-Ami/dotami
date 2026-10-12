@@ -1,12 +1,23 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (the cards' colours follow the person's own branch picks; a stage card's
+Last updated: 2026-10-11 (the map draws a road, and today's map is the road "Starting any business in
+Alberta", unchanged; the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
-**Component:** `components/cockpit/strategy-map.tsx` · **Tier data:**
-`lib/engines/cfe/v2026/tiers.ts` · **Design record:** this file (decided 2026-09-16).
+**Component:** `components/cockpit/strategy-map.tsx` · **Road data:** `lib/engines/roads/v2026/`
+(today: `generalRoadV2026`, built from `lib/engines/cfe/v2026/tiers.ts` and `nodes.ts` by `roadFromCfe`)
+· **Design record:** this file (decided 2026-09-16) and docs/architecture/future-cockpit.md § 6.
+
+**The map draws any road (2026-10-11).** The component takes a `Road` and imports nothing from the
+CFE catalog: a column is a road column (`TIER n` is its place from the left, its name and the line
+under it are the column's `label` and `summary`), a stage card is a road step (its name, and its
+`summary` as the two-line text), the toggle in a column is the one for the column's `forkId`, and the
+hover arrows follow the steps' `next`. Every saved idea is drawn on road 0 until storage lets it name
+another road. Nothing a person sees or does on the map changed: `tests/road-map.spec.ts` draws six saved
+states through the road and compares the HTML, byte for byte, with what the old map drew, and a browser
+test checks the columns, cards, toggles and arrows.
 
 ## What it is
 
@@ -15,9 +26,10 @@ Incorporating · Corporation running). No edges, no free-form layout, no React F
 
 Each column: `TIER n` · label · one-line subtitle · the branch toggle that belongs to it
 (GST timing in Tier 2, Incorporation timing in Tier 3 — "default, not your pick yet" until
-clicked, S2.5.4d). Then, in catalog order, one **stage card** per lifecycle node whose
-`stage` the tier lists, and under each stage card one **lever card** per evaluator item
-relevant to that stage (`itemsForNode(...).forThisStage`, S2.5.4e).
+clicked, S2.5.4d). Then, in the column's order, one **stage card** per step the column lists
+(for road 0, the catalog's nodes whose `stage` the tier lists, in catalog order), and under each
+stage card one **lever card** per evaluator item relevant to that stage
+(`itemsForNode(...).forThisStage`, S2.5.4e).
 
 | Card | Shows | Click |
 |---|---|---|
@@ -57,7 +69,8 @@ cards' accessible names: **applies as answered**, **check first — confirm, tim
 away** and **doesn't apply as answered** (the grey entry added 2026-10-11).
 
 **Hover / select a stage card (ruling 2, same day):** `components/cockpit/map-arrows.tsx` draws
-an SVG overlay of arrows from that card along `CFENode.branches` — solid to the next step,
+an SVG overlay of arrows from that card along the road's `RoadStep.next` (road 0: the nodes'
+`branches`, unchanged) — solid to the next step,
 dashed and fainter for each step after, to the end of the tree; rightwards when the target is
 in a later tier, downwards inside a tier. Cards off that future dim to 35%. Hover wins while
 the pointer is on a card; the selected card keeps its arrows otherwise. Arrows reach "not on
