@@ -57,6 +57,56 @@ person is asked).
   two plain column additions ([`prisma/migrations/20261011120000_first_words`](../prisma/migrations/20261011120000_first_words/migration.sql)).
   Nothing about what leaves the computer changes: the sentence was already sent to the intake's parser
   as before (only when a model key is set), and is now also kept in the data file.
+- **What the future cockpit will be told can now be kept (2026-10-11).** The storage for the cockpit's
+  phase 1 ([docs/architecture/future-cockpit.md § 7, Storage as built](architecture/future-cockpit.md)),
+  with no screen that writes to it yet, so a copy of this version holds none of it until those screens
+  land. Three new tables in the data file: **skill marks** (`SkillMark`: the person's mark, *have*,
+  *learning* or *not yet*, on a skill item from a road's list or on a skill they added in their own
+  words, with the day; kept for the person, not for an idea), **progress on each step** (`StepProgress`:
+  per idea, road and step, the status *doing*, *done* or *not for me*, the *done when* lines ticked, and
+  the moment of each status change, the newest 100 per step), and **numbers about the person**
+  (`PersonFigure`: today only the yearly income they want, before tax, in whole cents, with its
+  currency, state and days; it goes through the same propose-then-agree steps as a figure, and agreeing
+  to a new one takes back the old one). New optional columns: on an idea, the road it is drawn on, the
+  ending picked at each fork of that road and the person's own month and year (`Venture.roadId`,
+  `forkPicks`, `targetMonth`); on a statement, whether it is the answer to "where do you want to be"
+  (`PersonStatement.kind`); on a figure, the road, step and cost line a start-up cost prices and where its
+  amount came from (`Figure.roadId`, `roadStepId`, `costLineId`, `amountFrom`). Two new figure kinds,
+  each one day's amount, never negative: the savings the person would put toward starting
+  (`savings-for-start`) and their number for one named start-up cost (`start-up-cost-line`); the Ideas
+  page's form doesn't offer them. The storage code is in [`lib/futures/`](../lib/futures/); the migration
+  is hand-written, plain column additions and three new tables
+  ([`prisma/migrations/20261011180000_cockpit_storage`](../prisma/migrations/20261011180000_cockpit_storage/migration.sql)).
+  Nothing about the person leaves the computer. Nothing new is asked yet, but DotAmi's figures routes
+  accept the two new kinds, so a program on this computer could propose one; like any figure, it waits
+  for the person's agreement in DotAmi's own window.
+- **Each idea's place is stored as its international code, and every cockpit answer has its date
+  (2026-10-12).** The data file now writes an idea's province as its code from ISO 3166-2:CA (`CA-AB`
+  for Alberta, where it wrote `AB`); the maintainer's decision of 2026-10-11. A hand-written migration
+  rewrites the ideas already saved with one `UPDATE`
+  ([`prisma/migrations/20261012000000_place_codes`](../prisma/migrations/20261012000000_place_codes/migration.sql)),
+  and an older backup is moved over when it is restored. What DotAmi shows, exports and answers still
+  says `AB`. Two more optional columns on an idea keep the moment the person chose its road and set
+  its month (`Venture.roadChosenAt`, `targetMonthSetAt`), and each ending picked on a road keeps the
+  moment it was picked, inside `forkPicks`, so *What you've told DotAmi* can date each answer. Agreeing
+  to a new savings number for an idea, or a new number for the same start-up cost, now takes back the
+  one agreed before (kept, as *taken back*). A savings number or a start-up cost has to be dated the
+  day it is given. On today's Alberta road a step's status stays with the map, as before, and the new
+  step-progress table doesn't keep a second one. Nothing new leaves the computer or is asked.
+- **The cockpit now asks, and keeps what the person gives (2026-10-12).** The cockpit's first screen
+  ([docs/architecture/future-cockpit.md § 2, Cockpit screen as built](architecture/future-cockpit.md))
+  writes to the storage above for the first time. It asks, all optional and one click or one box at a
+  time: a step's status (*doing*, *done*, *not for me*) and its *done when* ticks (`StepProgress`); a mark
+  on each skill a road lists and on skills the person adds in their own words (`SkillMark`); their own
+  number for a named start-up cost line, with where it came from, and their savings for starting (two
+  figures, proposed and then agreed in the agree prompt, never counted before); and their own month and
+  year (`Venture.targetMonth`). **Changed from the line above:** on today's Alberta road a step's status
+  the person sets is now kept in `StepProgress` too, because the map's own *active, done, set aside*
+  lists are worked out from its toggles on every load and never held a status the person set; those
+  lists are untouched. Three new routes answer only DotAmi's own window (`POST /api/futures/<id>/progress`,
+  `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
+  answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
+  any program on this computer, like the figures list. Nothing new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
@@ -67,6 +117,20 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+
+### Packages that ship
+
+- **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine
+  version (Chromium 152.0.7977.130) and Node (24.21.0), with 55 fixes Electron copied from Chromium
+  and the parts it is built from ([electron/electron#54666](https://github.com/electron/electron/pull/54666),
+  [#54657](https://github.com/electron/electron/pull/54657); release notes for
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0), read 2026-10-11). Nothing about
+  what DotAmi keeps, sends or asks changes: neither release's notes mention `safeStorage`, which wraps
+  the data file's and the receipts' keys, and the one `net.fetch` fix is for a call DotAmi doesn't
+  make. The desktop build's `THIRD-PARTY-NOTICES.txt` names the new version
+  ([`desktop/notices.mjs`](../desktop/notices.mjs) reads it from the installed package). What
+  Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
 
 ### How to remove it
 
@@ -79,6 +143,17 @@ person is asked).
   open at the time keeps its own draft, and writes its sentence only if no save there had kept it yet.
   **The goal chips** are part of the idea and go with "Your ideas". Neither can be removed one by one,
   like every statement.
+- **The cockpit's storage (2026-10-11):** Delete on `/your-data` gains two boxes, **Your skill marks**
+  and **The yearly income you said you want**, because both belong to the person and stay when ideas
+  are deleted; each wipes every row of its table. **Progress on each step**, an idea's road, endings and
+  month, and the two new kinds of figure go with "Your ideas" (the figures also with "Your figures"); the
+  answers to "where do you want to be" go with "Your statements", all at once
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). No screen removes one mark,
+  one step's progress or one income target yet; the cockpit's screens will.
+- **From the cockpit (2026-10-12):** *I don't know* on a skill removes its mark; pressing a step's status
+  that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
+  removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
+  figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
 
@@ -86,6 +161,11 @@ person is asked).
 
 - The words a person types on the front door to describe an idea are kept in the data file, with the day
   they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
+- Since the cockpit's first screen (2026-10-12): the person's marks on skills, their progress on each step
+  (on every road, today's Alberta road included), their own month and their own numbers for savings and
+  start-up costs are kept in the data file on their computer; the yearly income they want will be, once
+  a screen asks it. The skill marks and the income target are kept for the person, not for an idea, so
+  deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
 - A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
   their own planning number, never set by DotAmi.
 

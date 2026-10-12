@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import type { NodeItems } from "@/lib/brain/node-items";
 import type { UnlockItem } from "@/lib/brain/types";
@@ -23,6 +23,11 @@ interface NodeDetailPanelProps {
   ownNumber?: number | null;
   /** Set or clear the person's own number. Absent = the panel shows it without an input. */
   onOwnNumberChange?: (value: number | null) => void;
+  /**
+   * The cockpit's step panel puts its own sections here (status, done when, skills, costs), between the
+   * two lines and the cards (2026-10-12; docs/architecture/future-cockpit.md § 2). Nothing else changes.
+   */
+  children?: ReactNode;
 }
 
 /**
@@ -34,7 +39,16 @@ interface NodeDetailPanelProps {
  * engine sections come from the evaluator run on THIS scenario — never from an archetype's
  * id lists — so an Alberta venture never sees BC entries.
  */
-export function NodeDetailPanel({ node, onClose, items, province, reason, ownNumber = null, onOwnNumberChange }: NodeDetailPanelProps) {
+export function NodeDetailPanel({
+  node,
+  onClose,
+  items,
+  province,
+  reason,
+  ownNumber = null,
+  onOwnNumberChange,
+  children,
+}: NodeDetailPanelProps) {
   const { routes, provinceNotWritten } = incorporationRoutesFor(node.id, province);
   return (
     <aside className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-[13px] leading-snug">
@@ -67,6 +81,8 @@ export function NodeDetailPanel({ node, onClose, items, province, reason, ownNum
       <p className="mt-2 font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone-dim">
         Compass, not GPS · planning information, not tax or legal advice
       </p>
+
+      {children}
 
       {/* For you — evaluator ∩ this stage */}
       <section className="mt-6">
@@ -150,7 +166,7 @@ function Block({ label, text }: { label: string; text: string }) {
 }
 
 /** Native disclosure — closed by default; the person asks for more by opening it. */
-function Fold({ title, children }: { title: string; children: React.ReactNode }) {
+export function Fold({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <details className="group mt-5 border-t border-rule-soft pt-3">
       <summary className="cursor-pointer list-none font-mono text-[9px] uppercase tracking-[0.14em] text-stone hover:text-paper">
@@ -168,7 +184,7 @@ const STATE_DOT: Record<UnlockItem["state"], string> = {
   gray: "bg-stone-dim",
 };
 
-function ItemRow({ item }: { item: UnlockItem }) {
+export function ItemRow({ item }: { item: UnlockItem }) {
   const [open, setOpen] = useState(false);
   return (
     <li className="rounded-lg border border-rule bg-ink2 p-3">

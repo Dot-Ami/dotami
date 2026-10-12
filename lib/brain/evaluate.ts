@@ -342,8 +342,13 @@ function evaluateComplianceRule(
   entry: ComplianceRule,
   figures: readonly ConfirmedFigure[] | undefined,
   today: string,
+  salesIsWhatIf = false,
 ): UnlockItem | null {
   if (!provinceMatches(profile, entry.provinces)) return null;
+  // Whose first-year number this is: the person's own target, or a what-if they are trying out,
+  // which must never be shown back to them as their target.
+  const salesWords = (amount: string) =>
+    salesIsWhatIf ? `your what-if of first-year sales (${amount}, not a forecast)` : `your Y1 revenue target (${amount})`;
   if (entry.industryTags && !tagsIntersect(profile.activityTags, entry.industryTags)) return null;
 
   let state: UnlockState = "green";
@@ -373,7 +378,7 @@ function evaluateComplianceRule(
       if (y1 > entry.thresholdAmount) {
         state = "yellow";
         step = "refine";
-        why = `Shown because your Y1 revenue target (${formatCad(y1 * 100)}) is over ${formatCad(entry.thresholdAmount * 100)}, the amount in the CRA's tests.`;
+        why = `Shown because ${salesWords(formatCad(y1 * 100))} is over ${formatCad(entry.thresholdAmount * 100)}, the amount in the CRA's tests.`;
         payoff = "If your assumptions hold, registration timing becomes a checkpoint on the map, not a surprise.";
       }
       // Figures that were read but couldn't decide still say so, next to the estimate's reason.
@@ -520,7 +525,7 @@ function computeNodeStates(
 
   // Liability / SR&ED (stage-3b) reads the activity tags (confirmed on the intake, often marked by the
   // parser from the sentence), not a liability or SR&ED need the person stated: an open item
-  // (docs/task-list.md [10f]). Its card says so, naming the tags that lit it (2026-10-11).
+  // (docs/task-list.md [14a]). Its card says so, naming the tags that lit it (2026-10-11).
   const sredPath = "stage-3b-incorporation-liability-sred";
   if (incPick === sredPath) {
     states[sredPath] = rdTags ? "green" : "yellow";
@@ -620,10 +625,18 @@ export interface EvaluateOptions {
    * Kept with the branch picks (`ScenarioState.incorporateAt`). DotAmi never supplies a default.
    */
   incorporateAt?: number | null;
+  /**
+   * A what-if of first-year sales, in whole dollars (road evaluation's "Try first-year sales of $___").
+   * It stands in for the profile's own first-year sales for this run only, and the cards it lights
+   * call it a what-if, never the person's target.
+   */
+  whatIfFirstYearSales?: number;
 }
 
-export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
+export function evaluateProfile(givenProfile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
   const { today } = options;
+  const salesIsWhatIf = options.whatIfFirstYearSales !== undefined;
+  const profile = salesIsWhatIf ? { ...givenProfile, targetRevenueY1: options.whatIfFirstYearSales! } : givenProfile;
   const activeBranches = options.activeBranches ?? {
     gstTiming: "stage-2b-mandatory-gst-registration",
     incorporationTiming: "stage-3a-incorporation-80k-net",
@@ -639,7 +652,7 @@ export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOpt
       .map((entry) => evaluateGrant(profile, entry))
       .filter((item): item is UnlockItem => item !== null),
     ...complianceCatalogV2026.entries
-      .map((entry) => evaluateComplianceRule(profile, entry, options.figures, today))
+      .map((entry) => evaluateComplianceRule(profile, entry, options.figures, today, salesIsWhatIf))
       .filter((item): item is UnlockItem => item !== null),
     ...structureLadderV2026
       .map((step) => evaluateStructureStep(profile, step))

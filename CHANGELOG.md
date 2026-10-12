@@ -1,6 +1,8 @@
 # Changelog
 
-Every catalog entry carries its own `lastVerified` date — the day a human read its source.
+Every catalog entry carries its own dates: `lastVerified`, the day its source was last read (and,
+since 2026-10-11, `readBy` when who read it is on record), or since 2026-10-11 a tool check, the day
+a script found the quoted words on the page.
 This file is the other half: what changed in the project between snapshots. A version here is
 a dated snapshot, not a promise of stability.
 
@@ -9,6 +11,86 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **A road type any future can use** ([14a]) — a business or a career can now be written as a *road*:
+  columns of steps, each cited, with the steps each one leads to, forks between two steps, *done when*
+  lines, skill items, and cost lines of three kinds (an official fee with its source and the day it was
+  read, the person's own agreed quote, or a named line not priced yet, which never counts as $0)
+  ([`lib/engines/roads/v2026/`](lib/engines/roads/v2026/), [docs/engines/roads.md](docs/engines/roads.md)).
+  Checks refuse a road with an uncited step or line, a source read on a day that hasn't come yet, an
+  official link that isn't an https page, a repeated id, a step in no column, an arrow or fork to a step
+  that isn't there, or a fee that isn't a whole number of cents, and the list of shipped ids (down to
+  each *done when* line, cost line and skill item) can't shrink. A quote that isn't a whole,
+  non-negative number of cents shows as not priced, never as a number. Today's ten-step map is the first road, *Starting any business in Alberta (tax and
+  structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
+  given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
+  drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.
+- **Storage for what you tell the future cockpit** ([14a]) — the data file can now keep your mark on each
+  skill (have, learning, not yet; kept once for you, so it carries across every road), your progress on
+  each step of a future's road (doing, done, not for me, the *done when* lines you ticked, and when you
+  changed it), the road a future is drawn on, the ending you picked at a fork and your own month and
+  year, your answer to "where do you want to be" as one of your dated statements, the yearly income you
+  want (kept once for you, agreed like a figure), and two new kinds of figure, each one day's amount and
+  never negative: savings you'd put toward starting, and your own number for a named start-up cost line
+  with where it came from (a quote, a link, a receipt or your guess). Everything is kept against the
+  road's permanent ids, so rewriting a screen or moving a step never loses your progress. No screen
+  writes any of it yet: the cockpit's screens come next ([`lib/futures/`](lib/futures/),
+  [docs/architecture/future-cockpit.md § 7](docs/architecture/future-cockpit.md)). *What DotAmi knows
+  about you* counts the three new tables, and Delete gains **Your skill marks** and **The yearly income
+  you said you want**; step progress goes with your ideas. The migration only adds columns and tables,
+  and a test checks a row in every table survives it. Each answer kept on a future has its date; on
+  today's Alberta road a step's status stays with the map, so one step can't say two things; agreeing
+  to a new number for the same cost line (or a new savings number) takes back the old one; and the same
+  skill of your own typed with other capital letters is one mark.
+- **Places stored as international codes** ([14a]) — the data file now writes each idea's province as
+  its code (`CA-AB` for Alberta), the maintainer's decision of 2026-10-11. A second hand-written
+  migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
+  every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
+  later ([`lib/places/codes.ts`](lib/places/codes.ts)).
+- **Road evaluation and receipts** — one pure function turns a road and everything you told DotAmi
+  (your idea's answers and the map's picks, the ending you picked, your skill marks, your progress, the
+  numbers you agreed to, your own month, and a what-if) into each step's state — applies, check first,
+  or not on your path — with the reason in your own answers, and the four gauges as counts and sums:
+  steps done, skills by your mark (unmarked ones counted on their own), official fees plus your own
+  numbers with the lines not priced yet counted rather than added as $0, your savings minus those only
+  when both exist, and months to your own date only when you set one. On today's Alberta road the colours
+  are the map's, and each names the answers it depends on, found by running the rules again with each
+  answer changed. A second function compares two results and writes one line per change: *"Because you
+  told us you have “Read drawings”, 1 step now has every skill it lists marked have."* Every line is built
+  from catalog words, your values and counts, never by a model; a test fails on *enough*, *ready*,
+  *best*, *should*, *recommended* or a step that "needs nothing more". Answers you took back are counted
+  as taken back, and a default you haven't set (a map pick you haven't clicked, an unanswered question)
+  is worded as a default, never as something you told us. Road 0's steps carry no status of yours: the
+  map's done, active and set-aside lists are worked out from its toggles, not set by you. A what-if
+  relights the rules for one run, is never kept as a figure, and the rules and tax cards it lights call
+  it your what-if, never your target. No screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
+  [docs/architecture/future-cockpit.md § 6](docs/architecture/future-cockpit.md)). The map's hover
+  arrows now walk the road through the same code, and draw exactly as before.
+- **The cockpit screen, part 1** ([14a]) — the cockpit for a saved idea now shows, from one run of road
+  evaluation: a **goal bar** with the sentence you typed for the idea, word for word with its day, your
+  yearly target only if you agreed to one (labelled yours), the future's name (or, on a road not written
+  for the idea's province, which map is drawn), and four **gauges** as counts and sums (steps marked done
+  and the next step; skills by your mark; official fees and your own numbers, each with its count of lines
+  and never a $0 for a part with none, lines not priced yet, your savings and, only when both exist, the
+  plain difference; months to your own date, only when you set one); a second press on a gauge closes what
+  it opened; **overlay switches** over the map (Road always on; Skills puts *needs 3 · you have 2* on each
+  step, Money its priced sum and lines not priced, Rules & tax shows or hides the cards, counting only the
+  ones drawn); a step you mark *not for me* reads *set aside by you*, not *doesn't apply as answered*; a
+  **step panel** in place of node detail that keeps all of it and adds why the step has its colour, the
+  fork's toggle, **Doing / Done / Not for me**, the *done when* checklist, the skills it needs with **Have
+  / Learning / Not yet / I don't know** and their sources, its costs in three kinds with **Add your
+  quote** through the agree prompt, and the step's official pages; the **lists behind the gauges** (the
+  road's skills and your own, with **Add a skill** and **Remove**; every cost line with its source and
+  **Add your savings**; your month and year); and **Next on your road**, the next three steps in road
+  order, read the way each card's chip reads (never one the map shows done or off your path), labelled
+  *the order steps happen, not importance*. Every
+  answer is saved as you give it and read back after a reload. Every sentence is in one words file
+  ([`lib/cockpit/words.ts`](lib/cockpit/words.ts)) and every amount and month goes through the one
+  formatter; a test fails on a verdict word. Three new routes answer only DotAmi's own window
+  (`/api/futures/<id>/progress`, `/api/futures/<id>/date`, `/api/skill-marks`), and one reads an idea's
+  kept answers back (`/api/futures/<id>`). Today's Alberta road has no *done when* lines, listed skills
+  or cost lines yet, so those parts show one line saying so until its content lands
+  ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
+  [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
   to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report
@@ -32,6 +114,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that none of its three tags is on the intake).
 
 ### Changed
+- **Every source says how it was checked, and never claims a person read it unless one did.** The
+  maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
+  by a person before it merges, as long as every card says which. A card's "verified <date>" now
+  says who read the source, only when that is on record: **"Read by a person on 2026-10-10"** for
+  the T2125 lines the maintainer checked; **"Read by an AI model on 2026-10-06. Not read by a person
+  yet."**, in amber, for the GST/HST small-supplier page, which moved and whose new address only a
+  model has read; and **"Read on <date>. Who read it wasn't recorded."** for every other source,
+  because they were read in build sessions that never recorded whether a person or a model did the
+  reading. A source checked only by a tool would read **"Checked by a tool on <date>: it found on the
+  page the exact words this entry relies on. Not read by a person yet."**, in amber, with the words
+  it found listed under it. The same words show in the map's sources, the intake's preview, the
+  Delete menu's record-keeping line, the Tax year hint, the playbook export and the readout API
+  (`howChecked` on each citation); one function writes them (`lib/engines/shared/citation-check.ts`)
+  and a test refuses any other file reading a citation's check fields. The export's front matter
+  counts the sources a person read (`sources_read_by_a_person: <n> of <total>`). A tool check is
+  recorded only after the new developer script `node scripts/check-quotes.mjs --url … --quote …`
+  (never shipped) found every quote on the live page as whole words, inside one block of the page
+  and outside text the page hides; run with no arguments it checks every recorded one again. The
+  integrity test now fails on a citation with neither kind of check, a read or tool check dated
+  after today, a tool check with no quote or a quote under three words, or a tax-line year's form
+  that no person is recorded as having read ([docs/engines/citations.md](docs/engines/citations.md)).
+- **Your own status on a step of today's Alberta road is kept with your step progress** ([14a]). The map's
+  *active, done, set aside* lists are worked out from its toggles on every load, so they never held a
+  status you set; the cockpit's **Doing / Done / Not for me** is now kept with the rest of your step
+  progress on every road, the map's chip shows it where you set one, and road evaluation counts it. The
+  toggles and their lists are unchanged.
+- **A road step names its own rules and tax cards** (`engineHints`), so any road can name the cards that
+  belong on its steps. Today's map's cards moved there unchanged from `lib/brain/node-items.ts`, which now
+  reads them from the road.
 - **The GST/HST cards quote the Canada Revenue Agency's two tests, word for word** ("You exceed the
   $30,000 threshold in a single calendar quarter." and "You exceed the $30,000 threshold over the
   previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter)."), each
@@ -66,7 +177,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   toggle saying "default, not your pick yet". Now the chip reads **default** until that toggle is clicked;
   a saved idea whose pick isn't the default keeps **your pick** after a reload; the "Service vs.
   productize" fork on every map reads **open choice**. The playbook export writes "(default, not picked
-  yet)" beside an untouched default, and the readout API gives each stage's chip.
+  yet)" beside an untouched default, and the readout API gives each stage's chip. The cockpit's step
+  panel and road evaluation's list of your answers use the same test, and road evaluation counts your own
+  "I'd incorporate at $___" as one of your answers when you typed one.
 - **The map's colours follow your own picks.** The cockpit ran the rules on the default GST and
   incorporation picks, so flipping **GST timing** or **Incorporation timing** moved the chips but not the
   card colours. It now runs them on the idea's own picks, through one function the readout API uses too
@@ -83,6 +196,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
+
+### Security
+- **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
+  2026-10-07, carries 55 fixes Electron copied from Chrome's engine and the parts it is built from
+  (ANGLE, Chromium, Dawn, fontconfig, Skia, V8 and WebRTC): 47 in
+  [electron/electron#54666](https://github.com/electron/electron/pull/54666) and 8 in
+  [#54657](https://github.com/electron/electron/pull/54657): one of them, by its title, a fix for memory
+  used after being freed, and a few more for objects that could be used after they went away.
+  Electron's release notes call them "backported fixes", not security fixes. The Chromium version
+  number (152.0.7977.130) and Node (24.21.0) stay the same. Read in the
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0) notes on 2026-10-11: the change
+  to the built-in `autoUpdater` is for Macs, and DotAmi updates through electron-updater; the
+  `net.fetch` fix is for a call DotAmi doesn't make; `protocol.registerSource` is new and unused. One
+  change does reach DotAmi, below. The installed app gets all of this with the next release
+  (`package.json`, `package-lock.json`).
+- **In the desktop app, "today" follows British Columbia's permanent UTC-7 from November 2026.**
+  Electron 44.6.0 updated its time-zone data to tzdata 2026d, "including British Columbia's move to
+  permanent UTC-7" ([electron/electron#54623](https://github.com/electron/electron/pull/54623), 44.6.0
+  release notes, read 2026-10-11). DotAmi works out the person's own day (`lib/figures/age.ts`
+  `localDay`) in the desktop app's server, which is started with `utilityProcess.fork`
+  (`desktop/main.mjs`), and in its window, and both run on Electron's own copy of that data. That day
+  is the line for refusing an expense or figure dated after today, and the day shown for one agreed to
+  or retracted. On a computer set to Vancouver time,
+  from 2026-11-01 that day now turns over at midnight UTC-7, one hour earlier than on 44.5.1, which
+  still moved the clocks back to UTC-8. Measured 2026-10-11 by formatting 2026-11-02 07:30 UTC in
+  `America/Vancouver`: 44.5.1 (tzdata 2025c) gave 2026-11-01, 11:30 p.m. GMT-8; 44.7.0 (tzdata 2026d)
+  gives 2026-11-02, 12:30 a.m. GMT-7. A desktop test checks it (`e2e-desktop/desktop.spec.ts`, "the
+  person's day follows the time-zone data Electron ships"). Copies run from source with `npm run dev`
+  use the system Node's time-zone data, as before.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
@@ -110,6 +263,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new node, the *New node* issue template and the people DotAmi is for say "starting a business, or
   working toward a career or a business of their own" (`CONTRIBUTING.md`,
   `.github/ISSUE_TEMPLATE/new-node.md`, `docs/architecture/use-cases.md`).
+- **The public pages catch up with what shipped.** The README no longer calls the desktop app "not
+  yet released": it links the installer on the
+  [latest release](https://github.com/Dot-Ami/dotami/releases/latest), says it isn't code-signed yet,
+  and says the future cockpit is being built (`README.md`). The government skills list is cited as
+  *OaSIS 2025 Version 1.0*, which has a Knowledge file, instead of the 2022 version, which doesn't;
+  which files the import uses is still open (`docs/architecture/future-cockpit.md`, `CONTRIBUTING.md`).
+  The task list ticks what is done: the incorporation fixes of #142, a setting that survives a restart,
+  the figures' ages, the data file's encryption (released in 0.3.0), the 0.2.1 and 0.3.0 releases and
+  the `source-map-js` update; it lists the cockpit's plan once, under [14a], with [10f] pointing there,
+  and says the privacy policy and terms are still owed after the first installer (`docs/task-list.md`).
+  CONTRIBUTING's "what we need" points to the task list, and the receipts design no longer lists
+  encrypting the data file as open (`CONTRIBUTING.md`, `docs/architecture/expense-records.md`). The
+  receipts design and the figures privacy review now say every new backup needs a passphrase since
+  0.3.0 (`docs/architecture/expense-records.md`, `docs/architecture/figures-privacy-review.md`), and
+  the settings edge cases say the warning before turning off locking is desktop-tested
+  (`docs/architecture/settings-and-edge-cases.md`).
+- **A source's date says who looked at it.** Following the maintainer's decision of 2026-10-11, a
+  source is either *read by a person on* a date or *checked by a tool on* a date (a tool fetched the
+  live page and the quoted words were found on it). The OaSIS 2025 record and the CRA's *When to
+  register for and start charging the GST/HST* page were fetched by a tool, so their dates now say
+  *checked by a tool on 2026-10-11* instead of *read 2026-10-11*
+  (`docs/architecture/future-cockpit.md`).
 
 ## [0.3.0] — 2026-10-10
 

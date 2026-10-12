@@ -259,7 +259,10 @@ describe("the list for this checkout", () => {
     expect(entries.some((e) => e.kind === "runtime")).toBe(false);
   });
 
-  it("lists every package the bundled code or the style sheet imports, even a development tool", () => {
+  // Slow on purpose: it scans every bundled file once (~250 files, each a full syntax-tree scan in
+  // tests/helpers/source-scan.ts), ~2 s alone and past vitest's 5-second default under a full
+  // `npm run ci:quality` run (2026-10-11). Nothing is kept from an earlier test to reuse.
+  it("lists every package the bundled code or the style sheet imports, even a development tool", { timeout: 20_000 }, () => {
     const bundled = [...sourceFiles(["app", "components", "lib"], SOURCE_FILES), ...rootSourceFiles().filter((f) => /^(middleware|instrumentation)/.test(f))];
     const imported = new Set(
       bundled.flatMap((file) =>

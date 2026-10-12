@@ -1,3 +1,5 @@
+import { countReadByAPerson, howCheckedWords, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+
 import type { PlaybookSkeleton } from "./types";
 
 function escapeYamlScalar(value: string): string {
@@ -28,14 +30,18 @@ function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
  * citations, disclaimer. S2.5.4h: catalog facts only, no LLM narrative.
  */
 export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
-  const citationDates = skeleton.sections.flatMap((s) => s.citations.map((c) => c.lastVerified));
-  const oldestVerified = citationDates.length > 0 ? [...citationDates].sort()[0] : undefined;
+  const citations = skeleton.sections.flatMap((s) => s.citations);
+  // The key keeps its old name for anything that reads it, but it is the oldest day one of these
+  // sources was read, by anyone; a tool check is not a read (docs/engines/citations.md). The next
+  // line says how many of them a person is recorded as having read.
+  const oldestVerified = oldestRead(citations);
 
   const frontMatter = [
     "---",
     `title: ${escapeYamlScalar(`${skeleton.profile.name} — DotAmi playbook`)}`,
     `scenario_id: ${escapeYamlScalar(skeleton.scenarioId)}`,
     `catalog_last_verified: ${oldestVerified ? escapeYamlScalar(oldestVerified) : "n/a"}`,
+    ...(citations.length > 0 ? [`sources_read_by_a_person: ${countReadByAPerson(citations)} of ${citations.length}`] : []),
     "generator: dotami-playbook",
     "---",
     "",
@@ -97,8 +103,10 @@ export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
 
       for (const c of section.citations) {
         body.push(
-          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · verified ${c.lastVerified}`,
+          `- [${c.title}](${c.url}) — ${c.authority} / ${c.jurisdiction} · ${howCheckedWords(c)}`,
         );
+        // A tool check's words go under its line, so the reader can see what was found on the page.
+        for (const quote of toolCheckQuotes(c)) body.push(`  - *Words found on the page:* "${quote}"`);
         body.push(`  - *Note:* ${c.note}`);
       }
 

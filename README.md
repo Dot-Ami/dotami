@@ -28,6 +28,10 @@ law behind it one click away.
 > never claims a qualification. Every figure it shows carries its source and the date it was
 > last verified — check that date before you rely on it.
 
+**Get it:** the Windows installer is on the
+[latest release](https://github.com/Dot-Ami/dotami/releases/latest), or run it from the source code
+([Run it](#run-it), below).
+
 ## See it
 
 ![Describe a venture in one sentence, confirm what was understood, open the map, then read the statute behind a card](docs/media/intake-to-map.gif)
@@ -48,7 +52,7 @@ engine did all of it. About 25 seconds, loops.*
   plausible, time-boxed, or one decision away. Hover a card to see where it leads.
 - **The law, on the card.** Every catalog entry cites the statute, the regulation or the tax
   authority's own page (today: the Income Tax Act, the Regulations, CRA and provincial
-  sources), with a verification status and a `lastVerified` date.
+  sources), with a verification status and the day it was checked, saying how: read by a person, read by someone the record doesn't name, read by an AI model, or checked by a tool that found the quoted words on the page.
 - **Your ideas.** Save as many ventures as you like, stage them (idea → prototype → first
   customers → established), cross-reference the ones that overlap or could become sister
   companies.
@@ -83,6 +87,11 @@ lands as cited nodes. **This is the part that needs you** — see
 progress per venture, jurisdictions beyond Canada, connecting to accounting software and
 financial records **locally**, and complex tax strategies and business structures mapped as
 roadmaps of their own. Pick something up.
+
+Being built now: the **future cockpit**, where you start from where you want to be (a business or
+a career), pick one future and see its whole road at once: the steps, the skills they need, the
+official fees and the costs you price yourself. The design:
+[docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md).
 
 ## Run it
 
@@ -126,12 +135,16 @@ the app.
 Upgrading from a PostgreSQL install (before 2026-09-28): see the CHANGELOG entry for that
 date before you pull — a fresh SQLite file starts empty.
 
-**The desktop app (early, Windows first, not yet released):** `npm run desktop:build` then
-`npm run desktop` opens DotAmi in its own window, with its data in the app's own folder
-(`%APPDATA%\DotAmi` on Windows) instead of `prisma/`. `npm run desktop:installer` builds the
-installer (`dist-desktop/out/`); the installed app updates itself from GitHub Releases and asks
-before installing. How it works, and how releases are made:
-[docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
+**The desktop app (early, Windows first):** download the installer, `DotAmi-Setup-<version>.exe`,
+from the [latest release](https://github.com/Dot-Ami/dotami/releases/latest). It installs for your
+Windows account only and doesn't need administrator rights. It isn't code-signed yet, so Windows
+shows "Windows protected your PC" when you run the installer. The installed app updates itself from GitHub
+Releases and asks before installing.
+
+To build it from source instead: `npm run desktop:build` then `npm run desktop` opens DotAmi in its
+own window, with its data in the app's own folder (`%APPDATA%\DotAmi` on Windows) instead of
+`prisma/`. `npm run desktop:installer` builds the installer (`dist-desktop/out/`). How it works, and
+how releases are made: [docs/architecture/desktop-app.md](docs/architecture/desktop-app.md).
 
 The quality gate is `npm run ci:quality` (prisma generate → typecheck → lint → test → build);
 CI runs the same chain on every pull request. **Browser tests:** `npm run test:browser` builds

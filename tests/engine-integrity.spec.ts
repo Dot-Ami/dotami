@@ -14,6 +14,10 @@ import { NODE_ENGINE_HINTS } from "@/lib/brain/node-items";
 import { defaultActiveBranches } from "@/lib/scenarios/branches";
 import { T2125_LINES } from "@/lib/figures/return/lines";
 import { FIGURE_KINDS } from "@/lib/figures/types";
+import { allCatalogCitations } from "@/lib/engines/all-citations";
+import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
+import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
 
 describe("engine catalog integrity", () => {
   it("CFE has unique ids, citations, and 10 nodes", () => {
@@ -27,7 +31,6 @@ describe("engine catalog integrity", () => {
       expect(node.citations.length).toBeGreaterThan(0);
       for (const citation of node.citations) {
         expect(citation.url).toMatch(/^https:\/\//);
-        expect(citation.lastVerified).toBeTruthy();
       }
     }
   });
@@ -73,11 +76,54 @@ describe("engine catalog integrity", () => {
         expect(entry.citations.length).toBeGreaterThan(0);
         for (const citation of entry.citations) {
           expect(citation.url).toMatch(/^https:\/\//);
-          expect(citation.lastVerified).toBeTruthy();
         }
       }
     });
   }
+
+  // Decided 2026-10-11 (option B, docs/engines/citations.md): every citation says how it was
+  // checked. A read (lastVerified, with readBy saying who when that is on record), or a tool check
+  // (the day a script found the quoted words on the live page, and those quotes), or both.
+  it("every citation was read or checked by a tool with its quotes, and no read or check is dated after today", () => {
+    const today = new Date().toLocaleDateString("en-CA");
+    const problems = allCatalogCitations().flatMap(({ where, citation }) =>
+      citationCheckProblems(citation, today).map((p) => `${where}: ${p}`),
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it("the list of every citation misses no catalog", () => {
+    // Counted here from each catalog by hand, so a catalog left out of lib/engines/all-citations.ts
+    // (and so never checked above, or by scripts/check-quotes.mjs) fails.
+    const expected =
+      cfeCatalogV2026.nodes.reduce((n, node) => n + node.citations.length, 0) +
+      entryCatalogs.reduce(
+        (n, { catalog }) => n + (catalog.entries as readonly { citations: readonly unknown[] }[]).reduce((m, e) => m + e.citations.length, 0),
+        0,
+      ) +
+      taxLinesCatalogV2026.entries.reduce((n, e) => n + e.yearsRead.reduce((m, y) => m + y.citations.length, 0), 0) +
+      recordRetentionV2026.citations.length +
+      // Roads: each step's sources, one per done-when line, one per official fee or sourced named
+      // cost line; then each shared skill item's sources and its how-to-get-it line's.
+      roadsCatalogV2026.entries.reduce(
+        (n, road) =>
+          n +
+          road.steps.reduce(
+            (m, s) =>
+              m + s.citations.length + s.doneWhen.length + s.costs.filter((c) => c.kind === "official-fee" || c.nameSource !== undefined).length,
+            0,
+          ),
+        0,
+      ) +
+      skillItemsV2026.reduce((n, item) => n + item.citations.length + (item.howToGetIt ? 1 : 0), 0);
+    const listed = allCatalogCitations();
+    expect(listed.length).toBe(expected);
+    // The roads are in the list: road 0's steps carry the map stages' sources.
+    expect(listed.some(({ where }) => where.startsWith("roads "))).toBe(true);
+    expect(listed.length).toBeGreaterThan(70);
+    // Each says where it came from, so a problem names the entry to fix.
+    for (const { where } of listed) expect(where).toMatch(/^[a-z-]+ [^ ]+/);
+  });
 
   it("risk entries resolve appliesTo/combination ids and carry mitigation", () => {
     const knownIds = new Set([
@@ -216,6 +262,10 @@ describe("tax-line catalog ([8f])", () => {
         expect(year.citations.length).toBeGreaterThan(0);
         // The first citation is that year's form; lib/figures/tax-line.ts shows its date.
         expect(year.citations[0].url).toContain(`t2125-${String(year.taxYear).slice(2)}e.pdf`);
+        // The Tax year screens say DotAmi "has read" a year's form and show its line numbers, so that
+        // form must have been read by a person: a tool check, an AI model's read or a read nobody
+        // recorded isn't enough (docs/engines/citations.md).
+        expect(howChecked(year.citations[0]).kind, `${entry.id} ${year.taxYear}`).toBe("person");
         for (const c of year.citations) {
           expect(c.url).toMatch(/^https:\/\/www\.canada\.ca\//);
           expect(c.authority).toBe("CRA");

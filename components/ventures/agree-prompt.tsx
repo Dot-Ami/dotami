@@ -131,9 +131,14 @@ interface AgreePromptProps {
   onDone: () => void | Promise<void>;
   /** Called when the prompt closes, whether or not anything was decided. */
   onClose: () => void;
+  /**
+   * Optional words under a row's kind, from the screen that opened the prompt: the cockpit names the cost
+   * line and step a quote is for, and where its amount came from (2026-10-12). Null adds nothing.
+   */
+  rowNote?: (figure: FigureView) => string | null;
 }
 
-export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePromptProps) {
+export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: AgreePromptProps) {
   const titleId = useId();
   const introId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -337,6 +342,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose }: AgreePrompt
                             {FIGURE_KIND_LABELS[row.kind]} <span className="text-stone">· {period}</span>
                             {/* [8f] A T2125 total says which tax year and line it is, before the person agrees. */}
                             {taxLineWords(row) ? <span className="text-stone"> · {taxLineWords(row)}</span> : null}
+                            {rowNote?.(row) ? <span className="text-stone"> · {rowNote(row)}</span> : null}
                           </span>
                           <label htmlFor={inputId} className="sr-only">
                             Amount for {period}

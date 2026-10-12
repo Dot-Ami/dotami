@@ -1,4 +1,4 @@
-import type { OfficialWords } from "@/lib/engines/shared/types";
+import type { CitationCheck, OfficialWords } from "@/lib/engines/shared/types";
 
 export type CFEStage =
   | "stage-0"
@@ -14,14 +14,14 @@ export type CFECitationAuthority = "CRA" | "federal" | "provincial";
 
 export type CFEProvince = "AB" | "BC" | "ON" | "CA";
 
-export interface CFECitation {
+/** A map stage's source. Read (by a person, an AI model, or a reader nobody recorded), checked by a tool, or both: docs/engines/citations.md. */
+export type CFECitation = {
   title: string;
   authority: CFECitationAuthority;
   jurisdiction: CFEProvince;
   url: string;
-  lastVerified: string;
   note: string;
-}
+} & CitationCheck;
 
 export interface CFELensAnnotations {
   tax: string;

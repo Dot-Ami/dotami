@@ -4,7 +4,8 @@ Page: Cockpit (`/cockpit`) · Component: `components/node-detail-panel.tsx`
 (quotes: `components/shared/official-words.tsx`)
 Type: side panel with one text input
 
-Last updated: 2026-10-11 (written with the honest-map fixes, docs/task-list.md [10f]; the panel
+Last updated: 2026-10-12 (inside the cockpit's step panel on today's road, 09-step-panel.md; written 2026-10-11 with
+the honest-map fixes, docs/task-list.md [14a]; the panel
 itself is from 2026-09-13)
 
 ## What it is

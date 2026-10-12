@@ -7,7 +7,7 @@ import type { TaxLineEntry } from "./types";
  * the text pdf.js reads from the standard-print PDF, page by page) and, where it has a section on the
  * line, Guide T4002. The maintainer checked the four lines (8299, 9368, 9369 and 9946: their names,
  * parts and pages, and DotAmi's descriptions of them) against the CRA's form and Guide T4002 on
- * 2026-10-10, so lastVerified is that day: the day a person read the source.
+ * 2026-10-10, so lastVerified is that day and readBy is "person": a person read the source.
  *
  * What the form says about GST/HST matters for the rest of DotAmi: line 8299 is built from amount 3A
  * (gross sales "include GST/HST collected or collectible") minus amount 3B (GST/HST, provincial sales
@@ -33,6 +33,7 @@ const FORM_2025: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/content/dam/cra-arc/formspubs/pbg/t2125/t2125-25e.pdf",
   lastVerified: READ,
+  readBy: "person",
   note: `Read 2026-10-08, the standard-print PDF listed as the current (2025) version on the CRA's T2125 page (page details dated 2026-05-01). Nine pages, each footed 'T2125 E (25)'. ${CHECKED}`,
 };
 
@@ -43,6 +44,7 @@ const GUIDE_INCOME: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-4.html",
   lastVerified: READ,
+  readBy: "person",
   note: `Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 8299 – Gross business or professional income': line 8000 (adjusted gross sales or adjusted professional fees) plus reserves deducted last year (line 8290) plus other income (line 8230). Amount 3A includes GST/HST collected or collectible; amount 3B, included in 3A, is the GST/HST, provincial sales tax, returns, allowances and discounts. ${CHECKED}`,
 };
 
@@ -53,6 +55,7 @@ const GUIDE_EXPENSES: EngineCitation = {
   jurisdiction: "CA",
   url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4002/t4002-5.html",
   lastVerified: READ,
+  readBy: "person",
   note: `Read 2026-10-08 (page details dated 2026-04-16). Section 'Line 9899 or 9369 – Net income (loss) before adjustments': for business and professional income, line 9369 on Form T2125, the gross income minus the total expenses, a loss in brackets. Section 'Line 9946 – Your net income (loss)': your net income or loss, a loss in brackets. The chapter has no section of its own for line 9368; the form defines it. ${CHECKED}`,
 };
 

@@ -1,6 +1,7 @@
 # Engine Reasoning Docs
 
-Last updated: 2026-10-08 (the tax-lines catalog, [8f])
+Last updated: 2026-10-11 (the roads catalog, [14a]; how a source was checked: read by a person
+or checked by a tool, [citations.md](./citations.md); 2026-10-08: the tax-lines catalog, [8f])
 
 One file per engine: what it holds, how it reasons (today vs target), and the authoring
 conventions that keep a cheaper model's output correct. The *catalog shape contract*
@@ -18,15 +19,16 @@ in `docs/brain/`.
 | CFE | [cfe.md](./cfe.md) | Medium |
 | Templates | [templates.md](./templates.md) | Low |
 | Tax lines ([8f], 2026-10-08) | [taxlines.md](./taxlines.md) | Low (read by the figures store and the return reader, not by the map) |
+| Roads ([14a], 2026-10-11) | [roads.md](./roads.md) | High (the map draws a road; today's map is road 0) |
 
 ## Conventions that apply to every engine (do not deviate)
 
 1. **Catalogs are read-only, versioned, year-locked TypeScript** under
    `lib/engines/<name>/v2026/`. Never in the database. New year = new folder, not edits that
    erase history.
-2. **Every entry cites its source** (`title, authority, jurisdiction, url, lastVerified,
-   note`). No citation, no entry — the integrity test enforces presence; *you* enforce that
-   the URL actually supports the claim.
+2. **Every entry cites its source** (`title, authority, jurisdiction, url, note`, and how it
+   was checked: `lastVerified` and/or `toolCheck`). No citation, no entry — the integrity test
+   enforces presence; *you* enforce that the URL actually supports the claim.
 3. **Compass language in all `lensAnnotations` and notes**: "if X, this may unlock Y".
    Never "you should", never "you qualify".
 4. **Encode numbers as data, not prose.** "55% declining balance" inside a description
@@ -40,13 +42,23 @@ in `docs/brain/`.
    including it without a risk read violates it too.
 7. **`lastVerified` is a promise.** If you touch an entry, re-check its source and bump
    the date; if you can't verify, don't touch the entry.
+   **Or a tool check** (the maintainer's decision of 2026-10-11, option B): instead of, or as
+   well as, a person's read, a citation may carry `toolCheck: { checkedOn, quotes }`, recorded
+   only after `node scripts/check-quotes.mjs --url … --quote …` found every quote on the live
+   page as whole words. It needs one of the two; the card says which ("Read by a person on …"
+   only when `readBy: "person"` records it, "Read on …. Who read it wasn't recorded." for a read
+   nobody recorded the reader of, or "Checked by a tool on …: it found on the page the exact words
+   this entry relies on. Not read by a person yet."). A tool check says the words are on the
+   page, not that the entry reads them right.
+   The shape, the names and the rules: [citations.md](./citations.md).
 8. **IDs are forever.** Archetypes, annotations, and (soon) risk entries reference engine
    ids. Rename labels freely; never rename ids.
-9. **A new entry usually needs a hint too.** `NODE_ENGINE_HINTS` in
-   `lib/brain/node-items.ts` maps each lifecycle node to the catalog entry ids that show on
-   its card. Add your id to the node it belongs under; an entry with no hint still appears,
-   but only under "Elsewhere on your map". `tests/engine-integrity.spec.ts` fails on a hint
-   naming an id no catalog has.
+9. **A new entry usually needs a hint too.** Each road step names the catalog entry ids that
+   show on its card in `engineHints` (road 0's are in
+   `lib/engines/roads/v2026/starting-any-business-ab.ts`; until 2026-10-12 they were
+   `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, which now reads them from the road). Add your
+   id to the step it belongs under; an entry with no hint still appears, but only under "Elsewhere
+   on your map". `tests/engine-integrity.spec.ts` fails on a hint naming an id no catalog has.
 
 ## Known duplication — status
 
@@ -56,8 +68,9 @@ rule stands permanently: **never add venture knowledge to a component** — add 
 catalog and let the brain drive the UI.
 
 Since then `exploration-page.tsx`, `cockpit-projection-footer.tsx` and `lib/archetypes/`
-were deleted (S2.5.4h, 2026-09-14); the node→engine hint map now lives in
-`lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` (convention 9 below).
+were deleted (S2.5.4h, 2026-09-14); the node→engine hint map lived in
+`lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` and since 2026-10-12 is each road step's
+`engineHints` (convention 9 above).
 
 Residual to sweep: the `lib/brain/goal-effects.ts` cards that still carry empty citations. (The
 "$30K GST line" copy in `components/discovery/intake-page.tsx` went on 2026-10-11.)

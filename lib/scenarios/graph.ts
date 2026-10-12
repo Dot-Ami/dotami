@@ -1,26 +1,36 @@
-import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { branchDecisions, defaultActiveBranches, type BranchDecisionId } from "./branches";
 import type { Scenario, ScenarioNodeStatus, ScenarioState } from "./types";
 
 /**
- * Where a lifecycle node sits on THIS venture's path, from its branch picks. S2.5.4j: the
- * React Flow graph builder that lived here is gone with the graph — the map is tier columns
- * (`components/cockpit/strategy-map.tsx`, `lib/engines/cfe/v2026/tiers.ts`).
+ * Where a step sits on THIS venture's path, from its branch picks. The React Flow graph builder
+ * that lived here went with the graph on 2026-09-16; the map is columns of a road
+ * (`components/cockpit/strategy-map.tsx`, `lib/engines/roads/v2026/`).
+ *
+ * Takes any road's step id (2026-10-11). The picks only name today's tax-map steps, so a step from
+ * another road reads "upcoming" here until road evaluation gives it its own state.
  */
-export function getScenarioNodeStatus(nodeId: CFENodeId, scenario: Scenario): ScenarioNodeStatus {
-  if (scenario.state.ghostedNodeIds.includes(nodeId)) {
+export function getScenarioNodeStatus(nodeId: string, scenario: Scenario): ScenarioNodeStatus {
+  // The same lists, read as plain strings so any road's step id can be looked up in them.
+  const state: {
+    ghostedNodeIds: readonly string[];
+    decisionNodeIds: readonly string[];
+    activeNodeIds: readonly string[];
+    completedNodeIds: readonly string[];
+  } = scenario.state;
+
+  if (state.ghostedNodeIds.includes(nodeId)) {
     return "ghost";
   }
 
-  if (scenario.state.decisionNodeIds.includes(nodeId)) {
+  if (state.decisionNodeIds.includes(nodeId)) {
     return "decision";
   }
 
-  if (scenario.state.activeNodeIds.includes(nodeId)) {
+  if (state.activeNodeIds.includes(nodeId)) {
     return "active";
   }
 
-  if (scenario.state.completedNodeIds.includes(nodeId)) {
+  if (state.completedNodeIds.includes(nodeId)) {
     return "complete";
   }
 
@@ -43,10 +53,11 @@ export type StageChipKind = "now" | "your-pick" | "default" | "open-choice" | "d
 
 /**
  * The chip on a stage card (issue #5, 2026-10-11): "your pick" only for something the person picked.
+ * Takes any road's step id; a step from another road is "ahead" here, like `getScenarioNodeStatus`.
  * Until then every "decision" stage said "your pick", including a toggle's untouched default (its own
  * toggle said "default, not your pick yet") and the fork drawn on every map.
  */
-export function stageChipFor(nodeId: CFENodeId, scenario: Scenario): StageChipKind {
+export function stageChipFor(nodeId: string, scenario: Scenario): StageChipKind {
   const status = getScenarioNodeStatus(nodeId, scenario);
   if (status === "active") return "now";
   if (status === "complete") return "done";
