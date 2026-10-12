@@ -21,6 +21,7 @@ import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { createDatabaseClient } from "@/lib/db/client";
 import { loadVentureScenarioById } from "@/lib/db/ventures";
 import { roadApprenticeToOwnShopAB } from "@/lib/engines/roads/v2026";
+import { keptOnRecord } from "@/lib/front-door/kept";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { readFuture } from "@/lib/futures/future";
 import { dayOnThisComputer } from "@/lib/futures/person";
@@ -200,5 +201,56 @@ describe("the migration adds two columns and touches nothing else", () => {
       'ALTER TABLE "Venture" ADD COLUMN "lookingFor" TEXT;',
       'ALTER TABLE "Venture" ADD COLUMN "lookingForSetAt" DATETIME;',
     ]);
+  });
+});
+
+describe("a picked future keeps what it was saved without as not said (review, 2026-10-12)", () => {
+  it("the kind of venture, equipment and sales targets: listed as not said, and equipment read back unanswered", async () => {
+    const scenario = scenarioForPickedFuture({ road: roadApprenticeToOwnShopAB, place: "CA-AB", name: "" }, randomUUID());
+    const { ventureId } = (await (await routes.save(post("/api/scenario/save", { scenario }))).json()) as { ventureId: string };
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    const loaded = await loadVentureScenarioById(prisma, ventureId);
+    expect(loaded?.profile.notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+    expect(loaded?.profile.capitalPurchasePlanned).toBeUndefined();
+
+    // The cockpit's own saves carry the list back, so it stays.
+    expect((await routes.save(post("/api/scenario/save", { scenario: loaded }))).status).toBe(200);
+    expect((await prisma.venture.findUniqueOrThrow({ where: { id: ventureId } })).notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+
+    // A save with no list (the intake, which asks all three) clears it, and its answers are the person's.
+    const answered = { ...loaded!, profile: { ...loaded!.profile, notSaid: undefined, type: "product" as const, capitalPurchasePlanned: true } };
+    expect((await routes.save(post("/api/scenario/save", { scenario: answered }))).status).toBe(200);
+    const after = await loadVentureScenarioById(prisma, ventureId);
+    expect(after?.profile.notSaid).toBeUndefined();
+    expect(after?.profile).toMatchObject({ type: "product", capitalPurchasePlanned: true });
+  });
+});
+
+describe("Your destination reads what is already kept (review, 2026-10-12)", () => {
+  it("the newest destination and the income agreed to, with its day", async () => {
+    const words = `Back to the shop floor, my own hours (invented) ${randomUUID()}`;
+    expect((await routes.statements(post("/api/person/statements", { text: words, saidAt: "2026-10-12", kind: "destination" }))).status).toBe(200);
+    const kept = await keptOnRecord(prisma);
+    expect(kept.destination).toEqual({ text: words, saidAt: "2026-10-12" });
+    // Agreed earlier in this file, edited to 7,000,000 cents.
+    expect(kept.incomeWanted).toEqual({ amountCents: 7_000_000, agreedOn: today() });
+  });
+
+  it("with no database, nothing is on record", async () => {
+    const broken = new Proxy({}, { get: () => new Proxy({}, { get: () => async () => Promise.reject(new Error("no database")) }) }) as unknown as PrismaClient;
+    expect(await keptOnRecord(broken)).toEqual({ destination: null, incomeWanted: null });
+  });
+});
+
+describe("the not-said migration adds one column and touches nothing else", () => {
+  it("only ALTER TABLE \"Venture\" ADD COLUMN, so no idea, figure or link can be lost", () => {
+    const dir = path.join(process.cwd(), "prisma", "migrations");
+    const name = readdirSync(dir).find((n) => n.endsWith("_not_said"));
+    expect(name, "no migration ending in _not_said").toBeDefined();
+    const statements = readFileSync(path.join(dir, name!, "migration.sql"), "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("--"));
+    expect(statements).toEqual(['ALTER TABLE "Venture" ADD COLUMN "notSaid" JSONB NOT NULL DEFAULT \'[]\';']);
   });
 });
