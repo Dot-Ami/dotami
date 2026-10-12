@@ -390,7 +390,8 @@ for a reason:
   through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, as before. The road-evaluation pull
   request moves those hints onto the step, so a road's content stays in the road catalog (§ 8) and a
   contributor-written road can name its own cards; until then a step from any other road gets no
-  lever cards.
+  lever cards. *(2026-10-12: the road-evaluation pull request left them where they are; the step panel
+  pull request moves them, below.)*
 - **Skill items are one shared list** (`skillItemsV2026`), so a mark carries across every road that
   lists the item. It is empty until the first written future.
 - **The checks** (`validate.ts`, run on every road by the tests): every step has a citation; every
@@ -422,6 +423,76 @@ for a reason:
   maintainer's. *(2026-10-11: the storage pull request keeps another road's picks in a column of their
   own instead and leaves the type as it is; the maintainer decided places are stored as codes such as
   `CA-AB`. Both in § 7, Storage as built.)*
+
+### Road evaluation as built (2026-10-12)
+
+The road-evaluation pull request builds the pure function above and the receipts, with no screen. It
+stacks on the storage pull request (§ 7, *Storage as built*), because it reads what that keeps. It
+lives in `lib/roads/`.
+
+- **One function, no I/O.** `evaluateRoad` (`lib/roads/evaluate-road.ts`) takes the road, the shared
+  skill list, the idea's answers as the rules read them (its saved map: the answers and the map's picks,
+  and the business figures the person agreed to), the ending picked at each fork, the person's skill
+  marks, step progress, their agreed planning numbers (income wanted, savings, their number for each
+  named cost line), their own month, an optional what-if and today's date. It reads no file, database
+  or clock and keeps nothing; a test fails if `lib/roads/` imports anything that does.
+  `agreedPlanning` (same folder) picks those numbers out of the stored ones: agreed only, never a
+  proposed, taken-back or turned-down number, and only cost lines on this future's own road.
+- **Each step gets one of today's three states, with the reason in the person's own answers.** In this
+  order, the first that fits decides:
+  1. The person marked the step *not for me*: **not on your path** (*not for me* greys a step; it
+     doesn't remove it, § 8).
+  2. Today's rules colour the step (every step of road 0, by its id): the rules' colour, exactly as
+     the map shows it today. Green is **applies**, amber **check first**, grey **not on your path**. The
+     reason names the answers that colour depends on, found the way receipts are: the rules run again
+     with one answer changed (taken away, given each other value it can have, or the fork's other side
+     picked), and an answer is named when that changes the step's colour. When no single answer changes
+     it, the reason says exactly that, never that the step is "for everyone".
+  3. The step is a side of a fork: the side picked **applies**, the other side is **not on your path**,
+     and while no side is picked both are **check first**. A step reached only through a side not
+     picked is not on your path too, and one reached only through a fork with no pick yet is check
+     first. This is walked along `next` from the road's first steps, so a step both endings lead to
+     stays on the path.
+  4. Anything else **applies**: it is on the road the person chose.
+
+  A step's status (*doing · done · not for me*) is given beside its state and changes it only through
+  *not for me*. Readiness is never a state: what a step needs is a count on the step (*needs 3 · you
+  have 2*), never a reason to turn it green.
+- **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
+  are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
+  as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
+  *Start-up money:* the official fees, the person's own numbers, how many named lines are not priced
+  yet, the lines left out of the sums because their step is not on the path or waits on a fork with no
+  pick (with the fork's name), the savings, and savings minus (official fees + the person's numbers),
+  given only when there are savings and at least one line with an amount. *Your date:* the months from
+  this month to the person's month, given only when they set one. The yearly income wanted is passed
+  through as *your target* and compared with nothing.
+- **What-if.** First-year sales, in whole dollars. It replaces the idea's own first-year sales for this
+  run of the rules and is never a figure: it touches no money sum and nothing is kept. A what-if that
+  isn't a whole, non-negative number of dollars is ignored, and the result says no what-if is on.
+- **Receipts.** `roadReceipt(before, after)` (`lib/roads/receipts.ts`) compares two results and gives
+  one plain line per change: steps whose state changed (counted by their new state), steps that now
+  need nothing more from the person (every skill they need marked *have*) or need something again,
+  steps done, the skills counts, the money sums, the date, the target, and rules and tax cards whose
+  colour changed. Each line starts with the answers that differ between the two results: *"Because you
+  told us you have “Welding”, 3 steps now need nothing more from you."*, *"Because you took back …"*,
+  and for a what-if *"Because you tried first-year sales of $45,000 (your what-if, not a forecast), …"*.
+  Three or more answers of one kind are counted (*"you marked 9 skills"*). With no answer changed (the
+  month turned over), the line is the change alone.
+- **Words and numbers in one place each.** Every sentence the evaluation and the receipts write comes
+  from `lib/roads/words.ts`, filled in with catalog labels, the person's own values and counts; money and
+  months are written by `lib/format/money-and-months.ts`. A test runs every kind of sentence past a list
+  of verdict words (*enough, ready, best, should, recommend, on track, behind*) and fails on any.
+- **The arrows' walk moved out of the screen.** `futureEdges` and `columnNumbers` (the steps that lie
+  ahead of a step, and each step's column) moved from `components/cockpit/map-arrows.tsx` to
+  `lib/roads/paths.ts`, because road evaluation walks the same `next` arrows. The map imports them from
+  there and draws exactly as before (the byte-for-byte map test is unchanged).
+- **Not in this pull request:** any screen; the lever cards moving onto the road step (`engineHints`,
+  above), which comes with the step panel, the first place the cards are drawn for a road other than
+  road 0; reading road 0's step statuses from the map, which the cockpit does when it calls this (its
+  caller passes them in as progress, § 7); and fix 2's fee lines (§ 9): no road has cost lines yet, and
+  when each way to incorporate is a side of a fork, the sums already leave both out until the person
+  picks.
 
 ## 7. Storage
 
