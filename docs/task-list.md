@@ -590,7 +590,8 @@ roadmap's build order.
   - [ ] **Honest:** every figure and claim shows where it came from; nothing invented
   - [ ] **Wired:** what's typed or clicked saves, reloads and survives a restart; errors handled
   - [ ] **Tested:** a browser test covers its main path and edge cases
-  - Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't name them).
+  - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
+    name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

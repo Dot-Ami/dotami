@@ -261,6 +261,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   whole now says "Shown because it is a federal rule, the same in every province and territory.";
   provincial rules still name the province, and the ride-share cards still name the tag that lit them
   ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
+- **A screen reader names the intake's province and employment dropdowns.** Their names ("Province /
+  territory", "Current employment") were plain text tied to nothing, so the dropdowns had no name;
+  they are now labels tied to their fields, and so is "Name it — optional" for the name box
+  ([`components/discovery/intake-page.tsx`](components/discovery/intake-page.tsx) `FieldGroup`; the
+  browser test finds both dropdowns by their names).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
