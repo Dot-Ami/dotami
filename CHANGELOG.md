@@ -44,6 +44,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
   every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
   later ([`lib/places/codes.ts`](lib/places/codes.ts)).
+- **Road evaluation and receipts** ([14a]) — one pure function turns a road and everything you told DotAmi
+  (your idea's answers and the map's picks, the ending you picked, your skill marks, your progress, the
+  numbers you agreed to, your own month, and a what-if) into each step's state — applies, check first,
+  or not on your path — with the reason in your own answers, and the four gauges as counts and sums:
+  steps done, skills by your mark (unmarked ones counted on their own), official fees plus your own
+  numbers with the lines not priced yet counted rather than added as $0, your savings minus those only
+  when both exist, and months to your own date only when you set one. On today's Alberta road the colours
+  are the map's, and each names the answers it depends on, found by running the rules again with each
+  answer changed. A second function compares two results and writes one line per change: *"Because you
+  told us you have “Read drawings”, 1 step now needs nothing more from you."* Every line is built from
+  catalog words, your values and counts, never by a model; a test fails on *enough*, *ready*, *best*,
+  *should* or *recommended*. A what-if relights the rules for one run and is never kept as a figure. No
+  screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
+  [docs/architecture/future-cockpit.md § 6](docs/architecture/future-cockpit.md)). The map's hover
+  arrows now walk the road through the same code, and draw exactly as before.
 
 ### Changed
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now

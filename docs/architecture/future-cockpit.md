@@ -487,6 +487,12 @@ lives in `lib/roads/`.
   ahead of a step, and each step's column) moved from `components/cockpit/map-arrows.tsx` to
   `lib/roads/paths.ts`, because road evaluation walks the same `next` arrows. The map imports them from
   there and draws exactly as before (the byte-for-byte map test is unchanged).
+- **Speed.** Measured by hand on 2026-10-12 on a Windows development computer, timing 200 runs after
+  a 50-run warm-up: about 0.36 ms a run on today's general road (the rules run about 30 times, once per
+  changed answer, to name each colour's answers), 0.06 ms on the invented test road, and 0.02 ms for a
+  receipt. So *What you've told DotAmi* with 40 answers, each worked out with and without, is about 30
+  ms on today's general road: still quick enough to work out on each visit (§ 7). No script keeps this
+  measurement.
 - **Not in this pull request:** any screen; the lever cards moving onto the road step (`engineHints`,
   above), which comes with the step panel, the first place the cards are drawn for a road other than
   road 0; reading road 0's step statuses from the map, which the cockpit does when it calls this (its
@@ -669,6 +675,8 @@ Windows development computer, timing one run of today's rules over 2,000 runs af
 0.01 ms a run (0.007 to 0.016 ms on the two demo ideas), so 40 answers, each run with and without, is
 about a millisecond. No script keeps this measurement. Road evaluation adds to that and is measured again in its own pull
 request; if it ever stops being quick, the line is saved with the answer when it is made, as planned.
+*(2026-10-12: measured, about 0.36 ms a run on today's general road, so about 30 ms for 40 answers;
+still worked out on each visit. § 6, Road evaluation as built.)*
 
 **What Delete and *What DotAmi knows about you* gain.** The three tables are listed in
 `lib/privacy/inventory.ts` and counted on `/your-data`. Step progress goes with *Your ideas* (it belongs
@@ -839,7 +847,8 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   table with a kind column; savings and a cost line cover the day the person gave them.
 - ~~**Whether *What you've told DotAmi* stays fast.**~~ Settled (2026-10-11, § 7 *Storage as built*):
   one run of the rules took about 0.01 ms, so the line is worked out on each visit; checked again when
-  road evaluation lands.
+  road evaluation landed (2026-10-12: about 0.36 ms a run on today's general road, about 30 ms for 40
+  answers, § 6 *Road evaluation as built*).
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
 - **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
