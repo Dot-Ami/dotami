@@ -67,6 +67,7 @@ const SHIPPED_IDS: Record<
       "dw-start-inc-articles",
       "dw-start-inc-t2",
       "dw-start-inc-guarantee",
+      "dw-start-inc-directors",
       "dw-start-incsred-incorporated",
       "dw-start-incsred-ccpc",
       "dw-start-incsred-associated",
@@ -85,6 +86,7 @@ const SHIPPED_IDS: Record<
       "dw-start-sred-deadline",
       "dw-start-name-when",
       "dw-start-name-ending",
+      "dw-start-name-report",
       "dw-start-name-form",
       "dw-start-name-proof",
       "dw-start-name-email",
@@ -98,8 +100,9 @@ const SHIPPED_IDS: Record<
     ],
     costs: [
       "cost-start-name-government-fee",
+      // "cost-start-name-report" was in review only, never on main: the register-name page names no
+      // price for the report, so it became the line dw-start-name-report before it shipped.
       "cost-start-name-service-fee",
-      "cost-start-name-report",
       "cost-start-permit-licence-fees",
       "cost-start-bank-fees",
     ],

@@ -63,7 +63,12 @@ describe("every step on road 0 has its done-when lines", () => {
         "dw-start-gstman-four-quarters",
         "dw-start-gstman-charging",
       ],
-      "stage-3a-incorporation-80k-net": ["dw-start-inc-articles", "dw-start-inc-t2", "dw-start-inc-guarantee"],
+      "stage-3a-incorporation-80k-net": [
+        "dw-start-inc-articles",
+        "dw-start-inc-t2",
+        "dw-start-inc-guarantee",
+        "dw-start-inc-directors",
+      ],
       "stage-3b-incorporation-liability-sred": [
         "dw-start-incsred-incorporated",
         "dw-start-incsred-ccpc",
@@ -110,7 +115,7 @@ describe("the three before-you-open steps the design names", () => {
     expect(BEFORE_YOU_OPEN.map((id) => step(id).label)).toEqual([
       "Register your business name, if you use one",
       "Look up your permits and licences (BizPaL)",
-      "A separate bank account for the business",
+      "A separate bank account for the business, if it has a name other than yours",
     ]);
   });
 
@@ -122,6 +127,7 @@ describe("the three before-you-open steps the design names", () => {
     expect(step("step-start-register-name").doneWhen.map((d) => d.id)).toEqual([
       "dw-start-name-when",
       "dw-start-name-ending",
+      "dw-start-name-report",
       "dw-start-name-form",
       "dw-start-name-proof",
       "dw-start-name-email",
@@ -158,7 +164,6 @@ describe("the three before-you-open steps the design names", () => {
     expect(costs.map((c) => c.id)).toEqual([
       "cost-start-name-government-fee",
       "cost-start-name-service-fee",
-      "cost-start-name-report",
       "cost-start-permit-licence-fees",
       "cost-start-bank-fees",
     ]);
@@ -181,9 +186,9 @@ describe("every new source is a tool check made on 2026-10-12, and none claims a
   const all = newCitations();
 
   it("each has quotes of three words or more, found by the tool that day, on an https page", () => {
-    // 45 done-when lines, plus the new steps' own sources and their cost lines' name sources.
-    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(45);
-    expect(all.length).toBeGreaterThan(45);
+    // 47 done-when lines, plus the new steps' own sources and their cost lines' name sources.
+    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(47);
+    expect(all.length).toBeGreaterThan(47);
     for (const { where, citation } of all) {
       expect(citation.toolCheck, where).toBeDefined();
       expect(citation.toolCheck!.checkedOn, where).toBe("2026-10-12");
@@ -261,5 +266,88 @@ describe("a line says what its own page says", () => {
       for (const path of dead) expect(d.citation.url, d.id).not.toContain(path);
     }
     expect(line("dw-start-sred-t661").citation.url).toContain("scientific-research-experimental-development-tax-incentive-program/");
+  });
+});
+
+// Review of 2026-10-12: each of these lines read as unconditional, while the sentence or section it
+// quotes carries a condition or exceptions. A line keeps them, quoted from the same page.
+describe("a line keeps the conditions and exceptions its own page attaches", () => {
+  it("the small-supplier line says what doesn't count, and when an associate's revenues do", () => {
+    const tests = line("dw-start-gstman-tests");
+    expect(tests.text).not.toMatch(/all revenues/);
+    expect(tests.text).toMatch(/financial services/);
+    expect(tests.text).toMatch(/capital property/);
+    expect(tests.text).toMatch(/goodwill from the sale of a business/);
+    expect(tests.text).toMatch(/associated at the beginning of the calendar quarter/);
+    const quoted = quotesOf(tests.citation);
+    expect(quoted).toContain("do not include revenues from supplies of financial services, sales of capital property");
+    expect(quoted).toContain("and goodwill from the sale of a business.");
+    expect(quoted).toContain("if they were associated at the beginning of the particular calendar quarter");
+  });
+
+  it("the T5 line names the T5 Guide's exceptions: under $50 to one recipient, and capital dividends", () => {
+    const t5 = line("dw-start-retained-t5");
+    expect(t5.text).toMatch(/less than \$50/);
+    expect(t5.text).toMatch(/capital dividends/);
+    const quoted = quotesOf(t5.citation);
+    expect(quoted).toContain("You do not have to prepare a T5 slip to report:");
+    expect(quoted).toContain("amounts paid to one recipient when the total amount for the year is less than $50");
+    expect(quoted).toContain("capital dividends, as described in Income Tax Folio S3-F2-C1, Capital Dividends");
+  });
+
+  it("a personal guarantee is one place limited liability stops, and directors' liability is another", () => {
+    const guarantee = line("dw-start-inc-guarantee");
+    expect(guarantee.text).not.toMatch(/where limited liability stops/);
+    expect(guarantee.text).toMatch(/one place limited liability stops/);
+    expect(quotesOf(guarantee.citation)).toContain("However, limited liability may not always protect you from creditors.");
+
+    const directors = line("dw-start-inc-directors");
+    expect(directors.text).toMatch(/director/);
+    for (const act of ["Income Tax Act", "Employment Insurance Act", "Canada Pension Plan", "Excise Act 2001", "Excise Tax Act"]) {
+      expect(directors.text, act).toContain(act);
+    }
+    expect(quotesOf(directors.citation)).toContain("Directors may also be liable to pay amounts owed by the corporation");
+    expect(directors.citation.url).toBe(guarantee.citation.url);
+  });
+
+  it("the payroll line keeps 'unless the CRA tells you to remit using a different frequency'", () => {
+    const payroll = line("dw-start-hire-payroll-account");
+    expect(payroll.text).toMatch(/unless the CRA tells you to remit using a different frequency/);
+    expect(quotesOf(payroll.citation)).toContain(
+      "from your employee's pay, unless the CRA tells you to remit using a different frequency.",
+    );
+  });
+
+  it("the salary-into-dividends line keeps its condition: recorded as salary, with deductions at source required", () => {
+    const noSwitch = line("dw-start-retained-no-switch");
+    expect(noSwitch.text).toMatch(/recorded as salary/);
+    expect(noSwitch.text).toMatch(/deductions at source were required/);
+    expect(quotesOf(noSwitch.citation)).toContain(
+      "If the payments you made to a shareholder were recorded as salary payments (in your books and records) and deductions at source were required",
+    );
+  });
+
+  it("the record-keeping lines say 'generally', as the CRA does", () => {
+    for (const id of ["dw-start-soleprop-records", "dw-start-account-statements"]) {
+      expect(line(id).text, id).toMatch(/generally/);
+      expect(quotesOf(line(id).citation), id).toContain("You are generally required to keep your records");
+    }
+  });
+
+  it("the Business Name Report is a line, not a cost: its page names no price for it", () => {
+    const name = step("step-start-register-name");
+    expect(name.costs.map((c) => c.label).join(" | ")).not.toMatch(/Business Name Report/);
+    const report = line("dw-start-name-report");
+    expect(report.text).toMatch(/optional/);
+    expect(quotesOf(report.citation)).toContain("This step is recommended, but not mandatory.");
+    expect(quotesOf(report.citation)).toContain("The report is provided by authorized NUANS members.");
+    // The register-name page says a government fee and a service fee are charged; it gives no amount.
+    for (const c of [...name.citations, ...name.doneWhen.map((d) => d.citation)]) {
+      if (c.url === "https://www.alberta.ca/register-business-name") expect(c.note, c.title).not.toMatch(/what it costs/);
+    }
+  });
+
+  it("the bank account card's own name carries the CRA's condition", () => {
+    expect(step("step-start-business-account").label).toMatch(/, if it has a name other than yours$/);
   });
 });

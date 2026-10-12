@@ -41,7 +41,7 @@ function draw(road: Road, c: MapCase): string {
 const ADDED = [
   { id: "step-start-register-name", label: "Register your business name, if you use one" },
   { id: "step-start-permits-bizpal", label: "Look up your permits and licences (BizPaL)" },
-  { id: "step-start-business-account", label: "A separate bank account for the business" },
+  { id: "step-start-business-account", label: "A separate bank account for the business, if it has a name other than yours" },
 ];
 
 /** The wrapper of one stage card, found by the card's name. */

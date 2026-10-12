@@ -208,7 +208,7 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
         "Employee/Apprentice baseline",
         "Register your business name, if you use one",
         "Look up your permits and licences (BizPaL)",
-        "A separate bank account for the business",
+        "A separate bank account for the business, if it has a name other than yours",
       ],
       toggle: null,
     },
@@ -253,6 +253,19 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
   await bizpal.hover();
   await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(1);
   await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(18);
+
+  // Clicking a card with no catalog entry selects it but opens no panel, so it leaves an open Export
+  // panel where it is (review of 2026-10-12: it used to close it).
+  const exportPanel = page.locator("pre");
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await expect(exportPanel).toBeVisible();
+  await bizpal.click();
+  await expect(bizpal).toHaveAttribute("aria-pressed", "true");
+  await expect(exportPanel).toBeVisible();
+  // A card with a catalog entry still opens its detail panel in Export's place, as before.
+  await page.getByRole("button", { name: /^Sole Prop activation, / }).click();
+  await expect(page.getByRole("button", { name: "Close node detail panel" })).toBeVisible();
+  await expect(exportPanel).toHaveCount(0);
 });
 
 // 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every
