@@ -55,7 +55,7 @@ estimate reached $80,000 — a number no cited page sets, compared against sales
 written as net income. Now it is **Incorporating**, its trigger line reads "DotAmi doesn't pick a
 point to incorporate. You do, with your accountant or lawyer.", and it is amber (**check first**)
 while it is the selected option of Incorporation timing (the person's pick, or the default until
-they click; its chip says "your pick" either way, a known wording gap, docs/task-list.md [10f]) and
+they click; its chip says "your pick" either way, a known wording gap, docs/task-list.md [14a]) and
 grey when the other option is selected. No amount lights it. Its
 detail keeps only cited facts: the CRA's corporation page and the small business deduction's
 $500,000 business limit from the T2 guide. The toggle's options read **When you decide** and

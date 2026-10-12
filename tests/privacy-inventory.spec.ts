@@ -41,6 +41,7 @@ import {
   importedModules,
   importsFromUnscannedCode,
   moduleName,
+  namesWritten,
   networkCalls,
   networkSourceFiles,
   readSource,
@@ -280,10 +281,14 @@ const scanned = new Map<string, string[]>();
 
 /** The calls in one file that aren't a literal "/…" path on DotAmi's own server, as "file: call". */
 function outsideCallsIn(file: string, code: string, names: readonly string[]): string[] {
-  const key = `${file}\0${names.join(",")}\0${code}`;
+  // Kept under the other names for a wrapper that this file writes, not under all of them: a name it
+  // doesn't write can't change what the scan finds in it (namesWritten), and filing every file under
+  // the whole list made a probe that brings a new name re-read all ~280 files.
+  const written = namesWritten(code, file);
+  const aliases = names.filter((n) => !WRAPPERS.includes(n) && written.has(n));
+  const key = `${file}\0${aliases.join(",")}\0${code}`;
   let found = scanned.get(key);
   if (!found) {
-    const aliases = names.filter((n) => !WRAPPERS.includes(n));
     found = networkCalls(code, WRAPPERS, file, { packages: NETWORK_PACKAGES, aliases })
       .filter((c) => !c.relative)
       .map((c) => `${file}: ${c.call}`);
@@ -327,7 +332,9 @@ describe("the privacy inventory lists what can leave this computer", () => {
     expect(SENT_ELSEWHERE.map((s) => s.id)).toContain("intake-sentence");
   });
 
-  it("sees the requests the app makes today (a guard against the scan silently finding nothing)", () => {
+  // Slow on purpose: it scans all ~280 files in full once more, keeping the calls to DotAmi's own
+  // server that the kept results leave out. ~1.8 s alone, so it gets room under a busy full run.
+  it("sees the requests the app makes today (a guard against the scan silently finding nothing)", { timeout: 20_000 }, () => {
     const names = wrapperNamesAcross(networkSources, WRAPPERS);
     const aliases = names.filter((n) => !WRAPPERS.includes(n));
     const calls = networkSources.flatMap(({ file, code }) =>
@@ -773,6 +780,71 @@ describe("the scan refuses what the final re-check found getting past it", () =>
 });
 
 // ---------------------------------------------------------------------------------------------
+// The shortcuts that keep the probes quick. A probe that brings a new name for the wrapper
+// (`export { postJson as send }`) used to re-read all ~280 files, because every file's kept answer
+// was filed under the whole list of names: about two seconds for that one test, past vitest's five
+// under a full CI run. Now a file is re-read only when it writes one of the new names. Each check
+// here holds that shortcut to reading everything in full.
+describe("a new name for a wrapper re-reads only the files that write it", () => {
+  it("knows every name and string a file writes, as the parser reads them: escapes decoded, comments left out", () => {
+    const code = [
+      'import { "send" as s } from "./barrel";',
+      'barrel["s\\u0065nd"](x);',
+      "\\u0070ostJson(y);",
+      'const { "go": g } = o;',
+      "obj.member;",
+      "`plainTemplate`;",
+      "// commentWord",
+    ].join("\n");
+    const written = namesWritten(code, PROBE_FILE);
+    expect([...written]).toEqual(
+      expect.arrayContaining(["send", "s", "./barrel", "barrel", "x", "postJson", "y", "go", "g", "o", "obj", "member", "plainTemplate"]),
+    );
+    expect(written.has("commentWord")).toBe(false);
+  });
+
+  // Every way the scan matches another name for a wrapper, some written behind an escape. In each,
+  // the name changes what the scan says, and the names the file writes are enough to say the same.
+  const ALIAS_USES: [string, string][] = [
+    ["called by that name", 'import { send } from "./barrel";\nsend(where);'],
+    ["called by that name written with an escape", "\\u0073end(where);"],
+    ["called on a name taken from our own file", 'import * as barrel from "./barrel";\nbarrel.send(where);'],
+    ["looked up by a string on it", 'import * as barrel from "./barrel";\nbarrel["send"](where);'],
+    ["looked up by a string written with an escape", 'import * as barrel from "./barrel";\nbarrel["s\\u0065nd"](where);'],
+    ["imported under another name", 'import { send as go } from "./barrel";\ngo(where);'],
+    ["imported by a quoted name", 'import { "send" as go } from "./barrel";\ngo(where);'],
+    ["taken out under another name", 'const { send: go } = await import("./barrel");\ngo(where);'],
+    ["taken out by a quoted key", 'const { "send": go } = await import("./barrel");\ngo(where);'],
+    ["handed on", 'import { send } from "./barrel";\nrunLater(send);'],
+    ["exported as a default", 'import { send } from "./barrel";\nexport default send;'],
+  ];
+  it.each(ALIAS_USES)("finds the same with only the names the file writes as with every name: %s", (_what, code) => {
+    const scan = (aliases: string[]) => networkCalls(code, ["postJson"], PROBE_FILE, { aliases });
+    const every = ["send", "other", "unwritten"];
+    expect(scan(every), "the name should change what the scan finds here").not.toEqual(scan([]));
+    expect(scan(every.filter((name) => namesWritten(code, PROBE_FILE).has(name)))).toEqual(scan(every));
+  });
+
+  it("follows a wrapper re-exported under a name written with an escape", () => {
+    const barrel = { file: "components/ventures/barrel.ts", code: 'export { p\\u006fstJson as send } from "./agree-prompt";' };
+    expect(wrapperNamesAcross([barrel], ["postJson"])).toContain("send");
+  });
+
+  it("re-reads only the probe's own two files when the probe brings a name no real file writes", () => {
+    requestsOutside(networkSources, ALLOWED); // the real tree, read once (the first group of tests already did)
+    const before = scanned.size;
+    const refused = refusedFor({
+      what: "",
+      file: PROBE_FILE,
+      also: [{ file: "components/ventures/barrel.ts", code: `export { postJson as probeOnlyName } from "./agree-prompt";` }],
+      code: `import { probeOnlyName } from "./ventures/barrel";\nawait probeOnlyName("https://example.invalid/x", {});`,
+    });
+    expect(refused).toContain(`${PROBE_FILE}: probeOnlyName("https://example.invalid/x"`);
+    expect(scanned.size - before).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
 // Packages. The inventory lists every package that ships and that DotAmi names itself, and the code imports only packages that
 // package.json declares.
 
@@ -965,6 +1037,15 @@ describe("the scan refuses a package that package.json doesn't declare", () => {
   it("reads the real imports (a guard against the check silently finding nothing)", () => {
     const seen = new Set(networkSources.flatMap(({ file, code }) => importedModules(code, file).map((s) => moduleName(s).name)));
     expect([...seen]).toEqual(expect.arrayContaining(["next", "react", "@prisma/client", "electron", "electron-updater", "electron-builder", "fs", "path"]));
+  });
+
+  it("gives the same imports when asked again, however the last caller changed its list", () => {
+    // importedModules keeps its answer per file text (most tests here ask it about the same ~280 files).
+    const code = `import a from "next/server";\nconst b = require("node:fs");`;
+    const first = importedModules(code, PROBE_FILE);
+    first.push("changed-by-a-caller");
+    first.reverse();
+    expect(importedModules(code, PROBE_FILE)).toEqual(["next/server", "node:fs"]);
   });
 
   it.each(UNLISTED_PACKAGE_PROBES.map((p) => [p.what, p] as const))("refuses %s", (_what, probe) => {
