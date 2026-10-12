@@ -80,6 +80,19 @@ person is asked).
   Nothing about the person leaves the computer. Nothing new is asked yet, but DotAmi's figures routes
   accept the two new kinds, so a program on this computer could propose one; like any figure, it waits
   for the person's agreement in DotAmi's own window.
+- **Each idea's place is stored as its international code, and every cockpit answer has its date
+  (2026-10-12).** The data file now writes an idea's province as its code from ISO 3166-2:CA (`CA-AB`
+  for Alberta, where it wrote `AB`); the maintainer's decision of 2026-10-11. A hand-written migration
+  rewrites the ideas already saved with one `UPDATE`
+  ([`prisma/migrations/20261012000000_place_codes`](../prisma/migrations/20261012000000_place_codes/migration.sql)),
+  and an older backup is moved over when it is restored. What DotAmi shows, exports and answers still
+  says `AB`. Two more optional columns on an idea keep the moment the person chose its road and set
+  its month (`Venture.roadChosenAt`, `targetMonthSetAt`), and each ending picked on a road keeps the
+  moment it was picked, inside `forkPicks`, so *What you've told DotAmi* can date each answer. Agreeing
+  to a new savings number for an idea, or a new number for the same start-up cost, now takes back the
+  one agreed before (kept, as *taken back*). A savings number or a start-up cost has to be dated the
+  day it is given. On today's Alberta road a step's status stays with the map, as before, and the new
+  step-progress table doesn't keep a second one. Nothing new leaves the computer or is asked.
 
 ### How to remove it
 

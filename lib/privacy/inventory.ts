@@ -219,7 +219,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there; nothing on screen sets those yet.",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; nothing on screen sets those yet. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta).",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -240,7 +240,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "StepProgress",
     name: "Your progress on each step",
     holds:
-      "For each idea, the steps on its road you marked doing, done or not for me, the “done when” lines you ticked on each, and when you changed each step's status (the newest 100 changes per step). It is never used to rank anything. Nothing on screen sets it yet: the cockpit's step panel, coming next, will.",
+      "For each idea, the steps on its road you marked doing, done or not for me (on today's Alberta road the map keeps those, so only the ticked lines are here), the “done when” lines you ticked on each, and when you changed each step's status (the newest 100 changes per step). It is never used to rank anything. Nothing on screen sets it yet: the cockpit's step panel, coming next, will.",
     removedBy: "Nothing on screen changes or removes it yet. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {

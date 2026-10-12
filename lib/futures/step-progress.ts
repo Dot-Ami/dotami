@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, StepProgress } from "@prisma/client";
 
 import { toStringList } from "@/lib/db/json-list";
+import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 import { requireVenture } from "@/lib/figures/store";
 
 import { FutureInputError, isRecord, roadForFuture, SHIPPED_ROADS_CATALOG, STEP_STATUSES, type RoadsCatalog, type StepStatus } from "./types";
@@ -10,6 +11,9 @@ import { FutureInputError, isRecord, roadForFuture, SHIPPED_ROADS_CATALOG, STEP_
  * Storage as built): a status (doing, done, not for me, or none), the "done when" lines they ticked,
  * and the status changes with their moments for "Since last time". Kept against the road's and the
  * step's permanent ids, never a position or a title, and never used to rank anything.
+ *
+ * On road 0 a step's status is the map's (ScenarioState: active, done, set aside), so it is refused here
+ * and only that step's "done when" ticks are kept: one step's status lives in one place.
  */
 
 /** How many status changes a step keeps: the newest ones. Plenty for "Since last time". */
@@ -52,10 +56,19 @@ const toView = (row: StepProgress): StepProgressView => ({
   updatedAt: row.updatedAt.toISOString(),
 });
 
-/** Every step of the future the person has touched, in the order they first touched them. */
-export async function listStepProgress(prisma: PrismaClient, ventureId: string): Promise<StepProgressView[]> {
+/**
+ * Every step of the future's current road the person has touched, in the order they first touched them.
+ * Another road's rows stay in the file, so going back to that road brings them back.
+ */
+export async function listStepProgress(
+  prisma: PrismaClient,
+  ventureId: string,
+  catalog: RoadsCatalog = SHIPPED_ROADS_CATALOG,
+): Promise<StepProgressView[]> {
   await requireVenture(prisma, ventureId);
-  const rows = await prisma.stepProgress.findMany({ where: { ventureId }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
+  const venture = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { roadId: true } });
+  const roadId = roadForFuture(catalog, venture.roadId).id;
+  const rows = await prisma.stepProgress.findMany({ where: { ventureId, roadId }, orderBy: [{ createdAt: "asc" }, { id: "asc" }] });
   return rows.map(toView);
 }
 
@@ -83,6 +96,10 @@ export async function setStepProgress(
   if (!step) throw new FutureInputError("That step isn't on this road.");
 
   const statusGiven = input.status !== undefined;
+  // Road 0's statuses are the map's; a second one here could contradict it (docs/architecture/future-cockpit.md § 7).
+  if (statusGiven && road.id === generalRoadV2026.id) {
+    throw new FutureInputError("On this road a step's status is set on the map, with its own buttons, and kept with the map.");
+  }
   if (statusGiven && input.status !== null && !isStatus(input.status)) {
     throw new FutureInputError(`The status has to be one of: ${STEP_STATUSES.join(", ")}, or none.`);
   }
@@ -101,6 +118,10 @@ export async function setStepProgress(
   return prisma.$transaction(async (tx) => {
     const where = { ventureId_roadId_stepId: { ventureId, roadId, stepId } };
     const current = await tx.stepProgress.findUnique({ where });
+    // Nothing to keep on a step never touched (no status, no ticks): no empty row is written for it.
+    if (!current && status === null && (doneWhenIds === undefined || doneWhenIds.length === 0)) {
+      return { roadId, stepId, status: null, doneWhenIds: [], changes: [], updatedAt: new Date().toISOString() };
+    }
     let changes = current ? readChanges(current.changes) : [];
     // Only a change of status is a change for "Since last time"; ticking a line is not.
     const before = current && isStatus(current.status) ? current.status : null;

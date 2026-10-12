@@ -190,11 +190,13 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
   const taxLine = checkTaxLine(kind as FigureKind, input.taxYear, input.formLine, periodEnd, today);
   if (!taxLine.ok) return taxLine;
 
-  // The person's own planning numbers (2026-10-11): one day's amount (the day they gave it), never
-  // negative. Savings or a cost can't be a loss, and neither is a total over a period.
+  // The person's own planning numbers (2026-10-11): one day's amount, the day they gave it (today: a
+  // number can't be dated to a day it wasn't given), never negative. Savings or a cost can't be a loss,
+  // and neither is a total over a period.
   if (PLANNING_KINDS.includes(kind as FigureKind)) {
     if (amountCents < 0) return { ok: false, error: "This amount can't be below zero." };
     if (periodStart !== periodEnd) return { ok: false, error: "This is one day's amount: give the same day as its start and end." };
+    if (periodStart !== today) return { ok: false, error: "This amount is dated the day it is given: give today as its start and end." };
   }
   const costLine = checkCostLine(kind as FigureKind, input.costLine);
   if (!costLine.ok) return costLine;

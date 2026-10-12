@@ -275,7 +275,7 @@ describe("step progress, per future and step", () => {
     await setStepProgress(prisma, ventureId, { roadId: INVENTED, stepId: "step-invented-train", status: "doing" }, catalog);
     await setStepProgress(prisma, ventureId, { roadId: INVENTED, stepId: "step-invented-train", doneWhenIds: ["dw-invented-1"] }, catalog);
     await setStepProgress(prisma, ventureId, { roadId: INVENTED, stepId: "step-invented-train", status: "done" }, catalog);
-    const [row] = await listStepProgress(prisma, ventureId);
+    const [row] = await listStepProgress(prisma, ventureId, catalog);
     expect(row).toMatchObject({ roadId: INVENTED, stepId: "step-invented-train", status: "done", doneWhenIds: ["dw-invented-1"] });
     // Each status change, in order, with its moment; a tick alone isn't a status change.
     expect(row.changes.map((c) => c.status)).toEqual(["doing", "done"]);
@@ -323,30 +323,30 @@ describe("step progress, per future and step", () => {
     const view = await setStepProgress(prisma, otherVentureId, { roadId: INVENTED, stepId: "step-invented-own", status: null }, catalog);
     expect(view).toMatchObject({ roadId: INVENTED, stepId: "step-invented-own", status: null, doneWhenIds: [], changes: [] });
     expect(await prisma.stepProgress.count({ where: { ventureId: otherVentureId } })).toBe(0);
-    expect(await listStepProgress(prisma, otherVentureId)).toEqual([]);
+    expect(await listStepProgress(prisma, otherVentureId, catalog)).toEqual([]);
   });
 
   it("keeps a status taken back as none, and only the newest status changes", async () => {
     const step = { roadId: INVENTED, stepId: "step-invented-train" };
     await setStepProgress(prisma, otherVentureId, { ...step, status: "doing" }, catalog);
     await setStepProgress(prisma, otherVentureId, { ...step, status: null }, catalog);
-    expect((await listStepProgress(prisma, otherVentureId))[0]).toMatchObject({ status: null });
+    expect((await listStepProgress(prisma, otherVentureId, catalog))[0]).toMatchObject({ status: null });
     for (let i = 0; i < STEP_CHANGES_KEPT + 5; i++) {
       await setStepProgress(prisma, otherVentureId, { ...step, status: i % 2 ? "done" : "doing" }, catalog);
     }
-    const [row] = await listStepProgress(prisma, otherVentureId);
+    const [row] = await listStepProgress(prisma, otherVentureId, catalog);
     expect(row.changes).toHaveLength(STEP_CHANGES_KEPT);
     expect(row.changes.at(-1)!.status).toBe((STEP_CHANGES_KEPT + 4) % 2 ? "done" : "doing");
   });
 
   it("lists only the current road's progress, and brings another road's back when the person goes back", async () => {
-    expect((await listStepProgress(prisma, otherVentureId)).map((p) => p.roadId)).toEqual([INVENTED]);
+    expect((await listStepProgress(prisma, otherVentureId, catalog)).map((p) => p.roadId)).toEqual([INVENTED]);
     await chooseRoad(prisma, otherVentureId, null, catalog);
-    expect(await listStepProgress(prisma, otherVentureId)).toEqual([]);
+    expect(await listStepProgress(prisma, otherVentureId, catalog)).toEqual([]);
     // Kept, not deleted.
     expect(await prisma.stepProgress.count({ where: { ventureId: otherVentureId } })).toBe(1);
     await chooseRoad(prisma, otherVentureId, INVENTED, catalog);
-    expect((await listStepProgress(prisma, otherVentureId)).map((p) => p.stepId)).toEqual(["step-invented-train"]);
+    expect((await listStepProgress(prisma, otherVentureId, catalog)).map((p) => p.stepId)).toEqual(["step-invented-train"]);
   });
 
   it("goes with its future: deleting the idea deletes its progress", async () => {

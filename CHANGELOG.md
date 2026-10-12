@@ -35,8 +35,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [docs/architecture/future-cockpit.md § 7](docs/architecture/future-cockpit.md)). *What DotAmi knows
   about you* counts the three new tables, and Delete gains **Your skill marks** and **The yearly income
   you said you want**; step progress goes with your ideas. The migration only adds columns and tables,
-  and a test checks a row in every table survives it. Places are read as international codes (`CA-AB`
-  for Alberta) through [`lib/places/codes.ts`](lib/places/codes.ts).
+  and a test checks a row in every table survives it. Each answer kept on a future has its date; on
+  today's Alberta road a step's status stays with the map, so one step can't say two things; agreeing
+  to a new number for the same cost line (or a new savings number) takes back the old one; and the same
+  skill of your own typed with other capital letters is one mark.
+- **Places stored as international codes** ([14a]) — the data file now writes each idea's province as
+  its code (`CA-AB` for Alberta), the maintainer's decision of 2026-10-11. A second hand-written
+  migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
+  every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
+  later ([`lib/places/codes.ts`](lib/places/codes.ts)).
 
 ### Changed
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now

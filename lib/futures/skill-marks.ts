@@ -1,4 +1,4 @@
-import type { PrismaClient, SkillMark } from "@prisma/client";
+import type { Prisma, PrismaClient, SkillMark } from "@prisma/client";
 
 import { personUserId } from "@/lib/figures/store";
 
@@ -65,6 +65,18 @@ function readKey(input: Record<string, unknown>, catalog: RoadsCatalog): SkillKe
 }
 
 /**
+ * The person's own skills are matched whatever their capital letters ("Welding" and "welding" are one
+ * skill). SQLite's unique index compares exactly, so the lookup is done here, over the person's own
+ * marks, which are few.
+ */
+async function findMark(tx: PrismaClient | Prisma.TransactionClient, userId: string, key: SkillKey): Promise<{ id: string } | null> {
+  if (key.skillItemId !== null) return tx.skillMark.findFirst({ where: { userId, skillItemId: key.skillItemId }, select: { id: true } });
+  const wanted = key.ownLabel.toLocaleLowerCase();
+  const own = await tx.skillMark.findMany({ where: { userId, skillItemId: null }, select: { id: true, ownLabel: true } });
+  return own.find((m) => m.ownLabel?.toLocaleLowerCase() === wanted) ?? null;
+}
+
+/**
  * Sets, changes or removes one mark: `{ skillItemId | ownLabel, mark }`, where `mark` is have, learning
  * or not-yet, or null for "I don't know", which removes the mark (the item then counts as not marked).
  * Returns the mark as kept, or null when there is none now. `input` is unknown on purpose: this is
@@ -85,16 +97,18 @@ export async function markSkill(
 
   if (mark === null) {
     const userId = await personUserId(prisma);
-    if (userId) await prisma.skillMark.deleteMany({ where: { userId, ...key } });
+    const current = userId ? await findMark(prisma, userId, key) : null;
+    if (current) await prisma.skillMark.delete({ where: { id: current.id } });
     return null;
   }
 
   const userId = await ensurePersonUserId(prisma);
   return prisma.$transaction(async (tx) => {
-    // One mark per skill (the table's unique keys say so too): marking again replaces it.
-    const current = await tx.skillMark.findFirst({ where: { userId, ...key }, select: { id: true } });
+    // One mark per skill (the table's unique keys say so too): marking again replaces it, and an own skill
+    // is kept under the spelling typed last.
+    const current = await findMark(tx, userId, key);
     const row = current
-      ? await tx.skillMark.update({ where: { id: current.id }, data: { mark, markedAt: new Date() } })
+      ? await tx.skillMark.update({ where: { id: current.id }, data: { mark, markedAt: new Date(), ...(key.ownLabel !== null ? { ownLabel: key.ownLabel } : {}) } })
       : await tx.skillMark.create({ data: { userId, ...key, mark } });
     return toView(row);
   });

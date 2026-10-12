@@ -2,7 +2,7 @@ import type { Figure, PrismaClient } from "@prisma/client";
 
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type RoadsCatalog } from "@/lib/futures/types";
 
-import type { CostLineAmountFrom, FigureCostLine, FigureKind, FigureSourceKind, FigureStatus, FigureView } from "./types";
+import { PLANNING_KINDS, type CostLineAmountFrom, type FigureCostLine, type FigureKind, type FigureSourceKind, type FigureStatus, type FigureView } from "./types";
 import { validateFigureInput, validateFigureSource } from "./validate";
 
 const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
@@ -213,6 +213,12 @@ function checkIds(ids: unknown): string[] {
  * `edits` carries amounts the person typed over the proposed ones; an amount that really
  * changed marks the figure `editedByPerson`. Anything not currently "proposed" is reported in
  * `skipped` and never modified.
+ *
+ * The person's planning numbers have one current value each (docs/architecture/future-cockpit.md § 7):
+ * agreeing to a start-up cost for a line takes back the one agreed before for the same road, step and
+ * line, and a savings number takes back the idea's earlier one, in the same transaction (retracted,
+ * with the moment, and kept in the history). Of two agreed at once for the same line, the one proposed
+ * last stays. The business totals are left as they were.
  */
 export async function agreeToFigures(
   prisma: PrismaClient,
@@ -254,6 +260,24 @@ export async function agreeToFigures(
       if (count === 1) confirmedIds.push(id);
       else skipped.push(id);
     }
+
+    // Newest proposal first, so the first one met for each line is the one that stays current.
+    const planning = (await tx.figure.findMany({ where: { id: { in: confirmedIds } } }))
+      .filter((row) => PLANNING_KINDS.includes(row.kind as FigureKind))
+      .sort((a, b) => b.proposedAt.getTime() - a.proposedAt.getTime() || (a.id < b.id ? 1 : -1));
+    const kept = new Set<string>();
+    for (const row of planning) {
+      const sameLine =
+        row.kind === "start-up-cost-line" ? { roadId: row.roadId, roadStepId: row.roadStepId, costLineId: row.costLineId } : {};
+      const key = JSON.stringify([row.kind, sameLine]);
+      if (kept.has(key)) continue;
+      kept.add(key);
+      await tx.figure.updateMany({
+        where: { ventureId, kind: row.kind, status: "confirmed", id: { not: row.id }, ...sameLine },
+        data: { status: "retracted", retractedAt: now },
+      });
+    }
+
     const rows = await tx.figure.findMany({
       where: { id: { in: confirmedIds } },
       orderBy: [{ periodStart: "asc" }, { proposedAt: "asc" }],

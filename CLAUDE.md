@@ -85,9 +85,12 @@ says where it is going.
   newest winning) · `Venture` (with `goals`, the intake's goal chips as they stood when
   the map opened, shown back and read by no rule; and, for the future cockpit, `roadId` (empty = today's
   general road), `forkPicks` (the ending picked at each fork of any road but road 0, whose two picks stay
-  in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`) · `VentureLink` ·
+  in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
+  its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
+  `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
   `ScenarioState` · `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
-  when* lines, status changes; keyed by permanent ids, deleted with the future) · `SkillMark` (per person,
+  when* lines, status changes; keyed by permanent ids, deleted with the future; no status on road 0,
+  whose step statuses are the map's in `ScenarioState`) · `SkillMark` (per person,
   not per future: have / learning / not yet on a shared skill item or the person's own skill; "I don't
   know" removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
   proposed then agreed) · `Figure` (the totals

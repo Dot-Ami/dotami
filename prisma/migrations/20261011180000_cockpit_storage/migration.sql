@@ -14,6 +14,8 @@
 ALTER TABLE "Venture" ADD COLUMN "roadId" TEXT;
 ALTER TABLE "Venture" ADD COLUMN "forkPicks" JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE "Venture" ADD COLUMN "targetMonth" TEXT;
+ALTER TABLE "Venture" ADD COLUMN "roadChosenAt" DATETIME;
+ALTER TABLE "Venture" ADD COLUMN "targetMonthSetAt" DATETIME;
 
 -- AlterTable
 ALTER TABLE "PersonStatement" ADD COLUMN "kind" TEXT;

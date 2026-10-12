@@ -17,20 +17,24 @@ enum VentureType {
   SIDE_GIG
 }
 
+/// Where an idea is. The app, the catalogs and every reply use these names (AB, BC, ...); the data file
+/// stores each as its international code from ISO 3166-2:CA ("CA-AB"), the maintainer's decision of
+/// 2026-10-11 (docs/architecture/future-cockpit.md § 7). Migration 20261012000000_place_codes moved the
+/// values already in the file. A new value is added with its own @map, never without one.
 enum Province {
-  AB
-  BC
-  MB
-  NB
-  NL
-  NS
-  NT
-  NU
-  ON
-  PE
-  QC
-  SK
-  YT
+  AB @map("CA-AB")
+  BC @map("CA-BC")
+  MB @map("CA-MB")
+  NB @map("CA-NB")
+  NL @map("CA-NL")
+  NS @map("CA-NS")
+  NT @map("CA-NT")
+  NU @map("CA-NU")
+  ON @map("CA-ON")
+  PE @map("CA-PE")
+  QC @map("CA-QC")
+  SK @map("CA-SK")
+  YT @map("CA-YT")
 }
 
 /// S2.5.4i: where an idea is on its way to being a business. the ideas DB: every idea is a
@@ -134,11 +138,16 @@ model Venture {
   /// The road this future is drawn on (lib/engines/roads/v2026 `roadsV2026`, a permanent id); null =
   /// today's general road, so every idea saved before roads existed keeps its map (2026-10-11).
   roadId           String?
-  /// The ending picked at each fork of that road, `{ "<fork id>": "<step id>" }`. Road 0's two forks are
-  /// NOT here: they stay in ScenarioState.activeBranches, which the map rewrites on every save. A JSON object.
+  /// The moment the person chose that road; null while the idea is on the general road (2026-10-12).
+  roadChosenAt     DateTime?
+  /// The ending picked at each fork of that road, `{ "<fork id>": { "stepId": "<step id>", "pickedAt": "<ISO>" } }`.
+  /// Road 0's two forks are NOT here: they stay in ScenarioState.activeBranches, which the map rewrites on
+  /// every save. A JSON object.
   forkPicks        Json             @default("{}")
   /// The person's own date, a month and year ("2029-05"); null until they set one. Never set by DotAmi.
   targetMonth      String?
+  /// The moment the person set that month; null while there is none (2026-10-12).
+  targetMonthSetAt DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
