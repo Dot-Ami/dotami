@@ -272,7 +272,7 @@ and how a gap is filled:
 |---|---|---|
 | Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), read and cited by a person, one citation per *done when* line | A person reads the official page and writes the step; until then the future isn't offered. *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read |
-| Skills for a job | OaSIS 2022 version 1.0 (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says modified 2025-09-04, read 2026-10-11), through the person's pick of job | The person adds their own skills (*added by you*) |
+| Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
 | Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
 | Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
@@ -440,7 +440,7 @@ phase it names.
    neither side counts in the Start-up money total, and the gauge says *"2 ways to incorporate, not
    picked yet"*.
 3. **The GST/HST card uses the CRA's exact test, quoted from the cited page.** The CRA's *When to
-   register for and start charging the GST/HST* page (read 2026-10-11; the page says it was modified
+   register for and start charging the GST/HST* page (checked by a tool on 2026-10-11; the page says it was modified
    2026-06-16) gives two tests: *"You exceed the $30,000 threshold in a single calendar quarter."* and
    *"You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters
    (but not in a single calendar quarter)."* The card quotes both sentences in full. The page gives
@@ -546,9 +546,9 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   again on each visit. If not, the line is saved with the answer when it is made.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
-- **The OaSIS import's shape.** Which files of the dataset (skills, abilities, work activities) and
-  how much of each list to show; the lists describe employees, not owners, so the *your pick of job*
-  tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
+- **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
+  abilities, work activities) and how much of each list to show; the lists describe employees, not
+  owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.

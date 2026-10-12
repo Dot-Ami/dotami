@@ -19,7 +19,7 @@ Seed research (maintainers' notes, 2026-07-01) locked the gating logic:
   liability/SR&ED stage reads no stated need: it lights from the idea's activity tags (Software /
   SaaS, Manufacturing or AI / ML / R&D), which the intake's parser can mark from the sentence and
   the person confirms on the intake. That tag-means-SR&ED reading is an open item for the cockpit
-  build (docs/task-list.md, [10f]). Holdco protects *existing* profits; Trust handles
+  build (docs/task-list.md, [14a]). Holdco protects *existing* profits; Trust handles
   succession/income-splitting.
 - **Skipping rungs doesn't solve spending problems.** Holdco/Trust do not make equipment
   affordable and don't add liability protection beyond what basic incorporation provides.
