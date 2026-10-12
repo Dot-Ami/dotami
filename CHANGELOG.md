@@ -33,13 +33,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a tool check made on 2026-10-12 (55 citations, 117 quotes (108 different) on 22 pages, found word
   for word on their live pages), none recorded as read.
   No amount is written: Alberta's registry fees, permit fees and bank fees are named lines the person
-  prices. On the map, Tier 1 shows the three new cards; a card no rule colours says **no rule yet**
-  and claims no colour (grey would say "doesn't apply as answered", which no rule decided) and no
-  place on the path, and a click selects it and keeps its arrows (no panel opens yet, and an open
-  Export panel stays open). Hovering the baseline dims the three new cards, since its own arrows were
-  left alone. Everything
+  prices. On the map, Tier 1 shows the three new cards. In the cockpit, road evaluation puts them on
+  the road, so each is coloured "applies as answered" and a click opens its step panel, with its
+  *done when* lines, like any other step. A map drawn without road evaluation, where no rule colours
+  them, says **no rule yet** and claims no colour (grey would say "doesn't apply as answered", which
+  no rule decided) and no place on the path; a click there selects the card and keeps its arrows.
+  Hovering the baseline dims the three new cards, since its own arrows were left alone. Everything
   else on the map is unchanged: with the three cards cut out, the HTML of six saved states is byte for
-  byte what it was. The *done when* lines show on screen with the step panel, later in phase 1.
+  byte what it was.
   While writing them, four of the map stages' own sources were found answering "page not found"
   (the CRA's Employees page, the line 4600 page and two SR&ED pages); their lines cite the current
   pages, and the stages' sources are left for the maintainer.

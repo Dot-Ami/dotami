@@ -233,8 +233,10 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
 // were, and hover arrows along the same paths (4 solid and 14 dashed from Sole Prop activation, as
 // measured on 2026-09-16, docs/ui-spec/cockpit/03-canvas.md).
 // 2026-10-12: the road gained three "before you open" steps in its first column, the only new cards.
-// No rule colours them yet, so each says "no rule yet" and claims no colour; hovering one sends arrows
-// to Sole Prop activation and on along its paths.
+// No tax rule reads them, but the cockpit draws every card from road evaluation, which puts them on
+// the road, so each is coloured "applies as answered" and opens its step panel like any other step;
+// hovering one sends arrows to Sole Prop activation and on along its paths. (Only a map drawn without
+// road evaluation says "no rule yet" on them: tests/road-map.spec.ts covers that.)
 test("the map draws today's road: columns, cards, toggles and hover arrows, plus the before-you-open steps", async ({ page }) => {
   const scenario = {
     id: `road-${Date.now()}`,
@@ -303,26 +305,28 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
   await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(14);
   await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText(expected[0]!.cards);
 
-  // A before-you-open card says no rule reads it yet (no colour, no place on the path claimed), and
-  // hovering it sends one solid arrow to Sole Prop activation and the 18 after it, dashed.
+  // A before-you-open card is on the road as road evaluation reads it: "ahead", coloured "applies as
+  // answered", never "no rule yet" in the cockpit. Hovering it sends one solid arrow to Sole Prop
+  // activation and the 18 after it, dashed.
   const bizpal = page.getByRole("button", { name: /^Look up your permits and licences \(BizPaL\), / });
-  await expect(bizpal).toHaveAccessibleName(
-    "Look up your permits and licences (BizPaL), no rule reads this step yet, shows where it leads",
-  );
-  await expect(bizpal.getByText("no rule yet", { exact: true })).toBeVisible();
+  await expect(bizpal).toHaveAccessibleName("Look up your permits and licences (BizPaL), ahead, applies as answered, opens detail");
+  await expect(page.getByText("no rule yet", { exact: true })).toHaveCount(0);
   await bizpal.hover();
   await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(1);
   await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(18);
 
-  // Clicking a card with no catalog entry selects it but opens no panel, so it leaves an open Export
-  // panel where it is (review of 2026-10-12: it used to close it).
+  // Clicking it opens its step panel in Export's place, with its own cited "done when" lines, the
+  // same as a card with a catalog entry.
   const exportPanel = page.locator("pre");
   await page.getByRole("button", { name: "Export", exact: true }).click();
   await expect(exportPanel).toBeVisible();
   await bizpal.click();
   await expect(bizpal).toHaveAttribute("aria-pressed", "true");
-  await expect(exportPanel).toBeVisible();
-  // A card with a catalog entry still opens its detail panel in Export's place, as before.
+  const stepPanel = page.getByRole("region", { name: "Step" });
+  await expect(stepPanel.getByRole("heading", { level: 2 })).toHaveText("Look up your permits and licences (BizPaL)");
+  await expect(stepPanel.getByText("0 of 4 ticked")).toBeVisible();
+  await expect(exportPanel).toHaveCount(0);
+  // A card with a catalog entry opens its detail panel there too, as before.
   await page.getByRole("button", { name: /^Sole Prop activation, / }).click();
   await expect(page.getByRole("button", { name: "Close node detail panel" })).toBeVisible();
   await expect(exportPanel).toHaveCount(0);
@@ -1018,8 +1022,10 @@ test.describe("how old each figure is", () => {
       page.getByText(/(One figure isn't|\d+ figures aren't) counted: it ends after today \(\d{4}-\d{2}-\d{2}\) — check its date/).first(),
     ).toBeVisible();
     await expect(page.getByText("October to December 2025 and 3 earlier quarters aren't fully covered yet.").first()).toBeVisible();
-    // ...and never reads the future-dated figure as this quarter's revenue.
-    await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
+    // ...and never reads the future-dated figure as this quarter's revenue. (The card's own reason is
+    // matched, not the bare phrase: since 2026-10-12 the step panel's cited "done when" lines for GST
+    // quote the CRA's "over $30,000 in a single calendar quarter" test, which is not a reading.)
+    await expect(page.getByText(/Shown because your confirmed revenue .* in a single calendar quarter/)).toHaveCount(0);
   });
 
   test("a map left open past midnight on a quarter's last day moves to the new four-quarter window without a reload", async ({

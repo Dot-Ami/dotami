@@ -782,20 +782,20 @@ each for a reason:
   to Fix 2 (§ 9).
 - **New ids, all permanent.** Steps `step-start-…`, lines `dw-start-…`, cost lines `cost-start-…`
   ("start" for *Starting any business*). `tests/roads.spec.ts` keeps every one on its shipped list.
-- **What the map shows changes, and only by the three new cards.** The map colours a card from the
-  rules (`evaluateProfile`'s node states) and places its chip from the branch picks; neither knows the
-  three new steps. Drawing them grey would say "doesn't apply as answered", which no rule decided, and
-  the chip would say "ahead" for a step nobody placed. So a step the rules don't colour is drawn with no
-  colour claim: a neutral left bar, the chip **no rule yet**, the accessible name
+- **What the map shows changes, and only by the three new cards.** In the cockpit every card is drawn
+  from road evaluation (§ 2, Cockpit screen as built), which gives the three new steps a state of their own:
+  they are on the road, so each is coloured "applies as answered" with the chip "ahead", and a click
+  opens its step panel, with its *done when* lines, like any other step (the step panel works for any
+  road step, catalog entry or not). A map drawn without road evaluation colours a card from the rules
+  (`evaluateProfile`'s node states) and places its chip from the branch picks; neither knows the three
+  new steps. Drawing them grey there would say "doesn't apply as answered", which no rule decided, and
+  the chip would say "ahead" for a step nobody placed. So on such a map a step the rules don't colour is
+  drawn with no colour claim: a neutral left bar, the chip **no rule yet**, the accessible name
   "*<name>*, no rule reads this step yet, shows where it leads". The legend gains no line for it, so the
   rest of the map stays byte for byte as it was; only the chip's words tell a sighted person the card
-  isn't grey. Clicking it selects it and keeps its arrows; no panel opens, because the node detail panel
-  shows today's catalog entries and these steps have none (the step panel, § 1 row 5, replaces it later
-  in phase 1, and road evaluation gives such steps states of their own). The right-hand panel is left as
-  it was, so an open Export panel stays open; an open detail panel closes, because it was about the card
-  no longer selected. Their *done when* lines are on no screen yet; the step panel shows them. `tests/road-map.spec.ts` draws the six saved states again and, with the three
-  new cards cut out, the HTML is byte for byte what the old map drew; the before pictures are not
-  re-recorded.
+  isn't grey. Clicking it there selects it and keeps its arrows. `tests/road-map.spec.ts` draws the six
+  saved states again and, with the three new cards cut out, the HTML is byte for byte what the old map
+  drew; the before pictures are not re-recorded.
 
 ## 7. Storage
 
