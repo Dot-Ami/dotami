@@ -80,6 +80,26 @@ export type EngineCitation = {
   corpus?: CorpusPointer[];
 } & CitationCheck;
 
+/**
+ * Words copied exactly from one official page, shown in quotation marks and never reworded
+ * (2026-10-11: the GST/HST card had paraphrased the CRA's test and dropped its "(or fewer)").
+ * The page must be one of the entry's own citations, and that citation's check covers these words:
+ * since 2026-10-12 a tool check (`toolCheck`, option B, docs/engines/citations.md) whose quotes are the
+ * words found on the page, never a read date that claims a person read them.
+ */
+export interface OfficialWords {
+  /** DotAmi's own short line before the quotes, saying whose words follow. */
+  lead: string;
+  passages: Array<{
+    /** Forever, like every catalog id. */
+    id: string;
+    /** Each sentence as the page prints it, shown in order, each in its own quotation marks. */
+    sentences: string[];
+  }>;
+  /** The page they were copied from. */
+  url: string;
+}
+
 export interface LensAnnotations {
   tax: string;
   legal: string;

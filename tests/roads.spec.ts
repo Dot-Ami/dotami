@@ -349,8 +349,11 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
   });
 
   it("its read date is the newest read date of any source in it", () => {
+    // A source checked only by a tool has no read date (the CRA's GST/HST page since 2026-10-12), and
+    // a tool check is not a read, so only read dates count.
     const newest = cfeNodesV2026
       .flatMap((n) => n.citations.map((c) => c.lastVerified))
+      .filter((d): d is string => d !== undefined)
       .sort()
       .at(-1);
     expect(road.lastVerified).toBe(newest);

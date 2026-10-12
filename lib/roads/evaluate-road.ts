@@ -8,7 +8,9 @@ import {
   type SkillItem,
 } from "@/lib/engines/roads/v2026";
 import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
+import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
+import { isBranchDecided } from "@/lib/scenarios/graph";
 import { PROVINCES, PROVINCE_LABELS, type Scenario } from "@/lib/scenarios/types";
 
 import type { AgreedPlanning } from "./agreed";
@@ -271,17 +273,26 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
   }
   if (base.figures.length > 0) add("idea:figures", answer.businessFigures(base.figures.length), [{ ...base, figures: [] }]);
   if (base.whatIf !== null) add("what-if", answer.whatIf(base.whatIf), [{ ...base, whatIf: null }]);
+  // The person's own "I'd incorporate at $___", kept with the map's picks: taking it away is the only
+  // alternative, since DotAmi has no number of its own for it.
+  const incorporateAt = scenario.state.incorporateAt ?? null;
+  if (incorporateAt !== null) {
+    add("idea:incorporate-at", answer.incorporateAt(incorporateAt), [
+      { ...base, scenario: { ...scenario, state: { ...scenario.state, incorporateAt: null } } },
+    ]);
+  }
 
   // The map's own picks (today's general road's two forks, kept with the map): flipping one is the
-  // other answer the person can give there. A pick the person hasn't clicked is the map's default; the
-  // map keeps its clicks for the session only, so after a reload every pick reads as a default.
-  const clicked = new Set(scenario.state.decidedBranchIds ?? []);
+  // other answer the person can give there. A pick the person hasn't clicked is the map's default. The
+  // map keeps its clicks for the session only, but a saved pick off the default was the person's
+  // (`isBranchDecided`), so only a pick still on the default reads as one after a reload.
   for (const fork of generalRoadV2026.forks) {
     const picked = scenario.state.activeBranches[fork.id];
     if (!fork.sides.includes(picked)) continue;
     const other = fork.sides.find((side) => side !== picked)!;
     const label = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)?.label ?? id;
-    const byPerson = clicked.has(fork.id);
+    // Road 0's fork ids are the map's two branch decisions.
+    const byPerson = isBranchDecided(fork.id as BranchDecisionId, scenario.state);
     add(`map-pick:${fork.id}`, answer.mapPick(fork.label, label(picked), byPerson), [
       {
         ...base,

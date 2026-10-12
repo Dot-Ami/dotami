@@ -200,11 +200,12 @@ Open: who writes the question files first; how to test that every path ends some
 The engine is plain code in [`lib/brain/evaluate.ts`](../../lib/brain/evaluate.ts). The same
 answers always give the same cards; no model is involved.
 
-1. **GST threshold** ([`evaluate.ts:228`](../../lib/brain/evaluate.ts#L228)). The catalog entry
-   holds `$30,000` and links CRA's *when to register* page. Expected first-year revenue over
-   $30,000 → the card turns amber: *"your target crosses the threshold"*. At 70% or more of
-   the line ($21,000+) → amber: *"approaches the threshold"*. Below that, it shows as a
-   general rule for the province, not a warning.
+1. **GST threshold** ([`evaluate.ts:340`](../../lib/brain/evaluate.ts#L340)). The catalog entry
+   holds `$30,000`, links CRA's *when to register* page and quotes its two small-supplier tests
+   word for word. Expected first-year revenue over $30,000 → the card turns amber: *"your Y1
+   revenue target ($45,000) is over $30,000"*. At or under it, the card shows as a general rule
+   for the province, not a warning. (Until 2026-10-11 a target at 70% or more of the line,
+   $21,000+, also turned it amber as "approaching" it; no cited page sets 70%, so that went.)
 2. **A grant that needs a company** ([`evaluate.ts:157`](../../lib/brain/evaluate.ts#L157)). If
    the province and the kind of work match but the program is only for corporations, the card
    shows amber with a fork: *"Incorporating would unlock this"*. SR&ED shows the rate going

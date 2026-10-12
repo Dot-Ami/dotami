@@ -107,6 +107,16 @@ person is asked).
   `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
   answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
   any program on this computer, like the figures list. Nothing new leaves the computer.
+- **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
+  amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
+  map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
+  its own key `incorporateAt`, so no table or column was added
+  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)). It is set only by what is
+  saved for the idea: the person's typing on the Incorporating stage, or a program on this computer that
+  saves the idea through DotAmi's own save route (`/api/scenario/save`, which accepts it like the rest of
+  the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
+  (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
+  the computer.
 
 ### Packages that ship
 
@@ -144,6 +154,8 @@ person is asked).
   that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
   removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
   figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
+- **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
+  save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
 
 ### What the policy will need to say
 
@@ -154,6 +166,8 @@ person is asked).
   start-up costs are kept in the data file on their computer; the yearly income they want will be, once
   a screen asks it. The skill marks and the income target are kept for the person, not for an idea, so
   deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
+- A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
+  their own planning number, never set by DotAmi.
 
 ---
 

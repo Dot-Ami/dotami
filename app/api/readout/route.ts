@@ -10,7 +10,7 @@ import { listTypedStatements } from "@/lib/person/statements";
 import { sortStatementsNewestFirst } from "@/lib/person/types";
 import { prisma } from "@/lib/prisma";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
-import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
+import { getScenarioNodeStatus, stageChipFor } from "@/lib/scenarios/graph";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,7 +66,12 @@ export async function GET(request: Request) {
     label: node.label,
     stage: node.stage,
     status: getScenarioNodeStatus(node.id, scenario),
+    // What the card's chip says on the map: "status" is "decision" for a pick and an untouched
+    // default alike, so this tells them apart ("your-pick", "default", "open-choice", …).
+    chip: stageChipFor(node.id, scenario),
     evaluatorColour: evaluation.nodeStates[node.id],
+    // Which of the person's answers set that colour, in the rules' own sentence (2026-10-11).
+    evaluatorReason: evaluation.nodeReasons[node.id] ?? null,
     trigger: node.trigger,
     relevantEntryIds: NODE_ENGINE_HINTS[node.id] ?? [],
   }));

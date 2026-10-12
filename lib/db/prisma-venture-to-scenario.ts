@@ -2,6 +2,7 @@ import type { EmploymentStatus, ScenarioState as DbScenarioState, Venture, Ventu
 
 import { toStringList } from "@/lib/db/json-list";
 import { reverseStage } from "@/lib/db/scenario-to-prisma";
+import { readMapAnswers } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import type { Scenario, ScenarioState, VentureProfile } from "@/lib/scenarios/types";
 
@@ -62,10 +63,13 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
   if (!row.scenarioSeedKey || !row.scenarioState) {
     return null;
   }
-  const branches = row.scenarioState.activeBranches;
-  if (!isActiveBranchesJson(branches)) {
+  if (!isActiveBranchesJson(row.scenarioState.activeBranches)) {
     return null;
   }
+  // The column also holds the person's own incorporation number; split it off the picks.
+  const { activeBranches: branches, incorporateAt } = readMapAnswers(
+    row.scenarioState.activeBranches as unknown as Record<string, unknown>,
+  );
 
   const profile: VentureProfile = {
     name: row.name,
@@ -85,6 +89,6 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
   return {
     id: row.scenarioSeedKey,
     profile,
-    state: recomputeScenarioState(branches, profile.hireFirst),
+    state: { ...recomputeScenarioState(branches, profile.hireFirst), incorporateAt },
   };
 }

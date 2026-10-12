@@ -321,7 +321,7 @@ gauges on *not given yet*.
 | Your quotes for named start-up cost lines | No official source prices opening a specific business; only the person can | Money badges, the Start-up money gauge, Compare rows | Step panel or Money overlay, on each blank line | No | A figure of the new kind `start-up-cost-line` linked to the future and step, with where it came from (quote, link, receipt, your guess), proposed then agreed |
 | Savings you'd put toward this | So the person sees their own money beside the lines they priced | The *savings* and *difference* parts of the Start-up money gauge (arithmetic, no verdict) | The gauge's invitation or the Money overlay | No | A figure of the new kind `savings-for-start`, agreed, dated. Never account records |
 | Sales what-if (first year, third year) | GST/HST registration switches on at the CRA's cited $30,000 tests (§ 9, fix 3) | The GST/HST card relights under *your what-if, not a forecast*; the *Incorporating* step relights only against your own number (next row) | The what-if bar | No | Today's Year 1 / Year 3 fields when kept. Agreed real figures still take over, as today |
-| The yearly sales at which you'd incorporate (*"I'd incorporate at $___"*) | No law sets a sales or income level for incorporating, so DotAmi has no number of its own; the uncited $80,000 is removed (§ 9, fix 1) | The *Incorporating* step lights when your third-year sales what-if (or agreed sales) passes your number; with no number it stays *check first* and says *"set your own number to see this light"* | The *Incorporating* step's panel, or a *Not told yet* row once a sales what-if is kept | No | A new nullable column on `Venture` (whole dollars, like today's Year 1 / Year 3 fields), labelled *your number*. A what-if setting, not a figure; never filled in by DotAmi |
+| The yearly sales at which you'd incorporate (*"I'd incorporate at $___"*) | No law sets a sales or income level for incorporating, so DotAmi has no number of its own; the uncited $80,000 is removed (§ 9, fix 1) | The *Incorporating* step lights when your third-year sales what-if (or agreed sales) passes your number; with no number it stays *check first* and says *"set your own number to see this light"*. *(2026-10-11, as built: it lights when the Year 3 estimate reaches the number (>=), and reads no agreed sales yet; a skipped Year 3 keeps it at check first. Whether "passes" means more than (>) is still the maintainer's call.)* | The *Incorporating* step's panel, or a *Not told yet* row once a sales what-if is kept | No | A new nullable column on `Venture` (whole dollars, like today's Year 1 / Year 3 fields), labelled *your number*. A what-if setting, not a figure; never filled in by DotAmi. *(2026-10-11: built with the honest-map fixes before the storage work, so for now it is kept in `ScenarioState.activeBranches` under its own key `incorporateAt`, `lib/db/scenario-state-json.ts`, with no migration; the storage pull request decides whether to move it.)* |
 | Step status, *done when* ticks, your own dates on steps | The doing half: progress and timing are the person's | Steps gauge, status chips, *Next on your road*, *Since last time* | Step panel, any time | No | One progress record per future and step. Never used to rank anything |
 | By when (month and year) | Without it there is no honest timeline; DotAmi never projects one | The *Your date* gauge | A destination-bar invitation | No | A target date on the saved future, labelled *your date* |
 | Agreed business figures and tax-form totals (existing) | Real numbers take over from what-ifs | *From your records* lines on threshold cards, as today | As today | No | Today's `Figure` records |
@@ -582,11 +582,14 @@ lives in `lib/roads/`.
 - **The answers it read.** `answers` lists every answer the run read, in a fixed order, each marked
   `given`. An answer is not given when it is a default the person hasn't set, and its words say so: a
   map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
-  clicks only for the session, so after a reload every pick reads as a default, as the map's rail
-  already says), the hire-first path while it is off (*the hire-first path is switched off*: the map
+  clicks only for the session, so after a reload a pick still on the default reads as a default, as the
+  map's rail already says, while a saved pick off the default counts as the person's, `isBranchDecided`
+  in `lib/scenarios/graph.ts`, since the honest-map pull request), the hire-first path while it is off (*the hire-first path is switched off*: the map
   can't tell switched off from never switched on), the structure the map assumes, and buying equipment
   while unanswered (*not answered, read as no*). *What you've told DotAmi* lists the given ones; the
-  others still name themselves in a step's reason, worded as defaults.
+  others still name themselves in a step's reason, worded as defaults. The person's own *I'd
+  incorporate at $___* on road 0, once typed, is one of the given answers (`idea:incorporate-at`;
+  taking it away is the only alternative tried, since DotAmi has no number of its own for it).
 - **The four gauges are counts and sums.** *Steps:* done, out of every step on the road, with how many
   are doing and how many are not on the path. *Skills:* each skill item the road lists, counted once,
   as *have · learning · not yet · not marked*; skills the person added themselves are counted apart.
@@ -1199,7 +1202,7 @@ or named blanks, and *"2 ways to incorporate, not picked yet"*; the step stays *
 
 She tries first-year sales of $45,000. Under *Your what-if, not a forecast*, the GST/HST card quotes
 the CRA's two tests: over $30,000 in a single calendar quarter, or over the previous four (or fewer)
-consecutive calendar quarters, with the page and the day it was read.
+consecutive calendar quarters, with the page and how it was checked (a tool found those words on it).
 
 She opens *Compare*: *Stay employed* and *Open your own shop* on the same rows, *"In the order the road
 shows them"*, no score. She clicks *This is mine* on the shop and exports her plan to show her partner.

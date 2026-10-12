@@ -47,9 +47,11 @@ export function renderPlaybookMarkdown(skeleton: PlaybookSkeleton): string {
     "",
   ].join("\n");
 
+  // An untouched default says so, as its chip does on the map (issue #5): this document goes to an
+  // accountant, who would otherwise read the default as the person's choice.
   const decisionLines = skeleton.decisions.map(
     (d) =>
-      `- **${d.label}:** ${d.selectedLabel} (\`${d.selectedNodeId}\`)`,
+      `- **${d.label}:** ${d.selectedLabel}${d.decided ? "" : " (default, not picked yet)"} (\`${d.selectedNodeId}\`)`,
   );
 
   const body: string[] = [

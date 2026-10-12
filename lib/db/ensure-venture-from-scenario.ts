@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 import { mapVentureProfileToEnums } from "@/lib/db/scenario-to-prisma";
+import { writeMapAnswers } from "@/lib/db/scenario-state-json";
 import type { FirstSave } from "@/lib/journey/first-save";
 import type { Scenario } from "@/lib/scenarios/types";
 
@@ -78,13 +79,15 @@ export async function ensureVentureFromScenario(
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      activeBranches: scenario.state.activeBranches,
+      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state),
     },
     update: {
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      activeBranches: scenario.state.activeBranches,
+      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state),
     },
   });
 

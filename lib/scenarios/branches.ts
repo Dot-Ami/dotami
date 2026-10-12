@@ -1,4 +1,5 @@
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { cleanIncorporateAt, INCORPORATE_AT_MAX } from "@/lib/db/scenario-state-json";
 import type { Scenario, ScenarioState } from "./types";
 
 export type BranchDecisionId = "gstTiming" | "incorporationTiming";
@@ -24,8 +25,9 @@ export const branchDecisions = [
         label: "Voluntary now",
       },
       {
+        // Until 2026-10-11 "Wait for $30K", a shorthand of the CRA's two tests.
         id: "stage-2b-mandatory-gst-registration",
-        label: "Wait for $30K",
+        label: "When the CRA's tests say",
       },
     ],
   },
@@ -48,7 +50,8 @@ export const branchDecisions = [
 
 /**
  * S2.5.4h: the one default branch bundle, now that archetypes are gone. Both picks are the
- * "nothing decided yet" reading — wait for the $30K line, incorporate when the person decides —
+ * "nothing decided yet" reading — register when the CRA's small-supplier tests say so, incorporate
+ * when the person decides —
  * and mirror the evaluator's own defaults (`evaluateProfile`). The rail labels them "default,
  * not your pick yet" until the person clicks.
  */
@@ -108,6 +111,31 @@ export function updateScenarioBranch(
         scenario.profile.hireFirst,
       ),
       decidedBranchIds: [...decided],
+      // A pick never clears the person's own number.
+      incorporateAt: scenario.state.incorporateAt ?? null,
     },
   };
+}
+
+/**
+ * Sets (or, with null, clears) the person's own "I'd incorporate at $___". Whole dollars; the
+ * branch picks are untouched. The cockpit calls it from the person's typing on the Incorporating
+ * stage. It cleans the number the way a save does (`cleanIncorporateAt`), so a number the save would
+ * drop is never on screen either.
+ */
+export function setIncorporateAt(scenario: Scenario, value: number | null): Scenario {
+  return { ...scenario, state: { ...scenario.state, incorporateAt: cleanIncorporateAt(value) } };
+}
+
+/** As many digits as the largest number a save keeps (999,999,999 while the cap is 1e9). */
+const OWN_NUMBER_DIGITS = String(INCORPORATE_AT_MAX - 1).length;
+
+/**
+ * What the "I'd incorporate at" box holds after a keystroke: the digits typed, cut to what a save
+ * keeps, or null when there are none. Until 2026-10-11 the box kept ten digits, and a number the save
+ * then dropped vanished on the next reload without a word.
+ */
+export function ownNumberFromTyping(text: string): number | null {
+  const digits = text.replace(/[^0-9]/g, "").slice(0, OWN_NUMBER_DIGITS);
+  return digits === "" ? null : Number(digits);
 }

@@ -1,7 +1,8 @@
 # A source's line: how it was checked
 
-Last updated: 2026-10-11 (read or checked by a tool, the maintainer's decision of 2026-10-11, option
-B; same day, after review: "Read by a person" only when a person is recorded as the reader;
+Last updated: 2026-10-12 (§ Today: the honest map's six pages now carry a tool check; before that,
+2026-10-11: read or checked by a tool, the maintainer's decision of 2026-10-11, option B; same day,
+after review: "Read by a person" only when a person is recorded as the reader;
 docs/engines/citations.md)
 
 Page: every page that shows a citation (the map's node detail, the intake's live preview, *What
@@ -83,10 +84,17 @@ None. Read from the catalogs only.
 
 ## Today
 
-Every citation in the catalogs was read. The T2125 lines' sources say "Read by a person on
-2026-10-10" (the maintainer checked them, as their notes record); the GST/HST small-supplier source
-under the compliance entry says "Read by an AI model on 2026-10-06. Not read by a person yet.", in
-amber (its page moved and only a model has read the new address); every other source says "Read on
-<date>. Who read it wasn't recorded." No citation has a tool check yet. `e2e/app.spec.ts` ("every
-source says how it was checked") checks a stage's sources, the playbook export and the readout in
-the browser.
+Every citation in the catalogs was read or checked by a tool. The T2125 lines' sources say "Read by
+a person on 2026-10-10" (the maintainer checked them, as their notes record). Six pages say "Checked
+by a tool on 2026-10-12: it found on the page the exact words this entry relies on. Not read by a
+person yet.", in amber (a source line lists the words found under it; each way to incorporate
+quotes them on its own line, `components/node-detail-panel.tsx`): the CRA's "When to register for and start
+charging the GST/HST" (the compliance entry, both GST/HST stages and the sole proprietor + GST/HST
+rung; until 2026-10-12 it said "Read by an AI model on 2026-10-06"), and the five pages behind the
+two ways to incorporate: Corporations Canada's "Services, fees and processing times" and "Register a
+federal corporation in a province or territory", and Alberta's "Incorporate an Alberta
+corporation", "Find a business registry" and "Annual returns for corporations, cooperatives and
+organizations" (docs/engines/citations.md, § Tool checks in the catalogs). Every other source says
+"Read on <date>. Who read it wasn't recorded." No citation is read by an AI model any more.
+`e2e/app.spec.ts` ("every source says how it was checked") checks a stage's sources, the playbook
+export and the readout in the browser.

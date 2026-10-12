@@ -1,6 +1,7 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-11 (the maintainer's decision of 2026-10-11; same day, after review: a card
+Last updated: 2026-10-12 (the first tool checks in the catalogs: the honest map's six pages, § Tool
+checks in the catalogs; 2026-10-11: the maintainer's decision; same day, after review: a card
 says "Read by a person" only when the catalog records that a person did the reading)
 
 Every citation in every catalog says how it was checked, and a card always says which kind of
@@ -62,8 +63,9 @@ catalog at run time.
 - **`readBy`** is separate so that a claim about *who* read it is made on purpose, entry by entry,
   and only from a record (a note, a commit or the maintainer's word). Left out, nothing is claimed.
   Today the T2125 lines' sources (the 2025 form and two chapters of Guide T4002) say `"person"`
-  (the maintainer checked them on 2026-10-10, as their notes record) and one source says `"model"`
-  (the GST/HST small-supplier page under the compliance entry). Every other source leaves it out.
+  (the maintainer checked them on 2026-10-10, as their notes record). The GST/HST small-supplier
+  page under the compliance entry said `"model"` until 2026-10-12; it now carries a tool check
+  instead (§ Tool checks in the catalogs). Every other source leaves it out.
 - **`toolCheck`** says who did the checking, in the same words the card uses ("Checked by a tool").
   A name like `machineVerified` or `autoVerified` was ruled out: a tool only confirms that some
   words are on a page. It does not read for meaning, and it cannot tell whether the entry says what
@@ -159,6 +161,31 @@ quote is found it prints the date to record as `checkedOn`.
 A PDF is not read by the script (it says so and counts the citation as not checked); a person reads
 PDFs. Its test, [`tests/check-quotes.spec.ts`](../../tests/check-quotes.spec.ts), uses saved sample
 pages and never reaches the network.
+
+## Tool checks in the catalogs
+
+The first ones, recorded on 2026-10-12 for the pages the honest map (#145) quotes, each after
+`node scripts/check-quotes.mjs --url … --quote …` found every quote on the live page. None of
+these pages is recorded as read by a person, so each card says *Checked by a tool on 2026-10-12* in
+amber.
+
+| Page | Where it is cited | What the quotes are |
+|---|---|---|
+| CRA, *When to register for and start charging the GST/HST* | the GST/HST compliance entry, the two GST stages, the structure ladder's sole proprietor + GST/HST rung (`CRA_WHEN_TO_REGISTER_TOOL_CHECK`, [`lib/engines/compliance/v2026/gst-official-words.ts`](../../lib/engines/compliance/v2026/gst-official-words.ts)) | the CRA's two small-supplier tests and what follows each, the line on registering voluntarily; on the compliance entry also the exclusions in its description |
+| Corporations Canada, *Services, fees and processing times* | the federal way to incorporate ([`lib/engines/cfe/v2026/incorporation-routes.ts`](../../lib/engines/cfe/v2026/incorporation-routes.ts)) | the $200 and $12 online fees, the $100 express service, no Nuans report needed, business days |
+| Corporations Canada, *Register a federal corporation in a province or territory* | the federal way | registering in each province, and that most charge for it |
+| Alberta, *Incorporate an Alberta corporation* | the Alberta way | a government fee and a service fee; no NUANS report for a number name |
+| Alberta, *Find a business registry* | the Alberta way | registry agents' service fees are not regulated |
+| Alberta, *Annual returns for corporations, cooperatives and organizations* | the Alberta way | the annual return goes to a service provider, who charges both fees |
+
+One rewrite: the CRA page puts a footnote number straight after "threshold" in both tests
+("threshold1"), so the two sentences can't be found as typed. The tool check holds the words on each
+side of that number instead ("You exceed the $30,000", then the rest of each sentence), and the card
+shows the sentences without the footnote numbers, as a person reads them;
+[`tests/honest-map.spec.ts`](../../tests/honest-map.spec.ts) checks every quoted sentence is covered.
+The incorporation routes are in the list every check reads
+([`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts)), so running the script with no
+arguments checks them again with the rest.
 
 ## How this relates to the other checks
 

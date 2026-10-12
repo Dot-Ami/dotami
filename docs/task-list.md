@@ -38,15 +38,22 @@ and the maintainer's six decisions of 2026-10-11:
     selected option, which is your pick or the default until you click; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure too, and
     a test fails on any dollar figure on the map that no cited page sets); the map coloured from your
     own branch picks; the sentence and goals you type at the start saved, dated and word for word
-  - [ ] Fixes carried in, still open: your own "I'd incorporate at $___" on the *Incorporating* step;
-    federal and Alberta incorporation side by side for you to pick, from their official pages; the
-    GST/HST card quoting the CRA's exact two tests, with the uncited 70% "approaching the line" watch
-    (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) going with it
-  - [ ] Smaller follow-ups from the same fixes: "Incorporation for liability/SR&ED" lights from an
-    activity tag (Software / SaaS, Manufacturing, AI / ML / R&D) the intake's parser can mark from the
-    sentence (say so on the card, or ask instead); change the sentence on an idea's card (today it can
-    only be removed, with "Your statements"); a stage card's chip says "default" until the person clicks
-    its toggle, not "your pick"
+  - [x] Fixes carried in, the rest (#145, 2026-10-11): your own "I'd incorporate at $___" on the
+    *Incorporating* step; federal and Alberta incorporation side by side, from their official pages
+    (Alberta's registry fees stay named blanks until a person reads the Registry agent product
+    catalogue; picking a route and totalling fees come with the cost lines); the GST/HST card quoting
+    the CRA's exact two tests, with the uncited 70% "approaching the line" watch
+    (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) gone with it. 2026-10-12: the six pages
+    these quote carry a tool check instead of a read date (option B, docs/engines/citations.md § Tool
+    checks in the catalogs); none is read by a person yet
+  - [x] Smaller follow-ups from the same fixes (#145, 2026-10-11): "Incorporation for liability/SR&ED"
+    lights from an activity tag (Software / SaaS, Manufacturing, AI / ML / R&D) the intake's parser can
+    mark from the sentence, and the card now says so, naming the tag; a stage card's chip says
+    "default" until the person clicks its toggle, not "your pick" (the playbook export and the readout
+    API say "default" too)
+  - [ ] Liability / SR&ED: ask the person about a liability or research need instead of reading only the
+    activity tags
+  - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"
   - [x] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's

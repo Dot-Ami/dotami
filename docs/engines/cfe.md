@@ -46,13 +46,26 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    "Incorporation at $80K net", whose $80,000 was a heuristic with no source and was compared
    against third-year *sales*. `tests/engine-integrity.spec.ts` fails on a dollar figure in a
    node's text that isn't one of the cited amounts it lists, or whose page the node doesn't cite.
-   **One known exception is left, in the evaluator, not on a node,** so that test can't see it:
-   `THRESHOLD_WATCH_RATIO` (0.7) in `lib/brain/evaluate.ts`. A first-year estimate, or a
-   complete run of confirmed quarters, at 70% of the GST/HST line or more (about $21,000) turns
-   the GST/HST card the person didn't pick from grey to amber, and makes the GST/HST compliance
-   item say the estimate is "approaching" the line. No cited page sets that 70%. It predates this
-   rule and goes in the GST/HST card rework, where the card uses only the CRA's own test
-   (docs/task-list.md, [14a]); until then it is an uncited watch line, not a rule.
+   The one exception that was left, in the evaluator where that test can't see it, went on
+   2026-10-11: `THRESHOLD_WATCH_RATIO` (0.7) turned a GST/HST card amber at 70% of the line
+   (about $21,000) and called the estimate "approaching" it. No cited page sets 70%. A threshold
+   card now changes only when the cited test itself is met, and `tests/honest-map.spec.ts` fails
+   if a watch ratio comes back.
+   **Where the official words matter, quote them.** A node (or compliance rule) can carry
+   `officialWords`: sentences copied exactly from one of its own cited pages, shown in quotation
+   marks. The GST/HST cards quote the CRA's two small-supplier tests this way
+   (`lib/engines/compliance/v2026/gst-official-words.ts`); the paraphrase they replaced dropped
+   the CRA's "(or fewer)". Every other mention says "over $30,000 in a single calendar quarter, or
+   over the previous four (or fewer) consecutive calendar quarters", never "$30K".
+   **Ways of taking a stage sit side by side** (`lib/engines/cfe/v2026/incorporation-routes.ts`,
+   2026-10-11): each line is an official fee whose amount is inside the quoted words of its own
+   page, a named blank, or "not needed"; DotAmi totals nothing and picks no way.
+   **Quoted words are tool-checked** (option B, [citations.md](citations.md)): since 2026-10-12 the
+   page behind every official-words box and every way's line carries a `toolCheck` whose quotes are
+   the words relied on, found on the live page by `scripts/check-quotes.mjs`, never a read date
+   that would claim a person read it.
+   **A number only the person can give** is asked on the node (`asksOwnNumber`): Incorporating's
+   "I'd incorporate at $___" is the only thing that can light it green.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes
    without maintainer approval.
 4. `financialImpact.projectionNotes` feed the modeling footer — numbers there must agree

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import { ArrowOverlay } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
@@ -13,7 +13,8 @@ import type { StepStatus } from "@/lib/futures/types";
 import type { StepEvaluation, StepState } from "@/lib/roads";
 import { columnNumbers, futureEdges, futureSet } from "@/lib/roads/paths";
 import { branchDecisions, type BranchDecision } from "@/lib/scenarios/branches";
-import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
+import { isBranchDecided, stageChipFor, type StageChipKind } from "@/lib/scenarios/graph";
+import type { Scenario } from "@/lib/scenarios/types";
 
 /**
  * S2.5.4j — the map as tier columns (decided 2026-09-16: the free-form graph was hard to
@@ -50,7 +51,6 @@ interface StrategyMapProps {
   evaluation: EvaluationResult;
   selectedStepId: string | null;
   onSelectStep: (stepId: string) => void;
-  decidedBranchIds: ReadonlySet<string>;
   onBranchChange: (decision: BranchDecision, optionId: BranchOptionId) => void;
   /** The cockpit's overlays. Left out, the map draws as it did before them. */
   overlays?: Overlays;
@@ -60,12 +60,19 @@ interface StrategyMapProps {
   linkedSkillId?: string | null;
 }
 
-const STAGE_CHIP: Record<ScenarioNodeStatus, { label: string; className: string }> = {
-  active: { label: "now", className: "text-maple bg-maple/15" },
-  decision: { label: "your pick", className: "text-amber bg-amber/15" },
-  complete: { label: "done", className: "text-sage bg-sage/15" },
-  upcoming: { label: "ahead", className: "text-stone bg-rule/30" },
-  ghost: { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
+/**
+ * The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which). Issue #5, 2026-10-11:
+ * "your pick" only on what the person picked; an untouched toggle's side says "default", and the fork
+ * drawn on every map says "open choice".
+ */
+const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = {
+  now: { label: "now", className: "text-maple bg-maple/15" },
+  "your-pick": { label: "your pick", className: "text-amber bg-amber/15" },
+  default: { label: "default", className: "text-stone border border-amber/50" },
+  "open-choice": { label: "open choice", className: "text-stone border border-rule" },
+  done: { label: "done", className: "text-sage bg-sage/15" },
+  ahead: { label: "ahead", className: "text-stone bg-rule/30" },
+  "not-on-your-path": { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
 };
 
 /**
@@ -105,7 +112,6 @@ export function StrategyMap({
   evaluation,
   selectedStepId,
   onSelectStep,
-  decidedBranchIds,
   onBranchChange,
   overlays,
   stepEvaluations,
@@ -151,7 +157,6 @@ export function StrategyMap({
                 evaluation={evaluation}
                 selectedStepId={selectedStepId}
                 onSelectStep={onSelectStep}
-                decidedBranchIds={decidedBranchIds}
                 onBranchChange={onBranchChange}
                 focus={focus}
                 overlays={overlays}
@@ -194,6 +199,12 @@ function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor 
 /** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
 const NO_RULE_CHIP = { label: "no rule yet", className: "text-stone border border-rule" };
 
+/** The rules' sentence naming the person's answers behind a step's colour, by step id (today's road only). */
+function reasonOf(evaluation: EvaluationResult, stepId: string): string | undefined {
+  const reasons: Partial<Record<string, string>> = evaluation.nodeReasons;
+  return reasons[stepId];
+}
+
 function TierColumn({
   column,
   ordinal,
@@ -202,7 +213,6 @@ function TierColumn({
   evaluation,
   selectedStepId,
   onSelectStep,
-  decidedBranchIds,
   onBranchChange,
   focus,
   overlays,
@@ -226,7 +236,7 @@ function TierColumn({
           <BranchToggle
             decision={decision}
             activeOptionId={scenario.state.activeBranches[decision.id]}
-            isDefault={!decidedBranchIds.has(decision.id)}
+            isDefault={!isBranchDecided(decision.id, scenario.state)}
             onChange={(optionId) => onBranchChange(decision, optionId)}
           />
         ) : null}
@@ -241,7 +251,12 @@ function TierColumn({
         // a step today's rules don't read gets no colour and no place chip (road 0's done-when work).
         const colour = evaluated ? COLOUR_OF_STATE[evaluated.state] : colourOf(evaluation, step.id);
         const ruled = colour !== undefined;
-        const chip = !ruled ? NO_RULE_CHIP : place.from === "you" ? STATUS_CHIP[place.status] : STAGE_CHIP[place.status];
+        // On the map's own reading, "your pick" only for what the person picked (`stageChipFor`, issue #5).
+        const chip = !ruled
+          ? NO_RULE_CHIP
+          : place.from === "you"
+            ? STATUS_CHIP[place.status]
+            : STAGE_CHIP[stageChipFor(step.id, scenario)];
         const ghost = ruled && setAsideOnMap(place);
         // A step the person marked not for me is grey because they said so, not because of the rules: its
         // name says that instead of "doesn't apply as answered".
@@ -261,6 +276,7 @@ function TierColumn({
               step={step}
               chip={chip}
               ghost={ghost}
+              reason={reasonOf(evaluation, step.id)}
               colour={colour}
               colourWords={setAsideByYou ? cockpitWords.road.setAside : ruled ? COLOUR_WORDS[colour] : null}
               badges={badges}
@@ -287,6 +303,7 @@ function StageCard({
   step,
   chip,
   ghost,
+  reason,
   colour,
   colourWords,
   badges,
@@ -298,6 +315,8 @@ function StageCard({
   step: RoadStep;
   chip: { label: string; className: string };
   ghost: boolean;
+  /** The rules' one sentence on which of the person's answers set this card's colour, if any. */
+  reason?: string;
   /** Undefined only when the map is drawn without road evaluation and no rule reads the step. */
   colour: NodeStateColor | undefined;
   /** The left bar in words, for the card's accessible name; null when the card has no colour. */
@@ -309,6 +328,7 @@ function StageCard({
   onHover: (on: boolean) => void;
   registerCard: (el: HTMLElement | null) => void;
 }) {
+  const reasonId = useId();
   const ruled = colour !== undefined;
   // The colour in words, so it is never the only way to tell. A step with no colour says so instead.
   const accessibleName =
@@ -326,6 +346,9 @@ function StageCard({
       onBlur={() => onHover(false)}
       aria-pressed={selected}
       aria-label={accessibleName}
+      // The label replaces the button's text for a screen reader, so the reason line is pointed to
+      // as the description; otherwise only sighted people would hear why the card has its colour.
+      aria-describedby={reason ? reasonId : undefined}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
       } ${ruled ? ACCENT[colour] : "border-l-rule-soft"} ${selected ? "ring-2 ring-maple/30" : ""}`}
@@ -337,6 +360,11 @@ function StageCard({
         </span>
       </div>
       <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{step.summary}</p>
+      {reason ? (
+        <p id={reasonId} className="mt-1.5 text-[10.5px] leading-snug text-paper-dim">
+          {reason}
+        </p>
+      ) : null}
       {badges.length > 0 ? (
         <span className="mt-1.5 flex flex-wrap gap-1">
           {badges.map((badge) => (
@@ -351,7 +379,7 @@ function StageCard({
 }
 
 /** The one dated fact the evaluator carries for this item, or nothing — never an invented range.
- * (Figures like the $30K line stay in the catalog and reach the screen through `item.why`.) */
+ * (Figures like the GST/HST line stay in the catalog and reach the screen through `item.why`.) */
 function leverFact(item: UnlockItem): string | null {
   return item.expires ? `in use before ${item.expires.slice(0, 4)}` : null;
 }

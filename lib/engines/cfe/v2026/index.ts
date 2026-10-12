@@ -4,7 +4,10 @@ export type {
   CFEFinancialImpact,
   CFELensAnnotations,
   CFENode,
+  CFEOwnNumber,
   CFEProvince,
+  CFERoute,
+  CFERouteLine,
   CFEStage,
 } from "./types";
 import { cfeNodesV2026 } from "./nodes";

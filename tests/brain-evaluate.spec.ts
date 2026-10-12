@@ -62,12 +62,14 @@ describe("strategy rules engine — GPU/workstation golden scenario", () => {
     expect(abi!.typeChip).toBe("Grant");
   });
 
-  it("surfaces the GST fork on the threshold", () => {
+  it("surfaces the GST/HST card, quoting the CRA's tests", () => {
     const gst = byId.get("compliance-gst-small-supplier");
     expect(gst).toBeDefined();
     expect(gst!.typeChip).toBe("Threshold");
-    // Y1 = $30K sits exactly on the threshold — watch state, not silence.
-    expect(gst!.state).toBe("yellow");
+    // Y1 = $30,000 sits exactly on the line and the CRA's tests say "exceed", so neither is met: no
+    // amber of DotAmi's own (until 2026-10-11 a 70% "approaching" band turned it amber here).
+    expect(gst!.state).toBe("green");
+    expect(gst!.officialWords?.passages).toHaveLength(2);
   });
 
   it("surfaces CSBFP as financing (never labeled a grant)", () => {
@@ -111,10 +113,11 @@ describe("strategy rules engine — GPU/workstation golden scenario", () => {
   it("colors nodes: baseline green, GST fork visible, SR&ED incorporation path yellow", () => {
     expect(result.nodeStates["stage-0-employee-apprentice-baseline"]).toBe("green");
     expect(result.nodeStates["stage-1-sole-prop-activation"]).toBe("green");
-    // $30K Y1 sits exactly ON the mandatory threshold — CRA's rule is exceed, not reach,
-    // so this is a watch state, not a false-green "registered" claim (audit H3).
+    // $30,000 Y1 sits exactly ON the line — the CRA's tests say exceed, not reach — so the picked
+    // (mandatory) card is "check first", not a false-green "registered" claim (audit H3), and the
+    // voluntary card nobody picked stays grey: no test is met (2026-10-11, no 70% band).
     expect(result.nodeStates["stage-2b-mandatory-gst-registration"]).toBe("yellow");
-    expect(result.nodeStates["stage-2a-voluntary-gst-registration"]).toBe("yellow");
+    expect(result.nodeStates["stage-2a-voluntary-gst-registration"]).toBe("gray");
     // R&D tags make the liability/SR&ED incorporation branch worth modeling
     expect(result.nodeStates["stage-3b-incorporation-liability-sred"]).toBe("yellow");
     expect(result.nodeStates["branch-hire-first-employee"]).toBe("gray");
