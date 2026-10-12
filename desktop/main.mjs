@@ -29,7 +29,7 @@ import {
 import { DATABASE_KEY_FILE, makeDatabaseKey, openDatabaseKey, setAsideLockedFileUnderNewKey } from "./database-key.mjs";
 import { clearTurnedOff, decryptFile, DecryptionStopped, decryptionNeedsKey, finishTurningOff as finishTurnOff, markTurnedOff, readDecryptNote, resumeDecryption } from "./decrypt-database.mjs";
 import { encryptFile, EncryptionStopped, PLAIN_SUFFIX, plainLeftovers, readNote, resumeEncryption, setAsideLockedFile } from "./encrypt-database.mjs";
-import { describeError, openLog } from "./log.mjs";
+import { describeError, openLog, updaterLogger } from "./log.mjs";
 import { migrate, MigrationRefused, vacuumFile } from "./migrate.mjs";
 import { PREPARING_TITLE, preparingWindow, waitShowingWindow } from "./preparing.mjs";
 import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "./receipt-bring-back.mjs";
@@ -294,14 +294,10 @@ async function checkForUpdates(byHand) {
     updaterReady = true;
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = false;
-    autoUpdater.logger = {
-      info: (m) => log?.write(`[update] ${m}\n`),
-      warn: (m) => log?.write(`[update] ${m}\n`),
-      // electron-updater hands this `Error: <stack>` for every failure, and a stack names folders on
-      // this computer; the check's own line below says which error it was, by name and code.
-      error: () => log?.write("[update] the updater reported an error\n"),
-      debug: () => {},
-    };
+    // electron-updater puts an error's stack or message in its error, warn and some info lines, and
+    // those name folders on this computer: updaterLogger (desktop/log.mjs) writes a fixed line for
+    // them; the check's own line below says which error it was, by name and code.
+    autoUpdater.logger = updaterLogger((text) => log?.write(text));
     // "Downloading now" the moment a newer version is found, the taskbar button as progress, then
     // "Restart and update" / "Later" once it's downloaded and checked (desktop/update-notice.mjs).
     // The same for the check at start and for Help → Check for updates.

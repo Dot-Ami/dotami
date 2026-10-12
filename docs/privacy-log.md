@@ -124,7 +124,9 @@ person is asked).
   the folders around it, which hold their Windows account name. They now write the error's name and
   code, as DotAmi's routes already did (for a refused restore, which of a few kinds of refusal, such as
   "damaged"). The update checker's own error report, which it writes with the error's stack, now leaves
-  one fixed line. The dialogs the person sees are unchanged. One write keeps the error's words on
+  one fixed line, and so do its warnings and the progress lines that report a failure, which can carry
+  an error's message (`updaterLogger` in [`desktop/log.mjs`](../desktop/log.mjs)). Its other progress
+  lines are written as given, as before; one of them names the folder an update downloads to. The dialogs the person sees are unchanged. One write keeps the error's words on
   purpose, as before: a failed database update, which update failed and what the database objected to.
   [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
   for the same rule, writes to the log file included.

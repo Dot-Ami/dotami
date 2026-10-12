@@ -274,8 +274,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The desktop app's log no longer keeps whole error messages from a failed update check, backup or
   restore.** Four lines in [`desktop/main.mjs`](desktop/main.mjs) wrote the whole error, whose message
   can name the file you chose and folders on the computer; they now write its name and code
-  (`describeError`), as the rest of the log does, and the update checker's own error report leaves one
-  fixed line. The failed database update keeps its words, on purpose, as before.
+  (`describeError`), as the rest of the log does, and the update checker's own error reports, warnings
+  and progress lines that report a failure, which can carry an error's message, each leave one fixed
+  line (`updaterLogger`, [`desktop/log.mjs`](desktop/log.mjs)); its other progress lines are kept as
+  given, and one of them names the folder an update downloads to. The failed database update keeps its words, on purpose, as before.
   [`tests/error-logging.spec.ts`](tests/error-logging.spec.ts) now reads `desktop/` too, writes to
   the log file included ([`docs/privacy-log.md`](docs/privacy-log.md)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
