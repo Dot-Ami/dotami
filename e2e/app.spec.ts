@@ -172,7 +172,10 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
 // before: the same four columns in order, the same ten cards in their columns, both toggles where they
 // were, and hover arrows along the same paths (4 solid and 14 dashed from Sole Prop activation, as
 // measured on 2026-09-16, docs/ui-spec/cockpit/03-canvas.md).
-test("the map draws today's road unchanged: columns, cards, toggles and hover arrows", async ({ page }) => {
+// 2026-10-12: the road gained three "before you open" steps in its first column, the only new cards.
+// No rule colours them yet, so each says "no rule yet" and claims no colour; hovering one sends arrows
+// to Sole Prop activation and on along its paths.
+test("the map draws today's road: columns, cards, toggles and hover arrows, plus the before-you-open steps", async ({ page }) => {
   const scenario = {
     id: `road-${Date.now()}`,
     profile: {
@@ -198,7 +201,17 @@ test("the map draws today's road unchanged: columns, cards, toggles and hover ar
   await page.goto(`/cockpit?venture=${ventureId}`);
 
   const expected = [
-    { tier: "Tier 1", label: "Before the venture", cards: ["Employee/Apprentice baseline"], toggle: null },
+    {
+      tier: "Tier 1",
+      label: "Before the venture",
+      cards: [
+        "Employee/Apprentice baseline",
+        "Register your business name, if you use one",
+        "Look up your permits and licences (BizPaL)",
+        "A separate bank account for the business",
+      ],
+      toggle: null,
+    },
     {
       tier: "Tier 2",
       label: "Sole proprietor",
@@ -224,12 +237,22 @@ test("the map draws today's road unchanged: columns, cards, toggles and hover ar
     else await expect(column.getByRole("group")).toHaveCount(0);
   }
 
-  // Hover Sole Prop activation: arrows to every step after it, and only the card before it dims.
+  // Hover Sole Prop activation: arrows to every step after it, and only the cards before it dim.
   await page.getByRole("button", { name: /^Sole Prop activation, / }).hover();
   await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(4);
   await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(14);
-  await expect(page.locator("div.opacity-35")).toHaveCount(1);
-  await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText("Employee/Apprentice baseline");
+  await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText(expected[0]!.cards);
+
+  // A before-you-open card says no rule reads it yet (no colour, no place on the path claimed), and
+  // hovering it sends one solid arrow to Sole Prop activation and the 18 after it, dashed.
+  const bizpal = page.getByRole("button", { name: /^Look up your permits and licences \(BizPaL\), / });
+  await expect(bizpal).toHaveAccessibleName(
+    "Look up your permits and licences (BizPaL), no rule reads this step yet, shows where it leads",
+  );
+  await expect(bizpal.getByText("no rule yet", { exact: true })).toBeVisible();
+  await bizpal.hover();
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(1);
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(18);
 });
 
 // 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every

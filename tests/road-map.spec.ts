@@ -34,22 +34,86 @@ function draw(road: Road, c: MapCase): string {
   );
 }
 
+/**
+ * The before-you-open steps added to road 0 on 2026-10-12 (docs/architecture/future-cockpit.md § 6,
+ * "Road 0's content as built"): the only cards the map gained. No rule colours them yet.
+ */
+const ADDED = [
+  { id: "step-start-register-name", label: "Register your business name, if you use one" },
+  { id: "step-start-permits-bizpal", label: "Look up your permits and licences (BizPaL)" },
+  { id: "step-start-business-account", label: "A separate bank account for the business" },
+];
+
+/** The wrapper of one stage card, found by the card's name. */
+function cardAt(html: string, label: string): { start: number; end: number } {
+  const heading = html.indexOf(`>${label}</h4>`);
+  if (heading === -1) throw new Error(`no card named ${label}`);
+  const start = html.lastIndexOf('<div class="flex flex-col gap-1.5 transition-opacity', heading);
+  // An added card has no lever cards, so its wrapper ends right after its button.
+  const end = html.indexOf("</button></div>", heading) + "</button></div>".length;
+  return { start, end };
+}
+
+/** The map's HTML with the added cards cut out, and the cut-out cards. */
+function withoutAdded(html: string): { rest: string; cards: string[] } {
+  const cards: string[] = [];
+  let rest = html;
+  for (const { label } of ADDED) {
+    const { start, end } = cardAt(rest, label);
+    cards.push(rest.slice(start, end));
+    rest = rest.slice(0, start) + rest.slice(end);
+  }
+  return { rest, cards };
+}
+
 describe("today's map, drawn as the road Starting any business in Alberta", () => {
-  it.each(mapCases)("draws $name exactly as the old map did", (c) => {
+  it.each(mapCases)("draws $name exactly as the old map did, plus the three before-you-open cards", (c) => {
     // Each file is one line of HTML; only its line ending can differ by checkout (CRLF on Windows).
     const before = readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd();
-    expect(draw(generalRoadV2026, c)).toBe(before);
+    const { rest, cards } = withoutAdded(draw(generalRoadV2026, c));
+    // Everything that was there is there, byte for byte; the before pictures are not re-recorded.
+    expect(rest).toBe(before);
+    expect(cards).toHaveLength(3);
+  });
+
+  it("an added card makes no colour claim and no place claim: no rule reads it yet", () => {
+    const { cards } = withoutAdded(draw(generalRoadV2026, mapCases[0]!));
+    cards.forEach((card, i) => {
+      const { label } = ADDED[i]!;
+      expect(card).toContain(`aria-label="${label}, no rule reads this step yet, shows where it leads"`);
+      expect(card).toContain(">no rule yet</span>");
+      // None of the three colours' words, and none of the chips worked out from the branch picks.
+      for (const words of ["applies as answered", "check first", "apply as answered", ">ahead<", ">now<", ">done<"]) {
+        expect(card, words).not.toContain(words);
+      }
+      // A neutral left bar, not the grey that means "doesn't apply as answered".
+      expect(card).toContain("border-l-rule-soft");
+      expect(card).not.toMatch(/border-l-(sage|amber|rule)(?![-\w])/);
+    });
   });
 
   it("every card's hover arrows go where they went, and every card sits in the same column", () => {
     const before = JSON.parse(readFileSync(new URL("arrows-and-columns.json", fixtures), "utf8")) as {
-      arrows: Record<string, unknown>;
+      arrows: Record<string, { from: string; to: string; depth: number }[]>;
       columns: Record<string, number>;
     };
     const stepsById = new Map(generalRoadV2026.steps.map((s) => [s.id, s]));
-    const arrows = Object.fromEntries(generalRoadV2026.steps.map((s) => [s.id, futureEdges(stepsById, s.id)]));
+    const addedIds = new Set(ADDED.map((a) => a.id));
+    const old = generalRoadV2026.steps.filter((s) => !addedIds.has(s.id));
+    const arrows = Object.fromEntries(old.map((s) => [s.id, futureEdges(stepsById, s.id)]));
     expect(arrows).toEqual(before.arrows);
-    expect(Object.fromEntries(columnNumbers(generalRoadV2026))).toEqual(before.columns);
+    const columns = Object.fromEntries(columnNumbers(generalRoadV2026));
+    expect(Object.fromEntries(old.map((s) => [s.id, columns[s.id]]))).toEqual(before.columns);
+
+    // Each added card sits in the first column and leads to Sole Prop activation, then along its arrows.
+    const fromSoleProp = before.arrows["stage-1-sole-prop-activation"]!;
+    for (const { id } of ADDED) {
+      expect(columns[id], id).toBe(1);
+      expect(futureEdges(stepsById, id)).toEqual([
+        { from: id, to: "stage-1-sole-prop-activation", depth: 1 },
+        ...fromSoleProp.map((e) => ({ ...e, depth: e.depth + 1 })),
+      ]);
+    }
   });
 });
 
