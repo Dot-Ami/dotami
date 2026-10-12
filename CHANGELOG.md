@@ -43,6 +43,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
 
+### Security
+- **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
+  2026-10-07, carries 55 fixes Electron copied from Chrome's engine and the parts it is built from
+  (ANGLE, Chromium, Dawn, fontconfig, Skia, V8 and WebRTC): 47 in
+  [electron/electron#54666](https://github.com/electron/electron/pull/54666) and 8 in
+  [#54657](https://github.com/electron/electron/pull/54657), several of them fixes for memory that was
+  used after being freed. Electron's release notes call them "backported fixes", not security fixes.
+  The Chromium version number (152.0.7977.130) and Node (24.21.0) stay the same. Nothing in the
+  44.6.0 or 44.7.0 notes touches what DotAmi uses (read 2026-10-11): the change to the built-in
+  `autoUpdater` is for Macs, and DotAmi updates through electron-updater; the `net.fetch` fix is for
+  a call DotAmi doesn't make; `protocol.registerSource` is new and unused. The installed app gets these
+  fixes with the next release (`package.json`, `package-lock.json`).
+
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
