@@ -469,7 +469,7 @@ describe("the new components", () => {
     const off = renderToStaticMarkup(createElement(WhatIfBar, { whatIf: null, receipt: null, sinceLastTime: ["A line."], onTry: noop, onKeep: noop, onClear: noop }));
     expect(off).not.toContain("Your what-if, not a forecast");
     expect(off).toContain("Try first-year sales of $");
-    expect(off).toContain("Since last time");
+    expect(off).toContain("This visit");
   });
 
   it("a receipt is a status line, and an empty one says nothing on the road changed", () => {

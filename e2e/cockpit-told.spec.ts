@@ -57,7 +57,9 @@ const told = (page: Page) => page.getByRole("region", { name: "What you've told 
 const notTold = (page: Page) => page.getByRole("region", { name: "Not told yet" });
 const compare = (page: Page) => page.getByRole("region", { name: "Compare the two endings" });
 const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
-const since = (page: Page) => page.getByRole("region", { name: "Since last time" });
+// This visit's receipt lines, named for what they hold (until 2026-10-12 "Since last time", which a
+// person returning would read as "since my last visit").
+const since = (page: Page) => page.getByRole("region", { name: "This visit" });
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
 const gauge = (page: Page, name: string) =>
@@ -95,6 +97,9 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   // Take it back: gone, the receipt says so, and the question is back.
   await dateTold.getByRole("button", { name: "Take back" }).click();
   await expect(told(page).getByRole("status")).toContainText("Because you took back your date, no date of yours is set now.");
+  // The row clicked is gone, so the receipt takes the focus and is scrolled to where the person looks.
+  await expect(told(page).getByRole("status")).toBeFocused();
+  await expect(told(page).getByRole("status")).toBeInViewport();
   await expect(gauge(page, "Your date")).toContainText("not set");
   await expect(notTold(page).getByText("By when?", { exact: false })).toBeVisible();
 
@@ -135,6 +140,73 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await expect(told(page).getByText("You told us “Sole Prop activation” is done", { exact: true })).toBeVisible();
   await expect(notTold(page).getByText("By when?", { exact: false })).toBeVisible();
   await expect(since(page)).toHaveCount(0);
+});
+
+test("the map's default side, picked in the box or with This is mine, is still the person's after a reload; a save that fails never says Saved", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — default side test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const incFork = generalRoadV2026.forks.find((f) => f.id === "incorporationTiming")!;
+  // The map's default side at each fork: the second at GST timing, the first at incorporation timing.
+  const gstDefault = gstFork.sides[1]!;
+  const incDefault = incFork.sides[0]!;
+  const showAll = async () => {
+    const more = notTold(page).getByRole("button", { name: /^\d+ more$/ });
+    if ((await more.count()) > 0) await more.click();
+  };
+
+  // In the one-question box: the default side is a pick of the person's like the other side.
+  await showAll();
+  const pickRow = notTold(page).getByRole("listitem").filter({ hasText: `Your pick at “${gstFork.label}”` });
+  await pickRow.getByRole("button", { name: /^Answer/ }).click();
+  await pickRow.getByLabel(label0(gstDefault)).check();
+  await pickRow.getByRole("button", { name: "Save", exact: true }).click();
+  // The receipt waits on the save, then says it was saved; it takes the focus from the box that closed.
+  await expect(told(page).getByRole("status")).toContainText("Saved. Nothing on the road changed.");
+  await expect(told(page).getByRole("status")).toBeFocused();
+  const gstTold = `You picked “${label0(gstDefault)}” at “${gstFork.label}” on the map`;
+  await expect(told(page).getByText(gstTold, { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+  await page.reload();
+  await expect(told(page).getByText(gstTold, { exact: true })).toBeVisible();
+  await showAll();
+  await expect(notTold(page).getByText(`Your pick at “${gstFork.label}”`)).toHaveCount(0);
+
+  // With This is mine in Compare, on the default side: still the person's pick after a reload.
+  const openCompareAt = async () => {
+    await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: "Compare", exact: true }).click();
+    await compare(page).getByRole("button", { name: incFork.label, exact: true }).click();
+  };
+  await openCompareAt();
+  await expect(compare(page).getByText(`The map's default pick: “${label0(incDefault)}”, not yours yet`)).toBeVisible();
+  await compare(page).getByRole("button", { name: `This is mine: ${label0(incDefault)}` }).click();
+  await expect(compare(page).getByText(`Your pick: “${label0(incDefault)}”`)).toBeVisible();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+  await page.reload();
+  await openCompareAt();
+  await expect(compare(page).getByText(`Your pick: “${label0(incDefault)}”`)).toBeVisible();
+
+  // A sales number taken back is not given, in the told list and in the rail: never a $0 target.
+  const y3 = told(page).getByRole("listitem").filter({ hasText: "You told us third-year sales of $60,000" });
+  await y3.getByRole("button", { name: /^Take back/ }).click();
+  await expect(told(page).getByRole("status")).toContainText(/Saved|Because you took back your third-year sales number/);
+  await expect(page.getByText("Target Y3", { exact: true }).locator("xpath=..")).toContainText("not given");
+
+  // A save that fails: the receipt says the answer wasn't kept, never "Saved", and This visit gets nothing.
+  const thisVisit = async () => ((await since(page).count()) > 0 ? await since(page).innerText() : "");
+  const linesBefore = await thisVisit();
+  await page.route("**/api/scenario/save", (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Database unavailable" }) }),
+  );
+  await showAll();
+  const structureRow = notTold(page).getByRole("listitem").filter({ hasText: /^Your structure/ });
+  await structureRow.getByRole("button", { name: /^Answer/ }).click();
+  await structureRow.getByLabel("Corporation").check();
+  await structureRow.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(told(page).getByRole("status")).toContainText("Not saved yet");
+  await expect(told(page).getByRole("status")).not.toContainText("Saved.");
+  await expect(page.getByText("Save unavailable — kept in this tab. Save now retries.")).toBeVisible();
+  expect(await thisVisit()).toBe(linesBefore);
+  await page.unroute("**/api/scenario/save");
 });
 
 test("on the first written future: compare its two endings, This is mine, kept after a reload, then taken back", async ({ page }) => {
