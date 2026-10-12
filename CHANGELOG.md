@@ -44,7 +44,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
   every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
   later ([`lib/places/codes.ts`](lib/places/codes.ts)).
-- **Road evaluation and receipts** ([14a]) — one pure function turns a road and everything you told DotAmi
+- **Road evaluation and receipts** — one pure function turns a road and everything you told DotAmi
   (your idea's answers and the map's picks, the ending you picked, your skill marks, your progress, the
   numbers you agreed to, your own month, and a what-if) into each step's state — applies, check first,
   or not on your path — with the reason in your own answers, and the four gauges as counts and sums:
