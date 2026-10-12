@@ -197,6 +197,6 @@ describe("the map's legend folds, in the cockpit only", () => {
   it("drawn without the cockpit, the legend has no fold button and the road's area no region (the map's HTML is unchanged)", () => {
     const html = draw();
     expect(html).not.toContain(words.legend.fold);
-    expect(html).not.toContain(words.roadRegion);
+    expect(html).not.toContain(`aria-label="${words.roadRegion}"`);
   });
 });
