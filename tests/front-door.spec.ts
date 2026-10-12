@@ -19,7 +19,7 @@ import { futureCards, sourcesLine } from "@/lib/front-door/futures";
 import { DESTINATION_PLACES, DESTINATION_QUESTIONS, LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt, roadIncludes } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
-import { frontDoorWords } from "@/lib/front-door/words";
+import { destinationWords, frontDoorWords, incomePromptWords, pickWords } from "@/lib/front-door/words";
 import { parseFirstSave } from "@/lib/db/parse-scenario-input";
 import { evaluateRoad } from "@/lib/roads";
 import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-profile";
@@ -144,12 +144,13 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
 
   it("no sentence the new screens write, nor any question, carries a verdict word", () => {
     const sentences = [
-      ...sentencesOf(frontDoorWords),
+      // Every words object of the new screens (a control on 2026-10-12 found only the first was read).
+      ...sentencesOf({ frontDoorWords, destinationWords, pickWords, incomePromptWords }),
       ...sentencesOf(DESTINATION_QUESTIONS),
       ...roadsV2026.map((r) => placeReceipt("CA-AB", [r])),
       ...LOOKING_FOR.map((c) => lookingForReceipt(c, roadsV2026)),
     ];
-    expect(sentences.length).toBeGreaterThan(40);
+    expect(sentences.length).toBeGreaterThan(80);
     expect(sentences.filter((s) => VERDICT.test(s))).toEqual([]);
   });
 
