@@ -34,6 +34,7 @@ Entries that affect tax or legal decisions include `lensAnnotations: { tax, lega
 | Engine | Entry type | Key fields |
 |--------|------------|------------|
 | CFE | `CFENode` | id, stage, trigger, branches, financialImpact |
+| Roads (2026-10-11) | `Road` | id, columns, steps (next, doneWhen, needs, costs, citations), forks; checked by `roadProblems` (docs/engines/roads.md) |
 | Structure | `StructureStep` | id, entityType, transitionTrigger, nextSteps |
 | Grants | `GrantProgram` | id, eligibility, provinces, structures |
 | Write-off | `WriteOffCategory` | id, ccaClass?, structures, activityTags |

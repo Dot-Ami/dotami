@@ -48,7 +48,8 @@ says where it is going.
 ## What the app is
 
 - Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
-  `/cockpit[?venture=<id>]` (the map: tier columns of stage cards + lever cards; node
+  `/cockpit[?venture=<id>]` (the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps; node
   detail; playbook export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step

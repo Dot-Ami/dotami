@@ -167,6 +167,71 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await expect(stage("Incorporation for liability/SR&ED")).toHaveAccessibleName(/, your pick, check first, opens detail$/);
 });
 
+// 2026-10-11: the map now draws a road (lib/engines/roads/v2026/) instead of reading the tax map's
+// tiers itself. Today's map is the road "Starting any business in Alberta" and must look and behave as
+// before: the same four columns in order, the same ten cards in their columns, both toggles where they
+// were, and hover arrows along the same paths (4 solid and 14 dashed from Sole Prop activation, as
+// measured on 2026-09-16, docs/ui-spec/cockpit/03-canvas.md).
+test("the map draws today's road unchanged: columns, cards, toggles and hover arrows", async ({ page }) => {
+  const scenario = {
+    id: `road-${Date.now()}`,
+    profile: {
+      name: "Invented — road test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 20_000,
+      targetRevenueY3: 60_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "employee",
+      hireFirst: false,
+      activityTags: [],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  const expected = [
+    { tier: "Tier 1", label: "Before the venture", cards: ["Employee/Apprentice baseline"], toggle: null },
+    {
+      tier: "Tier 2",
+      label: "Sole proprietor",
+      cards: ["Sole Prop activation", "Voluntary GST registration", "Mandatory GST registration"],
+      toggle: "GST timing",
+    },
+    {
+      tier: "Tier 3",
+      label: "Incorporating",
+      cards: ["Incorporating", "Incorporation for liability/SR&ED", "Hire first employee", "Service vs. productize"],
+      toggle: "Incorporation timing",
+    },
+    { tier: "Tier 4", label: "Corporation running", cards: ["Retained earnings planning", "SR&ED deepening"], toggle: null },
+  ];
+  const columns = page.locator("section").filter({ has: page.getByText(/^Tier \d$/) });
+  await expect(columns).toHaveCount(expected.length);
+  for (const [i, col] of expected.entries()) {
+    const column = columns.nth(i);
+    await expect(column.getByText(col.tier, { exact: true })).toBeVisible();
+    await expect(column.getByRole("heading", { level: 3 })).toHaveText(col.label);
+    await expect(column.getByRole("heading", { level: 4 })).toHaveText(col.cards);
+    if (col.toggle) await expect(column.getByRole("group", { name: col.toggle })).toBeVisible();
+    else await expect(column.getByRole("group")).toHaveCount(0);
+  }
+
+  // Hover Sole Prop activation: arrows to every step after it, and only the card before it dims.
+  await page.getByRole("button", { name: /^Sole Prop activation, / }).hover();
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(4);
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(14);
+  await expect(page.locator("div.opacity-35")).toHaveCount(1);
+  await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText("Employee/Apprentice baseline");
+});
+
 // 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every
 // source on the map today was read, and for the map's own stages nobody recorded who read it, so the
 // stage's sources and the playbook export say "Read on <date>. Who read it wasn't recorded." and never
