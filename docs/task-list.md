@@ -520,7 +520,7 @@ roadmap's build order.
 - ⬜ **[11k] Fixes already reported** — good places to start:
   - [ ] #36 federal rules say "because you selected <province>"
   - [ ] #39 tier 1 subtitle wording
-  - [ ] #9 statute text with paragraph breaks
+  - [x] #9 statute text with paragraph breaks — 2026-10-12
   - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure

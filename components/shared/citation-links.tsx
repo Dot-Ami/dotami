@@ -5,6 +5,7 @@ import { useState } from "react";
 import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "@/lib/engines/shared/types";
 import { httpsOnly } from "@/lib/http/safe-url";
+import { provisionLines } from "@/lib/law/provision-lines";
 
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
@@ -124,6 +125,32 @@ interface ProvisionResponse {
 
 const SECTION_PREVIEW_CHARS = 1200;
 
+// One step of indent per level: subsection, paragraph, subparagraph, clause, subclause. Written out
+// in full so Tailwind finds each class in the source.
+const INDENT = ["pl-0", "pl-3", "pl-6", "pl-9", "pl-12"];
+
+/**
+ * A provision's words laid out as the Act prints them (#9): one line per subsection, paragraph and
+ * subparagraph, indented by level, with each marginal note on a line of its own in small italics.
+ * The store sends one run-on string; lib/law/provision-lines.ts finds the breaks without changing a
+ * word. `more` marks a section cut short for the preview with " …" on its last line.
+ */
+export function ProvisionText({ text, more }: { text: string; more: boolean }) {
+  const lines = provisionLines(text);
+  return (
+    <div className="mt-1.5 space-y-1 font-serif text-[12px] leading-relaxed text-paper">
+      {lines.map((line, i) => (
+        <p
+          key={i}
+          className={`whitespace-pre-wrap ${INDENT[line.depth] ?? INDENT[INDENT.length - 1]}${line.note ? " text-[10px] italic text-stone" : ""}`}
+        >
+          {more && i === lines.length - 1 ? `${line.text} …` : line.text}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function pointerLabel(p: CorpusPointer): string {
   const src = p.source === "ita" ? "ITA" : p.source === "itr" ? "Reg." : p.source.toUpperCase();
   return `${src} ${p.label}${p.sub ?? ""}`;
@@ -179,11 +206,14 @@ function ProvisionWords({ pointer }: { pointer: CorpusPointer }) {
                   Could not locate {data.focus.sub} inside s.{data.label} by walking the paragraph markers — showing the start of the section instead. Open the official text to read the paragraph.
                 </p>
               ) : null}
-              <p className="mt-1.5 whitespace-pre-wrap font-serif text-[12px] leading-relaxed text-paper">
-                {data.focus?.found
-                  ? data.focus.snippet
-                  : `${(data.text ?? "").slice(0, SECTION_PREVIEW_CHARS)}${(data.textLength ?? 0) > SECTION_PREVIEW_CHARS ? " …" : ""}`}
-              </p>
+              {data.focus?.found ? (
+                <ProvisionText text={data.focus.snippet} more={false} />
+              ) : (
+                <ProvisionText
+                  text={(data.text ?? "").slice(0, SECTION_PREVIEW_CHARS)}
+                  more={(data.textLength ?? 0) > SECTION_PREVIEW_CHARS}
+                />
+              )}
               <p className="mt-1.5 font-mono text-[9px] uppercase tracking-wider text-stone-dim">
                 The provision&apos;s own words, read from the law store through its contract. Not a summary.{" "}
                 {httpsOnly(data.officialUrl) ? (

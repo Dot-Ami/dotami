@@ -244,6 +244,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   about it; the route still reports it for any program that reads it
   ([`components/shared/person-statements.tsx`](components/shared/person-statements.tsx); a browser test
   in [`e2e/app.spec.ts`](e2e/app.spec.ts)).
+- **"Show the words" draws a provision as the Act lays it out** ([#9](https://github.com/Dot-Ami/dotami/issues/9)).
+  The law store sends a provision as one string with no space between a paragraph and the next label,
+  so ITA 18(12)'s paragraphs (a), (b), (c) and subparagraphs (i), (ii) ran together as one block. Each
+  subsection, paragraph and subparagraph now gets a line of its own, indented by level, and each
+  marginal note (*Capital outlay or loss*) a small italic line above the paragraph it names. No word
+  changes: a reference inside a sentence (*subparagraph (a)(i) or (ii)*) stays put, and the lines put
+  back together are the store's text, character for character
+  ([`lib/law/provision-lines.ts`](lib/law/provision-lines.ts);
+  [`tests/provision-lines.spec.ts`](tests/provision-lines.spec.ts), on the store's own text for ITA
+  18(12), ITA 18(1) (a)–(l) and Reg. 1100(2)(c.3), read 2026-10-12).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
