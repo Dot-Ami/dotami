@@ -67,7 +67,8 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // The goal bar: the future by name and four gauges, counts only.
   await expect(goalBar(page).getByText("Future: Starting any business in Alberta (tax and structure)")).toBeVisible();
   await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
-  await expect(gauge(page, "Skills")).toContainText("No skills are listed on this road yet");
+  // Road 0's one legal requirement (the GST/HST registration, from the compliance catalog), not marked yet.
+  await expect(gauge(page, "Skills")).toContainText("1 not marked, out of 1 listed");
   // The before-you-open steps name four lines the person prices, with no amount, so never $0.
   await expect(gauge(page, "Start-up money")).toContainText("your numbers: not given yet");
   await expect(gauge(page, "Start-up money")).toContainText("4 not priced yet");
@@ -171,6 +172,67 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // Pressing the status that's on takes it back.
   await stepPanel(page).getByRole("button", { name: "Done", exact: true }).click();
   await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
+});
+
+test("skills: road 0's legal requirement on its step, and the government's list for the job you pick, kept after a reload", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — job pick test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  // Road 0's one legal requirement sits on its own step, with its source, from the compliance catalog.
+  await stage(page, "Mandatory GST registration").click();
+  const gst = stepPanel(page).getByRole("listitem").filter({ hasText: "A GST/HST registration with the Canada Revenue Agency" });
+  await expect(gst.getByText("legal requirement")).toBeVisible();
+  // Nothing picked yet: the step panel invites the person to the list, without tying it to the step.
+  await expect(stepPanel(page).getByText("Pick the job closest to your work to see the government's skills list for it.")).toBeVisible();
+  await stepPanel(page).getByRole("button", { name: "Pick a job", exact: true }).click();
+
+  // The Skills list: one optional question and a search box.
+  const skills = page.getByRole("region", { name: "Skills on this road" });
+  await expect(skills.getByText("Pick the job closest to the work you'd do yourself")).toBeVisible();
+  const search = skills.getByRole("searchbox", { name: "Search jobs by name or code" });
+  await search.fill("cabinet");
+  await skills.getByRole("button", { name: "Cabinetmakers · 72311.00" }).click();
+
+  // The government's list for that job: every row tagged, the licence's line, no rating anywhere.
+  await expect(skills.getByText(/^Cabinetmakers · 72311\.00 · picked \d{4}-\d{2}-\d{2}$/)).toBeVisible();
+  const numeracy = skills.getByRole("listitem").filter({ has: page.getByText("Numeracy", { exact: true }) });
+  await expect(numeracy.getByText("your pick of job")).toBeVisible();
+  await expect(skills.getByText("your pick of job", { exact: true })).toHaveCount(44);
+  await expect(skills.getByText("Contains information licensed under the Open Government Licence – Canada.")).toBeVisible();
+  await expect(skills).not.toContainText(/Level|on a scale|Not applicable/);
+  await numeracy.getByRole("button", { name: "Have", exact: true }).click();
+  await expect(numeracy.getByRole("button", { name: "Have", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(gauge(page, "Skills")).toContainText("your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed");
+
+  // A reload reads the pick and the mark back from the data file.
+  await page.reload();
+  await expect(gauge(page, "Skills")).toContainText("your pick of job: 1 have · 0 learning · 0 not yet, of 44 listed");
+  await stage(page, "Mandatory GST registration").click();
+  await expect(stepPanel(page).getByText(/^Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked\./)).toBeVisible();
+  await stepPanel(page).getByRole("button", { name: "Open the list", exact: true }).click();
+  await expect(skills.getByRole("listitem").filter({ has: page.getByText("Numeracy", { exact: true }) }).getByRole("button", { name: "Have", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // Change it: the search again, another job, and the mark on Numeracy carries over (one id per skill).
+  await skills.getByRole("button", { name: "Change", exact: true }).click();
+  await skills.getByRole("searchbox", { name: "Search jobs by name or code" }).fill("72310");
+  await skills.getByRole("button", { name: "Carpenters · 72310.00" }).click();
+  await expect(skills.getByText(/^Carpenters · 72310\.00 · picked /)).toBeVisible();
+  await expect(gauge(page, "Skills")).toContainText(/your pick of job: 1 have · 0 learning · 0 not yet, of \d+ listed/);
+
+  // "I don't know" takes the mark off, so the other tests in this run see the person's marks as they were.
+  const numeracyNow = skills.getByRole("listitem").filter({ has: page.getByText("Numeracy", { exact: true }) });
+  await numeracyNow.getByRole("button", { name: "I don't know", exact: true }).click();
+  await expect(gauge(page, "Skills")).toContainText(/your pick of job: 0 have · 0 learning · 0 not yet, of \d+ listed/);
+
+  // Take it back: the question again, and nothing of the pick is kept.
+  await skills.getByRole("button", { name: "Take back", exact: true }).click();
+  await expect(skills.getByText("Pick the job closest to the work you'd do yourself")).toBeVisible();
+  await expect(gauge(page, "Skills")).not.toContainText("your pick of job");
+  const kept = (await (await page.request.get(`/api/futures/${ventureId}`)).json()) as { future: { job: unknown } };
+  expect(kept.future.job).toBeNull();
 });
 
 // A "done when" line and a quote need a road that has them. Road 0's are written in their own pull

@@ -240,6 +240,8 @@ const SHIPPED_SKILL_ITEM_IDS: string[] = [
   "skill-ab-alberta-student-number",
   "skill-ab-apprenticeship-education-agreement",
   "skill-ab-recognized-outside-trade-certificate",
+  // Road 0's one legal requirement, from the compliance catalog (2026-10-12).
+  "skill-ca-gst-hst-registration",
 ];
 
 const doneWhenIds = (road: Road) => road.steps.flatMap((s) => s.doneWhen.map((d) => d.id));

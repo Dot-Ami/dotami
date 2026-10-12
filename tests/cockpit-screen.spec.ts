@@ -411,10 +411,12 @@ describe("the gauges", () => {
     expect(bc).toContain("Map drawn: Invented trade road (test only) · written for AB; this idea is in BC");
   });
 
-  it("on road 0: no listed skills yet, said in one line; its cost lines are named lines, never $0", () => {
+  it("on road 0: its one legal requirement, not marked yet; its cost lines are named lines, never $0", () => {
     const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
-    expect(view.skills.value).toBe("No skills are listed on this road yet");
+    // The GST/HST registration, from the compliance catalog (2026-10-12).
+    expect(view.skills.value).toBe("0 have · 0 learning · 0 not yet");
+    expect(view.skills.lines).toContain("1 not marked, out of 1 listed");
     // The before-you-open steps (2026-10-12) name four lines the person prices, and no amount.
     expect(view.money.value).toBe("your numbers: not given yet");
     expect(view.money.lines).toContain("4 not priced yet");
@@ -651,10 +653,12 @@ describe("the step panel", () => {
         branch: null,
         canSave,
         error: null,
+        job: null,
         onStatus: () => {},
         onTicks: () => {},
         onMark: () => {},
         onSelectSkill: () => {},
+        onOpenJobList: () => {},
         onProposeQuote: async () => null,
         province: "AB",
         ownNumber: null,
@@ -809,8 +813,11 @@ describe("the lists behind the gauges", () => {
         selectedSkillId: null,
         canSave: true,
         error: null,
+        job: null,
+        jobPickedOn: null,
         onMark: () => {},
         onSelectSkill: () => {},
+        onPickJob: () => {},
         onClose: () => {},
       }),
     );
