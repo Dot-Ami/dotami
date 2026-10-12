@@ -1,14 +1,28 @@
-import type { Road, RoadKind, SkillItem } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, type Road, type RoadKind, type SkillItem } from "@/lib/engines/roads/v2026";
 import { howChecked } from "@/lib/engines/shared/citation-check";
 import type { EngineCitation, Province } from "@/lib/engines/shared/types";
 
 import { pickWords } from "./words";
 
 /**
- * *Pick a future*'s cards (docs/architecture/future-cockpit.md § 1, "The way in as built"): every
- * written future, in the order the catalog lists them (the order added, never ranked), each as counts
- * of what its road holds and how its sources were checked. Counts only: no score, no fit, no "best".
+ * *Pick a future*'s cards (docs/architecture/future-cockpit.md § 1, "The way in as built"): the futures
+ * it lists, in the order the catalog lists them (the order added, never ranked), each as counts of what
+ * its road holds and how its sources were checked. Counts only: no score, no fit, no "best".
  */
+
+/**
+ * The roads *Pick a future* lists, and every count on *Your destination* is of. Road 0 only: the first
+ * written future's sources are all tool checks, and whether a road nobody has read may be listed is the
+ * maintainer's call (future-cockpit.md § 13, "Listing a road nobody has read"; until then "no screen lists
+ * any road but road 0"). Each card already says how its sources were checked, so listing another road is
+ * adding its id here.
+ */
+export const LISTED_ROAD_IDS: readonly string[] = [generalRoadV2026.id];
+
+/** The roads of `roads` that Pick a future lists, in the catalog's own order. */
+export function listedRoads<R extends Pick<Road, "id">>(roads: readonly R[]): R[] {
+  return roads.filter((road) => LISTED_ROAD_IDS.includes(road.id));
+}
 
 /** How many of a road's citations were checked each way (lib/engines/shared/citation-check.ts decides the kind). */
 export interface SourceCounts {

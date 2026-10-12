@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 
 import { Pill } from "@/components/ui";
-import { AMOUNT_HELP, CHECK_FIRST_LINE, postJson } from "@/components/ventures/agree-prompt";
+import { AMOUNT_HELP, postJson } from "@/components/ventures/agree-prompt";
 import { parseMoneyToCents } from "@/lib/figures/money";
 import { formatAmountForBox } from "@/lib/format/money-and-months";
 import { incomePromptWords as words } from "@/lib/front-door/words";
@@ -19,6 +19,7 @@ import { incomePromptWords as words } from "@/lib/front-door/words";
 export function IncomeAgreePrompt({
   proposal,
   today,
+  returnFocusTo,
   onAgreed,
   onTurnedDown,
   onClose,
@@ -27,6 +28,11 @@ export function IncomeAgreePrompt({
   proposal: { id: string; amountCents: number };
   /** The person's own day, for the row. */
   today: string;
+  /**
+   * Where focus goes when the prompt closes. The button that opened it is disabled while the number is
+   * proposed, so focus can't simply go back to it: the caller names a control that stays usable.
+   */
+  returnFocusTo?: RefObject<HTMLElement | null>;
   onAgreed: (amountCents: number) => void;
   onTurnedDown: () => void;
   onClose: () => void;
@@ -41,11 +47,15 @@ export function IncomeAgreePrompt({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Focus the amount on open, and give focus back to whatever opened the prompt on close.
+  // Focus the amount on open, and give it back on close: to the control the caller named, else to whatever
+  // had it. After Agree or turning it down the caller's control is gone with its question, focusing it does
+  // nothing, and the page moves focus to what comes next.
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const target = returnFocusTo;
     inputRef.current?.focus();
-    return () => opener?.focus();
+    return () => (target?.current ?? opener)?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -184,8 +194,8 @@ export function IncomeAgreePrompt({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-rule-soft pt-3">
-          {/* Always shown, as in every agree prompt: check the work before the button that confirms. */}
-          <p className="basis-full text-sm text-paper-dim">{CHECK_FIRST_LINE}</p>
+          {/* Always shown, as in every agree prompt, worded for a number the person typed themselves. */}
+          <p className="basis-full text-sm text-paper-dim">{words.checkFirst}</p>
           <Pill variant="ghost" onClick={() => void turnDown()} disabled={busy}>
             {words.turnDown}
           </Pill>

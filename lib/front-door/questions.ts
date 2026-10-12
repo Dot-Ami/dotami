@@ -52,8 +52,9 @@ export const DESTINATION_QUESTIONS: readonly DestinationQuestion[] = [
   {
     id: "destination",
     ask: "In a few years, what do you want your work and life to look like? Use your own words.",
-    why: "So the top of every future you open is your own goal, exactly as you said it.",
-    unlocks: "The words at the top of each future, with the day you said them. No rule reads them.",
+    // Only a future picked on Pick a future shows them: an idea with its own sentence shows that one.
+    why: "So the top of each future you pick here is your own goal, exactly as you said it.",
+    unlocks: "The words at the top of each future you pick here, with the day you said them. No rule reads them.",
     answer: { kind: "own-words", maxChars: STATEMENT_MAX_CHARS },
     skip: "I don't know yet",
     required: false,

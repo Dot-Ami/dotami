@@ -40,3 +40,29 @@ export function questionAsked(
 export function readyToPick(draft: DestinationDraft): boolean {
   return DESTINATION_QUESTIONS.every((q) => isAnswered(draft, q.id));
 }
+
+/**
+ * What the data file already holds for questions 1 and 4: the person's newest destination and the
+ * yearly income they agreed to, each with its day (read on the server by lib/front-door/kept.ts).
+ */
+export interface KeptOnRecord {
+  destination: { text: string; saidAt: string } | null;
+  incomeWanted: { amountCents: number; agreedOn: string } | null;
+}
+
+/**
+ * The draft with what is already kept counted as answered (review of 2026-10-12): a returning person, in a
+ * new tab, after a restart or after the front door's Map it started the tab's journey afresh, isn't asked
+ * questions 1 and 4 again. An answer given in this tab wins, since it is the newer one; 2 and 3 live only
+ * in the tab, so they are asked again.
+ */
+export function withKept(draft: DestinationDraft, kept: KeptOnRecord): DestinationDraft {
+  const out: DestinationDraft = { ...draft };
+  if (out.destination === undefined && kept.destination) {
+    out.destination = { kept: "saved", text: kept.destination.text, saidAt: kept.destination.saidAt };
+  }
+  if (out.incomeWanted === undefined && kept.incomeWanted) {
+    out.incomeWanted = { kind: "agreed", amountCents: kept.incomeWanted.amountCents, agreedOn: kept.incomeWanted.agreedOn };
+  }
+  return out;
+}

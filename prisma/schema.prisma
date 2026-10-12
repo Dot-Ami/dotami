@@ -158,6 +158,11 @@ model Venture {
   lookingFor       String?
   /// The moment that answer was kept with the idea; null with it.
   lookingForSetAt  DateTime?
+  /// The idea's answers it was saved without, because nobody was asked (a future picked on *Pick a
+  /// future*, 2026-10-12): a JSON list of lib/scenarios/types.ts NOT_SAID_FIELDS ("venture-type",
+  /// "equipment", "sales-targets"). Their columns keep the intake's starting values; this list stops
+  /// anything saying the person told DotAmi them. [] for every other idea; a save with no list clears it.
+  notSaid          Json             @default("[]")
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -12,7 +12,7 @@ import {
   skillItemsV2026,
   type Road,
 } from "@/lib/engines/roads/v2026";
-import { futureCards, sourcesLine, type FutureCard } from "@/lib/front-door/futures";
+import { futureCards, listedRoads, sourcesLine, type FutureCard } from "@/lib/front-door/futures";
 import { lookingForReceipt, placeName, provinceOfPlace } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { pickWords as words } from "@/lib/front-door/words";
@@ -20,8 +20,11 @@ import { saveScenario } from "@/lib/journey/save-scenario";
 import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
+/** The roads this page lists (road 0 only until the maintainer decides; lib/front-door/futures.ts). */
+const LISTED = listedRoads(roadsV2026);
+
 /**
- * *Pick a future* (`/futures`; docs/ui-spec/futures/_index.md): every written future, in the order the
+ * *Pick a future* (`/futures`; docs/ui-spec/futures/_index.md): the futures it lists, in the order the
  * catalog lists them, never ranked, each as counts of what its road holds and how its sources were
  * checked. Picking one saves a new idea on that road in one request (the place answered, the name typed or
  * the road's own, and the business / career / both answer, each kept with its moment) and opens the
@@ -31,7 +34,7 @@ export function PickFuturePage() {
   const router = useRouter();
   const { intake, setScenario, hydrated } = useJourney();
   const draft = intake.destination ?? {};
-  const cards = useMemo(() => futureCards(roadsV2026, skillItemsV2026), []);
+  const cards = useMemo(() => futureCards(LISTED, skillItemsV2026), []);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   // The road being saved, so its button says so and every other waits.
@@ -43,8 +46,11 @@ export function PickFuturePage() {
   const place = draft.place;
   const placeLabel = place ? placeName(place) : null;
 
-  /** Saves the idea on `road`, then opens the cockpit on it. A future that couldn't be saved isn't opened. */
-  async function lookInside(road: Road) {
+  /**
+   * Saves the idea on `road`, then opens the cockpit on it. A future that couldn't be saved isn't opened,
+   * and the page says `failed` (by default, that nothing was saved).
+   */
+  async function lookInside(road: Road, failed: string = words.saveFailed) {
     if (!place || opening) return;
     setOpening(road.id);
     setError(null);
@@ -56,7 +62,7 @@ export function PickFuturePage() {
     );
     if (!saved.ok || !saved.ventureId) {
       setOpening(null);
-      setError(words.saveFailed);
+      setError(failed);
       return;
     }
     setScenario(scenario);
@@ -86,8 +92,11 @@ export function PickFuturePage() {
       setError(words.saveFailed);
       return;
     }
+    // The note is kept: empty the box, so pressing again can't keep it twice, and if the road can't be
+    // opened, say the note is kept rather than "nothing was saved".
+    setNote("");
     setOpening(null);
-    await lookInside(generalRoadV2026);
+    await lookInside(generalRoadV2026, words.notHere.keptNotOpened);
   }
 
   return (
@@ -111,7 +120,7 @@ export function PickFuturePage() {
             <p className="mt-2 text-sm text-paper-dim">{words.order}</p>
             {draft.lookingFor ? (
               <p className="mt-1 text-[12px] text-stone">
-                {lookingForReceipt(draft.lookingFor, roadsV2026)}
+                {lookingForReceipt(draft.lookingFor, LISTED)}
               </p>
             ) : null}
           </header>
@@ -154,7 +163,7 @@ export function PickFuturePage() {
 
               <ul aria-label={words.listLabel} className="grid gap-4 md:grid-cols-2">
                 {cards.map((card) => {
-                  const road = roadsV2026.find((r) => r.id === card.roadId)!;
+                  const road = LISTED.find((r) => r.id === card.roadId)!;
                   return (
                     <FutureCardItem
                       key={card.roadId}

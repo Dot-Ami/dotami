@@ -168,6 +168,12 @@ export const answer = {
     takenBack: "you took back the kind of venture",
     fact: `the kind of venture (${type})`,
   }),
+  // A future picked on Pick a future is saved with the intake's starting kind, never asked (2026-10-12).
+  ventureTypeUnanswered: (startingKind: string): AnswerWords => ({
+    said: `the kind of venture is not answered yet; the idea was saved with the starting value, ${startingKind}`,
+    takenBack: "you took back the kind of venture",
+    fact: `the kind of venture (not answered; saved as ${startingKind})`,
+  }),
   workSituation: (situation: string): AnswerWords => ({
     said: `you told us your work situation is ${situation}`,
     takenBack: "you took back your work situation",

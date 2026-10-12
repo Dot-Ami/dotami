@@ -2,7 +2,7 @@ import type { Road } from "@/lib/engines/roads/v2026";
 import type { FirstSave } from "@/lib/journey/first-save";
 import type { PlaceCode } from "@/lib/places/codes";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
-import type { Scenario } from "@/lib/scenarios/types";
+import { NOT_SAID_FIELDS, type Scenario } from "@/lib/scenarios/types";
 
 import type { LookingFor } from "./questions";
 import { provinceOfPlace } from "./receipts";
@@ -11,8 +11,10 @@ import { provinceOfPlace } from "./receipts";
  * A future picked on *Pick a future*, as the idea the cockpit opens (docs/architecture/future-cockpit.md
  * § 1, "The way in as built"). Only what the person answered goes in, and nothing is made up for the
  * rest: their place, the name they typed (or the road's own), and their work situation kept as "not
- * said", since this way in never asks it. The kind of venture starts at Service, the intake's own starting
- * value for every idea; no rule in the catalogs reads it. Every number starts at 0, as on the intake.
+ * said", since this way in never asks it. The kind of venture, equipment and the sales targets aren't
+ * asked either: they are listed in `notSaid`, so nothing says the person told DotAmi them, and equipment
+ * has no answer at all. Their fields keep the intake's starting values (Service, 0), which no rule reads
+ * as the person's: no catalog rule reads the kind of venture, and a 0 target is none.
  */
 export function scenarioForPickedFuture(
   input: { road: Road; place: PlaceCode; name: string },
@@ -21,7 +23,7 @@ export function scenarioForPickedFuture(
   const province = provinceOfPlace(input.place);
   // The place question only offers Canada's provinces and territories; anything else is a caller's mistake.
   if (!province) throw new Error("A future needs a province or territory.");
-  return buildScenarioFromIntake(
+  const built = buildScenarioFromIntake(
     {
       name: input.name.trim() || input.road.label,
       type: "service",
@@ -31,11 +33,13 @@ export function scenarioForPickedFuture(
       hireFirst: false,
       employmentStatus: "not-said",
       activityTags: [],
-      capitalPurchasePlanned: false,
       stage: "idea",
     },
     scenarioId,
   );
+  // The intake builder fills equipment with "no"; on this way in nobody answered it, so it has no answer.
+  const { capitalPurchasePlanned: _filledIn, ...profile } = built.profile;
+  return { ...built, profile: { ...profile, notSaid: [...NOT_SAID_FIELDS] } };
 }
 
 /**

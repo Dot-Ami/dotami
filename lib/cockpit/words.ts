@@ -16,6 +16,10 @@ const quoted = (label: string) => `“${label}”`;
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export const cockpitWords = {
+  /** An answer the idea was saved without (a future picked on Pick a future): never shown as a value. */
+  notSaid: "Not said",
+  /** The rail's link to every saved idea, named as the header's back link is. */
+  allFutures: "Your futures",
   goal: {
     region: "Your goal and gauges",
     yourWords: (day: string) => `your words · ${day}`,

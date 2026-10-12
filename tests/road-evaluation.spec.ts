@@ -703,6 +703,8 @@ describe("road evaluation is pure", () => {
   // the one formatter. Type-only imports vanish when compiled, so they are not run-time imports.
   // "@/lib/scenarios/graph" is for `isBranchDecided` (#145): whether the person picked a fork comes
   // from their saved state, not only this session's clicks. It reads only the scenario it is given.
+  // "@/lib/scenarios/not-said" is two pure functions over the profile's not-said list, importing only
+  // lib/scenarios/types (2026-10-12): a picked future's unasked answers are never listed as told.
   const ALLOWED = new Set([
     "./agreed",
     "./evaluate-road",
@@ -713,6 +715,7 @@ describe("road evaluation is pure", () => {
     "@/lib/format/money-and-months",
     "@/lib/scenarios/evaluate-scenario",
     "@/lib/scenarios/graph",
+    "@/lib/scenarios/not-said",
     "@/lib/scenarios/types",
   ]);
 

@@ -40,7 +40,12 @@ export const frontDoorWords = {
 /** What a future includes, for the receipt to question 2. */
 const LOOKING_FOR_WHAT = { business: "a business of your own", career: "a job or career" } as const;
 
+/** How to remove what stays: statements go all at once (lib/privacy/inventory.ts), the income with its own box. */
+const DELETE_ON_YOUR_DATA = "Delete on What DotAmi knows about you";
+
 export const destinationWords = {
+  /** The page's one level 1 heading, for a screen reader: the nav already says it on screen. */
+  pageHeading: "Your destination",
   back: "← Back",
   navLabel: (n: number, total: number) => `Your destination · question ${n} of ${total}`,
   allAnswered: (total: number) => `Your destination · ${total} of ${total} answered`,
@@ -59,25 +64,33 @@ export const destinationWords = {
   answeredAmount: (cents: number) => `${formatMoney(cents)} a year, before tax`,
   skipped: "Skipped",
   receipts: {
+    // The goal bar shows the destination only on an idea with no first sentence of its own, which is what
+    // Pick a future saves; an idea described on the front door shows its own (components/cockpit/goal-bar.tsx).
     destinationKept: (day: string) =>
-      `Kept word for word, dated ${day}. It goes at the top of each future you open.`,
+      `Kept word for word, dated ${day}. It goes at the top of each future you pick on Pick a future; an idea you describe in your own sentence shows that sentence instead.`,
     destinationTabOnly: "Not kept: no database reachable. It stays in this tab only.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
+    // "I don't know yet" deletes nothing: statements are never edited away one by one.
+    destinationStillKept: (day: string) =>
+      `Nothing new kept. Your words of ${day} are still kept and still show on top of your futures; ${DELETE_ON_YOUR_DATA} removes them, with all your statements.`,
     lookingForSome: (n: number, total: number, choice: keyof typeof LOOKING_FOR_WHAT) =>
-      `${n} of the ${plural(total, "written future", "written futures")} include ${LOOKING_FOR_WHAT[choice]}.`,
+      `Of the ${plural(total, "future", "futures")} listed, ${n} ${n === 1 ? "includes" : "include"} ${LOOKING_FOR_WHAT[choice]}.`,
     lookingForAll: (total: number) =>
-      `All ${plural(total, "written future is", "written futures are")} shown.`,
+      total === 1 ? "The 1 future listed is shown." : `All ${total} futures listed are shown.`,
     placeWritten: (name: string) => `${name}'s rules and the federal rules apply.`,
     placeFederalOnly: (name: string) =>
       `The federal rules apply; ${name}'s own rules aren't written yet.`,
     futuresFor: (n: number, name: string) =>
       n === 0
-        ? `No future is written for ${name} yet: the ones shown are written for other places, and each says which.`
-        : `${plural(n, "future is", "futures are")} written for ${name}.`,
+        ? `No future listed is written for ${name} yet: the ones shown are written for other places, and each says which.`
+        : `${plural(n, "future listed is", "futures listed are")} written for ${name}.`,
     incomeAgreed: (cents: number, day: string) =>
       `Your target: ${formatMoney(cents)} a year, before tax, agreed ${day}. Nothing compares it with anything.`,
-    incomeTurnedDown: "Not kept.",
+    // Turning it down keeps the row, marked discarded (lib/futures/person-figures.ts), so it is never "not kept".
+    incomeTurnedDown: `Turned down. It stays in your data file, marked turned down and shown nowhere, until ${DELETE_ON_YOUR_DATA} removes it.`,
     incomeSkipped: "Not given. Nothing here waits on it.",
+    incomeStillStands: (cents: number, day: string) =>
+      `Your target of ${formatMoney(cents)}, agreed ${day}, still stands; ${DELETE_ON_YOUR_DATA} removes it.`,
   },
 } as const;
 
@@ -117,6 +130,8 @@ export const pickWords = {
     label: "Not here yet?",
     hint: "Say what you'd look into, in your own words. It is kept as one of your statements, and the general road opens.",
     button: "Keep my note and look inside the general road",
+    // The note went in before the road was saved: say so, so it isn't kept twice by pressing again.
+    keptNotOpened: "Your note is kept. The general road couldn't be opened: no database reachable.",
   },
 } as const;
 
@@ -127,6 +142,8 @@ export const incomePromptWords = {
   amountLabel: "Amount, in dollars a year",
   changes:
     "It shows as your target at the top of each future you open. Nothing compares it with anything.",
+  // The number is the person's own: the figures prompt's line is about work DotAmi did, and it did none here.
+  checkFirst: "Double-check the number you typed before you agree.",
   turnDown: "No, I'll do it myself",
   agree: "Agree",
   close: "Close",

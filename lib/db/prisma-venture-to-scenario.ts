@@ -4,6 +4,7 @@ import { toStringList } from "@/lib/db/json-list";
 import { reverseStage } from "@/lib/db/scenario-to-prisma";
 import { readMapAnswers } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
+import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import type { Scenario, ScenarioState, VentureProfile } from "@/lib/scenarios/types";
 
 type VentureWithState = Venture & { scenarioState: DbScenarioState | null };
@@ -73,6 +74,8 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
     row.scenarioState.activeBranches as unknown as Record<string, unknown>,
   );
 
+  // The answers a picked future was saved without (2026-10-12); an older row has [] and reads as none.
+  const notSaid = cleanNotSaid(row.notSaid);
   const profile: VentureProfile = {
     name: row.name,
     type: reverseVentureType(row.type),
@@ -83,9 +86,11 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
     structureSource: row.structureSource === "assumed" ? "assumed" : "user",
     hireFirst: row.hireFirst,
     activityTags: toStringList(row.activityTags),
-    capitalPurchasePlanned: row.capitalPurchasePlanned,
+    // The column can't be empty, so equipment not said is stored as "no"; read back, it has no answer.
+    ...(notSaid.includes("equipment") ? {} : { capitalPurchasePlanned: row.capitalPurchasePlanned }),
     employmentStatus: reverseEmployment(row.employmentStatus),
     stage: reverseStage(row.stage),
+    ...(notSaid.length > 0 ? { notSaid } : {}),
   };
 
   return {

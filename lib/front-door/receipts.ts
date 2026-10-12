@@ -18,17 +18,28 @@ export type DestinationAnswer =
   | { kept: "saved"; text: string; saidAt: string }
   /** The words, with no database to keep them in: they stay in this tab only. */
   | { kept: "tab-only"; text: string; saidAt: string }
-  | { kept: "dont-know" };
+  /**
+   * "I don't know yet". It deletes nothing, so `stillKept` is the person's newest destination already in
+   * the data file when they said it: those words still show on top of their futures, and the receipt says so.
+   */
+  | { kept: "dont-know"; stillKept?: { text: string; saidAt: string } };
+
+/** An income the person agreed to before, still current when they turned a new one down or skipped. */
+export interface StillAgreed {
+  amountCents: number;
+  agreedOn: string;
+}
 
 /** What became of question 4. */
 export type IncomeAnswer =
   | { kind: "agreed"; amountCents: number; agreedOn: string }
-  | { kind: "turned-down" }
-  | { kind: "skipped" };
+  | { kind: "turned-down"; stillAgreed?: StillAgreed }
+  | { kind: "skipped"; stillAgreed?: StillAgreed };
 
 export function destinationReceipt(answer: DestinationAnswer): string {
   if (answer.kept === "saved") return words.destinationKept(answer.saidAt);
-  return answer.kept === "tab-only" ? words.destinationTabOnly : words.destinationDontKnow;
+  if (answer.kept === "tab-only") return words.destinationTabOnly;
+  return answer.stillKept ? words.destinationStillKept(answer.stillKept.saidAt) : words.destinationDontKnow;
 }
 
 /**
@@ -85,5 +96,9 @@ export function placeReceipt(place: PlaceCode, roads: readonly Pick<Road, "provi
 
 export function incomeReceipt(answer: IncomeAnswer): string {
   if (answer.kind === "agreed") return words.incomeAgreed(answer.amountCents, answer.agreedOn);
-  return answer.kind === "turned-down" ? words.incomeTurnedDown : words.incomeSkipped;
+  const said = answer.kind === "turned-down" ? words.incomeTurnedDown : words.incomeSkipped;
+  // Neither takes back a number agreed before: say it still stands, so the receipt isn't read as "none".
+  return answer.stillAgreed
+    ? `${said} ${words.incomeStillStands(answer.stillAgreed.amountCents, answer.stillAgreed.agreedOn)}`
+    : said;
 }

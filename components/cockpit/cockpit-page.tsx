@@ -17,7 +17,9 @@ import { FigureReminderBanners } from "@/components/ventures/figure-reminder-ban
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
+import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCounts, type GaugeId, type Overlays } from "@/lib/cockpit/view";
+import { cockpitWords } from "@/lib/cockpit/words";
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
@@ -34,6 +36,7 @@ import {
   type BranchDecision,
 } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { isNotSaid } from "@/lib/scenarios/not-said";
 import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
 import Link from "next/link";
 
@@ -400,8 +403,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             <h3 className="mt-0.5 font-serif text-[22px] font-bold tracking-tight">
               {scenario.profile.name}
             </h3>
-            <p className="text-[11px] text-stone capitalize">
-              {scenario.profile.type} · {scenario.profile.province}
+            {/* "Not said" stays as written; a kind the person gave is capitalised, as before. */}
+            <p className={`text-[11px] text-stone ${isNotSaid(scenario.profile, "venture-type") ? "" : "capitalize"}`}>
+              {ventureLine(scenario.profile)}
             </p>
           </div>
 
@@ -418,10 +422,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             />
           ) : null}
 
-          <FieldRow label="Type" value={scenario.profile.type} />
-          <FieldRow label="Province" value={scenario.profile.province} />
-          <FieldRow label="Target Y1" value={formatCurrency(scenario.profile.targetRevenueY1)} />
-          <FieldRow label="Target Y3" value={formatCurrency(scenario.profile.targetRevenueY3)} />
+          {/* What a picked future was saved without says "Not said" (lib/cockpit/profile-rows.ts). */}
+          {profileRows(scenario.profile).map((row) => (
+            <FieldRow key={row.label} label={row.label} value={row.value} />
+          ))}
           <div className="border-t border-rule-soft py-2 text-xs">
             <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
               <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
@@ -500,7 +504,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             </Link>
             <Link href="/ventures">
               <Pill variant="ghost" className="w-full justify-center">
-                All ideas
+                {cockpitWords.allFutures}
               </Pill>
             </Link>
           </div>
@@ -679,19 +683,11 @@ function EmptyCockpit() {
               <Pill variant="maple">Describe a venture →</Pill>
             </Link>
             <Link href="/ventures">
-              <Pill variant="ghost">All ideas</Pill>
+              <Pill variant="ghost">{cockpitWords.allFutures}</Pill>
             </Link>
           </div>
         </div>
       </div>
     </div>
   );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  }).format(value);
 }

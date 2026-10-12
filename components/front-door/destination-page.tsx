@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 
 import { IncomeAgreePrompt } from "@/components/front-door/income-agree-prompt";
 import { useJourney } from "@/components/shared/journey-provider";
@@ -14,8 +14,11 @@ import {
   isAnswered,
   questionAsked,
   readyToPick,
+  withKept,
   type DestinationDraft,
+  type KeptOnRecord,
 } from "@/lib/front-door/draft";
+import { listedRoads } from "@/lib/front-door/futures";
 import {
   DESTINATION_QUESTIONS,
   type DestinationQuestion,
@@ -27,10 +30,14 @@ import {
   lookingForReceipt,
   placeName,
   placeReceipt,
+  type StillAgreed,
 } from "@/lib/front-door/receipts";
 import { destinationWords as words } from "@/lib/front-door/words";
 import type { PlaceCode } from "@/lib/places/codes";
 import { STATEMENT_FULL_NOTE } from "@/lib/person/types";
+
+/** Every count on this page is of the futures Pick a future lists (lib/front-door/futures.ts). */
+const LISTED = listedRoads(roadsV2026);
 
 /**
  * *Your destination* (`/start`; docs/ui-spec/start/): the four questions of lib/front-door/questions.ts,
@@ -40,22 +47,48 @@ import { STATEMENT_FULL_NOTE } from "@/lib/person/types";
  *
  * Question 1 is kept at once as the person's destination (a dated, word-for-word statement); question 4 is
  * proposed and counts only once agreed in the prompt. Questions 2 and 3 wait in the tab until a future is
- * picked (/futures), which keeps them on the idea.
+ * picked (/futures), which keeps them on the idea. What the data file already holds for 1 and 4 (`kept`,
+ * read on the server when the page is drawn) counts as answered, so a returning person isn't asked again.
  */
-export function DestinationPage() {
+export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
   const { intake, setIntake, hydrated } = useJourney();
-  const draft: DestinationDraft = intake.destination ?? {};
+  const draft: DestinationDraft = withKept(intake.destination ?? {}, kept);
   const today = useLocalToday();
   // A question the person chose to change; otherwise the first one not answered is asked.
   const [changing, setChanging] = useState<DestinationQuestionId | null>(null);
+  // The newest words and agreed income in the data file, as far as this page knows: the server's read,
+  // then whatever is kept here. "I don't know yet" and "Skip" delete neither, and their receipts say so.
+  const [keptWords, setKeptWords] = useState(kept.destination);
+  const [agreedIncome, setAgreedIncome] = useState<StillAgreed | null>(kept.incomeWanted);
+  // Focus moves on only after something the person did, never on the first paint.
+  const [moveFocus, setMoveFocus] = useState(false);
+  const nextLinkRef = useRef<HTMLAnchorElement>(null);
   const asked = questionAsked(draft, changing);
   const total = DESTINATION_QUESTIONS.length;
   const askedIndex = DESTINATION_QUESTIONS.findIndex((q) => q.id === asked);
 
   function answer(change: Partial<DestinationDraft>) {
     setIntake((prev) => ({ ...prev, destination: { ...prev.destination, ...change } }));
+    if (change.destination?.kept === "saved") {
+      setKeptWords({ text: change.destination.text, saidAt: change.destination.saidAt });
+    }
+    if (change.incomeWanted?.kind === "agreed") {
+      setAgreedIncome({ amountCents: change.incomeWanted.amountCents, agreedOn: change.incomeWanted.agreedOn });
+    }
     setChanging(null);
+    setMoveFocus(true);
   }
+
+  function change(id: DestinationQuestionId) {
+    setChanging(id);
+    setMoveFocus(true);
+  }
+
+  // With every question answered, focus goes to the way on (the asked question's heading takes it otherwise).
+  const allAnswered = hydrated && asked === null && readyToPick(draft);
+  useEffect(() => {
+    if (moveFocus && allAnswered) nextLinkRef.current?.focus();
+  }, [moveFocus, allAnswered]);
 
   return (
     <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
@@ -71,6 +104,8 @@ export function DestinationPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
+          {/* The page's name for a screen reader; the nav above already says it on screen. */}
+          <h1 className="sr-only">{words.pageHeading}</h1>
           {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}
           {hydrated
             ? DESTINATION_QUESTIONS.map((question) =>
@@ -80,6 +115,9 @@ export function DestinationPage() {
                     question={question}
                     draft={draft}
                     today={today}
+                    keptWords={keptWords}
+                    agreedIncome={agreedIncome}
+                    focusOnMount={moveFocus}
                     onAnswer={answer}
                   />
                 ) : isAnswered(draft, question.id) ? (
@@ -87,15 +125,16 @@ export function DestinationPage() {
                     key={question.id}
                     question={question}
                     draft={draft}
-                    onChange={() => setChanging(question.id)}
+                    onChange={() => change(question.id)}
                   />
                 ) : null,
               )
             : null}
 
-          {hydrated && asked === null && readyToPick(draft) ? (
+          {allAnswered ? (
             <div className="flex justify-end">
               <Link
+                ref={nextLinkRef}
                 href="/futures"
                 className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
               >
@@ -113,15 +152,21 @@ export function DestinationPage() {
 function QuestionHead({
   question,
   headingId,
+  headingRef,
 }: {
   question: DestinationQuestion;
   headingId: string;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 }) {
   return (
     <header>
+      {/* tabIndex -1: focus is moved here after each answer, so a keyboard or screen reader user meets
+          the next question instead of the page body. It isn't in the Tab order. */}
       <h2
         id={headingId}
-        className="font-serif text-[22px] font-bold leading-[1.2] tracking-tight text-paper"
+        ref={headingRef}
+        tabIndex={headingRef ? -1 : undefined}
+        className="font-serif text-[22px] font-bold leading-[1.2] tracking-tight text-paper outline-hidden"
       >
         {question.ask}
       </h2>
@@ -137,25 +182,39 @@ function AskedQuestion({
   question,
   draft,
   today,
+  keptWords,
+  agreedIncome,
+  focusOnMount,
   onAnswer,
 }: {
   question: DestinationQuestion;
   draft: DestinationDraft;
   today: string;
+  keptWords: KeptOnRecord["destination"];
+  agreedIncome: StillAgreed | null;
+  /** True once the person has answered or chosen Change: the heading takes focus as the question opens. */
+  focusOnMount: boolean;
   onAnswer: (change: Partial<DestinationDraft>) => void;
 }) {
   const headingId = useId();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // Only on mount: each question is keyed by its id, so a new question is a new mount.
+  useEffect(() => {
+    if (focusOnMount) headingRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <section
       aria-labelledby={headingId}
       className="space-y-4 rounded-lg border border-maple-soft bg-ink2 p-5"
     >
-      <QuestionHead question={question} headingId={headingId} />
+      <QuestionHead question={question} headingId={headingId} headingRef={headingRef} />
       {question.answer.kind === "own-words" ? (
         <OwnWords
           question={question}
           draft={draft}
           today={today}
+          keptWords={keptWords}
           labelledBy={headingId}
           onAnswer={onAnswer}
         />
@@ -182,6 +241,7 @@ function AskedQuestion({
         <IncomeAmount
           question={question}
           today={today}
+          agreedIncome={agreedIncome}
           labelledBy={headingId}
           onAnswer={onAnswer}
         />
@@ -194,12 +254,14 @@ function OwnWords({
   question,
   draft,
   today,
+  keptWords,
   labelledBy,
   onAnswer,
 }: {
   question: DestinationQuestion;
   draft: DestinationDraft;
   today: string;
+  keptWords: KeptOnRecord["destination"];
   labelledBy: string;
   onAnswer: (change: Partial<DestinationDraft>) => void;
 }) {
@@ -267,7 +329,10 @@ function OwnWords({
         {question.skip ? (
           <Pill
             variant="ghost"
-            onClick={() => onAnswer({ destination: { kept: "dont-know" } })}
+            // Deletes nothing: words already kept still show on top, and the receipt says so.
+            onClick={() =>
+              onAnswer({ destination: keptWords ? { kept: "dont-know", stillKept: keptWords } : { kept: "dont-know" } })
+            }
             disabled={busy}
           >
             {question.skip}
@@ -326,11 +391,13 @@ function PlacePicker({
 function IncomeAmount({
   question,
   today,
+  agreedIncome,
   labelledBy,
   onAnswer,
 }: {
   question: DestinationQuestion;
   today: string;
+  agreedIncome: StillAgreed | null;
   labelledBy: string;
   onAnswer: (change: Partial<DestinationDraft>) => void;
 }) {
@@ -339,8 +406,14 @@ function IncomeAmount({
   const [busy, setBusy] = useState(false);
   // The number waiting in the agree prompt, as the propose route gave it back.
   const [proposal, setProposal] = useState<{ id: string; amountCents: number } | null>(null);
+  // Where focus goes when the prompt is closed without deciding: "Keep it" is disabled as it opens.
+  const amountRef = useRef<HTMLInputElement>(null);
+  // Turning a new number down or skipping takes back nothing agreed before; the receipt says it stands.
+  const stillAgreed = agreedIncome ? { stillAgreed: agreedIncome } : {};
 
-  async function keep() {
+  async function keep(e?: FormEvent) {
+    // Enter in the amount box submits the form: it does what "Keep it" does.
+    e?.preventDefault();
     if (busy) return;
     const cents = parseMoneyToCents(text);
     if (cents === null || cents < 0) {
@@ -370,60 +443,61 @@ function IncomeAmount({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center rounded-sm border border-rule bg-ink focus-within:border-maple-soft">
-          <span className="pl-3 text-sm text-stone-dim">$</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            aria-labelledby={labelledBy}
-            aria-invalid={problem ? true : undefined}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setProblem(null);
-            }}
-            className="w-40 bg-transparent px-2 py-2 text-sm text-paper outline-hidden"
-          />
+    <>
+      <form className="space-y-3" onSubmit={(e) => void keep(e)} noValidate>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center rounded-sm border border-rule bg-ink focus-within:border-maple-soft">
+            <span className="pl-3 text-sm text-stone-dim">$</span>
+            <input
+              ref={amountRef}
+              type="text"
+              inputMode="decimal"
+              aria-labelledby={labelledBy}
+              aria-invalid={problem ? true : undefined}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setProblem(null);
+              }}
+              className="w-40 bg-transparent px-2 py-2 text-sm text-paper outline-hidden"
+            />
+          </div>
+          <span className="text-[12px] text-stone">{words.perYear}</span>
         </div>
-        <span className="text-[12px] text-stone">{words.perYear}</span>
-      </div>
-      {problem ? (
-        <p role="alert" className="text-[12px] text-amber">
-          {problem}
-        </p>
-      ) : null}
-      <div className="flex flex-wrap justify-end gap-3">
-        {question.skip ? (
-          <Pill
-            variant="ghost"
-            onClick={() => onAnswer({ incomeWanted: { kind: "skipped" } })}
-            disabled={busy}
-          >
-            {question.skip}
-          </Pill>
+        {problem ? (
+          <p role="alert" className="text-[12px] text-amber">
+            {problem}
+          </p>
         ) : null}
-        <Pill
-          variant="maple"
-          onClick={() => void keep()}
-          disabled={busy || text.trim().length === 0}
-        >
-          {busy ? words.saving : words.keepAmount}
-        </Pill>
-      </div>
+        <div className="flex flex-wrap justify-end gap-3">
+          {question.skip ? (
+            <Pill
+              variant="ghost"
+              onClick={() => onAnswer({ incomeWanted: { kind: "skipped", ...stillAgreed } })}
+              disabled={busy}
+            >
+              {question.skip}
+            </Pill>
+          ) : null}
+          <Pill type="submit" variant="maple" disabled={busy || text.trim().length === 0}>
+            {busy ? words.saving : words.keepAmount}
+          </Pill>
+        </div>
+      </form>
+      {/* Outside the form: Enter in the prompt's own box must not submit this one and propose again. */}
       {proposal ? (
         <IncomeAgreePrompt
           proposal={proposal}
           today={today}
+          returnFocusTo={amountRef}
           onAgreed={(amountCents) =>
             onAnswer({ incomeWanted: { kind: "agreed", amountCents, agreedOn: today } })
           }
-          onTurnedDown={() => onAnswer({ incomeWanted: { kind: "turned-down" } })}
+          onTurnedDown={() => onAnswer({ incomeWanted: { kind: "turned-down", ...stillAgreed } })}
           onClose={() => setProposal(null)}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -459,13 +533,13 @@ function AnsweredQuestion({
   ) {
     const choice = question.answer.choices.find((c) => c.id === draft.lookingFor);
     shown = <p className="text-sm text-paper">{choice?.label}</p>;
-    receipt = lookingForReceipt(draft.lookingFor, roadsV2026);
+    receipt = lookingForReceipt(draft.lookingFor, LISTED);
   } else if (question.id === "place" && draft.place) {
     shown = <p className="text-sm text-paper">{words.answeredPlace(placeName(draft.place))}</p>;
-    receipt = placeReceipt(draft.place, roadsV2026);
+    receipt = placeReceipt(draft.place, LISTED);
   } else if (question.id === "income-wanted" && draft.incomeWanted) {
     const income = draft.incomeWanted;
-    // A number turned down in the prompt shows nothing here: its receipt says it wasn't kept.
+    // A number turned down in the prompt shows nothing here: its receipt says what became of it.
     shown =
       income.kind === "agreed" ? (
         <p className="text-sm text-paper">{words.answeredAmount(income.amountCents)}</p>

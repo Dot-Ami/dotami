@@ -52,6 +52,8 @@ export async function ensureVentureFromScenario(
       capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
       employmentStatus,
       stage,
+      // What the idea was saved without (a picked future), so nothing reads it as said; [] for the rest.
+      notSaid: scenario.profile.notSaid ?? [],
       // The goal picks are written on creation only: `update` below never touches them.
       goals: firstSave.goals ?? [],
       // So are Pick a future's road and the business / career / both answer, each with its moment
@@ -73,6 +75,8 @@ export async function ensureVentureFromScenario(
       capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
       employmentStatus,
       stage,
+      // Every save says it again: the cockpit's carry the list back, the intake's carry none (it asks all).
+      notSaid: scenario.profile.notSaid ?? [],
     },
   });
 

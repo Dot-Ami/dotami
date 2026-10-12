@@ -6,6 +6,7 @@ import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
 import { cleanIncorporateAt } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
+import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
 import type { Scenario, VentureProfile } from "@/lib/scenarios/types";
 
@@ -67,6 +68,8 @@ function parseProfile(raw: unknown): VentureProfile | null {
   const stage: VentureStage = (VENTURE_STAGES as readonly string[]).includes(p.stage as string)
     ? (p.stage as VentureStage)
     : "idea";
+  // The answers a picked future was saved without (2026-10-12). No list is none: the intake asks them all.
+  const notSaid = cleanNotSaid(p.notSaid);
 
   return {
     name: p.name.trim(),
@@ -79,8 +82,10 @@ function parseProfile(raw: unknown): VentureProfile | null {
     hireFirst: p.hireFirst,
     employmentStatus: p.employmentStatus as VentureProfile["employmentStatus"],
     activityTags,
-    capitalPurchasePlanned,
+    // Equipment not said has no answer: the column still stores "no", the rules' reading of none.
+    ...(notSaid.includes("equipment") ? {} : { capitalPurchasePlanned }),
     stage,
+    ...(notSaid.length > 0 ? { notSaid } : {}),
   };
 }
 
