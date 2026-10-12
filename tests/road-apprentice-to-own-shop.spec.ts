@@ -162,7 +162,7 @@ describe("every source is a tool check with its quotes, and none claims a read",
     expect(items.map((i) => i.id).sort()).toEqual([
       "skill-ab-alberta-student-number",
       "skill-ab-apprenticeship-education-agreement",
-      "skill-recognized-trade-certificate-outside-ab",
+      "skill-ab-recognized-outside-trade-certificate",
     ]);
     for (const item of items) {
       // Legal requirements only; named skills from the government's list come with the OaSIS import.
@@ -206,8 +206,12 @@ describe("costs: official fees only where a page states them, everything else a 
     }
   });
 
-  it("the conditional rewrite fee says so in its label", () => {
-    expect(fees.find((f) => f.id === "cost-shop-tqrc-rewrite")!.label).toMatch(/only if you fail/i);
+  it("the conditional rewrite fee is typed as conditional, so a total can leave it out, and its label says so too", () => {
+    const rewrite = fees.find((f) => f.id === "cost-shop-tqrc-rewrite")!;
+    expect(rewrite.label).toMatch(/only if you fail/i);
+    expect(rewrite.onlyIf).toMatch(/fail/i);
+    // Every other fee applies to everyone on its step.
+    for (const fee of fees.filter((f) => f.id !== "cost-shop-tqrc-rewrite")) expect(fee.onlyIf, fee.id).toBeUndefined();
   });
 
   it("named lines carry no amount at all", () => {
@@ -234,5 +238,150 @@ describe("costs: official fees only where a page states them, everything else a 
         "Money to live on while starting",
       ]),
     );
+  });
+});
+
+/** A done-when line anywhere on the road, by id. */
+const line = (id: string) => {
+  const found = road.steps.flatMap((s) => s.doneWhen).find((d) => d.id === id);
+  if (!found) throw new Error(`no done-when line ${id}`);
+  return found;
+};
+/** Every quote a list of citations relies on, as one string. */
+const quotesOf = (...citations: (EngineCitation | undefined)[]) =>
+  citations.flatMap((c) => c?.toolCheck?.quotes ?? []).join(" | ");
+
+describe("a line says what its own page says, no more and no less", () => {
+  // The numbers a line states, as digits: "8,160" is 8160, "$160.00" is 160, "four" is 4. Words for
+  // numbers are the ones these pages use; "one" is left out ("one assigned mentor", "one or more").
+  const WORDS: Record<string, string> = { two: "2", three: "3", four: "4", six: "6", eight: "8", fifteen: "15", eighteen: "18", thirty: "30", forty: "40" };
+  const numbersIn = (text: string) => {
+    const found = new Set<string>();
+    for (const m of text.matchAll(/\d[\d,]*(?:\.\d+)?/g)) found.add(m[0].replace(/,/g, "").replace(/\.00$/, ""));
+    for (const m of text.toLowerCase().matchAll(/\b(two|three|four|six|eight|fifteen|eighteen|thirty|forty)\b/g)) {
+      found.add(WORDS[m[1]!]!);
+    }
+    return found;
+  };
+  const numbersOnItsOwnPage = (where: string, text: string, citations: (EngineCitation | undefined)[]) => {
+    const quoted = numbersIn(quotesOf(...citations));
+    for (const n of numbersIn(text)) expect(quoted.has(n), `${where}: "${n}" isn't in its own quotes`).toBe(true);
+  };
+
+  it("every number in a done-when line, a step's one line, a cost label or a how-to-get-it line is in that entry's own quotes", () => {
+    for (const s of road.steps) {
+      numbersOnItsOwnPage(`${s.id} (one line)`, s.summary, s.citations);
+      for (const d of s.doneWhen) numbersOnItsOwnPage(d.id, d.text, [d.citation]);
+      for (const c of s.costs) numbersOnItsOwnPage(c.id, c.label, [c.kind === "official-fee" ? c.citation : c.nameSource]);
+    }
+    for (const item of skillItemsV2026) {
+      if (item.howToGetIt) numbersOnItsOwnPage(item.id, item.howToGetIt.text, [item.howToGetIt.citation]);
+    }
+  });
+
+  it("someone who chooses a corporation is pointed to Incorporating on road 0, where this road joins it", () => {
+    const joinColumn = roadStartingAnyBusinessAB.columns.find((c) => c.id === road.joins!.columnId)!;
+    for (const id of ["step-shop-open-own-shop", "step-shop-register-name"]) {
+      const summary = step(id).summary;
+      expect(summary, id).toMatch(/corporation/i);
+      expect(summary, id).toContain(joinColumn.label);
+      expect(summary, id).toContain("Starting any business in Alberta");
+    }
+  });
+
+  it("the legal-advice line keeps alberta.ca's condition, and the lawyer line is that same condition, cited", () => {
+    expect(line("dw-shop-own-business-form").text).toMatch(/if you need help (deciding|choosing)/i);
+    expect(line("dw-shop-own-business-form").text).not.toMatch(/strongly recommends/i);
+    const lawyer = step("step-shop-open-own-shop").costs.find((c) => c.id === "cost-shop-lawyer-business-form")!;
+    expect(lawyer.kind).toBe("named");
+    expect(lawyer.label).toMatch(/if you want help/i);
+    expect(lawyer.kind === "named" && lawyer.nameSource?.url).toBe("https://www.alberta.ca/register-business-name");
+    expect(quotesOf(lawyer.kind === "named" ? lawyer.nameSource : undefined)).toMatch(/If you need help deciding/);
+  });
+
+  it("the name rule includes the short forms Alberta also bans", () => {
+    const ending = line("dw-shop-name-ending");
+    for (const short of ["Ltd.", "Inc.", "Corp."]) expect(ending.text, short).toContain(short);
+    expect(quotesOf(ending.citation)).toContain("cannot use the abbreviated forms of these words");
+  });
+
+  it("the apprentice-to-mentor ratio is a limit, not a quota", () => {
+    expect(line("dw-shop-sponsor-own-ratio").text).toMatch(/no more than two apprentices for each assigned mentor/i);
+  });
+
+  it("the Red Seal step can't be done without passing: one line says the exam was passed, from the page's own words", () => {
+    const passed = line("dw-shop-red-seal-passed");
+    expect(step("step-shop-red-seal").doneWhen.map((d) => d.id)).toContain("dw-shop-red-seal-passed");
+    expect(passed.text).toMatch(/passed the Red Seal exam/i);
+    expect(quotesOf(passed.citation)).toContain("hold a trade certificate with a Red Seal");
+    expect(quotesOf(passed.citation)).toContain("If you are unsuccessful in your Red Seal exam");
+  });
+
+  it("the GST/HST lines count what the CRA counts: all revenues, all your businesses and your associates', worldwide", () => {
+    for (const id of ["dw-shop-gst-checked", "dw-shop-gst-registered"]) expect(line(id).text, id).not.toMatch(/your (taxable )?sales/i);
+    const checkedLine = line("dw-shop-gst-checked");
+    expect(checkedLine.text).toMatch(/worldwide/);
+    expect(checkedLine.text).toMatch(/associates/);
+    expect(checkedLine.text).toMatch(/before expenses/);
+    expect(quotesOf(checkedLine.citation)).toContain("If you are a sole proprietor, include the total amount of all revenues (before expenses)");
+    expect(quotesOf(checkedLine.citation)).toContain("If you are a partnership or a corporation, include the total amount of all revenues");
+  });
+
+  it("the WCB lines name what each page backs: personal coverage for the owner, apart from the workers' premium", () => {
+    const costs = step("step-shop-first-hire").costs;
+    const personal = costs.find((c) => c.id === "cost-shop-wcb-personal-coverage")!;
+    expect(personal.label).toMatch(/personal coverage for yourself/i);
+    expect(personal.kind === "named" && personal.nameSource?.url).toMatch(/personal-coverage\.html$/);
+    const workers = costs.find((c) => c.id === "cost-shop-wcb-premium")!;
+    expect(workers.label).toMatch(/your workers/i);
+    // The personal-coverage page backs only the personal-coverage line.
+    for (const c of costs) {
+      if (c.id === personal.id || c.kind !== "named") continue;
+      expect(c.nameSource?.url ?? "", c.id).not.toMatch(/personal-coverage/);
+    }
+  });
+
+  it("certification is optional in this trade, and the road says so in its own words", () => {
+    expect(step("step-shop-journeyperson-certificate").summary).toMatch(/optional/i);
+    expect(quotesOf(...step("step-shop-journeyperson-certificate").citations)).toContain("journeyperson certification optional");
+    // Not the general page's "ticket to work", which says more than this trade's profile does.
+    for (const s of road.steps) {
+      for (const c of [...s.citations, ...s.doneWhen.map((d) => d.citation)]) {
+        expect(quotesOf(c), s.id).not.toContain("ticket to work");
+      }
+    }
+  });
+
+  it("plain words: abbreviations spelled out, a period explained, Schedule 1 named", () => {
+    const allText = road.steps.map((s) => [s.summary, ...s.doneWhen.map((d) => d.text)].join(" ")).join(" ");
+    for (const spelled of [
+      "Northern Alberta Institute of Technology",
+      "Southern Alberta Institute of Technology",
+      "Canada Revenue Agency",
+      "Workers' Compensation Board",
+      "Goods and Services Tax",
+    ]) {
+      expect(allText, spelled).toContain(spelled);
+    }
+    expect(step("step-shop-register-apprentice").summary).toMatch(/about a year/);
+    expect(quotesOf(...step("step-shop-register-apprentice").citations)).toContain("Each period designed to take ~1 year");
+    const wages = line("dw-shop-sponsor-own-wages");
+    expect(wages.text).toContain("Apprenticeship Education and Industry Training Programs Regulation");
+    expect(quotesOf(wages.citation)).toContain("Schedule 1 (pages 20 and 21) of the Apprenticeship Education and Industry Training Programs Regulation");
+  });
+
+  it("the Alberta Student Number cites every page on this road that asks for it, and skill ids share one pattern", () => {
+    const asn = skillItemsV2026.find((i) => i.id === "skill-ab-alberta-student-number")!;
+    const urls = asn.citations.map((c) => c.url);
+    // Each step that needs it has a page saying so, and that page is cited on the item.
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        "https://tradesecrets.alberta.ca/get-started/become-an-apprentice/apply-for-apprenticeship/",
+        "https://tradesecrets.alberta.ca/become-certified/trades-qualifier-programs/qualify-based-on-work-experience/program-details/",
+        "https://tradesecrets.alberta.ca/become-certified/trades-qualifier-programs/qualify-for-alberta-certification/program-details/",
+        "https://tradesecrets.alberta.ca/become-certified/business-competencies-blue-seal/",
+      ]),
+    );
+    for (const id of new Set(road.steps.flatMap((s) => s.needs))) expect(id).toMatch(/^skill-ab-/);
   });
 });

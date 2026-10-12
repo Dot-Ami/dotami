@@ -100,6 +100,7 @@ const SHIPPED_IDS: Record<
       "dw-shop-red-seal-apprentice",
       "dw-shop-red-seal-later",
       "dw-shop-red-seal-third-try",
+      "dw-shop-red-seal-passed",
       "dw-shop-employed-certificate",
       "dw-shop-employed-mentor",
       "dw-shop-own-certificate",
@@ -168,6 +169,7 @@ const SHIPPED_IDS: Record<
       "cost-shop-other-permits",
       "cost-shop-wages",
       "cost-shop-wcb-premium",
+      "cost-shop-wcb-personal-coverage",
       "cost-shop-payroll-bookkeeping",
       "cost-shop-apprentice-wages",
     ],
@@ -178,7 +180,7 @@ const SHIPPED_IDS: Record<
 const SHIPPED_SKILL_ITEM_IDS: string[] = [
   "skill-ab-alberta-student-number",
   "skill-ab-apprenticeship-education-agreement",
-  "skill-recognized-trade-certificate-outside-ab",
+  "skill-ab-recognized-outside-trade-certificate",
 ];
 
 const doneWhenIds = (road: Road) => road.steps.flatMap((s) => s.doneWhen.map((d) => d.id));
@@ -483,6 +485,53 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
     expect(broken(() => {})).toEqual([]);
   });
 
+  it("a tool-checked fee's amount can't be one end of a range: an official fee is one amount", () => {
+    const feeQuote = (quote: string) => (r: Road) => {
+      const fee = r.steps[0]!.costs[0]!;
+      if (fee.kind !== "official-fee") throw new Error("the invented road's first cost is its fee");
+      const { title, authority, jurisdiction, url, note } = fee.citation;
+      fee.citation = { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: "2026-10-01", quotes: [quote] } };
+    };
+    const missing =
+      'Official fee "cost-invented-fee" is checked only by a tool, and none of its quotes has its amount ($125 or $125.00).';
+    for (const range of [
+      "The invented fee is $125-$200 per exam.",
+      "The invented fee is $100-$125 per exam.",
+      "The invented fee is $125 – $200 per exam.",
+      "The invented fee is $125 to $200 per exam.",
+      "The invented fee is $100 to $125 per exam.",
+      "Invented fees range between $100 and $125 a year.",
+      "Invented fees range between $125 and $200 a year.",
+      "Invented fees start from $125 a year.",
+    ]) {
+      expect(broken(feeQuote(range)), range).toEqual([missing]);
+    }
+    // One amount next to a different one is still one amount.
+    expect(broken(feeQuote("The invented fee is $125, and the rewrite is $50."))).toEqual([]);
+    expect(broken(feeQuote("A $125 invented fee and a $50 rewrite fee."))).toEqual([]);
+  });
+
+  it("a fee that applies only sometimes carries its condition as a typed field, never in the label alone", () => {
+    const fee = (change: (f: Extract<Road["steps"][number]["costs"][number], { kind: "official-fee" }>) => void) => (r: Road) => {
+      const line = r.steps[0]!.costs[0]!;
+      if (line.kind !== "official-fee") throw new Error("the invented road's first cost is its fee");
+      change(line);
+    };
+    // The label says "only if", and the type says so too: fine.
+    expect(
+      broken(fee((f) => {
+        f.label = "Invented rewrite fee (only if you fail)";
+        f.onlyIf = "You failed the invented exam and choose to rewrite it.";
+      })),
+    ).toEqual([]);
+    // The label says "only if" and nothing typed does: a total would count it.
+    expect(broken(fee((f) => (f.label = "Invented rewrite fee (only if you fail)")))).toEqual([
+      'Official fee "cost-invented-fee" says "only if" in its label but has no onlyIf condition.',
+    ]);
+    // A blank condition says nothing.
+    expect(broken(fee((f) => (f.onlyIf = "  ")))).toEqual(['Official fee "cost-invented-fee" has a blank onlyIf condition.']);
+  });
+
   it("a road none of whose sources has been read carries no read date", () => {
     // Every citation becomes a tool check; the road then has nothing read, so any date it gives is a claim.
     const onlyToolChecked = (r: Road) => {
@@ -544,6 +593,14 @@ describe("cost lines come in three kinds, and a blank never reads as $0", () => 
 
   it("an official fee stays the official fee even if a quote is passed for it", () => {
     expect(costLineAsShown(fee!, 99_00)).toMatchObject({ kind: "official-fee", amountCents: 12_500 });
+  });
+
+  it("an official fee that applies only sometimes carries its condition to the screen", () => {
+    if (fee!.kind !== "official-fee") throw new Error("the invented road's first cost is its fee");
+    const onlyIf = "You failed the invented exam and choose to rewrite it.";
+    expect(costLineAsShown({ ...fee!, onlyIf })).toMatchObject({ kind: "official-fee", onlyIf });
+    // A fee that always applies has no condition at all, not an empty one.
+    expect(costLineAsShown(fee!)).not.toHaveProperty("onlyIf");
   });
 
   it("a named line with the person's agreed quote is their quote", () => {
