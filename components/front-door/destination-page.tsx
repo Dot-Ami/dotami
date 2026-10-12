@@ -10,9 +10,24 @@ import { AMOUNT_HELP } from "@/components/ventures/agree-prompt";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 import { parseMoneyToCents } from "@/lib/figures/money";
 import { useLocalToday } from "@/lib/figures/use-local-today";
-import { isAnswered, questionAsked, readyToPick, type DestinationDraft } from "@/lib/front-door/draft";
-import { DESTINATION_QUESTIONS, type DestinationQuestion, type DestinationQuestionId } from "@/lib/front-door/questions";
-import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt } from "@/lib/front-door/receipts";
+import {
+  isAnswered,
+  questionAsked,
+  readyToPick,
+  type DestinationDraft,
+} from "@/lib/front-door/draft";
+import {
+  DESTINATION_QUESTIONS,
+  type DestinationQuestion,
+  type DestinationQuestionId,
+} from "@/lib/front-door/questions";
+import {
+  destinationReceipt,
+  incomeReceipt,
+  lookingForReceipt,
+  placeName,
+  placeReceipt,
+} from "@/lib/front-door/receipts";
 import { destinationWords as words } from "@/lib/front-door/words";
 import type { PlaceCode } from "@/lib/places/codes";
 import { STATEMENT_FULL_NOTE } from "@/lib/person/types";
@@ -43,7 +58,7 @@ export function DestinationPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
+    <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
           {words.back}
@@ -54,42 +69,66 @@ export function DestinationPage() {
         </p>
       </nav>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-10 sm:px-8">
-        {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}
-        {hydrated
-          ? DESTINATION_QUESTIONS.map((question) =>
-              asked === question.id ? (
-                <AskedQuestion key={question.id} question={question} draft={draft} today={today} onAnswer={answer} />
-              ) : isAnswered(draft, question.id) ? (
-                <AnsweredQuestion key={question.id} question={question} draft={draft} onChange={() => setChanging(question.id)} />
-              ) : null,
-            )
-          : null}
+      <main className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
+          {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}
+          {hydrated
+            ? DESTINATION_QUESTIONS.map((question) =>
+                asked === question.id ? (
+                  <AskedQuestion
+                    key={question.id}
+                    question={question}
+                    draft={draft}
+                    today={today}
+                    onAnswer={answer}
+                  />
+                ) : isAnswered(draft, question.id) ? (
+                  <AnsweredQuestion
+                    key={question.id}
+                    question={question}
+                    draft={draft}
+                    onChange={() => setChanging(question.id)}
+                  />
+                ) : null,
+              )
+            : null}
 
-        {hydrated && asked === null && readyToPick(draft) ? (
-          <div className="flex justify-end">
-            <Link
-              href="/futures"
-              className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
-            >
-              {words.next}
-            </Link>
-          </div>
-        ) : null}
+          {hydrated && asked === null && readyToPick(draft) ? (
+            <div className="flex justify-end">
+              <Link
+                href="/futures"
+                className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
+              >
+                {words.next}
+              </Link>
+            </div>
+          ) : null}
+        </div>
       </main>
     </div>
   );
 }
 
 /** The question's words, why it is asked and what it unlocks. The heading names the answer controls. */
-function QuestionHead({ question, headingId }: { question: DestinationQuestion; headingId: string }) {
+function QuestionHead({
+  question,
+  headingId,
+}: {
+  question: DestinationQuestion;
+  headingId: string;
+}) {
   return (
     <header>
-      <h2 id={headingId} className="font-serif text-[22px] font-bold leading-[1.2] tracking-tight text-paper">
+      <h2
+        id={headingId}
+        className="font-serif text-[22px] font-bold leading-[1.2] tracking-tight text-paper"
+      >
         {question.ask}
       </h2>
       <p className="mt-2 text-[12px] leading-snug text-stone">{words.why(question.why)}</p>
-      <p className="mt-0.5 text-[12px] leading-snug text-stone">{words.unlocks(question.unlocks)}</p>
+      <p className="mt-0.5 text-[12px] leading-snug text-stone">
+        {words.unlocks(question.unlocks)}
+      </p>
     </header>
   );
 }
@@ -107,22 +146,45 @@ function AskedQuestion({
 }) {
   const headingId = useId();
   return (
-    <section aria-labelledby={headingId} className="space-y-4 rounded-lg border border-maple-soft bg-ink2 p-5">
+    <section
+      aria-labelledby={headingId}
+      className="space-y-4 rounded-lg border border-maple-soft bg-ink2 p-5"
+    >
       <QuestionHead question={question} headingId={headingId} />
       {question.answer.kind === "own-words" ? (
-        <OwnWords question={question} draft={draft} today={today} labelledBy={headingId} onAnswer={onAnswer} />
+        <OwnWords
+          question={question}
+          draft={draft}
+          today={today}
+          labelledBy={headingId}
+          onAnswer={onAnswer}
+        />
       ) : question.answer.kind === "one-choice" ? (
         <div className="flex flex-wrap gap-2">
           {question.answer.choices.map((choice) => (
-            <Chip key={choice.id} active={draft.lookingFor === choice.id} onClick={() => onAnswer({ lookingFor: choice.id })}>
+            <Chip
+              key={choice.id}
+              active={draft.lookingFor === choice.id}
+              onClick={() => onAnswer({ lookingFor: choice.id })}
+            >
               {choice.label}
             </Chip>
           ))}
         </div>
       ) : question.answer.kind === "place" ? (
-        <PlacePicker places={question.answer.places} draft={draft} labelledBy={headingId} onAnswer={onAnswer} />
+        <PlacePicker
+          places={question.answer.places}
+          draft={draft}
+          labelledBy={headingId}
+          onAnswer={onAnswer}
+        />
       ) : (
-        <IncomeAmount question={question} today={today} labelledBy={headingId} onAnswer={onAnswer} />
+        <IncomeAmount
+          question={question}
+          today={today}
+          labelledBy={headingId}
+          onAnswer={onAnswer}
+        />
       )}
     </section>
   );
@@ -141,7 +203,8 @@ function OwnWords({
   labelledBy: string;
   onAnswer: (change: Partial<DestinationDraft>) => void;
 }) {
-  const before = draft.destination && draft.destination.kept !== "dont-know" ? draft.destination.text : "";
+  const before =
+    draft.destination && draft.destination.kept !== "dont-know" ? draft.destination.text : "";
   const [text, setText] = useState(before);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,9 +222,14 @@ function OwnWords({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: typed, saidAt: today, kind: "destination" }),
       });
-      const body = (await res.json().catch(() => null)) as { statement?: { text: string; saidAt: string }; error?: string } | null;
+      const body = (await res.json().catch(() => null)) as {
+        statement?: { text: string; saidAt: string };
+        error?: string;
+      } | null;
       if (res.ok && body?.statement) {
-        onAnswer({ destination: { kept: "saved", text: body.statement.text, saidAt: body.statement.saidAt } });
+        onAnswer({
+          destination: { kept: "saved", text: body.statement.text, saidAt: body.statement.saidAt },
+        });
       } else if (res.status === 503) {
         // No database: the words stay in this tab, and the receipt says so.
         onAnswer({ destination: { kept: "tab-only", text: typed, saidAt: today } });
@@ -197,11 +265,19 @@ function OwnWords({
       ) : null}
       <div className="flex flex-wrap justify-end gap-3">
         {question.skip ? (
-          <Pill variant="ghost" onClick={() => onAnswer({ destination: { kept: "dont-know" } })} disabled={busy}>
+          <Pill
+            variant="ghost"
+            onClick={() => onAnswer({ destination: { kept: "dont-know" } })}
+            disabled={busy}
+          >
             {question.skip}
           </Pill>
         ) : null}
-        <Pill variant="maple" onClick={() => void keep()} disabled={busy || text.trim().length === 0}>
+        <Pill
+          variant="maple"
+          onClick={() => void keep()}
+          disabled={busy || text.trim().length === 0}
+        >
           {busy ? words.saving : words.keepWords}
         </Pill>
       </div>
@@ -236,7 +312,11 @@ function PlacePicker({
           </option>
         ))}
       </select>
-      <Pill variant="maple" onClick={() => place !== "" && onAnswer({ place })} disabled={place === ""}>
+      <Pill
+        variant="maple"
+        onClick={() => place !== "" && onAnswer({ place })}
+        disabled={place === ""}
+      >
         {words.usePlace}
       </Pill>
     </div>
@@ -275,7 +355,10 @@ function IncomeAmount({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "income-wanted", amountCents: cents }),
       });
-      const body = (await res.json().catch(() => null)) as { figures?: { id: string; amountCents: number }[]; error?: string } | null;
+      const body = (await res.json().catch(() => null)) as {
+        figures?: { id: string; amountCents: number }[];
+        error?: string;
+      } | null;
       const proposed = body?.figures?.[0];
       if (res.ok && proposed) setProposal({ id: proposed.id, amountCents: proposed.amountCents });
       else setProblem(body?.error ?? words.receipts.destinationTabOnly);
@@ -313,11 +396,19 @@ function IncomeAmount({
       ) : null}
       <div className="flex flex-wrap justify-end gap-3">
         {question.skip ? (
-          <Pill variant="ghost" onClick={() => onAnswer({ incomeWanted: { kind: "skipped" } })} disabled={busy}>
+          <Pill
+            variant="ghost"
+            onClick={() => onAnswer({ incomeWanted: { kind: "skipped" } })}
+            disabled={busy}
+          >
             {question.skip}
           </Pill>
         ) : null}
-        <Pill variant="maple" onClick={() => void keep()} disabled={busy || text.trim().length === 0}>
+        <Pill
+          variant="maple"
+          onClick={() => void keep()}
+          disabled={busy || text.trim().length === 0}
+        >
           {busy ? words.saving : words.keepAmount}
         </Pill>
       </div>
@@ -325,7 +416,9 @@ function IncomeAmount({
         <IncomeAgreePrompt
           proposal={proposal}
           today={today}
-          onAgreed={(amountCents) => onAnswer({ incomeWanted: { kind: "agreed", amountCents, agreedOn: today } })}
+          onAgreed={(amountCents) =>
+            onAnswer({ incomeWanted: { kind: "agreed", amountCents, agreedOn: today } })
+          }
           onTurnedDown={() => onAnswer({ incomeWanted: { kind: "turned-down" } })}
           onClose={() => setProposal(null)}
         />
@@ -335,7 +428,15 @@ function IncomeAmount({
 }
 
 /** An answered question: its words, the answer shown back, its receipt (read out by a screen reader) and Change. */
-function AnsweredQuestion({ question, draft, onChange }: { question: DestinationQuestion; draft: DestinationDraft; onChange: () => void }) {
+function AnsweredQuestion({
+  question,
+  draft,
+  onChange,
+}: {
+  question: DestinationQuestion;
+  draft: DestinationDraft;
+  onChange: () => void;
+}) {
   const headingId = useId();
   let shown: ReactNode = null;
   let receipt = "";
@@ -351,7 +452,11 @@ function AnsweredQuestion({ question, draft, onChange }: { question: Destination
         </>
       );
     receipt = destinationReceipt(kept);
-  } else if (question.id === "looking-for" && draft.lookingFor && question.answer.kind === "one-choice") {
+  } else if (
+    question.id === "looking-for" &&
+    draft.lookingFor &&
+    question.answer.kind === "one-choice"
+  ) {
     const choice = question.answer.choices.find((c) => c.id === draft.lookingFor);
     shown = <p className="text-sm text-paper">{choice?.label}</p>;
     receipt = lookingForReceipt(draft.lookingFor, roadsV2026);
@@ -371,12 +476,19 @@ function AnsweredQuestion({ question, draft, onChange }: { question: Destination
   }
 
   return (
-    <section aria-labelledby={headingId} className="space-y-2 rounded-lg border border-rule bg-ink2 px-5 py-4">
+    <section
+      aria-labelledby={headingId}
+      className="space-y-2 rounded-lg border border-rule bg-ink2 px-5 py-4"
+    >
       <div className="flex items-start justify-between gap-4">
         <h2 id={headingId} className="text-[13px] font-semibold text-paper-dim">
           {question.ask}
         </h2>
-        <button type="button" onClick={onChange} className="shrink-0 border-b border-rule-soft pb-0.5 text-xs text-stone hover:text-paper">
+        <button
+          type="button"
+          onClick={onChange}
+          className="shrink-0 border-b border-rule-soft pb-0.5 text-xs text-stone hover:text-paper"
+        >
           {words.change}
         </button>
       </div>

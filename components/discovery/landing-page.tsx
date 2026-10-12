@@ -73,8 +73,8 @@ export function LandingPage() {
 
   const doors = frontDoorWords.doors;
   return (
-    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-rule-soft px-4 py-7 sm:px-8 md:px-14">
+    <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-rule-soft px-4 py-5 sm:px-8 md:px-14">
         <WordMark />
         <div className="flex flex-wrap items-center gap-5">
           <GhostLink href="/ventures" tone="stone">
@@ -89,10 +89,10 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-8 md:px-14">
-        <section className="w-full max-w-[1120px]">
+      <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-8 md:px-14">
+        <section className="my-auto w-full max-w-[1120px]">
           <div className="text-center">
-            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-paper md:text-5xl lg:text-[56px]">
+            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-paper lg:text-[46px]">
               {frontDoorWords.headline}
             </h1>
             <p className="mx-auto mt-4 max-w-[560px] text-[15px] leading-relaxed text-paper-dim">{frontDoorWords.subline}</p>
@@ -100,7 +100,7 @@ export function LandingPage() {
 
           {/* The three doors (decision 6 of 2026-10-11), in this order: the dream first. Side by side on a
               wide window, one under the other on a narrow one. */}
-          <ul aria-label={frontDoorWords.doorsLabel} className="mt-10 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]">
+          <ul aria-label={frontDoorWords.doorsLabel} className="mt-8 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]">
             <li className="flex flex-col gap-3 rounded-[10px] border border-maple-soft bg-ink2 p-5">
               <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.dream.title}</h2>
               <p className="text-[13px] leading-relaxed text-paper-dim">{doors.dream.body}</p>

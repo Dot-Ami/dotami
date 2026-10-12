@@ -41,9 +41,16 @@ export function roadIncludes(kind: Road["kind"], choice: LookingFor): boolean {
   return kind === choice || kind === "both";
 }
 
-export function lookingForReceipt(choice: LookingFor, roads: readonly Pick<Road, "kind">[]): string {
+export function lookingForReceipt(
+  choice: LookingFor,
+  roads: readonly Pick<Road, "kind">[],
+): string {
   if (choice === "both-or-not-sure") return words.lookingForAll(roads.length);
-  return words.lookingForSome(roads.filter((road) => roadIncludes(road.kind, choice)).length, roads.length, choice);
+  return words.lookingForSome(
+    roads.filter((road) => roadIncludes(road.kind, choice)).length,
+    roads.length,
+    choice,
+  );
 }
 
 /** "CA-AB" as today's value, "AB", which the catalogs and the app's own type still use. */
@@ -64,7 +71,10 @@ export function placeName(place: PlaceCode): string {
 export function placeReceipt(place: PlaceCode, roads: readonly Pick<Road, "provinces">[]): string {
   const province = provinceOfPlace(place);
   const name = placeName(place);
-  const rules = province && FULL_COVERAGE_PROVINCES.includes(province) ? words.placeWritten(name) : words.placeFederalOnly(name);
+  const rules =
+    province && FULL_COVERAGE_PROVINCES.includes(province)
+      ? words.placeWritten(name)
+      : words.placeFederalOnly(name);
   // A road's places are read as plain strings: it names only the places it is written for.
   const writtenHere = roads.filter((road) => {
     const places: readonly string[] = road.provinces;

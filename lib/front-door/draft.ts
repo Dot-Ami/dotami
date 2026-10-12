@@ -28,7 +28,10 @@ export function isAnswered(draft: DestinationDraft, id: DestinationQuestionId): 
 }
 
 /** The question being asked: the one the person chose to change, else the first not answered; null when all are. */
-export function questionAsked(draft: DestinationDraft, changing: DestinationQuestionId | null): DestinationQuestionId | null {
+export function questionAsked(
+  draft: DestinationDraft,
+  changing: DestinationQuestionId | null,
+): DestinationQuestionId | null {
   if (changing) return changing;
   return DESTINATION_QUESTIONS.find((q) => !isAnswered(draft, q.id))?.id ?? null;
 }

@@ -41,7 +41,11 @@ export interface DestinationQuestion {
   /** True when the way in can't go on without an answer. */
   required: boolean;
   /** Where the answer is kept: a statement, a column on the future, or a number the person agrees to. */
-  keptIn: "person-statement:destination" | "future:looking-for" | "future:place" | "person-figure:income-wanted";
+  keptIn:
+    | "person-statement:destination"
+    | "future:looking-for"
+    | "future:place"
+    | "person-figure:income-wanted";
 }
 
 export const DESTINATION_QUESTIONS: readonly DestinationQuestion[] = [
@@ -59,7 +63,8 @@ export const DESTINATION_QUESTIONS: readonly DestinationQuestion[] = [
     id: "looking-for",
     ask: "Are you after a business of your own, a job or career, or both?",
     why: "Some futures are a business, some a career, and some have both, with a fork between them.",
-    unlocks: "A count of the written futures that include what you picked. Every future is still listed.",
+    unlocks:
+      "A count of the written futures that include what you picked. Every future is still listed.",
     answer: {
       kind: "one-choice",
       choices: [

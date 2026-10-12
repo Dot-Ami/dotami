@@ -47,11 +47,16 @@ function roadCitations(road: Road, skillItems: readonly SkillItem[]): EngineCita
     ...road.steps.flatMap((step) => [
       ...step.citations,
       ...step.doneWhen.map((line) => line.citation),
-      ...step.costs.flatMap((cost) => (cost.kind === "official-fee" ? [cost.citation] : cost.nameSource ? [cost.nameSource] : [])),
+      ...step.costs.flatMap((cost) =>
+        cost.kind === "official-fee" ? [cost.citation] : cost.nameSource ? [cost.nameSource] : [],
+      ),
     ]),
     ...skillItems
       .filter((item) => listed.has(item.id))
-      .flatMap((item) => [...item.citations, ...(item.howToGetIt ? [item.howToGetIt.citation] : [])]),
+      .flatMap((item) => [
+        ...item.citations,
+        ...(item.howToGetIt ? [item.howToGetIt.citation] : []),
+      ]),
   ];
 }
 
@@ -64,7 +69,10 @@ function countSources(citations: readonly EngineCitation[]): SourceCounts {
   return counts;
 }
 
-export function futureCards(roads: readonly Road[], skillItems: readonly SkillItem[]): FutureCard[] {
+export function futureCards(
+  roads: readonly Road[],
+  skillItems: readonly SkillItem[],
+): FutureCard[] {
   return roads.map((road) => {
     const costs = road.steps.flatMap((step) => step.costs);
     return {
@@ -89,7 +97,8 @@ export function sourcesLine(counts: SourceCounts): { text: string; checkFirst: b
   const words = pickWords.sources;
   const parts: { text: string; checkFirst: boolean }[] = [];
   if (counts.person > 0) parts.push({ text: words.person(counts.person), checkFirst: false });
-  if (counts.unrecorded > 0) parts.push({ text: words.unrecorded(counts.unrecorded), checkFirst: false });
+  if (counts.unrecorded > 0)
+    parts.push({ text: words.unrecorded(counts.unrecorded), checkFirst: false });
   if (counts.model > 0) parts.push({ text: words.model(counts.model), checkFirst: true });
   if (counts.tool > 0) parts.push({ text: words.tool(counts.tool), checkFirst: true });
   return parts;

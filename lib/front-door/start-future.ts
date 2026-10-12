@@ -14,7 +14,10 @@ import { provinceOfPlace } from "./receipts";
  * said", since this way in never asks it. The kind of venture starts at Service, the intake's own starting
  * value for every idea; no rule in the catalogs reads it. Every number starts at 0, as on the intake.
  */
-export function scenarioForPickedFuture(input: { road: Road; place: PlaceCode; name: string }, scenarioId: string): Scenario {
+export function scenarioForPickedFuture(
+  input: { road: Road; place: PlaceCode; name: string },
+  scenarioId: string,
+): Scenario {
   const province = provinceOfPlace(input.place);
   // The place question only offers Canada's provinces and territories; anything else is a caller's mistake.
   if (!province) throw new Error("A future needs a province or territory.");

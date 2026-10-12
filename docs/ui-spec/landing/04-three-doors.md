@@ -10,7 +10,9 @@ the dream"; design: docs/architecture/future-cockpit.md § 1, The way in as buil
 ## What it is
 
 The page's headline and three doors under it, one list (`role="list"`, each door a list item with its
-own heading), in this order. Side by side on a wide window, one under the other on a narrow one.
+own heading), in this order. Side by side on a wide window, one under the other on a narrow one. The page is
+exactly the window less the shared footer and scrolls inside when the doors don't fit, so the disclaimer
+footer stays in the window (the same goes for `/start` and `/futures`).
 
 | Door | Heading (level 2) | What is in it |
 |---|---|---|

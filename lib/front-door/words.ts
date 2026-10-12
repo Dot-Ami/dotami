@@ -59,14 +59,17 @@ export const destinationWords = {
   answeredAmount: (cents: number) => `${formatMoney(cents)} a year, before tax`,
   skipped: "Skipped",
   receipts: {
-    destinationKept: (day: string) => `Kept word for word, dated ${day}. It goes at the top of each future you open.`,
+    destinationKept: (day: string) =>
+      `Kept word for word, dated ${day}. It goes at the top of each future you open.`,
     destinationTabOnly: "Not kept: no database reachable. It stays in this tab only.",
     destinationDontKnow: "Nothing kept. You can say it later; nothing here waits on it.",
     lookingForSome: (n: number, total: number, choice: keyof typeof LOOKING_FOR_WHAT) =>
       `${n} of the ${plural(total, "written future", "written futures")} include ${LOOKING_FOR_WHAT[choice]}.`,
-    lookingForAll: (total: number) => `All ${plural(total, "written future is", "written futures are")} shown.`,
+    lookingForAll: (total: number) =>
+      `All ${plural(total, "written future is", "written futures are")} shown.`,
     placeWritten: (name: string) => `${name}'s rules and the federal rules apply.`,
-    placeFederalOnly: (name: string) => `The federal rules apply; ${name}'s own rules aren't written yet.`,
+    placeFederalOnly: (name: string) =>
+      `The federal rules apply; ${name}'s own rules aren't written yet.`,
     futuresFor: (n: number, name: string) =>
       n === 0
         ? `No future is written for ${name} yet: the ones shown are written for other places, and each says which.`
@@ -122,7 +125,8 @@ export const incomePromptWords = {
   intro: "Nothing counts until you agree.",
   row: (day: string) => `The yearly income you want, before tax · typed by you · ${day}`,
   amountLabel: "Amount, in dollars a year",
-  changes: "It shows as your target at the top of each future you open. Nothing compares it with anything.",
+  changes:
+    "It shows as your target at the top of each future you open. Nothing compares it with anything.",
   turnDown: "No, I'll do it myself",
   agree: "Agree",
   close: "Close",

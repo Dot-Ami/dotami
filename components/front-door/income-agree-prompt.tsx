@@ -56,7 +56,9 @@ export function IncomeAgreePrompt({
     }
     if (e.key !== "Tab") return;
     // Keep Tab inside the dialog while it is open.
-    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled])");
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      "button:not([disabled]), input:not([disabled])",
+    );
     if (!focusable || focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -79,8 +81,12 @@ export function IncomeAgreePrompt({
     }
     setBusy(true);
     setError(null);
-    const edits = cents !== proposal.amountCents ? { [proposal.id]: { amountCents: cents } } : undefined;
-    const result = await postJson("/api/person-figures/agree", { ids: [proposal.id], ...(edits ? { edits } : {}) });
+    const edits =
+      cents !== proposal.amountCents ? { [proposal.id]: { amountCents: cents } } : undefined;
+    const result = await postJson("/api/person-figures/agree", {
+      ids: [proposal.id],
+      ...(edits ? { edits } : {}),
+    });
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
@@ -129,13 +135,20 @@ export function IncomeAgreePrompt({
               {words.intro}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="shrink-0 text-[11px] text-stone hover:text-paper">
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 text-[11px] text-stone hover:text-paper"
+          >
             {words.close}
           </button>
         </div>
 
         {error ? (
-          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p
+            role="alert"
+            className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber"
+          >
             {error}
           </p>
         ) : null}
