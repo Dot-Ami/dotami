@@ -1,0 +1,539 @@
+{
+  "arrows": {
+    "stage-0-employee-apprentice-baseline": [
+      {
+        "from": "stage-0-employee-apprentice-baseline",
+        "to": "stage-1-sole-prop-activation",
+        "depth": 1
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "stage-2a-voluntary-gst-registration",
+        "depth": 2
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "stage-2b-mandatory-gst-registration",
+        "depth": 2
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 4
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 4
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 4
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 4
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 4
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 4
+      }
+    ],
+    "stage-1-sole-prop-activation": [
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "stage-2a-voluntary-gst-registration",
+        "depth": 1
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "stage-2b-mandatory-gst-registration",
+        "depth": 1
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "branch-hire-first-employee",
+        "depth": 1
+      },
+      {
+        "from": "stage-1-sole-prop-activation",
+        "to": "branch-service-vs-productize",
+        "depth": 1
+      },
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 3
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 3
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 3
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 3
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 3
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 3
+      }
+    ],
+    "stage-2a-voluntary-gst-registration": [
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 1
+      },
+      {
+        "from": "stage-2a-voluntary-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      }
+    ],
+    "stage-2b-mandatory-gst-registration": [
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 1
+      },
+      {
+        "from": "stage-2b-mandatory-gst-registration",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      }
+    ],
+    "stage-3a-incorporation-80k-net": [
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 1
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 3
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 3
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 3
+      }
+    ],
+    "stage-3b-incorporation-liability-sred": [
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 1
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 1
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 1
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 3
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 3
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 3
+      }
+    ],
+    "branch-hire-first-employee": [
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 1
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 2
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      }
+    ],
+    "branch-service-vs-productize": [
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 1
+      },
+      {
+        "from": "branch-service-vs-productize",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 1
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3a-incorporation-80k-net",
+        "to": "stage-4-retained-earnings-planning",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-service-vs-productize",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "branch-hire-first-employee",
+        "depth": 2
+      },
+      {
+        "from": "stage-3b-incorporation-liability-sred",
+        "to": "stage-4-sred-deepening",
+        "depth": 2
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3a-incorporation-80k-net",
+        "depth": 3
+      },
+      {
+        "from": "branch-hire-first-employee",
+        "to": "stage-3b-incorporation-liability-sred",
+        "depth": 3
+      }
+    ],
+    "stage-4-retained-earnings-planning": [],
+    "stage-4-sred-deepening": []
+  },
+  "columns": {
+    "stage-0-employee-apprentice-baseline": 1,
+    "stage-1-sole-prop-activation": 2,
+    "stage-2a-voluntary-gst-registration": 2,
+    "stage-2b-mandatory-gst-registration": 2,
+    "stage-3a-incorporation-80k-net": 3,
+    "stage-3b-incorporation-liability-sred": 3,
+    "branch-hire-first-employee": 3,
+    "branch-service-vs-productize": 3,
+    "stage-4-retained-earnings-planning": 4,
+    "stage-4-sred-deepening": 4
+  }
+}

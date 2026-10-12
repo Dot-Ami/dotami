@@ -8,7 +8,8 @@ Catalog: `lib/engines/cfe/v2026/nodes.ts` (10 nodes as of 2026-07-02) · Priorit
 Lifecycle nodes Stage 0–4 (employee baseline → sole-prop activation → GST fork →
 incorporation fork → SR&ED deepening / retained-earnings planning) plus branch nodes
 (hire-first, service-vs-productize). Each node: trigger, financial impact, citations,
-lens annotations, branch ids. This is the graph the cockpit renders.
+lens annotations, branch ids. The cockpit draws it as road 0, *Starting any business in Alberta (tax
+and structure)* ([roads.md](./roads.md), since 2026-10-11): tiers become columns, nodes become steps.
 
 ## Node state semantics (today vs target)
 

@@ -47,9 +47,10 @@ and the maintainer's six decisions of 2026-10-11:
     sentence (say so on the card, or ask instead); change the sentence on an idea's card (today it can
     only be removed, with "Your statements"); a stage card's chip says "default" until the person clicks
     its toggle, not "your pick"
-  - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
+  - [x] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
-    Alberta*
+    Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
+    *done when* lines, cost lines and *before you open* steps come with the content)
   - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;

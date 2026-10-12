@@ -2,12 +2,11 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { ArrowOverlay, futureEdges, futureSet } from "@/components/cockpit/map-arrows";
+import { ArrowOverlay, columnNumbers, futureEdges, futureSet } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { itemsForNode } from "@/lib/brain/node-items";
-import type { EvaluationResult, UnlockItem } from "@/lib/brain/types";
-import type { CFENode, CFENodeId } from "@/lib/engines/cfe/v2026";
-import { cfeTiersV2026, tierForStage, type CFETier } from "@/lib/engines/cfe/v2026/tiers";
+import type { EvaluationResult, NodeStateColor, UnlockItem } from "@/lib/brain/types";
+import type { Road, RoadColumn, RoadStep } from "@/lib/engines/roads/v2026";
 import { branchDecisions, type BranchDecision } from "@/lib/scenarios/branches";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
@@ -17,23 +16,30 @@ import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
  * follow visually; a column-per-tier layout replaced it). Deliberately NOT copied from the
  * reference layout: per-card dollar ranges — no engine computes them, so none are shown.
  *
- * Each column = one tier from `cfeTiersV2026`. Inside: a stage card per lifecycle node whose
- * `stage` the tier lists, and under each stage card a lever card per evaluator item relevant
- * to that stage (`itemsForNode`). Stage chips say where the node sits on THIS venture's path;
- * lever chips say what the answers given support. Nothing here ranks or recommends.
+ * 2026-10-11: the map draws whatever road it is given (`lib/engines/roads/v2026/`) and holds no
+ * map of its own. Today's ten-step tax map is the road "Starting any business in Alberta", drawn
+ * exactly as before (tests/road-map.spec.ts compares the HTML with what the old map drew).
+ *
+ * Each column = one column of the road. Inside: a stage card per step the column lists, and under
+ * each stage card a lever card per evaluator item relevant to that step (`itemsForNode`). Stage
+ * chips say where the step sits on THIS venture's path; lever chips say what the answers given
+ * support. Nothing here ranks or recommends.
  *
  * Ruling 2 (same day): hover or select a stage card and arrows show where it leads — the
- * catalog's own `branches`, walked to the end (`map-arrows.tsx`); everything off that future dims.
+ * road's own `next`, walked to the end (`map-arrows.tsx`); everything off that future dims.
  */
 
+/** A toggle option's id: a step the toggle switches between. */
+type BranchOptionId = BranchDecision["options"][number]["id"];
+
 interface StrategyMapProps {
-  nodes: readonly CFENode[];
+  road: Road;
   scenario: Scenario;
   evaluation: EvaluationResult;
-  selectedNodeId: CFENodeId | null;
-  onSelectNode: (nodeId: CFENodeId) => void;
+  selectedStepId: string | null;
+  onSelectStep: (stepId: string) => void;
   decidedBranchIds: ReadonlySet<string>;
-  onBranchChange: (decision: BranchDecision, optionId: CFENodeId) => void;
+  onBranchChange: (decision: BranchDecision, optionId: BranchOptionId) => void;
 }
 
 const STAGE_CHIP: Record<ScenarioNodeStatus, { label: string; className: string }> = {
@@ -62,17 +68,17 @@ const ACCENT: Record<"green" | "yellow" | "gray", string> = {
 };
 
 export function StrategyMap({
-  nodes,
+  road,
   scenario,
   evaluation,
-  selectedNodeId,
-  onSelectNode,
+  selectedStepId,
+  onSelectStep,
   decidedBranchIds,
   onBranchChange,
 }: StrategyMapProps) {
-  const [hoveredId, setHoveredId] = useState<CFENodeId | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [wrap, setWrap] = useState<HTMLDivElement | null>(null);
-  // Stage-card elements by node id, for the arrow overlay to measure. A ref (not state) so
+  // Stage-card elements by step id, for the arrow overlay to measure. A ref (not state) so
   // registration during render never re-renders; the overlay re-measures on focus change.
   const cardsRef = useRef(new Map<string, HTMLElement>());
   const registerCard = useCallback((id: string, el: HTMLElement | null) => {
@@ -80,18 +86,13 @@ export function StrategyMap({
     else cardsRef.current.delete(id);
   }, []);
 
-  const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
-  const columnOf = useCallback(
-    (id: string) => {
-      const node = nodesById.get(id);
-      return node ? (tierForStage(node.stage)?.ordinal ?? 0) : 0;
-    },
-    [nodesById],
-  );
+  const stepsById = useMemo(() => new Map(road.steps.map((s) => [s.id, s])), [road]);
+  const columnByStep = useMemo(() => columnNumbers(road), [road]);
+  const columnOf = useCallback((id: string) => columnByStep.get(id) ?? 0, [columnByStep]);
 
   // Hover wins while the pointer is on a card; the selected card keeps its arrows otherwise.
-  const focusId = hoveredId ?? selectedNodeId;
-  const edges = useMemo(() => (focusId ? futureEdges(nodesById, focusId) : []), [nodesById, focusId]);
+  const focusId = hoveredId ?? selectedStepId;
+  const edges = useMemo(() => (focusId ? futureEdges(stepsById, focusId) : []), [stepsById, focusId]);
   const future = useMemo(() => futureSet(edges), [edges]);
 
   const focus: MapFocus = { focusId, future, hover: setHoveredId, registerCard };
@@ -102,17 +103,19 @@ export function StrategyMap({
         <div ref={setWrap} className="relative">
           <div
             className="grid min-w-[820px] gap-3.5"
-            style={{ gridTemplateColumns: `repeat(${cfeTiersV2026.length}, minmax(195px, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${road.columns.length}, minmax(195px, 1fr))` }}
           >
-            {cfeTiersV2026.map((tier) => (
+            {road.columns.map((column, i) => (
               <TierColumn
-                key={tier.id}
-                tier={tier}
-                nodes={nodes.filter((n) => tier.stages.includes(n.stage))}
+                key={column.id}
+                column={column}
+                ordinal={i + 1}
+                // The road's checks guarantee every listed step exists; the filter only keeps types honest.
+                steps={column.steps.map((id) => stepsById.get(id)).filter((s): s is RoadStep => s !== undefined)}
                 scenario={scenario}
                 evaluation={evaluation}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={onSelectNode}
+                selectedStepId={selectedStepId}
+                onSelectStep={onSelectStep}
                 decidedBranchIds={decidedBranchIds}
                 onBranchChange={onBranchChange}
                 focus={focus}
@@ -129,33 +132,43 @@ export function StrategyMap({
 
 /** What the columns need to know about the focused card and its future. */
 interface MapFocus {
-  focusId: CFENodeId | null;
+  focusId: string | null;
   future: ReadonlySet<string>;
-  hover: (id: CFENodeId | null) => void;
+  hover: (id: string | null) => void;
   registerCard: (id: string, el: HTMLElement | null) => void;
 }
 
+/**
+ * A step's colour from today's rules, by step id. A step the rules don't know (one from a road
+ * other than today's) is grey until road evaluation gives it a state of its own.
+ */
+function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor {
+  const states: Partial<Record<string, NodeStateColor>> = evaluation.nodeStates;
+  return states[stepId] ?? "gray";
+}
+
 function TierColumn({
-  tier,
-  nodes,
+  column,
+  ordinal,
+  steps,
   scenario,
   evaluation,
-  selectedNodeId,
-  onSelectNode,
+  selectedStepId,
+  onSelectStep,
   decidedBranchIds,
   onBranchChange,
   focus,
-}: StrategyMapProps & { tier: CFETier; focus: MapFocus }) {
-  const decision = tier.branchDecisionId
-    ? branchDecisions.find((d) => d.id === tier.branchDecisionId)
-    : undefined;
+}: Omit<StrategyMapProps, "road"> & { column: RoadColumn; ordinal: number; steps: RoadStep[]; focus: MapFocus }) {
+  // A fork gets a toggle when it is one of today's two (GST timing, Incorporation timing); the
+  // toggle keeps its own option names. Other roads' forks are picked on Compare, later in phase 1.
+  const decision = column.forkId ? branchDecisions.find((d) => d.id === column.forkId) : undefined;
 
   return (
     <section className="flex min-w-0 flex-col gap-3 pb-6">
       <header className="border-b border-rule pb-2.5">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {tier.ordinal}</p>
-        <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{tier.label}</h3>
-        <p className="mt-0.5 text-[10.5px] leading-snug text-stone">{tier.subtitle}</p>
+        <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {ordinal}</p>
+        <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
+        <p className="mt-0.5 text-[10.5px] leading-snug text-stone">{column.summary}</p>
         {decision ? (
           <BranchToggle
             decision={decision}
@@ -166,28 +179,28 @@ function TierColumn({
         ) : null}
       </header>
 
-      {nodes.map((node) => {
-        const status = getScenarioNodeStatus(node.id as CFENodeId, scenario);
-        const colour = evaluation.nodeStates[node.id as CFENodeId] ?? "gray";
-        const levers = itemsForNode(evaluation.unlocks, node.id as CFENodeId).forThisStage;
-        const selected = selectedNodeId === node.id;
+      {steps.map((step) => {
+        const status = getScenarioNodeStatus(step.id, scenario);
+        const colour = colourOf(evaluation, step.id);
+        const levers = itemsForNode(evaluation.unlocks, step.id).forThisStage;
+        const selected = selectedStepId === step.id;
         // While a card is focused, everything that is neither it nor on its future dims.
-        const dimmed = focus.focusId !== null && focus.focusId !== node.id && !focus.future.has(node.id);
+        const dimmed = focus.focusId !== null && focus.focusId !== step.id && !focus.future.has(step.id);
         return (
-          <div key={node.id} className={`flex flex-col gap-1.5 transition-opacity ${dimmed ? "opacity-35" : ""}`}>
+          <div key={step.id} className={`flex flex-col gap-1.5 transition-opacity ${dimmed ? "opacity-35" : ""}`}>
             <StageCard
-              node={node}
+              step={step}
               status={status}
               colour={colour}
               selected={selected}
-              onClick={() => onSelectNode(node.id as CFENodeId)}
-              onHover={(on) => focus.hover(on ? (node.id as CFENodeId) : null)}
-              registerCard={(el) => focus.registerCard(node.id, el)}
+              onClick={() => onSelectStep(step.id)}
+              onHover={(on) => focus.hover(on ? step.id : null)}
+              registerCard={(el) => focus.registerCard(step.id, el)}
             />
             {status !== "ghost" && levers.length > 0 ? (
               <ul className="ml-3 flex flex-col gap-1.5 border-l border-rule-soft pl-3">
                 {levers.map((item) => (
-                  <LeverCard key={item.id} item={item} onClick={() => onSelectNode(node.id as CFENodeId)} />
+                  <LeverCard key={item.id} item={item} onClick={() => onSelectStep(step.id)} />
                 ))}
               </ul>
             ) : null}
@@ -199,7 +212,7 @@ function TierColumn({
 }
 
 function StageCard({
-  node,
+  step,
   status,
   colour,
   selected,
@@ -207,9 +220,9 @@ function StageCard({
   onHover,
   registerCard,
 }: {
-  node: CFENode;
+  step: RoadStep;
   status: ScenarioNodeStatus;
-  colour: "green" | "yellow" | "gray";
+  colour: NodeStateColor;
   selected: boolean;
   onClick: () => void;
   onHover: (on: boolean) => void;
@@ -227,18 +240,18 @@ function StageCard({
       onFocus={() => onHover(true)}
       onBlur={() => onHover(false)}
       aria-pressed={selected}
-      aria-label={`${node.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`}
+      aria-label={`${step.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
       } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{node.label}</h4>
+        <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{step.label}</h4>
         <span className={`shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${chip.className}`}>
           {chip.label}
         </span>
       </div>
-      <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{node.trigger}</p>
+      <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{step.summary}</p>
     </button>
   );
 }
@@ -289,10 +302,10 @@ function BranchToggle({
   onChange,
 }: {
   decision: BranchDecision;
-  activeOptionId: CFENodeId;
+  activeOptionId: BranchOptionId;
   /** S2.5.4d: true until the person clicks — the active option is a default, and says so. */
   isDefault: boolean;
-  onChange: (optionId: CFENodeId) => void;
+  onChange: (optionId: BranchOptionId) => void;
 }) {
   return (
     <fieldset className="mt-2.5 rounded-md border border-rule bg-ink3/90 p-2">
