@@ -50,6 +50,13 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
   if (o0.have !== o1.have || o0.learning !== o1.learning || o0.notYet !== o1.notYet) {
     changes.push(changed.ownSkills(o1.have, o1.learning, o1.notYet));
   }
+  // The government's list for the person's pick of job: a new pick, or its marks.
+  const j0 = s0.yourPickOfJob;
+  const j1 = s1.yourPickOfJob;
+  if (j0?.code !== j1?.code) changes.push(changed.job(j1?.label ?? null));
+  else if (j0 && j1 && (j0.have !== j1.have || j0.learning !== j1.learning || j0.notYet !== j1.notYet)) {
+    changes.push(changed.jobSkills(j1.label, j1.have, j1.learning, j1.notYet, j1.notMarked));
+  }
 
   const m0 = g0.money;
   const m1 = g1.money;

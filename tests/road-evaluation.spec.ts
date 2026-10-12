@@ -353,6 +353,8 @@ describe("the four gauges are counts and sums", () => {
       notYet: 1,
       notMarked: 2,
       addedByYou: { have: 1, learning: 0, notYet: 0 },
+      // No job picked: the government's list for one is counted apart (tests/cockpit-skills.spec.ts).
+      yourPickOfJob: null,
     });
     expect(stepOf(result, "step-eval-train").needs).toEqual({ listed: 2, have: 1, learning: 1, notYet: 0, notMarked: 0 });
   });

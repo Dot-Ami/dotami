@@ -3,7 +3,7 @@ export const NOTICES_FILE: string;
 export const SEPARATOR: string;
 export const RULE: string;
 export const DESKTOP_APP_PACKAGES: readonly string[];
-export const SHIPS: Readonly<Record<"dependency" | "server" | "app" | "runtime" | "styles" | "fonts", string>>;
+export const SHIPS: Readonly<Record<"dependency" | "server" | "app" | "runtime" | "styles" | "fonts" | "data", string>>;
 export interface LicenceElsewhere {
   why: string;
   readme?: boolean;
@@ -26,7 +26,7 @@ export interface FoundPackage {
 }
 
 export interface NoticeSource {
-  kind: "runtime" | "package" | "inside" | "font";
+  kind: "runtime" | "package" | "inside" | "font" | "data";
   name: string;
   version: string;
   licence: string;

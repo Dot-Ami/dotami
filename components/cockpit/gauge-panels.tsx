@@ -7,6 +7,7 @@ import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
 import { CitationLinks } from "@/components/shared/citation-links";
 import { Pill } from "@/components/ui";
 import { cockpitWords as words } from "@/lib/cockpit/words";
+import { OASIS_LICENCE_URL, searchOasisJobs, type JobList } from "@/lib/engines/oasis/v2026";
 import type { Road, SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney, formatMonth } from "@/lib/format/money-and-months";
 import type { SkillMarkView } from "@/lib/futures/skill-marks";
@@ -57,8 +58,11 @@ export function SkillsListPanel({
   selectedSkillId,
   canSave,
   error,
+  job,
+  jobPickedOn,
   onMark,
   onSelectSkill,
+  onPickJob,
   onClose,
 }: {
   road: Road;
@@ -67,8 +71,14 @@ export function SkillsListPanel({
   selectedSkillId: string | null;
   canSave: boolean;
   error: string | null;
+  /** The government's list for the person's pick of job, or null when none is picked. */
+  job: JobList | null;
+  /** The day the person picked it, or null. */
+  jobPickedOn: string | null;
   onMark: (skill: SkillKey, mark: SkillMarkValue | null) => void;
   onSelectSkill: (skillItemId: string | null) => void;
+  /** Picks a job by its code, or takes the pick back (null). */
+  onPickJob: (code: string | null) => void;
   onClose: () => void;
 }) {
   const [ownLabel, setOwnLabel] = useState("");
@@ -151,7 +161,125 @@ export function SkillsListPanel({
           </div>
         </div>
       </div>
+
+      <JobSection job={job} pickedOn={jobPickedOn} markOf={markOf} canSave={canSave} onMark={onMark} onPickJob={onPickJob} />
     </PanelShell>
+  );
+}
+
+/**
+ * "Your pick of job" (docs/architecture/future-cockpit.md § 6, "Skills, and the government's list for your
+ * pick of job, as built"; decision 5 of 2026-10-11). With no job picked: the one optional question and a
+ * search over the government's job names. With one: its name, Change and Take back, then its list in two
+ * groups, each row tagged "your pick of job" with the person's marks, the group's source once, and the
+ * licence's line. Names only: an item carries no rating, so none can be shown here.
+ */
+function JobSection({
+  job,
+  pickedOn,
+  markOf,
+  canSave,
+  onMark,
+  onPickJob,
+}: {
+  job: JobList | null;
+  pickedOn: string | null;
+  markOf: ReadonlyMap<string, SkillMarkValue>;
+  canSave: boolean;
+  onMark: (skill: SkillKey, mark: SkillMarkValue | null) => void;
+  onPickJob: (code: string | null) => void;
+}) {
+  const [changing, setChanging] = useState(false);
+  const [query, setQuery] = useState("");
+  const searching = job === null || changing;
+  const results = searching ? searchOasisJobs(query) : [];
+
+  function pick(code: string | null) {
+    onPickJob(code);
+    setChanging(false);
+    setQuery("");
+  }
+
+  return (
+    <div>
+      <h3 className={heading}>{words.lists.job.title}</h3>
+      {searching ? (
+        <>
+          <p className="text-[12px] text-paper">{words.lists.job.ask}</p>
+          <p className="mt-1 text-[11px] text-stone">{words.lists.job.optional}</p>
+          <input
+            type="search"
+            aria-label={words.lists.job.search}
+            placeholder={words.lists.job.search}
+            value={query}
+            disabled={!canSave}
+            onChange={(e) => setQuery(e.target.value)}
+            className="mt-2 w-full rounded-sm border border-rule bg-ink2 px-2 py-1 text-[12px] text-paper outline-hidden focus:border-maple-soft"
+          />
+          {query.trim() !== "" && results.length === 0 ? <p className="mt-1.5 text-[11px] text-stone">{words.lists.job.noMatch}</p> : null}
+          {results.length > 0 ? (
+            <ul className="mt-1.5 space-y-1">
+              {results.map((r) => (
+                <li key={r.code}>
+                  <button
+                    type="button"
+                    disabled={!canSave}
+                    onClick={() => pick(r.code)}
+                    className="w-full rounded-sm border border-rule-soft bg-ink2 px-2 py-1 text-left text-[12px] text-paper hover:border-maple-soft"
+                  >
+                    {words.lists.job.result(r.label, r.code)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {changing ? (
+            <Pill className="mt-1.5" size="small" variant="ghost" onClick={() => setChanging(false)}>
+              {words.lists.job.cancel}
+            </Pill>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <p className="text-[12px] font-semibold text-paper">{words.lists.job.picked(job.label, job.code, pickedOn)}</p>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            <Pill size="small" variant="ghost" disabled={!canSave} onClick={() => setChanging(true)}>
+              {words.lists.job.change}
+            </Pill>
+            <Pill size="small" variant="ghost" disabled={!canSave} onClick={() => pick(null)}>
+              {words.lists.job.takeBack}
+            </Pill>
+          </div>
+          <p className="mt-2 text-[11px] text-stone">{words.lists.job.employees}</p>
+          {(["skills", "knowledge"] as const).map((group) => {
+            const items = job.items.filter((item) => item.group === group);
+            if (items.length === 0) return null;
+            return (
+              <div key={group} className="mt-3">
+                <h4 className={heading}>{words.lists.job.groups[group]}</h4>
+                {/* Every item of a group cites the same file of the dataset: shown once, above the rows. */}
+                <CitationLinks citations={items[0]!.citations} compact />
+                <ul className="mt-1.5 space-y-1.5">
+                  {items.map((item) => (
+                    <li key={item.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
+                      <span className="text-[12px] font-semibold text-paper">{item.label}</span>{" "}
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-stone">{words.lists.job.tag}</span>
+                      <MarkButtons mark={markOf.get(item.id) ?? null} canSave={canSave} onMark={(mark) => onMark({ skillItemId: item.id }, mark)} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+          <p className="mt-3 text-[11px] text-stone">
+            {words.lists.job.attribution}{" "}
+            <a href={OASIS_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-paper">
+              {words.lists.job.licence}
+            </a>
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 

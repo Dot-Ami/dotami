@@ -21,6 +21,7 @@ import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCoun
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { oasisListForJob } from "@/lib/engines/oasis/v2026";
 import { roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
@@ -121,6 +122,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
   const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, kept?.future.roadId ?? null), [kept]);
+  // The government's skills list for the job the person picked as closest to their work, or none.
+  const jobCode = kept?.future.job?.code ?? null;
+  const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
 
   // One run of road evaluation draws everything: the gauges, the step colours, the badges, the step
   // panel, "Next on your road", and the map's lever cards (its `rules`, run on the idea's own picks;
@@ -143,11 +147,12 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               future: kept?.future ?? null,
               progress: kept?.progress ?? [],
               skillMarks: kept?.skillMarks ?? [],
+              job,
               today,
             }),
           )
         : null,
-    [currentScenario, road, kept, figures, today],
+    [currentScenario, road, kept, figures, job, today],
   );
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
@@ -291,6 +296,23 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null) {
     void saveAnswer(postJson("/api/skill-marks", { ...skill, mark }));
   }
+
+  /** The person's pick of job for the government's skills list, or null to take it back. */
+  function handlePickJob(code: string | null) {
+    if (!ventureId) return;
+    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/job`, { code }));
+  }
+
+  /** From the step panel: the Skills list, where the job's list is (or the question, when none is picked). */
+  function openJobList() {
+    setActiveGauge("skills");
+    setOverlays((o) => ({ ...o, skills: true }));
+    setRightPanel("skills");
+  }
+
+  // The step panel's one line about the job's list: its name, its count, and how many the person marked.
+  const jobCount = evaluation?.gauges.skills.yourPickOfJob ?? null;
+  const jobForStep = jobCount ? { label: jobCount.label, listed: jobCount.listed, marked: jobCount.listed - jobCount.notMarked } : null;
 
   /**
    * The person's own number (a quote for a named cost line, or their savings) is proposed, then the agree
@@ -565,6 +587,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               onTicks={handleTicks}
               onMark={(skillItemId, mark) => handleMark({ skillItemId }, mark)}
               onSelectSkill={setSelectedSkillId}
+              job={jobForStep}
+              onOpenJobList={openJobList}
               onProposeQuote={handleProposeQuote}
               province={scenario.profile.province}
               ownNumber={scenario.state.incorporateAt ?? null}
@@ -585,8 +609,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             selectedSkillId={selectedSkillId}
             canSave={canSave}
             error={answerError}
+            job={job}
+            jobPickedOn={kept?.future.job?.pickedOn ?? null}
             onMark={handleMark}
             onSelectSkill={setSelectedSkillId}
+            onPickJob={handlePickJob}
             onClose={() => {
               setRightPanel(null);
               setActiveGauge(null);

@@ -58,7 +58,8 @@ describe("the Skills list: your pick of job", () => {
     expect(html).toContain(esc(cockpitWords.lists.job.ask));
     expect(html).toContain(esc(cockpitWords.lists.job.optional));
     expect(html).toContain(`aria-label="${cockpitWords.lists.job.search}"`);
-    expect(html).not.toContain(cockpitWords.lists.job.tag);
+    // No row is drawn, so no row's tag (the optional line names the tag in its own words).
+    expect(html).not.toContain(`>${cockpitWords.lists.job.tag}<`);
   });
 
   it("with a job picked: its name, code and day, Change and Take back, then every item tagged with its marks", () => {

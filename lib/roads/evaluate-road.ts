@@ -1,4 +1,5 @@
 import type { ConfirmedFigure, EvaluationResult, NodeStateColor } from "@/lib/brain/types";
+import type { JobList } from "@/lib/engines/oasis/v2026";
 import {
   costLineAsShown,
   generalRoadV2026,
@@ -60,6 +61,12 @@ export interface RoadEvaluationInput {
   forkPicks: Readonly<Record<string, { stepId: string; from: "you" | "map" }>>;
   /** Every skill mark the person set (lib/futures/skill-marks.ts). */
   skillMarks: readonly { skillItemId: string | null; ownLabel: string | null; mark: SkillMarkValue }[];
+  /**
+   * The government's list for the job the person picked as closest to their work
+   * (lib/engines/oasis/v2026 `oasisListForJob`), or none. Counted apart on the Skills gauge, never tied to
+   * a step: no official source says which step needs which skill on it (decision 5 of 2026-10-11).
+   */
+  job?: JobList | null;
   /**
    * The person's progress on this road's steps: the status they set and the "done when" lines they
    * ticked, from step progress (lib/futures/step-progress.ts) only. On today's general road (road 0) the
@@ -136,8 +143,14 @@ export interface ToldAnswer extends AnswerWords {
 
 export interface RoadGauges {
   steps: { done: number; doing: number; notOnYourPath: number; total: number };
-  /** Each skill item the road lists, once; the person's own added skills apart. */
-  skills: MarkCounts & { addedByYou: { have: number; learning: number; notYet: number } };
+  /**
+   * Each skill item the road lists, once; the person's own added skills apart; and, apart again, the
+   * government's list for the job the person picked (null when none is picked).
+   */
+  skills: MarkCounts & {
+    addedByYou: { have: number; learning: number; notYet: number };
+    yourPickOfJob: (MarkCounts & { code: string; label: string }) | null;
+  };
   money: {
     officialFeesCents: number;
     officialFeeLines: number;
@@ -550,6 +563,16 @@ function gauges(
         learning: own.filter((m) => m.mark === "learning").length,
         notYet: own.filter((m) => m.mark === "not-yet").length,
       },
+      yourPickOfJob: input.job
+        ? {
+            code: input.job.code,
+            label: input.job.label,
+            ...countMarks(
+              input.job.items.map((item) => item.id),
+              itemMarks,
+            ),
+          }
+        : null,
     },
     money,
     date: input.targetMonth !== null && months !== null ? { targetMonth: input.targetMonth, monthsFromToday: months } : null,
@@ -560,8 +583,10 @@ function gauges(
 function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   const out: Omit<ToldAnswer, "given">[] = [];
   const stepById = new Map(road.steps.map((s) => [s.id, s]));
-  const listed = new Set(road.steps.flatMap((s) => s.needs));
-  const itemLabel = new Map(input.skillItems.map((item) => [item.id, item.label]));
+  // The items this road lists, and those on the government's list for the person's pick of job.
+  const jobItems = input.job?.items ?? [];
+  const listed = new Set([...road.steps.flatMap((s) => s.needs), ...jobItems.map((item) => item.id)]);
+  const itemLabel = new Map([...input.skillItems, ...jobItems].map((item) => [item.id, item.label]));
 
   for (const fork of road.forks) {
     const pick = input.forkPicks[fork.id];
@@ -570,9 +595,10 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       out.push({ id: `fork:${fork.id}`, group: "fork", ...answer.forkPick(fork.label, stepById.get(pick.stepId)!.label) });
     }
   }
+  if (input.job) out.push({ id: "job", group: "job", ...answer.job(input.job.label) });
   for (const mark of input.skillMarks) {
     if (mark.skillItemId !== null) {
-      // Only items this road lists: a mark on another road's item changes nothing here.
+      // Only items this road or the picked job's list has: a mark on another road's item changes nothing here.
       if (!listed.has(mark.skillItemId)) continue;
       const label = itemLabel.get(mark.skillItemId) ?? mark.skillItemId;
       out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false) });

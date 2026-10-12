@@ -12,6 +12,7 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import type { Road, RoadStep, SkillItem } from "@/lib/engines/roads/v2026";
 import type { CostLineAmountFrom } from "@/lib/figures/types";
+import { Pill } from "@/components/ui";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { SKILL_MARKS, STEP_STATUSES, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import type { StepEvaluation } from "@/lib/roads";
@@ -48,6 +49,14 @@ export interface StepPanelProps {
   onTicks: (doneWhenIds: string[]) => Promise<unknown> | void;
   onMark: (skillItemId: string, mark: SkillMarkValue | null) => void;
   onSelectSkill: (skillItemId: string | null) => void;
+  /**
+   * The person's pick of job, counted: its name, how many items the government's list has and how many
+   * the person marked; null when none is picked. Shown under the step's own skills with `onOpenJobList`,
+   * which opens the Skills list (to the list, or to the question when none is picked). A panel drawn
+   * without `onOpenJobList` shows neither.
+   */
+  job?: { label: string; listed: number; marked: number } | null;
+  onOpenJobList?: () => void;
   /** Proposes the person's number for a named cost line; resolves to an error, or null once the agree prompt opened. */
   onProposeQuote: (lineId: string, amountCents: number, from: CostLineAmountFrom) => Promise<string | null>;
   /** The idea's province code, for the ways of incorporating written for it (road 0's node detail). */
@@ -141,6 +150,8 @@ function StepSections({
   onMark,
   onSelectSkill,
   onProposeQuote,
+  job = null,
+  onOpenJobList,
 }: StepPanelProps) {
   const [quoting, setQuoting] = useState<string | null>(null);
   // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
@@ -279,6 +290,16 @@ function StepSections({
             })}
           </ul>
         )}
+        {/* The government's list for the person's pick of job belongs to the job, not to a step (no
+            official source ties one of its skills to a step), so the panel only counts it and opens it. */}
+        {onOpenJobList ? (
+          <div className="mt-2 text-[11px] text-stone">
+            <p>{job ? words.panel.jobLine(job.label, job.listed, job.marked) : words.panel.noJob}</p>
+            <Pill className="mt-1" size="small" variant="ghost" onClick={onOpenJobList}>
+              {job ? words.panel.openJobList : words.panel.pickJob}
+            </Pill>
+          </div>
+        ) : null}
       </div>
 
       <div>

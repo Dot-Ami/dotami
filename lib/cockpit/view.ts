@@ -1,5 +1,6 @@
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { ConfirmedFigure } from "@/lib/brain/types";
+import type { JobList } from "@/lib/engines/oasis/v2026";
 import { generalRoadV2026, type Road, type SkillItem } from "@/lib/engines/roads/v2026";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM_LABELS, type FigureView } from "@/lib/figures/types";
@@ -53,6 +54,8 @@ export function cockpitInput(args: {
   future: KeptFuture | null;
   progress: readonly { stepId: string; status: StepStatus | null; doneWhenIds: readonly string[] }[];
   skillMarks: readonly { skillItemId: string | null; ownLabel: string | null; mark: SkillMarkValue }[];
+  /** The government's list for the job the person picked (lib/engines/oasis/v2026), or none. */
+  job?: JobList | null;
   today: string;
 }): RoadEvaluationInput {
   const businessKinds: readonly string[] = BUSINESS_TOTAL_KINDS;
@@ -93,6 +96,7 @@ export function cockpitInput(args: {
     confirmedFigures,
     forkPicks,
     skillMarks: args.skillMarks,
+    job: args.job ?? null,
     progress: args.progress,
     agreed: agreedPlanning(args.road.id, args.figures, args.personFigures),
     targetMonth: args.future?.targetMonth ?? null,
@@ -217,7 +221,11 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
 
   const s = g.skills;
   const own = s.addedByYou;
-  const ownLine = own.have + own.learning + own.notYet > 0 ? [words.gauges.skills.own(own.have, own.learning, own.notYet)] : [];
+  // The person's own skills, then the government's list for their pick of job, each on its own line.
+  const ownLine = [
+    ...(own.have + own.learning + own.notYet > 0 ? [words.gauges.skills.own(own.have, own.learning, own.notYet)] : []),
+    ...(s.yourPickOfJob ? [words.gauges.skills.job(s.yourPickOfJob.have, s.yourPickOfJob.learning, s.yourPickOfJob.notYet, s.yourPickOfJob.listed)] : []),
+  ];
   const skills: GaugeLines =
     s.listed === 0
       ? { value: words.gauges.skills.noneListed, lines: ownLine, invite: ownLine.length === 0 ? words.gauges.skills.addOwn : null }

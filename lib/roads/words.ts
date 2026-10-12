@@ -80,6 +80,11 @@ export interface AnswerWords {
 }
 
 export const answer = {
+  job: (label: string): AnswerWords => ({
+    said: `you picked the job closest to your work: ${quoted(label)}`,
+    takenBack: "you took back your pick of job",
+    fact: `your pick of job (${label})`,
+  }),
   skill: (label: string, mark: keyof typeof MARK_WORDS, own: boolean): AnswerWords => {
     const added = own ? ", a skill you added" : "";
     const said =
@@ -222,6 +227,7 @@ export const answer = {
 
 /** Kinds of answer, so three or more changed at once are counted rather than listed one by one. */
 export type AnswerGroup =
+  | "job"
   | "skill"
   | "own-skill"
   | "step"
@@ -304,6 +310,9 @@ export const changed = {
     `the skills now read ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,
   ownSkills: (have: number, learning: number, notYet: number) =>
     `the skills you added now read ${have} have, ${learning} learning, ${notYet} not yet`,
+  job: (label: string | null) => (label === null ? "no job is picked now" : `your pick of job is now ${quoted(label)}`),
+  jobSkills: (label: string, have: number, learning: number, notYet: number, notMarked: number) =>
+    `the government's list for ${quoted(label)} now reads ${have} have, ${learning} learning, ${notYet} not yet, ${notMarked} not marked`,
   officialFees: (cents: number, lines: number) =>
     lines === 0
       ? "no official fee is counted now"
