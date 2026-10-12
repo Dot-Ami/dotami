@@ -335,10 +335,11 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
       expect(step.summary).toBe(node.trigger);
       expect(step.next).toEqual(node.branches);
       expect(step.citations).toEqual(node.citations);
-      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); cost lines, skill
-      // items and official links on them come later, read from the official pages, never made up.
+      // Their done-when lines are written (tests/road-starting-any-business.spec.ts), and so is the one
+      // legal requirement the compliance catalog cites (2026-10-12); cost lines and official links on them
+      // come later, read from the official pages, never made up.
       expect(step.doneWhen.length).toBeGreaterThanOrEqual(3);
-      expect(step.needs).toEqual([]);
+      expect(step.needs).toEqual(node.id === "stage-2b-mandatory-gst-registration" ? ["skill-ca-gst-hst-registration"] : []);
       expect(step.costs).toEqual([]);
       expect(step.officialLinks).toEqual([]);
     });

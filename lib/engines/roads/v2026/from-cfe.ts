@@ -16,8 +16,9 @@ import { newestReadDate } from "./validate";
  * Two optional inputs carry the road's own content, written from the official pages in the road's
  * file rather than in the tax map's catalog: `doneWhen`, the done-when lines for a step by its id, and
  * `addedSteps`, steps that aren't map stages (road 0's "before you open" steps), each placed in a
- * column after that column's stages. Cost lines, skill items and official links on the map stages
- * start empty; nothing is filled in here that a page didn't say.
+ * column after that column's stages. Since 2026-10-12, `needs` gives a map stage the legal requirements
+ * its road's file writes for it. Cost lines and official links on the map stages start empty; nothing is
+ * filled in here that a page didn't say.
  */
 export function roadFromCfe(input: {
   id: string;
@@ -30,6 +31,8 @@ export function roadFromCfe(input: {
   /** The rules and tax cards each step names, by step id (a step left out names none). */
   engineHints?: Readonly<Record<string, readonly string[]>>;
   doneWhen?: Readonly<Record<string, readonly DoneWhenLine[]>>;
+  /** The skill items (legal requirements) a map stage needs, by step id; the items are on the shared list. */
+  needs?: Readonly<Record<string, readonly string[]>>;
   addedSteps?: readonly { columnId: string; step: RoadStep }[];
 }): Road {
   const added = input.addedSteps ?? [];
@@ -56,7 +59,7 @@ export function roadFromCfe(input: {
         summary: node.trigger,
         next: [...node.branches],
         doneWhen: [...(input.doneWhen?.[node.id] ?? [])],
-        needs: [],
+        needs: [...(input.needs?.[node.id] ?? [])],
         costs: [],
         officialLinks: [],
         citations: [...node.citations],

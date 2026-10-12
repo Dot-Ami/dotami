@@ -1,8 +1,9 @@
 import { cfeNodesV2026, type CFENodeId } from "../../cfe/v2026/nodes";
 import { cfeTiersV2026 } from "../../cfe/v2026/tiers";
+import { complianceRulesV2026 } from "../../compliance/v2026/rules";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import { roadFromCfe } from "./from-cfe";
-import type { DoneWhenLine, NamedCostLine, RoadStep } from "./types";
+import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
 
 /**
  * Road 0: today's ten-step map as a road (docs/architecture/future-cockpit.md § 6). Every saved
@@ -751,6 +752,34 @@ const businessAccount: RoadStep = {
   ],
 };
 
+// ---- Legal requirements, from the compliance catalog where it cites one ----------------------------
+
+/**
+ * A legal requirement made from a compliance entry: the entry's own citations, unchanged, so the
+ * requirement says no more than the catalog already cites (docs/architecture/future-cockpit.md § 6,
+ * "Skills, and the government's list for your pick of job, as built"). Throws if the entry is gone, so
+ * a renamed entry can't leave a requirement with no source.
+ */
+function fromCompliance(id: string, label: string, ruleId: string): SkillItem {
+  const rule = complianceRulesV2026.find((r) => r.id === ruleId);
+  if (!rule) throw new Error(`road 0: no compliance entry ${ruleId} for ${id}`);
+  return { id, label, kind: "legal-requirement", citations: [...rule.citations] };
+}
+
+const SKILL_GST_HST_REGISTRATION = "skill-ca-gst-hst-registration";
+
+/**
+ * Road 0's legal requirements. Only one of its steps has one the compliance catalog cites: once a small
+ * supplier is over either of the CRA's $30,000 tests, "You must register for the GST/HST." (a quote the
+ * tool found on the CRA's page, in that entry's citation). The entry is already one of the step's cards.
+ * Left out on purpose: the payroll and WCB-Alberta accounts (no compliance entry cites them; the hire-first
+ * step's done-when lines do), Alberta trades licensing (no road 0 step; some trades only), voluntary
+ * registration (a choice), and the ride-share rule (the same registration, a card on the same step).
+ */
+export const skillItemsStartingAnyBusinessAB: readonly SkillItem[] = [
+  fromCompliance(SKILL_GST_HST_REGISTRATION, "A GST/HST registration with the Canada Revenue Agency", "compliance-gst-small-supplier"),
+];
+
 // ---- The road ------------------------------------------------------------------------------------
 
 export const roadStartingAnyBusinessAB = roadFromCfe({
@@ -794,6 +823,7 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
     "branch-hire-first-employee": ["writeoff-vehicle"],
   },
   doneWhen: stageDoneWhen,
+  needs: { "stage-2b-mandatory-gst-registration": [SKILL_GST_HST_REGISTRATION] },
   addedSteps: [
     { columnId: "tier-1-before", step: registerName },
     { columnId: "tier-1-before", step: permitsBizpal },

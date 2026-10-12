@@ -72,7 +72,8 @@ describe("the jobs a person can pick", () => {
 });
 
 describe("the list for a picked job", () => {
-  it("every item of every job carries the tag 'your pick of job' and the dataset's citation, and nothing else", () => {
+  // Slow on purpose: it walks all 900 jobs' lists, about 25,000 items, checking each one's citation.
+  it("every item of every job carries the tag 'your pick of job' and the dataset's citation, and nothing else", { timeout: 30_000 }, () => {
     let items = 0;
     for (const job of oasisJobs) {
       const list = oasisListForJob(job.code)!;
@@ -111,7 +112,7 @@ describe("the list for a picked job", () => {
     const labels = list.items.map((i) => i.label);
     expect(labels).toEqual(expect.arrayContaining(["Numeracy", "Equipment and Tool Selection", "Building and Construction", "Mathematics"]));
     // Rated 0, "Not applicable" on the government's own profile: left out.
-    for (const left of ["Digital Literacy", "Digital Systems Production", "Accounting", "Physics"]) expect(labels).not.toContain(left);
+    for (const left of ["Digital Literacy", "Digital Systems Production", "Accounting", "Law"]) expect(labels).not.toContain(left);
     expect(labels[0]).toBe("Oral Communication: Active Listening");
     // The dataset's own order, never by rating.
     const order = list.items.map((i) => oasisItemIds.indexOf(i.id));

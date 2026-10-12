@@ -27,6 +27,7 @@ const SECTIONS: readonly { kind: NoticeKind; id: string; title: string; blurb: s
       "Code a package above carries inside itself (Next.js ships its own copies of these). Where that package includes no licence file for a copy, the entry says so.",
   },
   { kind: "font", id: "fonts", title: "Fonts", blurb: "The fonts the pages are set in." },
+  { kind: "data", id: "data", title: "Data", blurb: "Information written by others that DotAmi shows, with the licence it comes under." },
 ];
 
 /**
