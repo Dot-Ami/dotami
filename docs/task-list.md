@@ -373,6 +373,10 @@ roadmap's build order.
       opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
+  - [ ] Words typed into the *Your expenses* form before the page has finished loading are emptied
+    when it loads (found 2026-10-11 by the review of the front page's same fix; only on a reload or a
+    typed address). The front page's way, reading what is already in each box as the page loads, with
+    its own browser test that holds the page's scripts back
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -494,6 +498,9 @@ roadmap's build order.
     only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
+  - [x] The desktop test types into the front page only once it has finished loading, and words a
+    person types before then are kept by the page (a browser test holds the page's scripts back) —
+    2026-10-11; the desktop test had failed on CI three times in about 15 hours with "Map it" greyed out
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — planned for before the first
   download; the first installer (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
   then the privacy log below is the record of what each version keeps, sends, ships and asks.
