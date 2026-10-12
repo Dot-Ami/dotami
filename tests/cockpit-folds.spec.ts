@@ -23,7 +23,7 @@ import {
   readFolds,
   writeFolds,
 } from "@/lib/cockpit/folds";
-import { FIRST_OVERLAYS } from "@/lib/cockpit/view";
+import { FIRST_OVERLAYS, gaugeView } from "@/lib/cockpit/view";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 import { evaluateRoad } from "@/lib/roads";
@@ -33,6 +33,10 @@ import { input, inventedIdea, roadToEvaluate } from "./helpers/road-to-evaluate"
 import { MAP_TODAY, mapCases } from "./helpers/strategy-map-cases";
 
 const words = cockpitWords.folds;
+
+/** Text as React writes it inside an attribute. */
+const escapeAttribute = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** A stand-in for the browser's localStorage, holding strings like the real one. */
 function fakeStorage(initial: Record<string, string> = {}) {
@@ -151,15 +155,36 @@ describe("the goal bar folds to one line that keeps the four gauges", () => {
 
   it("folded: one line with the four gauges as buttons (name and value), and a button to show it again", () => {
     const html = draw(true);
-    expect(html).toContain(`>${words.goal.show}<`);
-    expect(html).toContain('aria-expanded="false"');
-    expect(html).not.toContain(`>${words.goal.fold}<`);
+    // The one line is everything before the open bar, which follows it hidden.
+    const line = html.split(/<div[^>]*hidden=""/)[0]!;
+    expect(line).toContain(`>${words.goal.show}<`);
+    expect(line).toContain('aria-expanded="false"');
+    expect(line).not.toContain(`>${words.goal.fold}<`);
     // The four gauges are still there and still pressable.
-    expect(html.match(/aria-pressed="false"/g)?.length).toBe(4);
-    for (const label of ["Steps", "Skills", "Start-up money", "Your date"]) expect(html).toContain(label);
-    // The sentence and the lines under each gauge are in the open bar only.
-    expect(html).not.toContain("“My own small shop (invented)”");
-    expect(html).not.toContain("your words · 2026-10-10");
+    expect(line.match(/aria-pressed="false"/g)?.length).toBe(4);
+    for (const label of ["Steps", "Skills", "Start-up money", "Your date"]) expect(line).toContain(label);
+    // The sentence and the lines under each gauge are not in the one line.
+    expect(line).not.toContain("“My own small shop (invented)”");
+    expect(line).not.toContain("your words · 2026-10-10");
+  });
+
+  it("folded: the open bar stays on the page, hidden, not removed (the same as the rail, the panel and the legend)", () => {
+    const html = draw(true);
+    expect(html).toMatch(/<div[^>]*hidden=""[^>]*>.*“My own small shop \(invented\)”/);
+    expect(html).toMatch(/<div[^>]*hidden=""[^>]*>.*your words · 2026-10-10/);
+    // Open, nothing in it is hidden.
+    expect(draw(false)).not.toContain('hidden=""');
+  });
+
+  it("folded: each gauge's button carries the lines it leaves out, in its title", () => {
+    const view = gaugeView(evaluateRoad(input()), roadToEvaluate(), inventedIdea());
+    const html = draw(true);
+    for (const id of ["steps", "skills", "money", "date"] as const) {
+      const title = [view[id].value, ...view[id].lines].join(" · ");
+      expect(html, id).toContain(`title="${escapeAttribute(title)}"`);
+    }
+    // The money gauge has lines that qualify its value, so the check above is not empty.
+    expect(view.money.lines.length).toBeGreaterThan(0);
   });
 
   it("drawn without a fold (as other tests and screens draw it), it has no fold button", () => {

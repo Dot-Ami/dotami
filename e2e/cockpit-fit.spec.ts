@@ -7,7 +7,10 @@
  * - at 1280x720 with every panel folded, each stage card and each rules and tax card on the road is fully
  *   inside the window once the road's own area is scrolled to it;
  * - at 375x812 the page never scrolls sideways, the road scrolls inside its own area, and a step opens as
- *   a full-width sheet and closes.
+ *   a full-width sheet and closes;
+ * - the keyboard: folding a region leaves focus on the button that now stands for it, and on a phone a
+ *   sheet takes focus, keeps Tab inside it, closes on Escape and gives focus back;
+ * - nothing the cockpit draws over the page covers a button or the page's last line.
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -45,6 +48,17 @@ const stage = (page: Page, name: string) => page.getByRole("button", { name: new
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const road = (page: Page) => page.getByRole("region", { name: "The road" });
 const button = (page: Page, name: string) => page.getByRole("button", { name, exact: true });
+
+/** True when a click at the element's centre would land on it: nothing is drawn over it there. */
+const onTop = (target: Locator) =>
+  target.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return hit !== null && el.contains(hit);
+  });
+
+/** True when the focused element is inside the element. */
+const holdsFocus = (target: Locator) => target.evaluate((el) => el.contains(document.activeElement));
 
 /** The page itself never scrolls sideways (the road's own area may). */
 const noSidewaysScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
@@ -181,6 +195,60 @@ test("at 1280x720 with every panel folded, every card on the road fits in the wi
   expect(await noSidewaysScroll(page)).toBe(true);
 });
 
+test("folding or showing a region from the keyboard leaves focus on the button that now stands for it, and the rail keeps its place", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — focus test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await expect(road(page)).toBeVisible();
+
+  // With no panel open, "Fold all panels" names only regions that are on the page.
+  const named = async () => (await button(page, "Fold all panels").getAttribute("aria-controls"))!.split(" ");
+  expect(await named()).not.toContain("cockpit-panel");
+  for (const id of await named()) await expect(page.locator(`#${id}`), id).toHaveCount(1);
+
+  await stage(page, "Sole Prop activation").click();
+  await expect(stepPanel(page)).toBeVisible();
+  expect(await named()).toContain("cockpit-panel");
+
+  const pairs: [string, string][] = [
+    ["Fold venture details", "Show venture details"],
+    ["Fold goal and gauges", "Show goal and gauges"],
+    ["Fold the panel", "Show the panel: Sole Prop activation"],
+    ["Fold the legend", "Show the legend"],
+  ];
+  for (const [foldName, showName] of pairs) {
+    await button(page, foldName).focus();
+    await page.keyboard.press("Enter");
+    await expect(button(page, showName), `after ${foldName}`).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(button(page, foldName), `after ${showName}`).toBeFocused();
+  }
+
+  // The rail comes back scrolled where it was.
+  const rail = page.getByRole("complementary", { name: "Venture details" });
+  const scrolled = await rail.evaluate((el) => {
+    el.scrollTop = 200;
+    return el.scrollTop;
+  });
+  expect(scrolled).toBeGreaterThan(0);
+  await button(page, "Fold all panels").click();
+  await button(page, "Show all panels").click();
+  await expect(button(page, "Fold venture details")).toBeVisible();
+  expect(await rail.evaluate((el) => el.scrollTop)).toBe(scrolled);
+});
+
+test("between 768 and 1023 px, a step's drawer leaves the header's buttons free to click", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  const ventureId = await saveIdea(page, "Invented — tablet test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await stage(page, "Sole Prop activation").click();
+  await expect(stepPanel(page)).toBeVisible();
+
+  for (const name of ["Export", "Fold all panels"]) expect(await onTop(button(page, name)), name).toBe(true);
+  // A real click, which Playwright refuses while something else would receive it.
+  await button(page, "Fold all panels").click({ timeout: 2_000 });
+  await expect(button(page, "Show all panels")).toBeVisible();
+});
+
 test.describe("phone width (issue #4)", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
@@ -226,5 +294,68 @@ test.describe("phone width (issue #4)", () => {
     await button(page, "Close venture details").click();
     await expect(rail.getByText("In your words", { exact: true })).toBeHidden();
     expect(await noSidewaysScroll(page)).toBe(true);
+  });
+
+  test("at 375x812 a sheet takes the keyboard: focus goes into it, Tab stays in it, Escape closes it and focus goes back", async ({ page }) => {
+    const ventureId = await saveIdea(page, "Invented — phone keyboard test");
+    await page.goto(`/cockpit?venture=${ventureId}`);
+    await expect(road(page)).toBeVisible();
+
+    // The venture details sheet.
+    const rail = page.getByRole("complementary", { name: "Venture details" });
+    await button(page, "Venture details").focus();
+    await page.keyboard.press("Enter");
+    await expect(button(page, "Close venture details")).toBeFocused();
+    for (let i = 1; i <= 30; i++) {
+      await page.keyboard.press(i % 3 === 0 ? "Shift+Tab" : "Tab");
+      expect(await holdsFocus(rail), `rail, key ${i}`).toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await expect(rail.getByText("In your words", { exact: true })).toBeHidden();
+    await expect(button(page, "Venture details")).toBeFocused();
+
+    // Its Close gives focus back too.
+    await page.keyboard.press("Enter");
+    await expect(button(page, "Close venture details")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(button(page, "Venture details")).toBeFocused();
+
+    // A step's sheet.
+    const card = stage(page, "Sole Prop activation");
+    const panel = page.locator("#cockpit-panel");
+    await card.focus();
+    await page.keyboard.press("Enter");
+    await expect(stepPanel(page)).toBeVisible();
+    expect(await holdsFocus(panel)).toBe(true);
+    for (let i = 1; i <= 30; i++) {
+      await page.keyboard.press(i % 3 === 0 ? "Shift+Tab" : "Tab");
+      expect(await holdsFocus(panel), `step sheet, key ${i}`).toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await expect(stepPanel(page)).toHaveCount(0);
+    await expect(card).toBeFocused();
+  });
+
+  test("at 375x812 the folded panel's bar is a full-width button and never covers the page's last line", async ({ page }) => {
+    const ventureId = await saveIdea(page, "Invented — phone bar test");
+    await page.goto(`/cockpit?venture=${ventureId}`);
+    await stage(page, "Sole Prop activation").click();
+    await button(page, "Fold the panel").click();
+    const bar = button(page, "Show the panel: Sole Prop activation");
+    const box = (await bar.boundingBox())!;
+    expect(Math.round(box.width)).toBe(375);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+
+    // Scrolled to the very bottom, the disclaimer line is not under the bar.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const footerLink = page.getByRole("link", { name: "open source on GitHub" });
+    expect(await onTop(footerLink)).toBe(true);
+    expect(await onTop(page.getByText(/^Information, not legal or tax advice/))).toBe(true);
+
+    // The fold buttons are at least 32 px tall on a phone.
+    for (const name of ["Fold goal and gauges", "Fold the legend"]) {
+      const b = (await button(page, name).boundingBox())!;
+      expect(b.height, name).toBeGreaterThanOrEqual(32);
+    }
   });
 });
