@@ -150,10 +150,10 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await page.goto(`/cockpit?venture=${ventureId}`);
 
   const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
-  // The defaults: waiting for the $30K line applies as answered; Incorporating is "check first",
-  // though the third-year estimate is $500,000.
-  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, applies as answered, opens detail$/);
-  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, your pick, check first, opens detail");
+  // The defaults: the mandatory GST/HST card applies as answered; Incorporating is "check first",
+  // though the third-year estimate is $500,000. Neither toggle was clicked, so both say "default".
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, default, applies as answered, opens detail$/);
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, check first, opens detail");
   await expect(page.getByText("DotAmi doesn't pick a point to incorporate. You do, with your accountant or lawyer.").first()).toBeVisible();
 
   // Flip GST timing: the voluntary card is now the one that applies, and the other one is a fork.
@@ -165,6 +165,76 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await page.getByRole("button", { name: "Liability / SR&ED", exact: true }).click();
   await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, not on your path, doesn't apply as answered, opens detail");
   await expect(stage("Incorporation for liability/SR&ED")).toHaveAccessibleName(/, your pick, check first, opens detail$/);
+});
+
+// 2026-10-11: the honest map. The GST/HST card quotes the CRA's two tests instead of a 70% line of
+// DotAmi's own; Incorporating shows the federal and Alberta routes from their own pages and lights only
+// from the person's own "I'd incorporate at $___"; Liability / SR&ED says which answer lit it.
+test("the map quotes the CRA, shows both ways to incorporate, and lights Incorporating only from your own number", async ({ page }) => {
+  // An invented Alberta idea: first-year estimate $25,000 (inside the old 70% band), third year $150,000.
+  const scenario = {
+    id: `honest-${Date.now()}`,
+    profile: {
+      name: "Invented — honest map test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 25_000,
+      targetRevenueY3: 150_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "self-employed",
+      hireFirst: false,
+      activityTags: ["Software / SaaS"],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
+
+  // $25,000 is under both CRA tests: the voluntary card nobody picked stays grey (the old 70% line lit it).
+  await expect(stage("Voluntary GST registration")).toHaveAccessibleName(/, not on your path, doesn't apply as answered, opens detail$/);
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, default, check first, opens detail$/);
+  await stage("Mandatory GST registration").click();
+  const panel = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Mandatory GST registration" }) });
+  await expect(panel.getByText("You exceed the $30,000 threshold in a single calendar quarter.").first()).toBeVisible();
+  await expect(
+    panel
+      .getByText("You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter).")
+      .first(),
+  ).toBeVisible();
+  await expect(page.getByText(/approach/i)).toHaveCount(0);
+
+  // Liability / SR&ED says which answer lit it.
+  await expect(page.getByText("your intake has the activity tag Software / SaaS", { exact: false }).first()).toBeVisible();
+
+  // Incorporating: both routes, the federal fee read on its page, Alberta's fees as named blanks.
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, check first, opens detail");
+  await stage("Incorporating").click();
+  const inc = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Incorporating" }) });
+  await expect(inc.getByRole("heading", { name: "Federal (Corporations Canada)" })).toBeVisible();
+  await expect(inc.getByRole("heading", { name: "Alberta (Corporate Registry)" })).toBeVisible();
+  await expect(inc.getByText("It will cost $200 and will take 1 day.", { exact: false }).first()).toBeVisible();
+  await expect(inc.getByText(/no amount read/i).first()).toBeVisible();
+
+  // The person's own number lights it; DotAmi never does.
+  const own = inc.getByLabel("I'd incorporate at");
+  await expect(own).toHaveValue("");
+  await own.fill("100000");
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, applies as answered, opens detail");
+  await expect(page.getByText("reaches your own number ($100,000)", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+
+  // Kept with the idea: a fresh load shows the number and the same colour.
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, applies as answered, opens detail");
+  await stage("Incorporating").click();
+  await expect(page.getByLabel("I'd incorporate at")).toHaveValue("100000");
 });
 
 test("a stage change on the ideas page survives a reload", async ({ page }) => {

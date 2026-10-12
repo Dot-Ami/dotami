@@ -68,6 +68,19 @@ describe("database round trip (SQLite)", () => {
     expect(scenario.state.activeNodeIds.length).toBeGreaterThan(0);
   });
 
+  // 2026-10-11: the person's own "I'd incorporate at $___" is kept with the idea's branch picks, in the
+  // same JSON column, and read back as a separate answer, never as a branch pick.
+  it("keeps the person's own incorporation number with the idea's map answers, and can clear it", async () => {
+    const scenario = { ...demoScenarios[1], state: { ...demoScenarios[1].state, incorporateAt: 125_000 } };
+    const { ventureId } = await ensureVentureFromScenario(prisma, scenario);
+    const loaded = await loadVentureScenarioById(prisma, ventureId);
+    expect(loaded!.state.incorporateAt).toBe(125_000);
+    expect(loaded!.state.activeBranches).toEqual(demoScenarios[1].state.activeBranches);
+
+    await ensureVentureFromScenario(prisma, { ...scenario, state: { ...scenario.state, incorporateAt: null } });
+    expect((await loadVentureScenarioById(prisma, ventureId))!.state.incorporateAt ?? null).toBeNull();
+  });
+
   it("saving the same scenario twice updates it instead of adding a second row", async () => {
     await ensureVentureFromScenario(prisma, demoScenarios[0]);
     await ensureVentureFromScenario(prisma, demoScenarios[0]);
