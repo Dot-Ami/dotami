@@ -28,7 +28,8 @@ The first intake screen. Renders the intent parse of whatever the user typed as
     `intake.ventureType`).
   - **Activity** — `ACTIVITY_TAXONOMY` tags, toggleable (`toggleTag`); an "add your own"
     input appends to `intake.customTags` on Enter (kept for display; not matched against
-    any engine catalog).
+    any engine catalog). A screen reader names it "Add your own kind of work" (`aria-label`,
+    since 2026-10-12; before, only its placeholder named it).
   - **Goals** — 4 fixed chips (`GOAL_CHIPS`: write-offs, replace-income, scale-ccpc,
     discover-now), toggleable (`toggleGoal`).
   - **Also picked up** — capital-purchase toggle (same field Screen B also edits — see

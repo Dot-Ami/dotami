@@ -268,7 +268,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
 - **A screen reader names the intake's province and employment dropdowns.** Their names ("Province /
   territory", "Current employment") were plain text tied to nothing, so the dropdowns had no name;
-  they are now labels tied to their fields, and so is "Name it — optional" for the name box
+  they are now labels tied to their fields, and so is "Name it — optional" for the name box; the
+  "add your own" kind-of-work box and the box "Other…" opens, named only by their placeholders, now
+  have names of their own
   ([`components/discovery/intake-page.tsx`](components/discovery/intake-page.tsx) `FieldGroup`; the
   browser test finds both dropdowns by their names).
 - **The desktop app's log no longer keeps whole error messages from a failed update check, backup or

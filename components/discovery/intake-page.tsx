@@ -299,6 +299,7 @@ export function IntakePage() {
                       ))}
                     </div>
                     <input
+                      aria-label="Add your own kind of work"
                       placeholder="Add your own — press Enter"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -421,6 +422,7 @@ export function IntakePage() {
                         onChange={(e) =>
                           setIntake((p) => ({ ...p, employmentOther: e.target.value }))
                         }
+                        aria-label="Your employment, in your words"
                         placeholder="Tell us in your words"
                         className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                       />

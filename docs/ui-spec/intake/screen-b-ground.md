@@ -32,7 +32,9 @@ straight to the cockpit.
   employee, self-employed, business-owner, apprentice/student, retired, unemployed,
   other. Choosing **Other…** reveals a free-text input backed by a `<datalist>` cached in
   `localStorage` (`dotami-employment-suggestions`, key persists across sessions/tabs —
-  the one piece of intake state that outlives `sessionStorage`).
+  the one piece of intake state that outlives `sessionStorage`). A screen reader names that box
+  "Your employment, in your words" (`aria-label`, since 2026-10-12; before, only its placeholder,
+  "Tell us in your words", named it).
 - **Name it — optional (added 2026-09-13, S2.5.4d)** — text input (max 80) → `intake.name`.
   Resolves the 2026-07-02 open question ("`intake.name` has no editable UI control"). At
   submit the venture name is `intake.name.trim() || "My venture"` — the parse's `rawLabel`
