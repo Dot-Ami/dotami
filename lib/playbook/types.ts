@@ -1,13 +1,14 @@
+import type { CitationCheck } from "@/lib/engines/shared/types";
 import type { VentureProfile } from "@/lib/scenarios/types";
 
-export interface PlaybookCitationRef {
+/** A source in the export, with how it was checked (docs/engines/citations.md). */
+export type PlaybookCitationRef = {
   title: string;
   authority: string;
   jurisdiction: string;
   url: string;
-  lastVerified: string;
   note: string;
-}
+} & CitationCheck;
 
 export interface PlaybookNodeSlice {
   nodeId: string;

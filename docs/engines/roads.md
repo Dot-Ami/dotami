@@ -23,11 +23,15 @@ The first written future, *From apprentice to your own shop (Alberta)*, joins la
 1. **Every step is cited.** At least one citation per step, and each *done when* line carries its own:
    the page that says that line, read by a person. A step with no citation, or a *done when* line
    without one, fails the checks.
-2. **A citation is an https page with a real read date** (`lastVerified`, `YYYY-MM-DD`, a day that
-   exists). It is the day a person read the page, never the day the file was edited, so it can't be a
-   day that hasn't come yet (the checks take "today" as the newest date anywhere on Earth). The road's
-   own `lastVerified` must be the newest read date in it; road 0's is worked out from its nodes. A
-   step's official links (pages the person opens themselves) must be https pages too.
+2. **A citation is an https page, checked the way every catalog's citations are**
+   ([citations.md](./citations.md)): a real read date (`lastVerified`, `YYYY-MM-DD`, a day that
+   exists, with `readBy` when who read it is on record), a tool check (`toolCheck`) with its quotes,
+   or both. A read date is the day the page was read, never the day the file was edited, so it can't
+   be a day that hasn't come yet (the checks take "today" as the newest date anywhere on Earth). The
+   road's own `lastVerified` must be the newest read date in it (a tool check is not a read); road 0's
+   is worked out from its nodes. A step's official links (pages the person opens themselves) must be
+   https pages too. Screens say how each source was checked in the same words as everywhere else
+   (`howCheckedWords`, `lib/engines/shared/citation-check.ts`).
 3. **Ids are forever.** Road, column, step, fork, *done when* line and cost line ids are what a
    person's progress, ticks, quotes and picks are kept against. Rename labels freely; never an id.
    Every id must be unique within its road. `tests/roads.spec.ts` keeps the list of every road,

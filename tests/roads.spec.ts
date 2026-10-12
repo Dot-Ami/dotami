@@ -176,7 +176,7 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
 
   it("a citation with no real read date", () => {
     expect(broken((r) => (r.steps[1]!.citations[0]!.lastVerified = "2026-02-30"))).toEqual([
-      'A citation on step "step-invented-employed" has no real read date: "2026-02-30".',
+      'A citation on step "step-invented-employed": read date "2026-02-30" is not a real day written YYYY-MM-DD.',
     ]);
   });
 
@@ -187,10 +187,15 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
         r.steps[1]!.citations[0]!.lastVerified = "2099-01-01";
         r.lastVerified = "2099-01-01";
       }),
-    ).toEqual(['A citation on step "step-invented-employed" says it was read on 2099-01-01, a day that hasn\'t come yet.']);
+    ).toEqual([
+      // The same words as every catalog's check (lib/engines/shared/citation-check.ts); today is the clock's.
+      expect.stringMatching(/^A citation on step "step-invented-employed": read date 2099-01-01 is after today \(\d{4}-\d{2}-\d{2}\)\.$/),
+    ]);
     expect(
       skillItemProblems([{ ...inventedSkillItems[0]!, citations: [inventedCitation("2099-01-01")] }]),
-    ).toEqual(['A citation on skill item "skill-invented-ticket" says it was read on 2099-01-01, a day that hasn\'t come yet.']);
+    ).toEqual([
+      expect.stringMatching(/^A citation on skill item "skill-invented-ticket": read date 2099-01-01 is after today \(\d{4}-\d{2}-\d{2}\)\.$/),
+    ]);
   });
 
   it("'today' is the newest date anywhere on Earth, so a reader east of UTC isn't refused their own today", () => {
@@ -198,8 +203,8 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
     const road = inventedRoad(); // its newest read date is 2026-10-02
     expect(roadProblems(road, inventedSkillItems, new Date("2026-10-01T10:00:00Z"))).toEqual([]);
     expect(roadProblems(road, inventedSkillItems, new Date("2026-10-01T09:59:00Z"))).toEqual([
-      'A citation on done-when line "dw-invented-1" says it was read on 2026-10-02, a day that hasn\'t come yet.',
-      'A citation on step "step-invented-own" says it was read on 2026-10-02, a day that hasn\'t come yet.',
+      'A citation on done-when line "dw-invented-1": read date 2026-10-02 is after today (2026-10-01).',
+      'A citation on step "step-invented-own": read date 2026-10-02 is after today (2026-10-01).',
     ]);
   });
 
@@ -300,7 +305,18 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
     expect(skillItemProblems([item!, item!])).toEqual(['The skill item id "skill-invented-ticket" is used twice.']);
     expect(
       skillItemProblems([{ ...item!, howToGetIt: { text: "x", citation: inventedCitation("someday") } }]),
-    ).toEqual(['A citation on skill item "skill-invented-ticket" has no real read date: "someday".']);
+    ).toEqual(['A citation on skill item "skill-invented-ticket": read date "someday" is not a real day written YYYY-MM-DD.']);
+  });
+
+  it("a source checked by a tool instead of read passes when its check is whole, and a broken one is refused", () => {
+    // docs/engines/citations.md: a read, a tool check, or both. A tool check is not a read, so it
+    // doesn't date the road (its newest read stays 2026-10-02).
+    const toolChecked = (quotes: string[]) => (r: Road) => {
+      const { title, authority, jurisdiction, url, note } = r.steps[1]!.citations[0]!;
+      r.steps[1]!.citations[0] = { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: "2026-10-01", quotes } };
+    };
+    expect(broken(toolChecked(["words found on the invented page"]))).toEqual([]);
+    expect(broken(toolChecked([]))).toEqual(['A citation on step "step-invented-employed": tool check has no quote.']);
   });
 });
 

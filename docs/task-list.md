@@ -147,6 +147,9 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] The server leaves out what it never loads: sharp with libvips (LGPL) and the TypeScript compiler,
     with what only they pull in (about 30 MB; the build stops if something still needs one, a desktop
     test fails if one comes back)
+  - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
+    data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
+    earlier; a desktop test checks it); reaches installed copies with the next release
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -396,6 +399,10 @@ roadmap's build order.
       opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
+  - [ ] Words typed into the *Your expenses* form before the page has finished loading are emptied
+    when it loads (found 2026-10-11 by the review of the front page's same fix; only on a reload or a
+    typed address). The front page's way, reading what is already in each box as the page loads, with
+    its own browser test that holds the page's scripts back
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -443,6 +450,11 @@ roadmap's build order.
   (2026-10-11: the road type in [14a] is the first part; the contributor files and the checker are [14d])
 - ⬜ **[11b] Check sources against the law's own words** — a model quotes, code checks the quote
   appears word for word in the official text, a person decides.
+  - [x] The record and the code check (2026-10-11, the maintainer's option B): a citation may carry a
+    tool check (the day and the quotes) instead of, or as well as, a read; every card says which
+    ("Read by a person on …" only when a person is recorded as the reader, "Read on …" otherwise, or
+    "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
+  - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
@@ -517,6 +529,9 @@ roadmap's build order.
     only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
+  - [x] The desktop test types into the front page only once it has finished loading, and words a
+    person types before then are kept by the page (a browser test holds the page's scripts back) —
+    2026-10-11; the desktop test had failed on CI three times in about 15 hours with "Map it" greyed out
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — planned for before the first
   download; the first installer (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
   then the privacy log below is the record of what each version keeps, sends, ships and asks.
