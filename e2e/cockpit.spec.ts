@@ -195,3 +195,33 @@ test("a done-when line ticked and a quote agreed on a step are kept after a relo
   await stage(page, costStep.label).click();
   await expect(stepPanel(page).getByRole("listitem").filter({ hasText: costLine.label })).toContainText("$3,400");
 });
+
+// A box shows the person's click at once, while the save is on its way, and goes back with the reason
+// when the save is refused: it never stays ticked over a refusal, and never ignores the click.
+test("a tick shows as soon as it is clicked, and a refused tick is taken back with the reason", async ({ page }) => {
+  test.skip(!withLines, "No shipped road has a “done when” line yet.");
+  const road = withLines!;
+  const ventureId = await saveIdea(page, "Invented — refused tick test");
+  await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
+  const lineStep = road.steps.find((s) => s.doneWhen.length > 0)!;
+
+  // The save is held until the box has been looked at, then refused the way the server refuses one.
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/futures/*/progress", async (route) => {
+    await held;
+    await route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ error: "Refused for this test." }) });
+  });
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  await stage(page, lineStep.label).click();
+  const box = stepPanel(page).getByRole("checkbox", { name: lineStep.doneWhen[0]!.text });
+  await box.click();
+  await expect(box).toBeChecked();
+  await expect(box).toBeDisabled();
+  release();
+  await expect(stepPanel(page).getByRole("alert")).toHaveText("Refused for this test.");
+  await expect(box).not.toBeChecked();
+  await expect(box).toBeEnabled();
+  await expect(stepPanel(page).getByText(`0 of ${lineStep.doneWhen.length} ticked`)).toBeVisible();
+});

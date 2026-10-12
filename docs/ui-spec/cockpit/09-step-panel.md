@@ -26,8 +26,10 @@ The sections, in order:
 3. **Your status** — **Doing**, **Done**, **Not for me**, each `aria-pressed`. Pressing one saves it;
    pressing the one that is on takes it back (*Press the one that is on to take it back.*).
 4. **Done when** — each line of the step with a checkbox, its words as the box's label, and its citation
-   under it; *1 of 2 ticked*. Ticking or unticking saves at once. Empty: *No “done when” lines are written
-   for this step yet.*
+   under it; *1 of 2 ticked*. Ticking or unticking saves at once: the box shows the click straight away
+   and the boxes wait (disabled) until the save is read back; a refused save puts the box back as kept and
+   shows the reason above, so a box never stays ticked over a refusal. The count is what is kept. Empty:
+   *No “done when” lines are written for this step yet.*
 5. **Skills it needs** — each skill item the step lists: its name (a button that selects it and dims the
    steps that don't list it), its kind (*legal requirement* or *listed skill*), **Have**, **Learning**,
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
