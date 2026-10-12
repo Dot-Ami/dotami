@@ -139,6 +139,12 @@ export interface ToldAnswer extends AnswerWords {
    * "What you've told DotAmi" list shows only the given ones.
    */
   given: boolean;
+  /**
+   * True on a mark on an item of the government's list for the picked job (and only there). Such a
+   * mark is read here only while its job is picked, but it is kept whatever the pick is, so when the
+   * pick changes a receipt doesn't count it coming into or out of view as given or taken back.
+   */
+  onJobList?: true;
 }
 
 export interface RoadGauges {
@@ -585,7 +591,8 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
   const stepById = new Map(road.steps.map((s) => [s.id, s]));
   // The items this road lists, and those on the government's list for the person's pick of job.
   const jobItems = input.job?.items ?? [];
-  const listed = new Set([...road.steps.flatMap((s) => s.needs), ...jobItems.map((item) => item.id)]);
+  const onRoad = new Set(road.steps.flatMap((s) => s.needs));
+  const listed = new Set([...onRoad, ...jobItems.map((item) => item.id)]);
   const itemLabel = new Map([...input.skillItems, ...jobItems].map((item) => [item.id, item.label]));
 
   for (const fork of road.forks) {
@@ -601,7 +608,9 @@ function personAnswers(input: RoadEvaluationInput, road: Road): ToldAnswer[] {
       // Only items this road or the picked job's list has: a mark on another road's item changes nothing here.
       if (!listed.has(mark.skillItemId)) continue;
       const label = itemLabel.get(mark.skillItemId) ?? mark.skillItemId;
-      out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false) });
+      // Read here only because of the pick of job (not one of the road's own items): say so, for the receipts.
+      const onJobList = onRoad.has(mark.skillItemId) ? {} : { onJobList: true as const };
+      out.push({ id: `skill:${mark.skillItemId}`, group: "skill", ...answer.skill(label, mark.mark, false), ...onJobList });
     } else if (mark.ownLabel !== null) {
       // One skill whatever its capital letters, as the storage keeps it.
       out.push({ id: `own-skill:${mark.ownLabel.toLocaleLowerCase()}`, group: "own-skill", ...answer.skill(mark.ownLabel, mark.mark, true) });

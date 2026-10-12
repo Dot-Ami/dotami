@@ -11,7 +11,8 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 Clicking the Skills, Start-up money or Your date gauge opens one of these in the right-hand panel, in
 place of a step, each a region named by its title with a × button named *Close*:
 
-- **Skills on this road**: every skill item the road lists, once, in the order the road first needs it,
+- **Skills on this road**: under the heading *On this road's steps* (so the job's list below never reads
+  as the road's), every skill item the road lists, once, in the order the road first needs it,
   each with the same row as the step panel (name, kind, **Have / Learning / Not yet / I don't know**, its
   sources, *you said you hold this*, the official way to get it). With none: *No skills are listed on this road yet.
   Your own skills are below.* Then **Your own skills**: each one the person added, tagged *added by you*,
@@ -22,11 +23,12 @@ place of a step, each a region named by its title with a × button named *Close*
   none picked, *Pick the job closest to the work you'd do yourself*, the line *Optional. DotAmi then shows
   the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back
   here any time.*, and a search box (*Search jobs by name or code*) that lists up to ten of the
-  government's jobs whose name holds the words typed or whose code starts with them, in the dataset's
-  order, each a button reading *Cabinetmakers · 72311.00* (*No job on the government's list matches
-  that.* when none does). With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
-  (the search again, with **Cancel**) and **Take back**; *The government's list describes people employed
-  in this job, not owners. DotAmi doesn't say which skills a business needs.*; then **Skills** and
+  government's jobs holding every word typed, each anywhere in the name or at the start of the code, in
+  the dataset's order, each a button reading *Cabinetmakers · 72311.00* (*No job name or code holds those
+  words.* when none does; *Showing 10 of 56 jobs that match. Type more of the name or the code to narrow
+  it.* when more match than are shown); then the licence's line with its link, as below. With one picked: *Cabinetmakers · 72311.00 · picked 2026-10-12*, **Change**
+  (the search again, with **Cancel**) and **Take back**; *This is the government's list for the job you
+  picked. DotAmi doesn't say which skills a business needs.*; then **Skills** and
   **Knowledge**, each with its source once (the dataset's page, checked by a tool) and its items in the
   dataset's order, each row its name, the tag *your pick of job* and **Have / Learning / Not yet / I don't
   know**; last, the licence's line *Contains information licensed under the Open Government Licence –

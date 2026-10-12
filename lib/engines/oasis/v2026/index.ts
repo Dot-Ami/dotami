@@ -78,19 +78,30 @@ export function oasisJobByCode(code: string): OasisJob | undefined {
   return row ? { code: row[0], label: row[1] } : undefined;
 }
 
+/** What a search finds: the first `limit` jobs that match, and how many match in all. */
+export interface OasisJobSearch {
+  jobs: OasisJob[];
+  total: number;
+}
+
 /**
- * Jobs whose name holds the words typed (any capitals), or whose code starts with them: at most `limit`,
- * in the dataset's order. Matching isn't scored, so no job is put first for being a "better" match.
+ * Jobs that hold every word typed (any capitals), each word anywhere in the name or at the start of the
+ * code: "heavy duty mechanic" finds "Heavy-duty equipment mechanics", "72311" finds Cabinetmakers. The
+ * first `limit` in the dataset's order, with the count of all that match so a screen can say when it
+ * shows only some. Matching isn't scored, so no job is put first for being a "better" match.
  */
-export function searchOasisJobs(query: string, limit = 10): OasisJob[] {
-  const wanted = query.trim().toLocaleLowerCase("en");
-  if (wanted === "") return [];
-  const out: OasisJob[] = [];
+export function searchOasisJobs(query: string, limit = 10): OasisJobSearch {
+  const words = query.toLocaleLowerCase("en").split(/\s+/).filter((w) => w !== "");
+  if (words.length === 0) return { jobs: [], total: 0 };
+  const jobs: OasisJob[] = [];
+  let total = 0;
   for (const job of oasisJobs) {
-    if (job.code.startsWith(wanted) || job.label.toLocaleLowerCase("en").includes(wanted)) out.push(job);
-    if (out.length === limit) break;
+    const name = job.label.toLocaleLowerCase("en");
+    if (!words.every((w) => name.includes(w) || job.code.startsWith(w))) continue;
+    total += 1;
+    if (jobs.length < limit) jobs.push(job);
   }
-  return out;
+  return { jobs, total };
 }
 
 // Each family's descriptors, in order, so a ratings string can be read digit by digit.

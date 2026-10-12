@@ -162,6 +162,8 @@ export const cockpitWords = {
   lists: {
     close: "Close",
     skillsTitle: "Skills on this road",
+    /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
+    roadTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
@@ -178,7 +180,10 @@ export const cockpitWords = {
       optional:
         "Optional. DotAmi then shows the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back here any time.",
       search: "Search jobs by name or code",
-      noMatch: "No job on the government's list matches that.",
+      /** The search reads names and codes only, so this says what it looked at, not that no such job exists. */
+      noMatch: "No job name or code holds those words.",
+      /** When more jobs match than the search shows. */
+      more: (shown: number, total: number) => `Showing ${shown} of ${total} jobs that match. Type more of the name or the code to narrow it.`,
       /** A search result, and the job once picked. */
       result: (label: string, code: string) => `${label} · ${code}`,
       picked: (label: string, code: string, day: string | null) => `${label} · ${code}${day ? ` · picked ${day}` : ""}`,
@@ -187,7 +192,10 @@ export const cockpitWords = {
       takeBack: "Take back",
       tag: "your pick of job",
       groups: { skills: "Skills", knowledge: "Knowledge" },
-      employees: "The government's list describes people employed in this job, not owners. DotAmi doesn't say which skills a business needs.",
+      // No claim about whom the list describes: the government's own profiles count self-employed people
+      // in a job (Cabinetmakers, 72311.00: "Self-employed" under Workplaces/employers). Only what DotAmi
+      // can say about itself.
+      aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
       /** The licence's own attribution line, word for word (lib/engines/oasis/v2026/licence.ts). */
       attribution: OASIS_ATTRIBUTION,
       licence: "The licence",

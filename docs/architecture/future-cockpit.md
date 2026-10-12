@@ -857,22 +857,28 @@ for the job the person picks (*your pick of job*; decision 5). Choices made, eac
   the storage accepts an id from the roads' shared list or from the OaSIS list, and refuses anything
   else. Taking back the pick of job keeps the marks, as deleting an idea does.
 - **Where it shows.** The Skills list behind the Skills gauge gains *Your pick of job*: with none picked,
-  *"Pick the job closest to the work you'd do yourself"*, a search box (by name or code; the first ten
-  matches) and nothing else asked: it is optional, and skipping it changes nothing. With one picked: its
+  *"Pick the job closest to the work you'd do yourself"*, a search box (every word typed, each anywhere in the
+  name or at the start of the code; the first ten matches in the dataset's order, with *Showing 10 of 56
+  jobs that match.* when more do, and *No job name or code holds those words.* when none does; the
+  licence's line under it) and nothing else asked: it is optional, and skipping it changes nothing. With one picked: its
   name and code, the day picked, **Change** and **Take back**, then the list in two groups with each
   row's tag, its marks (**Have · Learning · Not yet · I don't know**), the group's source once under its
-  heading, and two lines: *"The government's list describes people employed in this job, not owners.
-  DotAmi doesn't say which skills a business needs."* and the attribution line. The step panel keeps
+  heading, and two lines: *"This is the government's list for the job you picked. DotAmi doesn't say
+  which skills a business needs."* (it says nothing about whom the list describes: the government's own
+  profiles list *Self-employed* among a job's workplaces, for example Cabinetmakers, 72311.00, read
+  2026-10-12) and the attribution line. The step panel keeps
   listing only what the step itself needs (its legal requirements); under them, one line counts the
   job's list and opens it, because no official source ties a skill on that list to a step. The Skills
   gauge counts the job's list apart, as it counts the person's own skills: *your pick of job: 2 have · 1
   learning · 0 not yet, of 44 listed*. The road's *needs 3 · you have 2* badges are unchanged.
 - **Road evaluation reads the pick.** `evaluateRoad` takes the picked job's list (or none); the Skills
   gauge's count is the one above, and *What you've told DotAmi* gains the pick (*"You picked the job
-  closest to your work: Cabinetmakers"*) and the marks on its items.
+  closest to your work: Cabinetmakers"*) and the marks on its items. A receipt about picking, changing
+  or taking back the job names the pick only: the marks on its list that come into or out of view with
+  it are kept either way, so they are never read as given or taken back then.
 - **Road 0's legal requirements come from the compliance catalog, where it cites one.** Only one of road
-  0's steps has one there: *Mandatory GST/HST registration* needs **A GST/HST registration (an account
-  with the CRA)**, built from the compliance entry `compliance-gst-small-supplier` and carrying its
+  0's steps has one there: *Mandatory GST/HST registration* needs **A GST/HST registration with the Canada
+  Revenue Agency**, built from the compliance entry `compliance-gst-small-supplier` and carrying its
   citation, whose tool-checked quotes include *"You must register for the GST/HST."*; the entry is
   already one of that step's cards. A test keeps the item's citations equal to the entry's and the entry
   among the step's cards. Left out, for a reason each: the CRA payroll account and the WCB-Alberta
@@ -1252,7 +1258,7 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   abilities, work activities) and how much of each list to show.~~ Settled in the skills pull request
   (2026-10-12, § 6 *Skills, and the government's list for your pick of job, as built*): Skills and
   Knowledge, every item the job's row rates 1 or more, in the dataset's own order; Labels for the job
-  names and the taxonomy for the ids. The lists describe employees, not owners, so the *your pick of job*
+  names and the taxonomy for the ids. The list is the job's, not a business's, so the *your pick of job*
   tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The government's ratings, or names only** (the maintainer's item 20). Built names only, the

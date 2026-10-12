@@ -16,8 +16,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Skills Information System* (OaSIS 2025 Version 1.0, Employment and Social Development Canada, under the
   Open Government Licence – Canada); once picked, that job's skills and knowledge areas, every item
   tagged *your pick of job*, with **Have / Learning / Not yet / I don't know** on each, the dataset's page
-  as its source (checked by a tool), the line that the list describes people employed in the job, not
-  owners, and the licence's attribution line. Names only: the government's ratings are kept in the data
+  as its source (checked by a tool), the line *This is the government's list for the job you picked.
+  DotAmi doesn't say which skills a business needs.*, and the licence's attribution line, shown while
+  searching too. The search matches every word typed, each anywhere in the job's name or at the start of
+  its code, shows ten at most in the dataset's order and says when more match (*Showing 10 of 56 jobs
+  that match.*). Names only: the government's ratings are kept in the data
   and not shown while the maintainer decides (item 20). The Skills gauge counts the list apart (*your
   pick of job: 1 have · 0 learning · 0 not yet, of 44 listed*), and the step panel counts it and opens it
   without tying it to a step. The pick is kept on the idea (two added columns), set and taken back

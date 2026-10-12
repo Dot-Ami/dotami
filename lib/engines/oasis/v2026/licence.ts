@@ -60,7 +60,7 @@ export function oasisDatasetCitation(family: keyof typeof OASIS_FAMILY_FILES, jo
     jurisdiction: "CA",
     url: OASIS_DATASET_URL,
     toolCheck: OASIS_DATASET_CHECK,
-    note: `From ${OASIS_FAMILY_FILES[family]}, the row for job ${jobCode}: every item the government rates 1 or more for this job, shown by name only and in the dataset's own order. Record modified 2026-10-04. The list describes people employed in the job, not owners, and is shown only because you picked this job.`,
+    note: `From ${OASIS_FAMILY_FILES[family]}, the row for job ${jobCode}: every item the government rates 1 or more for this job, shown by name only and in the dataset's own order. Record modified 2026-10-04. Shown only because you picked this job.`,
   };
 }
 

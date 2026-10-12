@@ -14,7 +14,9 @@ Version 1.0*, as downloaded from
 | `knowledge_oasis_2025_v.1.1.csv` | Each job's ratings on the 44 knowledge areas |
 | `labels_oasis_2025_v1.1.csv` | Each job's name, for *Pick the job closest to your work* |
 
-They are kept exactly as downloaded so the import can be redone: `node scripts/import-oasis.mjs`
+They are kept as downloaded so the import can be redone, except that git stores them with "\n" line
+endings (a Windows checkout may write them back with "\r\n"); the import evens line endings out before
+it hashes or reads them, so its SHA-256s are those of the official files' text either way: `node scripts/import-oasis.mjs`
 turns them into `lib/engines/oasis/v2026/data.ts`, and `--check` (and `tests/oasis-import.spec.ts`)
 fails if the module isn't exactly what these files make. `--download` fetches fresh copies first.
 Nothing in this folder ships with the app; the module made from it does, with its licence line.

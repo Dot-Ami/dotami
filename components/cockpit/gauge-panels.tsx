@@ -92,6 +92,7 @@ export function SkillsListPanel({
   return (
     <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error}>
       {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      <h3 className={heading}>{words.lists.roadTitle}</h3>
       {listed.length === 0 ? (
         <p className="text-[12px] text-stone">{words.lists.skillsNone}</p>
       ) : (
@@ -192,7 +193,7 @@ function JobSection({
   const [changing, setChanging] = useState(false);
   const [query, setQuery] = useState("");
   const searching = job === null || changing;
-  const results = searching ? searchOasisJobs(query) : [];
+  const { jobs: results, total } = searching ? searchOasisJobs(query) : { jobs: [], total: 0 };
 
   function pick(code: string | null) {
     onPickJob(code);
@@ -217,6 +218,8 @@ function JobSection({
             className="mt-2 w-full rounded-sm border border-rule bg-ink2 px-2 py-1 text-[12px] text-paper outline-hidden focus:border-maple-soft"
           />
           {query.trim() !== "" && results.length === 0 ? <p className="mt-1.5 text-[11px] text-stone">{words.lists.job.noMatch}</p> : null}
+          {/* Ten at most are shown; say so when more match, so ten never read as all of them. */}
+          {total > results.length ? <p className="mt-1.5 text-[11px] text-stone">{words.lists.job.more(results.length, total)}</p> : null}
           {results.length > 0 ? (
             <ul className="mt-1.5 space-y-1">
               {results.map((r) => (
@@ -238,6 +241,8 @@ function JobSection({
               {words.lists.job.cancel}
             </Pill>
           ) : null}
+          {/* The job names searched are the government's data, so its licence line is here too. */}
+          <OasisAttribution />
         </>
       ) : (
         <>
@@ -250,7 +255,7 @@ function JobSection({
               {words.lists.job.takeBack}
             </Pill>
           </div>
-          <p className="mt-2 text-[11px] text-stone">{words.lists.job.employees}</p>
+          <p className="mt-2 text-[11px] text-stone">{words.lists.job.aboutTheList}</p>
           {(["skills", "knowledge"] as const).map((group) => {
             const items = job.items.filter((item) => item.group === group);
             if (items.length === 0) return null;
@@ -271,15 +276,22 @@ function JobSection({
               </div>
             );
           })}
-          <p className="mt-3 text-[11px] text-stone">
-            {words.lists.job.attribution}{" "}
-            <a href={OASIS_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-paper">
-              {words.lists.job.licence}
-            </a>
-          </p>
+          <OasisAttribution />
         </>
       )}
     </div>
+  );
+}
+
+/** The Open Government Licence's attribution line, word for word, with a link to the licence. */
+function OasisAttribution() {
+  return (
+    <p className="mt-3 text-[11px] text-stone">
+      {words.lists.job.attribution}{" "}
+      <a href={OASIS_LICENCE_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-paper">
+        {words.lists.job.licence}
+      </a>
+    </p>
   );
 }
 

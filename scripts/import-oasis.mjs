@@ -11,7 +11,7 @@
 //   node scripts/import-oasis.mjs --check      Rebuilds it in memory and fails if the committed module differs.
 //   node scripts/import-oasis.mjs --download   Fetches fresh copies of the four files first, then rebuilds.
 //
-// The files are committed as downloaded so the import can be redone byte for byte; the module records
+// The files are committed as downloaded, line endings aside, so the import can be redone; the module records
 // each file's SHA-256, of its text with the byte-order mark dropped and line endings evened out to "\n",
 // since git may check a file out with Windows line endings. Exit code 0 when it worked (or the check
 // matched), 1 when it didn't, 2 for a usage error.

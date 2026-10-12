@@ -826,8 +826,11 @@ describe("the lists behind the gauges", () => {
     expect(html).toContain("Welding (invented)");
     expect(html).toContain("added by you");
     expect(html).toContain("Add a skill");
-    // Every listed skill shows its own source: five items, one citation each.
-    expect((html.match(/<a /g) ?? []).length).toBe(skillItems.length);
+    // Every listed skill shows its own source: five items, one citation each (and, apart, the job
+    // search's licence link, there before any pick because the job names are the government's).
+    const links = [...html.matchAll(/<a href="([^"]*)"/g)].map((m) => m[1]);
+    expect(links.filter((href) => href !== "https://open.canada.ca/en/open-government-licence-canada")).toHaveLength(skillItems.length);
+    expect(links).toContain("https://open.canada.ca/en/open-government-licence-canada");
     // On a skill the person typed, the button that takes it away says so; "I don't know" stays on the road's.
     const welding = html.slice(html.indexOf("Welding (invented)"));
     expect(welding).toContain(`>${cockpitWords.lists.removeOwn}<`);

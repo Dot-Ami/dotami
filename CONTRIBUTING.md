@@ -179,7 +179,7 @@ CSV files in English and French, under the [Open Government Licence – Canada](
 - **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
   do yourself", and the list for that job is shown tagged *your pick of job*. No entry, road or step
   may link a business or a future to a job by itself: no official source says which skills a business
-  needs, and the lists describe employees, not owners.
+  needs.
 - **Cited by dataset version and record date,** like any other source: the dataset's title and version
   (at the time of writing, *OaSIS 2025 Version 1.0*: unlike the older *OaSIS 2022 Version 1.0*, it has
   a Knowledge file), the file it came from (the import reads the Skills and Knowledge files, with the

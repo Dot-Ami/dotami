@@ -15,7 +15,8 @@ import { changed, listOf, manyAnswers, manyTakenBack, receiptLine, type AnswerGr
  * differs, so with two answers changed at once a line can name one that couldn't have caused it.
  */
 export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): string[] {
-  const because = answersThatChanged(before.answers, after.answers);
+  const jobChanged = before.gauges.skills.yourPickOfJob?.code !== after.gauges.skills.yourPickOfJob?.code;
+  const because = answersThatChanged(before.answers, after.answers, jobChanged);
   const changes: string[] = [];
 
   // Steps that changed state, counted by the state they are in now.
@@ -104,18 +105,24 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
  * changed reads as said, one that is gone reads as taken back. Three or more of one kind are counted,
  * those given apart from those taken back ("you marked 9 skills", "you took back 3 skill marks").
  * Null when no answer changed (the month turned over, say).
+ *
+ * When the pick of job changed, a mark on the job's list that is in only one of the two runs came into or
+ * out of view with the pick: the mark itself is kept whatever the pick is (future-cockpit.md § 6, "Taking
+ * back the pick of job keeps the marks"), so it is neither said nor taken back, and the pick names itself.
  */
-function answersThatChanged(before: readonly ToldAnswer[], after: readonly ToldAnswer[]): string | null {
+function answersThatChanged(before: readonly ToldAnswer[], after: readonly ToldAnswer[], jobChanged: boolean): string | null {
   const was = new Map(before.map((a) => [a.id, a]));
   const now = new Map(after.map((a) => [a.id, a]));
+  const cameWithThePick = (a: ToldAnswer) => jobChanged && a.onJobList === true;
   type Way = "said" | "taken-back";
   const differ: { group: AnswerGroup; way: Way; clause: string }[] = [];
   for (const a of after) {
     const b = was.get(a.id);
+    if (!b && cameWithThePick(a)) continue;
     if (!b || b.said !== a.said) differ.push({ group: a.group, way: "said", clause: a.said });
   }
   for (const b of before) {
-    if (!now.has(b.id)) differ.push({ group: b.group, way: "taken-back", clause: b.takenBack });
+    if (!now.has(b.id) && !cameWithThePick(b)) differ.push({ group: b.group, way: "taken-back", clause: b.takenBack });
   }
   if (differ.length === 0) return null;
 
