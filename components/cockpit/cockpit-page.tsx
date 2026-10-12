@@ -15,8 +15,9 @@ import type { ConfirmedFigure } from "@/lib/brain";
 import type { FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import { itemsForNode } from "@/lib/brain/node-items";
-import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import type { CFENode, CFENodeId } from "@/lib/engines/cfe/v2026";
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
+import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import {
@@ -72,7 +73,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
-  const [selectedNodeId, setSelectedNodeId] = useState<CFENodeId | null>(null);
+  // A step id from the road on the map (today's map: the CFE node ids, unchanged).
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>(null);
   // Issue #1: every edit on this page is written to the database after a short pause; the
   // line under "Save now" always says where things stand. `dirty` = an edit is waiting.
@@ -89,7 +91,12 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   );
 
   const cfeNodes = cfeCatalogV2026.nodes;
-  const cfeNodeById = useMemo(() => new Map(cfeNodes.map((node) => [node.id, node])), [cfeNodes]);
+  // The node detail panel still opens on today's catalog entry for a step; the step panel of the
+  // future cockpit replaces it later in phase 1 (docs/architecture/future-cockpit.md § 1, row 5).
+  const cfeNodeById = useMemo(
+    () => new Map<string, CFENode>(cfeNodes.map((node) => [node.id, node])),
+    [cfeNodes],
+  );
   const selectedNode = selectedNodeId ? cfeNodeById.get(selectedNodeId) : null;
 
   // [8a] The person's CONFIRMED figures for this venture, once it has been saved: they beat the
@@ -386,11 +393,13 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         <div className="relative flex min-h-0 flex-col bg-ink4">
           {evaluation ? (
             <StrategyMap
-              nodes={cfeNodes}
+              // Every saved future is drawn on today's general road until storage lets it name
+              // another (docs/architecture/future-cockpit.md § 7).
+              road={generalRoadV2026}
               scenario={scenario}
               evaluation={evaluation}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={(nodeId) => {
+              selectedStepId={selectedNodeId}
+              onSelectStep={(nodeId) => {
                 setSelectedNodeId(nodeId);
                 setRightPanel("node");
               }}

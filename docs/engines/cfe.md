@@ -8,7 +8,8 @@ Catalog: `lib/engines/cfe/v2026/nodes.ts` (10 nodes as of 2026-07-02) · Priorit
 Lifecycle nodes Stage 0–4 (employee baseline → sole-prop activation → GST fork →
 incorporation fork → SR&ED deepening / retained-earnings planning) plus branch nodes
 (hire-first, service-vs-productize). Each node: trigger, financial impact, citations,
-lens annotations, branch ids. This is the graph the cockpit renders.
+lens annotations, branch ids. The cockpit draws it as road 0, *Starting any business in Alberta (tax
+and structure)* ([roads.md](./roads.md), since 2026-10-11): tiers become columns, nodes become steps.
 
 ## Node state semantics (today vs target)
 
@@ -51,7 +52,7 @@ in v0 of the brain; merging the two systems is its own reviewed change.
    the GST/HST card the person didn't pick from grey to amber, and makes the GST/HST compliance
    item say the estimate is "approaching" the line. No cited page sets that 70%. It predates this
    rule and goes in the GST/HST card rework, where the card uses only the CRA's own test
-   (docs/task-list.md, [10f]); until then it is an uncited watch line, not a rule.
+   (docs/task-list.md, [14a]); until then it is an uncited watch line, not a rule.
 3. Node count is version-locked scope (v1 = 10; 20+ is roadmap v4). Do not add nodes
    without maintainer approval.
 4. `financialImpact.projectionNotes` feed the modeling footer — numbers there must agree

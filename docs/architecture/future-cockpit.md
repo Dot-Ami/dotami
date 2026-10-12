@@ -272,7 +272,7 @@ and how a gap is filled:
 |---|---|---|
 | Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), read and cited by a person, one citation per *done when* line | A person reads the official page and writes the step; until then the future isn't offered. *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read |
-| Skills for a job | OaSIS 2022 version 1.0 (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says modified 2025-09-04, read 2026-10-11), through the person's pick of job | The person adds their own skills (*added by you*) |
+| Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
 | Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
 | Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
@@ -354,6 +354,72 @@ drawn exactly as today (about 1.5 build days).
 agreed figures and any what-if, and returns step states, gauge counts and the money arithmetic. It
 reuses `evaluateProfile` for the rules and tax cards. A small helper diffs two results for receipts
 (about 1.5 build days with unit tests).
+
+### The road type as built (2026-10-11)
+
+The first phase-1 pull request turns the sketch above into real types, with these differences, each
+for a reason:
+
+- **Where it lives:** `lib/engines/roads/v2026/` (`types.ts`, `validate.ts`, `from-cfe.ts`, one file
+  per road, `index.ts`). Like every catalog it imports nothing from the app, the rules engine or the
+  screens.
+- **A road holds its own steps and forks.** `Road` gains `steps` (every step, by id) and `forks` (each
+  fork once, with its two sides). The sketch's `forkId` on a step is dropped, so a fork is written in
+  one place only. A column gains `summary` (the line under its name) and an optional `forkId`: the
+  fork decided in that column. It is data, not layout: it carries today's two toggles over (the map
+  shows each in its column's header), and for other roads the pick is made on Compare (§ 1, row 6).
+- **A step says where it leads:** `next` lists the steps it opens. The map's hover arrows walk it;
+  before, they walked `CFENode.branches`.
+- **A fork's id is the key its pick is kept under.** Road 0's two forks are `gstTiming` and
+  `incorporationTiming`, the keys today's `ScenarioState.activeBranches` already stores, so every
+  saved pick stays attached with no storage change. A fork's sides must match today's toggle options
+  exactly; a test checks.
+- **Costs:** an official fee carries one citation, and that citation's `lastVerified` is the day the
+  fee was read (the sketch had the date twice). A catalog holds only *official fee* and *named* lines;
+  the third kind, *your quote*, is the person's agreed number and never in a catalog. One pure
+  function turns a catalog line plus the person's agreed amount (if any) into the three kinds a
+  screen shows: *official fee*, *your quote*, *named, not priced yet*. A quote that isn't a whole,
+  non-negative number of cents is shown as *named, not priced yet*, never added up.
+- **Two fee lines can't yet be marked as alternatives.** A step's `costs` is a flat list, so a total
+  that added every official fee on one step would count both sides of a choice. Fix 2 (§ 9: federal and
+  Alberta incorporation side by side, neither counted until the person picks) needs one of two
+  additions, and the pull request that writes those fee lines picks between them: two steps under a
+  `Fork` (one per way to incorporate, each with its own fee lines), or an optional choice-group field
+  on a cost line that road evaluation reads. Either adds to the type; nothing in it changes shape.
+- **`engineHints` is not on `RoadStep` yet.** Today's lever cards are matched to a step by its id
+  through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, as before. The road-evaluation pull
+  request moves those hints onto the step, so a road's content stays in the road catalog (§ 8) and a
+  contributor-written road can name its own cards; until then a step from any other road gets no
+  lever cards.
+- **Skill items are one shared list** (`skillItemsV2026`), so a mark carries across every road that
+  lists the item. It is empty until the first written future.
+- **The checks** (`validate.ts`, run on every road by the tests): every step has a citation; every
+  citation is an https page with a real read date that has already come (the newest date anywhere
+  on Earth, so a reader east of UTC isn't refused their own today); every official link is an https
+  page; every id is unique within its road; every step sits in exactly one column and every column
+  names real steps; `next`, fork sides and a column's fork name real steps and forks; an official fee
+  is a whole, non-negative number of cents; `needs` names real skill items; the road's `lastVerified`
+  is the newest read date in it. A separate list in the tests holds every road, column, step, fork,
+  *done when* line, cost line and skill item id ever shipped: removing or renaming one fails. The
+  checks don't yet look at a citation's title, an empty road, or whether a column's fork has a side
+  in that column.
+- **Road 0 is today's map, unchanged.** `roadFromCfe` builds *Starting any business in Alberta (tax and
+  structure)* from `cfeNodesV2026` and `cfeTiersV2026`: the four tiers become its columns, the ten
+  nodes its steps (same ids, labels, trigger lines as the step's one line, citations, and `branches`
+  as `next`). Its *done when* lines, cost lines and the *before you open* steps are content work for a
+  later pull request; until then those lists are empty, which the checks allow.
+- **The map draws a `Road`.** `components/cockpit/strategy-map.tsx` takes a road and no longer imports
+  the CFE tiers or nodes. Card colours, chips and lever cards still come from today's rules by step
+  id, so road 0 looks and behaves exactly as before: a test draws the map through the road in six
+  saved states and compares the HTML, byte for byte, with what the old map drew from `main`. The node
+  detail panel still opens on today's catalog entry for a step; the step panel (§ 1, row 5) replaces
+  it later in phase 1.
+- **Not in this pull request:** which road a saved future uses (storage, § 7; until then every map is
+  road 0), road evaluation (above), and any new screen. Saved fork picks are still typed as tax-map
+  step ids (`activeBranches: Record<string, CFENodeId>` in `lib/scenarios/types.ts`); the storage pull
+  request widens the value to any road's step id so another road's pick can be kept. Places stay
+  today's values (`AB`, `BC`, `ON`, `CA`); how places are stored is an open decision of the
+  maintainer's.
 
 ## 7. Storage
 
@@ -440,7 +506,7 @@ phase it names.
    neither side counts in the Start-up money total, and the gauge says *"2 ways to incorporate, not
    picked yet"*.
 3. **The GST/HST card uses the CRA's exact test, quoted from the cited page.** The CRA's *When to
-   register for and start charging the GST/HST* page (read 2026-10-11; the page says it was modified
+   register for and start charging the GST/HST* page (checked by a tool on 2026-10-11; the page says it was modified
    2026-06-16) gives two tests: *"You exceed the $30,000 threshold in a single calendar quarter."* and
    *"You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters
    (but not in a single calendar quarter)."* The card quotes both sentences in full. The page gives
@@ -546,9 +612,9 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   again on each visit. If not, the line is saved with the answer when it is made.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
-- **The OaSIS import's shape.** Which files of the dataset (skills, abilities, work activities) and
-  how much of each list to show; the lists describe employees, not owners, so the *your pick of job*
-  tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
+- **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
+  abilities, work activities) and how much of each list to show; the lists describe employees, not
+  owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.
