@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- An invented page shaped like a government page (canada.ca's layout: a head full of metadata,
+     scripts, a navigation menu, the main text, a footer). Every sentence is made up for
+     tests/check-quotes.spec.ts; none is quoted from a real page. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Invented registration page - Example agency</title>
+  <meta name="description" content="Decoy in the head: register within thirty days of your first sale.">
+  <style>.decoy::after { content: "Decoy in a style: register within thirty days of your first sale."; }</style>
+  <script>
+    // Decoy in a script: register within thirty days of your first sale.
+    window.dataLayer = window.dataLayer || [];
+  </script>
+</head>
+<body>
+  <nav><ul><li><a href="/">Home</a></li><li><a href="/taxes">Taxes</a></li></ul></nav>
+  <main property="mainContentOfPage">
+    <h1 id="wb-cont">Invented registration page</h1>
+    <p>You are a <strong>small&nbsp;operator</strong> if your total sales over four consecutive
+       calendar quarters are $40,000 or less.</p>
+    <p>Once you pass that amount, you have to   register
+       by the day after the month in which you passed it.</p>
+    <p>The agency calls this the &ldquo;operator test&rdquo; &mdash; it&rsquo;s applied each quarter.</p>
+    <p>Rates are set out in the <abbr title="Invented Act">IA</abbr>/<abbr title="Invented Regulations">IR</abbr> schedule&#8230;</p>
+    <p>Caf&eacute; owners and food&#x2011;truck operators follow the same rule.</p>
+    <noscript><p>Decoy in noscript: register within thirty days of your first sale.</p></noscript>
+    <template><p>Decoy in a template: register within thirty days of your first sale.</p></template>
+  </main>
+  <footer><p>Date modified: 2026-01-01</p></footer>
+  <script src="/invented.js"></script>
+</body>
+</html>
