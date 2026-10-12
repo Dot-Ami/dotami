@@ -33,13 +33,28 @@ function shape(lines: ProvisionLine[], chars = 24): string[] {
 const ITA_18_12 = fixture("ita-18-12.json");
 const ITA_18_1 = fixture("ita-18-1-start.json");
 const ITR_1100_2_C3 = fixture("itr-1100-2-c3.json");
+// Added 2026-10-12 after a review ran the splitter on every provision DotAmi cites: two where a
+// reference was split off as a part of its own, three where the law's words were drawn as a heading.
+const ITA_248_1 = fixture("ita-248-1.json");
+const ITA_37_1 = fixture("ita-37-1.json");
+const ITR_CLASS_50 = fixture("itr-sch2-class-50.json");
+const ITA_67_3 = fixture("ita-67-3-start.json");
+const ITA_67 = fixture("ita-67.json");
+
+/** Every store answer the tests hold, for the checks that must hold on all of them. */
+const STORE_TEXTS: [string, string][] = [
+  ["ITA 18(12)", ITA_18_12.text],
+  ["ITA 18(1), paragraphs (a) to (l)", ITA_18_1.text],
+  ["Reg. 1100(2)(c.3)", ITR_1100_2_C3.text],
+  ["ITA 248(1)", ITA_248_1.text],
+  ["ITA 37(1)", ITA_37_1.text],
+  ["Reg. Sch. II Class 50", ITR_CLASS_50.text],
+  ["ITA 67.3, start of the section", ITA_67_3.text],
+  ["ITA 67", ITA_67.text],
+];
 
 describe("the words are never changed", () => {
-  it.each([
-    ["ITA 18(12)", ITA_18_12.text],
-    ["ITA 18(1), paragraphs (a) to (l)", ITA_18_1.text],
-    ["Reg. 1100(2)(c.3)", ITR_1100_2_C3.text],
-  ])("%s: the lines put back together are the store's text, character for character", (_name, text) => {
+  it.each(STORE_TEXTS)("%s: the lines put back together are the store's text, character for character", (_name, text) => {
     expect(provisionLines(text).map((l) => l.text).join("")).toBe(text);
   });
 
@@ -140,6 +155,76 @@ describe("ITA 18(1), paragraphs (a) to (l): marginal notes, and the letter (i) n
 
   it("keeps words in brackets that aren't a label inside their line", () => {
     expect(lines.at(-1)!.text).toContain("(whether initiation fees or otherwise)");
+  });
+});
+
+describe("a reference glued to the words after it stays in its sentence", () => {
+  // The store joins the Act's nodes with no space, so a reference at the end of a phrase can sit
+  // right against the next word, just like a real label does: "subparagraph (c)(ii)exceeds".
+  it("ITA 248(1): \"subparagraph (c)(ii)exceeds\" and \"subparagraph (c)(i)that\" are references, not subparagraphs (ii) and (i)", () => {
+    const lines = provisionLines(ITA_248_1.text);
+    expect(lines.some((l) => l.text.startsWith("(ii)exceeds"))).toBe(false);
+    expect(lines.some((l) => l.text.startsWith("(i)that was deducted"))).toBe(false);
+    const f = lines.findIndex((l) => l.text.startsWith("(f)the part of the amount"));
+    expect(shape(lines.slice(f, f + 3), 40)).toEqual([
+      "1|(f)the part of the amount, if any, by wh",
+      "2|(i)the amount referred to in subparagrap",
+      "2|(ii)the amount referred to in subparagra",
+    ]);
+    expect(lines[f + 1].text).toBe("(i)the amount referred to in subparagraph (c)(ii)exceeds");
+    expect(lines[f + 2].text.startsWith("(ii)the amount referred to in subparagraph (c)(i)that was deducted")).toBe(true);
+  });
+
+  it("ITA 37(1): \"clauses A to (C)to be used\" is a reference, not a clause (C)", () => {
+    const lines = provisionLines(ITA_37_1.text);
+    expect(lines.some((l) => l.text.startsWith("(C)to be used"))).toBe(false);
+    expect(lines.find((l) => l.text.includes("any of clauses A to (C)to be used"))).toBeDefined();
+  });
+
+  it.each(STORE_TEXTS)("%s: no line starts right after a reference (a label's \")\" or a space)", (_name, text) => {
+    const lines = provisionLines(text);
+    for (let i = 1; i < lines.length; i += 1) {
+      expect(lines[i - 1].text, `before "${lines[i].text.slice(0, 30)}"`).not.toMatch(/(?:\s|\([0-9A-Za-z.]{1,8}\))$/);
+    }
+  });
+});
+
+describe("only a heading glued to its section number is drawn as a heading", () => {
+  it("Reg. Sch. II Class 50: the class's own words before (a) are body text, not a heading", () => {
+    const [first] = provisionLines(ITR_CLASS_50.text);
+    expect(first.note).toBe(false);
+    expect(first.depth).toBe(0);
+    expect(first.text.startsWith("Property acquired after March 18, 2007")).toBe(true);
+    expect(first.text.endsWith("used principally as")).toBe(true);
+  });
+
+  it("ITA 67.3: the heading is split from \"67.3Notwithstanding…\", which is body text", () => {
+    const lines = provisionLines(ITA_67_3.text);
+    expect(lines[0]).toEqual({ text: "Limitation re cost of leasing passenger vehicle", depth: 0, note: true });
+    expect(lines[1].note).toBe(false);
+    expect(lines[1].text).toBe("67.3Notwithstanding any other section of this Act, where");
+  });
+
+  it("ITA 67, a section with no paragraphs: its heading, then its words", () => {
+    const lines = provisionLines(ITA_67.text);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toEqual({ text: "General limitation re expenses", depth: 0, note: true });
+    expect(lines[1].note).toBe(false);
+    expect(lines[1].text.startsWith("67In computing income, no deduction shall be made")).toBe(true);
+  });
+
+  it("ITA 67.3(c): a formula's \"Dis the amount of interest…\" stays in its paragraph, not a marginal note", () => {
+    const lines = provisionLines(ITA_67_3.text);
+    const c = lines.find((l) => l.text.startsWith("(c)the amount determined by the formula"))!;
+    expect(c.note).toBe(false);
+    expect(c.text).toContain(",Dis the amount of interest that would be earned");
+  });
+
+  it.each(STORE_TEXTS)("%s: no marginal note holds a formula's variable (\"Dis the\") or ends mid-sentence (\"that is\")", (_name, text) => {
+    for (const l of provisionLines(text).filter((x) => x.note)) {
+      expect(l.text).not.toMatch(/(?:^|[^A-Za-z])[A-Z](?:is|are) /);
+      expect(l.text).not.toMatch(/\bthat is$/);
+    }
   });
 });
 
