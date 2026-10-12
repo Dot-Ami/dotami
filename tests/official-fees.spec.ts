@@ -149,8 +149,9 @@ describe("roads and the ways to incorporate name a fee by id instead of typing i
     expect(feeReferenceProblems(officialFeesV2026, roadsV2026, incorporationRoutesV2026)).toEqual([]);
     const onRoads = roadsV2026.flatMap((r) => r.steps.flatMap((s) => s.costs)).filter((c) => c.kind === "official-fee");
     const onRoutes = incorporationRoutesV2026.flatMap((r) => r.lines).filter((l) => l.kind === "official-fee");
-    // Nine fee lines on the first written future, three on the federal way to incorporate.
-    expect(onRoads).toHaveLength(9);
+    // Eight fee lines on the first written future (the practical exam on two steps), three on the federal
+    // way to incorporate.
+    expect(onRoads).toHaveLength(8);
     expect(onRoutes).toHaveLength(3);
     // Every catalog fee is used somewhere: nothing sits in the catalog that no card shows.
     const used = new Set([...onRoads.map((c) => c.feeId), ...onRoutes.map((l) => l.feeId)]);

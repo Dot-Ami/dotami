@@ -76,9 +76,20 @@ and the maintainer's six decisions of 2026-10-11:
     separate bank account), every source a tool check (2026-10-12,
     `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
     three new cards as on your road; drawn without it, the map shows them as "no rule yet")
-    - [ ] Still open on it: cost lines, skill items and official links on the ten map stages; four
+    - [ ] Still open on it: skill items and official links on the ten map stages; four
       map stages' own sources point at pages that answer "page not found" (a read, or a tool check
       in place of it, is the maintainer's call); a person's read of each page
+  - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
+    one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
+    for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that
+    day), and the roads and the federal way to incorporate name it by id instead of typing the amount
+    (no card changed, shown byte for byte); *Sole Prop activation* on today's Alberta road names seven
+    start-up costs the person prices (tools and equipment, space deposit, insurance, vehicle, first
+    materials, software, money to live on while starting), never an amount DotAmi chose
+    ([§ 6](architecture/future-cockpit.md))
+    - [ ] Still open on it: Alberta's registry fees stay named blanks until a person reads the Registry
+      Agent Product Catalogue; a source for the seven start-up names (the BDC and Futurpreneur
+      templates keep them in spreadsheets; the maintainer's call, design § 13)
   - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;

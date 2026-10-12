@@ -415,9 +415,10 @@ describe("the gauges", () => {
     const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
     expect(view.skills.value).toBe("No skills are listed on this road yet");
-    // The before-you-open steps (2026-10-12) name four lines the person prices, and no amount.
+    // The before-you-open steps (2026-10-12) name four lines the person prices, and Sole Prop activation
+    // seven start-up lines (later the same day), all with no amount: eleven on the path, none priced.
     expect(view.money.value).toBe("your numbers: not given yet");
-    expect(view.money.lines).toContain("4 not priced yet");
+    expect(view.money.lines).toContain("11 not priced yet");
     expect([view.money.value, ...view.money.lines].join(" ")).not.toContain("$0");
   });
 
@@ -570,11 +571,15 @@ describe("the overlays on the road", () => {
   it("a step the person set aside says so in its own words, never as a reading of their answers", () => {
     const scenario = inventedIdea({ activityTags: ["Software / SaaS"] });
     const before = drawRoad0(scenario, evaluateRoad(road0Input({ scenario })));
-    expect(before).toMatch(/aria-label="Sole Prop activation, now, applies as answered, opens detail"/);
+    // With Money on, the card names its seven start-up lines as not priced (2026-10-12).
+    expect(before).toMatch(/aria-label="Sole Prop activation, now, applies as answered, 7 not priced, opens detail"/);
     // No one set anything aside: the legend has no line for it.
     expect(before).not.toContain(cockpitWords.road.setAsideLegend);
     const after = drawRoad0(scenario, evaluateRoad(road0Input({ scenario, progress: [notForMe("stage-1-sole-prop-activation")] })));
-    expect(after).toMatch(/aria-label="Sole Prop activation, not for me, set aside by you, opens detail"/);
+    // Set aside, its start-up lines stay named and drop out of the sums.
+    expect(after).toMatch(
+      /aria-label="Sole Prop activation, not for me, set aside by you, 7 not priced · not counted: not on your path, opens detail"/,
+    );
     expect(after).not.toMatch(/aria-label="Sole Prop activation, [^"]*doesn&#x27;t apply as answered/);
     expect(after).toContain(cockpitWords.road.setAsideLegend);
   });

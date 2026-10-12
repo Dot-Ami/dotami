@@ -341,11 +341,17 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
       expect(step.summary).toBe(node.trigger);
       expect(step.next).toEqual(node.branches);
       expect(step.citations).toEqual(node.citations);
-      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); cost lines, skill
-      // items and official links on them come later, read from the official pages, never made up.
+      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); skill items and
+      // official links on them come later, read from the official pages, never made up. The only cost
+      // lines are Sole Prop activation's named start-up lines (2026-10-12): names, never an amount.
       expect(step.doneWhen.length).toBeGreaterThanOrEqual(3);
       expect(step.needs).toEqual([]);
-      expect(step.costs).toEqual([]);
+      if (node.id === "stage-1-sole-prop-activation") {
+        expect(step.costs.length).toBe(7);
+        for (const cost of step.costs) expect(cost.kind, cost.id).toBe("named");
+      } else {
+        expect(step.costs).toEqual([]);
+      }
       expect(step.officialLinks).toEqual([]);
     });
   });
