@@ -1038,7 +1038,7 @@ or named blanks, and *"2 ways to incorporate, not picked yet"*; the step stays *
 
 She tries first-year sales of $45,000. Under *Your what-if, not a forecast*, the GST/HST card quotes
 the CRA's two tests: over $30,000 in a single calendar quarter, or over the previous four (or fewer)
-consecutive calendar quarters, with the page and the day it was read.
+consecutive calendar quarters, with the page and how it was checked (a tool found those words on it).
 
 She opens *Compare*: *Stay employed* and *Open your own shop* on the same rows, *"In the order the road
 shows them"*, no score. She clicks *This is mine* on the shop and exports her plan to show her partner.
