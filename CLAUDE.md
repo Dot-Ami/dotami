@@ -52,9 +52,11 @@ says where it is going.
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
   `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
-  lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps, until
-  a screen lets a person pick another road (the catalog's second road, the first written future, has no
-  screen yet); the step panel, which keeps node detail whole; playbook export; the cards' colours come from the rules run on the venture's own branch
+  lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
+  three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
+  say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
+  first written future, has no screen yet); the step panel, which keeps node detail whole; playbook
+  export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of

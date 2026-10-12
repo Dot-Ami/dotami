@@ -14,7 +14,7 @@ cockpit draws whatever road it is given and holds no steps of its own.
 
 | Road | Id | What it is |
 |---|---|---|
-| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, unchanged. The general road every saved future is drawn on until it names another |
+| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, plus its own content (2026-10-12): 47 *done when* lines (three or four on each of the ten map stages, and on the new steps) and three *before you open* steps in the first column (register your business name, look up permits and licences on BizPaL, a separate bank account), every new source a tool check. The general road every saved future is drawn on until it names another |
 | From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. No screen lists it yet |
 
 A road may name where it carries on after its last column: `joins: { roadId, columnId }`
@@ -68,7 +68,9 @@ A road may name where it carries on after its last column: `joins: { roadId, col
    (a registration number, an agreement, a certificate); a certificate a page calls optional is not one.
    Skills for a job come only from the job the person picked (OaSIS, *your pick of job*); DotAmi never
    claims which skills a business needs.
-7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines, cost lines,
+7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines and its
+   *before you open* steps are written (2026-10-12, in `starting-any-business-ab.ts`, passed to
+   `roadFromCfe` as `doneWhen` by step id and `addedSteps` by column); its map stages' cost lines,
    skill items and official links are empty until they are read from the official pages; the checks
    allow empty lists and refuse uncited entries.
 8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`) in the catalog for now. The maintainer

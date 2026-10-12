@@ -10,7 +10,12 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
-import { roadsV2026 } from "../lib/engines/roads/v2026";
+import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
+
+// Road 0 (today's general road) counted from its own data: its ten map stages plus the three "before
+// you open" steps added on 2026-10-12, so the Steps gauge reads "0 of 13".
+const road0Steps = generalRoadV2026.steps.length;
+const soleProp = generalRoadV2026.steps.find((s) => s.id === "stage-1-sole-prop-activation")!;
 
 /** The run's own data file, for the one test that draws an idea on another road. */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
@@ -61,16 +66,24 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
 
   // The goal bar: the future by name and four gauges, counts only.
   await expect(goalBar(page).getByText("Future: Starting any business in Alberta (tax and structure)")).toBeVisible();
-  await expect(gauge(page, "Steps")).toContainText("0 of 10 marked done");
+  await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
   await expect(gauge(page, "Skills")).toContainText("No skills are listed on this road yet");
-  await expect(gauge(page, "Start-up money")).toContainText("No cost lines on this road yet");
+  // The before-you-open steps name four lines the person prices, with no amount, so never $0.
+  await expect(gauge(page, "Start-up money")).toContainText("your numbers: not given yet");
+  await expect(gauge(page, "Start-up money")).toContainText("4 not priced yet");
+  await expect(gauge(page, "Start-up money")).not.toContainText("$0");
   await expect(gauge(page, "Your date")).toContainText("not set");
 
-  // Next on your road agrees with the map's chips: stage 0 is drawn done and voluntary GST is the side
-  // not picked, so neither is listed; the Steps gauge names the same first step.
+  // Next on your road agrees with the map's chips: stage 0 is drawn done, so the list starts at the
+  // three before-you-open steps that follow it in the first column; the Steps gauge names the same
+  // first step.
   const next = page.getByRole("region", { name: "Next on your road" });
-  await expect(next.getByRole("button")).toHaveText(["1 · Sole Prop activation", "2 · Mandatory GST registration", "3 · Incorporating"]);
-  await expect(gauge(page, "Steps")).toContainText("next on your road: “Sole Prop activation”");
+  await expect(next.getByRole("button")).toHaveText([
+    "1 · Register your business name, if you use one",
+    "2 · Look up your permits and licences (BizPaL)",
+    "3 · A separate bank account for the business, if it has a name other than yours",
+  ]);
+  await expect(gauge(page, "Steps")).toContainText("next on your road: “Register your business name, if you use one”");
 
   // The overlays: Road is always on; Rules & tax starts on, so the map looks as it did.
   await expect(overlays(page).getByText("always on")).toBeVisible();
@@ -98,9 +111,12 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(done).toHaveAttribute("aria-pressed", "false");
   await done.click();
   await expect(done).toHaveAttribute("aria-pressed", "true");
-  await expect(gauge(page, "Steps")).toContainText("1 of 10 marked done");
+  await expect(gauge(page, "Steps")).toContainText(`1 of ${road0Steps} marked done`);
   await expect(stage(page, "Sole Prop activation")).toHaveAccessibleName(/^Sole Prop activation, done, /);
-  await expect(stepPanel(page).getByText("No “done when” lines are written for this step yet.")).toBeVisible();
+  // Its cited "done when" lines (2026-10-12): marking the step done ticks none of them.
+  await expect(stepPanel(page).getByText(`0 of ${soleProp.doneWhen.length} ticked`)).toBeVisible();
+  await expect(stepPanel(page).getByRole("checkbox", { name: soleProp.doneWhen[0]!.text })).not.toBeChecked();
+  await expect(stepPanel(page).getByText("No “done when” lines are written for this step yet.")).toHaveCount(0);
 
   // Next on your road: in road order, and never the step marked done.
   await expect(next.getByText("the order steps happen, not importance")).toBeVisible();
@@ -146,7 +162,7 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
 
   // A reload reads everything back from the data file.
   await page.reload();
-  await expect(gauge(page, "Steps")).toContainText("1 of 10 marked done");
+  await expect(gauge(page, "Steps")).toContainText(`1 of ${road0Steps} marked done`);
   await expect(gauge(page, "Skills")).toContainText("your own skills: 1 have · 0 learning · 0 not yet");
   await expect(gauge(page, "Start-up money")).toContainText("savings $12,000");
   await expect(gauge(page, "Your date")).toContainText("May 2099");
@@ -154,7 +170,7 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(stepPanel(page).getByRole("button", { name: "Done", exact: true })).toHaveAttribute("aria-pressed", "true");
   // Pressing the status that's on takes it back.
   await stepPanel(page).getByRole("button", { name: "Done", exact: true }).click();
-  await expect(gauge(page, "Steps")).toContainText("0 of 10 marked done");
+  await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
 });
 
 // A "done when" line and a quote need a road that has them. Road 0's are written in their own pull

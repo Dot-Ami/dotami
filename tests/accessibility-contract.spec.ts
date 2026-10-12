@@ -21,8 +21,12 @@ describe("accessibility contracts for interactive map controls", () => {
     // between the colour and the action; with no overlay on, the name is what it was.
     // Since 2026-10-12 a card the person marked not for me says "set aside by you" in place of the colour's
     // words: its grey is their choice, not a reading of their answers.
-    expect(map).toContain("aria-label={`${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join(\"\")}opens detail`}");
-    expect(map).toContain("colourWords={setAsideByYou ? cockpitWords.road.setAside : COLOUR_WORDS[colour]}");
+    expect(map).toContain("`${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join(\"\")}opens detail`");
+    expect(map).toContain("colourWords={setAsideByYou ? cockpitWords.road.setAside : ruled ? COLOUR_WORDS[colour] : null}");
+    // 2026-10-12: drawn without road evaluation, a step no rule colours (road 0's before-you-open steps)
+    // says so instead of a colour. In the cockpit, road evaluation gives every step a state.
+    expect(map).toContain("`${step.label}, no rule reads this step yet, shows where it leads`");
+    expect(map).toContain("aria-label={accessibleName}");
     expect(map).toContain('green: "applies as answered"');
     expect(map).toContain('yellow: "check first"');
     expect(map).toContain('gray: "doesn\'t apply as answered"');

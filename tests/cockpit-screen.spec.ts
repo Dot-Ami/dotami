@@ -3,8 +3,8 @@
  * goal bar and its four gauges, the overlays on the road, the step panel, the lists behind the gauges
  * and "Next on your road", all drawn from one run of road evaluation.
  *
- * Road 0 (today's general road) has no "done when" lines, listed skills or cost lines yet, so most cases
- * draw the invented trade road from tests/helpers/road-to-evaluate.ts. Components are drawn to HTML the
+ * Road 0 (today's general road) has no listed skills yet, and cost lines only on its three "before you
+ * open" steps (2026-10-12), so most cases draw the invented trade road from tests/helpers/road-to-evaluate.ts. Components are drawn to HTML the
  * way tests/road-map.spec.ts draws the map.
  */
 import { readFileSync } from "node:fs";
@@ -298,11 +298,13 @@ describe("Next on your road", () => {
       // Nothing the map's own chip calls "not on your path" or "done".
       for (const id of next) expect(["ghost", "complete"]).not.toContain(getScenarioNodeStatus(id, scenario));
     }
-    // A first visit on the default picks: stage 0 is drawn done, so the list starts at stage 1.
-    expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea()).map((s) => s.stepId)).toEqual([
+    // A first visit on the default picks: stage 0 is drawn done, so the list starts at the three
+    // before-you-open steps that follow it in the first column (2026-10-12), then stage 1.
+    expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea(), 4).map((s) => s.stepId)).toEqual([
+      "step-start-register-name",
+      "step-start-permits-bizpal",
+      "step-start-business-account",
       "stage-1-sole-prop-activation",
-      mandatory,
-      "stage-3a-incorporation-80k-net",
     ]);
   });
 
@@ -383,7 +385,10 @@ describe("the gauges", () => {
 
   it("on road 0 the Steps gauge names the first step the map shows on the path, not one it shows done", () => {
     const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
-    expect(view.steps.lines).toContain("next on your road: “Sole Prop activation”");
+    // Stage 0 is drawn done; the first step after it is the first before-you-open step (2026-10-12).
+    expect(view.steps.lines).toContain("next on your road: “Register your business name, if you use one”");
+    const stage0 = generalRoadV2026.steps.find((s) => s.id === "stage-0-employee-apprentice-baseline")!;
+    expect(view.steps.lines.join(" ")).not.toContain(stage0.label);
   });
 
   it("a goal bar on a road written for another province says which map is drawn, not that it is their future", () => {
@@ -406,11 +411,14 @@ describe("the gauges", () => {
     expect(bc).toContain("Map drawn: Invented trade road (test only) · written for AB; this idea is in BC");
   });
 
-  it("on road 0: no listed skills or cost lines yet, said in one line each", () => {
+  it("on road 0: no listed skills yet, said in one line; its cost lines are named lines, never $0", () => {
     const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
     expect(view.skills.value).toBe("No skills are listed on this road yet");
-    expect(view.money.value).toBe("No cost lines on this road yet");
+    // The before-you-open steps (2026-10-12) name four lines the person prices, and no amount.
+    expect(view.money.value).toBe("your numbers: not given yet");
+    expect(view.money.lines).toContain("4 not priced yet");
+    expect([view.money.value, ...view.money.lines].join(" ")).not.toContain("$0");
   });
 
   it("the goal bar: the person's words with their day, the target only when agreed, the future by name, four gauge buttons", () => {

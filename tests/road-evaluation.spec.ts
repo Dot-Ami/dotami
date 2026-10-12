@@ -114,7 +114,23 @@ describe("each step's state and its reason", () => {
     const result = evaluateRoad(road0());
     const map = evaluateScenario(inventedIdea(), { today: TODAY }).nodeStates;
     const asState = { green: "applies", yellow: "check-first", gray: "not-on-your-path" } as const;
-    expect(stateOf(result)).toEqual(Object.fromEntries(Object.entries(map).map(([id, colour]) => [id, asState[colour]])));
+    // The steps the rules read get the map's colours; road 0's before-you-open steps (2026-10-12), which
+    // no rule reads, apply because they are on the road, and say so.
+    const ruled = new Set(Object.keys(map));
+    const states = stateOf(result);
+    expect(Object.fromEntries(Object.entries(states).filter(([id]) => ruled.has(id)))).toEqual(
+      Object.fromEntries(Object.entries(map).map(([id, colour]) => [id, asState[colour]])),
+    );
+    const beforeYouOpen = result.steps.filter((s) => !ruled.has(s.stepId));
+    expect(beforeYouOpen.map((s) => s.stepId)).toEqual([
+      "step-start-register-name",
+      "step-start-permits-bizpal",
+      "step-start-business-account",
+    ]);
+    for (const step of beforeYouOpen) {
+      expect(step.state).toBe("applies");
+      expect(step.reason).toEqual({ kind: "on-your-road" });
+    }
   });
 
   it("a rules colour names the answers it hangs on, found by running the rules with each answer changed", () => {

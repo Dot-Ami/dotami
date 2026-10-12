@@ -23,7 +23,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  *
  * 2026-10-11: the map draws whatever road it is given (`lib/engines/roads/v2026/`) and holds no
  * map of its own. Today's ten-step tax map is the road "Starting any business in Alberta", drawn
- * exactly as before (tests/road-map.spec.ts compares the HTML with what the old map drew).
+ * exactly as before, plus three before-you-open steps (2026-10-12): tests/road-map.spec.ts cuts those
+ * three cards out and compares the rest of the HTML with what the old map drew.
  *
  * Each column = one column of the road. Inside: a stage card per step the column lists, and under
  * each stage card a lever card per evaluator item relevant to that step (`itemsForNode`). Stage
@@ -185,13 +186,18 @@ interface MapFocus {
 }
 
 /**
- * A step's colour from today's rules, by step id. A step the rules don't know (one from a road
- * other than today's) is grey until road evaluation gives it a state of its own.
+ * A step's colour from today's rules, by step id, or undefined when the rules don't colour it (road
+ * 0's before-you-open steps, or a step from another road). Such a step is drawn with no colour at all
+ * rather than grey: grey says "doesn't apply as answered", which no rule decided (2026-10-12). Only
+ * used when the map is drawn without road evaluation; in the cockpit every step has a state of its own.
  */
-function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor {
+function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor | undefined {
   const states: Partial<Record<string, NodeStateColor>> = evaluation.nodeStates;
-  return states[stepId] ?? "gray";
+  return states[stepId];
 }
+
+/** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
+const NO_RULE_CHIP = { label: "no rule yet", className: "text-stone border border-rule" };
 
 /** The rules' sentence naming the person's answers behind a step's colour, by step id (today's road only). */
 function reasonOf(evaluation: EvaluationResult, stepId: string): string | undefined {
@@ -241,10 +247,17 @@ function TierColumn({
         // The person's own status wins the chip; otherwise the map's worked-out place on the path, as before.
         // The same reading decides "Next on your road" and the Rules & tax count (lib/cockpit/view.ts).
         const place = mapPlace(step.id, scenario, evaluated);
-        // On the map's own reading, "your pick" only for what the person picked (`stageChipFor`, issue #5).
-        const chip = place.from === "you" ? STATUS_CHIP[place.status] : STAGE_CHIP[stageChipFor(step.id, scenario)];
-        const ghost = setAsideOnMap(place);
+        // Road evaluation gives every step a state, the before-you-open steps included. Drawn without it,
+        // a step today's rules don't read gets no colour and no place chip (road 0's done-when work).
         const colour = evaluated ? COLOUR_OF_STATE[evaluated.state] : colourOf(evaluation, step.id);
+        const ruled = colour !== undefined;
+        // On the map's own reading, "your pick" only for what the person picked (`stageChipFor`, issue #5).
+        const chip = !ruled
+          ? NO_RULE_CHIP
+          : place.from === "you"
+            ? STATUS_CHIP[place.status]
+            : STAGE_CHIP[stageChipFor(step.id, scenario)];
+        const ghost = ruled && setAsideOnMap(place);
         // A step the person marked not for me is grey because they said so, not because of the rules: its
         // name says that instead of "doesn't apply as answered".
         const setAsideByYou = place.from === "you" && place.status === "not-for-me";
@@ -265,7 +278,7 @@ function TierColumn({
               ghost={ghost}
               reason={reasonOf(evaluation, step.id)}
               colour={colour}
-              colourWords={setAsideByYou ? cockpitWords.road.setAside : COLOUR_WORDS[colour]}
+              colourWords={setAsideByYou ? cockpitWords.road.setAside : ruled ? COLOUR_WORDS[colour] : null}
               badges={badges}
               selected={selected}
               onClick={() => onSelectStep(step.id)}
@@ -304,9 +317,10 @@ function StageCard({
   ghost: boolean;
   /** The rules' one sentence on which of the person's answers set this card's colour, if any. */
   reason?: string;
-  colour: NodeStateColor;
-  /** The left bar in words, for the card's accessible name. */
-  colourWords: string;
+  /** Undefined only when the map is drawn without road evaluation and no rule reads the step. */
+  colour: NodeStateColor | undefined;
+  /** The left bar in words, for the card's accessible name; null when the card has no colour. */
+  colourWords: string | null;
   /** The overlays' badges: drawn under the line, and read out in the card's name. */
   badges: string[];
   selected: boolean;
@@ -315,6 +329,12 @@ function StageCard({
   registerCard: (el: HTMLElement | null) => void;
 }) {
   const reasonId = useId();
+  const ruled = colour !== undefined;
+  // The colour in words, so it is never the only way to tell. A step with no colour says so instead.
+  const accessibleName =
+    colourWords === null
+      ? `${step.label}, no rule reads this step yet, shows where it leads`
+      : `${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join("")}opens detail`;
   return (
     <button
       ref={registerCard}
@@ -325,13 +345,13 @@ function StageCard({
       onFocus={() => onHover(true)}
       onBlur={() => onHover(false)}
       aria-pressed={selected}
-      aria-label={`${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join("")}opens detail`}
+      aria-label={accessibleName}
       // The label replaces the button's text for a screen reader, so the reason line is pointed to
       // as the description; otherwise only sighted people would hear why the card has its colour.
       aria-describedby={reason ? reasonId : undefined}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
-      } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
+      } ${ruled ? ACCENT[colour] : "border-l-rule-soft"} ${selected ? "ring-2 ring-maple/30" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{step.label}</h4>

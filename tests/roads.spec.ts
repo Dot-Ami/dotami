@@ -41,12 +41,71 @@ const SHIPPED_IDS: Record<
       "branch-service-vs-productize",
       "stage-4-retained-earnings-planning",
       "stage-4-sred-deepening",
+      // The before-you-open steps (2026-10-12).
+      "step-start-register-name",
+      "step-start-permits-bizpal",
+      "step-start-business-account",
     ],
     // The keys today's saved branch picks are stored under (ScenarioState.activeBranches).
     forks: ["gstTiming", "incorporationTiming"],
-    // Road 0's done-when and cost lines are written in a later pull request; none has shipped yet.
-    doneWhen: [],
-    costs: [],
+    // Road 0's done-when lines (2026-10-12): about three per step, each cited to an official page.
+    doneWhen: [
+      "dw-start-baseline-employment",
+      "dw-start-baseline-business-lines",
+      "dw-start-baseline-sole-prop",
+      "dw-start-soleprop-records",
+      "dw-start-soleprop-return",
+      "dw-start-soleprop-instalments",
+      "dw-start-gstvol-registered",
+      "dw-start-gstvol-charge-file",
+      "dw-start-gstvol-one-year",
+      "dw-start-gstvol-itc-evidence",
+      "dw-start-gstman-tests",
+      "dw-start-gstman-one-quarter",
+      "dw-start-gstman-four-quarters",
+      "dw-start-gstman-charging",
+      "dw-start-inc-articles",
+      "dw-start-inc-t2",
+      "dw-start-inc-guarantee",
+      "dw-start-inc-directors",
+      "dw-start-incsred-incorporated",
+      "dw-start-incsred-ccpc",
+      "dw-start-incsred-associated",
+      "dw-start-hire-status",
+      "dw-start-hire-before-pay",
+      "dw-start-hire-payroll-account",
+      "dw-start-hire-wcb",
+      "dw-start-service-income-records",
+      "dw-start-service-separate-records",
+      "dw-start-service-name",
+      "dw-start-retained-t5",
+      "dw-start-retained-eligible",
+      "dw-start-retained-no-switch",
+      "dw-start-sred-t661",
+      "dw-start-sred-spent",
+      "dw-start-sred-deadline",
+      "dw-start-name-when",
+      "dw-start-name-ending",
+      "dw-start-name-report",
+      "dw-start-name-form",
+      "dw-start-name-proof",
+      "dw-start-name-email",
+      "dw-start-bizpal-searched",
+      "dw-start-bizpal-more",
+      "dw-start-bizpal-city-hall",
+      "dw-start-bizpal-applied",
+      "dw-start-account-named",
+      "dw-start-account-billing",
+      "dw-start-account-statements",
+    ],
+    costs: [
+      "cost-start-name-government-fee",
+      // "cost-start-name-report" was in review only, never on main: the register-name page names no
+      // price for the report, so it became the line dw-start-name-report before it shipped.
+      "cost-start-name-service-fee",
+      "cost-start-permit-licence-fees",
+      "cost-start-bank-fees",
+    ],
   },
   "road-apprentice-to-own-shop-ab": {
     columns: ["col-shop-training", "col-shop-certified", "col-shop-open", "col-shop-first-years"],
@@ -237,7 +296,7 @@ describe("the road catalog", () => {
   });
 });
 
-describe("road 0, Starting any business in Alberta, is today's ten-step map unchanged", () => {
+describe("road 0, Starting any business in Alberta, is today's ten-step map, plus its before-you-open steps", () => {
   const road = roadStartingAnyBusinessAB;
 
   it("is the general road every map draws until a saved future names another", () => {
@@ -249,6 +308,9 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map unch
     expect(road.provinces).toEqual(["AB"]);
   });
 
+  // The three steps written for it on 2026-10-12, in the first column after the map's own stages.
+  const BEFORE_YOU_OPEN = ["step-start-register-name", "step-start-permits-bizpal", "step-start-business-account"];
+
   it("its columns are today's four tiers, in order, with the same names, lines and toggles", () => {
     expect(road.columns.map((c) => c.id)).toEqual(cfeTiersV2026.map((t) => t.id));
     road.columns.forEach((column, i) => {
@@ -256,22 +318,24 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map unch
       expect(column.label).toBe(tier.label);
       expect(column.summary).toBe(tier.subtitle);
       expect(column.forkId).toBe(tier.branchDecisionId);
-      // The same cards in the same order the old map drew: the catalog's nodes whose stage the tier lists.
-      expect(column.steps).toEqual(cfeNodesV2026.filter((n) => tier.stages.includes(n.stage)).map((n) => n.id));
+      // The same cards in the same order the old map drew (the catalog's nodes whose stage the tier
+      // lists), and only the first column has steps after them: the before-you-open steps.
+      const stages = cfeNodesV2026.filter((n) => tier.stages.includes(n.stage)).map((n) => n.id);
+      expect(column.steps).toEqual(i === 0 ? [...stages, ...BEFORE_YOU_OPEN] : stages);
     });
   });
 
-  it("its steps are today's ten nodes: same ids, names, card lines, sources and arrows", () => {
-    expect(road.steps.map((s) => s.id)).toEqual(cfeNodesV2026.map((n) => n.id));
-    road.steps.forEach((step, i) => {
-      const node = cfeNodesV2026[i]!;
+  it("its first ten steps are today's ten nodes: same ids, names, card lines, sources and arrows", () => {
+    expect(road.steps.map((s) => s.id)).toEqual([...cfeNodesV2026.map((n) => n.id), ...BEFORE_YOU_OPEN]);
+    cfeNodesV2026.forEach((node, i) => {
+      const step = road.steps[i]!;
       expect(step.label).toBe(node.label);
       expect(step.summary).toBe(node.trigger);
       expect(step.next).toEqual(node.branches);
       expect(step.citations).toEqual(node.citations);
-      // Content still to be written for road 0 (done-when lines, cost lines, skills, official links)
-      // comes in its own pull request, read from the official pages; nothing is made up meanwhile.
-      expect(step.doneWhen).toEqual([]);
+      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); cost lines, skill
+      // items and official links on them come later, read from the official pages, never made up.
+      expect(step.doneWhen.length).toBeGreaterThanOrEqual(3);
       expect(step.needs).toEqual([]);
       expect(step.costs).toEqual([]);
       expect(step.officialLinks).toEqual([]);

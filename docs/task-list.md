@@ -71,6 +71,14 @@ and the maintainer's six decisions of 2026-10-11:
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
     *done when* lines, cost lines and *before you open* steps come with the content)
+  - [x] Road 0's content: about three cited *done when* lines on each of today's ten steps, and the
+    *before you open* steps (register your business name, look up permits and licences on BizPaL, a
+    separate bank account), every source a tool check (2026-10-12,
+    `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
+    three new cards as on your road; drawn without it, the map shows them as "no rule yet")
+    - [ ] Still open on it: cost lines, skill items and official links on the ten map stages; four
+      map stages' own sources point at pages that answer "page not found" (a read, or a tool check
+      in place of it, is the maintainer's call); a person's read of each page
   - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
