@@ -34,8 +34,8 @@ and the maintainer's six decisions of 2026-10-11:
 - 🔄 **[14a] Phase 1 — Look inside one future (Alberta).** About two calendar weeks.
   - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
   - [x] Fixes carried in, the first three (#142, 2026-10-11): the uncited $80,000 incorporation
-    trigger off the map (the step is now *Incorporating*, cited facts only, lit from your own pick;
-    the toggle's *$80K net* option, its sibling step's wording and the export lose the figure too, and
+    trigger off the map (the step is now *Incorporating*, cited facts only, lit only while it is the
+    selected option, which is your pick or the default until you click; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure too, and
     a test fails on any dollar figure on the map that no cited page sets); the map coloured from your
     own branch picks; the sentence and goals you type at the start saved, dated and word for word
   - [ ] Fixes carried in, still open: your own "I'd incorporate at $___" on the *Incorporating* step;
@@ -140,8 +140,9 @@ and the maintainer's six decisions of 2026-10-11:
     acted on at the desktop app's next start and still unticked after it (desktop-tested in
     `e2e-desktop/desktop.spec.ts`, "turning locking off"); Figure reminders survive a reload
     (browser-tested)
-  - [ ] One edge case still untested: a refused clipboard ("Copy failed — select it instead"), because
-    a browser grants the clipboard in tests
+  - [ ] Edge cases still untested: a refused clipboard ("Copy failed — select it instead"), because
+    a browser grants the clipboard in tests; the saved choices read again when the window is focused
+    or comes back from the browser's memory
     ([settings-and-edge-cases.md](architecture/settings-and-edge-cases.md), the settings page)
 
 ## 8 — Your figures (confirmed totals, never the records) · roadmap §5 · #46
@@ -473,7 +474,7 @@ roadmap's build order.
   a threat model for the Lens's powers before [9g].
   - [x] `source-map-js` 1.2.1 → 1.2.2 (build-time; Dependabot #71, merged 2026-10-07)
   - [ ] `sprintf-js` GHSA-hp3w-g68c-fv3c (build-time, under the installer builder: `electron-builder` →
-    `@electron/get` → `global-agent` → `roarr`). **No fixed version exists yet** — it covers every
+    `app-builder-lib` → `@electron/get` → `global-agent` → `roarr`). **No fixed version exists yet** — it covers every
     release up to 1.1.3, the newest (checked 2026-10-11)
   - [x] `sharp` 0.35.5 — its SVG reader's advisory (#73) · `postcss-selector-parser` — gone with
     Tailwind 4 (#80)
@@ -493,7 +494,7 @@ roadmap's build order.
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — planned for before the first
-  download; the first download (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
+  download; the first installer (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
   then the privacy log below is the record of what each version keeps, sends, ships and asks.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a

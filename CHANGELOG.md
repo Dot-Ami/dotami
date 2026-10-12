@@ -78,9 +78,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The task list ticks what is done: the incorporation fixes of #142, a setting that survives a restart,
   the figures' ages, the data file's encryption (released in 0.3.0), the 0.2.1 and 0.3.0 releases and
   the `source-map-js` update; it lists the cockpit's plan once, under [14a], with [10f] pointing there,
-  and says the privacy policy and terms are still owed after the first download (`docs/task-list.md`).
+  and says the privacy policy and terms are still owed after the first installer (`docs/task-list.md`).
   CONTRIBUTING's "what we need" points to the task list, and the receipts design no longer lists
-  encrypting the data file as open (`CONTRIBUTING.md`, `docs/architecture/expense-records.md`).
+  encrypting the data file as open (`CONTRIBUTING.md`, `docs/architecture/expense-records.md`). The
+  receipts design and the figures privacy review now say every new backup needs a passphrase since
+  0.3.0 (`docs/architecture/expense-records.md`, `docs/architecture/figures-privacy-review.md`), and
+  the settings edge cases say the warning before turning off locking is desktop-tested
+  (`docs/architecture/settings-and-edge-cases.md`).
 
 ## [0.3.0] — 2026-10-10
 

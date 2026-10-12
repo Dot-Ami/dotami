@@ -137,8 +137,8 @@ date before you pull — a fresh SQLite file starts empty.
 
 **The desktop app (early, Windows first):** download the installer, `DotAmi-Setup-<version>.exe`,
 from the [latest release](https://github.com/Dot-Ami/dotami/releases/latest). It installs for your
-Windows account only, with no administrator rights. It isn't code-signed yet, so Windows shows
-"Windows protected your PC" the first time you run it. The installed app updates itself from GitHub
+Windows account only and doesn't need administrator rights. It isn't code-signed yet, so Windows
+shows "Windows protected your PC" when you run the installer. The installed app updates itself from GitHub
 Releases and asks before installing.
 
 To build it from source instead: `npm run desktop:build` then `npm run desktop` opens DotAmi in its

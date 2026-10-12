@@ -649,6 +649,8 @@ It does **not** protect against:
   which disk encryption also covers.
 - **A backup with no passphrase.** Its receipts are written decrypted (so that it restores on another
   computer, below), and anyone with the file can read them. DotAmi says so when it makes one.
+  *(2026-10-11: since 0.3.0 every new backup needs a passphrase; older backups without one still
+  restore.)*
 
 **The separate option: encrypting the database.** Not built, not proposed for this change. What it
 would take, as my rough estimate in working days (not a measurement): the database library DotAmi
