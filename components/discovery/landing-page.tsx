@@ -6,7 +6,7 @@ import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 /**
  * The landing page's one job (2026-07-02 workshop, W1/W4): capture the user's situation
@@ -24,6 +24,18 @@ export function LandingPage() {
   const { setIntake, resetJourney } = useJourney();
   const [text, setText] = useState("");
   const [parsing, setParsing] = useState(false);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
+
+  // The server sends this page already drawn, so on a slow computer the box can be typed into before
+  // the page's scripts have run. React then starts from an empty `text` and never hears those
+  // keystrokes (it takes what is already in the box as its starting point), so "Map it" stayed greyed
+  // out and the next redraw emptied the box. Take whatever is in the box once, when React takes the
+  // page over. A layout effect runs before any redraw can empty the box, and before the person can
+  // type again, so nothing typed is lost and ordinary typing still goes through onChange.
+  useLayoutEffect(() => {
+    const typedBeforeLoad = boxRef.current?.value ?? "";
+    if (typedBeforeLoad !== "") setText(typedBeforeLoad);
+  }, []);
 
   async function handleMapIt() {
     const trimmed = text.trim();
@@ -86,6 +98,7 @@ export function LandingPage() {
 
           <div className="mt-10 flex w-full overflow-hidden rounded-[10px] border border-rule bg-ink3 text-left focus-within:border-maple-soft">
             <textarea
+              ref={boxRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {

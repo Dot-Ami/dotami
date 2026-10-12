@@ -8,6 +8,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **A road type any future can use** ([14a]) — a business or a career can now be written as a *road*:
+  columns of steps, each cited, with the steps each one leads to, forks between two steps, *done when*
+  lines, skill items, and cost lines of three kinds (an official fee with its source and the day it was
+  read, the person's own agreed quote, or a named line not priced yet, which never counts as $0)
+  ([`lib/engines/roads/v2026/`](lib/engines/roads/v2026/), [docs/engines/roads.md](docs/engines/roads.md)).
+  Checks refuse a road with an uncited step or line, a source read on a day that hasn't come yet, an
+  official link that isn't an https page, a repeated id, a step in no column, an arrow or fork to a step
+  that isn't there, or a fee that isn't a whole number of cents, and the list of shipped ids (down to
+  each *done when* line, cost line and skill item) can't shrink. A quote that isn't a whole,
+  non-negative number of cents shows as not priced, never as a number. Today's ten-step map is the first road, *Starting any business in Alberta (tax and
+  structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
+  given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
+  drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.
+
 ### Changed
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
@@ -42,6 +57,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
 
 ### Security
 - **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
@@ -99,6 +124,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new node, the *New node* issue template and the people DotAmi is for say "starting a business, or
   working toward a career or a business of their own" (`CONTRIBUTING.md`,
   `.github/ISSUE_TEMPLATE/new-node.md`, `docs/architecture/use-cases.md`).
+- **The public pages catch up with what shipped.** The README no longer calls the desktop app "not
+  yet released": it links the installer on the
+  [latest release](https://github.com/Dot-Ami/dotami/releases/latest), says it isn't code-signed yet,
+  and says the future cockpit is being built (`README.md`). The government skills list is cited as
+  *OaSIS 2025 Version 1.0*, which has a Knowledge file, instead of the 2022 version, which doesn't;
+  which files the import uses is still open (`docs/architecture/future-cockpit.md`, `CONTRIBUTING.md`).
+  The task list ticks what is done: the incorporation fixes of #142, a setting that survives a restart,
+  the figures' ages, the data file's encryption (released in 0.3.0), the 0.2.1 and 0.3.0 releases and
+  the `source-map-js` update; it lists the cockpit's plan once, under [14a], with [10f] pointing there,
+  and says the privacy policy and terms are still owed after the first installer (`docs/task-list.md`).
+  CONTRIBUTING's "what we need" points to the task list, and the receipts design no longer lists
+  encrypting the data file as open (`CONTRIBUTING.md`, `docs/architecture/expense-records.md`). The
+  receipts design and the figures privacy review now say every new backup needs a passphrase since
+  0.3.0 (`docs/architecture/expense-records.md`, `docs/architecture/figures-privacy-review.md`), and
+  the settings edge cases say the warning before turning off locking is desktop-tested
+  (`docs/architecture/settings-and-edge-cases.md`).
+- **A source's date says who looked at it.** Following the maintainer's decision of 2026-10-11, a
+  source is either *read by a person on* a date or *checked by a tool on* a date (a tool fetched the
+  live page and the quoted words were found on it). The OaSIS 2025 record and the CRA's *When to
+  register for and start charging the GST/HST* page were fetched by a tool, so their dates now say
+  *checked by a tool on 2026-10-11* instead of *read 2026-10-11*
+  (`docs/architecture/future-cockpit.md`).
 
 ## [0.3.0] — 2026-10-10
 

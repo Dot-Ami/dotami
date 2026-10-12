@@ -30,6 +30,7 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { makePdf } from "../tests/helpers/make-pdf";
 import { heic } from "../tests/helpers/heic-files";
 import { pdf, png } from "../tests/helpers/receipt-files";
+import { waitForReact } from "../tests/helpers/react-ready";
 import { wipePendingFile, writeWipePending } from "../desktop/wipe-pending.mjs";
 
 const root = path.resolve(__dirname, "..");
@@ -170,7 +171,13 @@ function filesHolding(dir: string, words: string): string[] {
 
 /** Describe a venture and open its map — the same path as e2e/app.spec.ts; it's saved as "My venture". */
 async function describeVenture(page: Page) {
-  await page.getByPlaceholder(/What are you building/).fill("A mobile bike repair business with a van in Calgary");
+  const box = page.getByPlaceholder(/What are you building/);
+  // Type into the live page, not the one the server drew before the scripts ran: on CI's slower
+  // Windows machines this used to type too early, and "Map it" stayed greyed out (three failures on
+  // 10-11 October 2026). Typing before the page has loaded is now handled by the page itself and has
+  // its own browser test (e2e/app.spec.ts); this path tests the ordinary one.
+  await waitForReact(box);
+  await box.fill("A mobile bike repair business with a van in Calgary");
   await page.getByRole("button", { name: "Map it →" }).click();
   await page.getByRole("button", { name: "Continue →" }).click();
   await page.getByRole("button", { name: "Looks right →" }).click();

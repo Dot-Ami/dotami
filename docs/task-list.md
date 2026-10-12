@@ -33,15 +33,24 @@ and the maintainer's six decisions of 2026-10-11:
 
 - 🔄 **[14a] Phase 1 — Look inside one future (Alberta).** About two calendar weeks.
   - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
-  - [ ] Fixes carried in: the uncited $80,000 incorporation trigger off the map (the step becomes
-    *Incorporating*, cited facts only, and lights from your own pick and your own "I'd incorporate at
-    $___"; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure
-    too, and a test keeps it off); federal and Alberta incorporation side by side for you to pick; the
-    GST/HST card quoting the CRA's exact two tests; the map coloured from your own branch picks; the sentence and goals you
-    type at the start saved, dated and word for word
-  - [ ] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
+  - [x] Fixes carried in, the first three (#142, 2026-10-11): the uncited $80,000 incorporation
+    trigger off the map (the step is now *Incorporating*, cited facts only, lit only while it is the
+    selected option, which is your pick or the default until you click; the toggle's *$80K net* option, its sibling step's wording and the export lose the figure too, and
+    a test fails on any dollar figure on the map that no cited page sets); the map coloured from your
+    own branch picks; the sentence and goals you type at the start saved, dated and word for word
+  - [ ] Fixes carried in, still open: your own "I'd incorporate at $___" on the *Incorporating* step;
+    federal and Alberta incorporation side by side for you to pick, from their official pages; the
+    GST/HST card quoting the CRA's exact two tests, with the uncited 70% "approaching the line" watch
+    (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) going with it
+  - [ ] Smaller follow-ups from the same fixes: "Incorporation for liability/SR&ED" lights from an
+    activity tag (Software / SaaS, Manufacturing, AI / ML / R&D) the intake's parser can mark from the
+    sentence (say so on the card, or ask instead); change the sentence on an idea's card (today it can
+    only be removed, with "Your statements"); a stage card's chip says "default" until the person clicks
+    its toggle, not "your pick"
+  - [x] Any road can be drawn: a road type (columns, steps, forks, skill items, cost lines, each cited
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
-    Alberta*
+    Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
+    *done when* lines, cost lines and *before you open* steps come with the content)
   - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
@@ -96,7 +105,8 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] A Windows build from CI, with the desktop test on the packaged app (Mac and Linux after)
 - ✅ **[7c] Backup, restore, moving to a new computer** (desktop app, File menu;
   [how it works](architecture/desktop-app.md#backup-and-restore-7c)).
-  - [x] *Back up* copies the database file; optional passphrase encryption
+  - [x] *Back up* copies the database file; locked with a passphrase, optional at first and required
+    for every backup since 0.3.0 ([8i]; older backups without one still restore)
   - [x] *Restore* checks a backup before replacing anything, and keeps a copy of what it replaces
   - [x] Setup suggests turning on disk encryption (the settings page, Windows Home and Pro)
   - [x] A test: back up on one computer → restore on another → the same ventures
@@ -123,14 +133,21 @@ and the maintainer's six decisions of 2026-10-11:
   starts fresh in the app rather than moving data (decided 2026-10-05). If you self-hosted on
   PostgreSQL before the SQLite switch and need your data moved, open an issue.
 - 🟡 **[7g] The settings page** — one screen for every setting in Part 1 of the edge-case doc;
-  each story adds its own rows.
+  each story adds its own rows. Two settings can be changed there so far: Figure reminders ([8e]) and
+  Encrypt the data file ([8i]).
   - [x] One screen (`/settings`), grouped: data and backups · your figures · the Lens · the map ·
     privacy · updates — each group opens with what is true of this copy today
   - [x] Every Part 1 setting listed with its default, choices, warning and the story that brings
     it; a test keeps the page and Part 1 in step
   - [x] A browser test for the page
-  - [ ] A setting changed there survives a restart — waits for the first setting that can be
-    switched (none can yet; each arrives with its story, starting with [7b]'s data folder)
+  - [x] A setting changed there survives a restart: Encrypt the data file, unticked in Settings, is
+    acted on at the desktop app's next start and still unticked after it (desktop-tested in
+    `e2e-desktop/desktop.spec.ts`, "turning locking off"); Figure reminders survive a reload
+    (browser-tested)
+  - [ ] Edge cases still untested: a refused clipboard ("Copy failed — select it instead"), because
+    a browser grants the clipboard in tests; the saved choices read again when the window is focused
+    or comes back from the browser's memory
+    ([settings-and-edge-cases.md](architecture/settings-and-edge-cases.md), the settings page)
 
 ## 8 — Your figures (confirmed totals, never the records) · roadmap §5 · #46
 
@@ -205,16 +222,19 @@ roadmap's build order.
     Delete left its "wipe pending" note
   - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
-- 🔄 **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
+- ✅ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
     GST/HST card say "over $30,000"); dates in the person's own day (#85)
+  - [x] The GST/HST card says the last day its newest figure covers ("Newest figure ends …") and which
+    quarters aren't fully covered; no cut-off for "old" is picked, since no source sets one (#85,
+    `tests/brain-records.spec.ts`)
   - [x] The server measures "a period that has ended" against the computer's own day, not the UTC day
     (a period ending "tomorrow" was accepted on Canadian evenings)
   - [x] The first saved setting: tick monthly, quarterly and/or yearly on the settings page, and a
     "Remind me about this idea" switch (off until turned on) on each idea; both survive a reload (browser-tested).
     One small `Setting` table that every later setting reuses
   - [x] Reminders: a banner on the ideas page and the idea's map when a period has ended that the agreed
-    figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, browser test written in `e2e/figure-reminders.spec.ts`)
+    figures don't cover, with "Add figures" and "Not this time" (counted per kind of figure; unit-tested, and browser-tested in `e2e/figure-reminders.spec.ts`)
   - [x] Reminders: an "add to my calendar" file: one repeating event per ticked box, made in the page
     (RFC 5545 rules unit-tested in `tests/figures-calendar.spec.ts`; the download browser-tested; the desktop
     app's Save dialog desktop-tested)
@@ -260,7 +280,7 @@ roadmap's build order.
   person has a record of what they spent and labelled; DotAmi never decides on its own that one is
   deductible. **Design written and decided** (2026-10-07, after the maintainer asked for a record of
   every business expense); the store for typed records and the screen to type them are built
-  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies, carried by backups and shown inside DotAmi (2026-10-08), and encrypted in the desktop app (2026-10-09); the other ways in are not.
+  (2026-10-08, with the maintainer's decisions of that day); receipts are kept as copies, carried by backups and shown inside DotAmi (2026-10-08), and encrypted in the desktop app (2026-10-09); the data file itself is encrypted in the desktop app too, asked first (released in 0.3.0); the other ways in are not.
   - [x] Design and the options with their costs: [architecture/expense-records.md](architecture/expense-records.md)
   - [x] The privacy review (typed records and receipts as built):
     [figures-privacy-review.md](architecture/figures-privacy-review.md#privacy-review-expense-records-and-receipts-8i)
@@ -291,8 +311,9 @@ roadmap's build order.
     AES-256-GCM per file with one key kept only wrapped by Windows (`safeStorage`), existing receipts
     encrypted once at the first start without risking one, backups that still restore on another
     computer, and plain words where the person looks (Settings, *What DotAmi knows about you*, the note
-    before adding a receipt). A copy run from source keeps them unencrypted and says so. Open for the
-    maintainer: encrypting the data file too, and a "start a new key" button
+    before adding a receipt). A copy run from source keeps them unencrypted and says so. The two
+    questions this left for the maintainer were both answered yes and built: a "start a new key"
+    button and encrypting the data file too (both below)
   - [x] The entries in the Delete menu ([8d]): expense records have their own box, counting every
     record. Deleting ideas keeps their records as "not attached yet" (the maintainer's decision of
     2026-10-08), and the menu says how many stay, where they are kept and how to delete them before
@@ -325,9 +346,10 @@ roadmap's build order.
     computer can't decode HEVC it is kept and the viewer says so. Not tried on a Mac
   - [ ] Before DotAmi is sold: the HEVC patent questions (they cover the Electron build already shipped)
     answered by a software-patent lawyer ([the list](connectors/heic-decoder-review.md#questions-for-a-software-patent-lawyer-before-dotami-is-sold))
-  - [ ] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10):
+  - [x] Encrypting the database file (the maintainer said yes, 2026-10-09; chose how on 2026-10-10;
+    released in 0.3.0):
     designed and the packages reviewed ([architecture/database-encryption.md](architecture/database-encryption.md));
-    being built in stacked pull requests: (A) the packages, the Prisma adapter and the measurements;
+    built in stacked pull requests (#132, #134, #135, #136, #139): (A) the packages, the Prisma adapter and the measurements;
     (B) the key, the first-start encryption, the window that asks first, the Settings switch, and the
     migrator, backups and restore on the new package; (C) a passphrase on every backup and restoring
     from the lost-key window; (D) the "Start fresh" button
@@ -354,6 +376,10 @@ roadmap's build order.
       opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
+  - [ ] Words typed into the *Your expenses* form before the page has finished loading are emptied
+    when it loads (found 2026-10-11 by the review of the front page's same fix; only on a reload or a
+    typed address). The front page's way, reading what is already in each box as the page loads, with
+    its own browser test that holds the page's scripts back
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -391,28 +417,9 @@ roadmap's build order.
   checklist is built in [14a]; the questions per step come later)
 - ⬜ **[10d] Deadlines and reminders** — cited, with a reminder before each.
 - ⬜ **[10e] The accountant package** — one export of the map, confirmed figures, open questions · extends #41
-- 🔄 **[10f] Look inside your future** (the maintainer's plan of 2026-10-11) — start from where you want to
-  be, in your own words; pick one business or career; see its whole road at once: every step, the skills it
-  needs, the official fees and the blank cost lines for your own quotes. The first written future is "From
-  apprentice to your own shop (Alberta)"; the cockpit becomes one map with layers you switch on.
-  - [x] Three fixes first: no invented point to incorporate (the stage is now "Incorporating"); the map's
-    colours follow your own picks; the sentence typed on the front door is kept with the idea, dated and
-    word for word, once, with the goal chips as they stood on the intake
-  - [ ] Federal and Alberta incorporation side by side, from their official pages, and your own "I'd
-    incorporate at $___"
-  - [ ] The GST/HST card worded with the CRA's exact test, quoted from the cited page; the uncited 70%
-    "approaching the line" watch (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) goes with it
-  - [ ] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
-    AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
-  - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"
-  - [ ] A stage card's chip says "default" until the person clicks its toggle, not "your pick"
-  - [ ] A road any future can use; the map draws any road; today's map becomes "Starting any business in
-    Alberta"
-  - [ ] Skill marks, step progress, your target date and cost lines, kept on your computer
-  - [ ] The front door's three doors, Your destination, Pick a future
-  - [ ] The first written future, every step's "done when" written from its official page and cited
-  - [ ] The government's skills list for the job you pick (Open Government Licence – Canada)
-  - [ ] A browser test for the whole path
+- 🔄 **[10f] Look inside your future** — the same plan as [14a], written twice on 2026-10-11 (once by
+  the fixes in #142, once by the design in #141). Its tasks, done and open, are now listed once, under
+  [14a] in § 14; this code stays so links to it still lead somewhere.
 
 ## 11 — The map's content: the tools, tactics and tricks
 
@@ -463,19 +470,25 @@ roadmap's build order.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
-- 🔄 **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
-  - [x] Version tags (v0.1.0, v0.2.0) and [CHANGELOG.md](../CHANGELOG.md)
+- ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
+  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
-  - [ ] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d])
+  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1
+    and v0.3.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
+    reached an installed app (by hand, 2026-10-08)
+  - [x] A release with a database change ships its migration, which the desktop app applies itself
+    (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
 - 🔄 **[13c] Security** — CodeQL, grouped Dependabot, audit; a privacy review for each import path;
   a threat model for the Lens's powers before [9g].
-  - [ ] Newer advisories (checked 2026-10-06): `source-map-js` 1.2.1 (build-time; a patch — Dependabot
-    #71) · `sprintf-js` (build-time, under the installer builder; no fix published)
+  - [x] `source-map-js` 1.2.1 → 1.2.2 (build-time; Dependabot #71, merged 2026-10-07)
+  - [ ] `sprintf-js` GHSA-hp3w-g68c-fv3c (build-time, under the installer builder: `electron-builder` →
+    `app-builder-lib` → `@electron/get` → `global-agent` → `roarr`). **No fixed version exists yet** — it covers every
+    release up to 1.1.3, the newest (checked 2026-10-11)
   - [x] `sharp` 0.35.5 — its SVG reader's advisory (#73) · `postcss-selector-parser` — gone with
     Tailwind 4 (#80)
   - [ ] Build-time tooling advisory GHSA-vfj7-8cjw-p6xm (`braces` stack-exhaustion). **No fixed
     version exists yet** — it covers every `braces` release up to 3.0.3, the newest (checked
-    2026-10-06). Since Tailwind 4 it reaches DotAmi only through Next's ESLint plugin
+    2026-10-06 and again 2026-10-11). Since Tailwind 4 it reaches DotAmi only through Next's ESLint plugin
     (`eslint-config-next` → `fast-glob` → `micromatch`), when lint runs (`next build` runs it
     too), on the project's own glob patterns; nothing shipped to people runs it. Wait for a fixed
     `braces`, or for the plugin to drop it.
@@ -488,7 +501,12 @@ roadmap's build order.
     only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
-- ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — needed before the first download.
+  - [x] The desktop test types into the front page only once it has finished loading, and words a
+    person types before then are kept by the page (a browser test holds the page's scripts back) —
+    2026-10-11; the desktop test had failed on CI three times in about 15 hours with "Map it" greyed out
+- ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — planned for before the first
+  download; the first installer (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
+  then the privacy log below is the record of what each version keeps, sends, ships and asks.
   - [x] Decided (2026-10-05): ask people whether to share anonymous usage — off unless they say yes
   - [ ] ⏸ Maintainer's decisions: what exactly is sent, where it goes, who sees the results; a
     privacy policy and terms

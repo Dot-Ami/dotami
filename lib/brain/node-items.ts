@@ -40,9 +40,13 @@ export interface NodeItems {
   elsewhere: UnlockItem[];
 }
 
-/** Pure: splits the evaluator's non-gray output by relevance to one node. */
-export function itemsForNode(unlocks: UnlockItem[], nodeId: CFENodeId): NodeItems {
-  const relevant = new Set(NODE_ENGINE_HINTS[nodeId] ?? []);
+/**
+ * Pure: splits the evaluator's non-gray output by relevance to one node. Takes any road's step id
+ * (2026-10-11); a step with no hints has nothing "for this stage" and everything "elsewhere".
+ */
+export function itemsForNode(unlocks: UnlockItem[], nodeId: string): NodeItems {
+  const hints: Partial<Record<string, string[]>> = NODE_ENGINE_HINTS;
+  const relevant = new Set(hints[nodeId] ?? []);
   const applicable = unlocks.filter((u) => u.state !== "gray" && u.engine !== "goal");
   return {
     forThisStage: applicable.filter((u) => relevant.has(u.id)),

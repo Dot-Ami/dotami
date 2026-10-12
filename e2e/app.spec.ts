@@ -17,6 +17,7 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { ownedByReact, waitForReact } from "../tests/helpers/react-ready";
 import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
 import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadian";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
@@ -66,6 +67,65 @@ test("one sentence becomes a saved map", async ({ page }) => {
   const card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "My venture", level: 2 }) });
   await expect(card).toBeVisible();
   await expect(card.getByText("Trades", { exact: true })).toBeVisible();
+});
+
+// 2026-10-11: the server sends the front page already drawn, so its box can be typed into before the
+// page's scripts have run. Words typed then sat in the box while "Map it" stayed greyed out (React
+// started from an empty box and never heard them). CI's desktop test hit it three times in about 15
+// hours; a person on a slow computer could too.
+test("words typed on the front page before it has finished loading are kept, and Map it takes them", async ({ page }) => {
+  const sentence = "A mobile bike repair business with a van in Calgary";
+  // Hold back the page's scripts until the box has been typed into: the page as a slow computer shows it.
+  let letScriptsThrough!: () => void;
+  const scriptsHeld = new Promise<void>((resolve) => (letScriptsThrough = resolve));
+  await page.route("**/_next/static/**/*.js", async (route) => {
+    await scriptsHeld;
+    await route.continue();
+  });
+  await page.goto("/", { waitUntil: "commit" });
+  const box = page.getByPlaceholder(/What are you building/);
+  await box.fill(sentence);
+  // Typed before React took the page over: not a test of the ordinary path by accident.
+  expect(await box.evaluate(ownedByReact)).toBe(false);
+
+  letScriptsThrough();
+  await waitForReact(box);
+  const mapIt = page.getByRole("button", { name: "Map it →" });
+  // Both checked, so a failure says which half went wrong: the words gone, the button greyed out, or both.
+  await expect.soft(box).toHaveValue(sentence);
+  await expect.soft(mapIt).toBeEnabled();
+  expect(test.info().errors).toHaveLength(0);
+  await mapIt.click();
+
+  // The intake got the words: "repair" was read as a trade.
+  await expect(page).toHaveURL(/\/intake/);
+  await page.getByRole("button", { name: "Continue →" }).click();
+  await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+// The same fix seen from the other side: leave the front page with a full page load and press Back,
+// and the browser itself puts the old words back in the box before the page's scripts run. Until
+// 2026-10-11 they showed for a moment and were emptied, with "Map it" greyed out; now they stay and
+// Map it takes them (docs/ui-spec/landing/01-free-text-entry.md).
+test("words the browser puts back in the front page's box after Back stay, and Map it takes them", async ({ page }) => {
+  const sentence = "A mobile bike repair business with a van in Calgary";
+  await page.goto("/");
+  const box = page.getByPlaceholder(/What are you building/);
+  await waitForReact(box);
+  await box.fill(sentence);
+  // A full page load away (not an in-app link, which would draw the front page fresh and empty).
+  await page.goto("/settings");
+  await page.goBack();
+
+  const back = page.getByPlaceholder(/What are you building/);
+  await waitForReact(back);
+  await page.waitForLoadState("networkidle");
+  const mapIt = page.getByRole("button", { name: "Map it →" });
+  await expect.soft(back).toHaveValue(sentence);
+  await expect.soft(mapIt).toBeEnabled();
+  expect(test.info().errors).toHaveLength(0);
+  await mapIt.click();
+  await expect(page).toHaveURL(/\/intake/);
 });
 
 // 2026-10-11: the sentence typed on the front door used to live only in the tab and was lost when it
@@ -165,6 +225,71 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await page.getByRole("button", { name: "Liability / SR&ED", exact: true }).click();
   await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, not on your path, doesn't apply as answered, opens detail");
   await expect(stage("Incorporation for liability/SR&ED")).toHaveAccessibleName(/, your pick, check first, opens detail$/);
+});
+
+// 2026-10-11: the map now draws a road (lib/engines/roads/v2026/) instead of reading the tax map's
+// tiers itself. Today's map is the road "Starting any business in Alberta" and must look and behave as
+// before: the same four columns in order, the same ten cards in their columns, both toggles where they
+// were, and hover arrows along the same paths (4 solid and 14 dashed from Sole Prop activation, as
+// measured on 2026-09-16, docs/ui-spec/cockpit/03-canvas.md).
+test("the map draws today's road unchanged: columns, cards, toggles and hover arrows", async ({ page }) => {
+  const scenario = {
+    id: `road-${Date.now()}`,
+    profile: {
+      name: "Invented — road test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 20_000,
+      targetRevenueY3: 60_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "employee",
+      hireFirst: false,
+      activityTags: [],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+
+  const expected = [
+    { tier: "Tier 1", label: "Before the venture", cards: ["Employee/Apprentice baseline"], toggle: null },
+    {
+      tier: "Tier 2",
+      label: "Sole proprietor",
+      cards: ["Sole Prop activation", "Voluntary GST registration", "Mandatory GST registration"],
+      toggle: "GST timing",
+    },
+    {
+      tier: "Tier 3",
+      label: "Incorporating",
+      cards: ["Incorporating", "Incorporation for liability/SR&ED", "Hire first employee", "Service vs. productize"],
+      toggle: "Incorporation timing",
+    },
+    { tier: "Tier 4", label: "Corporation running", cards: ["Retained earnings planning", "SR&ED deepening"], toggle: null },
+  ];
+  const columns = page.locator("section").filter({ has: page.getByText(/^Tier \d$/) });
+  await expect(columns).toHaveCount(expected.length);
+  for (const [i, col] of expected.entries()) {
+    const column = columns.nth(i);
+    await expect(column.getByText(col.tier, { exact: true })).toBeVisible();
+    await expect(column.getByRole("heading", { level: 3 })).toHaveText(col.label);
+    await expect(column.getByRole("heading", { level: 4 })).toHaveText(col.cards);
+    if (col.toggle) await expect(column.getByRole("group", { name: col.toggle })).toBeVisible();
+    else await expect(column.getByRole("group")).toHaveCount(0);
+  }
+
+  // Hover Sole Prop activation: arrows to every step after it, and only the card before it dims.
+  await page.getByRole("button", { name: /^Sole Prop activation, / }).hover();
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(4);
+  await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(14);
+  await expect(page.locator("div.opacity-35")).toHaveCount(1);
+  await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText("Employee/Apprentice baseline");
 });
 
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
