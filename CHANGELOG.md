@@ -238,6 +238,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **About you and the map's "In your words" no longer say "Vault: No external statement source
+  configured."** ([#6](https://github.com/Dot-Ami/dotami/issues/6)). Every copy showed the line, about a
+  feature nobody has set up, in a word that meant nothing to a stranger. The screen now says nothing
+  about it; the route still reports it for any program that reads it
+  ([`components/shared/person-statements.tsx`](components/shared/person-statements.tsx); a browser test
+  in [`e2e/app.spec.ts`](e2e/app.spec.ts)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the

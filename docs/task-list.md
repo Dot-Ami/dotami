@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-11. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-12. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -521,7 +521,7 @@ roadmap's build order.
   - [ ] #36 federal rules say "because you selected <province>"
   - [ ] #39 tier 1 subtitle wording
   - [ ] #9 statute text with paragraph breaks
-  - [ ] #6 hide the empty vault line
+  - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure
   - [ ] #40 hide R&D-only steps without an R&D tag
