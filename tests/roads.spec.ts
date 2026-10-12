@@ -105,6 +105,14 @@ const SHIPPED_IDS: Record<
       "cost-start-name-service-fee",
       "cost-start-permit-licence-fees",
       "cost-start-bank-fees",
+      // The named start-up cost lines on Sole Prop activation (2026-10-12).
+      "cost-start-tools-equipment",
+      "cost-start-space-deposit",
+      "cost-start-insurance",
+      "cost-start-vehicle",
+      "cost-start-first-materials",
+      "cost-start-software",
+      "cost-start-living-while-starting",
     ],
   },
   "road-apprentice-to-own-shop-ab": {
