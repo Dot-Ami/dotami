@@ -345,6 +345,8 @@ type CostLine =
   hours, are read from the Alberta trade body's current pages, not assumed. This adds roughly 15–20
   citations to be read word for word; today the app has 74, of which 9 have been checked against the
   law's text, 4 of them word for word (`status: "confirmed"` in `lib/engines/shared/types.ts`).
+  (As built on 2026-10-12, its citations are tool checks, not reads: see "The first written future
+  as built" below.)
 
 **The map draws any road.** Today `components/cockpit/strategy-map.tsx` only knows the ten-step tax
 map (it imports `CFENode` and `cfeTiersV2026`). Phase 1 first changes it to draw a `Road`, with road 0
@@ -420,6 +422,48 @@ for a reason:
   request widens the value to any road's step id so another road's pick can be kept. Places stay
   today's values (`AB`, `BC`, `ON`, `CA`); how places are stored is an open decision of the
   maintainer's.
+
+### The first written future as built (2026-10-12)
+
+Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalog
+(`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`, id `road-apprentice-to-own-shop-ab`, kind
+`both`, `AB`). It is in the catalog only: no screen lists it until *Pick a future* is built. Choices
+made while writing it, each for a reason:
+
+- **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
+  your own shop*) · *Open the doors* · *First years on your own*. The example trade is Cabinetmaker,
+  Alberta's official name for it. Alberta's pages list three ways to the certificate (apprenticeship,
+  Trades Qualifier on work experience, Trades Qualifier with a certificate from outside Alberta); they
+  are steps side by side in the first column that all lead to the certificate, not a fork, because a
+  fork has two sides. The Blue Seal certificate, which the content shows under both endings, is one
+  optional step both endings lead to, so it is written (and its ids kept) once.
+- **Where it joins road 0.** After its last column the road carries on along road 0 from
+  *Incorporating*. `Road` gains an optional `joins: { roadId, columnId }`, and `roadJoinProblems`
+  checks that the road and column it names exist (a road on its own can't see the others, so this is a
+  check over the whole catalog). How a screen draws the join is decided with the screens.
+- **Every source is a tool check.** Each citation was checked on 2026-10-12 with
+  `node scripts/check-quotes.mjs --url … --quote …` (option B, [citations.md](../engines/citations.md));
+  only quotes the script found are recorded, and none is recorded as read. Because nothing in it has
+  been read yet, the road's own `lastVerified` is empty, and the checks now hold a road with no read
+  source to an empty date instead of letting it carry any date.
+- **A fee checked only by a tool quotes its amount.** An official fee whose citation has no read must
+  have a quote with the amount as the page writes it (`$150`, `$150.00`, `$1,500`), so the typed
+  number is one the tool found on the page. A $0 fee is exempt (pages say "no cost"). A fee with a
+  read keeps today's rule.
+- **Alberta's registry fees stay named lines.** The government fee and the agent's service fee to
+  register a name are named lines with no amount: the Registry Agent Product Catalogue that holds them
+  stops tools with a human check, which is never bypassed. A person can read it and fill them in.
+- **Skill items are the legal requirements only:** an Alberta Student Number, an apprenticeship
+  education agreement with a sponsor, and a recognized trade certificate from outside Alberta, each
+  cited. Skills from the government's list (OaSIS, occupation 72311 *Cabinetmakers*, profile
+  72311.00) come with the OaSIS import, a separate change.
+- **Left out, not guessed:** the apprentice wage percentages per period (they need a typed field, not
+  prose); WCB-Alberta's $200 minimum annual premium (a minimum, not a fee, and it would be added on
+  top of the person's own premium quote); the WCB industry a shop falls in (WCB classifies); the Red
+  Seal application fee (the page gives no amount); the federal and Alberta incorporation card (it
+  belongs to road 0's *Incorporating* column). One official fee is conditional: the $50 rewrite fee on
+  the Recognized Credential route applies only after a failed exam, and its label says so; road
+  evaluation must not add it to a total unless the person says they will rewrite.
 
 ## 7. Storage
 
