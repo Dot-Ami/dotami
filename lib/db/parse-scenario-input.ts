@@ -1,3 +1,5 @@
+import { roadsV2026 } from "@/lib/engines/roads/v2026";
+import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
 import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
@@ -17,6 +19,7 @@ const EMPLOYMENT = new Set<VentureProfile["employmentStatus"]>([
   "retired",
   "unemployed",
   "other",
+  "not-said",
 ]);
 function parseProfile(raw: unknown): VentureProfile | null {
   if (!raw || typeof raw !== "object") {
@@ -151,6 +154,13 @@ export function parseFirstSave(data: unknown, now: Date): FirstSave {
       // Word for word: the text is kept exactly as sent.
       out.firstWords = { text, saidAt };
     }
+  }
+
+  // Pick a future's two extras: only a road the catalog has, and only an answer the question offers.
+  // Anything else is dropped, never guessed into one.
+  if (typeof root.roadId === "string" && roadsV2026.some((road) => road.id === root.roadId)) out.roadId = root.roadId;
+  if (typeof root.lookingFor === "string" && (LOOKING_FOR as readonly string[]).includes(root.lookingFor)) {
+    out.lookingFor = root.lookingFor as LookingFor;
   }
 
   if (Array.isArray(root.goals)) {

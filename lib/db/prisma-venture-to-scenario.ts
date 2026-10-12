@@ -48,6 +48,8 @@ function reverseEmployment(status: EmploymentStatus): VentureProfile["employment
       return "retired";
     case "UNEMPLOYED":
       return "unemployed";
+    case "NOT_SAID":
+      return "not-said";
     case "OTHER":
       return "other";
     default:

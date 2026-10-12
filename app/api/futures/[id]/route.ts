@@ -7,6 +7,7 @@ import { currentIncomeWanted } from "@/lib/futures/person-figures";
 import { dayOnThisComputer } from "@/lib/futures/person";
 import { listSkillMarks } from "@/lib/futures/skill-marks";
 import { listStepProgress } from "@/lib/futures/step-progress";
+import { latestDestination } from "@/lib/person/statements";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -20,7 +21,7 @@ const RATE_LIMIT = { limit: 600, windowMs: 60_000 };
  * GET /api/futures/<idea id> — what the cockpit keeps for one idea (docs/architecture/future-cockpit.md
  * § 2, "Cockpit screen as built"): its road, picks and month (`future`), its step progress, the person's
  * skill marks (kept once for the person, so the same on every idea), the yearly income they agreed to
- * with the day agreed, and the sentence typed on the front door for it. Only the idea's id travels in
+ * with the day agreed, the sentence typed on the front door for it, and the person's newest destination. Only the idea's id travels in
  * the address; amounts come back in the body.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -30,11 +31,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   try {
     const future = await readFuture(prisma, id);
-    const [progress, skillMarks, income, firstWords] = await Promise.all([
+    const [progress, skillMarks, income, firstWords, destination] = await Promise.all([
       listStepProgress(prisma, id),
       listSkillMarks(prisma),
       currentIncomeWanted(prisma),
       firstWordsOf(prisma, id),
+      latestDestination(prisma),
     ]);
     return NextResponse.json({
       future,
@@ -46,6 +48,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           ? { amountCents: income.amountCents, agreedOn: dayOnThisComputer(new Date(income.confirmedAt)) }
           : null,
       firstWords,
+      // The person's, not the idea's: the goal bar shows it when the idea has no first sentence (2026-10-12).
+      destination: destination ? { text: destination.text, saidAt: destination.saidAt } : null,
     });
   } catch (error) {
     return futureFailure("futures GET", error);

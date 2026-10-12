@@ -241,6 +241,8 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
     (Object.keys(EMPLOYMENT_WORDS) as (keyof typeof EMPLOYMENT_WORDS)[])
       .filter((e) => e !== profile.employmentStatus)
       .map((employmentStatus) => withProfile({ employmentStatus })),
+    // "Not said" was never told, so it is not on the list of what the person told DotAmi.
+    profile.employmentStatus !== "not-said",
   );
   add(
     "idea:structure",

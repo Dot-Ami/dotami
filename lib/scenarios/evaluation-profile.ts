@@ -19,7 +19,8 @@ export function buildEvaluationProfileFromScenario(scenario: Scenario): Evaluati
     ventureType: profile.type,
     activityTags: profile.activityTags ?? [],
     province: profile.province,
-    employmentStatus: profile.employmentStatus,
+    // Not said is not an answer: the rules read it as unanswered, as the intake does before one is picked.
+    employmentStatus: profile.employmentStatus === "not-said" ? null : profile.employmentStatus,
     structure: profile.structure === "corporation" ? "ccpc" : "sole-prop",
     targetRevenueY1: profile.targetRevenueY1,
     targetRevenueY3: profile.targetRevenueY3,

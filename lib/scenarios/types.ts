@@ -45,7 +45,10 @@ export type EmploymentStatus =
   | "business-owner"
   | "retired"
   | "unemployed"
-  | "other";
+  | "other"
+  // Not asked: a future picked on Pick a future is saved before anyone asks (2026-10-12). Never offered
+  // on the intake, which still asks; the rules read it as unanswered (evaluation-profile.ts).
+  | "not-said";
 export type ScenarioNodeStatus = "active" | "complete" | "decision" | "ghost" | "upcoming";
 
 export interface VentureProfile {

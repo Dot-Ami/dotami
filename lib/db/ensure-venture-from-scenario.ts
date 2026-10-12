@@ -11,8 +11,8 @@ const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
  * Finds or inserts the database row for a scenario (keyed by the scenario id in `scenarioSeedKey`)
  * and its branch state. Used by /api/scenario/save.
  *
- * `firstSave` (the sentence typed on the front door, the goal picks) is written only when this call
- * creates the idea: the sentence as one dated statement linked to it, the goals on it. A save of an
+ * `firstSave` (the sentence typed on the front door, the goal picks; from Pick a future, the road and the
+ * business / career / both answer) is written only when this call creates the idea: the sentence as one dated statement linked to it, the goals on it. A save of an
  * idea that already exists ignores it, so nothing the person deleted is ever written back.
  */
 export async function ensureVentureFromScenario(
@@ -54,6 +54,10 @@ export async function ensureVentureFromScenario(
       stage,
       // The goal picks are written on creation only: `update` below never touches them.
       goals: firstSave.goals ?? [],
+      // So are Pick a future's road and the business / career / both answer, each with its moment
+      // (2026-10-12): a later save of the map never moves either.
+      ...(firstSave.roadId ? { roadId: firstSave.roadId, roadChosenAt: new Date() } : {}),
+      ...(firstSave.lookingFor ? { lookingFor: firstSave.lookingFor, lookingForSetAt: new Date() } : {}),
     },
     update: {
       name: scenario.profile.name,

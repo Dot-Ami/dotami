@@ -33,6 +33,9 @@ export const EMPLOYMENT_WORDS = {
   retired: "Retired",
   unemployed: "Between roles",
   other: "Other",
+  // Not an answer: a future picked on Pick a future before anyone asked (2026-10-12). Road evaluation
+  // lists it as not told, and tries it as the work situation "taken away".
+  "not-said": "Not said",
 } as const;
 
 export const STRUCTURE_WORDS = { "sole-prop": "Sole prop", corporation: "Corporation" } as const;

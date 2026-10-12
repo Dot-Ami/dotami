@@ -19,6 +19,8 @@ export const cockpitWords = {
   goal: {
     region: "Your goal and gauges",
     yourWords: (day: string) => `your words · ${day}`,
+    /** An idea with no first sentence (picked on Pick a future) shows the person's newest destination instead. */
+    destination: (day: string) => `where you want to be · your words · ${day}`,
     target: (cents: number, day: string) => `Your target: ${formatMoney(cents)} a year, before tax (yours, agreed ${day})`,
     future: (roadLabel: string) => `Future: ${roadLabel}`,
     /** A road written for other places than the idea's: it is the map drawn, not the person's future. */

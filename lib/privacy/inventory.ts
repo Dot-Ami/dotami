@@ -211,7 +211,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "PersonStatement",
     name: "Your statements",
     holds:
-      "Things you told DotAmi about yourself, word for word, each with the day you say you said it, and the sentence you typed on the front door for each idea, word for word, with the day you typed it and the idea it was for. Your answers to “where do you want to be” are kept here too, marked as such; the newest is the one the cockpit will show on top. They are never summarised or used to rank anything.",
+      "Things you told DotAmi about yourself, word for word, each with the day you say you said it, and the sentence you typed on the front door for each idea, word for word, with the day you typed it and the idea it was for. Your answers to “where do you want to be” (the first question on Your destination, since 2026-10-12) are kept here too, marked as such; the newest is the one the cockpit shows on top of a future that has no sentence of its own. They are never summarised or used to rank anything.",
     removedBy:
       "Delete, at the bottom of this page, with “Your statements” ticked: all of them at once, wiped from the file. Nothing removes one by itself, by design: a newer statement beats an older one by its date, and old ones are never edited away. Deleting your ideas keeps the sentences typed for them here, tied to no idea.",
   },
@@ -219,7 +219,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12); nothing on screen sets the road or the endings yet. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta).",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12), and Pick a future sets the road (since 2026-10-12); nothing on screen sets the endings yet. A future picked there also keeps your answer to “a business of your own, a job or career, or both?” with the moment it was kept, and its employment status as “not said”, since that way in doesn't ask it. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta).",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -273,7 +273,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "PersonFigure",
     name: "The yearly income you want",
     holds:
-      "The yearly income you said you want, before tax, kept once for you rather than for one idea: the amount and currency, whether it is waiting, agreed, taken back or turned down, where it came from (typed by you) and the days. Agreeing to a new one takes back the one before, which stays here. DotAmi never judges it as enough or not enough. Nothing on screen asks for it yet: the cockpit's first questions, coming next, will.",
+      "The yearly income you said you want, before tax, kept once for you rather than for one idea: the amount and currency, whether it is waiting, agreed, taken back or turned down, where it came from (typed by you) and the days. Agreeing to a new one takes back the one before, which stays here. DotAmi never judges it as enough or not enough. Your destination asks for it (since 2026-10-12): it counts only once you agree to it there.",
     removedBy:
       "Delete, at the bottom of this page, with “The yearly income you said you want” ticked: every one, in every state, wiped from the file. Deleting your ideas leaves it.",
   },
@@ -597,7 +597,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one, and your answers on Your destination (since 2026-10-12): your words and their day, business, career or both, your province or territory, and the yearly income you agreed to, if you did.",
     lasts: "Until this window or tab closes.",
   },
   {
@@ -828,7 +828,7 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "loadURL(`${origin}${pathname}`",
-    why: "The Go menu (Home, Your ideas, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
+    why: "The Go menu (Home, Your futures, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
   },
   {
     file: "desktop/main.mjs",

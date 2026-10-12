@@ -117,6 +117,29 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **The way in: Your destination and Pick a future (2026-10-12).** The front door's first door,
+  *Start from where I want to be*, asks four questions
+  ([`lib/front-door/questions.ts`](../lib/front-door/questions.ts)). Where the answers go:
+  - *Where you want to be*, in the person's own words: kept at once as one of their statements
+    (`PersonStatement`, `kind: "destination"`), word for word, dated the day they gave in their own
+    calendar, through DotAmi's own statements route. "I don't know yet" keeps nothing.
+  - *The yearly income you want, before tax*: proposed, then kept only once the person agrees in the
+    prompt (`PersonFigure`, kind `income-wanted`); three new routes on DotAmi's own server
+    (`/api/person-figures/propose`, `/agree` from DotAmi's own window only, `/discard`). "Skip" keeps
+    nothing; turning it down keeps it as *discarded*, hidden, as a turned-down figure is.
+  - *A business, a job or career, or both* and *the province or territory*: held in the browser tab's
+    draft (`dotami-journey-v3`, with what the other two came to and the income's amount if agreed) until
+    a future is picked. Picking one saves a new idea with the place, the road picked (`Venture.roadId`,
+    `roadChosenAt`) and that answer with its moment (new columns `Venture.lookingFor`,
+    `lookingForSetAt`, migration `20261012120000_looking_for`, two plain added columns). The idea's
+    employment status is kept as **not said** (a new value, `NOT_SAID`), since this way in doesn't ask
+    it, and its kind of venture starts at *Service*, as every intake draft does.
+  - *Not here yet?* on Pick a future keeps the person's note as one of their statements.
+  The cockpit's read of an idea (`GET /api/futures/<id>`) now also gives the person's newest destination,
+  so the goal bar can show it on an idea with no sentence of its own. None of it is read by a rule, and
+  nothing leaves the computer: these answers go only to DotAmi's own server, never to a model, and the
+  front door's first door says *"What you type here stays on this computer."* only of itself (the second
+  door's sentence still goes to the intake's parser, which uses a model when a key is set up).
 
 ### Packages that ship
 
@@ -131,6 +154,14 @@ person is asked).
   make. The desktop build's `THIRD-PARTY-NOTICES.txt` names the new version
   ([`desktop/notices.mjs`](../desktop/notices.mjs) reads it from the installed package). What
   Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
+
+### What the person must agree to
+
+- **The yearly income on Your destination (2026-10-12)** goes through an agree prompt of its own
+  ([`components/front-door/income-agree-prompt.tsx`](../components/front-door/income-agree-prompt.tsx)):
+  the amount, typed by the person, per year, with the day, and *"It shows as your target at the top of
+  each future you open. Nothing compares it with anything."*; **Agree** or **No, I'll do it myself**.
+  Only DotAmi's own window can agree (`Sec-Fetch-Site: same-origin`, as for figures).
 
 ### How to remove it
 
@@ -156,6 +187,10 @@ person is asked).
   figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
+- **Your destination's answers**: the destination goes with "Your statements" on Delete, the income with
+  "The yearly income you said you want", and the business / career / both answer and the road with the
+  idea ("Your ideas"). The answers held in the browser tab go when the tab closes, or when the front
+  door's **Map it** starts a new journey.
 
 ### What the policy will need to say
 

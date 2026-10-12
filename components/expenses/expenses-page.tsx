@@ -288,7 +288,7 @@ export function ExpensesPage({
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/ventures" tone="stone">
-          ← Your ideas
+          ← Your futures
         </GhostLink>
         <WordMark />
         <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your expenses</p>

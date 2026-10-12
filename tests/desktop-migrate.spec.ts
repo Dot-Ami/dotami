@@ -1289,8 +1289,11 @@ describe("desktop migrator — places stored as international codes (2026-10-12)
     `,
     );
     const tablesKept = ["User", "PersonStatement", "Venture", "VentureLink", "ScenarioState", "Figure", "StepProgress"];
+    // The columns as they were before: a later migration may add columns (the looking-for one added two to
+    // Venture, 2026-10-12), which isn't the change this test is about.
+    const columnsBefore = Object.fromEntries(tablesKept.map((t) => [t, columns(dbFile, t)]));
     const everything = () =>
-      Object.fromEntries(tablesKept.map((t) => [t, query(dbFile, `SELECT ${columns(dbFile, t).map(columnAsBefore).join(", ")} FROM "${t}" ORDER BY 1`)]));
+      Object.fromEntries(tablesKept.map((t) => [t, query(dbFile, `SELECT ${columnsBefore[t].map(columnAsBefore).join(", ")} FROM "${t}" ORDER BY 1`)]));
     const held = everything();
     expect(held.Venture).toHaveLength(13);
 

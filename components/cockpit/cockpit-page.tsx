@@ -26,6 +26,7 @@ import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad } from "@/lib/roads";
+import { EMPLOYMENT_WORDS } from "@/lib/roads/words";
 import {
   branchDecisions,
   setIncorporateAt,
@@ -344,7 +345,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       <header className="grid grid-cols-[240px_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12]">
         <div className="flex min-w-0 items-center gap-[18px] border-r border-rule px-[22px]">
           <Link href="/ventures" className="font-mono text-[11px] text-stone transition hover:text-paper">
-            ← Ideas
+            ← Your futures
           </Link>
           <WordMark size="sm" />
         </div>
@@ -375,6 +376,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           evaluation={evaluation}
           scenario={scenario}
           firstWords={kept?.firstWords ?? null}
+          destination={kept?.destination ?? null}
           target={kept?.incomeWanted ?? null}
           active={activeGauge}
           onGauge={handleGauge}
@@ -442,7 +444,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               </p>
             ) : null}
           </div>
-          <FieldRow label="Employed" value={scenario.profile.employmentStatus} />
+          <FieldRow
+            label="Employed"
+            // A future picked on Pick a future was saved before anyone asked: say so in words, not as a code.
+            value={scenario.profile.employmentStatus === "not-said" ? EMPLOYMENT_WORDS["not-said"] : scenario.profile.employmentStatus}
+          />
 
           {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. */}
           <section className="border-t border-rule-soft pt-4">

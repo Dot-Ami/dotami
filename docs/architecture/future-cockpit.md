@@ -1017,7 +1017,9 @@ row per answer with its date (§ 2); `Venture.updatedAt` is not used for that, b
 
 The job picked (an occupation code and its day), the *business / career / both* answer and the *This
 is mine* pin are **not** added yet: each comes with the screen that asks it, as one more plain added
-column. The occupation code's shape waits on the OaSIS import (§ 13).
+column. The occupation code's shape waits on the OaSIS import (§ 13). *(2026-10-12: the business / career
+/ both answer came with Your destination and Pick a future, as `lookingFor` and `lookingForSetAt`; § 1,
+The way in as built.)*
 
 **The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
 statement written as the answer to *where you want to be*. It is one of the person's statements like

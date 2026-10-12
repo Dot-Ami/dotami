@@ -47,17 +47,23 @@ says where it is going.
 
 ## What the app is
 
-- Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
+- Pages: `/` (the front door, since 2026-10-12 three doors: *Start from where I want to be* → `/start`
+  (*Your destination*: four questions from `lib/front-door/questions.ts`, a receipt after each from
+  `lib/front-door/receipts.ts`) → `/futures` (*Pick a future*: every written road, in the order added, as
+  counts; a pick saves an idea on that road and opens the cockpit); *I already have an idea*, the
+  free-text box; *Show me an example first*, not written yet, no link; words in `lib/front-door/words.ts`)
+  → `/intake` (about you, only before the person's first saved idea, issue #38 · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
   `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
-  say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
-  first written future, has no screen yet); the step panel, which keeps node detail whole; playbook
+  say "no rule yet"), unless the idea was picked on `/futures` on another road (the first written future,
+  since 2026-10-12); the step panel, which keeps node detail whole; playbook
   export; the cards' colours come from the rules run on the venture's own branch
-  picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
+  picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (*Your futures*, until 2026-10-12 *Your
+  ideas*: every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
   this copy today; the settings marked live there, so far Figure reminders and Encrypt the data file, can be changed and are
@@ -72,7 +78,10 @@ says where it is going.
   · `/licences` (the third-party notices: every package that ships, its version and licence text,
   read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes at build time; packaging
   the installer stops if a package that ships has no entry).
-- API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
+- API: `intent/parse` · `person/statements` (since 2026-10-12 also `kind: "destination"`) ·
+  `person-figures/propose` · `/agree` (DotAmi's own window only) · `/discard` (the yearly income the
+  person wants) · `scenario/save` (its first save may carry Pick a future's road and *business / career
+  / both* answer) · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
   `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
@@ -84,7 +93,7 @@ says where it is going.
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
   (GET what the cockpit keeps for an idea: its road, picks, month and step progress, the person's skill
-  marks, their agreed yearly income and the idea's first sentence; + `/progress` and `/date`, POST a
+  marks, their agreed yearly income, the idea's first sentence and the person's newest destination; + `/progress` and `/date`, POST a
   step's status or ticks and the person's month) · `skill-marks` (POST one mark); the three writes
   answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
@@ -104,7 +113,9 @@ says where it is going.
   the map opened, shown back and read by no rule; and, for the future cockpit, `roadId` (empty = today's
   general road), `forkPicks` (the ending picked at each fork of any road but road 0, whose two picks stay
   in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
-  its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
+  its moment; since 2026-10-12 `lookingFor` (the *business / career / both* answer, kept with
+  `lookingForSetAt` when Pick a future saves the idea), and an `employmentStatus` of `NOT_SAID` on an idea
+  saved that way, which never asks it; `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
   `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
   same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
@@ -114,7 +125,7 @@ says where it is going.
   person's status) · `SkillMark` (per person,
   not per future: have / learning / not yet on a shared skill item or the person's own skill; "I don't
   know" removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
-  proposed then agreed) · `Figure` (the totals
+  proposed then agreed, asked on *Your destination*) · `Figure` (the totals
   the person agreed to; [8a]; since 2026-10-11 also two one-day planning numbers, `savings-for-start` and
   `start-up-cost-line`, the latter naming a named cost line on the future's own road; the storage code for
   all of the cockpit's tables is `lib/futures/`, design in `docs/architecture/future-cockpit.md` § 7) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;

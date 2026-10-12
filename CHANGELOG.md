@@ -11,6 +11,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
+  the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
+  life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's
+  box, *Map it* and its chips, unchanged) and **Show me an example first**, which says plainly that the
+  invented example isn't written yet and links nowhere. *Your destination* (`/start`) asks four
+  questions, one at a time, each with a one-line receipt worked out from the answer and the catalogs:
+  where you want to be in your own words (kept at once, word for word and dated, as your destination),
+  a business, a job or career, or both (a count of the written futures that include it; nothing is
+  filtered), your province or territory (whose rules apply and how many futures are written for it), and
+  the yearly income you want (counted only once you agree to it in its own agree prompt). The questions
+  are data (`lib/front-door/questions.ts`), so the later step-by-step questionnaire starts from them.
+  *Pick a future* (`/futures`) lists every written future in the order added, never ranked, as counts
+  (steps, skills listed, official fees found, cost lines you'd price) and how its sources were checked
+  (the first written future's are all tool checks, said in amber); **Look inside** saves a new idea on
+  that road, with your place and your business / career / both answer, and opens the cockpit on it.
+  *Not here yet?* keeps a note in your words and opens the general road. The cockpit's goal bar shows
+  your destination on an idea with no sentence of its own. Words: `lib/front-door/words.ts`.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;
@@ -182,6 +199,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   type, `platform-reporting`, is new; the maintainer approved it on 2026-10-12.
 
 ### Changed
+- **A second idea no longer passes through *About you*** (issue #38) — the intake opens on *About you*
+  only for a person with no saved idea yet; anyone with one starts on the screen they came for, and
+  **← Back** still reaches *About you*. Decided on the server when the page is drawn, so the first screen
+  never changes under you.
+- **"Your ideas" is "Your futures"** — on its page, the front door's link, the cockpit's and *Your
+  expenses*' back links and the desktop app's Go menu; **New idea →** is **+ Another future**, which opens
+  the front door's doors. The *What DotAmi knows about you* page keeps "Your ideas" for now.
+- **An idea picked on *Pick a future* keeps its work situation as "not said"** — that way in doesn't ask
+  it, so nothing is made up: the rules read it as unanswered, road evaluation lists it as not told, and
+  the cockpit and the export write "not said". New storage: `Venture.lookingFor` and
+  `lookingForSetAt` (two added columns), and the employment value `NOT_SAID`.
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
   maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
   by a person before it merges, as long as every card says which. A card's "verified <date>" now

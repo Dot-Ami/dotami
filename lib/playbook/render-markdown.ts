@@ -18,7 +18,8 @@ function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
     `- **Target revenue Y1 (CAD):** ${profile.targetRevenueY1.toLocaleString("en-CA")}`,
     `- **Target revenue Y3 (CAD):** ${profile.targetRevenueY3.toLocaleString("en-CA")}`,
     `- **Structure:** ${profile.structure}`,
-    `- **Employment status:** ${profile.employmentStatus}`,
+    // "not-said": a future picked on Pick a future before anyone asked (2026-10-12).
+    `- **Employment status:** ${profile.employmentStatus === "not-said" ? "not said" : profile.employmentStatus}`,
     `- **Hire-first lens:** ${profile.hireFirst ? "yes" : "no"}`,
   ];
 

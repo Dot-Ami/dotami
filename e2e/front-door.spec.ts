@@ -145,7 +145,7 @@ test("Pick a future without a place says so and links back; the general road ope
   // A fresh tab has no answers yet.
   await page.goto("/futures");
   await expect(page.getByText("Say which province or territory you're in first.")).toBeVisible();
-  await page.getByRole("link", { name: "Your destination" }).click();
+  await page.getByRole("link", { name: "Your destination", exact: true }).click();
   await expect(page).toHaveURL(/\/start$/);
 
   await waitForReact(page.getByRole("textbox", { name: /what do you want your work and life to look like/ }));
