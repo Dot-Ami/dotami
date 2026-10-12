@@ -43,8 +43,11 @@ export function ToldList({
   onTakeBack: (row: ToldRow) => void;
   /** A question answered elsewhere: its list, or Compare. */
   onAnswer: (row: NotToldRow) => void;
-  /** The one-question box for a question, drawn by the page, which knows how to save each answer. */
-  boxFor: (question: BoxQuestion, close: () => void) => ReactNode;
+  /**
+   * The one-question box for a question, drawn by the page, which knows how to save each answer. `close`
+   * shuts it after a save; `dontKnow` is its I don't know, which on a question also folds the question away.
+   */
+  boxFor: (question: BoxQuestion, close: () => void, dontKnow: () => void) => ReactNode;
 }) {
   // Which row has its box open: a told row's Change, or a question's Answer.
   const [open, setOpen] = useState<string | null>(null);
@@ -105,7 +108,7 @@ export function ToldList({
                     {row.takeBack.why === "required" ? words.told.required : row.takeBack.why === "figures" ? words.told.figuresElsewhere : words.told.noRoute}
                   </p>
                 ) : null}
-                {boxOpen && row.change.kind === "box" ? <div className="mt-2">{boxFor(row.change.question, () => setOpen(null))}</div> : null}
+                {boxOpen && row.change.kind === "box" ? <div className="mt-2">{boxFor(row.change.question, () => setOpen(null), () => setOpen(null))}</div> : null}
               </li>
             );
           })}
@@ -149,7 +152,7 @@ export function ToldList({
                     </button>
                   ) : null}
                 </div>
-                {boxOpen && q.answer === "box" ? <div className="mt-2">{boxFor(q.id as BoxQuestion, fold)}</div> : null}
+                {boxOpen && q.answer === "box" ? <div className="mt-2">{boxFor(q.id as BoxQuestion, () => setOpen(null), fold)}</div> : null}
               </li>
             );
           })}

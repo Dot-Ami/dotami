@@ -488,7 +488,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   }
 
   /** The one-question box for each question the box asks, saved the way its own control elsewhere saves it. */
-  function boxFor(question: BoxQuestion, close: () => void) {
+  function boxFor(question: BoxQuestion, close: () => void, dontKnow: () => void) {
     const q = words.questions;
     const done = (refused: string | null) => {
       if (!refused) close();
@@ -559,7 +559,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       };
       save = (value) => viaScenario(updateScenarioBranch(scenario, decision.id, value as CFENodeId));
     }
-    return <QuestionBox title={title} why={why} control={control} canSave={canSave} onSave={save} onDontKnow={close} />;
+    return <QuestionBox title={title} why={why} control={control} canSave={canSave} onSave={save} onDontKnow={dontKnow} />;
   }
 
   // --- Compare and This is mine
