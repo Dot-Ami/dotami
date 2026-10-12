@@ -17,6 +17,7 @@ import { INVENTED_AMOUNTS, otherFormPage, t2125Pages } from "../tests/fixtures/r
 import { gnucashGz, gnucashXml, smallBook } from "../tests/helpers/make-gnucash";
 import { makePdf } from "../tests/helpers/make-pdf";
 import { makeXlsx, type XlsxCell } from "../tests/helpers/make-xlsx";
+import { ownedByReact, waitForReact } from "../tests/helpers/react-ready";
 import { files as freshbooksFiles } from "../tests/fixtures/packages/freshbooks";
 import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadian";
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
@@ -66,6 +67,40 @@ test("one sentence becomes a saved map", async ({ page }) => {
   const card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "My venture", level: 2 }) });
   await expect(card).toBeVisible();
   await expect(card.getByText("Trades", { exact: true })).toBeVisible();
+});
+
+// 2026-10-11: the server sends the front page already drawn, so its box can be typed into before the
+// page's scripts have run. Words typed then sat in the box while "Map it" stayed greyed out (React
+// started from an empty box and never heard them). CI's desktop test hit it three times in about 15
+// hours; a person on a slow computer could too.
+test("words typed on the front page before it has finished loading are kept, and Map it takes them", async ({ page }) => {
+  const sentence = "A mobile bike repair business with a van in Calgary";
+  // Hold back the page's scripts until the box has been typed into: the page as a slow computer shows it.
+  let letScriptsThrough!: () => void;
+  const scriptsHeld = new Promise<void>((resolve) => (letScriptsThrough = resolve));
+  await page.route("**/_next/static/**/*.js", async (route) => {
+    await scriptsHeld;
+    await route.continue();
+  });
+  await page.goto("/", { waitUntil: "commit" });
+  const box = page.getByPlaceholder(/What are you building/);
+  await box.fill(sentence);
+  // Typed before React took the page over: not a test of the ordinary path by accident.
+  expect(await box.evaluate(ownedByReact)).toBe(false);
+
+  letScriptsThrough();
+  await waitForReact(box);
+  const mapIt = page.getByRole("button", { name: "Map it →" });
+  // Both checked, so a failure says which half went wrong: the words gone, the button greyed out, or both.
+  await expect.soft(box).toHaveValue(sentence);
+  await expect.soft(mapIt).toBeEnabled();
+  expect(test.info().errors).toHaveLength(0);
+  await mapIt.click();
+
+  // The intake got the words: "repair" was read as a trade.
+  await expect(page).toHaveURL(/\/intake/);
+  await page.getByRole("button", { name: "Continue →" }).click();
+  await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
 // 2026-10-11: the sentence typed on the front door used to live only in the tab and was lost when it
