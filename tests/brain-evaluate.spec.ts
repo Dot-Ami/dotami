@@ -207,6 +207,15 @@ describe("why a compliance card is shown: federal or the province (#36)", () => 
     const gst = unlock({ ...gpuWorkstationProfile, targetRevenueY1: 45000 }, "compliance-gst-small-supplier");
     expect(gst!.why).toBe("Shown because your Y1 revenue target ($45,000) is over $30,000, the amount in the CRA's tests.");
   });
+
+  // The ride-share cards (#147) name the tag that lit them; both rules are federal, so neither adds
+  // the province. Pinned here because the federal test above decides this line too.
+  it("a federal rule that names its tag names only the tag", () => {
+    const driver = { ...gpuWorkstationProfile, activityTags: ["Ride-share or taxi driving"], province: "ON" as const, targetRevenueY1: 10000 };
+    for (const id of ["compliance-platform-reporting-rideshare", "compliance-gst-taxi-ride-sharing"]) {
+      expect(unlock(driver, id)?.why, id).toBe("Shown because your intake has the activity tag Ride-share or taxi driving.");
+    }
+  });
 });
 
 describe("strategy rules engine — profile and intake coverage", () => {
