@@ -1,6 +1,8 @@
 import type { Figure, PrismaClient } from "@prisma/client";
 
-import type { FigureKind, FigureSourceKind, FigureStatus, FigureView } from "./types";
+import { roadForFuture, SHIPPED_ROADS_CATALOG, type RoadsCatalog } from "@/lib/futures/types";
+
+import { PLANNING_KINDS, type CostLineAmountFrom, type FigureCostLine, type FigureKind, type FigureSourceKind, type FigureStatus, type FigureView } from "./types";
 import { validateFigureInput, validateFigureSource } from "./validate";
 
 const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
@@ -73,12 +75,34 @@ export function rowToFigure(row: Figure): FigureView {
     sourceRows: row.sourceRows,
     taxYear: row.taxYear,
     formLine: row.formLine,
+    costLine: costLineOf(row),
     status: row.status as FigureStatus,
     editedByPerson: row.editedByPerson,
     proposedAt: row.proposedAt.toISOString(),
     confirmedAt: row.confirmedAt ? row.confirmedAt.toISOString() : null,
     retractedAt: row.retractedAt ? row.retractedAt.toISOString() : null,
   };
+}
+
+/** The cost line a row prices, when all four of its columns are set (only a start-up cost's are). */
+function costLineOf(row: Figure): FigureCostLine | null {
+  if (row.roadId === null || row.roadStepId === null || row.costLineId === null || row.amountFrom === null) return null;
+  return { roadId: row.roadId, stepId: row.roadStepId, lineId: row.costLineId, amountFrom: row.amountFrom as CostLineAmountFrom };
+}
+
+/**
+ * A start-up cost may only price a named line on the idea's own road (2026-10-11): never a line on
+ * another road, a step that isn't there, or an official fee, which has its own cited amount. Returns
+ * the refusal, or null when the line is fine.
+ */
+function costLineProblem(costLine: FigureCostLine, ventureRoadId: string | null, catalog: RoadsCatalog): string | null {
+  const road = roadForFuture(catalog, ventureRoadId);
+  if (costLine.roadId !== road.id) return "That cost line isn't on this idea's road.";
+  const step = road.steps.find((s) => s.id === costLine.stepId);
+  const line = step?.costs.find((c) => c.id === costLine.lineId);
+  if (!line) return "That cost line isn't on that step of the road.";
+  if (line.kind !== "named") return "An official fee has its own cited amount, so it can't be priced.";
+  return null;
 }
 
 /** Every figure of the venture except the discarded ones, by period then by when it was proposed. */
@@ -94,7 +118,8 @@ export async function listFigures(prisma: PrismaClient, ventureId: string): Prom
 /**
  * Creates every figure as "proposed", all or nothing. `source` and `inputs` are unknown on
  * purpose: this is the trust boundary for importers, the Lens and outside agents, so each one
- * is validated here whatever the caller already did. `today` is YYYY-MM-DD.
+ * is validated here whatever the caller already did. `today` is YYYY-MM-DD. `catalog` is the road
+ * catalog a start-up cost's line is checked against: the shipped one, unless a test passes its own.
  */
 export async function proposeFigures(
   prisma: PrismaClient,
@@ -102,6 +127,7 @@ export async function proposeFigures(
   source: unknown,
   inputs: unknown,
   today: string,
+  catalog: RoadsCatalog = SHIPPED_ROADS_CATALOG,
 ): Promise<FigureView[]> {
   await requireVenture(prisma, ventureId);
 
@@ -125,6 +151,15 @@ export async function proposeFigures(
     return checked.value;
   });
 
+  // A start-up cost names a line on the road; read the idea's road once, only when one does.
+  if (valid.some((v) => v.costLine)) {
+    const { roadId } = await prisma.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { roadId: true } });
+    valid.forEach((v, i) => {
+      const problem = v.costLine ? costLineProblem(v.costLine, roadId, catalog) : null;
+      if (problem) throw new FigureInputError(`Figure ${i + 1}: ${problem}`);
+    });
+  }
+
   const rows = await prisma.$transaction(
     valid.map((v) =>
       prisma.figure.create({
@@ -142,6 +177,11 @@ export async function proposeFigures(
           // [8f] Only a T2125 total has these; validateFigureInput refuses them on any other kind.
           taxYear: v.taxYear ?? null,
           formLine: v.formLine ?? null,
+          // Only a start-up cost has these; validateFigureInput refuses a cost line on any other kind.
+          roadId: v.costLine?.roadId ?? null,
+          roadStepId: v.costLine?.stepId ?? null,
+          costLineId: v.costLine?.lineId ?? null,
+          amountFrom: v.costLine?.amountFrom ?? null,
           // Not left to the column default: proposing never confirms, and this line says so.
           status: "proposed",
         },
@@ -173,6 +213,12 @@ function checkIds(ids: unknown): string[] {
  * `edits` carries amounts the person typed over the proposed ones; an amount that really
  * changed marks the figure `editedByPerson`. Anything not currently "proposed" is reported in
  * `skipped` and never modified.
+ *
+ * The person's planning numbers have one current value each (docs/architecture/future-cockpit.md § 7):
+ * agreeing to a start-up cost for a line takes back the one agreed before for the same road, step and
+ * line, and a savings number takes back the idea's earlier one, in the same transaction (retracted,
+ * with the moment, and kept in the history). Of two agreed at once for the same line, the one proposed
+ * last stays. The business totals are left as they were.
  */
 export async function agreeToFigures(
   prisma: PrismaClient,
@@ -214,6 +260,24 @@ export async function agreeToFigures(
       if (count === 1) confirmedIds.push(id);
       else skipped.push(id);
     }
+
+    // Newest proposal first, so the first one met for each line is the one that stays current.
+    const planning = (await tx.figure.findMany({ where: { id: { in: confirmedIds } } }))
+      .filter((row) => PLANNING_KINDS.includes(row.kind as FigureKind))
+      .sort((a, b) => b.proposedAt.getTime() - a.proposedAt.getTime() || (a.id < b.id ? 1 : -1));
+    const kept = new Set<string>();
+    for (const row of planning) {
+      const sameLine =
+        row.kind === "start-up-cost-line" ? { roadId: row.roadId, roadStepId: row.roadStepId, costLineId: row.costLineId } : {};
+      const key = JSON.stringify([row.kind, sameLine]);
+      if (kept.has(key)) continue;
+      kept.add(key);
+      await tx.figure.updateMany({
+        where: { ventureId, kind: row.kind, status: "confirmed", id: { not: row.id }, ...sameLine },
+        data: { status: "retracted", retractedAt: now },
+      });
+    }
+
     const rows = await tx.figure.findMany({
       where: { id: { in: confirmedIds } },
       orderBy: [{ periodStart: "asc" }, { proposedAt: "asc" }],

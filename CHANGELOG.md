@@ -46,6 +46,47 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
   given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
   drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.
+- **Storage for what you tell the future cockpit** ([14a]) — the data file can now keep your mark on each
+  skill (have, learning, not yet; kept once for you, so it carries across every road), your progress on
+  each step of a future's road (doing, done, not for me, the *done when* lines you ticked, and when you
+  changed it), the road a future is drawn on, the ending you picked at a fork and your own month and
+  year, your answer to "where do you want to be" as one of your dated statements, the yearly income you
+  want (kept once for you, agreed like a figure), and two new kinds of figure, each one day's amount and
+  never negative: savings you'd put toward starting, and your own number for a named start-up cost line
+  with where it came from (a quote, a link, a receipt or your guess). Everything is kept against the
+  road's permanent ids, so rewriting a screen or moving a step never loses your progress. No screen
+  writes any of it yet: the cockpit's screens come next ([`lib/futures/`](lib/futures/),
+  [docs/architecture/future-cockpit.md § 7](docs/architecture/future-cockpit.md)). *What DotAmi knows
+  about you* counts the three new tables, and Delete gains **Your skill marks** and **The yearly income
+  you said you want**; step progress goes with your ideas. The migration only adds columns and tables,
+  and a test checks a row in every table survives it. Each answer kept on a future has its date; on
+  today's Alberta road a step's status stays with the map, so one step can't say two things; agreeing
+  to a new number for the same cost line (or a new savings number) takes back the old one; and the same
+  skill of your own typed with other capital letters is one mark.
+- **Places stored as international codes** ([14a]) — the data file now writes each idea's province as
+  its code (`CA-AB` for Alberta), the maintainer's decision of 2026-10-11. A second hand-written
+  migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
+  every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
+  later ([`lib/places/codes.ts`](lib/places/codes.ts)).
+- **Road evaluation and receipts** — one pure function turns a road and everything you told DotAmi
+  (your idea's answers and the map's picks, the ending you picked, your skill marks, your progress, the
+  numbers you agreed to, your own month, and a what-if) into each step's state — applies, check first,
+  or not on your path — with the reason in your own answers, and the four gauges as counts and sums:
+  steps done, skills by your mark (unmarked ones counted on their own), official fees plus your own
+  numbers with the lines not priced yet counted rather than added as $0, your savings minus those only
+  when both exist, and months to your own date only when you set one. On today's Alberta road the colours
+  are the map's, and each names the answers it depends on, found by running the rules again with each
+  answer changed. A second function compares two results and writes one line per change: *"Because you
+  told us you have “Read drawings”, 1 step now has every skill it lists marked have."* Every line is built
+  from catalog words, your values and counts, never by a model; a test fails on *enough*, *ready*,
+  *best*, *should*, *recommended* or a step that "needs nothing more". Answers you took back are counted
+  as taken back, and a default you haven't set (a map pick you haven't clicked, an unanswered question)
+  is worded as a default, never as something you told us. Road 0's steps carry no status of yours: the
+  map's done, active and set-aside lists are worked out from its toggles, not set by you. A what-if
+  relights the rules for one run, is never kept as a figure, and the rules and tax cards it lights call
+  it your what-if, never your target. No screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
+  [docs/architecture/future-cockpit.md § 6](docs/architecture/future-cockpit.md)). The map's hover
+  arrows now walk the road through the same code, and draw exactly as before.
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
@@ -102,6 +143,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
+
+### Security
+- **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
+  2026-10-07, carries 55 fixes Electron copied from Chrome's engine and the parts it is built from
+  (ANGLE, Chromium, Dawn, fontconfig, Skia, V8 and WebRTC): 47 in
+  [electron/electron#54666](https://github.com/electron/electron/pull/54666) and 8 in
+  [#54657](https://github.com/electron/electron/pull/54657): one of them, by its title, a fix for memory
+  used after being freed, and a few more for objects that could be used after they went away.
+  Electron's release notes call them "backported fixes", not security fixes. The Chromium version
+  number (152.0.7977.130) and Node (24.21.0) stay the same. Read in the
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0) notes on 2026-10-11: the change
+  to the built-in `autoUpdater` is for Macs, and DotAmi updates through electron-updater; the
+  `net.fetch` fix is for a call DotAmi doesn't make; `protocol.registerSource` is new and unused. One
+  change does reach DotAmi, below. The installed app gets all of this with the next release
+  (`package.json`, `package-lock.json`).
+- **In the desktop app, "today" follows British Columbia's permanent UTC-7 from November 2026.**
+  Electron 44.6.0 updated its time-zone data to tzdata 2026d, "including British Columbia's move to
+  permanent UTC-7" ([electron/electron#54623](https://github.com/electron/electron/pull/54623), 44.6.0
+  release notes, read 2026-10-11). DotAmi works out the person's own day (`lib/figures/age.ts`
+  `localDay`) in the desktop app's server, which is started with `utilityProcess.fork`
+  (`desktop/main.mjs`), and in its window, and both run on Electron's own copy of that data. That day
+  is the line for refusing an expense or figure dated after today, and the day shown for one agreed to
+  or retracted. On a computer set to Vancouver time,
+  from 2026-11-01 that day now turns over at midnight UTC-7, one hour earlier than on 44.5.1, which
+  still moved the clocks back to UTC-8. Measured 2026-10-11 by formatting 2026-11-02 07:30 UTC in
+  `America/Vancouver`: 44.5.1 (tzdata 2025c) gave 2026-11-01, 11:30 p.m. GMT-8; 44.7.0 (tzdata 2026d)
+  gives 2026-11-02, 12:30 a.m. GMT-7. A desktop test checks it (`e2e-desktop/desktop.spec.ts`, "the
+  person's day follows the time-zone data Electron ships"). Copies run from source with `npm run dev`
+  use the system Node's time-zone data, as before.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —

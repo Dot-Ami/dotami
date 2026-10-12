@@ -49,6 +49,14 @@ jump links, then five sections in this order:
    number, no receipt file; since 2026-10-08 also the idea or none, the person's own business share, the GST/HST part and how a refund is kept), that taking one back or turning one down keeps the row, and that nothing in the app erases a single record yet. Only the count is shown here: no payee, no words, no amount.
    "Your bank and card accounts" (added 2026-10-08, [8g]) counts the accounts in the file, in use and
    taken back; it shows no name (Settings lists them) and says Take back leaves the row until Delete.
+   Three cards were added on 2026-10-11 for the future cockpit's phase 1 storage, each 0 until the
+   cockpit's screens write to it: "Your progress on each step" (after Map progress: the steps marked
+   doing, done or not for me on each idea's road, the ticked "done when" lines and the status changes;
+   removed with the ideas), "Your skill marks" and "The yearly income you want" (after Your figures:
+   both kept once for the person, each removed by its own Delete box, and left when ideas are deleted).
+   The ideas, statements and figures cards also say what they now can hold (an idea's road, endings
+   and month; the answers to "where do you want to be"; savings toward starting and start-up costs).
+   Only counts are shown: no skill name, no amount.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened (the log's row says

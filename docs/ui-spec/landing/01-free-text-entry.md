@@ -2,7 +2,7 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-10-11 (the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
+Last updated: 2026-10-11 (words typed before the page has finished loading are kept; the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
 
 ## What it is
 
@@ -17,6 +17,18 @@ control exists to help fill or bypass this one.
   "That's the most this box holds: 2,000 characters. Anything typed or pasted past that wasn't
   taken, so check the end of your text."). The intake's own "What are you building?" box does the
   same.
+- Words typed before the page has finished loading are kept. The server sends the page already
+  drawn, so on a slow computer the box can be typed into before the page's scripts have run; React
+  never hears those keystrokes. Once, when React takes the page over (a layout effect, before any
+  redraw), whatever is in the box becomes `text`, so `Map it →` enables and the words stay. Until
+  2026-10-11 the button stayed greyed out and the next redraw emptied the box (CI's desktop test hit
+  it three times in about 15 hours). Browser test: `e2e/app.spec.ts`, "words typed on the front page
+  before it has finished loading…", which holds the page's scripts back while it types.
+  The same goes for words the browser itself puts back in the box: leave the front page with a full
+  page load (a typed address, a reload elsewhere) and press Back, and the browser refills the box
+  before the scripts run. Those words now stay and `Map it →` works with them; before, they showed for
+  a moment and were emptied. Leaving by an in-app link or `Map it →` draws the page fresh, with an
+  empty box. Browser test: "words the browser puts back in the front page's box after Back stay…".
 - Submit via click on `Map it →` or ⌘/Ctrl+Enter. Button disabled while `text` is empty or
   a request is in flight (`parsing`, label swaps to "Reading…").
 - On submit (`handleMapIt`):
