@@ -49,8 +49,12 @@ A road may name where it carries on after its last column: `joins: { roadId, col
 5. **Three kinds of cost, two in the catalog** (decision 2 of 2026-10-11). An *official fee* has an
    amount in whole cents (never a range or an average) and one citation: a read (its `lastVerified`
    is the day the fee was read there), or a tool check whose quotes include the amount as the page
-   writes it (`$150`, `$150.00`, `$1,500`; a $0 fee is exempt, since pages say "no cost"). A fee that
-   applies only sometimes (a rewrite after a failed exam) says so in its label. A *named* line has a name and no amount ("tools: add your quote"); it
+   writes it (`$150`, `$150.00`, `$1,500`; a $0 fee is exempt, since pages say "no cost"), and not as
+   one end of a range (`$150-$200`, `$150 to $200`, `between $100 and $150`, `from $150` are refused).
+   A fee that applies only sometimes (a rewrite after a failed exam) carries `onlyIf`, the condition in
+   plain words, and says so in its label too; the checks refuse a label saying "only if" with no
+   `onlyIf`, and a blank `onlyIf`. A total must leave such a fee out unless the person says the
+   condition holds. A *named* line has a name and no amount ("tools: add your quote"); it
    may cite where the name comes from (a blank cash-flow template, linked, not copied). The third kind,
    *your quote*, is the person's agreed number and is never written into a catalog.
    `costLineAsShown` turns a line plus the person's agreed amount into what a screen shows; a named
