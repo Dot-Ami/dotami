@@ -11,6 +11,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The first written future, *From apprentice to your own shop (Alberta)*, is in the catalog**
+  ([14a]) — a second road ([`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`](lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)):
+  a Cabinetmaker's three ways to the certificate side by side (an apprenticeship, or the Trades
+  Qualifier on work experience or with a certificate from outside Alberta), the certificate, the
+  optional Red Seal and Blue Seal, the fork between staying employed and opening your own shop, then
+  registering the business name, the business number, permits and the municipal licence, GST/HST's
+  small-supplier test, the first hire (WCB-Alberta and a CRA payroll account) and sponsoring an
+  apprentice; after that it joins today's road at *Incorporating*. 16 steps and 60 *done when*
+  lines, each cited. Official fees appear only where a page states them (the $150 apprenticeship
+  application, the $450 and $150 Trades Qualifier applications, the $160.00 practical exam, the $50
+  rewrite after a failed exam, the $150.00 Blue Seal application, and the business number at no
+  cost); everything else is a named line the person prices (tools, shop space deposit, insurance,
+  vehicle, first materials, software, money to live on while starting). Alberta's registry fees stay
+  named lines: the catalogue that holds them stops tools with a human check. Every source is a tool
+  check made on 2026-10-12 (180 quotes found word for word on their live pages); none is recorded as
+  read, so every card will say "Checked by a tool" in amber. No screen lists the road yet. New checks:
+  an official fee checked only by a tool must quote its own amount, a road none of whose sources has
+  been read carries no read date, and a road's join must name a real road and column.
 - **A road type any future can use** ([14a]) — a business or a career can now be written as a *road*:
   columns of steps, each cited, with the steps each one leads to, forks between two steps, *done when*
   lines, skill items, and cost lines of three kinds (an official fee with its source and the day it was

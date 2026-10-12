@@ -59,6 +59,10 @@ businesses: a road can lead to a career, a business, or a fork between the two.
 [architecture/future-cockpit.md](architecture/future-cockpit.md) § 6. The contributor files and
 their checker stay open here.
 
+2026-10-12: the first written future is in the catalog: 16 steps from a Cabinetmaker's training to
+the shop's first years, every *done when* line cited, every source checked by a tool (no screen
+lists it yet).
+
 ## 2. Progress
 
 Per node, per venture: **done · doing · not for me**, stored in the person's own database and

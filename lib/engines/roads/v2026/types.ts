@@ -28,10 +28,22 @@ export interface Road {
   /** Each fork once: two steps a person chooses between. */
   forks: Fork[];
   /**
-   * The newest read date of any source in the road (the checks hold it to that). The road's own date,
-   * not a citation's: a tool check is not a read and doesn't count (docs/engines/citations.md).
+   * The newest read date of any source in the road (the checks hold it to that), or "" when none of
+   * its sources has been read yet. The road's own date, not a citation's: a tool check is not a read
+   * and doesn't count (docs/engines/citations.md).
    */
   lastVerified: string;
+  /**
+   * Where the road carries on after its last column, if it does: another road's id and the column on
+   * it to carry on from (the first written future joins road 0 at "Incorporating"). Data, not layout;
+   * `roadJoinProblems` checks both exist.
+   */
+  joins?: RoadJoin;
+}
+
+export interface RoadJoin {
+  roadId: string;
+  columnId: string;
 }
 
 export interface RoadColumn {
@@ -101,8 +113,10 @@ export interface SkillItem {
 }
 
 /**
- * A fee with an official source. Its citation's `lastVerified` is the day a person read the fee
- * there; the amount is whole cents, never a range or an average.
+ * A fee with an official source: either read there (the citation's read date is the day the fee was
+ * read), or checked by a tool whose quotes include the amount as the page writes it ("$150.00"), so
+ * the number is one the tool found on the page. The amount is whole cents, never a range or an
+ * average. A fee that applies only sometimes (a rewrite after a failed exam) says so in its label.
  */
 export interface OfficialFeeLine {
   id: string;
