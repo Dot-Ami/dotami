@@ -26,10 +26,10 @@ Incorporating · Corporation running). No edges, no free-form layout, no React F
 
 Each column: `TIER n` · label · one-line subtitle · the branch toggle that belongs to it
 (GST timing in Tier 2, Incorporation timing in Tier 3 — "default, not your pick yet" until
-clicked, S2.5.4d). Then, in the column's order, one **stage card** per step the column lists
+clicked). Then, in the column's order, one **stage card** per step the column lists
 (for road 0, the catalog's nodes whose `stage` the tier lists, in catalog order), and under each
 stage card one **lever card** per evaluator item relevant to that stage
-(`itemsForNode(...).forThisStage`, S2.5.4e).
+(`itemsForNode(...).forThisStage`).
 
 | Card | Shows | Click |
 |---|---|---|

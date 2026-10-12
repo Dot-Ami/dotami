@@ -366,7 +366,8 @@ for a reason:
 - **A road holds its own steps and forks.** `Road` gains `steps` (every step, by id) and `forks` (each
   fork once, with its two sides). The sketch's `forkId` on a step is dropped, so a fork is written in
   one place only. A column gains `summary` (the line under its name) and an optional `forkId`: the
-  fork whose choice sits in that column's header.
+  fork decided in that column. It is data, not layout: it carries today's two toggles over (the map
+  shows each in its column's header), and for other roads the pick is made on Compare (§ 1, row 6).
 - **A step says where it leads:** `next` lists the steps it opens. The map's hover arrows walk it;
   before, they walked `CFENode.branches`.
 - **A fork's id is the key its pick is kept under.** Road 0's two forks are `gstTiming` and
@@ -377,15 +378,31 @@ for a reason:
   fee was read (the sketch had the date twice). A catalog holds only *official fee* and *named* lines;
   the third kind, *your quote*, is the person's agreed number and never in a catalog. One pure
   function turns a catalog line plus the person's agreed amount (if any) into the three kinds a
-  screen shows: *official fee*, *your quote*, *named, not priced yet*.
+  screen shows: *official fee*, *your quote*, *named, not priced yet*. A quote that isn't a whole,
+  non-negative number of cents is shown as *named, not priced yet*, never added up.
+- **Two fee lines can't yet be marked as alternatives.** A step's `costs` is a flat list, so a total
+  that added every official fee on one step would count both sides of a choice. Fix 2 (§ 9: federal and
+  Alberta incorporation side by side, neither counted until the person picks) needs one of two
+  additions, and the pull request that writes those fee lines picks between them: two steps under a
+  `Fork` (one per way to incorporate, each with its own fee lines), or an optional choice-group field
+  on a cost line that road evaluation reads. Either adds to the type; nothing in it changes shape.
+- **`engineHints` is not on `RoadStep` yet.** Today's lever cards are matched to a step by its id
+  through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, as before. The road-evaluation pull
+  request moves those hints onto the step, so a road's content stays in the road catalog (§ 8) and a
+  contributor-written road can name its own cards; until then a step from any other road gets no
+  lever cards.
 - **Skill items are one shared list** (`skillItemsV2026`), so a mark carries across every road that
   lists the item. It is empty until the first written future.
 - **The checks** (`validate.ts`, run on every road by the tests): every step has a citation; every
-  citation is an https page with a real read date; every id is unique within its road; every step
-  sits in exactly one column and every column names real steps; `next`, fork sides and a column's
-  fork name real steps and forks; an official fee is a whole, non-negative number of cents; `needs`
-  names real skill items; the road's `lastVerified` is the newest read date in it. A separate list in
-  the tests holds every road, column, step and fork id ever shipped: removing or renaming one fails.
+  citation is an https page with a real read date that has already come (the newest date anywhere
+  on Earth, so a reader east of UTC isn't refused their own today); every official link is an https
+  page; every id is unique within its road; every step sits in exactly one column and every column
+  names real steps; `next`, fork sides and a column's fork name real steps and forks; an official fee
+  is a whole, non-negative number of cents; `needs` names real skill items; the road's `lastVerified`
+  is the newest read date in it. A separate list in the tests holds every road, column, step, fork,
+  *done when* line, cost line and skill item id ever shipped: removing or renaming one fails. The
+  checks don't yet look at a citation's title, an empty road, or whether a column's fork has a side
+  in that column.
 - **Road 0 is today's map, unchanged.** `roadFromCfe` builds *Starting any business in Alberta (tax and
   structure)* from `cfeNodesV2026` and `cfeTiersV2026`: the four tiers become its columns, the ten
   nodes its steps (same ids, labels, trigger lines as the step's one line, citations, and `branches`
@@ -398,8 +415,11 @@ for a reason:
   detail panel still opens on today's catalog entry for a step; the step panel (§ 1, row 5) replaces
   it later in phase 1.
 - **Not in this pull request:** which road a saved future uses (storage, § 7; until then every map is
-  road 0), road evaluation (above), and any new screen. Places stay today's values (`AB`, `BC`, `ON`,
-  `CA`); how places are stored is an open decision of the maintainer's.
+  road 0), road evaluation (above), and any new screen. Saved fork picks are still typed as tax-map
+  step ids (`activeBranches: Record<string, CFENodeId>` in `lib/scenarios/types.ts`); the storage pull
+  request widens the value to any road's step id so another road's pick can be kept. Places stay
+  today's values (`AB`, `BC`, `ON`, `CA`); how places are stored is an open decision of the
+  maintainer's.
 
 ## 7. Storage
 

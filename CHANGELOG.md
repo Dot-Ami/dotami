@@ -14,9 +14,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   lines, skill items, and cost lines of three kinds (an official fee with its source and the day it was
   read, the person's own agreed quote, or a named line not priced yet, which never counts as $0)
   ([`lib/engines/roads/v2026/`](lib/engines/roads/v2026/), [docs/engines/roads.md](docs/engines/roads.md)).
-  Checks refuse a road with an uncited step or line, a repeated id, a step in no column, an arrow or fork
-  to a step that isn't there, or a fee that isn't a whole number of cents, and the list of shipped ids
-  can't shrink. Today's ten-step map is the first road, *Starting any business in Alberta (tax and
+  Checks refuse a road with an uncited step or line, a source read on a day that hasn't come yet, an
+  official link that isn't an https page, a repeated id, a step in no column, an arrow or fork to a step
+  that isn't there, or a fee that isn't a whole number of cents, and the list of shipped ids (down to
+  each *done when* line, cost line and skill item) can't shrink. A quote that isn't a whole,
+  non-negative number of cents shows as not priced, never as a number. Today's ten-step map is the first road, *Starting any business in Alberta (tax and
   structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
   given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
   drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.

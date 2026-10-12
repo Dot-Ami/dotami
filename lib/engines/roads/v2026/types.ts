@@ -39,7 +39,10 @@ export interface RoadColumn {
   summary: string;
   /** Step ids, top to bottom. */
   steps: string[];
-  /** The fork whose choice sits in this column's header, if any. */
+  /**
+   * The fork decided in this column, if any. Data, not layout: it carries today's two toggles over,
+   * and the map chooses to show them in the column's header.
+   */
   forkId?: string;
 }
 

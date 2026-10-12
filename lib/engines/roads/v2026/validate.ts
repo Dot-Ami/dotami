@@ -4,13 +4,15 @@ import type { CatalogCostLine, CostLineAsShown, Road, SkillItem } from "./types"
 /**
  * The checks every road must pass before it ships (tests/roads.spec.ts runs them on every road in
  * the catalog). Each problem comes back as one plain sentence naming the id, so a contributor can
- * find it; an empty list means the road is fine. Pure: no I/O, nothing about any screen.
+ * find it; an empty list means the road is fine. Pure apart from the clock (read only when no `now`
+ * is passed, to tell whether a read date has come yet): no I/O, nothing about any screen.
  *
  * Content still to be written (a step's done-when lines, cost lines, skills) may be empty; what is
  * written must be cited. That is how road 0 ships before its done-when lines are read and written.
  */
-export function roadProblems(road: Road, skillItems: readonly SkillItem[]): string[] {
+export function roadProblems(road: Road, skillItems: readonly SkillItem[], now: Date = new Date()): string[] {
   const problems: string[] = [];
+  const today = newestTodayOnEarth(now);
   const stepIds = new Set(road.steps.map((s) => s.id));
   const forkIds = new Set(road.forks.map((f) => f.id));
   const skillIds = new Set(skillItems.map((s) => s.id));
@@ -48,7 +50,15 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[]): stri
     if (count > 1) problems.push(`Step "${step.id}" sits in ${count} columns.`);
 
     if (step.citations.length === 0) problems.push(`Step "${step.id}" has no citation.`);
-    for (const citation of step.citations) problems.push(...citationProblems(citation, `step "${step.id}"`));
+    for (const citation of step.citations) problems.push(...citationProblems(citation, `step "${step.id}"`, today));
+
+    // A link the person opens themselves is held to the same rule as a citation: an https page, so a
+    // contributor's file can't slip in a "javascript:" or plain-http address.
+    for (const link of step.officialLinks) {
+      if (!isHttpsPage(link.url)) {
+        problems.push(`An official link on step "${step.id}" is not an https page: ${link.url}`);
+      }
+    }
 
     for (const target of step.next) {
       if (!stepIds.has(target)) {
@@ -59,7 +69,7 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[]): stri
     for (const line of step.doneWhen) {
       // The type says every line has a citation; contributor files arrive as data, so check anyway.
       if (!line.citation) problems.push(`Done-when line "${line.id}" has no citation.`);
-      else problems.push(...citationProblems(line.citation, `done-when line "${line.id}"`));
+      else problems.push(...citationProblems(line.citation, `done-when line "${line.id}"`, today));
     }
 
     for (const need of step.needs) {
@@ -68,7 +78,7 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[]): stri
       }
     }
 
-    for (const cost of step.costs) problems.push(...costProblems(cost));
+    for (const cost of step.costs) problems.push(...costProblems(cost, today));
   }
 
   for (const fork of road.forks) {
@@ -91,16 +101,17 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[]): stri
 }
 
 /** The checks for the shared list of skill items: unique ids, and every item and route cited. */
-export function skillItemProblems(items: readonly SkillItem[]): string[] {
+export function skillItemProblems(items: readonly SkillItem[], now: Date = new Date()): string[] {
   const problems: string[] = [];
+  const today = newestTodayOnEarth(now);
   const seen = new Set<string>();
   for (const item of items) {
     if (seen.has(item.id)) problems.push(`The skill item id "${item.id}" is used twice.`);
     seen.add(item.id);
     if (item.citations.length === 0) problems.push(`Skill item "${item.id}" has no citation.`);
     const where = `skill item "${item.id}"`;
-    for (const citation of item.citations) problems.push(...citationProblems(citation, where));
-    if (item.howToGetIt) problems.push(...citationProblems(item.howToGetIt.citation, where));
+    for (const citation of item.citations) problems.push(...citationProblems(citation, where, today));
+    if (item.howToGetIt) problems.push(...citationProblems(item.howToGetIt.citation, where, today));
   }
   return problems;
 }
@@ -124,7 +135,9 @@ export function newestReadDate(road: Road): string | undefined {
  * Turns a catalog cost line, plus the amount the person agreed to for it (if any), into one of the
  * three kinds a screen shows. An official fee is always the official fee: a quote can't replace it.
  * A named line with no agreed amount carries no amount at all, so it can't be summed as $0; screens
- * count it in "N lines not priced yet" instead.
+ * count it in "N lines not priced yet" instead. So does a quote that isn't a whole, non-negative number
+ * of cents (NaN, a negative, a fraction): a broken number is shown as a blank, never added up. Zero is
+ * a real quote (something the person already owns).
  */
 export function costLineAsShown(line: CatalogCostLine, agreedQuoteCents?: number | null): CostLineAsShown {
   if (line.kind === "official-fee") {
@@ -136,13 +149,18 @@ export function costLineAsShown(line: CatalogCostLine, agreedQuoteCents?: number
       citation: line.citation,
     };
   }
-  if (agreedQuoteCents !== undefined && agreedQuoteCents !== null) {
+  if (
+    agreedQuoteCents !== undefined &&
+    agreedQuoteCents !== null &&
+    Number.isInteger(agreedQuoteCents) &&
+    agreedQuoteCents >= 0
+  ) {
     return { kind: "your-quote", lineId: line.id, label: line.label, amountCents: agreedQuoteCents };
   }
   return { kind: "named-not-priced", lineId: line.id, label: line.label };
 }
 
-function costProblems(cost: CatalogCostLine): string[] {
+function costProblems(cost: CatalogCostLine, today: string): string[] {
   const problems: string[] = [];
   if (cost.kind === "official-fee") {
     if (!Number.isInteger(cost.amountCents) || cost.amountCents < 0) {
@@ -151,22 +169,38 @@ function costProblems(cost: CatalogCostLine): string[] {
       );
     }
     if (!cost.citation) problems.push(`Official fee "${cost.id}" has no citation.`);
-    else problems.push(...citationProblems(cost.citation, `official fee "${cost.id}"`));
+    else problems.push(...citationProblems(cost.citation, `official fee "${cost.id}"`, today));
   } else if (cost.nameSource) {
-    problems.push(...citationProblems(cost.nameSource, `cost line "${cost.id}"`));
+    problems.push(...citationProblems(cost.nameSource, `cost line "${cost.id}"`, today));
   }
   return problems;
 }
 
-function citationProblems(citation: EngineCitation, where: string): string[] {
+function citationProblems(citation: EngineCitation, where: string, today: string): string[] {
   const problems: string[] = [];
-  if (!/^https:\/\//.test(citation.url)) {
+  if (!isHttpsPage(citation.url)) {
     problems.push(`A citation on ${where} is not an https page: ${citation.url}`);
   }
   if (!isRealDate(citation.lastVerified)) {
     problems.push(`A citation on ${where} has no real read date: "${citation.lastVerified}".`);
+  } else if (citation.lastVerified > today) {
+    // lastVerified is the day a person read the page, so it can't be a day that hasn't come yet.
+    // ISO dates compare correctly as text.
+    problems.push(`A citation on ${where} says it was read on ${citation.lastVerified}, a day that hasn't come yet.`);
   }
   return problems;
+}
+
+function isHttpsPage(url: string): boolean {
+  return /^https:\/\//.test(url);
+}
+
+/**
+ * Today's date in the earliest time zone on Earth (UTC+14), as YYYY-MM-DD. A read date is refused only
+ * once it is after this, so a contributor east of UTC is never told their own today hasn't come yet.
+ */
+function newestTodayOnEarth(now: Date): string {
+  return new Date(now.getTime() + 14 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /** YYYY-MM-DD and a day that exists on the calendar (no 2026-02-30). */
