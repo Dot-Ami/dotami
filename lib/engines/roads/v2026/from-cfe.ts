@@ -1,7 +1,7 @@
 import type { CFENode } from "../../cfe/v2026/types";
 import type { CFETier } from "../../cfe/v2026/tiers";
 import type { Province } from "../../shared/types";
-import type { Fork, Road, RoadKind } from "./types";
+import type { DoneWhenLine, Fork, Road, RoadKind, RoadStep } from "./types";
 import { newestReadDate } from "./validate";
 
 /**
@@ -11,8 +11,11 @@ import { newestReadDate } from "./validate";
  * step's one line, as the card already showed it; its `branches` are where the step leads). A node
  * lands in the column whose tier lists its stage, in catalog order, exactly as the old map placed it.
  *
- * Done-when lines, cost lines, skill items and official links start empty: they are written from the
- * official pages in their own pull request, never filled in here.
+ * Two optional inputs carry the road's own content, written from the official pages in the road's
+ * file rather than in the tax map's catalog: `doneWhen`, the done-when lines for a step by its id, and
+ * `addedSteps`, steps that aren't map stages (road 0's "before you open" steps), each placed in a
+ * column after that column's stages. Cost lines, skill items and official links on the map stages
+ * start empty; nothing is filled in here that a page didn't say.
  */
 export function roadFromCfe(input: {
   id: string;
@@ -22,7 +25,10 @@ export function roadFromCfe(input: {
   nodes: readonly CFENode[];
   tiers: readonly CFETier[];
   forks: Fork[];
+  doneWhen?: Readonly<Record<string, readonly DoneWhenLine[]>>;
+  addedSteps?: readonly { columnId: string; step: RoadStep }[];
 }): Road {
+  const added = input.addedSteps ?? [];
   const road: Road = {
     id: input.id,
     label: input.label,
@@ -32,20 +38,27 @@ export function roadFromCfe(input: {
       id: tier.id,
       label: tier.label,
       summary: tier.subtitle,
-      steps: input.nodes.filter((node) => tier.stages.includes(node.stage)).map((node) => node.id),
+      steps: [
+        ...input.nodes.filter((node) => tier.stages.includes(node.stage)).map((node) => node.id),
+        // After the map's own stages, so every card the old map drew keeps its place.
+        ...added.filter((a) => a.columnId === tier.id).map((a) => a.step.id),
+      ],
       ...(tier.branchDecisionId ? { forkId: tier.branchDecisionId } : {}),
     })),
-    steps: input.nodes.map((node) => ({
-      id: node.id,
-      label: node.label,
-      summary: node.trigger,
-      next: [...node.branches],
-      doneWhen: [],
-      needs: [],
-      costs: [],
-      officialLinks: [],
-      citations: [...node.citations],
-    })),
+    steps: [
+      ...input.nodes.map((node) => ({
+        id: node.id,
+        label: node.label,
+        summary: node.trigger,
+        next: [...node.branches],
+        doneWhen: [...(input.doneWhen?.[node.id] ?? [])],
+        needs: [],
+        costs: [],
+        officialLinks: [],
+        citations: [...node.citations],
+      })),
+      ...added.map((a) => a.step),
+    ],
     forks: input.forks,
     lastVerified: "",
   };

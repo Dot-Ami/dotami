@@ -49,8 +49,9 @@ says where it is going.
 
 - Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
-  lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps (the
-  catalog's second road, the first written future, has no screen yet); node
+  lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
+  three *before you open* steps, which no rule colours yet and which say "no rule yet" (the catalog's
+  second road, the first written future, has no screen yet); node
   detail; playbook export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step

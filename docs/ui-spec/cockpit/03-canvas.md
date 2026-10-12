@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-11 (the map draws a road, and today's map is the road "Starting any business in
+Last updated: 2026-10-12 (road 0 gains three "before you open" cards in Tier 1, and a card no rule
+colours says "no rule yet" instead of a colour; 2026-10-11: the map draws a road, and today's map is the road "Starting any business in
 Alberta", unchanged; the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
@@ -19,6 +20,13 @@ another road. Nothing a person sees or does on the map changed: `tests/road-map.
 states through the road and compares the HTML, byte for byte, with what the old map drew, and a browser
 test checks the columns, cards, toggles and arrows.
 
+**Road 0's before-you-open cards (2026-10-12).** Tier 1 now holds four cards: *Employee/Apprentice
+baseline*, then *Register your business name, if you use one*, *Look up your permits and licences
+(BizPaL)* and *A separate bank account for the business* (docs/architecture/future-cockpit.md § 6,
+"Road 0's content as built"). They are the only cards the map gained: with them cut out, the HTML of
+the six saved states is byte for byte what the old map drew (`tests/road-map.spec.ts`). Each leads to
+*Sole Prop activation*; the baseline's own arrows are unchanged, so hovering it dims them.
+
 ## What it is
 
 A CSS grid of tier columns (four in v2026: Before the venture · Sole proprietor ·
@@ -34,12 +42,16 @@ stage card one **lever card** per evaluator item relevant to that stage
 | Card | Shows | Click |
 |---|---|---|
 | Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
+| Stage the rules don't colour (road 0's before-you-open steps, 2026-10-12) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1) |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
 Stage and lever buttons have explicit accessible names. Stage names include the current status,
 the left bar's colour in words and the action — "Sole Prop activation, now, applies as answered,
 opens detail"; the words are **applies as answered** (green), **check first** (amber) and
-**doesn't apply as answered** (grey), so the colour is never the only way to tell. Lever names
+**doesn't apply as answered** (grey), so the colour is never the only way to tell. A card the rules
+don't colour claims no colour and no place on the path: "Register your business name, if you use one,
+no rule reads this step yet, shows where it leads" (grey would say "doesn't apply as answered", which no
+rule decided, and "ahead" would be a guess). Lever names
 identify the item whose details open. Stage selection remains exposed as `aria-pressed`.
 
 **The colours follow the person's own picks (2026-10-11).** The cockpit runs the rules with the
@@ -75,7 +87,9 @@ dashed and fainter for each step after, to the end of the tree; rightwards when 
 in a later tier, downwards inside a tier. Cards off that future dim to 35%. Hover wins while
 the pointer is on a card; the selected card keeps its arrows otherwise. Arrows reach "not on
 your path" cards too — those are the other paths. Measured 2026-09-16 on "Sole Prop
-activation": 4 solid + 14 dashed, 1 card dimmed.
+activation": 4 solid + 14 dashed, 1 card dimmed (4 since 2026-10-12: the baseline and the three
+before-you-open cards, which come before it). From a before-you-open card: 1 solid (to Sole Prop
+activation) + 18 dashed.
 
 ## What it does not do (charter)
 

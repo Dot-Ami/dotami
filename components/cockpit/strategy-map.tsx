@@ -139,13 +139,18 @@ interface MapFocus {
 }
 
 /**
- * A step's colour from today's rules, by step id. A step the rules don't know (one from a road
- * other than today's) is grey until road evaluation gives it a state of its own.
+ * A step's colour from today's rules, by step id, or undefined when the rules don't colour it (road
+ * 0's before-you-open steps, or a step from another road). Such a step is drawn with no colour at all
+ * rather than grey: grey says "doesn't apply as answered", which no rule decided (2026-10-12). Road
+ * evaluation gives these steps states of their own later in phase 1.
  */
-function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor {
+function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor | undefined {
   const states: Partial<Record<string, NodeStateColor>> = evaluation.nodeStates;
-  return states[stepId] ?? "gray";
+  return states[stepId];
 }
+
+/** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
+const NO_RULE_CHIP = { label: "no rule yet", className: "text-stone border border-rule" };
 
 function TierColumn({
   column,
@@ -222,14 +227,23 @@ function StageCard({
 }: {
   step: RoadStep;
   status: ScenarioNodeStatus;
-  colour: NodeStateColor;
+  colour: NodeStateColor | undefined;
   selected: boolean;
   onClick: () => void;
   onHover: (on: boolean) => void;
   registerCard: (el: HTMLElement | null) => void;
 }) {
-  const chip = STAGE_CHIP[status];
-  const ghost = status === "ghost";
+  const ruled = colour !== undefined;
+  // The branch picks only name today's tax-map steps, so a step the rules don't read gets no place
+  // chip either ("ahead" would be a guess).
+  const chip = ruled ? STAGE_CHIP[status] : NO_RULE_CHIP;
+  const ghost = ruled && status === "ghost";
+  // The colour in words, so it is never the only way to tell. A step no rule reads opens no panel
+  // (the detail panel shows today's catalog entries, and it has none): a click selects it and keeps
+  // its arrows, and its name says so.
+  const accessibleName = ruled
+    ? `${step.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`
+    : `${step.label}, no rule reads this step yet, shows where it leads`;
   return (
     <button
       ref={registerCard}
@@ -240,10 +254,10 @@ function StageCard({
       onFocus={() => onHover(true)}
       onBlur={() => onHover(false)}
       aria-pressed={selected}
-      aria-label={`${step.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`}
+      aria-label={accessibleName}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
-      } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
+      } ${ruled ? ACCENT[colour] : "border-l-rule-soft"} ${selected ? "ring-2 ring-maple/30" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{step.label}</h4>
