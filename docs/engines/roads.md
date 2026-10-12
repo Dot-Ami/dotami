@@ -73,15 +73,26 @@ A road may name where it carries on after its last column: `joins: { roadId, col
    `roadFromCfe` as `doneWhen` by step id and `addedSteps` by column); its map stages' cost lines,
    skill items and official links are empty until they are read from the official pages; the checks
    allow empty lists and refuse uncited entries.
-8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`). How places are stored is still the
-   maintainer's decision; don't add new place codes here.
+8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`) in the catalog for now. The maintainer
+   decided on 2026-10-11 that places are stored as international codes (`CA`, `CA-AB`); the storage
+   code maps today's values to them (`lib/places/codes.ts`), and moving the catalogs over is a later
+   pull request. Don't add a new place value here until then.
 9. **No layout in the catalog.** A road says what the steps are and how they connect; how a screen
    draws them is the screen's business. A fork's id is the key its pick is saved under: road 0's forks
    reuse `gstTiming` and `incorporationTiming`, the keys saved branch picks already use. A column's
    `forkId` says which fork is decided in that column, not where a toggle goes; it carries today's two
-   toggles over, and the map chooses to show them in the column header.
-11. **Lever cards are not on the step yet.** The sketch's `engineHints` is not on `RoadStep`: today's
-    cards are matched to a step by its id through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`.
-    The road-evaluation pull request moves them onto the step; don't add a new road's cards to
-    `lib/brain/`.
+   toggles over, and the map chooses to show them in the column header. Road 0's picks are kept in
+   `ScenarioState.activeBranches`, as before; every other road's picks are kept on the saved future
+   (`Venture.forkPicks`; docs/architecture/future-cockpit.md § 7, Storage as built).
+11. **A step names its own lever cards** in its optional `engineHints`, by catalog id (2026-10-12,
+    the cockpit screen; until then they were matched by step id through `NODE_ENGINE_HINTS` in
+    `lib/brain/node-items.ts`, which now reads road 0's from the road). Whether a card applies is
+    still the rules' call; the hint only says the card is about this step. Don't add a road's cards
+    to `lib/brain/`.
 10. **Road order is the order added**, never a ranking (decision 3).
+
+How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
+is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as
+built*](../architecture/future-cockpit.md)). What in a road file it reads: a fork's two sides and the
+`next` arrows decide which steps are on a person's path once they pick, and a step's cost lines count
+in the sums only while that step is on the path.

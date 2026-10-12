@@ -12,6 +12,9 @@ import {
   type RoadStep,
 } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
+import { evaluateRoad, roadReceipt } from "@/lib/roads";
+
+import { input } from "./helpers/road-to-evaluate";
 
 /**
  * The first written future (decision 1 of 2026-10-11): "From apprentice to your own shop (Alberta)".
@@ -383,5 +386,39 @@ describe("a line says what its own page says, no more and no less", () => {
       ]),
     );
     for (const id of new Set(road.steps.flatMap((s) => s.needs))) expect(id).toMatch(/^skill-ab-/);
+  });
+});
+
+describe("road evaluation reads it (lib/roads/)", () => {
+  const evaluate = (forkPicks = {}) => evaluateRoad(input({ road, roadChosen: true, skillItems: skillItemsV2026, forkPicks }));
+  const OWN_SHOP = { "fork-shop-employed-or-own": { stepId: "step-shop-open-own-shop", from: "you" as const } };
+
+  it("every step gets a state and a reason, and every skill item it lists has a name in the shared list", () => {
+    const result = evaluate();
+    expect(result.steps.map((s) => s.stepId).sort()).toEqual(road.steps.map((s) => s.id).sort());
+    for (const s of result.steps) expect(s.because.length).toBeGreaterThan(0);
+    expect(result.gauges.skills.listed).toBe(new Set(road.steps.flatMap((s) => s.needs)).size);
+  });
+
+  it("a fee that applies only sometimes is counted apart and never added to the official fees", () => {
+    for (const result of [evaluate(), evaluate(OWN_SHOP)]) {
+      const counted = result.steps.filter((s) => s.money === "counted").flatMap((s) => s.costs);
+      const fees = counted.filter((c) => c.kind === "official-fee");
+      const always = fees.filter((c) => c.kind === "official-fee" && c.onlyIf === undefined);
+      // The $50 exam rewrite on the Recognized Credential route is on the path before the fork.
+      expect(fees.find((c) => c.lineId === "cost-shop-tqrc-rewrite")).toMatchObject({ onlyIf: expect.any(String) });
+      expect(result.gauges.money.onlyIfFeeLines).toBe(fees.length - always.length);
+      expect(result.gauges.money.onlyIfFeeLines).toBeGreaterThan(0);
+      expect(result.gauges.money.officialFeeLines).toBe(always.length);
+      expect(result.gauges.money.officialFeesCents).toBe(
+        always.reduce((sum, c) => sum + (c.kind === "official-fee" ? c.amountCents : 0), 0),
+      );
+    }
+  });
+
+  it("picking the own-shop ending gives receipt lines, none of them a verdict", () => {
+    const lines = roadReceipt(evaluate(), evaluate(OWN_SHOP));
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.filter((line) => /\b(enough|ready|best|should|recommend\w*)\b/i.test(line))).toEqual([]);
   });
 });

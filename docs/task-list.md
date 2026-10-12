@@ -54,23 +54,48 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] Road 0's content: about three cited *done when* lines on each of today's ten steps, and the
     *before you open* steps (register your business name, look up permits and licences on BizPaL, a
     separate bank account), every source a tool check (2026-10-12,
-    `lib/engines/roads/v2026/starting-any-business-ab.ts`; the map shows the three new cards as
-    "no rule yet")
+    `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
+    three new cards as on your road; drawn without it, the map shows them as "no rule yet")
     - [ ] Still open on it: cost lines, skill items and official links on the ten map stages; four
       map stages' own sources point at pages that answer "page not found" (a read, or a tool check
       in place of it, is the maintainer's call); a person's read of each page
-  - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
+  - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
     savings for starting; a start-up cost line); listed and deletable on *What DotAmi knows about you*
-  - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
-    steps now say needs 0 more"), worked out by running the rules before and after
+    (2026-10-11: the storage and its server-side code, `lib/futures/`, with no screen yet; the design's
+    open items on each number's time period, the per-person table and the speed of *What you've told
+    DotAmi* settled in [future-cockpit.md § 7](architecture/future-cockpit.md). The sales at which you'd
+    incorporate stay where the honest-map change keeps them, with the map's answers. 2026-10-12: each
+    idea's place is now stored in the data file as its international code, such as `CA-AB` for Alberta;
+    every answer kept on a future has its date; one current number per cost line and per idea's
+    savings. Still to come, each in the open lines below: the job you pick, the *business / career /
+    both* answer, the *This is mine* pin, a step's own date, the catalogs' place keys)
+  - [x] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
+    steps now say needs 0 more"), worked out by running the rules before and after (2026-10-12: road
+    evaluation, `lib/roads/`: each step's state with its reason in your own answers, the four gauges as
+    counts and sums, and the receipt lines, from one pure function and one words file; no screen shows
+    them yet, which the cockpit line below does; [§ 6](architecture/future-cockpit.md))
   - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);
     *What you've told DotAmi / Not told yet*; the Road, Skills, Money and Rules & tax overlays; the
     step panel with its *done when* checklist, skill marks and three kinds of cost; *Next on your
-    road*; the what-if bar; compare the two endings and *This is mine*; the export gains all of it
+    road*; the what-if bar; compare the two endings and *This is mine* (kept on the future: one added
+    column); the export gains all of it. On today's Alberta road the step panel sets a step's status
+    through the map, which keeps it ([§ 7](architecture/future-cockpit.md)); the step panel also moves
+    today's lever cards onto the road step, so any road can name its own ([§ 6](architecture/future-cockpit.md))
+    (2026-10-12, part 1 built: the goal bar and four gauges, the four overlays, the step panel with status,
+    *done when* checklist, skill marks and three kinds of cost through the agree prompt, the lists behind
+    the gauges, *Next on your road*, and the lever cards on the road step; a road 0 step's status is kept
+    with the step progress, not the map, the line below; [§ 2, Cockpit screen as built](architecture/future-cockpit.md).
+    Part 2: *What you've told DotAmi / Not told yet* with a receipt after each answer, the what-if bar,
+    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all)
+  - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
+    the map, so *Since last time* can list those changes too (the map then reads them;
+    [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the
+    person's status where they set one; the map's own lists stay worked out from its toggles)
   - [ ] The way in: three doors on the front page, *Your destination* (four short questions, a receipt
-    after each), *Pick a future*, and *Your ideas* renamed *Your futures*
+    after each), *Pick a future*, and *Your ideas* renamed *Your futures*. The *business / career /
+    both* answer is kept on the future (one added column) when this screen asks it
   - [x] The first written future, *From apprentice to your own shop (Alberta)*: steps from
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
@@ -79,17 +104,22 @@ and the maintainer's six decisions of 2026-10-11:
       tools, so a person reads them); the apprentice wage percentages per period (they need a typed
       field); a person's read of each page, which turns its "checked by a tool" into a read; whether
       *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13)
-  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*
+  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
+    you pick is kept on the future (an occupation code and the day you picked it: one added column each)
   - [ ] *Show me an example first*: a filled-in, clearly invented example future
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine*
   - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's
-    Alberta road, for the maintainer to click through
+    Alberta road, for the maintainer to click through. Raise then: *I don't know* on a skill keeps no
+    mark (the design's table listed it as a fourth mark; [§ 7](architecture/future-cockpit.md))
+  - [ ] The catalogs' place keys (`AB`, `CA`) and the app's own place type moved to international codes
+    such as `CA-AB`, as the data file already stores them (2026-10-12). No phase 1 screen needs it; it
+    comes before any place outside Canada is added
 - ⬜ **[14b] Phase 2 — Compare futures, dates and your dream numbers.** A second written future; a
   shelf of *Possible futures* (business, career, side gig) with *Peek inside*: what the work looks like
   running, the road, skills, costs to start, and your own numbers beside it with no verdict; *Side by
   side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
-  a what-if; a time strip from your own dates; hours you want, things you won't do, and a dream-life
+  a what-if; a time strip from your own dates (each step's own date kept then: one added column); hours you want, things you won't do, and a dream-life
   list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
   planned cost. Before this phase is locked, the maintainer is asked again whether to show typical
   numbers beside the official fees and your own quotes (the approved plan's follow-up to decision 2).
@@ -137,6 +167,9 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] The server leaves out what it never loads: sharp with libvips (LGPL) and the TypeScript compiler,
     with what only they pull in (about 30 MB; the build stops if something still needs one, a desktop
     test fails if one comes back)
+  - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
+    data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
+    earlier; a desktop test checks it); reaches installed copies with the next release
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -386,6 +419,10 @@ roadmap's build order.
       opensWith); now the file is opened once read-write with its key first, so SQLite rolls it back
     - [ ] A question for the maintainer: turn receipt encryption off too?
   - [ ] From a spreadsheet's rows · from a bank statement's ticked rows ([8g]) · a receipt photo the Lens reads ([9])
+  - [ ] Words typed into the *Your expenses* form before the page has finished loading are emptied
+    when it loads (found 2026-10-11 by the review of the front page's same fix; only on a reload or a
+    typed address). The front page's way, reading what is already in each box as the page loads, with
+    its own browser test that holds the page's scripts back
 
 ## 9 — The Lens (DotAmi's built-in agent)
 
@@ -512,6 +549,9 @@ roadmap's build order.
     only a request that names its own bucket is counted (`DOTAMI_E2E_RATE_LIMITS=opt-in`, set by
     `playwright.config.ts` alone), and `e2e/rate-limit.spec.ts` shows the shipped limit still holds
   - [x] A run waits for its own server, never another run's on the same port — 2026-10-09
+  - [x] The desktop test types into the front page only once it has finished loading, and words a
+    person types before then are kept by the page (a browser test holds the page's scripts back) —
+    2026-10-11; the desktop test had failed on CI three times in about 15 hours with "Map it" greyed out
 - ⏸ **[13f] Privacy policy, terms, and the usage-sharing decision** — planned for before the first
   download; the first installer (0.2.0, 2026-10-06) went out before them, so they are still owed. Until
   then the privacy log below is the record of what each version keeps, sends, ships and asks.

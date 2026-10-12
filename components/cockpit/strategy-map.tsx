@@ -2,13 +2,17 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { ArrowOverlay, columnNumbers, futureEdges, futureSet } from "@/components/cockpit/map-arrows";
+import { ArrowOverlay } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
-import { itemsForNode } from "@/lib/brain/node-items";
+import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult, NodeStateColor, UnlockItem } from "@/lib/brain/types";
+import { mapPlace, setAsideOnMap, stepBadges, type Overlays } from "@/lib/cockpit/view";
+import { cockpitWords } from "@/lib/cockpit/words";
 import type { Road, RoadColumn, RoadStep } from "@/lib/engines/roads/v2026";
+import type { StepStatus } from "@/lib/futures/types";
+import type { StepEvaluation, StepState } from "@/lib/roads";
+import { columnNumbers, futureEdges, futureSet } from "@/lib/roads/paths";
 import { branchDecisions, type BranchDecision } from "@/lib/scenarios/branches";
-import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
 
 /**
@@ -28,6 +32,13 @@ import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";
  *
  * Ruling 2 (same day): hover or select a stage card and arrows show where it leads — the
  * road's own `next`, walked to the end (`map-arrows.tsx`); everything off that future dims.
+ *
+ * 2026-10-12, the cockpit screen (docs/architecture/future-cockpit.md § 2): given road evaluation's
+ * result and the overlays, the cards take their colour from each step's state, their chip from the
+ * person's own status where they set one, and the Skills and Money badges; Rules & tax switches the lever
+ * cards; a selected skill dims the steps that don't list it. A card the person marked not for me says
+ * "set aside by you" in place of its colour's words. Given none of that, the map draws exactly as before
+ * (tests/road-map.spec.ts).
  */
 
 /** A toggle option's id: a step the toggle switches between. */
@@ -41,6 +52,12 @@ interface StrategyMapProps {
   onSelectStep: (stepId: string) => void;
   decidedBranchIds: ReadonlySet<string>;
   onBranchChange: (decision: BranchDecision, optionId: BranchOptionId) => void;
+  /** The cockpit's overlays. Left out, the map draws as it did before them. */
+  overlays?: Overlays;
+  /** Road evaluation's result for each step: its colour, the person's status and the badges. */
+  stepEvaluations?: ReadonlyMap<string, StepEvaluation>;
+  /** A skill selected in the step panel or the skills list: the steps that don't list it dim. */
+  linkedSkillId?: string | null;
 }
 
 const STAGE_CHIP: Record<ScenarioNodeStatus, { label: string; className: string }> = {
@@ -61,6 +78,20 @@ const COLOUR_WORDS: Record<"green" | "yellow" | "gray", string> = {
   gray: "doesn't apply as answered",
 };
 
+/** The person's own status as the card's chip, where they set one. */
+const STATUS_CHIP: Record<StepStatus, { label: string; className: string }> = {
+  doing: { label: cockpitWords.road.statusChip.doing, className: "text-amber bg-amber/15" },
+  done: { label: cockpitWords.road.statusChip.done, className: "text-sage bg-sage/15" },
+  "not-for-me": { label: cockpitWords.road.statusChip["not-for-me"], className: "text-stone-dim border border-stone-dim" },
+};
+
+/** Road evaluation's states as today's three colours (the same meanings: green applies, amber check first). */
+const COLOUR_OF_STATE: Record<StepState, NodeStateColor> = {
+  applies: "green",
+  "check-first": "yellow",
+  "not-on-your-path": "gray",
+};
+
 /** Left accent from the evaluator's read of the answers: met · plausible · not applicable. */
 const ACCENT: Record<"green" | "yellow" | "gray", string> = {
   green: "border-l-sage",
@@ -76,6 +107,9 @@ export function StrategyMap({
   onSelectStep,
   decidedBranchIds,
   onBranchChange,
+  overlays,
+  stepEvaluations,
+  linkedSkillId = null,
 }: StrategyMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [wrap, setWrap] = useState<HTMLDivElement | null>(null);
@@ -120,13 +154,20 @@ export function StrategyMap({
                 decidedBranchIds={decidedBranchIds}
                 onBranchChange={onBranchChange}
                 focus={focus}
+                overlays={overlays}
+                stepEvaluations={stepEvaluations}
+                linkedSkillId={linkedSkillId}
               />
             ))}
           </div>
           <ArrowOverlay container={wrap} cards={cardsRef.current} columnOf={columnOf} edges={edges} />
         </div>
       </div>
-      <Legend coverage={evaluation.provinceCoverage} />
+      <Legend
+        coverage={evaluation.provinceCoverage}
+        // Only once a card is set aside by the person, so the map drawn without the cockpit stays as it was.
+        setAsideShown={[...(stepEvaluations?.values() ?? [])].some((s) => s.status === "not-for-me")}
+      />
     </div>
   );
 }
@@ -142,8 +183,8 @@ interface MapFocus {
 /**
  * A step's colour from today's rules, by step id, or undefined when the rules don't colour it (road
  * 0's before-you-open steps, or a step from another road). Such a step is drawn with no colour at all
- * rather than grey: grey says "doesn't apply as answered", which no rule decided (2026-10-12). Road
- * evaluation gives these steps states of their own later in phase 1.
+ * rather than grey: grey says "doesn't apply as answered", which no rule decided (2026-10-12). Only
+ * used when the map is drawn without road evaluation; in the cockpit every step has a state of its own.
  */
 function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor | undefined {
   const states: Partial<Record<string, NodeStateColor>> = evaluation.nodeStates;
@@ -164,6 +205,9 @@ function TierColumn({
   decidedBranchIds,
   onBranchChange,
   focus,
+  overlays,
+  stepEvaluations,
+  linkedSkillId,
 }: Omit<StrategyMapProps, "road"> & { column: RoadColumn; ordinal: number; steps: RoadStep[]; focus: MapFocus }) {
   // A fork gets a toggle when it is one of today's two (GST timing, Incorporation timing); the
   // toggle keeps its own option names. Other roads' forks are picked on Compare, later in phase 1.
@@ -175,6 +219,9 @@ function TierColumn({
         <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {ordinal}</p>
         <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
         <p className="mt-0.5 text-[10.5px] leading-snug text-stone">{column.summary}</p>
+        {overlays && column.forkId ? (
+          <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-amber">{cockpitWords.road.forkSplits}</p>
+        ) : null}
         {decision ? (
           <BranchToggle
             decision={decision}
@@ -186,24 +233,43 @@ function TierColumn({
       </header>
 
       {steps.map((step) => {
-        const status = getScenarioNodeStatus(step.id, scenario);
-        const colour = colourOf(evaluation, step.id);
-        const levers = itemsForNode(evaluation.unlocks, step.id).forThisStage;
+        const evaluated = stepEvaluations?.get(step.id);
+        // The person's own status wins the chip; otherwise the map's worked-out place on the path, as before.
+        // The same reading decides "Next on your road" and the Rules & tax count (lib/cockpit/view.ts).
+        const place = mapPlace(step.id, scenario, evaluated);
+        // Road evaluation gives every step a state, the before-you-open steps included. Drawn without it,
+        // a step today's rules don't read gets no colour and no place chip (road 0's done-when work).
+        const colour = evaluated ? COLOUR_OF_STATE[evaluated.state] : colourOf(evaluation, step.id);
+        const ruled = colour !== undefined;
+        const chip = !ruled ? NO_RULE_CHIP : place.from === "you" ? STATUS_CHIP[place.status] : STAGE_CHIP[place.status];
+        const ghost = ruled && setAsideOnMap(place);
+        // A step the person marked not for me is grey because they said so, not because of the rules: its
+        // name says that instead of "doesn't apply as answered".
+        const setAsideByYou = place.from === "you" && place.status === "not-for-me";
+        const levers = itemsForStep(evaluation.unlocks, step).forThisStage;
+        const showLevers = overlays ? overlays.rules : true;
+        const badges = overlays && evaluated ? stepBadges(evaluated, overlays) : [];
         const selected = selectedStepId === step.id;
-        // While a card is focused, everything that is neither it nor on its future dims.
-        const dimmed = focus.focusId !== null && focus.focusId !== step.id && !focus.future.has(step.id);
+        // While a card is focused, everything that is neither it nor on its future dims; while a skill is
+        // selected, every step that doesn't list it dims.
+        const dimmed =
+          (focus.focusId !== null && focus.focusId !== step.id && !focus.future.has(step.id)) ||
+          (linkedSkillId !== null && linkedSkillId !== undefined && !step.needs.includes(linkedSkillId));
         return (
           <div key={step.id} className={`flex flex-col gap-1.5 transition-opacity ${dimmed ? "opacity-35" : ""}`}>
             <StageCard
               step={step}
-              status={status}
+              chip={chip}
+              ghost={ghost}
               colour={colour}
+              colourWords={setAsideByYou ? cockpitWords.road.setAside : ruled ? COLOUR_WORDS[colour] : null}
+              badges={badges}
               selected={selected}
               onClick={() => onSelectStep(step.id)}
               onHover={(on) => focus.hover(on ? step.id : null)}
               registerCard={(el) => focus.registerCard(step.id, el)}
             />
-            {status !== "ghost" && levers.length > 0 ? (
+            {!ghost && showLevers && levers.length > 0 ? (
               <ul className="ml-3 flex flex-col gap-1.5 border-l border-rule-soft pl-3">
                 {levers.map((item) => (
                   <LeverCard key={item.id} item={item} onClick={() => onSelectStep(step.id)} />
@@ -219,32 +285,36 @@ function TierColumn({
 
 function StageCard({
   step,
-  status,
+  chip,
+  ghost,
   colour,
+  colourWords,
+  badges,
   selected,
   onClick,
   onHover,
   registerCard,
 }: {
   step: RoadStep;
-  status: ScenarioNodeStatus;
+  chip: { label: string; className: string };
+  ghost: boolean;
+  /** Undefined only when the map is drawn without road evaluation and no rule reads the step. */
   colour: NodeStateColor | undefined;
+  /** The left bar in words, for the card's accessible name; null when the card has no colour. */
+  colourWords: string | null;
+  /** The overlays' badges: drawn under the line, and read out in the card's name. */
+  badges: string[];
   selected: boolean;
   onClick: () => void;
   onHover: (on: boolean) => void;
   registerCard: (el: HTMLElement | null) => void;
 }) {
   const ruled = colour !== undefined;
-  // The branch picks only name today's tax-map steps, so a step the rules don't read gets no place
-  // chip either ("ahead" would be a guess).
-  const chip = ruled ? STAGE_CHIP[status] : NO_RULE_CHIP;
-  const ghost = ruled && status === "ghost";
-  // The colour in words, so it is never the only way to tell. A step no rule reads opens no panel
-  // (the detail panel shows today's catalog entries, and it has none): a click selects it and keeps
-  // its arrows, and its name says so.
-  const accessibleName = ruled
-    ? `${step.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`
-    : `${step.label}, no rule reads this step yet, shows where it leads`;
+  // The colour in words, so it is never the only way to tell. A step with no colour says so instead.
+  const accessibleName =
+    colourWords === null
+      ? `${step.label}, no rule reads this step yet, shows where it leads`
+      : `${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join("")}opens detail`;
   return (
     <button
       ref={registerCard}
@@ -267,6 +337,15 @@ function StageCard({
         </span>
       </div>
       <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{step.summary}</p>
+      {badges.length > 0 ? (
+        <span className="mt-1.5 flex flex-wrap gap-1">
+          {badges.map((badge) => (
+            <span key={badge} className="rounded-xs border border-rule-soft bg-ink px-1.5 py-0.5 font-mono text-[9.5px] text-paper-dim">
+              {badge}
+            </span>
+          ))}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -310,7 +389,7 @@ function LeverCard({ item, onClick }: { item: UnlockItem; onClick: () => void })
   );
 }
 
-function BranchToggle({
+export function BranchToggle({
   decision,
   activeOptionId,
   isDefault,
@@ -351,7 +430,7 @@ function BranchToggle({
   );
 }
 
-function Legend({ coverage }: { coverage: EvaluationResult["provinceCoverage"] }) {
+function Legend({ coverage, setAsideShown }: { coverage: EvaluationResult["provinceCoverage"]; setAsideShown: boolean }) {
   return (
     <footer className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule bg-ink3 px-5 py-2.5 font-mono text-[9px] uppercase tracking-wider text-stone">
       <span className="text-maple">Hover a card: arrows show where it leads — solid next, dashed further on</span>
@@ -360,6 +439,7 @@ function Legend({ coverage }: { coverage: EvaluationResult["provinceCoverage"] }
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-amber" /> check first — confirm, time-boxed, or one fork away</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-rule" /> doesn&apos;t apply as answered</span>
       <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-xs bg-rule" /> left bar = what your answers support</span>
+      {setAsideShown ? <span className="text-stone-dim">{cockpitWords.road.setAsideLegend}</span> : null}
       {coverage === "federal-only" ? <span className="text-amber">federal rules only for this province</span> : null}
       <span className="ml-auto normal-case tracking-normal text-stone-dim">Compass, not GPS — nothing here is a recommendation.</span>
     </footer>

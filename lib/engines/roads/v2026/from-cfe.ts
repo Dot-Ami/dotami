@@ -11,6 +11,8 @@ import { newestReadDate } from "./validate";
  * step's one line, as the card already showed it; its `branches` are where the step leads). A node
  * lands in the column whose tier lists its stage, in catalog order, exactly as the old map placed it.
  *
+ * The rules and tax cards each step names come in as `engineHints`, by step id.
+ *
  * Two optional inputs carry the road's own content, written from the official pages in the road's
  * file rather than in the tax map's catalog: `doneWhen`, the done-when lines for a step by its id, and
  * `addedSteps`, steps that aren't map stages (road 0's "before you open" steps), each placed in a
@@ -25,6 +27,8 @@ export function roadFromCfe(input: {
   nodes: readonly CFENode[];
   tiers: readonly CFETier[];
   forks: Fork[];
+  /** The rules and tax cards each step names, by step id (a step left out names none). */
+  engineHints?: Readonly<Record<string, readonly string[]>>;
   doneWhen?: Readonly<Record<string, readonly DoneWhenLine[]>>;
   addedSteps?: readonly { columnId: string; step: RoadStep }[];
 }): Road {
@@ -56,6 +60,7 @@ export function roadFromCfe(input: {
         costs: [],
         officialLinks: [],
         citations: [...node.citations],
+        ...(input.engineHints?.[node.id] ? { engineHints: [...input.engineHints[node.id]!] } : {}),
       })),
       ...added.map((a) => a.step),
     ],

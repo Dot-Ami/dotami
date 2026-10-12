@@ -19,11 +19,14 @@ export function evaluateScenario(
     today: string;
     /** The venture's CONFIRMED figures only; see `EvaluateOptions.figures`. */
     figures?: readonly ConfirmedFigure[];
+    /** A what-if of first-year sales, whole dollars, for this run only; see `EvaluateOptions.whatIfFirstYearSales`. */
+    whatIfFirstYearSales?: number;
   },
 ): EvaluationResult {
   return evaluateProfile(buildEvaluationProfileFromScenario(scenario), {
     today: options.today,
     activeBranches: scenario.state.activeBranches,
     figures: options.figures,
+    whatIfFirstYearSales: options.whatIfFirstYearSales,
   });
 }

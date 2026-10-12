@@ -17,9 +17,14 @@ describe("accessibility contracts for interactive map controls", () => {
     // A stage card's left bar is coloured; its name says the colour in words too, so the colour is
     // never the only way to tell (2026-10-11).
     // Since 2026-10-11 a card is a road step (lib/engines/roads/v2026/); the words it says are the same.
-    expect(map).toContain("`${step.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`");
-    // 2026-10-12: a step no rule colours (road 0's before-you-open steps) says so instead of a colour,
-    // and opens no panel, so its name says what a click does: it shows where the step leads.
+    // Since 2026-10-12 the cockpit's overlay badges ("needs 3 · you have 2") are read out in the name too,
+    // between the colour and the action; with no overlay on, the name is what it was.
+    // Since 2026-10-12 a card the person marked not for me says "set aside by you" in place of the colour's
+    // words: its grey is their choice, not a reading of their answers.
+    expect(map).toContain("`${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join(\"\")}opens detail`");
+    expect(map).toContain("colourWords={setAsideByYou ? cockpitWords.road.setAside : ruled ? COLOUR_WORDS[colour] : null}");
+    // 2026-10-12: drawn without road evaluation, a step no rule colours (road 0's before-you-open steps)
+    // says so instead of a colour. In the cockpit, road evaluation gives every step a state.
     expect(map).toContain("`${step.label}, no rule reads this step yet, shows where it leads`");
     expect(map).toContain("aria-label={accessibleName}");
     expect(map).toContain('green: "applies as answered"');

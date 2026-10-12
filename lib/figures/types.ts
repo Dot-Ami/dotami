@@ -1,7 +1,9 @@
 /**
- * [8a] The figures store — shared types. A "figure" is a total about the person's business
- * (revenue for a year, say) that the person has agreed to; see prisma/schema.prisma `Figure`
- * and docs/architecture/figures-privacy-review.md for the rules the store is built under.
+ * [8a] The figures store — shared types. A "figure" is an amount about one of the person's ideas that
+ * the person has agreed to: a total about the business (revenue for a year, say) or, since 2026-10-11,
+ * one of the person's own planning numbers for starting it (the savings they'd put toward it, their
+ * quote for a start-up cost). See prisma/schema.prisma `Figure` and
+ * docs/architecture/figures-privacy-review.md for the rules the store is built under.
  *
  * Kinds are IDs and IDs are forever: add to this list, never rename or reuse one.
  *
@@ -10,13 +12,23 @@
  * 2026-10-07); the line each goes on, year by year, is in lib/engines/taxlines/. Line 8299 is not
  * "gross-revenue": it leaves out the GST/HST collected, so the GST/HST card never reads it.
  */
-export const FIGURE_KINDS = [
+export const BUSINESS_TOTAL_KINDS = [
   "gross-revenue",
   "business-gross-income",
   "business-total-expenses",
   "business-net-income-before-adjustments",
   "business-net-income",
 ] as const;
+
+/**
+ * Every kind, the business totals first. The two after them (2026-10-11, the future cockpit's phase 1;
+ * docs/architecture/future-cockpit.md § 7) are the person's own planning numbers, each one day's amount,
+ * never negative: "savings-for-start" (what they'd put toward starting) and "start-up-cost-line" (their
+ * number for one named cost line on the future's road, which names that line and where its amount came
+ * from). They are entered from the cockpit's screens, so the Ideas page's form offers only
+ * BUSINESS_TOTAL_KINDS.
+ */
+export const FIGURE_KINDS = [...BUSINESS_TOTAL_KINDS, "savings-for-start", "start-up-cost-line"] as const;
 export type FigureKind = (typeof FIGURE_KINDS)[number];
 
 export const FIGURE_KIND_LABELS: Record<FigureKind, string> = {
@@ -25,7 +37,31 @@ export const FIGURE_KIND_LABELS: Record<FigureKind, string> = {
   "business-total-expenses": "Business total expenses (T2125)",
   "business-net-income-before-adjustments": "Business net income before adjustments (T2125)",
   "business-net-income": "Business net income (T2125)",
+  "savings-for-start": "Savings you'd put toward starting",
+  "start-up-cost-line": "A start-up cost (your number)",
 };
+
+/** The kinds that are one day's planning number, never negative, rather than a total over a period. */
+export const PLANNING_KINDS: readonly FigureKind[] = ["savings-for-start", "start-up-cost-line"];
+
+/** Where the amount of a start-up cost line came from, as the person says (2026-10-11). Ids are forever. */
+export const COST_LINE_AMOUNT_FROM = ["quote", "link", "receipt", "your-guess"] as const;
+export type CostLineAmountFrom = (typeof COST_LINE_AMOUNT_FROM)[number];
+
+export const COST_LINE_AMOUNT_FROM_LABELS: Record<CostLineAmountFrom, string> = {
+  quote: "a quote",
+  link: "a link",
+  receipt: "a receipt",
+  "your-guess": "your guess",
+};
+
+/** The named cost line on a road that a "start-up-cost-line" figure prices: permanent catalog ids. */
+export interface FigureCostLine {
+  roadId: string;
+  stepId: string;
+  lineId: string;
+  amountFrom: CostLineAmountFrom;
+}
 
 /**
  * proposed  — an importer, the Lens or an outside agent suggested it; nothing relies on it yet.
@@ -69,6 +105,8 @@ export interface FigureView {
    * shows what the person's own form said.
    */
   formLine: string | null;
+  /** The road line a "start-up-cost-line" figure prices, with where its amount came from; null on every other kind. */
+  costLine: FigureCostLine | null;
   status: FigureStatus;
   editedByPerson: boolean;
   /** ISO timestamp. */

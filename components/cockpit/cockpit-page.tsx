@@ -1,31 +1,36 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
+import { GoalBar } from "@/components/cockpit/goal-bar";
+import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
+import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
+import { StepPanel } from "@/components/cockpit/step-panel";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { TemplatesRail } from "@/components/cockpit/templates-rail";
 import { StrategyMap } from "@/components/cockpit/strategy-map";
+import { useCockpitData } from "@/components/cockpit/use-cockpit-data";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
-import { NodeDetailPanel } from "@/components/node-detail-panel";
+import { AgreePrompt, postJson } from "@/components/ventures/agree-prompt";
 import { FigureReminderBanners } from "@/components/ventures/figure-reminder-banners";
 import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
-import type { ConfirmedFigure } from "@/lib/brain";
-import type { FigureView } from "@/lib/figures/types";
+import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCounts, type GaugeId, type Overlays } from "@/lib/cockpit/view";
+import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
-import { itemsForNode } from "@/lib/brain/node-items";
-import type { CFENode, CFENodeId } from "@/lib/engines/cfe/v2026";
-import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
+import { evaluateRoad } from "@/lib/roads";
 import {
   branchDecisions,
   updateScenarioBranch,
   type BranchDecision,
 } from "@/lib/scenarios/branches";
-import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
 import Link from "next/link";
 
@@ -36,9 +41,16 @@ import Link from "next/link";
  * projection footer, Track/Compare tabs, header fork chips and the dead Focus / ? /
  * "Graph language" controls. What is left is the cockpit itself — the map and the rails
  * that explain it.
+ *
+ * 2026-10-12, the future cockpit's screen, part 1 (docs/architecture/future-cockpit.md § 2, "Cockpit
+ * screen as built"): the goal bar and its four gauges on top, the overlay switches over the map, the
+ * step panel in place of node detail, the lists behind the gauges, and "Next on your road", all drawn
+ * from one run of road evaluation (lib/roads/) on what is kept for this idea (lib/futures/). The left
+ * rail is unchanged until part 2 brings "What you've told DotAmi / Not told yet".
  */
 
-type RightPanel = null | "node" | "playbook";
+/** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
+type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date";
 
 /** Every prep-tool reference, once the structure is set — there are four; no persona picks them. */
 const ALL_TEMPLATE_IDS = templatesCatalogV2026.entries.map((entry) => entry.id);
@@ -76,6 +88,14 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // A step id from the road on the map (today's map: the CFE node ids, unchanged).
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>(null);
+  // The overlays on the road, the gauge whose list is open, and a skill selected to light its steps.
+  const [overlays, setOverlays] = useState<Overlays>(FIRST_OVERLAYS);
+  const [activeGauge, setActiveGauge] = useState<GaugeId | null>(null);
+  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
+  const [answerError, setAnswerError] = useState<string | null>(null);
+  // Numbers the person just gave (a quote, their savings), waiting in the agree prompt.
+  const [reviewing, setReviewing] = useState<FigureView[] | null>(null);
   // Issue #1: every edit on this page is written to the database after a short pause; the
   // line under "Save now" always says where things stand. `dirty` = an edit is waiting.
   const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved" | "error">(
@@ -90,80 +110,46 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     [],
   );
 
-  const cfeNodes = cfeCatalogV2026.nodes;
-  // The node detail panel still opens on today's catalog entry for a step; the step panel of the
-  // future cockpit replaces it later in phase 1 (docs/architecture/future-cockpit.md § 1, row 5).
-  const cfeNodeById = useMemo(
-    () => new Map<string, CFENode>(cfeNodes.map((node) => [node.id, node])),
-    [cfeNodes],
-  );
-  const selectedNode = selectedNodeId ? cfeNodeById.get(selectedNodeId) : null;
-
-  // [8a] The person's CONFIRMED figures for this venture, once it has been saved: they beat the
-  // estimate wherever they settle a rule. Proposed, retracted and discarded figures never reach
-  // the evaluator. An unsaved venture (or no database) simply has none.
-  const [confirmedFigures, setConfirmedFigures] = useState<ConfirmedFigure[]>([]);
-  // [8e] The same list, whole, for the reminder banner: it also needs to know what is still waiting
-  // for the person to agree. null = not read (yet, or couldn't be), and then no banner is drawn.
-  const [ideaFigures, setIdeaFigures] = useState<{ ideaId: string; figures: FigureView[] } | null>(null);
+  // The saved idea behind this scenario, its figures (every state: the reminder banner needs to know
+  // what is still waiting), and what the cockpit keeps for it. An idea not saved yet has none of it.
   const reminders = useIdeaReminders();
   const scenarioId = currentScenario?.id ?? null;
-  useEffect(() => {
-    let cancelled = false;
-    setConfirmedFigures([]);
-    setIdeaFigures(null);
-    if (!scenarioId) return;
-    (async () => {
-      try {
-        const ventures = (await (await fetch("/api/ventures", { cache: "no-store" })).json()) as {
-          ventures?: { id: string; scenarioId: string | null }[];
-        };
-        const venture = ventures.ventures?.find((v) => v.scenarioId === scenarioId);
-        if (!venture) return;
-        const res = await fetch(`/api/figures?venture=${encodeURIComponent(venture.id)}`, { cache: "no-store" });
-        if (!res.ok) return;
-        const body = (await res.json()) as { figures?: FigureView[] };
-        const confirmed = (body.figures ?? [])
-          .filter((f) => f.status === "confirmed")
-          .map(({ id, kind, periodStart, periodEnd, amountCents, currency, sourceLabel, sourceRows }) => ({
-            id,
-            kind,
-            periodStart,
-            periodEnd,
-            amountCents,
-            currency,
-            sourceLabel,
-            sourceRows,
-          }));
-        if (!cancelled) {
-          setConfirmedFigures(confirmed);
-          setIdeaFigures({ ideaId: venture.id, figures: body.figures ?? [] });
-        }
-      } catch {
-        // Offline or no database: the map runs on the estimates, as it always has.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [scenarioId]);
+  const { ventureId, figures, kept, reload } = useCockpitData(scenarioId);
+  const ideaFigures = ventureId && figures ? { ideaId: ventureId, figures } : null;
 
-  // S2.5.4e: the cockpit runs the same evaluator the intake preview runs — on this scenario, with
-  // the person's own GST and incorporation picks (until 2026-10-11 it ran on the default picks, so a
-  // flipped toggle didn't recolour the cards).
+  // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
+  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, kept?.future.roadId ?? null), [kept]);
+
+  // One run of road evaluation draws everything: the gauges, the step colours, the badges, the step
+  // panel, "Next on your road", and the map's lever cards (its `rules`, run on the idea's own picks;
+  // until 2026-10-11 the map ran on the default picks, so a flipped toggle didn't recolour the cards).
+  // [8a] Only agreed business totals reach the rules (cockpitInput says how).
   // [8e] Today is the person's own day and moves on with the clock: a window left open past
   // midnight or a quarter end re-reads the figures against the new day instead of the old one.
   const today = useLocalToday();
-  const evaluation = useMemo(
-    () => (currentScenario ? evaluateScenario(currentScenario, { today, figures: confirmedFigures }) : null),
-    [currentScenario, today, confirmedFigures],
-  );
-  const nodeItems = useMemo(
+  const roadEvaluation = useMemo(
     () =>
-      selectedNodeId && evaluation
-        ? itemsForNode(evaluation.unlocks, selectedNodeId)
-        : { forThisStage: [], elsewhere: [] },
-    [evaluation, selectedNodeId],
+      currentScenario
+        ? evaluateRoad(
+            cockpitInput({
+              road,
+              roadChosen: kept?.future.roadChosen ?? false,
+              skillItems: skillItemsV2026,
+              scenario: currentScenario,
+              figures: figures ?? [],
+              personFigures: [],
+              future: kept?.future ?? null,
+              progress: kept?.progress ?? [],
+              skillMarks: kept?.skillMarks ?? [],
+              today,
+            }),
+          )
+        : null,
+    [currentScenario, road, kept, figures, today],
+  );
+  const stepEvaluations = useMemo(
+    () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
+    [roadEvaluation],
   );
 
   if (!currentScenario) {
@@ -233,10 +219,118 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     void persist(scenario);
   }
 
-  const showRightSlot = rightPanel === "playbook" || (rightPanel === "node" && selectedNode);
+  const evaluation = roadEvaluation;
+  const selectedStep = selectedNodeId ? road.steps.find((s) => s.id === selectedNodeId) : undefined;
+  const selectedStepEvaluation = selectedNodeId ? stepEvaluations.get(selectedNodeId) : undefined;
+  const canSave = ventureId !== null && kept !== null;
+  const markOf = new Map((kept?.skillMarks ?? []).flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])));
+
+  function openStep(stepId: string) {
+    setSelectedNodeId(stepId);
+    setRightPanel("node");
+    setAnswerError(null);
+  }
+
+  /**
+   * A gauge opens its overlay and its list (Steps opens the next step on the road). Pressed again, it
+   * closes what it opened, so its pressed state is a real toggle; the overlay it switched on stays on.
+   */
+  function handleGauge(gauge: GaugeId) {
+    setAnswerError(null);
+    if (activeGauge === gauge) {
+      setActiveGauge(null);
+      if (gauge === "steps") setSelectedNodeId(null);
+      setRightPanel(null);
+      return;
+    }
+    setActiveGauge(gauge);
+    if (gauge === "steps") {
+      const next = evaluation ? nextOnYourRoad(evaluation, scenario, 1)[0] : undefined;
+      if (next) openStep(next.stepId);
+      return;
+    }
+    if (gauge === "skills") setOverlays((o) => ({ ...o, skills: true }));
+    if (gauge === "money") setOverlays((o) => ({ ...o, money: true }));
+    setRightPanel(gauge);
+  }
+
+  /** Waits for one of the person's answers to be saved; on success reads back what is kept, else shows the refusal. */
+  async function saveAnswer(pending: ReturnType<typeof postJson>): Promise<string | null> {
+    setAnswerError(null);
+    const result = await pending;
+    if (!result.ok) {
+      setAnswerError(result.error);
+      return result.error;
+    }
+    await reload();
+    return null;
+  }
+
+  function handleStatus(status: StepStatus | null) {
+    if (!ventureId || !selectedNodeId) return;
+    const stepId = selectedNodeId;
+    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }));
+  }
+
+  /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
+  function handleTicks(doneWhenIds: string[]): Promise<unknown> {
+    if (!ventureId || !selectedNodeId) return Promise.resolve();
+    const stepId = selectedNodeId;
+    return saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }));
+  }
+
+  function handleMark(skill: SkillKey, mark: SkillMarkValue | null) {
+    void saveAnswer(postJson("/api/skill-marks", { ...skill, mark }));
+  }
+
+  /**
+   * The person's own number (a quote for a named cost line, or their savings) is proposed, then the agree
+   * prompt opens; it counts only once they click Agree there. Dated the person's own day: a planning
+   * number is that day's amount.
+   */
+  async function proposeNumber(figure: Record<string, unknown>): Promise<string | null> {
+    if (!ventureId) return null;
+    setAnswerError(null);
+    const result = await postJson("/api/figures/propose", {
+      ventureId,
+      source: { kind: "typed", label: "typed by you" },
+      figures: [{ periodStart: today, periodEnd: today, currency: "CAD", ...figure }],
+    });
+    if (!result.ok) return result.error;
+    const created = (result.body as { figures?: FigureView[] } | null)?.figures ?? [];
+    if (created.length > 0) setReviewing(created);
+    return null;
+  }
+
+  function handleProposeQuote(lineId: string, amountCents: number, from: CostLineAmountFrom) {
+    if (!selectedNodeId) return Promise.resolve(null);
+    return proposeNumber({
+      kind: "start-up-cost-line",
+      amountCents,
+      costLine: { roadId: road.id, stepId: selectedNodeId, lineId, amountFrom: from },
+    });
+  }
+
+  async function handleSaveDate(month: string | null): Promise<string | null> {
+    if (!ventureId) return null;
+    const id = ventureId;
+    return saveAnswer(postJson(`/api/futures/${encodeURIComponent(id)}/date`, { month }));
+  }
+
+  // Road 0's toggle for the fork the selected step is a side of, so it can be flipped from the panel too.
+  const selectedDecision = selectedNodeId
+    ? branchDecisions.find((d) => d.options.some((o) => o.id === selectedNodeId))
+    : undefined;
+
+  const showRightSlot =
+    rightPanel === "playbook" ||
+    rightPanel === "skills" ||
+    rightPanel === "money" ||
+    rightPanel === "date" ||
+    (rightPanel === "node" && selectedStep !== undefined && selectedStepEvaluation !== undefined);
 
   return (
-    <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_1fr] overflow-hidden bg-ink">
+    <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_auto_1fr] overflow-hidden bg-ink">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
       <header className="grid grid-cols-[240px_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12]">
         <div className="flex min-w-0 items-center gap-[18px] border-r border-rule px-[22px]">
@@ -265,6 +359,20 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           </Pill>
         </div>
       </header>
+
+      {evaluation ? (
+        <GoalBar
+          road={road}
+          evaluation={evaluation}
+          scenario={scenario}
+          firstWords={kept?.firstWords ?? null}
+          target={kept?.incomeWanted ?? null}
+          active={activeGauge}
+          onGauge={handleGauge}
+        />
+      ) : (
+        <div />
+      )}
 
       {/* Body */}
       <div
@@ -389,35 +497,67 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           </p>
         </aside>
 
-        {/* Canvas — S2.5.4j: tier columns, not a graph */}
+        {/* Canvas — S2.5.4j: tier columns, not a graph; the overlay switches over it and "Next on your
+            road" under it (2026-10-12). */}
         <div className="relative flex min-h-0 flex-col bg-ink4">
           {evaluation ? (
-            <StrategyMap
-              // Every saved future is drawn on today's general road until storage lets it name
-              // another (docs/architecture/future-cockpit.md § 7).
-              road={generalRoadV2026}
-              scenario={scenario}
-              evaluation={evaluation}
-              selectedStepId={selectedNodeId}
-              onSelectStep={(nodeId) => {
-                setSelectedNodeId(nodeId);
-                // A road step with no catalog entry (the before-you-open steps) has no detail panel
-                // to show, so the right panel is left as it was: an open Export panel stays open.
-                // An open detail panel still closes, since it was about the card no longer selected.
-                if (cfeNodeById.has(nodeId)) setRightPanel("node");
-              }}
-              decidedBranchIds={decidedBranchIds}
-              onBranchChange={handleBranchChange}
-            />
+            <>
+              <OverlaySwitches
+                overlays={overlays}
+                counts={overlayCounts(road, evaluation, scenario)}
+                onToggle={(overlay) => setOverlays((o) => ({ ...o, [overlay]: !o[overlay] }))}
+              />
+              <div className="min-h-0 flex-1">
+                <StrategyMap
+                  // The idea's own road: today's general road until the person picks another future.
+                  road={road}
+                  scenario={scenario}
+                  evaluation={evaluation.rules}
+                  selectedStepId={selectedNodeId}
+                  onSelectStep={(stepId) => {
+                    setActiveGauge(null);
+                    openStep(stepId);
+                  }}
+                  decidedBranchIds={decidedBranchIds}
+                  onBranchChange={handleBranchChange}
+                  overlays={overlays}
+                  stepEvaluations={stepEvaluations}
+                  linkedSkillId={selectedSkillId}
+                />
+              </div>
+              <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
+            </>
           ) : null}
         </div>
 
-        {/* Right panel */}
-        {showRightSlot && rightPanel === "node" && selectedNode ? (
+        {/* Right panel: one thing at a time. */}
+        {showRightSlot && rightPanel === "node" && selectedStep && selectedStepEvaluation && evaluation ? (
           <div className="overflow-y-auto border-l border-rule bg-ink3">
-            <NodeDetailPanel
-              node={selectedNode}
-              items={nodeItems}
+            <StepPanel
+              road={road}
+              step={selectedStep}
+              evaluation={selectedStepEvaluation}
+              rules={evaluation.rules}
+              skillItems={skillItemsV2026}
+              marks={markOf}
+              selectedSkillId={selectedSkillId}
+              branch={
+                selectedDecision
+                  ? {
+                      decision: selectedDecision,
+                      activeOptionId: scenario.state.activeBranches[selectedDecision.id],
+                      isDefault: !decidedBranchIds.has(selectedDecision.id),
+                      onChange: (optionId) => handleBranchChange(selectedDecision, optionId),
+                    }
+                  : null
+              }
+              canSave={canSave}
+              error={answerError}
+              onStatus={handleStatus}
+              onTicks={handleTicks}
+              onMark={(skillItemId, mark) => handleMark({ skillItemId }, mark)}
+              onSelectSkill={setSelectedSkillId}
+              onProposeQuote={handleProposeQuote}
               onClose={() => {
                 setSelectedNodeId(null);
                 setRightPanel(null);
@@ -426,12 +566,73 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           </div>
         ) : null}
 
+        {showRightSlot && rightPanel === "skills" ? (
+          <SkillsListPanel
+            road={road}
+            skillItems={skillItemsV2026}
+            marks={kept?.skillMarks ?? []}
+            selectedSkillId={selectedSkillId}
+            canSave={canSave}
+            error={answerError}
+            onMark={handleMark}
+            onSelectSkill={setSelectedSkillId}
+            onClose={() => {
+              setRightPanel(null);
+              setActiveGauge(null);
+            }}
+          />
+        ) : null}
+
+        {showRightSlot && rightPanel === "money" && evaluation ? (
+          <MoneyListPanel
+            road={road}
+            evaluation={evaluation}
+            canSave={canSave}
+            error={answerError}
+            onProposeSavings={(amountCents) => proposeNumber({ kind: "savings-for-start", amountCents })}
+            onSelectStep={openStep}
+            onClose={() => {
+              setRightPanel(null);
+              setActiveGauge(null);
+            }}
+          />
+        ) : null}
+
+        {showRightSlot && rightPanel === "date" && evaluation ? (
+          <DatePanel
+            targetMonth={kept?.future.targetMonth ?? null}
+            monthsFromToday={evaluation.gauges.date?.monthsFromToday ?? null}
+            today={today}
+            canSave={canSave}
+            error={answerError}
+            onSave={handleSaveDate}
+            onClose={() => {
+              setRightPanel(null);
+              setActiveGauge(null);
+            }}
+          />
+        ) : null}
+
         {showRightSlot && rightPanel === "playbook" ? (
           <div className="overflow-y-auto border-l border-rule bg-ink3">
             <PlaybookExportPanel scenario={scenario} onClose={() => setRightPanel(null)} />
           </div>
         ) : null}
       </div>
+
+      {reviewing && ventureId ? (
+        <AgreePrompt
+          ventureId={ventureId}
+          figures={reviewing}
+          rowNote={(figure) => costLineNote(roadsV2026, figure)}
+          onDone={reload}
+          onClose={() => {
+            // Closing decides nothing: the number stays waiting until the person agrees or turns it down.
+            setReviewing(null);
+            void reload();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

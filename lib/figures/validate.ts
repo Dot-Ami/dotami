@@ -1,8 +1,12 @@
 import { taxLineEntryForKind, taxLineForYear } from "@/lib/engines/taxlines/v2026";
 
 import {
+  COST_LINE_AMOUNT_FROM,
   FIGURE_KINDS,
   FIGURE_SOURCE_KINDS,
+  PLANNING_KINDS,
+  type CostLineAmountFrom,
+  type FigureCostLine,
   type FigureKind,
   type FigureSourceKind,
 } from "./types";
@@ -29,6 +33,12 @@ export interface ProposedFigureInput {
    * only from a "tax-return" source (proposeFigures refuses it from any other).
    */
   formLine?: string;
+  /**
+   * The named road line a "start-up-cost-line" figure prices, and where its amount came from. Required
+   * for that kind, refused on every other. Only its shape is checked here; that the line is a named one
+   * on the idea's own road is checked by proposeFigures, which can read the idea and the catalog.
+   */
+  costLine?: FigureCostLine;
 }
 
 export interface FigureSourceInput {
@@ -113,6 +123,33 @@ function checkTaxLine(
   return { ok: true, value: { taxYear, formLine: formLine as string } };
 }
 
+/** Longest id a cost line may name; catalog ids are far shorter, so this only stops a runaway value. */
+const CATALOG_ID_MAX = 200;
+
+const isCatalogId = (x: unknown): x is string => typeof x === "string" && x.length > 0 && x.length <= CATALOG_ID_MAX;
+
+/**
+ * The cost line a figure names: required on a "start-up-cost-line" figure, refused on every other kind.
+ * Only the shape is checked here (three ids and where the amount came from).
+ */
+function checkCostLine(kind: FigureKind, costLine: unknown): Checked<{ costLine?: FigureCostLine }> {
+  if (kind !== "start-up-cost-line") {
+    if (costLine !== undefined && costLine !== null) return { ok: false, error: "Only a start-up cost names a cost line." };
+    return { ok: true, value: {} };
+  }
+  if (!isRecord(costLine) || !isCatalogId(costLine.roadId) || !isCatalogId(costLine.stepId) || !isCatalogId(costLine.lineId)) {
+    return { ok: false, error: "A start-up cost has to say which cost line on the road it is for." };
+  }
+  const from = costLine.amountFrom;
+  if (typeof from !== "string" || !(COST_LINE_AMOUNT_FROM as readonly string[]).includes(from)) {
+    return { ok: false, error: `Say where the amount came from: one of ${COST_LINE_AMOUNT_FROM.join(", ")}.` };
+  }
+  return {
+    ok: true,
+    value: { costLine: { roadId: costLine.roadId, stepId: costLine.stepId, lineId: costLine.lineId, amountFrom: from as CostLineAmountFrom } },
+  };
+}
+
 /**
  * Checks one proposed figure. `today` is a YYYY-MM-DD parameter (not read from the clock here)
  * so the caller decides which day counts as today and tests stay deterministic.
@@ -153,6 +190,17 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
   const taxLine = checkTaxLine(kind as FigureKind, input.taxYear, input.formLine, periodEnd, today);
   if (!taxLine.ok) return taxLine;
 
+  // The person's own planning numbers (2026-10-11): one day's amount, the day they gave it (today: a
+  // number can't be dated to a day it wasn't given), never negative. Savings or a cost can't be a loss,
+  // and neither is a total over a period.
+  if (PLANNING_KINDS.includes(kind as FigureKind)) {
+    if (amountCents < 0) return { ok: false, error: "This amount can't be below zero." };
+    if (periodStart !== periodEnd) return { ok: false, error: "This is one day's amount: give the same day as its start and end." };
+    if (periodStart !== today) return { ok: false, error: "This amount is dated the day it is given: give today as its start and end." };
+  }
+  const costLine = checkCostLine(kind as FigureKind, input.costLine);
+  if (!costLine.ok) return costLine;
+
   return {
     ok: true,
     value: {
@@ -163,6 +211,7 @@ export function validateFigureInput(input: unknown, today: string): Checked<Prop
       currency,
       ...(rows.value !== null ? { rows: rows.value } : {}),
       ...taxLine.value,
+      ...costLine.value,
     },
   };
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
-import type { Road, RoadStep } from "@/lib/engines/roads/v2026";
+import type { FutureEdge } from "@/lib/roads/paths";
 
 /**
  * S2.5.4j (decided 2026-09-16): hovering a stage card shows arrows along the paths that lead
@@ -10,53 +10,10 @@ import type { Road, RoadStep } from "@/lib/engines/roads/v2026";
  * arrows are the road's own `RoadStep.next`, walked to the end of the road: solid for the next
  * step, dashed and fainter for every step after. (Until 2026-10-11 they walked the tax map's
  * `CFENode.branches`; road 0 carries those over unchanged.)
+ *
+ * The walk itself (which steps lie ahead, each step's column) is in lib/roads/paths.ts, shared with
+ * road evaluation, since 2026-10-12; this file only draws it.
  */
-
-export interface FutureEdge {
-  from: string;
-  to: string;
-  /** 1 = the next step from the focused card; 2+ = further into the future. */
-  depth: number;
-}
-
-/** Breadth-first over `next` from one step. A road's checks don't forbid loops, so they are guarded. */
-export function futureEdges(stepsById: ReadonlyMap<string, Pick<RoadStep, "next">>, startId: string): FutureEdge[] {
-  const edges: FutureEdge[] = [];
-  const seen = new Set<string>([startId]);
-  let frontier: string[] = [startId];
-  let depth = 1;
-  while (frontier.length > 0) {
-    const next: string[] = [];
-    for (const id of frontier) {
-      const step = stepsById.get(id);
-      for (const target of step?.next ?? []) {
-        if (!stepsById.has(target)) continue;
-        edges.push({ from: id, to: target, depth });
-        if (!seen.has(target)) {
-          seen.add(target);
-          next.push(target);
-        }
-      }
-    }
-    frontier = next;
-    depth += 1;
-  }
-  return edges;
-}
-
-/** Every step reachable from `startId`, the card itself excluded. */
-export function futureSet(edges: FutureEdge[]): Set<string> {
-  return new Set(edges.map((e) => e.to));
-}
-
-/** Each step's column, counted from 1 at the left, so an arrow knows whether to go right or down. */
-export function columnNumbers(road: Road): Map<string, number> {
-  const out = new Map<string, number>();
-  road.columns.forEach((column, i) => {
-    for (const stepId of column.steps) out.set(stepId, i + 1);
-  });
-  return out;
-}
 
 interface Rect {
   x: number;

@@ -1,7 +1,13 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-12 (road 0 gains three "before you open" cards in Tier 1, and a card no rule
-colours says "no rule yet" instead of a colour; 2026-10-11: the map draws a road, and today's map is the road "Starting any business in
+Last updated: 2026-10-12 (road 0 gains three "before you open" cards in Tier 1, which road evaluation
+colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
+instead of a colour; the cockpit screen, part 1: the overlay switches over the map, colours from
+road evaluation's states, the chip showing the person's own status where they set one, the Skills and
+Money badges, Rules & tax showing or hiding the lever cards, the fork's *The road splits here: you
+choose*, and a selected skill dimming the steps that don't list it, all in [08-overlays.md](./08-overlays.md);
+a step's lever cards now come from its own `engineHints`; *Next on your road* under the map,
+[11-next-on-your-road.md](./11-next-on-your-road.md); 2026-10-11: the map draws a road, and today's map is the road "Starting any business in
 Alberta", unchanged; the cards' colours follow the person's own branch picks; a stage card's
 accessible name says its colour in words; the legend gains grey's words; the Incorporating card no
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
@@ -45,7 +51,7 @@ stage card one **lever card** per evaluator item relevant to that stage
 | Card | Shows | Click |
 |---|---|---|
 | Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
-| Stage the rules don't colour (road 0's before-you-open steps, 2026-10-12) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
+| Stage the rules don't colour, on a map drawn without road evaluation (road 0's before-you-open steps, 2026-10-12; in the cockpit, road evaluation gives them a state, so they are coloured and open the step panel like any card) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
 Stage and lever buttons have explicit accessible names. Stage names include the current status,

@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { columnNumbers, futureEdges } from "@/components/cockpit/map-arrows";
+import { columnNumbers, futureEdges } from "@/lib/roads/paths";
 import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
