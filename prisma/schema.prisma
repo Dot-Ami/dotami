@@ -70,6 +70,8 @@ model User {
   updatedAt        DateTime          @updatedAt
   ventures         Venture[]
   personStatements PersonStatement[]
+  skillMarks       SkillMark[]
+  personFigures    PersonFigure[]
 }
 
 /// What the person told DotAmi about themselves — verbatim, dated, append-only (S2.5.4a).
@@ -94,6 +96,10 @@ model PersonStatement {
   /// statement stays, tied to no idea (lib/privacy/inventory.ts, the ideas box's `keeps`).
   ventureId String?
   venture   Venture? @relation(fields: [ventureId], references: [id], onDelete: SetNull)
+  /// What the statement answers, when it answers a question: "destination" for the answer to "where do
+  /// you want to be" (the cockpit's top line; docs/architecture/future-cockpit.md § 7, Storage as built).
+  /// Null for everything else. A change is a new statement; the newest destination is the current one.
+  kind      String?
 
   @@index([userId, saidAt])
 }
@@ -125,6 +131,14 @@ model Venture {
   /// intake first saves the idea (2026-10-11); shown back on its card and read by no rule. A JSON array
   /// of strings.
   goals            Json             @default("[]")
+  /// The road this future is drawn on (lib/engines/roads/v2026 `roadsV2026`, a permanent id); null =
+  /// today's general road, so every idea saved before roads existed keeps its map (2026-10-11).
+  roadId           String?
+  /// The ending picked at each fork of that road, `{ "<fork id>": "<step id>" }`. Road 0's two forks are
+  /// NOT here: they stay in ScenarioState.activeBranches, which the map rewrites on every save. A JSON object.
+  forkPicks        Json             @default("{}")
+  /// The person's own date, a month and year ("2029-05"); null until they set one. Never set by DotAmi.
+  targetMonth      String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -135,6 +149,8 @@ model Venture {
   expenses         Expense[]
   /// Statements typed for this idea (its first sentence); they outlive it, tied to no idea.
   statements       PersonStatement[]
+  /// The person's progress on each step of this future's road; deleted with the future.
+  stepProgress     StepProgress[]
 
   @@index([userId])
 }
@@ -190,6 +206,14 @@ model Figure {
   taxYear        Int?
   /// [8f] The form and line as printed on the return it was read from, e.g. "T2125 8299"; null unless the source is a tax return.
   formLine       String?
+  /// The road, step and named cost line a "start-up-cost-line" figure prices (permanent catalog ids);
+  /// null on every other kind (2026-10-11).
+  roadId         String?
+  roadStepId     String?
+  costLineId     String?
+  /// Where a cost line's amount came from: "quote" | "link" | "receipt" | "your-guess"
+  /// (lib/figures/types.ts COST_LINE_AMOUNT_FROM); null on every other kind.
+  amountFrom     String?
   /// "proposed" | "confirmed" | "retracted" | "discarded"
   status         String    @default("proposed")
   editedByPerson Boolean   @default(false)
@@ -326,4 +350,75 @@ model SourceAccount {
   /// and dates) until Delete removes every account.
   retiredAt DateTime?
   createdAt DateTime  @default(now())
+}
+
+/// The person's own mark on one skill or requirement (2026-10-11; docs/architecture/future-cockpit.md
+/// § 7, Storage as built). Per person, not per future, so a mark carries across every road listing the
+/// item. Either `skillItemId` (a permanent id from the shared skill list, lib/engines/roads/v2026
+/// `skillItemsV2026`) or `ownLabel` (a skill the person added, in their words), never both;
+/// lib/futures/skill-marks.ts keeps that rule. "I don't know" is not stored: it removes the mark.
+model SkillMark {
+  id          String   @id @default(cuid())
+  userId      String
+  skillItemId String?
+  /// A skill the person added themselves, as they typed it (trimmed).
+  ownLabel    String?
+  /// "have" | "learning" | "not-yet" (lib/futures/types.ts SKILL_MARKS)
+  mark        String
+  /// When the person last set this mark.
+  markedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillItemId])
+  @@unique([userId, ownLabel])
+}
+
+/// The person's progress on one step of a future's road (2026-10-11). Keyed by the road's and the
+/// step's permanent ids, never a position or a title, so moving a step to another column or renaming it
+/// never loses anyone's progress. Never used to rank anything. Deleted with its future.
+model StepProgress {
+  id          String   @id @default(cuid())
+  ventureId   String
+  roadId      String
+  stepId      String
+  /// "doing" | "done" | "not-for-me" (lib/futures/types.ts STEP_STATUSES), or null when none is set.
+  status      String?
+  /// The ids of the step's "done when" lines the person ticked. A JSON array of strings.
+  doneWhenIds Json     @default("[]")
+  /// Status changes, oldest first, each `{ "at": ISO moment, "status": … }`; the newest 100 are kept.
+  changes     Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  venture     Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+
+  @@unique([ventureId, roadId, stepId])
+}
+
+/// A number the person gives about themselves rather than about one future (2026-10-11): today only the
+/// yearly income they want, before tax. Agreed like a figure (proposed, then the person's click), but it
+/// belongs to the person: a Figure needs a future and is deleted with it. lib/futures/person-figures.ts.
+model PersonFigure {
+  id             String    @id @default(cuid())
+  userId         String
+  /// lib/futures/types.ts PERSON_FIGURE_KINDS: "income-wanted".
+  kind           String
+  /// Whole cents, never negative. BigInt like Figure.amountCents.
+  amountCents    BigInt
+  /// ISO 4217, stored as given — never converted.
+  currency       String    @default("CAD")
+  /// What the amount is per: "year".
+  per            String
+  /// "typed"
+  sourceKind     String
+  sourceLabel    String
+  /// "proposed" | "confirmed" | "retracted" | "discarded", as a Figure's.
+  status         String    @default("proposed")
+  editedByPerson Boolean   @default(false)
+  proposedAt     DateTime  @default(now())
+  confirmedAt    DateTime?
+  retractedAt    DateTime?
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, status])
 }

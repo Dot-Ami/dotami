@@ -81,9 +81,19 @@ says where it is going.
   auth) · `PersonStatement` (the person's words, dated; the sentence typed on the front door is one,
   linked to the idea it was typed for by `ventureId`, written once per sentence typed by the intake's
   first save of an idea (the tab marks it done after, `lib/journey/first-save.ts`), kept, tied to no
-  idea, when the idea is deleted) · `Venture` (with `goals`, the intake's goal chips as they stood when
-  the map opened, shown back and read by no rule) · `VentureLink` · `ScenarioState` · `Figure` (the totals
-  the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
+  idea, when the idea is deleted; `kind: "destination"` marks the answer to "where do you want to be", the
+  newest winning) · `Venture` (with `goals`, the intake's goal chips as they stood when
+  the map opened, shown back and read by no rule; and, for the future cockpit, `roadId` (empty = today's
+  general road), `forkPicks` (the ending picked at each fork of any road but road 0, whose two picks stay
+  in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`) · `VentureLink` ·
+  `ScenarioState` · `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
+  when* lines, status changes; keyed by permanent ids, deleted with the future) · `SkillMark` (per person,
+  not per future: have / learning / not yet on a shared skill item or the person's own skill; "I don't
+  know" removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
+  proposed then agreed) · `Figure` (the totals
+  the person agreed to; [8a]; since 2026-10-11 also two one-day planning numbers, `savings-for-start` and
+  `start-up-cost-line`, the latter naming a named cost line on the future's own road; the storage code for
+  all of the cockpit's tables is `lib/futures/`, design in `docs/architecture/future-cockpit.md` § 7) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
   optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed
   record, described: its type read from the bytes, size and SHA-256; the file itself is a copy in `receipts/` beside the data file,

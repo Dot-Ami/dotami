@@ -43,10 +43,16 @@ and the maintainer's six decisions of 2026-10-11:
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
     *done when* lines, cost lines and *before you open* steps come with the content)
-  - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
+  - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
     savings for starting; a start-up cost line); listed and deletable on *What DotAmi knows about you*
+    (2026-10-11: the storage and its server-side code, `lib/futures/`, with no screen yet; the design's
+    open items on each number's time period, the per-person table and the speed of *What you've told
+    DotAmi* settled in [future-cockpit.md § 7](architecture/future-cockpit.md). The sales at which you'd
+    incorporate stay where the honest-map change keeps them, with the map's answers. Still to come with
+    the screens that ask them: the job you pick, the *business / career / both* answer, the *This is
+    mine* pin, a step's own date; and moving today's province column to place codes such as `CA-AB`)
   - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
     steps now say needs 0 more"), worked out by running the rules before and after
   - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);

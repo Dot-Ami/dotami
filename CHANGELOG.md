@@ -22,6 +22,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
   given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
   drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.
+- **Storage for what you tell the future cockpit** ([14a]) — the data file can now keep your mark on each
+  skill (have, learning, not yet; kept once for you, so it carries across every road), your progress on
+  each step of a future's road (doing, done, not for me, the *done when* lines you ticked, and when you
+  changed it), the road a future is drawn on, the ending you picked at a fork and your own month and
+  year, your answer to "where do you want to be" as one of your dated statements, the yearly income you
+  want (kept once for you, agreed like a figure), and two new kinds of figure, each one day's amount and
+  never negative: savings you'd put toward starting, and your own number for a named start-up cost line
+  with where it came from (a quote, a link, a receipt or your guess). Everything is kept against the
+  road's permanent ids, so rewriting a screen or moving a step never loses your progress. No screen
+  writes any of it yet: the cockpit's screens come next ([`lib/futures/`](lib/futures/),
+  [docs/architecture/future-cockpit.md § 7](docs/architecture/future-cockpit.md)). *What DotAmi knows
+  about you* counts the three new tables, and Delete gains **Your skill marks** and **The yearly income
+  you said you want**; step progress goes with your ideas. The migration only adds columns and tables,
+  and a test checks a row in every table survives it. Places are read as international codes (`CA-AB`
+  for Alberta) through [`lib/places/codes.ts`](lib/places/codes.ts).
 
 ### Changed
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
