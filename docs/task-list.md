@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-11. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-12. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -538,6 +538,11 @@ roadmap's build order.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
+  - [x] A plain-words glossary ([glossary.md](glossary.md)) — 2026-10-12: 44 entries for the short
+    forms and terms on the map, the roads and the settings, each linked to its official page and
+    checked by a tool that day (46 pages, every quote found); linked from the README and CONTRIBUTING
+  - [ ] A "What does this mean?" link from a card's short form to its glossary entry
+  - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
   - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes

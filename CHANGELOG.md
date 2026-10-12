@@ -324,6 +324,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **A plain-words glossary** ([13a]) — 46 terms and short forms a person meets in DotAmi (the GST/HST
+  and the small supplier, input and investment tax credits, T1, T2, T2125, CCA, SR&ED and T661, the
+  small business deduction, CCPC, TOSI, GAAR, B.C.'s PST; sole proprietorship, partnership,
+  corporation, trade name, registry agent, NUANS, the business number, BizPaL; payroll accounts,
+  CPP/EI, WCB-Alberta; IRAP and the CSBFP; the apprenticeship words of *From apprentice to your own
+  shop (Alberta)*: AIT, the Alberta Student Number, sponsor, period, classroom instruction,
+  journeyperson, Trades Qualifier, Red Seal, Blue Seal, RAP, CTS; NOC and OaSIS; and MCP), each in one
+  or two sentences, no advice, linked to its official page, *checked by a tool on 2026-10-12*: the
+  quote checker found the listed words on every one of its 46 pages (`docs/glossary.md`). Linked from
+  the README and CONTRIBUTING. No code changes.
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
   inside, and sees its whole road at once: steps, the skills they need, official fees and the cost
