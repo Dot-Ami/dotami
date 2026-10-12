@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { describeError, logRouteError } from "@/lib/api/log-error";
 
+import { updaterLogger } from "../desktop/log.mjs";
+
 import {
   catchScopes,
   consoleCalls,
@@ -302,8 +304,40 @@ describe("no desktop code writes an error to DotAmi's log, by any of its ways of
 
   it("the update checker's own error report doesn't reach the log either", () => {
     // electron-updater hands its logger `Error: <stack>` for every failure; the stack names folders on
-    // this computer. Its error handler writes a fixed line and drops what it was given.
+    // this computer. desktop/main.mjs gives it updaterLogger (desktop/log.mjs), tested below.
     const main = simplify(readSource("desktop/main.mjs"), false);
-    expect(main).toMatch(/\berror:\s*\(\)\s*=>\s*log\?\.write\(/);
+    expect(main).toMatch(/autoUpdater\.logger\s*=\s*updaterLogger\(/);
+  });
+
+  // 2026-10-12, review: the error channel wrote a fixed line, but electron-updater (6.8.9) also puts
+  // an error's message or stack in its warn lines and in some info lines. These are its own messages,
+  // copied from node_modules/electron-updater/out, with a made-up folder in the error.
+  describe("updaterLogger: what electron-updater's messages leave in the log", () => {
+    const FOLDER = "C:\\Users\\someone-4417\\AppData\\Roaming\\DotAmi";
+    const ERR = `Error: EPERM: operation not permitted, open '${FOLDER}\\.updaterId'`;
+    function written(channel: "info" | "warn" | "error" | "debug", message: string): string {
+      const lines: string[] = [];
+      updaterLogger((text) => lines.push(text))[channel](message);
+      return lines.join("");
+    }
+
+    it.each([
+      ["AppUpdater.js:202", "error", `Error: ${ERR}\n    at AppUpdater.getOrCreateStagingUserId (${FOLDER}\\app.asar\\x.js:1:1)`],
+      ["AppUpdater.js:514", "warn", `Couldn't read staging user ID, creating a blank one: ${ERR}`],
+      ["AppUpdater.js:523", "warn", `Couldn't write out staging user ID: ${ERR}`],
+      ["AppUpdater.js:456", "warn", `Cannot dispatch error event: ${ERR}\n    at ${FOLDER}\\x.js:1:1`],
+      ["NsisUpdater.js:135", "info", `Cannot run installer: error code: EACCES, error message: "spawn ${FOLDER}\\installer.exe EACCES", will be executed again using elevate if EACCES`],
+      ["DownloadedUpdateHelper.js:102", "info", `No cached update info available (error on read: Unexpected token in JSON at ${FOLDER}\\update-info.json)`],
+    ] as const)("%s (%s) leaves one fixed line, no folder", (_where, channel, message) => {
+      const line = written(channel, message);
+      expect(line).toMatch(/^\[update\] [^\n]+\n$/);
+      expect(line).not.toContain("someone-4417");
+      expect(line).not.toContain("EPERM");
+    });
+
+    it("an ordinary progress line is kept as it was given", () => {
+      expect(written("info", "Checking for update")).toBe("[update] Checking for update\n");
+      expect(written("debug", "anything")).toBe("");
+    });
   });
 });
