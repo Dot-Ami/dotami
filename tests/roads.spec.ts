@@ -6,6 +6,7 @@ import {
   costLineAsShown,
   generalRoadV2026,
   roadById,
+  roadJoinProblems,
   roadProblems,
   roadsCatalogV2026,
   roadStartingAnyBusinessAB,
@@ -13,6 +14,7 @@ import {
   skillItemsV2026,
   type Road,
 } from "@/lib/engines/roads/v2026";
+import type { EngineCitation } from "@/lib/engines/shared/types";
 import { branchDecisions } from "@/lib/scenarios/branches";
 
 import { inventedCitation, inventedRoad, inventedSkillItems } from "./helpers/invented-road";
@@ -46,10 +48,138 @@ const SHIPPED_IDS: Record<
     doneWhen: [],
     costs: [],
   },
+  "road-apprentice-to-own-shop-ab": {
+    columns: ["col-shop-training", "col-shop-certified", "col-shop-open", "col-shop-first-years"],
+    steps: [
+      "step-shop-register-apprentice",
+      "step-shop-sponsor-hours",
+      "step-shop-classroom-exams",
+      "step-shop-tq-work-experience",
+      "step-shop-tq-recognized-credential",
+      "step-shop-journeyperson-certificate",
+      "step-shop-red-seal",
+      "step-shop-stay-employed",
+      "step-shop-open-own-shop",
+      "step-shop-blue-seal",
+      "step-shop-register-name",
+      "step-shop-business-number",
+      "step-shop-permits-licence",
+      "step-shop-gst-small-supplier",
+      "step-shop-first-hire",
+      "step-shop-sponsor-apprentice",
+    ],
+    forks: ["fork-shop-employed-or-own"],
+    doneWhen: [
+      "dw-shop-apply-online",
+      "dw-shop-apply-fee-paid",
+      "dw-shop-apply-sponsor-approves",
+      "dw-shop-start-rap",
+      "dw-shop-start-cts",
+      "dw-shop-sponsor-agreement",
+      "dw-shop-period-hours",
+      "dw-shop-record-book-upload",
+      "dw-shop-entrance",
+      "dw-shop-classroom-weeks",
+      "dw-shop-period-theory-exam",
+      "dw-shop-tqwe-experience",
+      "dw-shop-tqwe-full-time",
+      "dw-shop-tqwe-employer",
+      "dw-shop-tqwe-applied",
+      "dw-shop-tqwe-theory",
+      "dw-shop-tqwe-practical",
+      "dw-shop-tqwe-18-months",
+      "dw-shop-tqrc-submitted",
+      "dw-shop-tqrc-not-expiring",
+      "dw-shop-tqrc-applied",
+      "dw-shop-tqrc-theory",
+      "dw-shop-tqrc-practical",
+      "dw-shop-tqrc-18-months",
+      "dw-shop-jp-apprenticeship",
+      "dw-shop-jp-tqwe",
+      "dw-shop-jp-tqrc",
+      "dw-shop-red-seal-apprentice",
+      "dw-shop-red-seal-later",
+      "dw-shop-red-seal-third-try",
+      "dw-shop-employed-certificate",
+      "dw-shop-employed-mentor",
+      "dw-shop-own-certificate",
+      "dw-shop-own-business-form",
+      "dw-shop-own-no-shield",
+      "dw-shop-blue-seal-study",
+      "dw-shop-blue-seal-credential",
+      "dw-shop-blue-seal-asn",
+      "dw-shop-blue-seal-applied",
+      "dw-shop-blue-seal-transcripts",
+      "dw-shop-blue-seal-fee",
+      "dw-shop-name-ending",
+      "dw-shop-name-report",
+      "dw-shop-name-form",
+      "dw-shop-name-proof",
+      "dw-shop-name-email",
+      "dw-shop-bn-email",
+      "dw-shop-permits-bizpal",
+      "dw-shop-permits-city-hall",
+      "dw-shop-gst-checked",
+      "dw-shop-gst-registered",
+      "dw-shop-gst-voluntary",
+      "dw-shop-hire-wcb",
+      "dw-shop-hire-wcb-unsure",
+      "dw-shop-hire-payroll",
+      "dw-shop-hire-personal-coverage",
+      "dw-shop-sponsor-own-eligible",
+      "dw-shop-sponsor-own-confirmed",
+      "dw-shop-sponsor-own-ratio",
+      "dw-shop-sponsor-own-wages",
+    ],
+    costs: [
+      "cost-shop-apprentice-application",
+      "cost-shop-living-while-training",
+      "cost-shop-hand-tools",
+      "cost-shop-tuition",
+      "cost-shop-books",
+      "cost-shop-parking",
+      "cost-shop-student-association-fees",
+      "cost-shop-facility-fees",
+      "cost-shop-materials-consumables",
+      "cost-shop-living-in-class",
+      "cost-shop-tqwe-application",
+      "cost-shop-tqwe-practical",
+      "cost-shop-tqwe-rewrite",
+      "cost-shop-tqwe-panel-interview",
+      "cost-shop-tqrc-application",
+      "cost-shop-tqrc-practical",
+      "cost-shop-tqrc-rewrite",
+      "cost-shop-red-seal-application",
+      "cost-shop-space-deposit",
+      "cost-shop-machines-tools",
+      "cost-shop-insurance",
+      "cost-shop-vehicle",
+      "cost-shop-first-materials",
+      "cost-shop-design-software",
+      "cost-shop-lawyer-business-form",
+      "cost-shop-living-while-starting",
+      "cost-shop-blue-seal-application",
+      "cost-shop-blue-seal-study",
+      "cost-shop-name-government-fee",
+      "cost-shop-name-service-fee",
+      "cost-shop-name-report",
+      "cost-shop-business-number",
+      "cost-shop-municipal-licence",
+      "cost-shop-other-permits",
+      "cost-shop-wages",
+      "cost-shop-wcb-premium",
+      "cost-shop-payroll-bookkeeping",
+      "cost-shop-apprentice-wages",
+    ],
+  },
 };
 
 /** Every skill item id that has ever shipped. Shared across roads, and forever like the ids above. */
-const SHIPPED_SKILL_ITEM_IDS: string[] = [];
+const SHIPPED_SKILL_ITEM_IDS: string[] = [
+  "skill-ab-alberta-student-number",
+  "skill-ab-apprenticeship-education-agreement",
+  "skill-recognized-trade-certificate-outside-ab",
+];
 
 const doneWhenIds = (road: Road) => road.steps.flatMap((s) => s.doneWhen.map((d) => d.id));
 const costIds = (road: Road) => road.steps.flatMap((s) => s.costs.map((c) => c.id));
@@ -61,9 +191,16 @@ describe("the road catalog", () => {
       expect(roadProblems(road, skillItemsV2026), road.id).toEqual([]);
     }
     expect(skillItemProblems(skillItemsV2026)).toEqual([]);
+    // Where a road carries on after its last column, the road and column it names are real.
+    expect(roadJoinProblems(roadsCatalogV2026.entries)).toEqual([]);
     // The invented road used below is valid too, so each broken copy fails for one reason only.
     expect(roadProblems(inventedRoad(), inventedSkillItems)).toEqual([]);
     expect(skillItemProblems(inventedSkillItems)).toEqual([]);
+  });
+
+  it("every skill item is needed by some step, so none sits on the list unused", () => {
+    const needed = new Set(roadsCatalogV2026.entries.flatMap((r) => r.steps.flatMap((s) => s.needs)));
+    for (const item of skillItemsV2026) expect(needed.has(item.id), item.id).toBe(true);
   });
 
   it("road ids are unique across the catalog, and roadById finds each one", () => {
@@ -317,6 +454,78 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
     };
     expect(broken(toolChecked(["words found on the invented page"]))).toEqual([]);
     expect(broken(toolChecked([]))).toEqual(['A citation on step "step-invented-employed": tool check has no quote.']);
+  });
+
+  it("an official fee checked only by a tool must quote its own amount, as the page writes it", () => {
+    // The fee is $125 (12_500 cents). A tool check proves only that its quotes are on the page, so the
+    // amount must be in one of them, or the typed number is one nobody found there.
+    const feeQuotes = (quotes: string[], amountCents = 12_500) => (r: Road) => {
+      const fee = r.steps[0]!.costs[0]!;
+      if (fee.kind !== "official-fee") throw new Error("the invented road's first cost is its fee");
+      const { title, authority, jurisdiction, url, note } = fee.citation;
+      fee.amountCents = amountCents;
+      fee.citation = { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: "2026-10-01", quotes } };
+    };
+    expect(broken(feeQuotes(["The invented fee is $125 a year."]))).toEqual([]);
+    expect(broken(feeQuotes(["The invented fee is $125.00 a year."]))).toEqual([]);
+    expect(broken(feeQuotes(["The invented fee is $1,250 a year."], 125_000))).toEqual([]);
+    expect(broken(feeQuotes(["The invented fee is $1,250.50 a year."], 125_050))).toEqual([]);
+    const missing =
+      'Official fee "cost-invented-fee" is checked only by a tool, and none of its quotes has its amount ($125 or $125.00).';
+    expect(broken(feeQuotes(["The invented fee is due each year."]))).toEqual([missing]);
+    // Whole amounts only: $125 inside $1250, $125.50 or $12,500 is a different number.
+    expect(broken(feeQuotes(["The invented fee is $1250 a year."]))).toEqual([missing]);
+    expect(broken(feeQuotes(["The invented fee is $125.50 a year."]))).toEqual([missing]);
+    expect(broken(feeQuotes(["The invented fee is $12,500 a year."]))).toEqual([missing]);
+    // A $0 fee is exempt: pages say "no cost", not "$0".
+    expect(broken(feeQuotes(["There is no cost to obtain one."], 0))).toEqual([]);
+    // A fee a person read keeps today's rule: the read date is enough.
+    expect(broken(() => {})).toEqual([]);
+  });
+
+  it("a road none of whose sources has been read carries no read date", () => {
+    // Every citation becomes a tool check; the road then has nothing read, so any date it gives is a claim.
+    const onlyToolChecked = (r: Road) => {
+      const tool = (c: EngineCitation): EngineCitation => {
+        const { title, authority, jurisdiction, url, note } = c;
+        return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: "2026-10-01", quotes: ["The invented fee is $125 a year."] } };
+      };
+      for (const step of r.steps) {
+        step.citations = step.citations.map(tool);
+        for (const line of step.doneWhen) line.citation = tool(line.citation);
+        for (const cost of step.costs) if (cost.kind === "official-fee") cost.citation = tool(cost.citation);
+      }
+    };
+    expect(broken((r) => {
+      onlyToolChecked(r);
+      r.lastVerified = "";
+    })).toEqual([]);
+    expect(broken(onlyToolChecked)).toEqual([
+      'Road "road-invented-test-only" says it was last read 2026-10-02, but none of its sources has been read.',
+    ]);
+  });
+});
+
+describe("where a road carries on after its last column", () => {
+  const road0 = roadStartingAnyBusinessAB;
+  const joining = (joins: Road["joins"]): Road => ({ ...inventedRoad(), joins });
+
+  it("a join naming a real road and one of its columns passes", () => {
+    expect(roadJoinProblems([road0, joining({ roadId: road0.id, columnId: "tier-3-incorporating" })])).toEqual([]);
+    // A road with no join has nothing to check.
+    expect(roadJoinProblems([road0, inventedRoad()])).toEqual([]);
+  });
+
+  it("a join naming a road that isn't in the catalog, a column that road doesn't have, or itself is refused", () => {
+    expect(roadJoinProblems([road0, joining({ roadId: "road-nobody-wrote", columnId: "tier-3-incorporating" })])).toEqual([
+      'Road "road-invented-test-only" joins a road the catalog doesn\'t have: "road-nobody-wrote".',
+    ]);
+    expect(roadJoinProblems([road0, joining({ roadId: road0.id, columnId: "col-nobody-wrote" })])).toEqual([
+      'Road "road-invented-test-only" joins road "road-starting-any-business-ab" at a column it doesn\'t have: "col-nobody-wrote".',
+    ]);
+    expect(roadJoinProblems([joining({ roadId: "road-invented-test-only", columnId: "col-invented-start" })])).toEqual([
+      'Road "road-invented-test-only" joins itself.',
+    ]);
   });
 });
 
