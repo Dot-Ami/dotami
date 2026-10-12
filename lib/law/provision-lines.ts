@@ -4,7 +4,7 @@
  * The law store hands a provision over as one string. Its paragraphs and the marginal notes between
  * them run together with no space, as the Act's XML nodes were joined: "…for a taxation
  * year,(a)no amount…", "…business or property;Capital outlay or loss(b)an outlay…" (read through
- * the store's contract on 2026-10-12; tests/provision-lines.spec.ts holds three of its answers).
+ * the store's contract on 2026-10-12; tests/provision-lines.spec.ts holds eight of its answers).
  * This finds where each subsection, paragraph, subparagraph, clause and subclause starts, and where
  * each marginal note sits, so the panel can draw them on their own lines.
  *
@@ -33,14 +33,23 @@ const LABEL = /(\d+(?:\.\d+)*)?\(([0-9A-Za-z]{1,6}(?:\.\d+)*)\)/g;
  * Where a structural label starts and how deep it is. A label is the start of a new part, not a
  * reference inside a sentence, when either:
  *  - its words follow it with no space ("(a)no amount"): the store's way of joining the Act's
- *    nodes. A reference is followed by a space or another bracket ("paragraph 20(1)(f) except");
+ *    nodes. A reference is usually followed by a space or another bracket ("paragraph 20(1)(f)
+ *    except"), but at the end of a phrase it can be glued to the next word too, and then what comes
+ *    before it tells: the store puts no space before a part it joined ("either(i)the"), so a glued
+ *    label right after a space is a reference ("clauses A to (C)to be used") unless the rule below
+ *    takes it, and one right after another label is the end of a chained reference ("subparagraph
+ *    (c)(ii)exceeds");
  *  - it is followed by a space and comes first, or right after ";", ":", "—", a comma that doesn't
  *    close another label, or ", and" / "; or": the way a person copies the Act from its web page
  *    ("…Class 50, (i) 9/11, …, and (ii) nil"). A list of references, "paragraphs (a), (b) or (c)",
  *    has a ")" before each comma or "or", so it stays in its sentence.
+ *
+ * `numbered` says the section's number is part of the label ("18(1)"), which is how the store
+ * starts a section under its heading.
  */
-function structuralLabels(text: string): { at: number; base: string; kind: LabelKind }[] {
-  const found: { at: number; base: string; kind: LabelKind }[] = [];
+function structuralLabels(text: string): { at: number; base: string; kind: LabelKind; numbered: boolean }[] {
+  const found: { at: number; base: string; kind: LabelKind; numbered: boolean }[] = [];
+  let lastLabelEnd = -1;
   for (const m of text.matchAll(LABEL)) {
     const [whole, number = "", inner] = m;
     let at = m.index!;
@@ -48,17 +57,30 @@ function structuralLabels(text: string): { at: number; base: string; kind: Label
     // ("General limitations18(1)In"): after a space it is a reference ("paragraph 20(1)(f)").
     if (number && at > 0 && !/[A-Za-z’)]/.test(text[at - 1])) at += number.length;
     const end = m.index! + whole.length;
+    const chained = m.index === lastLabelEnd;
+    lastLabelEnd = end;
     const next = text[end] ?? "";
     const before = text.slice(0, at).trimEnd();
 
-    const glued = /[A-Za-z0-9“"‘'’]/.test(next);
-    const spaced =
-      /\s/.test(next) && (before === "" || /[^)][;:,—]$/.test(before) || /[;,]\s*(?:and|or)$/.test(before));
+    const personCopied = before === "" || /[^)][;:,—]$/.test(before) || /[;,]\s*(?:and|or)$/.test(before);
+    const afterSpace = at > 0 && /\s/.test(text[at - 1]);
+    const glued = /[A-Za-z0-9“"‘'’]/.test(next) && !chained && (!afterSpace || personCopied);
+    const spaced = /\s/.test(next) && personCopied;
     if (!glued && !spaced) continue;
-    found.push({ at, base: inner.replace(/\.\d+$/, ""), kind: kindOf(inner) });
+    found.push({ at, base: inner.replace(/\.\d+$/, ""), kind: kindOf(inner), numbered: at === m.index && number !== "" });
   }
   return found;
 }
+
+/**
+ * A section's heading glued to the section's number and its first word, as the store joins them when
+ * the section has no "(1)": "Limitation re cost of leasing passenger vehicle67.3Notwithstanding…",
+ * "General limitation re expenses67In computing…". Group 1 is the heading.
+ */
+const HEADING_BEFORE_NUMBER = /^([A-Z][^;:]*?[a-z’)])(?=\d+(?:\.\d+)*[A-Z])/;
+
+/** A formula's variable glued to its definition, "Dis the amount…", "Bis the number…": the law's words, never a note. */
+const FORMULA_VARIABLE = /(?:^|[^A-Za-z])[A-Z](?:is|are) /;
 
 type LabelKind = "number" | "lower" | "lower-roman" | "lower-either" | "upper" | "upper-roman" | "upper-either";
 
@@ -97,7 +119,9 @@ function numeralAfter(numeral: string): string {
  * note starts: right after the last ";", ":", "." or "," that closes a word, or the last small
  * letter, directly followed by a capital ("property;Capital outlay or loss", "in respect
  * ofGeneral limitation"). The note may hold commas and full stops ("Reserves, etc.") but not ";" or
- * ":", which end a provision's sentences. -1 when there is none.
+ * ":", which end a provision's sentences, nor a formula's variable ("…the vehicle,Dis the amount…",
+ * ITA 67.3(c)). -1 when there is none. (A note is the end of the stretch, so an earlier start would
+ * hold the same words: the first candidate decides.)
  */
 function noteStart(stretch: string, atEnd: boolean): number {
   for (let k = stretch.length - 2; k >= 1; k -= 1) {
@@ -106,7 +130,7 @@ function noteStart(stretch: string, atEnd: boolean): number {
     const closesWord = /[;:.,]/.test(c) && /[a-z0-9)’”]/.test(stretch[k - 1]);
     if (!closesWord && !/[a-z]/.test(c)) continue;
     const note = stretch.slice(k + 1);
-    if (/[;:]/.test(note)) return -1;
+    if (/[;:]/.test(note) || FORMULA_VARIABLE.test(note)) return -1;
     // At the very end, a note has no label after it to prove it is one; take it only when it
     // doesn't end like a sentence.
     if (atEnd && /[.,;:]$/.test(note)) return -1;
@@ -149,10 +173,19 @@ export function provisionLines(text: string): ProvisionLine[] {
     const depth = labelIndex >= 0 ? depths[labelIndex] : 0;
     const stretch = text.slice(start, end);
 
-    // Text before the first label is the section's heading ("General limitations"), unless it ends
-    // like a sentence; text with no label in it at all is just the words.
+    // Text before the first label (or a text with no label at all) is a heading only where the store
+    // glued a section number to it: all of it when the first label carries the number ("General
+    // limitations" + "18(1)In…"), or the part before the number when the number is in the text
+    // ("…passenger vehicle" + "67.3Notwithstanding…, where"). Anything else is the law's own words,
+    // such as a class of Schedule II, "Property acquired after March 18, 2007 that is …".
     if (labelIndex < 0) {
-      lines.push({ text: stretch, depth: 0, note: labels.length > 0 && !/[;:.,]\s*$/.test(stretch) });
+      if (labels[0]?.numbered && !/[;:.,]\s*$/.test(stretch)) {
+        lines.push({ text: stretch, depth: 0, note: true });
+        return;
+      }
+      const heading = HEADING_BEFORE_NUMBER.exec(stretch)?.[1];
+      if (heading) lines.push({ text: heading, depth: 0, note: true });
+      lines.push({ text: stretch.slice(heading?.length ?? 0), depth: 0, note: false });
       return;
     }
     const atEnd = end === text.length;

@@ -36,14 +36,23 @@ grant via `LAW_STORE_PATH`) and shows:
   the words are drawn as the Act lays them out, one line per subsection, paragraph,
   subparagraph, clause and subclause, each indented one step further than the level above
   (`(1)` · `(a)` · `(i)` · `(A)` · `(I)`), and each marginal note (*Capital outlay or loss*)
-  on a line of its own above the paragraph it names, in small italics. Until then they ran
+  on a line of its own above the paragraph it names, in small italics. The section's heading
+  is drawn the same way only where the store glued the section's number to it (*General
+  limitations* + `18(1)In…`, *Limitation re cost of leasing passenger vehicle* + `67.3Notwithstanding…`);
+  other text before the first label is the law's own words (Class 50's definition, *Property
+  acquired after March 18, 2007 that is …*) and is drawn as ordinary text, and so is a formula's
+  variable glued to its definition (`…the vehicle,Dis the amount…`). Until then they ran
   together as one block: the store hands the text over as one string with no space between a
   paragraph and the next label (`…for a taxation year,(a)no amount…`). The split is for the
   eye only (`lib/law/provision-lines.ts` `provisionLines`, drawn by `ProvisionText`): the
   words are never changed, and a reference inside a sentence (*subparagraph (a)(i) or (ii)*,
-  *paragraph 20(1)(f) except*) stays where it is. `(i)` right after `(h)` is paragraph (i),
-  not a subparagraph, unless `(ii)` follows it. `tests/provision-lines.spec.ts`, on the
-  store's own text for ITA 18(12), ITA 18(1) (a)–(l) and Reg. 1100(2)(c.3), read 2026-10-12;
+  *paragraph 20(1)(f) except*) stays where it is, also when the store glued it to the next
+  word: right after another label (*subparagraph (c)(ii)exceeds*, ITA 248(1)) or after a space
+  (*clauses A to (C)to be used*, ITA 37(1)), since the store puts no space before a part it
+  joined. `(i)` right after `(h)` is paragraph (i), not a subparagraph, unless `(ii)` follows
+  it. `tests/provision-lines.spec.ts`, on the store's own text for ITA 18(12), ITA 18(1)
+  (a)–(l), ITA 248(1), ITA 37(1), ITA 67, ITA 67.3, Reg. 1100(2)(c.3) and Reg. Sch. II Class 50,
+  read 2026-10-12;
 - a footer: "The provision's own words, read from the law store through its contract. Not a
   summary." + a link to the official text.
 

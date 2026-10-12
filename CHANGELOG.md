@@ -248,12 +248,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The law store sends a provision as one string with no space between a paragraph and the next label,
   so ITA 18(12)'s paragraphs (a), (b), (c) and subparagraphs (i), (ii) ran together as one block. Each
   subsection, paragraph and subparagraph now gets a line of its own, indented by level, and each
-  marginal note (*Capital outlay or loss*) a small italic line above the paragraph it names. No word
-  changes: a reference inside a sentence (*subparagraph (a)(i) or (ii)*) stays put, and the lines put
-  back together are the store's text, character for character
+  marginal note (*Capital outlay or loss*) a small italic line above the paragraph it names; a
+  section's heading (*Limitation re cost of leasing passenger vehicle*) gets one too, but only where
+  the store glued the section's number to it, so the law's own words, such as Class 50's definition
+  or a formula's *D is the amount of interest…*, stay ordinary text. No word changes: a reference
+  inside a sentence stays put, even one glued to the next word (*subparagraph (a)(i) or (ii)*,
+  *subparagraph (c)(ii)exceeds* in ITA 248(1), *clauses A to (C)to be used* in ITA 37(1)), and the lines
+  put back together are the store's text, character for character
   ([`lib/law/provision-lines.ts`](lib/law/provision-lines.ts);
   [`tests/provision-lines.spec.ts`](tests/provision-lines.spec.ts), on the store's own text for ITA
-  18(12), ITA 18(1) (a)–(l) and Reg. 1100(2)(c.3), read 2026-10-12).
+  18(12), ITA 18(1) (a)–(l), ITA 248(1), ITA 37(1), ITA 67, ITA 67.3, Reg. 1100(2)(c.3) and Reg. Sch. II
+  Class 50, read 2026-10-12).
 - **A federal rule says it is shown because it is federal** ([#36](https://github.com/Dot-Ami/dotami/issues/36)).
   Every compliance card said "Shown because you selected <province>.", so an Alberta idea read
   "because you selected Alberta" on the GST/HST small-supplier rule, which is federal, and an idea with
