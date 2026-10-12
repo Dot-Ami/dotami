@@ -1,3 +1,4 @@
+import { citationCheckProblems, newestRead } from "../../shared/citation-check";
 import type { EngineCitation } from "../../shared/types";
 import type { CatalogCostLine, CostLineAsShown, Road, SkillItem } from "./types";
 
@@ -116,19 +117,20 @@ export function skillItemProblems(items: readonly SkillItem[], now: Date = new D
   return problems;
 }
 
-/** The newest real read date among every citation in the road, or undefined when it has none. */
+/**
+ * The newest real read date among every citation in the road, or undefined when it has none. A tool
+ * check is not a read, so a source only a tool has checked doesn't date the road
+ * (docs/engines/citations.md).
+ */
 export function newestReadDate(road: Road): string | undefined {
-  const dates = road.steps
+  const citations = road.steps
     .flatMap((step) => [
       ...step.citations,
       ...step.doneWhen.map((d) => d.citation),
       ...step.costs.flatMap((c) => (c.kind === "official-fee" ? [c.citation] : c.nameSource ? [c.nameSource] : [])),
     ])
-    .filter((c): c is EngineCitation => Boolean(c))
-    .map((c) => c.lastVerified)
-    .filter(isRealDate);
-  // ISO dates sort as text.
-  return dates.sort().at(-1);
+    .filter((c): c is EngineCitation => Boolean(c));
+  return newestRead(citations);
 }
 
 /**
@@ -181,12 +183,11 @@ function citationProblems(citation: EngineCitation, where: string, today: string
   if (!isHttpsPage(citation.url)) {
     problems.push(`A citation on ${where} is not an https page: ${citation.url}`);
   }
-  if (!isRealDate(citation.lastVerified)) {
-    problems.push(`A citation on ${where} has no real read date: "${citation.lastVerified}".`);
-  } else if (citation.lastVerified > today) {
-    // lastVerified is the day a person read the page, so it can't be a day that hasn't come yet.
-    // ISO dates compare correctly as text.
-    problems.push(`A citation on ${where} says it was read on ${citation.lastVerified}, a day that hasn't come yet.`);
+  // How it was checked follows the rules every catalog's citations follow (docs/engines/citations.md):
+  // a read (a real day, not after today), a tool check with its quotes, or both. "Today" here is the
+  // newest date anywhere on Earth, so a reader east of UTC isn't refused their own today.
+  for (const problem of citationCheckProblems(citation, today)) {
+    problems.push(`A citation on ${where}: ${problem}.`);
   }
   return problems;
 }
@@ -201,11 +202,4 @@ function isHttpsPage(url: string): boolean {
  */
 function newestTodayOnEarth(now: Date): string {
   return new Date(now.getTime() + 14 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
-/** YYYY-MM-DD and a day that exists on the calendar (no 2026-02-30). */
-function isRealDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }

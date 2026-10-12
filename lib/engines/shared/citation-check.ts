@@ -5,9 +5,10 @@
  * A citation was read (`lastVerified`, with `readBy` saying who when that is on record), checked by
  * a tool (`toolCheck`: a script found the quoted words on the live page), or both. This is the one
  * file that reads those fields: the map's sources, the Delete menu's line, the Tax year hint, the
- * playbook export and the readout all get their words from here, so a tool check or an unrecorded
- * read can never be shown as a person's read (tests/citation-check.spec.ts refuses `.lastVerified`
- * and `.readBy` anywhere else in app/, components/ or lib/).
+ * playbook export and the readout all get their words from here, and the road checks get their
+ * rules and dates from here too, so a tool check or an unrecorded read can never be shown as a
+ * person's read (tests/citation-check.spec.ts refuses a citation's `.lastVerified` and `.readBy`
+ * anywhere else in app/, components/ or lib/).
  */
 
 import type { CitationCheck } from "./types";
@@ -83,6 +84,16 @@ export function checkFields(c: CitationCheck): CitationCheck {
 export function oldestRead(citations: readonly CitationCheck[]): string | undefined {
   const days = citations.map((c) => c.lastVerified).filter((d): d is string => Boolean(d));
   return days.length > 0 ? [...days].sort()[0] : undefined;
+}
+
+/**
+ * The newest real day any of these sources was read (by anyone), or undefined when none was. A tool
+ * check is not a read, and a malformed date is skipped (citationCheckProblems reports it). A road's
+ * own date is this (lib/engines/roads/v2026/validate.ts).
+ */
+export function newestRead(citations: readonly CitationCheck[]): string | undefined {
+  const days = citations.map((c) => c.lastVerified).filter((d): d is string => d !== undefined && isDay(d));
+  return days.length > 0 ? [...days].sort().at(-1) : undefined;
 }
 
 /** How many of these sources a person is recorded as having read. */

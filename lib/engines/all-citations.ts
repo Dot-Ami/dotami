@@ -11,6 +11,7 @@ import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { complianceCatalogV2026, recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
+import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { CitationCheck } from "@/lib/engines/shared/types";
 import { structureCatalogV2026 } from "@/lib/engines/structure/v2026";
 import { taxLinesCatalogV2026 } from "@/lib/engines/taxlines/v2026";
@@ -46,5 +47,23 @@ export function allCatalogCitations(): CitationInCatalog[] {
     for (const year of entry.yearsRead) add(`taxlines ${entry.id} ${year.taxYear}`, year.citations);
   }
   add(`compliance ${recordRetentionV2026.id}`, recordRetentionV2026.citations);
+
+  // Roads (lib/engines/roads/v2026/): each step's sources, its done-when lines' and cost lines'
+  // sources, then the shared skill items'. Road 0's steps reuse the map stages' sources, so those
+  // are listed twice (once under "cfe", once under "roads"): each place a source is shown is checked.
+  for (const road of roadsCatalogV2026.entries) {
+    for (const step of road.steps) {
+      add(`roads ${road.id} ${step.id}`, step.citations);
+      for (const line of step.doneWhen) add(`roads ${road.id} ${line.id}`, [line.citation]);
+      for (const cost of step.costs) {
+        if (cost.kind === "official-fee") add(`roads ${road.id} ${cost.id}`, [cost.citation]);
+        else if (cost.nameSource) add(`roads ${road.id} ${cost.id}`, [cost.nameSource]);
+      }
+    }
+  }
+  for (const item of skillItemsV2026) {
+    add(`skills ${item.id}`, item.citations);
+    if (item.howToGetIt) add(`skills ${item.id}`, [item.howToGetIt.citation]);
+  }
   return out;
 }

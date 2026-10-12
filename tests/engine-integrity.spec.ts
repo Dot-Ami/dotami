@@ -16,6 +16,7 @@ import { T2125_LINES } from "@/lib/figures/return/lines";
 import { FIGURE_KINDS } from "@/lib/figures/types";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
 
 describe("engine catalog integrity", () => {
@@ -101,9 +102,24 @@ describe("engine catalog integrity", () => {
         0,
       ) +
       taxLinesCatalogV2026.entries.reduce((n, e) => n + e.yearsRead.reduce((m, y) => m + y.citations.length, 0), 0) +
-      recordRetentionV2026.citations.length;
+      recordRetentionV2026.citations.length +
+      // Roads: each step's sources, one per done-when line, one per official fee or sourced named
+      // cost line; then each shared skill item's sources and its how-to-get-it line's.
+      roadsCatalogV2026.entries.reduce(
+        (n, road) =>
+          n +
+          road.steps.reduce(
+            (m, s) =>
+              m + s.citations.length + s.doneWhen.length + s.costs.filter((c) => c.kind === "official-fee" || c.nameSource !== undefined).length,
+            0,
+          ),
+        0,
+      ) +
+      skillItemsV2026.reduce((n, item) => n + item.citations.length + (item.howToGetIt ? 1 : 0), 0);
     const listed = allCatalogCitations();
     expect(listed.length).toBe(expected);
+    // The roads are in the list: road 0's steps carry the map stages' sources.
+    expect(listed.some(({ where }) => where.startsWith("roads "))).toBe(true);
     expect(listed.length).toBeGreaterThan(70);
     // Each says where it came from, so a problem names the entry to fix.
     for (const { where } of listed) expect(where).toMatch(/^[a-z-]+ [^ ]+/);

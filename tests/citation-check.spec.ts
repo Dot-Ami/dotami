@@ -232,7 +232,9 @@ describe("one place reads a citation's date", () => {
       .flatMap((d) => filesUnder(path.join(root, d)))
       .map((f) => path.relative(root, f).split(path.sep).join("/"))
       .filter((f) => f !== "lib/engines/shared/citation-check.ts")
-      .filter((f) => /\.(lastVerified|readBy)\b/.test(readFileSync(path.join(root, f), "utf8")));
+      // A road's own date (`road.lastVerified`, lib/engines/roads/v2026/) is the road's, not a
+      // citation's: it is worked out by newestRead in that file, so it is left out of this search.
+      .filter((f) => /\.(lastVerified|readBy)\b/.test(readFileSync(path.join(root, f), "utf8").replace(/\broad\.lastVerified\b/g, "")));
     expect(offenders).toEqual([]);
   });
 });
