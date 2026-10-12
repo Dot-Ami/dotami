@@ -215,8 +215,15 @@ test("the map quotes the CRA, shows both ways to incorporate, and lights Incorpo
 
   // Incorporating: both routes, the federal fee read on its page, Alberta's fees as named blanks.
   await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, check first, opens detail");
+  // A screen reader hears the card's reason line too, not only sighted people.
+  await expect(stage("Incorporating")).toHaveAccessibleDescription(/^Check first: set your own number to see this light/);
+  // The readout API says "default" where the map does, instead of a bare "decision".
+  const readout = await page.request.get(`/api/readout?venture=${ventureId}`);
+  expect(readout.ok()).toBe(true);
+  const { nodes } = (await readout.json()) as { nodes: { id: string; chip: string }[] };
+  expect(nodes.find((n) => n.id === "stage-3a-incorporation-80k-net")?.chip).toBe("default");
   await stage("Incorporating").click();
-  const inc = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Incorporating" }) });
+  const inc =page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Incorporating" }) });
   await expect(inc.getByRole("heading", { name: "Federal (Corporations Canada)" })).toBeVisible();
   await expect(inc.getByRole("heading", { name: "Alberta (Corporate Registry)" })).toBeVisible();
   await expect(inc.getByText("It will cost $200 and will take 1 day.", { exact: false }).first()).toBeVisible();
