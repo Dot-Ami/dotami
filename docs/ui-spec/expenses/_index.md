@@ -26,7 +26,7 @@ record's words or amounts: only an idea's id, in `?idea=`.
 
 | Control | Behaviour | Persists to |
 |---|---|---|
-| **← Your ideas** (nav) | opens `/ventures` | — |
+| **← Your futures** (nav; *← Your ideas* until 2026-10-12) | opens `/ventures` | — |
 | **Settings** (nav, right) | opens `/settings` | — |
 | Intro line | "Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice." | — |
 | **Show** select | **All your records** · **Not attached to an idea yet** · one entry per idea (by name). Filters the waiting banner and both lists below; it changes nothing stored. Opened from an idea's card (`?idea=<id>`) it starts on that idea; an id that isn't one of the person's ideas falls back to All | — |

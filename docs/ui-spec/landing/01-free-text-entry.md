@@ -2,12 +2,12 @@
 
 Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx`
 
-Last updated: 2026-10-11 (words typed before the page has finished loading are kept; the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
+Last updated: 2026-10-12 (the box, its chips and Map it now sit inside the second of three doors, *I already have an idea*, with everything below unchanged: [04-three-doors.md](./04-three-doors.md)); 2026-10-11 (words typed before the page has finished loading are kept; the sentence is saved with the idea, dated and word for word, once per sentence typed; the box takes up to 2,000 characters and says so when full)
 
 ## What it is
 
-The textarea + `Map it →` pill. The entire product surface of this page — every other
-control exists to help fill or bypass this one.
+The textarea + `Map it →` pill, inside the door *I already have an idea* since 2026-10-12. Until
+then it was the entire product surface of this page.
 
 ## What it does (behavior on interact)
 

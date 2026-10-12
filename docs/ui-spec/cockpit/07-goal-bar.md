@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/goal-b
 `lib/cockpit/words.ts`; numbers: `lib/cockpit/view.ts` `gaugeView`, from `lib/roads/` `evaluateRoad`)
 Type: display + button group
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
+Last updated: 2026-10-12 (an idea with no first sentence, such as one picked on *Pick a future*, shows the person's newest destination from *Your destination* in its place, with its day: *where you want to be · your words · <day>*; `GET /api/futures/<id>` gives it as `destination`. Before that, 2026-10-12: built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
 ## What it is
 

@@ -4,7 +4,9 @@ Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx` (`
 + `components/shared/person-statements.tsx` (`PersonStatements`, `variant="full"`)
 Type: free-text composer + dated record list (wizard step, skippable)
 
-Last updated: 2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
+Last updated: 2026-10-12 (issue #38: shown first only to a person with no saved idea yet; a second
+idea starts on Screen A, and **← Back** from there reaches this screen; [_index.md](./_index.md));
+2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
 Workshop status: **built 2026-09-13; the behaviour below is the shipped surface**
 
 ## What it is
