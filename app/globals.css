@@ -102,3 +102,13 @@
     box-sizing: border-box;
   }
 }
+
+/* The cockpit's folded panel is a bar fixed along the bottom of a window narrower than 1024 px (45 px:
+   a 44 px button and its top border; components/cockpit/folding.tsx FoldedBar). While it is there, the
+   page leaves that much room under its last line, so the bar never covers the "not legal or tax advice"
+   line however far the person scrolls. */
+@media (width < 64rem) {
+  body:has([data-cockpit-bottom-bar]) {
+    padding-bottom: 45px;
+  }
+}

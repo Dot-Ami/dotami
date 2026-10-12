@@ -530,6 +530,7 @@ function Legend({
     >
       <FoldButton
         folded={fold.legendFolded}
+        region="legend"
         label={fold.legendFolded ? cockpitWords.folds.legend.show : cockpitWords.folds.legend.fold}
         controls={LEGEND_ID}
         onClick={fold.onToggleLegend}

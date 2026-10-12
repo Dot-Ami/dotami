@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { FoldButton, FoldedStrip, useFolds } from "@/components/cockpit/folding";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { FoldButton, FoldedBar, FoldedStrip, useFolds } from "@/components/cockpit/folding";
+import { useIsPhone, useSheet } from "@/components/cockpit/use-sheet";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
@@ -64,7 +65,8 @@ import Link from "next/link";
 /** The regions' ids, for the fold buttons' aria-controls. */
 const RAIL_ID = "cockpit-rail";
 const PANEL_ID = "cockpit-panel";
-const ALL_REGION_IDS = `${RAIL_ID} cockpit-goal-bar ${PANEL_ID} cockpit-map-legend`;
+const GOAL_BAR_ID = "cockpit-goal-bar";
+const LEGEND_ID = "cockpit-map-legend";
 
 /** A folded rail or panel on a wide window is a strip this wide. */
 const STRIP = "44px";
@@ -175,6 +177,26 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
     [roadEvaluation],
   );
+
+  // Below 768 px the rail and the right-hand panel are sheets over the page: while one is open it holds
+  // the keyboard, Escape closes it, and the page behind it is inert (components/cockpit/use-sheet.ts).
+  const isPhone = useIsPhone();
+  const railRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const railModal = isPhone && railSheet;
+  const panelModal = isPhone && rightPanel !== null && !folds.panel;
+  useSheet(railModal, railRef, () => setRailSheet(false));
+  useSheet(panelModal, panelRef, () => {
+    setSelectedNodeId(null);
+    setRightPanel(null);
+    setActiveGauge(null);
+  });
+
+  // Folding the rail hides what it holds, which scrolls it back to the top; it comes back where it was.
+  const railScroll = useRef(0);
+  useLayoutEffect(() => {
+    if (!folds.rail && railRef.current) railRef.current.scrollTop = railScroll.current;
+  }, [folds.rail]);
 
   if (!currentScenario) {
     return <EmptyCockpit />;
@@ -381,11 +403,19 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     "--cockpit-cols-lg": showRightSlot ? `${railColumn} minmax(0,1fr) ${panelColumn}` : `${railColumn} minmax(0,1fr)`,
   } as CSSProperties;
   const everythingFolded = allFolded(folds);
+  // The header's button names the regions that are drawn: the panel only while it holds something, the
+  // goal bar and the legend only once the road is evaluated.
+  const foldAllControls = [RAIL_ID, ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID] : []), ...(showRightSlot ? [PANEL_ID] : [])].join(" ");
+  // While a sheet covers the page on a phone, everything behind it is inert.
+  const behindSheet = railModal || panelModal;
 
   return (
     <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
-      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]">
+      <header
+        inert={behindSheet}
+        className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]"
+      >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
           <Link href="/ventures" className="font-mono text-[11px] text-stone transition hover:text-paper">
             ← Ideas
@@ -414,7 +444,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             <FoldButton
               folded={everythingFolded}
               label={everythingFolded ? words.folds.all.show : words.folds.all.fold}
-              controls={ALL_REGION_IDS}
+              controls={foldAllControls}
               onClick={toggleAll}
             />
           </span>
@@ -428,21 +458,21 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         </div>
       </header>
 
-      {evaluation ? (
-        <GoalBar
-          road={road}
-          evaluation={evaluation}
-          scenario={scenario}
-          firstWords={kept?.firstWords ?? null}
-          target={kept?.incomeWanted ?? null}
-          active={activeGauge}
-          onGauge={handleGauge}
-          folded={folds.goal}
-          onToggleFold={() => toggle("goal")}
-        />
-      ) : (
-        <div />
-      )}
+      <div inert={behindSheet} className="min-w-0">
+        {evaluation ? (
+          <GoalBar
+            road={road}
+            evaluation={evaluation}
+            scenario={scenario}
+            firstWords={kept?.firstWords ?? null}
+            target={kept?.incomeWanted ?? null}
+            active={activeGauge}
+            onGauge={handleGauge}
+            folded={folds.goal}
+            onToggleFold={() => toggle("goal")}
+          />
+        ) : null}
+      </div>
 
       {/* Body: one column below 768 px, the rail and the road from 768 px, and the panel too from 1024 px. */}
       <div
@@ -453,21 +483,27 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             the header's button opens it. */}
         <aside
           id={RAIL_ID}
+          ref={railRef}
           aria-label={words.folds.railSheet.open}
+          inert={panelModal}
+          onScroll={(event) => {
+            // Its place while open, to come back to after a fold (folding scrolls it to the top).
+            if (!folds.rail) railScroll.current = event.currentTarget.scrollTop;
+          }}
           className={`min-w-0 border-r border-rule bg-ink3 ${folds.rail ? "md:overflow-hidden" : "md:overflow-y-auto"} ${
             railSheet ? "max-md:fixed max-md:inset-0 max-md:z-40 max-md:overflow-y-auto" : "max-md:hidden"
           }`}
         >
           {folds.rail ? (
             <div className="hidden h-full md:block">
-              <FoldedStrip label={words.folds.rail.show} controls={RAIL_ID} onClick={() => toggle("rail")} />
+              <FoldedStrip region="rail" label={words.folds.rail.show} controls={RAIL_ID} onClick={() => toggle("rail")} />
             </div>
           ) : null}
           {/* Folded on a wide window, this is hidden, never removed: what it holds is there when it opens. */}
           <div className={`flex min-h-full flex-col gap-3.5 p-5 ${folds.rail ? "md:hidden" : ""}`}>
             <div className="flex justify-end">
               <span className="hidden md:inline-flex">
-                <FoldButton folded={false} label={words.folds.rail.fold} controls={RAIL_ID} onClick={() => toggle("rail")} />
+                <FoldButton folded={false} region="rail" label={words.folds.rail.fold} controls={RAIL_ID} onClick={() => toggle("rail")} />
               </span>
               <Pill variant="ghost" size="small" className="md:hidden" onClick={() => setRailSheet(false)}>
                 {words.folds.railSheet.close}
@@ -589,7 +625,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
         {/* Canvas — S2.5.4j: tier columns, not a graph; the overlay switches over it and "Next on your
             road" under it (2026-10-12). */}
-        <div className="relative flex min-h-0 flex-col bg-ink4">
+        <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4">
           {evaluation ? (
             <>
               <OverlaySwitches
@@ -621,29 +657,33 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         </div>
 
         {/* Right panel: one thing at a time. A column from 1024 px; below that it opens over the road, a
-            full-width sheet on a phone and a 420 px drawer between. Folded, it is a strip (or a bar along
-            the bottom on a narrow window) naming what it holds; what it holds stays, hidden. */}
+            full-width sheet on a phone and a 420 px drawer under the header between. Folded, it is a strip
+            (or a bar along the bottom on a narrow window, with room left for it under the page's last
+            line: app/globals.css) naming what it holds; what it holds stays, hidden. */}
         {showRightSlot ? (
           <div
             id={PANEL_ID}
+            ref={panelRef}
+            inert={railModal}
+            {...(folds.panel ? { "data-cockpit-bottom-bar": "" } : {})}
             className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
               folds.panel
                 ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
-                : "max-lg:fixed max-lg:inset-0 max-lg:z-40 md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
+                : "max-lg:fixed max-lg:inset-0 max-lg:z-40 md:max-lg:top-[52px] md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
             }`}
           >
             {folds.panel ? (
               <>
                 <div className="hidden h-full border-l border-rule lg:block">
-                  <FoldedStrip label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
+                  <FoldedStrip region="panel" label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
                 </div>
-                <div className="flex justify-center px-3 py-2 lg:hidden">
-                  <FoldButton folded label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
+                <div className="lg:hidden">
+                  <FoldedBar region="panel" label={words.folds.panel.show(panelTitle)} controls={PANEL_ID} onClick={() => toggle("panel")} />
                 </div>
               </>
             ) : (
               <div className="flex justify-end border-b border-l border-rule px-3 py-1 max-lg:border-l-0">
-                <FoldButton folded={false} label={words.folds.panel.fold} controls={PANEL_ID} onClick={() => toggle("panel")} />
+                <FoldButton folded={false} region="panel" label={words.folds.panel.fold} controls={PANEL_ID} onClick={() => toggle("panel")} />
               </div>
             )}
             <div className={`min-h-0 flex-1 ${folds.panel ? "hidden" : ""}`}>

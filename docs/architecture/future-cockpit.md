@@ -316,8 +316,13 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   button says whether its region is open (`aria-expanded`).
 - **Folding hides nothing for good.** A folded region keeps its unfold button where it was: the rail
   becomes a narrow strip, the goal bar one line that still holds the four gauges as buttons (name and
-  value), the panel a narrow strip naming what it holds, the legend one line. What is inside stays on the
-  page, only hidden, so a half-typed statement in *In your words* is still there when it unfolds.
+  value, with the lines under each in the button's title), the panel a narrow strip naming what it
+  holds, the legend one line. What is inside stays on the page, only hidden (the open goal bar sits
+  behind its one line), so a half-typed statement in *In your words* is still there when it unfolds,
+  and so is the rail's scroll position.
+- **Focus follows the fold.** The button pressed to fold or show a region is often gone afterwards (a
+  folded rail is a strip, the folded goal bar a different line), so focus moves to the button that now
+  stands for the region; a keyboard or screen-reader user is never sent back to the top of the page.
 - **The panel stays folded while the person moves around the road.** Clicking another step, a gauge or
   *Export* puts the new thing in the folded panel and its strip names it; *Show the panel* opens it.
   Closing the panel is still its own *Close* button and clears what it held, as before.
@@ -340,11 +345,15 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   page itself scrolls down to *Next on your road* and the legend, so the legend can no longer squeeze the
   road. The left rail is not a column: *Venture details* in the header opens it as a full-width sheet,
   with *Close venture details* at its top. The right-hand panel opens as a full-width sheet over the
-  road, closed by its own *Close*; folded, it is a bar along the bottom. The gauges keep their row,
-  which scrolls sideways inside the goal bar.
+  road, closed by its own *Close*; folded, it is a bar along the bottom, one full-width button 44 px tall,
+  and the page leaves room under its last line for the bar so it never covers the *not legal or tax
+  advice* line. A sheet that covers the page takes the keyboard with it: focus goes to its first
+  control, Tab stays inside it, Escape closes it, the page behind is inert, and focus goes back to what
+  opened it (`components/cockpit/use-sheet.ts`). The fold buttons are at least 32 px tall. The gauges
+  keep their row, which scrolls sideways inside the goal bar.
 - **Between 768 and 1024 px** the rail is a column again, and the right-hand panel opens as a 420 px
-  drawer over the road's right side instead of squeezing the road; from 1024 px it is a column, as
-  before.
+  drawer under the header, over the road's right side, instead of squeezing the road (the header's
+  *Export* and *Fold all panels* stay free to click); from 1024 px it is a column, as before.
 - **The map's own drawing is unchanged.** The folding legend and the phone-width columns are drawn only
   when the cockpit asks for them (`StrategyMap`'s `cockpit` prop); drawn without it, the map is the same
   HTML as before, byte for byte (`tests/road-map.spec.ts`).

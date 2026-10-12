@@ -22,7 +22,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   everything open). Below 768 px the page never scrolls sideways: the road scrolls sideways in its own
   area one column at a time, the venture details and the right-hand panel open as full-width sheets, and
   the legend sits under the road instead of squeezing it to 20 px; from 768 to 1024 px the panel opens as
-  a drawer over the road. Design: [docs/architecture/future-cockpit.md § 2, "Folding and phone
+  a drawer under the header, over the road. Folding moves focus to the button that now stands for the
+  region; on a phone a sheet takes the keyboard (focus inside, Tab stays in it, Escape closes it, focus
+  goes back to what opened it), and the folded panel's bar never covers the page's last line. Design: [docs/architecture/future-cockpit.md § 2, "Folding and phone
   width"](docs/architecture/future-cockpit.md); controls:
   [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
   `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
