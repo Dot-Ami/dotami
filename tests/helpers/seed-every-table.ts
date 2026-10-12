@@ -7,17 +7,30 @@
 import type { PrismaClient } from "@prisma/client";
 
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
-import { addTypedStatement } from "@/lib/person/statements";
+import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-figures";
+import { markSkill } from "@/lib/futures/skill-marks";
+import { setStepProgress } from "@/lib/futures/step-progress";
+import { addDestination, addTypedStatement } from "@/lib/person/statements";
 import { writeSetting } from "@/lib/settings/store";
 import { demoScenarios } from "../../prisma/seed-data";
 
-/** Two ideas, a link between them, statements, a setting, a bank account, a figure, expenses with a refund and a receipt row. */
+/**
+ * Two ideas, a link between them, statements (a destination among them), a setting, a bank account, a
+ * figure, expenses with a refund and a receipt row, a skill mark, progress on a step and the income the
+ * person wants.
+ */
 export async function seedEveryTable(prisma: PrismaClient, marker: string) {
   const a = (await ensureVentureFromScenario(prisma, demoScenarios[0])).ventureId;
   const b = (await ensureVentureFromScenario(prisma, demoScenarios[1])).ventureId;
   await prisma.venture.update({ where: { id: a }, data: { notes: `note ${marker}` } });
   await prisma.ventureLink.create({ data: { fromId: a, toId: b, kind: "RELATED", note: `link ${marker}` } });
   await addTypedStatement(prisma, { text: `statement ${marker}`, saidAt: "2026-09-01" });
+  await addDestination(prisma, { text: `destination ${marker}`, saidAt: "2026-09-01" });
+  // The shipped skill list is empty until the first written future, so the mark is on a skill of the person's own.
+  await markSkill(prisma, { ownLabel: `skill ${marker}`, mark: "learning" });
+  await setStepProgress(prisma, a, { roadId: "road-starting-any-business-ab", stepId: "stage-1-sole-prop-activation", status: "done" });
+  const [income] = await proposeIncomeWanted(prisma, { amountCents: 7_000_000 });
+  await agreeToPersonFigures(prisma, [income.id]);
   await writeSetting(prisma, "figure-reminders", { cadences: ["yearly"], ideaIds: [a] });
   await prisma.sourceAccount.create({ data: { name: `Chequing ${marker}`, allowance: "always", agreedAt: new Date("2026-09-01T00:00:00Z") } });
   await prisma.figure.create({

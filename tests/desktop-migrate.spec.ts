@@ -1101,3 +1101,136 @@ describe("desktop migrator — the first sentence and the goal picks (2026-10-11
     expect(query(dbFile, `SELECT id, ventureId FROM "Expense"`)).toEqual([{ id: "e1", ventureId: "v1" }]);
   }, 60_000);
 });
+
+describe("desktop migrator — phase 1 storage for the future cockpit (2026-10-11)", () => {
+  const storageMigration = localNames.find((name) => name.endsWith("_cockpit_storage"));
+
+  it("only adds columns to Venture, PersonStatement and Figure, and creates three tables: nothing is copied, dropped or renamed", () => {
+    expect(storageMigration, "no migration ending in _cockpit_storage").toBeDefined();
+    const statements = statementsOf(storageMigration!);
+    // Prisma's own diff for this change rebuilds Venture; with foreign keys on, that would delete every
+    // idea's figures, links and map progress. Every statement that touches an existing table is a plain ADD COLUMN.
+    expect(statements.filter((s) => /^ALTER TABLE/.test(s))).toEqual([
+      `ALTER TABLE "Venture" ADD COLUMN "roadId" TEXT`,
+      `ALTER TABLE "Venture" ADD COLUMN "forkPicks" JSONB NOT NULL DEFAULT '{}'`,
+      `ALTER TABLE "Venture" ADD COLUMN "targetMonth" TEXT`,
+      `ALTER TABLE "PersonStatement" ADD COLUMN "kind" TEXT`,
+      `ALTER TABLE "Figure" ADD COLUMN "amountFrom" TEXT`,
+      `ALTER TABLE "Figure" ADD COLUMN "costLineId" TEXT`,
+      `ALTER TABLE "Figure" ADD COLUMN "roadId" TEXT`,
+      `ALTER TABLE "Figure" ADD COLUMN "roadStepId" TEXT`,
+    ]);
+    expect(statements.filter((s) => /^CREATE TABLE/.test(s)).map((s) => /^CREATE TABLE "(\w+)"/.exec(s)![1])).toEqual([
+      "SkillMark",
+      "StepProgress",
+      "PersonFigure",
+    ]);
+    for (const s of statements) {
+      expect(s, "only ALTER TABLE … ADD COLUMN, CREATE TABLE and CREATE INDEX").toMatch(/^(ALTER TABLE "\w+" ADD COLUMN |CREATE TABLE "|CREATE (UNIQUE )?INDEX ")/);
+      expect(s).not.toMatch(/\bDROP\b|\bRENAME\b|INSERT INTO|PRAGMA/i);
+    }
+  });
+
+  it("keeps every row of every table; old ideas get the general road, no endings and no month", () => {
+    // Everything before this migration, as a person on the version before it has it.
+    const before = path.join(dir, "migrations-before-cockpit-storage");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= storageMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(tables(dbFile)).not.toContain("StepProgress");
+    expect(columns(dbFile, "Venture")).not.toContain("roadId");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    // One of every table, with invented values: ideas with figures, links, map progress and a first sentence.
+    const sha = "c".repeat(64);
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, activityTags, notes, goals, updatedAt)
+        VALUES ('v1', 'u1', 'First idea', 'SERVICE', 'AB', 1000, 3000, 'APPRENTICE', '["Trades"]', 'my note', '["write-offs"]', 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'BC', 2000, 6000, 'SELF_EMPLOYED', '[]', '', '[]', 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt, ventureId) VALUES ('s1', 'u1', 'in my words', 0, NULL), ('s2', 'u1', 'A sign shop', 1, 'v1');
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '{"gstTiming":"stage-2a-voluntary-gst-registration","incorporationTiming":"stage-3a-incorporation-80k-net"}', 0),
+               ('p2', 'v2', '[]', '[]', '[]', '{}', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status, taxYear, formLine)
+        VALUES ('f1', 'v1', 'gross-revenue', 0, 1, 1234500, 'typed', 'typed by you', 'confirmed', NULL, NULL),
+               ('f2', 'v2', 'business-gross-income', 2, 3, 4825000, 'tax-return', 'return-2025.pdf', 'proposed', 2025, 'T2125 8299');
+      INSERT INTO "Setting" (key, value, updatedAt) VALUES ('figure-reminders', '{"cadences":["monthly"],"ideaIds":["v1"]}', 0);
+      INSERT INTO "SourceAccount" (id, name, allowance, agreedAt) VALUES ('a1', 'Visa ending 1234', 'always', 0);
+      INSERT INTO "Expense" (id, ventureId, date, amountCents, paidTo, whatFor, sourceKind, sourceLabel, status)
+        VALUES ('e1', 'v1', 0, 4599, 'Example Stationery Ltd', 'printer paper', 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "Receipt" (id, expenseId, type, bytes, sha256) VALUES ('${"3".repeat(32)}', 'e1', 'image/png', 99, '${sha}');
+    `,
+    );
+    const tablesBefore = ["User", "PersonStatement", "Venture", "VentureLink", "ScenarioState", "Figure", "Setting", "SourceAccount", "Expense", "Receipt"];
+    const oldColumns = Object.fromEntries(
+      tablesBefore.map((t) => [
+        t,
+        columns(dbFile, t)
+          .map((c) => (/Cents$/.test(c) ? `CAST("${c}" AS TEXT) AS "${c}"` : `"${c}"`))
+          .join(", "),
+      ]),
+    );
+    const everything = () => Object.fromEntries(tablesBefore.map((t) => [t, query(dbFile, `SELECT ${oldColumns[t]} FROM "${t}" ORDER BY 1`)]));
+    const held = everything();
+    expect(held.Figure).toHaveLength(2);
+    expect(held.ScenarioState).toHaveLength(2);
+
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 17 });
+    expect(applied).toEqual(localNames.filter((n) => n >= storageMigration!));
+    expect(backup).not.toBeNull();
+
+    // Every row is still there, unchanged, in every column it had.
+    expect(everything()).toEqual(held);
+    // Old ideas: the general road (no road id), no endings, no month; old statements and figures: none of the new.
+    expect(query(dbFile, `SELECT id, roadId, forkPicks, targetMonth FROM "Venture" ORDER BY id`)).toEqual([
+      { id: "v1", roadId: null, forkPicks: "{}", targetMonth: null },
+      { id: "v2", roadId: null, forkPicks: "{}", targetMonth: null },
+    ]);
+    expect(query(dbFile, `SELECT kind FROM "PersonStatement" WHERE kind IS NOT NULL`)).toEqual([]);
+    expect(query(dbFile, `SELECT id FROM "Figure" WHERE roadId IS NOT NULL OR roadStepId IS NOT NULL OR costLineId IS NOT NULL OR amountFrom IS NOT NULL`)).toEqual([]);
+
+    // The new tables take rows, linked to the person and the ideas.
+    runSql(
+      dbFile,
+      `INSERT INTO "SkillMark" (id, userId, ownLabel, mark) VALUES ('m1', 'u1', 'Reading shop drawings', 'learning');
+       INSERT INTO "StepProgress" (id, ventureId, roadId, stepId, status, updatedAt)
+         VALUES ('sp1', 'v1', 'road-starting-any-business-ab', 'stage-1-sole-prop-activation', 'done', 0),
+                ('sp2', 'v2', 'road-starting-any-business-ab', 'stage-1-sole-prop-activation', 'doing', 0);
+       INSERT INTO "PersonFigure" (id, userId, kind, amountCents, per, sourceKind, sourceLabel)
+         VALUES ('pf1', 'u1', 'income-wanted', 7000000, 'year', 'typed', 'typed by you');`,
+    );
+    expect(query(dbFile, `SELECT doneWhenIds, changes FROM "StepProgress" WHERE id = 'sp1'`)).toEqual([{ doneWhenIds: "[]", changes: "[]" }]);
+
+    // The safety copy taken first holds the same rows, without the new tables.
+    expect(query<{ n: number }>(backup!, `SELECT count(*) AS n FROM "Venture"`)).toEqual([{ n: 2 }]);
+    expect(tables(backup!)).not.toContain("SkillMark");
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
+
+    // Prisma's own referee agrees the file matches the migrations.
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // Deleting an idea takes its own figures, links, map progress and step progress, and nothing of the
+    // person's: their skill marks and income target stay, and so do its first sentence and expense record.
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure"`)).toEqual([{ id: "f2" }]);
+    expect(query(dbFile, `SELECT * FROM "VentureLink"`)).toEqual([]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "ScenarioState"`)).toEqual([{ id: "p2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "StepProgress"`)).toEqual([{ id: "sp2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SkillMark"`)).toEqual([{ id: "m1" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "PersonFigure"`)).toEqual([{ id: "pf1" }]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "PersonStatement" ORDER BY id`)).toEqual([
+      { id: "s1", ventureId: null },
+      { id: "s2", ventureId: null },
+    ]);
+    expect(query(dbFile, `SELECT id, ventureId FROM "Expense"`)).toEqual([{ id: "e1", ventureId: null }]);
+  }, 60_000);
+});

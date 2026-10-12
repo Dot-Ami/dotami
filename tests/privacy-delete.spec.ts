@@ -318,6 +318,17 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     }
   });
 
+  it("phase 1 storage (2026-10-11): step progress goes with ideas; skill marks and the income target each have a box", () => {
+    // Step progress belongs to a future, so the database deletes it with one.
+    expect(DELETE_MENU.find((e) => e.id === "ideas")!.alsoDeletes).toContain("StepProgress");
+    // Skill marks and the income target belong to the person: deleting ideas leaves them, so each has its own box.
+    const marks = DELETE_MENU.find((e) => e.id === "skill-marks")!;
+    expect(marks).toMatchObject({ tables: ["SkillMark"], alsoDeletes: [], built: true });
+    const income = DELETE_MENU.find((e) => e.id === "income-wanted")!;
+    expect(income).toMatchObject({ tables: ["PersonFigure"], alsoDeletes: [], built: true });
+    for (const box of [marks, income]) expect(box.goesWithIt).toMatch(/your ideas stay/i);
+  });
+
   it("says what goes with each box and has a Learn more for it; a box not built yet deletes nothing", () => {
     for (const e of DELETE_MENU) {
       expect(e.label.trim()).not.toBe("");
