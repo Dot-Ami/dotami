@@ -277,8 +277,8 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   and month goes through `lib/format/money-and-months.ts`.
 - **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
   last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
-  the yearly income question, and phone width (its own next item; this screen wraps the gauges two by
-  two on a narrow window and keeps the map scrolling sideways, as before). With no road written beyond
+  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
+  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
   road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
   empty line until the road content lands; the tests use an invented road for them.
 

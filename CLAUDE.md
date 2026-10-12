@@ -40,7 +40,10 @@ says where it is going.
 ## What the app is
 
 - Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
-  `/cockpit[?venture=<id>]` (the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
+  idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
+  detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps; node
   detail; playbook export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
@@ -68,7 +71,11 @@ says where it is going.
   one saved setting; answers only DotAmi's own window, no agent access yet) · `your-data/delete`
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
-  only DotAmi's own window; adding is refused until the bank-records setting is live).
+  only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
+  (GET what the cockpit keeps for an idea: its road, picks, month and step progress, the person's skill
+  marks, their agreed yearly income and the idea's first sentence; + `/progress` and `/date`, POST a
+  step's status or ticks and the person's month) · `skill-marks` (POST one mark); the three writes
+  answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
@@ -89,8 +96,9 @@ says where it is going.
   its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
   `ScenarioState` · `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
-  when* lines, status changes; keyed by permanent ids, deleted with the future; no status on road 0,
-  whose step statuses are the map's in `ScenarioState`) · `SkillMark` (per person,
+  when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
+  included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the
+  person's status) · `SkillMark` (per person,
   not per future: have / learning / not yet on a shared skill item or the person's own skill; "I don't
   know" removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
   proposed then agreed) · `Figure` (the totals

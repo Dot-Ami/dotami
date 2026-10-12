@@ -64,6 +64,13 @@ export interface RoadStep {
   officialLinks: OfficialLink[];
   /** At least one. */
   citations: EngineCitation[];
+  /**
+   * The rules and tax cards that belong on this step, by their catalog ids (write-offs, grants,
+   * compliance entries). Whether a card applies to the person is still the rules' call; this only says
+   * the card is about this step. Optional: a step with none shows no cards on it. (2026-10-12: moved
+   * here from lib/brain/node-items.ts, so a road names its own cards.)
+   */
+  engineHints?: string[];
 }
 
 export interface DoneWhenLine {

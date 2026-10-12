@@ -312,8 +312,8 @@ describe("the four gauges are counts and sums", () => {
       }),
     );
     expect(result.gauges.steps).toEqual({ done: 2, doing: 1, notOnYourPath: 2, total: 7 });
-    // Ticks count once each, and only the step's own lines.
-    expect(stepOf(result, "step-eval-train").doneWhen).toEqual({ ticked: 1, total: 2 });
+    // Ticks count once each, and only the step's own lines (their ids, for the step panel's boxes).
+    expect(stepOf(result, "step-eval-train").doneWhen).toEqual({ ticked: 1, total: 2, tickedIds: ["dw-eval-train-1"] });
   });
 
   it("skills: each listed item once, unmarked ones counted on their own; the person's own skills apart", () => {

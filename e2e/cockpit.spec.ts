@@ -87,7 +87,7 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // A step: the step panel keeps node detail and adds the person's status.
   await stage(page, "Sole Prop activation").click();
   await expect(stepPanel(page).getByText("For you on this stage", { exact: false })).toBeVisible();
-  await expect(stepPanel(page).getByText(/^Sources for this stage/)).toBeVisible();
+  await expect(stepPanel(page).getByText(/Sources for this stage · \d+/)).toBeVisible();
   const done = stepPanel(page).getByRole("button", { name: "Done", exact: true });
   await expect(done).toHaveAttribute("aria-pressed", "false");
   await done.click();

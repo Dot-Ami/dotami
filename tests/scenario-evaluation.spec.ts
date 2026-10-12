@@ -115,7 +115,10 @@ describe("no screen or route runs a saved venture's rules without its picks", ()
   });
 
   it("the cockpit and the readout colour the map through evaluateScenario", () => {
-    for (const rel of ["components/cockpit/cockpit-page.tsx", "app/api/readout/route.ts"]) {
+    // Since 2026-10-12 the cockpit runs road evaluation, whose rules run is evaluateScenario on the idea
+    // with its own picks (lib/roads/evaluate-road.ts runRules), and draws the map from that run.
+    expect(readFileSync(path.join(root, "components/cockpit/cockpit-page.tsx"), "utf8")).toMatch(/\bevaluateRoad\s*\(/);
+    for (const rel of ["lib/roads/evaluate-road.ts", "app/api/readout/route.ts"]) {
       expect(readFileSync(path.join(root, rel), "utf8"), rel).toMatch(/\bevaluateScenario\s*\(/);
     }
   });

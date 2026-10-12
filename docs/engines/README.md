@@ -43,11 +43,12 @@ in `docs/brain/`.
    the date; if you can't verify, don't touch the entry.
 8. **IDs are forever.** Archetypes, annotations, and (soon) risk entries reference engine
    ids. Rename labels freely; never rename ids.
-9. **A new entry usually needs a hint too.** `NODE_ENGINE_HINTS` in
-   `lib/brain/node-items.ts` maps each lifecycle node to the catalog entry ids that show on
-   its card. Add your id to the node it belongs under; an entry with no hint still appears,
-   but only under "Elsewhere on your map". `tests/engine-integrity.spec.ts` fails on a hint
-   naming an id no catalog has.
+9. **A new entry usually needs a hint too.** Each road step names the catalog entry ids that
+   show on its card in `engineHints` (road 0's are in
+   `lib/engines/roads/v2026/starting-any-business-ab.ts`; until 2026-10-12 they were
+   `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`, which now reads them from the road). Add your
+   id to the step it belongs under; an entry with no hint still appears, but only under "Elsewhere
+   on your map". `tests/engine-integrity.spec.ts` fails on a hint naming an id no catalog has.
 
 ## Known duplication — status
 
@@ -57,8 +58,9 @@ rule stands permanently: **never add venture knowledge to a component** — add 
 catalog and let the brain drive the UI.
 
 Since then `exploration-page.tsx`, `cockpit-projection-footer.tsx` and `lib/archetypes/`
-were deleted (S2.5.4h, 2026-09-14); the node→engine hint map now lives in
-`lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` (convention 9 below).
+were deleted (S2.5.4h, 2026-09-14); the node→engine hint map lived in
+`lib/brain/node-items.ts` as `NODE_ENGINE_HINTS` and since 2026-10-12 is each road step's
+`engineHints` (convention 9 above).
 
 Residual to sweep: the "$30K GST line" copy in `components/discovery/intake-page.tsx`,
 and the `lib/brain/goal-effects.ts` cards that still carry empty citations.
