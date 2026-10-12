@@ -190,6 +190,14 @@ test("skills: road 0's legal requirement on its step, and the government's list 
   const skills = page.getByRole("region", { name: "Skills on this road" });
   await expect(skills.getByText("Pick the job closest to the work you'd do yourself")).toBeVisible();
   const search = skills.getByRole("searchbox", { name: "Search jobs by name or code" });
+  // The job names searched are the government's, so the licence's line is there before any pick.
+  await expect(skills.getByText("Contains information licensed under the Open Government Licence – Canada.")).toBeVisible();
+  // More match than are shown: the screen says so, with the count.
+  await search.fill("manager");
+  await expect(skills.getByText(/^Showing 10 of \d+ jobs that match\. Type more of the name or the code to narrow it\.$/)).toBeVisible();
+  // Every word typed, each anywhere in the name.
+  await search.fill("restaurant manager");
+  await expect(skills.getByRole("button", { name: "Restaurant and food service managers · 60030.00" })).toBeVisible();
   await search.fill("cabinet");
   await skills.getByRole("button", { name: "Cabinetmakers · 72311.00" }).click();
 

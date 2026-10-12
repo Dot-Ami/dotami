@@ -13,7 +13,7 @@ import { SkillsListPanel } from "@/components/cockpit/gauge-panels";
 import { StepPanel } from "@/components/cockpit/step-panel";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { gaugeView } from "@/lib/cockpit/view";
-import { OASIS_ATTRIBUTION, oasisListForJob } from "@/lib/engines/oasis/v2026";
+import { OASIS_ATTRIBUTION, oasisDatasetCitation, oasisListForJob } from "@/lib/engines/oasis/v2026";
 import { evaluateRoad, roadReceipt } from "@/lib/roads";
 
 import { input, inventedIdea, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
@@ -62,6 +62,16 @@ describe("the Skills list: your pick of job", () => {
     expect(html).not.toContain(`>${cockpitWords.lists.job.tag}<`);
   });
 
+  it("with no job picked, the licence's line is there too: the job names searched are the government's", () => {
+    const html = drawList({ job: null, jobPickedOn: null });
+    expect(html).toContain(esc(OASIS_ATTRIBUTION));
+    expect(html).toContain('href="https://open.canada.ca/en/open-government-licence-canada"');
+  });
+
+  it("the road's own items sit under a heading of their own, apart from the job's list", () => {
+    expect(drawList()).toContain(`>${esc(cockpitWords.lists.roadTitle)}<`);
+  });
+
   it("with a job picked: its name, code and day, Change and Take back, then every item tagged with its marks", () => {
     const html = drawList();
     expect(html).toContain("Cabinetmakers");
@@ -76,7 +86,7 @@ describe("the Skills list: your pick of job", () => {
     expect(html).toContain(`>${cockpitWords.lists.job.groups.knowledge}<`);
     expect(html).toContain(esc(OASIS_ATTRIBUTION));
     expect(html).toContain('href="https://open.canada.ca/en/open-government-licence-canada"');
-    expect(html).toContain(esc(cockpitWords.lists.job.employees));
+    expect(html).toContain(esc(cockpitWords.lists.job.aboutTheList));
     // The person's mark on Numeracy shows as pressed.
     const row = html.slice(html.indexOf(">Numeracy<"));
     expect(row.slice(0, row.indexOf("</li>"))).toContain('aria-pressed="true"');
@@ -98,7 +108,60 @@ describe("the words for the job's list", () => {
   it("hold no rating words, and no claim about what a business needs", () => {
     const all = JSON.stringify(cockpitWords.lists.job) + JSON.stringify(cockpitWords.gauges.skills) + JSON.stringify(cockpitWords.panel);
     expect(all).not.toMatch(RATING);
-    expect(cockpitWords.lists.job.employees).toContain("not owners");
+    expect(cockpitWords.lists.job.aboutTheList).toContain("DotAmi doesn't say which skills a business needs.");
+  });
+
+  // The government's own profiles list "Self-employed" among the workplaces for a job (Cabinetmakers,
+  // 72311.00, and Carpenters, 72310.00, read 2026-10-12), so no line may say the list leaves owners out.
+  it("make no claim about whom the government's list describes", () => {
+    const NO_SOURCE = /not owners|employed in (this|the) job|describes? employees/i;
+    expect(JSON.stringify(cockpitWords)).not.toMatch(NO_SOURCE);
+    expect(oasisDatasetCitation("skills", "72311.00").note).not.toMatch(NO_SOURCE);
+    expect(oasisDatasetCitation("knowledge", "72311.00").note).not.toMatch(NO_SOURCE);
+  });
+
+  it("say when the search shows only some of the jobs that match", () => {
+    expect(cockpitWords.lists.job.more(10, 56)).toBe("Showing 10 of 56 jobs that match. Type more of the name or the code to narrow it.");
+    // The search reads the names and codes, so the no-match line says no name or code holds the words,
+    // not that no such job exists.
+    expect(cockpitWords.lists.job.noMatch).toBe("No job name or code holds those words.");
+  });
+});
+
+describe("a receipt about the pick of job never reads as marks given or taken back", () => {
+  // Marks are kept for the person whatever the pick is (design § 6, "Taking back the pick of job keeps
+  // the marks"), so a mark coming into or out of view with a pick wasn't given or taken back just then.
+  const hairstylists = oasisListForJob("63210.01")!;
+  const productDesign = cabinetmakers.items.find((i) => i.label === "Product Design")!;
+  const marks = [
+    { skillItemId: numeracy.id, ownLabel: null, mark: "have" as const },
+    { skillItemId: productDesign.id, ownLabel: null, mark: "learning" as const },
+  ];
+  const picked = evaluateRoad(input({ job: cabinetmakers, skillMarks: marks }));
+
+  it("taking back the pick: the receipt names the pick only", () => {
+    const receipt = roadReceipt(picked, evaluateRoad(input({ job: null, skillMarks: marks }))).join(" ");
+    expect(receipt).toContain("you took back your pick of job");
+    expect(receipt).not.toMatch(/skill mark|your mark on|Numeracy|Product Design/);
+  });
+
+  it("changing the pick: a mark on an item only the old job lists is not taken back", () => {
+    expect(hairstylists.items.some((i) => i.id === productDesign.id)).toBe(false);
+    const receipt = roadReceipt(picked, evaluateRoad(input({ job: hairstylists, skillMarks: marks }))).join(" ");
+    expect(receipt).toContain("Hairstylists");
+    expect(receipt).not.toMatch(/took back|Product Design/);
+  });
+
+  it("picking a job: marks already on its items are not read as marked just now", () => {
+    const receipt = roadReceipt(evaluateRoad(input({ job: null, skillMarks: marks })), picked).join(" ");
+    expect(receipt).toContain("Cabinetmakers");
+    expect(receipt).not.toMatch(/you marked|told us you|Numeracy|Product Design/);
+  });
+
+  it("a mark made or taken back with the same pick still reads as one", () => {
+    const unmarked = evaluateRoad(input({ job: cabinetmakers, skillMarks: marks.slice(0, 1) }));
+    expect(roadReceipt(picked, unmarked).join(" ")).toContain("Product Design");
+    expect(roadReceipt(unmarked, picked).join(" ")).toContain("Product Design");
   });
 });
 

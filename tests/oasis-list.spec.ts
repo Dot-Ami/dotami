@@ -58,16 +58,28 @@ describe("the jobs a person can pick", () => {
     expect(oasisJobByCode("99999.99")).toBeUndefined();
   });
 
-  it("are searched by any part of the name, whatever its capitals, or by the start of the code; ten at most, in the dataset's order", () => {
-    expect(searchOasisJobs("cabinet")).toContainEqual({ code: "72311.00", label: "Cabinetmakers" });
-    expect(searchOasisJobs("CABINETMAKERS")).toEqual([{ code: "72311.00", label: "Cabinetmakers" }]);
-    expect(searchOasisJobs("72311")).toEqual([{ code: "72311.00", label: "Cabinetmakers" }]);
-    expect(searchOasisJobs("manager").length).toBe(10);
+  it("are searched by every word typed, each anywhere in the name whatever its capitals or the start of the code; ten shown at most, in the dataset's order, with the count of all that match", () => {
+    expect(searchOasisJobs("cabinet").jobs).toContainEqual({ code: "72311.00", label: "Cabinetmakers" });
+    expect(searchOasisJobs("CABINETMAKERS")).toEqual({ jobs: [{ code: "72311.00", label: "Cabinetmakers" }], total: 1 });
+    expect(searchOasisJobs("72311")).toEqual({ jobs: [{ code: "72311.00", label: "Cabinetmakers" }], total: 1 });
     const many = searchOasisJobs("manager");
-    expect(many.map((j) => j.code)).toEqual([...many.map((j) => j.code)].sort());
-    expect(searchOasisJobs("")).toEqual([]);
-    expect(searchOasisJobs("   ")).toEqual([]);
-    expect(searchOasisJobs("no job is called this")).toEqual([]);
+    expect(many.jobs.length).toBe(10);
+    // Every job whose name holds "manager", counted from the list itself, not a number written here.
+    expect(many.total).toBe(oasisJobs.filter((j) => j.label.toLowerCase().includes("manager")).length);
+    expect(many.total).toBeGreaterThan(10);
+    expect(many.jobs.map((j) => j.code)).toEqual([...many.jobs.map((j) => j.code)].sort());
+    expect(searchOasisJobs("")).toEqual({ jobs: [], total: 0 });
+    expect(searchOasisJobs("   ")).toEqual({ jobs: [], total: 0 });
+    expect(searchOasisJobs("no job is called this")).toEqual({ jobs: [], total: 0 });
+  });
+
+  it("find a job from everyday words, each anywhere in its name, never scored", () => {
+    expect(searchOasisJobs("restaurant manager").jobs).toContainEqual({ code: "60030.00", label: "Restaurant and food service managers" });
+    expect(searchOasisJobs("hair stylist").jobs).toContainEqual({ code: "63210.01", label: "Hairstylists" });
+    expect(searchOasisJobs("heavy duty mechanic").jobs).toContainEqual({ code: "72401.00", label: "Heavy-duty equipment mechanics" });
+    expect(searchOasisJobs("Mechanic  heavy").jobs).toContainEqual({ code: "72401.00", label: "Heavy-duty equipment mechanics" });
+    // A word that is in no name is still no match: every word must be there.
+    expect(searchOasisJobs("cabinet daycare").total).toBe(0);
   });
 });
 
