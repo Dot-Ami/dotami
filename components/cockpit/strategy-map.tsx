@@ -44,6 +44,16 @@ const STAGE_CHIP: Record<ScenarioNodeStatus, { label: string; className: string 
   ghost: { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
 };
 
+/**
+ * The left accent in words, for the card's accessible name, so the colour is never the only way to
+ * tell (2026-10-11). The same words as the legend.
+ */
+const COLOUR_WORDS: Record<"green" | "yellow" | "gray", string> = {
+  green: "applies as answered",
+  yellow: "check first",
+  gray: "doesn't apply as answered",
+};
+
 /** Left accent from the evaluator's read of the answers: met · plausible · not applicable. */
 const ACCENT: Record<"green" | "yellow" | "gray", string> = {
   green: "border-l-sage",
@@ -217,7 +227,7 @@ function StageCard({
       onFocus={() => onHover(true)}
       onBlur={() => onHover(false)}
       aria-pressed={selected}
-      aria-label={`${node.label}, ${chip.label}, opens detail`}
+      aria-label={`${node.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
       } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
@@ -320,6 +330,7 @@ function Legend({ coverage }: { coverage: EvaluationResult["provinceCoverage"] }
       <span className="text-stone-dim">Stage chip = where it sits on your path</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-sage" /> applies as answered</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-amber" /> check first — confirm, time-boxed, or one fork away</span>
+      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-rule" /> doesn&apos;t apply as answered</span>
       <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-xs bg-rule" /> left bar = what your answers support</span>
       {coverage === "federal-only" ? <span className="text-amber">federal rules only for this province</span> : null}
       <span className="ml-auto normal-case tracking-normal text-stone-dim">Compass, not GPS — nothing here is a recommendation.</span>

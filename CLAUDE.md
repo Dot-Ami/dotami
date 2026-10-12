@@ -41,8 +41,9 @@ says where it is going.
 
 - Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the map: tier columns of stage cards + lever cards; node
-  detail; playbook export) · `/ventures` (every saved venture, its stage, notes,
-  cross-references) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
+  detail; playbook export; the cards' colours come from the rules run on the venture's own branch
+  picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
+  cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
   this copy today; the settings marked live there, so far Figure reminders and Encrypt the data file, can be changed and are
   saved) · `/your-data` ("What DotAmi knows about you": every figure by source, counts of
@@ -76,7 +77,11 @@ says where it is going.
   `docs/architecture/database-encryption.md`; every backup it writes is locked with a passphrase,
   required since [8i]: `desktop/backup.mjs` `writeBackup` refuses one without, and older backups still
   restore) — `User` (single stub user, no
-  auth) · `PersonStatement` · `Venture` · `VentureLink` · `ScenarioState` · `Figure` (the totals
+  auth) · `PersonStatement` (the person's words, dated; the sentence typed on the front door is one,
+  linked to the idea it was typed for by `ventureId`, written once per sentence typed by the intake's
+  first save of an idea (the tab marks it done after, `lib/journey/first-save.ts`), kept, tied to no
+  idea, when the idea is deleted) · `Venture` (with `goals`, the intake's goal chips as they stood when
+  the map opened, shown back and read by no rule) · `VentureLink` · `ScenarioState` · `Figure` (the totals
   the person agreed to; [8a]) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
   the one place DotAmi holds single transactions, with no bank or card number; its idea is
   optional and cleared, not deleted, when its idea is deleted (onDelete: SetNull), a refund is a negative amount or a refund record linked to its purchase; [8i]) · `Receipt` (the receipt file the person added to an agreed
@@ -191,3 +196,7 @@ usage reports; never call `next` or `prisma` directly in a `package.json` script
   the file, same commit.
 - Catalog conventions: `docs/engines/README.md` and `docs/engines/<engine>.md`.
 - Architecture: `docs/architecture/`. The rules engine: `docs/brain/`.
+- The future cockpit (the top priority since 2026-10-10: the journey from where a person wants to
+  be, the cockpit's job, regions and overlays, the road data model and its storage, and the
+  maintainer's six decisions of 2026-10-11): `docs/architecture/future-cockpit.md`. Read it before
+  changing the front door, the intake, the cockpit, *Your ideas* or the CFE map.

@@ -8,6 +8,68 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
+  **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
+  the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point
+  to incorporate; the person does, and the card says so: "DotAmi doesn't pick a point to incorporate.
+  You do, with your accountant or lawyer." It is amber (check first) while it is the selected option
+  (the person's pick, or the default until they click) and grey when the other option is selected,
+  whatever their estimates. Its detail keeps only cited facts
+  (the CRA's corporation page, the T2 guide's $500,000 business limit). The Incorporation timing toggle
+  reads **When you decide** / **Liability / SR&ED**; Retained earnings planning lights only for an idea
+  the person said is a corporation. The node's id is unchanged, so saved ideas keep their picks. A test
+  now fails on any dollar figure on the map that isn't one a cited page sets
+  ([`tests/engine-integrity.spec.ts`](tests/engine-integrity.spec.ts); docs/engines/cfe.md).
+- **Stage cards say their colour in words** to a screen reader ("applies as answered", "check first",
+  "doesn't apply as answered"), so the colour is never the only way to tell; the map's legend now
+  names grey too.
+
+### Fixed
+- **The map's colours follow your own picks.** The cockpit ran the rules on the default GST and
+  incorporation picks, so flipping **GST timing** or **Incorporation timing** moved the chips but not the
+  card colours. It now runs them on the idea's own picks, through one function the readout API uses too
+  ([`lib/scenarios/evaluate-scenario.ts`](lib/scenarios/evaluate-scenario.ts)); a test refuses any other
+  way of colouring a saved idea's map.
+- **The sentence you type on the front door is kept.** It, and the intake's goal chips, lived only in the
+  browser tab and were lost when it closed. When the map first opens, the sentence is saved with the idea,
+  word for word and dated the day you typed it, as one of your statements, and the goal chips as they stood
+  on the intake go on the idea; the idea's card shows both under "In your words" ("Goals marked on the
+  intake", since some chips can be marked from the sentence and confirmed there). The sentence is saved
+  once: going back through the intake from the map makes a new idea without a second copy, and a sentence
+  deleted with "Your statements" isn't written back from the same tab. About you and the map's rail list it
+  as "typed for your idea “…”". It is listed and deleted with "Your statements" on What DotAmi knows about
+  you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
+  most a statement holds, and says so when it is full. One hand-written migration adds the two columns
+  (`prisma/migrations/20261011120000_first_words`).
+
+### Documented
+- **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
+  a person starts from where they want to be (a business or a career), picks one future to look
+  inside, and sees its whole road at once: steps, the skills they need, official fees and the cost
+  lines they price themselves; the cockpit becomes the one screen where they plan it and do it. The
+  journey screen by screen, the cockpit's regions, overlays and interactions, what DotAmi asks and
+  why, receipts that show what each answer changed, where the data comes from, the road data model
+  and storage, how each of the repo's rules is met, six fixes from the final check (the uncited
+  $80,000 incorporation trigger comes off the map; federal and Alberta incorporation side by side;
+  the CRA's exact GST/HST test; a model never writes into the person's own words; the job for a
+  skills list is always the person's pick; every *done when* line cited), and the four phases. No
+  code changes (`docs/architecture/future-cockpit.md`).
+- **A new kind of source: the government's skills list for a job** — OaSIS (Employment and Social
+  Development Canada, Open Government Licence – Canada), allowed only through the person's own pick
+  of job, cited by dataset version and record date, its licence line kept with it (`CONTRIBUTING.md`).
+- **The task list** gains the future cockpit's four phases with phase 1's tasks, and three later
+  stories: real examples of how people started, your own test results, and DotAmi getting better
+  over time (`docs/task-list.md` § 14–17).
+- **Older pages corrected in place, each with a dated note**: the roadmap's "In-app AI is off by
+  design" (out of date since the Lens came back on 2026-09-27) and pointers from §1–§3 to the new
+  design (`docs/roadmap.md`); the cockpit page's wrong back-link lines and the retired Track tab
+  (`docs/ui-spec/cockpit/_index.md`, `docs/ui-spec/cockpit/01-header.md`).
+- **Careers are now in scope for new content**, not only small businesses: the relevance rule for a
+  new node, the *New node* issue template and the people DotAmi is for say "starting a business, or
+  working toward a career or a business of their own" (`CONTRIBUTING.md`,
+  `.github/ISSUE_TEMPLATE/new-node.md`, `docs/architecture/use-cases.md`).
+
 ## [0.3.0] — 2026-10-10
 
 Your data file can be locked to your Windows account (asked first, can be turned off), backups take

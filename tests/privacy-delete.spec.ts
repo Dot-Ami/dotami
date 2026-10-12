@@ -247,7 +247,9 @@ describe("the Delete menu covers every table, and says what goes with each", () 
       expect(entry.keeps.map(keptLinkKey).sort(), `${entry.id}: keeps`).toEqual(expected);
       for (const k of entry.keeps) expect(k.becomes.trim()).not.toBe("");
     }
-    expect(DELETE_MENU.find((e) => e.id === "ideas")!.keeps.map(keptLinkKey)).toEqual(["Expense.ventureId"]);
+    // 2026-10-11: the sentence typed on the front door is a statement linked to its idea; deleting the
+    // idea keeps it among the person's statements, tied to no idea.
+    expect(DELETE_MENU.find((e) => e.id === "ideas")!.keeps.map(keptLinkKey)).toEqual(["Expense.ventureId", "PersonStatement.ventureId"]);
   });
 
   it("the menu in the window works out the kept links with the server's own code, not a copy", () => {
@@ -428,22 +430,30 @@ describe("deleteData", () => {
   it("deleting ideas takes their links, map progress and figures, keeps every expense record (not attached yet), and leaves statements and settings", async () => {
     // The case that made the counts wrong: 2 records attached to an idea and 1 not attached.
     const { prisma } = makeDb("ideas");
-    await seed(prisma);
+    const { a } = await seed(prisma);
     const loose = await unattachedExpense(prisma);
+    // 2026-10-11: one statement is the sentence typed on the front door for the first idea.
+    const firstWords = await prisma.personStatement.findFirstOrThrow({ where: { text: "a second statement" } });
+    await prisma.personStatement.update({ where: { id: firstWords.id }, data: { ventureId: a } });
     const before = await countAll(prisma);
     for (const m of ["Venture", "VentureLink", "ScenarioState", "Figure"]) expect(before[m]).toBeGreaterThan(0);
     expect(before.Expense).toBe(3);
 
     // What the page shows and sends: whole-table counts for what goes, and how many records are attached.
-    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, "Expense.ventureId": 2 };
+    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
     expect(await seenFor(prisma, ["ideas"])).toEqual(seen);
     const result = await deleteData(prisma, { kinds: ["ideas"], seen });
     expect(result).toEqual({
       status: "deleted",
       deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2 },
       left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0 },
-      kept: { Expense: { unlinked: 2, total: 3 } },
+      kept: { Expense: { unlinked: 2, total: 3 }, PersonStatement: { unlinked: 1, total: 2 } },
       wiped: true,
+    });
+    // The sentence is still one of the person's statements, word for word, tied to no idea.
+    expect(await prisma.personStatement.findUniqueOrThrow({ where: { id: firstWords.id } })).toMatchObject({
+      text: "a second statement",
+      ventureId: null,
     });
 
     const after = await countAll(prisma);
@@ -478,14 +488,16 @@ describe("deleteData", () => {
     await unattachedExpense(prisma);
     const kinds = ["ideas", "expenses"];
     const seen = await seenFor(prisma, kinds);
-    // The expense records are counted whole, once, and no "kept" count is asked for. Their receipts
-    // (none here) go with them.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 });
+    // The expense records are counted whole, once, and no "kept" count is asked for them. Their receipts
+    // (none here) go with them. Statements aren't ticked, so the ones typed for an idea (none here,
+    // 2026-10-11) are still counted as kept.
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
       deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, Figure: 2, Expense: 3, Receipt: 0 },
       left: { Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0, Expense: 0, Receipt: 0 },
+      kept: { PersonStatement: { unlinked: 0, total: 2 } },
       wiped: true,
     });
   });

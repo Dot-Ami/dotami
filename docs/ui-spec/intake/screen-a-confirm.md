@@ -3,7 +3,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: confirm screen (intent-parse output)
 
-Last updated: 2026-07-02 (page-mechanics workshop, verified line-by-line against shipped code)
+Last updated: 2026-10-11 (the box's sentence and the goal picks are saved with the idea; 2026-07-02: page-mechanics workshop, verified line-by-line against shipped code)
 Workshop status: **signed off**
 
 ## What it is
@@ -18,7 +18,11 @@ The first intake screen. Renders the intent parse of whatever the user typed as
   visit with no prior Landing submission), renders `ConfirmEmptyState` instead: the same
   free-text box + `Map it →` as Landing, POSTing to the same `/api/intent/parse`
   (`handleInlineParse`). Once that resolves, `hasInput` flips true automatically — no
-  explicit "confirmed" transition, purely state-derived.
+  explicit "confirmed" transition, purely state-derived. Since 2026-10-11 this box, like the
+  Landing one, takes up to 2,000 characters and keeps the sentence with the day it was typed;
+  it is saved with the idea when the map opens ([screen B](./screen-b-ground.md)).
+- **Goals** picked here are saved on the idea at the same moment and shown back on its card
+  ("Goals you picked: …"); they still feed nothing on the map.
 - Chip groups (each editable in place):
   - **Venture type** — service / product / side-gig (single select, `Chip` toggle sets
     `intake.ventureType`).

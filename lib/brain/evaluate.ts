@@ -58,7 +58,11 @@ const STRUCTURE_RUNG: Record<StructureEntityType, number> = {
   "family-trust": 4,
 };
 
-/** Revenue within this fraction of a threshold counts as "approaching it". */
+/**
+ * Revenue within this fraction of a threshold counts as "approaching it". No cited page sets 70%: it is
+ * a known uncited watch line, kept until the GST/HST card rework uses only the CRA's own test
+ * (docs/engines/cfe.md, authoring rule 2).
+ */
 const THRESHOLD_WATCH_RATIO = 0.7;
 
 export function buildEvaluationProfile(intake: IntakeDraft): EvaluationProfile {
@@ -468,7 +472,6 @@ function computeNodeStates(
 ): Record<CFENodeId, NodeStateColor> {
   const states: Record<string, NodeStateColor> = {};
   const gstThreshold = 30000;
-  const incorporationNetTrigger = 80000;
   const rdTags = tagsIntersect(profile.activityTags, ["AI / ML / R&D", "Software / SaaS", "Manufacturing"]);
 
   states["stage-0-employee-apprentice-baseline"] = "green";
@@ -492,19 +495,24 @@ function computeNodeStates(
   }
 
   const incPick = activeBranches["incorporationTiming"];
-  const incTriggeredByRevenue = profile.targetRevenueY3 >= incorporationNetTrigger;
-  for (const nodeId of ["stage-3a-incorporation-80k-net", "stage-3b-incorporation-liability-sred"]) {
-    const triggerMet = nodeId === "stage-3b-incorporation-liability-sred" ? rdTags : incTriggeredByRevenue;
-    if (nodeId === incPick) {
-      states[nodeId] = triggerMet ? "green" : "yellow";
-    } else {
-      states[nodeId] = triggerMet ? "yellow" : "gray";
-    }
+  // "Incorporating" (stage-3a): DotAmi doesn't pick a point to incorporate, the person does, so no
+  // amount lights it. It is "check first" while it is their pick and off their path otherwise. Until
+  // 2026-10-11 a third-year SALES estimate of $80,000 turned it green: a net-income heuristic with no
+  // source (docs/engines/cfe.md, authoring rule 2).
+  states["stage-3a-incorporation-80k-net"] = incPick === "stage-3a-incorporation-80k-net" ? "yellow" : "gray";
+  // Liability / SR&ED (stage-3b) reads the activity tags (confirmed on the intake, often marked by the
+  // parser from the sentence), not a liability or SR&ED need the person stated: an open item (docs/task-list.md [10f]).
+  const sredPath = "stage-3b-incorporation-liability-sred";
+  if (incPick === sredPath) {
+    states[sredPath] = rdTags ? "green" : "yellow";
+  } else {
+    states[sredPath] = rdTags ? "yellow" : "gray";
   }
 
+  // Corporation-stage planning lights only for an idea the person said is a corporation.
   const incorporated = profile.structure === "ccpc";
   states["stage-4-sred-deepening"] = incorporated && rdTags ? "yellow" : "gray";
-  states["stage-4-retained-earnings-planning"] = incorporated || incTriggeredByRevenue ? "yellow" : "gray";
+  states["stage-4-retained-earnings-planning"] = incorporated ? "yellow" : "gray";
 
   states["branch-hire-first-employee"] = profile.hireFirst ? "yellow" : "gray";
   states["branch-service-vs-productize"] = "yellow";

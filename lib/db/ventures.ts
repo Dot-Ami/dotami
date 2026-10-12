@@ -58,6 +58,14 @@ export interface VentureSummary {
   updatedAt: string;
   createdAt: string;
   links: VentureLinkSummary[];
+  /**
+   * The sentence the person typed on the front door for this idea, word for word, with the day they
+   * typed it (a statement linked to the idea; 2026-10-11). Null when there is none: an idea saved
+   * before then, or after the person deleted their statements.
+   */
+  firstWords: { text: string; saidAt: string } | null;
+  /** The goal chips picked on the intake (ids from lib/journey/types.ts), as saved with the idea. */
+  goals: string[];
 }
 
 /** Every idea the person has saved, newest touched first, with its cross-references. */
@@ -71,6 +79,9 @@ export async function listVentures(prisma: PrismaClient): Promise<VentureSummary
     include: {
       linksFrom: { include: { to: { select: { id: true, name: true } } } },
       linksTo: { include: { from: { select: { id: true, name: true } } } },
+      // Only the intake's first save links a statement to an idea, so there is at most one; the
+      // earliest is taken all the same.
+      statements: { orderBy: [{ saidAt: "asc" }, { createdAt: "asc" }], take: 1, select: { text: true, saidAt: true } },
     },
   });
 
@@ -89,6 +100,11 @@ export async function listVentures(prisma: PrismaClient): Promise<VentureSummary
     targetRevenueY3: row.targetRevenueY3,
     updatedAt: row.updatedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
+    // A statement's day is stored as midnight UTC of that day, so its UTC date is the day itself.
+    firstWords: row.statements[0]
+      ? { text: row.statements[0].text, saidAt: row.statements[0].saidAt.toISOString().slice(0, 10) }
+      : null,
+    goals: toStringList(row.goals),
     links: [
       ...row.linksFrom.map((l) => ({
         id: l.id,

@@ -17,7 +17,13 @@ function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function rowToStatement(row: { id: string; text: string; saidAt: Date; createdAt: Date }): PersonStatement {
+function rowToStatement(row: {
+  id: string;
+  text: string;
+  saidAt: Date;
+  createdAt: Date;
+  venture?: { id: string; name: string } | null;
+}): PersonStatement {
   return {
     id: row.id,
     text: row.text,
@@ -25,6 +31,8 @@ function rowToStatement(row: { id: string; text: string; saidAt: Date; createdAt
     source: "typed",
     sourceRef: "app",
     recordedAt: row.createdAt.toISOString(),
+    // The idea a front-door sentence was typed for, so the lists can say so (not "typed here").
+    ...(row.venture ? { idea: { id: row.venture.id, name: row.venture.name } } : {}),
   };
 }
 
@@ -35,6 +43,7 @@ export async function listTypedStatements(prisma: PrismaClient): Promise<PersonS
   const rows = await prisma.personStatement.findMany({
     where: { userId: user.id },
     orderBy: [{ saidAt: "desc" }, { createdAt: "desc" }],
+    include: { venture: { select: { id: true, name: true } } },
   });
   return rows.map(rowToStatement);
 }

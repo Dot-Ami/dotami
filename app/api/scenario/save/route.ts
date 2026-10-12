@@ -4,7 +4,7 @@ import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib
 import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
-import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
+import { parseFirstSave, parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -32,8 +32,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid scenario payload" }, { status: 400 });
   }
 
+  // The intake's first save also carries the typed sentence and the goal picks; the cockpit's
+  // autosaves carry neither. Kept only when this save creates the idea.
+  const firstSave = parseFirstSave(body, new Date());
+
   try {
-    const { ventureId } = await ensureVentureFromScenario(prisma, scenario);
+    const { ventureId } = await ensureVentureFromScenario(prisma, scenario, firstSave);
     return NextResponse.json({ ok: true as const, ventureId });
   } catch (error) {
     logRouteError("scenario/save", error);

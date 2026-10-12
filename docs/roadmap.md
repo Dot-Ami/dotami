@@ -1,6 +1,17 @@
 # Where DotAmi is going
 
-Last updated: 2026-09-20.
+Last updated: 2026-10-11.
+
+> **2026-10-11 — what changed on this page, and why.** The maintainer named the *future cockpit*
+> the top priority on 2026-10-10 and made its six decisions on 2026-10-11
+> ([architecture/future-cockpit.md](architecture/future-cockpit.md)): a person starts from where
+> they want to be — a business **or a career** — picks one future to look inside, and plans and
+> does the work in the cockpit. That design is the first piece of §1 (roadmaps as data), §2
+> (progress) and §3 (projects, as each step's *done when* checklist), so those sections now point
+> to it. §0's line "In-app AI is off by design" was already out of date: on 2026-09-27 the
+> maintainer brought the Lens back as DotAmi's built-in agent on the person's own model
+> ([architecture/use-cases.md](architecture/use-cases.md)); the line is corrected below. Nothing
+> else on this page changed.
 
 DotAmi's mission is that everyone has access to the same tools, tactics and tricks the elite
 have: every path that leads to financial freedom, mapped step by step, each step cited to the
@@ -19,7 +30,11 @@ plain English, no recommendations, no numbers from memory.
   "Show the words" (the provision's own text, from an optional local statute store).
 - **Ideas** (`/ventures`): every saved venture, its stage, notes, cross-references.
 - **The readout** (`GET /api/readout`): everything the map knows about a venture as JSON, so
-  a coding agent working with the person can reason over it. In-app AI is off by design.
+  a coding agent working with the person can reason over it. In-app AI today is only the intake's
+  free-text parser, which uses a model only when the person sets their own key and otherwise a
+  keyword matcher, its result confirmed on screen; the Lens, a built-in agent
+  on the person's own model, is planned (decided 2026-09-27; this line said "In-app AI is off by
+  design" until 2026-10-11).
 - **Self-hosted, single user, no auth**, the database is one SQLite file on the person's machine. Nothing leaves it.
 
 ## 1. Roadmaps as data
@@ -37,12 +52,24 @@ without a citation**. Ids are permanent.
 Open: file layout (`roadmaps/<slug>/<node-id>.md`?), the frontmatter schema, how a node is
 shared between roadmaps, year-versioning of a node whose figure changes.
 
+2026-10-11: the first part is designed — a *road* type any future can use (columns, steps, forks,
+skill items and cost lines, each cited and dated), today's 10-node map wrapped as road 0, and a
+first written future, *From apprentice to your own shop (Alberta)*. Roadmaps are no longer only
+businesses: a road can lead to a career, a business, or a fork between the two.
+[architecture/future-cockpit.md](architecture/future-cockpit.md) § 6. The contributor files and
+their checker stay open here.
+
 ## 2. Progress
 
 Per node, per venture: **done · doing · not for me**, stored in the person's own database and
 shown as a percentage on the venture's card and in the readout. Never used to rank anything.
 
 Open: whether *not for me* hides or greys the node; progress when two roadmaps share a node.
+
+2026-10-11: designed as part of the future cockpit — progress lives in the cockpit (not on a
+separate tab), shown as *x of y done*, never a percentage that could read as a score; *not for me*
+greys a step and never removes it. [architecture/future-cockpit.md](architecture/future-cockpit.md)
+§ 2 and § 7.
 
 ## 3. Projects and questions
 
@@ -52,6 +79,10 @@ are a handful per roadmap, in plain English, with the answer revealed alongside 
 the things to know before walking into an accountant's office.
 
 Open: the data format for each; how a project's "done" relates to a node's progress.
+
+2026-10-11: projects are designed as each step's *done when* checklist, every line written from the
+step's official page and cited ([architecture/future-cockpit.md](architecture/future-cockpit.md)
+§ 6). Questions per roadmap stay open.
 
 ## 4. Jurisdictions beyond Canada
 
