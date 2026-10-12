@@ -17,6 +17,9 @@ export const ACTIVITY_TAXONOMY = [
   "Real estate",
   "Creator / influencer",
   "Healthcare / wellness",
+  // 2026-10-11: the CRA's GST/HST rule for this work differs from everyone else's (no $30,000 line),
+  // so it needs a tag of its own: lib/engines/compliance/v2026/rules.ts compliance-gst-taxi-ride-sharing.
+  "Ride-share or taxi driving",
 ] as const;
 
 export type ActivityTag = (typeof ACTIVITY_TAXONOMY)[number];

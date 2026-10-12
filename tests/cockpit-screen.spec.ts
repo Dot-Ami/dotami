@@ -600,11 +600,17 @@ describe("the overlays on the road", () => {
 
 describe("the lever cards belong to the road step (engineHints)", () => {
   it("road 0's steps name exactly the cards the old hint list gave each node", () => {
-    // The list as it was in lib/brain/node-items.ts before it moved onto the road (2026-10-12).
+    // The list as it was in lib/brain/node-items.ts before it moved onto the road (2026-10-12), with
+    // the two ride-share and taxi cards that list had gained (#147, 2026-10-11).
     const before: Record<string, string[]> = {
-      "stage-1-sole-prop-activation": ["writeoff-home-office", "writeoff-saas-tools", "compliance-hobby-vs-business"],
+      "stage-1-sole-prop-activation": [
+        "writeoff-home-office",
+        "writeoff-saas-tools",
+        "compliance-hobby-vs-business",
+        "compliance-platform-reporting-rideshare",
+      ],
       "stage-2a-voluntary-gst-registration": ["grant-sred", "writeoff-cca-class-50", "compliance-gst-small-supplier"],
-      "stage-2b-mandatory-gst-registration": ["grant-cajg", "compliance-gst-small-supplier"],
+      "stage-2b-mandatory-gst-registration": ["grant-cajg", "compliance-gst-small-supplier", "compliance-gst-taxi-ride-sharing"],
       "stage-3a-incorporation-80k-net": ["grant-on-innovation"],
       "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
       "stage-4-sred-deepening": ["grant-sred", "grant-irap"],

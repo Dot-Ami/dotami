@@ -169,6 +169,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The Liability / SR&ED card says what lit it**: "Lit because your intake has the activity tag
   Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or
   that none of its three tags is on the intake).
+- **A "Ride-share or taxi driving" kind of work**, with a card for the platforms' reporting: on the intake
+  it is its own chip, and the keyword reader marks it from words like "rideshare driver", "Lyft", "taxi
+  driver" or "driving for Uber", but not from "driving for Uber Eats" (the CRA counts food delivery
+  toward the general $30,000 total) or "building a rideshare app" (the rule is about drivers). With
+  it, the map adds *Ride-share platforms may report drivers' information to the CRA*, quoting the CRA's
+  page on the reporting rules for digital platforms ("These platform operators have to collect detailed
+  information on certain sellers.", and "Rideshare and delivery services" among the activities listed).
+  It says "information" and "may", as the page does
+  ([`lib/engines/compliance/v2026/rules.ts`](lib/engines/compliance/v2026/rules.ts)). The two ride-share
+  cards say the tag lit them; the other cards for a kind of work keep naming the province. Its rule
+  type, `platform-reporting`, is new; the maintainer approved it on 2026-10-12.
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
@@ -227,6 +238,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
+  ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
+  than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
+  $30,000 small-supplier line doesn't apply to commercial ride-sharing or a taxi business (Excise Tax Act
+  s.240(1.1)). A new card, *GST/HST for ride-share and taxi driving: from the first paid ride*, quotes
+  the CRA ("You must register for a GST/HST account the moment you start earning money from commercial
+  ridesharing services."); Mandatory GST registration applies whatever the estimate, saying which tag
+  lit it; the small-supplier card is "check first" and says what the line still decides (the person's
+  other sales). Ideas without the tag are unchanged
+  ([`tests/rideshare-gst.spec.ts`](tests/rideshare-gst.spec.ts); docs/engines/compliance.md). How
+  its sources were checked (option B): the CRA's page on the reporting rules for digital platforms
+  says "Read by a person on 2026-10-11" (the maintainer read it); the sharing-economy page, the taxi
+  and ride-sharing page, GI-196 and the Excise Tax Act's s.240 and s.123 each say "Checked by a tool on
+  2026-10-12" in amber, with the words the tool found listed under it.
 - **No "getting close" warning of DotAmi's own.** A first-year estimate (or a complete year of agreed
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's

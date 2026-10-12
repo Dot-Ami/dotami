@@ -3,7 +3,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`  
 Type: chip set + text inputs
 
-Last updated: 2026-06-11  
+Last updated: 2026-10-11 (the Ride-share or taxi driving chip)  
 Workshop status: **Signed off — Phase 4 intake workshop**
 
 ## What it is
@@ -44,7 +44,18 @@ Step 2 should feel like the user has already earned a first map, not just filled
 - Describe it — optional
 - Venture name — optional
 
-Activity tags: Software / SaaS, AI / ML / R&D, Consulting, Trades, Content / streaming, E-commerce / retail, Manufacturing, Real estate, Creator / influencer, Healthcare / wellness
+Activity tags: Software / SaaS, AI / ML / R&D, Consulting, Trades, Content / streaming, E-commerce / retail, Manufacturing, Real estate, Creator / influencer, Healthcare / wellness, Ride-share or taxi driving
+
+**Ride-share or taxi driving (added 2026-10-11).** Its own chip because the CRA's GST/HST rule for this
+work differs from everyone else's: registration from the first paid ride, with no $30,000 line
+(docs/engines/compliance.md § Work the $30,000 line doesn't cover). With it on, the live preview shows
+two more cards: *GST/HST for ride-share and taxi driving: from the first paid ride*
+and *Ride-share platforms may report drivers' information to the CRA*, and the GST/HST small-supplier
+card is "check first" instead of green. The keyword reader marks it from words like "rideshare driver",
+"drive rideshare", "Lyft", "taxi driver", "cab driver" or "driving for Uber", but not from "Uber Eats",
+even "I drive for Uber Eats" (the CRA counts food delivery toward the general $30,000 total), from
+"rideshare" without a word about driving ("I'm building a rideshare app"), or from "taxidermy"
+(`lib/journey/intent-fallback.ts`). The chip can still be ticked by hand.
 
 ## Immediate-value preview requirements
 

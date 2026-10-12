@@ -773,9 +773,20 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
     },
   ],
   engineHints: {
-    "stage-1-sole-prop-activation": ["writeoff-home-office", "writeoff-saas-tools", "compliance-hobby-vs-business"],
+    "stage-1-sole-prop-activation": [
+      "writeoff-home-office",
+      "writeoff-saas-tools",
+      "compliance-hobby-vs-business",
+      // From the first ride through an app, the platform may be reporting to the CRA (2026-10-11).
+      "compliance-platform-reporting-rideshare",
+    ],
     "stage-2a-voluntary-gst-registration": ["grant-sred", "writeoff-cca-class-50", "compliance-gst-small-supplier"],
-    "stage-2b-mandatory-gst-registration": ["grant-cajg", "compliance-gst-small-supplier"],
+    "stage-2b-mandatory-gst-registration": [
+      "grant-cajg",
+      "compliance-gst-small-supplier",
+      // Registration from the first paid ride, for ride-share and taxi driving (2026-10-11).
+      "compliance-gst-taxi-ride-sharing",
+    ],
     "stage-3a-incorporation-80k-net": ["grant-on-innovation"],
     "stage-3b-incorporation-liability-sred": ["grant-sred", "grant-irap", "writeoff-rd", "writeoff-cca-class-50"],
     "stage-4-sred-deepening": ["grant-sred", "grant-irap"],

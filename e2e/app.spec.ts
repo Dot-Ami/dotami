@@ -478,6 +478,55 @@ test("the map quotes the CRA, shows both ways to incorporate, and lights Incorpo
   await expect(page.getByLabel("I'd incorporate at")).toHaveValue("100000");
 });
 
+// 2026-10-11: a ride-share driver under $30,000 was told on a green card that most businesses "need not
+// register yet"; the CRA says the $30,000 line doesn't apply to commercial ride-sharing.
+test("a ride-share driver's map: GST/HST from the first paid ride, in the CRA's words", async ({ page }) => {
+  // The CRA's own example driver: $10,000 from driving passengers in Ontario.
+  const scenario = {
+    id: `rideshare-${Date.now()}`,
+    profile: {
+      name: "Invented — ride-share test",
+      type: "service",
+      province: "ON",
+      targetRevenueY1: 10_000,
+      targetRevenueY3: 10_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "self-employed",
+      hireFirst: false,
+      activityTags: ["Ride-share or taxi driving"],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
+
+  // Under $30,000, and still Mandatory GST registration applies, saying which answer lit it.
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(
+    "Mandatory GST registration, default, applies as answered, opens detail",
+  );
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleDescription(/Ride-share or taxi driving/);
+  await expect(stage("Voluntary GST registration")).toHaveAccessibleName(/, check first, opens detail$/);
+
+  await stage("Mandatory GST registration").click();
+  const panel = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Mandatory GST registration" }) });
+  await expect(
+    panel
+      .getByText("You must register for a GST/HST account the moment you start earning money from commercial ridesharing services.")
+      .first(),
+  ).toBeVisible();
+  await expect(
+    panel.getByText("The $30,000 small supplier threshold does not apply for commercial ridesharing services.").first(),
+  ).toBeVisible();
+  await expect(page.getByText(/need not register yet/i)).toHaveCount(0);
+});
+
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
   await page.goto("/ventures");
   const card = page

@@ -51,6 +51,19 @@ and the maintainer's six decisions of 2026-10-11:
     mark from the sentence, and the card now says so, naming the tag; a stage card's chip says
     "default" until the person clicks its toggle, not "your pick" (the playbook export and the readout
     API say "default" too)
+  - [x] Ride-share and taxi drivers (#147, 2026-10-11): a kind of work of their own, GST/HST
+    registration from the first paid ride (the $30,000 line doesn't apply to them, Excise Tax Act
+    s.240(1.1)), and a card on the platforms' reporting to the CRA (docs/engines/compliance.md).
+    2026-10-12: the platform-reporting page is recorded as read by the maintainer (2026-10-11); the
+    other pages these cards cite carry a tool check instead of a read date (option B)
+  - [ ] Ride-share and taxi follow-ons: the keyword reader still marks "platform" and "app" as Software /
+    SaaS, so a driver "using the Uber platform" gets that tag too; the platform-reporting card for the
+    other activities the CRA lists (selling goods, renting property, personal services)
+  - [x] The new `platform-reporting` rule type: approved by the maintainer on 2026-10-12
+    (docs/engines/compliance.md, authoring rule 1), as was green for a driver who picked *Voluntary now*
+  - [ ] Waiting on the maintainer: decide whether the older cards for a kind of work (hobby vs.
+    business, the licensing cards) should name the tag that lit them, as the two ride-share cards do,
+    instead of only the province
   - [ ] Liability / SR&ED: ask the person about a liability or research need instead of reading only the
     activity tags
   - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"

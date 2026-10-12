@@ -63,7 +63,9 @@ catalog at run time.
 - **`readBy`** is separate so that a claim about *who* read it is made on purpose, entry by entry,
   and only from a record (a note, a commit or the maintainer's word). Left out, nothing is claimed.
   Today the T2125 lines' sources (the 2025 form and two chapters of Guide T4002) say `"person"`
-  (the maintainer checked them on 2026-10-10, as their notes record). The GST/HST small-supplier
+  (the maintainer checked them on 2026-10-10, as their notes record), and so does the CRA's page on
+  the reporting rules for digital platforms under the ride-share platform card (the maintainer read
+  it himself on 2026-10-11). The GST/HST small-supplier
   page under the compliance entry said `"model"` until 2026-10-12; it now carries a tool check
   instead (§ Tool checks in the catalogs). Every other source leaves it out.
 - **`toolCheck`** says who did the checking, in the same words the card uses ("Checked by a tool").
@@ -177,6 +179,15 @@ amber.
 | Alberta, *Incorporate an Alberta corporation* | the Alberta way | a government fee and a service fee; no NUANS report for a number name |
 | Alberta, *Find a business registry* | the Alberta way | registry agents' service fees are not regulated |
 | Alberta, *Annual returns for corporations, cooperatives and organizations* | the Alberta way | the annual return goes to a service provider, who charges both fees |
+| CRA, *Sharing economy* (its commercial ridesharing section) | the ride-share and taxi GST/HST entry (`CRA_SHARING_ECONOMY_TOOL_CHECK`, [`lib/engines/compliance/v2026/ride-share-official-words.ts`](../../lib/engines/compliance/v2026/ride-share-official-words.ts)) | the two sentences on the card, the line on combined sales under $30,000, and that food delivery isn't charged as ride-sharing |
+| CRA, *GST/HST information for taxi operators and commercial ride-sharing drivers* | the ride-share and taxi entry | registering even as a small supplier |
+| CRA, GST/HST Info Sheet GI-196 | the ride-share and taxi entry | registration effective from the first taxable supply, 30 days to apply, and its example |
+| Excise Tax Act s.240 | the ride-share and taxi entry | s.240(1.1): a small supplier carrying on a taxi business must be registered |
+| Excise Tax Act s.123 | the ride-share and taxi entry | the definition of a taxi business, paragraph (b): rides arranged through an electronic platform |
+
+The ride-share and taxi pages were added on 2026-10-12, with #147 (docs/engines/compliance.md § How
+its sources are checked); every quote was found as typed. The platform-reporting page that #147 also
+cites is a read by a person, not a tool check.
 
 One rewrite: the CRA page puts a footnote number straight after "threshold" in both tests
 ("threshold1"), so the two sentences can't be found as typed. The tool check holds the words on each
