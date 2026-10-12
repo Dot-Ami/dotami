@@ -171,6 +171,44 @@ describe("strategy rules engine — gating correctness", () => {
   });
 });
 
+// #36: a compliance card's "why" line credited the province on every rule, so an Alberta venture read
+// "Shown because you selected Alberta." on the GST/HST small-supplier rule, which is federal. A rule
+// whose `provinces` include "CA" (federal entries list the provinces too, so the test is whether "CA"
+// is there, not whether it is alone) now says it is shown because it is federal.
+describe("why a compliance card is shown: federal or the province (#36)", () => {
+  const FEDERAL = "Shown because it is a federal rule, the same in every province and territory.";
+  const unlock = (profile: EvaluationProfile, id: string) =>
+    evaluateProfile(profile, { today: TODAY }).unlocks.find((u) => u.id === id);
+
+  it("a federal rule says it is federal, not that you selected Alberta", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, targetRevenueY1: 10000 }, "compliance-gst-small-supplier");
+    expect(gst).toBeDefined();
+    expect(gst!.why).toBe(FEDERAL);
+    expect(gst!.why).not.toContain("Alberta");
+  });
+
+  it("says the same with no province chosen yet, where it used to say \"because you selected your province\"", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, province: null, targetRevenueY1: 10000 }, "compliance-gst-small-supplier");
+    expect(gst!.why).toBe(FEDERAL);
+  });
+
+  it("a federal rule for a kind of work that doesn't name its tag says it is federal too", () => {
+    const hobby = unlock({ ...gpuWorkstationProfile, activityTags: ["Content / streaming"] }, "compliance-hobby-vs-business");
+    expect(hobby).toBeDefined();
+    expect(hobby!.why).toBe(FEDERAL);
+  });
+
+  it("a provincial rule still names the province", () => {
+    expect(unlock(gpuWorkstationProfile, "compliance-ab-no-pst")!.why).toBe("Shown because you selected Alberta.");
+    expect(unlock({ ...gpuWorkstationProfile, province: "BC" }, "compliance-bc-pst")!.why).toBe("Shown because you selected British Columbia.");
+  });
+
+  it("a rule over the line still says so in place of either", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, targetRevenueY1: 45000 }, "compliance-gst-small-supplier");
+    expect(gst!.why).toBe("Shown because your Y1 revenue target ($45,000) is over $30,000, the amount in the CRA's tests.");
+  });
+});
+
 describe("strategy rules engine — profile and intake coverage", () => {
   it("blank default draft yields an honestly empty preview (no fake fullness)", () => {
     const profile = buildEvaluationProfile(defaultIntakeDraft());

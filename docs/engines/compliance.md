@@ -90,8 +90,18 @@ How it is modelled, all in the catalog, none of it in a component:
   their reason is "Shown because your intake has the activity tag Ride-share or taxi driving." rather
   than "Shown because you selected <province>.", which would say nothing about why they show. The
   older cards scoped by `industryTags` (hobby vs. business, the licensing cards) don't carry it and
-  keep naming the province; whether they should name their tag too is a separate decision
+  keep their default line (below); whether they should name their tag too is a separate decision
   (`tests/rideshare-gst.spec.ts` pins their lines).
+
+**The default reason line: federal or the province (#36, 2026-10-12).** A card whose rule sets no
+reason of its own (no tag reason, no amount over the line, no confirmed figures) says why it shows
+from where the rule applies. A rule whose `provinces` include `"CA"` is federal: "Shown because it is
+a federal rule, the same in every province and territory." Any other rule names the province: "Shown
+because you selected Alberta." Until 2026-10-12 every card named the province, so an Alberta idea
+read "because you selected Alberta" on the GST/HST small-supplier rule, which is federal, and an idea
+with no province yet read "because you selected your province". Federal entries list the provinces
+as well (`["AB", "BC", "ON", "CA"]`), so the test is whether `"CA"` is there, not whether it is alone
+(`lib/brain/evaluate.ts`; `tests/brain-evaluate.spec.ts`).
 
 **The maintainer's answers (2026-10-12).** The new rule type `platform-reporting` is approved. A
 driver who picked *Voluntary now* on the GST timing toggle still sees Mandatory GST registration in
