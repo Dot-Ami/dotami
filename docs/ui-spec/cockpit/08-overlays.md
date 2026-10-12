@@ -21,7 +21,8 @@ off. The choice is not remembered between visits yet.
 - **Skills** on: each step that lists skills gets a badge *needs 3 · you have 2* (items the step lists,
   and how many the person marked *have*).
 - **Money** on: each step with cost lines gets a badge with its priced sum (official fees plus the
-  person's agreed numbers) and *n not priced*, plus *waits on a pick* or *not counted: not on your path*
+  person's agreed numbers; an official fee that applies only sometimes is never in it, and the badge says
+  *n only sometimes, not added*) and *n not priced*, plus *waits on a pick* or *not counted: not on your path*
   when road evaluation leaves its lines out of the sums. A blank line is never shown as $0.
 - **Rules & tax** off: the lever cards under the stage cards are hidden; on, they are drawn as before.
 - Badges are drawn under the card's line and read out in the card's accessible name, between its colour

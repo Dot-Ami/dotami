@@ -35,7 +35,8 @@ The sections, in order:
    *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
    Empty: *No skills are listed for this step yet.*
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
-   source and day read* and its citation; the person's agreed number with *your quote · agreed* and
+   source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
+   Not added to any total.*); the person's agreed number with *your quote · agreed* and
    **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
    name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*

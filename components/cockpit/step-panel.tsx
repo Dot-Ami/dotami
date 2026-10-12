@@ -285,6 +285,10 @@ function StepSections({
                         {words.panel.costKind[line.kind]}
                       </span>
                     </div>
+                    {/* A fee that applies only sometimes shows its condition; no total on the screen adds it. */}
+                    {line.kind === "official-fee" && line.onlyIf !== undefined ? (
+                      <p className="mt-1 text-[11px] text-amber">{words.panel.onlyIf(line.onlyIf)}</p>
+                    ) : null}
                     {line.kind === "official-fee" ? (
                       <div className="mt-1.5">
                         <CitationLinks citations={[line.citation]} compact />
