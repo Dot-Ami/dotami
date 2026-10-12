@@ -858,3 +858,77 @@ describe("the agree prompt names the cost line a quote is for", () => {
     expect(costLineNote([road], figure({ kind: "savings-for-start" }))).toBeNull();
   });
 });
+
+describe("an official fee that applies only sometimes (onlyIf) is shown, never summed or dropped", () => {
+  // The invented road with Tuition made a fee that applies only sometimes, as the first written future's
+  // exam rewrite is (tests/road-apprentice-to-own-shop.spec.ts).
+  const CONDITION = "You fail the invented exam and choose to rewrite it (test only)";
+  const base = roadToEvaluate();
+  const road: Road = {
+    ...base,
+    steps: base.steps.map((s) => ({
+      ...s,
+      costs: s.costs.map((c) => (c.id === "cost-eval-tuition" && c.kind === "official-fee" ? { ...c, onlyIf: CONDITION } : c)),
+    })),
+  };
+  const result = evaluateRoad(input({ road, agreed: { ...NO_AGREED_PLANNING, savingsCents: 1_200_000 } }));
+
+  it("the Money gauge leaves it out of the official fees and the difference, and counts it on a line of its own", () => {
+    expect(result.gauges.money.onlyIfFeeLines).toBe(1);
+    const view = gaugeView(result, road, inventedIdea());
+    // Only the $300 exam is added; Tuition's $1,500 is neither in the sum nor lost.
+    expect(view.money.value).toBe("$300 official fees (1 line) · your numbers: not given yet");
+    expect(view.money.lines).toContain("1 official fee applies only sometimes, not added up");
+    expect(view.money.lines).toContain("savings minus both: $11,700");
+  });
+
+  it("the Money badge leaves it out of the step's sum and says so; a step with no other price shows no $0", () => {
+    expect(stepBadges(stepOf(result, "step-eval-train"), { skills: false, money: true, rules: true })).toEqual([
+      "1 only sometimes, not added · 1 not priced",
+    ]);
+    // A step without one is drawn as before.
+    expect(stepBadges(stepOf(result, "step-eval-ticket"), { skills: false, money: true, rules: true })).toEqual(["$300"]);
+  });
+
+  it("the step panel and the money list show the fee with its condition", () => {
+    const note = cockpitWords.panel.onlyIf(CONDITION);
+    const panel = renderToStaticMarkup(
+      createElement(StepPanel, {
+        road,
+        step: road.steps.find((s) => s.id === "step-eval-train")!,
+        evaluation: stepOf(result, "step-eval-train"),
+        rules: result.rules,
+        skillItems,
+        marks: new Map(),
+        selectedSkillId: null,
+        branch: null,
+        canSave: true,
+        error: null,
+        onStatus: () => {},
+        onTicks: () => {},
+        onMark: () => {},
+        onSelectSkill: () => {},
+        onProposeQuote: async () => null,
+        onClose: () => {},
+      }),
+    );
+    const list = renderToStaticMarkup(
+      createElement(MoneyListPanel, {
+        road,
+        evaluation: result,
+        canSave: true,
+        error: null,
+        onProposeSavings: async () => null,
+        onSelectStep: () => {},
+        onClose: () => {},
+      }),
+    );
+    for (const html of [panel, list]) {
+      expect(html).toContain("Tuition (test only)");
+      expect(html).toContain("$1,500");
+      expect(html).toContain(note);
+    }
+    // Only the one fee with a condition carries the note.
+    expect(list.split(note).length - 1).toBe(1);
+  });
+});

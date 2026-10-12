@@ -28,10 +28,22 @@ export interface Road {
   /** Each fork once: two steps a person chooses between. */
   forks: Fork[];
   /**
-   * The newest read date of any source in the road (the checks hold it to that). The road's own date,
-   * not a citation's: a tool check is not a read and doesn't count (docs/engines/citations.md).
+   * The newest read date of any source in the road (the checks hold it to that), or "" when none of
+   * its sources has been read yet. The road's own date, not a citation's: a tool check is not a read
+   * and doesn't count (docs/engines/citations.md).
    */
   lastVerified: string;
+  /**
+   * Where the road carries on after its last column, if it does: another road's id and the column on
+   * it to carry on from (the first written future joins road 0 at "Incorporating"). Data, not layout;
+   * `roadJoinProblems` checks both exist.
+   */
+  joins?: RoadJoin;
+}
+
+export interface RoadJoin {
+  roadId: string;
+  columnId: string;
 }
 
 export interface RoadColumn {
@@ -108,8 +120,10 @@ export interface SkillItem {
 }
 
 /**
- * A fee with an official source. Its citation's `lastVerified` is the day a person read the fee
- * there; the amount is whole cents, never a range or an average.
+ * A fee with an official source: either read there (the citation's read date is the day the fee was
+ * read), or checked by a tool whose quotes include the amount as the page writes it ("$150.00"), so
+ * the number is one the tool found on the page. The amount is whole cents, never a range or an
+ * average, and a tool-checked quote may not write it as one end of a range.
  */
 export interface OfficialFeeLine {
   id: string;
@@ -117,6 +131,13 @@ export interface OfficialFeeLine {
   label: string;
   amountCents: number;
   citation: EngineCitation;
+  /**
+   * Set only on a fee that applies only sometimes: the condition, in plain words ("You failed an exam
+   * and choose to rewrite it"). A total must leave the fee out unless the person says the condition
+   * holds, and a screen shows the condition next to the fee. The checks refuse a label that says
+   * "only if" without one, so a conditional fee can't hide in prose.
+   */
+  onlyIf?: string;
 }
 
 /** A cost the person prices themselves ("tools: add your quote"). Named, never given an amount here. */
@@ -137,6 +158,14 @@ export type CatalogCostLine = OfficialFeeLine | NamedCostLine;
  * which has no amount at all so it can never be added up as $0.
  */
 export type CostLineAsShown =
-  | { kind: "official-fee"; lineId: string; label: string; amountCents: number; citation: EngineCitation }
+  | {
+      kind: "official-fee";
+      lineId: string;
+      label: string;
+      amountCents: number;
+      citation: EngineCitation;
+      /** The fee's condition, when it applies only sometimes (`OfficialFeeLine.onlyIf`). */
+      onlyIf?: string;
+    }
   | { kind: "your-quote"; lineId: string; label: string; amountCents: number }
   | { kind: "named-not-priced"; lineId: string; label: string };

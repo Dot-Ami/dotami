@@ -88,9 +88,14 @@ and the maintainer's six decisions of 2026-10-11:
   - [ ] The way in: three doors on the front page, *Your destination* (four short questions, a receipt
     after each), *Pick a future*, and *Your ideas* renamed *Your futures*. The *business / career /
     both* answer is kept on the future (one added column) when this screen asks it
-  - [ ] The first written future, *From apprentice to your own shop (Alberta)*: steps read from
+  - [x] The first written future, *From apprentice to your own shop (Alberta)*: steps from
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
-    fees, cost-line names, legal requirements
+    fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
+    `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; no screen lists it until *Pick a future*)
+    - [ ] Still open on it: Alberta's registry fees (the Registry Agent Product Catalogue stops
+      tools, so a person reads them); the apprentice wage percentages per period (they need a typed
+      field); a person's read of each page, which turns its "checked by a tool" into a read; whether
+      *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13)
   - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
   - [ ] *Show me an example first*: a filled-in, clearly invented example future

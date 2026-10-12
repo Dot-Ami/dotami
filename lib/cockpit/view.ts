@@ -138,20 +138,29 @@ export function nextOnYourRoad(evaluation: RoadEvaluation, scenario: Scenario, c
     .slice(0, count);
 }
 
-/** A step's priced sum on the Money overlay: official fees plus the person's agreed numbers. */
-function pricedCents(step: StepEvaluation): number {
-  return step.costs.reduce((sum, line) => (line.kind === "named-not-priced" ? sum : sum + line.amountCents), 0);
+type CostLine = StepEvaluation["costs"][number];
+
+/** An official fee that applies only sometimes (`onlyIf`): counted on its own, never added to a sum. */
+function onlyIfFee(line: CostLine): boolean {
+  return line.kind === "official-fee" && line.onlyIf !== undefined;
 }
 
-/** The badges an overlay puts on one step: "needs 3 · you have 2" and "$1,500 · 1 not priced". */
+/**
+ * The badges an overlay puts on one step: "needs 3 · you have 2" and "$1,500 · 1 not priced". The sum is
+ * official fees plus the person's agreed numbers, the same lines the Money gauge adds up: a fee that applies
+ * only sometimes is counted beside it, as road evaluation counts it, never added in or dropped.
+ */
 export function stepBadges(step: StepEvaluation, overlays: Overlays): string[] {
   const badges: string[] = [];
   if (overlays.skills && step.needs.listed > 0) badges.push(words.road.needs(step.needs.listed, step.needs.have));
   if (overlays.money && step.costs.length > 0) {
     const parts: string[] = [];
-    const priced = step.costs.filter((line) => line.kind !== "named-not-priced");
-    const blanks = step.costs.length - priced.length;
-    if (priced.length > 0) parts.push(formatMoney(pricedCents(step)));
+    const priced = step.costs.filter((line) => line.kind !== "named-not-priced" && !onlyIfFee(line));
+    const sometimes = step.costs.filter(onlyIfFee).length;
+    const blanks = step.costs.filter((line) => line.kind === "named-not-priced").length;
+    const pricedCents = priced.reduce((sum, line) => (line.kind === "named-not-priced" ? sum : sum + line.amountCents), 0);
+    if (priced.length > 0) parts.push(formatMoney(pricedCents));
+    if (sometimes > 0) parts.push(words.road.onlyIf(sometimes));
     // A blank is counted as a blank, never shown as $0.
     if (blanks > 0) parts.push(words.road.notPriced(blanks));
     if (step.money === "waits-on-a-pick") parts.push(words.road.waitsOnPick);
@@ -230,6 +239,8 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   const money: GaugeLines = {
     value: anyLines ? moneyParts.join(" · ") : words.gauges.money.noLines,
     lines: [
+      // A fee that applies only sometimes is in neither part above: said here, so it is never silently dropped.
+      ...(m.onlyIfFeeLines > 0 ? [words.gauges.money.onlyIf(m.onlyIfFeeLines)] : []),
       ...(m.notPricedLines > 0 ? [words.gauges.money.notPriced(m.notPricedLines)] : []),
       ...(m.leftOutLines > 0 ? [words.gauges.money.leftOut(m.leftOutLines)] : []),
       ...m.waitingOnForks.map((w) => words.gauges.money.waiting(w.lines, w.label)),

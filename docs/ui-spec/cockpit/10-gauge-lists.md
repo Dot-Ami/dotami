@@ -23,7 +23,8 @@ place of a step, each a region named by its title with a × button named *Close*
   *Nothing counts until you agree to it.*) with **Add your savings** / **Change your savings**, which opens
   the amount box (no *where it came from*); then every step with cost lines, in road order, its name a
   button that opens the step, and each line with its amount and kind (*official fee · source and day
-  read*, *your quote · agreed*, *not priced yet*, a blank with no amount); an official fee's citation, and
+  read*, *your quote · agreed*, *not priced yet*, a blank with no amount); an official fee that applies
+  only sometimes with *Only if: <its condition>. Not added to any total.*; an official fee's citation, and
   a named line's name source when it has one, under the line through `CitationLinks`. With none: *No cost
   lines on this road yet.*
 - **Your date**: the month and the count (*May 2029 · 31 months from today*) or *not set*; **Month and

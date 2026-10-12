@@ -1,4 +1,4 @@
-import { citationCheckProblems, newestRead } from "../../shared/citation-check";
+import { citationCheckProblems, howChecked, newestRead } from "../../shared/citation-check";
 import type { EngineCitation } from "../../shared/types";
 import type { CatalogCostLine, CostLineAsShown, Road, SkillItem } from "./types";
 
@@ -90,14 +90,42 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[], now: 
   }
 
   // The road's own date is the newest day any of its sources was read, so it never claims fresher
-  // reading than it has (or hides a newer read).
+  // reading than it has (or hides a newer read). A road whose sources were only checked by a tool has
+  // no read at all, so it carries no date: any date there would be a read nobody did.
   const newest = newestReadDate(road);
   if (newest !== undefined && road.lastVerified !== newest) {
     problems.push(
       `Road "${road.id}" says it was last read ${road.lastVerified}, but its newest source was read ${newest}.`,
     );
   }
+  if (newest === undefined && road.lastVerified !== "") {
+    problems.push(`Road "${road.id}" says it was last read ${road.lastVerified}, but none of its sources has been read.`);
+  }
 
+  return problems;
+}
+
+/**
+ * The checks on where roads carry on after their last column: the road a join names is in the list,
+ * it has the column named, and it isn't the road itself. Run over the whole catalog, since one road
+ * can't see the others.
+ */
+export function roadJoinProblems(roads: readonly Road[]): string[] {
+  const problems: string[] = [];
+  for (const road of roads) {
+    if (!road.joins) continue;
+    const { roadId, columnId } = road.joins;
+    if (roadId === road.id) {
+      problems.push(`Road "${road.id}" joins itself.`);
+      continue;
+    }
+    const target = roads.find((r) => r.id === roadId);
+    if (!target) {
+      problems.push(`Road "${road.id}" joins a road the catalog doesn't have: "${roadId}".`);
+    } else if (!target.columns.some((c) => c.id === columnId)) {
+      problems.push(`Road "${road.id}" joins road "${roadId}" at a column it doesn't have: "${columnId}".`);
+    }
+  }
   return problems;
 }
 
@@ -149,6 +177,8 @@ export function costLineAsShown(line: CatalogCostLine, agreedQuoteCents?: number
       label: line.label,
       amountCents: line.amountCents,
       citation: line.citation,
+      // Only when there is one: a fee that always applies has no condition, not an empty one.
+      ...(line.onlyIf !== undefined ? { onlyIf: line.onlyIf } : {}),
     };
   }
   if (
@@ -170,8 +200,27 @@ function costProblems(cost: CatalogCostLine, today: string): string[] {
         `Official fee "${cost.id}" is not a whole, non-negative number of cents: ${cost.amountCents}.`,
       );
     }
+    // A fee that applies only sometimes must say so in a field a total can read, not just in words a
+    // person reads: otherwise a sum of a step's fees would count it for everyone.
+    if (cost.onlyIf !== undefined && cost.onlyIf.trim() === "") {
+      problems.push(`Official fee "${cost.id}" has a blank onlyIf condition.`);
+    } else if (cost.onlyIf === undefined && /\bonly if\b/i.test(cost.label)) {
+      problems.push(`Official fee "${cost.id}" says "only if" in its label but has no onlyIf condition.`);
+    }
     if (!cost.citation) problems.push(`Official fee "${cost.id}" has no citation.`);
-    else problems.push(...citationProblems(cost.citation, `official fee "${cost.id}"`, today));
+    else {
+      problems.push(...citationProblems(cost.citation, `official fee "${cost.id}"`, today));
+      // A tool check proves only that its quotes are on the page, so a fee nobody read must quote its
+      // own amount, or the typed number is one nobody found there. A $0 fee is exempt: pages say "no
+      // cost" or "free", not "$0".
+      const how = howChecked(cost.citation);
+      if (how.kind === "tool" && cost.amountCents > 0 && !how.quotes.some((q) => quotesAmount(q, cost.amountCents))) {
+        const written = amountAsWritten(cost.amountCents);
+        problems.push(
+          `Official fee "${cost.id}" is checked only by a tool, and none of its quotes has its amount (${written.slice(0, 2).join(" or ")}).`,
+        );
+      }
+    }
   } else if (cost.nameSource) {
     problems.push(...citationProblems(cost.nameSource, `cost line "${cost.id}"`, today));
   }
@@ -190,6 +239,47 @@ function citationProblems(citation: EngineCitation, where: string, today: string
     problems.push(`A citation on ${where}: ${problem}.`);
   }
   return problems;
+}
+
+/**
+ * The ways a page may write an amount in dollars, thousands comma first: 12_500 cents is "$125" or
+ * "$125.00", 125_000 is "$1,250", "$1,250.00", "$1250" or "$1250.00", and 125_050 is "$1,250.50" or
+ * "$1250.50".
+ */
+function amountAsWritten(amountCents: number): string[] {
+  const dollars = Math.floor(amountCents / 100);
+  const cents = String(amountCents % 100).padStart(2, "0");
+  const forms: string[] = [];
+  for (const whole of new Set([dollars.toLocaleString("en-CA"), String(dollars)])) {
+    if (cents === "00") forms.push(`$${whole}`);
+    forms.push(`$${whole}.${cents}`);
+  }
+  return forms;
+}
+
+// An amount written as one end of a range: "$125-$200", "$125 – $200", "$125 to $200" (the low end),
+// and "$100-$125", "$100 to $125", "between $100 and $125", "between $125", "from $125" (either end).
+const RANGE_AFTER = /^\s*(?:[-–—]|to\b)\s*\$/i;
+const RANGE_BEFORE = /(?:\$[\d,.]+\s*(?:[-–—]|to)\s*|\bbetween\s+(?:\$[\d,.]+\s+and\s+)?|\bfrom\s+)$/i;
+
+/**
+ * True when the quote holds the amount as one whole number: "$125" counts in "is $125 a year" but not
+ * in "$1250", "$125.50" or "$12,500" (each a different number), nor as one end of a range ("$125-$200",
+ * "between $100 and $125"), since an official fee is one amount, never a range.
+ */
+function quotesAmount(quote: string, amountCents: number): boolean {
+  return amountAsWritten(amountCents).some((form) => {
+    for (let at = quote.indexOf(form); at !== -1; at = quote.indexOf(form, at + 1)) {
+      const before = quote.slice(0, at);
+      const after = quote.slice(at + form.length);
+      // "$12,500" holds "$12" followed by ",500"; "$1250" holds "$125" followed by "0".
+      if (/^[\d]/.test(after) || /^[.,]\d/.test(after)) continue;
+      if (/\d$/.test(before)) continue;
+      if (RANGE_AFTER.test(after) || RANGE_BEFORE.test(before)) continue;
+      return true;
+    }
+    return false;
+  });
 }
 
 function isHttpsPage(url: string): boolean {

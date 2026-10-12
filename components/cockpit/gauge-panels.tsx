@@ -226,6 +226,10 @@ export function MoneyListPanel({
                     <span className={`font-mono text-[9px] uppercase tracking-wider ${line.kind === "named-not-priced" ? "text-amber" : "text-stone"}`}>
                       {words.panel.costKind[line.kind]}
                     </span>
+                    {/* A fee that applies only sometimes shows its condition; the gauge above doesn't add it. */}
+                    {line.kind === "official-fee" && line.onlyIf !== undefined ? (
+                      <p className="col-span-2 mt-1 text-[11px] text-amber">{words.panel.onlyIf(line.onlyIf)}</p>
+                    ) : null}
                     {source ? (
                       <div className="col-span-2 mt-1">
                         <CitationLinks citations={[source]} compact />

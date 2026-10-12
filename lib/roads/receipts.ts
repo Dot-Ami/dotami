@@ -56,6 +56,7 @@ export function roadReceipt(before: RoadEvaluation, after: RoadEvaluation): stri
   if (m0.officialFeesCents !== m1.officialFeesCents || m0.officialFeeLines !== m1.officialFeeLines) {
     changes.push(changed.officialFees(m1.officialFeesCents, m1.officialFeeLines));
   }
+  if (m0.onlyIfFeeLines !== m1.onlyIfFeeLines) changes.push(changed.onlyIfFees(m1.onlyIfFeeLines));
   if (m0.yourNumbersCents !== m1.yourNumbersCents || m0.yourNumberLines !== m1.yourNumberLines) {
     changes.push(changed.yourNumbers(m1.yourNumbersCents, m1.yourNumberLines));
   }
