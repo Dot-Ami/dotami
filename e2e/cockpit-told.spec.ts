@@ -68,7 +68,7 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await page.goto(`/cockpit?venture=${ventureId}`);
 
   // What the person told the intake, in their own words; the intake keeps no day for each answer.
-  await expect(told(page).getByText("You told us your place is Alberta")).toBeVisible();
+  await expect(told(page).getByText("You told us your place is Alberta", { exact: true })).toBeVisible();
   await expect(told(page).getByText("day not kept").first()).toBeVisible();
   // A default is never listed as said: the structure the map assumes is a question instead.
   await expect(told(page).getByText(/the map assumes/i)).toHaveCount(0);
@@ -102,16 +102,16 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await stage(page, "Sole Prop activation").click();
   await stepPanel(page).getByRole("button", { name: "Done", exact: true }).click();
   await expect(stepPanel(page).getByRole("status")).toContainText(`Because you told us “Sole Prop activation” is done, 1 of ${road0Steps} steps are now done.`);
-  await expect(told(page).getByText("You told us “Sole Prop activation” is done")).toBeVisible();
+  await expect(told(page).getByText("You told us “Sole Prop activation” is done", { exact: true })).toBeVisible();
 
   // A what-if: it relights the rules under its banner, and Clear takes it off with nothing kept.
   await whatIf(page).getByLabel("Try first-year sales of $").fill("45000");
   await whatIf(page).getByRole("button", { name: "Try", exact: true }).click();
-  await expect(whatIf(page).getByText("Your what-if, not a forecast")).toBeVisible();
+  await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
   await expect(whatIf(page).getByRole("status")).toContainText("Because you tried first-year sales of $45,000 (your what-if, not a forecast)");
   await expect(told(page).getByText(/what-if/)).toHaveCount(0);
   await whatIf(page).getByRole("button", { name: "Clear", exact: true }).click();
-  await expect(whatIf(page).getByText("Your what-if, not a forecast")).toHaveCount(0);
+  await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toHaveCount(0);
 
   // Compare the two endings at the GST timing fork, and pick one.
   await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: "Compare", exact: true }).click();
@@ -131,8 +131,8 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
 
   // A reload: the pick and the step's status are kept; the receipts of the last visit are not.
   await page.reload();
-  await expect(told(page).getByText(`You picked “${label0(first)}” at “${gstFork.label}” on the map`)).toBeVisible();
-  await expect(told(page).getByText("You told us “Sole Prop activation” is done")).toBeVisible();
+  await expect(told(page).getByText(`You picked “${label0(first)}” at “${gstFork.label}” on the map`, { exact: true })).toBeVisible();
+  await expect(told(page).getByText("You told us “Sole Prop activation” is done", { exact: true })).toBeVisible();
   await expect(notTold(page).getByText("By when?", { exact: false })).toBeVisible();
   await expect(since(page)).toHaveCount(0);
 });
