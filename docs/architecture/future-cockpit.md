@@ -366,12 +366,37 @@ answer, before and after it or with and without it. Choices made while building 
   is built from what the save read back, never from what the screen hoped would be kept. A save that
   changes nothing on the road says *Saved. Nothing on the road changed.* The *I'd incorporate at* box in
   a step's panel saves as the person types, so it gives no receipt per keystroke; the same answer given
-  in the one-question box does.
-- **Since last time, kept briefly.** The newest five receipt lines of this visit stay in a line under the
-  map, *Since last time*, newest first, so a receipt closed with its panel isn't lost. They are kept
-  nowhere: a reload starts the line empty. The return visit's list (steps marked since the person's last
-  visit, dates coming up, figure reminders) needs the day of the last visit, which DotAmi doesn't keep;
-  it is left for a later pull request.
+  in the one-question box does. *(2026-10-12, after review: the idea's own answers, kept with the map
+  (the structure, a map pick, buying equipment, *I'd incorporate at*, a what-if kept, and a take back of
+  any of them), had their receipt worked out from what the screen sent, before the save had run. They
+  now wait for the map's save, whose route answers with the idea as it kept it, read back from the data
+  file (`POST /api/scenario/save` → `scenario`), and *after* is built from that. Until it answers the
+  receipt says *Saving your answer…*; a save that fails says *Not saved yet*, adds nothing to *This
+  visit*, and leaves the save line's *Save now* to try again. A take back that changes nothing on the
+  road names what was taken back: *Saved: you took back … . Nothing on the road changed.* In the left
+  list the row or box the person clicked is gone once they answer, so the receipt there takes the
+  keyboard focus and is scrolled into view.)*
+- **This visit, kept briefly.** The newest five receipt lines of this visit stay in a line under the
+  map, newest first, so a receipt closed with its panel isn't lost. They are kept nowhere: a reload
+  starts the line empty. *(2026-10-12, after review: named* This visit*, not* Since last time*, which a
+  person returning reads as "since my last visit"; that name is kept for the return visit's list. Only
+  the newest line shows, the rest behind* n more this visit*, so the map keeps its room at 1280 by
+  720.)* The return visit's list, *Since last time* (steps marked since the person's last visit, dates
+  coming up, figure reminders), needs the day of the last visit, which DotAmi doesn't keep; it is left
+  for a later pull request.
+- **What the map's save keeps (2026-10-12, after review).** A pick at one of road 0's forks is the
+  person's on either side, the map's default side included, so it is kept with the map's answers: the
+  fork ids the person picked, under their own key `decided` in the same JSON as the picks
+  (`ScenarioState.activeBranches`, `lib/db/scenario-state-json.ts`), and a reload still lists it and
+  Compare still says *Your pick*. Until then the map kept its clicks for the session only, and a pick of
+  the default side said *Saved* and was gone after a reload. Buying equipment is an answer only when the
+  person gave one: the intake's chip starts off and off is the chip not picked, so it is *not answered*
+  (the rules read it as no, and say so), never *you told us you're not buying*. A yes is kept in
+  `Venture.capitalPurchasePlanned` as before; a *No* in the one-question box under its own key
+  `equipmentNo` in the same JSON. Ideas saved before this read as not answered unless their chip was on.
+  A *done when* tick keeps no day of its own (the step's last change is not the tick's), so its row says
+  *day not kept*. The rail's sales targets say *not given* for no number, never $0. Every *Change*, *Take
+  back*, *Answer*, *I don't know* and *This is mine* names its row or side to a screen reader.
 - **The what-if bar** sits under the map, above *Next on your road*: *Try first-year sales of $___* and
   **Try**. While a what-if is on, the bar says **Your what-if, not a forecast**, shows its receipt (what
   it relit), and offers **Keep** and **Clear**. It goes to road evaluation's `whatIf` only, so it relights
@@ -393,6 +418,11 @@ answer, before and after it or with and without it. Choices made while building 
   **This is mine** button is pressed. Above the table one line says whose pick stands (*Your pick*, *the
   map's default pick, not yours yet* on road 0, or *no side picked yet*). The person's target and
   what-if rows are left out: neither changes with the ending, and no screen asks for the target yet.
+  *(2026-10-12, after review: a what-if does change the rules and tax cards, on both sides alike, and
+  Compare's panel has no what-if banner, so Compare is worked out without it. On road 0 each column also
+  gives the map toggle's own short name (*on the map: “Voluntary now”*), since the step's name and the
+  toggle's differ; and when no row differs between the two endings, a line says so, so two identical
+  columns don't read as a fault.)*
 - **This is mine** keeps the pick where each road keeps it (§ 7): on road 0 it is the map's toggle, saved
   with the map; on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:
   null` to take it back, which the told list's *Take back* uses), through `pickEnding`, guarded like the
@@ -688,9 +718,11 @@ lives in `lib/roads/`.
   map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
   clicks only for the session, so after a reload a pick still on the default reads as a default, as the
   map's rail already says, while a saved pick off the default counts as the person's, `isBranchDecided`
-  in `lib/scenarios/graph.ts`, since the honest-map pull request), the hire-first path while it is off (*the hire-first path is switched off*: the map
+  in `lib/scenarios/graph.ts`, since the honest-map pull request; since 2026-10-12 the clicks are kept
+  with the map's answers, § 2, *What the map's save keeps*), the hire-first path while it is off (*the hire-first path is switched off*: the map
   can't tell switched off from never switched on), the structure the map assumes, and buying equipment
-  while unanswered (*not answered, read as no*). *What you've told DotAmi* lists the given ones; the
+  while unanswered (*not answered, read as no*; since 2026-10-12 the intake's chip left off is
+  unanswered too, § 2). *What you've told DotAmi* lists the given ones; the
   others still name themselves in a step's reason, worded as defaults. The person's own *I'd
   incorporate at $___* on road 0, once typed, is one of the given answers (`idea:incorporate-at`;
   taking it away is the only alternative tried, since DotAmi has no number of its own for it).
