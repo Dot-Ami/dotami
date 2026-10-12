@@ -498,11 +498,21 @@ each for a reason:
   *done when* lines by step id, and steps to add to a column after that column's map stages. Everything
   else it builds from today's catalog is unchanged: the ten steps keep their ids, names, one-line
   summaries, sources and `next`, so their hover arrows go where they went.
-- **About three lines per step, each from an official page.** 33 lines on the ten steps (three or
-  four each) and 12 on the three new steps, 45 in all. Each line is written from the page its quotes come
+- **About three lines per step, each from an official page.** 34 lines on the ten steps (three or
+  four each) and 13 on the three new steps, 47 in all. Each line is written from the page its quotes come
   from, on the CRA's, Alberta's, Corporations Canada's, WCB-Alberta's and BizPaL's sites, and says only
   what those quotes say. A line that is a fact to know rather than a thing to do ("You know that a
   corporation files a T2 return every year…") says so in its words; none says "you should".
+- **A line keeps its page's conditions and exceptions** (review of 2026-10-12). Where the sentence or
+  section a line quotes carries an "unless", an "if" or a list of exceptions, the line carries it too,
+  quoted from the same page: the small-supplier test leaves out financial services, sales of capital
+  property and goodwill, and counts an associate only if associated at the start of the quarter; T5
+  slips have the T5 Guide's exceptions (under $50 to one recipient in the year, capital dividends); the
+  first payroll remittance date holds unless the CRA sets a different frequency; salary can't become
+  dividends when it was recorded as salary and deductions at source were required; records are kept six
+  years "generally". A personal guarantee is *one* place limited liability stops, and a line of its own
+  (`dw-start-inc-directors`) says a director may be liable for amounts the corporation failed to
+  remit, since the owner of a one-person corporation is usually its director.
 - **Every source is a tool check made on 2026-10-12** (option B, [citations.md](../engines/citations.md)):
   each quote was found word for word on its live page by `node scripts/check-quotes.mjs`, and none is
   recorded as read. A tool check is not a read, so road 0's own `lastVerified` stays the newest read
@@ -517,20 +527,35 @@ each for a reason:
   are and listed as an open item for the maintainer.
 - **Three *before you open* steps, in the first column.** *Register your business name, if you use one*
   (`step-start-register-name`), *Look up your permits and licences (BizPaL)*
-  (`step-start-permits-bizpal`) and *A separate bank account for the business*
-  (`step-start-business-account`) sit in *Before the venture*, under *Employee/Apprentice baseline*, and
-  each leads to *Sole Prop activation*. The baseline's own `next` is not changed, so no existing card's
-  arrows move; hovering the baseline dims the three new cards, as it dims every card not on its arrows.
+  (`step-start-permits-bizpal`) and *A separate bank account for the business, if it has a name other
+  than yours* (`step-start-business-account`) sit in *Before the venture*, under *Employee/Apprentice
+  baseline*, and each leads to *Sole Prop activation*. Their order down the column is the order they are
+  written in, not a ranking and not a sequence the person must follow: the name comes before the bank
+  account because the CRA's condition for the account depends on the name, and BizPaL sits between
+  them because none of the pages ties it to either. Nothing on screen calls them "before you open" yet:
+  they sit under Tier 1's existing line (*Employment or apprenticeship income; nothing commercial
+  yet.*), which comes from the tax map's tier and describes the baseline; a column summary of road 0's
+  own would change that line, so it waits for the step panel.
+- **The baseline's arrows don't reach the three new steps (the maintainer's call).** The baseline's own
+  `next` is not changed, so no existing card's arrows move. The cost: hovering or selecting
+  *Employee/Apprentice baseline* dims the three new cards, as it dims every card not on its arrows, and
+  selecting one new card dims the baseline and the other two, so on screen they look like the baseline's
+  siblings rather than steps after it. Adding them to the baseline's `next` would fix that and change an
+  existing card's arrows (the baseline's), which the byte-for-byte comparison and the measured arrow
+  counts would then have to be re-cut for; that trade-off is left to the maintainer.
 - **The bank account step says what the CRA says, with its condition.** The CRA's sole proprietorship
   page says a business with a name other than your own needs a separate bank account for cheques payable
-  to it; it doesn't say every business needs one. The step's one line repeats that condition, and its
-  other lines are what the page and the CRA's *Business records* page say about billing and keeping the
-  account's statements.
+  to it; it doesn't say every business needs one. The card's own name, its one line and its first
+  *done when* line all carry that condition, and its other lines are what the page and the CRA's
+  *Business records* page say about billing and keeping the account's statements.
 - **Costs are named lines only.** Alberta's registry fees (the government fee and the agent's service
   fee to register a name) stay named blanks: the catalogue that holds them stops tools with a human
-  check. Permit and licence fees "vary" (BizPaL's own word), and a bank's fees are the bank's. No
-  amount is written anywhere in this content. The ten map stages get no cost lines, skill items or
-  official links yet; the incorporation fees belong to Fix 2 (§ 9).
+  check. Permit and licence fees "vary" (BizPaL's own word), and a bank's fees are the bank's; the
+  bank-fees line cites nothing on purpose, since no official page names a bank's fees. The optional
+  Business Name Report is a *done when* line (`dw-start-name-report`), not a cost: Alberta's page says
+  NUANS members provide it but names no price for it. No amount is written anywhere in this content.
+  The ten map stages get no cost lines, skill items or official links yet; the incorporation fees belong
+  to Fix 2 (§ 9).
 - **New ids, all permanent.** Steps `step-start-…`, lines `dw-start-…`, cost lines `cost-start-…`
   ("start" for *Starting any business*). `tests/roads.spec.ts` keeps every one on its shipped list.
 - **What the map shows changes, and only by the three new cards.** The map colours a card from the
@@ -538,11 +563,13 @@ each for a reason:
   three new steps. Drawing them grey would say "doesn't apply as answered", which no rule decided, and
   the chip would say "ahead" for a step nobody placed. So a step the rules don't colour is drawn with no
   colour claim: a neutral left bar, the chip **no rule yet**, the accessible name
-  "*<name>*, no rule reads this step yet, shows where it leads", and a legend line for it. Clicking it
-  selects it and keeps its arrows; no panel opens, because the node detail panel shows today's catalog
-  entries and these steps have none (the step panel, § 1 row 5, replaces it later in phase 1, and road
-  evaluation gives such steps states of their own). Their *done when* lines are on no screen yet; the
-  step panel shows them. `tests/road-map.spec.ts` draws the six saved states again and, with the three
+  "*<name>*, no rule reads this step yet, shows where it leads". The legend gains no line for it, so the
+  rest of the map stays byte for byte as it was; only the chip's words tell a sighted person the card
+  isn't grey. Clicking it selects it and keeps its arrows; no panel opens, because the node detail panel
+  shows today's catalog entries and these steps have none (the step panel, § 1 row 5, replaces it later
+  in phase 1, and road evaluation gives such steps states of their own). The right-hand panel is left as
+  it was, so an open Export panel stays open; an open detail panel closes, because it was about the card
+  no longer selected. Their *done when* lines are on no screen yet; the step panel shows them. `tests/road-map.spec.ts` draws the six saved states again and, with the three
   new cards cut out, the HTML is byte for byte what the old map drew; the before pictures are not
   re-recorded.
 

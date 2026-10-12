@@ -401,7 +401,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               selectedStepId={selectedNodeId}
               onSelectStep={(nodeId) => {
                 setSelectedNodeId(nodeId);
-                setRightPanel("node");
+                // A road step with no catalog entry (the before-you-open steps) has no detail panel
+                // to show, so the right panel is left as it was: an open Export panel stays open.
+                // An open detail panel still closes, since it was about the card no longer selected.
+                if (cfeNodeById.has(nodeId)) setRightPanel("node");
               }}
               decidedBranchIds={decidedBranchIds}
               onBranchChange={handleBranchChange}

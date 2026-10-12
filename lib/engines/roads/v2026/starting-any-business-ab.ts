@@ -87,7 +87,7 @@ const PAGES = {
     authority: "CRA",
     jurisdiction: "CA",
     url: `${CRA}/tax/businesses/small-businesses-self-employed-income/setting-your-business/corporation.html`,
-    note: "What a corporation is, how one is set up, its T2 return, and a shareholder's liability.",
+    note: "What a corporation is, how one is set up, its T2 return, and a shareholder's and a director's liability.",
   },
   federalIncorporation: {
     title: "Federal incorporation (Corporations Canada)",
@@ -129,7 +129,7 @@ const PAGES = {
     authority: "provincial",
     jurisdiction: "AB",
     url: "https://www.alberta.ca/register-business-name",
-    note: "Registering a trade name or partnership in Alberta: the forms, the name rules, and what it costs.",
+    note: "Registering a trade name or partnership in Alberta: the forms, the name rules, and that registering has a government fee and a service fee.",
   },
   businessNames: {
     title: "Business names (alberta.ca)",
@@ -150,7 +150,7 @@ const PAGES = {
     authority: "CRA",
     jurisdiction: "CA",
     url: `${CRA}/forms-publications/publications/t4015/t5-guide-return-investment-income.html`,
-    note: "When a payer prepares T5 slips, including for dividends, and the filing deadline.",
+    note: "When a payer prepares T5 slips, including for dividends, when it doesn't have to, and the filing deadline.",
   },
   t5Slip: {
     title: "Completing the T5 slip (CRA)",
@@ -261,7 +261,7 @@ const stageDoneWhen = {
   "stage-1-sole-prop-activation": [
     {
       id: "dw-start-soleprop-records",
-      text: "You keep a record of your daily income and expenses, get a receipt or other voucher for each business purchase, and keep these records for at least six years from the end of the last tax year they relate to.",
+      text: "You keep a record of your daily income and expenses, get a receipt or other voucher for each business purchase, and keep these records for at least six years from the end of the last tax year they relate to (the CRA says you are generally required to).",
       citation: checked(
         PAGES.businessRecords,
         "Keep a record of your daily income and expenses.",
@@ -329,15 +329,21 @@ const stageDoneWhen = {
   ],
   "stage-2b-mandatory-gst-registration": [
     {
-      // What counts is wider than one business's sales: the CRA counts every business, and associates.
+      // What counts is wider than one business's sales (the CRA counts every business, and associates),
+      // and narrower than every dollar in (it leaves out financial services, capital property and
+      // goodwill). Both halves are the same footnote on the page.
       id: "dw-start-gstman-tests",
-      text: "You checked your taxable revenues against both of the CRA's (the Canada Revenue Agency's) small-supplier tests: a single calendar quarter on its own, and the previous four (or fewer) consecutive calendar quarters. What counts is all revenues before expenses from your worldwide taxable supplies, and those of your associates (the CRA's word).",
+      text: "You checked your taxable revenues against both of the CRA's (the Canada Revenue Agency's) small-supplier tests: a single calendar quarter on its own, and the previous four (or fewer) consecutive calendar quarters. What counts is your revenues before expenses from your worldwide taxable supplies, and those of your associates (the CRA's word) if they were associated at the beginning of the calendar quarter. Revenues from financial services, sales of capital property (such as business equipment you sell) and goodwill from the sale of a business don't count.",
       citation: checked(
         PAGES.gstWhenToRegister,
         "in a single calendar quarter.",
         Q.fourQuarters,
         "If you are a sole proprietor, include the total amount of all revenues (before expenses) from your worldwide taxable supplies from all your businesses and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
         "If you are a partnership or a corporation, include the total amount of all revenues (before expenses) from your worldwide taxable supplies and those of your associates (if they were associated at the beginning of the particular calendar quarter).",
+        // One sentence on the page, quoted in two parts: a glossary link inside it leaves a space
+        // before the comma after "capital property", so the whole sentence doesn't match.
+        "do not include revenues from supplies of financial services, sales of capital property",
+        "and goodwill from the sale of a business.",
       ),
     },
     {
@@ -387,12 +393,22 @@ const stageDoneWhen = {
     },
     {
       id: "dw-start-inc-guarantee",
-      text: "You know where limited liability stops: as a shareholder you aren't responsible for the corporation's debts, but a debt you personally guarantee is yours if the corporation doesn't pay it back.",
+      text: "You know one place limited liability stops: as a shareholder you aren't responsible for the corporation's debts, but a debt you personally guarantee is yours if the corporation doesn't pay it back.",
       citation: checked(
         PAGES.corporation,
         "As a shareholder of your corporation, you have limited liability.",
         "This means that you and the other shareholders are not responsible for the corporation's debts.",
+        "However, limited liability may not always protect you from creditors.",
         "If you agree to this condition, you will be personally liable for that debt if the corporation does not pay it back.",
+      ),
+    },
+    {
+      // The owner of a one-person corporation is usually its director too, so this is theirs as well.
+      id: "dw-start-inc-directors",
+      text: "You know another: a director may also be liable for amounts the corporation owes if it failed to deduct, withhold, remit or pay amounts as the Income Tax Act, the Employment Insurance Act, the Canada Pension Plan, the Excise Act 2001 or the Excise Tax Act requires.",
+      citation: checked(
+        PAGES.corporation,
+        "Directors may also be liable to pay amounts owed by the corporation if it has failed to deduct, withhold, remit, or pay amounts as required by the Income Tax Act, the Employment Insurance Act, the Canada Pension Plan, the Excise Act 2001, and the Excise Tax Act.",
       ),
     },
   ],
@@ -451,11 +467,11 @@ const stageDoneWhen = {
     },
     {
       id: "dw-start-hire-payroll-account",
-      text: "You registered for a CRA payroll account before your first remittance due date: the 15th day of the month after the month you began withholding deductions from the employee's pay.",
+      text: "You registered for a CRA payroll account before your first remittance due date: the 15th day of the month after the month you began withholding deductions from the employee's pay, unless the CRA tells you to remit using a different frequency.",
       citation: checked(
         PAGES.payrollAccount,
         "You have to register for a payroll account before the first remittance due date.",
-        "Your first remittance due date is the 15th day of the month following the month in which you began withholding deductions from your employee's pay",
+        "Your first remittance due date is the 15th day of the month following the month in which you began withholding deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.",
       ),
     },
     {
@@ -491,13 +507,16 @@ const stageDoneWhen = {
   "stage-4-retained-earnings-planning": [
     {
       id: "dw-start-retained-t5",
-      text: "When the corporation pays dividends to a resident of Canada, it prepares a T5 slip, files the T5 information return and gives each recipient a copy, by the last day of February after the calendar year.",
+      text: "When the corporation pays dividends to a resident of Canada, it prepares a T5 slip, files the T5 information return and gives each recipient a copy, by the last day of February after the calendar year, unless one of the T5 Guide's exceptions applies (among them, amounts to one recipient that total less than $50 for the year, and capital dividends).",
       citation: checked(
         PAGES.t5Guide,
         "If you make certain types of payments to a resident of Canada, or if you receive certain types of payments as a nominee or agent for a person resident in Canada, you have to prepare a T5 slip.",
         "eligible dividends and dividends other than eligible dividends (including most deemed dividends)",
         "You have to file a T5 information return by the last day of February following the calendar year to which the information return applies.",
         "You must give recipients a copy of their T5 slips, by the last day of February following the calendar year to which the information return applies.",
+        "You do not have to prepare a T5 slip to report:",
+        "amounts paid to one recipient when the total amount for the year is less than $50",
+        "capital dividends, as described in Income Tax Folio S3-F2-C1, Capital Dividends",
       ),
     },
     {
@@ -510,10 +529,11 @@ const stageDoneWhen = {
     },
     {
       id: "dw-start-retained-no-switch",
-      text: "Each payment to you is recorded as what it is when it is made: the CRA says payments recorded as salary can't later be changed into dividends, on the slips or in your records.",
+      text: "Each payment to you is recorded as what it is when it is made: the CRA says that if payments to a shareholder were recorded as salary and deductions at source were required, they can't later be changed into dividends, on the slips or in your records.",
       citation: checked(
         PAGES.amendSlips,
         "You cannot change the nature of the income paid (for example, from salary to dividends).",
+        "If the payments you made to a shareholder were recorded as salary payments (in your books and records) and deductions at source were required, you cannot do any of the following:",
         "Retroactively change your records and convert the payments to dividends",
       ),
     },
@@ -578,6 +598,17 @@ const registerName: RoadStep = {
       ),
     },
     {
+      // The page names no price for the report, so it is a line here, not a cost.
+      id: "dw-start-name-report",
+      text: "You decided whether to get a Business Name Report first (optional): it lists registered business, corporation and trademark names similar to yours, and comes from authorized NUANS members.",
+      citation: checked(
+        PAGES.registerName,
+        "This step is recommended, but not mandatory.",
+        "The report contains registered business, corporation and trademark names that are similar to your proposed business name.",
+        "The report is provided by authorized NUANS members.",
+      ),
+    },
+    {
       id: "dw-start-name-form",
       text: "You filled in the Declaration of Trade Name (a trade name or sole proprietorship), or the Declaration of Partnership (a partnership).",
       citation: checked(
@@ -615,11 +646,6 @@ const registerName: RoadStep = {
       "cost-start-name-service-fee",
       "Registry agent's service fee (set by your agent)",
       checked(PAGES.findRegistry, "Service fees are not regulated and may vary from one agent to another."),
-    ),
-    named(
-      "cost-start-name-report",
-      "Business Name Report (optional)",
-      checked(PAGES.registerName, "Step 2: Get a Business Name Report", "This step is recommended, but not mandatory."),
     ),
   ],
   officialLinks: [
@@ -682,7 +708,7 @@ const permitsBizpal: RoadStep = {
 
 const businessAccount: RoadStep = {
   id: "step-start-business-account",
-  label: "A separate bank account for the business",
+  label: "A separate bank account for the business, if it has a name other than yours",
   // The CRA's condition stays in: it says a business with a name other than your own needs one, not
   // that every business does.
   summary:
@@ -705,11 +731,13 @@ const businessAccount: RoadStep = {
     },
     {
       id: "dw-start-account-statements",
-      text: "You keep the account's deposit slips, bank statements and cancelled cheques with your records, for at least six years from the end of the last tax year they relate to.",
+      text: "You keep the account's deposit slips, bank statements and cancelled cheques with your records, generally for at least six years from the end of the last tax year they relate to.",
       citation: checked(PAGES.businessRecords, "Keep your duplicate deposit slips, bank statements, and cancelled cheques.", Q.sixYears),
     },
   ],
   needs: [],
+  // Left uncited on purpose: no official page sets or names a bank's fees, and the line carries no
+  // amount, only a blank the person fills from their own bank.
   costs: [named("cost-start-bank-fees", "Bank account fees (set by your bank)")],
   officialLinks: [],
   citations: [

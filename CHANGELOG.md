@@ -11,28 +11,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 45
+- **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;
-  records, the T1 return and instalments for a sole proprietor; the CRA's two small-supplier tests,
-  the 29 days to register and what a voluntary registrant has to do; articles of incorporation, the
-  yearly T2 return and where limited liability stops; what a CCPC is and how associated corporations
-  share the business limit; a first employee's status, SIN and TD1 forms, the payroll account's
-  deadline and WCB-Alberta's 15 days; T5 slips and eligible dividends; Form T661 and the SR&ED
-  reporting deadline), and three new *before you open* steps in the first column, each leading to
-  *Sole Prop activation*: **Register your business name, if you use one** (Alberta's trade name or
-  partnership, the name rules, the forms, proof of filing), **Look up your permits and licences
-  (BizPaL)** (the free government finder, which says its own list isn't complete, and city hall where
-  a municipality isn't on it) and **A separate bank account for the business** (the CRA's words: a
-  business with a name other than your own needs one for cheques payable to it). Every line is
-  written from an official page (the CRA, alberta.ca, Corporations Canada, WCB-Alberta, BizPaL) and
-  every number in it is in its own quotes; every new source is a tool check made on 2026-10-12 (54
-  citations, 108 quotes (99 different) on 22 pages, found word for word on their live pages), none
-  recorded as read.
+  records, the T1 return and instalments for a sole proprietor; the CRA's two small-supplier tests
+  (with what doesn't count: financial services, capital property, goodwill), the 29 days to register
+  and what a voluntary registrant has to do; articles of incorporation, the yearly T2 return, a
+  personal guarantee as one place limited liability stops and a director's liability for amounts the
+  corporation failed to remit; what a CCPC is and how associated corporations share the business
+  limit; a first employee's status, SIN and TD1 forms, the payroll account's deadline and
+  WCB-Alberta's 15 days; T5 slips with the T5 Guide's exceptions, and eligible dividends; Form T661
+  and the SR&ED reporting deadline), and three new *before you open* steps in the first column, each
+  leading to *Sole Prop activation*: **Register your business name, if you use one** (Alberta's trade
+  name or partnership, the name rules, the optional Business Name Report, the forms, proof of
+  filing), **Look up your permits and licences (BizPaL)** (the free government finder, which says its
+  own list isn't complete, and city hall where a municipality isn't on it) and **A separate bank
+  account for the business, if it has a name other than yours** (the CRA's words: a business with a
+  name other than your own needs one for cheques payable to it). Every line is written from an
+  official page (the CRA, alberta.ca, Corporations Canada, WCB-Alberta, BizPaL), keeps the conditions
+  and exceptions its page attaches, and every number in it is in its own quotes; every new source is
+  a tool check made on 2026-10-12 (55 citations, 117 quotes (108 different) on 22 pages, found word
+  for word on their live pages), none recorded as read.
   No amount is written: Alberta's registry fees, permit fees and bank fees are named lines the person
   prices. On the map, Tier 1 shows the three new cards; a card no rule colours says **no rule yet**
   and claims no colour (grey would say "doesn't apply as answered", which no rule decided) and no
-  place on the path, and a click selects it and keeps its arrows (no panel opens yet). Everything
+  place on the path, and a click selects it and keeps its arrows (no panel opens yet, and an open
+  Export panel stays open). Hovering the baseline dims the three new cards, since its own arrows were
+  left alone. Everything
   else on the map is unchanged: with the three cards cut out, the HTML of six saved states is byte for
   byte what it was. The *done when* lines show on screen with the step panel, later in phase 1.
   While writing them, four of the map stages' own sources were found answering "page not found"

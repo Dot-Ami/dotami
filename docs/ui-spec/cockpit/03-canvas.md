@@ -22,10 +22,13 @@ test checks the columns, cards, toggles and arrows.
 
 **Road 0's before-you-open cards (2026-10-12).** Tier 1 now holds four cards: *Employee/Apprentice
 baseline*, then *Register your business name, if you use one*, *Look up your permits and licences
-(BizPaL)* and *A separate bank account for the business* (docs/architecture/future-cockpit.md § 6,
-"Road 0's content as built"). They are the only cards the map gained: with them cut out, the HTML of
-the six saved states is byte for byte what the old map drew (`tests/road-map.spec.ts`). Each leads to
-*Sole Prop activation*; the baseline's own arrows are unchanged, so hovering it dims them.
+(BizPaL)* and *A separate bank account for the business, if it has a name other than yours*
+(docs/architecture/future-cockpit.md § 6, "Road 0's content as built"). They are the only cards the map
+gained: with them cut out, the HTML of the six saved states is byte for byte what the old map drew
+(`tests/road-map.spec.ts`). Each leads to *Sole Prop activation*; the baseline's own arrows are
+unchanged, so hovering or selecting the baseline dims all three, and selecting one of them dims the
+baseline and the other two. Their order down the column is the order they are written in, not a
+ranking. The legend has no line for "no rule yet".
 
 ## What it is
 
@@ -42,7 +45,7 @@ stage card one **lever card** per evaluator item relevant to that stage
 | Card | Shows | Click |
 |---|---|---|
 | Stage | name · chip (**now · your pick · done · ahead · not on your path**, from the branch picks) · trigger (2 lines) · left bar coloured by the evaluator (green met · amber plausible · grey n/a), run on the person's own branch picks | opens node detail |
-| Stage the rules don't colour (road 0's before-you-open steps, 2026-10-12) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1) |
+| Stage the rules don't colour (road 0's before-you-open steps, 2026-10-12) | name · chip **no rule yet** · its one line (2 lines) · a neutral left bar, no colour | selects it and keeps its arrows; no panel opens (it has no catalog entry; the step panel comes later in phase 1). The right-hand panel is left as it was: an open Export panel stays open, and an open node detail panel closes, since it was about the card no longer selected |
 | Lever | dot + type chip (Write-off / Grant / Threshold / …) · title · **applies** (green) or **check first** (amber) · `fork` when incorporating would change it · `in use before <year>` when time-boxed · PARTIAL chip when a citation is partial | opens the stage's node detail |
 
 Stage and lever buttons have explicit accessible names. Stage names include the current status,
