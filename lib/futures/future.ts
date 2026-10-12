@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
+import { oasisJobByCode } from "@/lib/engines/oasis/v2026";
 import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import { requireVenture } from "@/lib/figures/store";
 import { placeCodeFor, type PlaceCode } from "@/lib/places/codes";
@@ -47,6 +48,12 @@ export interface FutureView {
   targetMonth: string | null;
   /** The day the person set that month, on this computer, or null. */
   targetMonthSetOn: string | null;
+  /**
+   * The job the person picked as closest to their work, for the government's skills list (lib/futures/job.ts),
+   * with its name and the day picked; null when none is picked, or when a stored code is no longer a job
+   * on the list.
+   */
+  job: { code: string; label: string; pickedOn: string | null } | null;
 }
 
 /** A pick as stored on the future: the step and the moment it was picked. */
@@ -90,6 +97,8 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
       forkPicks: true,
       targetMonth: true,
       targetMonthSetAt: true,
+      occupationCode: true,
+      occupationPickedAt: true,
       scenarioState: { select: { activeBranches: true } },
     },
   });
@@ -119,6 +128,7 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
   }
 
   const roadChosen = row.roadId !== null && row.roadId === road.id;
+  const job = row.occupationCode === null ? undefined : oasisJobByCode(row.occupationCode);
   return {
     ventureId,
     roadId: road.id,
@@ -128,6 +138,7 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
     forkPicks,
     targetMonth: row.targetMonth,
     targetMonthSetOn: row.targetMonth === null ? null : dayOf(row.targetMonthSetAt),
+    job: job ? { ...job, pickedOn: dayOf(row.occupationPickedAt) } : null,
   };
 }
 

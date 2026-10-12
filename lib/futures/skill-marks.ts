@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient, SkillMark } from "@prisma/client";
 
+import { isOasisItemId } from "@/lib/engines/oasis/v2026";
 import { personUserId } from "@/lib/figures/store";
 
 import { dayOnThisComputer, ensurePersonUserId } from "./person";
@@ -8,7 +9,8 @@ import { FutureInputError, isRecord, SHIPPED_ROADS_CATALOG, SKILL_MARKS, type Ro
 /**
  * The person's skill marks (docs/architecture/future-cockpit.md § 7, Storage as built): one per skill
  * item on the shared list, or per skill the person added in their own words, kept for the person rather
- * than for one future so a mark carries across every road listing the item. Only the person sets one:
+ * than for one future so a mark carries across every road listing the item, and across every job whose
+ * government list has it (one id per skill, shared by every job). Only the person sets one:
  * there is no code path that guesses a mark from anything else.
  */
 
@@ -51,8 +53,9 @@ function readKey(input: Record<string, unknown>, catalog: RoadsCatalog): SkillKe
   if (hasItem === hasOwn) throw new FutureInputError("Say which skill: one from the list, or one of your own, not both.");
   if (hasItem) {
     const id = input.skillItemId;
-    // A mark has to point at something: an id the shared list doesn't have is refused, never kept.
-    if (typeof id !== "string" || !catalog.skillItems.some((item) => item.id === id)) {
+    // A mark has to point at something: an id on neither the roads' shared list nor the government's
+    // list for a job (lib/engines/oasis/v2026, its own catalog whatever the road) is refused, never kept.
+    if (typeof id !== "string" || !(catalog.skillItems.some((item) => item.id === id) || isOasisItemId(id))) {
       throw new FutureInputError("That skill isn't on DotAmi's list.");
     }
     return { skillItemId: id, ownLabel: null };
