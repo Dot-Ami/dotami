@@ -44,9 +44,11 @@ in `docs/brain/`.
    **Or a tool check** (the maintainer's decision of 2026-10-11, option B): instead of, or as
    well as, a person's read, a citation may carry `toolCheck: { checkedOn, quotes }`, recorded
    only after `node scripts/check-quotes.mjs --url … --quote …` found every quote on the live
-   page word for word. It needs one of the two; the card says which ("Read by a person on …" /
-   "Checked by a tool on …: the quoted words were found on the page. Not read by a person
-   yet."). A tool check says the words are on the page, not that the entry reads them right.
+   page as whole words. It needs one of the two; the card says which ("Read by a person on …"
+   only when `readBy: "person"` records it, "Read on …. Who read it wasn't recorded." for a read
+   nobody recorded the reader of, or "Checked by a tool on …: it found on the page the exact words
+   this entry relies on. Not read by a person yet."). A tool check says the words are on the
+   page, not that the entry reads them right.
    The shape, the names and the rules: [citations.md](./citations.md).
 8. **IDs are forever.** Archetypes, annotations, and (soon) risk entries reference engine
    ids. Rename labels freely; never rename ids.

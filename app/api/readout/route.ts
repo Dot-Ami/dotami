@@ -89,9 +89,9 @@ export async function GET(request: Request) {
         expires: u.expires ?? null,
         fork: u.fork ?? null,
         risk: u.risk ?? null,
-        // Each citation keeps its dates (lastVerified, toolCheck) and gains the words a screen shows
-        // for them, so an agent reads the same "Read by a person on …" / "Checked by a tool on …"
-        // as the person does (docs/engines/citations.md).
+        // Each citation keeps its check fields (lastVerified, readBy, toolCheck) and gains the words a
+        // screen shows for them, so an agent reads the same "Read by a person on …" / "Read on …" /
+        // "Checked by a tool on …" as the person does (docs/engines/citations.md).
         citations: u.citations.map((c) => ({ ...c, howChecked: howCheckedWords(c) })),
       })),
     },

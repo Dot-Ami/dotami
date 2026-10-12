@@ -135,9 +135,11 @@ Every citation says how it was checked, and the card shows it. The maintainer de
 ([docs/engines/citations.md](docs/engines/citations.md)):
 
 - **Read by a person**: you read the page and it says what the entry says. Set `lastVerified` to
-  that day. The card shows *"Read by a person on 2026-10-10"*.
+  that day and `readBy: "person"`. The card shows *"Read by a person on 2026-10-10"*. If an AI
+  model did the reading, say `readBy: "model"` instead; the card then says so, in amber. Without
+  `readBy` the card says *"Read on 2026-10-10. Who read it wasn't recorded."*
 - **Checked by a tool**: you copy the exact words the entry relies on from the page (one or more
-  short quotes, never a paraphrase), then run
+  short quotes of at least three words each, never a paraphrase), then run
 
   ```bash
   node scripts/check-quotes.mjs --url "https://www.canada.ca/…" --quote "the exact words" --quote "more exact words"
@@ -150,12 +152,12 @@ Every citation says how it was checked, and the card shows it. The maintainer de
   toolCheck: { checkedOn: "2026-10-11", quotes: ["the exact words", "more exact words"] },
   ```
 
-  The card shows *"Checked by a tool on 2026-10-11: the quoted words were found on the page. Not
-  read by a person yet."* The script changes no file; you record the result. It doesn't read PDFs,
+  The card shows *"Checked by a tool on 2026-10-11: it found on the page the exact words this
+  entry relies on. Not read by a person yet."*, with the words it found under it. The script
+  matches whole words only, inside one block of the page. It changes no file; you record the result. It doesn't read PDFs,
   so a PDF needs a person's read.
 
-A citation needs one of the two and may have both; when both exist, the card shows the person's
-read. A tool check only proves the words are on the page. Whether the entry reads them right is
+A citation needs one of the two and may have both; when both exist, the card shows the read. A tool check only proves the words are on the page. Whether the entry reads them right is
 still for a person, so the maintainer may read any source before it merges. Run
 `node scripts/check-quotes.mjs` with no arguments to check every recorded tool check again (it
 fails when a page has changed under one).

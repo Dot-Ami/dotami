@@ -48,7 +48,7 @@ engine did all of it. About 25 seconds, loops.*
   plausible, time-boxed, or one decision away. Hover a card to see where it leads.
 - **The law, on the card.** Every catalog entry cites the statute, the regulation or the tax
   authority's own page (today: the Income Tax Act, the Regulations, CRA and provincial
-  sources), with a verification status and the day it was checked, saying how: read by a person, or checked by a tool that found the quoted words on the page.
+  sources), with a verification status and the day it was checked, saying how: read by a person, read by someone the record doesn't name, read by an AI model, or checked by a tool that found the quoted words on the page.
 - **Your ideas.** Save as many ventures as you like, stage them (idea → prototype → first
   customers → established), cross-reference the ones that overlap or could become sister
   companies.

@@ -72,9 +72,10 @@ describe("what the catalogs say about who read them", () => {
   const all = allCatalogCitations();
 
   it("the GST/HST small-supplier page, which moved and was re-read only by a model, says so", () => {
-    const gst = all.filter(({ citation }) => citation.url.endsWith("/when-register-charge.html"));
-    expect(gst.length).toBeGreaterThan(0);
-    for (const { citation } of gst) expect(howChecked(citation)).toEqual({ kind: "model", on: "2026-10-06" });
+    const gst = all.filter(({ where }) => where === "compliance compliance-gst-small-supplier");
+    expect(gst.length).toBe(1);
+    expect(gst[0].citation.url).toMatch(/\/when-register-charge\.html$/);
+    expect(howChecked(gst[0].citation)).toEqual({ kind: "model", on: "2026-10-06" });
   });
 
   it("the record-keeping page under Delete doesn't claim a person read it", () => {

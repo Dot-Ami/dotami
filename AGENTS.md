@@ -13,7 +13,7 @@ Orientation for a new agent or contributor:
 Key reminders:
 
 - Catalog data only in `lib/engines/*/v2026/`. Never encode venture or tax knowledge in components.
-- Every rule, rate, threshold or date carries a typed citation with `lastVerified` (the day a person read it) or a `toolCheck` (docs/engines/citations.md). No numbers from memory.
+- Every rule, rate, threshold or date carries a typed citation with `lastVerified` (the day it was read, with `readBy` when who read it is on record) or a `toolCheck` (docs/engines/citations.md). No numbers from memory.
 - Compass, not GPS. No rankings, no "you should", no profile of the person.
 - Not legal or tax advice, and the app never says otherwise.
 - Sign commits off (`git commit -s`) — see `DCO.md`.

@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 
-import { howChecked, howCheckedWords } from "@/lib/engines/shared/citation-check";
+import { howCheckedWords, isCheckFirst, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
 import type { CitationVerificationStatus, CorpusPointer, EngineCitation } from "@/lib/engines/shared/types";
 import { httpsOnly } from "@/lib/http/safe-url";
 
 /**
  * S2.5.4f (decided 2026-09-13) — show the law on every item, as clickable official links.
  * Every citation is a link to its official URL (Justice Canada for the Act, canada.ca for
- * CRA), with authority · jurisdiction · how it was checked ("Read by a person on <date>" or
- * "Checked by a tool on <date>: …", 2026-10-11), and the statute-check status where one exists.
+ * CRA), with authority · jurisdiction · how it was checked ("Read by a person on <date>", "Read on
+ * <date>. Who read it wasn't recorded.", an AI model's read or "Checked by a tool on <date>: …",
+ * 2026-10-11), and the statute-check status where one exists.
  * PARTIAL is amber on purpose: it is the gap the UI must show, not hide.
  *
  * S2.5.4i (decided 2026-09-14) — "Show the words". A citation that carries
@@ -62,10 +63,11 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
               <span className="min-w-0 flex-1 font-semibold text-paper">{c.title} ↗</span>
               {c.verification ? <StatusChip status={c.verification.status} className="shrink-0" /> : null}
             </span>
-            {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read
-                keeps its place on the one line; a tool check gets its own line, in amber, because
-                it says no person has read the page yet. */}
-            {howChecked(c).kind === "person" ? (
+            {/* How it was checked (decided 2026-10-11, docs/engines/citations.md). A person's read,
+                or a read nobody recorded the reader of, keeps its place on the one line; an AI
+                model's read or a tool check gets its own line, in amber, because it says no person
+                has read the page yet. A tool check lists the words it found under that line. */}
+            {!isCheckFirst(c) ? (
               <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wider text-stone">
                 {c.authority} · {c.jurisdiction} · {howCheckedWords(c)}
               </span>
@@ -75,6 +77,16 @@ export function CitationLinks({ citations, compact = false }: { citations: Engin
                   {c.authority} · {c.jurisdiction}
                 </span>
                 <span className="mt-1 block text-[10px] leading-4 text-amber">{howCheckedWords(c)}</span>
+                {toolCheckQuotes(c).length > 0 ? (
+                  <span className="mt-0.5 block text-[10px] leading-4 text-stone">
+                    Words found on the page:{" "}
+                    {toolCheckQuotes(c).map((q, i) => (
+                      <span key={q} className="text-paper-dim">
+                        {i > 0 ? " · " : ""}“{q}”
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
               </>
             )}
             {c.verification?.status === "partial" ? (

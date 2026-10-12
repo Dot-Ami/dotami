@@ -87,7 +87,7 @@ function mergeCitations(existing: PlaybookCitationRef[], node: CFENode): Playboo
         authority: c.authority,
         jurisdiction: c.jurisdiction,
         url: c.url,
-        // How it was checked travels with it: a person's read, a tool check, or both.
+        // How it was checked travels with it: a read (and who did it, when recorded), a tool check, or both.
         ...checkFields(c),
         note: c.note,
       });

@@ -10,7 +10,7 @@ For every rule, rate, threshold or date touched: the official URL and the day yo
 ## Checklist
 
 - [ ] `npm run ci:quality` is green locally (paste the last lines)
-- [ ] Every new or changed entry has at least one typed citation with `lastVerified` (read by a person) or a `toolCheck` (quotes found by `node scripts/check-quotes.mjs`)
+- [ ] Every new or changed entry has at least one typed citation with `lastVerified` (the day it was read; `readBy: "person"` only if a person did) or a `toolCheck` (quotes found by `node scripts/check-quotes.mjs`)
 - [ ] No number appears in prose that is not also a typed field with a source
 - [ ] Nothing reads as a recommendation ("you should")
 - [ ] The matching `docs/ui-spec/` or `docs/engines/` file is updated if behaviour changed

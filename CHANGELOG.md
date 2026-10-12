@@ -1,7 +1,8 @@
 # Changelog
 
-Every catalog entry carries its own dates: `lastVerified`, the day a human read its source, or
-since 2026-10-11 a tool check, the day a script found the quoted words on the page.
+Every catalog entry carries its own dates: `lastVerified`, the day its source was last read (and,
+since 2026-10-11, `readBy` when who read it is on record), or since 2026-10-11 a tool check, the day
+a script found the quoted words on the page.
 This file is the other half: what changed in the project between snapshots. A version here is
 a dated snapshot, not a promise of stability.
 
@@ -10,20 +11,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
-- **Every source says how it was checked: read by a person, or checked by a tool.** The maintainer
-  decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read by a person
-  before it merges, as long as every card says which. A card's "verified 2026-10-10" now reads
-  **"Read by a person on 2026-10-10"**; a source checked only by a tool would read **"Checked by a
-  tool on <date>: the quoted words were found on the page. Not read by a person yet."**, in amber.
-  The same words show in the map's sources, the intake's preview, the Delete menu's record-keeping
-  line, the Tax year hint, the playbook export and the readout API (`howChecked` on each citation);
-  one function writes them (`lib/engines/shared/citation-check.ts`) and a test refuses any other file
-  reading a citation's date. Every source on the map today was read by a person, and none changed
-  kind. A tool check is recorded only after the new developer script
-  `node scripts/check-quotes.mjs --url … --quote …` (never shipped) found every quote on the live page
-  word for word; run with no arguments it checks every recorded one again. The integrity test now
-  fails on a citation with neither kind of check, a tool check with no quote or an empty one, or one
-  dated after today ([docs/engines/citations.md](docs/engines/citations.md)).
+- **Every source says how it was checked, and never claims a person read it unless one did.** The
+  maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
+  by a person before it merges, as long as every card says which. A card's "verified <date>" now
+  says who read the source, only when that is on record: **"Read by a person on 2026-10-10"** for
+  the T2125 lines the maintainer checked; **"Read by an AI model on 2026-10-06. Not read by a person
+  yet."**, in amber, for the GST/HST small-supplier page, which moved and whose new address only a
+  model has read; and **"Read on <date>. Who read it wasn't recorded."** for every other source,
+  because they were read in build sessions that never recorded whether a person or a model did the
+  reading. A source checked only by a tool would read **"Checked by a tool on <date>: it found on the
+  page the exact words this entry relies on. Not read by a person yet."**, in amber, with the words
+  it found listed under it. The same words show in the map's sources, the intake's preview, the
+  Delete menu's record-keeping line, the Tax year hint, the playbook export and the readout API
+  (`howChecked` on each citation); one function writes them (`lib/engines/shared/citation-check.ts`)
+  and a test refuses any other file reading a citation's check fields. The export's front matter
+  counts the sources a person read (`sources_read_by_a_person: <n> of <total>`). A tool check is
+  recorded only after the new developer script `node scripts/check-quotes.mjs --url … --quote …`
+  (never shipped) found every quote on the live page as whole words, inside one block of the page
+  and outside text the page hides; run with no arguments it checks every recorded one again. The
+  integrity test now fails on a citation with neither kind of check, a read or tool check dated
+  after today, a tool check with no quote or a quote under three words, or a tax-line year's form
+  that no person is recorded as having read ([docs/engines/citations.md](docs/engines/citations.md)).
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
   the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point

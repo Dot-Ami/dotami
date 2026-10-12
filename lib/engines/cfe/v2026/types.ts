@@ -14,7 +14,7 @@ export type CFECitationAuthority = "CRA" | "federal" | "provincial";
 
 export type CFEProvince = "AB" | "BC" | "ON" | "CA";
 
-/** A map stage's source. Read by a person, checked by a tool, or both: docs/engines/citations.md. */
+/** A map stage's source. Read (by a person, an AI model, or a reader nobody recorded), checked by a tool, or both: docs/engines/citations.md. */
 export type CFECitation = {
   title: string;
   authority: CFECitationAuthority;

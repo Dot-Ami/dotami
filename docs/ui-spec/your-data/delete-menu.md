@@ -86,7 +86,7 @@ with where they are kept, before confirming.
    Under the boxes: the cited line (from `lib/engines/compliance/v2026/record-keeping.ts`): Delete
    removes DotAmi's own copy only and doesn't touch the person's books, receipts or bank
    statements; the CRA says business records are generally kept for six years from the end of the
-   last tax year they relate to, with exceptions, linked to the CRA's page, then how the page was checked in brackets, "(Read by a person on 2026-10-08)" (the same words as every source since 2026-10-11, [../shared/citation-links.md](../shared/citation-links.md); it said "(read 2026-10-08)").
+   last tax year they relate to, with exceptions, linked to the CRA's page, then how the page was checked in brackets, "(Read on 2026-10-08. Who read it wasn't recorded.)", grey (the same words and colour as every source since 2026-10-11, amber for a model's read or a tool check, [../shared/citation-links.md](../shared/citation-links.md); it said "(read 2026-10-08)").
    Then **What Delete doesn't reach** (`NOT_CLEARED_BY_DELETE`): key files set aside on their own in
    the backups folder (`receipts-key-unreadable-….key`; before 2026-10-10 this line was the receipt
    folders set aside there, which the safety-copies box now clears); [8i] the locked data file and the

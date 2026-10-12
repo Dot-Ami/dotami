@@ -15,7 +15,8 @@ This is the deep dive's first half: the law's own words, on the screen, dated.
 ## What it does
 
 **2026-10-11:** the citation line above the button now says how the citation was checked, "Read by
-a person on <date>" or "Checked by a tool on <date>: …" ([citation-links.md](./citation-links.md)).
+a person on <date>", "Read on <date>. Who read it wasn't recorded.", an AI model's read or "Checked
+by a tool on <date>: …" ([citation-links.md](./citation-links.md)).
 The button and its panel are unchanged: the panel's "current to <date>" is the law store's date for
 the Act, not a check of the citation.
 

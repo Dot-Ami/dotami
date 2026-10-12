@@ -42,8 +42,9 @@ export function taxLineStatus(kind: string, taxYear: number): TaxLineStatus | un
     line: year.line,
     printedLabel: year.printedLabel,
     taxYear,
-    // The first citation is always the form itself (tests/engine-integrity.spec.ts checks). How it
-    // was checked, in the same words as every other source (docs/engines/citations.md).
+    // The first citation is always the form itself, read by a person (tests/engine-integrity.spec.ts
+    // checks both, since these sentences say DotAmi "has read" the form). How it was checked, in the
+    // same words as every other source (docs/engines/citations.md).
     checked: howCheckedWords(year.citations[0]),
   };
 }

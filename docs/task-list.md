@@ -418,9 +418,9 @@ roadmap's build order.
 - ⬜ **[11b] Check sources against the law's own words** — a model quotes, code checks the quote
   appears word for word in the official text, a person decides.
   - [x] The record and the code check (2026-10-11, the maintainer's option B): a citation may carry a
-    tool check (the day and the quotes) instead of, or as well as, a person's read; every card says
-    which ("Read by a person on …" / "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks
-    the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
+    tool check (the day and the quotes) instead of, or as well as, a read; every card says which
+    ("Read by a person on …" only when a person is recorded as the reader, "Read on …" otherwise, or
+    "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
