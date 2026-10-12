@@ -538,9 +538,12 @@ roadmap's build order.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
-  - [x] A plain-words glossary ([glossary.md](glossary.md)) — 2026-10-12: 44 entries for the short
+  - [x] A plain-words glossary ([glossary.md](glossary.md)) — 2026-10-12: 51 entries for the short
     forms and terms on the map, the roads and the settings, each linked to its official page and
-    checked by a tool that day (46 pages, every quote found); linked from the README and CONTRIBUTING
+    checked by a tool that day (53 pages, every quote found); linked from the README and CONTRIBUTING
+  - [ ] Entries for the short forms its *Not explained here yet* list names (Holdco and Opco, dividend,
+    family trust, ITA and Reg., T4002, ISED, SME, ABTIC, CAJG, NAIT, SAIT, GED, CAEC, IP, R&D, B2B, ML, CAD),
+    each once its official page can be checked
   - [ ] A "What does this mean?" link from a card's short form to its glossary entry
   - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.

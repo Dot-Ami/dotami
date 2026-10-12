@@ -1,12 +1,13 @@
-# Glossary: the short forms and terms you meet in DotAmi
+# Glossary: short forms and terms you meet in DotAmi
 
 Last updated: 2026-10-12.
 
 DotAmi's cards, roads and settings use the words the government pages use: GST/HST, T2125, CCPC,
 journeyperson and so on. This page says what each one means in a sentence or two, in plain words,
-and links the official page the meaning comes from. It explains words; it doesn't say what anyone
-should do. For that, the cards show what each option costs and unlocks, and an accountant or a
-lawyer can say what fits a person's own situation.
+and links the official page the meaning comes from. It doesn't cover every short form yet: the ones
+on screen it doesn't explain are listed under [Not explained here yet](#not-explained-here-yet). It
+explains words; it doesn't say what anyone should do. For that, the cards show what each option
+costs and unlocks, and an accountant or a lawyer can say what fits a person's own situation.
 
 **How each source was checked.** Every link below was *checked by a tool on 2026-10-12*:
 [`scripts/check-quotes.mjs`](../scripts/check-quotes.mjs) fetched the live page and found the quoted
@@ -29,6 +30,7 @@ person reads it. Terms are grouped by where you meet them, then listed alphabeti
 - [Apprenticeship and the trades (Alberta)](#apprenticeship-and-the-trades-alberta)
 - [Skills and jobs](#skills-and-jobs)
 - [DotAmi's own settings](#dotamis-own-settings)
+- [Not explained here yet](#not-explained-here-yet)
 
 ## Tax and sales tax
 
@@ -65,17 +67,48 @@ Source: [About the Canada Revenue Agency (CRA)](https://www.canada.ca/en/revenue
 Checked by a tool on 2026-10-12: "The Canada Revenue Agency (CRA) administers tax laws for the
 Government of Canada and for most provinces and territories."
 
+### Eligible dividend
+
+A taxable dividend a Canadian corporation pays to a resident of Canada and marks (designates) as an
+eligible dividend. How much a corporation can pay as eligible dividends depends mostly on its status;
+see [GRIP](#grip-general-rate-income-pool) and [LRIP](#lrip-low-rate-income-pool) below. Designating
+too much brings a tax of its own, the Part III.1 tax.
+
+Source: [Eligible dividends](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/eligible-dividends.html)
+(CRA). Checked by a tool on 2026-10-12: "An eligible dividend is any taxable dividend paid to a
+resident of Canada by a Canadian corporation that is designated by that corporation to be an eligible
+dividend."; "A corporation's capacity to pay eligible dividends depends mostly on its status."; "Part
+III.1 Tax on Excessive Eligible Dividend Designations".
+
 ### GAAR (general anti-avoidance rule)
 
-A section of the federal Income Tax Act (section 245) that takes away the tax benefit of an
-avoidance transaction that misuses the Act's provisions or abuses them read as a whole. DotAmi's risk
-reads name it where it may apply (`lib/engines/risk/v2026/triggers.ts`).
+A section of the federal Income Tax Act (section 245) that can take away a tax benefit. It applies to
+an avoidance transaction, one where getting the tax benefit is one of the main purposes, when the
+transaction misuses one of the Act's rules or goes against what the rules, taken together, are for. It
+doesn't take away the tax benefits Parliament meant people to have. DotAmi's risk reads name it where
+it may apply (`lib/engines/risk/v2026/triggers.ts`).
 
 Source: [Income Tax Act, section 245](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-245.html)
 (Justice Laws). Checked by a tool on 2026-10-12: "This section of the Act contains the general
 anti-avoidance rule"; "applies to deny the tax benefit of avoidance transactions that result directly
 or indirectly either in a misuse of provisions of the Act"; "an abuse having regard to those
-provisions read as a whole".
+provisions read as a whole"; "obtaining the tax benefit is not one of the main purposes for
+undertaking or arranging a transaction"; "while not preventing taxpayers from obtaining tax benefits
+contemplated by Parliament".
+
+### GRIP (general rate income pool)
+
+A balance a Canadian-controlled private corporation (or a deposit insurance corporation) works out at
+the end of its tax year. It generally reflects taxable income that didn't get the small business
+deduction or another special tax rate, and the corporation can pay eligible dividends up to it without
+paying Part III.1 tax. It's worked out on Schedule 53, filed with the T2 return.
+
+Source: [General rate income pool (GRIP)](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/eligible-dividends/general-rate-income-pool-grip.html)
+(CRA). Checked by a tool on 2026-10-12: "may pay eligible dividends to the extent of its general rate
+income pool (GRIP) without incurring Part III.1 tax"; "The GRIP is a balance that generally reflects
+taxable income that has not benefited from the small business deduction or any other special tax
+rate."; "Use Schedule 53, General Rate Income Pool (GRIP) Calculation, to determine the GRIP and file
+it with your T2 return."; "The GRIP is calculated at the end of the tax year."
 
 ### GST/HST (goods and services tax / harmonized sales tax)
 
@@ -103,10 +136,27 @@ payable on your purchases and expenses related to your commercial activities by 
 credits (ITCs)". · The SR&ED page under [SR&ED](#sred-scientific-research-and-experimental-development)
 below: "Earn an investment tax credit (ITC)".
 
+### LRIP (low rate income pool)
+
+A balance that matters to a corporation resident in Canada that is neither a Canadian-controlled
+private corporation nor a deposit insurance corporation. It is generally taxable income that got
+certain lower (preferential) tax rates. While a corporation has an LRIP, it has to bring it down to
+zero by paying ordinary dividends before it can pay an eligible dividend, or Part III.1 tax applies.
+It's worked out on Schedule 54, filed with the T2 return.
+
+Source: [Low rate income pool (LRIP)](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/eligible-dividends/low-rate-income-pool-lrip.html)
+(CRA). Checked by a tool on 2026-10-12: "A corporation resident in Canada that is neither a
+Canadian-controlled private corporation (CCPC) nor a deposit insurance corporation can pay eligible
+dividends in any amount unless it has a low rate income pool (LRIP)."; "The corporation has to reduce
+its LRIP to zero by paying out ordinary dividends before it can pay an eligible dividend, or it will
+be subject to Part III.1 tax."; "The LRIP is generally made up of taxable income that has benefited
+from certain preferential tax rates."; "Use Schedule 54, Low Rate Income Pool (LRIP) Calculation, to
+determine the LRIP, throughout the year."; "File the completed schedule with your T2 return."
+
 ### PST (provincial sales tax, British Columbia)
 
-A sales tax British Columbia charges on top of the GST, separate from it, when taxable goods,
-software or services are bought in B.C. or brought into B.C. to use there. (Alberta has no PST.)
+A retail sales tax British Columbia charges when taxable goods, software or services are bought in
+B.C. or brought into B.C. to use there, unless an exemption applies. (Alberta has no PST.)
 
 Source: [B.C. provincial sales tax (PST)](https://www2.gov.bc.ca/gov/content/taxes/sales-taxes/pst)
 (Government of British Columbia). Checked by a tool on 2026-10-12: "Provincial sales tax (PST) is a
@@ -115,6 +165,23 @@ brought into B.C. for use in B.C., unless a specific exemption applies."
 
 The words "Alberta has no PST" are DotAmi's compliance catalog's, cited there
 (`lib/engines/compliance/v2026/rules.ts`), not this page's.
+
+### RDTOH (refundable dividend tax on hand)
+
+Two accounts a private corporation keeps: the eligible one (ERDTOH) and the non-eligible one
+(NERDTOH). A Canadian-controlled private corporation adds to them part of the tax it pays on
+investment income, and the tax it pays on dividends it receives. When the corporation pays taxable
+dividends to its shareholders, all or part of the accounts may come back to it as a dividend refund.
+
+Source: [T2 Corporation Income Tax Guide, chapter 6](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-6-pages-6-7-t2-return.html)
+(CRA). Checked by a tool on 2026-10-12: "The calculation of a private corporation's dividend refund is
+based on two accounts, the eligible refundable dividend tax on hand (ERDTOH) and the non-eligible
+refundable dividend tax on hand (NERDTOH)."; "The ERDTOH and NERDTOH accounts only apply to
+corporations that were private or subject corporations."; "CCPCs and substantive CCPCs generate NERDTOH
+on the refundable portion of Part I tax they pay on investment income."; "They also generate both
+ERDTOH and NERDTOH on the Part IV tax they pay on dividends they receive."; "All or part of the ERDTOH
+and NERDTOH at the end of the tax year may be available as a refund if the corporation pays taxable
+dividends to the shareholders during the tax year."
 
 ### SBD (small business deduction)
 
@@ -128,16 +195,18 @@ corporations (CCPCs) throughout the tax year may be able to claim the small busi
 
 ### Small supplier (GST/HST)
 
-Most businesses are small suppliers while their taxable sales stay at $30,000 or less, both over
-four calendar quarters in a row and within any single quarter (a sole proprietor counts the sales of
-all their businesses, and those of businesses associated with them). A small supplier doesn't have to
+For most businesses, a small supplier is one whose worldwide taxable sales (from all its businesses,
+together with those of its associates) stay at $30,000 or less both in a single calendar quarter and
+over four calendar quarters in a row. Charities and public institutions have tests of their own, on
+the same page. A small supplier doesn't have to
 register for the GST/HST but may choose to. Some businesses, such as taxi and ride-share drivers,
 must register even as small suppliers; DotAmi's ride-share card cites that rule
 (`lib/engines/compliance/v2026/ride-share-official-words.ts`).
 
 Source: [When to register for and start charging the GST/HST](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html)
 (CRA). Checked by a tool on 2026-10-12: "You have to register for a GST/HST account if both situations
-apply:"; "You do not exceed the $30,000"; "over four consecutive calendar quarters."; "in a single
+apply:"; "Small supplier limit calculation for most businesses"; "Charities and public institutions";
+"You do not exceed the $30,000"; "over four consecutive calendar quarters."; "in a single
 calendar quarter."; "from your worldwide taxable supplies from all your businesses and those of your
 associates"; "You may choose to register voluntarily if you make taxable sales, leases, or other
 supplies in Canada."
@@ -185,6 +254,25 @@ Source: [T2125 Statement of Business or Professional Activities](https://www.can
 (CRA). Checked by a tool on 2026-10-12: "Use the T2125 form to report either business or professional
 income and expenses."
 
+### T5 (the slip for investment income)
+
+The slip that reports certain kinds of investment income paid to a resident of Canada, dividends
+among them (both eligible dividends and the others). The one who pays files a T5 information return,
+and gives each recipient a copy of their slip, by the last day of February after the calendar year;
+the guide lists the payments that need no slip. DotAmi's road names it on its retained earnings step
+(`lib/engines/roads/v2026/starting-any-business-ab.ts`).
+
+Source: [T5 Guide: Return of Investment Income](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4015/t5-guide-return-investment-income.html)
+(CRA). Checked by a tool on 2026-10-12: "If you make certain types of payments to a resident of
+Canada, or if you receive certain types of payments as a nominee or agent for a person resident in
+Canada, you have to prepare a T5 slip."; "eligible dividends and dividends other than eligible
+dividends (including most deemed dividends)"; "You have to file a T5 information return by the last
+day of February following the calendar year to which the information return applies."; "You must give
+recipients a copy of their T5 slips, by the last day of February following the calendar year to which
+the information return applies."; "Use this slip to report the various types of investment income that
+residents of Canada have to report on their income tax and benefit return."; "You do not have to
+prepare a T5 slip to report:"
+
 ### T661 (the SR&ED expenditures claim)
 
 The CRA form used to claim SR&ED.
@@ -195,15 +283,15 @@ Development (SR&ED) in Canada".
 
 ### TOSI (tax on split income)
 
-A special tax on certain income a person receives from a related business, such as some dividends
-from a family corporation. It comes up when income is paid to family members.
+A special tax on certain income a person receives from a related business. Split income includes,
+for example, taxable dividends on shares of a corporation, other than shares listed on a stock
+exchange; the page lists the other kinds, and the amounts that are excluded.
 
 Source: [Line 40424 – Tax on split income](https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-40424-federal-tax-on-split-income.html)
 (CRA). Checked by a tool on 2026-10-12: "Tax on split income (TOSI) is a special tax that applies to
-certain income received from a related business."
-
-The example of dividends is from the same page's list of what counts as split income; the tool check
-above covers only the quoted sentence.
+certain income received from a related business."; "Split income includes taxable dividends on shares
+of a corporation"; "other than shares of a class listed on a designated stock exchange"; "Excluded
+amount from split income".
 
 ## Ways to run a business, and registering it
 
@@ -291,9 +379,7 @@ registrations also have a government fee.
 Source: [Find a business registry](https://www.alberta.ca/find-business-registry) (alberta.ca).
 Checked by a tool on 2026-10-12: "Authorized registry agents can provide most registration services
 for your corporation, trade name or partnership."; "Service fees are not regulated and may vary from
-one agent to another."
-
-The government fee is in a sentence of the same page the tool check doesn't cover.
+one agent to another."; "There is also a government fee for certain registrations."
 
 ### Sole proprietorship (sole proprietor)
 
@@ -335,17 +421,45 @@ insurance (EI) ruling to determine if a worker is an employee or self-employed".
 
 The CRA account an employer uses for the deductions it takes from employees' pay and sends to the CRA
 (remits). It has to be opened before the first remittance is due: the 15th of the month after the
-month the first deductions were taken, unless the CRA sets another frequency.
+month the first deductions were taken, unless the CRA tells the employer to remit on a different
+schedule.
 
 Sources: [Determine if you need to register for a payroll account](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/open-manage-payroll-account/determine-need-register.html)
 (CRA). Checked by a tool on 2026-10-12: "You may need to register for a payroll account if you are:";
 "The Canada Revenue Agency (CRA) generally considers you to be an employer if you:"; "Your first
 remittance due date is the 15th day of the month following the month in which you began withholding
-deductions from your employee's pay"; "If you did not open an account before hiring employees, you
+deductions from your employee's pay, unless the CRA tells you to remit using a different frequency.";
+"If you did not open an account before hiring employees, you
 still need to calculate deductions and remit them by the due date." ·
 [Set up and manage employee payroll information](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/set-up-new-employee.html)
 (CRA). Checked by a tool on 2026-10-12: "You have to register for a payroll account before the first
 remittance due date."
+
+### T4 (the employee's slip)
+
+The slip an employer issues to an employee that shows all the remuneration (pay and other amounts)
+it paid them in a calendar year. The page says when an employer has to issue one. DotAmi's map uses it in the words "T4 employment income"
+(`lib/engines/cfe/v2026/nodes.ts`).
+
+Source: [T4 slip – Information for employers](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/completing-filing-information-returns/t4-information-employers/t4-slip.html)
+(CRA). Checked by a tool on 2026-10-12: "A T4 slip identifies all of the remuneration paid by an
+employer to an employee during a calendar year."; "you must issue a T4 slip if any of the following
+apply".
+
+### TD1 (Personal Tax Credits Return)
+
+The form a person fills out for their employer when they start a new job, or when they want more
+income tax taken off their pay. The employer uses it to work out how much to take off (withhold). If
+the person claims more than the basic personal amount, they fill out a provincial or territorial TD1
+too. DotAmi's hiring step asks for the completed TD1 forms before the first pay
+(`lib/engines/roads/v2026/starting-any-business-ab.ts`).
+
+Source: [Get the completed TD1 forms from the individual](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/set-up-new-employee/filing-form-td1.html)
+(CRA). Checked by a tool on 2026-10-12: "Employers and payers must get Form TD1, Personal Tax Credits
+Return, when individuals start a new job or they want to increase income tax deductions."; "This is
+used to calculate the amounts to withhold from their employment income or other income, such as
+pension income."; "If more than the basic personal amount is claimed, the individual must also fill
+out a provincial or territorial TD1 form."
 
 ### WCB-Alberta (the Workers' Compensation Board – Alberta)
 
@@ -358,10 +472,8 @@ Sources: [Worker coverage](https://www.wcb.ab.ca/insurance-and-premiums/types-of
 employers from the impacts of workplace injuries and illnesses."; "The Workers' Compensation Board -
 Alberta". · [Personal coverage](https://www.wcb.ab.ca/insurance-and-premiums/types-of-coverage/personal-coverage.html)
 (WCB-Alberta). Checked by a tool on 2026-10-12: "you're not automatically covered by workers'
-compensation benefits".
-
-That personal coverage is optional is in the next words of the same sentence, which the tool check
-doesn't cover.
+compensation benefits"; "Personal coverage is optional coverage for people not automatically covered
+through the workers' compensation system."
 
 ## Funding programs
 
@@ -561,3 +673,22 @@ Source: [What is the Model Context Protocol (MCP)?](https://modelcontextprotocol
 connecting AI applications to external systems."
 
 The setting's words are in DotAmi's settings catalog (`lib/settings/catalog.ts`).
+
+## Not explained here yet
+
+These short forms and terms appear on DotAmi's cards or road steps and have no entry yet. Each needs
+an official page a tool or a person can check before it gets one (see *Adding a term* above). This
+list is from a scan of the catalogs' words on 2026-10-12, so it may miss some.
+
+- **Holdco and Opco** (a holding company and an operating company), on the structure cards
+  (`lib/engines/structure/v2026/ladder.ts`; the Holdco card spells out "Holding company").
+- **Dividend** itself, and the **family trust** card (`lib/engines/structure/v2026/ladder.ts`).
+- **ITA** and **Reg.**, the short names a card's source links use for the Income Tax Act and its
+  Regulations (`components/shared/citation-links.tsx`).
+- **T4002**, the CRA guide named in a capital cost allowance source
+  (`lib/engines/risk/v2026/triggers.ts`).
+- **ISED**, **SME**, **ABTIC** and **CAJG**, on the funding cards (`lib/engines/grants/v2026/programs.ts`;
+  ABTIC and CAJG are spelled out in their cards' names).
+- **NAIT**, **SAIT**, **GED** and **CAEC**, on the apprenticeship road
+  (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; NAIT and SAIT are spelled out there).
+- **IP**, **R&D**, **B2B**, **AI / ML** and **CAD**, used in passing on cards and road steps.

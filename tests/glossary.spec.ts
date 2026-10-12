@@ -51,7 +51,7 @@ describe("docs/glossary.md", () => {
       /\*\*A plain-words glossary\*\*[^\n]*?(\d+) entries/,
     );
     const taskList = read("docs/task-list.md").match(
-      /A plain-words glossary \(\[glossary\.md\][^)]*\) — [^:]*: (\d+) entries/,
+      /A plain-words glossary \(\[glossary\.md\]\(glossary\.md\)\)[^\n]*?(\d+) entries/,
     );
     expect(changelog?.[1], "CHANGELOG.md's glossary line gives no entry count").toBeDefined();
     expect(taskList?.[1], "docs/task-list.md's glossary line gives no entry count").toBeDefined();
