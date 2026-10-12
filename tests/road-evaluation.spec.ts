@@ -11,14 +11,15 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import type { ConfirmedFigure } from "@/lib/brain/types";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { formatMoney, formatMonth } from "@/lib/format/money-and-months";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { agreedPlanning, evaluateRoad, roadReceipt, type RoadEvaluation, type RoadEvaluationInput } from "@/lib/roads";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
+import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 
-import { input, inventedIdea, ROAD_ID, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { input, inventedIdea, ROAD_ID, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
 
 const stateOf = (result: RoadEvaluation) => Object.fromEntries(result.steps.map((s) => [s.stepId, s.state]));
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
@@ -121,8 +122,9 @@ describe("each step's state and its reason", () => {
     const gst = stepOf(result, "stage-2b-mandatory-gst-registration");
     expect(gst.state).toBe("check-first");
     expect(gst.reason).toEqual({ kind: "rules", answerIds: ["map-pick:gstTiming"] });
+    // Nothing clicked on the map, so the pick is the map's default, and the reason says so.
     expect(gst.because).toBe(
-      "Today's rules say check first, from the map's pick at “GST timing” (“Mandatory GST registration”).",
+      "Today's rules say check first, from the map's default pick at “GST timing” (“Mandatory GST registration”).",
     );
     const hire = stepOf(result, "branch-hire-first-employee");
     expect(hire.because).toBe("Today's rules leave it off your path, from the hire-first path (switched off).");
@@ -140,6 +142,110 @@ describe("each step's state and its reason", () => {
     // No third-year number was given, so there is no answer, and no invented number is tried in its place.
     expect(answers.find((a) => a.id === "idea:sales-year-3")).toBeUndefined();
   });
+
+  it("on road 0 the map's worked-out lists are not the person's statuses: nothing says 'You marked'", () => {
+    // The map's active, done and set-aside lists come from its toggles alone (lib/scenarios/branches.ts):
+    // stage 0 is always done, stage 1 always active, the side not picked set aside. Passed in as
+    // progress, the way the first version's comment said to, they must not read as the person's word.
+    const idea = inventedIdea();
+    const fromMap = { ghost: "not-for-me", complete: "done", active: "doing" } as const;
+    const progress = generalRoadV2026.steps.flatMap((s) => {
+      const status = fromMap[getScenarioNodeStatus(s.id, idea) as keyof typeof fromMap];
+      return status ? [{ stepId: s.id, status, doneWhenIds: [] }] : [];
+    });
+    expect(progress.length).toBeGreaterThan(0);
+    const result = evaluateRoad(road0({ scenario: idea, progress }));
+    expect(result.steps.filter((s) => s.reason.kind === "not-for-me")).toEqual([]);
+    expect(result.steps.every((s) => s.status === null)).toBe(true);
+    expect(result.gauges.steps).toMatchObject({ done: 0, doing: 0 });
+    expect(result.answers.filter((a) => a.group === "step")).toEqual([]);
+    // The colours are the map's, exactly as with no progress at all.
+    expect(stateOf(result)).toEqual(stateOf(evaluateRoad(road0({ scenario: idea }))));
+  });
+
+  it("on another road the person's own status still counts", () => {
+    const result = evaluateRoad(input({ progress: [{ stepId: "step-eval-train", status: "done", doneWhenIds: [] }] }));
+    expect(result.gauges.steps.done).toBe(1);
+    expect(result.answers.find((a) => a.id === "step:step-eval-train")?.said).toBe("you told us “Train (test only)” is done");
+  });
+});
+
+describe("a road that reuses a road 0 step after a fork", () => {
+  // Road 1 is designed to join road 0's later columns. Here the invented road's "Open the doors",
+  // which only "Own shop" leads to, goes on into road 0's retained-earnings step.
+  const JOINED = "stage-4-retained-earnings-planning";
+  const joinedRoad = (): Road => {
+    const base = roadToEvaluate();
+    const roadZeroStep = generalRoadV2026.steps.find((s) => s.id === JOINED)!;
+    return {
+      ...base,
+      columns: [...base.columns, { id: "col-eval-joined", label: "Joined", summary: "Road 0's own step.", steps: [JOINED] }],
+      steps: [
+        ...base.steps.map((s) => (s.id === "step-eval-open" ? { ...s, next: [...s.next, JOINED] } : s)),
+        { ...roadZeroStep, next: [], costs: [{ id: "cost-eval-joined", kind: "named" as const, label: "Advice (test only)" }] },
+      ],
+    };
+  };
+  const corporation = inventedIdea({ structure: "corporation", structureSource: "user" });
+
+  it("after the side not picked, it is not on your path and its money is left out, whatever the rules say", () => {
+    const step = stepOf(evaluateRoad(input({ road: joinedRoad(), scenario: corporation, forkPicks: { "fork-eval-ending": EMPLOYED } })), JOINED);
+    expect(step).toMatchObject({ state: "not-on-your-path", money: "left-out", reason: { kind: "after-other-side", sideStepId: "step-eval-own" } });
+  });
+
+  it("with no pick yet, it waits on the pick", () => {
+    const step = stepOf(evaluateRoad(input({ road: joinedRoad(), scenario: corporation })), JOINED);
+    expect(step).toMatchObject({ state: "check-first", money: "waits-on-a-pick", waitsOnForkId: "fork-eval-ending" });
+  });
+
+  it("on the path, the rules colour it as they do on road 0", () => {
+    const step = stepOf(evaluateRoad(input({ road: joinedRoad(), scenario: corporation, forkPicks: { "fork-eval-ending": OWN } })), JOINED);
+    const roadZero = stepOf(evaluateRoad(road0({ scenario: corporation })), JOINED);
+    expect(step.reason.kind).toBe("rules");
+    expect(step.state).toBe(roadZero.state);
+    expect(step.money).toBe("counted");
+  });
+});
+
+describe("the answers it read: given, or a default worded as one", () => {
+  const byId = (result: RoadEvaluation, id: string) => result.answers.find((a) => a.id === id)!;
+
+  it("on a fresh idea, the defaults are marked not given and say they are defaults", () => {
+    const result = evaluateRoad(road0({ scenario: inventedIdea({ capitalPurchasePlanned: undefined }) }));
+    expect(byId(result, "idea:place")).toMatchObject({ given: true, said: "you told us your place is Alberta" });
+    expect(byId(result, "idea:equipment")).toMatchObject({
+      given: false,
+      said: "buying equipment, a vehicle or tools is not answered yet, so the rules read it as no",
+    });
+    expect(byId(result, "idea:hire-first")).toMatchObject({ given: false, said: "the hire-first path is switched off" });
+    expect(byId(result, "idea:structure")).toMatchObject({ given: false });
+    expect(byId(result, "map-pick:gstTiming")).toMatchObject({
+      given: false,
+      said: "the map's default pick at “GST timing” is “Mandatory GST registration”, not your pick yet",
+    });
+    // Nothing that wasn't given says "you told us", "you picked" or "you switched".
+    expect(result.answers.filter((a) => !a.given && /\byou (told|picked|switched)\b/.test(a.said))).toEqual([]);
+  });
+
+  it("an answer the person gave says so", () => {
+    const idea = inventedIdea({ capitalPurchasePlanned: false, hireFirst: true });
+    const clicked = { ...idea, state: { ...idea.state, decidedBranchIds: ["gstTiming"] } };
+    const result = evaluateRoad(road0({ scenario: clicked }));
+    expect(byId(result, "idea:equipment")).toMatchObject({ given: true, said: "you told us you're not buying equipment, a vehicle or tools" });
+    expect(byId(result, "idea:hire-first")).toMatchObject({ given: true, said: "you switched on the hire-first path" });
+    expect(byId(result, "map-pick:gstTiming")).toMatchObject({
+      given: true,
+      said: "you picked “Mandatory GST registration” at “GST timing” on the map",
+    });
+    expect(byId(result, "map-pick:incorporationTiming").given).toBe(false);
+  });
+
+  it("the person's own answers on a road are all given", () => {
+    const result = evaluateRoad(
+      input({ forkPicks: { "fork-eval-ending": OWN }, skillMarks: [{ skillItemId: "skill-eval-math", ownLabel: null, mark: "have" }] }),
+    );
+    expect(result.answers.filter((a) => !a.id.startsWith("idea:") && !a.id.startsWith("map-pick:")).every((a) => a.given)).toBe(true);
+  });
 });
 
 describe("the what-if", () => {
@@ -150,6 +256,22 @@ describe("the what-if", () => {
     expect(gst.state).toBe("applies");
     expect(gst.reason.kind === "rules" && gst.reason.answerIds).toContain("what-if");
     expect(gst.because).toContain("your what-if of first-year sales ($45,000, not a forecast)");
+  });
+
+  it("the rules and tax cards in the same result call it a what-if, never the person's target", () => {
+    const result = evaluateRoad(road0({ whatIf: { firstYearSalesDollars: 45_000 } }));
+    const gstCard = result.rules.unlocks.find((u) => u.id === "compliance-gst-small-supplier")!;
+    // The what-if still lights the card: it crosses the line, so check first.
+    expect(gstCard.state).toBe("yellow");
+    expect(gstCard.why).toContain("your what-if of first-year sales (not a forecast)");
+    expect(result.rules.unlocks.filter((u) => /Y1 revenue target/.test(u.why))).toEqual([]);
+  });
+
+  it("the person's own first-year sales are still their target (the control)", () => {
+    const result = evaluateRoad(road0({ scenario: inventedIdea({ targetRevenueY1: 45_000 }) }));
+    const gstCard = result.rules.unlocks.find((u) => u.id === "compliance-gst-small-supplier")!;
+    expect(gstCard.state).toBe("yellow");
+    expect(gstCard.why).toContain("your Y1 revenue target crosses");
   });
 
   it.each([[-1], [1.5], [Number.NaN], [Number.POSITIVE_INFINITY], ["45000" as unknown as number]])(
@@ -389,7 +511,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
     expect(roadReceipt(evaluateRoad(told), evaluateRoad(told))).toEqual([]);
   });
 
-  it("marking two skills names both; a step whose every need is marked have needs nothing more", () => {
+  it("marking two skills names both; the skills line counts skills and claims nothing else about the step", () => {
     const before = evaluateRoad(input());
     const after = evaluateRoad(
       input({
@@ -401,9 +523,11 @@ describe("receipts: one plain line per change, from the two runs", () => {
     );
     const because = "Because you told us you have “Trade math (test only)” and you told us you have “Read drawings (test only)”";
     expect(roadReceipt(before, after)).toEqual([
-      `${because}, 1 step now needs nothing more from you.`,
+      `${because}, 1 step now has every skill it lists marked have.`,
       `${because}, the skills now read 2 have, 0 learning, 0 not yet, 3 not marked.`,
     ]);
+    // The step still has its two "done when" lines and its money to go: the line is about skills only.
+    expect(stepOf(after, "step-eval-train")).toMatchObject({ doneWhen: { ticked: 0, total: 2 }, needs: { listed: 2, have: 2 } });
   });
 
   it("three or more answers of one kind are counted", () => {
@@ -416,7 +540,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
         })),
       }),
     );
-    expect(roadReceipt(evaluateRoad(input()), after)[0]).toBe("Because you marked 3 skills, 2 steps now need nothing more from you.");
+    expect(roadReceipt(evaluateRoad(input()), after)[0]).toBe("Because you marked 3 skills, 2 steps now have every skill they list marked have.");
   });
 
   it("taking an answer back says so", () => {
@@ -424,6 +548,31 @@ describe("receipts: one plain line per change, from the two runs", () => {
     expect(roadReceipt(before, evaluateRoad(input()))).toEqual([
       "Because you took back your mark on “Trade math (test only)”, the skills now read 0 have, 0 learning, 0 not yet, 5 not marked.",
     ]);
+  });
+
+  it("taking back three or more is counted as taken back, never as marked", () => {
+    const marks = ["skill-eval-math", "skill-eval-drawings", "skill-eval-ticket"].map((id) => ({
+      skillItemId: id,
+      ownLabel: null,
+      mark: "have" as const,
+    }));
+    const lines = roadReceipt(evaluateRoad(input({ skillMarks: marks })), evaluateRoad(input()));
+    expect(lines).toEqual([
+      "Because you took back 3 skill marks, 2 steps no longer have every skill they list marked have.",
+      "Because you took back 3 skill marks, the skills now read 0 have, 0 learning, 0 not yet, 5 not marked.",
+    ]);
+  });
+
+  it("marks given and marks taken back at once are counted apart", () => {
+    const mark = (id: string) => ({ skillItemId: id, ownLabel: null, mark: "have" as const });
+    const before = evaluateRoad(input({ skillMarks: ["skill-eval-math", "skill-eval-drawings", "skill-eval-ticket"].map(mark) }));
+    const after = evaluateRoad(
+      input({ skillMarks: ["skill-eval-quoting", "skill-eval-books", "skill-eval-math"].map((id) => ({ ...mark(id), mark: "learning" as const })) }),
+    );
+    // Three marked (two new, one changed), two taken back: the three are counted, the two named.
+    expect(roadReceipt(before, after)[0]).toMatch(
+      /^Because you marked 3 skills, you took back your mark on “Read drawings \(test only\)” and you took back your mark on “Trade ticket \(test only\)”, /,
+    );
   });
 
   it("picking an ending: steps by their new state, and the money that moved", () => {
@@ -494,6 +643,8 @@ describe("the words: counts and arithmetic, never a verdict", () => {
       ],
       agreed: { incomeWantedCents: 7_000_000, savingsCents: 100_000, costLines: [{ stepId: "step-eval-own", lineId: "cost-eval-saw", amountCents: 340_050 }] },
     }),
+    // Every skill marked have, so the pairs include steps whose every listed skill is marked.
+    input({ skillMarks: skillItems.map((item) => ({ skillItemId: item.id, ownLabel: null, mark: "have" as const })) }),
     road0(),
     road0({ whatIf: { firstYearSalesDollars: 45_000 } }),
     road0({ scenario: inventedIdea({ structure: "corporation", structureSource: "user", hireFirst: true, targetRevenueY3: 150_000, activityTags: ["Software / SaaS"] }) }),
@@ -510,6 +661,8 @@ describe("the words: counts and arithmetic, never a verdict", () => {
     ];
     expect(sentences.length).toBeGreaterThan(200);
     expect(sentences.filter((s) => VERDICT.test(s))).toEqual([]);
+    // Nor that a step needs nothing more: skills marked say nothing about its "done when" lines or money.
+    expect(sentences.filter((s) => /\bnothing more\b|\bneeds? nothing\b/i.test(s))).toEqual([]);
   });
 
   it("one formatter for money and months", () => {
