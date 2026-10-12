@@ -187,7 +187,10 @@ test("every source says how it was checked: the map's sources, the playbook expo
       activityTags: ["Trades"],
       stage: "idea",
     },
-    state: {},
+    // The same picks as the test above: the save refuses a scenario without them.
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
   };
   const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
   expect(saved.ok()).toBe(true);
@@ -196,8 +199,9 @@ test("every source says how it was checked: the map's sources, the playbook expo
 
   // A stage's own sources.
   await page.getByRole("button", { name: /^Sole Prop activation, / }).click();
-  await page.getByText(/^Sources for this stage · \d+$/).click();
-  const sources = page.locator("details[open]").filter({ has: page.getByText(/^Sources for this stage/) }).getByRole("listitem");
+  // The fold's summary reads "▸ Sources for this stage · 2".
+  await page.locator("summary", { hasText: /Sources for this stage · \d+/ }).click();
+  const sources = page.locator("details[open]").filter({ has: page.locator("summary", { hasText: "Sources for this stage" }) }).getByRole("listitem");
   expect(await sources.count()).toBeGreaterThan(0);
   for (const item of await sources.all()) {
     await expect(item).toContainText(/Read by a person on \d{4}-\d{2}-\d{2}/);
