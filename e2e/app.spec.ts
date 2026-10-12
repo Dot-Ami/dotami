@@ -177,6 +177,11 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await fresh.goto("/intake");
   const row = fresh.getByRole("listitem").filter({ hasText: sentence });
   await expect(row.getByText("typed for your idea “Invented — first words test”", { exact: true })).toBeVisible();
+  // The list has loaded, so any status line would be drawn by now. None is about an external source
+  // of statements, which no copy of DotAmi has set up: "Vault: No external statement source
+  // configured." showed to everyone and meant nothing to a stranger (#6, 2026-10-12).
+  await expect(fresh.getByText(/external statement source/i)).toHaveCount(0);
+  await expect(fresh.getByText(/^Vault:/)).toHaveCount(0);
   await context.close();
 });
 
