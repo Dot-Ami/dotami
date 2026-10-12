@@ -24,12 +24,12 @@ import { files as waveFiles } from "../tests/fixtures/packages/wave";
 import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
 /**
- * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
- * is a plain <p> that isn't tied to its <select>, so a screen reader can't name the dropdown
- * either — a finding for the screen-by-screen review; until then, take the select that follows it.
+ * One of the intake's dropdowns, found by the name a screen reader says for it ("Province /
+ * territory", "Current employment"). Until 2026-10-12 the name above each was a plain <p> tied to
+ * nothing, so the dropdowns had no name and this test took "the select after that text" instead.
  */
 function groupSelect(page: Page, label: string) {
-  return page.getByText(label, { exact: true }).locator("xpath=following-sibling::select");
+  return page.getByRole("combobox", { name: label, exact: true });
 }
 
 test("one sentence becomes a saved map", async ({ page }) => {
@@ -56,6 +56,8 @@ test("one sentence becomes a saved map", async ({ page }) => {
   await expect(openMap).toBeDisabled();
   await groupSelect(page, "Current employment").selectOption("self-employed");
   await expect(openMap).toBeEnabled();
+  // The name box is named by its label too, not only by its placeholder.
+  await expect(page.getByRole("textbox", { name: "Name it — optional", exact: true })).toBeVisible();
   await openMap.click();
 
   // The map, with named stage cards.

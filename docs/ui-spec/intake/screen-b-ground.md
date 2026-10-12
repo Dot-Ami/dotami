@@ -5,7 +5,7 @@
 Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx`
 Type: location + optional numbers screen
 
-Last updated: 2026-10-11 (Open my map saves the typed sentence and the goal picks with the idea; 2026-09-21: employment context is explicitly chosen before opening the map)
+Last updated: 2026-10-12 (the province, employment and name fields are named by their labels); 2026-10-11 (Open my map saves the typed sentence and the goal picks with the idea; 2026-09-21: employment context is explicitly chosen before opening the map)
 Workshop status: **signed off**
 
 ## What it is
@@ -20,6 +20,14 @@ straight to the cockpit.
   `FULL_COVERAGE_PROVINCES` (AB/BC/ON) render nothing further; the rest also show: *"Federal rules apply. Provincial coverage for
   \<province\> is coming — nothing shown will be wrong, some provincial programs just won't
   appear yet."* Federal (CA-wide) engine entries surface for every province regardless.
+- **The fields' names (2026-10-12).** "Province / territory", "Current employment" and "Name it —
+  optional" are each a `<label>` tied to its field (`htmlFor` → `intake-province`,
+  `intake-employment`, `intake-name`), so a screen reader says the name when the field takes focus
+  and clicking the name moves to the field. Until then `FieldGroup` drew every group's name as a
+  plain `<p>`, which names nothing: the two dropdowns had no name at all, and the name box only its
+  placeholder. Groups that hold buttons or fields with names of their own ("Numbers — optional",
+  and the confirm screen's groups) keep the `<p>`. `e2e/app.spec.ts` finds both dropdowns by their
+  names.
 - **Current employment** — starts at **Choose…**, then offers 7 options as of this session (was 5 — see Fixed below):
   employee, self-employed, business-owner, apprentice/student, retired, unemployed,
   other. Choosing **Other…** reveals a free-text input backed by a `<datalist>` cached in
