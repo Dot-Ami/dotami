@@ -52,13 +52,17 @@ The first written future, *From apprentice to your own shop (Alberta)*, joins la
 7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines, cost lines,
    skill items and official links are empty until they are read from the official pages; the checks
    allow empty lists and refuse uncited entries.
-8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`). How places are stored is still the
-   maintainer's decision; don't add new place codes here.
+8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`) in the catalog for now. The maintainer
+   decided on 2026-10-11 that places are stored as international codes (`CA`, `CA-AB`); the storage
+   code maps today's values to them (`lib/places/codes.ts`), and moving the catalogs over is a later
+   pull request. Don't add a new place value here until then.
 9. **No layout in the catalog.** A road says what the steps are and how they connect; how a screen
    draws them is the screen's business. A fork's id is the key its pick is saved under: road 0's forks
    reuse `gstTiming` and `incorporationTiming`, the keys saved branch picks already use. A column's
    `forkId` says which fork is decided in that column, not where a toggle goes; it carries today's two
-   toggles over, and the map chooses to show them in the column header.
+   toggles over, and the map chooses to show them in the column header. Road 0's picks are kept in
+   `ScenarioState.activeBranches`, as before; every other road's picks are kept on the saved future
+   (`Venture.forkPicks`; docs/architecture/future-cockpit.md § 7, Storage as built).
 11. **Lever cards are not on the step yet.** The sketch's `engineHints` is not on `RoadStep`: today's
     cards are matched to a step by its id through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`.
     The road-evaluation pull request moves them onto the step; don't add a new road's cards to
