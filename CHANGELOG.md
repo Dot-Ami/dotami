@@ -53,10 +53,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   when both exist, and months to your own date only when you set one. On today's Alberta road the colours
   are the map's, and each names the answers it depends on, found by running the rules again with each
   answer changed. A second function compares two results and writes one line per change: *"Because you
-  told us you have “Read drawings”, 1 step now needs nothing more from you."* Every line is built from
-  catalog words, your values and counts, never by a model; a test fails on *enough*, *ready*, *best*,
-  *should* or *recommended*. A what-if relights the rules for one run and is never kept as a figure. No
-  screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
+  told us you have “Read drawings”, 1 step now has every skill it lists marked have."* Every line is built
+  from catalog words, your values and counts, never by a model; a test fails on *enough*, *ready*,
+  *best*, *should*, *recommended* or a step that "needs nothing more". Answers you took back are counted
+  as taken back, and a default you haven't set (a map pick you haven't clicked, an unanswered question)
+  is worded as a default, never as something you told us. Road 0's steps carry no status of yours: the
+  map's done, active and set-aside lists are worked out from its toggles, not set by you. A what-if
+  relights the rules for one run, is never kept as a figure, and the rules and tax cards it lights call
+  it your what-if, never your target. No screen shows it yet; nothing new is kept or sent ([`lib/roads/`](lib/roads/),
   [docs/architecture/future-cockpit.md § 6](docs/architecture/future-cockpit.md)). The map's hover
   arrows now walk the road through the same code, and draw exactly as before.
 
