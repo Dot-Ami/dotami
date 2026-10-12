@@ -51,32 +51,51 @@ and the maintainer's six decisions of 2026-10-11:
     and dated), the map changed to draw it, and today's map wrapped as *Starting any business in
     Alberta* (2026-10-11: `lib/engines/roads/v2026/`, [engines/roads.md](engines/roads.md); road 0's
     *done when* lines, cost lines and *before you open* steps come with the content)
-  - [ ] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
+  - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
     savings for starting; a start-up cost line); listed and deletable on *What DotAmi knows about you*
+    (2026-10-11: the storage and its server-side code, `lib/futures/`, with no screen yet; the design's
+    open items on each number's time period, the per-person table and the speed of *What you've told
+    DotAmi* settled in [future-cockpit.md § 7](architecture/future-cockpit.md). The sales at which you'd
+    incorporate stay where the honest-map change keeps them, with the map's answers. 2026-10-12: each
+    idea's place is now stored in the data file as its international code, such as `CA-AB` for Alberta;
+    every answer kept on a future has its date; one current number per cost line and per idea's
+    savings. Still to come, each in the open lines below: the job you pick, the *business / career /
+    both* answer, the *This is mine* pin, a step's own date, the catalogs' place keys)
   - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
     steps now say needs 0 more"), worked out by running the rules before and after
   - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);
     *What you've told DotAmi / Not told yet*; the Road, Skills, Money and Rules & tax overlays; the
     step panel with its *done when* checklist, skill marks and three kinds of cost; *Next on your
-    road*; the what-if bar; compare the two endings and *This is mine*; the export gains all of it
+    road*; the what-if bar; compare the two endings and *This is mine* (kept on the future: one added
+    column); the export gains all of it. On today's Alberta road the step panel sets a step's status
+    through the map, which keeps it ([§ 7](architecture/future-cockpit.md))
+  - [ ] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
+    the map, so *Since last time* can list those changes too (the map then reads them;
+    [§ 7](architecture/future-cockpit.md)). Until then *Since last time* has no history for that road's steps
   - [ ] The way in: three doors on the front page, *Your destination* (four short questions, a receipt
-    after each), *Pick a future*, and *Your ideas* renamed *Your futures*
+    after each), *Pick a future*, and *Your ideas* renamed *Your futures*. The *business / career /
+    both* answer is kept on the future (one added column) when this screen asks it
   - [ ] The first written future, *From apprentice to your own shop (Alberta)*: steps read from
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements
-  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*
+  - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
+    you pick is kept on the future (an occupation code and the day you picked it: one added column each)
   - [ ] *Show me an example first*: a filled-in, clearly invented example future
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine*
   - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's
-    Alberta road, for the maintainer to click through
+    Alberta road, for the maintainer to click through. Raise then: *I don't know* on a skill keeps no
+    mark (the design's table listed it as a fourth mark; [§ 7](architecture/future-cockpit.md))
+  - [ ] The catalogs' place keys (`AB`, `CA`) and the app's own place type moved to international codes
+    such as `CA-AB`, as the data file already stores them (2026-10-12). No phase 1 screen needs it; it
+    comes before any place outside Canada is added
 - ⬜ **[14b] Phase 2 — Compare futures, dates and your dream numbers.** A second written future; a
   shelf of *Possible futures* (business, career, side gig) with *Peek inside*: what the work looks like
   running, the road, skills, costs to start, and your own numbers beside it with no verdict; *Side by
   side* across your saved futures, sorted by one thing you choose, said on screen; *Keep as a copy* for
-  a what-if; a time strip from your own dates; hours you want, things you won't do, and a dream-life
+  a what-if; a time strip from your own dates (each step's own date kept then: one added column); hours you want, things you won't do, and a dream-life
   list that adds up your own monthly amounts into your target; *I paid this* linking an expense to a
   planned cost. Before this phase is locked, the maintainer is asked again whether to show typical
   numbers beside the official fees and your own quotes (the approved plan's follow-up to decision 2).

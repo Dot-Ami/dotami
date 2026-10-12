@@ -419,7 +419,9 @@ for a reason:
   step ids (`activeBranches: Record<string, CFENodeId>` in `lib/scenarios/types.ts`); the storage pull
   request widens the value to any road's step id so another road's pick can be kept. Places stay
   today's values (`AB`, `BC`, `ON`, `CA`); how places are stored is an open decision of the
-  maintainer's.
+  maintainer's. *(2026-10-11: the storage pull request keeps another road's picks in a column of their
+  own instead and leaves the type as it is; the maintainer decided places are stored as codes such as
+  `CA-AB`. Both in § 7, Storage as built.)*
 
 ## 7. Storage
 
@@ -437,8 +439,8 @@ themselves, and nothing about the person is put in a link.
 | **Two new figure kinds** | `savings-for-start` and `start-up-cost-line`, added to `FIGURE_KINDS` (added, never renamed), each belonging to one future. A cost-line figure gets new nullable columns naming its road step and cost line, and where its amount came from (quote, link, receipt, your guess) | Through the agree prompt, like every figure. The definition of a figure in `lib/figures/types.ts` ("a total about the person's business") and its privacy note are reworded in the same pull request |
 
 *What you've told DotAmi* needs no table of its own: each row is a stored answer with its date, and its
-*what it unlocked* line is worked out again by running the rules with and without that answer (§ 13
-has the open question if that turns out slow).
+*what it unlocked* line is worked out again by running the rules with and without that answer (settled
+below, in *Storage as built*).
 
 **The rules for the migration.** One hand-checked migration. New tables are created; `Venture`,
 `PersonStatement` and `Figure` only gain nullable columns through `ALTER TABLE … ADD COLUMN`. `Venture`
@@ -450,6 +452,163 @@ it and checks every row survives.
 **What else changes in the same pull request:** every new table in `lib/privacy/inventory.ts` (the
 privacy test fails until it is), new rows and counts on `/your-data`, the new kinds on the Delete menu,
 and a line in `docs/privacy-log.md` [Unreleased] saying what is now kept.
+
+### Storage as built (2026-10-11)
+
+The storage pull request builds the tables and columns above and the server-side code that reads and
+writes them (`lib/futures/`), with no new screen: the cockpit's screens come later in phase 1 and call
+this code. It differs from the table above in these ways, each for a reason, and it settles three of the
+open items in § 13.
+
+**Two migrations, hand-written.** `…_cockpit_storage` creates three new tables; `Venture`,
+`PersonStatement` and `Figure` only gain nullable columns (or one with a default) through `ALTER TABLE …
+ADD COLUMN`. `…_place_codes` is one `UPDATE` of `Venture.province` (below). No table is copied, dropped or
+renamed. `tests/desktop-migrate.spec.ts` seeds a row in every table on the version before, migrates, and
+checks every row is still there, unchanged except for the place now written as its code.
+
+**Skill marks, per person (`SkillMark`).** The person (their `User` row), then either a skill item's
+permanent id from the shared list or the person's own label for a skill they added (never both), the
+mark, and the day it was set. One mark per skill item and one per own label, so marking again replaces
+the mark rather than adding a second one.
+
+- A skill the person added is one skill whatever its capital letters: *Welding* and *welding* are the
+  same mark, kept under the spelling typed last.
+- The marks are **have · learning · not yet**. *I don't know* is not stored: it removes the mark, and
+  the item is counted as *not marked*, so every stored mark is something the person said. (The table
+  above listed *don't know* as a fourth mark; the gauge already counts *not marked* on its own, so a
+  fourth value would only be a second way of saying the same thing.)
+- *You said* for a held licence is not a column: it is how a screen labels *have* on an item of the
+  kind *legal requirement*.
+- A mark for an id that isn't in the shared list is refused, so a mark can't point at nothing. The list
+  is empty until the first written future, so until then only the person's own skills can be marked.
+
+**Step progress, per future and step (`StepProgress`).** The future, the road id and the step id (never
+a position or a title), the status (**doing · done · not for me**, or none), the *done when* line ids
+the person ticked, and a list of status changes with the moment of each (the newest 100 per step), for
+*Since last time*. One row per future, road and step. Every id is checked against the road catalog when
+it is written: the road must be the future's own road, the step must be on it, and each ticked line must
+be one of that step's *done when* lines. The step's own date (*your date* on a step) is left out: dates
+beyond the target date are not in phase 1 (§ 12), and it is a plain added column when they are.
+
+- **On road 0 a step's status is the map's, kept in one place (settled 2026-10-12).** The map already
+  keeps which of road 0's steps the person marked active, done or set aside, in `ScenarioState`. A
+  second status for the same step here could say something else (*done* on the map, *not for me* here)
+  with nothing to say which is true, so the storage code refuses a status on a road 0 step, the same
+  way it refuses road 0's forks. On road 0 this table keeps only the ticked *done when* lines (road 0
+  has none until its content is written), and the cockpit reads and sets road 0's statuses through the
+  map: active is *doing*, done is *done*, set aside is *not for me*. One cost: the map keeps no list of
+  changes, so *Since last time* has no status history for road 0's steps until the map's statuses move
+  here, which a later pull request may do (the map would then read this table).
+- The list of a future's progress gives only the steps of the road the future is drawn on now. Another
+  road's rows are kept, so going back to that road brings them back.
+- Taking the status off a step that was never touched keeps nothing: no empty row is written.
+
+**On the saved future (`Venture`).** Three new columns, all optional:
+
+- `roadId`: the road it is drawn on. Empty means today's general road, so every idea saved before
+  this keeps its map. Only a road in the catalog is accepted. `roadChosenAt` keeps the moment the
+  person chose it (empty for the general road), so *What you've told DotAmi* can show the answer with
+  its date.
+- `forkPicks`: the ending picked at each fork of that road, as `{ fork id: { step id, moment picked } }`
+  (empty `{}` by default), so each pick has its date too.
+  **This differs from the table above**, which put the ending in `ScenarioState.activeBranches`.
+  That column is rewritten whole every time the map is saved, from the tax map's two toggles (and, from
+  the honest-map pull request, the person's own *I'd incorporate at* number), so another road's ending
+  kept there would be wiped by the next save of the map. Road 0's two forks stay exactly where they are,
+  in `activeBranches`, picked on the map as today, and the storage code refuses them so there is one
+  place for each pick. Every other road's picks go in `forkPicks`. The app's scenario type
+  (`activeBranches: Record<string, CFENodeId>`) is therefore left as it is, not widened.
+  Reading a future still gives one set of picks whatever its road: on road 0 they are read from the
+  map's `activeBranches` and marked *from the map*, with no date, because the map keeps neither the
+  day of a pick nor whether a toggle was set by the person or is still its default (the map's
+  `decidedBranchIds` is not saved). Road evaluation, *Compare* and *This is mine* read that one set.
+- `targetMonth`: the person's own date, a month and year (`2029-05`), because the question asks *by
+  when (month and year)*. A month before the current one is refused. `targetMonthSetAt` keeps the
+  moment it was set.
+
+Every answer kept on the saved future therefore has its date, as *What you've told DotAmi* shows one
+row per answer with its date (§ 2); `Venture.updatedAt` is not used for that, because any edit moves it.
+
+The job picked (an occupation code and its day), the *business / career / both* answer and the *This
+is mine* pin are **not** added yet: each comes with the screen that asks it, as one more plain added
+column. The occupation code's shape waits on the OaSIS import (§ 13).
+
+**The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
+statement written as the answer to *where you want to be*. It is one of the person's statements like
+any other: word for word, dated, never edited (a change is a new statement, and the newest is the
+destination), shown in *In your words*, deleted with *Your statements*.
+
+**Income wanted, per person: the per-person table's shape (`PersonFigure`, settles § 13).** One row
+per number the person gives about themselves rather than about one future: the person, the kind of
+number (`income-wanted` is the only kind today), the amount in whole cents, the currency, what it is per
+(`year`), where it came from (`typed`), the state (**proposed · confirmed · retracted · discarded**, as
+figures have), whether the person changed the amount when agreeing, and the days it was proposed,
+agreed and taken back. A kind column, rather than a table for income alone, so the phase 2 numbers that
+also belong to the person (the dream-life list's monthly amounts) are new kinds, not new tables. Hours a
+week are not money and will need their own column when they come.
+
+- Only the person agrees to it. The storage code has *propose*, *agree*, *discard* and *take back*, and
+  no way to write a confirmed number directly. No route calls it yet; when the screen comes, its agree
+  route answers only DotAmi's own window, like the figures' agree route.
+- Agreeing to a new income target takes back the one agreed before it (state *retracted*, with the
+  day), so there is one current number and the old one stays in the history, as a retracted figure does.
+- The kind column means a new kind lands in this table, and the Delete box *The yearly income you said
+  you want* wipes every row of it. The pull request that adds a second kind renames or splits that box
+  in the same change, so ticking it never takes a number the person didn't mean.
+
+**Two new figure kinds.** `savings-for-start` and `start-up-cost-line`, added to `FIGURE_KINDS` after the
+five business totals (added, never renamed). `Figure` gains four optional columns, used only by a
+cost-line figure: `roadId`, `roadStepId` and `costLineId` (the *named* line on the future's own road it
+prices: an official fee is never quoted) and `amountFrom` (**quote · link · receipt · your guess**). Both
+kinds are a whole, non-negative number of cents. The *Your figures* form on the Ideas page still offers
+only the five business totals: the new kinds are entered from the cockpit's screens, later in phase 1.
+
+There is **one current number** for each cost line and one savings number for each idea, because road
+evaluation takes a line plus the person's agreed amount (§ 6) and the *Start-up money* gauge needs one
+savings figure. Agreeing to a new number for the same idea, road, step and cost line (or a new savings
+number for the same idea) takes back the one agreed before it in the same step (state *retracted*,
+with the day), as the income target does; it stays in the history. If two numbers for the same line
+are agreed at once, the one proposed last is kept. The five business totals are not changed by this.
+
+**The time period each new number covers (settles § 13).**
+
+- **Income wanted:** *per year*, kept as `per: "year"` on its own row, and never a period with two
+  dates: it is a target, not a total of anything that happened.
+- **Savings for starting and a start-up cost line:** one day, both ends the same: the day the person
+  gave the number. The design proposed the day agreed; the day given is used instead because agreeing
+  never changes what a number is, and the day agreed is kept anyway (`confirmedAt`). The check holds
+  it to that: both ends have to be today, so a number can't be dated to a day it wasn't given.
+
+**Places stored as international codes (the maintainer's decision of 2026-10-11).** The data file now
+stores each idea's place as its code: `CA-AB` for Alberta, and each province and territory's code from
+ISO 3166-2:CA (`CA` is Canada itself). A second migration, `…_place_codes`, rewrites the one column that
+holds a place with a single `UPDATE "Venture" SET "province" = 'CA-' || "province"` (only on a value that
+is still two letters), so an idea saved before keeps its place, and an older backup is moved over when it
+is restored and upgraded. Nothing is copied, dropped or renamed. The Prisma enum `Province` keeps its
+names (`AB`, `BC`, …) and maps each to its code in the file (`AB @map("CA-AB")`), so the app's code, the
+catalogs (which still key a rule by `AB` and `CA`) and every reply and export keep today's values; only
+what is written in the file changed. `lib/places/codes.ts` turns today's values into codes for new
+storage code, and the storage code's reading of a future gives its place as a code, so the cockpit's
+screens use codes from their first line. Moving the catalogs' keys and the app's own type to codes is a
+later pull request; everything else about other countries stays parked.
+
+**Whether *What you've told DotAmi* stays fast (settles § 13).** It does, so the *what it unlocked* line
+is worked out on each visit and not stored. Measured by hand on 2026-10-11 and 2026-10-12 on a
+Windows development computer, timing one run of today's rules over 2,000 runs after a 200-run warm-up: about
+0.01 ms a run (0.007 to 0.016 ms on the two demo ideas), so 40 answers, each run with and without, is
+about a millisecond. No script keeps this measurement. Road evaluation adds to that and is measured again in its own pull
+request; if it ever stops being quick, the line is saved with the answer when it is made, as planned.
+
+**What Delete and *What DotAmi knows about you* gain.** The three tables are listed in
+`lib/privacy/inventory.ts` and counted on `/your-data`. Step progress goes with *Your ideas* (it belongs
+to a future, and the database deletes it with one). Skill marks and the income target each get a box of
+their own on the Delete menu (*Your skill marks*, *The yearly income you said you want*), because they
+belong to the person, not to any future, and deleting ideas leaves them.
+
+**Not in this pull request:** any screen or route; the occupation code, the *business / career / both*
+answer and the *This is mine* pin; a step's own date; moving the catalogs' keys and the app's own
+`Province` type to place codes; and moving the person's *I'd incorporate at* number, which the honest-map pull request keeps in
+`ScenarioState.activeBranches` under its own key, to a column of its own (a later pull request may).
 
 ## 8. The rules check — how each binding rule in CLAUDE.md is met
 
@@ -604,12 +763,12 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   own quotes for phase 1 (decision 2), then asking the maintainer again, once a real future with
   blanks can be clicked through, whether to also show typical numbers (the plan's options B and C).
   Ask before phase 2 is locked.
-- **The period a new number carries.** Figures have a period today. Proposed: income wanted (on its
-  own per-person table, § 7) is "a year" with the period the person names; `savings-for-start` and
-  `start-up-cost-line` carry the day agreed as both ends. To settle in the storage pull request,
-  along with the per-person table's exact shape.
-- **Whether *What you've told DotAmi* stays fast** when every row's *what it unlocked* is worked out
-  again on each visit. If not, the line is saved with the answer when it is made.
+- ~~**The period a new number carries**, and the per-person table's exact shape.~~ Settled in the
+  storage pull request (2026-10-11, § 7 *Storage as built*): income wanted is per year on a per-person
+  table with a kind column; savings and a cost line cover the day the person gave them.
+- ~~**Whether *What you've told DotAmi* stays fast.**~~ Settled (2026-10-11, § 7 *Storage as built*):
+  one run of the rules took about 0.01 ms, so the line is worked out on each visit; checked again when
+  road evaluation lands.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks.
 - **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,

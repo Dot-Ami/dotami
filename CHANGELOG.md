@@ -24,6 +24,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   structure)*, with the same steps, ids, sources and toggles, and the map now draws whatever road it is
   given. Nothing on the map looks or behaves differently: a test compares the map's HTML with what it
   drew before, in six saved states, and a browser test checks its columns, cards, toggles and arrows.
+- **Storage for what you tell the future cockpit** ([14a]) — the data file can now keep your mark on each
+  skill (have, learning, not yet; kept once for you, so it carries across every road), your progress on
+  each step of a future's road (doing, done, not for me, the *done when* lines you ticked, and when you
+  changed it), the road a future is drawn on, the ending you picked at a fork and your own month and
+  year, your answer to "where do you want to be" as one of your dated statements, the yearly income you
+  want (kept once for you, agreed like a figure), and two new kinds of figure, each one day's amount and
+  never negative: savings you'd put toward starting, and your own number for a named start-up cost line
+  with where it came from (a quote, a link, a receipt or your guess). Everything is kept against the
+  road's permanent ids, so rewriting a screen or moving a step never loses your progress. No screen
+  writes any of it yet: the cockpit's screens come next ([`lib/futures/`](lib/futures/),
+  [docs/architecture/future-cockpit.md § 7](docs/architecture/future-cockpit.md)). *What DotAmi knows
+  about you* counts the three new tables, and Delete gains **Your skill marks** and **The yearly income
+  you said you want**; step progress goes with your ideas. The migration only adds columns and tables,
+  and a test checks a row in every table survives it. Each answer kept on a future has its date; on
+  today's Alberta road a step's status stays with the map, so one step can't say two things; agreeing
+  to a new number for the same cost line (or a new savings number) takes back the old one; and the same
+  skill of your own typed with other capital letters is one mark.
+- **Places stored as international codes** ([14a]) — the data file now writes each idea's province as
+  its code (`CA-AB` for Alberta), the maintainer's decision of 2026-10-11. A second hand-written
+  migration rewrites the ideas already saved with one `UPDATE`, and a test checks every other value of
+  every row survives it; screens, exports and replies still say `AB`, and the catalogs' own keys move
+  later ([`lib/places/codes.ts`](lib/places/codes.ts)).
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The

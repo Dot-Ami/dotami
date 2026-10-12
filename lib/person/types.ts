@@ -31,6 +31,11 @@ export interface PersonStatement {
    */
   idea?: { id: string; name: string };
   /**
+   * Set only on the person's answer to "where do you want to be" (the future cockpit's destination,
+   * 2026-10-11): the newest one is the current destination. Absent on every other statement.
+   */
+  kind?: "destination";
+  /**
    * Client-only: false while a typed statement lives only in this browser tab because the
    * save failed (no database reachable). Never sent by the server.
    */
