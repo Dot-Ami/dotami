@@ -4,10 +4,13 @@
  * Added by the 2026-07-04 audit (H6) for the routes that call a model; every write route uses it now.
  *
  * Where it runs: inside DotAmi's own Next.js server on the person's own computer. The desktop app
- * starts that server on 127.0.0.1 (desktop/main.mjs); a copy run from source starts it with `npm
- * run dev` or `npm start`; and either way every request whose Host isn't this computer's own name
- * is refused before it gets here (middleware.ts). So the callers are the person's own DotAmi window
- * and programs on the same computer: a script, or an agent the person runs.
+ * starts that server on 127.0.0.1 (desktop/main.mjs), and so does `npm run dev` (-H 127.0.0.1), so
+ * only programs on the same computer can reach it: the person's own DotAmi window, a script, or an
+ * agent the person runs. `npm start` listens on every network interface (it passes no -H, and
+ * Next.js then uses 0.0.0.0) unless it is given -H 127.0.0.1. Every request whose Host isn't this
+ * computer's own name is refused before it gets here (middleware.ts), which stops a web page from
+ * reaching the server through DNS rebinding; it doesn't stop another machine on the network that
+ * sends "Host: localhost" itself.
  *
  * What it is for: a runaway loop in one of those programs can't spend the person's model key (when a
  * copy run from source has one) on the intake parser, or write to the data file, hundreds of times a

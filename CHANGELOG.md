@@ -367,7 +367,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Documented
 - **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
   hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
-  server runs on the person's own computer, who can reach it, what the limit is for (a runaway loop in
+  server runs on the person's own computer, who can reach it (only programs on the same computer for
+  the desktop app and `npm run dev`; `npm start` listens on every network interface unless given
+  `-H 127.0.0.1`, and the Host check stops web pages, not other machines), what the limit is for (a runaway loop in
   a script or an agent), that the counts live in memory, and that Next.js fills in the caller's address
   ([`lib/api/rate-limit.ts`](lib/api/rate-limit.ts); a check in
   [`tests/rate-limit.spec.ts`](tests/rate-limit.spec.ts)). No behaviour changes.
