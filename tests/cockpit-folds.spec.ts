@@ -69,6 +69,13 @@ describe("the remembered answers", () => {
       panel: false,
       legend: true,
     });
+    // Each region on its own: a truthy value that isn't `true` never folds it.
+    for (const region of FOLD_REGIONS) {
+      for (const notTrue of ['"true"', "1", '"yes"', "{}", "[]"]) {
+        expect(parseFolds(`{"${region}":${notTrue}}`), `${region}: ${notTrue}`).toEqual(ALL_OPEN);
+      }
+      expect(parseFolds(`{"${region}":true}`)).toEqual({ ...ALL_OPEN, [region]: true });
+    }
   });
 
   it("are written as one small JSON object and read back the same", () => {
