@@ -1,6 +1,8 @@
 # Changelog
 
-Every catalog entry carries its own `lastVerified` date — the day a human read its source.
+Every catalog entry carries its own dates: `lastVerified`, the day its source was last read (and,
+since 2026-10-11, `readBy` when who read it is on record), or since 2026-10-11 a tool check, the day
+a script found the quoted words on the page.
 This file is the other half: what changed in the project between snapshots. A version here is
 a dated snapshot, not a promise of stability.
 
@@ -91,6 +93,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
 
 ### Changed
+- **Every source says how it was checked, and never claims a person read it unless one did.** The
+  maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
+  by a person before it merges, as long as every card says which. A card's "verified <date>" now
+  says who read the source, only when that is on record: **"Read by a person on 2026-10-10"** for
+  the T2125 lines the maintainer checked; **"Read by an AI model on 2026-10-06. Not read by a person
+  yet."**, in amber, for the GST/HST small-supplier page, which moved and whose new address only a
+  model has read; and **"Read on <date>. Who read it wasn't recorded."** for every other source,
+  because they were read in build sessions that never recorded whether a person or a model did the
+  reading. A source checked only by a tool would read **"Checked by a tool on <date>: it found on the
+  page the exact words this entry relies on. Not read by a person yet."**, in amber, with the words
+  it found listed under it. The same words show in the map's sources, the intake's preview, the
+  Delete menu's record-keeping line, the Tax year hint, the playbook export and the readout API
+  (`howChecked` on each citation); one function writes them (`lib/engines/shared/citation-check.ts`)
+  and a test refuses any other file reading a citation's check fields. The export's front matter
+  counts the sources a person read (`sources_read_by_a_person: <n> of <total>`). A tool check is
+  recorded only after the new developer script `node scripts/check-quotes.mjs --url … --quote …`
+  (never shipped) found every quote on the live page as whole words, inside one block of the page
+  and outside text the page hides; run with no arguments it checks every recorded one again. The
+  integrity test now fails on a citation with neither kind of check, a read or tool check dated
+  after today, a tool check with no quote or a quote under three words, or a tax-line year's form
+  that no person is recorded as having read ([docs/engines/citations.md](docs/engines/citations.md)).
 - **Your own status on a step of today's Alberta road is kept with your step progress** ([14a]). The map's
   *active, done, set aside* lists are worked out from its toggles on every load, so they never held a
   status you set; the cockpit's **Doing / Done / Not for me** is now kept with the rest of your step
@@ -132,6 +155,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you; deleting the idea keeps it, tied to no idea. The front door's box takes up to 2,000 characters, the
   most a statement holds, and says so when it is full. One hand-written migration adds the two columns
   (`prisma/migrations/20261011120000_first_words`).
+- **Words typed on the front page before it has finished loading are kept.** The page arrives already
+  drawn, so on a slow computer its box can be typed into before the page's scripts have run. Those words
+  were never heard: **Map it** stayed greyed out, and the box was emptied a moment later. The page now
+  takes whatever is in the box when it finishes loading
+  ([`components/discovery/landing-page.tsx`](components/discovery/landing-page.tsx)); a browser test holds
+  the page's scripts back while it types. The same race made the desktop test fail on CI three times in
+  about 15 hours on 10-11 October; that test now waits for the page to finish loading before it types.
+  A side effect people will see: words the browser puts back in the box when you press Back (after
+  leaving the front page with a full page load) now stay, and **Map it** works with them; before, they
+  showed for a moment and were emptied.
+
+### Security
+- **The desktop app moves to Electron 44.7.0** (from 44.5.1, which 0.3.0 shipped). 44.7.0, released
+  2026-10-07, carries 55 fixes Electron copied from Chrome's engine and the parts it is built from
+  (ANGLE, Chromium, Dawn, fontconfig, Skia, V8 and WebRTC): 47 in
+  [electron/electron#54666](https://github.com/electron/electron/pull/54666) and 8 in
+  [#54657](https://github.com/electron/electron/pull/54657): one of them, by its title, a fix for memory
+  used after being freed, and a few more for objects that could be used after they went away.
+  Electron's release notes call them "backported fixes", not security fixes. The Chromium version
+  number (152.0.7977.130) and Node (24.21.0) stay the same. Read in the
+  [44.6.0](https://github.com/electron/electron/releases/tag/v44.6.0) and
+  [44.7.0](https://github.com/electron/electron/releases/tag/v44.7.0) notes on 2026-10-11: the change
+  to the built-in `autoUpdater` is for Macs, and DotAmi updates through electron-updater; the
+  `net.fetch` fix is for a call DotAmi doesn't make; `protocol.registerSource` is new and unused. One
+  change does reach DotAmi, below. The installed app gets all of this with the next release
+  (`package.json`, `package-lock.json`).
+- **In the desktop app, "today" follows British Columbia's permanent UTC-7 from November 2026.**
+  Electron 44.6.0 updated its time-zone data to tzdata 2026d, "including British Columbia's move to
+  permanent UTC-7" ([electron/electron#54623](https://github.com/electron/electron/pull/54623), 44.6.0
+  release notes, read 2026-10-11). DotAmi works out the person's own day (`lib/figures/age.ts`
+  `localDay`) in the desktop app's server, which is started with `utilityProcess.fork`
+  (`desktop/main.mjs`), and in its window, and both run on Electron's own copy of that data. That day
+  is the line for refusing an expense or figure dated after today, and the day shown for one agreed to
+  or retracted. On a computer set to Vancouver time,
+  from 2026-11-01 that day now turns over at midnight UTC-7, one hour earlier than on 44.5.1, which
+  still moved the clocks back to UTC-8. Measured 2026-10-11 by formatting 2026-11-02 07:30 UTC in
+  `America/Vancouver`: 44.5.1 (tzdata 2025c) gave 2026-11-01, 11:30 p.m. GMT-8; 44.7.0 (tzdata 2026d)
+  gives 2026-11-02, 12:30 a.m. GMT-7. A desktop test checks it (`e2e-desktop/desktop.spec.ts`, "the
+  person's day follows the time-zone data Electron ships"). Copies run from source with `npm run dev`
+  use the system Node's time-zone data, as before.
 
 ### Documented
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —

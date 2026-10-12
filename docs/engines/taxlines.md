@@ -18,7 +18,7 @@ Every line is cited to the CRA's 2025 form (`t2125-25e.pdf`) and, where the guid
 that line, to Guide T4002 (2025, chapter pages dated 2026-04-16). The guide has no section of its own
 for line 9368; the form defines it. The builder (an AI agent) first read both on 2026-10-08; the
 maintainer checked the four lines (names, parts, pages and DotAmi's descriptions) against the form and
-the guide on 2026-10-10, so every 2025 citation's `lastVerified` is 2026-10-10, the day a person read
+the guide on 2026-10-10, so every 2025 citation's `lastVerified` is 2026-10-10 with `readBy: "person"`, the day a person read
 the source, and each note says so.
 
 ## How it reasons
