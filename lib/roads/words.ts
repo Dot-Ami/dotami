@@ -110,7 +110,8 @@ export const answer = {
     takenBack: `you took back your pick at ${quoted(fork)}`,
     fact: `your pick at ${quoted(fork)} (${quoted(side)})`,
   }),
-  // byPerson: the person clicked it this session; otherwise it is the map's default, and says so.
+  // byPerson: the person clicked it, or its saved pick is off the default (`isBranchDecided`,
+  // lib/scenarios/graph.ts); otherwise it is the map's default, and says so.
   mapPick: (fork: string, side: string, byPerson: boolean): AnswerWords =>
     byPerson
       ? {
@@ -142,6 +143,12 @@ export const answer = {
     said: `you told us your date is ${formatMonth(month)}`,
     takenBack: "you took back your date",
     fact: `your date (${formatMonth(month)})`,
+  }),
+  // The person's own "I'd incorporate at $___" on today's road (2026-10-11): theirs, never DotAmi's.
+  incorporateAt: (dollars: number): AnswerWords => ({
+    said: `you told us you'd incorporate at ${formatMoney(dollars * 100)} of yearly sales`,
+    takenBack: "you took back the sales at which you'd incorporate",
+    fact: `your own “I'd incorporate at” number (${formatMoney(dollars * 100)})`,
   }),
   whatIf: (dollars: number): AnswerWords => ({
     said: `you tried first-year sales of ${formatMoney(dollars * 100)} (your what-if, not a forecast)`,

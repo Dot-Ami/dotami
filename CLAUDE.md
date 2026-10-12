@@ -104,7 +104,9 @@ says where it is going.
   in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
   its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
-  `ScenarioState` · `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
+  `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
+  same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
+  `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
   when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
   included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the
   person's status) · `SkillMark` (per person,

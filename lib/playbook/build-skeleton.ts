@@ -1,6 +1,7 @@
 import type { CFENode, CFENodeId, CFEStage } from "@/lib/engines/cfe/v2026";
 import { checkFields } from "@/lib/engines/shared/citation-check";
 import { branchDecisions } from "@/lib/scenarios/branches";
+import { isBranchDecided } from "@/lib/scenarios/graph";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import type {
@@ -141,6 +142,8 @@ export function buildPlaybookSkeleton(cfeNodes: CFENode[], scenario: Scenario): 
       label: decision.label,
       selectedNodeId,
       selectedLabel: option?.label ?? selectedNodeId,
+      // The same test the map's chips use, so the export never calls an untouched default a pick.
+      decided: isBranchDecided(decision.id, scenario.state),
     };
   });
 

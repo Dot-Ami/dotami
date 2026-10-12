@@ -1,3 +1,10 @@
+import {
+  CRA_SMALL_SUPPLIER_TESTS,
+  CRA_VOLUNTARY_REGISTRATION,
+  CRA_WHEN_TO_REGISTER_TOOL_CHECK,
+  CRA_WHEN_TO_REGISTER_URL,
+} from "@/lib/engines/compliance/v2026/gst-official-words";
+
 import type { CFENode } from "./types";
 
 const LAST_VERIFIED = "2026-05-01";
@@ -90,7 +97,7 @@ export const cfeNodesV2026 = [
       summary:
         "Revenue and expenses start flowing through the personal tax return as self-employment business income.",
       projectionNotes: [
-        "Track gross revenue against the $30,000 GST/HST small supplier threshold.",
+        "Track gross revenue against the CRA's two $30,000 small-supplier tests: a single calendar quarter, and the previous four (or fewer) consecutive calendar quarters.",
         "Track expenses from the first business activity because later GST/HST registration may affect ITC planning.",
       ],
       estimates: [
@@ -113,7 +120,7 @@ export const cfeNodesV2026 = [
     label: "Voluntary GST registration",
     stage: "stage-2a",
     trigger:
-      "Taxable supplies remain at or below $30,000, but the venture wants GST/HST registration for input tax credit strategy or B2B credibility.",
+      "Neither of the CRA's two $30,000 small-supplier tests is met, but the venture wants GST/HST registration for input tax credits or for business customers.",
     description:
       "A small supplier can register voluntarily for GST/HST if carrying on commercial activity in Canada. If the venture registers before the mandatory threshold, this unlocks GST/HST collection, filing obligations, and input tax credit recovery on eligible business purchases.",
     taxImpact:
@@ -121,9 +128,20 @@ export const cfeNodesV2026 = [
     lensAnnotations: {
       tax: "If customers are mostly GST/HST registrant businesses and startup inputs are material, this unlocks earlier ITC recovery while adding filing discipline.",
       legal:
-        "If registration is voluntary, this unlocks ongoing registrant obligations even before the $30,000 mandatory threshold is crossed.",
+        "If registration is voluntary, this unlocks ongoing registrant obligations before either of the CRA's $30,000 tests is met.",
     },
+    // 2026-10-11: the CRA's own line on registering by choice, from the page the small-supplier test is on.
+    officialWords: CRA_VOLUNTARY_REGISTRATION,
     citations: [
+      {
+        title: "When to register for and start charging the GST/HST",
+        authority: "CRA",
+        jurisdiction: "CA",
+        url: CRA_WHEN_TO_REGISTER_URL,
+        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
+        note: "CRA page with the small-supplier tests and the line on registering voluntarily (page details 2026-06-16).",
+      },
       {
         title: "Register voluntarily for a GST/HST account",
         authority: "CRA",
@@ -153,7 +171,7 @@ export const cfeNodesV2026 = [
           label: "GST/HST threshold",
           value: "$30,000",
           basis:
-            "Small supplier threshold measured against taxable supplies in a calendar quarter or four consecutive calendar quarters.",
+            "The CRA's small-supplier tests: taxable supplies over $30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters.",
         },
       ],
     },
@@ -164,24 +182,27 @@ export const cfeNodesV2026 = [
     label: "Mandatory GST registration",
     stage: "stage-2b",
     trigger:
-      "Taxable supplies exceed $30,000 in a single calendar quarter or over four consecutive calendar quarters.",
+      "Taxable supplies over $30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters (the CRA's two tests, quoted in full in this stage's detail).",
     description:
-      "When the venture stops being a small supplier, GST/HST registration becomes a compliance gate. If the $30,000 rolling threshold is crossed, this unlocks mandatory registration timing, charging GST/HST, filing returns, and remittance planning.",
+      "When the venture stops being a small supplier, GST/HST registration becomes a compliance gate. If either of the CRA's $30,000 tests is met, this unlocks mandatory registration timing, charging GST/HST, filing returns, and remittance planning.",
     taxImpact:
       "GST/HST becomes a trust-style cash flow obligation: collect from customers, claim eligible ITCs, file returns, and remit net tax by CRA deadlines.",
     lensAnnotations: {
-      tax: "If rolling taxable supplies approach $30,000, this unlocks threshold monitoring and avoids surprise remittance exposure.",
+      tax: "If taxable supplies may go over $30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters, this unlocks watching each quarter and avoids surprise remittance exposure.",
       legal:
-        "If the threshold is crossed, this unlocks a compliance obligation rather than an optional optimization choice.",
+        "If either test is met, this unlocks a compliance obligation rather than an optional optimization choice.",
     },
+    // 2026-10-11: the two tests word for word, instead of a paraphrase that dropped "(or fewer)".
+    officialWords: CRA_SMALL_SUPPLIER_TESTS,
     citations: [
       {
         title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
-        lastVerified: LAST_VERIFIED,
-        note: "CRA guidance on small supplier status, mandatory registration, and timing.",
+        url: CRA_WHEN_TO_REGISTER_URL,
+        // A tool found the words this stage quotes on the live page (option B); no person has read it.
+        toolCheck: CRA_WHEN_TO_REGISTER_TOOL_CHECK,
+        note: "CRA guidance on small supplier status, mandatory registration, and timing (page details 2026-06-16). The two tests in this stage's detail are copied from its table.",
       },
       {
         title: "Small suppliers",
@@ -204,7 +225,7 @@ export const cfeNodesV2026 = [
           label: "Mandatory registration trigger",
           value: "> $30,000",
           basis:
-            "Taxable supplies in one calendar quarter or over the previous four consecutive calendar quarters.",
+            "Taxable supplies in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters.",
         },
       ],
     },
@@ -220,6 +241,13 @@ export const cfeNodesV2026 = [
     label: "Incorporating",
     stage: "stage-3a",
     trigger: "DotAmi doesn't pick a point to incorporate. You do, with your accountant or lawyer.",
+    // 2026-10-11: the person's own number, kept as theirs; with it, this card turns green when their
+    // third-year revenue estimate reaches it (lib/brain/evaluate.ts computeNodeStates).
+    asksOwnNumber: {
+      id: "incorporateAt",
+      label: "I'd incorporate at",
+      help: "Your own yearly sales number, kept as yours. No law sets one, so DotAmi has none. With it, this card applies once your third-year estimate reaches it.",
+    },
     description:
       "Incorporation creates a separate legal taxpayer. If the business keeps money inside it after what the owner takes out personally, this unlocks CCPC planning, small business deduction modeling, corporate filings, and salary/dividend tradeoff analysis.",
     taxImpact:

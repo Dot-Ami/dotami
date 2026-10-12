@@ -8,6 +8,7 @@
  */
 
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
+import { incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-routes";
 import { complianceCatalogV2026, recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
@@ -34,6 +35,11 @@ export function allCatalogCitations(): CitationInCatalog[] {
   };
 
   for (const node of cfeCatalogV2026.nodes) add(`cfe ${node.id}`, node.citations);
+  // The ways to incorporate on the Incorporating stage (2026-10-11): one source per line, each with a
+  // tool check, so scripts/check-quotes.mjs re-checks their quotes with the rest.
+  for (const route of incorporationRoutesV2026) {
+    for (const line of route.lines) add(`routes ${route.id} ${line.id}`, [line.citation]);
+  }
   const entryCatalogs: [string, readonly { id: string; citations: readonly ListedCitation[] }[]][] = [
     ["structure", structureCatalogV2026.entries],
     ["grants", grantsCatalogV2026.entries],

@@ -1,3 +1,4 @@
+import { CRA_SMALL_SUPPLIER_TESTS, CRA_WHEN_TO_REGISTER_TOOL_CHECK, CRA_WHEN_TO_REGISTER_URL } from "./gst-official-words";
 import type { ComplianceRule } from "./types";
 
 const LAST_VERIFIED = "2026-06-08";
@@ -8,12 +9,16 @@ export const complianceRulesV2026 = [
     label: "GST/HST small-supplier threshold",
     ruleType: "gst-threshold",
     description:
-      "Most Canadian businesses need not register for GST/HST until worldwide taxable supplies exceed $30,000 in a single calendar quarter or over four consecutive calendar quarters. Supplies of financial services, sales of capital property and goodwill from selling a business don't count.",
-    threshold: "$30,000 rolling four-quarter / single quarter",
+      "Most Canadian businesses need not register for GST/HST while they are small suppliers: until their worldwide taxable supplies are over $30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters. Supplies of financial services, sales of capital property and goodwill from selling a business don't count.",
+    threshold: "$30,000 in a single calendar quarter, or over the previous four (or fewer) consecutive calendar quarters",
     thresholdAmount: 30000,
     thresholdTest: { singleQuarter: true, consecutiveQuarters: 4 },
+    // Quoted on the card, word for word; until 2026-10-11 the card paraphrased them.
+    officialWords: CRA_SMALL_SUPPLIER_TESTS,
     lensAnnotations: {
-      tax: "If revenue stays under $30K, small-supplier status may defer GST registration — voluntary registration remains an option for ITCs.",
+      // "Most businesses", not "you": the cited page lists people who must register even as small
+      // suppliers (taxi and ride-sharing drivers, some non-residents), and the line counts associates' supplies.
+      tax: "While neither of the CRA's two $30,000 tests is met, most businesses are small suppliers and need not register yet (the CRA's page lists exceptions); registering voluntarily remains an option for input tax credits.",
       legal: "If B2B customers require a GST number, registration may be needed before the threshold.",
     },
     citations: [
@@ -21,13 +26,20 @@ export const complianceRulesV2026 = [
         title: "When to register for and start charging the GST/HST",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/when-register-charge.html",
-        // The last read of the page this links to was an AI model's (see the note), so the card says
-        // so instead of dating an earlier read of the old address (docs/engines/citations.md).
-        lastVerified: "2026-10-06",
-        readBy: "model",
+        url: CRA_WHEN_TO_REGISTER_URL,
+        // Option B (docs/engines/citations.md): a tool found the words this entry relies on, the two
+        // tests on the card and the exclusions in its description, on the live page. No person has read it.
+        toolCheck: {
+          checkedOn: CRA_WHEN_TO_REGISTER_TOOL_CHECK.checkedOn,
+          quotes: [
+            ...CRA_WHEN_TO_REGISTER_TOOL_CHECK.quotes,
+            "do not include revenues from supplies of financial services",
+            "sales of capital property",
+            "goodwill from the sale of a business.",
+          ],
+        },
         note:
-          "CRA small-supplier registration rules. The page moved: the old address (…/when-register.html) answered 404 on 2026-10-06. Its content was re-read by a model that day (page modified 2026-06-16) and matches this entry, including the exclusions. No person has read the new address yet; a person's re-check is owed.",
+          "CRA small-supplier registration rules (the old address, …/when-register.html, answered 404 on 2026-10-06; an AI model read the new one that day). The two tests on the card are copied from its table, and the exclusions from its footnote 1; scripts/check-quotes.mjs found those words on the page on 2026-10-12.",
       },
     ],
     provinces: ["AB", "BC", "ON", "CA"],

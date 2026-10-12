@@ -210,10 +210,10 @@ test("the map's colours follow your own picks, and Incorporating lights from no 
   await page.goto(`/cockpit?venture=${ventureId}`);
 
   const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
-  // The defaults: waiting for the $30K line applies as answered; Incorporating is "check first",
-  // though the third-year estimate is $500,000.
-  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, applies as answered, opens detail$/);
-  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, your pick, check first, opens detail");
+  // The defaults: the mandatory GST/HST card applies as answered; Incorporating is "check first",
+  // though the third-year estimate is $500,000. Neither toggle was clicked, so both say "default".
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, default, applies as answered, opens detail$/);
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, check first, opens detail");
   await expect(page.getByText("DotAmi doesn't pick a point to incorporate. You do, with your accountant or lawyer.").first()).toBeVisible();
 
   // Flip GST timing: the voluntary card is now the one that applies, and the other one is a fork.
@@ -344,7 +344,7 @@ test("every source says how it was checked: the map's sources, the playbook expo
 
   // The readout, for an agent: each citation carries the same words beside its dates.
   const readout = (await (await page.request.get(`/api/readout?venture=${ventureId}`)).json()) as {
-    evaluation: { unlocks: { citations: { howChecked: string; lastVerified?: string }[] }[] };
+    evaluation: { unlocks: { citations: { howChecked: string; lastVerified?: string; toolCheck?: { checkedOn: string } }[] }[] };
   };
   const citations = readout.evaluation.unlocks.flatMap((u) => u.citations);
   expect(citations.length).toBeGreaterThan(0);
@@ -353,8 +353,89 @@ test("every source says how it was checked: the map's sources, the playbook expo
       `Read by a person on ${c.lastVerified}`,
       `Read on ${c.lastVerified}. Who read it wasn't recorded.`,
       `Read by an AI model on ${c.lastVerified}. Not read by a person yet.`,
+      // Since 2026-10-12 the GST/HST card's CRA page is checked by a tool (option B), not read.
+      `Checked by a tool on ${c.toolCheck?.checkedOn}: it found on the page the exact words this entry relies on. Not read by a person yet.`,
     ]).toContain(c.howChecked);
   }
+});
+
+// 2026-10-11: the honest map. The GST/HST card quotes the CRA's two tests instead of a 70% line of
+// DotAmi's own; Incorporating shows the federal and Alberta routes from their own pages and lights only
+// from the person's own "I'd incorporate at $___"; Liability / SR&ED says which answer lit it.
+test("the map quotes the CRA, shows both ways to incorporate, and lights Incorporating only from your own number", async ({ page }) => {
+  // An invented Alberta idea: first-year estimate $25,000 (inside the old 70% band), third year $150,000.
+  const scenario = {
+    id: `honest-${Date.now()}`,
+    profile: {
+      name: "Invented — honest map test",
+      type: "service",
+      province: "AB",
+      targetRevenueY1: 25_000,
+      targetRevenueY3: 150_000,
+      structure: "sole-prop",
+      structureSource: "assumed",
+      employmentStatus: "self-employed",
+      hireFirst: false,
+      activityTags: ["Software / SaaS"],
+      stage: "idea",
+    },
+    state: {
+      activeBranches: { gstTiming: "stage-2b-mandatory-gst-registration", incorporationTiming: "stage-3a-incorporation-80k-net" },
+    },
+  };
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario } });
+  expect(saved.ok()).toBe(true);
+  const { ventureId } = (await saved.json()) as { ventureId: string };
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const stage = (name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
+
+  // $25,000 is under both CRA tests: the voluntary card nobody picked stays grey (the old 70% line lit it).
+  await expect(stage("Voluntary GST registration")).toHaveAccessibleName(/, not on your path, doesn't apply as answered, opens detail$/);
+  await expect(stage("Mandatory GST registration")).toHaveAccessibleName(/, default, check first, opens detail$/);
+  await stage("Mandatory GST registration").click();
+  const panel = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Mandatory GST registration" }) });
+  await expect(panel.getByText("You exceed the $30,000 threshold in a single calendar quarter.").first()).toBeVisible();
+  await expect(
+    panel
+      .getByText("You exceed the $30,000 threshold over the previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter).")
+      .first(),
+  ).toBeVisible();
+  await expect(page.getByText(/approach/i)).toHaveCount(0);
+
+  // Liability / SR&ED says which answer lit it.
+  await expect(page.getByText("your intake has the activity tag Software / SaaS", { exact: false }).first()).toBeVisible();
+
+  // Incorporating: both routes, the federal fee read on its page, Alberta's fees as named blanks.
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, check first, opens detail");
+  // A screen reader hears the card's reason line too, not only sighted people.
+  await expect(stage("Incorporating")).toHaveAccessibleDescription(/^Check first: set your own number to see this light/);
+  // The readout API says "default" where the map does, instead of a bare "decision".
+  const readout = await page.request.get(`/api/readout?venture=${ventureId}`);
+  expect(readout.ok()).toBe(true);
+  const { nodes } = (await readout.json()) as { nodes: { id: string; chip: string }[] };
+  expect(nodes.find((n) => n.id === "stage-3a-incorporation-80k-net")?.chip).toBe("default");
+  await stage("Incorporating").click();
+  const inc = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Incorporating" }) });
+  await expect(inc.getByRole("heading", { name: "Federal (Corporations Canada)" })).toBeVisible();
+  await expect(inc.getByRole("heading", { name: "Alberta (Corporate Registry)" })).toBeVisible();
+  await expect(inc.getByText("It will cost $200 and will take 1 day.", { exact: false }).first()).toBeVisible();
+  await expect(inc.getByText(/no amount read/i).first()).toBeVisible();
+  // Each line says how its source was checked (option B): a tool found the words, no person read the page.
+  await expect(inc.getByText(/^Checked by a tool on 2026-10-12: .* Not read by a person yet\.$/).first()).toBeVisible();
+
+  // The person's own number lights it; DotAmi never does.
+  const own = inc.getByLabel("I'd incorporate at");
+  await expect(own).toHaveValue("");
+  await own.fill("100000");
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, applies as answered, opens detail");
+  await expect(page.getByText("reaches your own number ($100,000)", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+
+  // Kept with the idea: a fresh load shows the number and the same colour.
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await expect(stage("Incorporating")).toHaveAccessibleName("Incorporating, default, applies as answered, opens detail");
+  await stage("Incorporating").click();
+  await expect(page.getByLabel("I'd incorporate at")).toHaveValue("100000");
 });
 
 test("a stage change on the ideas page survives a reload", async ({ page }) => {
@@ -983,7 +1064,8 @@ test.describe("how old each figure is", () => {
     ).toBeVisible();
     await expect(page.getByText("October to December 2025 and 3 earlier quarters aren't fully covered yet.").first()).toBeVisible();
     // ...and never reads the future-dated figure as this quarter's revenue.
-    await expect(page.getByText(/over \$30,000 in a single calendar quarter/)).toHaveCount(0);
+    // (The card's own sentence, not the CRA's test quoted on the cards since 2026-10-11, which uses the same words.)
+    await expect(page.getByText(/your confirmed revenue for .* over \$30,000 in a single calendar quarter/)).toHaveCount(0);
   });
 
   test("a map left open past midnight on a quarter's last day moves to the new four-quarter window without a reload", async ({

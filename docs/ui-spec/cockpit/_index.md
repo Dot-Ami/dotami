@@ -57,6 +57,7 @@ laid out left-to-right by dagre. Node status comes from `scenario.state`
 | Step panel, in place of node detail (2026-10-12) | [09-step-panel.md](./09-step-panel.md) |
 | The lists behind the gauges: skills, money, your date (2026-10-12) | [10-gauge-lists.md](./10-gauge-lists.md) |
 | Next on your road (2026-10-12) | [11-next-on-your-road.md](./11-next-on-your-road.md) |
+| Node detail: your answers line, official words, "I'd incorporate at $___", ways side by side (2026-10-11) | [07-node-detail.md](./07-node-detail.md) |
 
 ## Flow in / out
 

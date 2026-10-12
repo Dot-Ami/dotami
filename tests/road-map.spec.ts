@@ -14,7 +14,9 @@ import { MAP_TODAY, mapCases, type MapCase } from "./helpers/strategy-map-cases"
 /**
  * The map draws any road, and today's map, drawn as road 0, is exactly what it was.
  *
- * tests/fixtures/strategy-map/ holds what the old map drew from main (7232937, 2026-10-11) for each
+ * tests/fixtures/strategy-map/ holds what the old map drew (from main at 7232937 on 2026-10-11; the
+ * HTML re-recorded on 2026-10-12 from the honest-map branch at a7f5bcb, #145, whose chips and reason
+ * lines changed the old map on purpose) for each
  * state in tests/helpers/strategy-map-cases.ts, plus where every card's arrows went and which column
  * each card sat in. Drawing the same states through the road must give the same HTML, byte for byte.
  */
@@ -28,7 +30,6 @@ function draw(road: Road, c: MapCase): string {
       evaluation: evaluateScenario(c.scenario, { today: MAP_TODAY }),
       selectedStepId: c.selectedNodeId,
       onSelectStep: () => {},
-      decidedBranchIds: new Set(c.decidedBranchIds),
       onBranchChange: () => {},
     }),
   );

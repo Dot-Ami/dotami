@@ -12,7 +12,9 @@ The right-hand panel when a step is selected, a region named *Step*. It replaces
 all of it: on a step of today's general road it is node detail (the stage, the name, **Trigger** and
 **If it applies**, *Compass, not GPS*, **For you on this stage**, **Elsewhere on your map**, **More about
 this stage**, **Sources for this stage** through `CitationLinks` with each source's how-checked words and
-**Show the words**, and the × button named *Close node detail panel*), with these sections put between
+**Show the words**, and the × button named *Close node detail panel*; since the honest-map change,
+#145, also the **Your answers** line, the CRA's quoted words, *I'd incorporate at $___* and the ways
+to incorporate side by side, [07-node-detail.md](./07-node-detail.md)), with these sections put between
 the two lines and the cards. On a step of any other road it shows the step's name, its one line, the
 same sections, its cards and *Sources for this step*.
 

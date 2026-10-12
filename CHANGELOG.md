@@ -113,6 +113,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or cost lines yet, so those parts show one line saying so until its content lands
   ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
+- **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
+  to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
+  incorporate, $100 more for express service, $12 a year for the annual return, no name search report
+  needed), and Alberta's Corporate Registry costs as named blanks ("no amount read": Alberta lists its
+  government and service fees in its Registry agent product catalogue, which DotAmi hasn't read, and
+  sends the NUANS name report to a NUANS service provider with no cost stated). Under every quote, its
+  source says how it was checked: **"Checked by a tool on 2026-10-12"**, in amber, because
+  `node scripts/check-quotes.mjs` found those words on each of the five pages and no person has read
+  them yet (option B); nothing is totalled and DotAmi picks neither. An idea in a province with no written
+  route sees the federal one under "Ways to do this · only the federal one is written for <province>
+  yet" and is told the other isn't written yet
+  ([`lib/engines/cfe/v2026/incorporation-routes.ts`](lib/engines/cfe/v2026/incorporation-routes.ts)).
+- **Your own "I'd incorporate at $___".** Typed in the Incorporating stage's detail and labelled
+  *your number*; with it, Incorporating turns green once your third-year revenue estimate reaches it,
+  and its card says so with both numbers. Without it the card stays "check first" at any estimate and
+  says "set your own number to see this light"; with no third-year estimate on the intake it stays
+  "check first" and says so, never quoting a skipped estimate back as "$0". DotAmi has no number of its
+  own for this and never fills one in. The box takes up to 9 digits, the most a save keeps. Kept with the
+  idea's branch picks
+  ([`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
+- **The Liability / SR&ED card says what lit it**: "Lit because your intake has the activity tag
+  Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or
+  that none of its three tags is on the intake).
 
 ### Changed
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
@@ -144,6 +167,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **A road step names its own rules and tax cards** (`engineHints`), so any road can name the cards that
   belong on its steps. Today's map's cards moved there unchanged from `lib/brain/node-items.ts`, which now
   reads them from the road.
+- **The GST/HST cards quote the Canada Revenue Agency's two tests, word for word** ("You exceed the
+  $30,000 threshold in a single calendar quarter." and "You exceed the $30,000 threshold over the
+  previous four (or fewer) consecutive calendar quarters (but not in a single calendar quarter)."), each
+  with what the page says follows and from when. The old paraphrase dropped "(or fewer)". The words are
+  checked by a tool, not read by a person (option B): the CRA page's source line, on both GST/HST stages,
+  the compliance card and the sole proprietor + GST/HST rung, now says **"Checked by a tool on
+  2026-10-12"** in amber, where the compliance card said "Read by an AI model on 2026-10-06". The page
+  puts a footnote number after "threshold" in both tests, so the tool check holds the words on each side
+  of it; the card shows the sentences without the footnote numbers. The "$30K" shorthand is gone from the map and the intake: the GST timing toggle's
+  "Wait for $30K" now reads **When the CRA's tests say**.
 - **The map no longer invents a point to incorporate.** The stage "Incorporation at $80K net" is now
   **Incorporating**. Its $80,000 had no source (the catalog called it a heuristic) and was compared with
   the third-year *sales* estimate although it was written as *net* income. DotAmi doesn't pick a point
@@ -161,6 +194,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **No "getting close" warning of DotAmi's own.** A first-year estimate (or a complete year of agreed
+  figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
+  "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
+  tests is met; under it, a card read from your confirmed figures says "not over $30,000", and a card
+  read from an estimate only says why it is shown ("Shown because you selected Alberta."). Under the line the card no longer tells
+  you flatly that you are a small supplier: most businesses are, and the CRA's page lists exceptions.
+- **A stage card says "default" until you click its toggle** ([#5](https://github.com/Dot-Ami/dotami/issues/5)).
+  The GST/HST and Incorporating cards said "your pick" on a default the person never chose, under a
+  toggle saying "default, not your pick yet". Now the chip reads **default** until that toggle is clicked;
+  a saved idea whose pick isn't the default keeps **your pick** after a reload; the "Service vs.
+  productize" fork on every map reads **open choice**. The playbook export writes "(default, not picked
+  yet)" beside an untouched default, and the readout API gives each stage's chip. The cockpit's step
+  panel and road evaluation's list of your answers use the same test, and road evaluation counts your own
+  "I'd incorporate at $___" as one of your answers when you typed one.
 - **The map's colours follow your own picks.** The cockpit ran the rules on the default GST and
   incorporation picks, so flipping **GST timing** or **Incorporation timing** moved the chips but not the
   card colours. It now runs them on the idea's own picks, through one function the readout API uses too

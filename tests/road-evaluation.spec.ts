@@ -264,7 +264,8 @@ describe("the what-if", () => {
     const gstCard = result.rules.unlocks.find((u) => u.id === "compliance-gst-small-supplier")!;
     // The what-if still lights the card: it crosses the line, so check first.
     expect(gstCard.state).toBe("yellow");
-    expect(gstCard.why).toContain("your what-if of first-year sales (not a forecast)");
+    // Since the honest map (#145) the card names the amount and the CRA's own line, not a "threshold" it crosses.
+    expect(gstCard.why).toContain("your what-if of first-year sales ($45,000, not a forecast) is over $30,000");
     expect(result.rules.unlocks.filter((u) => /Y1 revenue target/.test(u.why))).toEqual([]);
   });
 
@@ -272,7 +273,7 @@ describe("the what-if", () => {
     const result = evaluateRoad(road0({ scenario: inventedIdea({ targetRevenueY1: 45_000 }) }));
     const gstCard = result.rules.unlocks.find((u) => u.id === "compliance-gst-small-supplier")!;
     expect(gstCard.state).toBe("yellow");
-    expect(gstCard.why).toContain("your Y1 revenue target crosses");
+    expect(gstCard.why).toContain("your Y1 revenue target ($45,000) is over $30,000");
   });
 
   it.each([[-1], [1.5], [Number.NaN], [Number.POSITIVE_INFINITY], ["45000" as unknown as number]])(
@@ -684,6 +685,8 @@ describe("road evaluation is pure", () => {
   ];
   // What it may import at run time: its own files, the road catalog, the rules (themselves pure) and
   // the one formatter. Type-only imports vanish when compiled, so they are not run-time imports.
+  // "@/lib/scenarios/graph" is for `isBranchDecided` (#145): whether the person picked a fork comes
+  // from their saved state, not only this session's clicks. It reads only the scenario it is given.
   const ALLOWED = new Set([
     "./agreed",
     "./evaluate-road",
@@ -693,6 +696,7 @@ describe("road evaluation is pure", () => {
     "@/lib/engines/roads/v2026",
     "@/lib/format/money-and-months",
     "@/lib/scenarios/evaluate-scenario",
+    "@/lib/scenarios/graph",
     "@/lib/scenarios/types",
   ]);
 

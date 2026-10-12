@@ -28,9 +28,11 @@ import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/sa
 import { evaluateRoad } from "@/lib/roads";
 import {
   branchDecisions,
+  setIncorporateAt,
   updateScenarioBranch,
   type BranchDecision,
 } from "@/lib/scenarios/branches";
+import { isBranchDecided } from "@/lib/scenarios/graph";
 import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
 import Link from "next/link";
 
@@ -164,7 +166,6 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     : scenario.profile.structure === "corporation"
       ? "structure-ccpc"
       : "structure-sole-prop";
-  const decidedBranchIds = new Set(scenario.state.decidedBranchIds ?? []);
 
   /** Writes `target` to the database and reports the outcome on the save line. Never throws. */
   async function persist(target: Scenario) {
@@ -190,6 +191,14 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   function handleBranchChange(decision: BranchDecision, optionId: CFENodeId) {
     const next = updateScenarioBranch(scenario, decision.id, optionId);
+    setCurrentScenario(next);
+    setScenario(next);
+    scheduleSave(next);
+  }
+
+  /** The person's own "I'd incorporate at $___" (2026-10-11): theirs, saved like a branch pick. */
+  function handleIncorporateAtChange(value: number | null) {
+    const next = setIncorporateAt(scenario, value);
     setCurrentScenario(next);
     setScenario(next);
     scheduleSave(next);
@@ -518,7 +527,6 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                     setActiveGauge(null);
                     openStep(stepId);
                   }}
-                  decidedBranchIds={decidedBranchIds}
                   onBranchChange={handleBranchChange}
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
@@ -546,7 +554,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                   ? {
                       decision: selectedDecision,
                       activeOptionId: scenario.state.activeBranches[selectedDecision.id],
-                      isDefault: !decidedBranchIds.has(selectedDecision.id),
+                      isDefault: !isBranchDecided(selectedDecision.id, scenario.state),
                       onChange: (optionId) => handleBranchChange(selectedDecision, optionId),
                     }
                   : null
@@ -558,6 +566,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               onMark={(skillItemId, mark) => handleMark({ skillItemId }, mark)}
               onSelectSkill={setSelectedSkillId}
               onProposeQuote={handleProposeQuote}
+              province={scenario.profile.province}
+              ownNumber={scenario.state.incorporateAt ?? null}
+              onOwnNumberChange={handleIncorporateAtChange}
               onClose={() => {
                 setSelectedNodeId(null);
                 setRightPanel(null);

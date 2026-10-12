@@ -1,4 +1,4 @@
-import type { EngineCitation, LensAnnotations, Province } from "@/lib/engines/shared/types";
+import type { EngineCitation, LensAnnotations, OfficialWords, Province } from "@/lib/engines/shared/types";
 
 export type ComplianceRuleType =
   | "gst-threshold"
@@ -11,9 +11,9 @@ export interface ComplianceRule {
   label: string;
   ruleType: ComplianceRuleType;
   description: string;
-  /** Display string (e.g. "$30,000 rolling four-quarter"). */
+  /** Display string, in the official page's own terms (no shorthand like "$30K"). */
   threshold?: string;
-  /** Typed threshold amount in CAD for the rules engine's watch logic. */
+  /** Typed threshold amount in CAD, the one the cited page sets. Nothing lights before it is passed. */
   thresholdAmount?: number;
   /**
    * [8a] How confirmed revenue figures are tested against `thresholdAmount`: totals per calendar
@@ -21,6 +21,8 @@ export interface ComplianceRule {
    * Typed here so the rules engine never hard-codes a tax rule (lib/brain/records.ts).
    */
   thresholdTest?: { singleQuarter: boolean; consecutiveQuarters: number };
+  /** The official test in its own words, quoted on the card (2026-10-11). */
+  officialWords?: OfficialWords;
   lensAnnotations: LensAnnotations;
   citations: EngineCitation[];
   provinces: Province[];

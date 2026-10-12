@@ -50,11 +50,17 @@ export interface StepPanelProps {
   onSelectSkill: (skillItemId: string | null) => void;
   /** Proposes the person's number for a named cost line; resolves to an error, or null once the agree prompt opened. */
   onProposeQuote: (lineId: string, amountCents: number, from: CostLineAmountFrom) => Promise<string | null>;
+  /** The idea's province code, for the ways of incorporating written for it (road 0's node detail). */
+  province: string;
+  /** The person's own "I'd incorporate at $___", or null when not given (road 0's node detail). */
+  ownNumber: number | null;
+  /** Sets or clears that number. */
+  onOwnNumberChange: (value: number | null) => void;
   onClose: () => void;
 }
 
 export function StepPanel(props: StepPanelProps) {
-  const { step, rules, onClose } = props;
+  const { step, rules, onClose, province, ownNumber, onOwnNumberChange } = props;
   const items = itemsForStep(rules.unlocks, step);
   const node = cfeCatalogV2026.nodes.find((n) => n.id === step.id);
   const sections = <StepSections {...props} />;
@@ -62,7 +68,16 @@ export function StepPanel(props: StepPanelProps) {
   return (
     <section aria-label={words.panel.region} className="h-full">
       {node ? (
-        <NodeDetailPanel node={node} items={items} onClose={onClose}>
+        <NodeDetailPanel
+          node={node}
+          items={items}
+          province={province}
+          // The rules' own sentence naming the person's answers behind this stage's colour (2026-10-11).
+          reason={rules.nodeReasons[node.id]}
+          ownNumber={ownNumber}
+          onOwnNumberChange={onOwnNumberChange}
+          onClose={onClose}
+        >
           {sections}
         </NodeDetailPanel>
       ) : (

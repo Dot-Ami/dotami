@@ -15,6 +15,7 @@ import { defaultActiveBranches } from "@/lib/scenarios/branches";
 import { T2125_LINES } from "@/lib/figures/return/lines";
 import { FIGURE_KINDS } from "@/lib/figures/types";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
+import { incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-routes";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
@@ -97,6 +98,8 @@ describe("engine catalog integrity", () => {
     // (and so never checked above, or by scripts/check-quotes.mjs) fails.
     const expected =
       cfeCatalogV2026.nodes.reduce((n, node) => n + node.citations.length, 0) +
+      // The ways to incorporate: one source per line (2026-10-11).
+      incorporationRoutesV2026.reduce((n, route) => n + route.lines.length, 0) +
       entryCatalogs.reduce(
         (n, { catalog }) => n + (catalog.entries as readonly { citations: readonly unknown[] }[]).reduce((m, e) => m + e.citations.length, 0),
         0,

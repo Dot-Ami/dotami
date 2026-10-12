@@ -10,7 +10,7 @@ Original v0 success criteria: five golden scenarios; structure exact; illustrati
 | --- | --- | --- | --- |
 | `example-service` | Golden example / default canvas | AB service, apprentice, 60k → 180k Y1–Y3 | Voluntary GST, incorporating when the person decides |
 | `golden-bc-product-sred` | Product + SR&ED-style incorporation timing | BC, self-employed, 90k → 200k | Voluntary GST, liability / SR&ED incorporation |
-| `golden-on-mandatory-low-ramp` | Mandatory GST + small-supplier curve | ON employee, 20k → 50k | Wait for $30K, incorporating when the person decides |
+| `golden-on-mandatory-low-ramp` | Mandatory GST + small-supplier curve | ON employee, 20k → 50k | When the CRA's tests say (was "Wait for $30K"), incorporating when the person decides |
 | `golden-ab-hire-first` | Hire-first branch visible | AB apprentice, hire-first | Same defaults as v0 intake |
 | `golden-intake-on-sidegig` | Intake → `Scenario` pipeline | ON side-gig, employee | Defaults from `v0ScenarioDefaultActiveBranches` |
 
