@@ -94,6 +94,31 @@ describe("a ride-share or taxi kind of work", () => {
       expect(parseIntentFallback(text).activityTags, text).not.toContain(TAG);
     }
   });
+
+  // A food courier who says "drive" is still a food courier: the CRA's example counts Abby's Uber Eats
+  // delivery toward the general $30,000 total, so the ride-share rule must not be suggested for it.
+  it("driving for Uber Eats is food delivery, not ride-share driving", () => {
+    for (const text of [
+      "I drive for Uber Eats",
+      "Driving for Uber Eats on weekends in Calgary",
+      "I deliver groceries with Instacart and drive Uber Eats",
+      "ride share delivery with Uber Eats",
+    ]) {
+      expect(parseIntentFallback(text).activityTags, text).not.toContain(TAG);
+    }
+    // Someone who does both still gets the tag, from the part about driving passengers.
+    expect(parseIntentFallback("I drive for Uber and Uber Eats").activityTags).toContain(TAG);
+  });
+
+  // The CRA's rule is about the self-employed drivers who give the rides, not the people writing the app.
+  it("building a rideshare app is not driving for one", () => {
+    for (const text of ["I'm building a rideshare app for university students", "Starting a ride-sharing software platform startup"]) {
+      expect(parseIntentFallback(text).activityTags, text).not.toContain(TAG);
+    }
+    for (const text of ["I drive rideshare on weekends", "I'm a ride-share driver in Edmonton", "driving for a rideshare company"]) {
+      expect(parseIntentFallback(text).activityTags, text).toContain(TAG);
+    }
+  });
 });
 
 describe("the rule: GST/HST from the first paid ride, cited", () => {
@@ -133,6 +158,23 @@ describe("the rule: GST/HST from the first paid ride, cited", () => {
     expect(aside?.ruleId).toBe(SMALL_SUPPLIER);
     expect(aside?.why.length).toBeGreaterThan(0);
     expect(aside?.stillDecides.length).toBeGreaterThan(0);
+  });
+
+  // The two sentences name the line in words; if the small-supplier rule's amount ever changes, this
+  // fails until they are rewritten to match, so they can't go stale quietly.
+  it("names the same amount as the small-supplier rule it sets aside", () => {
+    const line = complianceCatalogV2026.entries.find((e) => e.id === SMALL_SUPPLIER)!.thresholdAmount!;
+    const amount = `$${line.toLocaleString("en-CA")}`;
+    const aside = rule()!.setsAsideThreshold!;
+    expect(aside.why).toContain(amount);
+    expect(aside.stillDecides).toContain(amount);
+  });
+
+  // GI-196: "before the thirtieth day after that particular day" (first ride September 1, apply by
+  // September 30). "Until the thirtieth day" would run a day past that.
+  it("gives GI-196's deadline as GI-196 words it", () => {
+    expect(rule()!.description).toContain("before the thirtieth day after");
+    expect(rule()!.description).not.toMatch(/until the thirtieth day/);
   });
 });
 
@@ -208,6 +250,21 @@ describe("the control: the same $10,000 without the driving tag is unchanged", (
     expect(result.nodeReasons[MANDATORY]).toBeUndefined();
     expect(result.nodeReasons[VOLUNTARY]).toBeUndefined();
   });
+
+  // The other cards scoped to a kind of work keep the reason line they had before this change. Naming
+  // the tag on them too is a separate question for the maintainer, not part of the ride-share rule.
+  it("the other cards for a kind of work keep their reason lines", () => {
+    const cases: Array<[string, Partial<EvaluationProfile>, string]> = [
+      ["compliance-trades-licensing-ab", { activityTags: ["Trades"], province: "AB" }, "Shown because you selected Alberta."],
+      ["compliance-hobby-vs-business", { activityTags: ["Content / streaming"], province: "AB" }, "Shown because you selected Alberta."],
+      ["compliance-food-premises-on", { activityTags: ["Food service"], province: "ON" }, "Shown because you selected Ontario."],
+    ];
+    for (const [id, over, why] of cases) {
+      const c = card(evaluateProfile({ ...abby, ...over }, { today: TODAY }), id);
+      expect(c, id).toBeDefined();
+      expect(c!.why, id).toBe(why);
+    }
+  });
 });
 
 describe("platforms report drivers' information to the CRA", () => {
@@ -229,5 +286,13 @@ describe("platforms report drivers' information to the CRA", () => {
     const c = card(evaluateProfile(abby, { today: TODAY }), PLATFORM_RULE);
     expect(c).toBeDefined();
     expect(`${c!.title} ${c!.why} ${c!.payoff}`).not.toMatch(/earning/i);
+  });
+
+  // The page says sellers who are reported "may include" rideshare drivers, and that operators collect
+  // information on "certain sellers": the card's title and description don't say more than that.
+  it("hedges as the page does: platforms may report, on certain sellers", () => {
+    const c = card(evaluateProfile(abby, { today: TODAY }), PLATFORM_RULE)!;
+    expect(c.title).toMatch(/\bmay report\b/);
+    expect(platform()!.description).toContain("certain sellers");
   });
 });
