@@ -18,11 +18,14 @@ import { branchDecisions } from "@/lib/scenarios/branches";
 import { inventedCitation, inventedRoad, inventedSkillItems } from "./helpers/invented-road";
 
 /**
- * Every road, column, step and fork id that has ever shipped. Ids are forever: a person's skill
- * marks, step progress and fork picks are kept against them, so removing or renaming one would
- * orphan what the person told DotAmi. Add new ids here; never take one out.
+ * Every road, column, step, fork, done-when line and cost line id that has ever shipped. Ids are
+ * forever: a person's step progress, ticks, quotes and fork picks are kept against them, so removing
+ * or renaming one would orphan what the person told DotAmi. Add new ids here; never take one out.
  */
-const SHIPPED_IDS: Record<string, { columns: string[]; steps: string[]; forks: string[] }> = {
+const SHIPPED_IDS: Record<
+  string,
+  { columns: string[]; steps: string[]; forks: string[]; doneWhen: string[]; costs: string[] }
+> = {
   "road-starting-any-business-ab": {
     columns: ["tier-1-before", "tier-2-sole-prop", "tier-3-incorporating", "tier-4-corporation"],
     steps: [
@@ -39,8 +42,17 @@ const SHIPPED_IDS: Record<string, { columns: string[]; steps: string[]; forks: s
     ],
     // The keys today's saved branch picks are stored under (ScenarioState.activeBranches).
     forks: ["gstTiming", "incorporationTiming"],
+    // Road 0's done-when and cost lines are written in a later pull request; none has shipped yet.
+    doneWhen: [],
+    costs: [],
   },
 };
+
+/** Every skill item id that has ever shipped. Shared across roads, and forever like the ids above. */
+const SHIPPED_SKILL_ITEM_IDS: string[] = [];
+
+const doneWhenIds = (road: Road) => road.steps.flatMap((s) => s.doneWhen.map((d) => d.id));
+const costIds = (road: Road) => road.steps.flatMap((s) => s.costs.map((c) => c.id));
 
 describe("the road catalog", () => {
   it("every road passes every check, and so does the shared list of skill items", () => {
@@ -68,6 +80,8 @@ describe("the road catalog", () => {
       expect(road!.columns.map((c) => c.id)).toEqual(expect.arrayContaining(shipped.columns));
       expect(road!.steps.map((s) => s.id)).toEqual(expect.arrayContaining(shipped.steps));
       expect(road!.forks.map((f) => f.id)).toEqual(expect.arrayContaining(shipped.forks));
+      expect(doneWhenIds(road!)).toEqual(expect.arrayContaining(shipped.doneWhen));
+      expect(costIds(road!)).toEqual(expect.arrayContaining(shipped.costs));
     }
     for (const road of roadsCatalogV2026.entries) {
       const shipped = SHIPPED_IDS[road.id];
@@ -75,7 +89,12 @@ describe("the road catalog", () => {
       for (const c of road.columns) expect(shipped!.columns).toContain(c.id);
       for (const s of road.steps) expect(shipped!.steps).toContain(s.id);
       for (const f of road.forks) expect(shipped!.forks).toContain(f.id);
+      for (const id of doneWhenIds(road)) expect(shipped!.doneWhen).toContain(id);
+      for (const id of costIds(road)) expect(shipped!.costs).toContain(id);
     }
+    const skillIds = skillItemsV2026.map((s) => s.id);
+    expect(skillIds).toEqual(expect.arrayContaining(SHIPPED_SKILL_ITEM_IDS));
+    for (const id of skillIds) expect(SHIPPED_SKILL_ITEM_IDS).toContain(id);
   });
 });
 
@@ -159,6 +178,37 @@ describe("the checks refuse a road that breaks a rule, one rule at a time", () =
     expect(broken((r) => (r.steps[1]!.citations[0]!.lastVerified = "2026-02-30"))).toEqual([
       'A citation on step "step-invented-employed" has no real read date: "2026-02-30".',
     ]);
+  });
+
+  it("a citation read on a day that hasn't come yet", () => {
+    // The road's own date moves with it, so the only problem left is the read date itself.
+    expect(
+      broken((r) => {
+        r.steps[1]!.citations[0]!.lastVerified = "2099-01-01";
+        r.lastVerified = "2099-01-01";
+      }),
+    ).toEqual(['A citation on step "step-invented-employed" says it was read on 2099-01-01, a day that hasn\'t come yet.']);
+    expect(
+      skillItemProblems([{ ...inventedSkillItems[0]!, citations: [inventedCitation("2099-01-01")] }]),
+    ).toEqual(['A citation on skill item "skill-invented-ticket" says it was read on 2099-01-01, a day that hasn\'t come yet.']);
+  });
+
+  it("'today' is the newest date anywhere on Earth, so a reader east of UTC isn't refused their own today", () => {
+    // 10:00 UTC on 1 October is already 2 October at UTC+14, the earliest time zone.
+    const road = inventedRoad(); // its newest read date is 2026-10-02
+    expect(roadProblems(road, inventedSkillItems, new Date("2026-10-01T10:00:00Z"))).toEqual([]);
+    expect(roadProblems(road, inventedSkillItems, new Date("2026-10-01T09:59:00Z"))).toEqual([
+      'A citation on done-when line "dw-invented-1" says it was read on 2026-10-02, a day that hasn\'t come yet.',
+      'A citation on step "step-invented-own" says it was read on 2026-10-02, a day that hasn\'t come yet.',
+    ]);
+  });
+
+  it("an official link that isn't an https page", () => {
+    for (const url of ["javascript:alert(1)", "http://example.org/invented"]) {
+      expect(broken((r) => (r.steps[0]!.officialLinks[0]!.url = url))).toEqual([
+        `An official link on step "step-invented-train" is not an https page: ${url}`,
+      ]);
+    }
   });
 
   it("a done-when line with no citation, or with a broken one", () => {
@@ -286,5 +336,17 @@ describe("cost lines come in three kinds, and a blank never reads as $0", () => 
       expect(shown).toEqual({ kind: "named-not-priced", lineId: "cost-invented-tools", label: "Tools (test only)" });
       expect(shown).not.toHaveProperty("amountCents");
     }
+  });
+
+  it("a quote that isn't a whole, non-negative number of cents counts as not priced, never as a number", () => {
+    for (const quote of [Number.NaN, -500, 12.5, Number.POSITIVE_INFINITY]) {
+      expect(costLineAsShown(named!, quote), String(quote)).toEqual({
+        kind: "named-not-priced",
+        lineId: "cost-invented-tools",
+        label: "Tools (test only)",
+      });
+    }
+    // Zero is a real quote (a tool the person already owns), not a blank.
+    expect(costLineAsShown(named!, 0)).toMatchObject({ kind: "your-quote", amountCents: 0 });
   });
 });
