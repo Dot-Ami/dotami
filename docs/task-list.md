@@ -518,7 +518,7 @@ roadmap's build order.
 - ⬜ **[11i] New tax years** — every card says which year.
 - ⬜ **[11j] Beyond Canada; Quebec; French** · roadmap §4 · #45
 - ⬜ **[11k] Fixes already reported** — good places to start:
-  - [ ] #36 federal rules say "because you selected <province>"
+  - [x] #36 federal rules say "because you selected <province>" — 2026-10-12
   - [ ] #39 tier 1 subtitle wording
   - [x] #9 statute text with paragraph breaks — 2026-10-12
   - [x] #6 hide the empty vault line — 2026-10-12

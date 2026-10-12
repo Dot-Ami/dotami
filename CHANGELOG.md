@@ -254,6 +254,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([`lib/law/provision-lines.ts`](lib/law/provision-lines.ts);
   [`tests/provision-lines.spec.ts`](tests/provision-lines.spec.ts), on the store's own text for ITA
   18(12), ITA 18(1) (a)–(l) and Reg. 1100(2)(c.3), read 2026-10-12).
+- **A federal rule says it is shown because it is federal** ([#36](https://github.com/Dot-Ami/dotami/issues/36)).
+  Every compliance card said "Shown because you selected <province>.", so an Alberta idea read
+  "because you selected Alberta" on the GST/HST small-supplier rule, which is federal, and an idea with
+  no province yet read "because you selected your province". A rule whose places include Canada as a
+  whole now says "Shown because it is a federal rule, the same in every province and territory.";
+  provincial rules still name the province, and the ride-share cards still name the tag that lit them
+  ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
@@ -272,7 +279,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
   tests is met; under it, a card read from your confirmed figures says "not over $30,000", and a card
-  read from an estimate only says why it is shown ("Shown because you selected Alberta."). Under the line the card no longer tells
+  read from an estimate only says why it is shown ("Shown because it is a federal rule, the same in
+  every province and territory.", since #36 below). Under the line the card no longer tells
   you flatly that you are a small supplier: most businesses are, and the CRA's page lists exceptions.
 - **A stage card says "default" until you click its toggle** ([#5](https://github.com/Dot-Ami/dotami/issues/5)).
   The GST/HST and Incorporating cards said "your pick" on a default the person never chose, under a

@@ -379,12 +379,18 @@ function evaluateComplianceRule(
   let typeChip: UnlockTypeChip = "Compliance";
   let step: IntakeStep = "location";
   let payoff = entry.lensAnnotations.tax;
-  let why = `Shown because you selected ${provinceName(profile.province)}.`;
+  // Where the rule applies is why it shows (#36). Federal entries list the provinces too
+  // (["AB", "BC", "ON", "CA"]), so "CA" being there is what makes a rule federal; crediting the
+  // province for one read "because you selected Alberta" on a rule Alberta has nothing to do with.
+  const federal = entry.provinces.includes("CA");
+  let why = federal
+    ? "Shown because it is a federal rule, the same in every province and territory."
+    : `Shown because you selected ${provinceName(profile.province)}.`;
   if (entry.industryTags && entry.reasonNamesTags) {
     // A rule for a kind of work that says so: the tag lit it, and the province only if the rule is
     // provincial. Opt-in per rule (`reasonNamesTags`), so the older work-scoped cards keep their line.
     const tags = matchedTags(profile, entry.industryTags);
-    const where = entry.provinces.includes("CA") ? "" : ` and you selected ${provinceName(profile.province)}`;
+    const where = federal ? "" : ` and you selected ${provinceName(profile.province)}`;
     why = `Shown because your intake has the activity ${tags.length === 1 ? "tag" : "tags"} ${andList(tags)}${where}.`;
   }
   let fromRecords: RecordsBasis | undefined;
