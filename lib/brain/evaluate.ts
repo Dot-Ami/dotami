@@ -505,6 +505,11 @@ function computeNodeStates(
   } else if (incorporateAt === null) {
     states[incPath] = "yellow";
     reasons[incPath] = "Check first: set your own number to see this light. DotAmi has no number of its own for this.";
+  } else if (profile.targetRevenueY3 <= 0) {
+    // The intake's numbers are optional and a skipped one is stored as 0, so 0 means "not given":
+    // never quote it back as the person's estimate, and never let 0 >= 0 light the card.
+    states[incPath] = "yellow";
+    reasons[incPath] = `Check first: there's no third-year revenue estimate on your intake to compare with your own number (${formatCad(incorporateAt * 100)}).`;
   } else if (profile.targetRevenueY3 >= incorporateAt) {
     states[incPath] = "green";
     reasons[incPath] = `Lit because your third-year revenue estimate (${y3}) reaches your own number (${formatCad(incorporateAt * 100)}).`;

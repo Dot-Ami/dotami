@@ -6,7 +6,8 @@ import type { UnlockItem } from "@/lib/brain/types";
 import { CitationLinks, StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { OfficialWordsBlock } from "@/components/shared/official-words";
 import type { CFENode, CFEOwnNumber, CFERoute, CFERouteLine } from "@/lib/engines/cfe/v2026";
-import { incorporationRoutesFor } from "@/lib/engines/cfe/v2026/incorporation-routes";
+import { incorporationRoutesFor, provinceNotWrittenNote, routesHeading } from "@/lib/engines/cfe/v2026/incorporation-routes";
+import { ownNumberFromTyping } from "@/lib/scenarios/branches";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
 interface NodeDetailPanelProps {
@@ -274,8 +275,8 @@ function OwnNumberField({
           value={value === null ? "" : String(value)}
           disabled={!onChange}
           onChange={(e) => {
-            const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
-            onChange?.(digits === "" ? null : Number(digits));
+            // Digits only, and never more than a save can keep (ownNumberFromTyping).
+            onChange?.(ownNumberFromTyping(e.target.value));
           }}
           className="w-32 rounded-sm border border-rule bg-ink px-2 py-1 font-mono text-sm text-paper focus:border-maple focus:outline-hidden"
         />
@@ -295,10 +296,11 @@ const PER_WORDS: Record<NonNullable<CFERouteLine["per"]>, string> = { once: "onc
  * Alberta incorporation). No total and no pick: the person compares and chooses.
  */
 function RoutesSideBySide({ routes, provinceNotWritten }: { routes: CFERoute[]; provinceNotWritten: string | null }) {
+  const missingName = provinceNotWritten ? (PROVINCE_LABELS[provinceNotWritten as Province] ?? provinceNotWritten) : null;
   return (
     <section className="mt-5" aria-label="Ways to take this step">
       <h3 className="mb-2 font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim">
-        {routes.length} {routes.length === 1 ? "way" : "ways"} to do this, side by side · DotAmi doesn&apos;t pick one
+        {routesHeading(routes.length, missingName)}
       </h3>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {routes.map((route) => (
@@ -334,11 +336,7 @@ function RoutesSideBySide({ routes, provinceNotWritten }: { routes: CFERoute[]; 
           </article>
         ))}
       </div>
-      {provinceNotWritten ? (
-        <p className="mt-2 text-[11px] text-stone-dim">
-          Incorporating under {PROVINCE_LABELS[provinceNotWritten as Province] ?? provinceNotWritten} law isn&apos;t written yet, so only the federal way is shown.
-        </p>
-      ) : null}
+      {missingName ? <p className="mt-2 text-[11px] text-stone-dim">{provinceNotWrittenNote(missingName)}</p> : null}
     </section>
   );
 }

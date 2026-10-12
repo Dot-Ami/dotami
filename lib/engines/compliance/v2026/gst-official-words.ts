@@ -23,6 +23,7 @@ export const CRA_SMALL_SUPPLIER_TESTS: OfficialWords = {
       id: "cra-gst-single-quarter",
       sentences: [
         "You exceed the $30,000 threshold in a single calendar quarter.",
+        "You are no longer a small supplier and have to charge GST/HST on the supply that made you exceed $30,000 within the calendar quarter.",
         "You must register for the GST/HST.",
         "Your effective date of registration is no later than the day of the supply that made you exceed $30,000.",
       ],

@@ -84,7 +84,8 @@ export interface ScenarioState {
   /**
    * S2.5.4d: decisions the person has actually clicked. Everything else in `activeBranches`
    * is a template default and is labelled as one. Session-persisted only — the database does not
-   * store it, so a reloaded venture shows its picks as defaults again (honest: we don't know).
+   * store it, so after a reload a pick that is the default reads "default" again, even if the person
+   * clicked it; a saved pick off the default still reads "your pick" (`isBranchDecided`, 2026-10-11).
    */
   decidedBranchIds?: string[];
   /**

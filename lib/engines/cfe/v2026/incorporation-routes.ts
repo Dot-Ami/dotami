@@ -123,8 +123,10 @@ export const incorporationRoutesV2026: readonly CFERoute[] = [
     jurisdiction: "AB",
     label: "Alberta (Corporate Registry)",
     summary: "A corporation under Alberta law, filed through a registry agent.",
+    // The page points its government and service fees to the catalogue, but the NUANS report to "a NUANS
+    // service provider", with no cost stated, so the note doesn't send that one to the catalogue too.
     blanksNote:
-      "Alberta's amounts are in the Registry agent product catalogue, which DotAmi hasn't read yet, so none is shown.",
+      "Alberta's government and service fees are in the Registry agent product catalogue, which DotAmi hasn't read yet, so none is shown. The NUANS report comes from a NUANS service provider; the Alberta page states no cost for it.",
     lines: [
       {
         id: "alberta-incorporation-government-fee",
@@ -180,4 +182,19 @@ export function incorporationRoutesFor(
   const routes = forNode.filter((route) => route.jurisdiction === "CA" || route.jurisdiction === province);
   const provinceWritten = forNode.some((route) => route.jurisdiction === province);
   return { routes, provinceNotWritten: provinceWritten ? null : province };
+}
+
+/**
+ * The heading over the routes. With every route written it is a side-by-side count; with the
+ * province's own route missing it says so instead, because "1 way to do this, side by side" read as
+ * if incorporating had only one way. `notWrittenProvinceName` is the province's name as shown.
+ */
+export function routesHeading(routeCount: number, notWrittenProvinceName: string | null): string {
+  if (notWrittenProvinceName) return `Ways to do this · only the federal one is written for ${notWrittenProvinceName} yet`;
+  return `${routeCount} ${routeCount === 1 ? "way" : "ways"} to do this, side by side · DotAmi doesn't pick one`;
+}
+
+/** The line under the routes when the province's own way isn't written yet. */
+export function provinceNotWrittenNote(provinceName: string): string {
+  return `Incorporating under ${provinceName} law isn't written yet, so only the federal way is shown.`;
 }

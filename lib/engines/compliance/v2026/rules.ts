@@ -16,7 +16,9 @@ export const complianceRulesV2026 = [
     // Quoted on the card, word for word; until 2026-10-11 the card paraphrased them.
     officialWords: CRA_SMALL_SUPPLIER_TESTS,
     lensAnnotations: {
-      tax: "While neither of the CRA's two $30,000 tests is met, you are a small supplier and need not register; registering voluntarily remains an option for input tax credits.",
+      // "Most businesses", not "you": the cited page lists people who must register even as small
+      // suppliers (taxi and ride-sharing drivers, some non-residents), and the line counts associates' supplies.
+      tax: "While neither of the CRA's two $30,000 tests is met, most businesses are small suppliers and need not register yet (the CRA's page lists exceptions); registering voluntarily remains an option for input tax credits.",
       legal: "If B2B customers require a GST number, registration may be needed before the threshold.",
     },
     citations: [

@@ -61,8 +61,10 @@ person is asked).
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
   its own key `incorporateAt`, so no table or column was added
-  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)). Only the person's typing sets it;
-  it lights one stage and is read by nothing else. It is also in the browser tab's saved draft
+  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)). It is set only by what is
+  saved for the idea: the person's typing on the Incorporating stage, or a program on this computer that
+  saves the idea through DotAmi's own save route (`/api/scenario/save`, which accepts it like the rest of
+  the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
 

@@ -34,6 +34,8 @@ export interface PlaybookDecisionSummary {
   label: string;
   selectedNodeId: string;
   selectedLabel: string;
+  /** False while the selection is still the untouched default (`isBranchDecided`), so the export says so. */
+  decided: boolean;
 }
 
 export interface PlaybookSkeleton {

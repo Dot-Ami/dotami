@@ -12,16 +12,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
   to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report
-  needed), and Alberta's Corporate Registry costs as named blanks ("no amount read": Alberta lists them
-  in its Registry agent product catalogue, which DotAmi hasn't read). Every quote shows the day it was
-  read; nothing is totalled and DotAmi picks neither. An idea in a province with no written route sees
-  the federal one and is told the other isn't written yet
+  needed), and Alberta's Corporate Registry costs as named blanks ("no amount read": Alberta lists its
+  government and service fees in its Registry agent product catalogue, which DotAmi hasn't read, and
+  sends the NUANS name report to a NUANS service provider with no cost stated). Every quote shows the
+  day it was read; nothing is totalled and DotAmi picks neither. An idea in a province with no written
+  route sees the federal one under "Ways to do this · only the federal one is written for <province>
+  yet" and is told the other isn't written yet
   ([`lib/engines/cfe/v2026/incorporation-routes.ts`](lib/engines/cfe/v2026/incorporation-routes.ts)).
 - **Your own "I'd incorporate at $___".** Typed in the Incorporating stage's detail and labelled
   *your number*; with it, Incorporating turns green once your third-year revenue estimate reaches it,
   and its card says so with both numbers. Without it the card stays "check first" at any estimate and
-  says "set your own number to see this light". DotAmi has no number of its own for this and never
-  fills one in. Kept with the idea's branch picks
+  says "set your own number to see this light"; with no third-year estimate on the intake it stays
+  "check first" and says so, never quoting a skipped estimate back as "$0". DotAmi has no number of its
+  own for this and never fills one in. The box takes up to 9 digits, the most a save keeps. Kept with the
+  idea's branch picks
   ([`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
 - **The Liability / SR&ED card says what lit it**: "Lit because your intake has the activity tag
   Software / SaaS. This card reads only those tags, not a liability or research need you stated." (or
@@ -54,12 +58,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **No "getting close" warning of DotAmi's own.** A first-year estimate (or a complete year of agreed
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
-  tests is met; under it the card reads "not over $30,000".
+  tests is met; under it, a card read from your confirmed figures says "not over $30,000", and a card
+  read from an estimate only says why it is shown ("Shown because you selected Alberta."). Under the line the card no longer tells
+  you flatly that you are a small supplier: most businesses are, and the CRA's page lists exceptions.
 - **A stage card says "default" until you click its toggle** ([#5](https://github.com/Dot-Ami/dotami/issues/5)).
   The GST/HST and Incorporating cards said "your pick" on a default the person never chose, under a
   toggle saying "default, not your pick yet". Now the chip reads **default** until that toggle is clicked;
   a saved idea whose pick isn't the default keeps **your pick** after a reload; the "Service vs.
-  productize" fork on every map reads **open choice**.
+  productize" fork on every map reads **open choice**. The playbook export writes "(default, not picked
+  yet)" beside an untouched default, and the readout API gives each stage's chip.
 - **The map's colours follow your own picks.** The cockpit ran the rules on the default GST and
   incorporation picks, so flipping **GST timing** or **Incorporation timing** moved the chips but not the
   card colours. It now runs them on the idea's own picks, through one function the readout API uses too

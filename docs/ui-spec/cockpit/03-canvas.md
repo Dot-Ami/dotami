@@ -43,9 +43,14 @@ route runs the map's rules on a saved venture without its picks.
 
 **The stage chip says "your pick" only for what the person picked (issue #5, 2026-10-11).** A side of
 a toggle reads **default** until the person clicks that toggle, and **your pick** after (clicking the
-default itself counts). A saved idea whose pick isn't the default keeps **your pick** after a reload:
-the database keeps the picks but not the clicks, and only a click can move a pick off the default
-(`isBranchDecided`; the toggle's "default, not your pick yet" follows the same rule). *Hire first
+default itself counts, but only until the page reloads: the click isn't saved, so after a reload a
+pick that is the default reads **default** again). A saved idea whose pick isn't the default keeps
+**your pick** after a reload: the database keeps the picks but not the clicks, so a saved pick off the
+default counts as decided, whether the person's click or a program saving through DotAmi's own save
+route put it there (`isBranchDecided`; the toggle's "default, not your pick yet" follows the same
+rule). The same test marks a default in the playbook export ("(default, not picked yet)" beside the
+selection) and in the readout API (each node's `chip`: `your-pick`, `default`, `open-choice`, `now`,
+`done`, `ahead` or `not-on-your-path`). *Hire first
 employee* reads **your pick** (it is on the map only when the person turned on "Show a hire-first
 path"), and *Service vs. productize*, drawn on every map, reads **open choice**. Until then every
 such card said "your pick", so the GST/HST card said "your pick" under a toggle saying "default, not

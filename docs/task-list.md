@@ -403,9 +403,12 @@ roadmap's build order.
     "approaching the line" watch (`THRESHOLD_WATCH_RATIO`, docs/engines/cfe.md rule 2) goes with it
   - [x] "Incorporation for liability/SR&ED" lights from an activity tag (Software / SaaS, Manufacturing,
     AI / ML / R&D) that the intake's parser can mark from the sentence; say so on the card, or ask instead
-    (2026-10-11: the card says so, naming the tag; asking instead is still open)
+    (2026-10-11: the card says so, naming the tag; asking instead is tracked on its own line below)
+  - [ ] Liability / SR&ED: ask the person about a liability or research need instead of reading only the
+    activity tags
   - [ ] Change the sentence on an idea's card: today it can only be removed, with "Your statements"
-  - [x] A stage card's chip says "default" until the person clicks its toggle, not "your pick" (#5)
+  - [x] A stage card's chip says "default" until the person clicks its toggle, not "your pick" (#5); the
+    playbook export and the readout API say "default" too
   - [ ] A road any future can use; the map draws any road; today's map becomes "Starting any business in
     Alberta"
   - [ ] Skill marks, step progress, your target date and cost lines, kept on your computer

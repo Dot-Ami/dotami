@@ -1,4 +1,5 @@
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { cleanIncorporateAt, INCORPORATE_AT_MAX } from "@/lib/db/scenario-state-json";
 import type { Scenario, ScenarioState } from "./types";
 
 export type BranchDecisionId = "gstTiming" | "incorporationTiming";
@@ -118,9 +119,23 @@ export function updateScenarioBranch(
 
 /**
  * Sets (or, with null, clears) the person's own "I'd incorporate at $___". Whole dollars; the
- * branch picks are untouched. Only the person's typing reaches this.
+ * branch picks are untouched. The cockpit calls it from the person's typing on the Incorporating
+ * stage. It cleans the number the way a save does (`cleanIncorporateAt`), so a number the save would
+ * drop is never on screen either.
  */
 export function setIncorporateAt(scenario: Scenario, value: number | null): Scenario {
-  const clean = value === null || !Number.isFinite(value) || value < 0 ? null : Math.round(value);
-  return { ...scenario, state: { ...scenario.state, incorporateAt: clean } };
+  return { ...scenario, state: { ...scenario.state, incorporateAt: cleanIncorporateAt(value) } };
+}
+
+/** As many digits as the largest number a save keeps (999,999,999 while the cap is 1e9). */
+const OWN_NUMBER_DIGITS = String(INCORPORATE_AT_MAX - 1).length;
+
+/**
+ * What the "I'd incorporate at" box holds after a keystroke: the digits typed, cut to what a save
+ * keeps, or null when there are none. Until 2026-10-11 the box kept ten digits, and a number the save
+ * then dropped vanished on the next reload without a word.
+ */
+export function ownNumberFromTyping(text: string): number | null {
+  const digits = text.replace(/[^0-9]/g, "").slice(0, OWN_NUMBER_DIGITS);
+  return digits === "" ? null : Number(digits);
 }

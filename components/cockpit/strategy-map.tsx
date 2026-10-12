@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import { ArrowOverlay, futureEdges, futureSet } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
@@ -225,6 +225,7 @@ function StageCard({
 }) {
   const chip = STAGE_CHIP[chipKind];
   const ghost = chipKind === "not-on-your-path";
+  const reasonId = useId();
   return (
     <button
       ref={registerCard}
@@ -236,6 +237,9 @@ function StageCard({
       onBlur={() => onHover(false)}
       aria-pressed={selected}
       aria-label={`${node.label}, ${chip.label}, ${COLOUR_WORDS[colour]}, opens detail`}
+      // The label replaces the button's text for a screen reader, so the reason line is pointed to
+      // as the description; otherwise only sighted people would hear why the card has its colour.
+      aria-describedby={reason ? reasonId : undefined}
       className={`w-full rounded-lg border border-l-[3px] bg-ink3 p-3 text-left transition hover:border-maple-soft ${
         ghost ? "border-dashed opacity-60" : "border-rule"
       } ${ACCENT[colour]} ${selected ? "ring-2 ring-maple/30" : ""}`}
@@ -247,7 +251,11 @@ function StageCard({
         </span>
       </div>
       <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{node.trigger}</p>
-      {reason ? <p className="mt-1.5 text-[10.5px] leading-snug text-paper-dim">{reason}</p> : null}
+      {reason ? (
+        <p id={reasonId} className="mt-1.5 text-[10.5px] leading-snug text-paper-dim">
+          {reason}
+        </p>
+      ) : null}
     </button>
   );
 }

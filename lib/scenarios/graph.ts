@@ -29,8 +29,9 @@ export function getScenarioNodeStatus(nodeId: CFENodeId, scenario: Scenario): Sc
 
 /**
  * Whether the person made this branch decision. True once they clicked it this session, or when its
- * pick isn't the default: the database keeps the picks but not the clicks, and only a click can move
- * a pick off the default, so a reloaded idea keeps "your pick" on what the person chose.
+ * saved pick isn't the default: the database keeps the picks but not the clicks, so a saved pick off
+ * the default counts as decided and a reloaded idea keeps "your pick" on it. A saved pick comes from
+ * the person's click, or from a program that saved the idea through DotAmi's own save route.
  */
 export function isBranchDecided(decisionId: BranchDecisionId, state: ScenarioState): boolean {
   if (state.decidedBranchIds?.includes(decisionId)) return true;
