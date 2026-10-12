@@ -1,6 +1,7 @@
 # "Show the words" — a provision's text on every statute citation
 
-Last updated: 2026-10-11 (the citation above the button says how it was checked; 2026-09-16:
+Last updated: 2026-10-12 (the words keep the Act's paragraph breaks, #9); 2026-10-11 (the
+citation above the button says how it was checked; 2026-09-16:
 S2.5.4i — built and verified in the pane)
 
 **Component:** `components/shared/citation-links.tsx` (`ProvisionWords`) · **API:**
@@ -31,7 +32,18 @@ grant via `LAW_STORE_PATH`) and shows:
   currency date for that Act) · REPEALED if so;
 - the words: the paragraph the pointer names when the store's marker walk landed
   (`focus.found = true`), otherwise the **start of the section** with an amber line saying
-  the paragraph could not be located and to open the official text;
+  the paragraph could not be located and to open the official text. **Since 2026-10-12 (#9)**
+  the words are drawn as the Act lays them out, one line per subsection, paragraph,
+  subparagraph, clause and subclause, each indented one step further than the level above
+  (`(1)` · `(a)` · `(i)` · `(A)` · `(I)`), and each marginal note (*Capital outlay or loss*)
+  on a line of its own above the paragraph it names, in small italics. Until then they ran
+  together as one block: the store hands the text over as one string with no space between a
+  paragraph and the next label (`…for a taxation year,(a)no amount…`). The split is for the
+  eye only (`lib/law/provision-lines.ts` `provisionLines`, drawn by `ProvisionText`): the
+  words are never changed, and a reference inside a sentence (*subparagraph (a)(i) or (ii)*,
+  *paragraph 20(1)(f) except*) stays where it is. `(i)` right after `(h)` is paragraph (i),
+  not a subparagraph, unless `(ii)` follows it. `tests/provision-lines.spec.ts`, on the
+  store's own text for ITA 18(12), ITA 18(1) (a)–(l) and Reg. 1100(2)(c.3), read 2026-10-12;
 - a footer: "The provision's own words, read from the law store through its contract. Not a
   summary." + a link to the official text.
 
