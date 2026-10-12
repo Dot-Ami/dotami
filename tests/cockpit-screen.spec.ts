@@ -104,7 +104,7 @@ describe("the words: one file, counts and sums, never a verdict", () => {
   it("the new screens hold no sentence of their own: words come from lib/cockpit/words.ts", () => {
     // A long run of plain words in a JSX text node or a string literal would be a sentence outside the
     // words file. Class names, ids and import paths are not sentences, so only runs of 4+ words count.
-    for (const file of ["goal-bar.tsx", "overlay-switches.tsx", "step-panel.tsx", "gauge-panels.tsx", "next-on-your-road.tsx"]) {
+    for (const file of ["goal-bar.tsx", "overlay-switches.tsx", "step-panel.tsx", "gauge-panels.tsx", "next-on-your-road.tsx", "folding.tsx"]) {
       const source = readFileSync(path.join(process.cwd(), "components", "cockpit", file), "utf8")
         // Comments are for programmers, not for the person.
         .replace(/\/\*[\s\S]*?\*\//g, "")
