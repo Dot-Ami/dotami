@@ -122,18 +122,31 @@ person is asked).
   ([`lib/front-door/questions.ts`](../lib/front-door/questions.ts)). Where the answers go:
   - *Where you want to be*, in the person's own words: kept at once as one of their statements
     (`PersonStatement`, `kind: "destination"`), word for word, dated the day they gave in their own
-    calendar, through DotAmi's own statements route. "I don't know yet" keeps nothing.
+    calendar, through DotAmi's own statements route. "I don't know yet" keeps nothing new and deletes
+    nothing: words kept before stay, still shown on top of the futures picked there, and the receipt
+    says so and points to Delete (statements go all at once).
   - *The yearly income you want, before tax*: proposed, then kept only once the person agrees in the
     prompt (`PersonFigure`, kind `income-wanted`); three new routes on DotAmi's own server
     (`/api/person-figures/propose`, `/agree` from DotAmi's own window only, `/discard`). "Skip" keeps
-    nothing; turning it down keeps it as *discarded*, hidden, as a turned-down figure is.
+    nothing new; turning it down keeps it in the data file as *discarded*, shown nowhere, as a
+    turned-down figure is, and the receipt says so (*"Turned down. It stays in your data file, marked
+    turned down and shown nowhere, until Delete on What DotAmi knows about you removes it."*). Neither
+    takes back an income agreed before, and the receipt says it still stands. A number proposed and
+    then left (the prompt closed without deciding) stays *proposed*, shown nowhere, until Delete.
+  - `/start` is drawn on the server, which reads the newest destination and the agreed income from the
+    data file (`lib/front-door/kept.ts`) to show them as answered; nothing new is kept by that read, and
+    nothing leaves the computer.
   - *A business, a job or career, or both* and *the province or territory*: held in the browser tab's
     draft (`dotami-journey-v3`, with what the other two came to and the income's amount if agreed) until
     a future is picked. Picking one saves a new idea with the place, the road picked (`Venture.roadId`,
     `roadChosenAt`) and that answer with its moment (new columns `Venture.lookingFor`,
     `lookingForSetAt`, migration `20261012120000_looking_for`, two plain added columns). The idea's
     employment status is kept as **not said** (a new value, `NOT_SAID`), since this way in doesn't ask
-    it, and its kind of venture starts at *Service*, as every intake draft does.
+    it. Its kind of venture, equipment and revenue estimates aren't asked either: their columns keep the
+    intake's starting values (*Service*, no, 0), and a new column, `Venture.notSaid` (migration
+    `20261012130000_not_said`, one plain added column, `[]` for every other idea), lists them as not
+    said, so no screen or export shows those values as the person's. Pick a future lists road 0 only
+    until the maintainer decides whether a road nobody has read may be listed.
   - *Not here yet?* on Pick a future keeps the person's note as one of their statements.
   The cockpit's read of an idea (`GET /api/futures/<id>`) now also gives the person's newest destination,
   so the goal bar can show it on an idea with no sentence of its own. None of it is read by a rule, and

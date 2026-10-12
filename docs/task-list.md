@@ -118,12 +118,14 @@ and the maintainer's six decisions of 2026-10-11:
     both* answer is kept on the future (one added column) when this screen asks it (2026-10-12: built,
     [§ 1, The way in as built](architecture/future-cockpit.md); the four questions are data in
     `lib/front-door/questions.ts`; a second idea skips *About you*, issue #38; an idea picked there keeps
-    its work situation as "not said")
+    its work situation, kind of venture, equipment and revenue estimates as "not said"; answers already
+    in the data file count as answered)
     - [ ] Still open on it: the third door waits for the invented example below; *Pick a future* doesn't
       ask the job closest to your work (the OaSIS line below) or draw the road in grey before the pick;
       *What DotAmi knows about you* and its Delete menu still say *Your ideas*; the kind of venture
-      (service, product, side gig) isn't asked on this way in and starts at *Service*, as on the intake;
-      whether *Pick a future* lists a road no person has read yet is still the maintainer's call
+      (service, product, side gig) isn't asked on this way in (kept as "not said"); *Pick a future*
+      lists road 0 only until the maintainer decides whether a road no person has read may be listed
+      (one line, `LISTED_ROAD_IDS`); whether the place gets an *I don't know* (design § 13)
   - [x] The first written future, *From apprentice to your own shop (Alberta)*: steps from
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
@@ -132,7 +134,8 @@ and the maintainer's six decisions of 2026-10-11:
       tools, so a person reads them); the apprentice wage percentages per period (they need a typed
       field); a person's read of each page, which turns its "checked by a tool" into a read; whether
       *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13; since
-      2026-10-12 it does, its card saying how many sources were only checked by a tool, in amber)
+      2026-10-12 *Pick a future* is built and lists road 0 only, each card saying how many sources were
+      only checked by a tool, so listing this road is one line once he decides)
   - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
   - [ ] *Show me an example first*: a filled-in, clearly invented example future

@@ -18,16 +18,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   invented example isn't written yet and links nowhere. *Your destination* (`/start`) asks four
   questions, one at a time, each with a one-line receipt worked out from the answer and the catalogs:
   where you want to be in your own words (kept at once, word for word and dated, as your destination),
-  a business, a job or career, or both (a count of the written futures that include it; nothing is
-  filtered), your province or territory (whose rules apply and how many futures are written for it), and
-  the yearly income you want (counted only once you agree to it in its own agree prompt). The questions
-  are data (`lib/front-door/questions.ts`), so the later step-by-step questionnaire starts from them.
-  *Pick a future* (`/futures`) lists every written future in the order added, never ranked, as counts
-  (steps, skills listed, official fees found, cost lines you'd price) and how its sources were checked
-  (the first written future's are all tool checks, said in amber); **Look inside** saves a new idea on
-  that road, with your place and your business / career / both answer, and opens the cockpit on it.
-  *Not here yet?* keeps a note in your words and opens the general road. The cockpit's goal bar shows
-  your destination on an idea with no sentence of its own. Words: `lib/front-door/words.ts`.
+  a business, a job or career, or both (a count of the futures listed that include it; nothing is
+  filtered), your province or territory (whose rules apply and how many futures listed are written for
+  it), and the yearly income you want (counted only once you agree to it in its own agree prompt). Each
+  receipt says what is true when it is shown: "I don't know yet" or "Skip" says when an earlier answer
+  is still kept, and turning the income down says it stays in the data file, marked turned down. What
+  the data file already holds (your newest words, the income you agreed to) counts as answered, so
+  coming back in a new tab you are asked only the place and business / career / both. Focus moves to the
+  next question after each answer. The questions are data (`lib/front-door/questions.ts`), so the later
+  step-by-step questionnaire starts from them. *Pick a future* (`/futures`) lists road 0, *Starting any
+  business in Alberta*, as counts (steps, skills listed, official fees found, cost lines you'd price) and
+  how its sources were checked; the first written future, whose sources are all tool checks, waits for
+  the maintainer's call on listing a road nobody has read (one line, `LISTED_ROAD_IDS`). **Look inside**
+  saves a new idea on that road, with your place and your business / career / both answer, and opens the
+  cockpit on it. *Not here yet?* keeps a note in your words and opens the general road. The cockpit's
+  goal bar shows your destination on an idea with no sentence of its own. Words:
+  `lib/front-door/words.ts`.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;
@@ -206,10 +212,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **"Your ideas" is "Your futures"** — on its page, the front door's link, the cockpit's and *Your
   expenses*' back links and the desktop app's Go menu; **New idea →** is **+ Another future**, which opens
   the front door's doors. The *What DotAmi knows about you* page keeps "Your ideas" for now.
-- **An idea picked on *Pick a future* keeps its work situation as "not said"** — that way in doesn't ask
-  it, so nothing is made up: the rules read it as unanswered, road evaluation lists it as not told, and
-  the cockpit and the export write "not said". New storage: `Venture.lookingFor` and
-  `lookingForSetAt` (two added columns), and the employment value `NOT_SAID`.
+- **An idea picked on *Pick a future* keeps what it wasn't asked as "not said"** — that way in doesn't ask
+  the work situation, the kind of venture, equipment or the revenue estimates, so nothing is made up: the
+  rules read the work situation as unanswered, road evaluation lists none of them as told, and the
+  cockpit and the export write "not said" (the cockpit's link to every idea now reads *Your futures*).
+  New storage: `Venture.lookingFor` and `lookingForSetAt` (two added columns), `Venture.notSaid` (one
+  added column), and the employment value `NOT_SAID`.
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
   maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
   by a person before it merges, as long as every card says which. A card's "verified <date>" now

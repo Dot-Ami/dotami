@@ -49,8 +49,11 @@ says where it is going.
 
 - Pages: `/` (the front door, since 2026-10-12 three doors: *Start from where I want to be* → `/start`
   (*Your destination*: four questions from `lib/front-door/questions.ts`, a receipt after each from
-  `lib/front-door/receipts.ts`) → `/futures` (*Pick a future*: every written road, in the order added, as
-  counts; a pick saves an idea on that road and opens the cockpit); *I already have an idea*, the
+  `lib/front-door/receipts.ts`; drawn on the server, which reads the newest destination and agreed income
+  so they count as answered, `lib/front-door/kept.ts`) → `/futures` (*Pick a future*: the roads in
+  `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 only until the maintainer decides whether a road
+  nobody has read may be listed, design § 13), in the order added, as counts; a pick saves an idea on
+  that road and opens the cockpit); *I already have an idea*, the
   free-text box; *Show me an example first*, not written yet, no link; words in `lib/front-door/words.ts`)
   → `/intake` (about you, only before the person's first saved idea, issue #38 · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
@@ -59,8 +62,8 @@ says where it is going.
   `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
-  say "no rule yet"), unless the idea was picked on `/futures` on another road (the first written future,
-  since 2026-10-12); the step panel, which keeps node detail whole; playbook
+  say "no rule yet"), unless the idea is on another road (the first written future is in the catalog,
+  but `/futures` doesn't list it yet); the step panel, which keeps node detail whole; playbook
   export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (*Your futures*, until 2026-10-12 *Your
   ideas*: every saved venture, its stage, notes,
@@ -115,7 +118,9 @@ says where it is going.
   in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
   its moment; since 2026-10-12 `lookingFor` (the *business / career / both* answer, kept with
   `lookingForSetAt` when Pick a future saves the idea), and an `employmentStatus` of `NOT_SAID` on an idea
-  saved that way, which never asks it; `province` is written in the file as its international code, `CA-AB`, through the enum's
+  saved that way, which never asks it, with `notSaid` (a JSON list: `venture-type`, `equipment`,
+  `sales-targets`) naming the other answers it was saved without, so nothing shows their columns' starting
+  values as the person's (`lib/scenarios/not-said.ts`); `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
   `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
   same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
