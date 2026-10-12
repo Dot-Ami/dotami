@@ -69,6 +69,12 @@ The first written future, *From apprentice to your own shop (Alberta)*, joins la
    (`Venture.forkPicks`; docs/architecture/future-cockpit.md § 7, Storage as built).
 11. **Lever cards are not on the step yet.** The sketch's `engineHints` is not on `RoadStep`: today's
     cards are matched to a step by its id through `NODE_ENGINE_HINTS` in `lib/brain/node-items.ts`.
-    The road-evaluation pull request moves them onto the step; don't add a new road's cards to
+    The step panel pull request moves them onto the step; don't add a new road's cards to
     `lib/brain/`.
 10. **Road order is the order added**, never a ranking (decision 3).
+
+How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
+is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as
+built*](../architecture/future-cockpit.md)). What in a road file it reads: a fork's two sides and the
+`next` arrows decide which steps are on a person's path once they pick, and a step's cost lines count
+in the sums only while that step is on the path.

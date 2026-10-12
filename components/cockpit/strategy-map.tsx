@@ -2,11 +2,12 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { ArrowOverlay, columnNumbers, futureEdges, futureSet } from "@/components/cockpit/map-arrows";
+import { ArrowOverlay } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { itemsForNode } from "@/lib/brain/node-items";
 import type { EvaluationResult, NodeStateColor, UnlockItem } from "@/lib/brain/types";
 import type { Road, RoadColumn, RoadStep } from "@/lib/engines/roads/v2026";
+import { columnNumbers, futureEdges, futureSet } from "@/lib/roads/paths";
 import { branchDecisions, type BranchDecision } from "@/lib/scenarios/branches";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 import type { Scenario, ScenarioNodeStatus } from "@/lib/scenarios/types";

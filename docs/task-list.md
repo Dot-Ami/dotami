@@ -63,14 +63,18 @@ and the maintainer's six decisions of 2026-10-11:
     every answer kept on a future has its date; one current number per cost line and per idea's
     savings. Still to come, each in the open lines below: the job you pick, the *business / career /
     both* answer, the *This is mine* pin, a step's own date, the catalogs' place keys)
-  - [ ] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
-    steps now say needs 0 more"), worked out by running the rules before and after
+  - [x] Receipts: after each answer, one line saying what it changed ("Because you marked 9 skills: 3
+    steps now say needs 0 more"), worked out by running the rules before and after (2026-10-12: road
+    evaluation, `lib/roads/`: each step's state with its reason in your own answers, the four gauges as
+    counts and sums, and the receipt lines, from one pure function and one words file; no screen shows
+    them yet, which the cockpit line below does; [§ 6](architecture/future-cockpit.md))
   - [ ] The cockpit: your destination and four gauges (steps, skills, start-up money, your date);
     *What you've told DotAmi / Not told yet*; the Road, Skills, Money and Rules & tax overlays; the
     step panel with its *done when* checklist, skill marks and three kinds of cost; *Next on your
     road*; the what-if bar; compare the two endings and *This is mine* (kept on the future: one added
     column); the export gains all of it. On today's Alberta road the step panel sets a step's status
-    through the map, which keeps it ([§ 7](architecture/future-cockpit.md))
+    through the map, which keeps it ([§ 7](architecture/future-cockpit.md)); the step panel also moves
+    today's lever cards onto the road step, so any road can name its own ([§ 6](architecture/future-cockpit.md))
   - [ ] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
     [§ 7](architecture/future-cockpit.md)). Until then *Since last time* has no history for that road's steps

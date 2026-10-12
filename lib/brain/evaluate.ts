@@ -340,8 +340,12 @@ function evaluateComplianceRule(
   entry: ComplianceRule,
   figures: readonly ConfirmedFigure[] | undefined,
   today: string,
+  salesIsWhatIf = false,
 ): UnlockItem | null {
   if (!provinceMatches(profile, entry.provinces)) return null;
+  // Whose first-year number this is: the person's own target, or a what-if they are trying out,
+  // which must never be shown back to them as their target.
+  const salesWords = salesIsWhatIf ? "your what-if of first-year sales (not a forecast)" : "your Y1 revenue target";
   if (entry.industryTags && !tagsIntersect(profile.activityTags, entry.industryTags)) return null;
 
   let state: UnlockState = "green";
@@ -375,12 +379,12 @@ function evaluateComplianceRule(
       if (y1 > entry.thresholdAmount) {
         state = "yellow";
         step = "refine";
-        why = `Shown because your Y1 revenue target crosses the ${entry.threshold ?? "registration"} threshold.`;
+        why = `Shown because ${salesWords} crosses the ${entry.threshold ?? "registration"} threshold.`;
         payoff = "If your assumptions hold, registration timing becomes a checkpoint on the map, not a surprise.";
       } else if (y1 >= entry.thresholdAmount * THRESHOLD_WATCH_RATIO) {
         state = "yellow";
         step = "refine";
-        why = `Shown because your Y1 revenue target approaches the ${entry.threshold ?? "registration"} threshold.`;
+        why = `Shown because ${salesWords} approaches the ${entry.threshold ?? "registration"} threshold.`;
         payoff = "If revenue lands near this line, the voluntary-vs-mandatory registration fork is worth modeling early.";
       }
       // Figures that were read but couldn't decide still say so, next to the estimate's reason.
@@ -593,10 +597,18 @@ export interface EvaluateOptions {
    * `fromRecords`.
    */
   figures?: readonly ConfirmedFigure[];
+  /**
+   * A what-if of first-year sales, in whole dollars (road evaluation's "Try first-year sales of $___").
+   * It stands in for the profile's own first-year sales for this run only, and the cards it lights
+   * call it a what-if, never the person's target.
+   */
+  whatIfFirstYearSales?: number;
 }
 
-export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
+export function evaluateProfile(givenProfile: EvaluationProfile, options: EvaluateOptions): EvaluationResult {
   const { today } = options;
+  const salesIsWhatIf = options.whatIfFirstYearSales !== undefined;
+  const profile = salesIsWhatIf ? { ...givenProfile, targetRevenueY1: options.whatIfFirstYearSales! } : givenProfile;
   const activeBranches = options.activeBranches ?? {
     gstTiming: "stage-2b-mandatory-gst-registration",
     incorporationTiming: "stage-3a-incorporation-80k-net",
@@ -612,7 +624,7 @@ export function evaluateProfile(profile: EvaluationProfile, options: EvaluateOpt
       .map((entry) => evaluateGrant(profile, entry))
       .filter((item): item is UnlockItem => item !== null),
     ...complianceCatalogV2026.entries
-      .map((entry) => evaluateComplianceRule(profile, entry, options.figures, today))
+      .map((entry) => evaluateComplianceRule(profile, entry, options.figures, today, salesIsWhatIf))
       .filter((item): item is UnlockItem => item !== null),
     ...structureLadderV2026
       .map((step) => evaluateStructureStep(profile, step))
