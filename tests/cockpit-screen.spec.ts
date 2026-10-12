@@ -35,7 +35,11 @@ import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { evaluateRoad, NO_AGREED_PLANNING, type RoadEvaluation, type RoadEvaluationInput } from "@/lib/roads";
+import { updateScenarioBranch } from "@/lib/scenarios/branches";
+import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
+import type { Scenario } from "@/lib/scenarios/types";
 
+import { inventedCitation } from "./helpers/invented-road";
 import { input, inventedIdea, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
 
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
@@ -265,7 +269,7 @@ describe("Next on your road", () => {
       }),
     );
     // Train is done; Stay employed and Keep working are not on the path (the other ending).
-    expect(nextOnYourRoad(result).map((s) => s.stepId)).toEqual(["step-eval-ticket", "step-eval-own", "step-eval-open"]);
+    expect(nextOnYourRoad(result, inventedIdea()).map((s) => s.stepId)).toEqual(["step-eval-ticket", "step-eval-own", "step-eval-open"]);
   });
 
   it("a step the person marked not for me is skipped; doing stays on the list", () => {
@@ -277,13 +281,40 @@ describe("Next on your road", () => {
         ],
       }),
     );
-    expect(nextOnYourRoad(result).map((s) => s.stepId)[0]).toBe("step-eval-ticket");
+    expect(nextOnYourRoad(result, inventedIdea()).map((s) => s.stepId)[0]).toBe("step-eval-ticket");
+  });
+
+  it("on road 0 it agrees with the map's chips: never the side of a fork not picked, never a step the map shows done", () => {
+    const voluntary = "stage-2a-voluntary-gst-registration";
+    const mandatory = "stage-2b-mandatory-gst-registration";
+    for (const [picked, other] of [
+      [voluntary, mandatory],
+      [mandatory, voluntary],
+    ] as const) {
+      const scenario = updateScenarioBranch(inventedIdea(), "gstTiming", picked);
+      const next = nextOnYourRoad(evaluateRoad(road0Input({ scenario })), scenario, generalRoadV2026.steps.length).map((s) => s.stepId);
+      expect(next).toContain(picked);
+      expect(next).not.toContain(other);
+      // Nothing the map's own chip calls "not on your path" or "done".
+      for (const id of next) expect(["ghost", "complete"]).not.toContain(getScenarioNodeStatus(id, scenario));
+    }
+    // A first visit on the default picks: stage 0 is drawn done, so the list starts at stage 1.
+    expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea()).map((s) => s.stepId)).toEqual([
+      "stage-1-sole-prop-activation",
+      mandatory,
+      "stage-3a-incorporation-80k-net",
+    ]);
+  });
+
+  it("on road 0 the person's own status wins over the map's worked-out chip, as on the card", () => {
+    const result = evaluateRoad(road0Input({ progress: [{ stepId: "stage-0-employee-apprentice-baseline", status: "doing", doneWhenIds: [] }] }));
+    expect(nextOnYourRoad(result, inventedIdea())[0]?.stepId).toBe("stage-0-employee-apprentice-baseline");
   });
 
   it("draws its label, says it is the order steps happen, and offers each step to open", () => {
     const result = evaluateRoad(input());
     const html = renderToStaticMarkup(
-      createElement(NextOnYourRoad, { road: roadToEvaluate(), evaluation: result, onSelectStep: () => {} }),
+      createElement(NextOnYourRoad, { road: roadToEvaluate(), evaluation: result, scenario: inventedIdea(), onSelectStep: () => {} }),
     );
     expect(html).toContain("Next on your road");
     expect(html).toContain("the order steps happen, not importance");
@@ -306,12 +337,13 @@ describe("the gauges", () => {
         agreed: { ...NO_AGREED_PLANNING, costLines: [{ stepId: "step-eval-own", lineId: "cost-eval-saw", amountCents: 340_000 }] },
       }),
     );
-    const view = gaugeView(result, roadToEvaluate());
+    const view = gaugeView(result, roadToEvaluate(), inventedIdea());
     expect(view.steps.value).toBe("1 of 7 marked done");
     expect(view.steps.lines).toContain("next on your road: “Get your ticket (test only)”");
     expect(view.skills.value).toBe("1 have · 1 learning · 1 not yet");
     expect(view.skills.lines).toContain("2 not marked, out of 5 listed");
-    expect(view.money.value).toBe("$1,860 official fees · $3,400 your numbers");
+    // Each part with its lines: Tuition, the exam and the name registration; the table saw quote.
+    expect(view.money.value).toBe("$1,860 official fees (3 lines) · $3,400 your numbers (1 line)");
     expect(view.money.lines).toContain("4 not priced yet");
     expect(view.money.lines).toContain("savings: not given yet");
     expect(view.money.lines.join(" ")).not.toMatch(/minus/);
@@ -326,7 +358,7 @@ describe("the gauges", () => {
         targetMonth: "2029-05",
       }),
     );
-    const view = gaugeView(result, roadToEvaluate());
+    const view = gaugeView(result, roadToEvaluate(), inventedIdea());
     expect(view.money.lines).toContain("savings $12,000");
     // Official fees on the path with nothing picked: Tuition $1,500 and the exam $300 (Own shop waits on the pick).
     expect(view.money.lines).toContain("savings minus both: $10,200");
@@ -335,8 +367,47 @@ describe("the gauges", () => {
     expect(view.date.lines).toContain("31 months from today");
   });
 
+  it("start-up money never shows $0 for a part the person gave nothing for, or a part with no lines", () => {
+    const own = { "fork-eval-ending": { stepId: "step-eval-own", from: "you" as const } };
+    // Official fees, and no number of the person's: their part is not given yet, never "$0 your numbers".
+    const fees = gaugeView(evaluateRoad(input({ forkPicks: own })), roadToEvaluate(), inventedIdea());
+    expect(fees.money.value).toBe("$1,860 official fees (3 lines) · your numbers: not given yet");
+    // Only named lines: no official fee part at all, and still no $0.
+    const base = roadToEvaluate();
+    const namedOnly: Road = { ...base, steps: base.steps.map((s) => ({ ...s, costs: s.costs.filter((c) => c.kind === "named") })) };
+    const named = gaugeView(evaluateRoad(input({ road: namedOnly, forkPicks: own })), namedOnly, inventedIdea());
+    expect(named.money.value).toBe("your numbers: not given yet");
+    expect(named.money.lines).toContain("5 not priced yet");
+    for (const view of [fees, named]) expect([view.money.value, ...view.money.lines].join(" ")).not.toContain("$0");
+  });
+
+  it("on road 0 the Steps gauge names the first step the map shows on the path, not one it shows done", () => {
+    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
+    expect(view.steps.lines).toContain("next on your road: “Sole Prop activation”");
+  });
+
+  it("a goal bar on a road written for another province says which map is drawn, not that it is their future", () => {
+    const result = evaluateRoad(input());
+    const draw = (province: "AB" | "BC") =>
+      renderToStaticMarkup(
+        createElement(GoalBar, {
+          road: roadToEvaluate(),
+          evaluation: result,
+          scenario: inventedIdea({ province }),
+          firstWords: null,
+          target: null,
+          active: null,
+          onGauge: () => {},
+        }),
+      );
+    expect(draw("AB")).toContain("Future: Invented trade road (test only)");
+    const bc = draw("BC");
+    expect(bc).not.toContain("Future:");
+    expect(bc).toContain("Map drawn: Invented trade road (test only) · written for AB; this idea is in BC");
+  });
+
   it("on road 0: no listed skills or cost lines yet, said in one line each", () => {
-    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026);
+    const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
     expect(view.skills.value).toBe("No skills are listed on this road yet");
     expect(view.money.value).toBe("No cost lines on this road yet");
@@ -349,6 +420,7 @@ describe("the gauges", () => {
         createElement(GoalBar, {
           road: roadToEvaluate(),
           evaluation: result,
+          scenario: inventedIdea(),
           firstWords,
           target,
           active: "skills",
@@ -394,7 +466,7 @@ describe("the overlays on the road", () => {
   });
 
   it("the switches carry the road's own counts", () => {
-    const counts = overlayCounts(road, result);
+    const counts = overlayCounts(road, result, inventedIdea());
     expect(counts).toEqual({ skillsListed: 5, costLines: 8, rulesCards: 0 });
     const html = renderToStaticMarkup(
       createElement(OverlaySwitches, { overlays: { skills: true, money: false, rules: true }, counts, onToggle: () => {} }),
@@ -471,6 +543,54 @@ describe("the overlays on the road", () => {
     const leverCount = (html: string) => (html.match(/, opens detail"/g) ?? []).length;
     expect(leverCount(draw(true))).toBeGreaterThan(generalRoadV2026.steps.length);
     expect(leverCount(draw(false))).toBe(generalRoadV2026.steps.length);
+  });
+
+  /** Road 0 as the cockpit draws it, with every overlay on. */
+  const drawRoad0 = (scenario: Scenario, result: RoadEvaluation) =>
+    renderToStaticMarkup(
+      createElement(StrategyMap, {
+        road: generalRoadV2026,
+        scenario,
+        evaluation: result.rules,
+        selectedStepId: null,
+        onSelectStep: () => {},
+        decidedBranchIds: new Set<string>(),
+        onBranchChange: () => {},
+        overlays: ALL_ON,
+        stepEvaluations: new Map(result.steps.map((s) => [s.stepId, s])),
+        linkedSkillId: null,
+      }),
+    );
+  const notForMe = (stepId: string) => ({ stepId, status: "not-for-me" as const, doneWhenIds: [] });
+
+  it("a step the person set aside says so in its own words, never as a reading of their answers", () => {
+    const scenario = inventedIdea({ activityTags: ["Software / SaaS"] });
+    const before = drawRoad0(scenario, evaluateRoad(road0Input({ scenario })));
+    expect(before).toMatch(/aria-label="Sole Prop activation, now, applies as answered, opens detail"/);
+    // No one set anything aside: the legend has no line for it.
+    expect(before).not.toContain(cockpitWords.road.setAsideLegend);
+    const after = drawRoad0(scenario, evaluateRoad(road0Input({ scenario, progress: [notForMe("stage-1-sole-prop-activation")] })));
+    expect(after).toMatch(/aria-label="Sole Prop activation, not for me, set aside by you, opens detail"/);
+    expect(after).not.toMatch(/aria-label="Sole Prop activation, [^"]*doesn&#x27;t apply as answered/);
+    expect(after).toContain(cockpitWords.road.setAsideLegend);
+  });
+
+  it("the Rules & tax count is the cards the map draws: none from a step set aside or a fork side not picked", () => {
+    const scenario = inventedIdea({ type: "service", activityTags: ["Software / SaaS"] });
+    for (const progress of [[], [notForMe("stage-1-sole-prop-activation")]]) {
+      const result = evaluateRoad(road0Input({ scenario, progress }));
+      const setAside = new Set(progress.map((p) => p.stepId));
+      // Worked out here from the map's own lists, apart from the code under test.
+      const drawnSteps = generalRoadV2026.steps.filter((s) => !setAside.has(s.id) && !scenario.state.ghostedNodeIds.includes(s.id as never));
+      const drawn = new Set(drawnSteps.flatMap((s) => itemsForStep(result.rules.unlocks, s).forThisStage.map((i) => i.id)));
+      const onRoad = new Set(generalRoadV2026.steps.flatMap((s) => itemsForStep(result.rules.unlocks, s).forThisStage.map((i) => i.id)));
+      // The case is only worth testing if hiding steps hides cards.
+      expect(onRoad.size).toBeGreaterThan(drawn.size);
+      expect(overlayCounts(generalRoadV2026, result, scenario).rulesCards).toBe(drawn.size);
+      // And the map draws exactly those cards (one lever button per card per step it is on).
+      const instances = drawnSteps.reduce((n, s) => n + itemsForStep(result.rules.unlocks, s).forThisStage.length, 0);
+      expect((drawRoad0(scenario, result).match(/, opens detail"/g) ?? []).length).toBe(generalRoadV2026.steps.length + instances);
+    }
   });
 });
 
@@ -569,6 +689,50 @@ describe("the step panel", () => {
     expect(own).toContain("Change your number");
   });
 
+  it("every skill item and named cost line carries its own source; official pages are links the person opens", () => {
+    // The ticket step: its one skill item's citation is drawn with it, mark or no mark.
+    const ticket = draw("step-eval-ticket");
+    const skillsPart = ticket.slice(ticket.indexOf(">Skills it needs<"), ticket.indexOf(">Costs<"));
+    expect((skillsPart.match(/<a /g) ?? []).length).toBe(1);
+    // A named line with a source for its name, and a step with an official page.
+    const withSources: Road = {
+      ...road,
+      steps: road.steps.map((s) =>
+        s.id === "step-eval-train"
+          ? {
+              ...s,
+              costs: s.costs.map((c) => (c.kind === "named" ? { ...c, nameSource: { ...inventedCitation(), title: "Where the name comes from (test only)" } } : c)),
+              officialLinks: [{ label: "The registry (test only)", url: "https://example.org/registry" }],
+            }
+          : s,
+      ),
+    };
+    const result = evaluateRoad(input({ road: withSources }));
+    const html = renderToStaticMarkup(
+      createElement(StepPanel, {
+        road: withSources,
+        step: withSources.steps.find((s) => s.id === "step-eval-train")!,
+        evaluation: stepOf(result, "step-eval-train"),
+        rules: result.rules,
+        skillItems,
+        marks: new Map(),
+        selectedSkillId: null,
+        branch: null,
+        canSave: true,
+        error: null,
+        onStatus: () => {},
+        onTicks: () => {},
+        onMark: () => {},
+        onSelectSkill: () => {},
+        onProposeQuote: async () => null,
+        onClose: () => {},
+      }),
+    );
+    expect(html).toContain("Where the name comes from (test only)");
+    expect(html).toMatch(/<a href="https:\/\/example\.org\/registry"[^>]*>The registry \(test only\)/);
+    expect(html).toContain(cockpitWords.panel.officialLinks);
+  });
+
   it("empty lists say so in one line; an idea not saved yet can't keep anything", () => {
     const html = draw("step-eval-employed", {}, false);
     expect(html).toContain(cockpitWords.panel.doneWhenNone);
@@ -636,6 +800,13 @@ describe("the lists behind the gauges", () => {
     expect(html).toContain("Welding (invented)");
     expect(html).toContain("added by you");
     expect(html).toContain("Add a skill");
+    // Every listed skill shows its own source: five items, one citation each.
+    expect((html.match(/<a /g) ?? []).length).toBe(skillItems.length);
+    // On a skill the person typed, the button that takes it away says so; "I don't know" stays on the road's.
+    const welding = html.slice(html.indexOf("Welding (invented)"));
+    expect(welding).toContain(`>${cockpitWords.lists.removeOwn}<`);
+    expect(welding).not.toContain("I don&#x27;t know");
+    expect((html.match(/I don&#x27;t know/g) ?? []).length).toBe(skillItems.length);
   });
 
   it("money: each cost line by step in road order, and savings through the agree prompt", () => {
@@ -652,6 +823,10 @@ describe("the lists behind the gauges", () => {
       }),
     );
     expect(html.indexOf("Tuition (test only)")).toBeLessThan(html.indexOf("Table saw (test only)"));
+    // Each official fee carries its source one click away, as in the step panel: tuition, exam, name.
+    const fees = roadToEvaluate().steps.flatMap((s) => s.costs).filter((c) => c.kind === "official-fee");
+    expect(fees.length).toBe(3);
+    expect((html.match(/<a /g) ?? []).length).toBe(fees.length);
     expect(html).toContain("Add your savings");
     expect(html).toContain(cockpitWords.amounts.agreeFirst);
   });

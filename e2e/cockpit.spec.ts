@@ -66,6 +66,12 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Start-up money")).toContainText("No cost lines on this road yet");
   await expect(gauge(page, "Your date")).toContainText("not set");
 
+  // Next on your road agrees with the map's chips: stage 0 is drawn done and voluntary GST is the side
+  // not picked, so neither is listed; the Steps gauge names the same first step.
+  const next = page.getByRole("region", { name: "Next on your road" });
+  await expect(next.getByRole("button")).toHaveText(["1 · Sole Prop activation", "2 · Mandatory GST registration", "3 · Incorporating"]);
+  await expect(gauge(page, "Steps")).toContainText("next on your road: “Sole Prop activation”");
+
   // The overlays: Road is always on; Rules & tax starts on, so the map looks as it did.
   await expect(overlays(page).getByText("always on")).toBeVisible();
   const rules = overlays(page).getByRole("button", { name: /^Rules & tax/ });
@@ -97,7 +103,6 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(stepPanel(page).getByText("No “done when” lines are written for this step yet.")).toBeVisible();
 
   // Next on your road: in road order, and never the step marked done.
-  const next = page.getByRole("region", { name: "Next on your road" });
   await expect(next.getByText("the order steps happen, not importance")).toBeVisible();
   await expect(next.getByRole("button", { name: /Sole Prop activation/ })).toHaveCount(0);
 
@@ -109,6 +114,14 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   const welding = skills.getByRole("listitem").filter({ hasText: "Welding (invented)" });
   await expect(welding.getByRole("button", { name: "Have", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(gauge(page, "Skills")).toContainText("your own skills: 1 have · 0 learning · 0 not yet");
+  // A skill the person typed is taken away by a button that says so.
+  await expect(welding.getByRole("button", { name: "Remove", exact: true })).toBeVisible();
+  await expect(welding.getByRole("button", { name: "I don't know" })).toHaveCount(0);
+  // A second press on the gauge closes its list and un-presses it.
+  await expect(gauge(page, "Skills")).toHaveAttribute("aria-pressed", "true");
+  await gauge(page, "Skills").click();
+  await expect(gauge(page, "Skills")).toHaveAttribute("aria-pressed", "false");
+  await expect(skills).toHaveCount(0);
 
   // Money: savings go through the agree prompt and count only once agreed.
   await gauge(page, "Start-up money").click();
