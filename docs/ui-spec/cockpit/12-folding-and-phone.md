@@ -1,0 +1,80 @@
+# Folding the regions, and phone width
+
+Page: Cockpit (`/cockpit?venture=<id>`) · Components: `components/cockpit/cockpit-page.tsx` (the rail, the
+panel, the header's *Fold all panels*, the phone sheets), `components/cockpit/goal-bar.tsx` (the goal bar),
+`components/cockpit/strategy-map.tsx` (the legend, the road's own area); the remembered answers:
+`lib/cockpit/folds.ts`; words: `lib/cockpit/words.ts` (`folds`)
+Type: toggle buttons + layout
+
+Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, "Folding and phone width"; closes
+issue #4)
+
+## What it is
+
+Four regions of the cockpit fold to make room for the road, each with its own button:
+
+| Region | Open, its button says | Folded, it shows | and its button says |
+|---|---|---|---|
+| Left rail (venture details, *In your words*, the ladder, the save line) | **Fold venture details** (top of the rail) | a narrow strip | **Show venture details** |
+| Goal bar and its four gauges | **Fold goal and gauges** (right of the goal line) | one line: the four gauges as buttons, name and value only | **Show goal and gauges** |
+| The right-hand panel (a step, a gauge's list, the month box, Export) | **Fold the panel** (a thin bar at the panel's top) | a narrow strip (wide window) or a bar along the bottom (narrow window) | **Show the panel: <what it holds>**, e.g. *Show the panel: Sole Prop activation* |
+| The map's legend | **Fold the legend** (start of the legend line) | one line | **Show the legend** |
+
+The header has **Fold all panels** (folds all four), which reads **Show all panels** once all four are
+folded (opens all four). It is hidden below 768 px, where the rail and the panel are sheets.
+
+Each fold button carries `aria-expanded` (open = true) and `aria-controls` naming its region.
+
+## What it does (behavior on interact)
+
+- A click folds or opens that region at once. Nothing inside is removed: the folded content stays on the
+  page, hidden, and is back as it was when the region opens (a half-typed statement included).
+- **Remembered per browser.** Every click writes the four answers to this browser's storage
+  (`localStorage`, key `dotami-cockpit-folds`, a JSON object such as `{"rail":true,"goal":false,"panel":false,"legend":true}`).
+  The cockpit reads it when it opens. If storage can't be read or written, everything opens and folding
+  still works until the window closes. Anything in the stored value other than `true` reads as open.
+- **The panel stays folded** while the person picks other steps, gauges or Export: the new thing goes in
+  the folded panel and the strip names it. **Close** inside the panel closes it and clears what it held,
+  as before; the fold answer is kept for the next thing opened.
+- **Phone width (below 768 px).** The page never scrolls sideways. The rail is not drawn as a column:
+  **Venture details** in the header opens it as a full-width sheet, and **Close venture details** at the
+  sheet's top closes it (not remembered: it is closed whenever the cockpit opens). The right-hand panel
+  opens as a full-width sheet over the page, closed by its own **Close**. The road's area is 70 % of the
+  window's height and scrolls sideways one column at a time (each column the window's width less the
+  margins; the scroll snaps to a column's edge); the page scrolls down to *Next on your road* and the
+  legend under it.
+- **768 to 1024 px.** The rail is a column; the right-hand panel opens as a 420 px drawer over the right
+  of the road.
+- **From 1024 px**, as part 1: the rail, the road and the panel side by side.
+
+## Why it exists (user purpose)
+
+The maintainer, 2026-10-12: *"we need to be able to open and close any menu in order to see the entire
+roadmap"*. With all four folded at 1280x720, every card on road 0 fits in the road's area once scrolled
+to, and that area is at least 400 px tall (it was 296 px with everything open). Issue #4: at 375 px the
+legend left the road 20 px of height.
+
+## Copy (current labels)
+
+All in `lib/cockpit/words.ts` `folds`: *Fold venture details* · *Show venture details* · *Venture
+details* · *Close venture details* · *Fold goal and gauges* · *Show goal and gauges* · *Fold the panel* ·
+*Show the panel: <title>* · *Fold the legend* · *Show the legend* · *Legend* · *Fold all panels* · *Show
+all panels* · the road's area, for a screen reader: *The road*.
+
+## State touched (field names only)
+
+Browser storage only: `localStorage` `dotami-cockpit-folds` (`rail`, `goal`, `panel`, `legend`). Nothing
+in the data file.
+
+## Downstream consumers (where the data goes today)
+
+None. The answers are read only by the cockpit page in the same browser.
+
+## Cleanup / open questions
+
+- Part 2's left list (*What you've told DotAmi*) will live in the same rail and fold with it.
+- On a phone, the folded goal bar's gauges scroll sideways inside their line when they don't fit.
+
+## Backend wiring
+
+None.
