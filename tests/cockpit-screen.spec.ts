@@ -914,6 +914,9 @@ describe("an official fee that applies only sometimes (onlyIf) is shown, never s
         onMark: () => {},
         onSelectSkill: () => {},
         onProposeQuote: async () => null,
+        province: "AB",
+        ownNumber: null,
+        onOwnNumberChange: () => {},
         onClose: () => {},
       }),
     );
