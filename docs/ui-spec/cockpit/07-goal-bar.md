@@ -4,7 +4,9 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/goal-b
 `lib/cockpit/words.ts`; numbers: `lib/cockpit/view.ts` `gaugeView`, from `lib/roads/` `evaluateRoad`)
 Type: display + button group
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
+Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; the same
+day, **Fold goal and gauges** folds the bar to one line that keeps the four gauges as buttons, name and value
+only, with **Show goal and gauges**; remembered in this browser, [12-folding-and-phone.md](./12-folding-and-phone.md))
 
 > **Changed 2026-10-12 — part 2.** After the future's name, on a road with a fork, a **Compare** button opens *Compare the two endings* in the right-hand panel ([15-compare.md](./15-compare.md)).
 >

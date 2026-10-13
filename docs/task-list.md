@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-11. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-12. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -76,9 +76,20 @@ and the maintainer's six decisions of 2026-10-11:
     separate bank account), every source a tool check (2026-10-12,
     `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
     three new cards as on your road; drawn without it, the map shows them as "no rule yet")
-    - [ ] Still open on it: cost lines, skill items and official links on the ten map stages; four
+    - [ ] Still open on it: skill items and official links on the ten map stages; four
       map stages' own sources point at pages that answer "page not found" (a read, or a tool check
       in place of it, is the maintainer's call); a person's read of each page
+  - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
+    one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
+    for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that
+    day), and the roads and the federal way to incorporate name it by id instead of typing the amount
+    (no card changed, shown byte for byte); *Sole Prop activation* on today's Alberta road names seven
+    start-up costs the person prices (tools and equipment, space deposit, insurance, vehicle, first
+    materials, software, money to live on while starting), never an amount DotAmi chose
+    ([§ 6](architecture/future-cockpit.md))
+    - [ ] Still open on it: Alberta's registry fees stay named blanks until a person reads the Registry
+      Agent Product Catalogue; a source for the seven start-up names (the BDC and Futurpreneur
+      templates keep them in spreadsheets; the maintainer's call, design § 13)
   - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
@@ -129,6 +140,10 @@ and the maintainer's six decisions of 2026-10-11:
       a *Change* on one of the intake's answers opening that question instead of the intake's first
       screen; receipt lines that name the steps and cards they count; a No to buying equipment survives
       a later save from the intake only if the chip is then switched on or answered again in the box
+  - [x] Every region of the cockpit folds and opens with its own button (the venture details, the goal
+    bar, the right-hand panel, the legend), remembered in this browser, so the whole road fits a 1280x720
+    window; and the cockpit at phone width, issue #4 (2026-10-12;
+    [§ 2, Folding and phone width](architecture/future-cockpit.md))
   - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
     [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the
@@ -538,17 +553,18 @@ roadmap's build order.
 - ⬜ **[11i] New tax years** — every card says which year.
 - ⬜ **[11j] Beyond Canada; Quebec; French** · roadmap §4 · #45
 - ⬜ **[11k] Fixes already reported** — good places to start:
-  - [ ] #36 federal rules say "because you selected <province>"
+  - [x] #36 federal rules say "because you selected <province>" — 2026-10-12; federal grant cards
+    the same — 2026-10-13
   - [ ] #39 tier 1 subtitle wording
-  - [ ] #9 statute text with paragraph breaks
-  - [ ] #6 hide the empty vault line
+  - [x] #9 statute text with paragraph breaks — 2026-10-12
+  - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure
   - [ ] #40 hide R&D-only steps without an R&D tag
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
   - [ ] #41 playbook print view
-  - [ ] #4 the cockpit on a phone
+  - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures
 
@@ -558,6 +574,14 @@ roadmap's build order.
 ## 13 — The project itself
 
 - 🔄 **[13a] Contributors** — issues as the to-do list; every commit signed off, merges included.
+  - [x] A plain-words glossary ([glossary.md](glossary.md)) — 2026-10-12: 51 entries for the short
+    forms and terms on the map, the roads and the settings, each linked to its official page and
+    checked by a tool that day (53 pages, every quote found); linked from the README and CONTRIBUTING
+  - [ ] Entries for the short forms its *Not explained here yet* list names (Holdco and Opco, dividend,
+    family trust, ITA and Reg., T4002, ISED, SME, ABTIC, CAJG, NAIT, SAIT, GED, CAEC, IP, R&D, B2B, ML, CAD),
+    each once its official page can be checked
+  - [ ] A "What does this mean?" link from a card's short form to its glossary entry
+  - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
   - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
@@ -610,7 +634,8 @@ roadmap's build order.
   - [ ] **Honest:** every figure and claim shows where it came from; nothing invented
   - [ ] **Wired:** what's typed or clicked saves, reloads and survives a restart; errors handled
   - [ ] **Tested:** a browser test covers its main path and edge cases
-  - Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't name them).
+  - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
+    name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)

@@ -11,6 +11,43 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Every region of the cockpit folds, and the cockpit works at phone width** (closes #4) — the
+  venture details on the left, the goal bar with its four gauges, the right-hand panel and the map's
+  legend each fold and open again with a button that says what it does (*Fold venture details*, *Show
+  goal and gauges*, *Show the panel: Sole Prop activation*…), and *Fold all panels* in the header folds
+  all four. A folded region keeps its button where it was and hides nothing for good; the goal bar folds
+  to one line that still holds the four gauges. The answers are remembered in this browser
+  (`localStorage`, `dotami-cockpit-folds`). With everything folded at 1280x720, every card on the road
+  fits in the window once the road is scrolled to it, in a road area at least 400 px tall (296 px with
+  everything open). Below 768 px the page never scrolls sideways: the road scrolls sideways in its own
+  area one column at a time, the venture details and the right-hand panel open as full-width sheets, and
+  the legend sits under the road instead of squeezing it to 20 px; from 768 to 1024 px the panel opens as
+  a drawer under the header, over the road. Folding moves focus to the button that now stands for the
+  region; on a phone a sheet takes the keyboard (focus inside, Tab stays in it, Escape closes it, focus
+  goes back to what opened it), and the folded panel's bar never covers the page's last line. Design: [docs/architecture/future-cockpit.md § 2, "Folding and phone
+  width"](docs/architecture/future-cockpit.md); controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
+  `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
+- **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
+  ([14a]) — every official fee DotAmi shows is now written once, in
+  [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):
+  its amount in cents, what it is for, the place it applies to as a code (`CA`, `CA-AB`) and its source.
+  Ten fees moved there: the federal online incorporation ($200), express service ($100) and annual
+  return ($12), and the first written future's seven (the apprenticeship, Trades Qualifier and Blue
+  Seal application fees, the Cabinetmaker practical exam, the rewrite fee that applies only if you fail
+  an exam, and the $0 business number). Each quote was found again on its live page by
+  `scripts/check-quotes.mjs` on 2026-10-12. The roads and the federal way to incorporate name a fee by
+  id and copy its amount; a check refuses any line whose amount, source or condition differs from its
+  fee, and a test refuses an amount typed in a road file. No card changed: every step panel of both
+  roads and both money lists draw the same HTML, byte for byte, as before the move
+  (`tests/cost-panels-unchanged.spec.ts`). Alberta's registry fees stay named blanks: the catalogue
+  that holds them stops tools with a human check. **Sole Prop activation** now names seven start-up
+  costs as blanks the person prices: tools and equipment, space deposit, insurance, vehicle, first
+  materials, software, and money to live on while starting; no amount anywhere, and no source for the
+  names yet (the BDC and Futurpreneur templates keep their lines inside spreadsheets;
+  [future-cockpit.md § 6 and § 13](docs/architecture/future-cockpit.md)). In the cockpit, the Money
+  overlay's badge on that card says *7 not priced*, and the Start-up money gauge counts them while the
+  step is on your path.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;
@@ -274,6 +311,55 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   was; and every *Change*, *Take back*, *Answer*, *I don't know* and *This is mine* names its row for a
   screen reader ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
   [`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
+- **About you and the map's "In your words" no longer say "Vault: No external statement source
+  configured."** ([#6](https://github.com/Dot-Ami/dotami/issues/6)). Every copy showed the line, about a
+  feature nobody has set up, in a word that meant nothing to a stranger. The screen now says nothing
+  about it; the route still reports it for any program that reads it
+  ([`components/shared/person-statements.tsx`](components/shared/person-statements.tsx); a browser test
+  in [`e2e/app.spec.ts`](e2e/app.spec.ts)).
+- **"Show the words" draws a provision as the Act lays it out** ([#9](https://github.com/Dot-Ami/dotami/issues/9)).
+  The law store sends a provision as one string with no space between a paragraph and the next label,
+  so ITA 18(12)'s paragraphs (a), (b), (c) and subparagraphs (i), (ii) ran together as one block. Each
+  subsection, paragraph and subparagraph now gets a line of its own, indented by level, and each
+  marginal note (*Capital outlay or loss*) a small italic line above the paragraph it names; a
+  section's heading (*Limitation re cost of leasing passenger vehicle*) gets one too, but only where
+  the store glued the section's number to it, so the law's own words, such as Class 50's definition
+  or a formula's *D is the amount of interest…*, stay ordinary text. No word changes: a reference
+  inside a sentence stays put, even one glued to the next word (*subparagraph (a)(i) or (ii)*,
+  *subparagraph (c)(ii)exceeds* in ITA 248(1), *clauses A to (C)to be used* in ITA 37(1)), and the lines
+  put back together are the store's text, character for character
+  ([`lib/law/provision-lines.ts`](lib/law/provision-lines.ts);
+  [`tests/provision-lines.spec.ts`](tests/provision-lines.spec.ts), on the store's own text for ITA
+  18(12), ITA 18(1) (a)–(l), ITA 248(1), ITA 37(1), ITA 67, ITA 67.3, Reg. 1100(2)(c.3) and Reg. Sch. II
+  Class 50, read 2026-10-12).
+- **A federal rule says it is shown because it is federal** ([#36](https://github.com/Dot-Ami/dotami/issues/36)).
+  Every compliance card said "Shown because you selected <province>.", so an Alberta idea read
+  "because you selected Alberta" on the GST/HST small-supplier rule, which is federal, and an idea with
+  no province yet read "because you selected your province". A rule whose places include Canada as a
+  whole now says "Shown because it is a federal rule, the same in every province and territory.";
+  provincial rules still name the province, and the ride-share cards still name the tag that lit them
+  ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
+  The grant cards had the same fault: SR&ED, NRC IRAP and the CSBFP read "Shown because Alberta and
+  your … activity match this program." (or "because your province and …" with no province yet). An
+  eligible federal program now says "Shown because it is a federal program, offered in every province
+  and territory, and your … activity matches it."; provincial programs still name the province, and a
+  program that needs a corporation keeps its own line (maintainer's answer, 2026-10-13).
+- **A screen reader names the intake's province and employment dropdowns.** Their names ("Province /
+  territory", "Current employment") were plain text tied to nothing, so the dropdowns had no name;
+  they are now labels tied to their fields, and so is "Name it — optional" for the name box; the
+  "add your own" kind-of-work box and the box "Other…" opens, named only by their placeholders, now
+  have names of their own
+  ([`components/discovery/intake-page.tsx`](components/discovery/intake-page.tsx) `FieldGroup`; the
+  browser test finds both dropdowns by their names).
+- **The desktop app's log no longer keeps whole error messages from a failed update check, backup or
+  restore.** Four lines in [`desktop/main.mjs`](desktop/main.mjs) wrote the whole error, whose message
+  can name the file you chose and folders on the computer; they now write its name and code
+  (`describeError`), as the rest of the log does, and the update checker's own error reports, warnings
+  and progress lines that report a failure, which can carry an error's message, each leave one fixed
+  line (`updaterLogger`, [`desktop/log.mjs`](desktop/log.mjs)); its other progress lines are kept as
+  given, and one of them names the folder an update downloads to. The failed database update keeps its words, on purpose, as before.
+  [`tests/error-logging.spec.ts`](tests/error-logging.spec.ts) now reads `desktop/` too, writes to
+  the log file included ([`docs/privacy-log.md`](docs/privacy-log.md)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
@@ -292,7 +378,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
   tests is met; under it, a card read from your confirmed figures says "not over $30,000", and a card
-  read from an estimate only says why it is shown ("Shown because you selected Alberta."). Under the line the card no longer tells
+  read from an estimate only says why it is shown ("Shown because it is a federal rule, the same in
+  every province and territory.", since #36 below). Under the line the card no longer tells
   you flatly that you are a small supplier: most businesses are, and the CRA's page lists exceptions.
 - **A stage card says "default" until you click its toggle** ([#5](https://github.com/Dot-Ami/dotami/issues/5)).
   The GST/HST and Incorporating cards said "your pick" on a default the person never chose, under a
@@ -360,6 +447,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
+  hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
+  server runs on the person's own computer, who can reach it (only programs on the same computer for
+  the desktop app and `npm run dev`; `npm start` listens on every network interface unless given
+  `-H 127.0.0.1`, and the Host check stops web pages, not other machines), what the limit is for (a runaway loop in
+  a script or an agent), that the counts live in memory, and that Next.js fills in the caller's address
+  ([`lib/api/rate-limit.ts`](lib/api/rate-limit.ts); a check in
+  [`tests/rate-limit.spec.ts`](tests/rate-limit.spec.ts)). No behaviour changes.
+- **A plain-words glossary** ([13a]) — 51 entries for the short forms and terms a person meets in
+  DotAmi (the GST/HST and the small supplier, input and investment tax credits, T1, T2, T2125, T5,
+  CCA, SR&ED and T661, the small business deduction, CCPC, eligible dividends, GRIP, LRIP, RDTOH,
+  TOSI, GAAR, B.C.'s PST; sole proprietorship, partnership, corporation, trade name, registry agent,
+  NUANS, the business number, BizPaL; payroll accounts, CPP/EI, T4, TD1, WCB-Alberta; IRAP and the
+  CSBFP; the apprenticeship words of *From apprentice to your own shop (Alberta)*: AIT, the Alberta
+  Student Number, sponsor, period, classroom instruction, journeyperson, Trades Qualifier, Red Seal,
+  Blue Seal, RAP, CTS; NOC and OaSIS; and MCP), each in one or two sentences, no advice, linked to its
+  official page, *checked by a tool on 2026-10-12*: the quote checker found the listed words on every
+  one of its 53 pages (`docs/glossary.md`). The short forms on screen it doesn't explain yet (Holdco,
+  ITA, ISED and others) are listed at its end. Linked from the README and CONTRIBUTING. No app code
+  changes; `tests/glossary.spec.ts` keeps this entry count true and fails when one of the short forms
+  a review found on screen (TD1, T4, T5, RDTOH, GRIP, LRIP, Holdco, Opco, eligible dividend) has
+  neither an entry nor a line in that list.
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
   inside, and sees its whole road at once: steps, the skills they need, official fees and the cost

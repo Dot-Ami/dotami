@@ -8,3 +8,12 @@ export interface DesktopLog {
 export function openLog(file: string): DesktopLog;
 
 export function describeError(error: unknown): string;
+
+export interface UpdaterLogger {
+  info(message?: unknown): void;
+  warn(message?: unknown): void;
+  error(message?: unknown): void;
+  debug(message?: unknown): void;
+}
+
+export function updaterLogger(write: (text: string) => void): UpdaterLogger;

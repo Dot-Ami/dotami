@@ -51,7 +51,9 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; part 2, since 2026-10-12: *What you've told DotAmi /
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel
+  and the legend each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; part 2, since 2026-10-12: *What you've told DotAmi /
   Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
   its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
@@ -152,8 +154,10 @@ says where it is going.
   `DEPENDENCY_REVIEW` is `on`), the browser's Content-Security-Policy (`connect-src`, `img-src`,
   `default-src`, `form-action`; not WebRTC, navigation, the server or the desktop main process), and
   code review; the header of `tests/helpers/source-scan.ts` has the full lists. Nothing may write an
-  error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
-  report is switched off in `lib/prisma.ts` because it quotes the values it was given.
+  error object to the log (`tests/error-logging.spec.ts`; since 2026-10-12 it also reads `desktop/`,
+  where a failure writes `describeError(error)`, the name and code, into `logs/server.log`, with two
+  listed exceptions), and the database library's own error report is switched off in `lib/prisma.ts`
+  because it quotes the values it was given.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 
@@ -214,7 +218,9 @@ reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
-the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
+the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`), split across three machines
+(`--fully-parallel --shard=N/3`), so each test must make its own data folder and never rely on
+another test's leftovers.
 A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
 migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee. Read
 the SQL Prisma generates: the migrator runs with foreign keys on, so a migration that rebuilds

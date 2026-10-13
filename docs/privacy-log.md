@@ -130,6 +130,13 @@ person is asked).
   wherever the idea is read (the cockpit, its export, `/api/readout`), and deleted with the idea. The save route (`/api/scenario/save`) now
   also puts the idea as it was kept, read back from the data file, in its answer to whatever saved it on
   this computer (the cockpit or the intake); nothing new leaves the computer.
+- **Seven more cost lines the person may price on today's Alberta road (2026-10-12).** *Sole Prop
+  activation* now names tools and equipment, a space deposit, insurance, a vehicle, first materials,
+  software and money to live on while starting
+  ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](../lib/engines/roads/v2026/starting-any-business-ab.ts)).
+  Each is a blank with *Add your quote*; a number the person gives is kept the way the line above says
+  (a `start-up-cost-line` figure, proposed then agreed). No new kind of answer, table or route; nothing
+  new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
@@ -140,6 +147,28 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **The desktop app's log keeps less when an update check, a backup or a restore fails (2026-10-12).**
+  Four lines in [`desktop/main.mjs`](../desktop/main.mjs) wrote the whole error into the log
+  (`logs/server.log` in the data folder): a failed update check, a failed backup, a refused restore and
+  a restore that couldn't replace the data. An error's message can name the file the person chose and
+  the folders around it, which hold their Windows account name. They now write the error's name and
+  code, as DotAmi's routes already did (for a refused restore, which of a few kinds of refusal, such as
+  "damaged"). The update checker's own error report, which it writes with the error's stack, now leaves
+  one fixed line, and so do its warnings and the progress lines that report a failure, which can carry
+  an error's message (`updaterLogger` in [`desktop/log.mjs`](../desktop/log.mjs)). Its other progress
+  lines are written as given, as before; one of them names the folder an update downloads to. The dialogs the person sees are unchanged. One write keeps the error's words on
+  purpose, as before: a failed database update, which update failed and what the database objected to.
+  [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
+  for the same rule, writes to the log file included.
+- **Which cockpit panels the person folded, in the browser's own storage (2026-10-12).** The cockpit's
+  venture details, goal bar, right-hand panel and map legend each fold, and the four yes-or-no answers
+  are kept in `localStorage` under `dotami-cockpit-folds`, a JSON object such as
+  `{"rail":true,"goal":false,"panel":false,"legend":true}` ([`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)),
+  so the cockpit opens the way the person left it. Nothing about the person or their ideas is in it,
+  nothing goes in the data file, nothing leaves the computer. Listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, so `/your-data` shows it. In
+  the desktop app each launch has its own local address and so its own empty storage: the answers last
+  until the app closes, and earlier launches' answers stay in the app's own folder, unread.
 
 ### Packages that ship
 
@@ -157,6 +186,9 @@ person is asked).
 
 ### How to remove it
 
+- **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
+  cleared. Opening every panel again leaves the key in place with four "no" answers; DotAmi has no button
+  that removes it.
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
   statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
   ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements

@@ -175,6 +175,7 @@ describe("the privacy inventory lists every browser-storage key", () => {
     expect([...used.keys()]).toEqual(
       expect.arrayContaining([
         "localStorage:dotami-employment-suggestions",
+        "localStorage:dotami-cockpit-folds",
         "sessionStorage:dotami-journey-v3",
         "sessionStorage:dotami-person-unsaved",
       ]),

@@ -68,9 +68,10 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(goalBar(page).getByText("Future: Starting any business in Alberta (tax and structure)")).toBeVisible();
   await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
   await expect(gauge(page, "Skills")).toContainText("No skills are listed on this road yet");
-  // The before-you-open steps name four lines the person prices, with no amount, so never $0.
+  // The before-you-open steps name four lines the person prices, and Sole Prop activation seven
+  // start-up lines (2026-10-12), all with no amount, so never $0.
   await expect(gauge(page, "Start-up money")).toContainText("your numbers: not given yet");
-  await expect(gauge(page, "Start-up money")).toContainText("4 not priced yet");
+  await expect(gauge(page, "Start-up money")).toContainText("11 not priced yet");
   await expect(gauge(page, "Start-up money")).not.toContainText("$0");
   await expect(gauge(page, "Your date")).toContainText("not set");
 
@@ -107,6 +108,16 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await stage(page, "Sole Prop activation").click();
   await expect(stepPanel(page).getByText("For you on this stage", { exact: false })).toBeVisible();
   await expect(stepPanel(page).getByText(/Sources for this stage · \d+/)).toBeVisible();
+  // Its seven named start-up lines, each a blank with no amount and a box for the person's own quote.
+  const startUp = soleProp.costs.filter((c) => c.kind === "named");
+  expect(startUp).toHaveLength(7);
+  for (const cost of startUp) {
+    // By the line's own name, exactly: "Software" alone would also match a lever card's words.
+    const row = stepPanel(page).getByRole("listitem").filter({ has: page.getByText(cost.label, { exact: true }) });
+    await expect(row).toContainText("not priced yet");
+    await expect(row.getByRole("button", { name: "Add your quote" })).toBeVisible();
+    await expect(row).not.toContainText("$");
+  }
   const done = stepPanel(page).getByRole("button", { name: "Done", exact: true });
   await expect(done).toHaveAttribute("aria-pressed", "false");
   await done.click();

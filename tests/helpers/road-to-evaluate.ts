@@ -69,13 +69,13 @@ export function roadToEvaluate(): Road {
         ],
         needs: ["skill-eval-math", "skill-eval-drawings"],
         costs: [
-          { id: "cost-eval-tuition", kind: "official-fee", label: "Tuition (test only)", amountCents: 150_000, citation: inventedCitation() },
+          { id: "cost-eval-tuition", kind: "official-fee", feeId: "fee-ab-eval-tuition-test-only", label: "Tuition (test only)", amountCents: 150_000, citation: inventedCitation() },
           { id: "cost-eval-books", kind: "named", label: "Textbooks (test only)" },
         ],
       }),
       step("step-eval-ticket", "Get your ticket (test only)", ["step-eval-employed", "step-eval-own"], {
         needs: ["skill-eval-ticket"],
-        costs: [{ id: "cost-eval-exam", kind: "official-fee", label: "Exam fee (test only)", amountCents: 30_000, citation: inventedCitation() }],
+        costs: [{ id: "cost-eval-exam", kind: "official-fee", feeId: "fee-ab-eval-exam-test-only", label: "Exam fee (test only)", amountCents: 30_000, citation: inventedCitation() }],
       }),
       step("step-eval-employed", "Stay employed (test only)", ["step-eval-keep"]),
       step("step-eval-own", "Own shop (test only)", ["step-eval-open"], {
@@ -83,7 +83,7 @@ export function roadToEvaluate(): Road {
         costs: [
           { id: "cost-eval-saw", kind: "named", label: "Table saw (test only)" },
           { id: "cost-eval-deposit", kind: "named", label: "Space deposit (test only)" },
-          { id: "cost-eval-name", kind: "official-fee", label: "Name registration (test only)", amountCents: 6_000, citation: inventedCitation() },
+          { id: "cost-eval-name", kind: "official-fee", feeId: "fee-ab-eval-name-test-only", label: "Name registration (test only)", amountCents: 6_000, citation: inventedCitation() },
         ],
       }),
       step("step-eval-keep", "Keep working (test only)", ["step-eval-books"]),

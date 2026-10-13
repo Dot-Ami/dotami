@@ -174,6 +174,24 @@ export const cockpitWords = {
     clear: "Clear",
   },
 
+  /**
+   * Folding the regions, and the phone-width sheets (docs/architecture/future-cockpit.md § 2, "Folding
+   * and phone width"). Each button says what it does: fold, or show again.
+   */
+  folds: {
+    rail: { fold: "Fold venture details", show: "Show venture details" },
+    goal: { fold: "Fold goal and gauges", show: "Show goal and gauges" },
+    panel: { fold: "Fold the panel", show: (what: string) => `Show the panel: ${what}` },
+    legend: { fold: "Fold the legend", show: "Show the legend", title: "Legend" },
+    all: { fold: "Fold all panels", show: "Show all panels" },
+    /** Below 768 px the rail is a sheet, opened from the header. */
+    railSheet: { open: "Venture details", close: "Close venture details" },
+    /** The road's own scrolling area, for a screen reader. */
+    roadRegion: "The road",
+    /** What the folded panel's strip names when it holds the export. */
+    exportTitle: "Export",
+  },
+
   /** The agree prompt's line under a start-up cost: which line on which step, and where the amount came from. */
   agreeNote: (line: string, step: string, from: string) => `${quoted(line)} on ${quoted(step)}, from ${from}`,
 
