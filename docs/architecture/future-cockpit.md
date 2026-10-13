@@ -1192,7 +1192,8 @@ each for a reason:
 - **No card changes.** `tests/cost-panels-unchanged.spec.ts` draws every step panel of both roads (the
   Incorporating stage for an Alberta and a British Columbia idea) and each road's money list, and compares
   them byte for byte with what main drew before the move (`tests/fixtures/official-fees/`; redrawn on
-  2026-10-13 to include #162's two federal "Shown because" lines, the only difference); the map's
+  2026-10-13 to include #162's two federal "Shown because" lines, the only difference, and again the
+  same day for #158's one legal requirement on *Mandatory GST registration*, its only change); the map's
   six saved states (`tests/road-map.spec.ts`) are unchanged too.
 - **Not in the catalog: a fee nobody could read.** Alberta's registry fees (incorporating, registering
   a name, the annual return, a federal corporation registering in Alberta) and the NUANS report stay

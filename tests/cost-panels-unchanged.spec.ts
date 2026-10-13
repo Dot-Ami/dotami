@@ -5,7 +5,11 @@
  * money list, drawn before the move by tests/helpers/cost-panels.ts: from main at f24d22c (2026-10-12),
  * redrawn on 2026-10-13 from PR #162's own head (6428ae3, that main plus #162) when #162 joined. #162
  * changed only two "Shown because" lines, on 11 panels: a federal program's and a federal rule's.
- * Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * Redrawn again on 2026-10-13 when the skills pull request (#158) joined: drawn from its own head
+ * (4e643d7, that main plus #158) and compared with that main's drawing, it changes one panel only,
+ * Mandatory GST registration, whose "No skills are listed for this step yet." becomes its legal
+ * requirement, A GST/HST registration with the Canada Revenue Agency; that change is applied to the
+ * fixture as #162 left it. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */
