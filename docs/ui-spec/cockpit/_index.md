@@ -9,6 +9,8 @@
 > **Changed 2026-10-11 — how a source was checked.** In node detail (each item's sources and *Sources for this stage*) and in the playbook export (Export), every citation's "verified <date>" now says how it was checked: **"Read by a person on <date>"** only when a person is recorded as the reader, **"Read on <date>. Who read it wasn't recorded."** for most sources, an amber **"Read by an AI model on <date>. Not read by a person yet."**, or, for a source checked only by a tool, an amber **"Checked by a tool on <date>: it found on the page the exact words this entry relies on. Not read by a person yet."** with the words found under it (the maintainer's decision of 2026-10-11, option B). Details: [../shared/citation-links.md](../shared/citation-links.md).
 >
 > **Built 2026-10-12 — the cockpit screen, part 1.** The goal bar and four gauges (`07`), the overlay switches (`08`), the step panel (`09`), the lists behind the gauges (`10`) and *Next on your road* (`11`), drawn from one run of road evaluation ([future-cockpit.md § 2, Cockpit screen as built](../../architecture/future-cockpit.md)). The page's rows are now: header · goal bar · body (left rail · overlay switches, map and *Next on your road* · right panel). Part 2 adds the left list, the what-if bar, *Compare* and *This is mine*.
+>
+> **Built 2026-10-12 — folding and phone width.** The left rail, the goal bar, the right-hand panel and the map's legend each fold with their own button, remembered in this browser; the header's *Fold all panels* folds all four. Below 768 px the page never scrolls sideways: the rail and the panel open as full-width sheets and the road scrolls sideways inside its own area. Details: [12-folding-and-phone.md](./12-folding-and-phone.md).
 
 Last updated: 2026-07-05 (page-mechanics workshop, surface 6/11 — verified against shipped code)
 
@@ -57,6 +59,7 @@ laid out left-to-right by dagre. Node status comes from `scenario.state`
 | Step panel, in place of node detail (2026-10-12) | [09-step-panel.md](./09-step-panel.md) |
 | The lists behind the gauges: skills, money, your date (2026-10-12) | [10-gauge-lists.md](./10-gauge-lists.md) |
 | Next on your road (2026-10-12) | [11-next-on-your-road.md](./11-next-on-your-road.md) |
+| Folding the rail, the goal bar, the panel and the legend; phone width (2026-10-12, issue #4) | [12-folding-and-phone.md](./12-folding-and-phone.md) |
 | Node detail: your answers line, official words, "I'd incorporate at $___", ways side by side (2026-10-11) | [07-node-detail.md](./07-node-detail.md) |
 
 ## Flow in / out

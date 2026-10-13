@@ -294,10 +294,69 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   and month goes through `lib/format/money-and-months.ts`.
 - **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
   last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
-  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
-  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
+  and the yearly income question. (Phone width was its own next item; it is built, with folding, in
+  *Folding and phone width* below.) With no road written beyond
   road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
   empty line until the road content lands; the tests use an invented road for them.
+
+### Folding and phone width (2026-10-12)
+
+The maintainer, 2026-10-12, after clicking through part 1: *"there's a LOT on the screen, and we need to
+be able to open and close any menu in order to see the entire roadmap because some of the tax boxes
+don't even fit on the screen"*. And issue #4 (2026-09-20): the cockpit can't be read 375 pixels wide.
+Measured on the part 1 page (main at f24d22c, an invented Alberta idea, 2026-10-12): at 1280x720 the
+goal bar took 153 px and the legend 70 px, leaving the road 296 px of height; at 375x812 the legend
+wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road was 20 px tall too.
+
+- **Four regions fold, each with its own button that says what it does.** The left rail (*Fold venture
+  details* / *Show venture details*), the goal bar (*Fold goal and gauges* / *Show goal and gauges*),
+  the right-hand panel, whatever it holds (*Fold the panel* / *Show the panel: <what is in it>*, for
+  example *Show the panel: Sole Prop activation*), and the map's legend (*Fold the legend* / *Show the
+  legend*). The header has *Fold all panels*, or *Show all panels* once everything is folded. Each
+  button says whether its region is open (`aria-expanded`).
+- **Folding hides nothing for good.** A folded region keeps its unfold button where it was: the rail
+  becomes a narrow strip, the goal bar one line that still holds the four gauges as buttons (name and
+  value, with the lines under each in the button's title), the panel a narrow strip naming what it
+  holds, the legend one line. What is inside stays on the page, only hidden (the open goal bar sits
+  behind its one line), so a half-typed statement in *In your words* is still there when it unfolds,
+  and so is the rail's scroll position.
+- **Focus follows the fold.** The button pressed to fold or show a region is often gone afterwards (a
+  folded rail is a strip, the folded goal bar a different line), so focus moves to the button that now
+  stands for the region; a keyboard or screen-reader user is never sent back to the top of the page.
+- **The panel stays folded while the person moves around the road.** Clicking another step, a gauge or
+  *Export* puts the new thing in the folded panel and its strip names it; *Show the panel* opens it.
+  Closing the panel is still its own *Close* button and clears what it held, as before.
+- **Remembered per browser.** The four answers (folded or not) are kept in this browser's own storage
+  under `dotami-cockpit-folds`, one small JSON object, read when the cockpit opens and written on every
+  fold (`lib/cockpit/folds.ts`). Every read and write is wrapped so a browser that refuses storage
+  (private windows, storage switched off) gets a cockpit with everything open and folding that works
+  until the window closes. Nothing goes in the data file and nothing leaves the computer; the privacy
+  inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
+  In the desktop app each launch is served from its own local address, so its storage starts empty: the
+  folds last until the app closes and it opens with everything showing (the same as the intake's list of
+  typed job descriptions).
+- **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
+  road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
+  least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before
+  and after.
+- **Phone width (below 768 px, issue #4).** The page never scrolls sideways. The road keeps its columns
+  and scrolls sideways inside its own area, one column at a time (each column is the window's width less
+  the margins, and the scroll snaps to a column's edge); its area is 70 % of the window's height, and the
+  page itself scrolls down to *Next on your road* and the legend, so the legend can no longer squeeze the
+  road. The left rail is not a column: *Venture details* in the header opens it as a full-width sheet,
+  with *Close venture details* at its top. The right-hand panel opens as a full-width sheet over the
+  road, closed by its own *Close*; folded, it is a bar along the bottom, one full-width button 44 px tall,
+  and the page leaves room under its last line for the bar so it never covers the *not legal or tax
+  advice* line. A sheet that covers the page takes the keyboard with it: focus goes to its first
+  control, Tab stays inside it, Escape closes it, the page behind is inert, and focus goes back to what
+  opened it (`components/cockpit/use-sheet.ts`). The fold buttons are at least 32 px tall. The gauges
+  keep their row, which scrolls sideways inside the goal bar.
+- **Between 768 and 1024 px** the rail is a column again, and the right-hand panel opens as a 420 px
+  drawer under the header, over the road's right side, instead of squeezing the road (the header's
+  *Export* and *Fold all panels* stay free to click); from 1024 px it is a column, as before.
+- **The map's own drawing is unchanged.** The folding legend and the phone-width columns are drawn only
+  when the cockpit asks for them (`StrategyMap`'s `cockpit` prop); drawn without it, the map is the same
+  HTML as before, byte for byte (`tests/road-map.spec.ts`).
 
 ## 3. What DotAmi asks, why, and how it's kept
 

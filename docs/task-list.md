@@ -120,6 +120,10 @@ and the maintainer's six decisions of 2026-10-11:
     with the step progress, not the map, the line below; [§ 2, Cockpit screen as built](architecture/future-cockpit.md).
     Part 2: *What you've told DotAmi / Not told yet* with a receipt after each answer, the what-if bar,
     compare the two endings, *This is mine*, *Since last time*, and the export gaining it all)
+  - [x] Every region of the cockpit folds and opens with its own button (the venture details, the goal
+    bar, the right-hand panel, the legend), remembered in this browser, so the whole road fits a 1280x720
+    window; and the cockpit at phone width, issue #4 (2026-10-12;
+    [§ 2, Folding and phone width](architecture/future-cockpit.md))
   - [x] Today's Alberta road keeps its step statuses with the rest of your step progress instead of on
     the map, so *Since last time* can list those changes too (the map then reads them;
     [§ 7](architecture/future-cockpit.md)) (2026-10-12, with the cockpit screen: the map's chip shows the
@@ -539,7 +543,7 @@ roadmap's build order.
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
   - [ ] #41 playbook print view
-  - [ ] #4 the cockpit on a phone
+  - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures
 

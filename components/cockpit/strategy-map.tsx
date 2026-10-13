@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 
+import { FoldButton } from "@/components/cockpit/folding";
 import { ArrowOverlay } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { itemsForStep } from "@/lib/brain/node-items";
@@ -40,7 +41,21 @@ import type { Scenario } from "@/lib/scenarios/types";
  * cards; a selected skill dims the steps that don't list it. A card the person marked not for me says
  * "set aside by you" in place of its colour's words. Given none of that, the map draws exactly as before
  * (tests/road-map.spec.ts).
+ *
+ * 2026-10-12, folding and phone width (future-cockpit.md § 2): given `cockpit`, the legend folds with its
+ * own button, the road's scrolling area is a region named for a screen reader, and below 768 px each
+ * column is the window's width less the margins, the area scrolling sideways one column at a time (scroll
+ * snap) at 70 % of the window's height. Without `cockpit` none of that is drawn and the HTML is unchanged.
  */
+
+/** What the cockpit adds to the map: the legend's fold. */
+export interface MapInCockpit {
+  legendFolded: boolean;
+  onToggleLegend: () => void;
+}
+
+/** The legend's id, for its fold button's aria-controls. */
+const LEGEND_ID = "cockpit-map-legend";
 
 /** A toggle option's id: a step the toggle switches between. */
 type BranchOptionId = BranchDecision["options"][number]["id"];
@@ -58,6 +73,8 @@ interface StrategyMapProps {
   stepEvaluations?: ReadonlyMap<string, StepEvaluation>;
   /** A skill selected in the step panel or the skills list: the steps that don't list it dim. */
   linkedSkillId?: string | null;
+  /** Drawn in the cockpit: the folding legend and the phone-width columns. Left out, the map is as before. */
+  cockpit?: MapInCockpit;
 }
 
 /**
@@ -116,6 +133,7 @@ export function StrategyMap({
   overlays,
   stepEvaluations,
   linkedSkillId = null,
+  cockpit,
 }: StrategyMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [wrap, setWrap] = useState<HTMLDivElement | null>(null);
@@ -138,14 +156,31 @@ export function StrategyMap({
 
   const focus: MapFocus = { focusId, future, hover: setHoveredId, registerCard };
 
+  // In the cockpit the columns are set by classes, so a phone-width window can give each column the
+  // window's width; the number of columns comes in as a CSS variable. Outside it, the inline style as before.
+  const columnCount = road.columns.length;
+  const grid = cockpit
+    ? {
+        className:
+          "grid min-w-[820px] gap-3.5 grid-cols-[repeat(var(--road-columns),minmax(195px,1fr))] max-md:grid-cols-[repeat(var(--road-columns),calc(100vw-4.5rem))]",
+        style: { "--road-columns": columnCount } as CSSProperties,
+      }
+    : { className: "grid min-w-[820px] gap-3.5", style: { gridTemplateColumns: `repeat(${columnCount}, minmax(195px, 1fr))` } };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-auto px-5 pt-5">
+      <div
+        {...(cockpit
+          ? {
+              role: "region",
+              "aria-label": cockpitWords.folds.roadRegion,
+              className:
+                "min-h-0 flex-1 overflow-auto px-5 pt-5 max-md:h-[70svh] max-md:flex-none max-md:snap-x max-md:snap-mandatory max-md:scroll-px-5",
+            }
+          : { className: "min-h-0 flex-1 overflow-auto px-5 pt-5" })}
+      >
         <div ref={setWrap} className="relative">
-          <div
-            className="grid min-w-[820px] gap-3.5"
-            style={{ gridTemplateColumns: `repeat(${road.columns.length}, minmax(195px, 1fr))` }}
-          >
+          <div className={grid.className} style={grid.style}>
             {road.columns.map((column, i) => (
               <TierColumn
                 key={column.id}
@@ -162,6 +197,7 @@ export function StrategyMap({
                 overlays={overlays}
                 stepEvaluations={stepEvaluations}
                 linkedSkillId={linkedSkillId}
+                snap={cockpit !== undefined}
               />
             ))}
           </div>
@@ -172,6 +208,7 @@ export function StrategyMap({
         coverage={evaluation.provinceCoverage}
         // Only once a card is set aside by the person, so the map drawn without the cockpit stays as it was.
         setAsideShown={[...(stepEvaluations?.values() ?? [])].some((s) => s.status === "not-for-me")}
+        fold={cockpit}
       />
     </div>
   );
@@ -218,13 +255,21 @@ function TierColumn({
   overlays,
   stepEvaluations,
   linkedSkillId,
-}: Omit<StrategyMapProps, "road"> & { column: RoadColumn; ordinal: number; steps: RoadStep[]; focus: MapFocus }) {
+  snap,
+}: Omit<StrategyMapProps, "road" | "cockpit"> & {
+  column: RoadColumn;
+  ordinal: number;
+  steps: RoadStep[];
+  focus: MapFocus;
+  /** In the cockpit on a phone-width window, the road's sideways scroll stops at each column's edge. */
+  snap: boolean;
+}) {
   // A fork gets a toggle when it is one of today's two (GST timing, Incorporation timing); the
   // toggle keeps its own option names. Other roads' forks are picked on Compare, later in phase 1.
   const decision = column.forkId ? branchDecisions.find((d) => d.id === column.forkId) : undefined;
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 pb-6">
+    <section className={snap ? "flex min-w-0 flex-col gap-3 pb-6 max-md:snap-start" : "flex min-w-0 flex-col gap-3 pb-6"}>
       <header className="border-b border-rule pb-2.5">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {ordinal}</p>
         <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
@@ -458,9 +503,49 @@ export function BranchToggle({
   );
 }
 
-function Legend({ coverage, setAsideShown }: { coverage: EvaluationResult["provinceCoverage"]; setAsideShown: boolean }) {
+function Legend({
+  coverage,
+  setAsideShown,
+  fold,
+}: {
+  coverage: EvaluationResult["provinceCoverage"];
+  setAsideShown: boolean;
+  /** In the cockpit: the legend folds to one line. Left out, the legend is drawn exactly as before. */
+  fold?: MapInCockpit;
+}) {
+  const lines = <LegendLines coverage={coverage} setAsideShown={setAsideShown} />;
+  if (!fold) {
+    return (
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule bg-ink3 px-5 py-2.5 font-mono text-[9px] uppercase tracking-wider text-stone">
+        {lines}
+      </footer>
+    );
+  }
+  // Folded, the lines stay on the page, hidden: the button brings them back as they were.
   return (
-    <footer className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule bg-ink3 px-5 py-2.5 font-mono text-[9px] uppercase tracking-wider text-stone">
+    <footer
+      role="group"
+      aria-label={cockpitWords.folds.legend.title}
+      className="flex items-start gap-3 border-t border-rule bg-ink3 px-5 py-2 font-mono text-[9px] uppercase tracking-wider text-stone"
+    >
+      <FoldButton
+        folded={fold.legendFolded}
+        region="legend"
+        label={fold.legendFolded ? cockpitWords.folds.legend.show : cockpitWords.folds.legend.fold}
+        controls={LEGEND_ID}
+        onClick={fold.onToggleLegend}
+      />
+      <div id={LEGEND_ID} hidden={fold.legendFolded} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5">
+        {lines}
+      </div>
+    </footer>
+  );
+}
+
+/** The legend's lines: the arrows, the chips, the three colours, and the notes that apply to this map. */
+function LegendLines({ coverage, setAsideShown }: { coverage: EvaluationResult["provinceCoverage"]; setAsideShown: boolean }) {
+  return (
+    <>
       <span className="text-maple">Hover a card: arrows show where it leads — solid next, dashed further on</span>
       <span className="text-stone-dim">Stage chip = where it sits on your path</span>
       <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-sage" /> applies as answered</span>
@@ -470,6 +555,6 @@ function Legend({ coverage, setAsideShown }: { coverage: EvaluationResult["provi
       {setAsideShown ? <span className="text-stone-dim">{cockpitWords.road.setAsideLegend}</span> : null}
       {coverage === "federal-only" ? <span className="text-amber">federal rules only for this province</span> : null}
       <span className="ml-auto normal-case tracking-normal text-stone-dim">Compass, not GPS — nothing here is a recommendation.</span>
-    </footer>
+    </>
   );
 }

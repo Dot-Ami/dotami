@@ -124,6 +124,15 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **Which cockpit panels the person folded, in the browser's own storage (2026-10-12).** The cockpit's
+  venture details, goal bar, right-hand panel and map legend each fold, and the four yes-or-no answers
+  are kept in `localStorage` under `dotami-cockpit-folds`, a JSON object such as
+  `{"rail":true,"goal":false,"panel":false,"legend":true}` ([`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)),
+  so the cockpit opens the way the person left it. Nothing about the person or their ideas is in it,
+  nothing goes in the data file, nothing leaves the computer. Listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, so `/your-data` shows it. In
+  the desktop app each launch has its own local address and so its own empty storage: the answers last
+  until the app closes, and earlier launches' answers stay in the app's own folder, unread.
 
 ### Packages that ship
 
@@ -141,6 +150,9 @@ person is asked).
 
 ### How to remove it
 
+- **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
+  cleared. Opening every panel again leaves the key in place with four "no" answers; DotAmi has no button
+  that removes it.
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
   statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
   ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements

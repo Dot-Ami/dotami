@@ -51,7 +51,9 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel
+  and the legend each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
