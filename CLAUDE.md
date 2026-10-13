@@ -51,8 +51,8 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel
-  and the legend each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel,
+  the legend and (since 2026-10-13) the what-if bar each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
   768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; part 2, since 2026-10-12: *What you've told DotAmi /
   Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets

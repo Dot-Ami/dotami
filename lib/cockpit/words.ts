@@ -183,6 +183,8 @@ export const cockpitWords = {
     goal: { fold: "Fold goal and gauges", show: "Show goal and gauges" },
     panel: { fold: "Fold the panel", show: (what: string) => `Show the panel: ${what}` },
     legend: { fold: "Fold the legend", show: "Show the legend", title: "Legend" },
+    /** The what-if bar and "This visit" under the map (2026-10-13). */
+    whatIf: { fold: "Fold the what-if bar", show: "Show the what-if bar" },
     all: { fold: "Fold all panels", show: "Show all panels" },
     /** Below 768 px the rail is a sheet, opened from the header. */
     railSheet: { open: "Venture details", close: "Close venture details" },

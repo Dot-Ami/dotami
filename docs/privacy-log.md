@@ -169,6 +169,11 @@ person is asked).
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, so `/your-data` shows it. In
   the desktop app each launch has its own local address and so its own empty storage: the answers last
   until the app closes, and earlier launches' answers stay in the app's own folder, unread.
+- **One more yes-or-no answer in the cockpit's folds (2026-10-13).** The what-if bar under the map folds
+  too, so `dotami-cockpit-folds` now holds five answers, the fifth under `whatIf`
+  (`{"rail":true,"goal":false,"panel":false,"legend":true,"whatIf":false}`). Still nothing about the
+  person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
+  `/your-data` says five.
 
 ### Packages that ship
 

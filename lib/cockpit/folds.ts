@@ -1,7 +1,11 @@
 /**
  * Which of the cockpit's regions the person folded, remembered in this browser (docs/architecture/
- * future-cockpit.md § 2, "Folding and phone width"). Four answers: the left rail, the goal bar, the
- * right-hand panel and the map's legend; true means folded.
+ * future-cockpit.md § 2, "Folding and phone width"). Five answers: the left rail, the goal bar, the
+ * right-hand panel, the map's legend and the what-if bar under the map; true means folded.
+ *
+ * The what-if bar (with "This visit") joined on 2026-10-13, so that every region of the cockpit folds:
+ * the told / not-told list sits in the rail and Compare in the panel, so they fold with those. An answer
+ * stored before then has no `whatIf`, which reads as open.
  *
  * Kept in localStorage under one key as a small JSON object. It is a convenience, never a record: nothing
  * here reaches the data file or leaves the computer, and every read and write is wrapped, so a browser
@@ -9,15 +13,15 @@
  * everything open and folding that lasts until the window closes.
  */
 
-export type FoldRegion = "rail" | "goal" | "panel" | "legend";
+export type FoldRegion = "rail" | "goal" | "panel" | "legend" | "whatIf";
 export type Folds = Readonly<Record<FoldRegion, boolean>>;
 
 /** In the order the regions sit on the screen, left to right and top to bottom. */
-export const FOLD_REGIONS: readonly FoldRegion[] = ["rail", "goal", "panel", "legend"];
+export const FOLD_REGIONS: readonly FoldRegion[] = ["rail", "goal", "panel", "legend", "whatIf"];
 
 /** Everything open: how the cockpit starts, and what anything unreadable falls back to. */
-export const ALL_OPEN: Folds = { rail: false, goal: false, panel: false, legend: false };
-export const ALL_FOLDED: Folds = { rail: true, goal: true, panel: true, legend: true };
+export const ALL_OPEN: Folds = { rail: false, goal: false, panel: false, legend: false, whatIf: false };
+export const ALL_FOLDED: Folds = { rail: true, goal: true, panel: true, legend: true, whatIf: true };
 
 /** The browser-storage key (listed in lib/privacy/inventory.ts WINDOW_STORAGE). */
 export const COCKPIT_FOLDS_KEY = "dotami-cockpit-folds";
@@ -41,6 +45,7 @@ export function parseFolds(raw: string | null | undefined): Folds {
     goal: stored.goal === true,
     panel: stored.panel === true,
     legend: stored.legend === true,
+    whatIf: stored.whatIf === true,
   };
 }
 
@@ -57,12 +62,13 @@ export function readFolds(): Folds {
 /** Remembers the answers. A browser that refuses is left alone: the fold still works until the window closes. */
 export function writeFolds(folds: Folds): void {
   try {
-    // Written key by key so nothing but the four answers is ever stored.
+    // Written key by key so nothing but the five answers is ever stored.
     const value: Record<FoldRegion, boolean> = {
       rail: folds.rail,
       goal: folds.goal,
       panel: folds.panel,
       legend: folds.legend,
+      whatIf: folds.whatIf,
     };
     localStorage.setItem(COCKPIT_FOLDS_KEY, JSON.stringify(value));
   } catch {
@@ -70,7 +76,7 @@ export function writeFolds(folds: Folds): void {
   }
 }
 
-/** True when all four are folded: the header's button then offers to show them all. */
+/** True when all five are folded: the header's button then offers to show them all. */
 export function allFolded(folds: Folds): boolean {
   return FOLD_REGIONS.every((region) => folds[region]);
 }

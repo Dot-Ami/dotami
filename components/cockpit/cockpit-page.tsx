@@ -15,7 +15,7 @@ import { TemplatesRail } from "@/components/cockpit/templates-rail";
 import { StrategyMap } from "@/components/cockpit/strategy-map";
 import { QuestionBox, ToldList, type BoxControl } from "@/components/cockpit/told-list";
 import { useCockpitData, type KeptForIdea } from "@/components/cockpit/use-cockpit-data";
-import { WhatIfBar } from "@/components/cockpit/what-if-bar";
+import { WHAT_IF_BAR_ID, WhatIfBar } from "@/components/cockpit/what-if-bar";
 import type { ShownReceipt } from "@/components/cockpit/receipt-lines";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
@@ -90,6 +90,10 @@ import Link from "next/link";
  * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose own pick, not the rules,
  * puts steps on or off the path (`forksToCompare`), so today's Alberta road, whose two forks are the map's
  * own toggles and whose sides the tax rules colour, has no Compare.
+ *
+ * 2026-10-13, every region folds: the told / not-told list folds with the rail it sits in and Compare with
+ * the panel; the what-if bar and "This visit" under the map fold together with their own button, the fifth
+ * answer remembered (lib/cockpit/folds.ts `whatIf`), and the header's "Fold all panels" folds it too.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
@@ -758,8 +762,12 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   } as CSSProperties;
   const everythingFolded = allFolded(folds);
   // The header's button names the regions that are drawn: the panel only while it holds something, the
-  // goal bar and the legend only once the road is evaluated.
-  const foldAllControls = [RAIL_ID, ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID] : []), ...(showRightSlot ? [PANEL_ID] : [])].join(" ");
+  // goal bar, the legend and the what-if bar only once the road is evaluated.
+  const foldAllControls = [
+    RAIL_ID,
+    ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID, WHAT_IF_BAR_ID] : []),
+    ...(showRightSlot ? [PANEL_ID] : []),
+  ].join(" ");
   // While a sheet covers the page on a phone, everything behind it is inert.
   const behindSheet = railModal || panelModal;
 
@@ -1029,6 +1037,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 onTry={handleTryWhatIf}
                 onKeep={handleKeepWhatIf}
                 onClear={handleClearWhatIf}
+                fold={{ folded: folds.whatIf, onToggle: () => toggle("whatIf") }}
               />
               <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
             </>

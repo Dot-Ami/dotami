@@ -28,6 +28,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   width"](docs/architecture/future-cockpit.md); controls:
   [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
   `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
+- **The cockpit's part 2 panels fold too** — *What you've told DotAmi / Not told yet* folds with the
+  venture details it sits at the top of, and *Compare the two endings* with the right-hand panel (its
+  strip says *Show the panel: Compare the two endings*). The what-if bar and *This visit* under the map
+  are a fifth region: *Fold the what-if bar* folds them to one line, which still says *Your what-if, not
+  a forecast* and its number while a what-if is on; *Fold all panels* folds it with the rest, and the
+  answer is remembered with the other four (`whatIf`). Controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md).
 - **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
   ([14a]) — every official fee DotAmi shows is now written once, in
   [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):

@@ -597,7 +597,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-cockpit-folds",
     name: "Which cockpit panels you folded",
     holds:
-      "Four yes-or-no answers: whether the venture details, the goal bar, the right-hand panel and the map's legend are folded on the cockpit. Nothing about you or your ideas.",
+      "Five yes-or-no answers: whether the venture details, the goal bar, the right-hand panel, the map's legend and the what-if bar are folded on the cockpit. Nothing about you or your ideas.",
     lasts:
       "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens with everything showing again, but the old answers stay in the app's own folder.",
   },

@@ -358,6 +358,16 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
 - **The map's own drawing is unchanged.** The folding legend and the phone-width columns are drawn only
   when the cockpit asks for them (`StrategyMap`'s `cockpit` prop); drawn without it, the map is the same
   HTML as before, byte for byte (`tests/road-map.spec.ts`).
+- **Part 2's panels fold too (2026-10-13, after both pull requests met).** *Every region can be folded
+  open and shut*, so each panel part 2 adds sits in a region that folds: *What you've told DotAmi / Not
+  told yet* and the one-question box at the top of the rail, folding with it; *Compare the two endings*
+  and the receipts in a step or a list in the right-hand panel, folding with it (its folded strip says
+  *Show the panel: Compare the two endings*). The what-if bar and *This visit*, under the map, were
+  outside every region, so they are a fifth region: *Fold the what-if bar* / *Show the what-if bar*,
+  folding to one line the way the legend does, the answer kept as `whatIf` with the other four (an
+  answer stored before has none, which reads as open), and *Fold all panels* folds it too. While a
+  what-if is on, the folded line still says *Your what-if, not a forecast* and its number, since the map
+  is still relit by it. The open rail is up to 280 px wide, as part 2 made it.
 
 ### Cockpit screen as built, part 2 (2026-10-12)
 

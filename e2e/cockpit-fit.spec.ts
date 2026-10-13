@@ -79,9 +79,11 @@ test("every region folds and opens with its own named button, and the cockpit re
   const inYourWords = page.getByRole("complementary", { name: "Venture details" }).getByText("In your words", { exact: true });
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
   const stepsLine = gauge(page, "Steps").getByText(/^next on your road:/);
+  const tryBox = page.getByRole("region", { name: "What-if" }).getByLabel("Try first-year sales of $");
   await expect(inYourWords).toBeVisible();
   await expect(stepsLine).toBeVisible();
   await expect(legendLine).toBeVisible();
+  await expect(tryBox).toBeVisible();
 
   // The left rail.
   await fold(page, "Fold venture details", "Show venture details");
@@ -97,6 +99,10 @@ test("every region folds and opens with its own named button, and the cockpit re
   await fold(page, "Fold the legend", "Show the legend");
   await expect(legendLine).toBeHidden();
 
+  // The what-if bar under the map, with This visit (2026-10-13).
+  await fold(page, "Fold the what-if bar", "Show the what-if bar");
+  await expect(tryBox).toBeHidden();
+
   // The panel: a step opened, then folded; its strip names it, and it stays folded when another step is picked.
   await stage(page, "Sole Prop activation").click();
   await expect(stepPanel(page)).toBeVisible();
@@ -106,9 +112,9 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(button(page, "Show the panel: Register your business name, if you use one")).toBeVisible();
   await expect(stepPanel(page)).toBeHidden();
 
-  // A reload remembers all four.
+  // A reload remembers them all.
   await page.reload();
-  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend"]) {
+  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar"]) {
     await expect(button(page, name)).toHaveAttribute("aria-expanded", "false");
   }
   await expect(inYourWords).toBeHidden();
@@ -125,10 +131,18 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(stepsLine).toBeVisible();
   await button(page, "Show the legend").click();
   await expect(legendLine).toBeVisible();
+  await button(page, "Show the what-if bar").click();
+  await expect(tryBox).toBeVisible();
 
-  // The header folds all four at once, and opens all four again.
+  // The header folds them all at once, and opens them all again.
   await button(page, "Fold all panels").click();
-  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the panel: Sole Prop activation"]) {
+  for (const name of [
+    "Show venture details",
+    "Show goal and gauges",
+    "Show the legend",
+    "Show the what-if bar",
+    "Show the panel: Sole Prop activation",
+  ]) {
     await expect(button(page, name)).toBeVisible();
   }
   await button(page, "Show all panels").click();
@@ -214,6 +228,7 @@ test("folding or showing a region from the keyboard leaves focus on the button t
     ["Fold goal and gauges", "Show goal and gauges"],
     ["Fold the panel", "Show the panel: Sole Prop activation"],
     ["Fold the legend", "Show the legend"],
+    ["Fold the what-if bar", "Show the what-if bar"],
   ];
   for (const [foldName, showName] of pairs) {
     await button(page, foldName).focus();
