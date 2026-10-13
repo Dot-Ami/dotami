@@ -18,7 +18,10 @@ They are kept as downloaded so the import can be redone, except that git stores 
 endings (a Windows checkout may write them back with "\r\n"); the import evens line endings out before
 it hashes or reads them, so its SHA-256s are those of the official files' text either way: `node scripts/import-oasis.mjs`
 turns them into `lib/engines/oasis/v2026/data.ts`, and `--check` (and `tests/oasis-import.spec.ts`)
-fails if the module isn't exactly what these files make. `--download` fetches fresh copies first.
+fails if the module isn't exactly what these files make. `--download` fetches fresh copies first, and
+writes each one only when its SHA-256 is the one pinned for it in the script's `OASIS_FILES`; a file
+that differs is not written, and the script says what it expected and what it got. Taking a new version
+from the government means updating that pinned value by hand, on purpose.
 Nothing in this folder ships with the app; the module made from it does, with its licence line.
 
 Why these files and not the others (Work Activities, Abilities, …), how much of each list is shown,

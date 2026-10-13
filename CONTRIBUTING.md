@@ -189,7 +189,8 @@ CSV files in English and French, under the [Open Government Licence – Canada](
   items carry). `authority` is `"federal"`, `jurisdiction` is `"CA"`.
 - **Imported, never typed.** `node scripts/import-oasis.mjs` turns the files committed under
   `data/oasis-2025-v1.0/` into `lib/engines/oasis/v2026/data.ts`; `--check` (and a test) fails if the
-  module isn't exactly what the files make, and `--download` fetches a new copy. Never edit the module by
+  module isn't exactly what the files make, and `--download` fetches a new copy, keeping a file only when
+  its SHA-256 is the one pinned in the script (a new version means updating the pin on purpose). Never edit the module by
   hand, and never show a rating until the maintainer decides to (names only today).
 - **Its licence travels with it.** The imported lists stay in their own data file carrying the
   licence's attribution line — *"Contains information licensed under the Open Government Licence –

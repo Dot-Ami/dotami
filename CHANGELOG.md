@@ -26,7 +26,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   without tying it to a step. The pick is kept on the idea (two added columns), set and taken back
   through `POST /api/futures/<id>/job`, from DotAmi's own window only. The list is built by
   `node scripts/import-oasis.mjs` from four files committed as downloaded (`data/oasis-2025-v1.0/`),
-  and a test redoes the import on every run
+  a test redoes the import on every run, and the script's `--download` writes a fetched file only when
+  its SHA-256 is the one pinned for it
   ([`lib/engines/oasis/v2026/`](lib/engines/oasis/v2026/),
   [design § 6](docs/architecture/future-cockpit.md)). The third-party notices and `/licences` list it
   under *Data*.

@@ -841,7 +841,10 @@ for the job the person picks (*your pick of job*; decision 5). Choices made, eac
   and `node scripts/import-oasis.mjs` turns them into the module. The module records each file's SHA-256
   (of its text with line endings evened out, since git may change them), and `--check` rebuilds it and
   fails on any difference; a test does the same on every run. `--download` fetches fresh copies from
-  open.canada.ca first, for a new version. The import refuses a file whose columns don't each match one
+  open.canada.ca first, for a new version, and writes each only when its SHA-256 is the one pinned for it
+  in the script (the maintainer's call of 2026-10-13, after GitHub's code scanner flagged the script for
+  writing network data to a file): a file that differs is not written, the script names the expected and
+  the received SHA-256, and a new version is taken by updating the pinned value on purpose. The import refuses a file whose columns don't each match one
   taxonomy entry, a rating outside its scale, or a job that isn't in every file.
 - **How each item is cited.** Every item carries the tag *your pick of job* and one citation: the dataset's
   page on open.canada.ca, checked by a tool (option B; the dataset's title, publisher, licence, the day
