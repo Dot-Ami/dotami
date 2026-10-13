@@ -33,10 +33,10 @@ import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
-import { clearScenarioBranch, defaultActiveBranches, updateScenarioBranch } from "@/lib/scenarios/branches";
+import { clearScenarioBranch, defaultActiveBranches, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 
-import { input, inventedIdea, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
 
 const VERDICT = /\b(enough|ready|best|better|worse|should|recommend\w*|on track|behind|score)\b/i;
 const FORK = "fork-eval-ending";
@@ -411,7 +411,7 @@ describe("Compare the two endings", () => {
 });
 
 describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () => {
-  // Compare is offered only at a fork whose pick decides steps on the road. Worked out from road
+  // Compare is offered only at a fork whose own pick, not the rules, decides steps. Worked out from road
   // evaluation of the road's own steps, never from a list of road ids.
   const road0 = (change: Partial<RoadEvaluationInput> = {}) =>
     input({ road: generalRoadV2026, roadChosen: false, skillItems: skillItemsV2026, ...change });
@@ -419,9 +419,20 @@ describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () 
     input({ road: roadApprenticeToOwnShopAB, roadChosen: true, skillItems: skillItemsV2026, ...change });
   const ids = (i: RoadEvaluationInput) => forksToCompare(i).map((f) => f.id);
 
-  it("not on today's Alberta road: the rules colour every step there, whichever side is picked", () => {
+  it("not on today's Alberta road: there the tax rules, not the fork's own pick, colour the sides", () => {
     expect(generalRoadV2026.forks.length).toBeGreaterThan(0);
     expect(ids(road0())).toEqual([]);
+    // Flipping a toggle does move steps there (between check first and not on your path), but through
+    // the rules, so both columns' counts come out the same: Compare would show the same numbers twice.
+    for (const fork of generalRoadV2026.forks) {
+      const runs = fork.sides.map((side) =>
+        evaluateRoad(road0({ scenario: updateScenarioBranch(inventedIdea(), fork.id as BranchDecisionId, side as CFENodeId) })).steps,
+      );
+      const moved = runs[0]!.filter((step, i) => step.state !== runs[1]![i]!.state);
+      expect(moved.length, fork.id).toBeGreaterThan(0);
+      expect(moved.every((step) => step.reason.kind === "rules"), fork.id).toBe(true);
+      expect(compareEndings(road0(), fork.id)!.sameOnEveryRow, fork.id).toBe(true);
+    }
     // Over the GST line, with the other sides picked, or with a what-if: still none.
     expect(ids(road0({ scenario: inventedIdea({ targetRevenueY1: 90_000, targetRevenueY3: 200_000 }) }))).toEqual([]);
     const [gst, inc] = generalRoadV2026.forks;
@@ -436,6 +447,26 @@ describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () 
   it("on the apprentice road: its fork puts one ending's steps on the path and the other's off it", () => {
     expect(ids(road1())).toEqual([roadApprenticeToOwnShopAB.forks[0]!.id]);
     expect(ids(input())).toEqual([FORK]);
+  });
+
+  // A road that isn't road 0, with a fork whose two sides the rules grey whichever is picked. A check of
+  // road ids would offer it; only reading the steps leaves it out.
+  const ruled = (change: Partial<RoadEvaluationInput> = {}) => input({ road: roadWithRuledFork(), roadChosen: true, skillItems: [], ...change });
+
+  it("not on another road where the rules, not the pick, decide both sides", () => {
+    const states = (i: RoadEvaluationInput) => evaluateRoad(i).steps.map((s) => `${s.stepId} ${s.state}`);
+    const [a, b] = roadWithRuledFork().forks[0]!.sides;
+    // Each side picked in turn: every step keeps its state.
+    expect(states(ruled({ forkPicks: { [RULED_FORK]: { stepId: a!, from: "you" } } }))).toEqual(
+      states(ruled({ forkPicks: { [RULED_FORK]: { stepId: b!, from: "you" } } })),
+    );
+    expect(ids(ruled())).toEqual([]);
+    // The same road with first-year sales the rules read differently: now the pick decides a step.
+    expect(ids(ruled({ scenario: inventedIdea({ targetRevenueY1: 45_000 }) }))).toEqual([RULED_FORK]);
+  });
+
+  it("a what-if doesn't bring the offer: it is worked out from the person's own answers", () => {
+    expect(ids(ruled({ whatIf: { firstYearSalesDollars: 45_000 } }))).toEqual([]);
   });
 
   it("whatever the person picked or marked: the offer is the road's, not the person's", () => {
