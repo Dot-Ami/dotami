@@ -11,6 +11,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
+  ([14a]) — every official fee DotAmi shows is now written once, in
+  [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):
+  its amount in cents, what it is for, the place it applies to as a code (`CA`, `CA-AB`) and its source.
+  Ten fees moved there: the federal online incorporation ($200), express service ($100) and annual
+  return ($12), and the first written future's seven (the apprenticeship, Trades Qualifier and Blue
+  Seal application fees, the Cabinetmaker practical exam, the rewrite fee that applies only if you fail
+  an exam, and the $0 business number). Each quote was found again on its live page by
+  `scripts/check-quotes.mjs` on 2026-10-12. The roads and the federal way to incorporate name a fee by
+  id and copy its amount; a check refuses any line whose amount, source or condition differs from its
+  fee, and a test refuses an amount typed in a road file. No card changed: every step panel of both
+  roads and both money lists draw the same HTML, byte for byte, as before the move
+  (`tests/cost-panels-unchanged.spec.ts`). Alberta's registry fees stay named blanks: the catalogue
+  that holds them stops tools with a human check. **Sole Prop activation** now names seven start-up
+  costs as blanks the person prices: tools and equipment, space deposit, insurance, vehicle, first
+  materials, software, and money to live on while starting; no amount anywhere, and no source for the
+  names yet (the BDC and Futurpreneur templates keep their lines inside spreadsheets;
+  [future-cockpit.md § 6 and § 13](docs/architecture/future-cockpit.md)). In the cockpit, the Money
+  overlay's badge on that card says *7 not priced*, and the Start-up money gauge counts them while the
+  step is on your path.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;

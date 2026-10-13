@@ -1,3 +1,4 @@
+import { feeLine } from "../../fees/v2026";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import type { NamedCostLine, Road, SkillItem } from "./types";
 
@@ -14,6 +15,10 @@ import type { NamedCostLine, Road, SkillItem } from "./types";
  * road's own `lastVerified` is empty. A line says only what its quotes say; anything a page doesn't
  * state (Alberta's registry fees, which sit in a catalogue that stops tools; a wage figure; a WCB rate)
  * is a named line or left out, never guessed.
+ *
+ * Its official fees are written once, in the official fees catalog (lib/engines/fees/v2026/, since
+ * 2026-10-12): each fee line here names its fee by id through `feeLine`, which copies the amount, source
+ * and condition, so no amount is typed in this file.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
@@ -454,17 +459,11 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [SKILL_ASN],
       costs: [
-        {
-          id: "cost-shop-apprentice-application",
-          kind: "official-fee",
-          label: "Apprenticeship application fee (non-refundable; your sponsor may pay it)",
-          amountCents: 150_00,
-          citation: checked(
-            PAGES.apply,
-            Q.applicationFee,
-            "Your sponsor also has the option to pay your $150 application fee for you at this stage.",
-          ),
-        },
+        feeLine(
+          "cost-shop-apprentice-application",
+          "Apprenticeship application fee (non-refundable; your sponsor may pay it)",
+          "fee-ab-apprenticeship-application",
+        ),
         named("cost-shop-living-while-training", "Money to live on while you train"),
       ],
       officialLinks: [
@@ -618,20 +617,12 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [SKILL_ASN],
       costs: [
-        {
-          id: "cost-shop-tqwe-application",
-          kind: "official-fee",
-          label: "Trades Qualifier (work experience) application fee (non-refundable)",
-          amountCents: 450_00,
-          citation: checked(PAGES.tqWorkExperience, Q.tqWorkFee),
-        },
-        {
-          id: "cost-shop-tqwe-practical",
-          kind: "official-fee",
-          label: "Practical exam, Cabinetmaker",
-          amountCents: 160_00,
-          citation: checked(PAGES.profile, Q.practicalExam),
-        },
+        feeLine(
+          "cost-shop-tqwe-application",
+          "Trades Qualifier (work experience) application fee (non-refundable)",
+          "fee-ab-trades-qualifier-work-experience-application",
+        ),
+        feeLine("cost-shop-tqwe-practical", "Practical exam, Cabinetmaker", "fee-ab-cabinetmaker-practical-exam"),
         named(
           "cost-shop-tqwe-rewrite",
           "Exam rewrite fee, if you rewrite (the page gives no amount)",
@@ -691,32 +682,19 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [SKILL_ASN, SKILL_OUTSIDE_CERTIFICATE],
       costs: [
-        {
-          id: "cost-shop-tqrc-application",
-          kind: "official-fee",
-          label: "Trades Qualifier (recognized credential) application fee (non-refundable)",
-          amountCents: 150_00,
-          citation: checked(PAGES.tqCredential, Q.tqCredentialFee),
-        },
-        {
-          id: "cost-shop-tqrc-practical",
-          kind: "official-fee",
-          label: "Practical exam, Cabinetmaker",
-          amountCents: 160_00,
-          citation: checked(PAGES.profile, Q.practicalExam),
-        },
-        {
-          // Conditional, and typed so: a total leaves it out unless the person says they'll rewrite.
-          id: "cost-shop-tqrc-rewrite",
-          kind: "official-fee",
-          label: "Exam rewrite fee for a second attempt (only if you fail an exam)",
-          amountCents: 50_00,
-          onlyIf: "You failed an exam and choose to rewrite it.",
-          citation: checked(
-            PAGES.tqCredential,
-            "If you fail an exam (pass mark is 70%), you may pay a $50 rewrite fee for a second attempt.",
-          ),
-        },
+        feeLine(
+          "cost-shop-tqrc-application",
+          "Trades Qualifier (recognized credential) application fee (non-refundable)",
+          "fee-ab-trades-qualifier-recognized-credential-application",
+        ),
+        feeLine("cost-shop-tqrc-practical", "Practical exam, Cabinetmaker", "fee-ab-cabinetmaker-practical-exam"),
+        // Conditional, and typed so in the catalog (onlyIf): a total leaves it out unless the person says
+        // they'll rewrite.
+        feeLine(
+          "cost-shop-tqrc-rewrite",
+          "Exam rewrite fee for a second attempt (only if you fail an exam)",
+          "fee-ab-trades-qualifier-recognized-credential-rewrite",
+        ),
       ],
       officialLinks: [{ label: "Trades Qualifier, Recognized Credential Program", url: PAGES.tqCredential.url }],
       citations: [checked(PAGES.profile, Q.outsideCertificate), checked(PAGES.tqCredential, Q.tqCredentialFee)],
@@ -955,13 +933,7 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [SKILL_ASN],
       costs: [
-        {
-          id: "cost-shop-blue-seal-application",
-          kind: "official-fee",
-          label: "Blue Seal application fee (non-refundable)",
-          amountCents: 150_00,
-          citation: checked(PAGES.blueSeal, Q.blueSealFee),
-        },
+        feeLine("cost-shop-blue-seal-application", "Blue Seal application fee (non-refundable)", "fee-ab-blue-seal-application"),
         named("cost-shop-blue-seal-study", "Approved programs or courses (the page gives no cost)"),
       ],
       officialLinks: [{ label: "Blue Seal Program", url: PAGES.blueSeal.url }],
@@ -1062,13 +1034,7 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [],
       costs: [
-        {
-          id: "cost-shop-business-number",
-          kind: "official-fee",
-          label: "Business number",
-          amountCents: 0,
-          citation: checked(PAGES.commonBusinessNumber, Q.noCostBn),
-        },
+        feeLine("cost-shop-business-number", "Business number", "fee-ab-business-number"),
       ],
       officialLinks: [],
       citations: [
