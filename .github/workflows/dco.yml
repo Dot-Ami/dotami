@@ -1,5 +1,10 @@
 # Every commit in a pull request must carry a Signed-off-by line (DCO.md). No secrets needed,
 # so it runs for forks too. Contributors add it with `git commit -s`.
+# Merge commits are skipped (`--no-merges`): GitHub's "Update branch" button makes a merge commit
+# with no Signed-off-by line, and that alone failed this check (an outside contributor's PR #50,
+# 2026-09-27). The repo allows squash merges only (checked 2026-10-13), so a merge commit never
+# reaches main; what lands is the PR's own signed commits squashed together. The trade-off: a conflict fixed by hand inside a merge commit isn't
+# checked for a sign-off.
 name: DCO
 
 on:
@@ -25,7 +30,7 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           missing=0
-          for sha in $(git rev-list "$BASE".."$HEAD"); do
+          for sha in $(git rev-list --no-merges "$BASE".."$HEAD"); do
             if ! git log -1 --format=%B "$sha" | grep -qE '^Signed-off-by: .+ <.+@.+>$'; then
               echo "::error::commit $sha has no Signed-off-by line (use: git commit -s)"
               missing=1
