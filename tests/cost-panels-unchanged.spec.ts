@@ -2,7 +2,9 @@
  * Moving the official fees into one catalog (lib/engines/fees/v2026/, 2026-10-12) changes no card.
  *
  * tests/fixtures/official-fees/panels-before.json is every step panel of both roads, and each road's
- * money list, drawn from main at f24d22c (2026-10-12) before the move, by tests/helpers/cost-panels.ts.
+ * money list, drawn before the move by tests/helpers/cost-panels.ts: from main at f24d22c (2026-10-12),
+ * redrawn on 2026-10-13 from PR #162's own head (6428ae3, that main plus #162) when #162 joined. #162
+ * changed only two "Shown because" lines, on 11 panels: a federal program's and a federal rule's.
  * Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
