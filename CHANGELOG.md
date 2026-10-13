@@ -266,6 +266,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   whole now says "Shown because it is a federal rule, the same in every province and territory.";
   provincial rules still name the province, and the ride-share cards still name the tag that lit them
   ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
+  The grant cards had the same fault: SR&ED, NRC IRAP and the CSBFP read "Shown because Alberta and
+  your … activity match this program." (or "because your province and …" with no province yet). An
+  eligible federal program now says "Shown because it is a federal program, offered in every province
+  and territory, and your … activity matches it."; provincial programs still name the province, and a
+  program that needs a corporation keeps its own line (maintainer's answer, 2026-10-13).
 - **A screen reader names the intake's province and employment dropdowns.** Their names ("Province /
   territory", "Current employment") were plain text tied to nothing, so the dropdowns had no name;
   they are now labels tied to their fields, and so is "Name it — optional" for the name box; the

@@ -218,6 +218,48 @@ describe("why a compliance card is shown: federal or the province (#36)", () => 
   });
 });
 
+// The grant cards had the same fault as #36: an eligible program's line read "Shown because Alberta and
+// your ... activity match this program." on SR&ED, IRAP and the CSBFP, which are federal. A program whose
+// `provinces` include "CA" is shown in any province (`provinceMatches`), so its line now says it is
+// federal and offered everywhere; it is a program, not a rule, and the activity still decides it.
+describe("why a grant card is shown: federal or the province", () => {
+  const unlock = (profile: EvaluationProfile, id: string) =>
+    evaluateProfile(profile, { today: TODAY }).unlocks.find((u) => u.id === id);
+  const federal = (tags: string) =>
+    `Shown because it is a federal program, offered in every province and territory, and your ${tags} activity matches it.`;
+
+  it("a federal program says it is federal, not that Alberta matched it", () => {
+    for (const id of ["grant-sred", "grant-csbfp"]) {
+      const card = unlock(gpuWorkstationProfile, id);
+      expect(card, id).toBeDefined();
+      expect(card!.why, id).toBe(federal("Software / SaaS and AI / ML / R&D"));
+      expect(card!.why, id).not.toContain("Alberta");
+    }
+  });
+
+  it("says the same with no province chosen yet, where it used to say \"because your province and ...\"", () => {
+    const sred = unlock({ ...gpuWorkstationProfile, province: null }, "grant-sred");
+    expect(sred!.why).toBe(federal("Software / SaaS and AI / ML / R&D"));
+  });
+
+  it("an eligible federal grant (IRAP, for a corporation) says it too", () => {
+    const irap = unlock({ ...gpuWorkstationProfile, structure: "ccpc", province: "ON" }, "grant-irap");
+    expect(irap!.why).toBe(federal("Software / SaaS and AI / ML / R&D"));
+  });
+
+  it("a provincial program still names the province", () => {
+    expect(unlock(gpuWorkstationProfile, "grant-alberta-innovates")!.why).toBe(
+      "Shown because Alberta and your Software / SaaS and AI / ML / R&D activity match this program.",
+    );
+  });
+
+  it("a program that needs a corporation keeps its own line", () => {
+    expect(unlock(gpuWorkstationProfile, "grant-irap")!.why).toBe(
+      "Shown because your activity matches, but this program requires incorporation (CCPC).",
+    );
+  });
+});
+
 describe("strategy rules engine — profile and intake coverage", () => {
   it("blank default draft yields an honestly empty preview (no fake fullness)", () => {
     const profile = buildEvaluationProfile(defaultIntakeDraft());
