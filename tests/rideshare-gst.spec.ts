@@ -260,7 +260,8 @@ describe("the control: the same $10,000 without the driving tag is unchanged", (
     const c = card(result, SMALL_SUPPLIER)!;
     expect(c.state).toBe("green");
     expect(c.payoff).toMatch(/need not register yet/);
-    expect(c.why).toBe("Shown because you selected Ontario.");
+    // A federal rule, so since #36 (2026-10-12) it says so rather than crediting the province.
+    expect(c.why).toBe("Shown because it is a federal rule, the same in every province and territory.");
   });
 
   it("shows neither driver card, and the GST/HST stages keep their old colours and no reasons", () => {
@@ -274,10 +275,15 @@ describe("the control: the same $10,000 without the driving tag is unchanged", (
 
   // The other cards scoped to a kind of work keep the reason line they had before this change. Naming
   // the tag on them too is a separate question for the maintainer, not part of the ride-share rule.
+  // Hobby vs. business is federal, so since #36 (2026-10-12) its line says that instead of the province.
   it("the other cards for a kind of work keep their reason lines", () => {
     const cases: Array<[string, Partial<EvaluationProfile>, string]> = [
       ["compliance-trades-licensing-ab", { activityTags: ["Trades"], province: "AB" }, "Shown because you selected Alberta."],
-      ["compliance-hobby-vs-business", { activityTags: ["Content / streaming"], province: "AB" }, "Shown because you selected Alberta."],
+      [
+        "compliance-hobby-vs-business",
+        { activityTags: ["Content / streaming"], province: "AB" },
+        "Shown because it is a federal rule, the same in every province and territory.",
+      ],
       ["compliance-food-premises-on", { activityTags: ["Food service"], province: "ON" }, "Shown because you selected Ontario."],
     ];
     for (const [id, over, why] of cases) {

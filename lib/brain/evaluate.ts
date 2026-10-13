@@ -187,6 +187,12 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
     // Structure-gated rate deltas surface as forks even when eligible today (SR&ED 15% → 35%).
     const betterAtCcpc =
       currentRate && ccpcRate && profile.structure !== "ccpc" && ccpcRate.rate > currentRate.rate;
+    // Same test as a compliance rule's (#36): "CA" in `provinces` makes a program federal, shown in any
+    // province, so crediting the person's province for it would be wrong. A program, not a rule.
+    const activity = tagList(profile, entry.activityTags) || "venture";
+    const why = entry.provinces.includes("CA")
+      ? `Shown because it is a federal program, offered in every province and territory, and your ${activity} activity matches it.`
+      : `Shown because ${provinceName(profile.province)} and your ${activity} activity match this program.`;
 
     return {
       id: entry.id,
@@ -194,7 +200,7 @@ function evaluateGrant(profile: EvaluationProfile, entry: GrantProgram): UnlockI
       state: "yellow", // program eligibility always needs confirmation — never claim qualification
       typeChip: grantChip(entry.kind),
       title: entry.label,
-      why: `Shown because ${provinceName(profile.province)} and your ${tagList(profile, entry.activityTags) || "venture"} activity match this program.`,
+      why,
       payoff: currentRate
         ? `If eligible as a ${STRUCTURE_LABELS[profile.structure]}, this may be worth ${Math.round(currentRate.rate * 100)}% (${currentRate.refundable ? "refundable" : "non-refundable"}). ${currentRate.note ?? ""}`.trim()
         : entry.lensAnnotations.tax,
@@ -379,12 +385,18 @@ function evaluateComplianceRule(
   let typeChip: UnlockTypeChip = "Compliance";
   let step: IntakeStep = "location";
   let payoff = entry.lensAnnotations.tax;
-  let why = `Shown because you selected ${provinceName(profile.province)}.`;
+  // Where the rule applies is why it shows (#36). Federal entries list the provinces too
+  // (["AB", "BC", "ON", "CA"]), so "CA" being there is what makes a rule federal; crediting the
+  // province for one read "because you selected Alberta" on a rule Alberta has nothing to do with.
+  const federal = entry.provinces.includes("CA");
+  let why = federal
+    ? "Shown because it is a federal rule, the same in every province and territory."
+    : `Shown because you selected ${provinceName(profile.province)}.`;
   if (entry.industryTags && entry.reasonNamesTags) {
     // A rule for a kind of work that says so: the tag lit it, and the province only if the rule is
     // provincial. Opt-in per rule (`reasonNamesTags`), so the older work-scoped cards keep their line.
     const tags = matchedTags(profile, entry.industryTags);
-    const where = entry.provinces.includes("CA") ? "" : ` and you selected ${provinceName(profile.province)}`;
+    const where = federal ? "" : ` and you selected ${provinceName(profile.province)}`;
     why = `Shown because your intake has the activity ${tags.length === 1 ? "tag" : "tags"} ${andList(tags)}${where}.`;
   }
   let fromRecords: RecordsBasis | undefined;

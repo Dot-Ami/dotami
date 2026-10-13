@@ -171,6 +171,95 @@ describe("strategy rules engine — gating correctness", () => {
   });
 });
 
+// #36: a compliance card's "why" line credited the province on every rule, so an Alberta venture read
+// "Shown because you selected Alberta." on the GST/HST small-supplier rule, which is federal. A rule
+// whose `provinces` include "CA" (federal entries list the provinces too, so the test is whether "CA"
+// is there, not whether it is alone) now says it is shown because it is federal.
+describe("why a compliance card is shown: federal or the province (#36)", () => {
+  const FEDERAL = "Shown because it is a federal rule, the same in every province and territory.";
+  const unlock = (profile: EvaluationProfile, id: string) =>
+    evaluateProfile(profile, { today: TODAY }).unlocks.find((u) => u.id === id);
+
+  it("a federal rule says it is federal, not that you selected Alberta", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, targetRevenueY1: 10000 }, "compliance-gst-small-supplier");
+    expect(gst).toBeDefined();
+    expect(gst!.why).toBe(FEDERAL);
+    expect(gst!.why).not.toContain("Alberta");
+  });
+
+  it("says the same with no province chosen yet, where it used to say \"because you selected your province\"", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, province: null, targetRevenueY1: 10000 }, "compliance-gst-small-supplier");
+    expect(gst!.why).toBe(FEDERAL);
+  });
+
+  it("a federal rule for a kind of work that doesn't name its tag says it is federal too", () => {
+    const hobby = unlock({ ...gpuWorkstationProfile, activityTags: ["Content / streaming"] }, "compliance-hobby-vs-business");
+    expect(hobby).toBeDefined();
+    expect(hobby!.why).toBe(FEDERAL);
+  });
+
+  it("a provincial rule still names the province", () => {
+    expect(unlock(gpuWorkstationProfile, "compliance-ab-no-pst")!.why).toBe("Shown because you selected Alberta.");
+    expect(unlock({ ...gpuWorkstationProfile, province: "BC" }, "compliance-bc-pst")!.why).toBe("Shown because you selected British Columbia.");
+  });
+
+  it("a rule over the line still says so in place of either", () => {
+    const gst = unlock({ ...gpuWorkstationProfile, targetRevenueY1: 45000 }, "compliance-gst-small-supplier");
+    expect(gst!.why).toBe("Shown because your Y1 revenue target ($45,000) is over $30,000, the amount in the CRA's tests.");
+  });
+
+  // The ride-share cards (#147) name the tag that lit them; both rules are federal, so neither adds
+  // the province. Pinned here because the federal test above decides this line too.
+  it("a federal rule that names its tag names only the tag", () => {
+    const driver = { ...gpuWorkstationProfile, activityTags: ["Ride-share or taxi driving"], province: "ON" as const, targetRevenueY1: 10000 };
+    for (const id of ["compliance-platform-reporting-rideshare", "compliance-gst-taxi-ride-sharing"]) {
+      expect(unlock(driver, id)?.why, id).toBe("Shown because your intake has the activity tag Ride-share or taxi driving.");
+    }
+  });
+});
+
+// The grant cards had the same fault as #36: an eligible program's line read "Shown because Alberta and
+// your ... activity match this program." on SR&ED, IRAP and the CSBFP, which are federal. A program whose
+// `provinces` include "CA" is shown in any province (`provinceMatches`), so its line now says it is
+// federal and offered everywhere; it is a program, not a rule, and the activity still decides it.
+describe("why a grant card is shown: federal or the province", () => {
+  const unlock = (profile: EvaluationProfile, id: string) =>
+    evaluateProfile(profile, { today: TODAY }).unlocks.find((u) => u.id === id);
+  const federal = (tags: string) =>
+    `Shown because it is a federal program, offered in every province and territory, and your ${tags} activity matches it.`;
+
+  it("a federal program says it is federal, not that Alberta matched it", () => {
+    for (const id of ["grant-sred", "grant-csbfp"]) {
+      const card = unlock(gpuWorkstationProfile, id);
+      expect(card, id).toBeDefined();
+      expect(card!.why, id).toBe(federal("Software / SaaS and AI / ML / R&D"));
+      expect(card!.why, id).not.toContain("Alberta");
+    }
+  });
+
+  it("says the same with no province chosen yet, where it used to say \"because your province and ...\"", () => {
+    const sred = unlock({ ...gpuWorkstationProfile, province: null }, "grant-sred");
+    expect(sred!.why).toBe(federal("Software / SaaS and AI / ML / R&D"));
+  });
+
+  it("an eligible federal grant (IRAP, for a corporation) says it too", () => {
+    const irap = unlock({ ...gpuWorkstationProfile, structure: "ccpc", province: "ON" }, "grant-irap");
+    expect(irap!.why).toBe(federal("Software / SaaS and AI / ML / R&D"));
+  });
+
+  it("a provincial program still names the province", () => {
+    expect(unlock(gpuWorkstationProfile, "grant-alberta-innovates")!.why).toBe(
+      "Shown because Alberta and your Software / SaaS and AI / ML / R&D activity match this program.",
+    );
+  });
+
+  it("a program that needs a corporation keeps its own line", () => {
+    expect(unlock(gpuWorkstationProfile, "grant-irap")!.why).toBe(
+      "Shown because your activity matches, but this program requires incorporation (CCPC).",
+    );
+  });
+});
+
 describe("strategy rules engine — profile and intake coverage", () => {
   it("blank default draft yields an honestly empty preview (no fake fullness)", () => {
     const profile = buildEvaluationProfile(defaultIntakeDraft());

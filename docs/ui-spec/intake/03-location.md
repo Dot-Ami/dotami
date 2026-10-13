@@ -47,6 +47,10 @@ When Step 3 fields change, the live preview should eventually surface cards such
 - `Employment context affects branch timing` for employee/apprentice/self-employed cases, without claiming eligibility.
 
 Cards must say why they appear, for example: `Shown because province is Alberta and hire-first is possible later`.
+A federal card never credits the province: a federal rule says `Shown because it is a federal rule, the
+same in every province and territory.` (#36, 2026-10-12) and an eligible federal program says `Shown
+because it is a federal program, offered in every province and territory, and your <activity> activity
+matches it.` (2026-10-13; `lib/brain/evaluate.ts`).
 
 ## State touched (field names only)
 

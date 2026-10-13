@@ -533,10 +533,11 @@ roadmap's build order.
 - ⬜ **[11i] New tax years** — every card says which year.
 - ⬜ **[11j] Beyond Canada; Quebec; French** · roadmap §4 · #45
 - ⬜ **[11k] Fixes already reported** — good places to start:
-  - [ ] #36 federal rules say "because you selected <province>"
+  - [x] #36 federal rules say "because you selected <province>" — 2026-10-12; federal grant cards
+    the same — 2026-10-13
   - [ ] #39 tier 1 subtitle wording
-  - [ ] #9 statute text with paragraph breaks
-  - [ ] #6 hide the empty vault line
+  - [x] #9 statute text with paragraph breaks — 2026-10-12
+  - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure
   - [ ] #40 hide R&D-only steps without an R&D tag
@@ -613,7 +614,8 @@ roadmap's build order.
   - [ ] **Honest:** every figure and claim shows where it came from; nothing invented
   - [ ] **Wired:** what's typed or clicked saves, reloads and survives a restart; errors handled
   - [ ] **Tested:** a browser test covers its main path and edge cases
-  - Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't name them).
+  - [x] Already found: the intake's field labels aren't tied to their dropdowns (a screen reader can't
+    name them) — fixed 2026-10-12: province, employment and the name box are named by their labels.
 - ✅ **[13i] The landing page and intake were dead in production builds** — fixed in #64.
 
 ## 15 — Real examples: how real people started (later)
