@@ -4,7 +4,10 @@ Page: Intake (`/intake`) · Component: `components/discovery/intake-page.tsx` (`
 + `components/shared/person-statements.tsx` (`PersonStatements`, `variant="full"`)
 Type: free-text composer + dated record list (wizard step, skippable)
 
-Last updated: 2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
+Last updated: 2026-10-12 (no line about an external source of statements when none is set up, #6;
+issue #38: shown first only to a person with no saved idea yet; a second idea starts on Screen A, and
+**← Back** from there reaches this screen; [_index.md](./_index.md));
+2026-10-11 (the sentence typed on the front door is listed here too, tagged with its idea; other typed rows say "typed in DotAmi", no longer "typed here"); 2026-09-13 (S2.5.4a — first vertical slice of the UI/UX + backend session)
 Workshop status: **built 2026-09-13; the behaviour below is the shipped surface**
 
 ## What it is
@@ -39,7 +42,7 @@ statements" deletes it.
   verbatim body exists (a constraint's paragraph, a question's "why this is open").
 - **Status lines (guardrails visible on the surface):**
   `db.available === false` → amber "No database reachable — nothing typed here will be
-  saved." · `vault.available === false` → mono "Vault: <reason>" · fetch failure → amber
+  saved." · fetch failure → amber
   "Couldn't load what's on record". The empty state reads "Nothing on record yet." only after
   a load has actually completed — never while loading.
 - **Footer line, always:** "Shown back as you said it · not scored · not summarised · newer
@@ -93,7 +96,11 @@ pretend to use).
   (for example a personal notes folder read live from disk, never copied into the database). A
   build that adds one reports it through `vault.available` and the source tag; this build
   always returns `vault.available=false` with the reason "No external statement source
-  configured."
+  configured." Since 2026-10-12 the screen says nothing about it (#6): the old mono line
+  "Vault: No external statement source configured." showed to everyone, named a feature nobody
+  has set up, and "vault" meant nothing to a stranger. A build that adds a source adds its own
+  line for when that source can't be read. The route still reports `vault` in its answer, for
+  any program that reads it.
 - **Route:** `app/api/person/statements/route.ts` — GET merges both sources newest-first
   and reports each half's availability; POST validates (non-empty, ≤2000 chars, real
   past-or-today ISO date) and appends.
@@ -102,7 +109,8 @@ pretend to use).
 
 ## Verified 2026-09-13
 
-- No external source configured → `vault.available:false` with its reason, shown on the surface.
+- No external source configured → `vault.available:false` with its reason, shown on the surface
+  (until 2026-10-12; since then the route still says so and the screen doesn't, #6).
 - Browser walk with no database: POST → 503, statement kept in-tab and tagged, then visible
   on the cockpit rail after `Open my map →`.
 - **Real Postgres write, same day (later):** local Postgres 17 in Docker,

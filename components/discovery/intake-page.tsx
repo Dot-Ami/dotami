@@ -93,10 +93,15 @@ function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
     .sort((a, b) => score(b) - score(a));
 }
 
-export function IntakePage() {
+/**
+ * `firstScreen` is read on the server (app/(journey)/intake/page.tsx): "about" for a person with no saved
+ * idea yet, "confirm" once they have one (issue #38), so a second idea doesn't pass through About you
+ * again. Back from Screen A still opens it.
+ */
+export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | "confirm" }) {
   const router = useRouter();
   const { intake, setIntake, setScenario } = useJourney();
-  const [screen, setScreen] = useState<ScreenId>("about");
+  const [screen, setScreen] = useState<ScreenId>(firstScreen);
   const [freeText, setFreeText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -299,6 +304,7 @@ export function IntakePage() {
                       ))}
                     </div>
                     <input
+                      aria-label="Add your own kind of work"
                       placeholder="Add your own — press Enter"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -359,8 +365,9 @@ export function IntakePage() {
                   </h1>
                 </header>
 
-                <FieldGroup label="Province / territory">
+                <FieldGroup label="Province / territory" htmlFor="intake-province">
                   <select
+                    id="intake-province"
                     value={intake.province ?? ""}
                     onChange={(e) =>
                       setIntake((p) => ({
@@ -390,8 +397,9 @@ export function IntakePage() {
                   ) : null}
                 </FieldGroup>
 
-                <FieldGroup label="Current employment">
+                <FieldGroup label="Current employment" htmlFor="intake-employment">
                   <select
+                    id="intake-employment"
                     value={intake.employmentStatus ?? ""}
                     onChange={(e) =>
                       setIntake((p) => ({
@@ -419,6 +427,7 @@ export function IntakePage() {
                         onChange={(e) =>
                           setIntake((p) => ({ ...p, employmentOther: e.target.value }))
                         }
+                        aria-label="Your employment, in your words"
                         placeholder="Tell us in your words"
                         className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                       />
@@ -431,8 +440,9 @@ export function IntakePage() {
                   ) : null}
                 </FieldGroup>
 
-                <FieldGroup label="Name it — optional">
+                <FieldGroup label="Name it — optional" htmlFor="intake-name">
                   <input
+                    id="intake-name"
                     type="text"
                     value={intake.name}
                     maxLength={80}
@@ -589,10 +599,23 @@ function ConfirmEmptyState({
   );
 }
 
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * A group on the intake: its name, then its fields. Given `htmlFor` (the id of the one field the
+ * name stands for) the name is a <label> tied to that field, so a screen reader says it when the
+ * field takes focus and clicking it moves to the field. Without, the name is a plain heading line,
+ * for groups of buttons or of fields that carry names of their own.
+ */
+function FieldGroup({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
+  const className = "mb-3 block font-mono text-[10px] uppercase tracking-[0.14em] text-stone";
   return (
     <div>
-      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{label}</p>
+      {htmlFor ? (
+        <label htmlFor={htmlFor} className={className}>
+          {label}
+        </label>
+      ) : (
+        <p className={className}>{label}</p>
+      )}
       {children}
     </div>
   );

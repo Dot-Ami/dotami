@@ -374,7 +374,9 @@ to the data.
   and "nothing leaves this computer" although the app was started with a model key in its
   environment → an outside link goes to the browser, the window stays → close → start again → the
   venture is still there. CI runs it on Windows against the packaged app (`ci.yml` job
-  "Desktop app (Windows)"). Delete ([8d]): an idea and a statement holding a marker string, a backup
+  "Desktop app (Windows) 1/3", "2/3" and "3/3": three machines at once, each packaging its own copy
+  and running a third of the tests, so every test still runs; the release workflow runs them all on
+  one). Delete ([8d]): an idea and a statement holding a marker string, a backup
   saved elsewhere and restored (which leaves a safety copy, and the receipts folder as it was in
   `receipts-before-restore-…`), plus a `receipts-locked-…` folder as Start a new key leaves one → Delete
   with ideas, statements and the safety copies ticked → after closing, the marker is in no byte of

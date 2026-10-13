@@ -211,7 +211,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "PersonStatement",
     name: "Your statements",
     holds:
-      "Things you told DotAmi about yourself, word for word, each with the day you say you said it, and the sentence you typed on the front door for each idea, word for word, with the day you typed it and the idea it was for. Your answers to “where do you want to be” are kept here too, marked as such; the newest is the one the cockpit will show on top. They are never summarised or used to rank anything.",
+      "Things you told DotAmi about yourself, word for word, each with the day you say you said it, and the sentence you typed on the front door for each idea, word for word, with the day you typed it and the idea it was for. Your answers to “where do you want to be” (the first question on Your destination, since 2026-10-12) are kept here too, marked as such; the newest is the one the cockpit shows on top of a future that has no sentence of its own. They are never summarised or used to rank anything.",
     removedBy:
       "Delete, at the bottom of this page, with “Your statements” ticked: all of them at once, wiped from the file. Nothing removes one by itself, by design: a newer statement beats an older one by its date, and old ones are never edited away. Deleting your ideas keeps the sentences typed for them here, tied to no idea.",
   },
@@ -219,7 +219,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "Venture",
     name: "Your ideas",
     holds:
-      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12); nothing on screen sets the road or the endings yet. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta), and an idea can hold the job you picked as closest to your work (its code on the government's list and the moment you picked it), set in the cockpit's skills list.",
+      "Each business idea you saved: its name, province, your first- and third-year revenue estimates, your employment status, the tags and goals marked on the intake, how far along it is, and your notes on it. Since 2026-10-11 it can also hold the road it is drawn on, the ending you picked at each fork of that road and your own month and year to get there, each with the moment you set it; the cockpit sets your month (since 2026-10-12), Pick a future sets the road (since 2026-10-12), and the cockpit's “This is mine”, under “Compare the two endings”, sets the ending at a fork of any road but the general one (since 2026-10-12; the general road's endings are kept with its map). A future picked on Pick a future also keeps your answer to “a business of your own, a job or career, or both?” with the moment it was kept, and its employment status as “not said”, since that way in doesn't ask it; so are its kind of venture, whether you're buying equipment and its revenue estimates, listed by name as not said, so nothing shows the starting values in their place as yours. Since 2026-10-12 the province is written in the file as its international code (CA-AB for Alberta), and an idea can hold the job you picked as closest to your work (its code on the government's list and the moment you picked it), set in the cockpit's skills list.",
     removedBy:
       "Delete, at the bottom of this page, with “Your ideas” ticked: every idea at once, with its notes, links, map progress and figures, wiped from the file. Expense records attached to an idea stay, as “not attached yet”, unless “Your expense records” is ticked too. Nothing deletes a single idea yet.",
   },
@@ -234,7 +234,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "ScenarioState",
     name: "Map progress",
     holds:
-      "Which branches you took on each idea's map, your own “I'd incorporate at” amount if you typed one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
+      "Which branches you took on each idea's map and which of them you picked yourself, your own “I'd incorporate at” amount if you typed one, your No to buying equipment, a vehicle or tools if you gave one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
@@ -273,7 +273,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "PersonFigure",
     name: "The yearly income you want",
     holds:
-      "The yearly income you said you want, before tax, kept once for you rather than for one idea: the amount and currency, whether it is waiting, agreed, taken back or turned down, where it came from (typed by you) and the days. Agreeing to a new one takes back the one before, which stays here. DotAmi never judges it as enough or not enough. Nothing on screen asks for it yet: the cockpit's first questions, coming next, will.",
+      "The yearly income you said you want, before tax, kept once for you rather than for one idea: the amount and currency, whether it is waiting, agreed, taken back or turned down, where it came from (typed by you) and the days. Agreeing to a new one takes back the one before, which stays here. DotAmi never judges it as enough or not enough. Your destination asks for it (since 2026-10-12): it counts only once you agree to it there.",
     removedBy:
       "Delete, at the bottom of this page, with “The yearly income you said you want” ticked: every one, in every state, wiped from the file. Deleting your ideas leaves it.",
   },
@@ -593,11 +593,20 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
       "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so a list from an earlier launch can't be read again, but it stays in the app's own folder.",
   },
   {
+    store: "localStorage",
+    key: "dotami-cockpit-folds",
+    name: "Which cockpit panels you folded",
+    holds:
+      "Five yes-or-no answers: whether the venture details, the goal bar, the right-hand panel, the map's legend and the what-if bar are folded on the cockpit. Nothing about you or your ideas.",
+    lasts:
+      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens with everything showing again, but the old answers stay in the app's own folder.",
+  },
+  {
     store: "sessionStorage",
     key: "dotami-journey-v3",
     name: "The intake in progress",
     holds:
-      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one.",
+      "What you've entered on the intake so far, including the sentence you typed to describe your idea and your revenue estimates. When the map opens, the sentence (once, with the first idea it opens) and the goals marked on the intake are also saved with the idea in the data file. It also holds the idea open on the map, with its branch picks and your own “I'd incorporate at” amount if you typed one, and your answers on Your destination (since 2026-10-12): your words and their day, business, career or both, your province or territory, and the yearly income you agreed to, if you did.",
     lasts: "Until this window or tab closes.",
   },
   {
@@ -736,7 +745,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. When an update check, a backup or a restore fails, it writes the same, the error's name and code (for a backup that can't be restored, which kind of problem it was, such as damaged), never the error's own message, which could name the file you chose or folders on this computer. The update checker's own reports of an error or a warning, and its progress lines that report a failure, leave one fixed line each; its other progress lines are kept as it wrote them, and one of them names the folder an update downloads to. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
     desktopOnly: true,
   },
@@ -828,7 +837,7 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "loadURL(`${origin}${pathname}`",
-    why: "The Go menu (Home, Your ideas, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
+    why: "The Go menu (Home, Your futures, Settings) and Help → Licences: a path on the same local origin as above. pathname is one of four fixed strings in buildMenu.",
   },
   {
     file: "desktop/main.mjs",

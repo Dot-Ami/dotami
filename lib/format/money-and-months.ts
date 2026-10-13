@@ -41,3 +41,17 @@ export function formatMonth(month: string): string {
   const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month);
   return match ? `${MONTH_NAMES[Number(match[2]) - 1]} ${match[1]}` : month;
 }
+
+/**
+ * Whole cents as the number alone, for an amount box a person edits: "70,000.00", "-1,200.50". No
+ * currency symbol, so it reads back through lib/figures/money.ts parseMoneyToCents exactly; the currency
+ * sits beside the box. The figures' agree prompt writes its boxes the same way.
+ */
+export function formatAmountForBox(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  const whole = Math.floor(abs / 100)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${sign}${whole}.${String(abs % 100).padStart(2, "0")}`;
+}

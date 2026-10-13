@@ -85,6 +85,9 @@ describe("the saved future: its road, the endings picked on it, the person's mon
       forkPicks: fromMap(demoScenarios[0].state.activeBranches),
       targetMonth: null,
       targetMonthSetOn: null,
+      // Asked only on Pick a future (2026-10-12): an idea saved any other way has no answer.
+      lookingFor: null,
+      lookingForOn: null,
       // No job picked for the government's skills list.
       job: null,
     });

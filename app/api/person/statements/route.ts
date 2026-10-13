@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { readJsonWithLimit, rejectedResponse, RequestRejectedError } from "@/lib/api/body-limit";
 import { logRouteError } from "@/lib/api/log-error";
 import { checkRateLimit, clientKeyFromRequest, rateLimitResponse } from "@/lib/api/rate-limit";
-import { addTypedStatement, listTypedStatements } from "@/lib/person/statements";
+import { addDestination, addTypedStatement, listTypedStatements } from "@/lib/person/statements";
 import {
   isValidSaidAt,
   sortStatementsNewestFirst,
@@ -49,7 +49,11 @@ export async function GET() {
   return NextResponse.json(body);
 }
 
-/** POST { text, saidAt? } — appends one verbatim statement. `saidAt` defaults to today (UTC). */
+/**
+ * POST { text, saidAt?, kind? } — appends one verbatim statement. `saidAt` defaults to today (UTC).
+ * `kind: "destination"` marks it as the answer to "where do you want to be" (Your destination, 2026-10-12);
+ * it is no other kind of statement, and any other kind is refused.
+ */
 export async function POST(request: Request) {
   const rateLimit = checkRateLimit(`statements:${clientKeyFromRequest(request)}`, RATE_LIMIT);
   if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
@@ -62,7 +66,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const body = (raw ?? {}) as { text?: unknown; saidAt?: unknown };
+  const body = (raw ?? {}) as { text?: unknown; saidAt?: unknown; kind?: unknown };
+  if (body.kind !== undefined && body.kind !== "destination") {
+    return NextResponse.json({ error: "A statement can only be marked as your destination." }, { status: 400 });
+  }
   const text = typeof body.text === "string" ? body.text.trim() : "";
   if (text.length === 0) {
     return NextResponse.json({ error: "Say something first — the statement is empty." }, { status: 400 });
@@ -87,7 +94,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const statement = await addTypedStatement(prisma, { text, saidAt });
+    const statement =
+      body.kind === "destination" ? await addDestination(prisma, { text, saidAt }) : await addTypedStatement(prisma, { text, saidAt });
     return NextResponse.json({ ok: true as const, statement });
   } catch (error) {
     logRouteError("person/statements POST", error);

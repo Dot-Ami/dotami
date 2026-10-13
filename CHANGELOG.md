@@ -11,6 +11,74 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
+  the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
+  life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's
+  box, *Map it* and its chips, unchanged) and **Show me an example first**, which says plainly that the
+  invented example isn't written yet and links nowhere. *Your destination* (`/start`) asks four
+  questions, one at a time, each with a one-line receipt worked out from the answer and the catalogs:
+  where you want to be in your own words (kept at once, word for word and dated, as your destination),
+  a business, a job or career, or both (a count of the futures listed that include it; nothing is
+  filtered), your province or territory (whose rules apply and how many futures listed are written for
+  it), and the yearly income you want (counted only once you agree to it in its own agree prompt). Each
+  receipt says what is true when it is shown: "I don't know yet" or "Skip" says when an earlier answer
+  is still kept, and turning the income down says it stays in the data file, marked turned down. What
+  the data file already holds (your newest words, the income you agreed to) counts as answered, so
+  coming back in a new tab you are asked only the place and business / career / both. Focus moves to the
+  next question after each answer. The questions are data (`lib/front-door/questions.ts`), so the later
+  step-by-step questionnaire starts from them. *Pick a future* (`/futures`) lists two futures, *Starting any
+  business in Alberta* and *From apprentice to your own shop (Alberta)*, as counts (steps, skills
+  listed, official fees found, cost lines you'd price) and how their sources were checked. The second's
+  sources were all checked by a tool and not read by a person yet, and its card says so in amber; the
+  maintainer decided on 2026-10-13 that such a road may be listed. **Look inside**
+  saves a new idea on that road, with your place and your business / career / both answer, and opens the
+  cockpit on it. *Not here yet?* keeps a note in your words and opens the general road. The cockpit's
+  goal bar shows your destination on an idea with no sentence of its own. Words:
+  `lib/front-door/words.ts`.
+- **Every region of the cockpit folds, and the cockpit works at phone width** (closes #4) — the
+  venture details on the left, the goal bar with its four gauges, the right-hand panel and the map's
+  legend each fold and open again with a button that says what it does (*Fold venture details*, *Show
+  goal and gauges*, *Show the panel: Sole Prop activation*…), and *Fold all panels* in the header folds
+  all four. A folded region keeps its button where it was and hides nothing for good; the goal bar folds
+  to one line that still holds the four gauges. The answers are remembered in this browser
+  (`localStorage`, `dotami-cockpit-folds`). With everything folded at 1280x720, every card on the road
+  fits in the window once the road is scrolled to it, in a road area at least 400 px tall (296 px with
+  everything open). Below 768 px the page never scrolls sideways: the road scrolls sideways in its own
+  area one column at a time, the venture details and the right-hand panel open as full-width sheets, and
+  the legend sits under the road instead of squeezing it to 20 px; from 768 to 1024 px the panel opens as
+  a drawer under the header, over the road. Folding moves focus to the button that now stands for the
+  region; on a phone a sheet takes the keyboard (focus inside, Tab stays in it, Escape closes it, focus
+  goes back to what opened it), and the folded panel's bar never covers the page's last line. Design: [docs/architecture/future-cockpit.md § 2, "Folding and phone
+  width"](docs/architecture/future-cockpit.md); controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
+  `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
+- **The cockpit's part 2 panels fold too** — *What you've told DotAmi / Not told yet* folds with the
+  venture details it sits at the top of, and *Compare the two endings* with the right-hand panel (its
+  strip says *Show the panel: Compare the two endings*). The what-if bar and *This visit* under the map
+  are a fifth region: *Fold the what-if bar* folds them to one line, which still says *Your what-if, not
+  a forecast* and its number while a what-if is on; *Fold all panels* folds it with the rest, and the
+  answer is remembered with the other four (`whatIf`). Controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md).
+- **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
+  ([14a]) — every official fee DotAmi shows is now written once, in
+  [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):
+  its amount in cents, what it is for, the place it applies to as a code (`CA`, `CA-AB`) and its source.
+  Ten fees moved there: the federal online incorporation ($200), express service ($100) and annual
+  return ($12), and the first written future's seven (the apprenticeship, Trades Qualifier and Blue
+  Seal application fees, the Cabinetmaker practical exam, the rewrite fee that applies only if you fail
+  an exam, and the $0 business number). Each quote was found again on its live page by
+  `scripts/check-quotes.mjs` on 2026-10-12. The roads and the federal way to incorporate name a fee by
+  id and copy its amount; a check refuses any line whose amount, source or condition differs from its
+  fee, and a test refuses an amount typed in a road file. No card changed: every step panel of both
+  roads and both money lists draw the same HTML, byte for byte, as before the move
+  (`tests/cost-panels-unchanged.spec.ts`). Alberta's registry fees stay named blanks: the catalogue
+  that holds them stops tools with a human check. **Sole Prop activation** now names seven start-up
+  costs as blanks the person prices: tools and equipment, space deposit, insurance, vehicle, first
+  materials, software, and money to live on while starting; no amount anywhere, and no source for the
+  names yet (the BDC and Futurpreneur templates keep their lines inside spreadsheets;
+  [future-cockpit.md § 6 and § 13](docs/architecture/future-cockpit.md)). In the cockpit, the Money
+  overlay's badge on that card says *7 not priced*, and the Start-up money gauge counts them while the
+  step is on your path.
 - **Pick the job closest to your work, and see the government's skills list for it** ([14a]) — in the
   cockpit's Skills list, an optional search over the 900 jobs of the government's *Occupational and
   Skills Information System* (OaSIS 2025 Version 1.0, Employment and Social Development Canada, under the
@@ -84,7 +152,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta's registry fees stay named lines: the catalogue that holds them stops tools with a human
   check. Every source is a tool check made on 2026-10-12 (195 quotes on 28 pages, found word for word
   on their live pages); none is recorded as read, so every card will say "Checked by a tool" in amber.
-  No screen lists the road yet. New checks: an official fee checked only by a tool must quote its own
+  *Pick a future* lists it (see the front-door entry). New checks: an official fee checked only by a tool must quote its own
   amount, and not as one end of a range; a fee that applies only sometimes (the $50 rewrite) carries
   its condition in a typed `onlyIf`, so a total can leave it out, and a label saying "only if" without
   one is refused; a road none of whose sources has been read carries no read date; and a road's join
@@ -169,6 +237,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or cost lines yet, so those parts show one line saying so until its content lands
   ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
+- **The cockpit screen, part 2** ([14a]) — at the top of the left rail, **What you've told DotAmi**: every
+  answer you gave (never a default you haven't set, never a what-if), with its day (or *day not kept*
+  where nothing keeps one), what it unlocked (road evaluation run without it and with it, in the
+  receipt's own words, from a new pure `withoutAnswer` in [`lib/roads/`](lib/roads/without-answer.ts)), and
+  **Change** and **Take back**; under it, **Not told yet**: each missing answer as *question → unlocks
+  what*, at most five showing, in the order DotAmi asks them, each with **I don't know**, which keeps
+  nothing, and a **one-question box** for the month, savings, structure, equipment, a map pick and your
+  own incorporation number. After every answer, wherever you give it, a **receipt** says what it changed
+  (two runs of the rules compared, never written by a model; for an answer kept with the map, worked out
+  from the idea the save read back, and *Saving your answer…* or *Not saved yet* until then), and the
+  newest lines of the visit stay in **This visit** under the map (its newest line, the rest behind *n more
+  this visit*). The **what-if bar** (*Try first-year sales of $___*) relights the
+  rules under *Your what-if, not a forecast*, moves no money sum and is kept nowhere; **Keep** makes it
+  the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
+  step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
+  score and no highlighted column, with **This is mine**, kept through a new route that answers only
+  DotAmi's own window (`/api/futures/<id>/ending`). It is offered only at a fork whose own pick, not the
+  rules, puts steps on or off the path (the maintainer's answer of 2026-10-13), worked out from the
+  road's own steps by [`lib/cockpit/told.ts`](lib/cockpit/told.ts) `forksToCompare`: today the
+  apprentice road's fork, and not today's Alberta road. There flipping a toggle does move a step between
+  *check first* and *not on your path*, but the tax rules do that whichever side is picked, and both
+  columns' counts come out the same; there the map's toggles pick, and no Compare button shows
+  ([docs/architecture/future-cockpit.md § 2, part 2](docs/architecture/future-cockpit.md),
+  [docs/ui-spec/cockpit/12–15](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
   to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report
@@ -205,6 +297,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   type, `platform-reporting`, is new; the maintainer approved it on 2026-10-12.
 
 ### Changed
+- **A second idea no longer passes through *About you*** (issue #38) — the intake opens on *About you*
+  only for a person with no saved idea yet; anyone with one starts on the screen they came for, and
+  **← Back** still reaches *About you*. Decided on the server when the page is drawn, so the first screen
+  never changes under you.
+- **"Your ideas" is "Your futures"** — on its page, the front door's link, the cockpit's and *Your
+  expenses*' back links and the desktop app's Go menu; **New idea →** is **+ Another future**, which opens
+  the front door's doors. The *What DotAmi knows about you* page keeps "Your ideas" for now.
+- **An idea picked on *Pick a future* keeps what it wasn't asked as "not said"** — that way in doesn't ask
+  the work situation, the kind of venture, equipment or the revenue estimates, so nothing is made up: the
+  rules read the work situation as unanswered, road evaluation lists none of them as told, and the
+  cockpit and the export write "not said" (the cockpit's link to every idea now reads *Your futures*).
+  New storage: `Venture.lookingFor` and `lookingForSetAt` (two added columns), `Venture.notSaid` (one
+  added column), and the employment value `NOT_SAID`.
 - **Every source says how it was checked, and never claims a person read it unless one did.** The
   maintainer decided on 2026-10-11 (option B) that a source may be checked by a tool instead of read
   by a person before it merges, as long as every card says which. A card's "verified <date>" now
@@ -261,6 +366,67 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
+  the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
+  starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
+  say so); a No you give in the one-question box is kept as yours, and Take back removes it for good. A
+  pick of the map's default side (in the box, or on the map's toggle) said *Saved* and was gone after a
+  reload, because the map kept your clicks for the tab only; the forks you picked are now kept with the
+  map's answers, so it reads as your pick after a reload (and the export no longer calls it a default).
+  Compare is worked out without the what-if and says when no row differs; a ticked *done when* line no longer borrows the step's last-change day; the rail says *not
+  given* for no sales target, never $0; the left list's receipt takes the focus where the row you used
+  was; and every *Change*, *Take back*, *Answer*, *I don't know* and *This is mine* names its row for a
+  screen reader ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
+  [`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
+- **About you and the map's "In your words" no longer say "Vault: No external statement source
+  configured."** ([#6](https://github.com/Dot-Ami/dotami/issues/6)). Every copy showed the line, about a
+  feature nobody has set up, in a word that meant nothing to a stranger. The screen now says nothing
+  about it; the route still reports it for any program that reads it
+  ([`components/shared/person-statements.tsx`](components/shared/person-statements.tsx); a browser test
+  in [`e2e/app.spec.ts`](e2e/app.spec.ts)).
+- **"Show the words" draws a provision as the Act lays it out** ([#9](https://github.com/Dot-Ami/dotami/issues/9)).
+  The law store sends a provision as one string with no space between a paragraph and the next label,
+  so ITA 18(12)'s paragraphs (a), (b), (c) and subparagraphs (i), (ii) ran together as one block. Each
+  subsection, paragraph and subparagraph now gets a line of its own, indented by level, and each
+  marginal note (*Capital outlay or loss*) a small italic line above the paragraph it names; a
+  section's heading (*Limitation re cost of leasing passenger vehicle*) gets one too, but only where
+  the store glued the section's number to it, so the law's own words, such as Class 50's definition
+  or a formula's *D is the amount of interest…*, stay ordinary text. No word changes: a reference
+  inside a sentence stays put, even one glued to the next word (*subparagraph (a)(i) or (ii)*,
+  *subparagraph (c)(ii)exceeds* in ITA 248(1), *clauses A to (C)to be used* in ITA 37(1)), and the lines
+  put back together are the store's text, character for character
+  ([`lib/law/provision-lines.ts`](lib/law/provision-lines.ts);
+  [`tests/provision-lines.spec.ts`](tests/provision-lines.spec.ts), on the store's own text for ITA
+  18(12), ITA 18(1) (a)–(l), ITA 248(1), ITA 37(1), ITA 67, ITA 67.3, Reg. 1100(2)(c.3) and Reg. Sch. II
+  Class 50, read 2026-10-12).
+- **A federal rule says it is shown because it is federal** ([#36](https://github.com/Dot-Ami/dotami/issues/36)).
+  Every compliance card said "Shown because you selected <province>.", so an Alberta idea read
+  "because you selected Alberta" on the GST/HST small-supplier rule, which is federal, and an idea with
+  no province yet read "because you selected your province". A rule whose places include Canada as a
+  whole now says "Shown because it is a federal rule, the same in every province and territory.";
+  provincial rules still name the province, and the ride-share cards still name the tag that lit them
+  ([`lib/brain/evaluate.ts`](lib/brain/evaluate.ts); [`tests/brain-evaluate.spec.ts`](tests/brain-evaluate.spec.ts)).
+  The grant cards had the same fault: SR&ED, NRC IRAP and the CSBFP read "Shown because Alberta and
+  your … activity match this program." (or "because your province and …" with no province yet). An
+  eligible federal program now says "Shown because it is a federal program, offered in every province
+  and territory, and your … activity matches it."; provincial programs still name the province, and a
+  program that needs a corporation keeps its own line (maintainer's answer, 2026-10-13).
+- **A screen reader names the intake's province and employment dropdowns.** Their names ("Province /
+  territory", "Current employment") were plain text tied to nothing, so the dropdowns had no name;
+  they are now labels tied to their fields, and so is "Name it — optional" for the name box; the
+  "add your own" kind-of-work box and the box "Other…" opens, named only by their placeholders, now
+  have names of their own
+  ([`components/discovery/intake-page.tsx`](components/discovery/intake-page.tsx) `FieldGroup`; the
+  browser test finds both dropdowns by their names).
+- **The desktop app's log no longer keeps whole error messages from a failed update check, backup or
+  restore.** Four lines in [`desktop/main.mjs`](desktop/main.mjs) wrote the whole error, whose message
+  can name the file you chose and folders on the computer; they now write its name and code
+  (`describeError`), as the rest of the log does, and the update checker's own error reports, warnings
+  and progress lines that report a failure, which can carry an error's message, each leave one fixed
+  line (`updaterLogger`, [`desktop/log.mjs`](desktop/log.mjs)); its other progress lines are kept as
+  given, and one of them names the folder an update downloads to. The failed database update keeps its words, on purpose, as before.
+  [`tests/error-logging.spec.ts`](tests/error-logging.spec.ts) now reads `desktop/` too, writes to
+  the log file included ([`docs/privacy-log.md`](docs/privacy-log.md)).
 - **Ride-share and taxi drivers see the GST/HST rule that applies to them: register from the first paid
   ride.** DotAmi had no driver kind of work and only the general $30,000 rule, so a driver expecting less
   than $30,000 was told on a green card that most businesses "need not register yet". The CRA says the
@@ -279,7 +445,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   figures) at 70% of the GST/HST line, about $21,000, turned the GST/HST card amber and called it
   "approaching" the line. No cited page sets 70%. A GST/HST card now changes only when one of the CRA's
   tests is met; under it, a card read from your confirmed figures says "not over $30,000", and a card
-  read from an estimate only says why it is shown ("Shown because you selected Alberta."). Under the line the card no longer tells
+  read from an estimate only says why it is shown ("Shown because it is a federal rule, the same in
+  every province and territory.", since #36 below). Under the line the card no longer tells
   you flatly that you are a small supplier: most businesses are, and the CRA's page lists exceptions.
 - **A stage card says "default" until you click its toggle** ([#5](https://github.com/Dot-Ami/dotami/issues/5)).
   The GST/HST and Incorporating cards said "your pick" on a default the person never chose, under a
@@ -347,6 +514,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
+  hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
+  server runs on the person's own computer, who can reach it (only programs on the same computer for
+  the desktop app and `npm run dev`; `npm start` listens on every network interface unless given
+  `-H 127.0.0.1`, and the Host check stops web pages, not other machines), what the limit is for (a runaway loop in
+  a script or an agent), that the counts live in memory, and that Next.js fills in the caller's address
+  ([`lib/api/rate-limit.ts`](lib/api/rate-limit.ts); a check in
+  [`tests/rate-limit.spec.ts`](tests/rate-limit.spec.ts)). No behaviour changes.
+- **A plain-words glossary** ([13a]) — 51 entries for the short forms and terms a person meets in
+  DotAmi (the GST/HST and the small supplier, input and investment tax credits, T1, T2, T2125, T5,
+  CCA, SR&ED and T661, the small business deduction, CCPC, eligible dividends, GRIP, LRIP, RDTOH,
+  TOSI, GAAR, B.C.'s PST; sole proprietorship, partnership, corporation, trade name, registry agent,
+  NUANS, the business number, BizPaL; payroll accounts, CPP/EI, T4, TD1, WCB-Alberta; IRAP and the
+  CSBFP; the apprenticeship words of *From apprentice to your own shop (Alberta)*: AIT, the Alberta
+  Student Number, sponsor, period, classroom instruction, journeyperson, Trades Qualifier, Red Seal,
+  Blue Seal, RAP, CTS; NOC and OaSIS; and MCP), each in one or two sentences, no advice, linked to its
+  official page, *checked by a tool on 2026-10-12*: the quote checker found the listed words on every
+  one of its 53 pages (`docs/glossary.md`). The short forms on screen it doesn't explain yet (Holdco,
+  ITA, ISED and others) are listed at its end. Linked from the README and CONTRIBUTING. No app code
+  changes; `tests/glossary.spec.ts` keeps this entry count true and fails when one of the short forms
+  a review found on screen (TD1, T4, T5, RDTOH, GRIP, LRIP, Holdco, Opco, eligible dividend) has
+  neither an entry nor a line in that list.
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
   inside, and sees its whole road at once: steps, the skills they need, official fees and the cost

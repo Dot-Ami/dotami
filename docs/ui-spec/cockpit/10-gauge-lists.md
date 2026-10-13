@@ -6,6 +6,8 @@ Type: panel (list + toggle buttons + forms)
 
 Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built; *Your pick of job* from § 6, Skills as built)
 
+> **Changed 2026-10-12 — part 2.** A mark, a skill of one's own, savings once agreed or a month saved in one of these lists shows its receipt under the list's title ([13-receipts.md](./13-receipts.md)). The lists also open from *Not told yet* (**Open the skills list**, **Open the money list**) and from a told row's **Change**.
+
 ## What it is
 
 Clicking the Skills, Start-up money or Your date gauge opens one of these in the right-hand panel, in

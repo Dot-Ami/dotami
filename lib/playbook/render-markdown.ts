@@ -1,4 +1,5 @@
 import { countReadByAPerson, howCheckedWords, oldestRead, toolCheckQuotes } from "@/lib/engines/shared/citation-check";
+import { isNotSaid } from "@/lib/scenarios/not-said";
 
 import type { PlaybookSkeleton } from "./types";
 
@@ -11,14 +12,18 @@ function escapeYamlScalar(value: string): string {
 }
 
 function formatProfileBlock(profile: PlaybookSkeleton["profile"]): string {
+  // What a picked future was saved without is written "not said", never as the intake's starting values.
+  const targetsSaid = !isNotSaid(profile, "sales-targets");
+  const target = (dollars: number) => (targetsSaid ? dollars.toLocaleString("en-CA") : "not said");
   const lines = [
     `- **Name:** ${profile.name}`,
-    `- **Type:** ${profile.type}`,
+    `- **Type:** ${isNotSaid(profile, "venture-type") ? "not said" : profile.type}`,
     `- **Province:** ${profile.province}`,
-    `- **Target revenue Y1 (CAD):** ${profile.targetRevenueY1.toLocaleString("en-CA")}`,
-    `- **Target revenue Y3 (CAD):** ${profile.targetRevenueY3.toLocaleString("en-CA")}`,
+    `- **Target revenue Y1 (CAD):** ${target(profile.targetRevenueY1)}`,
+    `- **Target revenue Y3 (CAD):** ${target(profile.targetRevenueY3)}`,
     `- **Structure:** ${profile.structure}`,
-    `- **Employment status:** ${profile.employmentStatus}`,
+    // "not-said": a future picked on Pick a future before anyone asked (2026-10-12).
+    `- **Employment status:** ${profile.employmentStatus === "not-said" ? "not said" : profile.employmentStatus}`,
     `- **Hire-first lens:** ${profile.hireFirst ? "yes" : "no"}`,
   ];
 

@@ -235,7 +235,7 @@ test.afterEach(async () => {
 test("start → describe a venture → close → start again: the venture is still there", async () => {
   // First launch on an empty folder: the app creates its own database there.
   let page = await launch();
-  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
   expect(existsSync(path.join(dataDir, "dotami.db"))).toBe(true);
   // The start is in the log, written by desktop/log.mjs: the start line and the database step.
   const startLog = readFileSync(path.join(dataDir, "logs", "server.log"), "utf8");
@@ -307,9 +307,17 @@ test("start → describe a venture → close → start again: the venture is sti
 
   // Second launch, same folder: the venture saved before closing is still there.
   page = await launch();
-  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
+  // A second idea: this person has one saved, so the intake skips About you (#38).
+  await page.getByRole("button", { name: "+ Another future" }).click();
+  const box = page.getByPlaceholder(/What are you building/);
+  await waitForReact(box);
+  await box.fill("Weekend woodworking");
+  await page.getByRole("button", { name: "Map it →" }).click();
+  await expect(page.getByRole("heading", { name: /Did we get this/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue →" })).toHaveCount(0);
   // [8i] Its name is in the encrypted file, never in its bytes.
   await quit();
   expect(filesHolding(dataDir, "My venture")).toEqual([]);
@@ -586,7 +594,7 @@ test("back up on one computer → restore on another: the same ventures and rece
   const computerB = path.join(tmp, "computer-b");
   mkdirSync(computerB);
   page = await launch(computerB);
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
 
   // File → Restore from a backup… — a wrong passphrase first, then the right one. The app restarts
@@ -612,7 +620,7 @@ test("back up on one computer → restore on another: the same ventures and rece
 
   // Computer B, started again: the venture from computer A is there.
   page = await launch(computerB);
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   // What B had before was kept, in its backups folder.
   expect(readdirSync(path.join(computerB, "backups")).some((f) => f.startsWith("dotami-before-restore-"))).toBe(true);
@@ -1368,11 +1376,11 @@ test("Delete with the safety copies ticked: the words are gone from dotami.db an
 
   // The backup saved elsewhere still brings it all back.
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
   await restoreFrom(elsewhere, passphrase);
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   expect(holdsMarker(dbFile, key)).toBe(true);
 });
@@ -1386,7 +1394,7 @@ test("a wipe Delete couldn't finish is finished at the next start, and only when
   // statement deleted without the wipe (its words still in the file's free space) and a safety copy
   // made before that delete (holding them as a live row).
   let page = await launch();
-  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
   // [8i] The data file is encrypted: the words are put in, and checked, with its key.
   const key = await dataKey();
   await quit();
@@ -1406,7 +1414,7 @@ test("a wipe Delete couldn't finish is finished at the next start, and only when
   // An ordinary start, with no note: nothing is wiped or deleted. (This is also the test's control:
   // without the note, the words would stay.)
   page = await launch();
-  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
   await quit();
   expect(holdsMarker(dbFile, key)).toBe(true);
   expect(safetyCopies(dataDir)).toEqual([copyName]);
@@ -1415,7 +1423,7 @@ test("a wipe Delete couldn't finish is finished at the next start, and only when
   // The note Delete leaves when its wipe can't finish: the next start finishes it.
   writeWipePending(dbFile, { backups: [copyName] });
   page = await launch();
-  await expect(page.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
   await quit();
   expect(holdsMarker(dbFile, key)).toBe(false);
   expect(safetyCopies(dataDir)).toEqual([]);
@@ -1457,7 +1465,7 @@ test("an existing plain data file: the window asks first, and Encrypt now encryp
 
   // The next start asks nothing and opens it.
   const again = await launch();
-  await expect(again.getByRole("heading", { name: /Map any venture/ })).toBeVisible();
+  await expect(again.getByRole("heading", { name: /See the road/ })).toBeVisible();
 });
 
 test("Not now keeps the file plain and asks again; Never keeps it plain and doesn't; the Settings switch brings the question back ([8i])", async () => {
@@ -1641,7 +1649,7 @@ test("turning locking off: a warning first, then the next start decrypts the dat
   // The next start decrypts, asks nothing, and every idea is still there.
   const before = desktopLog().length;
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   await page.goto(new URL("/settings", page.url()).toString());
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your data file isn't encrypted.");
@@ -1801,7 +1809,7 @@ test("an encrypted data file left with a write cut off part-way (a hot journal, 
   // The start goes on (every start used to stop with "DotAmi couldn't start."), and nothing was lost.
   const before = desktopLog().length;
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   expect(desktopLog().slice(before)).not.toContain("[desktop] stopped:");
   await quit();
@@ -1849,7 +1857,7 @@ test("a plain data file beside a decryption's owed wipe, and no key at all: DotA
   // The key is gone, but nothing that needs it is left: the start goes on and finishes the wipe.
   const before = desktopLog().length;
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   await quit();
   const thisStart = desktopLog().slice(before);
@@ -1887,7 +1895,7 @@ test("a data file whose key can't be opened: nothing changes, the app says what 
   // Put back (as from the Recycle Bin): everything comes back.
   writeFileSync(keyFile, readFileSync(aside));
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
 });
 
@@ -1944,7 +1952,7 @@ test("a lost key: Restore from a backup… sets the locked file and its key asid
   expect(fileKind(path.join(dataDir, "dotami.db"))).toBe("encrypted");
 
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
   await page.goto(new URL("/settings", page.url()).toString());
   await expect(page.getByRole("region", { name: "Data and backups" })).toContainText("Your data file is encrypted on this computer.");
@@ -1979,7 +1987,7 @@ test("a lost key: Start fresh… asks twice, keeps the locked file and its key i
   await window.getByRole("button", { name: "Start fresh…" }).click();
   await window.getByRole("button", { name: "Start fresh", exact: true }).click();
   page = await mainWindow(app!);
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByText("Nothing saved yet.")).toBeVisible();
   await quit();
 
@@ -2070,7 +2078,7 @@ test("a key file that opens but holds another key: the lost-key window, not a fa
   // The right key put back: everything comes back.
   writeFileSync(keyFile, rightKey);
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
 });
 
@@ -2097,6 +2105,6 @@ test("a missing data file beside a key that opens: the key is kept, so the old f
   // The old data file put back opens with that same key: nothing was stranded.
   writeFileSync(dbFile, readFileSync(aside));
   page = await launch();
-  await page.getByRole("link", { name: "Your ideas →" }).click();
+  await page.getByRole("link", { name: "Your futures →" }).click();
   await expect(page.getByRole("heading", { name: "My venture", level: 2 })).toBeVisible();
 });

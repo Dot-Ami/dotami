@@ -1,3 +1,4 @@
+import type { LookingFor } from "@/lib/front-door/questions";
 import type { IntakeDraft, IntakeGoalId } from "@/lib/journey/types";
 
 /**
@@ -16,6 +17,13 @@ export interface FirstSave {
   firstWords?: { text: string; saidAt: string };
   /** Kept on the idea, shown back on its card; no rule reads them. */
   goals?: IntakeGoalId[];
+  /**
+   * The road picked on *Pick a future* (a road id from the catalog), kept with the moment it was picked
+   * (2026-10-12). Left out by the intake, whose ideas start on today's general road.
+   */
+  roadId?: string;
+  /** The answer to "a business, a job or career, or both?" on *Your destination*, kept with its moment. */
+  lookingFor?: LookingFor;
 }
 
 /** The first-save extras from the intake draft. `today` is the person's own day, used if the typing day is missing. */

@@ -53,6 +53,8 @@ engine did all of it. About 25 seconds, loops.*
 - **The law, on the card.** Every catalog entry cites the statute, the regulation or the tax
   authority's own page (today: the Income Tax Act, the Regulations, CRA and provincial
   sources), with a verification status and the day it was checked, saying how: read by a person, read by someone the record doesn't name, read by an AI model, or checked by a tool that found the quoted words on the page.
+  The short forms on the cards (GST/HST, T2125, CCPC, SR&ED, Red Seal…) are explained in plain
+  words, each linked to its official page, in the [glossary](docs/glossary.md).
 - **Your ideas.** Save as many ventures as you like, stage them (idea → prototype → first
   customers → established), cross-reference the ones that overlap or could become sister
   companies.
@@ -152,7 +154,7 @@ the app, starts it on a fresh throwaway database and drives it in Chromium the w
 (first time: `npx playwright install chromium`). CI runs them on every pull request too.
 **Desktop test:** `npm run test:desktop` builds the desktop app's server and drives the real app
 (start → describe a venture → close → start again → still there). CI runs it on Windows against
-the packaged app.
+the packaged app, split across three machines that each run a third of the tests.
 
 ## Contribute
 
@@ -187,5 +189,6 @@ verified yourself, no self-promotion. Sign your commits off with the [DCO](DCO.m
 | Catalog conventions (read before editing a catalog) | `docs/engines/README.md` |
 | Architecture | `docs/architecture/` |
 | Where this is going | `docs/roadmap.md` |
+| What the short forms mean (GST/HST, T2125, CCPC, SR&ED…) | [`docs/glossary.md`](docs/glossary.md) |
 | Screenshots and the GIF above | `docs/media/` — from a made-up venture on an empty database |
 | What changed between snapshots | `CHANGELOG.md` — entry dates live on the entries themselves |

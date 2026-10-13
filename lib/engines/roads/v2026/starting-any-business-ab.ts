@@ -25,7 +25,8 @@ import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
  * its live page by `node scripts/check-quotes.mjs --url … --quote …` on CHECKED_ON, and nobody is
  * recorded as having read these pages, so none has a read date. A line says only what its quotes say,
  * and no amount is written anywhere: Alberta's registry fees sit in a catalogue that stops tools, and
- * permit fees vary, so they are named lines the person prices.
+ * permit fees vary, so they are named lines the person prices. Sole Prop activation also carries the
+ * seven named start-up cost lines the design names (tools, a space deposit, insurance, …), names only.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
@@ -752,6 +753,25 @@ const businessAccount: RoadStep = {
   ],
 };
 
+// ---- Named start-up cost lines (2026-10-12) ----------------------------------------------------------
+
+/**
+ * The start-up costs the design names (docs/architecture/future-cockpit.md § 5 and § 6, "The official
+ * fees catalog and start-up cost lines as built"), on the first step where the business runs. Names
+ * only: each is a blank the person prices through the agree prompt, never an amount DotAmi chose. None
+ * cites a source for its name: the BDC and Futurpreneur cash-flow templates keep their lines inside
+ * spreadsheets, which the quote checker can't check, and their pages don't list these names.
+ */
+const startUpCosts: NamedCostLine[] = [
+  named("cost-start-tools-equipment", "Tools and equipment"),
+  named("cost-start-space-deposit", "Space deposit"),
+  named("cost-start-insurance", "Insurance"),
+  named("cost-start-vehicle", "Vehicle"),
+  named("cost-start-first-materials", "First materials"),
+  named("cost-start-software", "Software"),
+  named("cost-start-living-while-starting", "Money to live on while starting"),
+];
+
 // ---- Legal requirements, from the compliance catalog where it cites one ----------------------------
 
 /**
@@ -823,6 +843,7 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
     "branch-hire-first-employee": ["writeoff-vehicle"],
   },
   doneWhen: stageDoneWhen,
+  costs: { "stage-1-sole-prop-activation": startUpCosts },
   needs: { "stage-2b-mandatory-gst-registration": [SKILL_GST_HST_REGISTRATION] },
   addedSteps: [
     { columnId: "tier-1-before", step: registerName },

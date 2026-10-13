@@ -13,8 +13,10 @@ import { useCallback, useEffect, useState } from "react";
  * never touches the journey draft — the evaluator cannot see anything here, by construction.
  *
  * Fail-soft is on-surface: no database → "saving is off" and the statement stays in this
- * tab (sessionStorage) tagged as unsaved; no vault → one line saying so. An empty list is
- * never silently indistinguishable from "couldn't load".
+ * tab (sessionStorage) tagged as unsaved. An empty list is never silently indistinguishable
+ * from "couldn't load". No external source ("vault") → nothing on screen (#6, 2026-10-12):
+ * no copy of DotAmi has one, so a line saying so only told every person about a feature they
+ * never set up. The route still reports it; a build that adds a source adds its own line.
  */
 
 type Availability = { available: boolean; reason?: string };
@@ -22,6 +24,7 @@ type Availability = { available: boolean; reason?: string };
 interface StatementsPayload {
   statements: PersonStatement[];
   db: Availability;
+  // Read by nothing on this screen; kept in the type because the route still sends it.
   vault: Availability;
 }
 
@@ -198,9 +201,6 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
       {/* Status lines — the guardrails, visible */}
       {loaded && !loaded.db.available ? (
         <p className="text-[11px] text-amber">{loaded.db.reason}</p>
-      ) : null}
-      {loaded && !loaded.vault.available ? (
-        <p className="font-mono text-[10px] text-stone-dim">Vault: {loaded.vault.reason}</p>
       ) : null}
       {loadError ? <p className="text-[11px] text-amber">{loadError}</p> : null}
 

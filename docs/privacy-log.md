@@ -107,13 +107,43 @@ person is asked).
   `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
   answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
   any program on this computer, like the figures list. Nothing new leaves the computer.
+- **The cockpit's second part asks a few more things, and keeps one more (2026-10-12).** The cockpit now
+  lists *What you've told DotAmi* (every answer kept, with its day, worked out from what is already
+  stored; nothing new is stored for the list) and *Not told yet*, whose one-question box asks, one at a
+  time and each optional with *I don't know*: the month and year, savings for starting (through the agree
+  prompt, as before), the structure, whether the person is buying equipment, a vehicle or tools, a pick at
+  each of today's map forks, and the yearly sales at which they'd incorporate. Each is kept where the same
+  answer is already kept (the idea's saved map, `Venture.targetMonth`, a figure). **New:** *This is mine*
+  under *Compare the two endings* keeps the ending the person picked at a fork of a road other than today's
+  in `Venture.forkPicks` (a column already listed) through a new route that answers only DotAmi's own
+  window (`POST /api/futures/<id>/ending`, [`app/api/futures/[id]/ending/route.ts`](../app/api/futures/[id]/ending/route.ts)).
+  The what-if bar's number is kept nowhere; only **Keep** writes it, as the idea's own first-year sales
+  (the intake's Year 1 field, kept with the map), never as a figure. Receipts and *This visit* are
+  worked out on screen and kept nowhere. Nothing new leaves the computer.
+- **The idea's saved map keeps two more of the person's own answers (2026-10-12, after review).** In the
+  same JSON as the GST and incorporation picks (`ScenarioState.activeBranches`), each under its own key
+  ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)): `decided`, the forks the person
+  picked a side at (until now kept in the browser tab only, so a pick of the map's default side was lost
+  on reload), and `equipmentNo`, set only when the person answered No to buying equipment, a vehicle or
+  tools in the one-question box. A Yes is kept where it was (`Venture.capitalPurchasePlanned`); the
+  intake's chip left off is no longer saved as a no. Both are written only by the idea's save, read
+  wherever the idea is read (the cockpit, its export, `/api/readout`), and deleted with the idea. The save route (`/api/scenario/save`) now
+  also puts the idea as it was kept, read back from the data file, in its answer to whatever saved it on
+  this computer (the cockpit or the intake); nothing new leaves the computer.
+- **Seven more cost lines the person may price on today's Alberta road (2026-10-12).** *Sole Prop
+  activation* now names tools and equipment, a space deposit, insurance, a vehicle, first materials,
+  software and money to live on while starting
+  ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](../lib/engines/roads/v2026/starting-any-business-ab.ts)).
+  Each is a blank with *Add your quote*; a number the person gives is kept the way the line above says
+  (a `start-up-cost-line` figure, proposed then agreed). No new kind of answer, table or route; nothing
+  new leaves the computer.
 - **The job the person picks for the government's skills list is kept with the idea (2026-10-12).** The
   cockpit's Skills list asks, optionally, for *the job closest to the work you'd do yourself*, searched
   among the government's 900 job names, which are part of the app (nothing is looked up online). The pick
   is kept as the job's code on the government's list and the moment it was picked, in two new optional
   columns on the idea (`Venture.occupationCode`, `occupationPickedAt`; a hand-written migration of two plain
   column additions,
-  [`prisma/migrations/20261012120000_job_pick`](../prisma/migrations/20261012120000_job_pick/migration.sql)).
+  [`prisma/migrations/20261013000000_job_pick`](../prisma/migrations/20261013000000_job_pick/migration.sql)).
   The person's marks on that job's list are skill marks like any other (`SkillMark`), kept for the person,
   so they stay when the job is changed or taken back. A new route answers only DotAmi's own window
   (`POST /api/futures/<id>/job`), and `GET /api/futures/<id>` now gives back the pick. The job's code is
@@ -128,6 +158,70 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **The way in: Your destination and Pick a future (2026-10-12).** The front door's first door,
+  *Start from where I want to be*, asks four questions
+  ([`lib/front-door/questions.ts`](../lib/front-door/questions.ts)). Where the answers go:
+  - *Where you want to be*, in the person's own words: kept at once as one of their statements
+    (`PersonStatement`, `kind: "destination"`), word for word, dated the day they gave in their own
+    calendar, through DotAmi's own statements route. "I don't know yet" keeps nothing new and deletes
+    nothing: words kept before stay, still shown on top of the futures picked there, and the receipt
+    says so and points to Delete (statements go all at once).
+  - *The yearly income you want, before tax*: proposed, then kept only once the person agrees in the
+    prompt (`PersonFigure`, kind `income-wanted`); three new routes on DotAmi's own server
+    (`/api/person-figures/propose`, `/agree` from DotAmi's own window only, `/discard`). "Skip" keeps
+    nothing new; turning it down keeps it in the data file as *discarded*, shown nowhere, as a
+    turned-down figure is, and the receipt says so (*"Turned down. It stays in your data file, marked
+    turned down and shown nowhere, until Delete on What DotAmi knows about you removes it."*). Neither
+    takes back an income agreed before, and the receipt says it still stands. A number proposed and
+    then left (the prompt closed without deciding) stays *proposed*, shown nowhere, until Delete.
+  - `/start` is drawn on the server, which reads the newest destination and the agreed income from the
+    data file (`lib/front-door/kept.ts`) to show them as answered; nothing new is kept by that read, and
+    nothing leaves the computer.
+  - *A business, a job or career, or both* and *the province or territory*: held in the browser tab's
+    draft (`dotami-journey-v3`, with what the other two came to and the income's amount if agreed) until
+    a future is picked. Picking one saves a new idea with the place, the road picked (`Venture.roadId`,
+    `roadChosenAt`) and that answer with its moment (new columns `Venture.lookingFor`,
+    `lookingForSetAt`, migration `20261012120000_looking_for`, two plain added columns). The idea's
+    employment status is kept as **not said** (a new value, `NOT_SAID`), since this way in doesn't ask
+    it. Its kind of venture, equipment and revenue estimates aren't asked either: their columns keep the
+    intake's starting values (*Service*, no, 0), and a new column, `Venture.notSaid` (migration
+    `20261012130000_not_said`, one plain added column, `[]` for every other idea), lists them as not
+    said, so no screen or export shows those values as the person's. Pick a future lists road 0 and,
+    since the maintainer's yes of 2026-10-13, the first written future, whose sources no person has read
+    yet (its card says so); an idea picked on it keeps that road's id in `Venture.roadId`, as above.
+  - *Not here yet?* on Pick a future keeps the person's note as one of their statements.
+  The cockpit's read of an idea (`GET /api/futures/<id>`) now also gives the person's newest destination,
+  so the goal bar can show it on an idea with no sentence of its own. None of it is read by a rule, and
+  nothing leaves the computer: these answers go only to DotAmi's own server, never to a model, and the
+  front door's first door says *"What you type here stays on this computer."* only of itself (the second
+  door's sentence still goes to the intake's parser, which uses a model when a key is set up).
+- **The desktop app's log keeps less when an update check, a backup or a restore fails (2026-10-12).**
+  Four lines in [`desktop/main.mjs`](../desktop/main.mjs) wrote the whole error into the log
+  (`logs/server.log` in the data folder): a failed update check, a failed backup, a refused restore and
+  a restore that couldn't replace the data. An error's message can name the file the person chose and
+  the folders around it, which hold their Windows account name. They now write the error's name and
+  code, as DotAmi's routes already did (for a refused restore, which of a few kinds of refusal, such as
+  "damaged"). The update checker's own error report, which it writes with the error's stack, now leaves
+  one fixed line, and so do its warnings and the progress lines that report a failure, which can carry
+  an error's message (`updaterLogger` in [`desktop/log.mjs`](../desktop/log.mjs)). Its other progress
+  lines are written as given, as before; one of them names the folder an update downloads to. The dialogs the person sees are unchanged. One write keeps the error's words on
+  purpose, as before: a failed database update, which update failed and what the database objected to.
+  [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
+  for the same rule, writes to the log file included.
+- **Which cockpit panels the person folded, in the browser's own storage (2026-10-12).** The cockpit's
+  venture details, goal bar, right-hand panel and map legend each fold, and the four yes-or-no answers
+  are kept in `localStorage` under `dotami-cockpit-folds`, a JSON object such as
+  `{"rail":true,"goal":false,"panel":false,"legend":true}` ([`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)),
+  so the cockpit opens the way the person left it. Nothing about the person or their ideas is in it,
+  nothing goes in the data file, nothing leaves the computer. Listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, so `/your-data` shows it. In
+  the desktop app each launch has its own local address and so its own empty storage: the answers last
+  until the app closes, and earlier launches' answers stay in the app's own folder, unread.
+- **One more yes-or-no answer in the cockpit's folds (2026-10-13).** The what-if bar under the map folds
+  too, so `dotami-cockpit-folds` now holds five answers, the fifth under `whatIf`
+  (`{"rail":true,"goal":false,"panel":false,"legend":true,"whatIf":false}`). Still nothing about the
+  person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
+  `/your-data` says five.
 
 ### Packages that ship
 
@@ -150,8 +244,19 @@ person is asked).
   measure). Not a package: it can reach nothing. The third-party notices list it with the licence's
   attribution line, under *Data*.
 
+### What the person must agree to
+
+- **The yearly income on Your destination (2026-10-12)** goes through an agree prompt of its own
+  ([`components/front-door/income-agree-prompt.tsx`](../components/front-door/income-agree-prompt.tsx)):
+  the amount, typed by the person, per year, with the day, and *"It shows as your target at the top of
+  each future you open. Nothing compares it with anything."*; **Agree** or **No, I'll do it myself**.
+  Only DotAmi's own window can agree (`Sec-Fetch-Site: same-origin`, as for figures).
+
 ### How to remove it
 
+- **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
+  cleared. Opening every panel again leaves the key in place with four "no" answers; DotAmi has no button
+  that removes it.
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
   statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
   ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements
@@ -172,11 +277,21 @@ person is asked).
   that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
   removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
   figure is, and agreeing to a new one takes back the old one. Rows stay until Delete, as above.
+- **From *What you've told DotAmi* (2026-10-12):** **Take back** on a row removes that one answer the same
+  way: a mark or a status through its route, ticks emptied, a quote or savings retracted (kept as
+  retracted), the month cleared, an ending picked on a road other than today's removed from
+  `Venture.forkPicks`, and the idea's own answers returned to not given (the structure, a map pick back to
+  the map's default, kinds of work, sales, hire-first, equipment, the incorporation number). The place, the
+  kind of venture and the work situation can be changed but not taken back (the map needs them).
 - **The job picked (2026-10-12):** **Take back** in the cockpit's Skills list clears it from the idea (both
   columns); Delete on `/your-data` with "Your ideas" ticked removes it with the idea. Marks on its list go
   with "Your skill marks", or one by one with *I don't know*.
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
+- **Your destination's answers**: the destination goes with "Your statements" on Delete, the income with
+  "The yearly income you said you want", and the business / career / both answer and the road with the
+  idea ("Your ideas"). The answers held in the browser tab go when the tab closes, or when the front
+  door's **Map it** starts a new journey.
 
 ### What the policy will need to say
 

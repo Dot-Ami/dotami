@@ -24,7 +24,7 @@ export { roadStartingAnyBusinessAB } from "./starting-any-business-ab";
 
 /**
  * Every road, in the order added (never ranked: docs/architecture/future-cockpit.md, decision 3).
- * No screen lists them yet: the map draws road 0, and *Pick a future* comes later in phase 1.
+ * *Pick a future* (components/front-door/pick-future-page.tsx, 2026-10-12) lists them in this order.
  */
 export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB, roadApprenticeToOwnShopAB];
 

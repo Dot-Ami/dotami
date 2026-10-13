@@ -12,6 +12,7 @@ import type { SkillMarkValue, StepStatus } from "@/lib/futures/types";
 import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { isNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES, PROVINCE_LABELS, type Scenario } from "@/lib/scenarios/types";
 
 import type { AgreedPlanning } from "./agreed";
@@ -247,12 +248,18 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
     answer.place(PROVINCE_LABELS[profile.province] ?? profile.province),
     PROVINCES.filter((p) => p !== profile.province).map((province) => withProfile({ province })),
   );
+  // A future picked on Pick a future was saved with the intake's starting kind, unasked (2026-10-12):
+  // it is tried like any other, but never listed as something the person told DotAmi.
+  const typeSaid = !isNotSaid(profile, "venture-type");
   add(
     "idea:venture-type",
-    answer.ventureType(VENTURE_TYPE_WORDS[profile.type] ?? profile.type),
+    typeSaid
+      ? answer.ventureType(VENTURE_TYPE_WORDS[profile.type] ?? profile.type)
+      : answer.ventureTypeUnanswered(VENTURE_TYPE_WORDS[profile.type] ?? profile.type),
     (Object.keys(VENTURE_TYPE_WORDS) as (keyof typeof VENTURE_TYPE_WORDS)[])
       .filter((t) => t !== profile.type)
       .map((type) => withProfile({ type })),
+    typeSaid,
   );
   add(
     "idea:work-situation",
@@ -260,6 +267,8 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
     (Object.keys(EMPLOYMENT_WORDS) as (keyof typeof EMPLOYMENT_WORDS)[])
       .filter((e) => e !== profile.employmentStatus)
       .map((employmentStatus) => withProfile({ employmentStatus })),
+    // "Not said" was never told, so it is not on the list of what the person told DotAmi.
+    profile.employmentStatus !== "not-said",
   );
   add(
     "idea:structure",
@@ -275,8 +284,9 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
   // The idea keeps no record of whether the hire-first toggle was touched: on means the person
   // switched it on; off may be the default, so it is worded as a state, not as something they did.
   add("idea:hire-first", answer.hireFirst(profile.hireFirst), [withProfile({ hireFirst: !profile.hireFirst })], profile.hireFirst);
-  // Unanswered reads as "no" to the rules (lib/brain), and says so.
-  const equipmentAnswered = profile.capitalPurchasePlanned !== undefined;
+  // Unanswered reads as "no" to the rules (lib/brain), and says so. A picked future's is not said even
+  // when a caller filled in "no" for it.
+  const equipmentAnswered = profile.capitalPurchasePlanned !== undefined && !isNotSaid(profile, "equipment");
   const equipment = profile.capitalPurchasePlanned ?? false;
   add(
     "idea:equipment",
@@ -303,8 +313,8 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
 
   // The map's own picks (today's general road's two forks, kept with the map): flipping one is the
   // other answer the person can give there. A pick the person hasn't clicked is the map's default. The
-  // map keeps its clicks for the session only, but a saved pick off the default was the person's
-  // (`isBranchDecided`), so only a pick still on the default reads as one after a reload.
+  // map keeps the person's clicks with its answers (since 2026-10-12, the default side included), and a
+  // saved pick off the default was the person's either way (`isBranchDecided`).
   for (const fork of generalRoadV2026.forks) {
     const picked = scenario.state.activeBranches[fork.id];
     if (!fork.sides.includes(picked)) continue;

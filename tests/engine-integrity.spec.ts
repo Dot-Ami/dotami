@@ -17,6 +17,7 @@ import { FIGURE_KINDS } from "@/lib/figures/types";
 import { allCatalogCitations } from "@/lib/engines/all-citations";
 import { incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-routes";
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { officialFeesV2026 } from "@/lib/engines/fees/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { oasisCatalogCitations } from "@/lib/engines/oasis/v2026";
 import { citationCheckProblems, howChecked } from "@/lib/engines/shared/citation-check";
@@ -101,6 +102,8 @@ describe("engine catalog integrity", () => {
       cfeCatalogV2026.nodes.reduce((n, node) => n + node.citations.length, 0) +
       // The ways to incorporate: one source per line (2026-10-11).
       incorporationRoutesV2026.reduce((n, route) => n + route.lines.length, 0) +
+      // The official fees catalog: one source per fee (2026-10-12).
+      officialFeesV2026.length +
       entryCatalogs.reduce(
         (n, { catalog }) => n + (catalog.entries as readonly { citations: readonly unknown[] }[]).reduce((m, e) => m + e.citations.length, 0),
         0,

@@ -72,6 +72,18 @@ describe("parseScenarioInput", () => {
     const bare = parseScenarioInput(validScenario);
     expect(bare?.profile.structureSource).toBe("user");
     expect(bare?.profile.activityTags).toEqual([]);
-    expect(bare?.profile.capitalPurchasePlanned).toBe(false);
+    // Buying equipment left out is not answered (the rules read it as no and say so), never a "no" the
+    // person didn't give; an explicit false is the person's no and is kept (2026-10-12).
+    expect(bare?.profile.capitalPurchasePlanned).toBeUndefined();
+    const no = structuredClone(validScenario);
+    (no.scenario.profile as Record<string, unknown>).capitalPurchasePlanned = false;
+    expect(parseScenarioInput(no)?.profile.capitalPurchasePlanned).toBe(false);
+  });
+
+  it("keeps which of the map's forks the person picked, and only those", () => {
+    const picked = structuredClone(validScenario);
+    (picked.scenario.state as Record<string, unknown>).decidedBranchIds = ["gstTiming", "gstTiming", "noSuchFork", 7];
+    expect(parseScenarioInput(picked)?.state.decidedBranchIds).toEqual(["gstTiming"]);
+    expect(parseScenarioInput(validScenario)?.state.decidedBranchIds).toEqual([]);
   });
 });

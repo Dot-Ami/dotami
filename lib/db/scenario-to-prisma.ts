@@ -66,6 +66,8 @@ function mapEmployment(status: VentureProfile["employmentStatus"]): EmploymentSt
       return "UNEMPLOYED";
     case "other":
       return "OTHER";
+    case "not-said":
+      return "NOT_SAID";
     default:
       return "OTHER";
   }

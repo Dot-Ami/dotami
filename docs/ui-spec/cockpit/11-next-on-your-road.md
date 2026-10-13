@@ -6,6 +6,8 @@ Type: list of buttons
 
 Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
+> **Changed 2026-10-12 — part 2.** Above it, under the map: the what-if bar ([14-what-if-bar.md](./14-what-if-bar.md)) and, once an answer was given this visit, *Since last time* ([13-receipts.md](./13-receipts.md)).
+
 ## What it is
 
 A strip under the map, a region named *Next on your road*: the heading *Next on your road · the order

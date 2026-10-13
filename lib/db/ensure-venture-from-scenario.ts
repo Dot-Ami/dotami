@@ -11,8 +11,8 @@ const STUB_EMAIL = process.env.STUB_USER_EMAIL ?? "stub@dotami.local";
  * Finds or inserts the database row for a scenario (keyed by the scenario id in `scenarioSeedKey`)
  * and its branch state. Used by /api/scenario/save.
  *
- * `firstSave` (the sentence typed on the front door, the goal picks) is written only when this call
- * creates the idea: the sentence as one dated statement linked to it, the goals on it. A save of an
+ * `firstSave` (the sentence typed on the front door, the goal picks; from Pick a future, the road and the
+ * business / career / both answer) is written only when this call creates the idea: the sentence as one dated statement linked to it, the goals on it. A save of an
  * idea that already exists ignores it, so nothing the person deleted is ever written back.
  */
 export async function ensureVentureFromScenario(
@@ -49,11 +49,18 @@ export async function ensureVentureFromScenario(
       structureSource: scenario.profile.structureSource ?? "user",
       hireFirst: scenario.profile.hireFirst,
       activityTags: scenario.profile.activityTags ?? [],
-      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
+      // Only a yes is this column's true; a No the person gave goes with the map's answers below.
+      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned === true,
       employmentStatus,
       stage,
+      // What the idea was saved without (a picked future), so nothing reads it as said; [] for the rest.
+      notSaid: scenario.profile.notSaid ?? [],
       // The goal picks are written on creation only: `update` below never touches them.
       goals: firstSave.goals ?? [],
+      // So are Pick a future's road and the business / career / both answer, each with its moment
+      // (2026-10-12): a later save of the map never moves either.
+      ...(firstSave.roadId ? { roadId: firstSave.roadId, roadChosenAt: new Date() } : {}),
+      ...(firstSave.lookingFor ? { lookingFor: firstSave.lookingFor, lookingForSetAt: new Date() } : {}),
     },
     update: {
       name: scenario.profile.name,
@@ -66,9 +73,12 @@ export async function ensureVentureFromScenario(
       structureSource: scenario.profile.structureSource ?? "user",
       hireFirst: scenario.profile.hireFirst,
       activityTags: scenario.profile.activityTags ?? [],
-      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
+      // Only a yes is this column's true; a No the person gave goes with the map's answers below.
+      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned === true,
       employmentStatus,
       stage,
+      // Every save says it again: the cockpit's carry the list back, the intake's carry none (it asks all).
+      notSaid: scenario.profile.notSaid ?? [],
     },
   });
 
@@ -79,15 +89,15 @@ export async function ensureVentureFromScenario(
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
-      activeBranches: writeMapAnswers(scenario.state),
+      // The picks and the person's own answers kept with the map, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state, scenario.profile.capitalPurchasePlanned),
     },
     update: {
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
-      activeBranches: writeMapAnswers(scenario.state),
+      // The picks and the person's own answers kept with the map, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state, scenario.profile.capitalPurchasePlanned),
     },
   });
 

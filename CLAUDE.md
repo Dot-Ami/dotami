@@ -47,17 +47,31 @@ says where it is going.
 
 ## What the app is
 
-- Pages: `/` (free-text front door) → `/intake` (about you · confirm · ground it) →
+- Pages: `/` (the front door, since 2026-10-12 three doors: *Start from where I want to be* → `/start`
+  (*Your destination*: four questions from `lib/front-door/questions.ts`, a receipt after each from
+  `lib/front-door/receipts.ts`; drawn on the server, which reads the newest destination and agreed income
+  so they count as answered, `lib/front-door/kept.ts`) → `/futures` (*Pick a future*: the roads in
+  `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 and, since the maintainer's yes of 2026-10-13, the
+  first written future, whose card says in amber that no person has read its sources, design § 13), in the order added, as counts; a pick saves an idea on
+  that road and opens the cockpit); *I already have an idea*, the
+  free-text box; *Show me an example first*, not written yet, no link; words in `lib/front-door/words.ts`)
+  → `/intake` (about you, only before the person's first saved idea, issue #38 · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel,
+  the legend and (since 2026-10-13) the what-if bar each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; part 2, since 2026-10-12: *What you've told DotAmi /
+  Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
+  runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
+  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
-  say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
-  first written future, has no screen yet); the step panel, which keeps node detail whole; playbook
+  say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
+  since 2026-10-13); the step panel, which keeps node detail whole; playbook
   export; the cards' colours come from the rules run on the venture's own branch
-  picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (every saved venture, its stage, notes,
+  picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (*Your futures*, until 2026-10-12 *Your
+  ideas*: every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
   with Part 1 of `docs/architecture/settings-and-edge-cases.md` by a test, plus what is true of
   this copy today; the settings marked live there, so far Figure reminders and Encrypt the data file, can be changed and are
@@ -72,7 +86,10 @@ says where it is going.
   · `/licences` (the third-party notices: every package that ships, its version and licence text,
   read from `THIRD-PARTY-NOTICES.txt`, which `desktop/notices.mjs` writes at build time; packaging
   the installer stops if a package that ships has no entry).
-- API: `intent/parse` · `person/statements` · `scenario/save` · `playbook` · `ventures`
+- API: `intent/parse` · `person/statements` (since 2026-10-12 also `kind: "destination"`) ·
+  `person-figures/propose` · `/agree` (DotAmi's own window only) · `/discard` (the yearly income the
+  person wants) · `scenario/save` (its first save may carry Pick a future's road and *business / career
+  / both* answer) · `playbook` · `ventures`
   (+ `[id]`, `[id]/links`) · `readout` (everything the map knows about a venture, as JSON) ·
   `law/provision` (a provision's words from an optional local statute store) · `expenses` (list,
   `propose`, and the page-only `agree` / `retract` / `discard` / `attach` / `receipt` /
@@ -84,9 +101,10 @@ says where it is going.
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
   (GET what the cockpit keeps for an idea: its road, picks, month, job picked and step progress, the
-  person's skill marks, their agreed yearly income and the idea's first sentence; + `/progress`, `/date`
-  and `/job`, POST a step's status or ticks, the person's month and their pick of job) · `skill-marks`
-  (POST one mark); the four writes answer only DotAmi's own window.
+  person's skill marks, their agreed yearly income, the idea's first sentence and the person's newest
+  destination; + `/progress`, `/date`, `/ending` and `/job`, POST a step's status or ticks, the person's
+  month, the ending picked at a fork of a road other than road 0, and their pick of job) · `skill-marks`
+  (POST one mark); the five writes answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
@@ -105,10 +123,16 @@ says where it is going.
   general road), `forkPicks` (the ending picked at each fork of any road but road 0, whose two picks stay
   in `ScenarioState.activeBranches`, which the map rewrites on every save), `targetMonth` and, since
   2026-10-12, `occupationCode` (the job the person picked as closest to their work, for the government's
-  skills list), each answer with its moment; `province` is written in the file as its international code, `CA-AB`, through the enum's
+  skills list), each answer with its moment; since 2026-10-12 `lookingFor` (the *business / career / both* answer, kept with
+  `lookingForSetAt` when Pick a future saves the idea), and an `employmentStatus` of `NOT_SAID` on an idea
+  saved that way, which never asks it, with `notSaid` (a JSON list: `venture-type`, `equipment`,
+  `sales-targets`) naming the other answers it was saved without, so nothing shows their columns' starting
+  values as the person's (`lib/scenarios/not-said.ts`); `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
-  `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
-  same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
+  `ScenarioState` (the map's progress and branch picks, and, each under its own key in the same JSON
+  (`lib/db/scenario-state-json.ts`), the person's own "I'd incorporate at" amount (since 2026-10-11),
+  the forks they picked a side at, `decided`, and their No to buying equipment, `equipmentNo` (both since
+  2026-10-12; a Yes is `Venture.capitalPurchasePlanned`, whose false alone is no answer)) ·
   `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
   when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
   included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the
@@ -117,7 +141,7 @@ says where it is going.
   a job (`lib/engines/oasis/v2026/`, OaSIS, shown only for the job the person picks, names only, made by
   `scripts/import-oasis.mjs` from `data/oasis-2025-v1.0/`), or the person's own skill; "I don't know"
   removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
-  proposed then agreed) · `Figure` (the totals
+  proposed then agreed, asked on *Your destination*) · `Figure` (the totals
   the person agreed to; [8a]; since 2026-10-11 also two one-day planning numbers, `savings-for-start` and
   `start-up-cost-line`, the latter naming a named cost line on the future's own road; the storage code for
   all of the cockpit's tables is `lib/futures/`, design in `docs/architecture/future-cockpit.md` § 7) · `Expense` (single business expense records, typed or proposed by an agent and kept only once the person agrees;
@@ -150,8 +174,10 @@ says where it is going.
   `DEPENDENCY_REVIEW` is `on`), the browser's Content-Security-Policy (`connect-src`, `img-src`,
   `default-src`, `form-action`; not WebRTC, navigation, the server or the desktop main process), and
   code review; the header of `tests/helpers/source-scan.ts` has the full lists. Nothing may write an
-  error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
-  report is switched off in `lib/prisma.ts` because it quotes the values it was given.
+  error object to the log (`tests/error-logging.spec.ts`; since 2026-10-12 it also reads `desktop/`,
+  where a failure writes `describeError(error)`, the name and code, into `logs/server.log`, with two
+  listed exceptions), and the database library's own error report is switched off in `lib/prisma.ts`
+  because it quotes the values it was given.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 
@@ -212,7 +238,9 @@ reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
-the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
+the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`), split across three machines
+(`--fully-parallel --shard=N/3`), so each test must make its own data folder and never rely on
+another test's leftovers.
 A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
 migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee. Read
 the SQL Prisma generates: the migrator runs with foreign keys on, so a migration that rebuilds

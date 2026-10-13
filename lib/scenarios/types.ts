@@ -45,7 +45,10 @@ export type EmploymentStatus =
   | "business-owner"
   | "retired"
   | "unemployed"
-  | "other";
+  | "other"
+  // Not asked: a future picked on Pick a future is saved before anyone asks (2026-10-12). Never offered
+  // on the intake, which still asks; the rules read it as unanswered (evaluation-profile.ts).
+  | "not-said";
 export type ScenarioNodeStatus = "active" | "complete" | "decision" | "ghost" | "upcoming";
 
 export interface VentureProfile {
@@ -69,11 +72,28 @@ export interface VentureProfile {
    * (their tags derive from the paths they are bound to) and on pre-2026-09-13 saved rows.
    */
   activityTags?: string[];
-  /** S2.5.4e: the intake capital-purchase toggle, persisted for the same reason. */
+  /**
+   * S2.5.4e: buying equipment, a vehicle or tools. True: the person said yes (the intake's chip switched
+   * on, or Yes in the cockpit's one-question box). False: the person said No in the box. Undefined: not
+   * answered, which the rules read as no and say so; the intake's chip left off is not answered
+   * (2026-10-12). Kept in `Venture.capitalPurchasePlanned` (yes) and the map's answers (no,
+   * lib/db/scenario-state-json.ts).
+   */
   capitalPurchasePlanned?: boolean;
   /** S2.5.4i: idea -> prototype -> first customers -> established. Undefined on pre-09-16 rows = idea. */
   stage?: VentureStage;
+  /**
+   * The idea's answers it was saved without, because nobody was asked (2026-10-12): a future picked on
+   * Pick a future. Their fields still hold the intake's starting values, which the rules read as they read
+   * an untouched intake; this list is what stops anything saying the person told DotAmi them (road
+   * evaluation, the cockpit's rail, the export). Undefined (or empty) = every answer was the person's.
+   */
+  notSaid?: NotSaidField[];
 }
+
+/** The answers a future can be saved without (`VentureProfile.notSaid`). Ids are permanent: the data file keeps them. */
+export const NOT_SAID_FIELDS = ["venture-type", "equipment", "sales-targets"] as const;
+export type NotSaidField = (typeof NOT_SAID_FIELDS)[number];
 
 export interface ScenarioState {
   activeNodeIds: CFENodeId[];
@@ -83,9 +103,10 @@ export interface ScenarioState {
   activeBranches: Record<string, CFENodeId>;
   /**
    * S2.5.4d: decisions the person has actually clicked. Everything else in `activeBranches`
-   * is a template default and is labelled as one. Session-persisted only — the database does not
-   * store it, so after a reload a pick that is the default reads "default" again, even if the person
-   * clicked it; a saved pick off the default still reads "your pick" (`isBranchDecided`, 2026-10-11).
+   * is a template default and is labelled as one. Since 2026-10-12 it is saved with the map's answers
+   * (key `decided`, lib/db/scenario-state-json.ts), so a pick of the default side is still the person's
+   * after a reload; until then it lived for the session only. A saved pick off the default reads "your
+   * pick" either way (`isBranchDecided`, 2026-10-11), which covers rows saved before the key existed.
    */
   decidedBranchIds?: string[];
   /**
