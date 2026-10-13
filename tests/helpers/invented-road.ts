@@ -55,6 +55,7 @@ export function inventedRoad(): Road {
           {
             id: "cost-invented-fee",
             kind: "official-fee",
+            feeId: "fee-ab-invented-test-only",
             label: "Invented fee (test only)",
             amountCents: 12_500,
             citation: inventedCitation(),

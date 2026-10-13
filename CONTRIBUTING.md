@@ -264,6 +264,8 @@ git commit -s -m "grants(ab): add Alberta Innovates Voucher, cited"
 
 The `-s` adds `Signed-off-by: Your Name <you@example.com>`, which is your statement that you
 wrote the contribution or have the right to submit it. No CLA, no paperwork.
+GitHub's "Update branch" button is fine to use: the sign-off check skips merge commits, and pull
+requests are squash-merged, so a merge commit never reaches `main`.
 
 By contributing you agree that **code** is licensed under [Apache-2.0](LICENSE) and
 **content** (catalog entries, nodes, docs) under [CC BY-SA 4.0](LICENSE-CONTENT.md).
