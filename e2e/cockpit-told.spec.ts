@@ -2,8 +2,9 @@
  * The cockpit screen, part 2 (docs/architecture/future-cockpit.md § 2, "Cockpit screen as built, part 2"),
  * in a real browser against the production build: answer a question from "Not told yet", see its
  * receipt, take it back, set a step's status, try a what-if, compare the two endings at a fork and pick
- * one, and see what was kept after a reload. Compare is offered only where a pick changes the road (the
- * maintainer's answer of 2026-10-13): on the apprentice road, not on today's Alberta road.
+ * one, and see what was kept after a reload. Compare is offered only where a fork's own pick, not the
+ * rules, puts steps on or off the path (the maintainer's answer of 2026-10-13): on the apprentice road,
+ * not on today's Alberta road.
  */
 import path from "node:path";
 
@@ -121,9 +122,9 @@ test("told and not told: answer, see the receipt, take it back, a what-if, no Co
   await whatIf(page).getByRole("button", { name: "Clear", exact: true }).click();
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toHaveCount(0);
 
-  // No Compare on today's Alberta road (the maintainer's answer of 2026-10-13): its steps are coloured
-  // by the rules whichever side is picked, so both columns would hold the same numbers. Not in the goal
-  // bar, and not in the step panel of a fork's side.
+  // No Compare on today's Alberta road (the maintainer's answer of 2026-10-13): flipping a toggle there
+  // moves steps, but the tax rules do that, not the fork's own pick, and both columns would hold the same
+  // numbers. Not in the goal bar, and not in the step panel of a fork's side.
   const [first, second] = gstFork.sides;
   await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toHaveCount(0);
   await stage(page, label0(second)).click();
@@ -229,7 +230,7 @@ test("on the first written future: compare its two endings, This is mine, kept a
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
 
-  // Here a pick changes the road (one ending's steps on the path, the other's off it), so Compare is
+  // Here the fork's own pick puts one ending's steps on the path and the other's off it, so Compare is
   // offered: in the goal bar, and from the question.
   await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toBeVisible();
   const endingRow = notTold(page).getByRole("listitem").filter({ hasText: `Which ending at “${fork.label}”?` });

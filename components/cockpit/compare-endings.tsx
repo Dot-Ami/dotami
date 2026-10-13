@@ -15,10 +15,11 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * says so when no row differs (two identical columns otherwise read as a fault), and each "This is mine"
  * names its side for a screen reader.
  *
- * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose pick changes the road, so
- * `forks` holds only those (lib/cockpit/told.ts `forksToCompare`, worked out there, read here). Today
- * that leaves out road 0, whose steps the rules colour whichever side is picked; the toggle names and the
- * "no row differs" line stay for any road where they come up.
+ * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose own pick, not the rules,
+ * puts steps on or off the path, so `forks` holds only those (lib/cockpit/told.ts `forksToCompare`,
+ * worked out there, read here). Today that leaves out road 0, whose sides the tax rules colour whichever
+ * is picked, so both columns' counts come out the same; the toggle names and the "no row differs" line
+ * stay for any road where they come up.
  */
 
 const heading = "font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";

@@ -426,16 +426,19 @@ answer, before and after it or with and without it. Choices made while building 
   columns don't read as a fault.)*
 - **Where Compare is offered (2026-10-13: the maintainer answered PR #159's questions with their
   defaults; for question 1 that is Compare only where a fork changes the path).** Only at a fork whose
-  pick changes the road.
+  own pick, not the rules, puts steps on or off the path.
   `forksToCompare` (`lib/cockpit/told.ts`) runs road evaluation once with each side picked, leaving out
   the person's step statuses and the what-if so the offer is the road's and doesn't come and go as steps
-  are marked, and keeps a fork when some step's state differs between the two runs for a reason that is
-  that fork's pick (the side picked, the side not picked, or a step reached only through it). It reads
-  the road's own steps, never a list of road ids. On today's Alberta road (road 0) every step is
-  coloured by the rules whichever side is picked, so neither of its forks is offered and Compare would
-  only have shown two columns of the same numbers; its picks are made on the map's toggles (also in the
-  step panel) and in the one-question box. On the apprentice road one ending's steps are on the path and
-  the other's off it, so its fork is offered. Where no fork is offered the goal bar has no **Compare**
+  are marked or a number is tried, and keeps a fork when some step's state differs between the two runs
+  for a reason that is that fork's pick (the side picked, the side not picked, or a step reached only
+  through it); a step the rules colour differently in the two runs doesn't count. It reads the road's
+  own steps, never a list of road ids (tested on an invented road whose fork's two sides the rules grey
+  whichever is picked: not offered). On today's Alberta road (road 0) flipping a toggle does move a step
+  between *check first* and *not on your path*, but the tax rules do that, colouring the sides whichever
+  is picked, and both columns' counts come out the same; so neither of its forks is offered, and its
+  picks are made on the map's toggles (also in the step panel) and in the one-question box. On the
+  apprentice road the pick itself puts one ending's steps on the path and the other's off it, so its
+  fork is offered. Where no fork is offered the goal bar has no **Compare**
   button and the step panel no **Compare the endings**, rather than a button that leads nowhere.
 - **This is mine** keeps the pick where each road keeps it (§ 7): on road 0 it is the map's toggle, saved
   with the map (not reached since 2026-10-13, as road 0 offers no Compare); on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:

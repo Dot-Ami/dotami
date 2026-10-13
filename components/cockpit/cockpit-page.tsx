@@ -77,8 +77,9 @@ import Link from "next/link";
  * their receipt is worked out, from the idea the save read back; until then it says so, and a failed save
  * says it wasn't kept.
  *
- * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose pick changes the road
- * (`forksToCompare`), so today's Alberta road, whose two forks are the map's own toggles, has no Compare.
+ * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose own pick, not the rules,
+ * puts steps on or off the path (`forksToCompare`), so today's Alberta road, whose two forks are the map's
+ * own toggles and whose sides the tax rules colour, has no Compare.
  */
 
 /** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
@@ -242,8 +243,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     const evaluation = whatIf === null && roadEvaluation ? roadEvaluation : evaluateRoad(base);
     return { input: base, rows: toldRows(base, evaluation, keptAnswers(kept, figures)), notTold: notToldYet(base, evaluation) };
   }, [inputFor, whatIf, roadEvaluation, kept, figures]);
-  // The forks Compare is offered at: only where the pick changes the road (the maintainer, 2026-10-13).
-  // None on today's Alberta road, whose steps the rules colour whichever side is picked.
+  // The forks Compare is offered at: only where the fork's own pick, not the rules, puts steps on or off
+  // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
+  // whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),

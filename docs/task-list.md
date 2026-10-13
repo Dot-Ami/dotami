@@ -117,8 +117,9 @@ and the maintainer's six decisions of 2026-10-11:
     the forks picked are kept with the map, the default side included; the intake's equipment chip left
     off is not an answer; receipts of answers kept with the map wait for the save; *This visit* named for
     what it holds; Compare without the what-if. 2026-10-13, the maintainer's answer to the PR's
-    question 1 (its default): Compare is offered only at a fork whose pick changes the road, worked out
-    from the road's own steps (`lib/cockpit/told.ts` `forksToCompare`), so not on today's Alberta road.
+    question 1 (its default): Compare is offered only at a fork whose own pick, not the rules, puts steps
+    on or off the path, worked out from the road's own steps (`lib/cockpit/told.ts` `forksToCompare`), so
+    not on today's Alberta road, whose sides the tax rules colour whichever is picked.
     Question 2, whether *This visit* carries over between visits, hasn't been asked of him yet and stays
     as built, this visit only)
     - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates

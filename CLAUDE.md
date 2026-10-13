@@ -54,7 +54,7 @@ says where it is going.
   `evaluateRoad`, words in `lib/cockpit/words.ts`; part 2, since 2026-10-12: *What you've told DotAmi /
   Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
-  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose pick changes the road (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the

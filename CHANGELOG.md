@@ -162,11 +162,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
   step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
   score and no highlighted column, with **This is mine**, kept through a new route that answers only
-  DotAmi's own window (`/api/futures/<id>/ending`). It is offered only at a fork whose pick changes the
-  road (the maintainer's answer of 2026-10-13), worked out from the road's own steps by
-  [`lib/cockpit/told.ts`](lib/cockpit/told.ts) `forksToCompare`: today the apprentice road's fork, and
-  not today's Alberta road, where the rules colour every step whichever side is picked and Compare
-  would show two columns of the same numbers; there the map's toggles pick, and no Compare button shows
+  DotAmi's own window (`/api/futures/<id>/ending`). It is offered only at a fork whose own pick, not the
+  rules, puts steps on or off the path (the maintainer's answer of 2026-10-13), worked out from the
+  road's own steps by [`lib/cockpit/told.ts`](lib/cockpit/told.ts) `forksToCompare`: today the
+  apprentice road's fork, and not today's Alberta road. There flipping a toggle does move a step between
+  *check first* and *not on your path*, but the tax rules do that whichever side is picked, and both
+  columns' counts come out the same; there the map's toggles pick, and no Compare button shows
   ([docs/architecture/future-cockpit.md § 2, part 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/12–15](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways

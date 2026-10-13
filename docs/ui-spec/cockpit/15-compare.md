@@ -4,15 +4,17 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/compar
 `lib/cockpit/words.ts` `compare`; rows: `lib/cockpit/told.ts` `compareEndings`)
 Type: panel (table + toggle buttons)
 
-Last updated: 2026-10-13 (offered only where a pick changes the road; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
+Last updated: 2026-10-13 (offered only where a fork's own pick puts steps on or off the path; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
 > **Changed 2026-10-13 — the maintainer's answer to PR #159's question 1.** Compare is offered only at a
-> fork whose pick changes the road: `lib/cockpit/told.ts` `forksToCompare` runs road evaluation once
-> with each side picked (without the person's step statuses and without the what-if) and keeps a fork
-> when some step's state differs between the two runs because of that fork's pick. It reads the road's
-> own steps, never a list of road ids. Today that is the apprentice road's fork and neither of today's
-> Alberta road's two forks (road 0), whose steps the rules colour whichever side is picked, so Compare
-> would show two columns of the same numbers there. Where no fork is offered there is no **Compare**
+> fork whose own pick, not the rules, puts steps on or off the path: `lib/cockpit/told.ts`
+> `forksToCompare` runs road evaluation once with each side picked (without the person's step statuses
+> and without the what-if) and keeps a fork when some step's state differs between the two runs because
+> of that fork's pick; a step the rules colour differently in the two runs doesn't count. It reads the
+> road's own steps, never a list of road ids. Today that is the apprentice road's fork and neither of
+> today's Alberta road's two forks (road 0). There flipping a toggle does move a step between *check
+> first* and *not on your path*, but the tax rules do that whichever side is picked, so both columns'
+> counts would come out the same. Where no fork is offered there is no **Compare**
 > button on the goal bar and no **Compare the endings** in the step panel at all, not a button that does
 > nothing; on road 0 the pick is made on the map's toggle, in the step panel's toggle, or in the
 > one-question box.
@@ -49,10 +51,11 @@ in the step panel at a fork, or a *Not told yet* ending row, each only at a fork
   same; only which **This is mine** is pressed differs.
 - On road 0 each column head also gives the map toggle's own short name for that side (*on the map:
   “Voluntary now”*), as the step's name and the toggle's differ. Since 2026-10-13 road 0 offers no
-  Compare, so this line is not reached today; it stays for a road 0 fork that one day changes the road.
+  Compare, so this line is not reached today; it stays for a road 0 fork whose own pick one day puts
+  steps on or off the path.
 - When no row differs between the two sides: *None of these rows differ between the two endings today.*
-  (Not reached through the offer rule today either, which leaves out forks whose steps don't change; it
-  stays for a fork whose steps change but whose counted rows happen not to.)
+  (Not reached through the offer rule today either, which leaves out forks whose own pick moves no step;
+  it stays for a fork whose pick moves steps but whose counted rows happen not to change.)
 - Worked out without the what-if (2026-10-12, after review): a what-if relights the rules and tax cards
   on both sides alike, and this panel carries no what-if banner.
 

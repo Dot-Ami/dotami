@@ -368,18 +368,21 @@ function decidedBy(reason: StepEvaluation["reason"], forkId: string): boolean {
 
 /**
  * The forks "Compare the two endings" is offered at (the maintainer's answer of 2026-10-13): only where
- * the pick actually changes the road. Road evaluation is run once with each side picked; a fork counts
- * when some step's state differs between the two runs and the reason, in either run, is this fork's pick
- * (the side picked, the side not picked, or a step only reached through it).
+ * the fork's own pick, not the rules, puts steps on or off the path. Road evaluation is run once with
+ * each side picked; a fork counts when some step's state differs between the two runs and the reason, in
+ * either run, is this fork's pick (the side picked, the side not picked, or a step only reached through
+ * it). A step the rules colour differently in the two runs doesn't count.
  *
- * Worked out from the road's own steps, never from a list of road ids. On today's Alberta road every
- * step is coloured by the rules whichever side is picked, so none of its forks is offered and Compare
- * would only show two columns of the same numbers; the map's own toggles pick there. On the apprentice
- * road one ending's steps are on the path and the other's off it, so its fork is.
+ * Worked out from the road's own steps, never from a list of road ids. On today's Alberta road flipping
+ * a toggle does move steps (between "check first" and "not on your path"), but the tax rules do that,
+ * colouring the sides whichever is picked, and both columns' counts come out the same; so none of its
+ * forks is offered, and the map's own toggles pick there. On the apprentice road the pick itself puts
+ * one ending's steps on the path and the other's off it, so its fork is.
  *
  * The person's step statuses and the what-if are left out of both runs, so the offer is the road's and
- * doesn't come and go as the person marks steps: two endings both marked "not for me" are still a fork
- * whose pick decides the steps after them. In road order.
+ * doesn't come and go as the person marks steps or tries a number: two endings both marked "not for me"
+ * are still a fork whose pick decides the steps after them, and a what-if that would move a side's rules
+ * colour doesn't bring the offer (both tested on invented roads). In road order.
  */
 export function forksToCompare(input: RoadEvaluationInput): Fork[] {
   const base: RoadEvaluationInput = { ...input, whatIf: null, progress: [] };

@@ -29,8 +29,9 @@ export function GoalBar({
 }: {
   /**
    * Opens "Compare the two endings" (part 2, 2026-10-12). The button shows only when it is given, and the
-   * page gives it only on a road with a fork whose pick changes the road (lib/cockpit/told.ts
-   * `forksToCompare`, the maintainer's answer of 2026-10-13): not on today's Alberta road.
+   * page gives it only on a road with a fork whose own pick, not the rules, puts steps on or off the path
+   * (lib/cockpit/told.ts `forksToCompare`, the maintainer's answer of 2026-10-13): not on today's Alberta
+   * road.
    */
   onCompare?: () => void;
   road: Road;
