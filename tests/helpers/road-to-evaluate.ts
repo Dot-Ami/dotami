@@ -114,7 +114,7 @@ export function roadToEvaluate(): Road {
 export const RULED_FORK = "fork-eval-ruled";
 
 export function roadWithRuledFork(): Road {
-  const sides = ["branch-hire-first-employee", "stage-2a-voluntary-gst-registration"];
+  const sides: [string, string] = ["branch-hire-first-employee", "stage-2a-voluntary-gst-registration"];
   return {
     id: "road-evaluation-ruled-fork",
     label: "Invented road with a ruled fork (test only)",
@@ -128,8 +128,8 @@ export function roadWithRuledFork(): Road {
     ],
     steps: [
       step("step-ruled-start", "Start (test only)", sides),
-      step(sides[0]!, "Hire first (test only)", ["step-ruled-books"]),
-      step(sides[1]!, "Voluntary GST (test only)", ["step-ruled-books"]),
+      step(sides[0], "Hire first (test only)", ["step-ruled-books"]),
+      step(sides[1], "Voluntary GST (test only)", ["step-ruled-books"]),
       step("step-ruled-books", "Keep the books (test only)", []),
     ],
     forks: [{ id: RULED_FORK, label: "Either (test only)", sides }],
