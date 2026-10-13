@@ -21,6 +21,7 @@ import { WhatIfBar } from "@/components/cockpit/what-if-bar";
 import {
   answerReceipt,
   compareEndings,
+  forksToCompare,
   keepWhatIf,
   notToldYet,
   parseWhatIf,
@@ -28,7 +29,8 @@ import {
   type KeptAnswers,
 } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import type { CFENodeId } from "@/lib/engines/cfe/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { clearScenarioBranch, defaultActiveBranches, updateScenarioBranch } from "@/lib/scenarios/branches";
@@ -405,6 +407,55 @@ describe("Compare the two endings", () => {
     const before = JSON.stringify(empty);
     compareEndings(empty, FORK);
     expect(JSON.stringify(empty)).toBe(before);
+  });
+});
+
+describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () => {
+  // Compare is offered only at a fork whose pick decides steps on the road. Worked out from road
+  // evaluation of the road's own steps, never from a list of road ids.
+  const road0 = (change: Partial<RoadEvaluationInput> = {}) =>
+    input({ road: generalRoadV2026, roadChosen: false, skillItems: skillItemsV2026, ...change });
+  const road1 = (change: Partial<RoadEvaluationInput> = {}) =>
+    input({ road: roadApprenticeToOwnShopAB, roadChosen: true, skillItems: skillItemsV2026, ...change });
+  const ids = (i: RoadEvaluationInput) => forksToCompare(i).map((f) => f.id);
+
+  it("not on today's Alberta road: the rules colour every step there, whichever side is picked", () => {
+    expect(generalRoadV2026.forks.length).toBeGreaterThan(0);
+    expect(ids(road0())).toEqual([]);
+    // Over the GST line, with the other sides picked, or with a what-if: still none.
+    expect(ids(road0({ scenario: inventedIdea({ targetRevenueY1: 90_000, targetRevenueY3: 200_000 }) }))).toEqual([]);
+    const [gst, inc] = generalRoadV2026.forks;
+    const flipped = updateScenarioBranch(
+      updateScenarioBranch(inventedIdea(), "gstTiming", gst!.sides[0] as CFENodeId),
+      "incorporationTiming",
+      inc!.sides[1] as CFENodeId,
+    );
+    expect(ids(road0({ scenario: flipped, whatIf: { firstYearSalesDollars: 45_000 } }))).toEqual([]);
+  });
+
+  it("on the apprentice road: its fork puts one ending's steps on the path and the other's off it", () => {
+    expect(ids(road1())).toEqual([roadApprenticeToOwnShopAB.forks[0]!.id]);
+    expect(ids(input())).toEqual([FORK]);
+  });
+
+  it("whatever the person picked or marked: the offer is the road's, not the person's", () => {
+    const fork = roadApprenticeToOwnShopAB.forks[0]!;
+    expect(ids(road1({ forkPicks: { [fork.id]: { stepId: fork.sides[1], from: "you" } } }))).toEqual([fork.id]);
+    // Both endings marked not for me: the fork still decides the steps after them.
+    const neither = road1({ progress: fork.sides.map((stepId) => ({ stepId, status: "not-for-me" as const, doneWhenIds: [] })) });
+    expect(ids(neither)).toEqual([fork.id]);
+    // Every step marked not for me greys them all alike on both sides; the offer still doesn't go away.
+    const all = road1({
+      progress: roadApprenticeToOwnShopAB.steps.map((s) => ({ stepId: s.id, status: "not-for-me" as const, doneWhenIds: [] })),
+    });
+    expect(ids(all)).toEqual([fork.id]);
+  });
+
+  it("never changes the input it reads", () => {
+    const i = road1();
+    const before = JSON.stringify(i);
+    forksToCompare(i);
+    expect(JSON.stringify(i)).toBe(before);
   });
 });
 

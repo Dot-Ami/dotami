@@ -25,6 +25,7 @@ import { FieldRow, Pill, WordMark } from "@/components/ui";
 import {
   answerReceipt,
   compareEndings,
+  forksToCompare,
   keepWhatIf,
   notToldYet,
   toldRows,
@@ -75,6 +76,9 @@ import Link from "next/link";
  * After review (2026-10-12): the idea's own answers, kept with the map, wait for the map's save before
  * their receipt is worked out, from the idea the save read back; until then it says so, and a failed save
  * says it wasn't kept.
+ *
+ * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose pick changes the road
+ * (`forksToCompare`), so today's Alberta road, whose two forks are the map's own toggles, has no Compare.
  */
 
 /** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
@@ -238,6 +242,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     const evaluation = whatIf === null && roadEvaluation ? roadEvaluation : evaluateRoad(base);
     return { input: base, rows: toldRows(base, evaluation, keptAnswers(kept, figures)), notTold: notToldYet(base, evaluation) };
   }, [inputFor, whatIf, roadEvaluation, kept, figures]);
+  // The forks Compare is offered at: only where the pick changes the road (the maintainer, 2026-10-13).
+  // None on today's Alberta road, whose steps the rules colour whichever side is picked.
+  const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
     [roadEvaluation],
@@ -400,7 +407,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     setAnswerError(null);
     setReceipt(null);
     setActiveGauge(null);
-    setCompareForkId(forkId ?? road.forks[0]?.id ?? null);
+    setCompareForkId(forkId ?? compareForks[0]?.id ?? null);
     setRightPanel("compare");
   }
 
@@ -721,7 +728,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           target={kept?.incomeWanted ?? null}
           active={activeGauge}
           onGauge={handleGauge}
-          onCompare={() => openCompare()}
+          onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
         />
       ) : (
         <div />
@@ -942,7 +949,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 setRightPanel(null);
               }}
               receipt={receiptAt("step")}
-              onCompare={openCompare}
+              // Only on a side of a fork Compare is offered at; anywhere else the panel shows no Compare at all.
+              onCompare={compareForks.some((fork) => fork.sides.includes(selectedStep.id)) ? openCompare : undefined}
             />
           </div>
         ) : null}
@@ -1000,7 +1008,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         {showRightSlot && rightPanel === "compare" ? (
           <CompareEndings
             view={compareView}
-            forks={road.forks.map((fork) => ({ id: fork.id, label: fork.label }))}
+            forks={compareForks.map((fork) => ({ id: fork.id, label: fork.label }))}
             canSave={canSave}
             error={answerError}
             receipt={receiptAt("compare")}

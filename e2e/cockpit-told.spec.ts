@@ -2,7 +2,8 @@
  * The cockpit screen, part 2 (docs/architecture/future-cockpit.md § 2, "Cockpit screen as built, part 2"),
  * in a real browser against the production build: answer a question from "Not told yet", see its
  * receipt, take it back, set a step's status, try a what-if, compare the two endings at a fork and pick
- * one, and see what was kept after a reload.
+ * one, and see what was kept after a reload. Compare is offered only where a pick changes the road (the
+ * maintainer's answer of 2026-10-13): on the apprentice road, not on today's Alberta road.
  */
 import path from "node:path";
 
@@ -63,10 +64,10 @@ const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
 const since = (page: Page) => page.getByRole("region", { name: "This visit" });
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
-const gauge = (page: Page, name: string) =>
-  page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: new RegExp(`^${name}`) });
+const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and gauges" });
+const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { name: new RegExp(`^${name}`) });
 
-test("told and not told: answer, see the receipt, take it back, a what-if, compare and pick an ending, kept after a reload", async ({ page }) => {
+test("told and not told: answer, see the receipt, take it back, a what-if, no Compare on today's road, a pick at a fork, kept after a reload", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — told list test");
   await page.goto(`/cockpit?venture=${ventureId}`);
 
@@ -120,24 +121,24 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await whatIf(page).getByRole("button", { name: "Clear", exact: true }).click();
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toHaveCount(0);
 
-  // Compare the two endings at the GST timing fork, and pick one.
-  await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: "Compare", exact: true }).click();
-  await compare(page).getByRole("button", { name: gstFork.label, exact: true }).click();
-  await expect(compare(page).getByText("In the order the road shows them.")).toBeVisible();
+  // No Compare on today's Alberta road (the maintainer's answer of 2026-10-13): its steps are coloured
+  // by the rules whichever side is picked, so both columns would hold the same numbers. Not in the goal
+  // bar, and not in the step panel of a fork's side.
   const [first, second] = gstFork.sides;
-  // Each column: the step's name, and on today's road the map toggle's own name for the same side.
-  const toggle = (id: string) => branchDecisions.find((d) => d.id === gstFork.id)!.options.find((o) => o.id === id)!.label;
-  await expect(compare(page).getByRole("columnheader")).toHaveText([
-    `${label0(first)}on the map: “${toggle(first)}”`,
-    `${label0(second)}on the map: “${toggle(second)}”`,
-  ]);
-  await expect(compare(page).getByText(`The map's default pick: “${label0(second)}”, not yours yet`)).toBeVisible();
-  const mine = compare(page).getByRole("button", { name: "This is mine" });
-  await expect(mine).toHaveCount(2);
-  await mine.first().click();
-  await expect(mine.first()).toHaveAttribute("aria-pressed", "true");
-  await expect(compare(page).getByRole("status")).toContainText(`Because you picked “${label0(first)}” at “${gstFork.label}” on the map`);
-  await expect(compare(page).getByText(`Your pick: “${label0(first)}”`)).toBeVisible();
+  await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toHaveCount(0);
+  await stage(page, label0(second)).click();
+  await expect(stepPanel(page).getByText("The road splits here: you choose", { exact: true })).toBeVisible();
+  await expect(stepPanel(page).getByRole("button", { name: "Compare the endings" })).toHaveCount(0);
+  await expect(compare(page)).toHaveCount(0);
+
+  // The GST timing pick is made in the one-question box (or on the map's own toggle) instead.
+  const more = notTold(page).getByRole("button", { name: /^\d+ more$/ });
+  if ((await more.count()) > 0) await more.click();
+  const gstRow = notTold(page).getByRole("listitem").filter({ hasText: `Your pick at “${gstFork.label}”` });
+  await gstRow.getByRole("button", { name: /^Answer/ }).click();
+  await gstRow.getByLabel(label0(first)).check();
+  await gstRow.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(told(page).getByRole("status")).toContainText(`Because you picked “${label0(first)}” at “${gstFork.label}” on the map`);
   // The map's pick is saved with the map, after its short pause.
   await expect(page.getByText(/^Saved · /)).toBeVisible();
 
@@ -149,7 +150,7 @@ test("told and not told: answer, see the receipt, take it back, a what-if, compa
   await expect(since(page)).toHaveCount(0);
 });
 
-test("the map's default side, picked in the box or with This is mine, is still the person's after a reload; a save that fails never says Saved", async ({ page }) => {
+test("the map's default side, picked in the box or on the map's toggle, is still the person's after a reload; a save that fails never says Saved", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — default side test");
   await page.goto(`/cockpit?venture=${ventureId}`);
   const incFork = generalRoadV2026.forks.find((f) => f.id === "incorporationTiming")!;
@@ -178,19 +179,22 @@ test("the map's default side, picked in the box or with This is mine, is still t
   await showAll();
   await expect(notTold(page).getByText(`Your pick at “${gstFork.label}”`)).toHaveCount(0);
 
-  // With This is mine in Compare, on the default side: still the person's pick after a reload.
-  const openCompareAt = async () => {
-    await page.getByRole("region", { name: "Your goal and gauges" }).getByRole("button", { name: "Compare", exact: true }).click();
-    await compare(page).getByRole("button", { name: incFork.label, exact: true }).click();
-  };
-  await openCompareAt();
-  await expect(compare(page).getByText(`The map's default pick: “${label0(incDefault)}”, not yours yet`)).toBeVisible();
-  await compare(page).getByRole("button", { name: `This is mine: ${label0(incDefault)}` }).click();
-  await expect(compare(page).getByText(`Your pick: “${label0(incDefault)}”`)).toBeVisible();
+  // With the map's own toggle in the step panel, on the default side: still the person's pick after a
+  // reload. (Until 2026-10-13 this was "This is mine" in Compare, which today's road no longer offers;
+  // both go through the same change to the map's picks.)
+  const incToggle = () => stepPanel(page).getByRole("group", { name: incFork.label });
+  const incOption = branchDecisions.find((d) => d.id === incFork.id)!.options.find((o) => o.id === incDefault)!.label;
+  await stage(page, label0(incDefault)).click();
+  await expect(incToggle()).toContainText("default, not your pick yet");
+  await incToggle().getByRole("button", { name: incOption, exact: true }).click();
+  await expect(incToggle()).not.toContainText("default, not your pick yet");
+  const incTold = `You picked “${label0(incDefault)}” at “${incFork.label}” on the map`;
+  await expect(told(page).getByText(incTold, { exact: true })).toBeVisible();
   await expect(page.getByText(/^Saved · /)).toBeVisible();
   await page.reload();
-  await openCompareAt();
-  await expect(compare(page).getByText(`Your pick: “${label0(incDefault)}”`)).toBeVisible();
+  await expect(told(page).getByText(incTold, { exact: true })).toBeVisible();
+  await stage(page, label0(incDefault)).click();
+  await expect(incToggle()).not.toContainText("default, not your pick yet");
 
   // A sales number taken back is not given, in the told list and in the rail: never a $0 target.
   const y3 = told(page).getByRole("listitem").filter({ hasText: "You told us third-year sales of $60,000" });
@@ -225,6 +229,9 @@ test("on the first written future: compare its two endings, This is mine, kept a
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
 
+  // Here a pick changes the road (one ending's steps on the path, the other's off it), so Compare is
+  // offered: in the goal bar, and from the question.
+  await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toBeVisible();
   const endingRow = notTold(page).getByRole("listitem").filter({ hasText: `Which ending at “${fork.label}”?` });
   await endingRow.getByRole("button", { name: "Compare the endings" }).click();
   await expect(compare(page).getByText("No side picked yet.")).toBeVisible();

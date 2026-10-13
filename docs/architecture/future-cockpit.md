@@ -388,7 +388,8 @@ answer, before and after it or with and without it. Choices made while building 
   person's on either side, the map's default side included, so it is kept with the map's answers: the
   fork ids the person picked, under their own key `decided` in the same JSON as the picks
   (`ScenarioState.activeBranches`, `lib/db/scenario-state-json.ts`), and a reload still lists it and
-  Compare still says *Your pick*. Until then the map kept its clicks for the session only, and a pick of
+  the toggle no longer says *default, not your pick yet* (Compare said *Your pick* until 2026-10-13,
+  when road 0 stopped offering Compare, below). Until then the map kept its clicks for the session only, and a pick of
   the default side said *Saved* and was gone after a reload. Buying equipment is an answer only when the
   person gave one: the intake's chip starts off and off is the chip not picked, so it is *not answered*
   (the rules read it as no, and say so), never *you told us you're not buying*. A yes is kept in
@@ -423,8 +424,21 @@ answer, before and after it or with and without it. Choices made while building 
   gives the map toggle's own short name (*on the map: “Voluntary now”*), since the step's name and the
   toggle's differ; and when no row differs between the two endings, a line says so, so two identical
   columns don't read as a fault.)*
+- **Where Compare is offered (2026-10-13: the maintainer answered PR #159's questions with their
+  defaults; for question 1 that is Compare only where a fork changes the path).** Only at a fork whose
+  pick changes the road.
+  `forksToCompare` (`lib/cockpit/told.ts`) runs road evaluation once with each side picked, leaving out
+  the person's step statuses and the what-if so the offer is the road's and doesn't come and go as steps
+  are marked, and keeps a fork when some step's state differs between the two runs for a reason that is
+  that fork's pick (the side picked, the side not picked, or a step reached only through it). It reads
+  the road's own steps, never a list of road ids. On today's Alberta road (road 0) every step is
+  coloured by the rules whichever side is picked, so neither of its forks is offered and Compare would
+  only have shown two columns of the same numbers; its picks are made on the map's toggles (also in the
+  step panel) and in the one-question box. On the apprentice road one ending's steps are on the path and
+  the other's off it, so its fork is offered. Where no fork is offered the goal bar has no **Compare**
+  button and the step panel no **Compare the endings**, rather than a button that leads nowhere.
 - **This is mine** keeps the pick where each road keeps it (§ 7): on road 0 it is the map's toggle, saved
-  with the map; on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:
+  with the map (not reached since 2026-10-13, as road 0 offers no Compare); on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:
   null` to take it back, which the told list's *Take back* uses), through `pickEnding`, guarded like the
   other writes (DotAmi's own window, `readJsonWithLimit`, a rate limit). Then the receipt.
 - **Words and numbers.** Every new sentence is in `lib/cockpit/words.ts` and every amount and month goes

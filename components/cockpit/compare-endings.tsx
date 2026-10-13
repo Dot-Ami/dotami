@@ -14,6 +14,11 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * 2026-10-12, after review: on road 0 each column head also gives the map toggle's own short name, a line
  * says so when no row differs (two identical columns otherwise read as a fault), and each "This is mine"
  * names its side for a screen reader.
+ *
+ * 2026-10-13, the maintainer's answer: Compare is offered only at a fork whose pick changes the road, so
+ * `forks` holds only those (lib/cockpit/told.ts `forksToCompare`, worked out there, read here). Today
+ * that leaves out road 0, whose steps the rules colour whichever side is picked; the toggle names and the
+ * "no row differs" line stay for any road where they come up.
  */
 
 const heading = "font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";
@@ -33,7 +38,7 @@ export function CompareEndings({
 }: {
   /** The fork shown; null when the road has none. */
   view: CompareView | null;
-  /** Every fork on the road, in road order, to choose which one to compare. */
+  /** Every fork Compare is offered at on this road, in road order, to choose which one to compare. */
   forks: readonly { id: string; label: string }[];
   canSave: boolean;
   error: string | null;

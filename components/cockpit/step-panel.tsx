@@ -61,7 +61,10 @@ export interface StepPanelProps {
   onClose: () => void;
   /** The receipt of the last answer given in this panel, or null (part 2, 2026-10-12). */
   receipt?: readonly string[] | null;
-  /** Opens "Compare the two endings" on this step's fork; shown only on a step that is a side of one. */
+  /**
+   * Opens "Compare the two endings" on this step's fork; shown only on a step that is a side of one. The
+   * page passes it only for a fork Compare is offered at (lib/cockpit/told.ts `forksToCompare`).
+   */
   onCompare?: (forkId: string) => void;
 }
 

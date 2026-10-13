@@ -161,8 +161,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   rules under *Your what-if, not a forecast*, moves no money sum and is kept nowhere; **Keep** makes it
   the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
   step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
-  score and no highlighted column, with **This is mine**: today's road keeps it as the map's toggle, any
-  other road through a new route that answers only DotAmi's own window (`/api/futures/<id>/ending`)
+  score and no highlighted column, with **This is mine**, kept through a new route that answers only
+  DotAmi's own window (`/api/futures/<id>/ending`). It is offered only at a fork whose pick changes the
+  road (the maintainer's answer of 2026-10-13), worked out from the road's own steps by
+  [`lib/cockpit/told.ts`](lib/cockpit/told.ts) `forksToCompare`: today the apprentice road's fork, and
+  not today's Alberta road, where the rules colour every step whichever side is picked and Compare
+  would show two columns of the same numbers; there the map's toggles pick, and no Compare button shows
   ([docs/architecture/future-cockpit.md § 2, part 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/12–15](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
@@ -261,11 +265,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
   say so); a No you give in the one-question box is kept as yours, and Take back removes it for good. A
-  pick of the map's default side (in the box, or with *This is mine*) said *Saved* and was gone after a
+  pick of the map's default side (in the box, or on the map's toggle) said *Saved* and was gone after a
   reload, because the map kept your clicks for the tab only; the forks you picked are now kept with the
-  map's answers, so it reads *Your pick* after a reload (and the export no longer calls it a default).
-  Compare is worked out without the what-if, says when no row differs and gives today's road's toggle
-  names; a ticked *done when* line no longer borrows the step's last-change day; the rail says *not
+  map's answers, so it reads as your pick after a reload (and the export no longer calls it a default).
+  Compare is worked out without the what-if and says when no row differs; a ticked *done when* line no longer borrows the step's last-change day; the rail says *not
   given* for no sales target, never $0; the left list's receipt takes the focus where the row you used
   was; and every *Change*, *Take back*, *Answer*, *I don't know* and *This is mine* names its row for a
   screen reader ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),

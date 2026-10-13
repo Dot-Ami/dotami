@@ -27,7 +27,11 @@ export function GoalBar({
   onGauge,
   onCompare,
 }: {
-  /** Opens "Compare the two endings" (part 2, 2026-10-12); the button shows only on a road with a fork. */
+  /**
+   * Opens "Compare the two endings" (part 2, 2026-10-12). The button shows only when it is given, and the
+   * page gives it only on a road with a fork whose pick changes the road (lib/cockpit/told.ts
+   * `forksToCompare`, the maintainer's answer of 2026-10-13): not on today's Alberta road.
+   */
   onCompare?: () => void;
   road: Road;
   evaluation: RoadEvaluation;
@@ -57,7 +61,7 @@ export function GoalBar({
         <span>
           {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
         </span>
-        {onCompare && road.forks.length > 0 ? (
+        {onCompare ? (
           <button type="button" onClick={onCompare} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
             {words.compare.open}
           </button>

@@ -9,6 +9,7 @@ import {
   type MarkCounts,
   type RoadEvaluation,
   type RoadEvaluationInput,
+  type StepEvaluation,
 } from "@/lib/roads";
 import { branchDecisions, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
@@ -355,6 +356,41 @@ function withSide(input: RoadEvaluationInput, fork: Fork, stepId: string): RoadE
   const onMap = input.road.id === generalRoadV2026.id && branchDecisions.some((d) => d.id === fork.id);
   const scenario = onMap ? updateScenarioBranch(input.scenario, fork.id as BranchDecisionId, stepId as CFENodeId) : input.scenario;
   return { ...input, scenario, forkPicks: { ...input.forkPicks, [fork.id]: { stepId, from: onMap ? "map" : "you" } } };
+}
+
+/** The reasons road evaluation gives a step whose state this fork's pick decides. */
+function decidedBy(reason: StepEvaluation["reason"], forkId: string): boolean {
+  return (
+    (reason.kind === "fork-picked" || reason.kind === "fork-other-side" || reason.kind === "after-other-side") &&
+    reason.forkId === forkId
+  );
+}
+
+/**
+ * The forks "Compare the two endings" is offered at (the maintainer's answer of 2026-10-13): only where
+ * the pick actually changes the road. Road evaluation is run once with each side picked; a fork counts
+ * when some step's state differs between the two runs and the reason, in either run, is this fork's pick
+ * (the side picked, the side not picked, or a step only reached through it).
+ *
+ * Worked out from the road's own steps, never from a list of road ids. On today's Alberta road every
+ * step is coloured by the rules whichever side is picked, so none of its forks is offered and Compare
+ * would only show two columns of the same numbers; the map's own toggles pick there. On the apprentice
+ * road one ending's steps are on the path and the other's off it, so its fork is.
+ *
+ * The person's step statuses and the what-if are left out of both runs, so the offer is the road's and
+ * doesn't come and go as the person marks steps: two endings both marked "not for me" are still a fork
+ * whose pick decides the steps after them. In road order.
+ */
+export function forksToCompare(input: RoadEvaluationInput): Fork[] {
+  const base: RoadEvaluationInput = { ...input, whatIf: null, progress: [] };
+  return base.road.forks.filter((fork) => {
+    const [a, b] = fork.sides.map((side) => evaluateRoad(withSide(base, fork, side)).steps);
+    const other = new Map(b!.map((step) => [step.stepId, step]));
+    return a!.some((step) => {
+      const twin = other.get(step.stepId);
+      return twin !== undefined && twin.state !== step.state && (decidedBy(step.reason, fork.id) || decidedBy(twin.reason, fork.id));
+    });
+  });
 }
 
 /**
