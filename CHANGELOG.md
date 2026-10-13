@@ -85,7 +85,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Alberta's registry fees stay named lines: the catalogue that holds them stops tools with a human
   check. Every source is a tool check made on 2026-10-12 (195 quotes on 28 pages, found word for word
   on their live pages); none is recorded as read, so every card will say "Checked by a tool" in amber.
-  No screen lists the road yet. New checks: an official fee checked only by a tool must quote its own
+  *Pick a future* lists it (see the front-door entry). New checks: an official fee checked only by a tool must quote its own
   amount, and not as one end of a range; a fee that applies only sometimes (the $50 rewrite) carries
   its condition in a typed `onlyIf`, so a total can leave it out, and a label saying "only if" without
   one is refused; a road none of whose sources has been read carries no read date; and a road's join

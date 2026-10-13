@@ -228,6 +228,17 @@ describe("Pick a future: every written future, in the order added, as counts", (
     ]);
   });
 
+  it("docs/engines/roads.md never says a listed road is on no screen", () => {
+    // The road table said "No screen lists it yet" for the first written future after Pick a future
+    // started listing it; this keeps the doc's row for every listed road in step with LISTED_ROAD_IDS.
+    const table = readFileSync(path.join(process.cwd(), "docs", "engines", "roads.md"), "utf8");
+    for (const id of LISTED_ROAD_IDS) {
+      const row = table.split("\n").find((line) => line.startsWith("|") && line.includes(`\`${id}\``));
+      expect(row, `roads.md has a row for ${id}`).toBeDefined();
+      expect(row!, `roads.md's row for ${id}`).not.toMatch(/no screen lists it/i);
+    }
+  });
+
   it("the first written future's card says its sources were checked by a tool, not read by a person, in amber", () => {
     const apprentice = futureCards(listedRoads(roadsV2026), skillItemsV2026).find(
       (c) => c.roadId === roadApprenticeToOwnShopAB.id,

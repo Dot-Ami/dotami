@@ -25,8 +25,8 @@ Flow graph this file described until 2026-09-16 (see git history before commit S
 CFE catalog: a column is a road column (`TIER n` is its place from the left, its name and the line
 under it are the column's `label` and `summary`), a stage card is a road step (its name, and its
 `summary` as the two-line text), the toggle in a column is the one for the column's `forkId`, and the
-hover arrows follow the steps' `next`. Every saved idea is drawn on road 0 until storage lets it name
-another road. Nothing a person sees or does on the map changed: `tests/road-map.spec.ts` draws six saved
+hover arrows follow the steps' `next`. Every saved idea is drawn on its own road, the one its `Venture.roadId`
+names (empty = road 0; `components/cockpit/cockpit-page.tsx` `roadForFuture`). Nothing a person sees or does on the map changed: `tests/road-map.spec.ts` draws six saved
 states through the road and compares the HTML, byte for byte, with what the old map drew, and a browser
 test checks the columns, cards, toggles and arrows. (The old map's HTML was re-recorded on 2026-10-12
 from the honest-map change, #145, which changed its chips and added its reason lines on purpose; the
