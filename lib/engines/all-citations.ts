@@ -10,6 +10,7 @@
 import { cfeCatalogV2026 } from "@/lib/engines/cfe/v2026";
 import { incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-routes";
 import { complianceCatalogV2026, recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
+import { officialFeesV2026 } from "@/lib/engines/fees/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
@@ -40,6 +41,9 @@ export function allCatalogCitations(): CitationInCatalog[] {
   for (const route of incorporationRoutesV2026) {
     for (const line of route.lines) add(`routes ${route.id} ${line.id}`, [line.citation]);
   }
+  // The official fees catalog (2026-10-12): one source per fee. Roads and routes show the same sources
+  // through their fee lines, so those are listed again there: each place a source is shown is checked.
+  for (const fee of officialFeesV2026) add(`fees ${fee.id}`, [fee.citation]);
   const entryCatalogs: [string, readonly { id: string; citations: readonly ListedCitation[] }[]][] = [
     ["structure", structureCatalogV2026.entries],
     ["grants", grantsCatalogV2026.entries],

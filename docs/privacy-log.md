@@ -107,6 +107,13 @@ person is asked).
   `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
   answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
   any program on this computer, like the figures list. Nothing new leaves the computer.
+- **Seven more cost lines the person may price on today's Alberta road (2026-10-12).** *Sole Prop
+  activation* now names tools and equipment, a space deposit, insurance, a vehicle, first materials,
+  software and money to live on while starting
+  ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](../lib/engines/roads/v2026/starting-any-business-ab.ts)).
+  Each is a blank with *Add your quote*; a number the person gives is kept the way the line above says
+  (a `start-up-cost-line` figure, proposed then agreed). No new kind of answer, table or route; nothing
+  new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
@@ -130,6 +137,15 @@ person is asked).
   purpose, as before: a failed database update, which update failed and what the database objected to.
   [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
   for the same rule, writes to the log file included.
+- **Which cockpit panels the person folded, in the browser's own storage (2026-10-12).** The cockpit's
+  venture details, goal bar, right-hand panel and map legend each fold, and the four yes-or-no answers
+  are kept in `localStorage` under `dotami-cockpit-folds`, a JSON object such as
+  `{"rail":true,"goal":false,"panel":false,"legend":true}` ([`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)),
+  so the cockpit opens the way the person left it. Nothing about the person or their ideas is in it,
+  nothing goes in the data file, nothing leaves the computer. Listed in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `WINDOW_STORAGE`, so `/your-data` shows it. In
+  the desktop app each launch has its own local address and so its own empty storage: the answers last
+  until the app closes, and earlier launches' answers stay in the app's own folder, unread.
 
 ### Packages that ship
 
@@ -147,6 +163,9 @@ person is asked).
 
 ### How to remove it
 
+- **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
+  cleared. Opening every panel again leaves the key in place with four "no" answers; DotAmi has no button
+  that removes it.
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
   statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
   ideas" keeps it, tied to no idea, and the menu says so before the person confirms ("Statements

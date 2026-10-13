@@ -294,10 +294,69 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   and month goes through `lib/format/money-and-months.ts`.
 - **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
   last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
-  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
-  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
+  and the yearly income question. (Phone width was its own next item; it is built, with folding, in
+  *Folding and phone width* below.) With no road written beyond
   road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
   empty line until the road content lands; the tests use an invented road for them.
+
+### Folding and phone width (2026-10-12)
+
+The maintainer, 2026-10-12, after clicking through part 1: *"there's a LOT on the screen, and we need to
+be able to open and close any menu in order to see the entire roadmap because some of the tax boxes
+don't even fit on the screen"*. And issue #4 (2026-09-20): the cockpit can't be read 375 pixels wide.
+Measured on the part 1 page (main at f24d22c, an invented Alberta idea, 2026-10-12): at 1280x720 the
+goal bar took 153 px and the legend 70 px, leaving the road 296 px of height; at 375x812 the legend
+wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road was 20 px tall too.
+
+- **Four regions fold, each with its own button that says what it does.** The left rail (*Fold venture
+  details* / *Show venture details*), the goal bar (*Fold goal and gauges* / *Show goal and gauges*),
+  the right-hand panel, whatever it holds (*Fold the panel* / *Show the panel: <what is in it>*, for
+  example *Show the panel: Sole Prop activation*), and the map's legend (*Fold the legend* / *Show the
+  legend*). The header has *Fold all panels*, or *Show all panels* once everything is folded. Each
+  button says whether its region is open (`aria-expanded`).
+- **Folding hides nothing for good.** A folded region keeps its unfold button where it was: the rail
+  becomes a narrow strip, the goal bar one line that still holds the four gauges as buttons (name and
+  value, with the lines under each in the button's title), the panel a narrow strip naming what it
+  holds, the legend one line. What is inside stays on the page, only hidden (the open goal bar sits
+  behind its one line), so a half-typed statement in *In your words* is still there when it unfolds,
+  and so is the rail's scroll position.
+- **Focus follows the fold.** The button pressed to fold or show a region is often gone afterwards (a
+  folded rail is a strip, the folded goal bar a different line), so focus moves to the button that now
+  stands for the region; a keyboard or screen-reader user is never sent back to the top of the page.
+- **The panel stays folded while the person moves around the road.** Clicking another step, a gauge or
+  *Export* puts the new thing in the folded panel and its strip names it; *Show the panel* opens it.
+  Closing the panel is still its own *Close* button and clears what it held, as before.
+- **Remembered per browser.** The four answers (folded or not) are kept in this browser's own storage
+  under `dotami-cockpit-folds`, one small JSON object, read when the cockpit opens and written on every
+  fold (`lib/cockpit/folds.ts`). Every read and write is wrapped so a browser that refuses storage
+  (private windows, storage switched off) gets a cockpit with everything open and folding that works
+  until the window closes. Nothing goes in the data file and nothing leaves the computer; the privacy
+  inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
+  In the desktop app each launch is served from its own local address, so its storage starts empty: the
+  folds last until the app closes and it opens with everything showing (the same as the intake's list of
+  typed job descriptions).
+- **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
+  road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
+  least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before
+  and after.
+- **Phone width (below 768 px, issue #4).** The page never scrolls sideways. The road keeps its columns
+  and scrolls sideways inside its own area, one column at a time (each column is the window's width less
+  the margins, and the scroll snaps to a column's edge); its area is 70 % of the window's height, and the
+  page itself scrolls down to *Next on your road* and the legend, so the legend can no longer squeeze the
+  road. The left rail is not a column: *Venture details* in the header opens it as a full-width sheet,
+  with *Close venture details* at its top. The right-hand panel opens as a full-width sheet over the
+  road, closed by its own *Close*; folded, it is a bar along the bottom, one full-width button 44 px tall,
+  and the page leaves room under its last line for the bar so it never covers the *not legal or tax
+  advice* line. A sheet that covers the page takes the keyboard with it: focus goes to its first
+  control, Tab stays inside it, Escape closes it, the page behind is inert, and focus goes back to what
+  opened it (`components/cockpit/use-sheet.ts`). The fold buttons are at least 32 px tall. The gauges
+  keep their row, which scrolls sideways inside the goal bar.
+- **Between 768 and 1024 px** the rail is a column again, and the right-hand panel opens as a 420 px
+  drawer under the header, over the road's right side, instead of squeezing the road (the header's
+  *Export* and *Fold all panels* stay free to click); from 1024 px it is a column, as before.
+- **The map's own drawing is unchanged.** The folding legend and the phone-width columns are drawn only
+  when the cockpit asks for them (`StrategyMap`'s `cockpit` prop); drawn without it, the map is the same
+  HTML as before, byte for byte (`tests/road-map.spec.ts`).
 
 ## 3. What DotAmi asks, why, and how it's kept
 
@@ -377,8 +436,8 @@ and how a gap is filled:
 | Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. Whether *Pick a future* may list a road none of whose sources a person has read is the maintainer's call (§ 13). *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read by a person or its quotes are found on it by the tool |
 | Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
-| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
-| Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
+| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13). Since 2026-10-12 each is written once, in the official fees catalog (`lib/engines/fees/v2026/`, § 6), and roads name it by id | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
+| Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, planned to be cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers). As built (2026-10-12, § 6): no source yet, because the templates' pages don't name the lines; § 13 | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
 | Rules and tax cards | Today's catalogs | — |
 | New futures | Contributors on GitHub, one cited file per step (phase 4), under [CONTRIBUTING.md](../../CONTRIBUTING.md) | Open issues ask for them |
@@ -782,7 +841,8 @@ each for a reason:
   Business Name Report is a *done when* line (`dw-start-name-report`), not a cost: Alberta's page says
   NUANS members provide it but names no price for it. No amount is written anywhere in this content.
   The ten map stages get no cost lines, skill items or official links yet; the incorporation fees belong
-  to Fix 2 (§ 9).
+  to Fix 2 (§ 9). *(Later on 2026-10-12: Sole Prop activation gets seven named start-up cost lines; § 6,
+  "The official fees catalog and start-up cost lines as built".)*
 - **New ids, all permanent.** Steps `step-start-…`, lines `dw-start-…`, cost lines `cost-start-…`
   ("start" for *Starting any business*). `tests/roads.spec.ts` keeps every one on its shipped list.
 - **What the map shows changes, and only by the three new cards.** In the cockpit every card is drawn
@@ -799,6 +859,63 @@ each for a reason:
   isn't grey. Clicking it there selects it and keeps its arrows. `tests/road-map.spec.ts` draws the six
   saved states again and, with the three new cards cut out, the HTML is byte for byte what the old map
   drew; the before pictures are not re-recorded.
+
+### The official fees catalog and start-up cost lines as built (2026-10-12)
+
+Decision 2 (official fees with a source, plus the person's own quotes, no averages) gets its two
+missing pieces: one place for every official fee, and road 0's named start-up cost lines. Choices made,
+each for a reason:
+
+- **One catalog, `lib/engines/fees/v2026/`.** Each fee is written once: a permanent id, what it is for
+  (`label`), the place it applies to as an international code (`place`: `CA`, `CA-AB`; the maintainer's
+  decision of 2026-10-11, used here from the start because the catalog is new), the amount in whole
+  cents, how often it is paid when the page says (`per`), its condition when it applies only sometimes
+  (`onlyIf`), and one citation. An id starts with `fee-` and its place (`fee-ca-…`, `fee-ab-…`), the way
+  skill items do. Like every catalog it imports nothing from the app.
+- **Roads and the ways to incorporate name a fee; they never type its amount.** An official fee line on
+  a road keeps its own permanent id and its own label (two steps can show the same practical exam fee in
+  their own words) and gains `feeId`; its amount, source and condition are copied from the catalog when
+  the road is built (`feeLine`). A way to incorporate does the same (`routeFeeLine`). A check over the
+  whole catalog (`feeReferenceProblems`) refuses a line naming a fee that doesn't exist, or carrying an
+  amount, source or condition that differs from its fee, and a test refuses a typed amount in any road
+  file or in the incorporation routes. So a fee that changes is changed in one place.
+- **What moved, and nothing else.** Ten fees: the federal online incorporation ($200), express service
+  ($100) and annual return ($12) from the incorporation routes (#145), and the first written future's
+  seven (#153): the apprenticeship application ($150), the two Trades Qualifier applications ($450 and
+  $150), the Cabinetmaker practical exam ($160, shown on two steps), the recognized-credential rewrite
+  ($50, only if you fail an exam), the Blue Seal application ($150) and the business number ($0). Each
+  quote was found again by `node scripts/check-quotes.mjs` on 2026-10-12. A federal fee's source now
+  carries only the quotes that state that fee (before, all three shared the fees page's six quotes),
+  which no card shows differently: the way-to-incorporate card shows the line's own quotes, as before.
+- **No card changes.** `tests/cost-panels-unchanged.spec.ts` draws every step panel of both roads (the
+  Incorporating stage for an Alberta and a British Columbia idea) and each road's money list, and compares
+  them byte for byte with what main drew before the move (`tests/fixtures/official-fees/`); the map's
+  six saved states (`tests/road-map.spec.ts`) are unchanged too.
+- **Not in the catalog: a fee nobody could read.** Alberta's registry fees (incorporating, registering
+  a name, the annual return, a federal corporation registering in Alberta) and the NUANS report stay
+  named blanks on their cards: the Registry Agent Product Catalogue that holds them stops tools with a
+  human check, which is never bypassed. A fee whose page names no amount (the Red Seal application, the
+  Work Experience rewrite) stays a named line. The catalog holds amounts only.
+- **Road 0's start-up cost lines, on *Sole Prop activation*.** The seven names § 5 lists, as named
+  lines with no amount: *Tools and equipment*, *Space deposit*, *Insurance*, *Vehicle*, *First
+  materials*, *Software*, *Money to live on while starting* (ids `cost-start-…`, permanent). They sit on
+  the first step where the business runs, the one every idea on road 0 passes through; the person prices
+  each through the agree prompt, and each counts in *N lines not priced yet* until then. `roadFromCfe`
+  gains a third optional input, cost lines by step id, like the *done when* lines.
+- **No source for these names, on purpose.** § 5 planned to cite the BDC and Futurpreneur cash-flow
+  templates for the names. Checked on 2026-10-12: BDC's template page names no cost lines (the lines are
+  inside a spreadsheet behind a download form); Futurpreneur's page names only insurance among them
+  ("This includes things like insurance, office furniture, website, legal fees, etc.", found by the
+  tool), the others are inside its spreadsheet, and Futurpreneur is a not-for-profit, a kind of source the
+  citation type has no word for (`authority` is `CRA`, `federal` or `provincial`). A downloaded
+  spreadsheet is not a page the quote checker can check. So the seven lines carry no `nameSource`, like
+  the bank-fees line, rather than a source that would claim more than its page says. A person who opens
+  the spreadsheets can record a read, or the maintainer can add a source kind for a not-for-profit; both
+  are listed in § 13.
+- **What a person sees change.** On road 0, *Sole Prop activation*'s step panel lists the seven lines
+  with *Add your quote*; the Money overlay's badge on its card says *7 not priced*; the Start-up money
+  gauge and the money list count seven more lines not priced while that step is on the person's path.
+  No amount appears anywhere that DotAmi chose.
 
 ## 7. Storage
 
@@ -1156,7 +1273,15 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
   evaluation as built*).
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
-  each registry agent is read from Alberta's page; until then they are named blanks.
+  each registry agent is read from Alberta's page; until then they are named blanks. When a person reads
+  them in the Registry Agent Product Catalogue, each amount goes into the official fees catalog
+  (`lib/engines/fees/v2026/`, § 6) and the named blank becomes a line naming it.
+- **A source for the start-up cost lines' names** (§ 6, *The official fees catalog and start-up cost
+  lines as built*). The seven names on road 0 cite nothing yet: the BDC and Futurpreneur templates keep
+  their lines inside spreadsheets, and Futurpreneur is a not-for-profit, which the citation type has no
+  word for. Two ways, the maintainer's call: a person opens the spreadsheets and records a read of each
+  name; or the citation type gains a kind for a not-for-profit, so Futurpreneur's page can be cited for
+  *insurance*, the one name its page shows.
 - **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
   abilities, work activities) and how much of each list to show; the lists describe employees, not
   owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed

@@ -27,6 +27,9 @@ const quotesOf = (...citations: (EngineCitation | undefined)[]) =>
 
 const BEFORE_YOU_OPEN = ["step-start-register-name", "step-start-permits-bizpal", "step-start-business-account"];
 
+/** Where the named start-up cost lines sit: the first step where the business runs (2026-10-12). */
+const START_UP_STEP = "stage-1-sole-prop-activation";
+
 /** The new citations this content adds: done-when lines, the new steps' own sources, their cost lines' name sources. */
 function newCitations(): { where: string; citation: EngineCitation }[] {
   return road.steps.flatMap((s) => [
@@ -173,11 +176,34 @@ describe("the three before-you-open steps the design names", () => {
     }
   });
 
-  it("today's ten steps still carry no cost lines, skill items or links: those come later", () => {
+  it("today's ten steps still carry no skill items or links, and only Sole Prop activation has cost lines", () => {
     for (const node of cfeNodesV2026) {
-      expect(step(node.id).costs, node.id).toEqual([]);
       expect(step(node.id).needs, node.id).toEqual([]);
       expect(step(node.id).officialLinks, node.id).toEqual([]);
+      if (node.id !== START_UP_STEP) expect(step(node.id).costs, node.id).toEqual([]);
+    }
+  });
+});
+
+describe("the start-up cost lines the design names, on Sole Prop activation", () => {
+  it("are the seven named lines, in the design's order, each a blank the person prices", () => {
+    const costs = step(START_UP_STEP).costs;
+    expect(costs.map((c) => [c.id, c.label])).toEqual([
+      ["cost-start-tools-equipment", "Tools and equipment"],
+      ["cost-start-space-deposit", "Space deposit"],
+      ["cost-start-insurance", "Insurance"],
+      ["cost-start-vehicle", "Vehicle"],
+      ["cost-start-first-materials", "First materials"],
+      ["cost-start-software", "Software"],
+      ["cost-start-living-while-starting", "Money to live on while starting"],
+    ]);
+    for (const c of costs) {
+      // Never an amount DotAmi chose: a named line has none, so it can't be added up as $0.
+      expect(c.kind, c.id).toBe("named");
+      expect(c, c.id).not.toHaveProperty("amountCents");
+      // No page a tool could check names these lines (docs/architecture/future-cockpit.md § 6), so none
+      // claims a source for its name.
+      expect(c, c.id).not.toHaveProperty("nameSource");
     }
   });
 });

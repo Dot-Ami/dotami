@@ -105,6 +105,14 @@ const SHIPPED_IDS: Record<
       "cost-start-name-service-fee",
       "cost-start-permit-licence-fees",
       "cost-start-bank-fees",
+      // The named start-up cost lines on Sole Prop activation (2026-10-12).
+      "cost-start-tools-equipment",
+      "cost-start-space-deposit",
+      "cost-start-insurance",
+      "cost-start-vehicle",
+      "cost-start-first-materials",
+      "cost-start-software",
+      "cost-start-living-while-starting",
     ],
   },
   "road-apprentice-to-own-shop-ab": {
@@ -333,11 +341,17 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
       expect(step.summary).toBe(node.trigger);
       expect(step.next).toEqual(node.branches);
       expect(step.citations).toEqual(node.citations);
-      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); cost lines, skill
-      // items and official links on them come later, read from the official pages, never made up.
+      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); skill items and
+      // official links on them come later, read from the official pages, never made up. The only cost
+      // lines are Sole Prop activation's named start-up lines (2026-10-12): names, never an amount.
       expect(step.doneWhen.length).toBeGreaterThanOrEqual(3);
       expect(step.needs).toEqual([]);
-      expect(step.costs).toEqual([]);
+      if (node.id === "stage-1-sole-prop-activation") {
+        expect(step.costs.length).toBe(7);
+        for (const cost of step.costs) expect(cost.kind, cost.id).toBe("named");
+      } else {
+        expect(step.costs).toEqual([]);
+      }
       expect(step.officialLinks).toEqual([]);
     });
   });

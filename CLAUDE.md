@@ -51,7 +51,9 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel
+  and the legend each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), until a screen lets a person pick another road (the catalog's second road, the
@@ -211,7 +213,9 @@ reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
-the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
+the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`), split across three machines
+(`--fully-parallel --shard=N/3`), so each test must make its own data folder and never rely on
+another test's leftovers.
 A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
 migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee. Read
 the SQL Prisma generates: the migrator runs with foreign keys on, so a migration that rebuilds
