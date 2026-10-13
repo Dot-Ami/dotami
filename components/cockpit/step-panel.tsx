@@ -3,9 +3,11 @@
 import { useState, type ReactNode } from "react";
 
 import { AmountForm } from "@/components/cockpit/amount-form";
+import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { BranchToggle } from "@/components/cockpit/strategy-map";
 import { Fold, ItemRow, NodeDetailPanel } from "@/components/node-detail-panel";
 import { CitationLinks } from "@/components/shared/citation-links";
+import { Pill } from "@/components/ui";
 import { itemsForStep } from "@/lib/brain/node-items";
 import type { EvaluationResult } from "@/lib/brain/types";
 import { cockpitWords as words } from "@/lib/cockpit/words";
@@ -57,6 +59,13 @@ export interface StepPanelProps {
   /** Sets or clears that number. */
   onOwnNumberChange: (value: number | null) => void;
   onClose: () => void;
+  /** The receipt of the last answer given in this panel, or null (part 2, 2026-10-12). */
+  receipt?: readonly string[] | null;
+  /**
+   * Opens "Compare the two endings" on this step's fork; shown only on a step that is a side of one. The
+   * page passes it only for a fork Compare is offered at (lib/cockpit/told.ts `forksToCompare`).
+   */
+  onCompare?: (forkId: string) => void;
 }
 
 export function StepPanel(props: StepPanelProps) {
@@ -141,6 +150,8 @@ function StepSections({
   onMark,
   onSelectSkill,
   onProposeQuote,
+  receipt,
+  onCompare,
 }: StepPanelProps) {
   const [quoting, setQuoting] = useState<string | null>(null);
   // Each save sends the step's whole list of ticks, built from what was last read back. A second tick
@@ -178,6 +189,7 @@ function StepSections({
           {error}
         </p>
       ) : null}
+      {receipt ? <ReceiptLines lines={receipt} /> : null}
 
       <div>
         <h3 className={heading}>{words.panel.whyColour}</h3>
@@ -194,6 +206,11 @@ function StepSections({
               {pickedSide ? words.panel.forkPicked(road.steps.find((s) => s.id === pickedSide)?.label ?? pickedSide) : words.panel.forkNotPicked}
             </p>
           )}
+          {onCompare ? (
+            <Pill className="mt-2" size="small" variant="ghost" onClick={() => onCompare(fork.id)}>
+              {words.compare.openAtFork}
+            </Pill>
+          ) : null}
         </div>
       ) : null}
 

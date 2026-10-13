@@ -119,7 +119,27 @@ and the maintainer's six decisions of 2026-10-11:
     the gauges, *Next on your road*, and the lever cards on the road step; a road 0 step's status is kept
     with the step progress, not the map, the line below; [§ 2, Cockpit screen as built](architecture/future-cockpit.md).
     Part 2: *What you've told DotAmi / Not told yet* with a receipt after each answer, the what-if bar,
-    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all)
+    compare the two endings, *This is mine*, *Since last time*, and the export gaining it all.
+    2026-10-12, part 2 built: *What you've told DotAmi* (each answer with its day and what it unlocked,
+    **Change** and **Take back**), *Not told yet* with *I don't know* and the one-question box, a receipt
+    after every answer where it was given, the what-if bar with **Keep** and **Clear**, *Compare the two
+    endings* with **This is mine** (an ending on a road other than today's kept through its own route);
+    [§ 2, Cockpit screen as built, part 2](architecture/future-cockpit.md). After review the same day:
+    the forks picked are kept with the map, the default side included; the intake's equipment chip left
+    off is not an answer; receipts of answers kept with the map wait for the save; *This visit* named for
+    what it holds; Compare without the what-if. 2026-10-13, the maintainer's answer to the PR's
+    question 1 (its default): Compare is offered only at a fork whose own pick, not the rules, puts steps
+    on or off the path, worked out from the road's own steps (`lib/cockpit/told.ts` `forksToCompare`), so
+    not on today's Alberta road, whose sides the tax rules colour whichever is picked.
+    Question 2, whether *This visit* carries over between visits, hasn't been asked of him yet and stays
+    as built, this visit only)
+    - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates
+      coming up, figure reminders: it needs the day of the last visit, which isn't kept; today *This
+      visit* holds this visit's receipts only); the export gaining the told list, the what-ifs and the
+      ending picked; the yearly income question, and taking it back; remembering the last overlay used;
+      a *Change* on one of the intake's answers opening that question instead of the intake's first
+      screen; receipt lines that name the steps and cards they count; a No to buying equipment survives
+      a later save from the intake only if the chip is then switched on or answered again in the box
   - [x] Every region of the cockpit folds and opens with its own button (the venture details, the goal
     bar, the right-hand panel, the legend), remembered in this browser, so the whole road fits a 1280x720
     window; and the cockpit at phone width, issue #4 (2026-10-12;

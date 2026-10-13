@@ -34,9 +34,17 @@ export function GoalBar({
   target,
   active,
   onGauge,
+  onCompare,
   folded = false,
   onToggleFold,
 }: {
+  /**
+   * Opens "Compare the two endings" (part 2, 2026-10-12). The button shows only when it is given, and the
+   * page gives it only on a road with a fork whose own pick, not the rules, puts steps on or off the path
+   * (lib/cockpit/told.ts `forksToCompare`, the maintainer's answer of 2026-10-13): not on today's Alberta
+   * road.
+   */
+  onCompare?: () => void;
   road: Road;
   evaluation: RoadEvaluation;
   /** The idea: its place, and the map's own chips for the Steps gauge's next step. */
@@ -98,6 +106,11 @@ export function GoalBar({
           <span>
             {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
           </span>
+          {onCompare ? (
+            <button type="button" onClick={onCompare} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
+              {words.compare.open}
+            </button>
+          ) : null}
           {onToggleFold ? (
             <FoldButton folded={false} region="goal" label={words.folds.goal.fold} controls={GOAL_BAR_ID} onClick={onToggleFold} className="ml-auto" />
           ) : null}

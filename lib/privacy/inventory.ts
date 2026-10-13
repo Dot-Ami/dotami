@@ -234,7 +234,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "ScenarioState",
     name: "Map progress",
     holds:
-      "Which branches you took on each idea's map, your own “I'd incorporate at” amount if you typed one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
+      "Which branches you took on each idea's map and which of them you picked yourself, your own “I'd incorporate at” amount if you typed one, your No to buying equipment, a vehicle or tools if you gave one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
@@ -597,7 +597,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-cockpit-folds",
     name: "Which cockpit panels you folded",
     holds:
-      "Four yes-or-no answers: whether the venture details, the goal bar, the right-hand panel and the map's legend are folded on the cockpit. Nothing about you or your ideas.",
+      "Five yes-or-no answers: whether the venture details, the goal bar, the right-hand panel, the map's legend and the what-if bar are folded on the cockpit. Nothing about you or your ideas.",
     lasts:
       "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens with everything showing again, but the old answers stay in the app's own folder.",
   },

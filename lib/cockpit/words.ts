@@ -183,6 +183,8 @@ export const cockpitWords = {
     goal: { fold: "Fold goal and gauges", show: "Show goal and gauges" },
     panel: { fold: "Fold the panel", show: (what: string) => `Show the panel: ${what}` },
     legend: { fold: "Fold the legend", show: "Show the legend", title: "Legend" },
+    /** The what-if bar and "This visit" under the map (2026-10-13). */
+    whatIf: { fold: "Fold the what-if bar", show: "Show the what-if bar" },
     all: { fold: "Fold all panels", show: "Show all panels" },
     /** Below 768 px the rail is a sheet, opened from the header. */
     railSheet: { open: "Venture details", close: "Close venture details" },
@@ -194,4 +196,180 @@ export const cockpitWords = {
 
   /** The agree prompt's line under a start-up cost: which line on which step, and where the amount came from. */
   agreeNote: (line: string, step: string, from: string) => `${quoted(line)} on ${quoted(step)}, from ${from}`,
+
+  // --- Part 2 (2026-10-12): the left list, receipts, the what-if bar and Compare.
+
+  /** "What you've told DotAmi": every answer the person gave, dated, with what it unlocked. */
+  told: {
+    region: "What you've told DotAmi",
+    count: (n: number) => `${count(n, "thing", "things")} you've told DotAmi`,
+    none: "Nothing yet. Each answer you give shows here, with its day.",
+    /** The intake's answers and road 0's map picks keep no day of their own; one is never borrowed. */
+    dayNotKept: "day not kept",
+    dayOnYourIdeas: "each figure's day is on Your ideas",
+    unlocked: "What it unlocked",
+    nothingChanged: "Nothing on the road changes with or without it.",
+    required: "The map needs this answer: it can be changed, not taken back.",
+    figuresElsewhere: "Take these back with the idea's figures on Your ideas.",
+    noRoute: "This can't be taken back here yet.",
+    change: "Change",
+    takeBack: "Take back",
+    // Each row's buttons named with the row for a screen reader, which otherwise hears "Take back" ten times.
+    changeFor: (said: string) => `Change: ${said}`,
+    takeBackFor: (said: string) => `Take back: ${said}`,
+  },
+
+  /** "Not told yet": each missing answer and the one thing it would unlock. */
+  notTold: {
+    region: "Not told yet",
+    order: "In the order DotAmi asks them, not importance.",
+    none: "Nothing missing that DotAmi asks here.",
+    unlocks: (what: string) => `unlocks ${what}`,
+    answer: "Answer",
+    openSkills: "Open the skills list",
+    openMoney: "Open the money list",
+    compare: "Compare the endings",
+    dontKnow: "I don't know",
+    more: (n: number) => `${n} more`,
+    fewer: "Show fewer",
+    dontKnowFolded: (n: number) => `${n} you don't know yet`,
+    showThem: "Show them",
+    /** A question's button named with its question, for a screen reader. */
+    forQuestion: (button: string, question: string) => `${button}: ${question}`,
+  },
+
+  /** Each question: what it asks, why it is asked, and the part of the screen the answer feeds. */
+  questions: {
+    date: {
+      question: "By when? Your month and year",
+      why: "Only you set it. DotAmi counts the months to it and nothing else.",
+      unlocks: "the Your date gauge: the months from today to it",
+    },
+    savings: {
+      question: "Savings you'd put toward starting",
+      why: "So your own money sits beside the lines you priced. Nothing counts until you agree to it.",
+      unlocks: "the savings and the difference in Start-up money",
+    },
+    costLines: {
+      question: (n: number) => `Your numbers for ${count(n, "cost line", "cost lines")} not priced yet`,
+      unlocks: "your numbers in Start-up money",
+    },
+    skills: {
+      question: (n: number) => `Your marks on ${count(n, "skill", "skills")} not marked`,
+      unlocks: "needs · you have on each step that lists them",
+    },
+    ending: {
+      question: (fork: string) => `Which ending at ${quoted(fork)}?`,
+      unlocks: "the steps after it, and the cost lines waiting on it",
+    },
+    mapPick: {
+      question: (fork: string) => `Your pick at ${quoted(fork)}`,
+      why: "The map shows its default pick until you choose one.",
+      unlocks: "the map reading your pick instead of its default",
+    },
+    structure: {
+      question: "Your structure",
+      why: "The map assumes a sole proprietorship until you set it.",
+      unlocks: "the map reading your structure instead of the one it assumes",
+      soleProp: "Sole prop",
+      corporation: "Corporation",
+    },
+    equipment: {
+      question: "Are you buying equipment, a vehicle or tools?",
+      why: "Until you answer, the rules read it as no.",
+      unlocks: "the rules reading your answer instead of no",
+      yes: "Yes",
+      no: "No",
+    },
+    incorporateAt: {
+      question: "The yearly sales at which you'd incorporate",
+      why: "DotAmi has no number of its own for this, so it waits for yours.",
+      unlocks: (step: string) => `${quoted(step)} lighting from your own number`,
+      box: "Dollars of yearly sales",
+    },
+    /** The box's own controls. */
+    box: {
+      save: "Save",
+      dontKnow: "I don't know",
+      month: "Month and year",
+      wholeDollars: "Write a whole number of dollars, like 45000.",
+      pickOne: "Pick one first.",
+      monthNeeded: "Pick a month and year first.",
+    },
+  },
+
+  /** A receipt: what one answer changed, from two runs of the rules. */
+  receipts: {
+    region: "What changed",
+    nothing: "Saved. Nothing on the road changed.",
+    /** A take back that changed nothing on the road still says what was taken back. */
+    nothingAfter: (what: string) => `Saved: ${what}. Nothing on the road changed.`,
+    /** The idea's own answers wait for the map's save before their receipt is worked out. */
+    saving: "Saving your answer…",
+    notSaved: "Not saved yet: the save didn't go through. Your answer stays in this tab, and Save now tries again.",
+    /**
+     * This visit's newest receipt lines (2026-10-12, after review: named for what they hold; "Since last
+     * time" is kept for the return visit's list, which isn't built).
+     */
+    thisVisit: "This visit",
+    moreThisVisit: (n: number) => `${n} more this visit`,
+    fewer: "Show fewer",
+  },
+
+  /** "Try first-year sales of $___": relights the rules for one run, never a figure. */
+  whatIf: {
+    region: "What-if",
+    label: "Try first-year sales of $",
+    try: "Try",
+    banner: "Your what-if, not a forecast",
+    on: (dollars: number) => `First-year sales of ${formatMoney(dollars * 100)}, for this look only`,
+    keep: "Keep",
+    keepHelp: "Keep makes it your first-year sales; Clear takes it off. Nothing is kept until you click Keep.",
+    clear: "Clear",
+    nothingChanged: "Nothing on the road changes with this what-if.",
+  },
+
+  /** Compare the two endings of a fork, side by side on the same rows. */
+  compare: {
+    region: "Compare the two endings",
+    open: "Compare",
+    openAtFork: "Compare the endings",
+    whichFork: "Which fork",
+    order: "In the order the road shows them.",
+    yourPick: (side: string) => `Your pick: ${quoted(side)}`,
+    mapDefault: (side: string) => `The map's default pick: ${quoted(side)}, not yours yet`,
+    nonePicked: "No side picked yet.",
+    noForks: "This road has no fork to compare.",
+    thisIsMine: "This is mine",
+    thisIsMineFor: (side: string) => `This is mine: ${side}`,
+    /** On road 0, the map toggle's own short name for the same side. */
+    onTheMap: (toggle: string) => `on the map: ${quoted(toggle)}`,
+    noRowDiffers: "None of these rows differ between the two endings today.",
+    rows: {
+      "steps-on-path": "Steps on your path",
+      "not-done": "Not marked done",
+      "not-on-path": "Not on your path",
+      skills: "Skills listed on your path",
+      legal: "Legal requirements among them",
+      fees: "Official fees",
+      yours: "Your numbers",
+      "not-priced": "Not priced yet",
+      "only-if": "Official fees that apply only sometimes",
+      cards: "Rules and tax cards",
+    },
+    skills: (have: number, learning: number, notYet: number, notMarked: number) =>
+      `${have} have · ${learning} learning · ${notYet} not yet · ${notMarked} not marked`,
+    money: (cents: number, lines: number) => `${formatMoney(cents)} (${count(lines, "line", "lines")})`,
+    feesNone: "none",
+    yoursNone: "not given yet",
+    lines: (n: number) => count(n, "line", "lines"),
+    onlyIf: (n: number) => (n === 0 ? "none" : `${count(n, "line", "lines")}, not added up`),
+    cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
+  },
+
+  /** The left rail's own fields. */
+  rail: {
+    /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target (2026-10-12, after review). */
+    salesTarget: (dollars: number) => (dollars > 0 ? formatMoney(dollars * 100) : "not given"),
+  },
 };

@@ -8,6 +8,10 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 day, **Fold goal and gauges** folds the bar to one line that keeps the four gauges as buttons, name and value
 only, with **Show goal and gauges**; remembered in this browser, [12-folding-and-phone.md](./12-folding-and-phone.md))
 
+> **Changed 2026-10-12 — part 2.** After the future's name, on a road with a fork, a **Compare** button opens *Compare the two endings* in the right-hand panel ([15-compare.md](./15-compare.md)).
+>
+> **Changed 2026-10-13 — the maintainer's answer to PR #159's question 1.** The **Compare** button shows only on a road with a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`): today the apprentice road, not today's Alberta road (road 0), where a toggle moves steps only through the tax rules, which colour the sides whichever is picked, so both columns' counts would come out the same. With none, there is no button.
+
 ## What it is
 
 A band under the header, across the whole page, named *Your goal and gauges* for a screen reader:

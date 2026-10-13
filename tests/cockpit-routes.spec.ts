@@ -18,7 +18,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { __resetRateLimitStateForTests } from "@/lib/api/rate-limit";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
-import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import { generalRoadV2026, roadApprenticeToOwnShopAB } from "@/lib/engines/roads/v2026";
 import { demoScenarios } from "../prisma/seed-data";
 import { fileUrl, migratedFile } from "./helpers/migrated-db";
 
@@ -29,7 +29,7 @@ let ventureId: string;
 
 type Params = { params: Promise<{ id: string }> };
 type IdRoute = (request: Request, context: Params) => Promise<Response>;
-const routes = {} as { future: IdRoute; progress: IdRoute; date: IdRoute; marks: (request: Request) => Promise<Response> };
+const routes = {} as { future: IdRoute; progress: IdRoute; date: IdRoute; ending: IdRoute; marks: (request: Request) => Promise<Response> };
 
 beforeAll(async () => {
   migratedFile(dbFile);
@@ -39,6 +39,7 @@ beforeAll(async () => {
   routes.future = (await import("@/app/api/futures/[id]/route")).GET;
   routes.progress = (await import("@/app/api/futures/[id]/progress/route")).POST;
   routes.date = (await import("@/app/api/futures/[id]/date/route")).POST;
+  routes.ending = (await import("@/app/api/futures/[id]/ending/route")).POST;
   routes.marks = (await import("@/app/api/skill-marks/route")).POST;
   ventureId = (await ensureVentureFromScenario(prisma, demoScenarios[0])).ventureId;
 }, 120_000);
@@ -187,5 +188,55 @@ describe("POST /api/skill-marks: the person's mark on a skill", () => {
     for (let i = 0; i < 125; i++) statuses.push((await routes.marks(post("/api/skill-marks", {}))).status);
     expect(statuses.slice(0, 120).every((s) => s === 400)).toBe(true);
     expect(statuses.at(-1)).toBe(429);
+  });
+});
+
+describe("POST /api/futures/<id>/ending: This is mine at a fork (2026-10-12, part 2)", () => {
+  const fork = roadApprenticeToOwnShopAB.forks[0]!;
+  const [stayEmployed, ownShop] = fork.sides;
+  const onRoad1 = async () => {
+    const id = (await ensureVentureFromScenario(prisma, { ...demoScenarios[0], id: `ending-${randomUUID()}` })).ventureId;
+    await prisma.venture.update({ where: { id }, data: { roadId: roadApprenticeToOwnShopAB.id, roadChosenAt: new Date() } });
+    return id;
+  };
+
+  it("keeps the side picked, with its day, and gives it back on the next read; null takes it back", async () => {
+    const id = await onRoad1();
+    const res = await routes.ending(post(`/api/futures/${id}/ending`, { forkId: fork.id, stepId: ownShop }), params(id));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { future: { forkPicks: Record<string, unknown> } }).future.forkPicks[fork.id]).toMatchObject({ stepId: ownShop, from: "you" });
+    expect(((await read(id)).body.future as { forkPicks: Record<string, unknown> }).forkPicks[fork.id]).toMatchObject({
+      stepId: ownShop,
+      from: "you",
+      pickedOn: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
+    const back = await routes.ending(post(`/api/futures/${id}/ending`, { forkId: fork.id, stepId: null }), params(id));
+    expect(back.status).toBe(200);
+    expect((await read(id)).body.future).toMatchObject({ forkPicks: {} });
+    void stayEmployed;
+  });
+
+  it("refuses today's road's forks (the map keeps those), a step that isn't a side, and a fork that isn't on the road", async () => {
+    const id = await onRoad1();
+    for (const body of [
+      { forkId: "gstTiming", stepId: "stage-2a-voluntary-gst-registration" },
+      { forkId: fork.id, stepId: "step-nobody-wrote" },
+      { forkId: "fork-nobody-wrote", stepId: ownShop },
+      { stepId: ownShop },
+    ]) {
+      expect((await routes.ending(post(`/api/futures/${id}/ending`, body), params(id))).status).toBe(400);
+    }
+    expect((await read(id)).body.future).toMatchObject({ forkPicks: {} });
+  });
+
+  it("answers only DotAmi's own window, reads JSON only, and an idea that isn't there is a 404", async () => {
+    const id = await onRoad1();
+    for (const site of [undefined, "cross-site", "same-site", "none"]) {
+      const headers: Record<string, string> = { ...json, ...(site ? { "sec-fetch-site": site } : {}) };
+      expect((await routes.ending(post(`/api/futures/${id}/ending`, { forkId: fork.id, stepId: ownShop }, headers), params(id))).status).toBe(403);
+    }
+    expect((await read(id)).body.future).toMatchObject({ forkPicks: {} });
+    expect((await routes.ending(post(`/api/futures/${id}/ending`, "{}", { "content-type": "text/plain", ...fromPage }), params(id))).status).toBe(415);
+    expect((await routes.ending(post("/api/futures/no-such-idea/ending", { forkId: fork.id, stepId: ownShop }), params("no-such-idea"))).status).toBe(404);
   });
 });

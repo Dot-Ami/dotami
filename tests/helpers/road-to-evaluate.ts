@@ -99,6 +99,43 @@ export function roadToEvaluate(): Road {
   };
 }
 
+/**
+ * A second invented road, for where Compare is offered: a fork whose two sides are steps road 0's rules
+ * colour (the hire-first branch and voluntary GST registration, reused by id), both leading on to the
+ * same last step, so nothing hangs off one side only.
+ *
+ *   Start ─┬▶ Hire first (road 0's step) ────┬▶ Keep the books
+ *          └▶ Voluntary GST (road 0's step) ─┘
+ *
+ * For the invented idea under the GST line the rules grey both sides, so whichever side is picked every
+ * step keeps its state: the pick decides nothing there. With first-year sales of $45,000 the rules move
+ * voluntary GST registration to "check first", and then the pick does decide it.
+ */
+export const RULED_FORK = "fork-eval-ruled";
+
+export function roadWithRuledFork(): Road {
+  const sides: [string, string] = ["branch-hire-first-employee", "stage-2a-voluntary-gst-registration"];
+  return {
+    id: "road-evaluation-ruled-fork",
+    label: "Invented road with a ruled fork (test only)",
+    kind: "both",
+    provinces: ["AB"],
+    lastVerified: "2026-10-01",
+    columns: [
+      { id: "col-ruled-start", label: "Start", summary: "Where it begins.", steps: ["step-ruled-start"] },
+      { id: "col-ruled-fork", label: "Either", summary: "One of two sides.", steps: sides, forkId: RULED_FORK },
+      { id: "col-ruled-after", label: "After", summary: "What comes next.", steps: ["step-ruled-books"] },
+    ],
+    steps: [
+      step("step-ruled-start", "Start (test only)", sides),
+      step(sides[0], "Hire first (test only)", ["step-ruled-books"]),
+      step(sides[1], "Voluntary GST (test only)", ["step-ruled-books"]),
+      step("step-ruled-books", "Keep the books (test only)", []),
+    ],
+    forks: [{ id: RULED_FORK, label: "Either (test only)", sides }],
+  };
+}
+
 /** An invented Alberta idea, well under the GST/HST line, on the map's default picks. */
 export function inventedIdea(change: Partial<Scenario["profile"]> = {}): Scenario {
   return {

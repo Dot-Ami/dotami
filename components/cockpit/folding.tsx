@@ -14,7 +14,7 @@ import {
 
 /**
  * Folding the cockpit's regions (docs/architecture/future-cockpit.md § 2, "Folding and phone width"): the
- * hook that holds and remembers the four answers, and the buttons every region uses: one to fold it, the
+ * hook that holds and remembers the five answers (lib/cockpit/folds.ts), and the buttons every region uses: one to fold it, the
  * narrow strip a folded rail or panel becomes on a wide window, and the bar a folded panel becomes along the
  * bottom of a narrow one. Their words come from lib/cockpit/words.ts.
  */
@@ -22,7 +22,7 @@ import {
 export interface FoldControls {
   folds: Folds;
   toggle: (region: FoldRegion) => void;
-  /** The header's button: folds all four, or opens all four once they are all folded. */
+  /** The header's button: folds every region, or opens them all once they are all folded. */
   toggleAll: () => void;
 }
 

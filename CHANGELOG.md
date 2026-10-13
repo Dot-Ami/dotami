@@ -28,6 +28,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   width"](docs/architecture/future-cockpit.md); controls:
   [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
   `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
+- **The cockpit's part 2 panels fold too** — *What you've told DotAmi / Not told yet* folds with the
+  venture details it sits at the top of, and *Compare the two endings* with the right-hand panel (its
+  strip says *Show the panel: Compare the two endings*). The what-if bar and *This visit* under the map
+  are a fifth region: *Fold the what-if bar* folds them to one line, which still says *Your what-if, not
+  a forecast* and its number while a what-if is on; *Fold all panels* folds it with the rest, and the
+  answer is remembered with the other four (`whatIf`). Controls:
+  [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md).
 - **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
   ([14a]) — every official fee DotAmi shows is now written once, in
   [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):
@@ -183,6 +190,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or cost lines yet, so those parts show one line saying so until its content lands
   ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
   [docs/ui-spec/cockpit/](docs/ui-spec/cockpit/)).
+- **The cockpit screen, part 2** ([14a]) — at the top of the left rail, **What you've told DotAmi**: every
+  answer you gave (never a default you haven't set, never a what-if), with its day (or *day not kept*
+  where nothing keeps one), what it unlocked (road evaluation run without it and with it, in the
+  receipt's own words, from a new pure `withoutAnswer` in [`lib/roads/`](lib/roads/without-answer.ts)), and
+  **Change** and **Take back**; under it, **Not told yet**: each missing answer as *question → unlocks
+  what*, at most five showing, in the order DotAmi asks them, each with **I don't know**, which keeps
+  nothing, and a **one-question box** for the month, savings, structure, equipment, a map pick and your
+  own incorporation number. After every answer, wherever you give it, a **receipt** says what it changed
+  (two runs of the rules compared, never written by a model; for an answer kept with the map, worked out
+  from the idea the save read back, and *Saving your answer…* or *Not saved yet* until then), and the
+  newest lines of the visit stay in **This visit** under the map (its newest line, the rest behind *n more
+  this visit*). The **what-if bar** (*Try first-year sales of $___*) relights the
+  rules under *Your what-if, not a forecast*, moves no money sum and is kept nowhere; **Keep** makes it
+  the idea's own first-year sales, never a figure. **Compare the two endings** (from the goal bar, a fork's
+  step, or a *Not told yet* ending) puts a fork's two sides on the same rows, counts and sums only, no
+  score and no highlighted column, with **This is mine**, kept through a new route that answers only
+  DotAmi's own window (`/api/futures/<id>/ending`). It is offered only at a fork whose own pick, not the
+  rules, puts steps on or off the path (the maintainer's answer of 2026-10-13), worked out from the
+  road's own steps by [`lib/cockpit/told.ts`](lib/cockpit/told.ts) `forksToCompare`: today the
+  apprentice road's fork, and not today's Alberta road. There flipping a toggle does move a step between
+  *check first* and *not on your path*, but the tax rules do that whichever side is picked, and both
+  columns' counts come out the same; there the map's toggles pick, and no Compare button shows
+  ([docs/architecture/future-cockpit.md § 2, part 2](docs/architecture/future-cockpit.md),
+  [docs/ui-spec/cockpit/12–15](docs/ui-spec/cockpit/)).
 - **Federal and Alberta incorporation, side by side.** The Incorporating stage's detail shows both ways
   to incorporate, each from its own official page: Corporations Canada's online fees ($200 to
   incorporate, $100 more for express service, $12 a year for the annual return, no name search report
@@ -275,6 +306,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
+  the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
+  starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
+  say so); a No you give in the one-question box is kept as yours, and Take back removes it for good. A
+  pick of the map's default side (in the box, or on the map's toggle) said *Saved* and was gone after a
+  reload, because the map kept your clicks for the tab only; the forks you picked are now kept with the
+  map's answers, so it reads as your pick after a reload (and the export no longer calls it a default).
+  Compare is worked out without the what-if and says when no row differs; a ticked *done when* line no longer borrows the step's last-change day; the rail says *not
+  given* for no sales target, never $0; the left list's receipt takes the focus where the row you used
+  was; and every *Change*, *Take back*, *Answer*, *I don't know* and *This is mine* names its row for a
+  screen reader ([docs/architecture/future-cockpit.md § 2](docs/architecture/future-cockpit.md),
+  [`lib/db/scenario-state-json.ts`](lib/db/scenario-state-json.ts)).
 - **About you and the map's "In your words" no longer say "Vault: No external statement source
   configured."** ([#6](https://github.com/Dot-Ami/dotami/issues/6)). Every copy showed the line, about a
   feature nobody has set up, in a word that meant nothing to a stranger. The screen now says nothing

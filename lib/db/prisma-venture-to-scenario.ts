@@ -66,8 +66,8 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
   if (!isActiveBranchesJson(row.scenarioState.activeBranches)) {
     return null;
   }
-  // The column also holds the person's own incorporation number; split it off the picks.
-  const { activeBranches: branches, incorporateAt } = readMapAnswers(
+  // The column also holds the person's own answers kept with the map; split them off the picks.
+  const { activeBranches: branches, incorporateAt, decidedBranchIds, equipmentNo } = readMapAnswers(
     row.scenarioState.activeBranches as unknown as Record<string, unknown>,
   );
 
@@ -81,7 +81,9 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
     structureSource: row.structureSource === "assumed" ? "assumed" : "user",
     hireFirst: row.hireFirst,
     activityTags: toStringList(row.activityTags),
-    capitalPurchasePlanned: row.capitalPurchasePlanned,
+    // A yes is the column; a No is only one the person gave (scenario-state-json.ts). The column's false
+    // alone is also the intake's untouched chip, which is no answer.
+    capitalPurchasePlanned: row.capitalPurchasePlanned ? true : equipmentNo ? false : undefined,
     employmentStatus: reverseEmployment(row.employmentStatus),
     stage: reverseStage(row.stage),
   };
@@ -89,6 +91,6 @@ export function mapVentureRowToScenario(row: VentureWithState): Scenario | null 
   return {
     id: row.scenarioSeedKey,
     profile,
-    state: { ...recomputeScenarioState(branches, profile.hireFirst), incorporateAt },
+    state: { ...recomputeScenarioState(branches, profile.hireFirst), decidedBranchIds, incorporateAt },
   };
 }
