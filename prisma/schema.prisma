@@ -64,6 +64,10 @@ enum EmploymentStatus {
   RETIRED
   UNEMPLOYED
   OTHER
+  /// Not asked: a future picked on *Pick a future* is saved before anyone asks the person's work
+  /// situation (2026-10-12; docs/architecture/future-cockpit.md § 1, The way in as built). The rules read
+  /// it as unanswered. SQLite keeps an enum as text, so adding a value changes no table.
+  NOT_SAID
 }
 
 model User {
@@ -148,6 +152,17 @@ model Venture {
   targetMonth      String?
   /// The moment the person set that month; null while there is none (2026-10-12).
   targetMonthSetAt DateTime?
+  /// The answer to "a business of your own, a job or career, or both?" on *Your destination*
+  /// (lib/front-door/questions.ts LOOKING_FOR: "business", "career", "both-or-not-sure"), written once,
+  /// when *Pick a future* saves the idea; null for every idea saved another way (2026-10-12).
+  lookingFor       String?
+  /// The moment that answer was kept with the idea; null with it.
+  lookingForSetAt  DateTime?
+  /// The idea's answers it was saved without, because nobody was asked (a future picked on *Pick a
+  /// future*, 2026-10-12): a JSON list of lib/scenarios/types.ts NOT_SAID_FIELDS ("venture-type",
+  /// "equipment", "sales-targets"). Their columns keep the intake's starting values; this list stops
+  /// anything saying the person told DotAmi them. [] for every other idea; a save with no list clears it.
+  notSaid          Json             @default("[]")
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1130,7 +1130,7 @@ function buildMenu(origin, dataDir) {
         label: "Go",
         submenu: [
           { label: "Home", click: go("/") },
-          { label: "Your ideas", click: go("/ventures") },
+          { label: "Your futures", click: go("/ventures") },
           { label: "Settings", click: go("/settings") },
         ],
       },

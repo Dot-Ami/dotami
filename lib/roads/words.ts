@@ -33,6 +33,9 @@ export const EMPLOYMENT_WORDS = {
   retired: "Retired",
   unemployed: "Between roles",
   other: "Other",
+  // Not an answer: a future picked on Pick a future before anyone asked (2026-10-12). Road evaluation
+  // lists it as not told, and tries it as the work situation "taken away".
+  "not-said": "Not said",
 } as const;
 
 export const STRUCTURE_WORDS = { "sole-prop": "Sole prop", corporation: "Corporation" } as const;
@@ -164,6 +167,12 @@ export const answer = {
     said: `you told us the kind of venture is ${type}`,
     takenBack: "you took back the kind of venture",
     fact: `the kind of venture (${type})`,
+  }),
+  // A future picked on Pick a future is saved with the intake's starting kind, never asked (2026-10-12).
+  ventureTypeUnanswered: (startingKind: string): AnswerWords => ({
+    said: `the kind of venture is not answered yet; the idea was saved with the starting value, ${startingKind}`,
+    takenBack: "you took back the kind of venture",
+    fact: `the kind of venture (not answered; saved as ${startingKind})`,
   }),
   workSituation: (situation: string): AnswerWords => ({
     said: `you told us your work situation is ${situation}`,

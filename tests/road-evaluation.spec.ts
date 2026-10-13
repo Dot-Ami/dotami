@@ -706,6 +706,8 @@ describe("road evaluation is pure", () => {
   // "@/lib/scenarios/branches" is for `withoutAnswer` (2026-10-12, the cockpit's part 2): a map pick taken
   // back returns to the map's default, the same pure change the map's toggles make. Its one import beyond
   // types is lib/db/scenario-state-json.ts's number cleaner, which reads nothing either.
+  // "@/lib/scenarios/not-said" is two pure functions over the profile's not-said list, importing only
+  // lib/scenarios/types (2026-10-12): a picked future's unasked answers are never listed as told.
   const ALLOWED = new Set([
     "@/lib/scenarios/branches",
     "./agreed",
@@ -717,6 +719,7 @@ describe("road evaluation is pure", () => {
     "@/lib/format/money-and-months",
     "@/lib/scenarios/evaluate-scenario",
     "@/lib/scenarios/graph",
+    "@/lib/scenarios/not-said",
     "@/lib/scenarios/types",
   ]);
 

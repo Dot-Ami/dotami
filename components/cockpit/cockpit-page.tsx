@@ -25,6 +25,7 @@ import { useIdeaReminders } from "@/components/ventures/use-idea-reminders";
 import { PlaybookExportPanel } from "@/components/playbook-export-panel";
 import { FieldRow, Pill, WordMark } from "@/components/ui";
 import { allFolded } from "@/lib/cockpit/folds";
+import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import {
   answerReceipt,
   compareEndings,
@@ -47,6 +48,7 @@ import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
+import { EMPLOYMENT_WORDS } from "@/lib/roads/words";
 import {
   branchDecisions,
   setIncorporateAt,
@@ -55,6 +57,7 @@ import {
   type BranchDecisionId,
 } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { isNotSaid } from "@/lib/scenarios/not-said";
 import type { Scenario, VentureStructure } from "@/lib/scenarios/types";
 import Link from "next/link";
 
@@ -780,7 +783,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
           <Link href="/ventures" className="font-mono text-[11px] text-stone transition hover:text-paper">
-            ← Ideas
+            ← Your futures
           </Link>
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
           <span className="max-md:hidden">
@@ -827,6 +830,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             evaluation={evaluation}
             scenario={scenario}
             firstWords={kept?.firstWords ?? null}
+            destination={kept?.destination ?? null}
             target={kept?.incomeWanted ?? null}
             active={activeGauge}
             onGauge={handleGauge}
@@ -892,8 +896,9 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               <h3 className="mt-0.5 font-serif text-[22px] font-bold tracking-tight">
                 {scenario.profile.name}
               </h3>
-              <p className="text-[11px] text-stone capitalize">
-                {scenario.profile.type} · {scenario.profile.province}
+              {/* "Not said" stays as written; a kind the person gave is capitalised, as before. */}
+              <p className={`text-[11px] text-stone ${isNotSaid(scenario.profile, "venture-type") ? "" : "capitalize"}`}>
+                {ventureLine(scenario.profile)}
               </p>
             </div>
 
@@ -910,11 +915,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               />
             ) : null}
 
-            <FieldRow label="Type" value={scenario.profile.type} />
-            <FieldRow label="Province" value={scenario.profile.province} />
-            {/* No number is "not given", never a $0 target (2026-10-12, after review). */}
-            <FieldRow label="Target Y1" value={words.rail.salesTarget(scenario.profile.targetRevenueY1)} />
-            <FieldRow label="Target Y3" value={words.rail.salesTarget(scenario.profile.targetRevenueY3)} />
+            {/* What a picked future was saved without says "Not said"; a target of no number is "not
+                given", never $0 (lib/cockpit/profile-rows.ts). */}
+            {profileRows(scenario.profile).map((row) => (
+              <FieldRow key={row.label} label={row.label} value={row.value} />
+            ))}
             <div className="border-t border-rule-soft py-2 text-xs">
               <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
                 <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
@@ -937,7 +942,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 </p>
               ) : null}
             </div>
-            <FieldRow label="Employed" value={scenario.profile.employmentStatus} />
+            <FieldRow
+              label="Employed"
+              // A future picked on Pick a future was saved before anyone asked: say so in words, not as a code.
+              value={scenario.profile.employmentStatus === "not-said" ? EMPLOYMENT_WORDS["not-said"] : scenario.profile.employmentStatus}
+            />
 
             {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. */}
             <section className="border-t border-rule-soft pt-4">
@@ -989,7 +998,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               </Link>
               <Link href="/ventures">
                 <Pill variant="ghost" className="w-full justify-center">
-                  All ideas
+                  {words.allFutures}
                 </Pill>
               </Link>
             </div>
@@ -1234,7 +1243,7 @@ function EmptyCockpit() {
               <Pill variant="maple">Describe a venture →</Pill>
             </Link>
             <Link href="/ventures">
-              <Pill variant="ghost">All ideas</Pill>
+              <Pill variant="ghost">{words.allFutures}</Pill>
             </Link>
           </div>
         </div>

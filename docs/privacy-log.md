@@ -147,6 +147,43 @@ person is asked).
   the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
   (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
+- **The way in: Your destination and Pick a future (2026-10-12).** The front door's first door,
+  *Start from where I want to be*, asks four questions
+  ([`lib/front-door/questions.ts`](../lib/front-door/questions.ts)). Where the answers go:
+  - *Where you want to be*, in the person's own words: kept at once as one of their statements
+    (`PersonStatement`, `kind: "destination"`), word for word, dated the day they gave in their own
+    calendar, through DotAmi's own statements route. "I don't know yet" keeps nothing new and deletes
+    nothing: words kept before stay, still shown on top of the futures picked there, and the receipt
+    says so and points to Delete (statements go all at once).
+  - *The yearly income you want, before tax*: proposed, then kept only once the person agrees in the
+    prompt (`PersonFigure`, kind `income-wanted`); three new routes on DotAmi's own server
+    (`/api/person-figures/propose`, `/agree` from DotAmi's own window only, `/discard`). "Skip" keeps
+    nothing new; turning it down keeps it in the data file as *discarded*, shown nowhere, as a
+    turned-down figure is, and the receipt says so (*"Turned down. It stays in your data file, marked
+    turned down and shown nowhere, until Delete on What DotAmi knows about you removes it."*). Neither
+    takes back an income agreed before, and the receipt says it still stands. A number proposed and
+    then left (the prompt closed without deciding) stays *proposed*, shown nowhere, until Delete.
+  - `/start` is drawn on the server, which reads the newest destination and the agreed income from the
+    data file (`lib/front-door/kept.ts`) to show them as answered; nothing new is kept by that read, and
+    nothing leaves the computer.
+  - *A business, a job or career, or both* and *the province or territory*: held in the browser tab's
+    draft (`dotami-journey-v3`, with what the other two came to and the income's amount if agreed) until
+    a future is picked. Picking one saves a new idea with the place, the road picked (`Venture.roadId`,
+    `roadChosenAt`) and that answer with its moment (new columns `Venture.lookingFor`,
+    `lookingForSetAt`, migration `20261012120000_looking_for`, two plain added columns). The idea's
+    employment status is kept as **not said** (a new value, `NOT_SAID`), since this way in doesn't ask
+    it. Its kind of venture, equipment and revenue estimates aren't asked either: their columns keep the
+    intake's starting values (*Service*, no, 0), and a new column, `Venture.notSaid` (migration
+    `20261012130000_not_said`, one plain added column, `[]` for every other idea), lists them as not
+    said, so no screen or export shows those values as the person's. Pick a future lists road 0 and,
+    since the maintainer's yes of 2026-10-13, the first written future, whose sources no person has read
+    yet (its card says so); an idea picked on it keeps that road's id in `Venture.roadId`, as above.
+  - *Not here yet?* on Pick a future keeps the person's note as one of their statements.
+  The cockpit's read of an idea (`GET /api/futures/<id>`) now also gives the person's newest destination,
+  so the goal bar can show it on an idea with no sentence of its own. None of it is read by a rule, and
+  nothing leaves the computer: these answers go only to DotAmi's own server, never to a model, and the
+  front door's first door says *"What you type here stays on this computer."* only of itself (the second
+  door's sentence still goes to the intake's parser, which uses a model when a key is set up).
 - **The desktop app's log keeps less when an update check, a backup or a restore fails (2026-10-12).**
   Four lines in [`desktop/main.mjs`](../desktop/main.mjs) wrote the whole error into the log
   (`logs/server.log` in the data folder): a failed update check, a failed backup, a refused restore and
@@ -189,6 +226,14 @@ person is asked).
   ([`desktop/notices.mjs`](../desktop/notices.mjs) reads it from the installed package). What
   Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
 
+### What the person must agree to
+
+- **The yearly income on Your destination (2026-10-12)** goes through an agree prompt of its own
+  ([`components/front-door/income-agree-prompt.tsx`](../components/front-door/income-agree-prompt.tsx)):
+  the amount, typed by the person, per year, with the day, and *"It shows as your target at the top of
+  each future you open. Nothing compares it with anything."*; **Agree** or **No, I'll do it myself**.
+  Only DotAmi's own window can agree (`Sec-Fetch-Site: same-origin`, as for figures).
+
 ### How to remove it
 
 - **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
@@ -222,6 +267,10 @@ person is asked).
   kind of venture and the work situation can be changed but not taken back (the map needs them).
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
+- **Your destination's answers**: the destination goes with "Your statements" on Delete, the income with
+  "The yearly income you said you want", and the business / career / both answer and the road with the
+  idea ("Your ideas"). The answers held in the browser tab go when the tab closes, or when the front
+  door's **Map it** starts a new journey.
 
 ### What the policy will need to say
 

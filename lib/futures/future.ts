@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { generalRoadV2026, type Road } from "@/lib/engines/roads/v2026";
+import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import { requireVenture } from "@/lib/figures/store";
 import { placeCodeFor, type PlaceCode } from "@/lib/places/codes";
 
@@ -47,6 +48,13 @@ export interface FutureView {
   targetMonth: string | null;
   /** The day the person set that month, on this computer, or null. */
   targetMonthSetOn: string | null;
+  /**
+   * The answer to "a business, a job or career, or both?" kept when the future was picked on *Pick a
+   * future* (2026-10-12); null for an idea saved any other way.
+   */
+  lookingFor: LookingFor | null;
+  /** The day that answer was kept, on this computer, or null. */
+  lookingForOn: string | null;
 }
 
 /** A pick as stored on the future: the step and the moment it was picked. */
@@ -90,6 +98,8 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
       forkPicks: true,
       targetMonth: true,
       targetMonthSetAt: true,
+      lookingFor: true,
+      lookingForSetAt: true,
       scenarioState: { select: { activeBranches: true } },
     },
   });
@@ -119,6 +129,8 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
   }
 
   const roadChosen = row.roadId !== null && row.roadId === road.id;
+  // Only an answer the question offers; a hand-edited file's other text reads as none, never guessed.
+  const lookingFor = (LOOKING_FOR as readonly (string | null)[]).includes(row.lookingFor) ? (row.lookingFor as LookingFor) : null;
   return {
     ventureId,
     roadId: road.id,
@@ -128,6 +140,8 @@ export async function readFuture(prisma: PrismaClient, ventureId: string, catalo
     forkPicks,
     targetMonth: row.targetMonth,
     targetMonthSetOn: row.targetMonth === null ? null : dayOf(row.targetMonthSetAt),
+    lookingFor,
+    lookingForOn: lookingFor === null ? null : dayOf(row.lookingForSetAt),
   };
 }
 

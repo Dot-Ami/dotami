@@ -31,6 +31,7 @@ export function GoalBar({
   evaluation,
   scenario,
   firstWords,
+  destination = null,
   target,
   active,
   onGauge,
@@ -51,6 +52,11 @@ export function GoalBar({
   scenario: Scenario;
   /** The sentence typed on the front door for this idea, as kept: word for word, with its day. */
   firstWords: { text: string; saidAt: string } | null;
+  /**
+   * The person's newest answer to "where do you want to be", word for word with its day. Shown only when
+   * the idea has no first sentence of its own, as an idea picked on Pick a future has none (2026-10-12).
+   */
+  destination?: { text: string; saidAt: string } | null;
   /** The yearly income the person agreed to, with the day agreed; null when there is none. */
   target: { amountCents: number; agreedOn: string } | null;
   active: GaugeId | null;
@@ -66,6 +72,12 @@ export function GoalBar({
   // An idea's province can be one no road names yet (MB, QC…), so the list is read as plain strings.
   const roadPlaces: readonly string[] = road.provinces;
   const writtenForThisPlace = roadPlaces.includes(place) || roadPlaces.includes("CA");
+  // The idea's own sentence wins; the person's destination stands in only when there is none.
+  const shownWords = firstWords
+    ? { text: firstWords.text, line: words.goal.yourWords(firstWords.saidAt) }
+    : destination
+      ? { text: destination.text, line: words.goal.destination(destination.saidAt) }
+      : null;
 
   const isFolded = folded && onToggleFold !== undefined;
 
@@ -97,11 +109,9 @@ export function GoalBar({
       ) : null}
       {/* The open bar. Folded, it stays on the page, hidden, so folding never removes anything. */}
       <div hidden={isFolded} className="grid gap-2.5 px-5 py-3">
-        {firstWords ? (
-          <p className="font-serif text-[17px] italic leading-snug text-paper">“{firstWords.text}”</p>
-        ) : null}
+        {shownWords ? <p className="font-serif text-[17px] italic leading-snug text-paper">“{shownWords.text}”</p> : null}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-stone">
-          {firstWords ? <span>{words.goal.yourWords(firstWords.saidAt)}</span> : null}
+          {shownWords ? <span>{shownWords.line}</span> : null}
           {target ? <span>{words.goal.target(target.amountCents, target.agreedOn)}</span> : null}
           <span>
             {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}

@@ -45,7 +45,10 @@ export type EmploymentStatus =
   | "business-owner"
   | "retired"
   | "unemployed"
-  | "other";
+  | "other"
+  // Not asked: a future picked on Pick a future is saved before anyone asks (2026-10-12). Never offered
+  // on the intake, which still asks; the rules read it as unanswered (evaluation-profile.ts).
+  | "not-said";
 export type ScenarioNodeStatus = "active" | "complete" | "decision" | "ghost" | "upcoming";
 
 export interface VentureProfile {
@@ -79,7 +82,18 @@ export interface VentureProfile {
   capitalPurchasePlanned?: boolean;
   /** S2.5.4i: idea -> prototype -> first customers -> established. Undefined on pre-09-16 rows = idea. */
   stage?: VentureStage;
+  /**
+   * The idea's answers it was saved without, because nobody was asked (2026-10-12): a future picked on
+   * Pick a future. Their fields still hold the intake's starting values, which the rules read as they read
+   * an untouched intake; this list is what stops anything saying the person told DotAmi them (road
+   * evaluation, the cockpit's rail, the export). Undefined (or empty) = every answer was the person's.
+   */
+  notSaid?: NotSaidField[];
 }
+
+/** The answers a future can be saved without (`VentureProfile.notSaid`). Ids are permanent: the data file keeps them. */
+export const NOT_SAID_FIELDS = ["venture-type", "equipment", "sales-targets"] as const;
+export type NotSaidField = (typeof NOT_SAID_FIELDS)[number];
 
 export interface ScenarioState {
   activeNodeIds: CFENodeId[];

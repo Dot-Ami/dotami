@@ -14,6 +14,8 @@ export interface KeptForIdea {
   skillMarks: SkillMarkView[];
   incomeWanted: { amountCents: number; agreedOn: string } | null;
   firstWords: { text: string; saidAt: string } | null;
+  /** The person's newest answer to "where do you want to be", word for word with its day; null when none. */
+  destination: { text: string; saidAt: string } | null;
 }
 
 /**

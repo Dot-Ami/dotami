@@ -93,10 +93,15 @@ function rankUnlocks(unlocks: UnlockItem[]): UnlockItem[] {
     .sort((a, b) => score(b) - score(a));
 }
 
-export function IntakePage() {
+/**
+ * `firstScreen` is read on the server (app/(journey)/intake/page.tsx): "about" for a person with no saved
+ * idea yet, "confirm" once they have one (issue #38), so a second idea doesn't pass through About you
+ * again. Back from Screen A still opens it.
+ */
+export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | "confirm" }) {
   const router = useRouter();
   const { intake, setIntake, setScenario } = useJourney();
-  const [screen, setScreen] = useState<ScreenId>("about");
+  const [screen, setScreen] = useState<ScreenId>(firstScreen);
   const [freeText, setFreeText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [opening, setOpening] = useState(false);

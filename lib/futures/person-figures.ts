@@ -13,8 +13,9 @@ import { FutureInputError, PERSON_FIGURE_PER, type PersonFigureKind } from "./ty
  * a message (messages can reach the log). Nothing here judges the number: it is never compared with
  * anything as a pass or a fail.
  *
- * No route calls this yet. When the screen that asks comes, its agree route answers only DotAmi's own
- * window, like the figures' agree route (app/api/figures/agree/route.ts).
+ * Called by app/api/person-figures/ (2026-10-12; *Your destination* asks the yearly income): propose and
+ * discard are open, as the figures' are; agree answers only DotAmi's own window, like the figures' agree
+ * route (app/api/figures/agree/route.ts).
  */
 
 export type PersonFigureStatus = "proposed" | "confirmed" | "retracted" | "discarded";

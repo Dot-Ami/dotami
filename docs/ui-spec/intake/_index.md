@@ -1,6 +1,11 @@
 # Intake — page overview
 
-Last updated: 2026-09-13 (S2.5.4a added Screen 0; 2026-07-02 workshop content below verified against shipped code)
+Last updated: 2026-10-12 (issue #38: the intake opens on Screen 0, *About you*, only for a person with
+no saved idea yet; anyone with one starts on Screen A, the screen they came for, and **← Back** from
+Screen A still opens *About you*. Whether there is a saved idea is read on the server when the page is
+drawn (`app/(journey)/intake/page.tsx`), so the first screen never changes under the person; with no
+database it reads as none, and the intake starts on *About you* as before); 2026-09-13 (Screen 0 added;
+2026-07-02 workshop content below verified against shipped code)
 
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)

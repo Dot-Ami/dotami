@@ -1,9 +1,12 @@
+import { roadsV2026 } from "@/lib/engines/roads/v2026";
+import { LOOKING_FOR, type LookingFor } from "@/lib/front-door/questions";
 import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
 import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
 import { cleanDecided, cleanIncorporateAt } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
+import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
 import type { Scenario, VentureProfile } from "@/lib/scenarios/types";
 
@@ -17,6 +20,7 @@ const EMPLOYMENT = new Set<VentureProfile["employmentStatus"]>([
   "retired",
   "unemployed",
   "other",
+  "not-said",
 ]);
 function parseProfile(raw: unknown): VentureProfile | null {
   if (!raw || typeof raw !== "object") {
@@ -67,6 +71,8 @@ function parseProfile(raw: unknown): VentureProfile | null {
   const stage: VentureStage = (VENTURE_STAGES as readonly string[]).includes(p.stage as string)
     ? (p.stage as VentureStage)
     : "idea";
+  // The answers a picked future was saved without (2026-10-12). No list is none: the intake asks them all.
+  const notSaid = cleanNotSaid(p.notSaid);
 
   return {
     name: p.name.trim(),
@@ -79,8 +85,10 @@ function parseProfile(raw: unknown): VentureProfile | null {
     hireFirst: p.hireFirst,
     employmentStatus: p.employmentStatus as VentureProfile["employmentStatus"],
     activityTags,
-    capitalPurchasePlanned,
+    // Equipment not said has no answer: the column still stores "no", the rules' reading of none.
+    ...(notSaid.includes("equipment") ? {} : { capitalPurchasePlanned }),
     stage,
+    ...(notSaid.length > 0 ? { notSaid } : {}),
   };
 }
 
@@ -159,6 +167,13 @@ export function parseFirstSave(data: unknown, now: Date): FirstSave {
       // Word for word: the text is kept exactly as sent.
       out.firstWords = { text, saidAt };
     }
+  }
+
+  // Pick a future's two extras: only a road the catalog has, and only an answer the question offers.
+  // Anything else is dropped, never guessed into one.
+  if (typeof root.roadId === "string" && roadsV2026.some((road) => road.id === root.roadId)) out.roadId = root.roadId;
+  if (typeof root.lookingFor === "string" && (LOOKING_FOR as readonly string[]).includes(root.lookingFor)) {
+    out.lookingFor = root.lookingFor as LookingFor;
   }
 
   if (Array.isArray(root.goals)) {

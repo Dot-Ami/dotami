@@ -2,16 +2,20 @@
 
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
+import { frontDoorWords } from "@/lib/front-door/words";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { STATEMENT_FULL_NOTE, STATEMENT_MAX_CHARS } from "@/lib/person/types";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 
 /**
- * The landing page's one job (2026-07-02 workshop, W1/W4): capture the user's situation
- * in their own words in under 30 seconds. The free-text box IS the front door; the chips
- * below only fill it with example phrasings. No entry cards, no example grids.
+ * The front door (decision 6 of 2026-10-11: it leads with the dream; docs/ui-spec/landing/04-three-doors.md):
+ * the headline and three doors. The first, *Start from where I want to be*, opens /start. The second is
+ * the 2026-07-02 workshop's front door, unchanged: the free-text box captures the situation in the
+ * person's own words, and the chips below only fill it with example phrasings. The third says plainly that
+ * the invented example future isn't written yet.
  */
 const EXAMPLE_PROMPTS = [
   "I want to monetize a hobby",
@@ -67,77 +71,104 @@ export function LandingPage() {
     router.push("/intake");
   }
 
+  const doors = frontDoorWords.doors;
   return (
-    <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <header className="flex items-center justify-between border-b border-rule-soft px-8 py-7 md:px-14">
+    <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-rule-soft px-4 py-5 sm:px-8 md:px-14">
         <WordMark />
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-5">
           <GhostLink href="/ventures" tone="stone">
-            Your ideas →
+            {frontDoorWords.nav.futures}
           </GhostLink>
           <GhostLink href="/cockpit" tone="stone">
-            Open cockpit →
+            {frontDoorWords.nav.cockpit}
           </GhostLink>
           <GhostLink href="/settings" tone="stone">
-            Settings
+            {frontDoorWords.nav.settings}
           </GhostLink>
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-8 md:px-14">
-        <section className="w-full max-w-[860px] text-center">
-          <h1 className="font-serif text-5xl font-bold leading-[1.02] tracking-tight text-paper md:text-6xl lg:text-[68px]">
-            Map any venture.
-            <br />
-            <span className="font-normal italic text-maple">Find your path.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-[560px] text-[15px] leading-relaxed text-paper-dim">
-            Every path to financial freedom — structures, write-offs, grants, thresholds —
-            sourced, risk-rated, cited to the law. Canada is the first jurisdiction mapped.
-          </p>
-
-          <div className="mt-10 flex w-full overflow-hidden rounded-[10px] border border-rule bg-ink3 text-left focus-within:border-maple-soft">
-            <textarea
-              ref={boxRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleMapIt();
-              }}
-              placeholder="What are you building — or what do you want to write off? Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
-              rows={3}
-              // The most a statement holds; the browser drops anything past it, so a note says so below.
-              maxLength={STATEMENT_MAX_CHARS}
-              className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
-            />
-            <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
-              <Pill variant="maple" onClick={handleMapIt} disabled={parsing || text.trim().length === 0}>
-                {parsing ? "Reading…" : "Map it →"}
-              </Pill>
-            </div>
-          </div>
-          {text.length >= STATEMENT_MAX_CHARS ? (
-            <p role="status" className="mt-2 text-[12px] text-amber">
-              {STATEMENT_FULL_NOTE}
-            </p>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {EXAMPLE_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => setText(prompt)}
-                className="rounded-full border border-rule px-3.5 py-1.5 text-[12px] text-stone transition hover:border-maple-soft hover:text-paper"
-              >
-                {prompt}
-              </button>
-            ))}
+      <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-8 md:px-14">
+        <section className="my-auto w-full max-w-[1120px]">
+          <div className="text-center">
+            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-paper lg:text-[46px]">
+              {frontDoorWords.headline}
+            </h1>
+            <p className="mx-auto mt-4 max-w-[560px] text-[15px] leading-relaxed text-paper-dim">{frontDoorWords.subline}</p>
           </div>
 
+          {/* The three doors (decision 6 of 2026-10-11), in this order: the dream first. Side by side on a
+              wide window, one under the other on a narrow one. */}
+          <ul aria-label={frontDoorWords.doorsLabel} className="mt-8 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]">
+            <li className="flex flex-col gap-3 rounded-[10px] border border-maple-soft bg-ink2 p-5">
+              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.dream.title}</h2>
+              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.dream.body}</p>
+              <p className="text-[12px] text-stone">{doors.dream.stays}</p>
+              <div className="mt-auto flex justify-end">
+                <Link
+                  href="/start"
+                  className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
+                >
+                  {doors.dream.go}
+                </Link>
+              </div>
+            </li>
+
+            <li className="flex flex-col gap-3 rounded-[10px] border border-rule bg-ink2 p-5">
+              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.idea.title}</h2>
+              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.idea.body}</p>
+              {/* Today's box, unchanged: everything it did, it still does (docs/ui-spec/landing/01-free-text-entry.md). */}
+              <div className="flex w-full flex-col overflow-hidden rounded-[10px] border border-rule bg-ink3 focus-within:border-maple-soft">
+                <textarea
+                  ref={boxRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleMapIt();
+                  }}
+                  placeholder="What are you building — or what do you want to write off? Any venture works: a video game studio, weekend woodworking, a plumbing company, “I bought a workstation”…"
+                  rows={3}
+                  // The most a statement holds; the browser drops anything past it, so a note says so below.
+                  maxLength={STATEMENT_MAX_CHARS}
+                  className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-4 py-3 text-[14px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
+                />
+                <div className="flex justify-end border-t border-rule-soft px-3 py-2">
+                  <Pill variant="maple" onClick={handleMapIt} disabled={parsing || text.trim().length === 0}>
+                    {parsing ? "Reading…" : "Map it →"}
+                  </Pill>
+                </div>
+              </div>
+              {text.length >= STATEMENT_MAX_CHARS ? (
+                <p role="status" className="text-[12px] text-amber">
+                  {STATEMENT_FULL_NOTE}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {EXAMPLE_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setText(prompt)}
+                    className="rounded-full border border-rule px-3 py-1.5 text-left text-[12px] text-stone transition hover:border-maple-soft hover:text-paper"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </li>
+
+            {/* No link and no button: the invented example future isn't written yet, and this says so. */}
+            <li className="flex flex-col gap-3 rounded-[10px] border border-dashed border-rule bg-ink p-5">
+              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper-dim">{doors.example.title}</h2>
+              <p className="text-[13px] leading-relaxed text-stone">{doors.example.body}</p>
+              <p className="mt-auto self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone-dim">
+                {doors.example.tag}
+              </p>
+            </li>
+          </ul>
         </section>
       </main>
-
     </div>
   );
 }

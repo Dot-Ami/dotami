@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
 import type { ReminderState } from "@/components/ventures/figure-reminder-banners";
 import { FiguresPanel } from "@/components/ventures/figures-panel";
@@ -23,7 +22,6 @@ import { VENTURE_STAGES, VENTURE_STAGE_LABELS, type VentureStage } from "@/lib/s
  */
 export function VenturesPage() {
   const router = useRouter();
-  const { resetJourney } = useJourney();
   const [ventures, setVentures] = useState<VentureSummary[] | null>(null);
   const [dbDown, setDbDown] = useState<string | null>(null);
   const reminders = useIdeaReminders();
@@ -44,9 +42,11 @@ export function VenturesPage() {
     void load();
   }, [load]);
 
-  function newIdea() {
-    resetJourney();
-    router.push("/intake");
+  // Another future starts at the front door, where both ways in are (2026-10-12). The door used resets
+  // what it needs: Map it resets the tab's journey, Start here keeps the destination answers already given.
+  // A second idea no longer passes through About you (issue #38: app/(journey)/intake/page.tsx).
+  function anotherFuture() {
+    router.push("/");
   }
 
   return (
@@ -56,7 +56,7 @@ export function VenturesPage() {
           ← Back
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your ideas</p>
+        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your futures</p>
         <GhostLink href="/expenses" tone="stone">
           Your expenses
         </GhostLink>
@@ -69,7 +69,7 @@ export function VenturesPage() {
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
-              Every idea, <span className="font-normal italic text-maple">saved and cross-referenced.</span>
+              Every future, <span className="font-normal italic text-maple">saved and cross-referenced.</span>
             </h1>
             <p className="mt-2 max-w-xl text-sm text-paper-dim">
               Listed by when you last touched them — not ranked. Each opens in its own cockpit. Link
@@ -77,8 +77,8 @@ export function VenturesPage() {
               never scores them.
             </p>
           </div>
-          <Pill variant="maple" onClick={newIdea}>
-            New idea →
+          <Pill variant="maple" onClick={anotherFuture}>
+            + Another future
           </Pill>
         </header>
 
@@ -92,8 +92,8 @@ export function VenturesPage() {
           <div className="mt-10 rounded-lg border border-dashed border-rule p-8 text-center">
             <p className="text-sm text-stone">Nothing saved yet. Describe one on the intake and press Save on its map.</p>
             <div className="mt-4 flex justify-center">
-              <Pill variant="maple" onClick={newIdea}>
-                Describe an idea →
+              <Pill variant="maple" onClick={anotherFuture}>
+                Start a future →
               </Pill>
             </div>
           </div>
