@@ -1,4 +1,5 @@
-import type { CFECitation, CFERoute } from "./types";
+import { requireOfficialFee } from "../../fees/v2026";
+import type { CFECitation, CFERoute, CFERouteLine } from "./types";
 
 /**
  * The ways to incorporate, side by side on the Incorporating stage (2026-10-11; design:
@@ -13,10 +14,32 @@ import type { CFECitation, CFERoute } from "./types";
  * inside the quoted words (tests/incorporation-routes.spec.ts checks both). Alberta's registry fees sit in the "Registry agent
  * product catalogue", which no tool could open on 2026-10-11 (it answers with a bot check), so they
  * are named blanks until a person reads them there. Never fill one in from a search snippet.
+ *
+ * The federal fees are written once, in the official fees catalog (lib/engines/fees/v2026/, since
+ * 2026-10-12); each fee line here names its fee by id through `routeFeeLine`, so no amount is typed here.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
 const CHECKED_ON = "2026-10-12";
+
+/**
+ * A way to incorporate's line for an official fee: its own permanent id and label, with the amount (in
+ * whole dollars, as the card shows it), how often, the quotes and the source copied from the catalog fee.
+ */
+function routeFeeLine(id: string, label: string, feeId: string): CFERouteLine {
+  const fee = requireOfficialFee(feeId);
+  const quotes = fee.citation.toolCheck?.quotes ?? [];
+  return {
+    id,
+    label,
+    kind: "official-fee",
+    feeId,
+    amountCad: fee.amountCents / 100,
+    ...(fee.per !== undefined ? { per: fee.per } : {}),
+    quotes: [...quotes],
+    citation: fee.citation,
+  };
+}
 
 const ISED_FEES: CFECitation = {
   title: "Corporations Canada: Services, fees and processing times",
@@ -102,24 +125,8 @@ export const incorporationRoutesV2026: readonly CFERoute[] = [
     label: "Federal (Corporations Canada)",
     summary: "A corporation under federal law, filed online with Corporations Canada.",
     lines: [
-      {
-        id: "federal-incorporation-fee",
-        label: "Government fee to incorporate online",
-        kind: "official-fee",
-        amountCad: 200,
-        per: "once",
-        quotes: ["It will cost $200 and will take 1 day."],
-        citation: ISED_FEES,
-      },
-      {
-        id: "federal-express-fee",
-        label: "Express service, if you want it",
-        kind: "official-fee",
-        amountCad: 100,
-        per: "once",
-        quotes: ["Add $100 for express service in 4 hours."],
-        citation: ISED_FEES,
-      },
+      routeFeeLine("federal-incorporation-fee", "Government fee to incorporate online", "fee-ca-incorporation-online"),
+      routeFeeLine("federal-express-fee", "Express service, if you want it", "fee-ca-incorporation-express"),
       {
         id: "federal-name-report",
         label: "Name search report",
@@ -130,15 +137,7 @@ export const incorporationRoutesV2026: readonly CFERoute[] = [
         ],
         citation: ISED_FEES,
       },
-      {
-        id: "federal-annual-return-fee",
-        label: "Annual return, filed online",
-        kind: "official-fee",
-        amountCad: 12,
-        per: "year",
-        quotes: ["It will cost $12 and will take 1 day."],
-        citation: ISED_FEES,
-      },
+      routeFeeLine("federal-annual-return-fee", "Annual return, filed online", "fee-ca-annual-return-online"),
       {
         id: "federal-provincial-registration",
         label: "Registering in each province where it does business",

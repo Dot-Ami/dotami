@@ -107,6 +107,13 @@ person is asked).
   `/date`, `POST /api/skill-marks`); one read (`GET /api/futures/<id>`) gives back an idea's kept
   answers, the person's skill marks, the yearly income they agreed to and the idea's first sentence, to
   any program on this computer, like the figures list. Nothing new leaves the computer.
+- **Seven more cost lines the person may price on today's Alberta road (2026-10-12).** *Sole Prop
+  activation* now names tools and equipment, a space deposit, insurance, a vehicle, first materials,
+  software and money to live on while starting
+  ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](../lib/engines/roads/v2026/starting-any-business-ab.ts)).
+  Each is a blank with *Add your quote*; a number the person gives is kept the way the line above says
+  (a `start-up-cost-line` figure, proposed then agreed). No new kind of answer, table or route; nothing
+  new leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under

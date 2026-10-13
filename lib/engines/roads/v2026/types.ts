@@ -126,9 +126,17 @@ export interface SkillItem {
  * average, and a tool-checked quote may not write it as one end of a range.
  */
 export interface OfficialFeeLine {
+  /** Permanent: the line's own id on this road, apart from the fee's, so two steps can show one fee. */
   id: string;
   kind: "official-fee";
+  /** The road's own words for the fee on this step; the catalog keeps what the fee is for. */
   label: string;
+  /**
+   * The fee in the official fees catalog (lib/engines/fees/v2026/, since 2026-10-12). Build the line with
+   * `feeLine`, which copies the amount, source and condition below from it; never type them here
+   * (`feeReferenceProblems` refuses any difference).
+   */
+  feeId: string;
   amountCents: number;
   citation: EngineCitation;
   /**

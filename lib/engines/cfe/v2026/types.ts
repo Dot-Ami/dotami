@@ -79,7 +79,12 @@ export interface CFERouteLine {
   id: string;
   label: string;
   kind: "official-fee" | "named-blank" | "not-needed";
-  /** Whole Canadian dollars; only on an "official-fee" line. */
+  /**
+   * Only on an "official-fee" line: the fee in the official fees catalog (lib/engines/fees/v2026/, since
+   * 2026-10-12). `routeFeeLine` copies its amount, how often, quotes and source from there.
+   */
+  feeId?: string;
+  /** Whole Canadian dollars; only on an "official-fee" line, copied from its catalog fee. */
   amountCad?: number;
   /** How often it is paid, when the page says. */
   per?: "once" | "year";

@@ -28,6 +28,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   width"](docs/architecture/future-cockpit.md); controls:
   [docs/ui-spec/cockpit/12-folding-and-phone.md](docs/ui-spec/cockpit/12-folding-and-phone.md); tests:
   `e2e/cockpit-fit.spec.ts`, `tests/cockpit-folds.spec.ts`.
+- **One list of official fees, and the start-up costs you price yourself on today's Alberta road**
+  ([14a]) — every official fee DotAmi shows is now written once, in
+  [`lib/engines/fees/v2026/`](lib/engines/fees/v2026/official-fees.ts) ([docs/engines/fees.md](docs/engines/fees.md)):
+  its amount in cents, what it is for, the place it applies to as a code (`CA`, `CA-AB`) and its source.
+  Ten fees moved there: the federal online incorporation ($200), express service ($100) and annual
+  return ($12), and the first written future's seven (the apprenticeship, Trades Qualifier and Blue
+  Seal application fees, the Cabinetmaker practical exam, the rewrite fee that applies only if you fail
+  an exam, and the $0 business number). Each quote was found again on its live page by
+  `scripts/check-quotes.mjs` on 2026-10-12. The roads and the federal way to incorporate name a fee by
+  id and copy its amount; a check refuses any line whose amount, source or condition differs from its
+  fee, and a test refuses an amount typed in a road file. No card changed: every step panel of both
+  roads and both money lists draw the same HTML, byte for byte, as before the move
+  (`tests/cost-panels-unchanged.spec.ts`). Alberta's registry fees stay named blanks: the catalogue
+  that holds them stops tools with a human check. **Sole Prop activation** now names seven start-up
+  costs as blanks the person prices: tools and equipment, space deposit, insurance, vehicle, first
+  materials, software, and money to live on while starting; no amount anywhere, and no source for the
+  names yet (the BDC and Futurpreneur templates keep their lines inside spreadsheets;
+  [future-cockpit.md § 6 and § 13](docs/architecture/future-cockpit.md)). In the cockpit, the Money
+  overlay's badge on that card says *7 not priced*, and the Start-up money gauge counts them while the
+  step is on your path.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;
@@ -341,6 +361,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **A plain-words glossary** ([13a]) — 51 entries for the short forms and terms a person meets in
+  DotAmi (the GST/HST and the small supplier, input and investment tax credits, T1, T2, T2125, T5,
+  CCA, SR&ED and T661, the small business deduction, CCPC, eligible dividends, GRIP, LRIP, RDTOH,
+  TOSI, GAAR, B.C.'s PST; sole proprietorship, partnership, corporation, trade name, registry agent,
+  NUANS, the business number, BizPaL; payroll accounts, CPP/EI, T4, TD1, WCB-Alberta; IRAP and the
+  CSBFP; the apprenticeship words of *From apprentice to your own shop (Alberta)*: AIT, the Alberta
+  Student Number, sponsor, period, classroom instruction, journeyperson, Trades Qualifier, Red Seal,
+  Blue Seal, RAP, CTS; NOC and OaSIS; and MCP), each in one or two sentences, no advice, linked to its
+  official page, *checked by a tool on 2026-10-12*: the quote checker found the listed words on every
+  one of its 53 pages (`docs/glossary.md`). The short forms on screen it doesn't explain yet (Holdco,
+  ITA, ISED and others) are listed at its end. Linked from the README and CONTRIBUTING. No app code
+  changes; `tests/glossary.spec.ts` keeps this entry count true and fails when one of the short forms
+  a review found on screen (TD1, T4, T5, RDTOH, GRIP, LRIP, Holdco, Opco, eligible dividend) has
+  neither an entry nor a line in that list.
 - **The design for the future cockpit, and the maintainer's six decisions of 2026-10-11** ([14a]) —
   a person starts from where they want to be (a business or a career), picks one future to look
   inside, and sees its whole road at once: steps, the skills they need, official fees and the cost

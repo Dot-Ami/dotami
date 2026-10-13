@@ -1,0 +1,9 @@
+# Almost every pull request adds a line under [Unreleased] in these two logs, so two branches
+# meeting there used to conflict on lines that both belong. git's built-in union merge keeps both
+# sides' lines instead (ours first, then theirs) and never stops for a conflict in these files.
+# It can't tell a reworded line from a new one: where both sides changed the same lines, both
+# versions are kept, so read the merged section once.
+# Not docs/task-list.md: its lines are ticked in place, and a union merge would keep both the
+# ticked and the unticked copy of a line.
+CHANGELOG.md merge=union
+docs/privacy-log.md merge=union
