@@ -16,6 +16,12 @@ nothing is asserted from memory.**
 - [Sign-off (DCO) and licenses](#sign-off-dco-and-licenses)
 - [Good vs. not-so-good contributions](#good-vs-not-so-good-contributions)
 
+**New to the words?** [docs/glossary.md](docs/glossary.md) explains the short forms and terms the
+map uses (GST/HST, the small supplier, T2125, CCA, SR&ED, CCPC, BN, NUANS, WCB, Red Seal and more),
+each in a sentence or two and linked to its official page. A new term is added the way a card's
+source is: a link to the page and the words a tool or a person found on it (its "Adding a term"
+paragraph says how).
+
 **What to expect back.** A first response on an issue or a pull request within 7 days, and
 a decision — merged, changes requested, or a plain reason it is out of scope — within 14.
 If it has been longer, say so on the thread; that is a bug in the maintaining, not rudeness.
