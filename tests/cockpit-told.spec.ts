@@ -423,7 +423,10 @@ describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () 
     expect(generalRoadV2026.forks.length).toBeGreaterThan(0);
     expect(ids(road0())).toEqual([]);
     // Flipping a toggle does move steps there (between check first and not on your path), but through
-    // the rules, so both columns' counts come out the same: Compare would show the same numbers twice.
+    // the rules, so both columns' step and money counts come out the same. The one exception: the
+    // mandatory GST/HST registration step lists the GST/HST legal requirement and the voluntary one
+    // lists nothing, so gstTiming's two skills rows differ (that is what each step lists, not the pick).
+    const differsOn: Record<string, string[]> = { gstTiming: ["skills", "legal"], incorporationTiming: [] };
     for (const fork of generalRoadV2026.forks) {
       const runs = fork.sides.map((side) =>
         evaluateRoad(road0({ scenario: updateScenarioBranch(inventedIdea(), fork.id as BranchDecisionId, side as CFENodeId) })).steps,
@@ -431,7 +434,8 @@ describe("where Compare is offered (the maintainer's answer of 2026-10-13)", () 
       const moved = runs[0]!.filter((step, i) => step.state !== runs[1]![i]!.state);
       expect(moved.length, fork.id).toBeGreaterThan(0);
       expect(moved.every((step) => step.reason.kind === "rules"), fork.id).toBe(true);
-      expect(compareEndings(road0(), fork.id)!.sameOnEveryRow, fork.id).toBe(true);
+      const view = compareEndings(road0(), fork.id)!;
+      expect(view.rows.filter((r) => r.values[0] !== r.values[1]).map((r) => r.id), fork.id).toEqual(differsOn[fork.id]);
     }
     // Over the GST line, with the other sides picked, or with a what-if: still none.
     expect(ids(road0({ scenario: inventedIdea({ targetRevenueY1: 90_000, targetRevenueY3: 200_000 }) }))).toEqual([]);

@@ -642,7 +642,9 @@ answer, before and after it or with and without it. Choices made while building 
   own steps, never a list of road ids (tested on an invented road whose fork's two sides the rules grey
   whichever is picked: not offered). On today's Alberta road (road 0) flipping a toggle does move a step
   between *check first* and *not on your path*, but the tax rules do that, colouring the sides whichever
-  is picked, and both columns' counts come out the same; so neither of its forks is offered, and its
+  is picked, and both columns' step and money counts come out the same (only the GST fork's skills rows
+  differ, since the mandatory registration step lists the GST/HST legal requirement and the voluntary
+  one lists nothing; that is what each step lists, not the pick); so neither of its forks is offered, and its
   picks are made on the map's toggles (also in the step panel) and in the one-question box. On the
   apprentice road the pick itself puts one ending's steps on the path and the other's off it, so its
   fork is offered. Where no fork is offered the goal bar has no **Compare**
@@ -1205,7 +1207,8 @@ each for a reason:
   materials*, *Software*, *Money to live on while starting* (ids `cost-start-…`, permanent). They sit on
   the first step where the business runs, the one every idea on road 0 passes through; the person prices
   each through the agree prompt, and each counts in *N lines not priced yet* until then. `roadFromCfe`
-  gains a third optional input, cost lines by step id, like the *done when* lines.
+  gains a third optional input, cost lines by step id, like the *done when* lines (a fourth, `needs`,
+  came with the skills work below: four in all, as `from-cfe.ts` says).
 - **No source for these names, on purpose.** § 5 planned to cite the BDC and Futurpreneur cash-flow
   templates for the names. Checked on 2026-10-12: BDC's template page names no cost lines (the lines are
   inside a spreadsheet behind a download form); Futurpreneur's page names only insurance among them
@@ -1316,7 +1319,8 @@ for the job the person picks (*your pick of job*; decision 5). Choices made, eac
   about 120 KB of each being the list. So it adds roughly 360 KB to the installed app and roughly 85 KB
   gzipped; the installer itself was not built to measure what it adds there. Nothing of it is fetched:
   the list is in the app.
-- **Not in this pull request:** the *Pick a future* screen (which will ask for the job too, § 1 row 3); the
+- **Not in this pull request:** the *Pick a future* screen asking for the job too (§ 1 row 3; that screen
+  is built and doesn't ask it yet); the
   ratings (item 20); *Work Activities* for *Peek inside*; the French files (the screens are English only
   today); the export gaining the pick and the list.
 
