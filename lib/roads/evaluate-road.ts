@@ -294,8 +294,8 @@ function rulesAnswers(base: RulesRun): RulesAnswer[] {
 
   // The map's own picks (today's general road's two forks, kept with the map): flipping one is the
   // other answer the person can give there. A pick the person hasn't clicked is the map's default. The
-  // map keeps its clicks for the session only, but a saved pick off the default was the person's
-  // (`isBranchDecided`), so only a pick still on the default reads as one after a reload.
+  // map keeps the person's clicks with its answers (since 2026-10-12, the default side included), and a
+  // saved pick off the default was the person's either way (`isBranchDecided`).
   for (const fork of generalRoadV2026.forks) {
     const picked = scenario.state.activeBranches[fork.id];
     if (!fork.sides.includes(picked)) continue;

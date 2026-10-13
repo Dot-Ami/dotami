@@ -234,7 +234,7 @@ export const TABLES: readonly TableEntry[] = [
     model: "ScenarioState",
     name: "Map progress",
     holds:
-      "Which branches you took on each idea's map, your own “I'd incorporate at” amount if you typed one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
+      "Which branches you took on each idea's map and which of them you picked yourself, your own “I'd incorporate at” amount if you typed one, your No to buying equipment, a vehicle or tools if you gave one, and the steps the map works out from them as active, done or set aside (worked out again on every load; your own status on a step is under “Your progress on each step”).",
     removedBy: "Saving the map again overwrites it. Deleting your ideas (Delete, at the bottom of this page) deletes it with them.",
   },
   {
@@ -593,6 +593,15 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
       "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so a list from an earlier launch can't be read again, but it stays in the app's own folder.",
   },
   {
+    store: "localStorage",
+    key: "dotami-cockpit-folds",
+    name: "Which cockpit panels you folded",
+    holds:
+      "Five yes-or-no answers: whether the venture details, the goal bar, the right-hand panel, the map's legend and the what-if bar are folded on the cockpit. Nothing about you or your ideas.",
+    lasts:
+      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens with everything showing again, but the old answers stay in the app's own folder.",
+  },
+  {
     store: "sessionStorage",
     key: "dotami-journey-v3",
     name: "The intake in progress",
@@ -736,7 +745,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. When an update check, a backup or a restore fails, it writes the same, the error's name and code (for a backup that can't be restored, which kind of problem it was, such as damaged), never the error's own message, which could name the file you chose or folders on this computer. The update checker's own reports of an error or a warning, and its progress lines that report a failure, leave one fixed line each; its other progress lines are kept as it wrote them, and one of them names the folder an update downloads to. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
     desktopOnly: true,
   },

@@ -36,6 +36,18 @@ describe("accessibility contracts for interactive map controls", () => {
     expect(map).toContain("aria-pressed={selected}");
   });
 
+  // 2026-10-12: the intake's group names were plain <p>s tied to nothing, so the province and
+  // employment dropdowns had no name for a screen reader. FieldGroup now draws a <label> for a group
+  // given its field's id; the browser test finds the dropdowns by those names (e2e/app.spec.ts).
+  it("ties the intake's field names to the province, employment and name fields", () => {
+    const intake = source("components/discovery/intake-page.tsx");
+    expect(intake).toContain("<label htmlFor={htmlFor}");
+    for (const id of ["intake-province", "intake-employment", "intake-name"]) {
+      expect(intake, id).toContain(`htmlFor="${id}"`);
+      expect(intake, id).toContain(`id="${id}"`);
+    }
+  });
+
   it("names preview and node-detail disclosure controls", () => {
     const intake = source("components/discovery/intake-page.tsx");
     const detail = source("components/node-detail-panel.tsx");

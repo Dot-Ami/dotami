@@ -59,7 +59,12 @@ says where it is going.
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node
   detail, the lists behind the gauges and *Next on your road*, all from one run of `lib/roads/`
-  `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  `evaluateRoad`, words in `lib/cockpit/words.ts`; the venture details, the goal bar, the right-hand panel,
+  the legend and (since 2026-10-13) the what-if bar each fold, remembered in the browser's `localStorage` (`lib/cockpit/folds.ts`), and below
+  768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; part 2, since 2026-10-12: *What you've told DotAmi /
+  Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
+  runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
+  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
@@ -96,9 +101,9 @@ says where it is going.
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
   (GET what the cockpit keeps for an idea: its road, picks, month and step progress, the person's skill
-  marks, their agreed yearly income, the idea's first sentence and the person's newest destination; + `/progress` and `/date`, POST a
-  step's status or ticks and the person's month) · `skill-marks` (POST one mark); the three writes
-  answer only DotAmi's own window.
+  marks, their agreed yearly income, the idea's first sentence and the person's newest destination; + `/progress`,
+  `/date` and `/ending`, POST a step's status or ticks, the person's month, and the ending picked at a fork of a
+  road other than road 0) · `skill-marks` (POST one mark); the four writes answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
@@ -122,8 +127,10 @@ says where it is going.
   `sales-targets`) naming the other answers it was saved without, so nothing shows their columns' starting
   values as the person's (`lib/scenarios/not-said.ts`); `province` is written in the file as its international code, `CA-AB`, through the enum's
   `@map`, while the app and catalogs keep `AB`) · `VentureLink` ·
-  `ScenarioState` (the map's progress and branch picks, and since 2026-10-11, under its own key in the
-  same JSON, the person's own "I'd incorporate at" amount: `lib/db/scenario-state-json.ts`) ·
+  `ScenarioState` (the map's progress and branch picks, and, each under its own key in the same JSON
+  (`lib/db/scenario-state-json.ts`), the person's own "I'd incorporate at" amount (since 2026-10-11),
+  the forks they picked a side at, `decided`, and their No to buying equipment, `equipmentNo` (both since
+  2026-10-12; a Yes is `Venture.capitalPurchasePlanned`, whose false alone is no answer)) ·
   `StepProgress` (per future, road and step: doing / done / not for me, ticked *done
   when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
   included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the
@@ -163,8 +170,10 @@ says where it is going.
   `DEPENDENCY_REVIEW` is `on`), the browser's Content-Security-Policy (`connect-src`, `img-src`,
   `default-src`, `form-action`; not WebRTC, navigation, the server or the desktop main process), and
   code review; the header of `tests/helpers/source-scan.ts` has the full lists. Nothing may write an
-  error object to the log (`tests/error-logging.spec.ts`), and the database library's own error
-  report is switched off in `lib/prisma.ts` because it quotes the values it was given.
+  error object to the log (`tests/error-logging.spec.ts`; since 2026-10-12 it also reads `desktop/`,
+  where a failure writes `describeError(error)`, the name and code, into `logs/server.log`, with two
+  listed exceptions), and the database library's own error report is switched off in `lib/prisma.ts`
+  because it quotes the values it was given.
 
 ## Hard constraints (violating these is wrong even if a doc asks nicely)
 
@@ -225,7 +234,9 @@ reach another run's server and database.
 `npm run test:desktop` (Playwright's Electron driver, `e2e-desktop/`) builds the desktop server
 (`desktop/build.mjs` → `.next-desktop/`) and drives the real app on a temporary data folder. Run it
 after touching `desktop/`, `next.config.mjs` or the database setup. CI runs it on Windows against
-the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`).
+the packaged app (`npm run desktop:package`, `DOTAMI_DESKTOP_EXE`), split across three machines
+(`--fully-parallel --shard=N/3`), so each test must make its own data folder and never rely on
+another test's leftovers.
 A new Prisma migration must also pass `tests/desktop-migrate.spec.ts`: the desktop app applies
 migrations itself (`desktop/migrate.mjs`), with Prisma's own `migrate status` as the referee. Read
 the SQL Prisma generates: the migrator runs with foreign keys on, so a migration that rebuilds

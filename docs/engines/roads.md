@@ -14,7 +14,7 @@ cockpit draws whatever road it is given and holds no steps of its own.
 
 | Road | Id | What it is |
 |---|---|---|
-| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, plus its own content (2026-10-12): 47 *done when* lines (three or four on each of the ten map stages, and on the new steps) and three *before you open* steps in the first column (register your business name, look up permits and licences on BizPaL, a separate bank account), every new source a tool check. The general road every saved future is drawn on until it names another |
+| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, plus its own content (2026-10-12): 47 *done when* lines (three or four on each of the ten map stages, and on the new steps) and three *before you open* steps in the first column (register your business name, look up permits and licences on BizPaL, a separate bank account), every new source a tool check; seven named start-up cost lines on *Sole Prop activation*. The general road every saved future is drawn on until it names another |
 | From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. Listed on *Pick a future* since 2026-10-13, where its card says its sources were checked by a tool, not read by a person |
 
 A road may name where it carries on after its last column: `joins: { roadId, columnId }`
@@ -46,7 +46,11 @@ A road may name where it carries on after its last column: `joins: { roadId, col
    renaming one fails, and a new one must be added to it.
 4. **Every step sits in exactly one column**, and columns name only real steps. `next` and a fork's
    two sides name real steps; a column's `forkId` names a real fork.
-5. **Three kinds of cost, two in the catalog** (decision 2 of 2026-10-11). An *official fee* has an
+5. **Three kinds of cost, two in the catalog** (decision 2 of 2026-10-11). An *official fee* is written
+   once, in the official fees catalog ([fees.md](./fees.md), since 2026-10-12): a road's fee line names
+   it by `feeId` and is built with `feeLine(lineId, label, feeId)`, which copies the fee's amount,
+   source and condition; never type an amount in a road file (a test refuses one). The line keeps its
+   own permanent id and label. A fee has an
    amount in whole cents (never a range or an average) and one citation: a read (its `lastVerified`
    is the day the fee was read there), or a tool check whose quotes include the amount as the page
    writes it (`$150`, `$150.00`, `$1,500`; a $0 fee is exempt, since pages say "no cost"), and not as
@@ -70,9 +74,13 @@ A road may name where it carries on after its last column: `joins: { roadId, col
    claims which skills a business needs.
 7. **Content not yet written stays empty, never guessed.** Road 0's *done when* lines and its
    *before you open* steps are written (2026-10-12, in `starting-any-business-ab.ts`, passed to
-   `roadFromCfe` as `doneWhen` by step id and `addedSteps` by column); its map stages' cost lines,
-   skill items and official links are empty until they are read from the official pages; the checks
-   allow empty lists and refuse uncited entries.
+   `roadFromCfe` as `doneWhen` by step id and `addedSteps` by column); its map stages' skill items and
+   official links are empty until they are read from the official pages, and so are their cost lines,
+   except *Sole Prop activation*'s seven named start-up lines (2026-10-12, passed as `costs` by step id:
+   tools and equipment, space deposit, insurance, vehicle, first materials, software, money to live on
+   while starting; names only, no amount, no source yet: [future-cockpit.md § 6, *The official fees
+   catalog and start-up cost lines as built*](../architecture/future-cockpit.md)); the checks allow
+   empty lists and refuse uncited entries.
 8. **Places use today's values** (`AB`, `BC`, `ON`, `CA`) in the catalog for now. The maintainer
    decided on 2026-10-11 that places are stored as international codes (`CA`, `CA-AB`); the storage
    code maps today's values to them (`lib/places/codes.ts`), and moving the catalogs over is a later

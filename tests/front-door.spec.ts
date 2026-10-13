@@ -387,7 +387,8 @@ describe("a picked future becomes an idea on its road, with nothing made up", ()
     ]);
     const intakeProfile = { ...scenario.profile, notSaid: undefined, type: "product" as const, targetRevenueY1: 40_000 };
     expect(ventureLine(intakeProfile)).toBe("product · AB");
-    expect(profileRows(intakeProfile).map((r) => r.value)).toEqual(["product", "AB", "$40,000", "$0"]);
+    // A target of no number is "not given", never $0 (the rail's own words, 2026-10-12, after review).
+    expect(profileRows(intakeProfile).map((r) => r.value)).toEqual(["product", "AB", "$40,000", "not given"]);
 
     const md = renderPlaybookMarkdown(buildPlaybookSkeleton(cfeCatalogV2026.nodes, scenario));
     expect(md).toContain("- **Type:** not said");

@@ -24,12 +24,12 @@ import { files as waveFiles } from "../tests/fixtures/packages/wave";
 import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
 /**
- * The dropdown under one of the intake's labelled groups ("Province / territory", …). The label
- * is a plain <p> that isn't tied to its <select>, so a screen reader can't name the dropdown
- * either — a finding for the screen-by-screen review; until then, take the select that follows it.
+ * One of the intake's dropdowns, found by the name a screen reader says for it ("Province /
+ * territory", "Current employment"). Until 2026-10-12 the name above each was a plain <p> tied to
+ * nothing, so the dropdowns had no name and this test took "the select after that text" instead.
  */
 function groupSelect(page: Page, label: string) {
-  return page.getByText(label, { exact: true }).locator("xpath=following-sibling::select");
+  return page.getByRole("combobox", { name: label, exact: true });
 }
 
 test("one sentence becomes a saved map", async ({ page }) => {
@@ -47,14 +47,22 @@ test("one sentence becomes a saved map", async ({ page }) => {
   // screen reader (#12).
   await expect(page.getByRole("button", { name: "Trades", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "AI / ML / R&D", exact: true })).toHaveAttribute("aria-pressed", "false");
+  // The "add your own" box has a name of its own, not only its placeholder, which a screen reader
+  // may not read and which disappears once something is typed.
+  await expect(page.getByPlaceholder("Add your own — press Enter")).toHaveAttribute("aria-label", "Add your own kind of work");
   await page.getByRole("button", { name: "Looks right →" }).click();
 
   // Ground it: Calgary was read as Alberta; the map won't open until employment is chosen (#7).
   await expect(groupSelect(page, "Province / territory")).toHaveValue("AB");
   const openMap = page.getByRole("button", { name: "Open my map →" });
   await expect(openMap).toBeDisabled();
+  // The box "Other…" opens is named the same way.
+  await groupSelect(page, "Current employment").selectOption("other");
+  await expect(page.getByPlaceholder("Tell us in your words")).toHaveAttribute("aria-label", "Your employment, in your words");
   await groupSelect(page, "Current employment").selectOption("self-employed");
   await expect(openMap).toBeEnabled();
+  // The name box is named by its label too, not only by its placeholder.
+  await expect(page.getByRole("textbox", { name: "Name it — optional", exact: true })).toBeVisible();
   await openMap.click();
 
   // The map, with named stage cards.
@@ -175,6 +183,11 @@ test("the sentence typed on the front door is kept with the idea, word for word 
   await fresh.getByRole("button", { name: "← Back" }).click();
   const row = fresh.getByRole("listitem").filter({ hasText: sentence });
   await expect(row.getByText("typed for your idea “Invented — first words test”", { exact: true })).toBeVisible();
+  // The list has loaded, so any status line would be drawn by now. None is about an external source
+  // of statements, which no copy of DotAmi has set up: "Vault: No external statement source
+  // configured." showed to everyone and meant nothing to a stranger (#6, 2026-10-12).
+  await expect(fresh.getByText(/external statement source/i)).toHaveCount(0);
+  await expect(fresh.getByText(/^Vault:/)).toHaveCount(0);
   await context.close();
 });
 

@@ -1,15 +1,24 @@
 /**
- * Per-key fixed-window rate limiter for the LLM-backed API routes (audit-2026-07-04 H6:
- * no rate limiting or body-size caps on any of the three Anthropic-calling routes before
- * a real `ANTHROPIC_API_KEY` lands on Vercel).
+ * A per-key, fixed-window rate limiter: each route counts the requests one caller makes in a window
+ * (a minute, for every route today) and answers 429 with a Retry-After once the count is spent.
+ * Added by the 2026-07-04 audit (H6) for the routes that call a model; every write route uses it now.
  *
- * Deliberately in-memory, not a durable store: this process holds one map per warm
- * serverless instance, so a cold start or a second concurrent instance resets or forks
- * the count. That's an honest limitation, not a hidden one — it still stops a single hot
- * client (browser tab, script, bot) from hammering a route inside one instance's
- * lifetime, which is the realistic v0 threat model with a stub single-user auth model.
- * A durable per-key store (Vercel KV / Upstash) is the Phase 7 upgrade once real
- * multi-tenant auth and a paid LLM key are both live.
+ * Where it runs: inside DotAmi's own Next.js server on the person's own computer. The desktop app
+ * starts that server on 127.0.0.1 (desktop/main.mjs), and so does `npm run dev` (-H 127.0.0.1), so
+ * only programs on the same computer can reach it: the person's own DotAmi window, a script, or an
+ * agent the person runs. `npm start` listens on every network interface (it passes no -H, and
+ * Next.js then uses 0.0.0.0) unless it is given -H 127.0.0.1. Every request whose Host isn't this
+ * computer's own name is refused before it gets here (middleware.ts), which stops a web page from
+ * reaching the server through DNS rebinding; it doesn't stop another machine on the network that
+ * sends "Host: localhost" itself.
+ *
+ * What it is for: a runaway loop in one of those programs can't spend the person's model key (when a
+ * copy run from source has one) on the intake parser, or write to the data file, hundreds of times a
+ * minute. The limits are sized for a program in a loop, not for a person clicking through the app.
+ *
+ * The counts live in memory, in the one server process: closing DotAmi empties them, which costs
+ * nothing, since a new start begins with no runaway loop either. Kept in memory on purpose, so the
+ * limiter writes nothing to the data file.
  */
 
 interface Bucket {
@@ -19,7 +28,7 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
-/** Opportunistic sweep so `buckets` doesn't grow unbounded across a long-lived instance. */
+/** Every 200 calls, drop the buckets whose window ended long ago, so the map can't grow for as long as DotAmi stays open. */
 let callsSinceSweep = 0;
 const SWEEP_EVERY_N_CALLS = 200;
 
@@ -100,9 +109,12 @@ export function checkRateLimit(key: string, options: RateLimitOptions): RateLimi
 }
 
 /**
- * Best-effort client identity for an unauthenticated route. `x-forwarded-for` is
- * client-suppliable and spoofable — this is a throttle, not an auth boundary. Real
- * per-user limits arrive with real auth (Phase 7).
+ * Which caller a request counts against. Next.js fills in `x-forwarded-for` with the address the
+ * request came from when the caller didn't send one (next/dist/server/base-server.js, Next 15.5.27,
+ * read 2026-10-12), so on the person's computer every request from DotAmi's own window counts as the
+ * same address (127.0.0.1 in the desktop app): in effect, one count per route. A program can send a
+ * header of its own and start a new count, so this is a brake on a runaway loop, not a lock; DotAmi
+ * has no accounts, and nothing here tells one person from another.
  */
 export function clientKeyFromRequest(request: Request): string {
   if (e2eOptIn()) {

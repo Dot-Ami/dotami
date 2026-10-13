@@ -2,10 +2,14 @@
 
 > **S2.5.4h (2026-09-14) — removed.** “Switch labeled example” and the archetype label/planning line are removed; prep-tool references show all four catalog entries once the structure is set. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 
+> **2026-10-12 — the rail folds.** **Fold venture details** at the rail's top folds it to a narrow strip with **Show venture details**; remembered in this browser. Below 768 px the rail is not a column: **Venture details** in the header opens it as a full-width sheet. [12-folding-and-phone.md](./12-folding-and-phone.md).
+
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
 Last updated: 2026-10-11 ("In your words" also lists each idea's front-door sentence, tagged with its idea); 2026-10-07 ([8e] the figure reminder banner under the venture block); 2026-09-13 (S2.5.4a — archetype hidden for real ventures, "In your words" section added; rest is the 2026-07-05 workshop)
+
+> **Changed 2026-10-12 — part 2 of the cockpit screen.** The rail is a little wider (up to 280 px) and opens with *What you've told DotAmi* and *Not told yet*, with the one-question box ([12-told-list.md](./12-told-list.md)). Everything below is the rail as it was, now under them and unfolded. Changing the structure here gives a receipt at the top of the told list ([13-receipts.md](./13-receipts.md)).
 Workshop status: documented, sign-off pending
 
 ## What it is
@@ -58,12 +62,14 @@ spot in the product — it carries 6+ unrelated concerns.
   only the one on the map, each tagged "typed for your idea “<name>”" so it is clear which idea
   it belongs to; other typed statements are tagged "typed in DotAmi".
 - **Venture block + FieldRows** — display-only. Reads `currentScenario.profile` (name,
-  type, province, targetRevenueY1/Y3 via `Intl.NumberFormat` CAD, structure,
+  type, province, targetRevenueY1/Y3 through `lib/cockpit/words.ts` `rail.salesTarget` (an amount,
+  or *not given* for none, never $0: 2026-10-12, after review), structure,
   employmentStatus) plus `archetype.label` and `archetype.planningFocus`. Since 2026-10-12 an
   idea picked on *Pick a future* was saved without the kind of venture or its sales targets
   (`profile.notSaid`): those rows, and the line under the name, say *Not said* instead of the
-  intake's starting values (*service*, *$0*); its work situation says *Not said* the same way.
-  The link to every idea reads **Your futures**, as the header's back link does.
+  intake's starting values (*service*, *$0*), through `lib/cockpit/profile-rows.ts`; its work
+  situation says *Not said* the same way. The link to every idea reads **Your futures**, as the
+  header's back link does.
   `archetype = resolveArchetypeForScenario(currentScenario)` — matches
   `scenario.archetypeId` (or legacy `scenario.id`) against the 4 archetypes, else
   falls back to the default example archetype. **Custom intake ventures therefore show

@@ -49,7 +49,8 @@ export async function ensureVentureFromScenario(
       structureSource: scenario.profile.structureSource ?? "user",
       hireFirst: scenario.profile.hireFirst,
       activityTags: scenario.profile.activityTags ?? [],
-      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
+      // Only a yes is this column's true; a No the person gave goes with the map's answers below.
+      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned === true,
       employmentStatus,
       stage,
       // What the idea was saved without (a picked future), so nothing reads it as said; [] for the rest.
@@ -72,7 +73,8 @@ export async function ensureVentureFromScenario(
       structureSource: scenario.profile.structureSource ?? "user",
       hireFirst: scenario.profile.hireFirst,
       activityTags: scenario.profile.activityTags ?? [],
-      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned ?? false,
+      // Only a yes is this column's true; a No the person gave goes with the map's answers below.
+      capitalPurchasePlanned: scenario.profile.capitalPurchasePlanned === true,
       employmentStatus,
       stage,
       // Every save says it again: the cockpit's carry the list back, the intake's carry none (it asks all).
@@ -87,15 +89,15 @@ export async function ensureVentureFromScenario(
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
-      activeBranches: writeMapAnswers(scenario.state),
+      // The picks and the person's own answers kept with the map, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state, scenario.profile.capitalPurchasePlanned),
     },
     update: {
       activeNodeIds: scenario.state.activeNodeIds,
       completedNodeIds: scenario.state.completedNodeIds,
       ghostedNodeIds: scenario.state.ghostedNodeIds,
-      // The picks and the person's own incorporation number, in one JSON column (scenario-state-json.ts).
-      activeBranches: writeMapAnswers(scenario.state),
+      // The picks and the person's own answers kept with the map, in one JSON column (scenario-state-json.ts).
+      activeBranches: writeMapAnswers(scenario.state, scenario.profile.capitalPurchasePlanned),
     },
   });
 

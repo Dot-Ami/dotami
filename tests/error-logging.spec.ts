@@ -2,7 +2,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { describeError, logRouteError } from "@/lib/api/log-error";
 
-import { catchScopes, consoleCalls, errorWrites, readSource, simplify, sourceFiles, streamWrites } from "./helpers/source-scan";
+import { updaterLogger } from "../desktop/log.mjs";
+
+import {
+  catchScopes,
+  consoleCalls,
+  errorWrites,
+  logFileWrites,
+  readSource,
+  simplify,
+  SOURCE_FILES,
+  sourceFiles,
+  streamWrites,
+} from "./helpers/source-scan";
 
 /**
  * Task 7 of [8d]: a route that fails writes the error's name and code to the log — never the
@@ -54,8 +66,8 @@ describe("logRouteError", () => {
 });
 
 /** The writes to the log in these files that pass an error (or something from one), as "file: call". */
-function errorWritesIn(sources: { file: string; code: string }[]): string[] {
-  return sources.flatMap(({ file, code }) => errorWrites(simplify(code, false)).map((call) => `${file}: ${call}`));
+function errorWritesIn(sources: { file: string; code: string }[], options: { desktop?: boolean } = {}): string[] {
+  return sources.flatMap(({ file, code }) => errorWrites(simplify(code, false), options).map((call) => `${file}: ${call}`));
 }
 
 describe("the scan that checks the routes", () => {
@@ -226,5 +238,106 @@ describe("no route logs an error object", () => {
     ]) {
       expect(readSource(f), f).toContain("logRouteError(");
     }
+  });
+});
+
+// The desktop app's own log, logs/server.log in the data folder (desktop/log.mjs), holds the same
+// rule since 2026-10-12: a failure writes the error's name and code (describeError), never its
+// message, which can name folders on the computer or quote what the code was given. Until then four
+// lines in desktop/main.mjs (a failed update check, backup, refused restore and restore) wrote the
+// whole error. The scan reads desktop/ with its log-file writes counted too ({ desktop: true }).
+
+// The desktop code's writes that still name an error, each with why. One entry covers one write.
+const DESKTOP_EXCEPTIONS: { file: string; call: string; why: string }[] = [
+  {
+    file: "desktop/main.mjs",
+    call: "log.write(`${error}`)",
+    why: "start(): a failed database update keeps the database's own words, which update failed and what it objected to (a table or a column), which is what fixing it needs; the privacy inventory's entry for the log says so",
+  },
+  {
+    file: "desktop/main.mjs",
+    call: "console.error(error)",
+    why: "fail(): the main process's own console, seen only when DotAmi is started from a terminal; nothing writes it to the log file",
+  },
+];
+
+describe("no desktop code writes an error to DotAmi's log, by any of its ways of writing there", () => {
+  const files = sourceFiles(["desktop"], SOURCE_FILES);
+  const sources = files.map((file) => ({ file, code: readSource(file) }));
+
+  it("finds the desktop files and their writes to the log (a guard against the scan silently finding nothing)", () => {
+    expect(files).toContain("desktop/main.mjs");
+    expect(files.length).toBeGreaterThanOrEqual(20);
+    const main = simplify(readSource("desktop/main.mjs"), false);
+    expect(logFileWrites(main).length).toBeGreaterThanOrEqual(50);
+  });
+
+  it("flags a log-file write that passes an error, and lets through its name and code", () => {
+    const flagged = (src: string) => errorWrites(simplify(src, false), { desktop: true }).length > 0;
+    // The ways the desktop code writes to the log.
+    expect(flagged("try {} catch (error) { log?.write(`[backup] failed: ${error}\\n`); }")).toBe(true);
+    expect(flagged("try {} catch (error) { log.write(error.message); }")).toBe(true);
+    expect(flagged("try {} catch (boom) { log(`[x] ${boom}`); }")).toBe(true);
+    expect(flagged("const say = (line) => log.write(`[database] ${line}\\n`);\ntry {} catch (boom) { say(String(boom)); }")).toBe(true);
+    // The ways it names an error without its message.
+    expect(flagged("try {} catch (error) { log?.write(`[backup] failed (${describeError(error)})\\n`); }")).toBe(false);
+    expect(flagged("try {} catch (error) { log(`[x] (${error?.code ?? error?.name ?? \"error\"})`); }")).toBe(false);
+    expect(flagged("try {} catch (error) { say(`(${error instanceof Stopped ? error.kind : describeError(error)})`); }")).toBe(false);
+    expect(flagged("log?.write(`[x] ${message}${error ? ` (${describeError(error)})` : \"\"}\\n`);")).toBe(false);
+    // Read without { desktop: true }, as app/, lib/ and components/ are, a log-file write isn't one.
+    expect(errorWrites(simplify("try {} catch (error) { log.write(`${error}`); }", false))).toEqual([]);
+  });
+
+  it("writes no error to the log anywhere in desktop/, except the listed ones", () => {
+    const left = errorWritesIn(sources, { desktop: true });
+    for (const { file, call } of DESKTOP_EXCEPTIONS) {
+      const at = left.indexOf(`${file}: ${call}`);
+      if (at >= 0) left.splice(at, 1);
+    }
+    expect(left, "write describeError(error) (desktop/log.mjs), not the error").toEqual([]);
+  });
+
+  it("keeps the exceptions honest: each listed write is still there", () => {
+    const all = errorWritesIn(sources, { desktop: true });
+    for (const { file, call } of DESKTOP_EXCEPTIONS) expect(all, `${file}: ${call} is gone; remove it from the list`).toContain(`${file}: ${call}`);
+  });
+
+  it("the update checker's own error report doesn't reach the log either", () => {
+    // electron-updater hands its logger `Error: <stack>` for every failure; the stack names folders on
+    // this computer. desktop/main.mjs gives it updaterLogger (desktop/log.mjs), tested below.
+    const main = simplify(readSource("desktop/main.mjs"), false);
+    expect(main).toMatch(/autoUpdater\.logger\s*=\s*updaterLogger\(/);
+  });
+
+  // 2026-10-12, review: the error channel wrote a fixed line, but electron-updater (6.8.9) also puts
+  // an error's message or stack in its warn lines and in some info lines. These are its own messages,
+  // copied from node_modules/electron-updater/out, with a made-up folder in the error.
+  describe("updaterLogger: what electron-updater's messages leave in the log", () => {
+    const FOLDER = "C:\\Users\\someone-4417\\AppData\\Roaming\\DotAmi";
+    const ERR = `Error: EPERM: operation not permitted, open '${FOLDER}\\.updaterId'`;
+    function written(channel: "info" | "warn" | "error" | "debug", message: string): string {
+      const lines: string[] = [];
+      updaterLogger((text) => lines.push(text))[channel](message);
+      return lines.join("");
+    }
+
+    it.each([
+      ["AppUpdater.js:202", "error", `Error: ${ERR}\n    at AppUpdater.getOrCreateStagingUserId (${FOLDER}\\app.asar\\x.js:1:1)`],
+      ["AppUpdater.js:514", "warn", `Couldn't read staging user ID, creating a blank one: ${ERR}`],
+      ["AppUpdater.js:523", "warn", `Couldn't write out staging user ID: ${ERR}`],
+      ["AppUpdater.js:456", "warn", `Cannot dispatch error event: ${ERR}\n    at ${FOLDER}\\x.js:1:1`],
+      ["NsisUpdater.js:135", "info", `Cannot run installer: error code: EACCES, error message: "spawn ${FOLDER}\\installer.exe EACCES", will be executed again using elevate if EACCES`],
+      ["DownloadedUpdateHelper.js:102", "info", `No cached update info available (error on read: Unexpected token in JSON at ${FOLDER}\\update-info.json)`],
+    ] as const)("%s (%s) leaves one fixed line, no folder", (_where, channel, message) => {
+      const line = written(channel, message);
+      expect(line).toMatch(/^\[update\] [^\n]+\n$/);
+      expect(line).not.toContain("someone-4417");
+      expect(line).not.toContain("EPERM");
+    });
+
+    it("an ordinary progress line is kept as it was given", () => {
+      expect(written("info", "Checking for update")).toBe("[update] Checking for update\n");
+      expect(written("debug", "anything")).toBe("");
+    });
   });
 });

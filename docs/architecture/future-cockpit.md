@@ -341,6 +341,7 @@ evaluation (§ 6). Every saved idea is on road 0 until *Pick a future* lets a pe
 road 0 is what a person sees today; nothing in the screen knows which road it draws. Part 2, a later
 pull request, adds the left list (*What you've told DotAmi / Not told yet* with a receipt after each
 answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as it is until then.
+*(2026-10-12: part 2 built; see "Cockpit screen as built, part 2" below.)*
 
 - **One run, one picture.** The page reads what is kept (below), passes it to `evaluateRoad`, and draws
   the gauges, the step colours, the badges, the step panel and *Next on your road* from that one result.
@@ -432,10 +433,229 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   and month goes through `lib/format/money-and-months.ts`.
 - **Not in part 1:** the left list and its receipts, the what-if bar, *Compare*, *This is mine*, *Since
   last time*, the one-question box, remembering the last overlay, the export gaining the new answers,
-  the yearly income question, and phone width (its own next item; on a narrow window the row of gauges
-  scrolls sideways so the bar stays one row tall, and the map scrolls sideways, as before). With no road written beyond
+  and the yearly income question. (Phone width was its own next item; it is built, with folding, in
+  *Folding and phone width* below.) With no road written beyond
   road 0, no step has *done when* lines, listed skills or cost lines yet, so those sections show their
   empty line until the road content lands; the tests use an invented road for them.
+
+### Folding and phone width (2026-10-12)
+
+The maintainer, 2026-10-12, after clicking through part 1: *"there's a LOT on the screen, and we need to
+be able to open and close any menu in order to see the entire roadmap because some of the tax boxes
+don't even fit on the screen"*. And issue #4 (2026-09-20): the cockpit can't be read 375 pixels wide.
+Measured on the part 1 page (main at f24d22c, an invented Alberta idea, 2026-10-12): at 1280x720 the
+goal bar took 153 px and the legend 70 px, leaving the road 296 px of height; at 375x812 the legend
+wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road was 20 px tall too.
+
+- **Four regions fold, each with its own button that says what it does.** The left rail (*Fold venture
+  details* / *Show venture details*), the goal bar (*Fold goal and gauges* / *Show goal and gauges*),
+  the right-hand panel, whatever it holds (*Fold the panel* / *Show the panel: <what is in it>*, for
+  example *Show the panel: Sole Prop activation*), and the map's legend (*Fold the legend* / *Show the
+  legend*). The header has *Fold all panels*, or *Show all panels* once everything is folded. Each
+  button says whether its region is open (`aria-expanded`).
+- **Folding hides nothing for good.** A folded region keeps its unfold button where it was: the rail
+  becomes a narrow strip, the goal bar one line that still holds the four gauges as buttons (name and
+  value, with the lines under each in the button's title), the panel a narrow strip naming what it
+  holds, the legend one line. What is inside stays on the page, only hidden (the open goal bar sits
+  behind its one line), so a half-typed statement in *In your words* is still there when it unfolds,
+  and so is the rail's scroll position.
+- **Focus follows the fold.** The button pressed to fold or show a region is often gone afterwards (a
+  folded rail is a strip, the folded goal bar a different line), so focus moves to the button that now
+  stands for the region; a keyboard or screen-reader user is never sent back to the top of the page.
+- **The panel stays folded while the person moves around the road.** Clicking another step, a gauge or
+  *Export* puts the new thing in the folded panel and its strip names it; *Show the panel* opens it.
+  Closing the panel is still its own *Close* button and clears what it held, as before.
+- **Remembered per browser.** The four answers (folded or not) are kept in this browser's own storage
+  under `dotami-cockpit-folds`, one small JSON object, read when the cockpit opens and written on every
+  fold (`lib/cockpit/folds.ts`). Every read and write is wrapped so a browser that refuses storage
+  (private windows, storage switched off) gets a cockpit with everything open and folding that works
+  until the window closes. Nothing goes in the data file and nothing leaves the computer; the privacy
+  inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
+  In the desktop app each launch is served from its own local address, so its storage starts empty: the
+  folds last until the app closes and it opens with everything showing (the same as the intake's list of
+  typed job descriptions).
+- **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
+  road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
+  least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before
+  and after.
+- **Phone width (below 768 px, issue #4).** The page never scrolls sideways. The road keeps its columns
+  and scrolls sideways inside its own area, one column at a time (each column is the window's width less
+  the margins, and the scroll snaps to a column's edge); its area is 70 % of the window's height, and the
+  page itself scrolls down to *Next on your road* and the legend, so the legend can no longer squeeze the
+  road. The left rail is not a column: *Venture details* in the header opens it as a full-width sheet,
+  with *Close venture details* at its top. The right-hand panel opens as a full-width sheet over the
+  road, closed by its own *Close*; folded, it is a bar along the bottom, one full-width button 44 px tall,
+  and the page leaves room under its last line for the bar so it never covers the *not legal or tax
+  advice* line. A sheet that covers the page takes the keyboard with it: focus goes to its first
+  control, Tab stays inside it, Escape closes it, the page behind is inert, and focus goes back to what
+  opened it (`components/cockpit/use-sheet.ts`). The fold buttons are at least 32 px tall. The gauges
+  keep their row, which scrolls sideways inside the goal bar.
+- **Between 768 and 1024 px** the rail is a column again, and the right-hand panel opens as a 420 px
+  drawer under the header, over the road's right side, instead of squeezing the road (the header's
+  *Export* and *Fold all panels* stay free to click); from 1024 px it is a column, as before.
+- **The map's own drawing is unchanged.** The folding legend and the phone-width columns are drawn only
+  when the cockpit asks for them (`StrategyMap`'s `cockpit` prop); drawn without it, the map is the same
+  HTML as before, byte for byte (`tests/road-map.spec.ts`).
+- **Part 2's panels fold too (2026-10-13, after both pull requests met).** *Every region can be folded
+  open and shut*, so each panel part 2 adds sits in a region that folds: *What you've told DotAmi / Not
+  told yet* and the one-question box at the top of the rail, folding with it; *Compare the two endings*
+  and the receipts in a step or a list in the right-hand panel, folding with it (its folded strip says
+  *Show the panel: Compare the two endings*). The what-if bar and *This visit*, under the map, were
+  outside every region, so they are a fifth region: *Fold the what-if bar* / *Show the what-if bar*,
+  folding to one line the way the legend does, the answer kept as `whatIf` with the other four (an
+  answer stored before has none, which reads as open), and *Fold all panels* folds it too. While a
+  what-if is on, the folded line still says *Your what-if, not a forecast* and its number, since the map
+  is still relit by it. The open rail is up to 280 px wide, as part 2 made it.
+
+### Cockpit screen as built, part 2 (2026-10-12)
+
+The second cockpit pull request adds the pieces part 1 left out: the left list, a receipt after every
+answer, the what-if bar, *Compare* with *This is mine*, and the one-question box. Everything still comes
+from road evaluation (`lib/roads/`), now run more than once: once for the screen, and once more for each
+answer, before and after it or with and without it. Choices made while building it, each for a reason:
+
+- **The left list sits at the top of the left rail.** *What you've told DotAmi* first, then *Not told
+  yet*, then the rail as it was (the venture's details, the structure picker, *In your words*, the
+  ladder, the save line and the *Compass, not GPS* line), unfolded. The design folds that part away;
+  folding is the separate *open and close every panel* work, so this pull request doesn't fold anything,
+  and the two don't change the same lines twice. The rail is a little wider (up to 280 px) so a row and
+  its receipt fit. *Your starting point* (place, work situation, licences held) is not a section of its
+  own: each of those is a row of *What you've told DotAmi*, as the person said it.
+- **What you've told DotAmi** is every answer road evaluation read that the person gave (`answers`,
+  `given: true`; a default the person hasn't set, such as the map's default pick, is never listed), in
+  road evaluation's fixed order, except a what-if, which is never kept. A row is the answer in its own
+  words (*You told us your date is May 2099*), its day, and what it unlocked. The day is the day kept
+  with the answer: a skill mark's day, the day a step's status last changed (ticks: the day the step was
+  last changed), the day an ending was picked, a number's day agreed, the day the month was set. The
+  idea's own answers from the intake, and road 0's map picks, keep no day of their own (the idea's
+  last-saved time moves with any edit, § 7), so those rows say *day not kept* rather than borrowing one.
+- **What it unlocked is worked out, never written.** `withoutAnswer(input, answerId)` (`lib/roads/`,
+  pure) gives road evaluation's input with that one answer taken away, and the row shows
+  `roadReceipt(without, with)`: the same lines a receipt shows, so the row's words and the receipt's are
+  the same by construction. Three answers have no *without* (the place, the kind of venture and the work
+  situation: the map can't be drawn without them), so `withoutAnswer` gives null and the row says it can
+  be changed but not taken back. Measured cost: one extra run per row (§ 6: about 0.36 ms a run on
+  today's general road).
+- **Change and Take back.** *Change* goes to where the answer is given: the step (status, ticks, a
+  quote), the Skills list (marks), *Compare* (an ending), the one-question box (the month, savings, the
+  structure, buying equipment, *I'd incorporate at*, a map pick), the intake (the idea's other answers)
+  or the idea's figures on *Your ideas* (agreed business figures). *Take back* removes the answer the
+  same way `withoutAnswer` does: a mark or a status through its route with *I don't know* / none; ticks
+  emptied; a quote or savings retracted through `/api/figures/retract` (kept in the history as
+  retracted, as today); the month cleared; an ending through the new ending route; and the idea's own
+  answers through the map's save (the structure back to *not set*, a map pick back to the map's default,
+  the person's *I'd incorporate at* number cleared, and so on). The receipt for a take back is therefore
+  exactly the row's *what it unlocked*, read the other way. Rows with no take back say why (*the map
+  needs it*; *take back figures on Your ideas*). A yearly income target has no route to take it back
+  yet, and no screen asks for it yet, so its row shows no buttons.
+- **Not told yet** lists, in a fixed order that is the order DotAmi asks them and never importance: your
+  date; your savings; your numbers for the cost lines not priced yet; your marks on the skills not
+  marked; an ending at each fork of the road with no pick (not road 0, whose forks always have the map's
+  pick); your pick at each of road 0's forks while it is still the map's default; your structure while
+  the map assumes one; buying equipment while unanswered; and, on road 0, your own *I'd incorporate at*
+  number. Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
+  answer feeds (a gauge part, a step that can light, the map reading your pick instead of its default),
+  never a promise of a result. At most five show; the rest are behind *n more*. Every row has **I don't
+  know**, which keeps nothing: it folds the row away for this visit (*n you don't know yet · Show them*),
+  and the gauges and cards it feeds stay as they were.
+- **The one-question box** (§ 2, *Overlays on top of everything*, named for phase 1) opens under the row,
+  in the left list, not as a window over the map: the question, its *why we ask* line, one control,
+  **Save** and **I don't know**. It takes the month, the savings (then the agree prompt, as everywhere),
+  a map pick (its two sides), the structure (sole prop or corporation), buying equipment (yes or no) and
+  *I'd incorporate at* (whole dollars). Questions with more than one answer in them (cost lines, skills)
+  or a choice that needs the two sides seen together (an ending) open their list or *Compare* instead.
+  The gauges' own invitations still open their lists, as in part 1.
+- **A receipt after each answer.** Every answer saved anywhere on the screen (a status, ticks, a mark, a
+  skill of one's own, a quote or savings once agreed, the month, a map toggle, the structure, an ending,
+  a take back, an answer in the box, a what-if kept) runs road evaluation on the input before and after
+  it, and shows `roadReceipt(before, after)` where it was given: in the step panel, the list it came
+  from, *Compare*, the left list or the what-if bar, as a status line read out by a screen reader. *After*
+  is built from what the save read back, never from what the screen hoped would be kept. A save that
+  changes nothing on the road says *Saved. Nothing on the road changed.* The *I'd incorporate at* box in
+  a step's panel saves as the person types, so it gives no receipt per keystroke; the same answer given
+  in the one-question box does. *(2026-10-12, after review: the idea's own answers, kept with the map
+  (the structure, a map pick, buying equipment, *I'd incorporate at*, a what-if kept, and a take back of
+  any of them), had their receipt worked out from what the screen sent, before the save had run. They
+  now wait for the map's save, whose route answers with the idea as it kept it, read back from the data
+  file (`POST /api/scenario/save` → `scenario`), and *after* is built from that. Until it answers the
+  receipt says *Saving your answer…*; a save that fails says *Not saved yet*, adds nothing to *This
+  visit*, and leaves the save line's *Save now* to try again. A take back that changes nothing on the
+  road names what was taken back: *Saved: you took back … . Nothing on the road changed.* In the left
+  list the row or box the person clicked is gone once they answer, so the receipt there takes the
+  keyboard focus and is scrolled into view.)*
+- **This visit, kept briefly.** The newest five receipt lines of this visit stay in a line under the
+  map, newest first, so a receipt closed with its panel isn't lost. They are kept nowhere: a reload
+  starts the line empty. *(2026-10-12, after review: named* This visit*, not* Since last time*, which a
+  person returning reads as "since my last visit"; that name is kept for the return visit's list. Only
+  the newest line shows, the rest behind* n more this visit*, so the map keeps its room at 1280 by
+  720.)* The return visit's list, *Since last time* (steps marked since the person's last visit, dates
+  coming up, figure reminders), needs the day of the last visit, which DotAmi doesn't keep; it is left
+  for a later pull request.
+- **What the map's save keeps (2026-10-12, after review).** A pick at one of road 0's forks is the
+  person's on either side, the map's default side included, so it is kept with the map's answers: the
+  fork ids the person picked, under their own key `decided` in the same JSON as the picks
+  (`ScenarioState.activeBranches`, `lib/db/scenario-state-json.ts`), and a reload still lists it and
+  the toggle no longer says *default, not your pick yet* (Compare said *Your pick* until 2026-10-13,
+  when road 0 stopped offering Compare, below). Until then the map kept its clicks for the session only, and a pick of
+  the default side said *Saved* and was gone after a reload. Buying equipment is an answer only when the
+  person gave one: the intake's chip starts off and off is the chip not picked, so it is *not answered*
+  (the rules read it as no, and say so), never *you told us you're not buying*. A yes is kept in
+  `Venture.capitalPurchasePlanned` as before; a *No* in the one-question box under its own key
+  `equipmentNo` in the same JSON. Ideas saved before this read as not answered unless their chip was on.
+  A *done when* tick keeps no day of its own (the step's last change is not the tick's), so its row says
+  *day not kept*. The rail's sales targets say *not given* for no number, never $0. Every *Change*, *Take
+  back*, *Answer*, *I don't know* and *This is mine* names its row or side to a screen reader.
+- **The what-if bar** sits under the map, above *Next on your road*: *Try first-year sales of $___* and
+  **Try**. While a what-if is on, the bar says **Your what-if, not a forecast**, shows its receipt (what
+  it relit), and offers **Keep** and **Clear**. It goes to road evaluation's `whatIf` only, so it relights
+  the rules and tax cards and the steps the rules colour, and never touches a money sum or a figure; it
+  is kept nowhere. **Keep** writes the number as the idea's own first-year sales, the Year 1 field the
+  intake already keeps with the map (§ 3: *"Today's Year 1 / Year 3 fields when kept"*), never a figure,
+  then clears the what-if; it is then an answer like any other, with its receipt and a row in *What
+  you've told DotAmi*. A number that isn't a whole, non-negative number of dollars is refused on screen.
+- **Compare the two endings** opens in the right-hand panel (one thing at a time, as part 1's lists do),
+  from a **Compare** button on the goal bar, from the step panel at a fork, and from a *Not told yet*
+  ending row. With more than one fork on the road, the person picks which fork, in road order. Each side
+  is a column with its step's name; the rows are the same in both, all counts and sums from road
+  evaluation run with that side picked (`compareEndings`, `lib/cockpit/`): steps on your path, of those
+  not marked done, steps not on your path; skills listed on your path as *have · learning · not yet · not
+  marked*, and the legal requirements among them; official fees and your numbers, each with its lines;
+  lines not priced yet; fees that apply only sometimes; and the rules and tax cards that apply and that
+  say check first. A line says *In the order the road shows them*. No score, no total, no badge and no
+  highlighted column: both columns are drawn the same, and the only difference on screen is which
+  **This is mine** button is pressed. Above the table one line says whose pick stands (*Your pick*, *the
+  map's default pick, not yours yet* on road 0, or *no side picked yet*). The person's target and
+  what-if rows are left out: neither changes with the ending, and no screen asks for the target yet.
+  *(2026-10-12, after review: a what-if does change the rules and tax cards, on both sides alike, and
+  Compare's panel has no what-if banner, so Compare is worked out without it. On road 0 each column also
+  gives the map toggle's own short name (*on the map: “Voluntary now”*), since the step's name and the
+  toggle's differ; and when no row differs between the two endings, a line says so, so two identical
+  columns don't read as a fault.)*
+- **Where Compare is offered (2026-10-13: the maintainer answered PR #159's questions with their
+  defaults; for question 1 that is Compare only where a fork changes the path).** Only at a fork whose
+  own pick, not the rules, puts steps on or off the path.
+  `forksToCompare` (`lib/cockpit/told.ts`) runs road evaluation once with each side picked, leaving out
+  the person's step statuses and the what-if so the offer is the road's and doesn't come and go as steps
+  are marked or a number is tried, and keeps a fork when some step's state differs between the two runs
+  for a reason that is that fork's pick (the side picked, the side not picked, or a step reached only
+  through it); a step the rules colour differently in the two runs doesn't count. It reads the road's
+  own steps, never a list of road ids (tested on an invented road whose fork's two sides the rules grey
+  whichever is picked: not offered). On today's Alberta road (road 0) flipping a toggle does move a step
+  between *check first* and *not on your path*, but the tax rules do that, colouring the sides whichever
+  is picked, and both columns' counts come out the same; so neither of its forks is offered, and its
+  picks are made on the map's toggles (also in the step panel) and in the one-question box. On the
+  apprentice road the pick itself puts one ending's steps on the path and the other's off it, so its
+  fork is offered. Where no fork is offered the goal bar has no **Compare**
+  button and the step panel no **Compare the endings**, rather than a button that leads nowhere.
+- **This is mine** keeps the pick where each road keeps it (§ 7): on road 0 it is the map's toggle, saved
+  with the map (not reached since 2026-10-13, as road 0 offers no Compare); on any other road, `POST /api/futures/<idea id>/ending { forkId, stepId }` (or `stepId:
+  null` to take it back, which the told list's *Take back* uses), through `pickEnding`, guarded like the
+  other writes (DotAmi's own window, `readJsonWithLimit`, a rate limit). Then the receipt.
+- **Words and numbers.** Every new sentence is in `lib/cockpit/words.ts` and every amount and month goes
+  through `lib/format/money-and-months.ts`; the copy test covers the new components too.
+- **Not in part 2:** the return visit's *Since last time* list (above); remembering the last overlay;
+  the export gaining the told list; the yearly income question and taking it back; a receipt per
+  keystroke in the *I'd incorporate at* box; folding the rail and phone width (their own items).
 
 ## 3. What DotAmi asks, why, and how it's kept
 
@@ -515,8 +735,8 @@ and how a gap is filled:
 | Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. *Pick a future* may list a road none of whose sources a person has read, its card saying so in amber (the maintainer's yes of 2026-10-13, § 13). *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read by a person or its quotes are found on it by the tool |
 | Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
-| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
-| Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers) | — |
+| Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13). Since 2026-10-12 each is written once, in the official fees catalog (`lib/engines/fees/v2026/`, § 6), and roads name it by id | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
+| Cost-line names (tools, space deposit, insurance, vehicle, first materials, software, money to live on while starting) | Names only, planned to be cited to the free BDC and Futurpreneur cash-flow templates (linked, not copied; they are blank templates, not numbers). As built (2026-10-12, § 6): no source yet, because the templates' pages don't name the lines; § 13 | — |
 | Amounts for cost lines, savings, income wanted, dates | The person: typed, quoted, linked or from a receipt, through the agree prompt | Stays blank, counted in *N lines not priced yet*. Never filled with an average (decision 2) |
 | Rules and tax cards | Today's catalogs | — |
 | New futures | Contributors on GitHub, one cited file per step (phase 4), under [CONTRIBUTING.md](../../CONTRIBUTING.md) | Open issues ask for them |
@@ -722,9 +942,11 @@ lives in `lib/roads/`.
   map pick they haven't clicked (*the map's default pick at “GST timing” is …*; the map keeps its
   clicks only for the session, so after a reload a pick still on the default reads as a default, as the
   map's rail already says, while a saved pick off the default counts as the person's, `isBranchDecided`
-  in `lib/scenarios/graph.ts`, since the honest-map pull request), the hire-first path while it is off (*the hire-first path is switched off*: the map
+  in `lib/scenarios/graph.ts`, since the honest-map pull request; since 2026-10-12 the clicks are kept
+  with the map's answers, § 2, *What the map's save keeps*), the hire-first path while it is off (*the hire-first path is switched off*: the map
   can't tell switched off from never switched on), the structure the map assumes, and buying equipment
-  while unanswered (*not answered, read as no*). *What you've told DotAmi* lists the given ones; the
+  while unanswered (*not answered, read as no*; since 2026-10-12 the intake's chip left off is
+  unanswered too, § 2). *What you've told DotAmi* lists the given ones; the
   others still name themselves in a step's reason, worded as defaults. The person's own *I'd
   incorporate at $___* on road 0, once typed, is one of the given answers (`idea:incorporate-at`;
   taking it away is the only alternative tried, since DotAmi has no number of its own for it).
@@ -778,7 +1000,8 @@ lives in `lib/roads/`.
   road 0; a status the person sets on a road 0 step (none exists yet, above); the *with and without
   one answer* run that gives each row of *What you've told DotAmi* its *what it unlocked* line (a pure
   `withoutAnswer(input, answerId)` in `lib/roads/` that maps an answer's id back to the input with
-  that answer taken away, with its tests; the told-list pull request adds it); and fix 2's fee lines
+  that answer taken away, with its tests; the told-list pull request adds it, *2026-10-12: built, § 2,
+  Cockpit screen as built, part 2*); and fix 2's fee lines
   (§ 9): no road has cost lines yet, and when each way to incorporate is a side of a fork, the sums
   already leave both out until the person picks.
 - **Open question for the maintainer: *not for me* on the side picked.** *Not for me* greys its own
@@ -920,7 +1143,8 @@ each for a reason:
   Business Name Report is a *done when* line (`dw-start-name-report`), not a cost: Alberta's page says
   NUANS members provide it but names no price for it. No amount is written anywhere in this content.
   The ten map stages get no cost lines, skill items or official links yet; the incorporation fees belong
-  to Fix 2 (§ 9).
+  to Fix 2 (§ 9). *(Later on 2026-10-12: Sole Prop activation gets seven named start-up cost lines; § 6,
+  "The official fees catalog and start-up cost lines as built".)*
 - **New ids, all permanent.** Steps `step-start-…`, lines `dw-start-…`, cost lines `cost-start-…`
   ("start" for *Starting any business*). `tests/roads.spec.ts` keeps every one on its shipped list.
 - **What the map shows changes, and only by the three new cards.** In the cockpit every card is drawn
@@ -937,6 +1161,64 @@ each for a reason:
   isn't grey. Clicking it there selects it and keeps its arrows. `tests/road-map.spec.ts` draws the six
   saved states again and, with the three new cards cut out, the HTML is byte for byte what the old map
   drew; the before pictures are not re-recorded.
+
+### The official fees catalog and start-up cost lines as built (2026-10-12)
+
+Decision 2 (official fees with a source, plus the person's own quotes, no averages) gets its two
+missing pieces: one place for every official fee, and road 0's named start-up cost lines. Choices made,
+each for a reason:
+
+- **One catalog, `lib/engines/fees/v2026/`.** Each fee is written once: a permanent id, what it is for
+  (`label`), the place it applies to as an international code (`place`: `CA`, `CA-AB`; the maintainer's
+  decision of 2026-10-11, used here from the start because the catalog is new), the amount in whole
+  cents, how often it is paid when the page says (`per`), its condition when it applies only sometimes
+  (`onlyIf`), and one citation. An id starts with `fee-` and its place (`fee-ca-…`, `fee-ab-…`), the way
+  skill items do. Like every catalog it imports nothing from the app.
+- **Roads and the ways to incorporate name a fee; they never type its amount.** An official fee line on
+  a road keeps its own permanent id and its own label (two steps can show the same practical exam fee in
+  their own words) and gains `feeId`; its amount, source and condition are copied from the catalog when
+  the road is built (`feeLine`). A way to incorporate does the same (`routeFeeLine`). A check over the
+  whole catalog (`feeReferenceProblems`) refuses a line naming a fee that doesn't exist, or carrying an
+  amount, source or condition that differs from its fee, and a test refuses a typed amount in any road
+  file or in the incorporation routes. So a fee that changes is changed in one place.
+- **What moved, and nothing else.** Ten fees: the federal online incorporation ($200), express service
+  ($100) and annual return ($12) from the incorporation routes (#145), and the first written future's
+  seven (#153): the apprenticeship application ($150), the two Trades Qualifier applications ($450 and
+  $150), the Cabinetmaker practical exam ($160, shown on two steps), the recognized-credential rewrite
+  ($50, only if you fail an exam), the Blue Seal application ($150) and the business number ($0). Each
+  quote was found again by `node scripts/check-quotes.mjs` on 2026-10-12. A federal fee's source now
+  carries only the quotes that state that fee (before, all three shared the fees page's six quotes),
+  which no card shows differently: the way-to-incorporate card shows the line's own quotes, as before.
+- **No card changes.** `tests/cost-panels-unchanged.spec.ts` draws every step panel of both roads (the
+  Incorporating stage for an Alberta and a British Columbia idea) and each road's money list, and compares
+  them byte for byte with what main drew before the move (`tests/fixtures/official-fees/`; redrawn on
+  2026-10-13 to include #162's two federal "Shown because" lines, the only difference); the map's
+  six saved states (`tests/road-map.spec.ts`) are unchanged too.
+- **Not in the catalog: a fee nobody could read.** Alberta's registry fees (incorporating, registering
+  a name, the annual return, a federal corporation registering in Alberta) and the NUANS report stay
+  named blanks on their cards: the Registry Agent Product Catalogue that holds them stops tools with a
+  human check, which is never bypassed. A fee whose page names no amount (the Red Seal application, the
+  Work Experience rewrite) stays a named line. The catalog holds amounts only.
+- **Road 0's start-up cost lines, on *Sole Prop activation*.** The seven names § 5 lists, as named
+  lines with no amount: *Tools and equipment*, *Space deposit*, *Insurance*, *Vehicle*, *First
+  materials*, *Software*, *Money to live on while starting* (ids `cost-start-…`, permanent). They sit on
+  the first step where the business runs, the one every idea on road 0 passes through; the person prices
+  each through the agree prompt, and each counts in *N lines not priced yet* until then. `roadFromCfe`
+  gains a third optional input, cost lines by step id, like the *done when* lines.
+- **No source for these names, on purpose.** § 5 planned to cite the BDC and Futurpreneur cash-flow
+  templates for the names. Checked on 2026-10-12: BDC's template page names no cost lines (the lines are
+  inside a spreadsheet behind a download form); Futurpreneur's page names only insurance among them
+  ("This includes things like insurance, office furniture, website, legal fees, etc.", found by the
+  tool), the others are inside its spreadsheet, and Futurpreneur is a not-for-profit, a kind of source the
+  citation type has no word for (`authority` is `CRA`, `federal` or `provincial`). A downloaded
+  spreadsheet is not a page the quote checker can check. So the seven lines carry no `nameSource`, like
+  the bank-fees line, rather than a source that would claim more than its page says. A person who opens
+  the spreadsheets can record a read, or the maintainer can add a source kind for a not-for-profit; both
+  are listed in § 13.
+- **What a person sees change.** On road 0, *Sole Prop activation*'s step panel lists the seven lines
+  with *Add your quote*; the Money overlay's badge on its card says *7 not priced*; the Start-up money
+  gauge and the money list count seven more lines not priced while that step is on the person's path.
+  No amount appears anywhere that DotAmi chose.
 
 ## 7. Storage
 
@@ -1297,7 +1579,15 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
   evaluation as built*).
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
-  each registry agent is read from Alberta's page; until then they are named blanks.
+  each registry agent is read from Alberta's page; until then they are named blanks. When a person reads
+  them in the Registry Agent Product Catalogue, each amount goes into the official fees catalog
+  (`lib/engines/fees/v2026/`, § 6) and the named blank becomes a line naming it.
+- **A source for the start-up cost lines' names** (§ 6, *The official fees catalog and start-up cost
+  lines as built*). The seven names on road 0 cite nothing yet: the BDC and Futurpreneur templates keep
+  their lines inside spreadsheets, and Futurpreneur is a not-for-profit, which the citation type has no
+  word for. Two ways, the maintainer's call: a person opens the spreadsheets and records a read of each
+  name; or the citation type gains a kind for a not-for-profit, so Futurpreneur's page can be cited for
+  *insurance*, the one name its page shows.
 - **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
   abilities, work activities) and how much of each list to show; the lists describe employees, not
   owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed

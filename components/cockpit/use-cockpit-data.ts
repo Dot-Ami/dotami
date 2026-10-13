@@ -29,14 +29,22 @@ export function useCockpitData(scenarioId: string | null) {
   const [figures, setFigures] = useState<FigureView[] | null>(null);
   const [kept, setKept] = useState<KeptForIdea | null>(null);
 
-  const loadFigures = useCallback(async (id: string) => {
+  // Each load also hands back what it read (null when it couldn't), so a save's receipt is worked out
+  // from what was kept rather than from what the screen hoped would be.
+  const loadFigures = useCallback(async (id: string): Promise<FigureView[] | null> => {
     const res = await fetch(`/api/figures?venture=${encodeURIComponent(id)}`, { cache: "no-store" });
-    if (res.ok) setFigures(((await res.json()) as { figures?: FigureView[] }).figures ?? []);
+    if (!res.ok) return null;
+    const list = ((await res.json()) as { figures?: FigureView[] }).figures ?? [];
+    setFigures(list);
+    return list;
   }, []);
 
-  const loadKept = useCallback(async (id: string) => {
+  const loadKept = useCallback(async (id: string): Promise<KeptForIdea | null> => {
     const res = await fetch(`/api/futures/${encodeURIComponent(id)}`, { cache: "no-store" });
-    if (res.ok) setKept((await res.json()) as KeptForIdea);
+    if (!res.ok) return null;
+    const read = (await res.json()) as KeptForIdea;
+    setKept(read);
+    return read;
   }, []);
 
   useEffect(() => {
@@ -63,13 +71,18 @@ export function useCockpitData(scenarioId: string | null) {
     };
   }, [scenarioId, loadFigures, loadKept]);
 
-  /** Reads the idea's figures and what the cockpit keeps again, after the person saved something. */
-  const reload = useCallback(async () => {
-    if (!ventureId) return;
+  /**
+   * Reads the idea's figures and what the cockpit keeps again, after the person saved something, and
+   * gives both back; null when either couldn't be read (the screen then keeps what it showed).
+   */
+  const reload = useCallback(async (): Promise<{ figures: FigureView[]; kept: KeptForIdea } | null> => {
+    if (!ventureId) return null;
     try {
-      await Promise.all([loadFigures(ventureId), loadKept(ventureId)]);
+      const [readFigures, readKept] = await Promise.all([loadFigures(ventureId), loadKept(ventureId)]);
+      return readFigures && readKept ? { figures: readFigures, kept: readKept } : null;
     } catch {
       // The screen keeps what it showed; the next save or visit reads again.
+      return null;
     }
   }, [ventureId, loadFigures, loadKept]);
 

@@ -4,7 +4,7 @@ import type { FirstSave } from "@/lib/journey/first-save";
 import { INTAKE_GOAL_IDS, type IntakeGoalId } from "@/lib/journey/types";
 import { isValidSaidAt, STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import type { Province, VentureStage, VentureType } from "@/lib/scenarios/types";
-import { cleanIncorporateAt } from "@/lib/db/scenario-state-json";
+import { cleanDecided, cleanIncorporateAt } from "@/lib/db/scenario-state-json";
 import { recomputeScenarioState } from "@/lib/scenarios/branches";
 import { cleanNotSaid } from "@/lib/scenarios/not-said";
 import { PROVINCES as ALL_PROVINCES, VENTURE_STAGES } from "@/lib/scenarios/types";
@@ -64,7 +64,10 @@ function parseProfile(raw: unknown): VentureProfile | null {
   const activityTags = Array.isArray(p.activityTags)
     ? p.activityTags.filter((t): t is string => typeof t === "string" && t.length > 0 && t.length <= 80).slice(0, 40)
     : [];
-  const capitalPurchasePlanned = p.capitalPurchasePlanned === true;
+  // Buying equipment: true or false is the person's answer; anything else is not answered (left out),
+  // which the rules read as no and say so. Until 2026-10-12 anything but true was kept as false, so a save
+  // turned "not answered" into "you told us you're not buying".
+  const capitalPurchasePlanned = typeof p.capitalPurchasePlanned === "boolean" ? p.capitalPurchasePlanned : undefined;
   const stage: VentureStage = (VENTURE_STAGES as readonly string[]).includes(p.stage as string)
     ? (p.stage as VentureStage)
     : "idea";
@@ -135,7 +138,12 @@ export function parseScenarioInput(data: unknown): Scenario | null {
     profile,
     // The person's own "I'd incorporate at $___": a whole-dollar amount, or nothing. Anything else is
     // dropped rather than refusing the whole save.
-    state: { ...recomputeScenarioState(activeBranches, profile.hireFirst), incorporateAt: cleanIncorporateAt(state?.incorporateAt) },
+    state: {
+      ...recomputeScenarioState(activeBranches, profile.hireFirst),
+      // The forks the person picked a side at, the default side included: only the map's own forks.
+      decidedBranchIds: cleanDecided(state?.decidedBranchIds, activeBranches),
+      incorporateAt: cleanIncorporateAt(state?.incorporateAt),
+    },
   };
 }
 

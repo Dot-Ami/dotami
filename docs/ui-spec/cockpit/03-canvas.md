@@ -17,6 +17,12 @@ accessible name says its colour in words; the legend gains grey's words; the Inc
 longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent the figures are, [8e]; the map itself S2.5.4j — built and verified in the pane 2026-09-16). **Supersedes** the React
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
+**Folding and phone width (2026-10-12).** In the cockpit (the map's `cockpit` prop) the legend starts with
+**Fold the legend**, which folds it to one line with **Show the legend** (remembered in this browser), and the
+road's scrolling area is a region named *The road*. Below 768 px each column is the window's width less the
+margins, the area scrolls sideways one column at a time (scroll snap), and it is 70 % of the window's height.
+Drawn without the prop, the map's HTML is unchanged. [12-folding-and-phone.md](./12-folding-and-phone.md).
+
 **Component:** `components/cockpit/strategy-map.tsx` · **Road data:** `lib/engines/roads/v2026/`
 (today: `generalRoadV2026`, built from `lib/engines/cfe/v2026/tiers.ts` and `nodes.ts` by `roadFromCfe`)
 · **Design record:** this file (decided 2026-09-16) and docs/architecture/future-cockpit.md § 6.

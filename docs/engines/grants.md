@@ -49,3 +49,9 @@ path, CSBFP may make financing available without revenue history."
    build trust.
 4. Umbrella entries ("Ontario innovation supports") are acceptable placeholders but should
    decompose into specific programs as they get verified — specific + cited beats broad + vague.
+5. `"CA"` in `provinces` means the program is offered in every province and territory: the
+   engine shows it wherever the person is, and since 2026-10-13 its card says so ("Shown because
+   it is a federal program, offered in every province and territory, and your … activity matches
+   it."), as a federal compliance rule's does since #36. A federal program open only in some
+   regions must list those provinces and leave `"CA"` out, or that line would be untrue
+   (`lib/brain/evaluate.ts` `evaluateGrant`; `tests/brain-evaluate.spec.ts`).

@@ -45,6 +45,32 @@ export function openLog(file) {
 }
 
 /**
+ * The logger handed to electron-updater (autoUpdater.logger in desktop/main.mjs).
+ *
+ * The updater writes errors on every channel: `Error: <stack>` on error, `${e}` in its warn lines
+ * ("Couldn't write out staging user ID: Error: EPERM … <userData>\.updaterId"), and an error's
+ * message in a few info lines ("Cannot run installer: error code: …, error message: …"). A stack or
+ * message names folders on this computer, which hold the person's Windows account name. So error and
+ * warn always leave one fixed line, and an info line that reports a failure does too; the check's own
+ * line in main.mjs says which error it was, by name and code. Other info lines are its progress
+ * ("Checking for update", "Found version …") and are kept as given; one of them names the folder an
+ * update downloads to. debug is dropped.
+ * @param {(text: string) => void} write
+ */
+export function updaterLogger(write) {
+  return {
+    info: (m) => write(UPDATER_FAILURE.test(String(m)) ? "[update] the updater reported a problem\n" : `[update] ${m}\n`),
+    warn: () => write("[update] the updater gave a warning\n"),
+    error: () => write("[update] the updater reported an error\n"),
+    debug: () => {},
+  };
+}
+
+// The words electron-updater 6.8.9 uses when an info line carries a failure (NsisUpdater.js:135,
+// DownloadedUpdateHelper.js:102).
+const UPDATER_FAILURE = /error|cannot|can't|couldn't|failed|unable/i;
+
+/**
  * "Error, EPERM": an error's name and code, never its message, which can quote what it was given.
  * The same rule as lib/api/log-error.ts describeError, for the desktop side (plain JavaScript, so it
  * can't import the TypeScript one).
