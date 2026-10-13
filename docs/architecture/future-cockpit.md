@@ -143,12 +143,12 @@ each choice that differs from the table above says why.
   2. *"Are you after a business of your own, a job or career, or both?"*: **A business of my own** ·
      **A job or career** · **Both, or not sure** (the last is the *I don't know*). The receipt counts the
      futures *Pick a future* lists that have that in them, by each road's `kind` (a *both* road has a
-     business and a career): *"Of the 1 future listed, 1 includes a business of your own."* It filters
+     business and a career): *"Of the 2 futures listed, 2 include a business of your own."* It filters
      nothing: *Pick a future* shows every future it lists. Kept on the future when one is picked (below).
   3. *"Which province or territory are you in?"*, required, no *I don't know*: fees, licences and tax
      rules differ by place and no road can be drawn without one. Choices are the thirteen places as
      codes (`CA-AB` …, the maintainer's decision of 2026-10-11). Receipt, from the catalogs' own
-     coverage: *"Alberta's rules and the federal rules apply. 1 future listed is written for
+     coverage: *"Alberta's rules and the federal rules apply. 2 futures listed are written for
      Alberta."*, or, for a place whose rules aren't written, *"The federal rules apply; Yukon's own rules
      aren't written yet. No future listed is written for Yukon yet: the ones shown are written for other
      places, and each says which."* § 3 says *I don't know* is always an answer, and its own table marks
@@ -182,10 +182,10 @@ each choice that differs from the table above says why.
   Closing the income prompt without deciding gives focus back to the amount box.
 - **Pick a future (`/futures`).** The futures it lists, as cards, in the order added (`roadsV2026`),
   never ranked: *"In the order they were written, not ranked. More futures are being written."* Which
-  roads it lists is one list, `LISTED_ROAD_IDS` in `lib/front-door/futures.ts`: road 0 only, because
-  whether a road nobody has read may be listed is the maintainer's call (§ 13, *Listing a road nobody
-  has read*); the first written future, whose sources are all tool checks, is added to that list, one
-  line, once he decides. Each card shows its name; what it holds (*"A business"*, *"A career and a
+  roads it lists is one list, `LISTED_ROAD_IDS` in `lib/front-door/futures.ts`: road 0 and, since the
+  maintainer's yes of 2026-10-13 (§ 13, *Listing a road nobody has read*), the first written future,
+  whose sources are all tool checks and whose card says so in amber. Picking it opens the cockpit on its
+  own road (`e2e/front-door.spec.ts`). Each card shows its name; what it holds (*"A business"*, *"A career and a
   business"*); where it is written for, and, when that isn't the person's place, *"Written for Alberta.
   You said Yukon."*; counts only (steps · skills listed · official fees found · cost lines you'd price);
   and how its sources were checked, counted through `lib/engines/shared/citation-check.ts`: *"Sources: n
@@ -512,7 +512,7 @@ and how a gap is filled:
 
 | Content | Source | If we don't have it |
 |---|---|---|
-| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. Whether *Pick a future* may list a road none of whose sources a person has read is the maintainer's call (§ 13). *"More futures are being written"* says so |
+| Steps, forks, *done when* lines | Official pages (the law, the CRA, the province, the regulator), one citation per *done when* line, each either read by a person or checked by a tool (the quote checker found its quotes word for word on the live page; option B of 2026-10-11, [citations.md](../engines/citations.md)) | Not written in until a person reads the official page or the tool finds each quote on it. *Pick a future* may list a road none of whose sources a person has read, its card saying so in amber (the maintainer's yes of 2026-10-13, § 13). *"More futures are being written"* says so |
 | Legal requirements (licences, certificates, registrations) | Today's compliance catalog plus the regulator's pages (for the first future, Alberta's apprenticeship and trade certification pages, read fresh: Alberta's trades system was recently rewritten) | Not written in until the current page is read by a person or its quotes are found on it by the tool |
 | Skills for a job | [OaSIS 2025 Version 1.0](https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec) (Employment and Social Development Canada, Open Government Licence – Canada; the dataset's record says published 2025-10-30, modified 2026-10-04, checked by a tool on 2026-10-11), through the person's pick of job. (Corrected 2026-10-11: this line first named OaSIS 2022 Version 1.0, which has no Knowledge file; the 2025 dataset has one, *Knowledges 2025 v1.0*.) | The person adds their own skills (*added by you*) |
 | Official fees | The fee page or regulation for each (for example federal online incorporation on the Corporations Canada page and its fee schedule; Alberta's trade-name and incorporation fees from Alberta's own page, which also says whether the province or each registry agent sets them, § 13) | A named blank; if Alberta's page says registry agents set the fee: *"set by your registry agent: add what you were quoted"* |
@@ -792,7 +792,7 @@ lives in `lib/roads/`.
 
 Road 1, *From apprentice to your own shop (Alberta)*, is written into the catalog
 (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`, id `road-apprentice-to-own-shop-ab`, kind
-`both`, `AB`). It is in the catalog only: no screen lists it until *Pick a future* is built. Choices
+`both`, `AB`). It was in the catalog only until *Pick a future* listed it (2026-10-13, § 13). Choices
 made while writing it, each for a reason:
 
 - **Four columns, one fork.** *Finish your training* · *Certified* (the fork: *Stay employed* or *Open
@@ -1304,14 +1304,17 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.
-- **Listing a road nobody has read.** The first written future's sources are all tool checks (option B):
+- ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
+  lists the first written future, its card saying in amber that its sources were checked by a tool and
+  not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
+  The question as it was asked: the first written future's sources are all tool checks (option B):
   every quote was found on its live page, but no person is recorded as having read one. Whether *Pick a
   future* may list such a road (each card saying "Checked by a tool" in amber), or only once a person
   has read its pages, is the maintainer's call; no screen lists any road but road 0 until then.
   *(2026-10-12: Pick a future is built and lists road 0 only, from one list, `LISTED_ROAD_IDS` in
   `lib/front-door/futures.ts`; each card already says how many of its sources were read and how many
   only checked by a tool, in amber, so listing the first written future is one line once the maintainer
-  decides. § 1, The way in as built.)*
+  decides. § 1, The way in as built.)* *(2026-10-13: that one line is added.)*
 - **"I don't know" on the place.** § 3 says *I don't know* is always an answer, and the same section's
   table marks the province as required. *Your destination* follows the table (no road can be drawn
   without a place). The other choice: an *I don't know* that lists the futures and asks for the place

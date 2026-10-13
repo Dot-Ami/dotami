@@ -123,19 +123,15 @@ and the maintainer's six decisions of 2026-10-11:
     - [ ] Still open on it: the third door waits for the invented example below; *Pick a future* doesn't
       ask the job closest to your work (the OaSIS line below) or draw the road in grey before the pick;
       *What DotAmi knows about you* and its Delete menu still say *Your ideas*; the kind of venture
-      (service, product, side gig) isn't asked on this way in (kept as "not said"); *Pick a future*
-      lists road 0 only until the maintainer decides whether a road no person has read may be listed
-      (one line, `LISTED_ROAD_IDS`); whether the place gets an *I don't know* (design § 13)
+      (service, product, side gig) isn't asked on this way in (kept as "not said"); whether the place gets an *I don't know* (design § 13)
   - [x] The first written future, *From apprentice to your own shop (Alberta)*: steps from
     Alberta's current trade pages, every *done when* line cited to its step's official page, official
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
-    `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; no screen lists it until *Pick a future*)
+    `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; listed on *Pick a future* since 2026-10-13, the
+    maintainer's yes to listing a road no person has read, its card saying so in amber)
     - [ ] Still open on it: Alberta's registry fees (the Registry Agent Product Catalogue stops
       tools, so a person reads them); the apprentice wage percentages per period (they need a typed
-      field); a person's read of each page, which turns its "checked by a tool" into a read; whether
-      *Pick a future* may list a road no person has read yet (the maintainer's call, design § 13; since
-      2026-10-12 *Pick a future* is built and lists road 0 only, each card saying how many sources were
-      only checked by a tool, so listing this road is one line once he decides)
+      field); a person's read of each page, which turns its "checked by a tool" into a read
   - [ ] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
   - [ ] *Show me an example first*: a filled-in, clearly invented example future

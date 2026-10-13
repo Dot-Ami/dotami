@@ -1,4 +1,10 @@
-import { generalRoadV2026, type Road, type RoadKind, type SkillItem } from "@/lib/engines/roads/v2026";
+import {
+  generalRoadV2026,
+  roadApprenticeToOwnShopAB,
+  type Road,
+  type RoadKind,
+  type SkillItem,
+} from "@/lib/engines/roads/v2026";
 import { howChecked } from "@/lib/engines/shared/citation-check";
 import type { EngineCitation, Province } from "@/lib/engines/shared/types";
 
@@ -11,13 +17,13 @@ import { pickWords } from "./words";
  */
 
 /**
- * The roads *Pick a future* lists, and every count on *Your destination* is of. Road 0 only: the first
- * written future's sources are all tool checks, and whether a road nobody has read may be listed is the
- * maintainer's call (future-cockpit.md § 13, "Listing a road nobody has read"; until then "no screen lists
- * any road but road 0"). Each card already says how its sources were checked, so listing another road is
- * adding its id here.
+ * The roads *Pick a future* lists, and every count on *Your destination* is of. Road 0 and the first
+ * written future. The first written future's sources are all tool checks: no person has read them yet.
+ * The maintainer decided on 2026-10-13 that such a road may be listed (future-cockpit.md § 13, "Listing a
+ * road nobody has read"), because its card says so in amber (`sourcesLine` below, counted through
+ * lib/engines/shared/citation-check.ts). Listing another road is adding its id here.
  */
-export const LISTED_ROAD_IDS: readonly string[] = [generalRoadV2026.id];
+export const LISTED_ROAD_IDS: readonly string[] = [generalRoadV2026.id, roadApprenticeToOwnShopAB.id];
 
 /** The roads of `roads` that Pick a future lists, in the catalog's own order. */
 export function listedRoads<R extends Pick<Road, "id">>(roads: readonly R[]): R[] {

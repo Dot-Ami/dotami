@@ -51,8 +51,8 @@ says where it is going.
   (*Your destination*: four questions from `lib/front-door/questions.ts`, a receipt after each from
   `lib/front-door/receipts.ts`; drawn on the server, which reads the newest destination and agreed income
   so they count as answered, `lib/front-door/kept.ts`) → `/futures` (*Pick a future*: the roads in
-  `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 only until the maintainer decides whether a road
-  nobody has read may be listed, design § 13), in the order added, as counts; a pick saves an idea on
+  `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 and, since the maintainer's yes of 2026-10-13, the
+  first written future, whose card says in amber that no person has read its sources, design § 13), in the order added, as counts; a pick saves an idea on
   that road and opens the cockpit); *I already have an idea*, the
   free-text box; *Show me an example first*, not written yet, no link; words in `lib/front-door/words.ts`)
   → `/intake` (about you, only before the person's first saved idea, issue #38 · confirm · ground it) →
@@ -62,8 +62,8 @@ says where it is going.
   `evaluateRoad`, words in `lib/cockpit/words.ts`; and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
-  say "no rule yet"), unless the idea is on another road (the first written future is in the catalog,
-  but `/futures` doesn't list it yet); the step panel, which keeps node detail whole; playbook
+  say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
+  since 2026-10-13); the step panel, which keeps node detail whole; playbook
   export; the cards' colours come from the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (*Your futures*, until 2026-10-12 *Your
   ideas*: every saved venture, its stage, notes,

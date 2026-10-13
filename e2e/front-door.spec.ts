@@ -8,10 +8,12 @@
  * folder (e2e-desktop/desktop.spec.ts).
  *
  * The tests run in this order on one database (playwright.config.ts): the first keeps a destination and
- * an income, and the third comes back as that same person in a fresh tab.
+ * an income, and the third comes back as that same person in a fresh tab; the fourth, as that person
+ * again, picks the first written future (it also runs on its own, answering what the first would have).
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
 
 const GENERAL = "Starting any business in Alberta (tax and structure)";
@@ -64,13 +66,13 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
 
   // 2. Business, career or both: a count of the futures listed, nothing filtered.
   await page.getByRole("button", { name: "Both, or not sure" }).click();
-  await expect(receipts.filter({ hasText: "listed" })).toHaveText("The 1 future listed is shown.");
+  await expect(receipts.filter({ hasText: "listed" })).toHaveText("All 2 futures listed are shown.");
   await expect(page.getByRole("heading", { name: Q3, level: 2 })).toBeFocused();
 
   // 3. The place, by code.
   await page.getByRole("combobox", { name: Q3 }).selectOption("CA-AB");
   await page.getByRole("button", { name: "Use this place" }).click();
-  await expect(receipts.filter({ hasText: "federal rules" })).toHaveText("Alberta's rules and the federal rules apply. 1 future listed is written for Alberta.");
+  await expect(receipts.filter({ hasText: "federal rules" })).toHaveText("Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.");
   await expect(page.getByRole("heading", { name: Q4, level: 2 })).toBeFocused();
 
   // 4. The yearly income: Enter in the box proposes it; closing the prompt gives focus back to the box.
@@ -100,10 +102,17 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   await page.getByRole("link", { name: "Pick a future →" }).click();
   await expect(page).toHaveURL(/\/futures$/);
 
-  // Road 0 only: whether a road nobody has read may be listed is the maintainer's call (design § 13).
+  // Road 0 and the first written future, in the order written (the maintainer's yes of 2026-10-13, design § 13).
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
-  await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL]);
-  await expect(page.getByRole("heading", { name: APPRENTICE })).toHaveCount(0);
+  await expect(cards.getByRole("heading", { level: 2 })).toHaveText([GENERAL, APPRENTICE]);
+  // The first written future's card says plainly, in amber, that no person has read its sources.
+  const apprentice = cards.nth(1);
+  await expect(apprentice).toContainText("A career and a business");
+  const toolChecked = apprentice.getByText(/^\d+ checked by a tool only, not read by a person yet$/);
+  await expect(toolChecked).toBeVisible();
+  await expect(toolChecked).toHaveClass(/text-amber/);
+  await expect(apprentice).not.toContainText(/\d+ read by a person/);
+  await expect(apprentice).not.toContainText("wasn't recorded");
   const general = cards.first();
   await expect(general).toContainText("A business");
   await expect(general).toContainText("Written for Alberta");
@@ -196,7 +205,7 @@ test("a returning person in a fresh tab: words and income already kept count as 
   );
 
   await page.getByRole("button", { name: "A business of my own" }).click();
-  await expect(receipts.filter({ hasText: "listed" }).first()).toHaveText("Of the 1 future listed, 1 includes a business of your own.");
+  await expect(receipts.filter({ hasText: "listed" }).first()).toHaveText("Of the 2 futures listed, 2 include a business of your own.");
   await page.getByRole("combobox", { name: Q3 }).selectOption("CA-YT");
   await page.getByRole("button", { name: "Use this place" }).click();
   await expect(receipts.filter({ hasText: "federal rules" })).toHaveText(
@@ -213,7 +222,8 @@ test("a returning person in a fresh tab: words and income already kept count as 
 
   // Each card says it is written for Alberta, and that the person said Yukon.
   const cards = page.getByRole("list", { name: "Written futures" }).getByRole("listitem");
-  await expect(cards.first()).toContainText("Written for Alberta. You said Yukon.");
+  await expect(cards).toHaveCount(2);
+  for (const card of await cards.all()) await expect(card).toContainText("Written for Alberta. You said Yukon.");
 
   const note = `Mobile sauna rentals (invented ${Date.now()})`;
   await page.getByRole("textbox", { name: "Not here yet?" }).fill(note);
@@ -222,4 +232,62 @@ test("a returning person in a fresh tab: words and income already kept count as 
   await expect(page.getByRole("region", { name: "Your goal and gauges" })).toContainText(GENERAL);
   const statements = (await (await page.request.get("/api/person/statements")).json()) as { statements: { text: string }[] };
   expect(statements.statements.map((s) => s.text)).toContain(note);
+});
+
+test("the first written future, picked on Pick a future, opens in the cockpit on its own road, and a step's status is kept", async ({ page }) => {
+  const road = roadApprenticeToOwnShopAB;
+  const first = road.steps[0]!;
+  await page.goto("/start");
+  // Questions 1 and 4 are normally answered from the data file by the first test; 2 and 3 are asked here.
+  // Run on its own, question 1 is asked first: "I don't know yet" keeps nothing and moves on.
+  const q1 = page.getByRole("textbox", { name: Q1 });
+  await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  if (await q1.isVisible()) {
+    const dontKnow = page.getByRole("button", { name: "I don't know yet" });
+    await waitForReact(dontKnow);
+    await dontKnow.click();
+  }
+  const business = page.getByRole("button", { name: "A business of my own" });
+  await waitForReact(business);
+  await business.click();
+  await page.getByRole("combobox", { name: Q3 }).selectOption("CA-AB");
+  await page.getByRole("button", { name: "Use this place" }).click();
+  // Run on its own, without the first test's income, question 4 is still asked: skipped, it waits on nothing.
+  const skip = page.getByRole("button", { name: "Skip" });
+  if (await skip.isVisible()) await skip.click();
+  await page.getByRole("link", { name: "Pick a future →" }).click();
+  await expect(page).toHaveURL(/\/futures$/);
+
+  await page.getByRole("button", { name: `Look inside ${APPRENTICE}` }).click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+
+  // The cockpit draws the road picked, not road 0.
+  const goal = page.getByRole("region", { name: "Your goal and gauges" });
+  await expect(goal).toContainText(`Future: ${APPRENTICE}`);
+  await expect(goal.getByRole("button", { name: /^Steps/ })).toContainText(`0 of ${road.steps.length} marked done`);
+  await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toHaveCount(0);
+  const step = page.getByRole("button", { name: new RegExp(`^${first.label}, `) });
+  await expect(step).toBeVisible();
+
+  // Its step opens, and its sources say, in amber, that a tool checked them and no person has read them yet.
+  await step.click();
+  const panel = page.getByRole("region", { name: "Step" });
+  await panel.getByText(/Sources for this step · \d+/).click();
+  const check = panel.getByText(/^Checked by a tool on \d{4}-\d{2}-\d{2}: .*Not read by a person yet\.$/).first();
+  await expect(check).toBeVisible();
+  await expect(check).toHaveClass(/text-amber/);
+
+  // A status set on it is kept in the data file, on this road, and shown again after a reload.
+  const doing = panel.getByRole("button", { name: "Doing", exact: true });
+  await doing.click();
+  await expect(doing).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await page.getByRole("button", { name: new RegExp(`^${first.label}, `) }).click();
+  await expect(page.getByRole("region", { name: "Step" }).getByRole("button", { name: "Doing", exact: true })).toHaveAttribute("aria-pressed", "true");
+
+  const ventureId = new URL(page.url()).searchParams.get("venture")!;
+  const kept = (await (await page.request.get(`/api/futures/${ventureId}`)).json()) as {
+    future: { roadId: string; roadChosen: boolean; lookingFor: string; place: string };
+  };
+  expect(kept.future).toMatchObject({ roadId: road.id, roadChosen: true, lookingFor: "business", place: "CA-AB" });
 });

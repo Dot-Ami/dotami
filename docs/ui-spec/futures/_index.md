@@ -3,7 +3,7 @@
 Page: `/futures` · Component: `components/front-door/pick-future-page.tsx` (cards:
 `lib/front-door/futures.ts`; words: `lib/front-door/words.ts`)
 
-Last updated: 2026-10-12 (built; design: docs/architecture/future-cockpit.md § 1, The way in as built)
+Last updated: 2026-10-13 (the first written future listed; design: docs/architecture/future-cockpit.md § 1, The way in as built)
 
 ## Page job
 
@@ -19,9 +19,12 @@ from *Your destination*'s **Pick a future →**. Next: the cockpit on the new id
 - **Name it (optional)**: one box above the cards, up to 80 characters; left empty, the idea is named
   after the road.
 - One card per future it lists (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`, in the catalog's
-  order; `role="list"`). Today that is road 0 only: whether the first written future, whose sources
-  are all tool checks, may be listed is the maintainer's call (docs/architecture/future-cockpit.md
-  § 13, *Listing a road nobody has read*); adding its id to the list is the whole change.
+  order; `role="list"`). Today that is two: road 0, *Starting any business in Alberta*, and the first
+  written future, *From apprentice to your own shop (Alberta)*. The first written future's sources are
+  all tool checks, so its card's sources line is one amber part, *"n checked by a tool only, not read
+  by a person yet"*; the maintainer decided on 2026-10-13 that it may be listed that way
+  (docs/architecture/future-cockpit.md § 13, *Listing a road nobody has read*). Its **Look inside**
+  opens the cockpit on its own road (`e2e/front-door.spec.ts`).
 - **Not here yet?** under the cards.
 
 ## Controls

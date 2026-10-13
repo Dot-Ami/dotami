@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
-import { howChecked } from "@/lib/engines/shared/citation-check";
+import { howChecked, howCheckedWords } from "@/lib/engines/shared/citation-check";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { CHECK_FIRST_LINE } from "@/components/ventures/agree-prompt";
 import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
@@ -129,9 +129,9 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
     // One is "includes".
     expect(lookingForReceipt("business", [{ kind: "business" }, { kind: "career" }])).toBe("Of the 2 futures listed, 1 includes a business of your own.");
     expect(lookingForReceipt("both-or-not-sure", [{ kind: "business" }])).toBe("The 1 future listed is shown.");
-    // What Pick a future lists today: road 0, a business.
-    expect(lookingForReceipt("business", listedRoads(roadsV2026))).toBe("Of the 1 future listed, 1 includes a business of your own.");
-    expect(lookingForReceipt("career", listedRoads(roadsV2026))).toBe("Of the 1 future listed, 0 include a job or career.");
+    // What Pick a future lists today: road 0, a business, and the first written future, a career and a business.
+    expect(lookingForReceipt("business", listedRoads(roadsV2026))).toBe("Of the 2 futures listed, 2 include a business of your own.");
+    expect(lookingForReceipt("career", listedRoads(roadsV2026))).toBe("Of the 2 futures listed, 1 includes a job or career.");
   });
 
   it("a road's kind decides what it includes; nothing is filtered by it", () => {
@@ -143,7 +143,8 @@ describe("the receipts: worked out from the answer and the catalogs, never a ver
 
   it("the place: whose rules are written, and how many futures listed are written for it", () => {
     const listed = listedRoads(roadsV2026);
-    expect(placeReceipt("CA-AB", listed)).toBe("Alberta's rules and the federal rules apply. 1 future listed is written for Alberta.");
+    expect(placeReceipt("CA-AB", listed)).toBe("Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.");
+    expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }])).toBe("Alberta's rules and the federal rules apply. 1 future listed is written for Alberta.");
     expect(placeReceipt("CA-AB", [{ provinces: ["AB"] }, { provinces: ["AB"] }])).toBe(
       "Alberta's rules and the federal rules apply. 2 futures listed are written for Alberta.",
     );
@@ -215,14 +216,32 @@ describe("Pick a future: every written future, in the order added, as counts", (
     expect(cards.map((c) => c.roadId)).toEqual(roadsV2026.map((r) => r.id));
   });
 
-  it("lists road 0 only: whether a road nobody has read may be listed is the maintainer's call (design § 13)", () => {
-    // The first written future's sources are all tool checks; the design says no screen lists any road but
-    // road 0 until the maintainer decides. Listing it is adding its id here, once he has.
-    expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id]);
-    expect(listedRoads(roadsV2026).map((r) => r.id)).toEqual([generalRoadV2026.id]);
-    expect(listedRoads(roadsV2026).map((r) => r.id)).not.toContain(roadApprenticeToOwnShopAB.id);
+  it("lists road 0 and the first written future: the maintainer said yes on 2026-10-13 (design § 13)", () => {
+    // The first written future's sources are all tool checks; the maintainer decided on 2026-10-13 that it
+    // may be listed, with its card saying so in amber (the test below).
+    expect(LISTED_ROAD_IDS).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
+    expect(listedRoads(roadsV2026).map((r) => r.id)).toEqual([generalRoadV2026.id, roadApprenticeToOwnShopAB.id]);
     // In the catalog's order, whatever order the list names them in.
-    expect(listedRoads([roadApprenticeToOwnShopAB, generalRoadV2026]).map((r) => r.id)).toEqual([generalRoadV2026.id]);
+    expect(listedRoads([roadApprenticeToOwnShopAB, generalRoadV2026]).map((r) => r.id)).toEqual([
+      roadApprenticeToOwnShopAB.id,
+      generalRoadV2026.id,
+    ]);
+  });
+
+  it("the first written future's card says its sources were checked by a tool, not read by a person, in amber", () => {
+    const apprentice = futureCards(listedRoads(roadsV2026), skillItemsV2026).find(
+      (c) => c.roadId === roadApprenticeToOwnShopAB.id,
+    )!;
+    const parts = sourcesLine(apprentice.sources);
+    // One part only, the tool checks, marked check-first (amber on screen): no read of any kind to show.
+    expect(parts).toEqual([
+      { text: `${apprentice.sources.tool} checked by a tool only, not read by a person yet`, checkFirst: true },
+    ]);
+    // The same claim lib/engines/shared/citation-check.ts makes for each of these sources.
+    const oneSource = roadApprenticeToOwnShopAB.steps[0].citations[0];
+    expect(howChecked(oneSource).kind).toBe("tool");
+    expect(howCheckedWords(oneSource)).toMatch(/^Checked by a tool on .*Not read by a person yet\.$/);
+    expect(parts[0].text).toMatch(/checked by a tool.*not read by a person yet$/);
   });
 
   it("the screens count only what Pick a future lists", () => {

@@ -26,10 +26,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the data file already holds (your newest words, the income you agreed to) counts as answered, so
   coming back in a new tab you are asked only the place and business / career / both. Focus moves to the
   next question after each answer. The questions are data (`lib/front-door/questions.ts`), so the later
-  step-by-step questionnaire starts from them. *Pick a future* (`/futures`) lists road 0, *Starting any
-  business in Alberta*, as counts (steps, skills listed, official fees found, cost lines you'd price) and
-  how its sources were checked; the first written future, whose sources are all tool checks, waits for
-  the maintainer's call on listing a road nobody has read (one line, `LISTED_ROAD_IDS`). **Look inside**
+  step-by-step questionnaire starts from them. *Pick a future* (`/futures`) lists two futures, *Starting any
+  business in Alberta* and *From apprentice to your own shop (Alberta)*, as counts (steps, skills
+  listed, official fees found, cost lines you'd price) and how their sources were checked. The second's
+  sources were all checked by a tool and not read by a person yet, and its card says so in amber; the
+  maintainer decided on 2026-10-13 that such a road may be listed. **Look inside**
   saves a new idea on that road, with your place and your business / career / both answer, and opens the
   cockpit on it. *Not here yet?* keeps a note in your words and opens the general road. The cockpit's
   goal bar shows your destination on an idea with no sentence of its own. Words:

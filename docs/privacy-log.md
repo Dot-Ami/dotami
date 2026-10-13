@@ -145,8 +145,9 @@ person is asked).
     it. Its kind of venture, equipment and revenue estimates aren't asked either: their columns keep the
     intake's starting values (*Service*, no, 0), and a new column, `Venture.notSaid` (migration
     `20261012130000_not_said`, one plain added column, `[]` for every other idea), lists them as not
-    said, so no screen or export shows those values as the person's. Pick a future lists road 0 only
-    until the maintainer decides whether a road nobody has read may be listed.
+    said, so no screen or export shows those values as the person's. Pick a future lists road 0 and,
+    since the maintainer's yes of 2026-10-13, the first written future, whose sources no person has read
+    yet (its card says so); an idea picked on it keeps that road's id in `Venture.roadId`, as above.
   - *Not here yet?* on Pick a future keeps the person's note as one of their statements.
   The cockpit's read of an idea (`GET /api/futures/<id>`) now also gives the person's newest destination,
   so the goal bar can show it on an idea with no sentence of its own. None of it is read by a rule, and

@@ -20,7 +20,7 @@ import { saveScenario } from "@/lib/journey/save-scenario";
 import { STATEMENT_MAX_CHARS } from "@/lib/person/types";
 import { PROVINCE_LABELS, type Province } from "@/lib/scenarios/types";
 
-/** The roads this page lists (road 0 only until the maintainer decides; lib/front-door/futures.ts). */
+/** The roads this page lists (road 0 and the first written future; lib/front-door/futures.ts). */
 const LISTED = listedRoads(roadsV2026);
 
 /**
