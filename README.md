@@ -152,7 +152,7 @@ the app, starts it on a fresh throwaway database and drives it in Chromium the w
 (first time: `npx playwright install chromium`). CI runs them on every pull request too.
 **Desktop test:** `npm run test:desktop` builds the desktop app's server and drives the real app
 (start → describe a venture → close → start again → still there). CI runs it on Windows against
-the packaged app.
+the packaged app, split across three machines that each run a third of the tests.
 
 ## Contribute
 

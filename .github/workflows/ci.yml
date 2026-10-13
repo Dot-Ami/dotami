@@ -87,10 +87,22 @@ jobs:
   # The desktop app packaged for Windows and driven like a person drives it (e2e-desktop/):
   # start on an empty data folder → describe a venture → close → start again → still there.
   # The same packaging the release workflow uses, minus the installer and the upload.
+  # The tests are split across three Windows machines that run at the same time: each one packages
+  # its own copy of the app and runs a third of the tests, one at a time (workers: 1 in
+  # playwright.desktop.config.ts). Every test still runs on every PR, just not all on one machine.
+  # --fully-parallel lets Playwright split the one spec file by test; without it a shard gets whole
+  # files, so one machine would get all of them. Each test makes its own data folder
+  # (e2e-desktop/desktop.spec.ts beforeEach), so none needs another's leftovers.
+  # release.yml still runs every test on one machine before a draft release.
   desktop:
-    name: Desktop app (Windows)
+    name: Desktop app (Windows) ${{ matrix.shard }}/3
     runs-on: windows-latest
     timeout-minutes: 30
+    strategy:
+      # One machine failing doesn't stop the other two, so a run shows every failing test at once.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       CHECKPOINT_DISABLE: "1"
@@ -109,7 +121,7 @@ jobs:
         run: npm run prisma:generate
 
       - name: Package the app and test it
-        run: npm run desktop:package && npx playwright test -c playwright.desktop.config.ts
+        run: npm run desktop:package && npx playwright test -c playwright.desktop.config.ts --fully-parallel --shard=${{ matrix.shard }}/3
         env:
           DOTAMI_DESKTOP_EXE: ${{ github.workspace }}\dist-desktop\out\win-unpacked\DotAmi.exe
 
