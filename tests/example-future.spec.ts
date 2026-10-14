@@ -224,12 +224,15 @@ describe("Mara's numbers are in her file only", () => {
   // plain numbers (a year, a character limit) to look for as digits; their cents and money forms are.
   const cents = [ex.kept.incomeWanted!.amountCents, ...ex.figures.map((f) => f.amountCents), ex.whatIfFirstYearSalesDollars! * 100];
   const grouped = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "_?");
+  // Every character a regular expression treats specially, backslash included, so "$3,400.00" matches
+  // only itself (an unescaped "." would match any character).
+  const literal = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const patterns = cents.flatMap((c) => {
     const dollars = c / 100;
     return [
       new RegExp(`\\b${grouped(c)}\\b`),
-      new RegExp(formatMoney(c).replace(/[$]/g, "\\$")),
-      ...(dollars >= 10_000 ? [new RegExp(`\\b${grouped(dollars)}\\b`), new RegExp(`\\b${dollars.toLocaleString("en-CA")}\\b`)] : []),
+      new RegExp(literal(formatMoney(c))),
+      ...(dollars >= 10_000 ? [new RegExp(`\\b${grouped(dollars)}\\b`), new RegExp(`\\b${literal(dollars.toLocaleString("en-CA"))}\\b`)] : []),
     ];
   });
   const file = "lib/examples/mara.ts";
