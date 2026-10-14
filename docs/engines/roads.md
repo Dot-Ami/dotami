@@ -101,15 +101,19 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     to `lib/brain/`.
 10. **Road order is the order added**, never a ranking (decision 3).
 12. **A step for some kinds of work only says which, and stays on the map** (2026-10-13, issue #40).
-    `onlyForKindsOfWork: { tags, notTold }` on a step: `tags` are the intake's kinds of work
-    (`ACTIVITY_TAXONOMY` in `lib/journey/intent.ts`) any one of which puts it on the path, and `notTold`
-    finishes *"You haven't told DotAmi …"* in plain words. Without one of those kinds of work, road
-    evaluation puts the step off the path with that reason; the step is still drawn and still opens, never
-    removed (the map doesn't pre-filter paths). Use it only where the step's own sources make it about
-    that work (road 0's *SR&ED deepening*: scientific research and experimental development), and keep
-    the tags the same as any rule that already reads them for the step (a test holds road 0's equal to
-    the rules'). The checks refuse an empty list and an empty `notTold`; `tests/research-steps.spec.ts` refuses a
-    kind of work the intake doesn't ask.
+    `onlyForKindsOfWork: { tags }` on a step: `tags` are the intake's kinds of work
+    (`ACTIVITY_TAXONOMY` in `lib/journey/intent.ts`), one of which the step needs to be on the path.
+    Without one of them, road evaluation puts the step off the path, with a reason naming the kinds of work
+    on the idea and the ones the step needs (*"None of the kinds of work on this idea is …, and this step is
+    on your path only with one of them."*), never what the person did or didn't tell DotAmi: a kind of work
+    they typed in their own words may say the same thing and still not be one of these. The catalog writes
+    no sentence for it. The step is still drawn and still opens, never removed (the map doesn't pre-filter
+    paths). Use it only where the step's own sources make it about that work (road 0's *SR&ED deepening*:
+    scientific research and experimental development), and keep the tags the same as any rule that
+    already reads them for the step (a test holds road 0's equal to the rules'), with every lever card the
+    step names grey without one of them (a dashed card hides its lever cards; a test holds that too). The
+    checks refuse an empty list; `tests/research-steps.spec.ts` refuses a kind of work the intake doesn't
+    ask.
 
 How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
 is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as

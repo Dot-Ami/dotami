@@ -851,10 +851,7 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
   // LIABILITY_SRED_TAGS); tests/research-steps.spec.ts holds the two lists equal. Incorporation for
   // liability/SR&ED isn't marked: it is about liability too, not research only.
   onlyForKindsOfWork: {
-    "stage-4-sred-deepening": {
-      tags: ["Software / SaaS", "Manufacturing", "AI / ML / R&D"],
-      notTold: "this idea involves research and development",
-    },
+    "stage-4-sred-deepening": { tags: ["Software / SaaS", "Manufacturing", "AI / ML / R&D"] },
   },
   addedSteps: [
     { columnId: "tier-1-before", step: registerName },

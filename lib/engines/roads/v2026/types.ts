@@ -95,10 +95,13 @@ export interface RoadStep {
 }
 
 export interface OnlyForKindsOfWork {
-  /** The intake's kinds of work (activity tags), any one of which puts the step on the path. */
+  /**
+   * The intake's kinds of work (activity tags), one of which the step needs to be on the path. The reason
+   * on screen is built from these and the idea's own kinds of work only, never a sentence about what the
+   * person told DotAmi: a kind of work typed in the person's own words isn't one of these, and may well say
+   * the same thing (review of 2026-10-13).
+   */
   tags: string[];
-  /** What the idea hasn't told DotAmi without one, finishing "You haven't told DotAmi …". */
-  notTold: string;
 }
 
 export interface DoneWhenLine {

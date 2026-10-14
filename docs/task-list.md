@@ -579,6 +579,9 @@ roadmap's build order.
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
   - [ ] #41 playbook print view
+    - [ ] the readout API and the playbook export read road evaluation, so *SR&ED deepening* off the
+      path (#40) isn't "ahead" there (docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
+      work only, as built*)
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures

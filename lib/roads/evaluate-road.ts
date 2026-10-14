@@ -452,11 +452,11 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
       text = because.notForMe();
     } else if (step.onlyForKindsOfWork && !hasKindOfWork(step.onlyForKindsOfWork.tags)) {
       // The road's own rule (road 0's SR&ED deepening, issue #40): without one of the step's kinds of
-      // work it is off the path, saying what wasn't told. It stays on the road and still opens; with
-      // one of them, the rules and forks below decide as for any step.
+      // work it is off the path, saying which kinds of work it needs. It stays on the road and still
+      // opens; with one of them, the rules and forks below decide as for any step.
       state = "not-on-your-path";
       reason = { kind: "kinds-of-work", tags: [...step.onlyForKindsOfWork.tags] };
-      text = because.kindsOfWork(step.onlyForKindsOfWork.notTold, step.onlyForKindsOfWork.tags);
+      text = because.kindsOfWork(kindsOfWork, step.onlyForKindsOfWork.tags);
     } else if (stepId in ruleColours && (onRoadZero || !forkDecides(stepId))) {
       state = STATE_OF_COLOUR[ruleColours[stepId]];
       const answerIds = dependsOn.get(stepId) ?? [];

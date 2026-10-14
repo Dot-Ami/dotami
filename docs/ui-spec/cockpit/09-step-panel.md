@@ -24,9 +24,9 @@ The sections, in order:
 
 1. **Why this colour** — road evaluation's sentence for the step (*"Today's rules light it, from your place
    (Alberta) and …"*, *"You marked this step not for me."*; since 2026-10-13, on *SR&ED deepening* for an
-   idea without a research kind of work, *"You haven't told DotAmi this idea involves research and
-   development: none of its kinds of work is Software / SaaS, Manufacturing or AI / ML / R&D."*, where it
-   said *"Today's rules give it this colour; no single answer of yours changes that."*, issue #40,
+   idea without a research kind of work, *"None of the kinds of work on this idea is Software / SaaS,
+   Manufacturing or AI / ML / R&D, and this step is on your path only with one of them."* (or *"This idea
+   has no kinds of work on it, …"*), never what the person did or didn't tell DotAmi, where it said *"Today's rules give it this colour; no single answer of yours changes that."*, issue #40,
    [03-canvas.md](./03-canvas.md)).
 2. **The road splits here: you choose** — only on a side of a fork. On today's road, that column's toggle
    (the same as on the map, *default, not your pick yet* until clicked). On another road, *Your pick:

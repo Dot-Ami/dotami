@@ -53,11 +53,15 @@ const STATUS_WORDS = { doing: "doing", done: "done", "not-for-me": "not for me" 
 
 export const because = {
   notForMe: () => "You marked this step not for me.",
-  // A step the road writes for some kinds of work only (`onlyForKindsOfWork`): what the idea hasn't told
-  // DotAmi, from the catalog, and the kinds of work that would say it. A fact about what was told, never
-  // a guess about the idea.
-  kindsOfWork: (notTold: string, tags: readonly string[]) =>
-    `You haven't told DotAmi ${notTold}: none of its kinds of work is ${eitherOf(tags)}.`,
+  // A step the road writes for some kinds of work only (`onlyForKindsOfWork`), on an idea with none of
+  // them. Only what DotAmi can check: which kinds of work are on the idea. Never "you haven't told DotAmi
+  // …": a person may have typed their own kind of work ("Research and development") that says just that,
+  // which the rules don't match. "Only with one of them" says what the step needs, not that one of them is
+  // enough (for a sole proprietorship today's rules still leave SR&ED deepening off).
+  kindsOfWork: (onIdea: readonly string[], tags: readonly string[]) =>
+    onIdea.length === 0
+      ? `This idea has no kinds of work on it, and this step is on your path only with one of ${eitherOf(tags)}.`
+      : `None of the kinds of work on this idea is ${eitherOf(tags)}, and this step is on your path only with one of them.`,
   rules: (state: "applies" | "check-first" | "not-on-your-path", facts: readonly string[]) => {
     if (facts.length === 0) return "Today's rules give it this colour; no single answer of yours changes that.";
     const lead =
