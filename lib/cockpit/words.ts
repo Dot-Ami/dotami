@@ -412,6 +412,66 @@ export const cockpitWords = {
     cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
   },
 
+  /**
+   * Your plan (2026-10-13, issue #41; docs/ui-spec/plan/_index.md): one idea's plan to read and print,
+   * made from what DotAmi keeps. Where the cockpit already has the words (the goal bar's, the step
+   * panel's, Compare's), the plan uses those; these are the plan's own.
+   */
+  plan: {
+    title: "Your plan",
+    made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
+    /** The Export panel's way here, and what it says for an idea not saved yet. */
+    open: "Open your plan to read or print",
+    notSaved: "Save this idea first: the plan is made from what DotAmi keeps.",
+    notFound: "DotAmi keeps no idea with this id on this computer.",
+    back: "← Back to the cockpit",
+    print: "Print",
+    printHelp: "Print opens your computer's print window, where you can also save it as a PDF.",
+    sections: {
+      words: "Where you want to be, in your words",
+      road: "The future and its ending",
+      steps: "Each step",
+      skills: "Skills you marked",
+      money: "Start-up money",
+      told: "What you've told DotAmi",
+      notAdvice: "What this plan is",
+    },
+    typedFor: (day: string) => `typed for this idea · ${day}`,
+    destination: (day: string) => `where you want to be · your words · ${day}`,
+    wordsNone: "No words of yours are kept for this idea.",
+    roadChosen: (day: string | null) => (day ? `You picked this future on ${day}.` : "You picked this future."),
+    roadDefault: "No future picked: this idea is drawn on the general road.",
+    ending: (fork: string, pick: string) => `${quoted(fork)}: ${pick}`,
+    noForks: "This road has no fork.",
+    gauges: "The four gauges",
+    order: "In the order the road shows them, not importance.",
+    status: (status: string) => `Your status: ${status}`,
+    noStatus: "Your status: not set",
+    /** A step's state in the map's own words. */
+    state: { applies: "applies as answered", "check-first": "check first", "not-on-your-path": "not on your path" },
+    doneWhen: (ticked: number, total: number) => `Done when (${ticked} of ${total} ticked)`,
+    ticked: "ticked",
+    notTicked: "not ticked",
+    /** The box drawn before a done-when line, so a printed page shows which are ticked. */
+    tickBox: { on: "☑", off: "☐" },
+    costCount: (n: number) => `${count(n, "cost line", "cost lines")}, under Start-up money`,
+    sources: "Sources",
+    /** A person's mark on a skill, or none. */
+    mark: { have: "have", learning: "learning", "not-yet": "not yet", none: "not marked" },
+    ownNone: "None added.",
+    job: (label: string, code: string, day: string | null) => `Your pick of job: ${label} · ${code}${day ? ` · picked ${day}` : ""}`,
+    jobNotMarked: (n: number, listed: number) => `${n} not marked, of ${listed} on the government's list`,
+    noJob: "No job picked for the government's skills list.",
+    costKind: {
+      "official-fee": "official fee",
+      "your-quote": "your quote",
+      "named-not-priced": "not priced yet",
+    },
+    quoteNote: (day: string | null, from: string) => `yours, agreed ${day ?? "(day not kept)"}, from ${from}`,
+    notAdvice:
+      "DotAmi is not legal or tax advice. This plan is a preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact comes from, and it ranks nothing.",
+  },
+
   /** The left rail's own fields. */
   rail: {
     /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target (2026-10-12, after review). */

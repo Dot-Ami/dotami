@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Pill } from "@/components/ui";
+import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { PlaybookSkeleton } from "@/lib/playbook/types";
 import { renderPlaybookMarkdown } from "@/lib/playbook/render-markdown";
 import type { Scenario } from "@/lib/scenarios/types";
@@ -9,6 +11,8 @@ import { saveTextFile } from "@/lib/utils/save-file";
 
 interface PlaybookExportPanelProps {
   scenario: Scenario;
+  /** The saved idea's id, for the link to its plan; null for an idea kept only in this tab. */
+  ventureId: string | null;
   onClose: () => void;
 }
 
@@ -30,7 +34,7 @@ function slugifyFileStem(name: string): string {
  * node with its citations) rendered to markdown for an accountant or lawyer. S2.5.4h: facts
  * only — the LLM narrative paragraphs are gone with the rest of the in-app AI.
  */
-export function PlaybookExportPanel({ scenario, onClose }: PlaybookExportPanelProps) {
+export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookExportPanelProps) {
   const [skeleton, setSkeleton] = useState<PlaybookSkeleton | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,6 +125,17 @@ export function PlaybookExportPanel({ scenario, onClose }: PlaybookExportPanelPr
         <Pill variant="maple" size="small" onClick={handleSaveMarkdown} disabled={!markdown}>
           Save as .md
         </Pill>
+      </div>
+
+      {/* Issue #41: the same idea laid out to read and print, on a page of its own (docs/ui-spec/plan/). */}
+      <div className="border-b border-rule-soft px-5 py-3">
+        {ventureId ? (
+          <Link href={`/plan?venture=${encodeURIComponent(ventureId)}`} className="text-[12px] text-maple hover:underline">
+            {words.plan.open} →
+          </Link>
+        ) : (
+          <p className="text-[11px] text-stone">{words.plan.notSaved}</p>
+        )}
       </div>
 
       {copyHint ? <p className="px-5 py-1 text-xs text-sage">{copyHint}</p> : null}

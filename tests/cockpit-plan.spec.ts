@@ -298,16 +298,17 @@ describe("start-up money: three kinds of line, and a blank stays blank", () => {
       authority: "provincial" as const,
       jurisdiction: "AB" as const,
       url: "https://example.org/fee",
+      note: "Invented for a test; not a source.",
       toolCheck: { checkedOn: "2026-10-09", quotes: ["the exam fee is $300.00"] },
     };
-    const train = road.steps.find((s) => s.id === "step-eval-ticket")!;
-    train.costs = [{ ...(train.costs[0] as Extract<Road["steps"][number]["costs"][number], { kind: "official-fee" }>), citation: toolChecked }];
+    const ticket = road.steps.find((s) => s.id === "step-eval-ticket")!;
+    ticket.costs = [{ ...(ticket.costs[0] as Extract<Road["steps"][number]["costs"][number], { kind: "official-fee" }>), citation: toolChecked }];
     const exam = lineOf(buildPlan(args({ road })), "cost-eval-exam");
     expect(exam.amount).toBe("$300");
     expect(exam.source).toEqual({
       title: "Invented fee page (test only)",
       url: "https://example.org/fee",
-      checked: "Checked by a tool on 2026-10-09: it found on the page the exact words this entry relies on. Not read by a person yet.",
+      checked:"Checked by a tool on 2026-10-09: it found on the page the exact words this entry relies on. Not read by a person yet.",
       quotes: ["the exam fee is $300.00"],
     });
   });
@@ -371,9 +372,14 @@ describe("what you've told DotAmi", () => {
     const rows = toldRows(a.input, evaluateRoad(a.input), a.kept);
     expect(plan.told.rows.map((r) => r.said)).toEqual(rows.map((r) => r.said));
     expect(plan.told.rows.find((r) => r.said === rows.find((x) => x.id === "skill:skill-eval-math")!.said)!.day).toBe("2026-10-06");
-    // An answer whose day isn't kept says so, never a borrowed day.
-    for (const r of plan.told.rows) expect(r.day).toMatch(/^\d{4}-\d{2}-\d{2}$|^day not kept$/);
-    for (const r of plan.told.rows) expect(r.unlocked.length).toBeGreaterThan(0);
+    // An answer whose day isn't kept says so, never a borrowed day; what it unlocked is the left list's,
+    // with its line for "nothing changes", and nothing for an answer the map needs (the list shows none).
+    rows.forEach((row, i) => {
+      const shown = plan.told.rows[i]!;
+      expect(shown.day).toBe(row.day ?? cockpitWords.told.dayNotKept);
+      expect(shown.unlocked).toEqual(row.unlocked === null ? [] : row.unlocked.length === 0 ? [cockpitWords.told.nothingChanged] : row.unlocked);
+    });
+    expect(plan.told.rows.some((r) => r.unlocked.length > 0)).toBe(true);
     expect(plan.told.none).toBeNull();
   });
 
@@ -437,7 +443,9 @@ describe("the page", () => {
 
   it("draws the sections in order, each a region named by its heading", () => {
     const s = cockpitWords.plan.sections;
-    const order = [s.words, s.road, s.steps, s.skills, s.money, s.told, s.notAdvice].map((h) => html.indexOf(`>${h}</h2>`));
+    // React writes an apostrophe as &#x27; in HTML.
+    const asHtml = (text: string) => text.replaceAll("&", "&amp;").replaceAll("'", "&#x27;");
+    const order = [s.words, s.road, s.steps, s.skills, s.money, s.told, s.notAdvice].map((h) => html.indexOf(`>${asHtml(h)}</h2>`));
     expect(order.every((i) => i > 0)).toBe(true);
     expect([...order].sort((x, y) => x - y)).toEqual(order);
     expect(html).toContain("“A shop of my own.”");

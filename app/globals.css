@@ -112,3 +112,19 @@
     padding-bottom: 45px;
   }
 }
+
+/* Your plan on paper (docs/ui-spec/plan/_index.md, issue #41): white paper and black ink whatever the
+   screen's colours, and the dark page around the sheet gone. The sheet itself switches with Tailwind's
+   print: variant (components/cockpit/plan-page.tsx); the app's footer hides itself (app/layout.tsx). */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+  html,
+  body:has(.plan-page),
+  body:has(.plan-page) > div {
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 0 !important;
+  }
+}
