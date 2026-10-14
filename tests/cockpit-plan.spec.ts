@@ -23,7 +23,7 @@ import type { Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
 import { evaluateRoad } from "@/lib/roads";
 
-import { inventedIdea, ROAD_ID, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { inventedIdea, ROAD_ID, roadToEvaluate, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
 
 /** The verdict words the cockpit's part 2 is checked against (tests/cockpit-told.spec.ts), the widest list. */
 const VERDICT = /\b(enough|ready|best|better|worse|should|recommend\w*|on track|behind|score)\b/i;
@@ -124,7 +124,7 @@ describe("the heading", () => {
   });
 });
 
-describe("where you want to be, in your words", () => {
+describe("in your words", () => {
   it("shows the sentence typed for the idea word for word, with its day", () => {
     // Odd spacing, quotes and punctuation stay exactly as typed: nothing is tidied or summarised.
     const text = "Run my own  cabinet shop by 2029 — “small”, two people, no debt!";
@@ -232,7 +232,7 @@ describe("each step", () => {
   });
 });
 
-describe("skills you marked: names only", () => {
+describe("skills and requirements, with the marks: names only", () => {
   it("lists each skill item the road lists once, with its kind and the person's mark", () => {
     const plan = buildPlan(args({ skillMarks: [{ skillItemId: "skill-eval-drawings", ownLabel: null, mark: "learning", markedOn: "2026-10-06" }] }));
     // "Read drawings" is needed by two steps but listed once.
@@ -383,10 +383,57 @@ describe("what you've told DotAmi", () => {
     expect(plan.told.none).toBeNull();
   });
 
-  it("never holds a what-if, which is never kept", () => {
-    const a = args();
-    const plan = buildPlan({ ...a, input: { ...a.input, whatIf: { firstYearSalesDollars: 45_000 } } });
-    expect(strings(plan.told).join(" ")).not.toContain("45,000");
+  it("never holds a what-if, which is never kept: the whole plan is the plan without it", () => {
+    // On the ruled-fork road a first-year-sales what-if of $45,000 moves voluntary GST to "check first",
+    // so a plan that let it through would differ in a step's state and reason, not only in the told list.
+    const a = args({
+      road: roadWithRuledFork(),
+      forkPicks: { [RULED_FORK]: { stepId: "stage-2a-voluntary-gst-registration", pickedOn: "2026-10-05", from: "you" } },
+    });
+    const tried = { ...a, input: { ...a.input, whatIf: { firstYearSalesDollars: 45_000 } } };
+    const steps = (input: PlanArgs["input"]) => evaluateRoad(input).steps.map((s) => `${s.stepId} ${s.state} ${s.because}`);
+    // The what-if really changes the steps here, so the check below can fail.
+    expect(steps(tried.input)).not.toEqual(steps(a.input));
+    expect(strings(buildPlan(tried))).toEqual(strings(buildPlan(a)));
+  });
+});
+
+describe("each heading and label says only what is under it", () => {
+  it("the words heading doesn't call the idea's own sentence where the person wants to be", () => {
+    // The sentence typed for the idea describes the idea; only the destination answer is "where you want
+    // to be", and its own line says so.
+    const plan = buildPlan(args({ change: { firstWords: { text: "A shop of my own.", saidAt: "2026-09-30" } } }));
+    expect(plan.words).toHaveLength(1);
+    expect(cockpitWords.plan.sections.words).not.toMatch(/where you want to be/i);
+    expect(cockpitWords.plan.destination("2026-10-02")).toMatch(/where you want to be/);
+  });
+
+  it("the destination's line says it belongs to the person, not to this one idea", () => {
+    expect(cockpitWords.plan.destination("2026-10-02")).toContain("not tied to one idea");
+    expect(cockpitWords.plan.destination("2026-10-02")).toContain("2026-10-02");
+  });
+
+  it("the skills heading doesn't say 'you marked' over a list that holds items not marked and legal requirements", () => {
+    const plan = buildPlan(args());
+    expect(plan.skills.road.some((s) => s.mark === cockpitWords.plan.mark.none)).toBe(true);
+    expect(plan.skills.road.some((s) => s.kind === cockpitWords.panel.skillKind["legal-requirement"])).toBe(true);
+    expect(cockpitWords.plan.sections.skills).not.toMatch(/you marked/i);
+    expect(cockpitWords.plan.sections.skills).toMatch(/requirements/i);
+  });
+
+  it("a fee's condition that ends in a full stop gets no second one on the plan", () => {
+    const road = roadToEvaluate();
+    const ticket = road.steps.find((s) => s.id === "step-eval-ticket")!;
+    ticket.costs = [{ ...(ticket.costs[0] as Extract<Road["steps"][number]["costs"][number], { kind: "official-fee" }>), onlyIf: "You failed an exam and choose to rewrite it." }];
+    const note = lineOf(buildPlan(args({ road })), "cost-eval-exam").note;
+    expect(note).toBe("Only if: You failed an exam and choose to rewrite it. Not added to any total.");
+    expect(strings(buildPlan(args({ road }))).filter((s) => s.includes(".."))).toEqual([]);
+  });
+
+  it("the told list names the figures' screen by its name since 2026-10-12, Your futures", () => {
+    const told = Object.values(cockpitWords.told).filter((v): v is string => typeof v === "string");
+    expect(told.filter((s) => /Your ideas/.test(s))).toEqual([]);
+    expect(cockpitWords.told.dayOnYourIdeas).toContain("Your futures");
   });
 });
 
@@ -433,13 +480,61 @@ describe("the standing line, and no verdict anywhere", () => {
 });
 
 describe("the page", () => {
+  // A plan with something in every list: told rows, a fork's ending, road skills, own skills, the job's
+  // list, a quote, a fee, a blank, both quotes of the person's words and the agreed income.
+  const jobCode = oasisJobs[0]!.code;
+  const jobItem = oasisListForJob(jobCode)!.items[0]!;
   const view = buildPlan(
     args({
-      progress: [{ stepId: "step-eval-train", status: null, doneWhenIds: ["dw-eval-train-1"] }],
-      change: { firstWords: { text: "A shop of my own.", saidAt: "2026-09-30" } },
+      progress: [{ stepId: "step-eval-train", status: "doing", doneWhenIds: ["dw-eval-train-1"] }],
+      skillMarks: [
+        { skillItemId: "skill-eval-math", ownLabel: null, mark: "have", markedOn: "2026-10-06" },
+        { skillItemId: null, ownLabel: "French polishing", mark: "learning", markedOn: "2026-10-07" },
+        { skillItemId: jobItem.id, ownLabel: null, mark: "have", markedOn: "2026-10-06" },
+      ],
+      forkPicks: { "fork-eval-ending": { stepId: "step-eval-own", pickedOn: "2026-10-05", from: "you" } },
+      figures: [figure({ amountCents: 340_000, costLine: { roadId: ROAD_ID, stepId: "step-eval-own", lineId: "cost-eval-saw", amountFrom: "quote" } })],
+      jobCode,
+      change: {
+        firstWords: { text: "A shop of my own.", saidAt: "2026-09-30" },
+        destination: { text: "Work for myself, four days a week.", saidAt: "2026-10-02" },
+        incomeWanted: { amountCents: 7_000_000, agreedOn: "2026-10-01" },
+      },
     }),
   );
   const html = renderToStaticMarkup(createElement(PlanPage, { view, backHref: "/cockpit?venture=v1" }));
+  // React's escaping of text and attributes.
+  const esc = (text: string) => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;");
+
+  it("draws every line the plan holds: nothing built is left off the page", () => {
+    // Every list has something in it, so a list the page stops drawing is missed here.
+    expect(view.told.rows.length).toBeGreaterThan(0);
+    expect(view.road.endings).toHaveLength(1);
+    expect(view.skills.road.length).toBeGreaterThan(0);
+    expect(view.skills.own).toHaveLength(1);
+    expect(view.skills.job?.items).toHaveLength(1);
+    expect(view.target).not.toBeNull();
+    expect(view.words).toHaveLength(2);
+    // Ids are keys, never shown; every other string is on the page.
+    const shown: string[] = [];
+    const walk = (value: unknown, key = "") => {
+      if (typeof value === "string") {
+        if (key !== "id" && key !== "lineId") shown.push(value);
+      } else if (Array.isArray(value)) for (const v of value) walk(v);
+      else if (value && typeof value === "object") for (const [k, v] of Object.entries(value)) walk(v, k);
+    };
+    walk(view);
+    expect(shown.length).toBeGreaterThan(50);
+    expect(shown.filter((s) => !html.includes(esc(s)))).toEqual([]);
+  });
+
+  it("carries the standing not-advice line on the first page too, in the heading above the first section", () => {
+    const line = html.indexOf(esc(cockpitWords.plan.notAdvice));
+    expect(line).toBeGreaterThan(0);
+    expect(line).toBeLessThan(html.indexOf("<section"));
+    // And still as the last section, as before.
+    expect(html.lastIndexOf(esc(cockpitWords.plan.notAdvice))).toBeGreaterThan(html.indexOf(`>${esc(cockpitWords.plan.sections.notAdvice)}</h2>`));
+  });
 
   it("draws the sections in order, each a region named by its heading", () => {
     const s = cockpitWords.plan.sections;

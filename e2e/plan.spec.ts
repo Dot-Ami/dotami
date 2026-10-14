@@ -13,6 +13,7 @@ import { createDatabaseClient } from "../lib/db/client";
 import { cockpitWords as words } from "../lib/cockpit/words";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 import { formatMoney } from "../lib/format/money-and-months";
+import { answer } from "../lib/roads/words";
 
 /** The run's own data file, to draw the idea on the first written future (as e2e/cockpit.spec.ts does). */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
@@ -99,7 +100,12 @@ test("an idea's plan: opened from Export, every section there, Print, and laid o
   await expect(blank).toContainText(words.plan.costKind["named-not-priced"]);
   await expect(blank).not.toContainText("$0");
   await expect(section(s.told)).not.toContainText(words.told.none);
+  // The tick made in the cockpit is a row of the told list, in the list's own words.
+  const ticks = answer.ticks(lineStep.label, 1, lineStep.doneWhen.length).said;
+  await expect(section(s.told)).toContainText(`${ticks.charAt(0).toUpperCase()}${ticks.slice(1)}`);
   await expect(section(s.notAdvice)).toContainText(words.plan.notAdvice);
+  // The standing line is in the heading too, so the first page carries it.
+  await expect(page.locator("article header")).toContainText(words.plan.notAdvice);
 
   // Print calls the browser's own print window (stubbed here: a test can't press the system dialog's buttons).
   await page.evaluate(() => {
@@ -118,6 +124,7 @@ test("an idea's plan: opened from Export, every section there, Print, and laid o
   await expect(page.getByRole("button", { name: words.plan.print, exact: true })).toBeHidden();
   await expect(page.getByRole("contentinfo")).toBeHidden();
   await expect(page.getByRole("heading", { level: 2 }).first()).toBeVisible();
+  await expect(page.locator("article header").getByText(words.plan.notAdvice)).toBeVisible();
   const breaks = await page.locator("section").evaluateAll((sections) => sections.map((el) => getComputedStyle(el).breakBefore));
   expect(breaks).toEqual(["auto", "page", "page", "page", "page", "page", "page"]);
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(255, 255, 255)");
@@ -128,6 +135,22 @@ test("an idea's plan: opened from Export, every section there, Print, and laid o
   // Nothing but DotAmi's own server was asked for anything.
   expect(requests.length).toBeGreaterThan(0);
   expect(requests.filter((url) => !url.startsWith(baseURL!))).toEqual([]);
+});
+
+test("every other page keeps the app's not-advice footer on paper: only the plan, which prints its own line, drops it", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — footer test");
+  for (const address of [`/cockpit?venture=${ventureId}`, "/ventures", "/your-data"]) {
+    await page.emulateMedia({ media: "screen" });
+    await page.goto(address);
+    await page.emulateMedia({ media: "print" });
+    const footer = page.getByRole("contentinfo");
+    await expect(footer, address).toBeVisible();
+    await expect(footer, address).toContainText("not legal or tax advice");
+  }
+  // The control: on the plan the footer is gone on paper and the plan's own line is there instead.
+  await page.goto(`/plan?venture=${ventureId}`);
+  await expect(page.getByRole("contentinfo")).toBeHidden();
+  await expect(page.locator("article header").getByText(words.plan.notAdvice)).toBeVisible();
 });
 
 test("a plan for an idea DotAmi doesn't keep says so, and offers every saved idea", async ({ page }) => {
