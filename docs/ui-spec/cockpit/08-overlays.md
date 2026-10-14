@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Components: `components/cockpit/overl
 `components/cockpit/strategy-map.tsx` (props `overlays`, `stepEvaluations`, `linkedSkillId`)
 Type: toggle group + map decoration
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
+Last updated: 2026-10-13 (the chip on a step for some kinds of work only, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
 ## What it is
 
@@ -37,7 +37,10 @@ Also on the map, from road evaluation (`evaluateRoad`):
   aside by you, not a reading of your answers* while any card is set aside.
 - **The chip** shows the person's own status where they set one (*doing*, *done*, *not for me*; *not for
   me* draws the card dashed and hides its lever cards). Where they set none, the map's worked-out chip
-  is shown as before (*now · your pick · done · ahead · not on your path*).
+  is shown as before (*now · your pick · done · ahead · not on your path*), except on a step the road
+  writes for some kinds of work only, on an idea with none of them (since 2026-10-13, road 0's *SR&ED
+  deepening*, issue #40): **not on your path**, dashed, no lever cards, and the reason as its line
+  ([03-canvas.md](./03-canvas.md)).
 - **A fork's column** says *The road splits here: you choose* under its line.
 - **A skill selected** in the step panel or the skills list dims every step that doesn't list it.
 

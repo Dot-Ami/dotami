@@ -1039,7 +1039,7 @@ Whether to hide it anyway is the maintainer's call (§ 13).
   and *"this idea involves research and development"*. A test holds the two lists equal, so the step can
   never be off the path for a kind of work the rules would light it for, or the other way round. The ids
   are unchanged. The checks (`roadProblems`) refuse an empty list and an empty `notTold`, and
-  `tests/roads.spec.ts` a kind of work the intake doesn't ask (the catalogs import nothing from the
+  `tests/research-steps.spec.ts` a kind of work the intake doesn't ask (the catalogs import nothing from the
   intake, so that check is the test's).
 - **Road evaluation** (rule 1a above): with none of those kinds of work, the step is **not on your path**,
   reason `{ kind: "kinds-of-work", tags }`, because *"You haven't told DotAmi this idea involves research

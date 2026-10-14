@@ -20,6 +20,12 @@ export function listOf(parts: readonly string[]): string {
   return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
 }
 
+/** "a", "a or b", "a, b or c". */
+function eitherOf(parts: readonly string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} or ${parts.at(-1)}`;
+}
+
 // --- The labels of the idea's own answers, as the intake shows them (components/discovery/intake-page.tsx,
 // --- components/cockpit/cockpit-page.tsx). Kept in step by hand; a new value is added in both places.
 
@@ -47,6 +53,11 @@ const STATUS_WORDS = { doing: "doing", done: "done", "not-for-me": "not for me" 
 
 export const because = {
   notForMe: () => "You marked this step not for me.",
+  // A step the road writes for some kinds of work only (`onlyForKindsOfWork`): what the idea hasn't told
+  // DotAmi, from the catalog, and the kinds of work that would say it. A fact about what was told, never
+  // a guess about the idea.
+  kindsOfWork: (notTold: string, tags: readonly string[]) =>
+    `You haven't told DotAmi ${notTold}: none of its kinds of work is ${eitherOf(tags)}.`,
   rules: (state: "applies" | "check-first" | "not-on-your-path", facts: readonly string[]) => {
     if (facts.length === 0) return "Today's rules give it this colour; no single answer of yours changes that.";
     const lead =

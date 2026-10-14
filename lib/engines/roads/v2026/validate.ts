@@ -81,6 +81,18 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[], now: 
     }
 
     for (const cost of step.costs) problems.push(...costProblems(cost, today));
+
+    // A step for some kinds of work only must name them and say, in words, what the idea hasn't told
+    // DotAmi without one: an empty list would put it off every path with a reason naming nothing. That
+    // each kind of work is one the intake asks is checked by tests/research-steps.spec.ts (catalogs
+    // import nothing from the intake).
+    const only = step.onlyForKindsOfWork;
+    if (only !== undefined) {
+      if (only.tags.length === 0) problems.push(`Step "${step.id}" is for some kinds of work only but names none.`);
+      if (only.notTold.trim() === "") {
+        problems.push(`Step "${step.id}" is for some kinds of work only but doesn't say what the idea hasn't told DotAmi.`);
+      }
+    }
   }
 
   for (const fork of road.forks) {

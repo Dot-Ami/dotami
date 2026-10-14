@@ -1,3 +1,4 @@
+import { tagsIntersect } from "@/lib/brain/predicates";
 import type { ConfirmedFigure, EvaluationResult, NodeStateColor } from "@/lib/brain/types";
 import type { JobList } from "@/lib/engines/oasis/v2026";
 import {
@@ -89,6 +90,8 @@ export interface RoadEvaluationInput {
 /** Why a step is in its state, as data; `because` on the step is the same reason as a sentence. */
 export type StepReason =
   | { kind: "not-for-me" }
+  /** The road writes the step for some kinds of work only, and the idea has none of these. */
+  | { kind: "kinds-of-work"; tags: string[] }
   /** Today's rules decide; `answerIds` are the person's answers that colour depends on (may be none). */
   | { kind: "rules"; answerIds: string[] }
   | { kind: "fork-picked"; forkId: string; from: "you" | "map" }
@@ -411,6 +414,12 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
   const ahead = (from: string) => futureSet(futureEdges(stepById, from));
 
   const progressOf = new Map(input.progress.filter((p) => stepById.has(p.stepId)).map((p) => [p.stepId, p]));
+  // The kinds of work the idea has (the intake's activity tags, confirmed there), for steps written for
+  // some kinds of work only, matched the way the rules match them (`tagsIntersect`), so the road and the
+  // rules can never disagree on whether an idea has one. None at all (an idea saved from Pick a future)
+  // is none of them.
+  const kindsOfWork = input.scenario.profile.activityTags ?? [];
+  const hasKindOfWork = (tags: readonly string[]) => tagsIntersect(kindsOfWork, [...tags]);
   const itemMarks = new Map(
     input.skillMarks.flatMap((m) => (m.skillItemId !== null ? [[m.skillItemId, m.mark] as const] : [])),
   );
@@ -441,6 +450,13 @@ export function evaluateRoad(input: RoadEvaluationInput): RoadEvaluation {
       state = "not-on-your-path";
       reason = { kind: "not-for-me" };
       text = because.notForMe();
+    } else if (step.onlyForKindsOfWork && !hasKindOfWork(step.onlyForKindsOfWork.tags)) {
+      // The road's own rule (road 0's SR&ED deepening, issue #40): without one of the step's kinds of
+      // work it is off the path, saying what wasn't told. It stays on the road and still opens; with
+      // one of them, the rules and forks below decide as for any step.
+      state = "not-on-your-path";
+      reason = { kind: "kinds-of-work", tags: [...step.onlyForKindsOfWork.tags] };
+      text = because.kindsOfWork(step.onlyForKindsOfWork.notTold, step.onlyForKindsOfWork.tags);
     } else if (stepId in ruleColours && (onRoadZero || !forkDecides(stepId))) {
       state = STATE_OF_COLOUR[ruleColours[stepId]];
       const answerIds = dependsOn.get(stepId) ?? [];

@@ -108,7 +108,7 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     removed (the map doesn't pre-filter paths). Use it only where the step's own sources make it about
     that work (road 0's *SR&ED deepening*: scientific research and experimental development), and keep
     the tags the same as any rule that already reads them for the step (a test holds road 0's equal to
-    the rules'). The checks refuse an empty list and an empty `notTold`; `tests/roads.spec.ts` refuses a
+    the rules'). The checks refuse an empty list and an empty `notTold`; `tests/research-steps.spec.ts` refuses a
     kind of work the intake doesn't ask.
 
 How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)

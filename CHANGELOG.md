@@ -366,6 +366,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **A sign painter's map no longer shows a research tax credit step as ahead** (issue #40) — in the
+  cockpit, *SR&ED deepening* (Tier 4) on an idea whose kinds of work include none of Software / SaaS,
+  Manufacturing and AI / ML / R&D is drawn dashed with the chip **not on your path** instead of **ahead**,
+  and says why on the card and in the step panel: *"You haven't told DotAmi this idea involves research
+  and development: none of its kinds of work is Software / SaaS, Manufacturing or AI / ML / R&D."* Its
+  step panel used to say *"no single answer of yours changes that"*, which wasn't true. It is still drawn
+  and still opens, with every *done when* line and source; it is not hidden, since the map doesn't
+  pre-filter paths (whether to hide it is a question for the maintainer, docs/architecture/future-cockpit.md
+  § 13). With one of those kinds of work it is as before. The rule is the road's own, in its catalog
+  (`onlyForKindsOfWork` on the step, docs/engines/roads.md rule 12), with the same three kinds of work the
+  rules already read for that step, and a test holds the two lists equal. No id changed.
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and

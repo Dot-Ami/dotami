@@ -845,6 +845,17 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
   doneWhen: stageDoneWhen,
   costs: { "stage-1-sole-prop-activation": startUpCosts },
   needs: { "stage-2b-mandatory-gst-registration": [SKILL_GST_HST_REGISTRATION] },
+  // SR&ED deepening is about scientific research and experimental development, by its own sources, so
+  // a sign painter's map draws it off the path, saying why, instead of "ahead" (issue #40, 2026-10-13).
+  // The kinds of work are the three today's rules read for this step (lib/brain/evaluate.ts
+  // LIABILITY_SRED_TAGS); tests/research-steps.spec.ts holds the two lists equal. Incorporation for
+  // liability/SR&ED isn't marked: it is about liability too, not research only.
+  onlyForKindsOfWork: {
+    "stage-4-sred-deepening": {
+      tags: ["Software / SaaS", "Manufacturing", "AI / ML / R&D"],
+      notTold: "this idea involves research and development",
+    },
+  },
   addedSteps: [
     { columnId: "tier-1-before", step: registerName },
     { columnId: "tier-1-before", step: permitsBizpal },

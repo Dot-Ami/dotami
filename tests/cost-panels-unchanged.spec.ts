@@ -9,7 +9,13 @@
  * (4e643d7, that main plus #158) and compared with that main's drawing, it changes one panel only,
  * Mandatory GST registration, whose "No skills are listed for this step yet." becomes its legal
  * requirement, A GST/HST registration with the Canada Revenue Agency; that change is applied to the
- * fixture as #162 left it. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * fixture as #162 left it. Redrawn on 2026-10-13 for issue #40 (research tax credit steps off the path
+ * without a research kind of work): drawn from main at cfa7aa1 plus only that change and compared with
+ * main's fixture, it changes one panel of 32 only, SR&ED deepening, whose "Why this colour" sentence
+ * "Today's rules give it this colour; no single answer of yours changes that." becomes "You haven't told
+ * DotAmi this idea involves research and development: none of its kinds of work is Software / SaaS,
+ * Manufacturing or AI / ML / R&D." (the invented idea is a trade); only that sentence is swapped in the
+ * fixture. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */
