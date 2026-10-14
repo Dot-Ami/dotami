@@ -259,7 +259,10 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
   fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if of first-year sales
   of $45,000 on. A banner that never folds says *"Invented person, invented numbers, not real data.
-  Nothing here is saved."* with **Start my own future →** (`/start`).
+  Nothing here is saved."* with **Start my own future →** (`/start`). It sits above the cockpit's grid,
+  never inside it, and stays at the top of the window when the page scrolls on a phone; the phone sheets
+  and the tablet drawer start under it (its height is `--example-banner-h`), so nothing is drawn over it
+  (2026-10-14, after review).
 - **Nothing is written, anywhere.** Every control that would save is disabled with *"This is an example.
   Start your own to keep anything."*, or answers with that sentence and does nothing; no request that
   writes is sent, none of the real person's data is read, and no browser storage is read or written (the

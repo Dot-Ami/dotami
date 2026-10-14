@@ -29,7 +29,12 @@ the catalog's differ, the page shows the catalog's (the receipts below).
 ## The banner (never folds)
 
 A row of its own above the header, outside every region that folds (the header's *Fold all panels*
-doesn't touch it), and on a phone too:
+doesn't touch it), and always on screen (since 2026-10-14, after review): it sits above the cockpit's
+grid (`ExampleFrame` in `components/cockpit/example-mode.tsx`), sticks to the top of the window when the
+page scrolls on a phone, and the phone's full-width sheets and the 768–1023 px step drawer start under it
+(its measured height is the CSS variable `--example-banner-h`; 0 px on a person's own future, whose
+sheets and drawer are unchanged). While a phone sheet is open the banner stays in sight but can't be
+reached, like everything else behind the sheet. It says:
 
 - **Invented person, invented numbers, not real data. Nothing here is saved.** (bold)
 - *Mara's example future: an invented person on a written road. Here, "you" and "your" mean Mara, the

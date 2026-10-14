@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 
 import type { StoryPart } from "@/lib/examples/story";
@@ -56,6 +56,54 @@ export function ExampleBanner({ person, notice }: { person: string; notice: numb
         {words.example.startOwn}
       </Link>
     </section>
+  );
+}
+
+/**
+ * The page around the cockpit on an example (2026-10-14, after review): the banner above the cockpit's
+ * own grid, never inside it, so it can stay at the top of the window. On a phone the page itself scrolls,
+ * and a sticky row inside a grid only sticks within its own grid row; here it sticks for the whole page.
+ * Its height, measured as it wraps, is `--example-banner-h`, which the phone sheets and the tablet drawer
+ * start below (cockpit-page.tsx), so no sheet is ever drawn over it. A person's own future has no frame:
+ * `person` null gives back the cockpit as it was.
+ */
+export function ExampleFrame({
+  person,
+  notice,
+  inert,
+  children,
+}: {
+  person: string | null;
+  notice: number;
+  /** While a sheet covers the page on a phone, the banner stays in sight but can't be reached. */
+  inert: boolean;
+  children: ReactNode;
+}) {
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = bannerRef.current;
+    if (!el) return;
+    const measure = () => setHeight(el.getBoundingClientRect().height);
+    measure();
+    // The banner wraps to more lines on a narrow window, and its status line appears after a click.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [person]);
+
+  if (person === null) return <>{children}</>;
+  return (
+    <div
+      style={{ "--example-banner-h": `${height}px` } as CSSProperties}
+      className="flex h-[calc(100vh-2.5rem)] flex-col max-md:block max-md:h-auto"
+    >
+      {/* bg-ink under the banner's see-through amber, so the page scrolling beneath never shows through. */}
+      <div ref={bannerRef} inert={inert} className="sticky top-0 z-50 shrink-0 bg-ink">
+        <ExampleBanner person={person} notice={notice} />
+      </div>
+      {children}
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { CompareEndings } from "@/components/cockpit/compare-endings";
-import { ExampleBanner, ExampleNoteContext, ExampleOnlyNote, ExampleStory } from "@/components/cockpit/example-mode";
+import { ExampleFrame, ExampleNoteContext, ExampleOnlyNote, ExampleStory } from "@/components/cockpit/example-mode";
 import { FoldButton, FoldedBar, FoldedStrip, useFolds } from "@/components/cockpit/folding";
 import { useIsPhone, useSheet } from "@/components/cockpit/use-sheet";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
@@ -847,15 +847,12 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   return (
     // On the example every panel's "nothing can be kept" line says it is an example (example-mode.tsx).
     <ExampleNoteContext.Provider value={isExample ? words.example.cantKeep : null}>
+    {/* The example's banner: above the cockpit, outside every region that folds, so it never folds, and on a
+        phone it stays at the top of the window (example-mode.tsx). On a person's own future this adds nothing. */}
+    <ExampleFrame person={example?.person ?? null} notice={exampleNotice} inert={behindSheet}>
     <div
-      className={`grid h-[calc(100vh-2.5rem)] ${example ? "grid-rows-[auto_52px_auto_1fr]" : "grid-rows-[52px_auto_1fr]"} overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
+      className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
-      {/* The example's banner: a row of its own, outside every region that folds, so it never folds. */}
-      {example ? (
-        <div inert={behindSheet}>
-          <ExampleBanner person={example.person} notice={exampleNotice} />
-        </div>
-      ) : null}
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
       <header
         inert={behindSheet}
@@ -941,7 +938,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             if (!folds.rail) railScroll.current = event.currentTarget.scrollTop;
           }}
           className={`min-w-0 border-r border-rule bg-ink3 ${folds.rail ? "md:overflow-hidden" : "md:overflow-y-auto"} ${
-            railSheet ? "max-md:fixed max-md:inset-0 max-md:z-40 max-md:overflow-y-auto" : "max-md:hidden"
+            // The sheet starts under the example's banner, which stays on screen (0 px on a person's own future).
+            railSheet
+              ? "max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-[var(--example-banner-h,0px)] max-md:z-40 max-md:overflow-y-auto"
+              : "max-md:hidden"
           }`}
         >
           {folds.rail ? (
@@ -1175,7 +1175,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
               folds.panel
                 ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
-                : "max-lg:fixed max-lg:inset-0 max-lg:z-40 md:max-lg:top-[52px] md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
+                : // Under the example's banner too, when there is one (its height is 0 px on a person's own future).
+                  "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-md:top-[var(--example-banner-h,0px)] md:max-lg:top-[calc(52px_+_var(--example-banner-h,0px))] md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
             }`}
           >
             {folds.panel ? (
@@ -1329,6 +1330,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         />
       ) : null}
     </div>
+    </ExampleFrame>
     </ExampleNoteContext.Provider>
   );
 }

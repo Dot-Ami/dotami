@@ -161,6 +161,73 @@ test("opened directly in a fresh tab: no browser storage is written and none of 
   await expect(page.getByRole("complementary")).toContainText("My own small furniture shop, four-day weeks, home for supper.");
 });
 
+/** The banner's box in the window, and whether its middle is on screen with nothing drawn over it. */
+function bannerOnScreen(page: Page) {
+  return banner(page).evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const onScreen = r.top >= -0.5 && r.bottom <= window.innerHeight + 0.5 && r.height > 0;
+    // A banner made inert behind a sheet is skipped by hit-testing, so look for the first element at that
+    // point that is either the banner or one of the cockpit's sheets and drawers.
+    const hit = document.elementsFromPoint(x, y).find((e) => el.contains(e) || e.closest("#cockpit-panel, #cockpit-rail"));
+    return { top: r.top, bottom: r.bottom, onScreen, covered: hit !== undefined && !el.contains(hit) };
+  });
+}
+
+test.describe("the banner stays on screen", () => {
+  test("at 375x812: scrolled to the bottom, and with a step or the venture details open as a sheet", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/example/mara", { waitUntil: "networkidle" });
+    await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
+    expect(await bannerOnScreen(page)).toMatchObject({ onScreen: true, covered: false });
+
+    // The page scrolls on a phone; the banner stays at the top of the window.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+    expect(await bannerOnScreen(page)).toMatchObject({ top: 0, onScreen: true, covered: false });
+
+    // A step's sheet starts under the banner, never over it.
+    await stage(page, "Open your own shop").scrollIntoViewIfNeeded();
+    await stage(page, "Open your own shop").click();
+    await expect(stepPanel(page)).toBeVisible();
+    const withStep = await bannerOnScreen(page);
+    expect(withStep).toMatchObject({ onScreen: true, covered: false });
+    expect((await page.locator("#cockpit-panel").boundingBox())!.y).toBeGreaterThanOrEqual(withStep.bottom - 0.5);
+    await stepPanel(page).getByRole("button", { name: "Close", exact: true }).click();
+    await expect(stepPanel(page)).toHaveCount(0);
+
+    // So does the venture details sheet.
+    await page.getByRole("button", { name: "Venture details", exact: true }).click();
+    const rail = page.getByRole("complementary", { name: "Venture details" });
+    await expect(rail.getByText("In Mara's words", { exact: true })).toBeVisible();
+    const withRail = await bannerOnScreen(page);
+    expect(withRail).toMatchObject({ onScreen: true, covered: false });
+    expect((await rail.boundingBox())!.y).toBeGreaterThanOrEqual(withRail.bottom - 0.5);
+  });
+
+  test("at 900x800 a step's drawer opens under the banner and the header, leaving their buttons free", async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.goto("/example/mara", { waitUntil: "networkidle" });
+    await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
+    await stage(page, "Open your own shop").click();
+    await expect(stepPanel(page)).toBeVisible();
+
+    const header = (await page.locator("header").first().boundingBox())!;
+    const drawer = (await page.locator("#cockpit-panel").boundingBox())!;
+    expect(drawer.y).toBeGreaterThanOrEqual(header.y + header.height - 0.5);
+    expect(await bannerOnScreen(page)).toMatchObject({ onScreen: true, covered: false });
+    // Real clicks, which Playwright refuses while something else would receive them.
+    await page.getByRole("button", { name: "Fold all panels" }).click({ timeout: 2_000 });
+    await expect(page.getByRole("button", { name: "Show all panels" })).toBeVisible();
+    await page.getByRole("button", { name: "Show all panels" }).click({ timeout: 2_000 });
+    await page.getByRole("button", { name: "Export", exact: true }).click({ timeout: 2_000 });
+    await expect(banner(page).getByRole("status")).toHaveText(CANT_KEEP);
+    await expect(banner(page).getByRole("link", { name: "Start my own future →" })).toBeVisible();
+    await banner(page).getByRole("link", { name: "Start my own future →" }).click({ trial: true, timeout: 2_000 });
+  });
+});
+
 test("any other example address is not found", async ({ page }) => {
   const response = await page.goto("/example/nobody");
   expect(response?.status()).toBe(404);
