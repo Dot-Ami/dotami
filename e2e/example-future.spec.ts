@@ -3,9 +3,11 @@
  * docs/architecture/future-cockpit.md § 1, "The example future as built"): the front door's third door
  * opens Mara's cockpit, read-only, under a banner that never folds.
  *
- * The proof that nothing is saved is taken three ways, before and after clicking every kind of control
- * that would save: the data file's row counts in every table, both kinds of browser storage, and the
- * requests the page sent (none may write, and none may read the person's own data).
+ * The proof that nothing is saved is taken three ways, before and after clicking Keep and Export (the two
+ * save controls that answer in the banner instead of being disabled): the data file's row counts in every
+ * table, both kinds of browser storage, and the requests the page sent (none may write, and none may go to
+ * DotAmi's API but the law-text route). Every other control in the ui-spec's table is checked to be
+ * disabled, and the requests and storage are checked again after reaching each of them.
  */
 import path from "node:path";
 
@@ -52,14 +54,20 @@ const storage = (page: Page) =>
     return JSON.stringify({ local: dump(localStorage), session: dump(sessionStorage) });
   });
 
-/** Every request the page sends that writes (anything but GET and HEAD), or reads the person's own data. */
+/**
+ * Every request the page sends that writes (anything but GET and HEAD), and every request to DotAmi's own
+ * API but the one that reads a law's words (`/api/law/provision`, catalog text, nothing of the person's).
+ * Listing the routes that read the person's data would miss one added later (`/api/your-data`,
+ * `/api/readout`…), so it is the other way round: any other `/api/` request counts.
+ */
 function watchRequests(page: Page): string[] {
   const seen: string[] = [];
-  const persons = /\/api\/(ventures|figures|futures|person|person-figures|skill-marks|expenses|scenario|playbook|settings)\b/;
+  const allowedApi = /^\/api\/law\/provision(\/|$|\?)/;
   page.on("request", (r: Request) => {
     const url = new URL(r.url());
     const writes = r.method() !== "GET" && r.method() !== "HEAD";
-    if (writes || persons.test(url.pathname)) seen.push(`${r.method()} ${url.pathname}`);
+    const api = url.pathname.startsWith("/api/") && !allowedApi.test(url.pathname);
+    if (writes || api) seen.push(`${r.method()} ${url.pathname}`);
   });
   return seen;
 }
@@ -159,6 +167,51 @@ test("opened directly in a fresh tab: no browser storage is written and none of 
   expect(requests).toEqual([]);
   // Mara's words in the rail, never the person's own statements.
   await expect(page.getByRole("complementary")).toContainText("My own small furniture shop, four-day weeks, home for supper.");
+});
+
+/** Every button the locator finds is disabled, and it finds at least one (so the check can fail). */
+async function allDisabled(buttons: ReturnType<Page["getByRole"]>, what: string) {
+  expect(await buttons.count(), what).toBeGreaterThan(0);
+  for (const b of await buttons.all()) await expect(b, what).toBeDisabled();
+}
+
+test("every other control in the ui-spec's table is drawn disabled, and none of them sends anything", async ({ page }) => {
+  const requests = watchRequests(page);
+  await page.goto("/example/mara", { waitUntil: "networkidle" });
+  await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
+
+  // The rail: the Structure select, the told list's Change and Take back, the not-told rows' Answer.
+  await expect(page.getByRole("combobox", { name: "Structure" })).toBeDisabled();
+  await allDisabled(told(page).getByRole("button", { name: /^Change/ }), "told: Change");
+  await allDisabled(told(page).getByRole("button", { name: /^Take back/ }), "told: Take back");
+  await allDisabled(page.getByRole("region", { name: "Not told yet" }).getByRole("button", { name: /^Answer/ }), "not told: Answer");
+
+  // The Skills list: every skill mark, Add a skill (even with a skill typed), and the pick of job.
+  await goalBar(page).getByRole("button", { name: /^Skills/ }).click();
+  const skills = page.getByRole("region", { name: "Skills on this road" });
+  await allDisabled(skills.getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "skills: marks");
+  await skills.getByRole("textbox", { name: "A skill in your own words" }).fill("Finishing");
+  await allDisabled(skills.getByRole("button", { name: /^Add as / }), "skills: Add a skill");
+  await allDisabled(skills.getByRole("button", { name: /^(Change|Take back)$/ }), "skills: the pick of job");
+
+  // The Money list: her savings and her numbers.
+  await goalBar(page).getByRole("button", { name: /^Start-up money/ }).click();
+  const money = page.getByRole("region", { name: "Start-up money", exact: true });
+  await allDisabled(money.getByRole("button", { name: /^(Add|Change) your (savings|number|quote)/ }), "money: savings and quotes");
+
+  // The date list: Save (even with a month typed) and Clear.
+  await goalBar(page).getByRole("button", { name: /^Mara's date/ }).click();
+  const date = page.getByRole("region", { name: "Your date" });
+  await date.locator("input[type=month]").fill("2027-06");
+  await allDisabled(date.getByRole("button", { name: /^(Save|Clear)$/ }), "date: Save and Clear");
+
+  // A step with skills listed: its marks and its status buttons.
+  await stage(page, "Get a sponsor and earn your on-the-job hours").click();
+  await allDisabled(stepPanel(page).getByRole("button", { name: /^(Doing|Done|Not for me)$/ }), "step: status");
+  await allDisabled(stepPanel(page).getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "step: skill marks");
+
+  expect(await storage(page)).toBe(JSON.stringify({ local: {}, session: {} }));
+  expect(requests).toEqual([]);
 });
 
 /** The banner's box in the window, and whether its middle is on screen with nothing drawn over it. */

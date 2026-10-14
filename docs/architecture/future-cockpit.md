@@ -268,7 +268,8 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   writes is sent, none of the real person's data is read, and no browser storage is read or written (the
   page sits outside the journey's pages, so the journey draft isn't touched, and the fold answers are
   remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
-  the requests sent before and after clicking each kind of save control.
+  the requests sent before and after clicking Keep and Export (the two save controls not disabled), and
+  checks that every other save control in the ui-spec's table is disabled.
 - **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
   catalog, which differs from the appendix's sketch: 16 steps (not 22), 31 lines to price before her
   quotes and 29 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The

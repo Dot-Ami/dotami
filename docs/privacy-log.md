@@ -231,8 +231,9 @@ person is asked).
   no browser storage: the page sits outside the journey's pages, so the tab's journey draft
   (`dotami-journey-v3`) isn't touched, and its folds are remembered nowhere (`dotami-cockpit-folds` is
   neither read nor written there). [`e2e/example-future.spec.ts`](../e2e/example-future.spec.ts) compares
-  the data file's row counts, both storages and the requests sent before and after clicking the save
-  controls. No inventory entry changes.
+  the data file's row counts, both storages and the requests sent before and after clicking Keep and
+  Export (the two save controls that aren't disabled), checks that every other save control is disabled,
+  and fails on any request to DotAmi's API but the law-text route. No inventory entry changes.
 
 ### Packages that ship
 

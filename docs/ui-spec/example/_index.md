@@ -101,9 +101,15 @@ example person never inherits hers.
   `/api/futures/<id>`, so nothing of the real person's appears in it.
 - **No browser storage.** The page is outside the journey's pages (`app/(journey)/`), so the journey
   draft in `sessionStorage` is neither read nor written; the fold answers are not read from or written to
-  `localStorage`; *In your words* reads no list of unsaved statements. The browser test compares both
-  storages, the data file's row counts and the requests sent, before and after clicking every kind of
-  save control (`e2e/example-future.spec.ts`).
+  `localStorage`; *In your words* reads no list of unsaved statements. The browser test
+  (`e2e/example-future.spec.ts`) compares both storages, the data file's row counts and the requests sent
+  before and after clicking **Keep** and **Export**, the two save controls that answer in the banner; it
+  checks that every other control in the table above is disabled (the step's status and skill marks, the
+  Skills list's marks, *Add a skill* with a skill typed and the pick of job, the savings button, the date's
+  **Save** with a month typed and **Clear**, **This is mine**, the told list's **Change**, **Take back**
+  and **Answer**, and the **Structure** select) rather than clicking them. Any request to DotAmi's API
+  other than `/api/law/provision` (a law's words, nothing of the person's) fails it, as does any request
+  that writes.
 
 ## The receipts it shows (worked out, never written)
 
