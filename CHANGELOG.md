@@ -11,6 +11,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Your plan: a page to read and print, from the cockpit's Export** (closes #41) — **Open your plan to
+  read or print** in the Export panel opens `/plan?venture=<id>`: one idea's plan laid out for a partner,
+  an accountant or a lawyer, with **Print** (the computer's own print window, which also saves a PDF).
+  In order: your words, word for word and dated, and the yearly income you agreed to; the future, who
+  picked it, the ending at each fork and the four gauges; every step of the road, column by column, on
+  your path or not, with your status, its state and the reason, its *done when* lines ticked or not, the
+  skills it needs with your marks, and its sources with how each was checked; the skills you marked, by
+  name (for your pick of job, only the items you marked, with the licence's line); start-up money in
+  three kinds, an official fee with its source and the day it was read or checked by a tool, your agreed
+  quote as yours with its day and where it came from, and a line not priced yet with no amount, never
+  $0; *What you've told DotAmi*, row for row as the cockpit lists it; and the line that DotAmi is not
+  legal or tax advice but a preparation tool for your accountant and lawyer. On paper the buttons and the
+  footer are gone, it prints black on white, each section starts a new page and every link prints as its
+  address. Made only from what DotAmi keeps, by the cockpit's own functions (`lib/cockpit/plan.ts`); it
+  keeps nothing and sends nothing. **Copy markdown** and **Save as .md** stay as they were. Words:
+  `lib/cockpit/words.ts` (`plan`); design: `docs/ui-spec/plan/_index.md`.
 - **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
   the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
   life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's

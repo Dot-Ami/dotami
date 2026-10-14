@@ -222,6 +222,14 @@ person is asked).
   (`{"rail":true,"goal":false,"panel":false,"legend":true,"whatIf":false}`). Still nothing about the
   person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
   `/your-data` says five.
+- **Your plan, a page to read and print, keeps nothing and sends nothing (2026-10-13, issue #41).** The
+  cockpit's Export opens `/plan?venture=<id>`: one idea's plan, drawn by DotAmi's own server from what the
+  data file already holds (the person's words for the idea and their newest destination, their agreed
+  income, the road and its ending, step progress, skill marks, agreed cost-line numbers and savings, the
+  told list) and the catalogs ([`lib/futures/read-plan.ts`](../lib/futures/read-plan.ts),
+  [`lib/cockpit/plan.ts`](../lib/cockpit/plan.ts)). No new table, column, browser-storage key, route or
+  request; only the idea's id travels in the address, as the cockpit's does. **Print** is the browser's
+  own `window.print()`: the computer's print window opens, and the person picks a printer or a PDF.
 
 ### Packages that ship
 
@@ -308,6 +316,9 @@ person is asked).
   shows the government's list for it and never says which skills a business needs. The list is the
   government of Canada's, under the Open Government Licence – Canada, which DotAmi attributes and which
   doesn't mean the government endorses DotAmi or anyone's use of it.
+- A plan the person prints or saves as a PDF (2026-10-13) holds their own words, marks, progress and
+  numbers for that idea; where the paper or the file goes from there is the person's choice. DotAmi sends
+  it nowhere.
 
 ---
 
