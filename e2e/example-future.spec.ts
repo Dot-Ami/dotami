@@ -69,7 +69,7 @@ const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and 
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const compare = (page: Page) => page.getByRole("region", { name: "Compare the two endings" });
 const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
-const told = (page: Page) => page.getByRole("region", { name: "What you've told DotAmi" });
+const told = (page: Page) => page.getByRole("region", { name: "What Mara told DotAmi" });
 const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
 
 test("door 3 opens Mara's example: the banner, her words, the road, the gauges; no save control writes anything, and Start my own future opens the first door", async ({ page }) => {
@@ -87,11 +87,18 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(banner(page)).toContainText(BANNER);
   await expect(goalBar(page)).toContainText("“My own small furniture shop, four-day weeks, home for supper.”");
   await expect(goalBar(page)).toContainText(`Future: ${road.label}`);
-  await expect(goalBar(page)).toContainText("Your target: $70,000 a year, before tax");
+  // Her numbers and answers are labelled hers, never the viewer's; the banner says once who "you" is.
+  await expect(banner(page)).toContainText("Here, “you” and “your” mean Mara, the invented person.");
+  await expect(goalBar(page)).toContainText("where Mara wants to be · Mara's words");
+  await expect(goalBar(page)).toContainText("Mara's target: $70,000 a year, before tax (Mara's, agreed");
+  await expect(goalBar(page)).not.toContainText(/\byours\b|your words|your marks|Your date/);
   await expect(goalBar(page).getByRole("button", { name: /^Steps/ })).toContainText("1 of 16 marked done");
-  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$5,400 your numbers (2 lines)");
+  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$5,400 Mara's numbers (2 lines)");
+  await expect(goalBar(page).getByRole("button", { name: /^Mara's date/ })).toContainText("Mara's");
+  await expect(told(page)).toContainText("things Mara told DotAmi");
+  await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Mara's skill marks");
   await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("29 not priced yet");
-  await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("your pick of job: 4 have · 2 learning · 1 not yet");
+  await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("Mara's pick of job: 4 have · 2 learning · 1 not yet");
   await expect(stage(page, "Open your own shop")).toBeVisible();
   // Her what-if is on: it relit the rules, and is kept nowhere.
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();

@@ -32,7 +32,9 @@ A row of its own above the header, outside every region that folds (the header's
 doesn't touch it), and on a phone too:
 
 - **Invented person, invented numbers, not real data. Nothing here is saved.** (bold)
-- *Mara's example future: an invented person on a written road.*
+- *Mara's example future: an invented person on a written road. Here, "you" and "your" mean Mara, the
+  invented person.* (the second sentence since 2026-10-14: the receipts and buttons are the words every
+  person's own cockpit uses, so their "you" is said once to mean her; *What Mara did* says it again)
 - **Start my own future →**, a link to `/start` (*Your destination*, the front door's first door).
 - A status line (read out by a screen reader), empty until a control that would save is used; then
   *"This is an example. Start your own to keep anything."*
@@ -67,6 +69,26 @@ own future →** is drawn in their place. *In your words* shows Mara's words fro
 real person's statements. The header's back link is **← Front door** (`/`). No figure reminder and no
 agree prompt is ever drawn.
 
+## Her answers are labelled hers (since 2026-10-14)
+
+Where a person's own cockpit labels an answer or a number as theirs, the example says Mara's name
+instead (`lib/cockpit/words.ts` `example.theirs`, given to the goal bar, `gaugeView` and the told list as
+`person`; a person's own future is unchanged):
+
+| A person's own cockpit | The example |
+|---|---|
+| *In your words* | *In Mara's words* |
+| *where you want to be · your words · <day>* | *where Mara wants to be · Mara's words · <day>* |
+| *Your target: $70,000 a year, before tax (yours, agreed <day>)* | *Mara's target: $70,000 a year, before tax (Mara's, agreed <day>)* |
+| Gauge tags *your marks*, *yours + cited*, *yours*; the gauge *Your date* | *Mara's marks*, *Mara's + cited*, *Mara's*; *Mara's date* |
+| *$5,400 your numbers (2 lines)*; *your pick of job: …*; *your own skills: …* | *$5,400 Mara's numbers (2 lines)*; *Mara's pick of job: …*; *Mara's own skills: …* |
+| *What you've told DotAmi*, *16 things you've told DotAmi* | *What Mara told DotAmi*, *16 things Mara told DotAmi* |
+
+The receipt lines (*"Because you marked 9 skills…"*) and the step panel's buttons keep the words every
+cockpit uses; the banner and *What Mara did* say once that "you" there means Mara. *What Mara did*'s
+headings say her name, not a pronoun (*Mara's skill marks*, *The step Mara marked done*), so a second
+example person never inherits hers.
+
 ## What it never does
 
 - **No write of any kind.** The example sends no request that writes (no `POST` to any `/api/…` route),
@@ -89,7 +111,7 @@ keeps them true):
   marks cover every skill on four steps).
 - The Steps gauge: *1 of 16 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
   16 steps).
-- The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $5,400 your numbers (2 lines)*,
+- The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $5,400 Mara's numbers (2 lines)*,
   *1 official fee applies only sometimes, not added up*, *29 not priced yet*, *savings $12,000*, *savings
   minus both: $5,380* (the appendix wrote *4 lines not priced yet*; road 1 names 31 lines to price, 29
   once her two quotes are in).

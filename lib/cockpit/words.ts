@@ -423,18 +423,43 @@ export const cockpitWords = {
     cantKeep: "This is an example. Start your own to keep anything.",
     startOwn: "Start my own future →",
     back: "← Front door",
-    /** Her own words, in the rail where a person's own statements would be. */
+    /** The example person's own words, in the rail where a person's own statements would be. */
     theirWords: (person: string) => `In ${person}'s words`,
+    /**
+     * Said once in the banner and once over the story (2026-10-14, after review): the receipts and the
+     * buttons are the same words every person's own cockpit uses, so their "you" means the example person.
+     */
+    youMeans: (person: string) => `Here, “you” and “your” mean ${person}, the invented person.`,
+    /**
+     * The labels that would otherwise call the example person's answers the viewer's own ("yours, agreed",
+     * "your marks", "things you've told DotAmi"), with the example person's name instead.
+     */
+    theirs: {
+      destination: (person: string, day: string) => `where ${person} wants to be · ${person}'s words · ${day}`,
+      target: (person: string, cents: number, day: string) =>
+        `${person}'s target: ${formatMoney(cents)} a year, before tax (${person}'s, agreed ${day})`,
+      tags: (person: string) => ({ steps: "count", skills: `${person}'s marks`, money: `${person}'s + cited`, date: `${person}'s` }),
+      dateLabel: (person: string) => `${person}'s date`,
+      numbers: (person: string, cents: number, lines: number) => `${formatMoney(cents)} ${person}'s numbers (${count(lines, "line", "lines")})`,
+      numbersNone: (person: string) => `${person}'s numbers: not given yet`,
+      ownSkills: (person: string, have: number, learning: number, notYet: number) =>
+        `${person}'s own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
+      job: (person: string, have: number, learning: number, notYet: number, listed: number) =>
+        `${person}'s pick of job: ${have} have · ${learning} learning · ${notYet} not yet, of ${listed} listed`,
+      toldRegion: (person: string) => `What ${person} told DotAmi`,
+      toldCount: (person: string, n: number) => `${count(n, "thing", "things")} ${person} told DotAmi`,
+    },
     story: {
       region: (person: string) => `What ${person} did`,
       note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
+      // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
       parts: {
-        marks: "Her skill marks",
-        quotes: "Her own quotes",
-        savings: "Her savings",
-        "this-is-mine": "Her pick: This is mine",
-        "step-done": "The step she marked done",
-        "what-if": "Her what-if, kept nowhere",
+        marks: (person: string) => `${person}'s skill marks`,
+        quotes: (person: string) => `${person}'s own quotes`,
+        savings: (person: string) => `${person}'s savings`,
+        "this-is-mine": (person: string) => `${person}'s pick: This is mine`,
+        "step-done": (person: string) => `The step ${person} marked done`,
+        "what-if": (person: string) => `${person}'s what-if, kept nowhere`,
       },
     },
   },

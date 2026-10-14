@@ -21,7 +21,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   what each of her answers changed, worked out by the rules (on today's road: 16 steps, 29 cost lines
   still to price; the design's early sketch said 22 and 4). A banner that never folds says *"Invented
   person, invented numbers, not real data. Nothing here is saved."*, with **Start my own future →**.
-  Nothing is saved from it: every button that would keep something is greyed out and says *"This is an
+  Her answers are labelled hers, not yours: *Mara's target: $70,000 a year … (Mara's, agreed …)*,
+  *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner says once that "you" in the
+  receipts means Mara. Nothing is saved from it: every button that would keep something is greyed out and says *"This is an
   example. Start your own to keep anything."*, or says so when clicked, and the page reads none of your
   own data and writes nothing to the browser either (a browser test checks the data file, both kinds of
   browser storage and every request). Her numbers live in one file, `lib/examples/mara.ts`, and a test

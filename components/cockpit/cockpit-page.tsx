@@ -919,6 +919,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
+            person={example?.person ?? null}
           />
         ) : null}
       </div>
@@ -963,6 +964,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             {/* Part 2: what the person told DotAmi and what isn't told yet, above the rail as it was. */}
             {told ? (
               <ToldList
+                person={example?.person ?? null}
                 rows={told.rows}
                 notTold={told.notTold}
                 receipt={toldReceipt}

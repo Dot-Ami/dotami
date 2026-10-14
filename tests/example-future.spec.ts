@@ -282,4 +282,40 @@ describe("the words", () => {
     expect(cockpitWords.example.cantKeep).toBe("This is an example. Start your own to keep anything.");
     expect(cockpitWords.example.startOwn).toBe("Start my own future →");
   });
+
+  // Her numbers and answers are hers, never labelled as the viewer's: the goal bar, the gauges' tags, the
+  // money gauge and the told list say her name, and the banner and her story say once that the "you" in the
+  // receipts (the same words every person's own receipts use) means her.
+  it("her target, words, gauges and told list are labelled with her name, not as the viewer's", () => {
+    const w = cockpitWords.example.theirs;
+    expect(w.target(ex.person, 7_000_000, "2026-10-13")).toBe("Mara's target: $70,000 a year, before tax (Mara's, agreed 2026-10-13)");
+    expect(w.destination(ex.person, "2026-10-13")).toBe("where Mara wants to be · Mara's words · 2026-10-13");
+    expect(w.tags(ex.person)).toEqual({ steps: "count", skills: "Mara's marks", money: "Mara's + cited", date: "Mara's" });
+    expect(w.dateLabel(ex.person)).toBe("Mara's date");
+    expect(w.toldRegion(ex.person)).toBe("What Mara told DotAmi");
+    expect(w.toldCount(ex.person, 16)).toBe("16 things Mara told DotAmi");
+    expect(cockpitWords.example.youMeans(ex.person)).toBe("Here, “you” and “your” mean Mara, the invented person.");
+    for (const s of [w.target(ex.person, 1, "d"), w.destination(ex.person, "d"), ...Object.values(w.tags(ex.person)), w.toldRegion(ex.person)]) {
+      expect(s, s).not.toMatch(/\byou(rs?)?\b|you've/i);
+    }
+  });
+
+  it("the money gauge says her numbers with her name when given the person; a person's own future still says 'your numbers'", () => {
+    const evaluation = evaluateRoad(inputOf());
+    expect(gaugeView(evaluation, road, ex.scenario, ex.person).money.value).toBe(
+      "$1,220 official fees (7 lines) · $5,400 Mara's numbers (2 lines)",
+    );
+    expect(gaugeView(evaluation, road, ex.scenario).money.value).toBe("$1,220 official fees (7 lines) · $5,400 your numbers (2 lines)");
+    expect(gaugeView(evaluation, road, ex.scenario, ex.person).skills.lines).toContain("Mara's pick of job: 4 have · 2 learning · 1 not yet, of 44 listed");
+    expect(gaugeView(evaluation, road, ex.scenario).skills.lines).toContain("your pick of job: 4 have · 2 learning · 1 not yet, of 44 listed");
+  });
+
+  it("her story's headings use her name, so a second example person never inherits Mara's pronoun", () => {
+    const parts = cockpitWords.example.story.parts;
+    for (const id of Object.keys(parts) as (keyof typeof parts)[]) {
+      expect(parts[id]("Sam"), id).toContain("Sam");
+      expect(parts[id]("Sam"), id).not.toMatch(/\b(her|she|hers)\b/i);
+    }
+    expect(parts.marks(ex.person)).toBe("Mara's skill marks");
+  });
 });
