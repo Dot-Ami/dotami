@@ -101,7 +101,7 @@ export function showUpdateProgress({ updater, dialog, window, log, whenShown = (
   });
 
   // The updater reports a failed check and a failed download the same way. A failed check is
-  // already handled where the check is made (desktop/main.mjs checkForUpdates); only a download
+  // already handled where the check is made (desktop/update-check.mjs checkForUpdates); only a download
   // the person was told about needs a word here.
   updater.on("error", () => {
     if (!downloading) return;

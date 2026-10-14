@@ -147,9 +147,41 @@ describe("how desktop/main.mjs starts the check", () => {
   });
 
   it("lets what the check found show only once the main window is on the screen", () => {
-    const ready = start.slice(start.indexOf('win.once("ready-to-show"'));
+    // One open() in the whole file: a second one anywhere (say, right after the check starts) would let
+    // a message show over the preparing window or the lock question.
+    expect(main.split("mainWindow.open(").length - 1, "desktop/main.mjs should open the update gate exactly once").toBe(1);
+    // And that one sits inside the ready-to-show callback, after the window is shown and the preparing
+    // window closed: one placed just after the callback would run while the window is still hidden.
+    const ready = readyToShowBody(main);
+    expect(ready.indexOf("mainWindow.open()"), "the gate should open inside win.once(\"ready-to-show\")").toBeGreaterThan(-1);
     expect(ready.indexOf("mainWindow.open()")).toBeGreaterThan(ready.indexOf("win?.show()"));
+    expect(ready.indexOf("mainWindow.open()")).toBeGreaterThan(ready.indexOf("preparing.close("));
     // On one line: the call's own arguments hold braces (a template string), so read to the line's end.
     expect(main).toMatch(/showUpdateProgress\(\{.*whenShown: mainWindow\.whenShown/);
   });
+
+  it("checks only in the installed app, and never when DOTAMI_NO_UPDATE_CHECK is 1", () => {
+    // The desktop tests set the switch on every start (e2e-desktop/desktop.spec.ts); a copy run from
+    // source isn't packaged. Both rest on these three lines.
+    expect(main).toContain('const updatesOn = app.isPackaged && process.env.DOTAMI_NO_UPDATE_CHECK !== "1";');
+    expect(start).toContain("if (updatesOn) void checkForUpdates(false);");
+    expect(main).toMatch(/runUpdateCheck\(\{ on: updatesOn,/);
+  });
 });
+
+/**
+ * The body of the `win.once("ready-to-show", () => { ... })` callback in desktop/main.mjs, found by
+ * counting braces from its opening one. The callback holds no strings or comments with braces in them.
+ */
+function readyToShowBody(source: string): string {
+  const head = 'win.once("ready-to-show", () => {';
+  const at = source.indexOf(head);
+  expect(at, "desktop/main.mjs has no ready-to-show callback").toBeGreaterThan(-1);
+  const open = at + head.length - 1;
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}" && --depth === 0) return source.slice(open + 1, i);
+  }
+  throw new Error("the ready-to-show callback never closes");
+}
