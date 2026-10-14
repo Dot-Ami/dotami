@@ -677,7 +677,7 @@ something handed to an accountant). Per-control behaviour: [docs/ui-spec/plan/_i
   the newest destination, word for word and dated) and their agreed yearly income; the future, who picked
   it, and the ending at each fork; the four gauges; every step of the road, column by column, with the
   person's status, its state and reason, its *done when* lines ticked or not, the skills it needs with the
-  person's marks, its cost lines, official pages and sources with how each was checked; the skills the
+  person's marks, a count of its cost lines, official pages and sources with how each was checked; the skills the
   person marked (names only; the government's list for the job picked shows the marked items and its
   licence's attribution, never the ratings); start-up money in the three kinds of § 6 (an official fee
   with its source and the day it was read or tool-checked; the person's agreed quote as theirs, with its

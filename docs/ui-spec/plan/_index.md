@@ -48,7 +48,7 @@ splits across two pages, and every link is printed as its address (each link's t
    or *Your status: not set*; its state in the map's words (*applies as answered*, *check first*, *not
    on your path*) with road evaluation's reason sentence; *Done when (x of y ticked)* with each line
    marked *ticked* or *not ticked* and its source; the skills it needs, each with the person's mark;
-   its cost lines (below); official pages; and its sources, each with how it was checked
+   how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
    (`lib/engines/shared/citation-check.ts` `howCheckedWords`, and the quotes a tool found).
 5. **Skills you marked** — names only. *On this road's steps*: every skill item the road lists, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
