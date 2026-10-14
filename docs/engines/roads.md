@@ -100,9 +100,20 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     still the rules' call; the hint only says the card is about this step. Don't add a road's cards
     to `lib/brain/`.
 10. **Road order is the order added**, never a ranking (decision 3).
+12. **A step for some kinds of work only says which, and stays on the map** (2026-10-13, issue #40).
+    `onlyForKindsOfWork: { tags, notTold }` on a step: `tags` are the intake's kinds of work
+    (`ACTIVITY_TAXONOMY` in `lib/journey/intent.ts`) any one of which puts it on the path, and `notTold`
+    finishes *"You haven't told DotAmi …"* in plain words. Without one of those kinds of work, road
+    evaluation puts the step off the path with that reason; the step is still drawn and still opens, never
+    removed (the map doesn't pre-filter paths). Use it only where the step's own sources make it about
+    that work (road 0's *SR&ED deepening*: scientific research and experimental development), and keep
+    the tags the same as any rule that already reads them for the step (a test holds road 0's equal to
+    the rules'). The checks refuse an empty list and an empty `notTold`; `tests/roads.spec.ts` refuses a
+    kind of work the intake doesn't ask.
 
 How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
 is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as
 built*](../architecture/future-cockpit.md)). What in a road file it reads: a fork's two sides and the
-`next` arrows decide which steps are on a person's path once they pick, and a step's cost lines count
+`next` arrows decide which steps are on a person's path once they pick, a step's `onlyForKindsOfWork`
+puts it off the path for an idea without one of its kinds of work (rule 12), and a step's cost lines count
 in the sums only while that step is on the path.

@@ -909,6 +909,11 @@ lives in `lib/roads/`.
   order, the first that fits decides:
   1. The person marked the step *not for me*: **not on your path** (*not for me* greys a step; it
      doesn't remove it, § 8).
+  1a. *(2026-10-13, issue #40.)* The road writes the step for some kinds of work only
+     (`onlyForKindsOfWork` on the step) and none of the idea's kinds of work is one of them: **not on
+     your path**, with the step's own reason. Road 0's *SR&ED deepening* is the one such step today. With
+     one of those kinds of work, the next rule decides, as before. Below, *Steps for some kinds of work
+     only, as built*.
   2. Today's rules colour the step (every step of road 0, by its id): the rules' colour, exactly as
      the map shows it today. Green is **applies**, amber **check first**, grey **not on your path**. The
      reason names the answers that colour depends on, found the way receipts are: the rules run again
@@ -1012,6 +1017,48 @@ lives in `lib/roads/`.
   money counted, so both endings are off while what comes after one of them applies. Whether those
   steps should go grey too, or the fork should read as unpicked, is the maintainer's call; until then
   it is built the simple way. (§ 13.)
+
+### Steps for some kinds of work only, as built (2026-10-13)
+
+Issue #40, from the first run as a stranger (2026-09-20): a sign painter's map drew *SR&ED deepening*
+(Tier 4), a research tax credit step, as **ahead**, which reads as a step that idea is headed toward. The
+rules already coloured it grey without a research kind of work, but the chip said *ahead*, the card had
+no reason line, and its *Why this colour* said *"Today's rules give it this colour; no single answer of
+yours changes that."*, which isn't true: a kind of work would.
+
+The issue asks for the card not to be drawn. It is drawn, the way the road already treats a step that
+isn't on a person's path: CLAUDE.md, *Every path, in the open*, says the map doesn't pre-filter paths
+by what it thinks the reader should want, and a step that isn't drawn can't be read or brought back.
+Whether to hide it anyway is the maintainer's call (§ 13).
+
+- **The rule is the road's, in the catalog.** A road step may carry `onlyForKindsOfWork`: `tags`, the
+  intake's kinds of work (activity tags, `lib/journey/intent.ts` `ACTIVITY_TAXONOMY`) any one of which
+  puts the step on the path, and `notTold`, what the idea hasn't told DotAmi without one, in plain words.
+  Road 0 sets it on *SR&ED deepening* only, with the three kinds of work today's rules already read for
+  that step (Software / SaaS, Manufacturing, AI / ML / R&D; `computeNodeStates` in `lib/brain/evaluate.ts`)
+  and *"this idea involves research and development"*. A test holds the two lists equal, so the step can
+  never be off the path for a kind of work the rules would light it for, or the other way round. The ids
+  are unchanged. The checks (`roadProblems`) refuse an empty list and an empty `notTold`, and
+  `tests/roads.spec.ts` a kind of work the intake doesn't ask (the catalogs import nothing from the
+  intake, so that check is the test's).
+- **Road evaluation** (rule 1a above): with none of those kinds of work, the step is **not on your path**,
+  reason `{ kind: "kinds-of-work", tags }`, because *"You haven't told DotAmi this idea involves research
+  and development: none of its kinds of work is Software / SaaS, Manufacturing or AI / ML / R&D."* An idea
+  with no kinds of work at all (one saved from *Pick a future*) reads the same. *Not for me* still comes
+  first. With one of them the rules decide as before: amber (**check first**) for a corporation, grey for
+  a sole proprietorship, its reason naming the structure. Its cost lines (none today) are left out of the
+  sums while it is off the path, like any step off the path.
+- **On the map** (cockpit only, where road evaluation runs): the card is drawn dashed, its chip says
+  **not on your path** instead of *ahead*, its lever cards are hidden (none apply without a research kind
+  of work anyway), and the reason sentence is its line under the trigger, also read out as the card's
+  description. It still opens the step panel, whose *Why this colour* gives the same sentence and keeps
+  every *done when* line and source. `lib/cockpit/view.ts` `mapPlace` gives such a step the map's
+  *not on your path* place; the words are road evaluation's (`lib/roads/words.ts`). Drawn without road
+  evaluation (`tests/road-map.spec.ts`), the map is unchanged.
+- **Not changed:** *Incorporation for liability/SR&ED* (Tier 3) is about liability as well as research,
+  so it is not a research-only step and keeps its colours and its line. The readout API and the playbook
+  export still give *SR&ED deepening* the map's worked-out chip (*ahead*) beside its grey colour: they
+  don't run road evaluation yet.
 
 ### The first written future as built (2026-10-12)
 
@@ -1683,6 +1730,12 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - ***Not for me* on the side picked at a fork.** Whether the steps only that side leads to go grey
   too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
   evaluation as built*).
+- **Hide a research step, or draw it off the path?** Issue #40 asks for *SR&ED deepening* not to be
+  drawn without a research kind of work; it is drawn off the path with its reason instead (§ 6, *Steps for
+  some kinds of work only, as built*), because the map doesn't pre-filter paths. Hiding it would take a
+  step out of sight that a person can't then read or bring back without knowing to go back to the
+  intake; drawing it keeps it one click away, at the cost of a dashed card on every map without one of
+  the three kinds of work. The maintainer's call.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks. When a person reads
   them in the Registry Agent Product Catalogue, each amount goes into the official fees catalog
