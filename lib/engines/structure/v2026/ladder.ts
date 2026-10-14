@@ -49,14 +49,19 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Register for a GST/HST account",
+        title: "Register as a resident with a Canadian business",
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/gst-hst-businesses/register-account.html, read 2026-06-08) answered
         // 404 on 2026-10-13. The CRA's GST/HST page now sends registering to Business Registration
-        // Online on this page; a tool found these words on it that day.
+        // Online on this page; a tool found this sentence, which names GST/HST accounts, on it that day.
         url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/business-number-program-account/how-register/resident.html",
-        toolCheck: { checkedOn: "2026-10-13", quotes: ["is the fastest and easiest way to get a business number"] },
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Registering online is the fastest and easiest way to get a business number (BN) and certain CRA program accounts such as GST/HST and payroll.",
+          ],
+        },
         note: "CRA guidance on registering for GST/HST.",
       },
       {
@@ -177,16 +182,21 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Guidance on the application of the split income rules for adults",
+        title: "Line 40424 – Tax on split income",
         authority: "CRA",
         jurisdiction: "CA",
         // Moved: the old address (…/tax-free-savings-account/tfsa/tax-on-split-income.html, read
-        // 2026-06-08) answered 404 on 2026-10-13. This is the CRA's guidance on the tax on split income
-        // (TOSI); a tool found these words on it that day.
-        url: "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/federal-government-budgets/income-sprinkling/guidance-split-income-rules-adults.html",
+        // 2026-06-08) answered 404 on 2026-10-13. The CRA's line 40424 page states the tax on split
+        // income (TOSI) as it is law today (the glossary cites it too); its income-sprinkling guidance
+        // page explains the same tax, but as the draft proposals of December 13, 2017, so it isn't used
+        // here. A tool found these words on the line 40424 page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-40424-federal-tax-on-split-income.html",
         toolCheck: {
           checkedOn: "2026-10-13",
-          quotes: ["will generally include dividends or interest, but not salary, paid by a private", "subject to tax at the top marginal rate"],
+          quotes: [
+            "Tax on split income (TOSI) is a special tax that applies to certain income received from a related business.",
+            "Split income includes taxable dividends on shares of a corporation (other than shares of a class listed on a designated stock exchange and those of a mutual fund corporation) that you received directly, or through a partnership or a trust (other than a mutual fund trust).",
+          ],
         },
         note: "CRA TOSI rules affecting dividends to related persons.",
       },

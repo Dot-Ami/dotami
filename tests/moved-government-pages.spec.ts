@@ -106,8 +106,10 @@ const MOVED: { old: string; now: { where: string; url: string }[] }[] = [
     old: `${CRA}/tax/individuals/topics/tax-free-savings-account/tfsa/tax-on-split-income.html`,
     now: [
       {
+        // The CRA's line 40424 page states the tax as it is law today. Its income-sprinkling guidance
+        // page also explains it, but as the draft proposals of December 13, 2017.
         where: "structure structure-family-trust",
-        url: "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/federal-government-budgets/income-sprinkling/guidance-split-income-rules-adults.html",
+        url: `${CRA}/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-40424-federal-tax-on-split-income.html`,
       },
     ],
   },
@@ -118,8 +120,9 @@ const MOVED: { old: string; now: { where: string; url: string }[] }[] = [
 ];
 
 /**
- * Dead on 2026-10-13 and left for a person: the Alberta Investor Tax Credit page (the program was
- * closed to new applications in 2019, so the entry itself may be out of date), and the two sources of
+ * Dead on 2026-10-13 and left for a person: the Alberta Investor Tax Credit page (it answers page not
+ * found; news reports say the program ended in 2019, not checked against an official page, so the
+ * entry itself may be out of date), and the two sources of
  * the Retained earnings planning stage, titled "Paying dividends" and "Salary or dividends", whose one
  * old address was a corporation-return line about dividends received; no current CRA page on either
  * subject was found. Each stays exactly as it was until a person decides.
@@ -179,7 +182,40 @@ describe("government pages that moved", () => {
     }
   });
 
-  it("the intake's write-offs card links to the business expenses page where it is now", () => {
+  // A card shows a tool check's quotes as "the exact words this entry relies on", so each must say
+  // what the entry is about: not a phrase cut off before its subject, a page's disclaimer, or a line
+  // from a worked example.
+  /** The quotes of the citation an entry has on its new page (the page as MOVED lists it). */
+  const quotesOf = (where: string, page: string) => {
+    const url = MOVED.flatMap((m) => m.now).find((n) => n.where === where && n.url.endsWith(page))?.url;
+    expect(url, `${where} on …${page}`).toBeDefined();
+    return listed.filter((l) => l.where === where && l.citation.url === url).flatMap((l) => l.citation.toolCheck?.quotes ?? []);
+  };
+
+  it("the GST/HST registration source quotes the words that name GST/HST", () => {
+    const quotes = quotesOf("structure structure-sole-prop-gst", "/how-register/resident.html");
+    expect(quotes.length).toBeGreaterThan(0);
+    expect(quotes.some((q) => q.includes("GST/HST")), quotes.join(" · ")).toBe(true);
+  });
+
+  it("the split-income source quotes the rule itself, not an example", () => {
+    const quotes = quotesOf("structure structure-family-trust", "/line-40424-federal-tax-on-split-income.html");
+    expect(quotes).toContain("Tax on split income (TOSI) is a special tax that applies to certain income received from a related business.");
+    expect(quotes.filter((q) => q.includes("top marginal rate"))).toEqual([]);
+  });
+
+  it("the SR&ED glossary source quotes a definition the stage relies on, not the page's disclaimer", () => {
+    const quotes = quotesOf("cfe stage-4-sred-deepening", "/glossary.html");
+    expect(quotes.filter((q) => q.includes("information purposes only"))).toEqual([]);
+    expect(
+      quotes.some((q) => q.startsWith("The systematic investigation or search called for in the definition of SR&ED")),
+      quotes.join(" · "),
+    ).toBe(true);
+  });
+
+  // The goal card's `source` link is read by no screen today (2026-10-13); it is kept pointing at a
+  // live page so it is right whenever a screen does show it.
+  it("the write-offs goal's link points at the business expenses page where it is now", () => {
     const href = GOAL_EFFECTS["write-offs"].source?.href;
     expect(href).toBe(`${SOLE_PROP}/business-expenses.html`);
   });

@@ -216,10 +216,15 @@ What was done, for each dead address:
   otherwise say "Read on 2026-06-08" next to a page nobody has read. A comment beside the `url` keeps
   the old address and its read date. The card shows the tool check in amber until a person reads the
   page. 23 citations on 19 addresses moved this way. Where the new page has a different name, the
-  `title` names it.
+  `title` names it. A card shows the quotes as "the exact words this entry relies on", so each is a
+  whole sentence, or a whole phrase that names the entry's subject: never words cut off before their
+  subject, a page's disclaimer, or a line from a worked example. Where two pages carry the content, the
+  one that states the rule as it is today is cited (the tax on split income cites the CRA's line 40424
+  page, not its guidance on the 2017 draft proposals).
 - **Where no current page carries those words**, the citation is left exactly as it was, for the
   maintainer: the entry's claim may have changed, and no tool rewrites a rule. Three citations, on two
-  addresses: the Alberta Investor Tax Credit (Alberta closed the program to new applications in 2019),
+  addresses: the Alberta Investor Tax Credit (its page answers page not found; news reports say the
+  program ended in 2019, not checked against an official page),
   and the two sources of the *Retained earnings planning* stage, "Paying dividends" and "Salary or
   dividends", which shared one address that was a corporation-return line about dividends received.
 

@@ -372,9 +372,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   19 of those addresses now link the page where the same government keeps that content, and each says
   *Checked by a tool on 2026-10-13* with the words found there, until a person reads it (the old read
   date was for the old page, so it no longer shows). Three sources are left as they were for the
-  maintainer: the Alberta Investor Tax Credit page (the program closed to new applications in 2019) and
-  the two sources of *Retained earnings planning*. The intake's write-offs card links the moved Business expenses page too
-  (`tests/moved-government-pages.spec.ts`).
+  maintainer: the Alberta Investor Tax Credit page (it answers page not found; news reports say the
+  program ended in 2019, not checked against an official page) and the two sources of *Retained earnings
+  planning* (`tests/moved-government-pages.spec.ts`).
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
