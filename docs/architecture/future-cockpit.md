@@ -659,6 +659,40 @@ answer, before and after it or with and without it. Choices made while building 
   the export gaining the told list; the yearly income question and taking it back; a receipt per
   keystroke in the *I'd incorporate at* box; folding the rail and phone width (their own items).
 
+### Your plan as built (2026-10-13)
+
+§ 1 row 9's *Your plan*, as a page of its own (issue #41: the export read as developer text, odd for
+something handed to an accountant). Per-control behaviour: [docs/ui-spec/plan/_index.md](../ui-spec/plan/_index.md).
+
+- **Where.** `/plan?venture=<idea id>`, opened from the cockpit's **Export** panel (*Open your plan to read
+  or print*), which keeps **Copy markdown** and **Save as .md** as they were. **← Back to the cockpit**
+  goes back.
+- **What it is made from.** Only what DotAmi keeps for the idea and the catalogs, read on the server for
+  each visit (`lib/futures/read-plan.ts`: the saved idea, what `GET /api/futures/<id>` gives, the idea's
+  figures), turned into one road-evaluation input the way the cockpit turns it (`lib/cockpit/view.ts`
+  `cockpitInput`, with no what-if), and laid out by one pure function, `lib/cockpit/plan.ts` `buildPlan`,
+  which runs road evaluation and the told list itself. So the plan's states, sums and told rows are the
+  cockpit's, from the same functions, never a second reading.
+- **What it shows**, in order: the person's words (the sentence typed for the idea and, when different,
+  the newest destination, word for word and dated) and their agreed yearly income; the future, who picked
+  it, and the ending at each fork; the four gauges; every step of the road, column by column, with the
+  person's status, its state and reason, its *done when* lines ticked or not, the skills it needs with the
+  person's marks, its cost lines, official pages and sources with how each was checked; the skills the
+  person marked (names only; the government's list for the job picked shows the marked items and its
+  licence's attribution, never the ratings); start-up money in the three kinds of § 6 (an official fee
+  with its source and the day it was read or tool-checked; the person's agreed quote as theirs, with its
+  day and where it came from; a named line not priced yet with no amount); *What you've told DotAmi*,
+  row for row; and the standing not-advice line.
+- **Print.** `window.print()`, so the computer's own print window, with *Save as PDF*. Print styles (in
+  `app/globals.css` and Tailwind's `print:` variant): no bar, no footer, black on white, a new page per
+  section, a step never split, every link printed as its address (the link's text is the address).
+  The desktop app needs nothing: Electron's `window.print()` opens Windows' print window, and nothing
+  in `desktop/` blocks it.
+- **Nothing kept, nothing sent.** No new table, column, browser key, route or request; the page is one
+  load from DotAmi's own server. Every sentence is in `lib/cockpit/words.ts` (`plan`); amounts and months
+  go through `lib/format/money-and-months.ts`; the verdict-word check covers them.
+- **Not in it:** the what-if (never kept), *This visit* and *Not told yet*; a Lens summary of any kind.
+
 ## 3. What DotAmi asks, why, and how it's kept
 
 No question is asked unless something on screen depends on it. Each says why it is asked and what it
