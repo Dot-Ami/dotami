@@ -6,7 +6,10 @@ idea, on the server), `components/cockpit/plan-page.tsx` (draws it), `components
 `lib/cockpit/words.ts` `plan` · Reads: `lib/futures/read-plan.ts`
 
 Last updated: 2026-10-13 (first written, before the code; issue #41; design: docs/architecture/future-cockpit.md
-§ 1 row 9 and § 2, *Your plan as built*)
+§ 1 row 9 and § 2, *Your plan as built*). Same day, after review: the app's footer hidden on paper on the
+plan only, the not-advice line on the first page too, *In your words* and *Skills and requirements, with
+your marks* as headings, the destination's line saying it isn't tied to one idea, a failed read said as a
+failed read, and printing from the desktop app marked as not yet tried.
 
 ## Page job
 
@@ -23,14 +26,17 @@ print window.
 
 On screen: a bar along the top with **← Back to the cockpit** and **Print**, then one sheet in the
 paper colour, the sections below in this order. On paper (print media): the bar is gone, the app's footer
-is gone, the sheet is black on white, each section after the first starts on a new page, a step never
+is gone on this page only (`app/globals.css`; every other page keeps the footer's not-advice line on
+paper), the sheet is black on white, each section after the first starts on a new page, a step never
 splits across two pages, and every link is printed as its address (each link's text is its address).
 
-1. **Heading** — *Your plan*, the idea's name, and *"Made on <day> from what DotAmi keeps for this idea
-   on this computer."* (the day is the computer's own day, YYYY-MM-DD).
-2. **Where you want to be, in your words** — the sentence typed on the front door for this idea, in
+1. **Heading** — *Your plan*, the idea's name, *"Made on <day> from what DotAmi keeps for this idea
+   on this computer."* (the day is the computer's own day, YYYY-MM-DD), and the standing line of
+   section 8, so the first page carries it as well as the last.
+2. **In your words** — the sentence typed on the front door for this idea, in
    quotes, word for word, with *"typed for this idea · <day>"*; and the person's newest answer to
-   *where do you want to be* (*"where you want to be · your words · <day>"*) when it is a different
+   *where do you want to be* (*"where you want to be · your words, not tied to one idea · <day>"*: the
+   destination is the person's, kept for no one idea) when it is a different
    sentence. Neither is summarised, shortened or read by a rule. None kept: *"No words of yours are kept
    for this idea."* The yearly income the person agreed to, when there is one, in the goal bar's own
    words (*"Your target: $X a year, before tax (yours, agreed <day>)"*); a proposed or turned-down one is
@@ -50,7 +56,7 @@ splits across two pages, and every link is printed as its address (each link's t
    marked *ticked* or *not ticked* and its source; the skills it needs, each with the person's mark;
    how many cost lines it has (the lines themselves are under *Start-up money*, by step); official pages; and its sources, each with how it was checked
    (`lib/engines/shared/citation-check.ts` `howCheckedWords`, and the quotes a tool found).
-5. **Skills you marked** — names only. *On this road's steps*: every skill item the road lists, once,
+5. **Skills and requirements, with your marks** — names only. *On this road's steps*: every skill item the road lists, marked or not, once,
    with *legal requirement* / *listed skill* and the person's mark (*have*, *learning*, *not yet*, or
    *not marked*). *Your own skills*: each with its mark and day. *Your pick of job*: the job's name and
    code and the day picked, the items the person marked (names only, never the government's ratings),
@@ -59,7 +65,7 @@ splits across two pages, and every link is printed as its address (each link's t
 6. **Start-up money** — every cost line on the road, by step, in the three kinds and nothing else:
    - an **official fee** shows its amount, *official fee*, its source's title and address, and how and
      on which day the source was read or checked by a tool; a fee that applies only sometimes shows its
-     condition and *"Not added to any total."*;
+     condition (a condition that ends in a full stop gets no second one) and *"Not added to any total."*;
    - **your quote** shows the amount as the person's (*"your quote · agreed <day>, from <quote / link /
      receipt / your guess>"*);
    - a **named line not priced yet** shows its name and *not priced yet*, and no amount at all: never
@@ -82,8 +88,9 @@ splits across two pages, and every link is printed as its address (each link's t
 |---|---|---|
 | **Open your plan to read or print** (a link in the cockpit's Export panel, under Copy markdown and Save as .md) | opens `/plan?venture=<id>` in the same tab, for the idea on screen. An idea not saved yet (only in this tab) has no id: the link is replaced by *"Save this idea first: the plan is made from what DotAmi keeps."* | — |
 | **← Back to the cockpit** | opens `/cockpit?venture=<id>` | — |
-| **Print** | calls the browser's `window.print()`: the computer's own print window opens, where the person picks a printer or *Save as PDF*. In the desktop app it is Electron's same call, which opens Windows' print window (nothing in `desktop/` changes for it). DotAmi sends nothing anywhere; where the paper or the PDF goes is the person's choice | — |
+| **Print** | calls the browser's `window.print()`: the computer's own print window opens, where the person picks a printer or *Save as PDF*. In the desktop app it is Electron's same call, expected to open Windows' print window; not yet tried in the packaged app (nothing in `desktop/` changes for it, and nothing there blocks it). DotAmi sends nothing anywhere; where the paper or the PDF goes is the person's choice | — |
 | No idea with that id | *"DotAmi keeps no idea with this id on this computer."* and a link to *Your futures* | — |
+| The data file couldn't be read just now (locked, say) | *"DotAmi couldn't read this idea from the data file just now; nothing was changed."* and **← Back to the cockpit** for the same idea; never the not-found sentence, since the idea may well be there. Nothing is logged | — |
 
 ## Page-level state
 
@@ -105,6 +112,10 @@ lands. The what-if, receipts of this visit and folded regions are not part of it
 
 `tests/cockpit-plan.spec.ts` (each section of `buildPlan`, a blank stays blank, an official fee's source
 and day, a quote as the person's, the person's words verbatim, the told list, the standing line, no
-verdict words, no sentence written in the component) · `e2e/plan.spec.ts` (open an idea's cockpit →
-Export → the plan → the sections → print media hides the bar and the footer, breaks between sections,
-no request leaves DotAmi's own server).
+verdict words, no sentence written in the component, every line the plan holds drawn on the page, the
+standing line in the heading, the whole plan unchanged by a what-if that relights a step, the headings
+saying only what is under them) · `tests/plan-route.spec.ts` (a failed read said as a failed read, never
+as no such idea; nothing logged) · `e2e/plan.spec.ts` (open an idea's cockpit → Export → the plan → the
+sections, the tick made in the cockpit as a told row → print media hides the bar and the footer, keeps
+the standing line on the first page, breaks between sections, no request leaves DotAmi's own server; the
+cockpit, *Your futures* and *Your data* keep the footer's not-advice line on paper).

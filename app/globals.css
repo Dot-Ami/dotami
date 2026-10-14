@@ -115,10 +115,15 @@
 
 /* Your plan on paper (docs/ui-spec/plan/_index.md, issue #41): white paper and black ink whatever the
    screen's colours, and the dark page around the sheet gone. The sheet itself switches with Tailwind's
-   print: variant (components/cockpit/plan-page.tsx); the app's footer hides itself (app/layout.tsx). */
+   print: variant (components/cockpit/plan-page.tsx). The app's footer is hidden on paper only here, on a
+   drawn plan (its sheet is the article), which prints its own not-advice line on its first and last pages;
+   every other page, and the plan's not-found page, keeps the footer's line on paper. */
 @media print {
   @page {
     margin: 16mm;
+  }
+  body:has(.plan-page > article) > footer {
+    display: none;
   }
   html,
   body:has(.plan-page),

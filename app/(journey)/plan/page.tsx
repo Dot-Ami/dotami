@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { PlanNotFound, PlanPage } from "@/components/cockpit/plan-page";
-import { buildPlan } from "@/lib/cockpit/plan";
+import { PlanNotFound, PlanPage, PlanReadFailed } from "@/components/cockpit/plan-page";
+import { buildPlan, type PlanArgs } from "@/lib/cockpit/plan";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { dayOnThisComputer } from "@/lib/futures/person";
 import { readPlan } from "@/lib/futures/read-plan";
@@ -21,13 +21,16 @@ export const metadata: Metadata = { title: `${cockpitWords.plan.title} · DotAmi
 export default async function PlanRoutePage({ searchParams }: { searchParams?: Promise<{ venture?: string }> }) {
   const ventureId = (await searchParams)?.venture?.trim() || null;
   if (!ventureId) return <PlanNotFound />;
-  let args = null;
+  const backHref = `/cockpit?venture=${encodeURIComponent(ventureId)}`;
+  let args: PlanArgs | null;
   try {
     args = await readPlan(prisma, ventureId, dayOnThisComputer(new Date()));
   } catch {
-    // No database reachable, or no idea with this id: the page says DotAmi keeps none, and nothing is logged.
-    args = null;
+    // The read failed (the file locked or unreachable). That is not "no such idea": the page says the read
+    // failed and nothing changed. Nothing is logged, as before.
+    return <PlanReadFailed backHref={backHref} />;
   }
+  // Null only when DotAmi keeps no idea with this id.
   if (!args) return <PlanNotFound />;
-  return <PlanPage view={buildPlan(args)} backHref={`/cockpit?venture=${encodeURIComponent(ventureId)}`} />;
+  return <PlanPage view={buildPlan(args)} backHref={backHref} />;
 }

@@ -148,6 +148,8 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/70 print:text-black">{view.title}</p>
           <h1 className="mt-1 font-serif text-[28px] font-bold leading-tight tracking-tight">{view.ideaName}</h1>
           <p className="mt-1 text-[12px] text-ink/80 print:text-black">{view.made}</p>
+          {/* The standing line on page 1 as well as the last page, for a page handed over on its own. */}
+          <p className="mt-2 text-[12px] italic text-ink/80 print:text-black">{view.notAdvice}</p>
         </header>
 
         <Section id="words" index={0}>
@@ -298,6 +300,25 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
           <p>{view.notAdvice}</p>
         </Section>
       </article>
+    </div>
+  );
+}
+
+/**
+ * The data file couldn't be read just now (locked by another program, say). The idea may well be there,
+ * so the page says the read failed and nothing changed, never that the idea is gone, and offers the way
+ * back to the same idea's cockpit.
+ */
+export function PlanReadFailed({ backHref }: { backHref: string }) {
+  return (
+    <div className="px-4 py-10">
+      <div className="mx-auto max-w-[620px] text-center">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{words.plan.title}</p>
+        <p className="mt-3 text-sm text-paper-dim">{words.plan.readFailed}</p>
+        <Link href={backHref} className="mt-4 inline-block text-[12px] text-maple hover:underline">
+          {words.plan.back}
+        </Link>
+      </div>
     </div>
   );
 }

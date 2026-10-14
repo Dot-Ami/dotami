@@ -546,7 +546,7 @@ answer, before and after it or with and without it. Choices made while building 
   answers through the map's save (the structure back to *not set*, a map pick back to the map's default,
   the person's *I'd incorporate at* number cleared, and so on). The receipt for a take back is therefore
   exactly the row's *what it unlocked*, read the other way. Rows with no take back say why (*the map
-  needs it*; *take back figures on Your ideas*). A yearly income target has no route to take it back
+  needs it*; *take back figures on Your futures*). A yearly income target has no route to take it back
   yet, and no screen asks for it yet, so its row shows no buttons.
 - **Not told yet** lists, in a fixed order that is the order DotAmi asks them and never importance: your
   date; your savings; your numbers for the cost lines not priced yet; your marks on the skills not
@@ -677,19 +677,25 @@ something handed to an accountant). Per-control behaviour: [docs/ui-spec/plan/_i
   the newest destination, word for word and dated) and their agreed yearly income; the future, who picked
   it, and the ending at each fork; the four gauges; every step of the road, column by column, with the
   person's status, its state and reason, its *done when* lines ticked or not, the skills it needs with the
-  person's marks, a count of its cost lines, official pages and sources with how each was checked; the skills the
-  person marked (names only; the government's list for the job picked shows the marked items and its
+  person's marks, a count of its cost lines, official pages and sources with how each was checked; the
+  skills and requirements the road lists, each with the person's mark or *not marked*, and the person's
+  own skills (names only; the government's list for the job picked shows the marked items and its
   licence's attribution, never the ratings); start-up money in the three kinds of § 6 (an official fee
   with its source and the day it was read or tool-checked; the person's agreed quote as theirs, with its
   day and where it came from; a named line not priced yet with no amount); *What you've told DotAmi*,
-  row for row; and the standing not-advice line.
+  row for row; and the standing not-advice line, which is also in the heading, so the first page carries
+  it. The words' heading is *In your words*: the idea's own sentence isn't the person's statement of where
+  they want to be, and the destination's line says it isn't tied to one idea.
 - **Print.** `window.print()`, so the computer's own print window, with *Save as PDF*. Print styles (in
-  `app/globals.css` and Tailwind's `print:` variant): no bar, no footer, black on white, a new page per
-  section, a step never split, every link printed as its address (the link's text is the address).
-  The desktop app needs nothing: Electron's `window.print()` opens Windows' print window, and nothing
-  in `desktop/` blocks it.
-- **Nothing kept, nothing sent.** No new table, column, browser key, route or request; the page is one
-  load from DotAmi's own server. Every sentence is in `lib/cockpit/words.ts` (`plan`); amounts and months
+  `app/globals.css` and Tailwind's `print:` variant): no bar, no footer on this page (every other page
+  keeps the footer's not-advice line on paper), black on white, a new page per section, a step never
+  split, every link printed as its address (the link's text is the address). In the desktop app,
+  Electron's `window.print()` is expected to open Windows' print window, and nothing in `desktop/`
+  blocks it; it has not yet been tried in the packaged app.
+- **A failed read.** When the data file can't be read just now, the page says so and that nothing was
+  changed, with the way back to the cockpit; *no idea with this id* is said only when the read found none.
+- **Nothing kept, nothing sent.** No new table, column, browser key, API route or request; one new page,
+  one load from DotAmi's own server. Every sentence is in `lib/cockpit/words.ts` (`plan`); amounts and months
   go through `lib/format/money-and-months.ts`; the verdict-word check covers them.
 - **Not in it:** the what-if (never kept), *This visit* and *Not told yet*; a Lens summary of any kind.
 

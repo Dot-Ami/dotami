@@ -251,11 +251,11 @@ export const cockpitWords = {
     none: "Nothing yet. Each answer you give shows here, with its day.",
     /** The intake's answers and road 0's map picks keep no day of their own; one is never borrowed. */
     dayNotKept: "day not kept",
-    dayOnYourIdeas: "each figure's day is on Your ideas",
+    dayOnYourIdeas: "each figure's day is on Your futures",
     unlocked: "What it unlocked",
     nothingChanged: "Nothing on the road changes with or without it.",
     required: "The map needs this answer: it can be changed, not taken back.",
-    figuresElsewhere: "Take these back with the idea's figures on Your ideas.",
+    figuresElsewhere: "Take these back with the idea's figures on Your futures.",
     noRoute: "This can't be taken back here yet.",
     change: "Change",
     takeBack: "Take back",
@@ -424,20 +424,25 @@ export const cockpitWords = {
     open: "Open your plan to read or print",
     notSaved: "Save this idea first: the plan is made from what DotAmi keeps.",
     notFound: "DotAmi keeps no idea with this id on this computer.",
+    /** The data file couldn't be read just now (locked, say): never said as "no such idea". */
+    readFailed: "DotAmi couldn't read this idea from the data file just now; nothing was changed.",
     back: "← Back to the cockpit",
     print: "Print",
     printHelp: "Print opens your computer's print window, where you can also save it as a PDF.",
     sections: {
-      words: "Where you want to be, in your words",
+      // Neutral: the idea's own sentence isn't "where you want to be"; the line under each quote says which it is.
+      words: "In your words",
       road: "The future and its ending",
       steps: "Each step",
-      skills: "Skills you marked",
+      // It lists every item the road names, marked or not, legal requirements among them.
+      skills: "Skills and requirements, with your marks",
       money: "Start-up money",
       told: "What you've told DotAmi",
       notAdvice: "What this plan is",
     },
     typedFor: (day: string) => `typed for this idea · ${day}`,
-    destination: (day: string) => `where you want to be · your words · ${day}`,
+    /** The newest destination is the person's own, kept for no one idea, and its line says so. */
+    destination: (day: string) => `where you want to be · your words, not tied to one idea · ${day}`,
     wordsNone: "No words of yours are kept for this idea.",
     roadChosen: (day: string | null) => (day ? `You picked this future on ${day}.` : "You picked this future."),
     roadDefault: "No future picked: this idea is drawn on the general road.",

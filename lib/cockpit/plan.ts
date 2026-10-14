@@ -9,7 +9,7 @@ import type { BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 
-import { dayOfMoment, toldRows, type KeptAnswers } from "./told";
+import { dayOfMoment, toldDay, toldRows, type KeptAnswers } from "./told";
 import { gaugeView } from "./view";
 import { cockpitWords as words } from "./words";
 
@@ -218,7 +218,10 @@ export function buildPlan(args: PlanArgs): PlanView {
         label: line.label,
         amount: formatMoney(line.amountCents),
         kind: words.plan.costKind["official-fee"],
-        note: line.onlyIf !== undefined ? words.panel.onlyIf(line.onlyIf) : null,
+        // A catalog's condition may end in a full stop of its own, and the step panel's words add one; the
+        // plan drops the condition's so paper never reads "rewrite it.. Not added". (The step panel itself
+        // still doubles it: its words are pinned byte for byte by tests/cost-panels-unchanged.spec.ts.)
+        note: line.onlyIf !== undefined ? words.panel.onlyIf(line.onlyIf.replace(/\.+$/, "")) : null,
         source: source(line.citation),
       };
     }
@@ -251,7 +254,7 @@ export function buildPlan(args: PlanArgs): PlanView {
   // --- What you've told DotAmi: the cockpit's left list, row for row.
   const told = toldRows(input, evaluation, args.kept).map((row) => ({
     said: row.said,
-    day: row.day ?? (row.takeBack.kind === "none" && row.takeBack.why === "figures" ? words.told.dayOnYourIdeas : words.told.dayNotKept),
+    day: toldDay(row),
     // The list shows nothing for an answer the map needs, and its own line when nothing changes.
     unlocked: row.unlocked === null ? [] : row.unlocked.length === 0 ? [words.told.nothingChanged] : row.unlocked,
   }));

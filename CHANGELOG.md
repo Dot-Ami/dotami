@@ -11,21 +11,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- **Your plan: a page to read and print, from the cockpit's Export** (closes #41) — **Open your plan to
+- **Your plan: a page to read and print, from the cockpit's Export** (part of #41: the Export panel itself
+  still shows the raw markdown) — **Open your plan to
   read or print** in the Export panel opens `/plan?venture=<id>`: one idea's plan laid out for a partner,
   an accountant or a lawyer, with **Print** (the computer's own print window, which also saves a PDF).
-  In order: your words, word for word and dated, and the yearly income you agreed to; the future, who
+  In order: your words, word for word and dated (your newest answer to *where do you want to be* marked
+  as not tied to one idea), and the yearly income you agreed to; the future, who
   picked it, the ending at each fork and the four gauges; every step of the road, column by column, on
   your path or not, with your status, its state and the reason, its *done when* lines ticked or not, the
-  skills it needs with your marks, and its sources with how each was checked; the skills you marked, by
-  name (for your pick of job, only the items you marked, with the licence's line); start-up money in
+  skills it needs with your marks, and its sources with how each was checked; the road's skills and legal
+  requirements, by name, each with your mark or *not marked*, and your own skills (for your pick of job,
+  only the items you marked, with the licence's line); start-up money in
   three kinds, an official fee with its source and the day it was read or checked by a tool, your agreed
   quote as yours with its day and where it came from, and a line not priced yet with no amount, never
   $0; *What you've told DotAmi*, row for row as the cockpit lists it; and the line that DotAmi is not
-  legal or tax advice but a preparation tool for your accountant and lawyer. On paper the buttons and the
-  footer are gone, it prints black on white, each section starts a new page and every link prints as its
-  address. Made only from what DotAmi keeps, by the cockpit's own functions (`lib/cockpit/plan.ts`); it
-  keeps nothing and sends nothing. **Copy markdown** and **Save as .md** stay as they were. Words:
+  legal or tax advice but a preparation tool for your accountant and lawyer, at the end and in the heading,
+  so the first page carries it too. On paper the buttons and the app's footer are gone from this page
+  (every other page still prints the footer's not-advice line), it prints black on white, each section
+  starts a new page and every link prints as its address. If the data file can't be read just now, the
+  page says so and that nothing was changed, never that the idea doesn't exist. Made only from what DotAmi
+  keeps, by the cockpit's own functions (`lib/cockpit/plan.ts`); it keeps nothing and sends nothing.
+  Printing from the desktop app hasn't been tried yet. **Copy markdown** and **Save as .md** stay as they were. Words:
   `lib/cockpit/words.ts` (`plan`); design: `docs/ui-spec/plan/_index.md`.
 - **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
   the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
@@ -382,6 +388,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **The told list names *Your futures*.** Its *"each figure's day is on Your ideas"* and *"Take these back
+  with the idea's figures on Your ideas."* now name the screen by its name since 2026-10-12, *Your
+  futures* (`lib/cockpit/words.ts`; the cockpit's list and Your plan pick a row's day through one
+  function, `lib/cockpit/told.ts` `toldDay`).
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and

@@ -95,6 +95,14 @@ export interface ToldRow {
   takeBack: ToldTakeBack;
 }
 
+/**
+ * The day a told row shows: the day kept with it or, where none is kept, where the figures' days are or
+ * that it isn't kept. One place for the cockpit's list and the plan, so the two can't drift apart.
+ */
+export function toldDay(row: Pick<ToldRow, "day" | "takeBack">): string {
+  return row.day ?? (row.takeBack.kind === "none" && row.takeBack.why === "figures" ? words.told.dayOnYourIdeas : words.told.dayNotKept);
+}
+
 /** The agreed figures behind a planning answer, newest agreed first. */
 function agreedFigures(figures: readonly FigureView[], match: (f: FigureView) => boolean): FigureView[] {
   return figures

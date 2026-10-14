@@ -227,8 +227,8 @@ person is asked).
   data file already holds (the person's words for the idea and their newest destination, their agreed
   income, the road and its ending, step progress, skill marks, agreed cost-line numbers and savings, the
   told list) and the catalogs ([`lib/futures/read-plan.ts`](../lib/futures/read-plan.ts),
-  [`lib/cockpit/plan.ts`](../lib/cockpit/plan.ts)). No new table, column, browser-storage key, route or
-  request; only the idea's id travels in the address, as the cockpit's does. **Print** is the browser's
+  [`lib/cockpit/plan.ts`](../lib/cockpit/plan.ts)). One new page; no new table, column, browser-storage key,
+  API route or request; only the idea's id travels in the address, as the cockpit's does. **Print** is the browser's
   own `window.print()`: the computer's print window opens, and the person picks a printer or a PDF.
 
 ### Packages that ship

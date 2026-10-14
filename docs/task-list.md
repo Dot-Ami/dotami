@@ -577,7 +577,7 @@ roadmap's build order.
   - [ ] #40 hide R&D-only steps without an R&D tag
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
-  - [x] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export)
+  - [ ] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export; the Export panel itself still shows the raw markdown, so whether this closes #41 is the maintainer's call)
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures
