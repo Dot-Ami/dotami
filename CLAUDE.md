@@ -100,10 +100,11 @@ says where it is going.
   (POST the ticked kinds and the counts the person saw; answers only DotAmi's own window) ·
   `figures/bank-sources` (+ `/retire`: list, allow and take back bank and card accounts; answers
   only DotAmi's own window; adding is refused until the bank-records setting is live) · `futures/[id]`
-  (GET what the cockpit keeps for an idea: its road, picks, month and step progress, the person's skill
-  marks, their agreed yearly income, the idea's first sentence and the person's newest destination; + `/progress`,
-  `/date` and `/ending`, POST a step's status or ticks, the person's month, and the ending picked at a fork of a
-  road other than road 0) · `skill-marks` (POST one mark); the four writes answer only DotAmi's own window.
+  (GET what the cockpit keeps for an idea: its road, picks, month, job picked and step progress, the
+  person's skill marks, their agreed yearly income, the idea's first sentence and the person's newest
+  destination; + `/progress`, `/date`, `/ending` and `/job`, POST a step's status or ticks, the person's
+  month, the ending picked at a fork of a road other than road 0, and their pick of job) · `skill-marks`
+  (POST one mark); the five writes answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
@@ -120,8 +121,9 @@ says where it is going.
   newest winning) · `Venture` (with `goals`, the intake's goal chips as they stood when
   the map opened, shown back and read by no rule; and, for the future cockpit, `roadId` (empty = today's
   general road), `forkPicks` (the ending picked at each fork of any road but road 0, whose two picks stay
-  in `ScenarioState.activeBranches`, which the map rewrites on every save) and `targetMonth`, each answer with
-  its moment; since 2026-10-12 `lookingFor` (the *business / career / both* answer, kept with
+  in `ScenarioState.activeBranches`, which the map rewrites on every save), `targetMonth` and, since
+  2026-10-12, `occupationCode` (the job the person picked as closest to their work, for the government's
+  skills list), each answer with its moment; since 2026-10-12 `lookingFor` (the *business / career / both* answer, kept with
   `lookingForSetAt` when Pick a future saves the idea), and an `employmentStatus` of `NOT_SAID` on an idea
   saved that way, which never asks it, with `notSaid` (a JSON list: `venture-type`, `equipment`,
   `sales-targets`) naming the other answers it was saved without, so nothing shows their columns' starting
@@ -135,8 +137,10 @@ says where it is going.
   when* lines, status changes; keyed by permanent ids, deleted with the future; on every road, road 0
   included since 2026-10-12: the map's lists in `ScenarioState` are worked out from its toggles, never the
   person's status) · `SkillMark` (per person,
-  not per future: have / learning / not yet on a shared skill item or the person's own skill; "I don't
-  know" removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
+  not per future: have / learning / not yet on a shared skill item, an item of the government's list for
+  a job (`lib/engines/oasis/v2026/`, OaSIS, shown only for the job the person picks, names only, made by
+  `scripts/import-oasis.mjs` from `data/oasis-2025-v1.0/`), or the person's own skill; "I don't know"
+  removes it) · `PersonFigure` (numbers about the person, not a future: the yearly income they want,
   proposed then agreed, asked on *Your destination*) · `Figure` (the totals
   the person agreed to; [8a]; since 2026-10-11 also two one-day planning numbers, `savings-for-start` and
   `start-up-cost-line`, the latter naming a named cost line on the future's own road; the storage code for

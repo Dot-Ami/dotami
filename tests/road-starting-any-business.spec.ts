@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { allCatalogCitations } from "@/lib/engines/all-citations";
 import { cfeNodesV2026 } from "@/lib/engines/cfe/v2026";
-import { roadStartingAnyBusinessAB, type RoadStep } from "@/lib/engines/roads/v2026";
+import { complianceCatalogV2026 } from "@/lib/engines/compliance/v2026";
+import { roadStartingAnyBusinessAB, skillItemsV2026, type RoadStep } from "@/lib/engines/roads/v2026";
 import type { EngineCitation } from "@/lib/engines/shared/types";
 
 /**
@@ -176,9 +177,8 @@ describe("the three before-you-open steps the design names", () => {
     }
   });
 
-  it("today's ten steps still carry no skill items or links, and only Sole Prop activation has cost lines", () => {
+  it("today's ten steps still carry no links, and only Sole Prop activation has cost lines", () => {
     for (const node of cfeNodesV2026) {
-      expect(step(node.id).needs, node.id).toEqual([]);
       expect(step(node.id).officialLinks, node.id).toEqual([]);
       if (node.id !== START_UP_STEP) expect(step(node.id).costs, node.id).toEqual([]);
     }
@@ -205,6 +205,25 @@ describe("the start-up cost lines the design names, on Sole Prop activation", ()
       // claims a source for its name.
       expect(c, c.id).not.toHaveProperty("nameSource");
     }
+  });
+});
+
+describe("road 0's legal requirements come from the compliance catalog, where it cites one (2026-10-12)", () => {
+  const GST = "skill-ca-gst-hst-registration";
+  const item = () => skillItemsV2026.find((i) => i.id === GST);
+  const rule = complianceCatalogV2026.entries.find((r) => r.id === "compliance-gst-small-supplier")!;
+
+  it("only the mandatory GST/HST registration step needs one: a GST/HST registration", () => {
+    const needing = road.steps.filter((s) => s.needs.length > 0).map((s) => [s.id, s.needs]);
+    expect(needing).toEqual([["stage-2b-mandatory-gst-registration", [GST]]]);
+    expect(item()).toMatchObject({ id: GST, kind: "legal-requirement", label: "A GST/HST registration with the Canada Revenue Agency" });
+  });
+
+  it("carries exactly the compliance entry's citations, and that entry is one of the step's own cards", () => {
+    expect(item()!.citations).toEqual(rule.citations);
+    expect(step("stage-2b-mandatory-gst-registration").engineHints).toContain(rule.id);
+    // The words that make it a requirement are among the quotes the tool found on the CRA's page.
+    expect(quotesOf(...item()!.citations)).toContain("You must register for the GST/HST.");
   });
 });
 

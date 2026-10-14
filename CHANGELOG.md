@@ -79,6 +79,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [future-cockpit.md § 6 and § 13](docs/architecture/future-cockpit.md)). In the cockpit, the Money
   overlay's badge on that card says *7 not priced*, and the Start-up money gauge counts them while the
   step is on your path.
+- **Pick the job closest to your work, and see the government's skills list for it** ([14a]) — in the
+  cockpit's Skills list, an optional search over the 900 jobs of the government's *Occupational and
+  Skills Information System* (OaSIS 2025 Version 1.0, Employment and Social Development Canada, under the
+  Open Government Licence – Canada); once picked, that job's skills and knowledge areas, every item
+  tagged *your pick of job*, with **Have / Learning / Not yet / I don't know** on each, the dataset's page
+  as its source (checked by a tool), the line *This is the government's list for the job you picked.
+  DotAmi doesn't say which skills a business needs.*, and the licence's attribution line, shown while
+  searching too. The search matches every word typed, each anywhere in the job's name or at the start of
+  its code, shows ten at most in the dataset's order and says when more match (*Showing 10 of 56 jobs
+  that match.*). Names only: the government's ratings are kept in the data
+  and not shown while the maintainer decides (item 20). The Skills gauge counts the list apart (*your
+  pick of job: 1 have · 0 learning · 0 not yet, of 44 listed*), and the step panel counts it and opens it
+  without tying it to a step. The pick is kept on the idea (two added columns), set and taken back
+  through `POST /api/futures/<id>/job`, from DotAmi's own window only. The list is built by
+  `node scripts/import-oasis.mjs` from four files committed as downloaded (`data/oasis-2025-v1.0/`),
+  a test redoes the import on every run, and the script's `--download` writes a fetched file only when
+  its SHA-256 is the one pinned for it
+  ([`lib/engines/oasis/v2026/`](lib/engines/oasis/v2026/),
+  [design § 6](docs/architecture/future-cockpit.md)). The third-party notices and `/licences` list it
+  under *Data*.
+- **Today's road lists its one legal requirement** — *Mandatory GST registration* needs *A GST/HST
+  registration with the Canada Revenue Agency*, carrying the compliance catalog's own source for it
+  (`compliance-gst-small-supplier`), so the Skills gauge on today's road now counts one item.
 - **Today's road, *Starting any business in Alberta*, says when each step is done** ([14a]) — 47
   *done when* lines ([`lib/engines/roads/v2026/starting-any-business-ab.ts`](lib/engines/roads/v2026/starting-any-business-ab.ts)):
   three or four on each of the map's ten steps (the tax-return lines for job and business income;

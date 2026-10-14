@@ -375,8 +375,9 @@ function decidedBy(reason: StepEvaluation["reason"], forkId: string): boolean {
  *
  * Worked out from the road's own steps, never from a list of road ids. On today's Alberta road flipping
  * a toggle does move steps (between "check first" and "not on your path"), but the tax rules do that,
- * colouring the sides whichever is picked, and both columns' counts come out the same; so none of its
- * forks is offered, and the map's own toggles pick there. On the apprentice road the pick itself puts
+ * colouring the sides whichever is picked, and both columns' step and money counts come out the same
+ * (only gstTiming's skills rows differ: the mandatory registration step lists the GST/HST legal
+ * requirement, the voluntary one nothing); so none of its forks is offered, and the map's own toggles pick there. On the apprentice road the pick itself puts
  * one ending's steps on the path and the other's off it, so its fork is.
  *
  * The person's step statuses and the what-if are left out of both runs, so the offer is the road's and

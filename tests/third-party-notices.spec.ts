@@ -52,7 +52,7 @@ function fakePackage(nodeModules: string, name: string, version: string, opts: {
   return dir;
 }
 
-/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts). */
+/** A checkout-shaped folder with the pieces collectNotices always reads (Tailwind, the two fonts, the OaSIS data's licence). */
 function fakeCheckout(name: string, dependencies: Record<string, string>) {
   const root = path.join(temp, name);
   const modules = path.join(root, "node_modules");
@@ -60,6 +60,8 @@ function fakeCheckout(name: string, dependencies: Record<string, string>) {
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "dotami", version: "9.9.9", dependencies }));
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-Inter.txt"), "Inter: SIL Open Font License 1.1");
   writeFileSync(path.join(root, "app", "fonts", "LICENSE-JetBrainsMono.txt"), "JetBrains Mono: SIL Open Font License 1.1");
+  mkdirSync(path.join(root, "lib", "engines", "oasis", "v2026"), { recursive: true });
+  writeFileSync(path.join(root, "lib", "engines", "oasis", "v2026", "LICENCE.txt"), "Contains information licensed under the Open Government Licence – Canada.");
   fakePackage(modules, "tailwindcss", "4.0.0");
   return { root, modules };
 }
@@ -140,6 +142,7 @@ describe("collectNotices: what the generator lists, and what stops it", () => {
       "package:tailwindcss",
       "font:Inter (font)",
       "font:JetBrains Mono (font)",
+      "data:OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
     ]);
     expect(entries[0].texts).toEqual([{ file: "LICENSE", text: "Copyright (c) app authors\nMIT terms" }]);
   });
@@ -293,6 +296,15 @@ describe("the list for this checkout", () => {
     const keys = entries.map((e) => `${e.kind}:${e.name}@${e.version}`);
     expect(keys.length).toBeGreaterThan(20);
     expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
+  });
+
+  it("lists the government's skills list as data that ships, with the licence's own attribution line (2026-10-12)", () => {
+    const oasis = entries.filter((e) => e.kind === "data");
+    expect(oasis.map((e) => [e.name, e.licence])).toEqual([["OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)", "OGL-Canada-2.0"]]);
+    expect(oasis[0]!.texts[0]!.file).toBe("LICENCE.txt");
+    expect(oasis[0]!.texts[0]!.text).toContain("Contains information licensed under the Open Government Licence – Canada.");
+    expect(oasis[0]!.texts[0]!.text).toContain("https://open.canada.ca/en/open-government-licence-canada");
+    expect(parseNotices(formatNotices(oasis, { version: "0.0.0-test", desktop: false })).entries[0]!.kind).toBe("data");
   });
 
   it("follows what desktop/package.mjs copies into the installed app", () => {

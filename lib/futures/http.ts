@@ -16,7 +16,7 @@ import { FutureInputError } from "./types";
  */
 
 export const COCKPIT_PAGE_ONLY =
-  "Your progress, your date and your skill marks can only be changed from DotAmi's own window. An outside agent can't change them yet.";
+  "Your progress, your date, your pick of job and your skill marks can only be changed from DotAmi's own window. An outside agent can't change them yet.";
 
 /** A write's guard: DotAmi's own window first (nothing else is read), then the rate limit. */
 export function guardWrite(request: Request, route: string, limit: RateLimitOptions): Response | null {

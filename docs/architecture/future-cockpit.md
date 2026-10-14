@@ -642,7 +642,9 @@ answer, before and after it or with and without it. Choices made while building 
   own steps, never a list of road ids (tested on an invented road whose fork's two sides the rules grey
   whichever is picked: not offered). On today's Alberta road (road 0) flipping a toggle does move a step
   between *check first* and *not on your path*, but the tax rules do that, colouring the sides whichever
-  is picked, and both columns' counts come out the same; so neither of its forks is offered, and its
+  is picked, and both columns' step and money counts come out the same (only the GST fork's skills rows
+  differ, since the mandatory registration step lists the GST/HST legal requirement and the voluntary
+  one lists nothing; that is what each step lists, not the pick); so neither of its forks is offered, and its
   picks are made on the map's toggles (also in the step panel) and in the one-question box. On the
   apprentice road the pick itself puts one ending's steps on the path and the other's off it, so its
   fork is offered. Where no fork is offered the goal bar has no **Compare**
@@ -1192,7 +1194,8 @@ each for a reason:
 - **No card changes.** `tests/cost-panels-unchanged.spec.ts` draws every step panel of both roads (the
   Incorporating stage for an Alberta and a British Columbia idea) and each road's money list, and compares
   them byte for byte with what main drew before the move (`tests/fixtures/official-fees/`; redrawn on
-  2026-10-13 to include #162's two federal "Shown because" lines, the only difference); the map's
+  2026-10-13 to include #162's two federal "Shown because" lines, the only difference, and again the
+  same day for #158's one legal requirement on *Mandatory GST registration*, its only change); the map's
   six saved states (`tests/road-map.spec.ts`) are unchanged too.
 - **Not in the catalog: a fee nobody could read.** Alberta's registry fees (incorporating, registering
   a name, the annual return, a federal corporation registering in Alberta) and the NUANS report stay
@@ -1204,7 +1207,8 @@ each for a reason:
   materials*, *Software*, *Money to live on while starting* (ids `cost-start-…`, permanent). They sit on
   the first step where the business runs, the one every idea on road 0 passes through; the person prices
   each through the agree prompt, and each counts in *N lines not priced yet* until then. `roadFromCfe`
-  gains a third optional input, cost lines by step id, like the *done when* lines.
+  gains a third optional input, cost lines by step id, like the *done when* lines (a fourth, `needs`,
+  came with the skills work below: four in all, as `from-cfe.ts` says).
 - **No source for these names, on purpose.** § 5 planned to cite the BDC and Futurpreneur cash-flow
   templates for the names. Checked on 2026-10-12: BDC's template page names no cost lines (the lines are
   inside a spreadsheet behind a download form); Futurpreneur's page names only insurance among them
@@ -1219,6 +1223,106 @@ each for a reason:
   with *Add your quote*; the Money overlay's badge on its card says *7 not priced*; the Start-up money
   gauge and the money list count seven more lines not priced while that step is on the person's path.
   No amount appears anywhere that DotAmi chose.
+
+### Skills, and the government's list for your pick of job, as built (2026-10-12)
+
+The skills pull request builds the Skills overlay's three kinds of item (§ 2, *Overlays*): legal
+requirements cited to the law or regulator, skills the person adds (*added by you*), and the OaSIS list
+for the job the person picks (*your pick of job*; decision 5). Choices made, each for a reason:
+
+- **Which OaSIS files (settles § 13).** The import reads four files of *OaSIS 2025 Version 1.0*: **Skills**
+  (`skills_oasis_2025_v1.1.csv`) and **Knowledge** (`knowledge_oasis_2025_v.1.1.csv`), the two lists a
+  person can say they have or are learning; **Labels** (`labels_oasis_2025_v1.1.csv`), the job names the
+  picker searches; and the **taxonomy** (`guide_oasis_2025_v4.0.csv`), which gives each skill and
+  knowledge area its code. Left out, for a reason each: *Work Activities* describes what the job does,
+  not something a person has, and belongs to phase 2's *Peek inside* (the government's duties for the job
+  the person picked); *Abilities* are "innate and developed aptitudes" (the taxonomy's words), and asking
+  a person to mark their aptitudes would turn the list into a self-rating; *Personal Attributes*,
+  *Interests* and *Work Context* are traits and working conditions, not skills anyone gets. Adding a file
+  later is one more family in the import, with new ids and nothing renamed.
+- **How much of each list.** Every skill or knowledge area the job's row rates 1 or more. A 0 is left out:
+  the government's own profile page prints it as *"0 – Not applicable"* (checked by a tool on the
+  Cabinetmakers profile, 72311.00, on 2026-10-12). For Cabinetmakers that is 31 of 33 skills and 13 of 44
+  knowledge areas. They are shown in the dataset's own order (the taxonomy's), grouped as *Skills* and
+  *Knowledge*, never by rating: the order is never importance.
+- **Names only (the maintainer's open item 20).** Whether to show the government's ratings ("3 - Moderate
+  Level") is the maintainer's call; the default is names only, so no screen shows one. The ratings stay
+  in the data module, and the function that builds a job's list gives a screen only the item's name, kind,
+  group, tag and citation, so a rating can't reach a screen by accident (a test renders the list and
+  looks for one). The scales differ by file (skills 1 to 5, knowledge 1 to 3), so showing ratings later
+  means showing each with its own scale.
+- **Ids are the taxonomy's codes.** One permanent id per skill or knowledge area, shared by every job:
+  `skill-ca-oasis-` and the taxonomy code in lower case (`skill-ca-oasis-f.01.c.01` is Numeracy). So a
+  mark on Numeracy stays when the person picks a different job, and a later OaSIS version keeps the id as
+  long as it keeps the code. Job codes are the OaSIS profile codes (`72311.00`).
+- **Where the list lives: code, never rows.** A generated module, `lib/engines/oasis/v2026/data.ts`,
+  keyed by job code: each job's name and one digit per rating. It starts with the licence's attribution
+  line (*"Contains information licensed under the Open Government Licence – Canada."*), and a `LICENCE.txt`
+  beside it says where the data comes from; the third-party notices (`/licences`, and Help → Licences in
+  the desktop app) list it like the fonts. It is kept apart from the catalogs' CC BY-SA text (§ 13), and
+  nothing suggests the government endorses DotAmi or the person's use of it (the licence forbids that).
+- **The import can be redone.** The four files are committed as downloaded, under `data/oasis-2025-v1.0/`,
+  and `node scripts/import-oasis.mjs` turns them into the module. The module records each file's SHA-256
+  (of its text with line endings evened out, since git may change them), and `--check` rebuilds it and
+  fails on any difference; a test does the same on every run. `--download` fetches fresh copies from
+  open.canada.ca first, for a new version, and writes each only when its SHA-256 is the one pinned for it
+  in the script (the maintainer's call of 2026-10-13, after GitHub's code scanner flagged the script for
+  writing network data to a file): a file that differs is not written, the script names the expected and
+  the received SHA-256, and a new version is taken by updating the pinned value on purpose. The import refuses a file whose columns don't each match one
+  taxonomy entry, a rating outside its scale, or a job that isn't in every file.
+- **How each item is cited.** Every item carries the tag *your pick of job* and one citation: the dataset's
+  page on open.canada.ca, checked by a tool (option B; the dataset's title, publisher, licence, the day
+  it was published, the day its record was modified, 2026-10-04, and the file names were found word for
+  word), with a note naming the file and the job's code. No item says a person read the page. A link to
+  the job's own OaSIS profile is not offered: it would put the person's pick of job in a link (§ 7).
+- **The pick is kept on the idea.** `Venture.occupationCode` (`72311.00`) and `occupationPickedAt`, two
+  plain added columns (migration `…_job_pick`). `POST /api/futures/<idea id>/job { code }` sets or
+  changes it, `{ code: null }` takes it back; like the other cockpit writes it reads its body through
+  `readJsonWithLimit`, has a rate limit and answers only DotAmi's own window. An unknown code is refused.
+  Reading a future gives `job: { code, label, pickedOn }` or null.
+- **Marks.** A mark on an item from the list is a skill mark like any other, kept for the person (§ 7):
+  the storage accepts an id from the roads' shared list or from the OaSIS list, and refuses anything
+  else. Taking back the pick of job keeps the marks, as deleting an idea does.
+- **Where it shows.** The Skills list behind the Skills gauge gains *Your pick of job*: with none picked,
+  *"Pick the job closest to the work you'd do yourself"*, a search box (every word typed, each anywhere in the
+  name or at the start of the code; the first ten matches in the dataset's order, with *Showing 10 of 56
+  jobs that match.* when more do, and *No job name or code holds those words.* when none does; the
+  licence's line under it) and nothing else asked: it is optional, and skipping it changes nothing. With one picked: its
+  name and code, the day picked, **Change** and **Take back**, then the list in two groups with each
+  row's tag, its marks (**Have · Learning · Not yet · I don't know**), the group's source once under its
+  heading, and two lines: *"This is the government's list for the job you picked. DotAmi doesn't say
+  which skills a business needs."* (it says nothing about whom the list describes: the government's own
+  profiles list *Self-employed* among a job's workplaces, for example Cabinetmakers, 72311.00, read
+  2026-10-12) and the attribution line. The step panel keeps
+  listing only what the step itself needs (its legal requirements); under them, one line counts the
+  job's list and opens it, because no official source ties a skill on that list to a step. The Skills
+  gauge counts the job's list apart, as it counts the person's own skills: *your pick of job: 2 have · 1
+  learning · 0 not yet, of 44 listed*. The road's *needs 3 · you have 2* badges are unchanged.
+- **Road evaluation reads the pick.** `evaluateRoad` takes the picked job's list (or none); the Skills
+  gauge's count is the one above, and *What you've told DotAmi* gains the pick (*"You picked the job
+  closest to your work: Cabinetmakers"*) and the marks on its items. A receipt about picking, changing
+  or taking back the job names the pick only: the marks on its list that come into or out of view with
+  it are kept either way, so they are never read as given or taken back then.
+- **Road 0's legal requirements come from the compliance catalog, where it cites one.** Only one of road
+  0's steps has one there: *Mandatory GST/HST registration* needs **A GST/HST registration with the Canada
+  Revenue Agency**, built from the compliance entry `compliance-gst-small-supplier` and carrying its
+  citation, whose tool-checked quotes include *"You must register for the GST/HST."*; the entry is
+  already one of that step's cards. A test keeps the item's citations equal to the entry's and the entry
+  among the step's cards. Left out, for a reason each: the CRA payroll account and the WCB-Alberta
+  account on *Hire first employee* (no compliance entry cites them; the step's *done when* lines already
+  do); *Alberta trades licensing* (no road 0 step, and it applies to some trades only); voluntary
+  registration (a choice, not a requirement); the ride-share rule (the same registration, already a card
+  on the step, and only for that work).
+- **Size.** The data module is 129 KB of text (28 KB gzipped). Measured on 2026-10-12 in a production build
+  (`npm run build`): it is compiled into three files, the cockpit page's script (335 KB, 87 KB gzipped,
+  with the rest of that page), the cockpit's server page and one server chunk the cockpit's routes share,
+  about 120 KB of each being the list. So it adds roughly 360 KB to the installed app and roughly 85 KB
+  gzipped; the installer itself was not built to measure what it adds there. Nothing of it is fetched:
+  the list is in the app.
+- **Not in this pull request:** the *Pick a future* screen asking for the job too (§ 1 row 3; that screen
+  is built and doesn't ask it yet); the
+  ratings (item 20); *Work Activities* for *Peek inside*; the French files (the screens are English only
+  today); the export gaining the pick and the list.
 
 ## 7. Storage
 
@@ -1334,7 +1438,8 @@ is mine* pin are **not** added yet: each comes with the screen that asks it, as 
 column. The occupation code's shape waits on the OaSIS import (§ 13). *(2026-10-12: the business / career
 / both answer came with Your destination and Pick a future, as `lookingFor` and `lookingForSetAt`; and
 `notSaid`, the idea's answers a picked future was saved without (`venture-type`, `equipment`,
-`sales-targets`), so nothing reads them as said; § 1, The way in as built.)*
+`sales-targets`), so nothing reads them as said; § 1, The way in as built.)* *(2026-10-12: the skills pull
+request adds the job picked, `Venture.occupationCode` and `occupationPickedAt`; § 6, Skills as built.)*
 
 **The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
 statement written as the answer to *where you want to be*. It is one of the person's statements like
@@ -1588,10 +1693,16 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   word for. Two ways, the maintainer's call: a person opens the spreadsheets and records a read of each
   name; or the citation type gains a kind for a not-for-profit, so Futurpreneur's page can be cited for
   *insurance*, the one name its page shows.
-- **The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
-  abilities, work activities) and how much of each list to show; the lists describe employees, not
-  owners, so the *your pick of job* tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
+- ~~**The OaSIS import's shape.** Which files of the 2025 dataset (for example skills, knowledge,
+  abilities, work activities) and how much of each list to show.~~ Settled in the skills pull request
+  (2026-10-12, § 6 *Skills, and the government's list for your pick of job, as built*): Skills and
+  Knowledge, every item the job's row rates 1 or more, in the dataset's own order; Labels for the job
+  names and the taxonomy for the ids. The list is the job's, not a business's, so the *your pick of job*
+  tag stays visible. The OaSIS data is kept in its own data file with its own licence line, not mixed
   into CC BY-SA catalog text, until someone checks how the two licences fit together.
+- **The government's ratings, or names only** (the maintainer's item 20). Built names only, the
+  documented default; the ratings are kept in the data. Showing them ("3 - Moderate Level") would show
+  each with its own scale.
 - **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
   on the first written road.
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*

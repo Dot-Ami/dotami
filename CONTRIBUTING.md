@@ -185,13 +185,19 @@ CSV files in English and French, under the [Open Government Licence – Canada](
 - **Only through the person's own pick of job.** The person picks "the job closest to the work you'd
   do yourself", and the list for that job is shown tagged *your pick of job*. No entry, road or step
   may link a business or a future to a job by itself: no official source says which skills a business
-  needs, and the lists describe employees, not owners.
+  needs.
 - **Cited by dataset version and record date,** like any other source: the dataset's title and version
   (at the time of writing, *OaSIS 2025 Version 1.0*: unlike the older *OaSIS 2022 Version 1.0*, it has
-  a Knowledge file), the file it came from (for example the skills file; which files the import uses
-  is still open, [future-cockpit.md](docs/architecture/future-cockpit.md) § 13), the occupation
-  code, the dataset's *record modified* date as the page shows it, and
-  `lastVerified` as the day you read it. `authority` is `"federal"`, `jurisdiction` is `"CA"`.
+  a Knowledge file), the file it came from (the import reads the Skills and Knowledge files, with the
+  Labels file for job names and the taxonomy for ids; settled 2026-10-12,
+  [future-cockpit.md](docs/architecture/future-cockpit.md) § 6), the occupation code, the dataset's *record modified* date as the page shows it, and
+  `lastVerified` as the day you read it, or a tool check of the dataset's page (option B, as the imported
+  items carry). `authority` is `"federal"`, `jurisdiction` is `"CA"`.
+- **Imported, never typed.** `node scripts/import-oasis.mjs` turns the files committed under
+  `data/oasis-2025-v1.0/` into `lib/engines/oasis/v2026/data.ts`; `--check` (and a test) fails if the
+  module isn't exactly what the files make, and `--download` fetches a new copy, keeping a file only when
+  its SHA-256 is the one pinned in the script (a new version means updating the pin on purpose). Never edit the module by
+  hand, and never show a rating until the maintainer decides to (names only today).
 - **Its licence travels with it.** The imported lists stay in their own data file carrying the
   licence's attribution line — *"Contains information licensed under the Open Government Licence –
   Canada."* — and are not copied into catalog text under CC BY-SA, because nobody has checked yet how

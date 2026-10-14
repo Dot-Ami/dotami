@@ -16,7 +16,7 @@ export const NOTICES_FILE = "THIRD-PARTY-NOTICES.txt";
 const SEPARATOR = "=".repeat(78);
 const RULE = "-".repeat(78);
 
-export type NoticeKind = "runtime" | "package" | "inside" | "font";
+export type NoticeKind = "runtime" | "package" | "inside" | "font" | "data";
 
 export interface NoticeEntry {
   name: string;
@@ -37,7 +37,7 @@ export interface Notices {
   entries: NoticeEntry[];
 }
 
-const KINDS: readonly NoticeKind[] = ["runtime", "package", "inside", "font"];
+const KINDS: readonly NoticeKind[] = ["runtime", "package", "inside", "font", "data"];
 
 /** Splits the file into its header and entries. Throws on a block that isn't in the expected shape. */
 export function parseNotices(text: string): Notices {

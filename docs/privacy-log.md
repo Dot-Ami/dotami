@@ -137,6 +137,17 @@ person is asked).
   Each is a blank with *Add your quote*; a number the person gives is kept the way the line above says
   (a `start-up-cost-line` figure, proposed then agreed). No new kind of answer, table or route; nothing
   new leaves the computer.
+- **The job the person picks for the government's skills list is kept with the idea (2026-10-12).** The
+  cockpit's Skills list asks, optionally, for *the job closest to the work you'd do yourself*, searched
+  among the government's 900 job names, which are part of the app (nothing is looked up online). The pick
+  is kept as the job's code on the government's list and the moment it was picked, in two new optional
+  columns on the idea (`Venture.occupationCode`, `occupationPickedAt`; a hand-written migration of two plain
+  column additions,
+  [`prisma/migrations/20261013000000_job_pick`](../prisma/migrations/20261013000000_job_pick/migration.sql)).
+  The person's marks on that job's list are skill marks like any other (`SkillMark`), kept for the person,
+  so they stay when the job is changed or taken back. A new route answers only DotAmi's own window
+  (`POST /api/futures/<id>/job`), and `GET /api/futures/<id>` now gives back the pick. The job's code is
+  never put in a link. Nothing leaves the computer.
 - **The person's own "I'd incorporate at $___" is kept with the idea (2026-10-11).** A whole-dollar
   amount the person types on the Incorporating stage, or nothing. It is stored in the idea's existing
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
@@ -226,6 +237,13 @@ person is asked).
   ([`desktop/notices.mjs`](../desktop/notices.mjs) reads it from the installed package). What
   Electron's browser engine writes to the data folder or requests on its own is still *not checked*.
 
+- **The government's skills list ships as data (2026-10-12).** Each job's name and its skills and knowledge
+  ratings, from OaSIS 2025 Version 1.0 (Employment and Social Development Canada, Open Government Licence –
+  Canada), are compiled into the app ([`lib/engines/oasis/v2026/data.ts`](../lib/engines/oasis/v2026/data.ts),
+  129 KB of text; about 360 KB in the built app, measured in a production build; the installer was not built to
+  measure). Not a package: it can reach nothing. The third-party notices list it with the licence's
+  attribution line, under *Data*.
+
 ### What the person must agree to
 
 - **The yearly income on Your destination (2026-10-12)** goes through an agree prompt of its own
@@ -265,6 +283,9 @@ person is asked).
   `Venture.forkPicks`, and the idea's own answers returned to not given (the structure, a map pick back to
   the map's default, kinds of work, sales, hire-first, equipment, the incorporation number). The place, the
   kind of venture and the work situation can be changed but not taken back (the map needs them).
+- **The job picked (2026-10-12):** **Take back** in the cockpit's Skills list clears it from the idea (both
+  columns); Delete on `/your-data` with "Your ideas" ticked removes it with the idea. Marks on its list go
+  with "Your skill marks", or one by one with *I don't know*.
 - **The "I'd incorporate at" number**: emptying the box on the Incorporating stage removes it at the next
   save; Delete on `/your-data` with "Your ideas" ticked removes it with the idea's map row.
 - **Your destination's answers**: the destination goes with "Your statements" on Delete, the income with
@@ -283,6 +304,10 @@ person is asked).
   deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
 - A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
   their own planning number, never set by DotAmi.
+- The job a person picks as closest to their work is kept with the idea, only if they pick one; DotAmi
+  shows the government's list for it and never says which skills a business needs. The list is the
+  government of Canada's, under the Open Government Licence – Canada, which DotAmi attributes and which
+  doesn't mean the government endorses DotAmi or anyone's use of it.
 
 ---
 

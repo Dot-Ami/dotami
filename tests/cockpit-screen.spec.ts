@@ -411,10 +411,12 @@ describe("the gauges", () => {
     expect(bc).toContain("Map drawn: Invented trade road (test only) · written for AB; this idea is in BC");
   });
 
-  it("on road 0: no listed skills yet, said in one line; its cost lines are named lines, never $0", () => {
+  it("on road 0: its one legal requirement, not marked yet; its cost lines are named lines, never $0", () => {
     const view = gaugeView(evaluateRoad(road0Input()), generalRoadV2026, inventedIdea());
     expect(view.steps.value).toBe(`0 of ${generalRoadV2026.steps.length} marked done`);
-    expect(view.skills.value).toBe("No skills are listed on this road yet");
+    // The GST/HST registration, from the compliance catalog (2026-10-12).
+    expect(view.skills.value).toBe("0 have · 0 learning · 0 not yet");
+    expect(view.skills.lines).toContain("1 not marked, out of 1 listed");
     // The before-you-open steps (2026-10-12) name four lines the person prices, and Sole Prop activation
     // seven start-up lines (later the same day), all with no amount: eleven on the path, none priced.
     expect(view.money.value).toBe("your numbers: not given yet");
@@ -656,10 +658,12 @@ describe("the step panel", () => {
         branch: null,
         canSave,
         error: null,
+        job: null,
         onStatus: () => {},
         onTicks: () => {},
         onMark: () => {},
         onSelectSkill: () => {},
+        onOpenJobList: () => {},
         onProposeQuote: async () => null,
         province: "AB",
         ownNumber: null,
@@ -814,8 +818,11 @@ describe("the lists behind the gauges", () => {
         selectedSkillId: null,
         canSave: true,
         error: null,
+        job: null,
+        jobPickedOn: null,
         onMark: () => {},
         onSelectSkill: () => {},
+        onPickJob: () => {},
         onClose: () => {},
       }),
     );
@@ -824,8 +831,11 @@ describe("the lists behind the gauges", () => {
     expect(html).toContain("Welding (invented)");
     expect(html).toContain("added by you");
     expect(html).toContain("Add a skill");
-    // Every listed skill shows its own source: five items, one citation each.
-    expect((html.match(/<a /g) ?? []).length).toBe(skillItems.length);
+    // Every listed skill shows its own source: five items, one citation each (and, apart, the job
+    // search's licence link, there before any pick because the job names are the government's).
+    const links = [...html.matchAll(/<a href="([^"]*)"/g)].map((m) => m[1]);
+    expect(links.filter((href) => href !== "https://open.canada.ca/en/open-government-licence-canada")).toHaveLength(skillItems.length);
+    expect(links).toContain("https://open.canada.ca/en/open-government-licence-canada");
     // On a skill the person typed, the button that takes it away says so; "I don't know" stays on the road's.
     const welding = html.slice(html.indexOf("Welding (invented)"));
     expect(welding).toContain(`>${cockpitWords.lists.removeOwn}<`);

@@ -1,3 +1,4 @@
+import { OASIS_ATTRIBUTION } from "@/lib/engines/oasis/v2026/licence";
 import { formatMoney, formatMonth } from "@/lib/format/money-and-months";
 import { monthsFromToday } from "@/lib/roads/words";
 
@@ -50,6 +51,9 @@ export const cockpitWords = {
       noneListed: "No skills are listed on this road yet",
       own: (have: number, learning: number, notYet: number) => `your own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
       addOwn: "Add skills of your own in the list",
+      /** The government's list for the person's pick of job, counted apart from the road's. */
+      job: (have: number, learning: number, notYet: number, listed: number) =>
+        `your pick of job: ${have} have · ${learning} learning · ${notYet} not yet, of ${listed} listed`,
     },
     money: {
       label: "Start-up money",
@@ -143,6 +147,12 @@ export const cockpitWords = {
     notSaved: "This idea is not saved yet, so nothing here can be kept.",
     sources: (n: number) => `Sources for this step · ${n}`,
     officialLinks: "Official pages you open yourself",
+    /** Under a step's own skills: the job's list is the job's, never tied to a step. */
+    jobLine: (label: string, listed: number, marked: number) =>
+      `Your pick of job, ${quoted(label)}: ${listed} on the government's list, ${marked} marked. The list is for the job, not for this step.`,
+    openJobList: "Open the list",
+    noJob: "Pick the job closest to your work to see the government's skills list for it.",
+    pickJob: "Pick a job",
   },
 
   amounts: {
@@ -158,6 +168,8 @@ export const cockpitWords = {
   lists: {
     close: "Close",
     skillsTitle: "Skills on this road",
+    /** Above the items the road's own steps list, so the job's list below never reads as the road's. */
+    roadTitle: "On this road's steps",
     skillsNone: "No skills are listed on this road yet. Your own skills are below.",
     ownTitle: "Your own skills",
     ownTag: "added by you",
@@ -167,6 +179,33 @@ export const cockpitWords = {
     addOwnAs: (mark: string) => `Add as ${mark}`,
     /** On a skill the person typed, the button that takes it away (the road's own skills say "I don't know"). */
     removeOwn: "Remove",
+    /** The person's pick of job and the government's list for it (decision 5 of 2026-10-11). Names only. */
+    job: {
+      title: "Your pick of job",
+      ask: "Pick the job closest to the work you'd do yourself",
+      optional:
+        "Optional. DotAmi then shows the government's skills list for that job, each item tagged “your pick of job”. Change it or take it back here any time.",
+      search: "Search jobs by name or code",
+      /** The search reads names and codes only, so this says what it looked at, not that no such job exists. */
+      noMatch: "No job name or code holds those words.",
+      /** When more jobs match than the search shows. */
+      more: (shown: number, total: number) => `Showing ${shown} of ${total} jobs that match. Type more of the name or the code to narrow it.`,
+      /** A search result, and the job once picked. */
+      result: (label: string, code: string) => `${label} · ${code}`,
+      picked: (label: string, code: string, day: string | null) => `${label} · ${code}${day ? ` · picked ${day}` : ""}`,
+      change: "Change",
+      cancel: "Cancel",
+      takeBack: "Take back",
+      tag: "your pick of job",
+      groups: { skills: "Skills", knowledge: "Knowledge" },
+      // No claim about whom the list describes: the government's own profiles count self-employed people
+      // in a job (Cabinetmakers, 72311.00: "Self-employed" under Workplaces/employers). Only what DotAmi
+      // can say about itself.
+      aboutTheList: "This is the government's list for the job you picked. DotAmi doesn't say which skills a business needs.",
+      /** The licence's own attribution line, word for word (lib/engines/oasis/v2026/licence.ts). */
+      attribution: OASIS_ATTRIBUTION,
+      licence: "The licence",
+    },
     moneyTitle: "Start-up money",
     moneyNone: "No cost lines on this road yet.",
     savingsTitle: "Your savings for starting",

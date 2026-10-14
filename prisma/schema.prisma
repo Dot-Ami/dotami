@@ -163,6 +163,12 @@ model Venture {
   /// "equipment", "sales-targets"). Their columns keep the intake's starting values; this list stops
   /// anything saying the person told DotAmi them. [] for every other idea; a save with no list clears it.
   notSaid          Json             @default("[]")
+  /// The job the person picked as closest to the work they'd do themselves, an OaSIS profile code ("72311.00"),
+  /// so the cockpit shows the government's skills list for it, tagged "your pick of job"; null until they
+  /// pick one. Never set by DotAmi (2026-10-12; lib/futures/job.ts).
+  occupationCode   String?
+  /// The moment the person picked that job; null while there is none.
+  occupationPickedAt DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)

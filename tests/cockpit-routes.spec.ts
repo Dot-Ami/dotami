@@ -29,7 +29,7 @@ let ventureId: string;
 
 type Params = { params: Promise<{ id: string }> };
 type IdRoute = (request: Request, context: Params) => Promise<Response>;
-const routes = {} as { future: IdRoute; progress: IdRoute; date: IdRoute; ending: IdRoute; marks: (request: Request) => Promise<Response> };
+const routes = {} as { future: IdRoute; progress: IdRoute; date: IdRoute; ending: IdRoute; job: IdRoute; marks: (request: Request) => Promise<Response> };
 
 beforeAll(async () => {
   migratedFile(dbFile);
@@ -40,6 +40,7 @@ beforeAll(async () => {
   routes.progress = (await import("@/app/api/futures/[id]/progress/route")).POST;
   routes.date = (await import("@/app/api/futures/[id]/date/route")).POST;
   routes.ending = (await import("@/app/api/futures/[id]/ending/route")).POST;
+  routes.job = (await import("@/app/api/futures/[id]/job/route")).POST;
   routes.marks = (await import("@/app/api/skill-marks/route")).POST;
   ventureId = (await ensureVentureFromScenario(prisma, demoScenarios[0])).ventureId;
 }, 120_000);
@@ -156,6 +157,34 @@ describe("POST /api/futures/<id>/date: the person's own month", () => {
     const res = await routes.date(post(`/api/futures/${ventureId}/date`, { month: "2099-05" }, json), params(ventureId));
     expect(res.status).toBe(403);
     expect((await read()).body.future).toMatchObject({ targetMonth: null });
+  });
+});
+
+describe("POST /api/futures/<id>/job: the job closest to the person's work", () => {
+  it("keeps a job from the dataset, gives it back on the next read, and takes it back", async () => {
+    const res = await routes.job(post(`/api/futures/${ventureId}/job`, { code: "72311.00" }), params(ventureId));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { future: { job: unknown } }).future.job).toMatchObject({ code: "72311.00", label: "Cabinetmakers" });
+    expect((await read()).body.future).toMatchObject({ job: { code: "72311.00", label: "Cabinetmakers" } });
+    expect((await routes.job(post(`/api/futures/${ventureId}/job`, { code: null }), params(ventureId))).status).toBe(200);
+    expect((await read()).body.future).toMatchObject({ job: null });
+  });
+
+  it("refuses a code that isn't a job, and a body without one, with nothing kept", async () => {
+    for (const body of [{ code: "99999.99" }, { code: 72311 }, {}]) {
+      expect((await routes.job(post(`/api/futures/${ventureId}/job`, body), params(ventureId))).status).toBe(400);
+    }
+    expect((await read()).body.future).toMatchObject({ job: null });
+  });
+
+  it("answers only DotAmi's own window, reads JSON only, and an idea that isn't there is a 404", async () => {
+    for (const site of [undefined, "cross-site", "same-site", "none"]) {
+      const headers: Record<string, string> = { ...json, ...(site ? { "sec-fetch-site": site } : {}) };
+      expect((await routes.job(post(`/api/futures/${ventureId}/job`, { code: "72311.00" }, headers), params(ventureId))).status).toBe(403);
+    }
+    expect((await routes.job(post(`/api/futures/${ventureId}/job`, "{}", { "content-type": "text/plain", ...fromPage }), params(ventureId))).status).toBe(415);
+    expect((await routes.job(post("/api/futures/no-such-idea/job", { code: "72311.00" }), params("no-such-idea"))).status).toBe(404);
+    expect((await read()).body.future).toMatchObject({ job: null });
   });
 });
 

@@ -12,6 +12,7 @@ import { incorporationRoutesV2026 } from "@/lib/engines/cfe/v2026/incorporation-
 import { complianceCatalogV2026, recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { officialFeesV2026 } from "@/lib/engines/fees/v2026";
 import { grantsCatalogV2026 } from "@/lib/engines/grants/v2026";
+import { oasisCatalogCitations } from "@/lib/engines/oasis/v2026";
 import { riskCatalogV2026 } from "@/lib/engines/risk/v2026";
 import { roadsCatalogV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { CitationCheck } from "@/lib/engines/shared/types";
@@ -75,5 +76,8 @@ export function allCatalogCitations(): CitationInCatalog[] {
     add(`skills ${item.id}`, item.citations);
     if (item.howToGetIt) add(`skills ${item.id}`, [item.howToGetIt.citation]);
   }
+  // The government's skills list (2026-10-12): every item of every job cites the dataset's page with one
+  // tool check, so the page is listed once, with the profile page that says what a 0 means and the licence.
+  for (const { where, citation } of oasisCatalogCitations()) add(where, [citation]);
   return out;
 }

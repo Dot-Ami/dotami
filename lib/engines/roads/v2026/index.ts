@@ -1,6 +1,6 @@
 import type { Road, SkillItem } from "./types";
 import { roadApprenticeToOwnShopAB, skillItemsApprenticeToOwnShopAB } from "./apprentice-to-own-shop-ab";
-import { roadStartingAnyBusinessAB } from "./starting-any-business-ab";
+import { roadStartingAnyBusinessAB, skillItemsStartingAnyBusinessAB } from "./starting-any-business-ab";
 
 export type {
   CatalogCostLine,
@@ -32,10 +32,11 @@ export const roadsV2026: readonly Road[] = [roadStartingAnyBusinessAB, roadAppre
 export const generalRoadV2026: Road = roadStartingAnyBusinessAB;
 
 /**
- * Skill items, shared by every road so a person's mark carries across them. So far the first written
- * future's legal requirements, each cited; skills from the government's list come with the OaSIS import.
+ * Skill items, shared by every road so a person's mark carries across them: the first written future's
+ * legal requirements and road 0's (2026-10-12), each cited. The government's lists for a job are their own
+ * catalog (lib/engines/oasis/v2026/), shown only for the job the person picks, never tied to a step.
  */
-export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToOwnShopAB];
+export const skillItemsV2026: readonly SkillItem[] = [...skillItemsApprenticeToOwnShopAB, ...skillItemsStartingAnyBusinessAB];
 
 export const roadsCatalogV2026 = {
   version: "v2026",

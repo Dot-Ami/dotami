@@ -21,6 +21,7 @@ import { roadStartingAnyBusinessAB } from "@/lib/engines/roads/v2026";
 import { agreeToFigures, listFigures, proposeFigures, VentureNotFoundError } from "@/lib/figures/store";
 import { BUSINESS_TOTAL_KINDS, COST_LINE_AMOUNT_FROM, FIGURE_KIND_LABELS, FIGURE_KINDS } from "@/lib/figures/types";
 import { chooseRoad, pickEnding, readFuture, setTargetMonth } from "@/lib/futures/future";
+import { pickJob } from "@/lib/futures/job";
 import {
   agreeToPersonFigures,
   currentIncomeWanted,
@@ -87,6 +88,8 @@ describe("the saved future: its road, the endings picked on it, the person's mon
       // Asked only on Pick a future (2026-10-12): an idea saved any other way has no answer.
       lookingFor: null,
       lookingForOn: null,
+      // No job picked for the government's skills list.
+      job: null,
     });
     expect(Object.keys(future.forkPicks).sort()).toEqual(["gstTiming", "incorporationTiming"]);
   });
@@ -268,6 +271,60 @@ describe("skill marks, kept once for the person", () => {
     await prisma.venture.delete({ where: { id: scratch } });
     expect((await listSkillMarks(prisma)).map((m) => m.mark)).toEqual(["have"]);
     await markSkill(prisma, { skillItemId: "skill-invented-ticket", mark: null }, catalog);
+  });
+});
+
+describe("the job closest to the work the person would do: their pick, for the government's skills list", () => {
+  const pickedAt = async () =>
+    (
+      await prisma.$queryRawUnsafe<{ occupationCode: string | null; occupationPickedAt: unknown }[]>(
+        `SELECT occupationCode, occupationPickedAt FROM "Venture" WHERE id = ?`,
+        ventureId,
+      )
+    )[0]!;
+
+  it("keeps a job code from the dataset with the day it was picked, and takes it back", async () => {
+    await pickJob(prisma, ventureId, "72311.00");
+    expect((await readFuture(prisma, ventureId, catalog)).job).toEqual({ code: "72311.00", label: "Cabinetmakers", pickedOn: dayOnThisComputer(new Date()) });
+    expect((await pickedAt()).occupationCode).toBe("72311.00");
+    await pickJob(prisma, ventureId, null);
+    expect((await readFuture(prisma, ventureId, catalog)).job).toBeNull();
+    expect(await pickedAt()).toEqual({ occupationCode: null, occupationPickedAt: null });
+  });
+
+  it("refuses anything that isn't one of the dataset's job codes, and keeps the pick that was there", async () => {
+    await pickJob(prisma, ventureId, "72311.00");
+    for (const code of ["99999.99", "72311", 72311, "", {}, undefined, "72311.00 "]) {
+      await expect(pickJob(prisma, ventureId, code)).rejects.toThrow(FutureInputError);
+    }
+    expect((await readFuture(prisma, ventureId, catalog)).job?.code).toBe("72311.00");
+  });
+
+  it("picking the same job again keeps the moment it was first picked; another job is a new answer", async () => {
+    const first = (await pickedAt()).occupationPickedAt;
+    expect(first).not.toBeNull();
+    await pickJob(prisma, ventureId, "72311.00");
+    expect((await pickedAt()).occupationPickedAt).toEqual(first);
+    await pickJob(prisma, ventureId, "72310.00");
+    expect((await readFuture(prisma, ventureId, catalog)).job?.label).toBe("Carpenters");
+    await pickJob(prisma, ventureId, null);
+  });
+
+  it("answers an unknown idea with the same not-found as the figures", async () => {
+    await expect(pickJob(prisma, "nope", "72311.00")).rejects.toThrow(VentureNotFoundError);
+  });
+
+  it("a mark on an item of the government's list is the person's, whichever road the future is on, and outlives the pick", async () => {
+    const numeracy = "skill-ca-oasis-f.01.c.01";
+    await pickJob(prisma, ventureId, "72311.00");
+    // The invented catalog and the shipped one both accept it: the list is its own catalog, not a road's.
+    await markSkill(prisma, { skillItemId: numeracy, mark: "have" }, catalog);
+    await markSkill(prisma, { skillItemId: numeracy, mark: "learning" });
+    await pickJob(prisma, ventureId, null);
+    expect((await listSkillMarks(prisma)).map((m) => [m.skillItemId, m.mark])).toEqual([[numeracy, "learning"]]);
+    await expect(markSkill(prisma, { skillItemId: "skill-ca-oasis-x.99", mark: "have" })).rejects.toThrow(FutureInputError);
+    await markSkill(prisma, { skillItemId: numeracy, mark: null });
+    expect(await listSkillMarks(prisma)).toEqual([]);
   });
 });
 

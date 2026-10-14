@@ -10,7 +10,8 @@
 // Two ways it runs:
 // - `npm run build` / `npm run notices` (a copy run from the source code): the packages DotAmi
 //   depends on, as package-lock.json records them (everything not marked as a development tool),
-//   plus the fonts and the styles Tailwind writes into the page. Written to the top folder, where
+//   plus the fonts, the styles Tailwind writes into the page and the data from others that ships (the
+//   government's skills list, 2026-10-12). Written to the top folder, where
 //   `next start` reads it (it's in .gitignore: it's made, never edited).
 // - desktop/build.mjs (the installer): the same, plus every package actually inside the built
 //   server's node_modules (Next's file tracer can copy ones package-lock.json calls development
@@ -46,6 +47,7 @@ export const SHIPS = {
   runtime: "the desktop app's runtime (DotAmi.exe and the files beside it)",
   styles: "the page's styles: Tailwind writes its own base styles into DotAmi's style sheet",
   fonts: "the page's fonts (app/fonts), served from DotAmi's own server",
+  data: "DotAmi's built server and page code: the data is compiled into them",
 };
 
 /**
@@ -126,6 +128,20 @@ export function noticesInSource(file) {
 const FONTS = [
   { name: "Inter (font)", licence: "OFL-1.1", file: "app/fonts/LICENSE-Inter.txt", version: "as committed in app/fonts" },
   { name: "JetBrains Mono (font)", licence: "OFL-1.1", file: "app/fonts/LICENSE-JetBrainsMono.txt", version: "as committed in app/fonts" },
+];
+
+/**
+ * Data written by others that ships inside DotAmi's own code, each with the licence file committed beside
+ * it. The government's skills list (lib/engines/oasis/v2026/data.ts, made by scripts/import-oasis.mjs)
+ * is under the Open Government Licence – Canada, whose attribution line is in that file.
+ */
+const DATA = [
+  {
+    name: "OaSIS 2025 Version 1.0 (data from Employment and Social Development Canada)",
+    licence: "OGL-Canada-2.0",
+    file: "lib/engines/oasis/v2026/LICENCE.txt",
+    version: "2025 Version 1.0, record modified 2026-10-04",
+  },
 ];
 
 /**
@@ -405,6 +421,15 @@ export function collectNotices(root, { standalone, leaveOut } = {}) {
     texts: [{ file: path.basename(f.file), text: readFileSync(path.join(root, f.file), "utf8").replace(/\r\n?/g, "\n").trimEnd() }],
   }));
 
+  const data = DATA.map((d) => ({
+    kind: "data",
+    name: d.name,
+    version: d.version,
+    licence: d.licence,
+    ships: new Set([SHIPS.data]),
+    texts: [{ file: path.basename(d.file), text: readFileSync(path.join(root, d.file), "utf8").replace(/\r\n?/g, "\n").trimEnd() }],
+  }));
+
   const runtime = [];
   if (standalone) {
     const electron = readJson(path.join(rootModules, "electron", "package.json"));
@@ -421,7 +446,7 @@ export function collectNotices(root, { standalone, leaveOut } = {}) {
   }
 
   const byName = (a, b) => a.name.localeCompare(b.name, "en") || a.version.localeCompare(b.version, "en");
-  return [...runtime, ...packages.sort(byName), ...inside.sort(byName), ...fonts];
+  return [...runtime, ...packages.sort(byName), ...inside.sort(byName), ...fonts, ...data];
 }
 
 /** The file's text: a short header, then one block per entry. */

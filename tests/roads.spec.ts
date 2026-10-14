@@ -248,6 +248,8 @@ const SHIPPED_SKILL_ITEM_IDS: string[] = [
   "skill-ab-alberta-student-number",
   "skill-ab-apprenticeship-education-agreement",
   "skill-ab-recognized-outside-trade-certificate",
+  // Road 0's one legal requirement, from the compliance catalog (2026-10-12).
+  "skill-ca-gst-hst-registration",
 ];
 
 const doneWhenIds = (road: Road) => road.steps.flatMap((s) => s.doneWhen.map((d) => d.id));
@@ -341,11 +343,12 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
       expect(step.summary).toBe(node.trigger);
       expect(step.next).toEqual(node.branches);
       expect(step.citations).toEqual(node.citations);
-      // Their done-when lines are written (tests/road-starting-any-business.spec.ts); skill items and
-      // official links on them come later, read from the official pages, never made up. The only cost
-      // lines are Sole Prop activation's named start-up lines (2026-10-12): names, never an amount.
+      // Their done-when lines are written (tests/road-starting-any-business.spec.ts), and so is the one
+      // legal requirement the compliance catalog cites (2026-10-12); official links on them come later,
+      // read from the official pages, never made up. The only cost lines are Sole Prop activation's named
+      // start-up lines (2026-10-12): names, never an amount.
       expect(step.doneWhen.length).toBeGreaterThanOrEqual(3);
-      expect(step.needs).toEqual([]);
+      expect(step.needs).toEqual(node.id === "stage-2b-mandatory-gst-registration" ? ["skill-ca-gst-hst-registration"] : []);
       if (node.id === "stage-1-sole-prop-activation") {
         expect(step.costs.length).toBe(7);
         for (const cost of step.costs) expect(cost.kind, cost.id).toBe("named");

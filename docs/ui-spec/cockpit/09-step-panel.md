@@ -39,7 +39,14 @@ The sections, in order:
    **Not yet** (`aria-pressed`) and **I don't know** (removes the mark; off when there is none), and the
    item's own sources through `CitationLinks`, mark or no mark. A legal requirement marked have reads
    *you said you hold this*; one marked not yet shows *The official way to get it:* with its cited route.
-   Empty: *No skills are listed for this step yet.*
+   Empty: *No skills are listed for this step yet.* Under the step's own items (2026-10-12), one line about
+   the government's list for the person's pick of job, which belongs to the job, never to a step: with a job
+   picked, *Your pick of job, “Cabinetmakers”: 44 on the government's list, 1 marked. The list is for the
+   job, not for this step.* and **Open the list**; with none, *Pick the job closest to your work to see the
+   government's skills list for it.* and **Pick a job**. Either button opens the Skills list behind the
+   Skills gauge (and switches the Skills overlay on). Road 0's *Mandatory GST registration* lists its one
+   legal requirement here, *A GST/HST registration with the Canada Revenue Agency*, with the compliance
+   catalog's source.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
    Not added to any total.*); the person's agreed number with *your quote · agreed* and

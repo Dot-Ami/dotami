@@ -219,13 +219,19 @@ describe("Compare, ticks, This visit and the rail", () => {
   });
 
   it("when no row differs between the two endings, Compare says so", () => {
-    const view = compareEndings(road0(idea), "gstTiming")!;
+    // incorporationTiming, not gstTiming: since the mandatory GST/HST registration step lists its legal
+    // requirement, gstTiming's skills rows differ, and then the line must not show.
+    const view = compareEndings(road0(idea), "incorporationTiming")!;
     expect(view.rows.every((r) => r.values[0] === r.values[1])).toBe(true);
     expect(view.sameOnEveryRow).toBe(true);
-    const html = renderToStaticMarkup(
-      createElement(CompareEndings, { view, forks: [], canSave: true, error: null, receipt: null, onPickFork: () => undefined, onThisIsMine: () => undefined, onClose: () => undefined }),
-    );
-    expect(html).toContain(cockpitWords.compare.noRowDiffers);
+    const render = (v: typeof view) =>
+      renderToStaticMarkup(
+        createElement(CompareEndings, { view: v, forks: [], canSave: true, error: null, receipt: null, onPickFork: () => undefined, onThisIsMine: () => undefined, onClose: () => undefined }),
+      );
+    expect(render(view)).toContain(cockpitWords.compare.noRowDiffers);
+    const gst = compareEndings(road0(idea), "gstTiming")!;
+    expect(gst.sameOnEveryRow).toBe(false);
+    expect(render(gst)).not.toContain(cockpitWords.compare.noRowDiffers);
   });
 
   it("each This is mine names its side, so a screen reader can tell the two apart", () => {
