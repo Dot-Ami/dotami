@@ -223,6 +223,19 @@ person is asked).
   person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
   `/your-data` says five.
 
+### What leaves the computer, and to whom
+
+- **The update check goes out earlier in each start (2026-10-14).** The installed app now asks GitHub
+  for a newer version as soon as its log is open, before the server starts, instead of after the first
+  page has loaded ([`desktop/main.mjs`](../desktop/main.mjs) `start()`,
+  [`desktop/update-check.mjs`](../desktop/update-check.mjs)). The same request, with the same contents
+  (GitHub sees the computer's internet address and which version it runs; none of the person's data),
+  and still once per start. What changes: it now also goes out on a start that stops before the main
+  window (a start that fails, or one the person ends at the lost-key window), where before it didn't, and a newer
+  version can start downloading then too (it stops when DotAmi quits, and installs only on the person's
+  click). The inventory's entry, *Each time the desktop app starts*, stays true. A copy run from source
+  and the test runs still never check.
+
 ### Packages that ship
 
 - **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine

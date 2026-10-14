@@ -366,6 +366,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **The update message comes sooner after the app opens** ([7d]; the maintainer, 2026-10-08 and
+  2026-10-13) — the installed app asked GitHub for a newer version only after its server had started and
+  the whole first page had loaded. It now asks as soon as its log is open, alongside the rest of the
+  start (`desktop/main.mjs`, `desktop/update-check.mjs`), and *"DotAmi <version> is available,
+  downloading now"* shows the moment the main window is on the screen if the answer came first. Never over
+  *Preparing DotAmi…* or the *Lock your data file with a key?* question: every update message waits for
+  the main window, and a download that finished meanwhile goes straight to *Restart and update* /
+  *Later*. Installing is still only that click; drafts stay invisible; the download is still checked
+  against the release's SHA-512; a failed check is still one log line with the error's name and code;
+  Help → Check for updates and a copy run from source are unchanged. The running version decides when
+  the message shows, so this is first seen when a copy with this change finds the version after it.
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and

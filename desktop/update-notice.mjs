@@ -11,6 +11,12 @@
 //     before is asked: "Restart and update" or "Later". Installing is still only ever that click.
 // If the download fails, the progress is cleared and the person is told nothing was installed.
 //
+// Since the check starts before the main window exists (desktop/update-check.mjs), every message here
+// goes through whenShown: it waits until the main window is on the screen, so nothing appears over
+// "Preparing DotAmi…" or the "Lock your data file with a key?" question. A download that finished or
+// failed while its "downloading now" was still waiting skips that message: the person sees only what is
+// true by the time they can see anything.
+//
 // The updater, the dialog module and the window are passed in, so tests can drive this with fakes
 // (tests/desktop-update-notice.spec.ts).
 
@@ -20,12 +26,15 @@
  *   dialog: Pick<Electron.Dialog, "showMessageBox">,
  *   window: () => (Pick<Electron.BrowserWindow, "setProgressBar" | "isDestroyed"> | null),
  *   log: (line: string) => void,
+ *   whenShown?: (fn: () => void) => void,
  * }} parts
  */
-export function showUpdateProgress({ updater, dialog, window, log }) {
+export function showUpdateProgress({ updater, dialog, window, log, whenShown = (fn) => fn() }) {
   /** @type {AbortController | null} */
   let notice = null;
   let downloading = false;
+  // Whether this download's "downloading now" actually reached the screen (it may still be waiting).
+  let told = false;
 
   // Electron: below 0 removes the bar, above 1 shows it moving without a percentage.
   const bar = (value) => {
@@ -39,24 +48,31 @@ export function showUpdateProgress({ updater, dialog, window, log }) {
 
   updater.on("update-available", (info) => {
     downloading = true;
+    told = false;
     closeNotice();
     notice = new AbortController();
-    bar(2);
+    const { signal } = notice;
     log(`[update] DotAmi ${info.version} is available; downloading`);
-    // Not awaited and not attached to the window: the app stays usable while the message is up.
-    // Windows only for now. On macOS a message box without a parent runs synchronously (Electron's
-    // showMessageBox docs) and would block the app; give it the window there when a Mac build comes.
-    void dialog
-      .showMessageBox({
-        type: "info",
-        title: "Update available",
-        buttons: ["OK"],
-        message: `DotAmi ${info.version} is available, downloading now.`,
-        detail:
-          "You can keep working. You'll be asked before it installs: nothing changes until you click Restart and update. The taskbar button shows how far the download has got.",
-        signal: notice.signal,
-      })
-      .catch(() => {});
+    whenShown(() => {
+      // Closed before it could show: the download already finished or failed.
+      if (signal.aborted) return;
+      told = true;
+      bar(2);
+      // Not awaited and not attached to the window: the app stays usable while the message is up.
+      // Windows only for now. On macOS a message box without a parent runs synchronously (Electron's
+      // showMessageBox docs) and would block the app; give it the window there when a Mac build comes.
+      void dialog
+        .showMessageBox({
+          type: "info",
+          title: "Update available",
+          buttons: ["OK"],
+          message: `DotAmi ${info.version} is available, downloading now.`,
+          detail:
+            "You can keep working. You'll be asked before it installs: nothing changes until you click Restart and update. The taskbar button shows how far the download has got.",
+          signal,
+        })
+        .catch(() => {});
+    });
   });
 
   updater.on("download-progress", (progress) => {
@@ -64,21 +80,24 @@ export function showUpdateProgress({ updater, dialog, window, log }) {
     if (downloading && Number.isFinite(progress?.percent)) bar(Math.max(0, Math.min(1, progress.percent / 100)));
   });
 
-  updater.on("update-downloaded", async (info) => {
+  updater.on("update-downloaded", (info) => {
     downloading = false;
     bar(-1);
     closeNotice();
-    const win = window();
-    const { response } = await dialog.showMessageBox(win && !win.isDestroyed() ? win : undefined, {
-      type: "info",
-      title: "Update ready",
-      buttons: ["Restart and update", "Later"],
-      defaultId: 0,
-      cancelId: 1,
-      message: `DotAmi ${info.version} is ready to install.`,
-      detail: "Your data stays in its folder, and the app copies it to backups/ before any change to how it's stored.",
+    whenShown(async () => {
+      // Read now, not when the download finished: before the main window showed there was none.
+      const win = window();
+      const { response } = await dialog.showMessageBox(win && !win.isDestroyed() ? win : undefined, {
+        type: "info",
+        title: "Update ready",
+        buttons: ["Restart and update", "Later"],
+        defaultId: 0,
+        cancelId: 1,
+        message: `DotAmi ${info.version} is ready to install.`,
+        detail: "Your data stays in its folder, and the app copies it to backups/ before any change to how it's stored.",
+      });
+      if (response === 0) updater.quitAndInstall();
     });
-    if (response === 0) updater.quitAndInstall();
   });
 
   // The updater reports a failed check and a failed download the same way. A failed check is
@@ -90,6 +109,9 @@ export function showUpdateProgress({ updater, dialog, window, log }) {
     bar(-1);
     closeNotice();
     log("[update] the download didn't finish");
+    // Its "downloading now" never reached the screen (still waiting for the main window): the person
+    // heard of no update, so there is nothing to take back. The next start tries again.
+    if (!told) return;
     void dialog
       .showMessageBox({
         type: "warning",

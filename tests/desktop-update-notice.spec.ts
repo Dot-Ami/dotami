@@ -142,3 +142,113 @@ describe("when something goes wrong", () => {
     expect(progress).toEqual([]);
   });
 });
+
+// The check now starts before the main window exists (desktop/main.mjs, tests/desktop-update-check.spec.ts),
+// so the answer can arrive while the "Preparing DotAmi…" window or the "Lock your data file with a key?"
+// question is on the screen. What it finds waits for the main window (whenShown), then shows once.
+describe("when GitHub answers before the main window is on the screen", () => {
+  let held: (() => void)[];
+  let open: () => void;
+
+  beforeEach(() => {
+    // A fresh updater with a gate: whenShown holds everything until open() is called.
+    updater = Object.assign(new EventEmitter(), {
+      installs: 0,
+      quitAndInstall() {
+        updater.installs += 1;
+      },
+    });
+    shown = [];
+    answers = [];
+    progress = [];
+    lines = [];
+    held = [];
+    let isOpen = false;
+    open = () => {
+      isOpen = true;
+      for (const fn of held.splice(0)) fn();
+    };
+    // Before the main window there is no `win`: the fake window appears when it shows.
+    fakeWindow = null;
+    const dialog = {
+      showMessageBox(...args: [MessageBoxOptions] | [unknown, MessageBoxOptions]) {
+        const [parent, options] = args.length === 2 ? args : [undefined, args[0]];
+        shown.push({ parent, options });
+        if (options.signal) {
+          return new Promise<{ response: number }>((resolve) => options.signal!.addEventListener("abort", () => resolve({ response: -1 })));
+        }
+        return Promise.resolve({ response: answers.shift() ?? 0 });
+      },
+    };
+    showUpdateProgress({
+      updater,
+      dialog,
+      window: () => fakeWindow,
+      log: (line) => lines.push(line),
+      whenShown: (fn) => (isOpen ? fn() : held.push(fn)),
+    });
+  });
+
+  const mainWindowShows = () => {
+    fakeWindow = { setProgressBar: (value) => progress.push(value), isDestroyed: () => false };
+    open();
+  };
+
+  it("shows no message over the lock question (or the preparing window): nothing at all until the main window shows", () => {
+    // The lock question is up; the main window doesn't exist yet.
+    updater.emit("update-available", { version: "0.4.1" });
+    updater.emit("download-progress", { percent: 10 });
+    expect(shown).toEqual([]);
+    // The log still says it was found, as before.
+    expect(lines).toEqual(["[update] DotAmi 0.4.1 is available; downloading"]);
+  });
+
+  it("holds the notice, then shows it once, when the main window shows", () => {
+    updater.emit("update-available", { version: "0.4.1" });
+    expect(shown).toHaveLength(0);
+    mainWindowShows();
+    expect(shown).toHaveLength(1);
+    expect(shown[0].options.message).toBe("DotAmi 0.4.1 is available, downloading now.");
+    expect(shown[0].parent).toBeUndefined();
+    // The taskbar bar starts on the window that now exists.
+    expect(progress).toEqual([2]);
+    // Shown once: the window showing again (or a second open) adds nothing.
+    open();
+    expect(shown).toHaveLength(1);
+    expect(updater.installs).toBe(0);
+  });
+
+  it("a download that finishes before the main window shows: no stale 'downloading now', just the question, on the main window", async () => {
+    updater.emit("update-available", { version: "0.4.1" });
+    answers.push(1); // "Later"
+    updater.emit("update-downloaded", { version: "0.4.1" });
+    await tick();
+    expect(shown).toEqual([]);
+
+    mainWindowShows();
+    await tick();
+    expect(shown.map((s) => s.options.title)).toEqual(["Update ready"]);
+    expect(shown[0].parent).toBe(fakeWindow);
+    expect(shown[0].options.buttons).toEqual(["Restart and update", "Later"]);
+    expect(updater.installs).toBe(0);
+  });
+
+  it("installing still waits for the person's click, also after a held question", async () => {
+    updater.emit("update-available", { version: "0.4.1" });
+    answers.push(0); // "Restart and update"
+    updater.emit("update-downloaded", { version: "0.4.1" });
+    await tick();
+    expect(updater.installs).toBe(0);
+    mainWindowShows();
+    await tick();
+    expect(updater.installs).toBe(1);
+  });
+
+  it("a download that fails before the person was told anything: a log line, no message about an update they never heard of", () => {
+    updater.emit("update-available", { version: "0.4.1" });
+    updater.emit("error", new Error("net::ERR_CONNECTION_RESET"));
+    mainWindowShows();
+    expect(shown).toEqual([]);
+    expect(lines).toContain("[update] the download didn't finish");
+  });
+});
