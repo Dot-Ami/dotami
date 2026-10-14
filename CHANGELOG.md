@@ -366,6 +366,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **Sources that led to "Page not found" now lead to the page where that rule is today.** A recount on
+  2026-10-13 opened every government page DotAmi cites (104 addresses, twice): 20 answered "page not
+  found", mostly because the CRA moved its business-expense, SR&ED and corporation pages. 23 sources on
+  19 of those addresses now link the page where the same government keeps that content, and each says
+  *Checked by a tool on 2026-10-13* with the words found there, until a person reads it (the old read
+  date was for the old page, so it no longer shows). Three sources are left as they were for the
+  maintainer: the Alberta Investor Tax Credit page (the program closed to new applications in 2019) and
+  the two sources of *Retained earnings planning*. The intake's write-offs card links the moved Business expenses page too
+  (`tests/moved-government-pages.spec.ts`).
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and

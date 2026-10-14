@@ -163,11 +163,17 @@ export const complianceRulesV2026 = [
     },
     citations: [
       {
-        title: "Trades and occupations",
+        title: "Compulsory certification trades",
         authority: "provincial",
         jurisdiction: "AB",
-        url: "https://www.alberta.ca/trades-occupations",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (alberta.ca/trades-occupations, read 2026-06-08) answered 404 on
+        // 2026-10-13. Alberta's list of trades that need certification or an apprenticeship is on its
+        // Tradesecrets site; a tool found this sentence on it that day.
+        url: "https://tradesecrets.alberta.ca/trades-in-alberta/compulsory-certification-trades",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["Journeyperson certification or registration as an apprentice is compulsory to perform restricted activities in these trades."],
+        },
         note: "Alberta regulated trades overview.",
       },
     ],

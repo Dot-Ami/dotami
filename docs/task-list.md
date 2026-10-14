@@ -76,9 +76,11 @@ and the maintainer's six decisions of 2026-10-11:
     separate bank account), every source a tool check (2026-10-12,
     `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
     three new cards as on your road; drawn without it, the map shows them as "no rule yet")
-    - [ ] Still open on it: skill items and official links on the ten map stages; four
-      map stages' own sources point at pages that answer "page not found" (a read, or a tool check
-      in place of it, is the maintainer's call); a person's read of each page
+    - [ ] Still open on it: skill items and official links on the ten map stages; one map stage's
+      own sources still point at a page that answers "page not found": *Retained earnings planning*,
+      whose "Paying dividends" and "Salary or dividends" shared one old address and have no current CRA
+      page found (a person's call). Since 2026-10-13 the other stages' moved sources link their new pages
+      with a tool check, `tests/moved-government-pages.spec.ts`; a person's read of each page
   - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
     one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
     for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that

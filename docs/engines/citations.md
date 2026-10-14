@@ -1,8 +1,9 @@
 # How a source was checked: read, or checked by a tool
 
-Last updated: 2026-10-12 (the first tool checks in the catalogs: the honest map's six pages, § Tool
-checks in the catalogs; 2026-10-11: the maintainer's decision; same day, after review: a card
-says "Read by a person" only when the catalog records that a person did the reading)
+Last updated: 2026-10-13 (pages that moved, § When a cited page moves; 2026-10-12: the first tool
+checks in the catalogs: the honest map's six pages, § Tool checks in the catalogs; 2026-10-11: the
+maintainer's decision; same day, after review: a card says "Read by a person" only when the catalog
+records that a person did the reading)
 
 Every citation in every catalog says how it was checked, and a card always says which kind of
 check it had.
@@ -197,6 +198,35 @@ shows the sentences without the footnote numbers, as a person reads them;
 The incorporation routes are in the list every check reads
 ([`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts)), so running the script with no
 arguments checks them again with the rest.
+
+## When a cited page moves
+
+On 2026-10-13 every distinct address the catalogs cite (104, from
+[`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts)) was fetched twice, with a normal
+browser's user-agent and a pause between requests. Both runs agreed: 84 answered, 20 answered "page not
+found" (404), none were blocked. Most of the 20 were CRA pages that moved when it reorganised its
+business-expense, SR&ED and corporation pages.
+
+What was done, for each dead address:
+
+- **Where the same government keeps that content now, and the words the entry relies on are there**,
+  the citation's `url` points at the new page and it carries a `toolCheck` of that day, recorded only
+  after `node scripts/check-quotes.mjs --url … --quote …` found every quote. Its `lastVerified` is
+  removed: that read was of the old page, and it says nothing about the new one, so a card would
+  otherwise say "Read on 2026-06-08" next to a page nobody has read. A comment beside the `url` keeps
+  the old address and its read date. The card shows the tool check in amber until a person reads the
+  page. 23 citations on 19 addresses moved this way. Where the new page has a different name, the
+  `title` names it.
+- **Where no current page carries those words**, the citation is left exactly as it was, for the
+  maintainer: the entry's claim may have changed, and no tool rewrites a rule. Three citations, on two
+  addresses: the Alberta Investor Tax Credit (Alberta closed the program to new applications in 2019),
+  and the two sources of the *Retained earnings planning* stage, "Paying dividends" and "Salary or
+  dividends", which shared one address that was a corporation-return line about dividends received.
+
+[`tests/moved-government-pages.spec.ts`](../../tests/moved-government-pages.spec.ts) holds the list: no
+citation may cite a dead address except the three left for a person, and each moved citation points at
+its new page with a tool check and no old read date. It never reaches the network; running
+`node scripts/check-quotes.mjs` with no arguments re-checks the new pages with the rest.
 
 ## How this relates to the other checks
 

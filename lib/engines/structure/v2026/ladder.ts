@@ -52,8 +52,11 @@ export const structureLadderV2026 = [
         title: "Register for a GST/HST account",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/register-account.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/gst-hst-businesses/register-account.html, read 2026-06-08) answered
+        // 404 on 2026-10-13. The CRA's GST/HST page now sends registering to Business Registration
+        // Online on this page; a tool found these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/business-number-program-account/how-register/resident.html",
+        toolCheck: { checkedOn: "2026-10-13", quotes: ["is the fastest and easiest way to get a business number"] },
         note: "CRA guidance on registering for GST/HST.",
       },
       {
@@ -88,19 +91,31 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Corporation income tax",
+        title: "Corporation tax rates",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old overview (…/topics/corporations/corporation-income-tax.html, read 2026-06-08)
+        // answered 404 on 2026-10-13. The rates this rung relies on are on this CRA page; a tool found
+        // these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html",
+        toolCheck: { checkedOn: "2026-10-13", quotes: ["The basic rate of Part I tax is 38% of your taxable income"] },
         note: "CRA corporate income tax overview.",
       },
       {
         title: "Small business deduction",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax/small-business-deduction.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/corporation-income-tax/small-business-deduction.html, read
+        // 2026-06-08) answered 404 on 2026-10-13. The CRA's T2 guide explains the deduction at line 430
+        // on this page; a tool found these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "throughout the tax year may be able to claim the small business deduction",
+            "reduces Part I tax that the corporation would otherwise have to pay.",
+          ],
+        },
         note: "CRA SBD guidance for CCPCs.",
       },
     ],
@@ -127,8 +142,18 @@ export const structureLadderV2026 = [
         title: "Intercorporate dividends",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax/returns/completing-your-corporation-income-tax-t2-return/line-4600-dividends-received.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/completing-your-corporation-income-tax-t2-return/line-4600-dividends-received.html,
+        // read 2026-06-08) answered 404 on 2026-10-13. The CRA's T2 guide explains the deduction for
+        // dividends from other Canadian corporations at line 320 on this page; a tool found these
+        // words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-3-page-3-t2-return.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "When calculating taxable income, you can deduct, under section 112, any of the following types of taxable dividends received:",
+            "dividends from a taxable Canadian corporation, or from a corporation resident in Canada and controlled by the receiving corporation",
+          ],
+        },
         note: "CRA framing for dividends between connected corporations.",
       },
     ],
@@ -152,11 +177,17 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Tax on split income (TOSI)",
+        title: "Guidance on the application of the split income rules for adults",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account/tfsa/tax-on-split-income.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/tax-free-savings-account/tfsa/tax-on-split-income.html, read
+        // 2026-06-08) answered 404 on 2026-10-13. This is the CRA's guidance on the tax on split income
+        // (TOSI); a tool found these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/federal-government-budgets/income-sprinkling/guidance-split-income-rules-adults.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["will generally include dividends or interest, but not salary, paid by a private", "subject to tax at the top marginal rate"],
+        },
         note: "CRA TOSI rules affecting dividends to related persons.",
       },
     ],

@@ -27,11 +27,20 @@ export const cfeNodesV2026 = [
     },
     citations: [
       {
-        title: "Employees",
+        title: "Line 10100 – Employment income",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/income/employment-self-employment-income/employment-income.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/completing-a-tax-return/income/employment-self-employment-income/employment-income.html,
+        // read 2026-05-01) answered 404 on 2026-10-13; a tool found these words on the CRA's line 10100
+        // page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/personal-income/line-10100-employment-income.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Employment income consists of amounts that you receive as salary, wages, commissions",
+            "Employment income is usually shown in box 14 of your T4 slip.",
+          ],
+        },
         note: "CRA guidance for reporting employment income on an individual tax return.",
       },
       {
@@ -546,16 +555,26 @@ export const cfeNodesV2026 = [
         title: "SR&ED claim preparation",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
+        // read 2026-05-01) answered 404 on 2026-10-13; a tool found this sentence on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["After conducting SR&ED work, you can prepare to file your SR&ED tax incentives claim."],
+        },
         note: "CRA SR&ED claim preparation guidance.",
       },
       {
         title: "SR&ED glossary",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive/glossary.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/glossary.html,
+        // read 2026-05-01) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/glossary.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["provided for information purposes only as a plain language explanation of some of the terms used on the SR&ED Web pages"],
+        },
         note: "CRA SR&ED terminology and eligibility concepts.",
       },
     ],

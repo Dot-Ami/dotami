@@ -22,8 +22,13 @@ export const grantProgramsV2026 = [
         title: "Scientific Research and Experimental Development (SR&ED) tax incentives",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/scientific-research-experimental-development-tax-incentive.html, read
+        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["tax incentives are intended to encourage businesses to conduct research and development in Canada."],
+        },
         note: "CRA SR&ED program overview.",
       },
     ],
@@ -98,8 +103,16 @@ export const grantProgramsV2026 = [
         title: "NRC IRAP",
         authority: "federal",
         jurisdiction: "CA",
-        url: "https://nrc.canada.ca/en/support-technology-innovation/nrc-irap",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/support-technology-innovation/nrc-irap, read 2026-06-08) answered 404
+        // on 2026-10-13; a tool found these words on the NRC's About NRC IRAP page that day.
+        url: "https://nrc.canada.ca/en/support-technology-innovation/about-nrc-industrial-research-assistance-program",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "is Canada's leading innovation assistance program for small and medium-sized businesses.",
+            "We do this through financial assistance, advisory services and connections to the best business and R&D expertise in Canada.",
+          ],
+        },
         note: "NRC IRAP program overview.",
       },
     ],
@@ -182,8 +195,11 @@ export const grantProgramsV2026 = [
         title: "Ontario business grants and funding",
         authority: "provincial",
         jurisdiction: "ON",
-        url: "https://www.ontario.ca/page/business-grants-and-funding-ontario-government",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old hub (…/page/business-grants-and-funding-ontario-government, read 2026-06-08)
+        // answered "We can't find that page" on 2026-10-13. Ontario's funding list for businesses is now a
+        // section of this page; a tool found this sentence on it that day.
+        url: "https://www.ontario.ca/page/business-and-economy",
+        toolCheck: { checkedOn: "2026-10-13", quotes: ["Ontario has a number of funds available for business and not-for-profit entrepreneurs."] },
         note: "Ontario government business funding hub.",
       },
     ],
