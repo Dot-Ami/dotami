@@ -341,6 +341,18 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
   await page.getByRole("button", { name: /^Sole Prop activation, / }).click();
   await expect(page.getByRole("button", { name: "Close node detail panel" })).toBeVisible();
   await expect(exportPanel).toHaveCount(0);
+
+  // Issue #40: this idea names no kind of work, so the research tax credit step is off its path with the
+  // reason, never "ahead", and is still drawn and still opens (tests/research-steps.spec.ts).
+  const notTold =
+    "You haven't told DotAmi this idea involves research and development: none of its kinds of work is Software / SaaS, Manufacturing or AI / ML / R&D.";
+  const sred = page.getByRole("button", { name: /^SR&ED deepening, / });
+  await expect(sred).toHaveAccessibleName("SR&ED deepening, not on your path, doesn't apply as answered, opens detail");
+  await expect(sred).toHaveAccessibleDescription(notTold);
+  await expect(sred).toHaveClass(/border-dashed/);
+  await sred.click();
+  await expect(stepPanel.getByRole("heading", { level: 2 })).toHaveText("SR&ED deepening");
+  await expect(stepPanel.getByText(notTold, { exact: true })).toBeVisible();
 });
 
 // 2026-10-11 (option B, docs/engines/citations.md): every source says how it was checked. Every

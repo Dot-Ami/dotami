@@ -142,7 +142,8 @@ still opens the step panel, whose *Why this colour* gives the same sentence. Wit
 of work the card is as before (amber for a corporation, grey for a sole proprietorship, chip **ahead**).
 The rule is the road's (`onlyForKindsOfWork` on the step, `lib/engines/roads/v2026/`); the place comes
 from `lib/cockpit/view.ts` `mapPlace`. Drawn without road evaluation, the card is unchanged.
-`tests/research-steps.spec.ts`. Design: docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
+`tests/research-steps.spec.ts`; in the browser, `e2e/app.spec.ts` (*the map draws today's road*). Design:
+docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
 work only, as built*.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items

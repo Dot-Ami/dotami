@@ -297,14 +297,15 @@ function TierColumn({
         const colour = evaluated ? COLOUR_OF_STATE[evaluated.state] : colourOf(evaluation, step.id);
         const ruled = colour !== undefined;
         // On the map's own reading, "your pick" only for what the person picked (`stageChipFor`, issue #5).
-        // A step the road puts off the path for its kinds of work reads its place from road evaluation
-        // (`mapPlace`), not from the toggles, and says why on its card.
+        // A place `mapPlace` puts off the path reads "not on your path" whatever the toggles say: a step the
+        // road writes for some kinds of work only, on an idea with none of them (issue #40). That card also
+        // says why, in road evaluation's sentence.
         const offForKindsOfWork = evaluated?.reason.kind === "kinds-of-work";
         const chip = !ruled
           ? NO_RULE_CHIP
           : place.from === "you"
             ? STATUS_CHIP[place.status]
-            : STAGE_CHIP[offForKindsOfWork ? "not-on-your-path" : stageChipFor(step.id, scenario)];
+            : STAGE_CHIP[place.status === "ghost" ? "not-on-your-path" : stageChipFor(step.id, scenario)];
         const ghost = ruled && setAsideOnMap(place);
         // A step the person marked not for me is grey because they said so, not because of the rules: its
         // name says that instead of "doesn't apply as answered".
