@@ -27,8 +27,8 @@ export function mainWindowGate() {
       else held.push(fn);
     },
     open: () => {
-      if (shown) return;
       shown = true;
+      // splice empties the list as it runs it, so a second open (or one from inside fn) runs nothing again.
       for (const fn of held.splice(0)) fn();
     },
   };
