@@ -154,6 +154,7 @@ export const exampleMara: ExampleFuture = {
     agreed("space-deposit", "start-up-cost-line", SPACE_DEPOSIT_QUOTE_CENTS, { roadId: road.id, stepId: SHOP_STEP_ID, lineId: SPACE_LINE_ID, amountFrom: "quote" }),
     agreed("savings", "savings-for-start", SAVINGS_CENTS, null),
   ],
-  // No incorporation number of her own: the Incorporating step waits on it.
+  // No incorporation number of her own (road 1 draws no Incorporating step of its own; it joins road 0's
+  // there, so the step panel's "I'd incorporate at" box is never drawn for her).
   whatIfFirstYearSalesDollars: WHAT_IF_FIRST_YEAR_SALES_DOLLARS,
 };
