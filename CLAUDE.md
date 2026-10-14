@@ -54,7 +54,10 @@ says where it is going.
   `LISTED_ROAD_IDS` (`lib/front-door/futures.ts`; road 0 and, since the maintainer's yes of 2026-10-13, the
   first written future, whose card says in amber that no person has read its sources, design § 13), in the order added, as counts; a pick saves an idea on
   that road and opens the cockpit); *I already have an idea*, the
-  free-text box; *Show me an example first*, not written yet, no link; words in `lib/front-door/words.ts`)
+  free-text box; *Show me an example first* → `/example/mara` (since 2026-10-13: Mara, an invented person on
+  the first written future, her answers as data in `lib/examples/mara.ts`, drawn read-only by the cockpit
+  (`CockpitPage`'s `example`) under a banner that never folds; it saves nothing, reads none of the person's
+  data and touches no browser storage, `docs/ui-spec/example/`); words in `lib/front-door/words.ts`)
   → `/intake` (about you, only before the person's first saved idea, issue #38 · confirm · ground it) →
   `/cockpit[?venture=<id>]` (the future cockpit's screen, part 1, since 2026-10-12: a goal bar with the
   idea's first sentence and four gauges, overlay switches over the map, a step panel in place of node

@@ -223,6 +223,17 @@ person is asked).
   person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
   `/your-data` says five.
 
+- **The front door's example future keeps nothing, and reads nothing of the person's (2026-10-13).**
+  *Show me an example first* opens `/example/mara`: an invented person's answers, shipped as data in the
+  app ([`lib/examples/mara.ts`](../lib/examples/mara.ts)), drawn read-only in the cockpit. It writes no
+  row (every control that would save is disabled or says it is an example, and no request that writes is
+  sent), it doesn't ask for the person's ideas, figures, settings or statements, and it reads and writes
+  no browser storage: the page sits outside the journey's pages, so the tab's journey draft
+  (`dotami-journey-v3`) isn't touched, and its folds are remembered nowhere (`dotami-cockpit-folds` is
+  neither read nor written there). [`e2e/example-future.spec.ts`](../e2e/example-future.spec.ts) compares
+  the data file's row counts, both storages and the requests sent before and after clicking the save
+  controls. No inventory entry changes.
+
 ### Packages that ship
 
 - **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine

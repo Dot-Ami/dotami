@@ -102,6 +102,29 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   return <JourneyContext.Provider value={value}>{children}</JourneyContext.Provider>;
 }
 
+const NOTHING = () => {};
+
+/**
+ * For a page that must never touch the tab's journey: the invented example future (app/example/,
+ * docs/ui-spec/example/_index.md). It hands out the scenario it is given and nothing else: it never reads
+ * or writes sessionStorage, and its setters do nothing, so the journey a person has going in this tab is
+ * exactly as it was when they come back.
+ */
+export function ReadOnlyJourneyProvider({ scenario, children }: { scenario: Scenario; children: ReactNode }) {
+  const value = useMemo<JourneyContextValue>(
+    () => ({
+      intake: defaultIntakeDraft(),
+      scenario,
+      hydrated: true,
+      setIntake: NOTHING,
+      setScenario: NOTHING,
+      resetJourney: NOTHING,
+    }),
+    [scenario],
+  );
+  return <JourneyContext.Provider value={value}>{children}</JourneyContext.Provider>;
+}
+
 export function useJourney() {
   const ctx = useContext(JourneyContext);
   if (!ctx) throw new Error("useJourney must be used within JourneyProvider");

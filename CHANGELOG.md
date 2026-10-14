@@ -11,6 +11,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Show me an example first: Mara, an invented example future** (the maintainer's pick of 2026-10-13) —
+  the front door's third door now opens a filled-in future for an invented person: Mara, an apprentice
+  cabinetmaker in Alberta, on *From apprentice to your own shop (Alberta)*. It is the same cockpit anyone
+  gets for their own future, drawn from her answers through the same rules: her words (*"My own small
+  furniture shop, four-day weeks, home for supper."*), her $70,000 target, nine skills marked, her own
+  quotes for a table saw and a shop deposit, her savings, her pick of *Open your own shop* and one step
+  done, with her what-if of $45,000 in first-year sales switched on. A short list, *What Mara did*, shows
+  what each of her answers changed, worked out by the rules (on today's road: 16 steps, 29 cost lines
+  still to price; the design's early sketch said 22 and 4). A banner that never folds says *"Invented
+  person, invented numbers, not real data. Nothing here is saved."*, with **Start my own future →**.
+  Nothing is saved from it: every button that would keep something is greyed out and says *"This is an
+  example. Start your own to keep anything."*, or says so when clicked, and the page reads none of your
+  own data and writes nothing to the browser either (a browser test checks the data file, both kinds of
+  browser storage and every request). Her numbers live in one file, `lib/examples/mara.ts`, and a test
+  checks no other file carries them; the what-if bar's hint no longer gives *45000* as its example.
 - **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
   the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
   life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's

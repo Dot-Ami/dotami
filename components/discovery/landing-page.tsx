@@ -2,6 +2,7 @@
 
 import { useJourney } from "@/components/shared/journey-provider";
 import { GhostLink, Pill, WordMark } from "@/components/ui";
+import { FRONT_DOOR_EXAMPLE_ID } from "@/lib/examples";
 import { frontDoorWords } from "@/lib/front-door/words";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
@@ -14,8 +15,8 @@ import { useLayoutEffect, useRef, useState } from "react";
  * The front door (decision 6 of 2026-10-11: it leads with the dream; docs/ui-spec/landing/04-three-doors.md):
  * the headline and three doors. The first, *Start from where I want to be*, opens /start. The second is
  * the 2026-07-02 workshop's front door, unchanged: the free-text box captures the situation in the
- * person's own words, and the chips below only fill it with example phrasings. The third says plainly that
- * the invented example future isn't written yet.
+ * person's own words, and the chips below only fill it with example phrasings. The third opens the invented
+ * example future, Mara (since 2026-10-13; docs/ui-spec/example/_index.md), and says it is invented.
  */
 const EXAMPLE_PROMPTS = [
   "I want to monetize a hobby",
@@ -158,13 +159,21 @@ export function LandingPage() {
               </div>
             </li>
 
-            {/* No link and no button: the invented example future isn't written yet, and this says so. */}
+            {/* The invented example future, read-only: it keeps nothing and touches no storage. */}
             <li className="flex flex-col gap-3 rounded-[10px] border border-dashed border-rule bg-ink p-5">
-              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper-dim">{doors.example.title}</h2>
-              <p className="text-[13px] leading-relaxed text-stone">{doors.example.body}</p>
-              <p className="mt-auto self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone-dim">
+              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.example.title}</h2>
+              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.example.body}</p>
+              <p className="self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone-dim">
                 {doors.example.tag}
               </p>
+              <div className="mt-auto flex justify-end">
+                <Link
+                  href={`/example/${FRONT_DOOR_EXAMPLE_ID}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-xs font-medium tracking-wide text-paper transition hover:border-maple-soft"
+                >
+                  {doors.example.go}
+                </Link>
+              </div>
             </li>
           </ul>
         </section>

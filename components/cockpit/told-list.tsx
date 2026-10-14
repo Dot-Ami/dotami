@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 
+import { ExampleOnlyNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines, type ShownReceipt } from "@/components/cockpit/receipt-lines";
 import type { BoxQuestion, NotToldRow, ToldRow } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
@@ -69,6 +70,8 @@ export function ToldList({
       <section aria-label={words.told.region}>
         <h2 className={heading}>{words.told.region}</h2>
         <p className="mt-0.5 text-[11px] text-stone-dim">{words.told.count(rows.length)}</p>
+        {/* On the invented example the buttons below are disabled; this says why. */}
+        <ExampleOnlyNote className="mt-1 text-[11px] text-amber" />
         {error ? (
           <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
             {error}

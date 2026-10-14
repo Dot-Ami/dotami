@@ -34,13 +34,14 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   await page.goto("/", { waitUntil: "networkidle" });
   const today = await todayIn(page);
 
-  // The dream first, then three doors in their order; the third says plainly it isn't written yet.
+  // The dream first, then three doors in their order; the third opens the invented example future, and
+  // says it is invented (since 2026-10-13; e2e/example-future.spec.ts drives it).
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/See the road to the work and life you want\./);
   const doors = page.getByRole("list", { name: "Three ways in" });
   await expect(doors.getByRole("heading", { level: 2 })).toHaveText(["Start from where I want to be", "I already have an idea", "Show me an example first"]);
   const example = doors.getByRole("listitem").nth(2);
-  await expect(example).toContainText("Coming: a filled-in future for an invented person, clearly labelled. It isn't written yet.");
-  await expect(example.getByRole("link")).toHaveCount(0);
+  await expect(example).toContainText("Look inside a filled-in future for Mara, an invented apprentice cabinetmaker in Alberta");
+  await expect(example.getByRole("link")).toHaveAttribute("href", "/example/mara");
   await expect(example.getByRole("button")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Your futures →" })).toBeVisible();
 

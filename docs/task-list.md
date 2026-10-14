@@ -155,7 +155,7 @@ and the maintainer's six decisions of 2026-10-11:
     `lib/front-door/questions.ts`; a second idea skips *About you*, issue #38; an idea picked there keeps
     its work situation, kind of venture, equipment and revenue estimates as "not said"; answers already
     in the data file count as answered)
-    - [ ] Still open on it: the third door waits for the invented example below; *Pick a future* doesn't
+    - [ ] Still open on it: *Pick a future* doesn't
       ask the job closest to your work (the OaSIS line below) or draw the road in grey before the pick;
       *What DotAmi knows about you* and its Delete menu still say *Your ideas*; the kind of venture
       (service, product, side gig) isn't asked on this way in (kept as "not said"); whether the place gets an *I don't know* (design § 13)
@@ -174,7 +174,14 @@ and the maintainer's six decisions of 2026-10-11:
     [§ 6](architecture/future-cockpit.md))
     - [ ] Still open on it: whether the government's ratings are shown beside the names (the
       maintainer's call); *Pick a future* asking for the job too (that screen is built and doesn't ask it yet)
-  - [ ] *Show me an example first*: a filled-in, clearly invented example future
+  - [x] *Show me an example first*: a filled-in, clearly invented example future (2026-10-13: the
+    maintainer picked Mara, a new invented person on the first written road; her answers are data in
+    `lib/examples/mara.ts`, drawn read-only at `/example/mara` by the same cockpit and road evaluation,
+    under a banner that never folds; nothing is saved or stored;
+    [§ 1, The example future as built](architecture/future-cockpit.md),
+    [docs/ui-spec/example/](ui-spec/example/_index.md))
+    - [ ] Still open on it: the front door's still picture of a filled-in cockpit (§ 1 row 1), drawn from
+      her example; the appendix's *Since last time* line, which needs the return visit's list
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine*
   - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's

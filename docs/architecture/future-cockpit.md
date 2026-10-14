@@ -114,10 +114,13 @@ each choice that differs from the table above says why.
      idea). The box is not moved behind a click, so nothing typed before the page has loaded is lost.
      This door doesn't say the words stay on this computer: with a model key set up, the intake's
      parser sends the sentence to that model (Settings says so).
-  3. **Show me an example first**: the invented example future (§ 13, *the example future's content*)
-     isn't written yet, so the door is drawn without a link and says so: *"Coming: a filled-in future
-     for an invented person, clearly labelled. It isn't written yet."* Nothing is invented here. The
-     still picture of a filled-in cockpit (row 1 above) waits for that example too.
+  3. **Show me an example first**: until 2026-10-13 the invented example future wasn't written, so the
+     door was drawn without a link and said so. Since the maintainer's pick of 2026-10-13 (§ 13, *the
+     example future's content*: Mara) it says *"Look inside a filled-in future for Mara, an invented
+     apprentice cabinetmaker in Alberta on her way to her own shop. Her numbers are invented, and nothing
+     in it is saved."* and links to **Show me Mara's example →**, `/example/mara` (*The example future as
+     built*, below). The still picture of a filled-in cockpit (row 1 above) can now be drawn from her
+     example; it isn't yet.
 
   The header's *Your ideas →* becomes **Your futures →**.
 - **Your destination (`/start`): four questions, one at a time, written as data.** The questions are a
@@ -235,6 +238,38 @@ each choice that differs from the table above says why.
 - **Words** for the new screens are in `lib/front-door/words.ts` (the questions' own words are in the
   questions list, since the questions are data); amounts and months go through
   `lib/format/money-and-months.ts`.
+
+### The example future as built (2026-10-13)
+
+The front door's third door, built from the maintainer's pick of 2026-10-13 (§ 13): Mara, the invented
+person of the appendix below, on the first written road. Written before the code; the page's controls are
+in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
+
+- **Her answers are data in their own file**, `lib/examples/mara.ts` (listed by `lib/examples/index.ts`):
+  not a catalog and not the database. Every value the appendix gives is there, and every number in it is
+  her own invented figure, typed in that file only (a test reads every other file the app is built from
+  and finds none of them). The steps, fees, skills and sources are the catalogs' own, named by id, and a
+  test checks each id exists. Where the appendix names something the catalog calls differently, the
+  catalog's real item is used: *Set up your shop* is *Open your own shop* (her quotes on its *Woodworking
+  machines and tools* and *Shop space deposit* lines); her 9 marks are road 1's two legal requirements
+  that fit an Alberta apprentice (both *have*) and seven items of the government's list for Cabinetmakers,
+  the job she picked as closest to her work (road 1 lists only three skills of its own); her 1 step done
+  is the road's first, *Register as a Cabinetmaker apprentice*.
+- **The same cockpit, read-only.** `/example/mara` (`app/example/[id]/page.tsx`; any other id is not
+  found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
+  fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if of first-year sales
+  of $45,000 on. A banner that never folds says *"Invented person, invented numbers, not real data.
+  Nothing here is saved."* with **Start my own future →** (`/start`).
+- **Nothing is written, anywhere.** Every control that would save is disabled with *"This is an example.
+  Start your own to keep anything."*, or answers with that sentence and does nothing; no request that
+  writes is sent, none of the real person's data is read, and no browser storage is read or written (the
+  page sits outside the journey's pages, so the journey draft isn't touched, and the fold answers are
+  remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
+  the requests sent before and after clicking each kind of save control.
+- **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
+  catalog, which differs from the appendix's sketch: 16 steps (not 22), 31 lines to price before her
+  quotes and 29 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The
+  appendix is left as written, a sketch from before the road was; the ui-spec lists the true receipts.
 
 ## 2. The cockpit
 
@@ -1703,8 +1738,10 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - **The government's ratings, or names only** (the maintainer's item 20). Built names only, the
   documented default; the ratings are kept in the data. Showing them ("3 - Moderate Level") would show
   each with its own scale.
-- **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
-  on the first written road.
+- ~~**The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
+  on the first written road.~~ Settled 2026-10-13: the maintainer picked a new invented person on the
+  first written road, Mara (the appendix below). Built at `/example/mara` from `lib/examples/mara.ts`
+  (§ 1, *The example future as built*).
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
   lists the first written future, its card saying in amber that its sources were checked by a tool and
   not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
@@ -1732,6 +1769,10 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 
 **Invented person, invented numbers, not real data.** Mara (invented) is a second-year cabinetmaking
 apprentice in Alberta.
+
+*(2026-10-13: the maintainer picked Mara as the front door's example future. She is built at
+`/example/mara`, her answers in `lib/examples/mara.ts`; § 1, The example future as built, says where the
+built page's counts differ from this sketch, which was written before road 1 was.)*
 
 She picks *Start from where I want to be* and types *"My own small furniture shop, four-day weeks,
 home for supper."* The receipt: *"Saved word for word, dated today. This goes at the top of your

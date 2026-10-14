@@ -337,7 +337,7 @@ export const cockpitWords = {
       save: "Save",
       dontKnow: "I don't know",
       month: "Month and year",
-      wholeDollars: "Write a whole number of dollars, like 45000.",
+      wholeDollars: "Write a whole number of dollars: digits only, no cents.",
       pickOne: "Pick one first.",
       monthNeeded: "Pick a month and year first.",
     },
@@ -410,6 +410,33 @@ export const cockpitWords = {
     lines: (n: number) => count(n, "line", "lines"),
     onlyIf: (n: number) => (n === 0 ? "none" : `${count(n, "line", "lines")}, not added up`),
     cards: (apply: number, checkFirst: number) => `${apply} apply · ${checkFirst} check first`,
+  },
+
+  /**
+   * The cockpit drawn read-only for an invented example person (docs/ui-spec/example/_index.md; since
+   * 2026-10-13). The banner never folds; every control that would save says `cantKeep`.
+   */
+  example: {
+    region: "Invented example",
+    banner: "Invented person, invented numbers, not real data. Nothing here is saved.",
+    whose: (person: string) => `${person}'s example future: an invented person on a written road.`,
+    cantKeep: "This is an example. Start your own to keep anything.",
+    startOwn: "Start my own future →",
+    back: "← Front door",
+    /** Her own words, in the rail where a person's own statements would be. */
+    theirWords: (person: string) => `In ${person}'s words`,
+    story: {
+      region: (person: string) => `What ${person} did`,
+      note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
+      parts: {
+        marks: "Her skill marks",
+        quotes: "Her own quotes",
+        savings: "Her savings",
+        "this-is-mine": "Her pick: This is mine",
+        "step-done": "The step she marked done",
+        "what-if": "Her what-if, kept nowhere",
+      },
+    },
   },
 
   /** The left rail's own fields. */

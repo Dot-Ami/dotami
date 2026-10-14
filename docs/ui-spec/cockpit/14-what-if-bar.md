@@ -20,7 +20,7 @@ reader:
 - **Try**: the number goes to road evaluation's `whatIf` for the screen's run; the rules and tax cards
   and the steps the rules colour relight at once. It never touches a money sum, a figure or a gauge's
   numbers, and nothing is kept: a reload clears it. A number that isn't a whole, non-negative number of
-  dollars is refused on screen (*Write a whole number of dollars, like 45000.*).
+  dollars is refused on screen (*Write a whole number of dollars: digits only, no cents.*; until 2026-10-13 it gave 45000 as its example, which is now the invented example's own what-if).
 - **Keep**: writes the number as the idea's own first-year sales (the Year 1 field the intake keeps, saved
   with the map), never a figure, and clears the what-if; a receipt follows, and the answer is a row in
   *What you've told DotAmi*.

@@ -2,6 +2,8 @@
 
 import { Suspense } from "react";
 import { CockpitPage } from "@/components/cockpit/cockpit-page";
+import { ReadOnlyJourneyProvider } from "@/components/shared/journey-provider";
+import { exampleById } from "@/lib/examples";
 import type { Scenario } from "@/lib/scenarios/types";
 
 interface CockpitPageClientProps {
@@ -15,5 +17,22 @@ export function CockpitPageClient({ initialScenario, pinned = false }: CockpitPa
     <Suspense fallback={<div className="flex h-screen items-center justify-center text-stone">Loading cockpit…</div>}>
       <CockpitPage initialScenario={initialScenario} pinned={pinned} />
     </Suspense>
+  );
+}
+
+/**
+ * The cockpit for an invented example future, by its id (docs/ui-spec/example/_index.md). It is drawn under
+ * a journey that hands out the example and never touches the tab's own (no sessionStorage read or write).
+ * The id comes from the address; the page has already refused any id that isn't an example.
+ */
+export function ExampleCockpitClient({ exampleId }: { exampleId: string }) {
+  const example = exampleById(exampleId);
+  if (!example) return null;
+  return (
+    <ReadOnlyJourneyProvider scenario={example.scenario}>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center text-stone">Loading cockpit…</div>}>
+        <CockpitPage initialScenario={example.scenario} example={example} />
+      </Suspense>
+    </ReadOnlyJourneyProvider>
   );
 }
