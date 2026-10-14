@@ -233,6 +233,22 @@ describe("Mara's numbers are in her file only", () => {
     ];
   });
   const file = "lib/examples/mara.ts";
+  // The cited catalogs are left out: a real official fee can be the same amount as one of her numbers (a
+  // $2,000 fee, say), and the fix must never be to change a sourced figure or her invented one to suit.
+  const catalogs = "lib/engines/";
+  // One string is allowed by name: the what-if bar's own hint, which gave 45000 as its example before Mara
+  // existed and is shown to every person on their own futures. Her what-if is the same amount by chance;
+  // the hint stays as it was, and only this exact sentence is taken out of words.ts before the scan.
+  const allowed = { file: "lib/cockpit/words.ts", text: cockpitWords.questions.box.wholeDollars };
+  const scanned = (f: string) => {
+    const code = simplify(readSource(f), true);
+    return f === allowed.file ? code.split(allowed.text).join("") : code;
+  };
+
+  it("the one string allowed by name is still in its file, so the allowance can't hide a new one", () => {
+    expect(allowed.text).toBe("Write a whole number of dollars, like 45000.");
+    expect(simplify(readSource(allowed.file), true)).toContain(allowed.text);
+  });
 
   it("the scan finds each of them in her file (so it can fail)", () => {
     const code = simplify(readSource(file), true);
@@ -240,11 +256,12 @@ describe("Mara's numbers are in her file only", () => {
     for (const c of cents) expect(new RegExp(`\\b${grouped(c)}\\b`).test(code) || new RegExp(`\\b${grouped(c / 100)}\\b`).test(code), String(c)).toBe(true);
   });
 
-  it("no other file under app/, components/ or lib/ writes one", () => {
+  it("no other file under app/, components/ or lib/ (the cited catalogs aside) writes one", () => {
     const found = sourceFiles(["app", "components", "lib"], TS_FILES)
-      .filter((f) => f.split("\\").join("/") !== file)
+      .map((f) => f.split("\\").join("/"))
+      .filter((f) => f !== file && !f.startsWith(catalogs))
       .flatMap((f) => {
-        const code = simplify(readSource(f), true);
+        const code = scanned(f);
         return patterns.filter((p) => p.test(code)).map((p) => `${f}: ${p}`);
       });
     expect(found).toEqual([]);

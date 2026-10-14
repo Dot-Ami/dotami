@@ -25,7 +25,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   example. Start your own to keep anything."*, or says so when clicked, and the page reads none of your
   own data and writes nothing to the browser either (a browser test checks the data file, both kinds of
   browser storage and every request). Her numbers live in one file, `lib/examples/mara.ts`, and a test
-  checks no other file carries them; the what-if bar's hint no longer gives *45000* as its example.
+  checks no other file the app is built from carries them (the cited catalogs aside, and the what-if
+  bar's own hint, whose example of 45000 is the same amount by chance and stays as it was).
 - **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
   the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
   life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's

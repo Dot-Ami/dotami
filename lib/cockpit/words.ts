@@ -337,7 +337,7 @@ export const cockpitWords = {
       save: "Save",
       dontKnow: "I don't know",
       month: "Month and year",
-      wholeDollars: "Write a whole number of dollars: digits only, no cents.",
+      wholeDollars: "Write a whole number of dollars, like 45000.",
       pickOne: "Pick one first.",
       monthNeeded: "Pick a month and year first.",
     },
