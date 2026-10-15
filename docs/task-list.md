@@ -546,6 +546,15 @@ roadmap's build order.
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
+  - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
+    - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its
+      page answers "page not found", and other sites say Alberta closed the program in 2019. The entry
+      is left as it was until a person reads an official source; then keep it, mark it closed, or
+      retire it (its id stays either way).
+    - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
+      current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
+    - [ ] *Canada-Alberta Job Grant* (`grant-cajg`): its page now redirects to the Canada-Alberta
+      Productivity Grant. A person reads whether the entry still says what the program does.
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:
