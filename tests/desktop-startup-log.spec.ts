@@ -183,7 +183,7 @@ describe("desktop/main.mjs", () => {
 
   it("ships every file of its own that it imports (desktop/package.mjs copies a fixed list)", () => {
     const own = [...main.matchAll(/from "\.\/([\w.-]+)"/g)].map((m) => m[1]);
-    expect(own).toEqual(expect.arrayContaining(["log.mjs", "update-notice.mjs", "migrate.mjs", "backup.mjs"]));
+    expect(own).toEqual(expect.arrayContaining(["log.mjs", "update-check.mjs", "update-notice.mjs", "migrate.mjs", "backup.mjs"]));
     const packaging = readFileSync(path.join(root, "desktop", "package.mjs"), "utf8");
     const list = packaging.match(/for \(const f of \[([^\]]+)\]\)/);
     expect(list, "desktop/package.mjs no longer lists the files it ships the way this test reads").not.toBeNull();

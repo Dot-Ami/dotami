@@ -19,4 +19,6 @@ export function showUpdateProgress(parts: {
   };
   window: () => { setProgressBar(value: number): void; isDestroyed(): boolean } | null;
   log: (line: string) => void;
+  /** Runs what it is given once the main window is on the screen (desktop/update-check.mjs mainWindowGate); by default, at once. */
+  whenShown?: (fn: () => void) => void;
 }): void;

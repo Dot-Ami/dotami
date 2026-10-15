@@ -229,6 +229,7 @@ and the maintainer's six decisions of 2026-10-11:
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
   - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
+  - [x] The check starts as the app opens, before the server and the first page, and its message waits for the main window (never over the preparing window or the lock question) (2026-10-14)
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
   - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
