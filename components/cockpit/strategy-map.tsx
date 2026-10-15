@@ -24,8 +24,9 @@ import type { Scenario } from "@/lib/scenarios/types";
  *
  * 2026-10-11: the map draws whatever road it is given (`lib/engines/roads/v2026/`) and holds no
  * map of its own. Today's ten-step tax map is the road "Starting any business in Alberta", drawn
- * exactly as before, plus three before-you-open steps (2026-10-12): tests/road-map.spec.ts cuts those
- * three cards out and compares the rest of the HTML with what the old map drew.
+ * exactly as before, plus four before-you-open steps (three on 2026-10-12, the records step on
+ * 2026-10-14): tests/road-map.spec.ts cuts those four cards out and compares the rest of the HTML with
+ * what the old map drew.
  *
  * Each column = one column of the road. Inside: a stage card per step the column lists, and under
  * each stage card a lever card per evaluator item relevant to that step (`itemsForNode`). Stage

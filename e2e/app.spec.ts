@@ -282,6 +282,8 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
         "Register your business name, if you use one",
         "Look up your permits and licences (BizPaL)",
         "A separate bank account for the business, if it has a name other than yours",
+        // Since 2026-10-14 (docs/engines/roads.md, road 0's table row).
+        "Keep your records from day one",
       ],
       toggle: null,
     },
@@ -325,6 +327,11 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
   await bizpal.hover();
   await expect(page.locator('svg path[marker-end="url(#map-arrow-solid)"]')).toHaveCount(1);
   await expect(page.locator('svg path[marker-end="url(#map-arrow-faint)"]')).toHaveCount(18);
+  // The other four first-column cards dim: the baseline and the other before-you-open cards, none of
+  // which it leads to (docs/ui-spec/cockpit/03-canvas.md gives these counts).
+  await expect(page.locator("div.opacity-35").getByRole("heading", { level: 4 })).toHaveText(
+    expected[0]!.cards.filter((c) => c !== "Look up your permits and licences (BizPaL)"),
+  );
 
   // Clicking it opens its step panel in Export's place, with its own cited "done when" lines, the
   // same as a card with a catalog entry.

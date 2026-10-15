@@ -12,8 +12,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 
-// Road 0 (today's general road) counted from its own data: its ten map stages plus the three "before
-// you open" steps added on 2026-10-12, so the Steps gauge reads "0 of 13".
+// Road 0 (today's general road) counted from its own data: its ten map stages, the three "before you
+// open" steps added on 2026-10-12 and Keep your records from day one (2026-10-14), so the Steps gauge
+// reads "0 of 14".
 const road0Steps = generalRoadV2026.steps.length;
 const soleProp = generalRoadV2026.steps.find((s) => s.id === "stage-1-sole-prop-activation")!;
 
@@ -77,8 +78,9 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Your date")).toContainText("not set");
 
   // Next on your road agrees with the map's chips: stage 0 is drawn done, so the list starts at the
-  // three before-you-open steps that follow it in the first column; the Steps gauge names the same
-  // first step.
+  // before-you-open steps that follow it in the first column. The panel shows three items, so the fourth,
+  // Keep your records from day one (2026-10-14), shows there only once one of these is done. The Steps
+  // gauge names the same first step.
   const next = page.getByRole("region", { name: "Next on your road" });
   await expect(next.getByRole("button")).toHaveText([
     "1 · Register your business name, if you use one",

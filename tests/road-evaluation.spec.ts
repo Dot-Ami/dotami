@@ -115,8 +115,9 @@ describe("each step's state and its reason", () => {
     const result = evaluateRoad(road0());
     const map = evaluateScenario(inventedIdea(), { today: TODAY }).nodeStates;
     const asState = { green: "applies", yellow: "check-first", gray: "not-on-your-path" } as const;
-    // The steps the rules read get the map's colours; road 0's before-you-open steps (2026-10-12), which
-    // no rule reads, apply because they are on the road, and say so.
+    // The steps the rules read get the map's colours; road 0's before-you-open steps (2026-10-12, and
+    // Keep your records from day one since 2026-10-14), which no rule reads, apply because they are on
+    // the road, and say so.
     const ruled = new Set(Object.keys(map));
     const states = stateOf(result);
     expect(Object.fromEntries(Object.entries(states).filter(([id]) => ruled.has(id)))).toEqual(
@@ -127,6 +128,7 @@ describe("each step's state and its reason", () => {
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
+      "step-start-keep-records",
     ]);
     for (const step of beforeYouOpen) {
       expect(step.state).toBe("applies");

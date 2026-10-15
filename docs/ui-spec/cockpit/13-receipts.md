@@ -12,7 +12,7 @@ left list, *This visit*; docs/architecture/future-cockpit.md § 2, Cockpit scree
 ## What it is
 
 - **A receipt**: after an answer is saved, one or more plain lines saying what it changed, each starting
-  with the answer: *Because you told us “Sole Prop activation” is done, 1 of 13 steps are now done.* A
+  with the answer: *Because you told us “Sole Prop activation” is done, 1 of 14 steps are now done.* A
   status line (`role="status"`, named *What changed*), shown where the answer was given: the step panel,
   the Skills / Start-up money / Your date list, *Compare*, the left list, or the what-if bar. With no
   change: *Saved. Nothing on the road changed.*; for a take back: *Saved: you took back … . Nothing on the

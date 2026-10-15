@@ -66,7 +66,8 @@ says where it is going.
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
   its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
-  three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
+  four *before you open* steps (the fourth, since 2026-10-14, *Keep your records from day one*, which
+  every business road has, `lib/engines/roads/v2026/keep-records.ts`), which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
   since 2026-10-13); the step panel, which keeps node detail whole; playbook
   export, which opens *Your plan* (`/plan?venture=<id>`, since 2026-10-13: one idea's plan to read and

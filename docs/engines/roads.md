@@ -1,6 +1,6 @@
 # Roads — Reasoning Conventions
 
-Catalog: `lib/engines/roads/v2026/` (2 roads as of 2026-10-12) · Design:
+Catalog: `lib/engines/roads/v2026/` (2 roads as of 2026-10-12; a step both share since 2026-10-14) · Design:
 [../architecture/future-cockpit.md](../architecture/future-cockpit.md) § 6 · Checks:
 `lib/engines/roads/v2026/validate.ts`, run on every road by `tests/roads.spec.ts`
 
@@ -14,8 +14,30 @@ cockpit draws whatever road it is given and holds no steps of its own.
 
 | Road | Id | What it is |
 |---|---|---|
-| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, plus its own content (2026-10-12): 47 *done when* lines (three or four on each of the ten map stages, and on the new steps) and three *before you open* steps in the first column (register your business name, look up permits and licences on BizPaL, a separate bank account), every new source a tool check; seven named start-up cost lines on *Sole Prop activation*. The general road every saved future is drawn on until it names another |
-| From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. Listed on *Pick a future* since 2026-10-13, where its card says its sources were checked by a tool, not read by a person |
+| Starting any business in Alberta (tax and structure) | `road-starting-any-business-ab` | Road 0: today's ten-step map (`lib/engines/cfe/v2026/`) wrapped by `roadFromCfe`, plus its own content (2026-10-12): 47 *done when* lines (three or four on each of the ten map stages, and on the new steps) and three *before you open* steps in the first column (register your business name, look up permits and licences on BizPaL, a separate bank account), every new source a tool check; seven named start-up cost lines on *Sole Prop activation*. Since 2026-10-14 a fourth step in the first column, *Keep your records from day one* (`step-start-keep-records`, four more lines, 51 in all). The general road every saved future is drawn on until it names another |
+| From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. Listed on *Pick a future* since 2026-10-13, where its card says its sources were checked by a tool, not read by a person. Since 2026-10-14, *Keep your records from day one* (`step-shop-keep-records`) is first in *Open the doors*, 17 steps in all |
+
+**Keep your records from day one** (2026-10-14, `keep-records.ts`): one step on every business road,
+because a business must keep its records from the start and records missed early are hard to put back
+together later. It is written once and each road builds it with its own permanent ids (`keepRecordsStep(ids,
+next)`), so the two can't drift apart. Its four *done when* lines come from the CRA's own *Keeping
+records* pages (who has to keep records and what counts; what the CRA says happens without them; how
+they must be kept, electronic records and backups included; where, and for how long: generally six years
+from the end of the last tax year they relate to, with the CRA's note that records kept outside Canada and
+opened from Canada don't count as kept in Canada, and two of the other periods the CRA lists, indefinitely
+for records about long-term property and six years from the filing date for a late return), each a tool
+check made that day, no read claimed. The summary says it is the CRA speaking, since the CRA's page covers
+only the laws it administers. It has no cost line (keeping records has no official fee) and one official
+link, the CRA's *Keeping records* page. How road evaluation colours it is the road's own arrows, not a
+rule: no rule reads a sale, an expense or any other answer for it. Each road places it where that road's
+business begins (the CRA's pages say records are kept by persons carrying on a business). On road 0 it is in the first
+column with the other *before you open* steps, leading to *Sole Prop activation* (records cover what a
+business spends as well as what it takes in, and spending can start before the first sale); nothing
+leads to it, so it is on the path for every idea, whatever its structure or work situation, until the
+person marks it *not for me*. On road 1 only *Open your own shop* leads to it, so it says *check first*
+while the fork has no pick, is on the path once the person picks their own shop, and is off the path if
+they stay employed. A new business road adds it the same way, where its business begins
+(`tests/keep-records-step.spec.ts`).
 
 A road may name where it carries on after its last column: `joins: { roadId, columnId }`
 (`roadJoinProblems` checks the road and column exist).

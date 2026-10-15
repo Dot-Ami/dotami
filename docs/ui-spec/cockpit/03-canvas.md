@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-13 (in the cockpit, SR&ED deepening on an idea without a research kind of work is
+Last updated: 2026-10-14 (road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
 instead of a colour; the cockpit screen, part 1: the overlay switches over the map, colours from
@@ -46,8 +47,19 @@ baseline*, then *Register your business name, if you use one*, *Look up your per
 gained: with them cut out, the HTML of the six saved states is byte for byte what the old map drew
 (`tests/road-map.spec.ts`). Each leads to *Sole Prop activation*; the baseline's own arrows are
 unchanged, so hovering or selecting the baseline dims all three, and selecting one of them dims the
-baseline and the other two. Their order down the column is the order they are written in, not a
+baseline and the other two (four and three since 2026-10-14, below). Their order down the column is the order they are written in, not a
 ranking. The legend has no line for "no rule yet".
+
+**Keep your records from day one (2026-10-14).** Tier 1 now holds five cards: the four above, then *Keep
+your records from day one*, which also leads to *Sole Prop activation* and behaves like the other
+before-you-open cards (in the cockpit, road evaluation colours it as on your road; drawn without it, it
+says "no rule yet"); with all four cut out, the six saved states are still byte for byte what the old map
+drew. On the apprentice road it is the first card in *Open the doors*: only *Open your own shop* leads to
+it, so it says *check first* until the person picks an ending, *applies as answered* once they pick their
+own shop, and *not on your path* if they stay employed. The arrow counts from Sole Prop activation and
+from a before-you-open card are unchanged; the dimmed cards are one more each: hovering or selecting the
+baseline dims all four before-you-open cards, hovering one of them dims the baseline and the other three,
+and hovering Sole Prop activation dims five (below).
 
 ## What it is
 
@@ -169,9 +181,10 @@ dashed and fainter for each step after, to the end of the tree; rightwards when 
 in a later tier, downwards inside a tier. Cards off that future dim to 35%. Hover wins while
 the pointer is on a card; the selected card keeps its arrows otherwise. Arrows reach "not on
 your path" cards too — those are the other paths. Measured 2026-09-16 on "Sole Prop
-activation": 4 solid + 14 dashed, 1 card dimmed (4 since 2026-10-12: the baseline and the three
-before-you-open cards, which come before it). From a before-you-open card: 1 solid (to Sole Prop
-activation) + 18 dashed.
+activation": 4 solid + 14 dashed, 1 card dimmed (4 from 2026-10-12, 5 since 2026-10-14: the baseline
+and the four before-you-open cards, which come before it). From a before-you-open card: 1 solid (to Sole
+Prop activation) + 18 dashed, 4 cards dimmed (the baseline and the other three before-you-open cards).
+`e2e/app.spec.ts` checks these counts.
 
 ## What it does not do (charter)
 

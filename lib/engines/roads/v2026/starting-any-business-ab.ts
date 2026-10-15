@@ -3,6 +3,7 @@ import { cfeTiersV2026 } from "../../cfe/v2026/tiers";
 import { complianceRulesV2026 } from "../../compliance/v2026/rules";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
 import { roadFromCfe } from "./from-cfe";
+import { keepRecordsStep } from "./keep-records";
 import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
 
 /**
@@ -27,6 +28,8 @@ import type { DoneWhenLine, NamedCostLine, RoadStep, SkillItem } from "./types";
  * and no amount is written anywhere: Alberta's registry fees sit in a catalogue that stops tools, and
  * permit fees vary, so they are named lines the person prices. Sole Prop activation also carries the
  * seven named start-up cost lines the design names (tools, a space deposit, insurance, …), names only.
+ * Since 2026-10-14 the first column also holds "Keep your records from day one" (./keep-records.ts),
+ * whose sources were checked by the tool that day.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
@@ -753,6 +756,23 @@ const businessAccount: RoadStep = {
   ],
 };
 
+/**
+ * Keep your records from day one (2026-10-14; the step itself is ./keep-records.ts, shared with the
+ * apprentice road). It sits with the other before-you-open steps: records cover what a business spends
+ * as well as what it takes in, and spending can start before the first sale. Nothing leads to it, so road
+ * evaluation draws it on the path for every idea on this road, like the three steps above; no rule reads it.
+ */
+const keepRecords = keepRecordsStep(
+  {
+    step: "step-start-keep-records",
+    what: "dw-start-records-what",
+    everyTransaction: "dw-start-records-every-transaction",
+    how: "dw-start-records-how",
+    whereHowLong: "dw-start-records-where-how-long",
+  },
+  [SOLE_PROP],
+);
+
 // ---- Named start-up cost lines (2026-10-12) ----------------------------------------------------------
 
 /**
@@ -857,5 +877,6 @@ export const roadStartingAnyBusinessAB = roadFromCfe({
     { columnId: "tier-1-before", step: registerName },
     { columnId: "tier-1-before", step: permitsBizpal },
     { columnId: "tier-1-before", step: businessAccount },
+    { columnId: "tier-1-before", step: keepRecords },
   ],
 });
