@@ -76,9 +76,11 @@ and the maintainer's six decisions of 2026-10-11:
     separate bank account), every source a tool check (2026-10-12,
     `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
     three new cards as on your road; drawn without it, the map shows them as "no rule yet")
-    - [ ] Still open on it: skill items and official links on the ten map stages; four
-      map stages' own sources point at pages that answer "page not found" (a read, or a tool check
-      in place of it, is the maintainer's call); a person's read of each page
+    - [ ] Still open on it: skill items and official links on the ten map stages; one map stage's
+      own sources still point at a page that answers "page not found": *Retained earnings planning*,
+      whose "Paying dividends" and "Salary or dividends" shared one old address and have no current CRA
+      page found (a person's call). Since 2026-10-13 the other stages' moved sources link their new pages
+      with a tool check, `tests/moved-government-pages.spec.ts`; a person's read of each page
   - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
     one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
     for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that
@@ -227,6 +229,7 @@ and the maintainer's six decisions of 2026-10-11:
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
   - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
+  - [x] The check starts as the app opens, before the server and the first page, and its message waits for the main window (never over the preparing window or the lock question) (2026-10-14)
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
   - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
@@ -544,6 +547,15 @@ roadmap's build order.
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
+  - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
+    - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its
+      page answers "page not found", and other sites say Alberta closed the program in 2019. The entry
+      is left as it was until a person reads an official source; then keep it, mark it closed, or
+      retire it (its id stays either way).
+    - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
+      current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
+    - [ ] *Canada-Alberta Job Grant* (`grant-cajg`): its page now redirects to the Canada-Alberta
+      Productivity Grant. A person reads whether the entry still says what the program does.
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:

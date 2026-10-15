@@ -289,6 +289,25 @@ When the download is checked, that message closes itself and the usual question 
 installed. Until 0.2.1 the app said nothing until the whole download (about 130 MB) had finished,
 so at start-up an update looked slow to appear (the maintainer, 2026-10-08).
 
+**When the check starts** (`desktop/update-check.mjs`, wired in `desktop/main.mjs` `start()`). Up to
+0.3.0 the check started only after the server had started and the whole first page had loaded
+(`await win.loadURL(origin)`, then the check), so the message came some seconds after the window
+(the maintainer, 2026-10-13, updating from 0.2.1: "nearly 15-20 seconds"; 0.2.1 also still
+downloaded before saying anything). Since this change the check starts as soon as the log is open,
+before the receipts' key, the data file's key, the migrator and the server, so GitHub's answer
+usually arrives while the server is still starting. What it finds waits for the main window: every
+update message goes through `mainWindowGate` (`whenShown`), opened in the main window's
+`ready-to-show`, so nothing appears over *Preparing DotAmi…*, the *Lock your data file with a key?*
+question or the lost-key window. If the download finishes while the messages are waiting, the
+person sees only *Restart and update* / *Later* (on the main window), not a stale "downloading
+now"; if it fails before the person heard of it, the log says so and nothing is shown (the next
+start tries again). A check that fails, or an updater that can't be loaded, is one log line with
+the error's name and code, and never stops the start. The check now also runs on starts that
+stop before the main window (a failed start, the lost-key window): the request goes out, nothing is
+shown, and a download under way stops when DotAmi quits. **The version that is running decides
+this**: an app on 0.3.0 or earlier still checks after its first page, so the earlier notice is
+first seen when a copy with this change finds the version after it.
+
 Why a message plus the taskbar, and not something quieter: the message has no parent window, so it
 doesn't block the app (the person can close it or just keep working); the taskbar progress alone
 is what's easy to miss. A Windows notification can be silenced by *Do not disturb*, and a banner
@@ -312,7 +331,7 @@ Read 2026-10-08 in the versions this checkout locks (electron-updater 6.8.9, ele
 `oneClick: true`, per user):
 
 1. **The click.** *Restart and update* calls `autoUpdater.quitAndInstall()` with no arguments
-   (`desktop/update-notice.mjs:79`). That means not silent, and "run the app afterwards" taken from
+   (`desktop/update-notice.mjs:99`). That means not silent, and "run the app afterwards" taken from
    `autoRunAppAfterInstall`, which defaults to true
    (`node_modules/electron-updater/out/BaseUpdater.js:13-16`, `AppUpdater.js:119`).
 2. **The installer starts, the app quits.** The downloaded installer is started on its own
@@ -418,7 +437,16 @@ to the data.
 - `tests/desktop-update-notice.spec.ts` — the update messages and taskbar progress, driven by a fake
   updater sending electron-updater's events: told at once, progress, the same *Restart and update* /
   *Later* question, installing only on that click, a failed download. (Checked that it bites: with
-  the old code, 6 of its 7 cases fail; the one that passes is "installs only on the click".)
+  the old code, 6 of its 7 cases fail; the one that passes is "installs only on the click".) Since
+  the check starts before the main window, it also covers messages that arrive early: none over the
+  lock question, held and shown once when the main window shows, a download finished or failed
+  meanwhile. (Checked that it bites: with the code before this change, those 5 cases fail.)
+- `tests/desktop-update-check.spec.ts` — when the check starts and what a failed check logs: the
+  check asks the updater with no window needed; a failed check, or an updater that can't be loaded,
+  logs the error's name and code only; Help → Check for updates still answers; a copy run from source
+  never loads the updater; the gate holds what arrives early and runs it once; and, read from
+  `desktop/main.mjs`, the check starts right after the log opens, before the start-up windows, the
+  server and the first page load, and the gate opens when the main window shows.
 
 ## Not done yet
 
