@@ -181,8 +181,9 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine* (2026-10-14: `e2e/journey.spec.ts`, on to
     *Your plan*, a reload and *Your futures*, plus the *I already have an idea* door to road 0; and
-    `e2e/no-verdict.spec.ts`, which fails if any screen of the journey shows advice or ranking words, the
-    list in `tests/helpers/verdict-words.ts`)
+    `e2e/no-verdict.spec.ts`, which fails if any screen of the journey shows advice or ranking words as it
+    opens, the journey test doing the same after each thing a person does; the list in
+    `tests/helpers/verdict-words.ts`)
   - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's
     Alberta road, for the maintainer to click through. Raise then: *I don't know* on a skill keeps no
     mark (the design's table listed it as a fourth mark; [§ 7](architecture/future-cockpit.md))

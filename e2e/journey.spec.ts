@@ -10,6 +10,12 @@
  * e2e/plan.spec.ts); this file checks they still join up, one after the other, as a person meets them,
  * so a change to one screen that breaks the way to the next fails here.
  *
+ * It also reads the page after each thing a person does on the way (an answer and its receipt, an agree
+ * prompt, a skill marked, a line priced, a date, a what-if, This is mine, the plan with all of it in) and
+ * fails on a verdict there, with the same findVerdicts as e2e/no-verdict.spec.ts, which reads every
+ * screen as it opens. Words a component writes only once something is done, such as the what-if banner,
+ * are on no screen as opened, so this is where they are read.
+ *
  * The run's database is fresh (playwright.config.ts), but this file runs after e2e/front-door.spec.ts on
  * it, which keeps a destination and an income. So questions 1 and 4 may already be answered from the data
  * file: the test then changes each, which asks it again, so the four questions and their receipts are met
@@ -20,6 +26,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
+import { findVerdicts } from "../tests/helpers/verdict-words";
 
 const GENERAL = generalRoadV2026.label;
 const APPRENTICE = roadApprenticeToOwnShopAB.label;
@@ -56,6 +63,15 @@ const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
 const compare = (page: Page) => page.getByRole("region", { name: "Compare the two endings" });
 const button = (page: Page, name: string) => page.getByRole("button", { name, exact: true });
 
+/** What the page shows right now, after something was done, kept with where it was. */
+interface Seen {
+  where: string;
+  text: string;
+}
+const look = async (seen: Seen[], page: Page, where: string) => seen.push({ where, text: await page.locator("body").innerText() });
+/** Every verdict phrase found, with the moment it was on screen. */
+const verdictsIn = (seen: Seen[]) => seen.flatMap((s) => findVerdicts(s.text).map((found) => `${s.where} → ${found}`));
+
 test("the whole journey: front door → destination → pick a future → the cockpit worked through → your plan → kept after a reload → your futures", async ({ page }) => {
   // The road this test walks has the skills, the cost line and the fork it uses.
   expect(listedSkills).toContain("skill-ab-alberta-student-number");
@@ -63,6 +79,7 @@ test("the whole journey: front door → destination → pick a future → the co
   expect(handTools.kind).toBe("named");
   expect(fork.sides).toHaveLength(2);
 
+  const seen: Seen[] = [];
   const stamp = Date.now();
   const words = `My own cabinet shop, my own hours (invented ${stamp})`;
   const ideaName = `Invented — journey test ${stamp}`;
@@ -98,6 +115,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await button(page, "Keep my words").click();
   await expect(receipts.filter({ hasText: "Kept word for word" })).toContainText(`Kept word for word, dated ${today}.`);
   await expect(page.getByText(`“${words}”`, { exact: true })).toBeVisible();
+  await look(seen, page, "Your destination, after the first answer and its receipt");
 
   // 2. Business, career or both: a count of the futures listed, nothing filtered out.
   await expect(page.getByRole("heading", { name: Q2, level: 2 })).toBeFocused();
@@ -117,9 +135,11 @@ test("the whole journey: front door → destination → pick a future → the co
   await button(page, "Keep it").click();
   const prompt = page.getByRole("dialog", { name: "Agree to this number?" });
   await expect(prompt).toContainText("The yearly income you want, before tax");
+  await look(seen, page, "Your destination, the agree prompt for the yearly income");
   await prompt.getByRole("button", { name: "Agree" }).click();
   await expect(prompt).toHaveCount(0);
   await expect(receipts.filter({ hasText: "Your target" })).toHaveText(`Your target: $65,000 a year, before tax, agreed ${today}. Nothing compares it with anything.`);
+  await look(seen, page, "Your destination, all four answered");
 
   // ---- Pick a future: both written futures, in the order written, never ranked.
   await page.getByRole("link", { name: "Pick a future →" }).click();
@@ -153,6 +173,7 @@ test("the whole journey: front door → destination → pick a future → the co
     "true",
   );
   await expect(gauge(page, "Skills")).toContainText("1 have · 1 learning · 0 not yet");
+  await look(seen, page, "cockpit, the Skills list with marks and their receipts");
   await gauge(page, "Skills").click();
   await expect(skillsList(page)).toHaveCount(0);
 
@@ -167,6 +188,7 @@ test("the whole journey: front door → destination → pick a future → the co
   const figures = page.getByRole("dialog", { name: "Agree to these figures?" });
   await expect(figures).toBeVisible();
   await expect(gauge(page, "Start-up money")).toContainText("your numbers: not given yet");
+  await look(seen, page, "cockpit, the agree prompt for a start-up line");
   await figures.getByRole("button", { name: "Agree", exact: true }).click();
   await expect(figures).toHaveCount(0);
   await expect(line).toContainText("$1,250");
@@ -174,6 +196,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(gauge(page, "Start-up money")).toContainText("$1,250 your numbers (1 line)");
   const pricedTold = `You told us your number for “${handTools.label}” on “${sponsorStep.label}” is $1,250`;
   await expect(told(page).getByText(pricedTold, { exact: true })).toBeVisible();
+  await look(seen, page, "cockpit, a start-up line priced and agreed");
 
   // Your month.
   await gauge(page, "Your date").click();
@@ -182,6 +205,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await date.getByRole("button", { name: "Save", exact: true }).click();
   await expect(gauge(page, "Your date")).toContainText("May 2099");
   await expect(gauge(page, "Your date")).toContainText(/\d+ months from today/);
+  await look(seen, page, "cockpit, the person's month set");
 
   // A what-if: the rules relit under the "not a forecast" banner, and nothing kept.
   await whatIf(page).getByLabel("Try first-year sales of $").fill("45000");
@@ -189,6 +213,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
   await expect(whatIf(page)).toContainText("First-year sales of $45,000, for this look only");
   await expect(told(page).getByText(/what-if/)).toHaveCount(0);
+  await look(seen, page, "cockpit, a what-if on");
 
   // Compare the two endings, side by side, and This is mine on one.
   await goalBar(page).getByRole("button", { name: "Compare", exact: true }).click();
@@ -199,6 +224,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await mine.nth(1).click();
   await expect(mine.nth(1)).toHaveAttribute("aria-pressed", "true");
   await expect(compare(page).getByRole("status")).toContainText(`Because you picked “${ownShop}” at “${fork.label}”`);
+  await look(seen, page, "cockpit, Compare after This is mine");
 
   // Fold a region and open it again: what it held is back.
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
@@ -230,6 +256,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(section("Start-up money")).toContainText(handTools.label);
   await expect(section("Start-up money")).toContainText("$1,250");
   await expect(section("Skills and requirements, with your marks")).toContainText(own);
+  await look(seen, page, "Your plan, with the marks, the priced line and the ending in it");
 
   // ---- Back in the cockpit, and a reload: what was kept is read back from the data file.
   await page.getByRole("link", { name: "← Back to the cockpit" }).click();
@@ -243,6 +270,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(told(page).getByRole("listitem").filter({ hasText: `You picked “${ownShop}” at “${fork.label}”` })).toBeVisible();
   // The what-if was kept nowhere: a reload starts without it.
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toHaveCount(0);
+  await look(seen, page, "cockpit, after a reload, with what was kept");
 
   // Skill marks are the person's, across futures: take them back, so later tests start from the person's marks as they were.
   await gauge(page, "Skills").click();
@@ -258,6 +286,18 @@ test("the whole journey: front door → destination → pick a future → the co
   const card = page.getByRole("heading", { name: ideaName, level: 2 });
   await expect(card).toBeVisible();
   await expect(page.locator(`a[href="/cockpit?venture=${encodeURIComponent(ventureId)}"]`).first()).toBeVisible();
+  await look(seen, page, "Your futures, with the new future");
+
+  // No verdict anywhere on the way. And the reads above did catch the states they name: the what-if
+  // banner, the agree prompts and This is mine's receipt were on screen when read, so a read can't
+  // quietly miss them.
+  const at = (where: string) => seen.find((s) => s.where.startsWith(where))!.text;
+  // (The banner is set in capitals by its style, and the page's text comes back as drawn, hence /i.)
+  expect(at("cockpit, a what-if on")).toMatch(/Your what-if, not a forecast/i);
+  expect(at("cockpit, the agree prompt for a start-up line")).toMatch(/Agree to these figures\?/i);
+  expect(at("Your destination, the agree prompt")).toMatch(/Agree to this number\?/i);
+  expect(at("cockpit, Compare after This is mine")).toContain(`Because you picked “${ownShop}”`);
+  expect(verdictsIn(seen)).toEqual([]);
 });
 
 test("the other way in: \"I already have an idea\" → the intake → the cockpit on road 0, with the idea's own sentence on top", async ({ page }) => {
@@ -286,6 +326,10 @@ test("the other way in: \"I already have an idea\" → the intake → the cockpi
   for (const step of generalRoadV2026.steps) await expect(stage(page, step.label), step.label).toBeVisible();
 
   // And it is one of the person's futures, with the sentence typed for it on the front door.
+  const seen: Seen[] = [];
+  await look(seen, page, "cockpit on road 0, from the intake");
+  expect(verdictsIn(seen)).toEqual([]);
+
   await page.goto("/ventures");
   await expect(page.getByText(sentence).first()).toBeVisible();
 });

@@ -326,20 +326,31 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   endings* and *This is mine*; the legend folded and opened again), *Your plan* and its seven sections,
   then a reload that reads back what was kept (and not the what-if, which is kept nowhere) and *Your
   futures* listing it; and the other door, *I already have an idea*, to the cockpit on road 0.
-  `e2e/no-verdict.spec.ts` reads the visible text of every screen of the journey (the front door, the
-  intake's three screens, *Your destination*, *Pick a future*, the cockpit on both roads with every card's
-  panel opened and its sources unfolded, each gauge's list, *Compare* and *Export*, *Your plan* for both,
-  *Your futures*, *What DotAmi knows about you*, *Settings* and *Your expenses*) and fails on advice or
-  ranking words: "you should", "we recommend", "recommended", "best option", "the right choice", "top
-  pick", "#1" and the like. The words are in one place, `tests/helpers/verdict-words.ts`, with the only two
-  allowances, both official sentences quoted from Alberta's *Register a business name* page, each with its
-  reason; `tests/verdict-words.spec.ts` checks each allowance is still a quote a tool found on that page and
-  that no other quote in the catalogs needs one. A control plants "Top pick" on a real screen and the
-  guard catches it. Checked by hand on 2026-10-14: a "Top pick" badge added to every card on *Your
-  futures* passed all 3,560 unit tests and failed this guard. The unit tests that ran DotAmi's words files
-  past their own copies of the verdict words (five of them, two lists) now share the widest list from the
-  same file. Not read: `/licences` (third-party licence texts, word for word) and the glossary, which is a
-  document, not a screen.
+  `e2e/no-verdict.spec.ts` reads the visible text of every screen of the journey as it opens (the front
+  door, the intake's three screens, *Your destination*, *Pick a future*, the cockpit on both roads with
+  every card's panel opened and its sources unfolded, each gauge's list, *Compare* and *Export*, *Your plan*
+  for both, *Your futures*, *What DotAmi knows about you*, *Settings*, *Your expenses* and the *Licences*
+  page's own words) and fails on advice or ranking words: "you should" (and "you shouldn't"), "we
+  recommend" (and "DotAmi recommends", "I recommend", "we'd recommend", "we suggest", "we advise"),
+  "recommended", "our top recommendation", "best option", "best bet", "ideal for you", "the smartest
+  choice", "top pick", "first choice", "#1", "No. 1", "top-rated", "most popular" and the like; a
+  recommendation named as someone else's, such as the apprentice road's "alberta.ca highly recommends legal
+  advice", is not one. A phrase split over two lines or blocks still counts. `e2e/journey.spec.ts` reads the
+  page again after each thing a person does on the way (an answer and its receipt, both agree prompts, the
+  skill marks, a priced line, the month, a what-if, *This is mine*, *Your plan* with all of it in) with the
+  same check, since words a screen draws only after an action are on no screen as it opens. The words are in
+  one place, `tests/helpers/verdict-words.ts`, with the only two allowances, both official sentences quoted
+  from Alberta's *Register a business name* page, each with its reason, and each allowed only inside quote
+  marks, as a source's quote shows: the same words written as DotAmi's own line are caught.
+  `tests/verdict-words.spec.ts` checks each allowance is still a quote a tool found on that page and that no
+  other quote in the catalogs needs one. A control plants "Top pick" on a real screen and the guard catches
+  it. Checked by hand on 2026-10-14: a "Top pick" badge added to every card on *Your futures* passed all
+  3,560 unit tests and failed this guard; and a "You should aim for these sales." line added to the what-if
+  banner, with a "DotAmi recommends keeping everything." line added to *What DotAmi knows about you*, passed
+  the first version of both files and failed these. The unit tests that ran DotAmi's words files past their
+  own copies of the verdict words (five of them, two lists) now share the widest list from the same file.
+  Not read: the third-party licence texts on `/licences` (folded under each package, word for word) and the
+  glossary, which is a document, not a screen.
 
 ### Changed
 - **A second idea no longer passes through *About you*** (issue #38) — the intake opens on *About you*

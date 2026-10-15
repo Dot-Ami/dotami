@@ -228,10 +228,12 @@ its test first. Never claim green without the command and its output.
 `npm run test:browser` (Playwright, `e2e/`) runs the production build on a throwaway database in
 Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path, and
 joins the walk in `e2e/no-verdict.spec.ts`, which reads the visible text of every screen of the journey
-and fails on advice or ranking words ("you should", "we recommend", "top pick", "#1"…). Those words, and
-the only official quotes allowed to carry one (each with its reason), are one list:
-`tests/helpers/verdict-words.ts`, which the words files' unit tests share too. `e2e/journey.spec.ts`
-walks the whole journey in one test, front door to *Your futures*.
+as it opens and fails on advice or ranking words ("you should", "we recommend", "DotAmi recommends", "top
+pick", "#1"…). Those words, and the only official quotes allowed to carry one (each with its reason, and
+only inside quote marks), are one list: `tests/helpers/verdict-words.ts`, which the words files' unit tests
+share too. `e2e/journey.spec.ts` walks the whole journey in one test, front door to *Your futures*, and
+reads the page with the same check after each thing a person does (a what-if, an agree prompt, a mark,
+*This is mine*): words drawn only after an action are read there, so a new one belongs in that walk.
 Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
 weeks) — browser tests run the real build for that reason.
 Its server starts with `DOTAMI_E2E_RATE_LIMITS=opt-in`, set only in `playwright.config.ts`: every

@@ -7,15 +7,19 @@
  * request that slips "we recommend" into a component, a catalog step or a words file fails here even if no
  * unit test reads that file.
  *
- * It walks the journey and reads the visible text of every screen on it: the front door, the intake's
- * screens, Your destination, Pick a future, the cockpit on both written futures (with every card's panel
- * opened, its sources unfolded, each gauge's list, Compare and Export), Your plan for both, Your futures,
- * What DotAmi knows about you, Settings and Your expenses. The phrases, and the only allowances (quoted
- * official sentences, each with its reason), are in tests/helpers/verdict-words.ts.
+ * It walks the journey and reads the visible text of every screen on it, as each is opened: the front
+ * door, the intake's screens, Your destination, Pick a future, the cockpit on both written futures (with
+ * every card's panel opened, its sources unfolded, each gauge's list, Compare and Export), Your plan for
+ * both, Your futures, What DotAmi knows about you, Settings, Your expenses and the Licences page's own
+ * words. What a screen shows after a person does something there (a skill marked, an agree prompt, a
+ * priced line, a date, a what-if, This is mine) is read by e2e/journey.spec.ts, which does each of those
+ * things, with the same findVerdicts. The phrases, and the only allowances (quoted official sentences,
+ * each with its reason), are in tests/helpers/verdict-words.ts.
  *
- * Not read here: /licences, which prints third-party licence texts word for word (the GPL's "You should
- * have received a copy…" among them), the packages' authors' words, not DotAmi's, and not a screen of the
- * journey; and the glossary, which is a document in the repository (docs/glossary.md), not a screen.
+ * Not read here: the third-party licence texts on /licences, folded under each package and printed word
+ * for word (the GPL's "You should have received a copy…" among them), the packages' authors' words, not
+ * DotAmi's; the page around them is read, folded as it opens. And the glossary, which is a document in the
+ * repository (docs/glossary.md), not a screen.
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -38,24 +42,29 @@ interface Seen {
 /** Unfolds every <details> on the page, so what a person can open is read too. */
 const unfoldAll = (page: Page) => page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
 
-/** Reads the visible text of the page (or one part of it), with everything foldable unfolded. */
-async function read(seen: Seen[], page: Page, where: string, part?: Locator) {
-  await unfoldAll(page);
+/** Reads the visible text of the page (or one part of it), with everything foldable unfolded unless told not to. */
+async function read(seen: Seen[], page: Page, where: string, part?: Locator, { unfold = true }: { unfold?: boolean } = {}) {
+  if (unfold) await unfoldAll(page);
   seen.push({ where, text: await (part ?? page.locator("body")).innerText() });
 }
 
 const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and gauges" });
 const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { name: new RegExp(`^${name}`) });
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * The cockpit, read whole: as opened, with every question showing, each gauge's list, Compare where the
  * road offers it, Export, and the panel of every card on the road (steps, and rules and tax cards).
  * Returns how many cards' panels were read.
  */
-async function readCockpit(seen: Seen[], page: Page, road: string): Promise<number> {
+async function readCockpit(seen: Seen[], page: Page, road: string, offersCompare: boolean): Promise<number> {
   await expect(goalBar(page)).toContainText(`Future: ${road}`);
   await expect(page.getByRole("region", { name: "The road" })).toBeVisible();
-  const more = page.getByRole("region", { name: "Not told yet" }).getByRole("button", { name: /^\d+ more$/ });
+  // The section is drawn (its questions and its "N more" come in the same render) before the button is
+  // looked for, so a late draw can't skip it quietly.
+  const notTold = page.getByRole("region", { name: "Not told yet" });
+  await expect(notTold.getByRole("heading", { name: "Not told yet" })).toBeVisible();
+  const more = notTold.getByRole("button", { name: /^\d+ more$/ });
   if ((await more.count()) > 0) await more.click();
   await read(seen, page, `cockpit (${road}), as opened`);
 
@@ -70,8 +79,11 @@ async function readCockpit(seen: Seen[], page: Page, road: string): Promise<numb
     await read(seen, page, `cockpit (${road}), the ${name} list`, list);
   }
 
+  // Compare is offered only at a fork whose own pick puts steps on or off the path (none on road 0): said
+  // per road, so a Compare that stops showing fails here instead of going unread.
   const compareButton = goalBar(page).getByRole("button", { name: "Compare", exact: true });
-  if ((await compareButton.count()) > 0) {
+  await expect(compareButton).toHaveCount(offersCompare ? 1 : 0);
+  if (offersCompare) {
     await compareButton.click();
     const compare = page.getByRole("region", { name: "Compare the two endings" });
     await expect(compare).toBeVisible();
@@ -83,18 +95,23 @@ async function readCockpit(seen: Seen[], page: Page, road: string): Promise<numb
   await read(seen, page, `cockpit (${road}), Export`);
 
   // Every card's panel. A card's name is "<title>, <its states…>, opens detail", a rules and tax card's
-  // title led by its kind ("Write-off: Home office expenses"): each click waits until the panel holds the
-  // card's title (up to its first comma), so the text read is that card's.
+  // title led by its kind ("Write-off: Home office expenses"). A step card's panel is headed by the step,
+  // so each click waits until that heading starts with the card's title (up to its first comma): the
+  // heading, not the whole panel, because one panel can name the next card too (a fork's panel names both
+  // sides). A rules and tax card opens the panel of the stage it sits under, which lists it, so there the
+  // wait is for the panel to hold the card's title.
   const cards = page.locator('button[aria-label$=", opens detail"]');
   const panel = page.locator("#cockpit-panel");
   const count = await cards.count();
   for (let i = 0; i < count; i++) {
     const card = cards.nth(i);
     const name = (await card.getAttribute("aria-label")) ?? "";
+    const isLever = /^[A-Za-z &-]+: /.test(name);
     const title = name.replace(/^[A-Za-z &-]+: /, "").split(", ")[0]!;
     expect(title.length, name).toBeGreaterThan(2);
     await card.click();
-    await expect(panel, name).toContainText(title);
+    if (isLever) await expect(panel, name).toContainText(title);
+    else await expect(panel.getByRole("heading", { level: 2 }).first(), name).toHaveText(new RegExp(`^${escape(title)}`));
     await read(seen, page, `cockpit (${road}), panel of “${name}”`, panel);
   }
   return count;
@@ -111,7 +128,7 @@ async function planAddress(page: Page): Promise<string> {
 /** Every verdict phrase found, with the screen it was on. */
 const verdictsIn = (seen: Seen[]) => seen.flatMap((s) => findVerdicts(s.text).map((found) => `${s.where} → ${found}`));
 
-test("no screen of the journey says what to do or ranks anything: every visible word, both roads, every card's panel", async ({ page }) => {
+test("no screen of the journey says what to do or ranks anything: every visible word of every screen as opened, both roads, every card's panel", async ({ page }) => {
   const seen: Seen[] = [];
   const stamp = Date.now();
 
@@ -138,7 +155,7 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await employment.selectOption("self-employed");
   await page.getByRole("button", { name: "Open my map →" }).click();
   await expect(page).toHaveURL(/\/cockpit/);
-  const road0Cards = await readCockpit(seen, page, GENERAL);
+  const road0Cards = await readCockpit(seen, page, GENERAL, false);
   const road0Plan = await planAddress(page);
 
   // Door 1: Your destination, answered, then Pick a future and the first written future.
@@ -171,7 +188,7 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await page.getByRole("textbox", { name: "Name it (optional)" }).fill(`Invented — no verdict test ${stamp}`);
   await page.getByRole("button", { name: `Look inside ${APPRENTICE}` }).click();
   await expect(page).toHaveURL(/\/cockpit\?venture=/);
-  const apprenticeCards = await readCockpit(seen, page, APPRENTICE);
+  const apprenticeCards = await readCockpit(seen, page, APPRENTICE, true);
   const apprenticePlan = await planAddress(page);
 
   // Your plan, for both.
@@ -198,13 +215,18 @@ test("no screen of the journey says what to do or ranks anything: every visible 
   await page.goto("/expenses");
   await expect(page.getByRole("heading", { name: "Records you agreed to", level: 2 })).toBeVisible();
   await read(seen, page, "Your expenses");
+  // The Licences page's own words, with each package's licence text left folded as the page opens it.
+  await page.goto("/licences");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Licences");
+  await read(seen, page, "Licences, the page's own words", page.locator("body"), { unfold: false });
+  expect(seen.at(-1)!.text).not.toContain("You should have received");
 
   // The walk read what it meant to: every step's panel on both roads (and road 0's rules and tax cards),
-  // and the sources under them, which is where the allowed official quotes show.
+  // and the sources under them, which is where the allowed official quotes show, inside quote marks.
   expect(road0Cards).toBeGreaterThan(generalRoadV2026.steps.length);
   expect(apprenticeCards).toBeGreaterThanOrEqual(roadApprenticeToOwnShopAB.steps.length);
-  const all = seen.map((s) => s.text).join("\n");
-  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) expect(all, allowance.text).toContain(allowance.text);
+  const all = seen.map((s) => s.text).join("\n").replace(/\s+/g, " ");
+  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) expect(all, allowance.text).toContain(`“${allowance.text}”`);
 
   expect(verdictsIn(seen)).toEqual([]);
 });
