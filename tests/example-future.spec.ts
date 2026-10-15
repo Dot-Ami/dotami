@@ -146,10 +146,10 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
   const evaluation = evaluateRoad(inputOf());
   const view = gaugeView(evaluation, road, ex.scenario);
 
-  it("Steps: 1 of the road's 16 steps marked done (the appendix's sketch said 22 steps)", () => {
-    expect(road.steps).toHaveLength(16);
-    expect(view.steps.value).toBe("1 of 16 marked done");
-    expect(evaluation.gauges.steps).toMatchObject({ done: 1, total: 16 });
+  it("Steps: 1 of the road's 17 steps marked done (the appendix's sketch said 22 steps)", () => {
+    expect(road.steps).toHaveLength(17);
+    expect(view.steps.value).toBe("1 of 17 marked done");
+    expect(evaluation.gauges.steps).toMatchObject({ done: 1, total: 17 });
   });
 
   it("the money gauge is plain arithmetic: official fees and her one priced line, the lines not priced counted, no savings", () => {
@@ -183,7 +183,7 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
     expect(story.savings).toBeUndefined();
     expect(story["what-if"].length).toBeGreaterThan(0);
     for (const l of story["what-if"]) expect(l).toMatch(/^Because you tried first-year sales of \$610,300 \(your what-if, not a forecast\), /);
-    expect(story["step-done"].some((l) => l.includes("1 of 16"))).toBe(true);
+    expect(story["step-done"].some((l) => l.includes("1 of 17"))).toBe(true);
     expect(story["this-is-mine"].length).toBeGreaterThan(0);
     // Every part changes something: an answer that changed nothing would be a story told wrong.
     for (const [id, lines] of Object.entries(story)) expect(lines.length, id).toBeGreaterThan(0);

@@ -105,7 +105,7 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   // Her target is a published statistic, said as that (not as an amount she agreed to).
   await expect(goalBar(page)).toContainText("Mara's target: $52,255 a year, before tax: the average yearly salary of employed cabinetmakers in Alberta");
   await expect(goalBar(page)).not.toContainText(/\byours\b|your words|your marks|Your date/);
-  await expect(goalBar(page).getByRole("button", { name: /^Steps/ })).toContainText("1 of 16 marked done");
+  await expect(goalBar(page).getByRole("button", { name: /^Steps/ })).toContainText("1 of 17 marked done");
   await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$14,993.62 Mara's numbers (1 line)");
   await expect(goalBar(page).getByRole("button", { name: /^Mara's date/ })).toContainText("Mara's");
   await expect(told(page)).toContainText("things Mara told DotAmi");

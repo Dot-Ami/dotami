@@ -185,8 +185,8 @@ The told list shows, for each of Mara's answers, what it unlocked, through the s
 - Her 9 marks: *"Because you marked 9 skills, 4 steps now have every skill they list marked have."* (the
   appendix wrote *3 steps now say needs 0 more*; road 1 lists three skills of its own, and her two *have*
   marks cover every skill on four steps).
-- The Steps gauge: *1 of 16 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
-  16 steps).
+- The Steps gauge: *1 of 17 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
+  17 steps since 2026-10-14, when *Keep your records from day one* was added; 16 before).
 - The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $14,993.62 Mara's numbers (1 line)*,
   *1 official fee applies only sometimes, not added up*, *30 not priced yet*, *savings: not given yet* (no
   difference is worked out without savings; the appendix wrote *4 lines not priced yet*; road 1 names 31

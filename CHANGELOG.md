@@ -35,7 +35,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   what stayed blank and why. It says Mara and her answers are invented and every price and statistic is
   real. The tools are information, a pick with what sellers charge: never ranked, never "buy this". A
   test checks that her three numbers are worked out in her file, never typed. A short list, *What Mara
-  did*, shows what each of her answers changed, worked out by the rules (on today's road: 16 steps, 30
+  did*, shows what each of her answers changed, worked out by the rules (on today's road: 17 steps, 30
   cost lines still to price; the design's early sketch said 22 and 4). Her answers are labelled hers, not
   yours: *Mara's target …*, *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner
   says once that "you" in the receipts means Mara. Nothing is saved from it: every button that would keep

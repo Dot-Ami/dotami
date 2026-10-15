@@ -298,7 +298,7 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   the requests sent before and after clicking Keep and Export (the two save controls not disabled), and
   checks that every other save control in the ui-spec's table is disabled.
 - **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
-  catalog, which differs from the appendix's sketch: 16 steps (not 22), 31 lines to price before her
+  catalog, which differs from the appendix's sketch: 17 steps (not 22; 16 until *Keep your records from day one* was added on 2026-10-14), 31 lines to price before her
   numbers and 30 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The
   appendix is left as written, a sketch from before the road was; the ui-spec lists the true receipts.
 
