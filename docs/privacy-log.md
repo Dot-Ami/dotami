@@ -223,6 +223,26 @@ person is asked).
   person or their ideas, nothing in the data file, nothing leaves the computer; the inventory's line on
   `/your-data` says five.
 
+### What leaves the computer, and to whom
+
+- **The update check goes out earlier in each start (2026-10-14).** The installed app now asks GitHub
+  for a newer version as soon as its log is open, before the server starts, instead of after the first
+  page has loaded ([`desktop/main.mjs`](../desktop/main.mjs) `start()`,
+  [`desktop/update-check.mjs`](../desktop/update-check.mjs)). The same request as before, and still once
+  per start: GitHub sees the computer's internet address and which version it runs, and also a random
+  install ID that electron-updater 6.8.9 adds to every check (the `x-user-staging-id` header,
+  `node_modules/electron-updater/out/AppUpdater.js:387`). The updater makes that ID the first time it
+  checks, keeps it in a file of its own, `.updaterId`, in the data folder, and sends the same one on
+  every start after (`AppUpdater.js:501-522`); its line saying it made one goes into `logs/server.log`.
+  None of the person's data is in the request. What changes: the check now also goes out on a start that
+  stops before the main window (a start that fails, or one the person ends at a question asked before
+  the main window, such as the lost-key window), where before it didn't, so such a start now also
+  creates `.updaterId` if it isn't there yet, and a newer version can start downloading then too (it
+  stops when DotAmi quits, and installs only on the person's click). The ID, its file and its log line
+  are older than this change and are not yet in the inventory's entry, *Each time the desktop app
+  starts* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); adding them is a separate change.
+  A copy run from source and the test runs still never check.
+
 ### Packages that ship
 
 - **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine

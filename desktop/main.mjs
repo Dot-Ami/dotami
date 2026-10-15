@@ -36,6 +36,7 @@ import { bringBackReceipts, listSetAsideReceipts, receiptRowsIn } from "./receip
 import { encryptReceiptsIn, keyIdOf } from "./receipt-crypto.mjs";
 import { newReceiptKey, openReceiptKey, RECEIPT_KEY_FILE, receiptLockEnv, restartForNewKey, revertReceiptKey, saveReceiptKey } from "./receipt-key.mjs";
 import { CannotOpenDatabase, FileNotReadable, fileKind, openDatabase, rollBackJournal, useSqliteFrom } from "./sqlite.mjs";
+import { checkForUpdates as runUpdateCheck, mainWindowGate } from "./update-check.mjs";
 import { showUpdateProgress } from "./update-notice.mjs";
 import { finishPendingWipe, SAFETY_COPY_NAME } from "./wipe-pending.mjs";
 
@@ -97,6 +98,8 @@ const preparing = preparingWindow(openPreparingWindow, { log: (line) => log?.wri
 // code updates with git. Tests switch the check off so they never reach the internet.
 const updatesOn = app.isPackaged && process.env.DOTAMI_NO_UPDATE_CHECK !== "1";
 let updaterReady = false;
+// Opened when the main window first shows; the update messages wait for it (desktop/update-check.mjs).
+const mainWindow = mainWindowGate();
 
 // One copy per data folder: a second launch brings the first window forward instead of starting
 // a second server writing to the same file.
@@ -153,6 +156,12 @@ async function start() {
   // StartApp; docs/architecture/desktop-app.md § Updating on Windows).
   const how = process.argv.includes("--updated") ? " (started by the updater)" : "";
   log.write(`\n--- ${new Date().toISOString()} starting DotAmi ${app.getVersion()}${how}\n`);
+
+  // The update check starts now, alongside everything below, rather than after the first page has
+  // loaded: GitHub's answer usually arrives while the server is still starting. Whatever it finds
+  // waits for the main window (mainWindow, opened in ready-to-show below), so nothing shows over the
+  // preparing window or the lock question. It never stops or slows the start: a failure is a log line.
+  if (updatesOn) void checkForUpdates(false);
 
   if (!existsSync(serverEntry)) {
     return fail("This copy of DotAmi hasn't been built yet. Run `npm run desktop:build`, then start it again.");
@@ -260,13 +269,14 @@ async function start() {
     win?.show();
     // In the same step, so there is never a moment with neither window on the screen.
     preparing.close("the main window showed");
+    // The update messages held until now (if the check answered during the start) show from here on.
+    mainWindow.open();
   });
   await win.loadURL(origin).catch((error) => {
     // ERR_ABORTED: another navigation (a menu item clicked during start-up) replaced the first
     // load. That isn't a failure; treating it as one closed the app (seen 2026-10-05).
     if (error?.code !== "ERR_ABORTED") throw error;
   });
-  if (updatesOn) void checkForUpdates(false);
 }
 
 /**
@@ -275,20 +285,15 @@ async function start() {
  * made is invisible until the maintainer publishes it. A copy whose version has a pre-release tag
  * (e.g. 0.2.0-dev.1) also takes pre-releases; a normal copy doesn't (electron-updater's own
  * `allowPrerelease` default, node_modules/electron-updater/out/AppUpdater.d.ts). The download is
- * checked against the SHA-512 in the release's latest.yml before it can be installed.
+ * checked against the SHA-512 in the release's latest.yml before it can be installed. What is said
+ * and logged, and when, is desktop/update-check.mjs.
  */
-async function checkForUpdates(byHand) {
-  if (!updatesOn) {
-    if (byHand) {
-      void dialog.showMessageBox({
-        type: "info",
-        title: "Updates",
-        message: "This copy runs from DotAmi's source code.",
-        detail: "It updates with git, not by itself. The installed app checks GitHub for new versions.",
-      });
-    }
-    return;
-  }
+function checkForUpdates(byHand) {
+  return runUpdateCheck({ on: updatesOn, byHand, loadUpdater, dialog, log: (line) => log?.write(`${line}\n`), version: app.getVersion() });
+}
+
+/** electron-updater, set up once: the first check (at start, or Help → Check for updates) does it. */
+async function loadUpdater() {
   const { autoUpdater } = (await import("electron-updater")).default;
   if (!updaterReady) {
     updaterReady = true;
@@ -296,26 +301,15 @@ async function checkForUpdates(byHand) {
     autoUpdater.autoInstallOnAppQuit = false;
     // electron-updater puts an error's stack or message in its error, warn and some info lines, and
     // those name folders on this computer: updaterLogger (desktop/log.mjs) writes a fixed line for
-    // them; the check's own line below says which error it was, by name and code.
+    // them; the check's own line (desktop/update-check.mjs) says which error it was, by name and code.
     autoUpdater.logger = updaterLogger((text) => log?.write(text));
     // "Downloading now" the moment a newer version is found, the taskbar button as progress, then
     // "Restart and update" / "Later" once it's downloaded and checked (desktop/update-notice.mjs).
-    // The same for the check at start and for Help → Check for updates.
-    showUpdateProgress({ updater: autoUpdater, dialog, window: () => win, log: (line) => log?.write(`${line}\n`) });
+    // The same for the check at start and for Help → Check for updates; each message waits until the
+    // main window is on the screen (whenShown).
+    showUpdateProgress({ updater: autoUpdater, dialog, window: () => win, log: (line) => log?.write(`${line}\n`), whenShown: mainWindow.whenShown });
   }
-  try {
-    const result = await autoUpdater.checkForUpdates();
-    if (byHand && !result?.isUpdateAvailable) {
-      void dialog.showMessageBox({ type: "info", title: "Updates", message: `You have the latest version (${app.getVersion()}).` });
-    }
-  } catch (error) {
-    // The name and code only (desktop/log.mjs): an update error's message can carry the address it
-    // tried and folders on this computer.
-    log?.write(`[update] check failed (${describeError(error)})\n`);
-    if (byHand) {
-      void dialog.showMessageBox({ type: "warning", title: "Updates", message: "DotAmi couldn't check for updates right now.", detail: "Check your internet connection and try again from Help → Check for updates." });
-    }
-  }
+  return autoUpdater;
 }
 
 /**
