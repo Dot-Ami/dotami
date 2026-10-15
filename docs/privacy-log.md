@@ -230,6 +230,19 @@ person is asked).
   [`lib/cockpit/plan.ts`](../lib/cockpit/plan.ts)). One new page; no new table, column, browser-storage key,
   API route or request; only the idea's id travels in the address, as the cockpit's does. **Print** is the browser's
   own `window.print()`: the computer's print window opens, and the person picks a printer or a PDF.
+- **The update checker's install ID is now in the inventory and on `/your-data` (2026-10-14; found in
+  the review of #169).** Nothing new is kept: electron-updater has kept it since the desktop app's first
+  version, unlisted. In the installed app only, the first update check makes a random ID (a UUID from
+  4096 random bytes) and saves it in `.updaterId` in the data folder
+  (`node_modules/electron-updater/out/AppUpdater.js:501-526`, 6.8.9); it is the updater's file, which
+  DotAmi doesn't write, read or remove. Its line *"Generated new staging user ID: <id>"* (`:518`) is an
+  info line, which `desktop/log.mjs` `updaterLogger` keeps, so `logs/server.log` holds the ID too.
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) gains a `FOLDERS` row for the file, the ID in
+  the log's row, and a line in `NOT_CLEARED_BY_DELETE`; Settings' Privacy group names it
+  ([`components/settings/settings-page.tsx`](../components/settings/settings-page.tsx)).
+  [`tests/privacy-inventory.spec.ts`](../tests/privacy-inventory.spec.ts) reads `AppUpdater.js` and fails
+  while a file it writes beside the data file, or a header it adds to the check, isn't listed. What the
+  app does is unchanged; whether DotAmi needs the ID is still open.
 
 ### What leaves the computer, and to whom
 
@@ -241,15 +254,25 @@ person is asked).
   install ID that electron-updater 6.8.9 adds to every check (the `x-user-staging-id` header,
   `node_modules/electron-updater/out/AppUpdater.js:387`). The updater makes that ID the first time it
   checks, keeps it in a file of its own, `.updaterId`, in the data folder, and sends the same one on
-  every start after (`AppUpdater.js:501-522`); its line saying it made one goes into `logs/server.log`.
+  every start after (`AppUpdater.js:501-526`); its line saying it made one goes into `logs/server.log`.
   None of the person's data is in the request. What changes: the check now also goes out on a start that
   stops before the main window (a start that fails, or one the person ends at a question asked before
   the main window, such as the lost-key window), where before it didn't, so such a start now also
   creates `.updaterId` if it isn't there yet, and a newer version can start downloading then too (it
   stops when DotAmi quits, and installs only on the person's click). The ID, its file and its log line
-  are older than this change and are not yet in the inventory's entry, *Each time the desktop app
-  starts* ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)); adding them is a separate change.
+  are older than this change; the line below and the last line under *What DotAmi keeps* add them to
+  the inventory.
   A copy run from source and the test runs still never check.
+- **The update check's entry names the install ID (2026-10-14).** *The update check* in
+  [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `SENT_ELSEWHERE`, shown on `/your-data`, now
+  says GitHub also sees a random install ID, the same on every check, and names the header in a new
+  developer field, `headers`: `x-user-staging-id`, set before every check
+  (`node_modules/electron-updater/out/AppUpdater.js:386-387`) and so sent with the requests that look for a
+  newer version (the release list, the latest tag and `latest.yml`, through `providers/Provider.js`
+  `createRequestOptions`); the installer download doesn't carry it (`AppUpdater.js:488-500` adds only
+  `autoUpdater.requestHeaders`, which DotAmi doesn't set). Its *when* now also names Help → Check for
+  updates, and *can it be taken back* says no, with deleting the file as the way to get a new ID.
+  Nothing new is sent; this is the list catching up.
 
 ### Packages that ship
 
@@ -320,6 +343,10 @@ person is asked).
   "The yearly income you said you want", and the business / career / both answer and the road with the
   idea ("Your ideas"). The answers held in the browser tab go when the tab closes, or when the front
   door's **Map it** starts a new journey.
+- **The update checker's install ID (2026-10-14):** close DotAmi and delete `.updaterId` in the data
+  folder; the next update check makes a new random ID and sends that one. Delete on `/your-data` doesn't
+  reach it, and its list of what it can't reach says so; the copy of the ID in `logs/server.log` stays
+  with the log, which nothing clears. What GitHub already received can't be taken back.
 
 ### What the policy will need to say
 
@@ -339,6 +366,10 @@ person is asked).
 - A plan the person prints or saves as a PDF (2026-10-13) holds their own words, marks, progress and
   numbers for that idea; where the paper or the file goes from there is the person's choice. DotAmi sends
   it nowhere.
+- The installed app's update check sends GitHub, besides the computer's internet address and the version,
+  a random install ID that the update package makes once per data folder and sends unchanged on every
+  check, so the checks from one copy can be linked to each other. It is kept in the data folder and in
+  the log, holds nothing about the person, and changes only when the person deletes its file.
 
 ---
 

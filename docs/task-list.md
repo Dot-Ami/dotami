@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-12. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-14. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -242,6 +242,11 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
     data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
     earlier; a desktop test checks it); reaches installed copies with the next release
+  - [x] The update checker's install ID (`.updaterId`, sent to GitHub with each check, written once into
+    the log) is listed on What DotAmi knows about you and in Settings, with how to remove it; a test reads
+    electron-updater's own code and fails while its file or header isn't listed (2026-10-14)
+  - [ ] Decide whether DotAmi needs that install ID at all (the updater uses it only for releases offered
+    to part of its users, which DotAmi doesn't do); nothing changed yet
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer

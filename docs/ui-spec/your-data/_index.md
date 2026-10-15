@@ -102,11 +102,17 @@ jump links, then five sections in this order:
    came from was deleted, "None: no encrypted copy is waiting to be wiped.") and **the note that the
    person turned locking off** (`database-turned-off.json`, the key's id only, "None: locking wasn't
    turned off, or turning it off is finished."). The receipts row says whether the data file is
-   encrypted too.
+   encrypted too. A row for **the update checker's install ID** (`.updaterId`, desktop app only,
+   since 2026-10-14): electron-updater's own file, a random code it sends GitHub with every update
+   check, that DotAmi doesn't write or read and Delete doesn't remove, and how to remove it (close
+   DotAmi, delete the file; the next check makes a new one); "None: the update checker hasn't checked
+   from this data folder yet (a copy run from source never checks)." when it isn't there. The log's
+   row says the ID is in the log too.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
    for this copy; says whether it is happening here, links Anthropic's own retention page when it
    is, and that DotAmi can't take it back), the desktop update check (GitHub sees the computer's
-   address and the version), and files the person saves themselves (DotAmi doesn't know where
+   address, the version and the updater's install ID, the same on every check; DotAmi can't take back
+   what GitHub received, and deleting the ID's file makes the next check send a new one), and files the person saves themselves (DotAmi doesn't know where
    they are). Each says when, what, and whether it can be taken back.
 5. **Taking things out** — what the person can do elsewhere (retract an agreed figure, discard a
    waiting one, remove a link between two ideas), a line saying Delete erases whole kinds of data and

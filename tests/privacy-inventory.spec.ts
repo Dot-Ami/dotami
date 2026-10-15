@@ -9,6 +9,7 @@ import {
   FOLDERS,
   LIBRARY_IMPORTS,
   LOCAL_REQUESTS,
+  NOT_CLEARED_BY_DELETE,
   SENT_ELSEWHERE,
   STARTS_PROGRAMS,
   TABLES,
@@ -51,6 +52,7 @@ import {
   unscannedSourceFolders,
   wrapperNamesAcross,
 } from "./helpers/source-scan";
+import { updaterLogger } from "../desktop/log.mjs";
 
 /**
  * The /your-data page is drawn from lib/privacy/inventory.ts, so the page is only as honest as
@@ -241,6 +243,61 @@ describe("the privacy inventory lists what the desktop app writes beside the dat
     // A suffix follows the data file's name; every other name is the file's own.
     const listed = FOLDERS.some((f) => f.relativePath === value || f.relativePath === `dotami.db${value}`);
     expect(listed, `add an entry for ${value} to FOLDERS in lib/privacy/inventory.ts`).toBe(true);
+  });
+});
+
+// electron-updater keeps a file of its own in the data folder, adds a header of its own to the update
+// check's requests and writes a line of its own to the log, all inside its own code, where the network
+// scan can't look (it sees the import in desktop/main.mjs, nothing after it). Found in PR #169's review
+// (2026-10-14): the install ID was in none of the inventory's entries. So these read the updater's own
+// source, in the version this checkout locks, for the shapes found there. They read AppUpdater.js only:
+// a file or header the updater names from another of its files, or in a different shape, isn't seen,
+// and a change of shape on an update fails the first test rather than passing on nothing.
+describe("the privacy inventory lists what electron-updater keeps and sends on its own", () => {
+  const UPDATER_SOURCE = "node_modules/electron-updater/out/AppUpdater.js";
+  const updater = readFileSync(path.join(process.cwd(), UPDATER_SOURCE), "utf8");
+  // A file beside the data file: path.join(this.app.userDataPath, ".updaterId"). userDataPath is
+  // electron's userData folder (ElectronAppAdapter.js), which desktop/main.mjs makes the data folder.
+  const updaterFiles = [...updater.matchAll(/path\.join\(this\.app\.userDataPath,\s*"([^"]+)"\)/g)].map((m) => m[1]);
+  // A header on every request of the check: setRequestHeaders(this.computeFinalHeaders({ "x-…": id })).
+  const updaterHeaders = [...updater.matchAll(/setRequestHeaders\(this\.computeFinalHeaders\(\{([^}]*)\}/g)].flatMap((m) =>
+    [...m[1].matchAll(/"([A-Za-z0-9-]+)"\s*:/g)].map((h) => h[1]),
+  );
+  const updateCheck = SENT_ELSEWHERE.find((s) => s.id === "update-check")!;
+
+  it("finds the names it checks (so the checks below can't pass on none)", () => {
+    expect(updaterFiles).toEqual([".updaterId"]);
+    expect(updaterHeaders).toEqual(["x-user-staging-id"]);
+  });
+
+  it.each(updaterFiles)("the file %s is listed beside the data file, as the updater's", (name) => {
+    const entry = FOLDERS.find((f) => f.relativePath === name);
+    expect(entry, `add an entry for ${name} to FOLDERS in lib/privacy/inventory.ts`).toBeDefined();
+    expect(entry!.writtenBy.file).toBe(UPDATER_SOURCE);
+    expect(entry!.desktopOnly).toBe(true);
+    // Delete doesn't reach it, so the menu's list of what it can't reach names it, with how to remove it.
+    expect(NOT_CLEARED_BY_DELETE.find((n) => n.why.includes(name))?.why).toMatch(/delete the file/);
+  });
+
+  it.each(updaterHeaders)("the header %s is named on the update check, and said in words", (name) => {
+    expect(
+      (updateCheck.headers ?? []).map((h) => h.name),
+      `name ${name} in the update check's headers in lib/privacy/inventory.ts`,
+    ).toContain(name);
+    expect(updateCheck.what).toMatch(/install ID/);
+    // Settings says what the check reveals in its own sentence, so it names the ID too.
+    expect(readFileSync(path.join(process.cwd(), "components/settings/settings-page.tsx"), "utf8")).toMatch(/GitHub sees [^<]*install ID/);
+  });
+
+  it("the line the updater writes when it makes the ID reaches the log with the ID in it, and the log's entry says so", () => {
+    // The updater's own info line, read from its source and filled in with a made-up ID.
+    const template = updater.match(/this\._logger\.info\(`(Generated new staging user ID: )\$\{id\}`\)/);
+    expect(template, "electron-updater no longer writes this line; read AppUpdater.js again").not.toBeNull();
+    const id = "3f6c2a9e-0b1d-5e47-8a2c-9d4e6f1a7b30";
+    const lines: string[] = [];
+    updaterLogger((text: string) => lines.push(text)).info(`${template![1]}${id}`);
+    expect(lines.join("")).toContain(id);
+    expect(FOLDERS.find((f) => f.id === "log")!.holds).toMatch(/install ID/);
   });
 });
 
