@@ -10,11 +10,29 @@
  *   a full-width sheet and closes;
  * - the keyboard: folding a region leaves focus on the button that now stands for it, and on a phone a
  *   sheet takes focus, keeps Tab inside it, closes on Escape and gives focus back;
- * - nothing the cockpit draws over the page covers a button or the page's last line.
+ * - nothing the cockpit draws over the page covers a button or the page's last line;
+ * - with a what-if on, the legend is never drawn under the what-if bar, and every control under the road
+ *   can be reached and clicked (2026-10-14: the road's area used to shrink to 20 px and the legend slid
+ *   under the bar, covering its fold button).
  */
+import path from "node:path";
+
+import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { generalRoadV2026 } from "../lib/engines/roads/v2026";
+import { createDatabaseClient } from "../lib/db/client";
+import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+
+/** The run's own data file, for the test that draws an idea on another road. */
+async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
+  const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
+  const db = createDatabaseClient({ url: `file:${file}` });
+  try {
+    return await fn(db);
+  } finally {
+    await db.$disconnect();
+  }
+}
 
 /** An invented Alberta idea, saved the way the intake saves one; returns its id. */
 async function saveIdea(page: Page, name: string): Promise<string> {
@@ -262,6 +280,80 @@ test("between 768 and 1023 px, a step's drawer leaves the header's buttons free 
   // A real click, which Playwright refuses while something else would receive it.
   await button(page, "Fold all panels").click({ timeout: 2_000 });
   await expect(button(page, "Show all panels")).toBeVisible();
+});
+
+/** Turns a what-if on with the bar's own box and Try, and waits for its banner. */
+async function tryWhatIf(page: Page, dollars: string) {
+  const bar = page.getByRole("region", { name: "What-if" });
+  await bar.getByLabel("Try first-year sales of $").fill(dollars);
+  await bar.getByRole("button", { name: "Try", exact: true }).click();
+  await expect(bar.getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
+}
+
+/**
+ * With a what-if on: the legend ends where the what-if bar starts (never under it), the road keeps an area
+ * to read, and every control in the legend, the what-if bar and Next on your road is the thing a click at
+ * its centre lands on once scrolled to, as a person would scroll to it. Then a real click on the legend's
+ * fold button, which Playwright refuses while something else would receive it.
+ */
+async function controlsUnderTheRoadReachable(page: Page, size: string, minRoadHeight: number) {
+  const legend = page.getByRole("group", { name: "Legend" });
+  const bar = page.getByRole("region", { name: "What-if" });
+  const legendBox = (await legend.boundingBox())!;
+  const barBox = (await bar.boundingBox())!;
+  expect(legendBox.y + legendBox.height, `${size}: the legend's bottom is not under the what-if bar`).toBeLessThanOrEqual(barBox.y + 0.5);
+  expect(await road(page).evaluate((el) => el.clientHeight), `${size}: the road's area`).toBeGreaterThanOrEqual(minRoadHeight);
+
+  const controls = [
+    ...(await legend.getByRole("button").all()),
+    ...(await bar.getByRole("button").all()),
+    ...(await bar.getByRole("textbox").all()),
+    ...(await page.getByRole("region", { name: "Next on your road" }).getByRole("button").all()),
+  ];
+  expect(controls.length).toBeGreaterThanOrEqual(5);
+  for (const control of controls) {
+    await control.scrollIntoViewIfNeeded();
+    const name = (await control.getAttribute("aria-label")) ?? (await control.innerText());
+    expect(await onTop(control), `${size}: ${name}`).toBe(true);
+  }
+  await button(page, "Fold the legend").click({ timeout: 2_000 });
+  await expect(legend.getByText("applies as answered", { exact: true })).toBeHidden();
+  await button(page, "Show the legend").click({ timeout: 2_000 });
+  await expect(legend.getByText("applies as answered", { exact: true })).toBeVisible();
+}
+
+test("with a what-if on and Compare open, the legend is never under the what-if bar and every control under the road can be clicked (1280x720, 1366x768, 1024x768)", async ({
+  page,
+}) => {
+  const ventureId = await saveIdea(page, "Invented — what-if fit test");
+  await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: roadApprenticeToOwnShopAB.id, roadChosenAt: new Date() } }));
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await tryWhatIf(page, "45000");
+  // Compare in the right-hand panel, as a person who has just compared the two endings has it: from 1024 px
+  // a column beside the road, which narrows the road and makes the legend wrap onto more lines.
+  await goalBar(page).getByRole("button", { name: "Compare", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Compare the two endings" })).toBeVisible();
+
+  for (const size of [
+    { width: 1280, height: 720 },
+    { width: 1366, height: 768 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(size);
+    await controlsUnderTheRoadReachable(page, `${size.width}x${size.height}`, 160);
+  }
+});
+
+test("with a what-if on, at tablet and phone widths every control under the road can be clicked (768x1024, 375x812)", async ({ page }) => {
+  const ventureId = await saveIdea(page, "Invented — what-if narrow fit test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await tryWhatIf(page, "45000");
+  // No panel open: below 1024 px the panel is a drawer or a sheet over the road by design (12-folding-and-phone.md).
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await controlsUnderTheRoadReachable(page, "768x1024", 160);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await controlsUnderTheRoadReachable(page, "375x812", 400);
+  expect(await noSidewaysScroll(page)).toBe(true);
 });
 
 test.describe("phone width (issue #4)", () => {

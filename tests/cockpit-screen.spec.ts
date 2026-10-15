@@ -41,12 +41,10 @@ import type { Scenario } from "@/lib/scenarios/types";
 
 import { inventedCitation } from "./helpers/invented-road";
 import { input, inventedIdea, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
 const ALL_ON: Overlays = { skills: true, money: true, rules: true };
-
-/** The same verdict words road evaluation's words are checked against (tests/road-evaluation.spec.ts). */
-const VERDICT = /\b(enough|ready|best|should|recommend\w*|on track|behind)\b/i;
 
 /** A figure as the figures list returns it; only what agreedPlanning and the rules read matters here. */
 function figure(change: Partial<FigureView>): FigureView {

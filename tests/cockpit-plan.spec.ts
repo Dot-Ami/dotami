@@ -24,9 +24,7 @@ import type { FigureView } from "@/lib/figures/types";
 import { evaluateRoad } from "@/lib/roads";
 
 import { inventedIdea, ROAD_ID, roadToEvaluate, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
-
-/** The verdict words the cockpit's part 2 is checked against (tests/cockpit-told.spec.ts), the widest list. */
-const VERDICT = /\b(enough|ready|best|better|worse|should|recommend\w*|on track|behind|score)\b/i;
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 const NO_KEPT: KeptAnswers = { progress: [], skillMarks: [], forkPickedOn: {}, targetMonthSetOn: null, figures: [], incomeWantedOn: null };
 

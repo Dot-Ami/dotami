@@ -32,8 +32,7 @@ import { buildEvaluationProfileFromScenario } from "@/lib/scenarios/evaluation-p
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import { cockpitInput } from "@/lib/cockpit/view";
 
-/** The verdict words every cockpit sentence is checked against (tests/road-evaluation.spec.ts). */
-const VERDICT = /\b(enough|ready|best|should|recommend\w*|on track|behind)\b/i;
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 /** Every string a words object can produce, filling each function with plain values. */
 function sentencesOf(words: unknown): string[] {
