@@ -218,10 +218,8 @@ export function buildPlan(args: PlanArgs): PlanView {
         label: line.label,
         amount: formatMoney(line.amountCents),
         kind: words.plan.costKind["official-fee"],
-        // A catalog's condition may end in a full stop of its own, and the step panel's words add one; the
-        // plan drops the condition's so paper never reads "rewrite it.. Not added". (The step panel itself
-        // still doubles it: its words are pinned byte for byte by tests/cost-panels-unchanged.spec.ts.)
-        note: line.onlyIf !== undefined ? words.panel.onlyIf(line.onlyIf.replace(/\.+$/, "")) : null,
+        // The step panel's own words, which add a full stop only when the condition doesn't end in one.
+        note: line.onlyIf !== undefined ? words.panel.onlyIf(line.onlyIf) : null,
         source: source(line.citation),
       };
     }
