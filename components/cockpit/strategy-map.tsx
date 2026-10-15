@@ -47,6 +47,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  * own button, the road's scrolling area is a region named for a screen reader, and below 768 px each
  * column is the window's width less the margins, the area scrolling sideways one column at a time (scroll
  * snap) at 70 % of the window's height. Without `cockpit` none of that is drawn and the HTML is unchanged.
+ * 2026-10-14: from 768 px the road's area keeps at least 12rem of height, so the legend under it never
+ * slides under the cockpit's what-if bar (the cockpit's canvas scrolls instead).
  */
 
 /** What the cockpit adds to the map: the legend's fold. */
@@ -176,7 +178,10 @@ export function StrategyMap({
               role: "region",
               "aria-label": cockpitWords.folds.roadRegion,
               className:
-                "min-h-0 flex-1 overflow-auto px-5 pt-5 max-md:h-[70svh] max-md:flex-none max-md:snap-x max-md:snap-mandatory max-md:scroll-px-5",
+                // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
+                // would make its minimum the height of every card): with the what-if bar open it used to
+                // shrink to 20 px, the legend sliding under the bar (2026-10-14).
+                "min-h-0 flex-1 overflow-auto px-5 pt-5 md:min-h-48 md:basis-0 max-md:h-[70svh] max-md:flex-none max-md:snap-x max-md:snap-mandatory max-md:scroll-px-5",
             }
           : { className: "min-h-0 flex-1 overflow-auto px-5 pt-5" })}
       >

@@ -37,8 +37,8 @@ import { clearScenarioBranch, defaultActiveBranches, updateScenarioBranch, type 
 import { isBranchDecided } from "@/lib/scenarios/graph";
 
 import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
-const VERDICT = /\b(enough|ready|best|better|worse|should|recommend\w*|on track|behind|score)\b/i;
 const FORK = "fork-eval-ending";
 const OWN = "step-eval-own";
 const EMPLOYED = "step-eval-employed";

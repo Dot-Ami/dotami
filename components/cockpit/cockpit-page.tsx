@@ -1036,8 +1036,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         </aside>
 
         {/* Canvas — S2.5.4j: tier columns, not a graph; the overlay switches over it and "Next on your
-            road" under it (2026-10-12). */}
-        <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4">
+            road" under it (2026-10-12). From 768 px the column scrolls down when what it holds is taller
+            than the window (a what-if on, with its receipt): the map's box never shrinks below the road's
+            minimum area plus the legend, so the legend can't slide under the what-if bar and cover its
+            own fold button, as it did until 2026-10-14 (12-folding-and-phone.md). */}
+        <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4 md:overflow-y-auto">
           {evaluation ? (
             <>
               <OverlaySwitches
@@ -1045,7 +1048,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 counts={overlayCounts(road, evaluation, scenario)}
                 onToggle={(overlay) => setOverlays((o) => ({ ...o, [overlay]: !o[overlay] }))}
               />
-              <div className="min-h-0 flex-1">
+              {/* No min-h-0 here: the box's minimum is the road's minimum area plus the legend. */}
+              <div className="flex-1">
                 <StrategyMap
                   // The idea's own road: today's general road until the person picks another future.
                   road={road}

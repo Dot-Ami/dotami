@@ -506,6 +506,12 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   answer stored before has none, which reads as open), and *Fold all panels* folds it too. While a
   what-if is on, the folded line still says *Your what-if, not a forecast* and its number, since the map
   is still relit by it. The open rail is up to 280 px wide, as part 2 made it.
+- **The road keeps a minimum area (2026-10-14).** With the what-if bar open and a what-if on, the road's
+  area shrank to 20 px at 1280x720 and the legend slid under the bar (all of it at 1024x768 with
+  *Compare* beside the road), so *Fold the legend* couldn't be clicked; the journey browser test found it
+  in CI. From 768 px the road's area is now at least 12rem tall, the legend ends where the bar starts,
+  and the canvas column scrolls down when what it holds is taller than the window
+  (docs/ui-spec/cockpit/12-folding-and-phone.md; `e2e/cockpit-fit.spec.ts`).
 
 ### Cockpit screen as built, part 2 (2026-10-12)
 
@@ -1647,7 +1653,7 @@ answer and the *This is mine* pin; a step's own date; moving the catalogs' keys 
 | Rule ([CLAUDE.md](../../CLAUDE.md)) | How this design meets it |
 |---|---|
 | **Every path, in the open.** No pre-filtering by what DotAmi thinks the reader wants | Pick a future lists every written future in the order added. Both sides of every fork are drawn and compared. *Not for me* greys a step; it doesn't remove it |
-| **Information and options, never a verdict.** No ranking, never *you should* | Gauges are counts and arithmetic with source tags. Compare has identical rows, no score, no highlight; the person clicks *This is mine*. The only sort (phase 2) is one measure the person picks, said on screen. A copy test bans *you should*, *recommended*, *best for you*. Card colours keep today's meanings and never mean *better* or *ready* |
+| **Information and options, never a verdict.** No ranking, never *you should* | Gauges are counts and arithmetic with source tags. Compare has identical rows, no score, no highlight; the person clicks *This is mine*. The only sort (phase 2) is one measure the person picks, said on screen. A copy test bans *you should*, *recommended*, *best for you*: as built (2026-10-14), `e2e/no-verdict.spec.ts` reads the visible text of every screen of the journey as it opens, every card's panel with its sources unfolded included, and `e2e/journey.spec.ts` reads it again after each thing a person does (a what-if, an agree prompt, a mark, *This is mine*); both fail on the phrases in `tests/helpers/verdict-words.ts`, which allows only two official sentences, quoted from Alberta's Register a business name page, each with its reason and only inside quote marks. Card colours keep today's meanings and never mean *better* or *ready* |
 | **Rules decide; models explain at most** | Steps, skills, fees, cost-line names and cards come from versioned, cited catalogs. Step states and counts come from a pure function; receipts are a diff of two runs. The whole journey works with no model. Later, the Lens only proposes, and what it drafts is labelled (§ 9) |
 | **Every claim is cited and dated** | Every step, *done when* line, skill item, official fee and cost-line name carries a typed citation with `lastVerified`. A road compiler (phase 4) refuses an uncited step; phase 1's tests refuse one too |
 | **Legal but honest; not advice; never files** | Steps link to the official page and the person acts there. Nothing files, registers or generates a binding document. The export keeps the disclaimer |
@@ -1658,7 +1664,7 @@ answer and the *This is mine* pin; a step's own date; moving the catalogs' keys 
 | **Never put venture or tax knowledge in a component** | The map draws whatever road file it is given; components hold no steps, fees or rules |
 | **Data stays on the computer; the privacy inventory is complete** | New tables in the existing local file, listed in the inventory, shown and deletable on `/your-data`. No new request leaves the computer |
 | **A new migration passes the desktop test and never rebuilds `Venture`** | § 7 |
-| **A new screen arrives with a browser test** | Phase 1's main path: front door → destination → pick a future → cockpit → mark a skill → price a line → what-if → compare → *This is mine* |
+| **A new screen arrives with a browser test** | Phase 1's main path: front door → destination → pick a future → cockpit → mark a skill → price a line → what-if → compare → *This is mine*; as built (2026-10-14) in one test, `e2e/journey.spec.ts`, on to *Your plan*, a reload and *Your futures* |
 | **Change a control, change its ui-spec file in the same commit** | Each screen's pull request writes or updates `docs/ui-spec/<page>/` |
 | **Value first** (the maintainer, 2026-10-10) | No new permission screens, warnings or settings. It reuses the agree prompt, encryption, the data list and reminders |
 

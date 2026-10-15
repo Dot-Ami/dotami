@@ -20,6 +20,7 @@ import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 
 import { input, inventedIdea, ROAD_ID, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 const stateOf = (result: RoadEvaluation) => Object.fromEntries(result.steps.map((s) => [s.stepId, s.state]));
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
@@ -647,9 +648,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
 
 describe("the words: counts and arithmetic, never a verdict", () => {
   // A gap is a count or a sum, never "enough", "ready" or "best", and nothing says what to do
-  // (docs/architecture/future-cockpit.md § 4 and § 8).
-  const VERDICT = /\b(enough|ready|best|should|recommend\w*|on track|behind)\b/i;
-
+  // (docs/architecture/future-cockpit.md § 4 and § 8). The words: tests/helpers/verdict-words.ts.
   const runs: RoadEvaluationInput[] = [
     input(),
     input({ forkPicks: { "fork-eval-ending": OWN }, targetMonth: "2029-05" }),

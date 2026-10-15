@@ -9,7 +9,8 @@ focus after a fold), `components/cockpit/use-sheet.ts` (the phone sheets' keyboa
 `lib/cockpit/folds.ts`; words: `lib/cockpit/words.ts` (`folds`)
 Type: toggle buttons + layout
 
-Last updated: 2026-10-13 (the what-if bar folds too, below); built 2026-10-12 (docs/architecture/future-cockpit.md
+Last updated: 2026-10-14 (the road keeps a minimum area and the canvas scrolls, so the legend never sits under
+the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-12 (docs/architecture/future-cockpit.md
 § 2, "Folding and phone width"; closes issue #4)
 
 ## What it is
@@ -71,6 +72,13 @@ fold buttons are at least 32 px tall.
 - **768 to 1024 px.** The rail is a column; the right-hand panel opens as a 420 px drawer under the
   header, over the right of the road, so the header's *Export* and *Fold all panels* stay free to click.
 - **From 1024 px**, as part 1: the rail, the road and the panel side by side.
+- **The road's minimum area (from 768 px, 2026-10-14).** The road's own area is never less than 12rem
+  (192 px) tall, and the legend always ends where the what-if bar starts. When the overlay switches, the
+  road at that minimum, the legend, the what-if bar (a what-if on, with its receipt, *Keep* and *Clear*),
+  *This visit* and *Next on your road* are taller than the window, the column holding them scrolls down;
+  the page itself doesn't. Until then, with a what-if on, the road's area shrank to 20 px at 1280x720 and
+  the legend was drawn under the what-if bar (all of it at 1024x768 with *Compare* open beside the road),
+  so **Fold the legend** couldn't be clicked. Folding still gives the road all the room it frees.
 
 ## Why it exists (user purpose)
 
@@ -78,7 +86,9 @@ The maintainer, 2026-10-12: *"we need to be able to open and close any menu in o
 roadmap"*. With all of them folded at 1280x720, every card on road 0 fits in the road's area once
 scrolled to, and that area is at least 400 px tall (it was 296 px with everything open). Issue #4: at
 375 px the legend left the road 20 px of height. Part 2 added the what-if bar under the map, which takes
-the road's height too, so it folds the same way (2026-10-13).
+the road's height too, so it folds the same way (2026-10-13). With it open and a what-if on, the road's
+area shrank to 20 px again and the legend slid under the bar; the minimum area and the scrolling column
+(above) end that (2026-10-14, found by the journey browser test in CI; `e2e/cockpit-fit.spec.ts`).
 
 ## Copy (current labels)
 
