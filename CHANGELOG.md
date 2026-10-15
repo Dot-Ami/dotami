@@ -388,6 +388,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **A sign painter's map no longer shows a research tax credit step as ahead** (issue #40) — in the
+  cockpit, *SR&ED deepening* (Tier 4) on an idea whose kinds of work include none of Software / SaaS,
+  Manufacturing and AI / ML / R&D is drawn dashed with the chip **not on your path** instead of **ahead**,
+  and says why on the card and in the step panel: *"None of the kinds of work on this idea is Software /
+  SaaS, Manufacturing or AI / ML / R&D, and this step is on your path only with one of them."* (or, on an
+  idea with no kinds of work at all, *"This idea has no kinds of work on it, …"*). It says what is on the
+  idea, never what you did or didn't tell DotAmi: a kind of work you typed in your own words, such as
+  "Research and development", isn't one the rules read, but you did tell DotAmi. Its step panel used to
+  say *"no single answer of yours changes that"*: true for a sole proprietorship, which needs two answers
+  (a corporation and one of those kinds of work), but not for an idea already set as a corporation, where
+  one of those kinds of work alone would change it. It is still drawn
+  and still opens, with every *done when* line and source; it is not hidden, since the map doesn't
+  pre-filter paths (whether to hide it is a question for the maintainer, docs/architecture/future-cockpit.md
+  § 13). With one of those kinds of work it is as before. The rule is the road's own, in its catalog
+  (`onlyForKindsOfWork` on the step, docs/engines/roads.md rule 12), with the same three kinds of work the
+  rules already read for that step, and a test holds the two lists equal. No id changed.
 - **The told list names *Your futures*.** Its *"each figure's day is on Your ideas"* and *"Take these back
   with the idea's figures on Your ideas."* now name the screen by its name since 2026-10-12, *Your
   futures* (`lib/cockpit/words.ts`; the cockpit's list and Your plan pick a row's day through one

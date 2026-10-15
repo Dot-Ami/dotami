@@ -586,10 +586,15 @@ roadmap's build order.
   - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure
-  - [ ] #40 hide R&D-only steps without an R&D tag
+  - [x] #40 hide R&D-only steps without an R&D tag — 2026-10-13: *SR&ED deepening* is drawn off the
+    path, dashed, with its reason, instead of hidden (the map doesn't pre-filter paths); whether to hide
+    it anyway is the maintainer's call (docs/architecture/future-cockpit.md § 13)
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
-  - [ ] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export; the Export panel itself still shows the raw markdown, so whether this closes #41 is the maintainer's call)
+  - [ ] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export; the Export panel keeps its raw-markdown box, the maintainer's call of 2026-10-14)
+    - [ ] the readout API and the playbook export read road evaluation, so *SR&ED deepening* off the
+      path (#40) isn't "ahead" there (docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
+      work only, as built*)
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures

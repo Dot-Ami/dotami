@@ -81,6 +81,13 @@ export function roadProblems(road: Road, skillItems: readonly SkillItem[], now: 
     }
 
     for (const cost of step.costs) problems.push(...costProblems(cost, today));
+
+    // A step for some kinds of work only must name them: an empty list would put it off every path with
+    // a reason naming nothing. That each kind of work is one the intake asks is checked by
+    // tests/research-steps.spec.ts (catalogs import nothing from the intake).
+    if (step.onlyForKindsOfWork !== undefined && step.onlyForKindsOfWork.tags.length === 0) {
+      problems.push(`Step "${step.id}" is for some kinds of work only but names none.`);
+    }
   }
 
   for (const fork of road.forks) {

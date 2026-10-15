@@ -107,7 +107,9 @@ export function cockpitInput(args: {
 
 /**
  * Where a step sits as its card's chip shows it: the person's own status where they set one, else the
- * place the map works out from its toggles (road 0's lists; a step of another road is "upcoming" there).
+ * place the map works out from its toggles (road 0's lists; a step of another road is "upcoming" there),
+ * except that a step the road writes for some kinds of work only is off the path on an idea with none
+ * of them (2026-10-13, issue #40).
  * The map, "Next on your road", the Steps gauge and the Rules & tax count all read it from here, so the
  * screen never lists as next a card it calls done or not on your path.
  */
@@ -115,7 +117,11 @@ export type MapPlace = { from: "you"; status: StepStatus } | { from: "map"; stat
 
 export function mapPlace(stepId: string, scenario: Scenario, evaluated: StepEvaluation | undefined): MapPlace {
   const status = evaluated?.status ?? null;
-  return status ? { from: "you", status } : { from: "map", status: getScenarioNodeStatus(stepId, scenario) };
+  if (status) return { from: "you", status };
+  // Off the path by the road's own rule, so the chip says "not on your path" rather than "ahead" and the
+  // card is drawn dashed; it is still drawn and still opens. The toggles don't decide it.
+  if (evaluated?.reason.kind === "kinds-of-work") return { from: "map", status: "ghost" };
+  return { from: "map", status: getScenarioNodeStatus(stepId, scenario) };
 }
 
 /** A card drawn dashed with no lever cards: the person set it aside, or the map puts it off the path. */

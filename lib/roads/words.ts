@@ -20,6 +20,12 @@ export function listOf(parts: readonly string[]): string {
   return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
 }
 
+/** "a", "a or b", "a, b or c". */
+function eitherOf(parts: readonly string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} or ${parts.at(-1)}`;
+}
+
 // --- The labels of the idea's own answers, as the intake shows them (components/discovery/intake-page.tsx,
 // --- components/cockpit/cockpit-page.tsx). Kept in step by hand; a new value is added in both places.
 
@@ -47,6 +53,15 @@ const STATUS_WORDS = { doing: "doing", done: "done", "not-for-me": "not for me" 
 
 export const because = {
   notForMe: () => "You marked this step not for me.",
+  // A step the road writes for some kinds of work only (`onlyForKindsOfWork`), on an idea with none of
+  // them. Only what DotAmi can check: which kinds of work are on the idea. Never "you haven't told DotAmi
+  // …": a person may have typed their own kind of work ("Research and development") that says just that,
+  // which the rules don't match. "Only with one of them" says what the step needs, not that one of them is
+  // enough (for a sole proprietorship today's rules still leave SR&ED deepening off).
+  kindsOfWork: (onIdea: readonly string[], tags: readonly string[]) =>
+    onIdea.length === 0
+      ? `This idea has no kinds of work on it, and this step is on your path only with one of ${eitherOf(tags)}.`
+      : `None of the kinds of work on this idea is ${eitherOf(tags)}, and this step is on your path only with one of them.`,
   rules: (state: "applies" | "check-first" | "not-on-your-path", facts: readonly string[]) => {
     if (facts.length === 0) return "Today's rules give it this colour; no single answer of yours changes that.";
     const lead =
