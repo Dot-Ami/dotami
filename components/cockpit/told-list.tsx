@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 
 import { ReceiptLines, type ShownReceipt } from "@/components/cockpit/receipt-lines";
-import type { BoxQuestion, NotToldRow, ToldRow } from "@/lib/cockpit/told";
+import { toldDay, type BoxQuestion, type NotToldRow, type ToldRow } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { parseMoneyToCents } from "@/lib/figures/money";
 
@@ -87,7 +87,7 @@ export function ToldList({
               <li key={row.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
                 <p className="text-[12px] leading-snug text-paper">{row.said}</p>
                 <p className="mt-0.5 font-mono text-[9.5px] text-stone">
-                  {row.day ?? (row.takeBack.kind === "none" && row.takeBack.why === "figures" ? words.told.dayOnYourIdeas : words.told.dayNotKept)}
+                  {toldDay(row)}
                 </p>
                 <Unlocked row={row} />
                 <div className="mt-1.5 flex flex-wrap gap-1">
