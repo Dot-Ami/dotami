@@ -366,6 +366,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **Sources that led to "Page not found" now lead to the page where that rule is today.** A recount on
+  2026-10-13 opened every government page DotAmi cites (104 addresses, twice): 20 answered "page not
+  found", mostly because the CRA moved its business-expense, SR&ED and corporation pages. 23 sources on
+  19 of those addresses now link the page where the same government keeps that content, and each says
+  *Checked by a tool on 2026-10-13* with the words found there, until a person reads it (the old read
+  date was for the old page, so it no longer shows). Three sources are left as they were for the
+  maintainer: the Alberta Investor Tax Credit page (it answers page not found; news reports say the
+  program ended in 2019, not checked against an official page) and the two sources of *Retained earnings
+  planning* (`tests/moved-government-pages.spec.ts`).
 - **The update message comes sooner after the app opens** ([7d]; the maintainer, 2026-10-08 and
   2026-10-13) — the installed app asked GitHub for a newer version only after its server had started and
   the whole first page had loaded. It now asks as soon as its log is open, alongside the rest of the

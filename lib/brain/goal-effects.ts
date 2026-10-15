@@ -16,7 +16,9 @@ export const GOAL_EFFECTS: Record<IntakeGoalId, ProductCard> = {
     payoff: "If this applies, DotAmi can prioritize expense, equipment, and workspace nodes earlier.",
     source: {
       label: "CRA",
-      href: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses.html",
+      // The old address (…/report-business-income-expenses/business-expenses.html) answered 404 on
+      // 2026-10-13; this is where the CRA's Business expenses page is now.
+      href: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses.html",
     },
     citations: [],
   },

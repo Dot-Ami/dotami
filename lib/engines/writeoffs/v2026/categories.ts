@@ -1,6 +1,7 @@
 import type { WriteOffCategory } from "./types";
 
-const LAST_VERIFIED = "2026-06-08";
+// Until 2026-10-13 the CRA pages here shared one read date, 2026-06-08. Each of those pages moved; the
+// new addresses carry a tool check instead, and each comment names the old address and its read date.
 
 export const writeOffCategoriesV2026 = [
   {
@@ -29,8 +30,19 @@ export const writeOffCategoriesV2026 = [
         title: "Business-use-of-home expenses",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/business-use-home-expenses.html",
-        lastVerified: LAST_VERIFIED,
+        // The page moved: its old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
+        // read 2026-06-08) answered 404 on 2026-10-13. A tool found these words on the new page that day;
+        // no person has read it yet (option B, docs/engines/citations.md).
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "You can deduct expenses for the business use of a workspace in your home",
+            "it is your principal place of business",
+            "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
+            "cannot be more than your net income from the business before you deduct these expenses",
+          ],
+        },
         note: "CRA home office expense guidance.",
       },
     ],
@@ -69,8 +81,13 @@ export const writeOffCategoriesV2026 = [
         title: "Motor vehicle expenses",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/motor-vehicle-expenses.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/report-business-income-expenses/business-expenses/motor-vehicle-expenses.html,
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found this sentence on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses/motor-vehicle-expenses.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["You can deduct expenses you incur to run a motor vehicle you use to earn business income."],
+        },
         note: "CRA motor vehicle expense rules.",
       },
     ],
@@ -118,8 +135,16 @@ export const writeOffCategoriesV2026 = [
         title: "Classes of depreciable property",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/capital-cost-allowance/classes-depreciable-property.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/business-expenses/capital-cost-allowance/classes-depreciable-property.html,
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/claiming-capital-cost-allowance/classes-depreciable-property.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Include in Class 50 with a CCA rate of 55% property acquired after March 18, 2007",
+            "general-purpose electronic data processing equipment and systems software for that equipment",
+          ],
+        },
         note: "CRA CCA class listing including Class 50.",
       },
       {
@@ -169,8 +194,14 @@ export const writeOffCategoriesV2026 = [
         title: "Meals and entertainment expenses",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/meals-entertainment-expenses.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/business-expenses/meals-entertainment-expenses.html, read 2026-06-08)
+        // answered 404 on 2026-10-13. The rule is now a section of the CRA's Business expenses page; a
+        // tool found this sentence there that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses.html#mealsandentertainmentallowablepartonly",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["The maximum amount you can claim for food, beverages and entertainment expenses is 50% of the lesser of the following amounts"],
+        },
         note: "CRA 50% meals and entertainment rule.",
       },
     ],
@@ -208,8 +239,13 @@ export const writeOffCategoriesV2026 = [
         title: "SR&ED expenditures",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
+        // read 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["determine which expenditures may be allowable (salary or wages, materials, contracts, overhead, and third-party payments)"],
+        },
         note: "CRA SR&ED expenditure claim guidance.",
       },
     ],
@@ -253,11 +289,16 @@ export const writeOffCategoriesV2026 = [
         note: "The delegate the Act points to. Class 8 is the residual class for machinery and equipment not placed elsewhere; the 20% rate is the provision's own text with its currency date.",
       },
       {
-        title: "Capital cost allowance (CCA)",
+        title: "Claiming capital cost allowance (CCA)",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/capital-cost-allowance.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/business-expenses/capital-cost-allowance.html, read 2026-06-08)
+        // answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/claiming-capital-cost-allowance.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["you can deduct their cost over a period of several years", "This yearly deduction is called a capital cost allowance (CCA)"],
+        },
         note: "CRA CCA overview.",
       },
     ],
@@ -296,8 +337,16 @@ export const writeOffCategoriesV2026 = [
         title: "Business expenses",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/report-business-income-expenses/business-expenses.html, read
+        // 2026-06-08) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "You cannot claim expenses you incur to buy capital property.",
+            "as a rule, you can deduct any reasonable current expense you incur to earn income.",
+          ],
+        },
         note: "CRA general business expense deductibility.",
       },
     ],
