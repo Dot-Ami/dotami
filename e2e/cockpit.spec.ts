@@ -78,8 +78,9 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Your date")).toContainText("not set");
 
   // Next on your road agrees with the map's chips: stage 0 is drawn done, so the list starts at the
-  // three before-you-open steps that follow it in the first column; the Steps gauge names the same
-  // first step.
+  // before-you-open steps that follow it in the first column. The panel shows three items, so the fourth,
+  // Keep your records from day one (2026-10-14), shows there only once one of these is done. The Steps
+  // gauge names the same first step.
   const next = page.getByRole("region", { name: "Next on your road" });
   await expect(next.getByRole("button")).toHaveText([
     "1 · Register your business name, if you use one",

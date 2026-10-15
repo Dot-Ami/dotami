@@ -1247,10 +1247,11 @@ each for a reason:
   *Keeping records* pages, tool-checked that day ([engines/roads.md](../engines/roads.md)). It brings road
   0 to 14 steps and 51 lines. Road evaluation colours it from the road's arrows only, as on your road for
   every idea here, and on the apprentice road once the person picks their own shop.
-- **The baseline's arrows don't reach the three new steps (the maintainer's call).** The baseline's own
+- **The baseline's arrows don't reach the new steps (the maintainer's call).** The baseline's own
   `next` is not changed, so no existing card's arrows move. The cost: hovering or selecting
-  *Employee/Apprentice baseline* dims the three new cards, as it dims every card not on its arrows, and
-  selecting one new card dims the baseline and the other two, so on screen they look like the baseline's
+  *Employee/Apprentice baseline* dims the four new cards (three until the records step joined on
+  2026-10-14), as it dims every card not on its arrows, and selecting one new card dims the baseline and
+  the other three, so on screen they look like the baseline's
   siblings rather than steps after it. Adding them to the baseline's `next` would fix that and change an
   existing card's arrows (the baseline's), which the byte-for-byte comparison and the measured arrow
   counts would then have to be re-cut for; that trade-off is left to the maintainer.
