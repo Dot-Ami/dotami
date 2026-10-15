@@ -1222,7 +1222,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
               {rightPanel === "playbook" ? (
                 <div className="h-full overflow-y-auto border-l border-rule bg-ink3 max-lg:border-l-0">
-                  <PlaybookExportPanel scenario={scenario} onClose={() => setRightPanel(null)} />
+                  <PlaybookExportPanel scenario={scenario} ventureId={ventureId} onClose={() => setRightPanel(null)} />
                 </div>
               ) : null}
             </div>

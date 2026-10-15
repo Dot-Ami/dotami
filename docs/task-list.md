@@ -137,8 +137,9 @@ and the maintainer's six decisions of 2026-10-11:
     as built, this visit only)
     - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates
       coming up, figure reminders: it needs the day of the last visit, which isn't kept; today *This
-      visit* holds this visit's receipts only); the export gaining the told list, the what-ifs and the
-      ending picked; the yearly income question, and taking it back; remembering the last overlay used;
+      visit* holds this visit's receipts only); the markdown export gaining the told list and the
+      ending picked (*Your plan*, the page to read and print, shows both since 2026-10-13, #41; a what-if is
+      never kept, so neither shows one); the yearly income question, and taking it back; remembering the last overlay used;
       a *Change* on one of the intake's answers opening that question instead of the intake's first
       screen; receipt lines that name the steps and cards they count; a No to buying equipment survives
       a later save from the intake only if the chip is then switched on or answered again in the box
@@ -588,7 +589,7 @@ roadmap's build order.
   - [ ] #40 hide R&D-only steps without an R&D tag
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
-  - [ ] #41 playbook print view
+  - [ ] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export; the Export panel itself still shows the raw markdown, so whether this closes #41 is the maintainer's call)
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures
