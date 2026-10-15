@@ -18,7 +18,10 @@
  * "Today's rules give it this colour; no single answer of yours changes that." becomes "None of the kinds
  * of work on this idea is Software / SaaS, Manufacturing or AI / ML / R&D, and this step is on your path
  * only with one of them." (the invented idea is a trade; the sentence says what is on the idea, not what
- * the person told DotAmi); its moved sources stay as they were. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * the person told DotAmi); its moved sources stay as they were. Redrawn on 2026-10-14 from that main
+ * (e7969ca) plus only the doubled full stop fix (tests/step-panel-double-full-stop.spec.ts): two entries
+ * change, the apprentice road's TQ recognized-credential panel and its money list, each by one removed
+ * "." in "rewrite it.. Not added to any total.". Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

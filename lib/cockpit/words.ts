@@ -138,8 +138,12 @@ export const cockpitWords = {
       "your-quote": "your quote · agreed",
       "named-not-priced": "not priced yet",
     },
-    /** Under an official fee that applies only sometimes: its condition, and that no total adds it. */
-    onlyIf: (condition: string) => `Only if: ${condition}. Not added to any total.`,
+    /**
+     * Under an official fee that applies only sometimes: its condition, and that no total adds it. A
+     * catalog's condition may already end its sentence ("…choose to rewrite it."), so a full stop is added
+     * only when it doesn't: no step panel, money list or printed plan reads "rewrite it.. Not added".
+     */
+    onlyIf: (condition: string) => `Only if: ${/[.!?…]$/.test(condition) ? condition : `${condition}.`} Not added to any total.`,
     addQuote: "Add your quote",
     changeQuote: "Change your number",
     costsLeftOut: "Not counted in the sums: this step is not on your path.",
