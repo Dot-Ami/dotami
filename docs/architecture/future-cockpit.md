@@ -239,27 +239,45 @@ each choice that differs from the table above says why.
   questions list, since the questions are data); amounts and months go through
   `lib/format/money-and-months.ts`.
 
-### The example future as built (2026-10-13)
+### The example future as built (2026-10-13; real numbers 2026-10-14)
 
 The front door's third door, built from the maintainer's pick of 2026-10-13 (§ 13): Mara, the invented
 person of the appendix below, on the first written road. Written before the code; the page's controls are
 in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
 
 - **Her answers are data in their own file**, `lib/examples/mara.ts` (listed by `lib/examples/index.ts`):
-  not a catalog and not the database. Every value the appendix gives is there, and every number in it is
-  her own invented figure, typed in that file only (a test reads every other file the app is built from
-  and finds none of them). The steps, fees, skills and sources are the catalogs' own, named by id, and a
-  test checks each id exists. Where the appendix names something the catalog calls differently, the
-  catalog's real item is used: *Set up your shop* is *Open your own shop* (her quotes on its *Woodworking
-  machines and tools* and *Shop space deposit* lines); her 9 marks are road 1's two legal requirements
+  not a catalog and not the database. Every answer the appendix gives is there. The steps, fees, skills and
+  sources are the catalogs' own, named by id, and a test checks each id exists. Where the appendix names
+  something the catalog calls differently, the catalog's real item is used: *Set up your shop* is *Open your
+  own shop* (she prices its *Woodworking machines and tools* line); her 9 marks are road 1's two legal requirements
   that fit an Alberta apprentice (both *have*) and seven items of the government's list for Cabinetmakers,
   the job she picked as closest to her work (road 1 lists only three skills of its own); her 1 step done
   is the road's first, *Register as a Cabinetmaker apprentice*.
+- **Mara is invented; her numbers are real (2026-10-14).** The maintainer's option A (*"ground Mara's
+  example in real, cited numbers where they exist; numbers nothing real can supply stay blank"*), asked for
+  "as in depth as possible; like recommending tools, software, and lets use stats to drum up the average
+  cost of these tools", with the sources shown. Her file types no number: each is taken from
+  `lib/examples/mara-sources.ts` (prices and statistics seen on 2026-10-14, each with its link, the words
+  seen and the day, kept only when a second check found the price or figure on the page again; not legal
+  citations, which name only government sources and back a rule), and every average is worked out by
+  `lib/examples/stats.ts`. Her one start-up cost line, *Woodworking machines and tools*, is $14,993.62:
+  the 12 tools the Alberta curriculum, the Red Seal standard and NOC 72311 name, mid-range shop grade, one
+  of each at its average of 3 to 5 listed prices from Canadian sellers. Her yearly income goal is $52,255,
+  the average yearly salary of employed cabinetmakers in Alberta (alis, 2023), said as that in the goal
+  bar. Her what-if is $610,300, the average yearly revenue of small and medium furniture makers in Canada
+  (ISED, NAICS 33712, 2024), said under the what-if bar to be *not a first-year figure*. Her savings and
+  her shop space deposit are blank: nothing real can supply them. The banner says *"Mara is invented; the
+  prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved."*
+  and its **Where these numbers come from** opens a panel listing every number, how it is worked out,
+  every source with its link and the day seen, the software a small shop uses with its listed plans, and
+  what stayed blank and why. "Recommending tools" is built as information: the trade's own list with what
+  sellers charge, never ranked and never "buy this". `tests/example-sources.spec.ts` traces every number
+  to its entry, recomputes every average and checks the old invented numbers are gone.
 - **The same cockpit, read-only.** `/example/mara` (`app/example/[id]/page.tsx`; any other id is not
   found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
-  fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if of first-year sales
-  of $45,000 on. A banner that never folds says *"Invented person, invented numbers, not real data.
-  Nothing here is saved."* with **Start my own future →** (`/start`). It sits above the cockpit's grid,
+  fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if on. A banner that
+  never folds says what is invented and what is real (above) with **Where these numbers come from** and
+  **Start my own future →** (`/start`). It sits above the cockpit's grid,
   never inside it, and stays at the top of the window when the page scrolls on a phone; the phone sheets
   and the tablet drawer start under it (its height is `--example-banner-h`), so nothing is drawn over it
   (2026-10-14, after review).
@@ -272,7 +290,7 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   checks that every other save control in the ui-spec's table is disabled.
 - **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
   catalog, which differs from the appendix's sketch: 16 steps (not 22), 31 lines to price before her
-  quotes and 29 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The
+  numbers and 30 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The
   appendix is left as written, a sketch from before the road was; the ui-spec lists the true receipts.
 
 ## 2. The cockpit
@@ -1907,6 +1925,12 @@ apprentice in Alberta.
 *(2026-10-13: the maintainer picked Mara as the front door's example future. She is built at
 `/example/mara`, her answers in `lib/examples/mara.ts`; § 1, The example future as built, says where the
 built page's counts differ from this sketch, which was written before road 1 was.)*
+
+*(2026-10-14: the numbers in this sketch, $70,000 a year, quotes of $3,400 and $2,000, $12,000 of
+savings and a $45,000 what-if, are invented and stay here only as the sketch. The built example's numbers
+are real since the maintainer's option A of 2026-10-14: a $14,993.62 tools line from sellers' listed
+prices, a $52,255 income goal from alis, a $610,300 what-if from ISED, and no savings or deposit; § 1, The
+example future as built.)*
 
 She picks *Start from where I want to be* and types *"My own small furniture shop, four-day weeks,
 home for supper."* The receipt: *"Saved word for word, dated today. This goes at the top of your

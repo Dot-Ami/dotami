@@ -14,11 +14,14 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Page, type Request } from "@playwright/test";
 
+import { cockpitWords } from "../lib/cockpit/words";
 import { createDatabaseClient } from "../lib/db/client";
 import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { MARA_SOURCES } from "../lib/examples/mara-sources";
+import { priceSummary } from "../lib/examples/stats";
 import { waitForReact } from "../tests/helpers/react-ready";
 
-const BANNER = "Invented person, invented numbers, not real data. Nothing here is saved.";
+const BANNER = "Mara is invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved.";
 const CANT_KEEP = "This is an example. Start your own to keep anything.";
 const road = roadApprenticeToOwnShopAB;
 
@@ -98,19 +101,21 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   // Her numbers and answers are labelled hers, never the viewer's; the banner says once who "you" is.
   await expect(banner(page)).toContainText("Here, “you” and “your” mean Mara, the invented person.");
   await expect(goalBar(page)).toContainText("where Mara wants to be · Mara's words");
-  await expect(goalBar(page)).toContainText("Mara's target: $70,000 a year, before tax (Mara's, agreed");
+  // Her target is a published statistic, said as that (not as an amount she agreed to).
+  await expect(goalBar(page)).toContainText("Mara's target: $52,255 a year, before tax: the average yearly salary of employed cabinetmakers in Alberta");
   await expect(goalBar(page)).not.toContainText(/\byours\b|your words|your marks|Your date/);
   await expect(goalBar(page).getByRole("button", { name: /^Steps/ })).toContainText("1 of 16 marked done");
-  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$5,400 Mara's numbers (2 lines)");
+  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("$14,993.62 Mara's numbers (1 line)");
   await expect(goalBar(page).getByRole("button", { name: /^Mara's date/ })).toContainText("Mara's");
   await expect(told(page)).toContainText("things Mara told DotAmi");
   await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Mara's skill marks");
-  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("29 not priced yet");
+  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("30 not priced yet");
   await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("Mara's pick of job: 4 have · 2 learning · 1 not yet");
   await expect(stage(page, "Open your own shop")).toBeVisible();
   // Her what-if is on: it relit the rules, and is kept nowhere.
   await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
-  await expect(whatIf(page)).toContainText("First-year sales of $45,000");
+  await expect(whatIf(page)).toContainText("First-year sales of $610,300");
+  await expect(whatIf(page)).toContainText("not a first-year figure");
   // Her story: each answer and what it changed, worked out by road evaluation.
   await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Because you marked 9 skills, 4 steps now have every skill they list marked have.");
 
@@ -279,6 +284,59 @@ test.describe("the banner stays on screen", () => {
     await expect(banner(page).getByRole("link", { name: "Start my own future →" })).toBeVisible();
     await banner(page).getByRole("link", { name: "Start my own future →" }).click({ trial: true, timeout: 2_000 });
   });
+});
+
+test("Where these numbers come from: opened from the banner, it lists every tool's average, every source with its link, and what stayed blank; it sends and keeps nothing", async ({ page }) => {
+  const requests = watchRequests(page);
+  await page.goto("/example/mara", { waitUntil: "networkidle" });
+  await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
+
+  const open = banner(page).getByRole("button", { name: "Where these numbers come from" });
+  await expect(open).toHaveAttribute("aria-expanded", "false");
+  await open.click();
+  const panel = page.getByRole("region", { name: "Where these numbers come from" });
+  await expect(panel).toBeVisible();
+  await expect(banner(page).getByRole("button", { name: "Hide where these numbers come from" })).toHaveAttribute("aria-expanded", "true");
+
+  // How each of her numbers is worked out.
+  await expect(panel).toContainText("Mara's number for “Woodworking machines and tools”: $14,993.62, the 12 tools below added up");
+  await expect(panel).toContainText("Mara's yearly income goal: $52,255");
+  await expect(panel).toContainText("Mara's what-if: first-year sales of $610,300");
+  await expect(panel).toContainText("not a first-year figure");
+  await expect(panel).toContainText("Mara's savings and shop space deposit: not priced yet.");
+
+  // Every tool, with the average the function gives over its own listed prices, and every price's link.
+  for (const tool of MARA_SOURCES.tools) {
+    const sum = priceSummary(tool.prices.map((p) => p.priceCents));
+    await expect(panel).toContainText(tool.item);
+    await expect(panel).toContainText(cockpitWords.example.sources.average(sum.count, sum.meanCents, sum.medianCents, sum.lowCents, sum.highCents));
+  }
+  // Every source is a link in the panel: each seller's page, each plan's page, each statistic's page.
+  const urls = new Set([
+    ...MARA_SOURCES.tools.flatMap((t) => [t.official.url, ...t.prices.map((p) => p.url)]),
+    ...MARA_SOURCES.software.map((s) => s.url),
+    ...MARA_SOURCES.statistics.map((s) => s.url),
+  ]);
+  const hrefs = new Set(await panel.locator("a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href"))));
+  for (const url of urls) expect(hrefs.has(url), url).toBe(true);
+  // A tool's prices fold under its average: open one and read a seller, a price and the words seen.
+  await panel.getByText("Table saw (10-inch cabinet saw, 3 HP, single-phase)").click();
+  await expect(panel.getByText("Model Number: 51-260 $2,699.95 $3,499.99 You save $800.04")).toBeVisible();
+
+  // The software, the statistics and what stayed blank.
+  await expect(panel).toContainText("Average of 10 plans listed by the month: $49 a month");
+  await expect(panel).toContainText("No paid plan here is listed in Canadian dollars");
+  await expect(panel).toContainText("Average yearly salary of employed cabinetmakers (NOC 72311) in Alberta");
+  await expect(panel).toContainText("Not priced yet, and why");
+  await expect(panel).toContainText("Seen but not used, and why");
+  // Information, never a verdict: nothing in it ranks or recommends.
+  expect(await panel.innerText()).not.toMatch(/\b(recommend\w*|best|should|top pick)\b/i);
+
+  // It closes from the same button, and nothing was sent or kept.
+  await banner(page).getByRole("button", { name: "Hide where these numbers come from" }).click();
+  await expect(panel).toHaveCount(0);
+  expect(await storage(page)).toBe(JSON.stringify({ local: {}, session: {} }));
+  expect(requests).toEqual([]);
 });
 
 test("any other example address is not found", async ({ page }) => {

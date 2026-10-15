@@ -183,6 +183,13 @@ and the maintainer's six decisions of 2026-10-11:
     under a banner that never folds; nothing is saved or stored;
     [§ 1, The example future as built](architecture/future-cockpit.md),
     [docs/ui-spec/example/](ui-spec/example/_index.md))
+  - [x] Mara's numbers real, with their sources shown (2026-10-14, the maintainer's option A): her tools
+    line from 12 tools' average listed prices at Canadian sellers, her income goal from alis, her what-if
+    from ISED, savings and deposit blank; *Where these numbers come from* in the banner
+    (`lib/examples/mara-sources.ts`, `lib/examples/stats.ts`, `tests/example-sources.spec.ts`)
+    - [ ] Still open on it: the other cost lines on *Open your own shop* (insurance, vehicle, first
+      materials, legal advice, money to live on, design software), not researched yet; re-seeing the
+      prices when sales end or pages move
     - [ ] Still open on it: the front door's still picture of a filled-in cockpit (§ 1 row 1), drawn from
       her example; the appendix's *Since last time* line, which needs the return visit's list
   - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a

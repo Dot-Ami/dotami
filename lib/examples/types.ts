@@ -32,4 +32,100 @@ export interface ExampleFuture {
   figures: FigureView[];
   /** A what-if the example opens with (never kept, as everywhere), or null. */
   whatIfFirstYearSalesDollars: number | null;
+  /**
+   * Where the example's numbers come from (the maintainer, 2026-10-14, option A): the prices and statistics
+   * behind them, and which of them each number is. Null for an example whose numbers have no sources.
+   */
+  sources: {
+    data: ExampleSources;
+    /** The cost line priced as the listed tools' averages added up, by its catalog id, or null. */
+    toolsLineId: string | null;
+    /** The statistic the yearly income wanted is, by its id in `data.statistics`, or null. */
+    incomeWantedFrom: string | null;
+    /** The statistic the what-if is, by its id in `data.statistics`, or null. */
+    whatIfFrom: string | null;
+  } | null;
+}
+
+/**
+ * The research behind an example's numbers, as seen on one day (docs/ui-spec/example/_index.md, "Where these
+ * numbers come from"). Plain observations: a price a seller listed, a plan a software maker listed, a
+ * statistic a government or market report published, each with its link, the words seen around it and the
+ * day. They are not legal citations (lib/engines/shared/: those name only government sources and back a
+ * rule); these back an invented person's numbers, and no rule reads them.
+ */
+export interface ExampleSources {
+  /** The day every entry was seen. */
+  seenOn: string;
+  /** The class of tool priced, the same at every seller, and what a price is (CAD, before GST and shipping). */
+  tier: string;
+  /** The official descriptions of the trade that name the tools. */
+  officialSources: readonly { label: string; url: string }[];
+  tools: readonly ToolPriced[];
+  softwareCategories: readonly { id: SoftwareCategoryId; label: string }[];
+  software: readonly SoftwarePlan[];
+  statistics: readonly Statistic[];
+  /** What stayed blank, and why. */
+  notPriced: readonly { what: string; why: string }[];
+  /** What was seen but not used (a price in another currency, a page that couldn't be read), and why. */
+  leftOut: readonly { what: string; why: string }[];
+}
+
+/** One price a seller listed for a tool. */
+export interface ListedPrice {
+  seller: string;
+  url: string;
+  /** The product as the page names it, the page's title, and anything to know about the price (a sale…). */
+  product: string;
+  /** The listed price, in cents, CAD, before GST and shipping. */
+  priceCents: number;
+  /** The words seen on the page around the price, word for word. */
+  quote: string;
+  seenOn: string;
+  /** What the second check found worth saying about this price, if anything. */
+  caution?: string;
+}
+
+/** A tool the trade's official descriptions name, and the prices sellers listed for one of its class. */
+export interface ToolPriced {
+  id: string;
+  item: string;
+  official: { mention: string; url: string; quote: string };
+  prices: readonly ListedPrice[];
+}
+
+export type SoftwareCategoryId = "design" | "cut-lists" | "bookkeeping";
+
+/** One plan a software maker listed, in Canadian dollars. */
+export interface SoftwarePlan {
+  category: SoftwareCategoryId;
+  product: string;
+  plan: string;
+  url: string;
+  /** In cents, CAD; 0 for a free tier. */
+  priceCents: number;
+  per: "month" | "year" | "free";
+  /** How it is billed or limited, as the page says. */
+  note: string;
+  quote: string;
+  seenOn: string;
+}
+
+/** One statistic a government or market report published. */
+export interface Statistic {
+  id: string;
+  group: "earnings" | "industry" | "space";
+  what: string;
+  /** The figure as the source prints it ("$52,255.00", "610.3"). */
+  value: string;
+  unit: string;
+  period: string;
+  source: string;
+  url: string;
+  quote: string;
+  seenOn: string;
+  caveat: string;
+  /** Only on a statistic an example's number is: the figure in whole cents, and how a sentence names it. */
+  amountCents?: number;
+  inSentence?: string;
 }

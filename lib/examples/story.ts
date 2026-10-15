@@ -6,10 +6,10 @@ import { evaluateRoad, roadReceipt, type RoadEvaluationInput } from "@/lib/roads
  * answer and with it and comparing the two (`roadReceipt`). Never written by hand: the lines are whatever
  * today's catalogs give, so if a catalog changes, the story's numbers change with it.
  *
- * Grouped as the story tells it (all nine marks at once, both quotes at once), which is why this isn't the
+ * Grouped as the story tells it (all nine marks at once, every priced cost line at once), which is why this isn't the
  * told list's one row per answer. Pure: it reads only the input it is given.
  */
-export type StoryPartId = "marks" | "quotes" | "savings" | "this-is-mine" | "step-done" | "what-if";
+export type StoryPartId = "marks" | "costs" | "savings" | "this-is-mine" | "step-done" | "what-if";
 
 export interface StoryPart {
   id: StoryPartId;
@@ -24,7 +24,7 @@ export function exampleStory(input: RoadEvaluationInput, whatIfDollars: number |
 
   const parts: StoryPart[] = [
     { id: "marks", lines: without({ skillMarks: [] }) },
-    { id: "quotes", lines: without({ agreed: { ...withAll.agreed, costLines: [] } }) },
+    { id: "costs", lines: without({ agreed: { ...withAll.agreed, costLines: [] } }) },
     { id: "savings", lines: without({ agreed: { ...withAll.agreed, savingsCents: null } }) },
     { id: "this-is-mine", lines: without({ forkPicks: {} }) },
     { id: "step-done", lines: without({ progress: [] }) },

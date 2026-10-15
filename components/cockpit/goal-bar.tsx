@@ -39,7 +39,13 @@ export function GoalBar({
   folded = false,
   onToggleFold,
   person = null,
+  targetFrom = null,
 }: {
+  /**
+   * On an example whose target is a published statistic (2026-10-14): which one and when, said in place of
+   * "agreed". Null otherwise.
+   */
+  targetFrom?: { what: string; period: string } | null;
   /**
    * An invented example person's name (docs/ui-spec/example/_index.md): the words, target, tags and money
    * are then labelled theirs, never the viewer's. Null on a person's own future.
@@ -123,7 +129,11 @@ export function GoalBar({
           {shownWords ? <span>{shownWords.line}</span> : null}
           {target ? (
             <span>
-              {person ? words.example.theirs.target(person, target.amountCents, target.agreedOn) : words.goal.target(target.amountCents, target.agreedOn)}
+              {person
+                ? targetFrom
+                  ? words.example.theirs.targetFrom(person, target.amountCents, targetFrom.what, targetFrom.period)
+                  : words.example.theirs.target(person, target.amountCents, target.agreedOn)
+                : words.goal.target(target.amountCents, target.agreedOn)}
             </span>
           ) : null}
           <span>

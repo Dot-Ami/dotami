@@ -3,6 +3,8 @@ import { roadApprenticeToOwnShopAB } from "@/lib/engines/roads/v2026";
 import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import type { FigureView } from "@/lib/figures/types";
 
+import { MARA_SOURCES } from "./mara-sources";
+import { toolsTotalCents } from "./stats";
 import type { ExampleFuture } from "./types";
 
 /**
@@ -10,17 +12,27 @@ import type { ExampleFuture } from "./types";
  * (the maintainer's pick of 2026-10-13; docs/architecture/future-cockpit.md § 13 and its appendix, "an
  * invented example", which tells her whole story).
  *
- * INVENTED PERSON, INVENTED NUMBERS, NOT REAL DATA. Nothing here is about anyone, nothing is read from
- * or written to the data file, and every screen that shows it says so in a banner that never folds.
+ * AN INVENTED PERSON. Nothing here is about anyone, nothing is read from or written to the data file, and
+ * every screen that shows it says so in a banner that never folds.
  *
- * Every number in this file is Mara's own invented figure, typed here and nowhere else (a test checks
- * that none of them appears in any other file the app is built from). The official fees, the skills
- * lists and their sources are the real catalogs' (road 1, the official fees catalog, OaSIS): this file
- * only names their ids, and a test checks that every id exists.
+ * Her numbers are real ones since 2026-10-14 (the maintainer's option A: "ground Mara's example in real,
+ * cited numbers where they exist; numbers nothing real can supply stay blank"). None is typed here: each is
+ * taken from lib/examples/mara-sources.ts, the prices and statistics as seen on 2026-10-14 with their links,
+ * and the averages are worked out by lib/examples/stats.ts (tests/example-sources.spec.ts traces each one).
+ *  - Her one start-up cost line, "Woodworking machines and tools": the twelve tools the trade's official
+ *    descriptions name, one of each at its average listed price, added up.
+ *  - Her yearly income goal: what employed cabinetmakers in Alberta average a year (alis, 2023), the
+ *    figure as the source prints it; not what a shop owner earns, and the goal bar says which it is.
+ *  - Her what-if: the average yearly revenue of small and medium furniture makers in Canada (ISED, 2024);
+ *    not a first-year figure, and the what-if bar says so.
+ *  - Her savings and her shop space deposit stay blank: nothing real can supply them.
+ * The official fees, the skills lists and their sources are the real catalogs' (road 1, the official fees
+ * catalog, OaSIS): this file only names their ids, and a test checks that every id exists.
  *
  * Where the appendix names something the catalog calls differently, the catalog's real item is used:
- *  - "Set up your shop" is the step "Open your own shop" (`step-shop-open-own-shop`): its named lines
- *    "Woodworking machines and tools" (her table saw quote) and "Shop space deposit" (her deposit).
+ *  - "Set up your shop" is the step "Open your own shop" (`step-shop-open-own-shop`): its named line
+ *    "Woodworking machines and tools" is the one she prices (until 2026-10-14 she also priced "Shop space
+ *    deposit", with an invented number; no source gives one, so it is blank).
  *  - "9 skills marked" (6 have, 2 learning, 1 not yet): road 1 lists only three skills of its own, all
  *    legal requirements, and one of them (a trade certificate from outside Alberta) doesn't fit a person
  *    apprenticing in Alberta. So she marks the two that fit, both have, and picks Cabinetmakers as the
@@ -40,18 +52,21 @@ const ID = "example-mara";
 
 const road = roadApprenticeToOwnShopAB;
 
-// ---- Mara's own invented figures (the only numbers in this example) -------------------------------
+// ---- Her numbers, each taken from a source entry (none typed here) --------------------------------
 
-/** "a target of $70,000 a year, which she agrees to". */
-const INCOME_WANTED_CENTS = 7_000_000;
-/** Her own quote for a table saw, on "Woodworking machines and tools". */
-const TABLE_SAW_QUOTE_CENTS = 340_000;
-/** Her own quote for a space deposit, on "Shop space deposit". */
-const SPACE_DEPOSIT_QUOTE_CENTS = 200_000;
-/** The savings she'd put toward starting. */
-const SAVINGS_CENTS = 1_200_000;
-/** "She tries first-year sales of $45,000": a what-if, kept nowhere. */
-const WHAT_IF_FIRST_YEAR_SALES_DOLLARS = 45_000;
+/** A statistic by id; a missing one is a bug in this file, never a blank to fill with a guess. */
+function statistic(id: string) {
+  const found = MARA_SOURCES.statistics.find((s) => s.id === id);
+  if (!found || found.amountCents === undefined) throw new Error(`Mara's sources have no amount for ${id}`);
+  return found;
+}
+
+/** Her yearly income goal: the average yearly salary of employed cabinetmakers in Alberta, as alis prints it. */
+const INCOME_FROM = "alis-yearly-average";
+/** Her what-if: the average yearly revenue of small and medium furniture makers in Canada, as ISED prints it. */
+const WHAT_IF_FROM = "ised-33712-revenue";
+/** "Woodworking machines and tools": one of each listed tool at its average listed price. */
+const TOOLS_CENTS = toolsTotalCents(MARA_SOURCES.tools);
 
 // ---- The catalog items she answered about (real ids) ---------------------------------------------
 
@@ -61,10 +76,9 @@ const JOB_CODE = "72311.00";
 /** The step she marked done. */
 const DONE_STEP_ID = "step-shop-register-apprentice";
 
-/** The step and the two named lines she priced. */
+/** The step and the named line she priced. */
 const SHOP_STEP_ID = "step-shop-open-own-shop";
 const MACHINES_LINE_ID = "cost-shop-machines-tools";
-const SPACE_LINE_ID = "cost-shop-space-deposit";
 
 /** The fork she picked a side of in Compare, and the side: This is mine on "Open your own shop". */
 const FORK_ID = "fork-shop-employed-or-own";
@@ -86,7 +100,7 @@ const MARKS = [
 ] as const;
 
 /** One of her agreed numbers, shaped as the figures list gives it. */
-function agreed(id: string, kind: FigureView["kind"], amountCents: number, costLine: FigureView["costLine"]): FigureView {
+function agreed(id: string, kind: FigureView["kind"], amountCents: number, costLine: FigureView["costLine"], sourceLabel: string): FigureView {
   return {
     id: `${ID}-${id}`,
     ventureId: ID,
@@ -96,7 +110,7 @@ function agreed(id: string, kind: FigureView["kind"], amountCents: number, costL
     amountCents,
     currency: "CAD",
     sourceKind: "typed",
-    sourceLabel: "typed by you",
+    sourceLabel,
     sourceRows: null,
     taxYear: null,
     formLine: null,
@@ -143,18 +157,26 @@ export const exampleMara: ExampleFuture = {
       },
     ],
     skillMarks: MARKS.map((m, i) => ({ id: `${ID}-mark-${i + 1}`, skillItemId: m.skillItemId, ownLabel: null, mark: m.mark, markedOn: DAY })),
-    incomeWanted: { amountCents: INCOME_WANTED_CENTS, agreedOn: DAY },
+    incomeWanted: { amountCents: statistic(INCOME_FROM).amountCents!, agreedOn: DAY },
     // Picked through Your destination, so the idea has no first sentence of its own; the goal bar shows her
     // destination, word for word.
     firstWords: null,
     destination: { text: "My own small furniture shop, four-day weeks, home for supper.", saidAt: DAY },
   },
   figures: [
-    agreed("table-saw", "start-up-cost-line", TABLE_SAW_QUOTE_CENTS, { roadId: road.id, stepId: SHOP_STEP_ID, lineId: MACHINES_LINE_ID, amountFrom: "quote" }),
-    agreed("space-deposit", "start-up-cost-line", SPACE_DEPOSIT_QUOTE_CENTS, { roadId: road.id, stepId: SHOP_STEP_ID, lineId: SPACE_LINE_ID, amountFrom: "quote" }),
-    agreed("savings", "savings-for-start", SAVINGS_CENTS, null),
+    // From links: every price behind it is a seller's page (amountFrom "link", the same id a person's own
+    // number from a link would carry).
+    agreed(
+      "machines-tools",
+      "start-up-cost-line",
+      TOOLS_CENTS,
+      { roadId: road.id, stepId: SHOP_STEP_ID, lineId: MACHINES_LINE_ID, amountFrom: "link" },
+      "sellers' listed prices, averaged",
+    ),
   ],
   // No incorporation number of her own (road 1 draws no Incorporating step of its own; it joins road 0's
   // there, so the step panel's "I'd incorporate at" box is never drawn for her).
-  whatIfFirstYearSalesDollars: WHAT_IF_FIRST_YEAR_SALES_DOLLARS,
+  // The source prints thousands of dollars; the what-if bar takes whole dollars.
+  whatIfFirstYearSalesDollars: statistic(WHAT_IF_FROM).amountCents! / 100,
+  sources: { data: MARA_SOURCES, toolsLineId: MACHINES_LINE_ID, incomeWantedFrom: INCOME_FROM, whatIfFrom: WHAT_IF_FROM },
 };

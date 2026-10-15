@@ -3,6 +3,8 @@
 import { createContext, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 
+import { EXAMPLE_SOURCES_ID, ExampleSources } from "@/components/cockpit/example-sources";
+import type { ExampleFuture } from "@/lib/examples";
 import type { StoryPart } from "@/lib/examples/story";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 
@@ -34,14 +36,30 @@ export function ExampleOnlyNote({ className }: { className: string }) {
  * The banner over the whole cockpit: a row of its own, outside every region that folds. The status line
  * stays empty until a control that would save is used, then says the example keeps nothing (`notice` is a
  * counter so the same sentence is read out again on each click).
+ *
+ * 2026-10-14 (the maintainer's option A): the person is invented, the numbers are real, and the banner's
+ * "Where these numbers come from" opens the panel listing every one of them with its source, so the
+ * sources are reachable from anywhere on the page.
  */
-export function ExampleBanner({ person, notice }: { person: string; notice: number }) {
+export function ExampleBanner({
+  example,
+  notice,
+  sourcesOpen,
+  onToggleSources,
+}: {
+  example: ExampleFuture;
+  notice: number;
+  sourcesOpen: boolean;
+  onToggleSources: () => void;
+}) {
+  const person = example.person;
+  const seenOn = example.sources?.data.seenOn ?? null;
   return (
     <section
       aria-label={words.example.region}
       className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber/50 bg-amber/10 px-4 py-2 text-[12px] md:px-[22px]"
     >
-      <p className="font-semibold text-amber">{words.example.banner}</p>
+      <p className="font-semibold text-amber">{seenOn ? words.example.banner(person, seenOn) : words.example.bannerInvented}</p>
       <p className="text-paper-dim">
         {words.example.whose(person)} {words.example.youMeans(person)}
       </p>
@@ -49,6 +67,17 @@ export function ExampleBanner({ person, notice }: { person: string; notice: numb
         {/* The key makes a repeated click a new announcement, not the same text left in place. */}
         {notice > 0 ? <span key={notice}>{words.example.cantKeep}</span> : null}
       </p>
+      {example.sources ? (
+        <button
+          type="button"
+          aria-expanded={sourcesOpen}
+          aria-controls={EXAMPLE_SOURCES_ID}
+          onClick={onToggleSources}
+          className="inline-flex items-center rounded-full border border-amber/60 px-3 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/10"
+        >
+          {sourcesOpen ? words.example.sources.close : words.example.sources.open}
+        </button>
+      ) : null}
       <Link
         href="/start"
         className="ml-auto inline-flex items-center rounded-full border border-maple bg-maple px-3 py-1 text-[11.5px] font-medium text-[#fff8ee]"
@@ -65,15 +94,15 @@ export function ExampleBanner({ person, notice }: { person: string; notice: numb
  * and a sticky row inside a grid only sticks within its own grid row; here it sticks for the whole page.
  * Its height, measured as it wraps, is `--example-banner-h`, which the phone sheets and the tablet drawer
  * start below (cockpit-page.tsx), so no sheet is ever drawn over it. A person's own future has no frame:
- * `person` null gives back the cockpit as it was.
+ * `example` null gives back the cockpit as it was.
  */
 export function ExampleFrame({
-  person,
+  example,
   notice,
   inert,
   children,
 }: {
-  person: string | null;
+  example: ExampleFuture | null;
   notice: number;
   /** While a sheet covers the page on a phone, the banner stays in sight but can't be reached. */
   inert: boolean;
@@ -81,6 +110,9 @@ export function ExampleFrame({
 }) {
   const bannerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
+  // "Where these numbers come from": closed at first, so the cockpit is what the page shows; not remembered.
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const person = example?.person ?? null;
   useLayoutEffect(() => {
     const el = bannerRef.current;
     if (!el) return;
@@ -92,7 +124,7 @@ export function ExampleFrame({
     return () => observer.disconnect();
   }, [person]);
 
-  if (person === null) return <>{children}</>;
+  if (example === null) return <>{children}</>;
   return (
     <div
       style={{ "--example-banner-h": `${height}px` } as CSSProperties}
@@ -100,7 +132,10 @@ export function ExampleFrame({
     >
       {/* bg-ink under the banner's see-through amber, so the page scrolling beneath never shows through. */}
       <div ref={bannerRef} inert={inert} className="sticky top-0 z-50 shrink-0 bg-ink">
-        <ExampleBanner person={person} notice={notice} />
+        <ExampleBanner example={example} notice={notice} sourcesOpen={sourcesOpen} onToggleSources={() => setSourcesOpen((open) => !open)} />
+        {/* Under the banner, inside its sticky row, so it opens where the button is on any screen. Its height
+            counts toward --example-banner-h while open, so a sheet opened then starts below it too. */}
+        {sourcesOpen ? <ExampleSources example={example} /> : null}
       </div>
       {children}
     </div>

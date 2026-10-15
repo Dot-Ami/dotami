@@ -313,6 +313,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
     [example, told],
   );
+  // Where the example's income goal and what-if come from (2026-10-14): the statistic each one is, so the
+  // goal bar and the what-if bar say what the number is rather than calling it the example person's own.
+  const exampleStat = (id: string | null | undefined) => (id ? (example?.sources?.data.statistics.find((s) => s.id === id) ?? null) : null);
+  const targetStat = exampleStat(example?.sources?.incomeWantedFrom);
+  const whatIfStat = exampleStat(example?.sources?.whatIfFrom);
+  const targetFrom = targetStat ? { what: targetStat.inSentence ?? targetStat.what, period: targetStat.period } : null;
+  // Only while the example's own what-if is on: a number the viewer tries is theirs to read, not a statistic.
+  const whatIfNote =
+    example && whatIfStat && whatIf !== null && whatIf === example.whatIfFirstYearSalesDollars
+      ? words.example.sources.whatIfNote(example.person, whatIfStat.period)
+      : null;
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
     [roadEvaluation],
@@ -849,7 +860,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     <ExampleNoteContext.Provider value={isExample ? words.example.cantKeep : null}>
     {/* The example's banner: above the cockpit, outside every region that folds, so it never folds, and on a
         phone it stays at the top of the window (example-mode.tsx). On a person's own future this adds nothing. */}
-    <ExampleFrame person={example?.person ?? null} notice={exampleNotice} inert={behindSheet}>
+    <ExampleFrame example={example ?? null} notice={exampleNotice} inert={behindSheet}>
     <div
       className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
@@ -917,6 +928,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
+            targetFrom={targetFrom}
           />
         ) : null}
       </div>
@@ -1156,6 +1168,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 onKeep={handleKeepWhatIf}
                 onClear={handleClearWhatIf}
                 fold={{ folded: folds.whatIf, onToggle: () => toggle("whatIf") }}
+                note={whatIfNote}
               />
               <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
             </>

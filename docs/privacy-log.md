@@ -287,6 +287,11 @@ person is asked).
   the data file's row counts, both storages and the requests sent before and after clicking Keep and
   Export (the two save controls that aren't disabled), checks that every other save control is disabled,
   and fails on any request to DotAmi's API but the law-text route. No inventory entry changes.
+  Since 2026-10-14 its *Where these numbers come from* panel lists the pages behind Mara's numbers
+  (Canadian tool sellers, software makers' pricing pages, Government of Alberta and Government of Canada
+  statistics, two commercial real-estate reports) as plain links: the page loads none of them, and only a
+  click opens one, in a new tab, where that site sees the visit as from any browser. Nothing of the
+  person's goes with it; the browser test checks the panel sends no request.
 
 ### Packages that ship
 

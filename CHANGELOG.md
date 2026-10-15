@@ -15,20 +15,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the front door's third door now opens a filled-in future for an invented person: Mara, an apprentice
   cabinetmaker in Alberta, on *From apprentice to your own shop (Alberta)*. It is the same cockpit anyone
   gets for their own future, drawn from her answers through the same rules: her words (*"My own small
-  furniture shop, four-day weeks, home for supper."*), her $70,000 target, nine skills marked, her own
-  quotes for a table saw and a shop deposit, her savings, her pick of *Open your own shop* and one step
-  done, with her what-if of $45,000 in first-year sales switched on. A short list, *What Mara did*, shows
-  what each of her answers changed, worked out by the rules (on today's road: 16 steps, 29 cost lines
-  still to price; the design's early sketch said 22 and 4). A banner that never folds says *"Invented
-  person, invented numbers, not real data. Nothing here is saved."*, with **Start my own future →**.
-  Her answers are labelled hers, not yours: *Mara's target: $70,000 a year … (Mara's, agreed …)*,
-  *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner says once that "you" in the
-  receipts means Mara. Nothing is saved from it: every button that would keep something is greyed out and says *"This is an
-  example. Start your own to keep anything."*, or says so when clicked, and the page reads none of your
-  own data and writes nothing to the browser either (a browser test checks the data file, both kinds of
-  browser storage and every request). Her numbers live in one file, `lib/examples/mara.ts`, and a test
-  checks no other file the app is built from carries them (the cited catalogs aside, and the what-if
-  bar's own hint, whose example of 45000 is the same amount by chance and stays as it was).
+  furniture shop, four-day weeks, home for supper."*), nine skills marked, her pick of *Open your own
+  shop* and one step done. **Mara is invented; her numbers are real** (the maintainer, 2026-10-14: real,
+  cited numbers where they exist, as in depth as possible, with the sources shown): her start-up cost for
+  *Woodworking machines and tools* is $14,993.62, the 12 tools the trade's official descriptions name
+  (the Alberta cabinetmaker curriculum, the Red Seal standard, the national job classification), one of
+  each at its average of 3 to 5 prices listed by Canadian sellers on 2026-10-14; her yearly income goal is
+  $52,255, what employed cabinetmakers in Alberta average a year (Government of Alberta, 2023); and her
+  what-if of $610,300 in first-year sales is the average yearly revenue of small furniture makers in
+  Canada (Government of Canada, 2024), said on screen to be *not a first-year figure*. Her savings and a
+  shop deposit stay blank, *not priced yet*: nothing real can supply them. The banner says *"Mara is
+  invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here
+  is saved."*, and its **Where these numbers come from** lists every number, how it was worked out (every
+  average is worked out by the app from the listed prices, never typed), every price and statistic with
+  its link and the day it was seen, the software a small shop uses (design, cut lists, bookkeeping) with
+  each plan's listed price and a monthly average, and what stayed blank and why. The tools are information,
+  the trade's own list with what sellers charge: never ranked, never "buy this". A short list, *What Mara
+  did*, shows what each of her answers changed, worked out by the rules (on today's road: 16 steps, 30
+  cost lines still to price; the design's early sketch said 22 and 4). Her answers are labelled hers, not
+  yours: *Mara's target …*, *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner
+  says once that "you" in the receipts means Mara. Nothing is saved from it: every button that would keep
+  something is greyed out and says *"This is an example. Start your own to keep anything."*, or says so
+  when clicked, and the page reads none of your own data and writes nothing to the browser either (a
+  browser test checks the data file, both kinds of browser storage and every request).
 - **Your plan: a page to read and print, from the cockpit's Export** (part of #41: the Export panel itself
   still shows the raw markdown) — **Open your plan to
   read or print** in the Export panel opens `/plan?venture=<id>`: one idea's plan laid out for a partner,

@@ -14,6 +14,11 @@ reader:
 - **Try first-year sales of $** and a box (whole dollars), then **Try**.
 - While a what-if is on: the banner **Your what-if, not a forecast**, the receipt of what it relit
   (13-receipts.md), **Keep** and **Clear**.
+- A note in amber on the number's own line, only when the page gives one (`note`; since 2026-10-14, on
+  the invented example only, while its own what-if is on): what the number is when it isn't the person's
+  own. Mara's what-if is a published statistic, so it says *Mara's what-if is an industry average (Data year
+  2024), not a first-year figure.* (docs/ui-spec/example/_index.md). On the same line, not a new one: a line
+  more under the bar squeezes the map above it. A person's own future never shows it.
 
 ## What it does (behavior on interact)
 

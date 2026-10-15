@@ -37,7 +37,13 @@ export function WhatIfBar({
   onKeep,
   onClear,
   fold,
+  note = null,
 }: {
+  /**
+   * A line under the what-if saying what the number is, when it isn't the person's own (2026-10-14: the
+   * example's what-if is a published statistic). Null otherwise.
+   */
+  note?: string | null;
   /** The what-if on now, in whole dollars, or null. */
   whatIf: number | null;
   /** What the what-if relit, when it was the last answer; null for none. */
@@ -115,7 +121,11 @@ export function WhatIfBar({
           {whatIf !== null ? (
             <div className="grid gap-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</p>
-              <p className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</p>
+              {/* The note sits on the number's own line: a line more here squeezes the map above it. */}
+              <p className="text-[11.5px] text-paper-dim">
+                {words.whatIf.on(whatIf)}
+                {note ? <span className="ml-2 text-[10.5px] text-amber">{note}</span> : null}
+              </p>
               {receipt ? <ReceiptLines lines={receipt} empty={words.whatIf.nothingChanged} /> : null}
               <div className="flex flex-wrap items-center gap-2">
                 <Pill

@@ -5,8 +5,9 @@
  * Three things are held true here. Her answers are valid against the real catalogs (every id exists, every
  * skill she marked is listed on road 1, the step she marked done is on it). The cockpit, run on her answers
  * through the same road evaluation as any future, gives the receipts the ui-spec lists, which are the
- * catalog's counts, not the appendix's sketch. And her numbers live in her file only: no other file the app
- * is built from carries one. The screen itself (nothing saved, nothing stored) is e2e/example-future.spec.ts.
+ * catalog's counts, not the appendix's sketch. And her numbers sit where the cockpit reads them; since
+ * 2026-10-14 they are real prices and statistics, each traced to its source in tests/example-sources.spec.ts.
+ * The screen itself (nothing saved, nothing stored) is e2e/example-future.spec.ts.
  */
 import { describe, expect, it } from "vitest";
 
@@ -24,8 +25,6 @@ import { frontDoorWords } from "@/lib/front-door/words";
 import { roadForFuture, SHIPPED_ROADS_CATALOG } from "@/lib/futures/types";
 import { evaluateRoad, type RoadEvaluationInput } from "@/lib/roads";
 import { NOT_SAID_FIELDS } from "@/lib/scenarios/types";
-
-import { readSource, simplify, sourceFiles, TS_FILES } from "./helpers/source-scan";
 
 const ex = exampleMara;
 const road = roadApprenticeToOwnShopAB;
@@ -121,24 +120,23 @@ describe("Mara's answers are valid against the catalogs", () => {
     expect(pick.from).toBe("you");
   });
 
-  it("her own numbers: two quotes on named lines of Open your own shop, and her savings, all agreed and typed by her", () => {
+  // Since 2026-10-14 (the maintainer's option A) her numbers are real ones, each traced to its source in
+  // tests/example-sources.spec.ts; here, only that they sit where the cockpit reads them.
+  it("her numbers: one start-up cost line on a named line of Open your own shop, her income goal and her what-if; no savings", () => {
     const shop = road.steps.find((s) => s.label === "Open your own shop")!;
-    const quotes = ex.figures.filter((f) => f.kind === "start-up-cost-line");
-    expect(quotes).toHaveLength(2);
-    for (const q of quotes) {
-      const line = shop.costs.find((c) => c.id === q.costLine!.lineId);
-      // Never a quote on an official fee: those are the catalog's, with their sources.
-      expect(line?.kind, q.id).toBe("named");
-      expect(q.costLine).toMatchObject({ roadId: road.id, stepId: shop.id, amountFrom: "quote" });
-    }
-    const byLine = Object.fromEntries(quotes.map((q) => [shop.costs.find((c) => c.id === q.costLine!.lineId)!.label, q.amountCents]));
-    expect(byLine).toEqual({ "Woodworking machines and tools": 340_000, "Shop space deposit": 200_000 });
-    expect(ex.figures.filter((f) => f.kind === "savings-for-start").map((f) => f.amountCents)).toEqual([1_200_000]);
-    expect(ex.kept.incomeWanted?.amountCents).toBe(7_000_000);
-    expect(ex.whatIfFirstYearSalesDollars).toBe(45_000);
+    const lines = ex.figures.filter((f) => f.kind === "start-up-cost-line");
+    expect(lines).toHaveLength(1);
+    const line = shop.costs.find((c) => c.id === lines[0].costLine!.lineId);
+    // Never a number on an official fee: those are the catalog's, with their sources.
+    expect(line?.kind).toBe("named");
+    expect(line?.label).toBe("Woodworking machines and tools");
+    expect(lines[0].costLine).toMatchObject({ roadId: road.id, stepId: shop.id, amountFrom: "link" });
+    expect(lines[0].amountCents).toBe(1_499_362);
+    expect(ex.figures.filter((f) => f.kind === "savings-for-start")).toEqual([]);
+    expect(ex.kept.incomeWanted?.amountCents).toBe(5_225_500);
+    expect(ex.whatIfFirstYearSalesDollars).toBe(610_300);
     for (const f of ex.figures) {
       expect(f.status, f.id).toBe("confirmed");
-      expect(f.sourceKind, f.id).toBe("typed");
       expect(f.currency, f.id).toBe("CAD");
     }
   });
@@ -154,24 +152,19 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
     expect(evaluation.gauges.steps).toMatchObject({ done: 1, total: 16 });
   });
 
-  it("the money gauge is plain arithmetic: savings minus official fees and her own numbers, and the lines not priced counted", () => {
+  it("the money gauge is plain arithmetic: official fees and her one priced line, the lines not priced counted, no savings", () => {
     const m = evaluation.gauges.money;
-    expect(m.yourNumbersCents).toBe(340_000 + 200_000);
-    expect(m.yourNumberLines).toBe(2);
-    expect(m.savingsCents).toBe(1_200_000);
-    expect(m.differenceCents).toBe(m.savingsCents! - (m.officialFeesCents + m.yourNumbersCents));
-    // The catalog's count of lines not priced yet: 29 once her two quotes are in (the appendix said 4).
-    expect(m.notPricedLines).toBe(29);
-    expect(view.money.value).toBe(`${formatMoney(m.officialFeesCents)} official fees (${m.officialFeeLines} lines) · $5,400 your numbers (2 lines)`);
-    expect(view.money.lines).toEqual([
-      "1 official fee applies only sometimes, not added up",
-      "29 not priced yet",
-      "savings $12,000",
-      `savings minus both: ${formatMoney(m.differenceCents!)}`,
-    ]);
-    // Today's catalog: seven official fees on her path, $1,220; so the difference is $5,380.
+    expect(m.yourNumbersCents).toBe(1_499_362);
+    expect(m.yourNumberLines).toBe(1);
+    // Nothing real can supply one person's savings, so there are none, and no difference is worked out.
+    expect(m.savingsCents).toBeNull();
+    expect(m.differenceCents).toBeNull();
+    // The catalog's count of lines not priced yet: 30 with only the machines line priced (the appendix said 4).
+    expect(m.notPricedLines).toBe(30);
+    expect(view.money.value).toBe(`${formatMoney(m.officialFeesCents)} official fees (${m.officialFeeLines} lines) · $14,993.62 your numbers (1 line)`);
+    expect(view.money.lines).toEqual(["1 official fee applies only sometimes, not added up", "30 not priced yet", "savings: not given yet"]);
+    // Today's catalog: seven official fees on her path, $1,220.
     expect(view.money.value.startsWith("$1,220 official fees (7 lines)")).toBe(true);
-    expect(formatMoney(m.differenceCents!)).toBe("$5,380");
   });
 
   it("her story's receipts, each worked out by comparing road evaluation without and with her answer", () => {
@@ -183,15 +176,13 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
       "Because you marked 9 skills, the skills now read 2 have, 0 learning, 0 not yet, 1 not marked.",
       "Because you marked 9 skills, the government's list for “Cabinetmakers” now reads 4 have, 2 learning, 1 not yet, 37 not marked.",
     ]);
-    expect(story.quotes).toContain(
-      "Because you told us your number for “Shop space deposit” on “Open your own shop” is $2,000 and you told us your number for “Woodworking machines and tools” on “Open your own shop” is $3,400, 29 cost lines are not priced yet.",
+    expect(story.costs).toContain(
+      "Because you told us your number for “Woodworking machines and tools” on “Open your own shop” is $14,993.62, 30 cost lines are not priced yet.",
     );
-    expect(story.savings).toContain(
-      "Because you told us you'd put $12,000 of savings toward starting, your savings minus the official fees and your own numbers is now $5,380.",
-    );
-    expect(story["what-if"]).toEqual([
-      "Because you tried first-year sales of $45,000 (your what-if, not a forecast), 1 rules and tax card now says check first.",
-    ]);
+    // No savings, so no savings part: a part is shown only when its answer changed something.
+    expect(story.savings).toBeUndefined();
+    expect(story["what-if"].length).toBeGreaterThan(0);
+    for (const l of story["what-if"]) expect(l).toMatch(/^Because you tried first-year sales of \$610,300 \(your what-if, not a forecast\), /);
     expect(story["step-done"].some((l) => l.includes("1 of 16"))).toBe(true);
     expect(story["this-is-mine"].length).toBeGreaterThan(0);
     // Every part changes something: an answer that changed nothing would be a story told wrong.
@@ -208,66 +199,13 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
       incomeWantedOn: ex.kept.incomeWanted!.agreedOn,
     };
     const rows = toldRows(inputOf(), evaluation, kept);
-    // 9 marks, 2 quotes, savings, the ending, the step done, the place and the job at least.
-    expect(rows.length).toBeGreaterThanOrEqual(15);
+    // 9 marks, the priced line, the ending, the step done, the place and the job at least.
+    expect(rows.length).toBeGreaterThanOrEqual(14);
     expect(rows.every((r) => r.day === null || r.day === "2026-10-13")).toBe(true);
   });
 
   it("Compare is offered at road 1's fork, where her pick is", () => {
     expect(forksToCompare(inputOf()).map((f) => f.id)).toEqual(["fork-shop-employed-or-own"]);
-  });
-});
-
-describe("Mara's numbers are in her file only", () => {
-  // Her five figures, in the forms code would write them: whole cents (as the file keeps them), the money
-  // as a screen prints it, and the plain dollars. Four-digit dollar amounts (2000, 3400) are too common as
-  // plain numbers (a year, a character limit) to look for as digits; their cents and money forms are.
-  const cents = [ex.kept.incomeWanted!.amountCents, ...ex.figures.map((f) => f.amountCents), ex.whatIfFirstYearSalesDollars! * 100];
-  const grouped = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "_?");
-  // Every character a regular expression treats specially, backslash included, so "$3,400.00" matches
-  // only itself (an unescaped "." would match any character).
-  const literal = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const patterns = cents.flatMap((c) => {
-    const dollars = c / 100;
-    return [
-      new RegExp(`\\b${grouped(c)}\\b`),
-      new RegExp(literal(formatMoney(c))),
-      ...(dollars >= 10_000 ? [new RegExp(`\\b${grouped(dollars)}\\b`), new RegExp(`\\b${literal(dollars.toLocaleString("en-CA"))}\\b`)] : []),
-    ];
-  });
-  const file = "lib/examples/mara.ts";
-  // The cited catalogs are left out: a real official fee can be the same amount as one of her numbers (a
-  // $2,000 fee, say), and the fix must never be to change a sourced figure or her invented one to suit.
-  const catalogs = "lib/engines/";
-  // One string is allowed by name: the what-if bar's own hint, which gave 45000 as its example before Mara
-  // existed and is shown to every person on their own futures. Her what-if is the same amount by chance;
-  // the hint stays as it was, and only this exact sentence is taken out of words.ts before the scan.
-  const allowed = { file: "lib/cockpit/words.ts", text: cockpitWords.questions.box.wholeDollars };
-  const scanned = (f: string) => {
-    const code = simplify(readSource(f), true);
-    return f === allowed.file ? code.split(allowed.text).join("") : code;
-  };
-
-  it("the one string allowed by name is still in its file, so the allowance can't hide a new one", () => {
-    expect(allowed.text).toBe("Write a whole number of dollars, like 45000.");
-    expect(simplify(readSource(allowed.file), true)).toContain(allowed.text);
-  });
-
-  it("the scan finds each of them in her file (so it can fail)", () => {
-    const code = simplify(readSource(file), true);
-    // The money and dollar forms are for other files; her file keeps whole cents, and the what-if in dollars.
-    for (const c of cents) expect(new RegExp(`\\b${grouped(c)}\\b`).test(code) || new RegExp(`\\b${grouped(c / 100)}\\b`).test(code), String(c)).toBe(true);
-  });
-
-  it("no other file under app/, components/ or lib/ (the cited catalogs aside) writes one", () => {
-    const found = sourceFiles(["app", "components", "lib"], TS_FILES)
-      .map((f) => f.split("\\").join("/"))
-      .filter((f) => f !== file && !f.startsWith(catalogs))
-      .flatMap((f) => {
-        const code = scanned(f);
-        return patterns.filter((p) => p.test(code)).map((p) => `${f}: ${p}`);
-      });
-    expect(found).toEqual([]);
   });
 });
 
@@ -280,8 +218,8 @@ describe("the words", () => {
     expect(JSON.stringify(door)).not.toMatch(/not written|isn't written/i);
   });
 
-  it("the banner says, in these words, that it is invented and nothing is saved", () => {
-    expect(cockpitWords.example.banner).toBe("Invented person, invented numbers, not real data. Nothing here is saved.");
+  it("nothing is saved, in these words (the banner's own words are tests/example-sources.spec.ts)", () => {
+    expect(cockpitWords.example.banner(ex.person, "2026-10-14")).toMatch(/Nothing here is saved\.$/);
     expect(cockpitWords.example.cantKeep).toBe("This is an example. Start your own to keep anything.");
     expect(cockpitWords.example.startOwn).toBe("Start my own future →");
   });
@@ -291,24 +229,24 @@ describe("the words", () => {
   // receipts (the same words every person's own receipts use) means her.
   it("her target, words, gauges and told list are labelled with her name, not as the viewer's", () => {
     const w = cockpitWords.example.theirs;
-    expect(w.target(ex.person, 7_000_000, "2026-10-13")).toBe("Mara's target: $70,000 a year, before tax (Mara's, agreed 2026-10-13)");
+    expect(w.target(ex.person, 5_225_500, "2026-10-13")).toBe("Mara's target: $52,255 a year, before tax (Mara's, agreed 2026-10-13)");
+    // Her target is a statistic, so the goal bar says which one and when, in place of "agreed".
+    expect(w.targetFrom(ex.person, 5_225_500, "the average yearly salary", "2023")).toBe("Mara's target: $52,255 a year, before tax: the average yearly salary (2023)");
     expect(w.destination(ex.person, "2026-10-13")).toBe("where Mara wants to be · Mara's words · 2026-10-13");
     expect(w.tags(ex.person)).toEqual({ steps: "count", skills: "Mara's marks", money: "Mara's + cited", date: "Mara's" });
     expect(w.dateLabel(ex.person)).toBe("Mara's date");
     expect(w.toldRegion(ex.person)).toBe("What Mara told DotAmi");
     expect(w.toldCount(ex.person, 16)).toBe("16 things Mara told DotAmi");
     expect(cockpitWords.example.youMeans(ex.person)).toBe("Here, “you” and “your” mean Mara, the invented person.");
-    for (const s of [w.target(ex.person, 1, "d"), w.destination(ex.person, "d"), ...Object.values(w.tags(ex.person)), w.toldRegion(ex.person)]) {
+    for (const s of [w.target(ex.person, 1, "d"), w.targetFrom(ex.person, 1, "x", "y"), w.destination(ex.person, "d"), ...Object.values(w.tags(ex.person)), w.toldRegion(ex.person)]) {
       expect(s, s).not.toMatch(/\byou(rs?)?\b|you've/i);
     }
   });
 
   it("the money gauge says her numbers with her name when given the person; a person's own future still says 'your numbers'", () => {
     const evaluation = evaluateRoad(inputOf());
-    expect(gaugeView(evaluation, road, ex.scenario, ex.person).money.value).toBe(
-      "$1,220 official fees (7 lines) · $5,400 Mara's numbers (2 lines)",
-    );
-    expect(gaugeView(evaluation, road, ex.scenario).money.value).toBe("$1,220 official fees (7 lines) · $5,400 your numbers (2 lines)");
+    expect(gaugeView(evaluation, road, ex.scenario, ex.person).money.value).toBe("$1,220 official fees (7 lines) · $14,993.62 Mara's numbers (1 line)");
+    expect(gaugeView(evaluation, road, ex.scenario).money.value).toBe("$1,220 official fees (7 lines) · $14,993.62 your numbers (1 line)");
     expect(gaugeView(evaluation, road, ex.scenario, ex.person).skills.lines).toContain("Mara's pick of job: 4 have · 2 learning · 1 not yet, of 44 listed");
     expect(gaugeView(evaluation, road, ex.scenario).skills.lines).toContain("your pick of job: 4 have · 2 learning · 1 not yet, of 44 listed");
   });
@@ -320,5 +258,7 @@ describe("the words", () => {
       expect(parts[id]("Sam"), id).not.toMatch(/\b(her|she|hers)\b/i);
     }
     expect(parts.marks(ex.person)).toBe("Mara's skill marks");
+    // Her start-up cost is from sellers' listed prices, not a quote she got.
+    expect(parts.costs(ex.person)).toBe("Mara's start-up cost, from listed prices");
   });
 });
