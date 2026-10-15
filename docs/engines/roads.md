@@ -18,15 +18,19 @@ cockpit draws whatever road it is given and holds no steps of its own.
 | From apprentice to your own shop (Alberta) | `road-apprentice-to-own-shop-ab` | The first written future (`apprentice-to-own-shop-ab.ts`): a Cabinetmaker's training, the certificate, the fork between staying employed and opening a shop, and the first years on your own; then it joins road 0 at *Incorporating*. Every source is a tool check. Listed on *Pick a future* since 2026-10-13, where its card says its sources were checked by a tool, not read by a person. Since 2026-10-14, *Keep your records from day one* (`step-shop-keep-records`) is first in *Open the doors*, 17 steps in all |
 
 **Keep your records from day one** (2026-10-14, `keep-records.ts`): one step on every business road,
-because a business must keep its records from the start and someone who learns that late can't rebuild
-them. It is written once and each road builds it with its own permanent ids (`keepRecordsStep(ids,
+because a business must keep its records from the start and records missed early are hard to put back
+together later. It is written once and each road builds it with its own permanent ids (`keepRecordsStep(ids,
 next)`), so the two can't drift apart. Its four *done when* lines come from the CRA's own *Keeping
 records* pages (who has to keep records and what counts; what the CRA says happens without them; how
 they must be kept, electronic records and backups included; where, and for how long: generally six years
-from the end of the last tax year they relate to), each a tool check made that day, no read claimed. It
-has no cost line (keeping records has no official fee) and one official link, the CRA's *Keeping records*
-page. How road evaluation colours it is the road's own arrows, not a rule: it applies from a business's
-first sale or expense, so it sits where the business begins on each road. On road 0 it is in the first
+from the end of the last tax year they relate to, with the CRA's note that records kept outside Canada and
+opened from Canada don't count as kept in Canada, and two of the other periods the CRA lists, indefinitely
+for records about long-term property and six years from the filing date for a late return), each a tool
+check made that day, no read claimed. The summary says it is the CRA speaking, since the CRA's page covers
+only the laws it administers. It has no cost line (keeping records has no official fee) and one official
+link, the CRA's *Keeping records* page. How road evaluation colours it is the road's own arrows, not a
+rule: no rule reads a sale, an expense or any other answer for it. Each road places it where that road's
+business begins (the CRA's pages say records are kept by persons carrying on a business). On road 0 it is in the first
 column with the other *before you open* steps, leading to *Sole Prop activation* (records cover what a
 business spends as well as what it takes in, and spending can start before the first sale); nothing
 leads to it, so it is on the path for every idea, whatever its structure or work situation, until the

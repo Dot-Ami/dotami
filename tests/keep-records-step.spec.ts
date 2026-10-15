@@ -18,7 +18,7 @@ import { input, inventedIdea } from "./helpers/road-to-evaluate";
 
 /**
  * "Keep your records from day one" (2026-10-14): one step on every business road. A business has to
- * keep its records from the start, and someone who learns that late can't rebuild them, so the step
+ * keep its records from the start, and records missed early are hard to put back together, so the step
  * sits where a business begins on each road:
  *
  * - road 0, Starting any business in Alberta: in the first column, with the other "before you open"
@@ -46,6 +46,33 @@ function stepOn(road: Road, id: string): RoadStep {
 }
 
 const quotesOf = (...citations: EngineCitation[]) => citations.flatMap((c) => c.toolCheck?.quotes ?? []).join(" | ");
+
+/**
+ * Right after its "Generally ... six years" sentence, the CRA's where-and-how-long page says "In some
+ * situations, you must retain your records for a different period of time" and lists them. Two fit a new
+ * business directly: records about long-term property are kept indefinitely, and a late-filed return moves
+ * the start of the six years to the filing date. The same page notes that records kept outside Canada and
+ * opened from Canada don't count as kept in Canada. Returns what the line leaves out, each needing both the
+ * words on the line and the CRA's own words among its quotes.
+ */
+function retentionGaps(line: { text: string; citation?: EngineCitation; quotes?: string[] }): string[] {
+  const quotes = (line.quotes ?? line.citation?.toolCheck?.quotes ?? []).join(" | ");
+  const needs: [string, RegExp, string][] = [
+    ["different period", /a different period/, "In some situations, you must retain your records for a different period of time."],
+    ["indefinitely", /indefinitely for records about long-term acquisitions and disposal of property/, "you have to keep them indefinitely"],
+    [
+      "late return",
+      /income tax return filed late/,
+      "If you file an income tax return late, you must keep your records for six years from the date you file that return.",
+    ],
+    [
+      "kept abroad",
+      /kept outside Canada and accessed electronically from Canada are not considered to be kept in Canada/,
+      "Records kept outside of Canada and accessed electronically from Canada are not considered to be records kept in Canada.",
+    ],
+  ];
+  return needs.filter(([, words, quote]) => !words.test(line.text) || !quotes.includes(quote)).map(([name]) => name);
+}
 
 describe("the step is on both business roads, with its own permanent ids", () => {
   it("road 0: in the first column, after the other before-you-open steps, leading to Sole Prop activation", () => {
@@ -124,6 +151,32 @@ describe("its lines come from the CRA's own Keeping records pages, checked by th
     const every = line("dw-start-records-every-transaction");
     expect(every.text).toMatch(/input tax credits/);
     expect(quotesOf(every.citation)).toContain("If you do not record your transactions, you may forget some of your expenses or ITCs");
+  });
+
+  it("the how-long line says the CRA lists other periods, and where records kept abroad stand", () => {
+    for (const step of steps()) {
+      const howLong = step.doneWhen.find((d) => d.id.endsWith("-records-where-how-long"))!;
+      expect(retentionGaps(howLong), step.id).toEqual([]);
+    }
+  });
+
+  it("control: the check catches the line as it was first written (six years only, no exceptions)", () => {
+    // The line as commit c86a637 wrote it: true, but silent on the periods the CRA lists right after.
+    const first = {
+      text: "You keep them at your place of business or your residence in Canada (unless the CRA gives you written permission to keep them elsewhere), generally for six years from the end of the last tax year they relate to: for an individual that is the calendar year, for a corporation its fiscal period. Destroying them sooner needs the CRA's written permission first.",
+      quotes: [
+        "You must keep records at your place of business or your residence in Canada, unless the Canada Revenue Agency (CRA) gives you written permission to keep them elsewhere.",
+        "Generally, you must keep all required records and supporting documents for a period of six years from the end of the last tax year they relate to.",
+      ],
+    };
+    expect(retentionGaps(first)).toEqual(["different period", "indefinitely", "late return", "kept abroad"]);
+  });
+
+  it("the summary says it is the CRA speaking, and that some situations have another period", () => {
+    for (const step of steps()) {
+      expect(step.summary).toMatch(/^The CRA says that, by law, /);
+      expect(step.summary).toMatch(/a different period in some situations/);
+    }
   });
 
   it("no line tells the person what to do: information and options, never 'you should'", () => {

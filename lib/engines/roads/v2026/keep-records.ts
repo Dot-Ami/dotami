@@ -6,8 +6,8 @@ import type { RoadStep } from "./types";
  * the two roads can't drift apart. Each road calls `keepRecordsStep` with its own permanent ids, since a
  * person's ticks and status are kept against them (docs/engines/roads.md, rule 3), and its own `next`.
  *
- * Why a step of its own: a business must keep its records from the start, and someone who learns that
- * late can't rebuild them. Road 0 already has two record lines on other steps (Sole Prop activation's
+ * Why a step of its own: a business must keep its records from the start, and records missed early are
+ * hard to put back together later. Road 0 already has two record lines on other steps (Sole Prop activation's
  * daily income and expenses, the bank account's statements); this step is the whole of it in one place:
  * who has to, what counts, how they must be kept, where and for how long.
  *
@@ -55,6 +55,7 @@ const Q = {
   carryingOnBusiness: "persons carrying on a business or engaged in commercial activity",
   sixYears:
     "Generally, you must keep all required records and supporting documents for a period of six years from the end of the last tax year they relate to.",
+  otherPeriods: "In some situations, you must retain your records for a different period of time.",
 } as const;
 
 /** The permanent ids one road gives the step and its four done-when lines. */
@@ -71,7 +72,9 @@ export function keepRecordsStep(ids: KeepRecordsIds, next: string[]): RoadStep {
     id: ids.step,
     label: "Keep your records from day one",
     summary:
-      "By law, anyone carrying on a business keeps records of its transactions and the documents behind them, generally for six years from the end of the last tax year they relate to.",
+      // Said as the CRA's words: its page covers the laws the CRA administers, and says other federal,
+      // provincial, territorial or municipal laws can ask for records of their own.
+      "The CRA says that, by law, anyone carrying on a business keeps records of its transactions and the documents behind them, generally for six years from the end of the last tax year they relate to, and for a different period in some situations.",
     next,
     doneWhen: [
       {
@@ -113,14 +116,22 @@ export function keepRecordsStep(ids: KeepRecordsIds, next: string[]): RoadStep {
         ),
       },
       {
+        // The page lists periods other than six years right after its "Generally"; the line names the two
+        // that fit a new business directly (property records, a late return) rather than all of them, and
+        // the page's note on records kept abroad, since the "how" line brings up electronic records.
         id: ids.whereHowLong,
-        text: "You keep them at your place of business or your residence in Canada (unless the CRA gives you written permission to keep them elsewhere), generally for six years from the end of the last tax year they relate to: for an individual that is the calendar year, for a corporation its fiscal period. Destroying them sooner needs the CRA's written permission first.",
+        text: "You keep them at your place of business or your residence in Canada (unless the CRA gives you written permission to keep them elsewhere); the CRA notes that records kept outside Canada and accessed electronically from Canada are not considered to be kept in Canada. You keep them generally for six years from the end of the last tax year they relate to: for an individual that is the calendar year, for a corporation its fiscal period. The CRA lists situations with a different period, among them indefinitely for records about long-term acquisitions and disposal of property, and, for an income tax return filed late, six years from the date you file that return. Destroying them sooner needs the CRA's written permission first.",
         citation: checked(
           PAGES.whereAndHowLong,
           "You must keep records at your place of business or your residence in Canada, unless the Canada Revenue Agency (CRA) gives you written permission to keep them elsewhere.",
+          "Records kept outside of Canada and accessed electronically from Canada are not considered to be records kept in Canada.",
           Q.sixYears,
           "is the calendar year for individuals",
           "is the fiscal period for corporations",
+          Q.otherPeriods,
+          "concern long-term acquisitions and disposal of property",
+          "you have to keep them indefinitely",
+          "If you file an income tax return late, you must keep your records for six years from the date you file that return.",
           "you first must get written permission from the CRA",
         ),
       },
@@ -129,6 +140,6 @@ export function keepRecordsStep(ids: KeepRecordsIds, next: string[]): RoadStep {
     // Keeping records has no official fee; bookkeeping help, where a road names it, is its own line.
     costs: [],
     officialLinks: [{ label: "Keeping records (CRA)", url: `${RECORDS}.html` }],
-    citations: [checked(PAGES.whatAndWho, Q.whoByLaw, Q.carryingOnBusiness), checked(PAGES.whereAndHowLong, Q.sixYears)],
+    citations: [checked(PAGES.whatAndWho, Q.whoByLaw, Q.carryingOnBusiness), checked(PAGES.whereAndHowLong, Q.sixYears, Q.otherPeriods)],
   };
 }
