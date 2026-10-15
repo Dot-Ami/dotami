@@ -615,6 +615,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
+  review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
+  first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with
+  every check (the `x-user-staging-id` header) and writes it into the log once; the privacy list didn't
+  say so. `/your-data` now has a row for the file (what it is, that DotAmi doesn't write or read it, that
+  Delete doesn't reach it, and how to remove it: close DotAmi and delete the file, and the next check makes
+  a new one; an earlier ID stays in the log, which both this row and Delete's list of what it can't reach
+  say), the log's row and the update check's entry name the ID, the update check also names Help →
+  Check for updates, and Settings' Privacy group says GitHub sees it
+  ([`lib/privacy/inventory.ts`](lib/privacy/inventory.ts),
+  [`components/settings/settings-page.tsx`](components/settings/settings-page.tsx),
+  [docs/architecture/desktop-app.md § Updates](docs/architecture/desktop-app.md#updates)).
+  [`tests/privacy-inventory.spec.ts`](tests/privacy-inventory.spec.ts) reads electron-updater's own
+  `AppUpdater.js` and fails while a file it writes beside the data file, or a header it adds to the
+  check, isn't listed. No behaviour changes; whether DotAmi needs the ID is still open.
 - **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
   hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
   server runs on the person's own computer, who can reach it (only programs on the same computer for

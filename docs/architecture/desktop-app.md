@@ -278,7 +278,27 @@ The installed app checks GitHub Releases when it starts (and on Help → Check f
 downloads a newer version, and **asks before installing it** — nothing installs without the
 person's click ("Restart and update"). A copy run from the source code never checks; it updates
 with git. The settings page says which kind of copy it is, and its Privacy group says what the
-check reveals: GitHub sees the computer's internet address and which version it runs.
+check reveals: GitHub sees the computer's internet address, which version it runs, and the
+updater's install ID (below).
+
+**The install ID** (electron-updater's own, not DotAmi's; read 2026-10-14 in the locked 6.8.9, found
+in the review of #169). The first time the updater checks, it makes a random ID (a UUID from 4096
+random bytes) and keeps it in a file of its own, `.updaterId`, in the data folder (electron's
+`userData`, which `desktop/main.mjs` makes the data folder): `getOrCreateStagingUserId`,
+`node_modules/electron-updater/out/AppUpdater.js:501-526`. It sends that same ID with every request
+that looks for a newer version, as the header `x-user-staging-id` (`AppUpdater.js:386-387`: the
+release list, the latest tag and `latest.yml`, through `providers/Provider.js` `createRequestOptions`);
+the download itself doesn't carry it (`AppUpdater.js:488-500`, which adds only
+`autoUpdater.requestHeaders`, and DotAmi sets none). The updater uses it to offer a release to only
+part of its users (`stagingPercentage` in `latest.yml`, `AppUpdater.js:314-332`), which DotAmi's
+release steps don't do. Its line *"Generated new staging user ID: <id>"* (`AppUpdater.js:518`) is an
+info line, so `updaterLogger` (`desktop/log.mjs`) keeps it in `logs/server.log` with the ID in it.
+DotAmi doesn't write, read or remove the file and Delete doesn't reach it; deleting it with DotAmi
+closed makes the next check send a new ID. All of this is listed in `lib/privacy/inventory.ts` (the
+file, the update check's header, the log line) and shown on `/your-data`;
+`tests/privacy-inventory.spec.ts` reads `AppUpdater.js` and fails if the file or the header it finds
+there isn't listed. **Still open:** whether DotAmi needs the ID at all. Nothing here changes what the
+updater does.
 
 **What the person sees** (`desktop/update-notice.mjs`; the app that is running shows it, so it first
 appears on the update after the release that brings it): the moment a newer version is found, a

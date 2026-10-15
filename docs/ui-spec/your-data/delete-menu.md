@@ -108,7 +108,9 @@ with where they are kept, before confirming.
    key file that couldn't open it, which a lost key's restore or Start fresh set aside, and the
    receipts folder Start fresh set aside (`dotami-locked-…db`, `database-key-unreadable-…key`,
    `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window stored in earlier
-   launches ("Not cleared yet"), the log, anything that already left the computer, and the disk under
+   launches ("Not cleared yet"), the log (which holds the update checker's install ID too), the update
+   checker's install ID (`.updaterId`, electron-updater's own file; close DotAmi and delete it, the next
+   check makes a new one; since 2026-10-14), anything that already left the computer, and the disk under
    the data file (which can still hold older pieces of the file, a removed receipt's bytes, deleted
    safety copies and set-aside receipts).
 
