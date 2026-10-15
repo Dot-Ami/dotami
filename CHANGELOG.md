@@ -422,6 +422,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **With a what-if on, the map's legend no longer slides under the what-if bar** (found by the new journey
+  browser test in CI) — in the cockpit, once a what-if was on (its banner, receipt, *Keep* and *Clear*),
+  the road's own area shrank to 20 px at 1280x720 and the legend under it was drawn partly under the
+  what-if bar; with *Compare the two endings* open beside the road at 1024x768 the whole legend was
+  under it, so **Fold the legend** could not be clicked. From 768 px the road's area now keeps at least
+  12rem (192 px) of height, the legend always ends where the what-if bar starts, and the column holding
+  the road, the legend, the what-if bar and *Next on your road* scrolls down when they are taller than the
+  window. Folding still gives the road its room (every region folded at 1280x720 is unchanged), and a phone
+  is unchanged. `e2e/cockpit-fit.spec.ts` checks it at 1280x720, 1366x768 and 1024x768 with a what-if on
+  and Compare open, and at 768x1024 and 375x812 with a what-if on: the legend's bottom is not under the
+  bar, the road's area keeps its height, every control in the legend, the bar and *Next on your road* is
+  what a click lands on once scrolled to, and a real click folds the legend; on the old layout both tests
+  fail (the legend's bottom 68 px under the bar's top at 1280x720; the road's area 53 px tall at 768x1024).
 - **No more doubled full stop under a fee that applies only sometimes** (flagged in PR #165) — the
   apprentice road's rewrite fee showed *"Only if: You failed an exam and choose to rewrite it.. Not added
   to any total."* in its step panel and in the Start-up money list. The words now add a full stop only

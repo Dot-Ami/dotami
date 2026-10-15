@@ -506,6 +506,12 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   answer stored before has none, which reads as open), and *Fold all panels* folds it too. While a
   what-if is on, the folded line still says *Your what-if, not a forecast* and its number, since the map
   is still relit by it. The open rail is up to 280 px wide, as part 2 made it.
+- **The road keeps a minimum area (2026-10-14).** With the what-if bar open and a what-if on, the road's
+  area shrank to 20 px at 1280x720 and the legend slid under the bar (all of it at 1024x768 with
+  *Compare* beside the road), so *Fold the legend* couldn't be clicked; the journey browser test found it
+  in CI. From 768 px the road's area is now at least 12rem tall, the legend ends where the bar starts,
+  and the canvas column scrolls down when what it holds is taller than the window
+  (docs/ui-spec/cockpit/12-folding-and-phone.md; `e2e/cockpit-fit.spec.ts`).
 
 ### Cockpit screen as built, part 2 (2026-10-12)
 
