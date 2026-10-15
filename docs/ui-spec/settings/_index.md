@@ -69,8 +69,9 @@ Each group:
    - The map: the tax year the catalogs cover.
    - Privacy: what leaves the computer — the sentence typed to describe a venture goes to
      Anthropic only when `ANTHROPIC_API_KEY` is set (the intake parser's own test); the installed
-     app's update check shows GitHub the computer's internet address and version
-     (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source
+     app's update check shows GitHub the computer's internet address, version and the updater's
+     random install ID, the same on every check, kept in the data folder, with a pointer to What
+     DotAmi knows about you for how to remove it (since 2026-10-14) (`DOTAMI_UPDATES=github`); DotAmi has no server and collects no usage data; from source
      only: Next.js telemetry and Prisma's check-in, that the project's own npm scripts switch both
      off (since 2026-10-08), what they can't reach (`npm ci`, `npx` by hand) and the two variables
      for those, and that `npm run dev` asks npm's registry for the newest Next.js version (npm sees the

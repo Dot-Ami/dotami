@@ -345,8 +345,10 @@ function todayFor(group: SettingGroupId, today: SettingsToday): ReactNode {
           {today.updates === "github" ? (
             <p>
               When the app starts, it asks GitHub whether there&apos;s a newer version, and downloads
-              it if there is. GitHub sees this computer&apos;s internet address and which version it
-              runs — none of your data.
+              it if there is. GitHub sees this computer&apos;s internet address, which version it
+              runs, and a random install ID the update checker made for this copy, the same on every
+              check — none of your data. That ID is kept in the data folder; What DotAmi knows about
+              you, linked below, says how to remove it.
               {today.intake.sentTo === "anthropic" ? null : " The sentence you type to describe a venture is read here, by keyword matching."}
             </p>
           ) : null}

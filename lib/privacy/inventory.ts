@@ -108,7 +108,8 @@ export interface FolderEntry {
     | "database-decrypting"
     | "database-decrypting-copy"
     | "database-encrypted-to-wipe"
-    | "database-turned-off";
+    | "database-turned-off"
+    | "updater-id";
   /**
    * Path relative to the folder holding the data file. The wipe-pending note and the two files of an
    * encryption under way are named after the data file itself, so this shows the desktop app's name for
@@ -192,6 +193,13 @@ export interface SentElsewhereEntry {
   canTakeBack: string;
   /** The code that does it (none when nothing is requested over the network). Not shown on the page. */
   calls: readonly AllowedCall[];
+  /**
+   * Headers a package adds to these requests inside its own code, by their exact names, with where in
+   * the package each was read. The network scan can't see them (it sees the import only), so
+   * tests/privacy-inventory.spec.ts reads electron-updater's own source and fails on a header it sets
+   * that isn't named here. For developers: the page says what they carry in `what`, in words.
+   */
+  headers?: readonly { name: string; source: string }[];
 }
 
 /**
@@ -561,7 +569,11 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The log",
-    why: "Not cleared. It holds events (starting up, updates, backups), never your words or an amount.",
+    why: "Not cleared. It holds events (starting up, updates, backups) and the update checker's install ID, never your words or an amount.",
+  },
+  {
+    name: "The update checker's install ID",
+    why: "Not deleted. It is the update checker's own file in the data folder (.updaterId), holding only the random code it sends GitHub with each check. To remove it, close DotAmi and delete the file; the next check makes a new one. An earlier ID stays in the log (“The log”, above), which nothing clears.",
   },
   {
     name: "Anything that already left this computer",
@@ -745,7 +757,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: "logs/server.log",
     name: "The log",
     holds:
-      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. When an update check, a backup or a restore fails, it writes the same, the error's name and code (for a backup that can't be restored, which kind of problem it was, such as damaged), never the error's own message, which could name the file you chose or folders on this computer. The update checker's own reports of an error or a warning, and its progress lines that report a failure, leave one fixed line each; its other progress lines are kept as it wrote them, and one of them names the folder an update downloads to. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
+      "A running note of what the app did: starting up, updates, backups and restores (with the location of the file you chose), and finishing a wipe an earlier Delete left owed (how many safety copies it deleted, never their contents). When the desktop app can't start, it writes the message it showed you (which can name the data folder) and the error's name and code; when an update to the database file fails, it also writes the database's own words about it: which update failed and what the database objected to, such as a table or a column. When one of DotAmi's own routes fails it writes only the error's name and code, never what you typed or an amount. When an update check, a backup or a restore fails, it writes the same, the error's name and code (for a backup that can't be restored, which kind of problem it was, such as damaged), never the error's own message, which could name the file you chose or folders on this computer. The update checker's own reports of an error or a warning, and its progress lines that report a failure, leave one fixed line each; its other progress lines are kept as it wrote them, and one of them names the folder an update downloads to. Another is the line it writes when it makes its install ID (“The update checker's install ID”, below), with the ID itself in it; and if a release were ever offered to only part of its users, its line deciding whether this copy gets it would name the ID too. The database library's own error report can quote the values it was given, so it is switched off: when the database reports an error, the log gets one fixed line naming only the part of the database code that reported it, never what you typed or an amount.",
     writtenBy: { file: "desktop/main.mjs", mentions: "server.log" },
     desktopOnly: true,
   },
@@ -758,6 +770,25 @@ export const FOLDERS: readonly FolderEntry[] = [
     writtenBy: { file: "desktop/wipe-pending.mjs", mentions: ".wipe-pending" },
     desktopOnly: false,
     whenAbsent: "None: no wipe is owed.",
+  },
+  // electron-updater's own file, not DotAmi's (found in PR #169's review, 2026-10-14). In 6.8.9,
+  // node_modules/electron-updater/out/AppUpdater.js:501-526 getOrCreateStagingUserId: it reads
+  // path.join(userDataPath, ".updaterId") (:502), and when that holds no valid ID, makes a random one
+  // (:517, a UUID from 4096 random bytes), writes "Generated new staging user ID: <id>" to its logger
+  // (:518) and saves it there (:520). userDataPath is electron's userData folder
+  // (ElectronAppAdapter.js:25), which desktop/main.mjs makes the data folder. It runs on the first
+  // update check (AppUpdater.js:189 makes it lazy; :386 asks for it), and the ID goes with every check
+  // after (the update check entry below, x-user-staging-id). Whether DotAmi needs the ID at all is
+  // still open: nothing here changes what the updater does.
+  {
+    id: "updater-id",
+    relativePath: ".updaterId",
+    name: "The update checker's install ID",
+    holds:
+      "A random code of 36 letters, digits and dashes that the update checker (electron-updater, the package the desktop app uses to look for a newer version) made the first time it checked, and nothing else: nothing about you, this computer or your data. It sends this same code to GitHub with every update check (see “What leaves this computer”), so whoever receives the checks could tell this copy's checks from other copies' and link them to each other. The checker uses it to offer a release to only part of its users at first; DotAmi's own release steps don't release that way. The file is the updater's, not DotAmi's: DotAmi doesn't write or read it, and Delete doesn't remove it. To remove it, close DotAmi and delete the file; the next update check makes a new random code and sends that one instead. An earlier ID stays in the log (“The log”, above), which the updater wrote when it made the ID. Uninstalling DotAmi leaves it, with the rest of the data folder.",
+    writtenBy: { file: "node_modules/electron-updater/out/AppUpdater.js", mentions: 'path.join(this.app.userDataPath, ".updaterId")' },
+    desktopOnly: true,
+    whenAbsent: "None: the update checker hasn't checked from this data folder yet (a copy run from source never checks).",
   },
 ];
 
@@ -781,9 +812,10 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
   {
     id: "update-check",
     name: "The update check",
-    when: "Each time the desktop app starts.",
-    what: "A request to GitHub, which sees this computer's internet address and which version it runs. None of your data.",
-    canTakeBack: "There is nothing of yours to take back.",
+    when: "Each time the desktop app starts, and when you choose Help → Check for updates.",
+    what: "A request to GitHub, which sees this computer's internet address, which version it runs, and a random install ID the update checker made for this copy, the same on every check (kept in the data folder: “The update checker's install ID”, above). None of your data.",
+    canTakeBack:
+      "No: DotAmi can't take back what GitHub already received. Deleting the install ID's file, with DotAmi closed, makes the next check send a new random ID in its place.",
     calls: [
       {
         file: "desktop/main.mjs",
@@ -791,6 +823,14 @@ export const SENT_ELSEWHERE: readonly SentElsewhereEntry[] = [
         why: "The installed app's update check: asks GitHub Releases for a newer version at start and from Help → Check for updates.",
       },
     ],
+    // electron-updater 6.8.9 sets this on its update provider before every check
+    // (node_modules/electron-updater/out/AppUpdater.js:386-387, getUpdateInfoAndProvider), so it goes
+    // with the requests that look for a newer version: the release list, the latest release's tag when
+    // it asks for one, and the release's latest.yml (providers/GitHubProvider.js:43, :165 and :119, all
+    // through providers/Provider.js createRequestOptions). The download of the installer doesn't carry
+    // it: its headers are AppUpdater.js:488-500 computeRequestHeaders, which adds only
+    // autoUpdater.requestHeaders, and DotAmi sets none. The value is the ID in .updaterId (FOLDERS above).
+    headers: [{ name: "x-user-staging-id", source: "node_modules/electron-updater/out/AppUpdater.js:387" }],
   },
   {
     id: "files-you-save",
