@@ -388,6 +388,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **No more doubled full stop under a fee that applies only sometimes** (flagged in PR #165) — the
+  apprentice road's rewrite fee showed *"Only if: You failed an exam and choose to rewrite it.. Not added
+  to any total."* in its step panel and in the Start-up money list. The words now add a full stop only
+  when the condition doesn't already end its sentence, so both read *"…rewrite it. Not added to any
+  total."*; *Your plan* uses the same words and no longer trims the condition itself.
 - **A sign painter's map no longer shows a research tax credit step as ahead** (issue #40) — in the
   cockpit, *SR&ED deepening* (Tier 4) on an idea whose kinds of work include none of Software / SaaS,
   Manufacturing and AI / ML / R&D is drawn dashed with the chip **not on your path** instead of **ahead**,

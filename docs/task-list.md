@@ -595,6 +595,8 @@ roadmap's build order.
     - [ ] the readout API and the playbook export read road evaluation, so *SR&ED deepening* off the
       path (#40) isn't "ahead" there (docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
       work only, as built*)
+  - [x] the step panel's doubled full stop, *"rewrite it.. Not added"* (flagged in PR #165) — 2026-10-14:
+    fixed in the panel's words, so the step panel, the money list and *Your plan* all print one
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures

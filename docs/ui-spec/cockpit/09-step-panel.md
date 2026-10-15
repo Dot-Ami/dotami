@@ -53,7 +53,7 @@ The sections, in order:
    catalog's source.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
-   Not added to any total.*); the person's agreed number with *your quote · agreed* and
+   Not added to any total.*, where a condition that already ends in a full stop gets no second one); the person's agreed number with *your quote · agreed* and
    **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
    name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*
