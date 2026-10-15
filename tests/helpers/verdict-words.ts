@@ -24,23 +24,58 @@
 /** Single words that make one of DotAmi's own sentences a verdict (the widest list the words files were checked against). */
 export const VERDICT_WORDS = /\b(enough|ready|best|better|worse|should|recommend\w*|on track|behind|score)\b/i;
 
-/** Phrases that read as advice or a ranking anywhere on a screen. */
+/**
+ * Phrases that read as advice or a ranking anywhere on a screen. They are matched against the text with
+ * every run of spaces and line breaks made one space and curly apostrophes made straight (see `normalise`),
+ * so they are written with single spaces and "'".
+ *
+ * "Recommend", "suggest" and "advise" count when DotAmi is made to say them (we, I, DotAmi, our, or no one
+ * named, as in "Highly recommend this road"). A recommendation named as someone else's stays allowed: the
+ * apprentice road says "alberta.ca highly recommends legal advice", the province's advice reported as the
+ * province's, and the licence note says "nothing in DotAmi suggests the government endorses it".
+ */
 export const VERDICT_PHRASES: readonly { phrase: string; pattern: RegExp }[] = [
-  { phrase: "you should", pattern: /\byou should\b/i },
+  { phrase: "you should", pattern: /\byou should(?:n't)?\b/i },
   { phrase: "you ought to", pattern: /\byou ought to\b/i },
-  { phrase: "we recommend", pattern: /\bwe (?:highly |strongly )?recommend/i },
-  { phrase: "we suggest", pattern: /\bwe suggest\b/i },
+  { phrase: "you'd better", pattern: /\byou(?:'d| had) better\b/i },
+  {
+    phrase: "we recommend",
+    pattern: /(?<!\bnothing in )\b(?:we|I|DotAmi)(?:'d| would)?(?: highly| strongly)? (?:recommends?|suggests?|advises?)\b/i,
+  },
+  // With no one named: "Highly recommend this road". Not "recommends", which names its speaker before it.
+  { phrase: "highly recommend", pattern: /\b(?:highly|strongly) (?:recommend|suggest|advise)\b/i },
+  { phrase: "suggested", pattern: /\b(?:suggested|advised) (?:future|road|path|option|choice|step|pick|structure)s?\b/i },
   { phrase: "recommended", pattern: /\brecommended\b/i },
-  { phrase: "our recommendation", pattern: /\b(?:our|DotAmi's) recommendation\b/i },
-  { phrase: "best option", pattern: /\bbest (?:option|choice|path|road|future|pick)s?\b/i },
-  { phrase: "best for you", pattern: /\bbest for you\b/i },
-  { phrase: "the right choice", pattern: /\bthe right (?:choice|option|path|road|future)\b/i },
+  {
+    phrase: "our recommendation",
+    pattern: /\b(?:our|DotAmi's|my)(?: \w+)? (?:recommendation|suggestion|advice|pick|choice)s?\b/i,
+  },
+  { phrase: "best option", pattern: /\bbest (?:option|choice|path|road|future|pick|fit|bet|way|move|route)s?\b/i },
+  { phrase: "best for you", pattern: /\b(?:best|ideal|perfect|made) for you\b/i },
+  {
+    phrase: "the right choice",
+    pattern: /\b(?:right|smartest|wisest|safest|obvious|ideal|perfect) (?:choice|option|path|road|future|pick|move)s?\b/i,
+  },
   { phrase: "top pick", pattern: /\btop (?:pick|choice|option)s?\b/i },
-  { phrase: "our pick", pattern: /\bour pick\b/i },
+  // Singular only: a rank is "first choice". "first choices" turns up where a label ending in "first" meets
+  // a "Choices" label below it (Settings), which the joined-up spacing would otherwise read as one phrase.
+  { phrase: "first choice", pattern: /\b(?:first|1st) (?:choice|pick)\b/i },
   // "#1" as a rank. Not "issue #1"-style references, which a screen doesn't show; a rank badge is "#1" on its own.
   { phrase: "#1", pattern: /(?:^|[^\w&])#1(?!\d)/ },
-  { phrase: "number one", pattern: /\bnumber one\b/i },
+  { phrase: "no. 1", pattern: /\bno\. ?1(?!\d)/i },
+  { phrase: "number one", pattern: /\bnumber (?:one|1)\b/i },
   { phrase: "ranked first", pattern: /\branked (?:first|1st|highest|top)\b/i },
+  { phrase: "top-rated", pattern: /\b(?:top|highest|best)[- ](?:rated|ranked)\b/i },
+  { phrase: "most popular", pattern: /\bmost popular\b/i },
+];
+
+/** One space for every run of spaces and line breaks, and straight apostrophes, so a phrase split by layout still matches. */
+const normalise = (text: string) => text.replace(/[‘’]/g, "'").replace(/\s+/g, " ");
+
+/** The ways a source's quote is shown on a screen: inside curly quote marks (or straight ones). */
+const QUOTE_MARKS: readonly [string, string][] = [
+  ["“", "”"],
+  ['"', '"'],
 ];
 
 /** A sentence of an official page, quoted by a citation, that holds a verdict phrase in the page's own voice. */
@@ -66,10 +101,17 @@ export const OFFICIAL_QUOTE_ALLOWANCES: readonly OfficialQuoteAllowance[] = [
   },
 ];
 
-/** The verdict phrases in a text, once the allowed official quotes are taken out of it. */
+/**
+ * The verdict phrases in a text, once the allowed official quotes are taken out of it. An allowance is
+ * taken out only where it stands inside quote marks, as a source's quote is shown; the same words written
+ * as a line of DotAmi's own, unquoted, are still caught.
+ */
 export function findVerdicts(text: string): string[] {
-  let rest = text;
-  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) rest = rest.split(allowance.text).join(" ");
+  let rest = normalise(text);
+  for (const allowance of OFFICIAL_QUOTE_ALLOWANCES) {
+    const words = normalise(allowance.text);
+    for (const [open, close] of QUOTE_MARKS) rest = rest.split(`${open}${words}${close}`).join(" ");
+  }
   const found: string[] = [];
   for (const { phrase, pattern } of VERDICT_PHRASES) {
     const global = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
