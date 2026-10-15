@@ -9,7 +9,9 @@
  * (4e643d7, that main plus #158) and compared with that main's drawing, it changes one panel only,
  * Mandatory GST registration, whose "No skills are listed for this step yet." becomes its legal
  * requirement, A GST/HST registration with the Canada Revenue Agency; that change is applied to the
- * fixture as #162 left it. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * fixture as #162 left it. Redrawn on 2026-10-13 for two panels when the map stages' dead government
+ * pages moved (tests/moved-government-pages.spec.ts): Employee/Apprentice baseline and SR&ED deepening,
+ * whose sources now link the new pages and say "Checked by a tool"; no other panel changed. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

@@ -254,7 +254,9 @@ describe("every new source is a tool check made on 2026-10-12, and none claims a
     // Some stage sources are tool checks too (the CRA's small-supplier page, since #145), so they have no
     // read date and are skipped here; sort() would otherwise put their undefined last.
     const newestStageRead = cfeNodesV2026
-      .flatMap((n) => n.citations.map((c) => c.lastVerified))
+      // Read as the shared citation type: a stage whose sources are all tool checks (since 2026-10-13,
+      // when its pages moved) has no lastVerified field in its own inferred type.
+      .flatMap((n) => n.citations.map((c: EngineCitation) => c.lastVerified))
       .filter((d): d is string => d !== undefined)
       .sort()
       .at(-1);

@@ -22,8 +22,16 @@ export const riskEntriesV2026 = [
         title: "Business-use-of-home expenses",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/business-use-home-expenses.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/report-business-income-expenses/business-expenses/business-use-home-expenses.html,
+        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/completing-form-t2125/business-use-home-expenses.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "You can deduct expenses for the business use of a workspace in your home",
+            "you use the space only to earn your business income, and you use it on a regular and ongoing basis to meet your clients, customers, or patients",
+          ],
+        },
         note: "CRA workspace-in-home requirements.",
       },
     ],
@@ -41,8 +49,16 @@ export const riskEntriesV2026 = [
         title: "Motor vehicle records",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/motor-vehicle-expenses/motor-vehicle-records.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/report-business-income-expenses/business-expenses/motor-vehicle-expenses/motor-vehicle-records.html,
+        // read 2026-07-02) answered 404 on 2026-10-13; a tool found these words on the new page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/business-expenses/motor-vehicle-expenses/motor-vehicle-records.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "The best evidence to support the use of a vehicle is an accurate logbook of business travel maintained for the entire year",
+            "showing for each business trip, the destination, the reason for the trip and the distance covered.",
+          ],
+        },
         note: "CRA logbook expectations for vehicle claims.",
       },
     ],
@@ -58,11 +74,17 @@ export const riskEntriesV2026 = [
     mitigation: "Set an honest business-use percentage before claiming, write down how you arrived at it, and apply it consistently to CCA.",
     citations: [
       {
-        title: "Capital cost allowance (CCA)",
+        title: "Personal use of property",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/business-expenses/capital-cost-allowance.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/business-expenses/capital-cost-allowance.html, read 2026-07-02)
+        // answered 404 on 2026-10-13. Its successor, Claiming capital cost allowance, sends property
+        // used both ways to this page; a tool found this sentence on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/claiming-capital-cost-allowance/personal-use-property.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: ["If you buy property for both business and personal use, you can calculate the business use of the property."],
+        },
         note: "CCA claims follow business-use portion.",
       },
     ],
@@ -99,8 +121,17 @@ export const riskEntriesV2026 = [
         title: "SR&ED expenditures claim guidance",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/scientific-research-experimental-development-tax-incentive/claim-sred-expenditures.html,
+        // read 2026-07-02) answered 404 on 2026-10-13. What to keep is now on the claim's Get ready
+        // page; a tool found these words there that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program/sred-claim/get-ready.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Keeping proper documentation will make it easier to prepare and support your claim.",
+            "Be sure to keep all technical and financial documentation that can support your claim",
+          ],
+        },
         note: "Contemporaneous documentation expectations.",
       },
     ],
