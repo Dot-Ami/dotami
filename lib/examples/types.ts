@@ -30,7 +30,10 @@ export interface ExampleFuture {
   };
   /** Its agreed numbers, as the figures list would give them. */
   figures: FigureView[];
-  /** A what-if the example opens with (never kept, as everywhere), or null. */
+  /**
+   * A what-if the example opens with (never kept, as everywhere), or null for a what-if bar that starts
+   * empty. Mara's is null since the maintainer's pick A of 2026-10-15.
+   */
   whatIfFirstYearSalesDollars: number | null;
   /**
    * Where the example's numbers come from (the maintainer, 2026-10-14, option A): the prices and statistics
@@ -42,8 +45,12 @@ export interface ExampleFuture {
     toolsLineId: string | null;
     /** The statistic the yearly income wanted is, by its id in `data.statistics`, or null. */
     incomeWantedFrom: string | null;
-    /** The statistic the what-if is, by its id in `data.statistics`, or null. */
-    whatIfFrom: string | null;
+    /**
+     * Statistics shown beside the example person's numbers as context, never as one of them, by their ids
+     * in `data.statistics` (each with `amountCents` and `inSentence`). Since 2026-10-15 (the maintainer's
+     * pick A) ISED's average revenue for Mara, which until then was her what-if.
+     */
+    context: readonly string[];
   } | null;
 }
 
@@ -131,7 +138,10 @@ export interface Statistic {
   quote: string;
   seenOn: string;
   caveat: string;
-  /** Only on a statistic an example's number is: the figure in whole cents, and how a sentence names it. */
+  /**
+   * Only on a statistic an example's number is, or one shown as context beside its numbers: the figure in
+   * whole cents, and how a sentence names it.
+   */
   amountCents?: number;
   inSentence?: string;
 }

@@ -122,7 +122,7 @@ describe("Mara's answers are valid against the catalogs", () => {
 
   // Since 2026-10-14 (the maintainer's option A) her numbers are real ones, each traced to its source in
   // tests/example-sources.spec.ts; here, only that they sit where the cockpit reads them.
-  it("her numbers: one start-up cost line on a named line of Open your own shop, her income goal and her what-if; no savings", () => {
+  it("her numbers: one start-up cost line on a named line of Open your own shop and her income goal; no savings, and no what-if", () => {
     const shop = road.steps.find((s) => s.label === "Open your own shop")!;
     const lines = ex.figures.filter((f) => f.kind === "start-up-cost-line");
     expect(lines).toHaveLength(1);
@@ -134,7 +134,10 @@ describe("Mara's answers are valid against the catalogs", () => {
     expect(lines[0].amountCents).toBe(1_499_362);
     expect(ex.figures.filter((f) => f.kind === "savings-for-start")).toEqual([]);
     expect(ex.kept.incomeWanted?.amountCents).toBe(5_225_500);
-    expect(ex.whatIfFirstYearSalesDollars).toBe(610_300);
+    // The maintainer's pick A (2026-10-15): the example opens with no what-if, so the what-if bar starts
+    // empty; a visitor tries their own if they want one, kept nowhere as on every cockpit. ISED's average is
+    // shown only as context in "Where these numbers come from" (tests/example-sources.spec.ts).
+    expect(ex.whatIfFirstYearSalesDollars).toBeNull();
     for (const f of ex.figures) {
       expect(f.status, f.id).toBe("confirmed");
       expect(f.currency, f.id).toBe("CAD");
@@ -181,8 +184,10 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
     );
     // No savings, so no savings part: a part is shown only when its answer changed something.
     expect(story.savings).toBeUndefined();
-    expect(story["what-if"].length).toBeGreaterThan(0);
-    for (const l of story["what-if"]) expect(l).toMatch(/^Because you tried first-year sales of \$610,300 \(your what-if, not a forecast\), /);
+    // No what-if part since the maintainer's pick A (2026-10-15): she has no what-if, so "What Mara did"
+    // tells only what she answered. The control below shows the part does come back for a what-if given.
+    expect(story["what-if"]).toBeUndefined();
+    expect(exampleStory(inputOf(), 80_000).some((p) => p.id === "what-if")).toBe(true);
     expect(story["step-done"].some((l) => l.includes("1 of 17"))).toBe(true);
     expect(story["this-is-mine"].length).toBeGreaterThan(0);
     // Every part changes something: an answer that changed nothing would be a story told wrong.

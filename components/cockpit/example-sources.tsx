@@ -49,6 +49,8 @@ function StatisticRow({ stat }: { stat: Statistic }) {
  * example shows and how it is worked out, then every price and statistic behind it with its link, the words
  * seen and the day, then what stayed blank and what was seen but not used. Every average is worked out here
  * by lib/examples/stats.ts from the listed prices, the same function the example's own numbers come from.
+ * Since 2026-10-15 a statistic can also sit under "For context", after the person's numbers: Mara's what-if
+ * starts empty, and ISED's average revenue, her what-if until then, is shown there as what it is.
  *
  * The tools are listed in the data's order (the Alberta curriculum's), never sorted by price: information,
  * not a ranking. Each tool's prices fold under its average (a native <details>, remembered nowhere).
@@ -60,7 +62,9 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
   const person = example.person;
   const stat = (id: string | null) => data.statistics.find((s) => s.id === id) ?? null;
   const income = stat(sources.incomeWantedFrom);
-  const whatIf = stat(sources.whatIfFrom);
+  // Context only (the maintainer's pick A, 2026-10-15): statistics with an amount, drawn under their own
+  // heading after the person's numbers so none of them reads as one of hers.
+  const context = sources.context.map((id) => stat(id)).filter((s): s is Statistic => s !== null && s.amountCents !== undefined);
   const software = softwareSummaries(data.software, data.softwareCategories);
 
   return (
@@ -81,14 +85,22 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
             <SourceLink href={income.url}>{words.page}</SourceLink>
           </li>
         ) : null}
-        {whatIf && example.whatIfFirstYearSalesDollars !== null ? (
-          <li>
-            {words.whatIf(person, example.whatIfFirstYearSalesDollars, whatIf.inSentence ?? whatIf.what, whatIf.period)}{" "}
-            <SourceLink href={whatIf.url}>{words.page}</SourceLink>
-          </li>
-        ) : null}
         <li>{words.blank(person)}</li>
       </ul>
+
+      {context.length > 0 ? (
+        <>
+          <Heading>{words.contextHeading(person)}</Heading>
+          <ul className="mt-1 max-w-3xl list-disc space-y-1 pl-4">
+            {context.map((s) => (
+              <li key={s.id}>
+                {words.context(person, s.amountCents!, s.inSentence ?? s.what, s.period)} <SourceLink href={s.url}>{words.page}</SourceLink>
+              </li>
+            ))}
+          </ul>
+          {example.whatIfFirstYearSalesDollars === null ? <p className="mt-1 max-w-3xl">{words.contextWhatIf(person)}</p> : null}
+        </>
+      ) : null}
 
       <Heading>{words.toolsHeading(data.tools.length)}</Heading>
       <p className="mt-1 max-w-3xl">{words.toolsOrder}</p>

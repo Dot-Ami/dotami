@@ -21,12 +21,14 @@ import type { ExampleFuture } from "./types";
  * and the averages are worked out by lib/examples/stats.ts (tests/example-sources.spec.ts traces each one).
  *  - Her one start-up cost line, "Woodworking machines and tools": twelve of the tools the trade's official
  *    descriptions name, picked for this example, one of each at its average listed price, added up.
- *    tests/example-sources.spec.ts reads this file to check that each of her three numbers is worked out
- *    here (toolsTotalCents( or statistic() and none is typed as a number.
+ *    tests/example-sources.spec.ts reads this file to check that each of her two numbers is worked out
+ *    here (toolsTotalCents( or statistic() and none, nor the context figure below, is typed.
  *  - Her yearly income goal: what employed cabinetmakers in Alberta average a year (alis, 2023), the
  *    figure as the source prints it; not what a shop owner earns, and the goal bar says which it is.
- *  - Her what-if: the average yearly revenue of small and medium furniture makers in Canada (ISED, 2024);
- *    not a first-year figure, and the what-if bar says so.
+ *  - No what-if (the maintainer's pick A, 2026-10-15): the what-if bar starts empty for the visitor, who
+ *    can try a number of their own, kept nowhere as everywhere. The average yearly revenue of small and
+ *    medium furniture makers in Canada (ISED, 2024), her what-if until then, is shown only as context in
+ *    "Where these numbers come from": an industry average, not a first-year figure and not one of hers.
  *  - Her savings and her shop space deposit stay blank: nothing real can supply them.
  * The official fees, the skills lists and their sources are the real catalogs' (road 1, the official fees
  * catalog, OaSIS): this file only names their ids, and a test checks that every id exists.
@@ -65,8 +67,11 @@ function statistic(id: string) {
 
 /** Her yearly income goal: the average yearly salary of employed cabinetmakers in Alberta, as alis prints it. */
 const INCOME_FROM = "alis-yearly-average";
-/** Her what-if: the average yearly revenue of small and medium furniture makers in Canada, as ISED prints it. */
-const WHAT_IF_FROM = "ised-33712-revenue";
+/**
+ * Context beside her numbers, never one of them: the average yearly revenue of small and medium furniture
+ * makers in Canada, as ISED prints it.
+ */
+const CONTEXT_FROM = ["ised-33712-revenue"];
 /** "Woodworking machines and tools": one of each listed tool at its average listed price. */
 const TOOLS_CENTS = toolsTotalCents(MARA_SOURCES.tools);
 
@@ -178,7 +183,8 @@ export const exampleMara: ExampleFuture = {
   ],
   // No incorporation number of her own (road 1 draws no Incorporating step of its own; it joins road 0's
   // there, so the step panel's "I'd incorporate at" box is never drawn for her).
-  // The source prints thousands of dollars; the what-if bar takes whole dollars.
-  whatIfFirstYearSalesDollars: statistic(WHAT_IF_FROM).amountCents! / 100,
-  sources: { data: MARA_SOURCES, toolsLineId: MACHINES_LINE_ID, incomeWantedFrom: INCOME_FROM, whatIfFrom: WHAT_IF_FROM },
+  // No what-if: the bar starts empty (the maintainer's pick A, 2026-10-15).
+  whatIfFirstYearSalesDollars: null,
+  // statistic() throws on a context id with no amount, so a renamed entry fails here, not on the page.
+  sources: { data: MARA_SOURCES, toolsLineId: MACHINES_LINE_ID, incomeWantedFrom: INCOME_FROM, context: CONTEXT_FROM.map((id) => statistic(id).id) },
 };

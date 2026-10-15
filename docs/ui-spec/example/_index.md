@@ -7,7 +7,10 @@ Page: `/example/<id>` (one today: `/example/mara`) · Route: `app/example/[id]/p
 numbers), `lib/examples/stats.ts` (every average) · Words: `lib/cockpit/words.ts` `example`
 Type: page (the cockpit, read-only)
 
-Last updated: 2026-10-14 (real numbers: the maintainer, 2026-10-14, "Lets go for A, but try to go as in depth
+Last updated: 2026-10-15 (the maintainer's pick A, "I agree, it should be A": Mara's what-if starts empty, and
+ISED's $610,300 is shown only as context in *Where these numbers come from*, labelled as an industry average;
+road 1 has 17 steps since main's *Keep your records from day one*). Before that 2026-10-14 (real numbers: the
+maintainer, 2026-10-14, "Lets go for A, but try to go as in depth
 as possible; like recommending tools, software, and lets use stats to drum up the average cost of these
 tools. Once done; make sure to let the user know where you got those numbers and averages."). First
 written 2026-10-13, before the code (the maintainer's pick of 2026-10-13: the front door's third door opens a
@@ -23,7 +26,9 @@ different. Her answers are data in their own file, `lib/examples/mara.ts`, never
 her words (*"My own small furniture shop, four-day weeks, home for supper."*), *Both, or not sure*,
 Alberta, Cabinetmakers as the job closest to her work, 9 skills marked (6 have, 2 learning, 1 not yet), no
 incorporation number of her own, *This is mine* on *Open your own shop*, and 1 step marked done (*Register as
-a Cabinetmaker apprentice*).
+a Cabinetmaker apprentice*). She has no what-if: the what-if bar starts empty (since 2026-10-15, the
+maintainer's pick A), and a visitor who wants one types their own, which is kept nowhere, as on every cockpit,
+and read with the bar's own words.
 
 **Mara is invented; her numbers are real** (since 2026-10-14, the maintainer's option A: "ground Mara's
 example in real, cited numbers where they exist; numbers nothing real can supply stay blank"). None is typed
@@ -34,11 +39,13 @@ second check, and every average is worked out by `lib/examples/stats.ts`:
 |---|---|---|
 | *Woodworking machines and tools* on *Open your own shop*: **$14,993.62** | 12 of the tools the trade's official descriptions name (Alberta Cabinetmaker Curriculum Guide 0361, the Red Seal standard, NOC 72311), picked for this example (they name more; the panel's *Not priced yet* lists them), one of each, mid-range shop grade | Each tool's average of its 3 to 5 listed prices from Canadian sellers (KMS Tools, Busy Bee Tools, Canadian Woodworker, Federated Tool Supply, Princess Auto, Lee Valley, ARDEC), the 12 averages added up; *amountFrom* "a link" |
 | Yearly income goal: **$52,255** | The average yearly salary of employed cabinetmakers in Alberta (alis, 2023 Alberta Wage and Salary Survey) | The figure as the source prints it; nothing converted. The goal bar says what it is in place of "agreed" |
-| What-if, first-year sales: **$610,300** | The average yearly revenue of small and medium household and institutional furniture makers in Canada (ISED, NAICS 33712, 2024) | The source's 610.3 thousand dollars; an average over existing businesses, **not a first-year figure**, and the what-if bar says so |
 | Savings, shop space deposit | Blank: **not priced yet** | Nothing real can supply one person's savings, and no source gives a typical lease deposit |
+| What-if, first-year sales | **None**: the what-if bar starts empty (since 2026-10-15, the maintainer's pick A) | Not one of her numbers. ISED's **$610,300** (the source's 610.3 thousand dollars: the average yearly revenue of existing small and medium household and institutional furniture makers of every age in Canada, NAICS 33712, data year 2024), her what-if from 2026-10-14 to 2026-10-15, is shown only as context in the panel, labelled an industry average, **not a first-year figure and not one of Mara's numbers** |
 
 Until 2026-10-14 these were invented ($70,000 a year, quotes of $3,400 and $2,000, $12,000 of savings, a
-$45,000 what-if); none of them appears in any file now (`tests/example-sources.spec.ts`). The catalogs'
+$45,000 what-if); none of them appears in any file now (`tests/example-sources.spec.ts`). Her two numbers
+and the context figure are worked out in her file, never typed there, and the same test fails on the
+context figure written as a number or as money anywhere in `lib/examples/mara.ts`. The catalogs'
 own numbers (official fees with their sources, counts of steps, skills and lines) are as before. Where the
 appendix's counts and the catalog's differ, the page shows the catalog's (the receipts below).
 
@@ -73,8 +80,15 @@ closed by the banner's button. Read-only; it sends nothing and keeps nothing. In
 1. *Mara is invented, and so are Mara's answers. Every price and statistic on this page is real…; the
    official fees are from DotAmi's own cited catalog.* (since 2026-10-14, after review: it said *Every
    number on this page is real*, while her marks, her step done and her day are invented), and **Mara's
-   numbers, and how each is worked out**: the four rows of the table above, each with its source's link
-   (the what-if's row: *Mara's what-if, tried as first-year sales: $610,300, which is …*).
+   numbers, and how each is worked out**: her tools line, her income goal with its source's link, and her
+   savings and deposit, blank. No what-if row (since 2026-10-15). Then **For context, not one of Mara's
+   numbers** (since 2026-10-15, the maintainer's pick A), visible as soon as the panel opens: *$610,300 a
+   year: the average yearly revenue of small and medium household and institutional furniture makers in
+   Canada (NAICS 33712, ISED) (Data year 2024). An industry average over existing businesses of every age,
+   not a first-year figure and not one of Mara's numbers.*, with its link, and *Mara's example has no
+   what-if: the what-if bar under the map starts empty, and a number tried there is for that look only,
+   kept nowhere.* This is the only place on the page that writes $610,300; the same statistic is also in
+   the industry list below as ISED prints it (610.3 thousands).
 2. **12 of the tools the trade's official descriptions name, picked for this example, with average prices
    from Canadian sellers**, *in the order the Alberta curriculum teaches them, not by price*; the class
    priced (mid-range, shop-grade, picked for this example; single-phase; benchtop, jobsite, cordless and
@@ -127,7 +141,7 @@ the banner's status line and does nothing else:
 | **This is mine** | Disabled, the note shown; her pick stays pressed |
 | The told list's **Change**, **Take back** and the not-told rows' **Answer** | Disabled, the note shown under the list's heading |
 | The rail's **Structure** select | Disabled, the note under it |
-| The what-if bar's **Keep** | Answers in the banner; the what-if stays on |
+| The what-if bar's **Keep** (drawn once the visitor tries a what-if) | Answers in the banner; the what-if stays on |
 | **Export** (the header) | Answers in the banner; no plan is made |
 | The step panel's *I'd incorporate at* box, a map toggle | Answers in the banner (neither is drawn on road 1 today) |
 
@@ -154,10 +168,11 @@ instead (`lib/cockpit/words.ts` `example.theirs`, given to the goal bar, `gaugeV
 The receipt lines (*"Because you marked 9 skills…"*) and the step panel's buttons keep the words every
 cockpit uses; the banner and *What Mara did* say once that "you" there means Mara. *What Mara did*'s
 headings say her name, not a pronoun (*Mara's skill marks*, *Mara's start-up cost, from listed prices*, *The
-step Mara marked done*), so a second example person never inherits hers. While her own what-if is on, the
-what-if bar adds, on the number's own line, *Mara's what-if is an industry average (Data year 2024), not a
-first-year figure.* (short on purpose: a line more under the bar squeezed the map until its legend was out of
-reach at 1280 by 720; the panel names the average).
+step Mara marked done*), so a second example person never inherits hers. The what-if bar has no words of
+its own on the example (since 2026-10-15): it starts empty, and a what-if the visitor tries reads as on any
+cockpit (*Your what-if, not a forecast*, *First-year sales of $…, for this look only*). From 2026-10-14 to
+2026-10-15, while her ISED what-if was on, the bar added a note calling it an industry average; with no
+what-if of hers, that note and the bar's `note` prop are gone.
 
 ## What it never does
 
@@ -194,7 +209,8 @@ The told list shows, for each of Mara's answers, what it unlocked, through the s
 - Her start-up cost: *"Because you told us your number for “Woodworking machines and tools” on “Open your
   own shop” is $14,993.62, 30 cost lines are not priced yet."* No savings part: a part is shown only when
   its answer changed something.
-- The what-if: *"Because you tried first-year sales of $610,300 (your what-if, not a forecast), 1 rules
+- No what-if part (since 2026-10-15): she has no what-if, so *What Mara did* tells only what she answered.
+  Until then it said *"Because you tried first-year sales of $610,300 (your what-if, not a forecast), 1 rules
   and tax card now says check first."*
 
 ## Why it exists (user purpose)

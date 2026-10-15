@@ -81,6 +81,7 @@ const goalBar = (page: Page) => page.getByRole("region", { name: "Your goal and 
 const stepPanel = (page: Page) => page.getByRole("region", { name: "Step" });
 const compare = (page: Page) => page.getByRole("region", { name: "Compare the two endings" });
 const whatIf = (page: Page) => page.getByRole("region", { name: "What-if" });
+const whatIfBox = (page: Page) => whatIf(page).getByRole("textbox", { name: "Try first-year sales of $" });
 const told = (page: Page) => page.getByRole("region", { name: "What Mara told DotAmi" });
 const stage = (page: Page, name: string) => page.getByRole("button", { name: new RegExp(`^${name}, `) });
 
@@ -113,10 +114,12 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("30 not priced yet");
   await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("Mara's pick of job: 4 have · 2 learning · 1 not yet");
   await expect(stage(page, "Open your own shop")).toBeVisible();
-  // Her what-if is on: it relit the rules, and is kept nowhere.
-  await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
-  await expect(whatIf(page)).toContainText("First-year sales of $610,300");
-  await expect(whatIf(page)).toContainText("not a first-year figure");
+  // No what-if on open (the maintainer's pick A, 2026-10-15): the box is empty and the "not a forecast"
+  // banner isn't drawn until the visitor tries a number of their own.
+  await expect(whatIfBox(page)).toHaveValue("");
+  await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toHaveCount(0);
+  await expect(whatIf(page)).not.toContainText("$610,300");
+  await expect(page.getByRole("region", { name: "What Mara did" })).not.toContainText("what-if");
   // Her story: each answer and what it changed, worked out by road evaluation.
   await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Because you marked 9 skills, 4 steps now have every skill they list marked have.");
 
@@ -135,6 +138,13 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   // The told list: Take back is disabled, with the reason under its heading.
   await expect(told(page)).toContainText(CANT_KEEP);
   await expect(told(page).getByRole("button", { name: /^Take back/ }).first()).toBeDisabled();
+
+  // A what-if the visitor tries is theirs: the bar's own words, with no note about ISED or Mara.
+  await whatIfBox(page).fill("80000");
+  await whatIf(page).getByRole("button", { name: "Try", exact: true }).click();
+  await expect(whatIf(page).getByText("Your what-if, not a forecast", { exact: true })).toBeVisible();
+  await expect(whatIf(page)).toContainText("First-year sales of $80,000, for this look only");
+  await expect(whatIf(page)).not.toContainText(/industry average|not a first-year figure|Mara/);
 
   // Keep and Export are not disabled: they answer in the banner, and nothing else happens.
   await whatIf(page).getByRole("button", { name: "Keep", exact: true }).click();
@@ -302,9 +312,18 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   // How each of her numbers is worked out.
   await expect(panel).toContainText("Mara's number for “Woodworking machines and tools”: $14,993.62, the 12 tools below added up");
   await expect(panel).toContainText("Mara's yearly income goal: $52,255");
-  await expect(panel).toContainText("Mara's what-if, tried as first-year sales: $610,300");
+  await expect(panel).not.toContainText("Mara's what-if, tried as first-year sales");
   await expect(panel).toContainText("Every price and statistic on this page is real");
-  await expect(panel).toContainText("not a first-year figure");
+  // ISED's average, only as context (the maintainer's pick A, 2026-10-15), visible as the panel opens and
+  // drawn once, labelled as an industry average and not one of hers.
+  await expect(panel.getByText("For context, not one of Mara's numbers", { exact: true })).toBeVisible();
+  const contextLine = panel.getByText(/^\$610,300 a year: /);
+  await expect(contextLine).toBeVisible();
+  await expect(contextLine).toContainText("An industry average over existing businesses of every age, not a first-year figure and not one of Mara's numbers.");
+  await expect(contextLine).toContainText("NAICS 33712");
+  await expect(contextLine).toContainText("Data year 2024");
+  await expect(panel.getByText("$610,300", { exact: false })).toHaveCount(1);
+  await expect(panel).toContainText("Mara's example has no what-if: the what-if bar under the map starts empty");
   await expect(panel).toContainText("Mara's savings and shop space deposit: not priced yet.");
 
   // Every tool, with the average the function gives over its own listed prices, and every price's link.

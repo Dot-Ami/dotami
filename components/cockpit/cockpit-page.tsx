@@ -205,7 +205,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // The receipt of an answer kept with the map, until its save answers; and a counter for focus keys and edits.
   const pendingReceipt = useRef<PendingReceipt | null>(null);
   const counter = useRef(0);
-  // The example opens with its own what-if on (kept nowhere, as every what-if).
+  // An example may open with its own what-if on (kept nowhere, as every what-if); Mara's starts empty.
   const [whatIf, setWhatIf] = useState<number | null>(example?.whatIfFirstYearSalesDollars ?? null);
   // On the example, a count of clicks on controls that would save: the banner says nothing is kept.
   const [exampleNotice, setExampleNotice] = useState(0);
@@ -313,17 +313,11 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
     [example, told],
   );
-  // Where the example's income goal and what-if come from (2026-10-14): the statistic each one is, so the
-  // goal bar and the what-if bar say what the number is rather than calling it the example person's own.
+  // Where the example's income goal comes from (2026-10-14): the statistic it is, so the goal bar says what
+  // the number is rather than calling it the example person's own.
   const exampleStat = (id: string | null | undefined) => (id ? (example?.sources?.data.statistics.find((s) => s.id === id) ?? null) : null);
   const targetStat = exampleStat(example?.sources?.incomeWantedFrom);
-  const whatIfStat = exampleStat(example?.sources?.whatIfFrom);
   const targetFrom = targetStat ? { what: targetStat.inSentence ?? targetStat.what, period: targetStat.period } : null;
-  // Only while the example's own what-if is on: a number the viewer tries is theirs to read, not a statistic.
-  const whatIfNote =
-    example && whatIfStat && whatIf !== null && whatIf === example.whatIfFirstYearSalesDollars
-      ? words.example.sources.whatIfNote(example.person, whatIfStat.period)
-      : null;
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
     [roadEvaluation],
@@ -1172,7 +1166,6 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 onKeep={handleKeepWhatIf}
                 onClear={handleClearWhatIf}
                 fold={{ folded: folds.whatIf, onToggle: () => toggle("whatIf") }}
-                note={whatIfNote}
               />
               <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
             </>

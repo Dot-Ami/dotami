@@ -492,14 +492,18 @@ export const cockpitWords = {
         `${person}'s number for “Woodworking machines and tools”: ${formatMoney(cents)}, the ${n} tools below added up, one of each at its average listed price (one bar clamp, though a glue-up needs several).`,
       income: (person: string, cents: number, what: string, period: string) =>
         `${person}'s yearly income goal: ${formatMoney(cents)}, ${what} (${period}), as the source prints it. What employees earn, not what a shop owner takes home.`,
-      whatIf: (person: string, dollars: number, what: string, period: string) =>
-        `${person}'s what-if, tried as first-year sales: ${formatMoney(dollars * 100)}, which is ${what} (${period}). An average over existing businesses, not a first-year figure.`,
-      /**
-       * Beside the what-if while the example's own what-if is on. Short on purpose (2026-10-14): a second
-       * line under the bar took the map's legend out of reach at 1280 by 720. The panel says which average.
-       */
-      whatIfNote: (person: string, period: string) => `${person}'s what-if is an industry average (${period}), not a first-year figure.`,
       blank: (person: string) => `${person}'s savings and shop space deposit: not priced yet. Nothing real can supply them; the list at the end says why.`,
+      /**
+       * A statistic shown beside the example person's numbers for context, never as one of them (the
+       * maintainer's pick A, 2026-10-15): ISED's average revenue, which was Mara's what-if until then. Said
+       * as what it is: an average over existing businesses of every age, not a first-year figure.
+       */
+      contextHeading: (person: string) => `For context, not one of ${person}'s numbers`,
+      context: (person: string, cents: number, what: string, period: string) =>
+        `${formatMoney(cents)} a year: ${what} (${period}). An industry average over existing businesses of every age, not a first-year figure and not one of ${person}'s numbers.`,
+      // No "you" here: the banner says "you" on this page means the example person, not the visitor.
+      contextWhatIf: (person: string) =>
+        `${person}'s example has no what-if: the what-if bar under the map starts empty, and a number tried there is for that look only, kept nowhere.`,
       /** "Picked for this example": the sources name more tools than are priced (2026-10-14, after review). */
       toolsHeading: (n: number) => `${n} of the tools the trade's official descriptions name, picked for this example, with average prices from Canadian sellers`,
       toolsOrder: "In the order the Alberta curriculum teaches them, not by price.",

@@ -22,9 +22,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   picked for this example (the Alberta cabinetmaker curriculum, the Red Seal standard, the national job
   classification; they name more, and the panel lists the ones not priced), one of
   each at its average of 3 to 5 prices listed by Canadian sellers on 2026-10-14; her yearly income goal is
-  $52,255, what employed cabinetmakers in Alberta average a year (Government of Alberta, 2023); and her
-  what-if of $610,300 in first-year sales is the average yearly revenue of small furniture makers in
-  Canada (Government of Canada, 2024), said on screen to be *not a first-year figure*. Her savings and a
+  $52,255, what employed cabinetmakers in Alberta average a year (Government of Alberta, 2023). She has
+  no what-if (the maintainer's pick A, 2026-10-15): the what-if bar starts empty, and you can try a number
+  of your own, kept nowhere as everywhere. The average yearly revenue of small furniture makers in Canada,
+  $610,300 (Government of Canada, 2024), is shown only for context in the panel below, said to be an
+  industry average over existing businesses of every age, *not a first-year figure* and not one of
+  Mara's numbers. Her savings and a
   shop deposit stay blank, *not priced yet*: nothing real can supply them. The banner says *"Mara is
   invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here
   is saved."*, and its **Where these numbers come from** lists every number, how it was worked out (every
@@ -34,7 +37,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   listed apart), market rents with the costs on top and the gross rent where the report gives them, and
   what stayed blank and why. It says Mara and her answers are invented and every price and statistic is
   real. The tools are information, a pick with what sellers charge: never ranked, never "buy this". A
-  test checks that her three numbers are worked out in her file, never typed. A short list, *What Mara
+  test checks that her two numbers and the context figure are worked out in her file, never typed. A
+  short list, *What Mara
   did*, shows what each of her answers changed, worked out by the rules (on today's road: 17 steps, 30
   cost lines still to price; the design's early sketch said 22 and 4). Her answers are labelled hers, not
   yours: *Mara's target …*, *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner

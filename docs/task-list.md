@@ -204,6 +204,11 @@ and the maintainer's six decisions of 2026-10-11:
       said to be picked for this example; a test that her three numbers are worked out, never typed; wider
       verdict and framing word lists (`tests/helpers/verdict-words.ts`), also over the example's
       components and the rendered banner, goal bar and what-if bar
+    - [x] Her what-if starts empty (2026-10-15, the maintainer's pick A): the visitor types their own if
+      they want one, kept nowhere; ISED's $610,300 shown only as context in *Where these numbers come
+      from*, labelled an industry average over existing businesses of every age, not a first-year figure
+      and not one of Mara's numbers; the what-if bar's example note removed; and her Steps gauge caught up
+      with main (road 1 has 17 steps since *Keep your records from day one*)
     - [ ] Still open on it: the review couldn't re-open Autodesk Fusion (403), Busy Bee Tools and Lee
       Valley (429) or QuickBooks (timed out), so those prices rest on the first research's two checks
       only; and whether Fusion's personal-use page shows the CA$120 monthly price its entry cites

@@ -10,8 +10,11 @@
  * function fails; the made-up numbers she had before are gone; and nothing in the sources or their words
  * ranks, recommends or tells anyone what to do.
  */
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { ExampleSources } from "@/components/cockpit/example-sources";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadApprenticeToOwnShopAB } from "@/lib/engines/roads/v2026";
 import { exampleMara } from "@/lib/examples/mara";
@@ -34,6 +37,20 @@ function byHand(cents: number[]) {
   const mid = Math.floor(sorted.length / 2);
   const median = sorted.length % 2 === 1 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
   return { count: cents.length, meanCents: Math.round(sum / cents.length), medianCents: median, lowCents: sorted[0], highCents: sorted[sorted.length - 1] };
+}
+
+/** "Where these numbers come from" drawn to HTML, as the browser gets it before React takes over. */
+const panelHtml = () => renderToStaticMarkup(createElement(ExampleSources, { example: ex }));
+
+/** The panel's text, tags dropped and the entities React writes turned back into characters. */
+function panelText(): string {
+  return panelHtml()
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/<!-- -->/g, "")
+    .replace(/\s+/g, " ");
 }
 
 /** A figure as a source prints it ("$52,255.00", "610.3" thousands) in whole cents. */
@@ -195,13 +212,55 @@ describe("every number in Mara's data traces to a source entry", () => {
     expect(ex.kept.incomeWanted?.amountCents).toBe(s.amountCents);
   });
 
-  it("her what-if is the official average revenue of small furniture businesses, never called a first-year figure", () => {
-    const s = stat(ex.sources!.whatIfFrom)!;
+  // The maintainer's pick A (2026-10-15, "I agree, it should be A"): her what-if starts empty, and ISED's
+  // average is shown only as context, labelled as what it is, never as one of her numbers.
+  it("she has no what-if; ISED's $610,300 is context only, labelled an industry average over existing businesses of every age", () => {
+    expect(ex.whatIfFirstYearSalesDollars).toBeNull();
+    expect(Object.keys(ex.sources!)).not.toContain("whatIfFrom");
+    expect(ex.sources!.context).toEqual(["ised-33712-revenue"]);
+    const s = stat("ised-33712-revenue")!;
     expect(s.url).toBe("https://ised-isde.canada.ca/app/ixb/cis/performance/rev/33712");
+    expect(s.period).toBe("Data year 2024");
     expect(s.amountCents).toBe(printedCents(s.value, s.unit));
-    expect(ex.whatIfFirstYearSalesDollars! * 100).toBe(s.amountCents);
+    expect(s.amountCents).toBe(61_030_000);
     expect(s.caveat).toMatch(/NOT a first-year figure/);
-    expect(cockpitWords.example.sources.whatIfNote(ex.person, s.period)).toBe("Mara's what-if is an industry average (Data year 2024), not a first-year figure.");
+    expect(cockpitWords.example.sources.context(ex.person, s.amountCents!, s.inSentence!, s.period)).toBe(
+      "$610,300 a year: the average yearly revenue of small and medium household and institutional furniture makers in Canada (NAICS 33712, ISED) (Data year 2024). An industry average over existing businesses of every age, not a first-year figure and not one of Mara's numbers.",
+    );
+    // The what-if bar's example-only note is gone with her what-if: no words for it remain.
+    expect(Object.keys(cockpitWords.example.sources)).not.toContain("whatIfNote");
+    expect(Object.keys(cockpitWords.example.sources)).not.toContain("whatIf");
+  });
+
+  it("the panel draws $610,300 once, under the context heading after her numbers, never in her numbers' list", () => {
+    const text = panelText();
+    const w = cockpitWords.example.sources;
+    const numbersAt = text.indexOf(w.numbersHeading(ex.person));
+    const contextAt = text.indexOf(w.contextHeading(ex.person));
+    const toolsAt = text.indexOf(w.toolsHeading(src.tools.length));
+    expect(numbersAt).toBeGreaterThan(-1);
+    expect(contextAt).toBeGreaterThan(numbersAt);
+    expect(toolsAt).toBeGreaterThan(contextAt);
+    // Her numbers' list: the tools line, the income goal and what stayed blank; no ISED figure, no what-if.
+    const numbersPart = text.slice(numbersAt, contextAt);
+    expect(numbersPart).toContain("$14,993.62");
+    expect(numbersPart).toContain("$52,255");
+    expect(numbersPart).not.toMatch(/610,300|what-if/);
+    // The context part: the one line, with its link, and that the what-if bar starts empty.
+    const contextPart = text.slice(contextAt, toolsAt);
+    const s = stat("ised-33712-revenue")!;
+    expect(contextPart).toContain(w.context(ex.person, s.amountCents!, s.inSentence!, s.period));
+    expect(contextPart).toContain(w.contextWhatIf(ex.person));
+    expect(text.split("$610,300").length - 1).toBe(1);
+    expect(panelHtml()).toContain(`href="${s.url}"`);
+  });
+
+  it("the panel check can fail: a panel that drew the figure among her numbers is caught", () => {
+    const w = cockpitWords.example.sources;
+    const text = panelText();
+    const moved = text.replace(w.blank(ex.person), `${w.blank(ex.person)} $610,300`);
+    expect(moved).not.toBe(text);
+    expect(moved.slice(moved.indexOf(w.numbersHeading(ex.person)), moved.indexOf(w.contextHeading(ex.person)))).toMatch(/610,300/);
   });
 
   it("nothing else: no savings and no deposit, which nothing real can supply, and each is listed as not priced", () => {
@@ -223,7 +282,7 @@ describe("every number in Mara's data traces to a source entry", () => {
       // The figure is in the words seen on the page (the value without its "$", as tables print it).
       expect(s.quote, s.id).toContain(s.value.replace(/^\$/, "").split(" / ")[0]);
     }
-    for (const id of [ex.sources!.incomeWantedFrom, ex.sources!.whatIfFrom]) expect(stat(id)?.amountCents, String(id)).toBeGreaterThan(0);
+    for (const id of [ex.sources!.incomeWantedFrom, ...ex.sources!.context]) expect(stat(id)?.amountCents, String(id)).toBeGreaterThan(0);
     expect(new Set(src.statistics.map((s) => s.id)).size).toBe(src.statistics.length);
   });
 });
@@ -231,30 +290,42 @@ describe("every number in Mara's data traces to a source entry", () => {
 describe("Mara's numbers are worked out in her file, never typed there", () => {
   // The value checks above pass a correct number typed by hand (review, 2026-10-14: `const TOOLS_CENTS =
   // 1_499_362;` passed every test). The panel says every average is "never typed by hand", so this reads
-  // lib/examples/mara.ts itself: each of her three numbers must come through the function or the statistic,
-  // and none of their values may appear in it as a number.
+  // lib/examples/mara.ts itself: each of her two numbers must come through the function or the statistic,
+  // her what-if must be null (the maintainer's pick A, 2026-10-15), and none of their values, nor the ISED
+  // figure shown beside them as context, may appear in it as a number or as money written out.
   const FILE = "lib/examples/mara.ts";
-  const numbers = () => [toolsTotalCents(src.tools), ex.kept.incomeWanted!.amountCents, ex.whatIfFirstYearSalesDollars!];
+  /** Her two numbers and the context figures, all in whole cents. */
+  const numbers = () => [
+    toolsTotalCents(src.tools),
+    ex.kept.incomeWanted!.amountCents,
+    ...ex.sources!.context.map((id) => src.statistics.find((s) => s.id === id)!.amountCents!),
+  ];
 
   /** What in this code types one of her numbers by hand (empty when each is worked out). */
-  function typedByHand(code: string, values: number[]): string[] {
+  function typedByHand(code: string, cents: number[]): string[] {
     // Comments go and strings are emptied, so only code is read.
     const bare = simplify(code, false);
     const problems: string[] = [];
     if (!/\bTOOLS_CENTS\s*=\s*toolsTotalCents\(\s*MARA_SOURCES\.tools\s*\)/.test(bare)) problems.push("TOOLS_CENTS is not toolsTotalCents(MARA_SOURCES.tools)");
     if (!/\bagreed\(\s*""\s*,\s*""\s*,\s*TOOLS_CENTS\s*,/.test(bare)) problems.push("the machines-and-tools figure is not TOOLS_CENTS");
     if (!/\bincomeWanted:\s*\{\s*amountCents:\s*statistic\(\s*INCOME_FROM\s*\)\.amountCents!?\s*,/.test(bare)) problems.push("incomeWanted is not statistic(INCOME_FROM)");
-    if (!/\bwhatIfFirstYearSalesDollars:\s*statistic\(\s*WHAT_IF_FROM\s*\)\.amountCents!?\s*\/\s*100\s*,/.test(bare)) problems.push("the what-if is not statistic(WHAT_IF_FROM) / 100");
-    // Any numeric literal equal to one of her numbers, in cents or in dollars, written with or without "_".
-    const forbidden = new Set(values.flatMap((v) => [v, v / 100, v * 100]));
+    if (!/\bwhatIfFirstYearSalesDollars:\s*null\s*,/.test(bare)) problems.push("the what-if is not null");
+    // Any numeric literal equal to one of the numbers, in cents or in dollars, written with or without "_".
+    const forbidden = new Set(cents.flatMap((v) => [v, v / 100, v * 100]));
     for (const m of bare.matchAll(/\b\d[\d_]*(?:\.\d+)?\b/g)) {
       if (forbidden.has(Number(m[0].replace(/_/g, "")))) problems.push(`the number ${m[0]} is typed`);
+    }
+    // And written out as money anywhere, strings and comments included ("$610,300", "610,300").
+    for (const v of cents) {
+      for (const form of new Set([formatMoney(v), (v / 100).toLocaleString("en-CA")])) {
+        if (code.includes(form)) problems.push(`${form} is written`);
+      }
     }
     return problems;
   }
 
-  it("each of the three is read through toolsTotalCents( or statistic(, and none is written as a number", () => {
-    expect(numbers()).toEqual([1_499_362, 5_225_500, 610_300]);
+  it("each of her two is read through toolsTotalCents( or statistic(, her what-if is null, and none (nor the context figure) is written", () => {
+    expect(numbers()).toEqual([1_499_362, 5_225_500, 61_030_000]);
     expect(typedByHand(readSource(FILE), numbers())).toEqual([]);
   });
 
@@ -263,7 +334,7 @@ describe("Mara's numbers are worked out in her file, never typed there", () => {
     const typed = [
       ["toolsTotalCents(MARA_SOURCES.tools)", "1_499_362"],
       ["statistic(INCOME_FROM).amountCents!", "5_225_500"],
-      ["statistic(WHAT_IF_FROM).amountCents! / 100", "610_300"],
+      ["whatIfFirstYearSalesDollars: null", "whatIfFirstYearSalesDollars: 610_300"],
       ["TOOLS_CENTS,\n", "14993.62 * 100,\n"],
     ];
     for (const [from, to] of typed) {
@@ -273,6 +344,10 @@ describe("Mara's numbers are worked out in her file, never typed there", () => {
     }
     // A number typed anywhere else in the file, even in a line that doesn't feed her figures.
     expect(typedByHand(`${code}\nconst spare = 5225500;`, numbers())).toEqual(["the number 5225500 is typed"]);
+    // The context figure, as a number or as money in a string or a comment.
+    expect(typedByHand(`${code}\nconst spare = 610300;`, numbers())).toEqual(["the number 610300 is typed"]);
+    expect(typedByHand(`${code}\nconst label = "$610,300";`, numbers())).toEqual(["$610,300 is written", "610,300 is written"]);
+    expect(typedByHand(`${code}\n// first-year sales of 610,300\n`, numbers())).toEqual(["610,300 is written"]);
   });
 });
 
@@ -428,9 +503,11 @@ describe("the banner and the sources' words", () => {
     expect(src.notPriced.find((n) => n.what.startsWith("Shaper"))!.why).toBe("Named in NOC 72311 or the curriculum, but not among the twelve tools picked for this example.");
   });
 
-  it("the panel's what-if line says the number was tried as first-year sales, not that it is first-year sales", () => {
-    expect(cockpitWords.example.sources.whatIf(ex.person, 610_300, "an average", "Data year 2024")).toBe(
-      "Mara's what-if, tried as first-year sales: $610,300, which is an average (Data year 2024). An average over existing businesses, not a first-year figure.",
+  it("the panel's context part is headed as not one of hers, and says the what-if bar starts empty and keeps nothing", () => {
+    const w = cockpitWords.example.sources;
+    expect(w.contextHeading(ex.person)).toBe("For context, not one of Mara's numbers");
+    expect(w.contextWhatIf(ex.person)).toBe(
+      "Mara's example has no what-if: the what-if bar under the map starts empty, and a number tried there is for that look only, kept nowhere.",
     );
   });
 

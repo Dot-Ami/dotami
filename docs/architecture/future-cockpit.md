@@ -265,8 +265,12 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   (they name more; the panel lists the ones not priced), mid-range shop grade, one of each at its average
   of 3 to 5 listed prices from Canadian sellers. Her yearly income goal is $52,255,
   the average yearly salary of employed cabinetmakers in Alberta (alis, 2023), said as that in the goal
-  bar. Her what-if is $610,300, the average yearly revenue of small and medium furniture makers in Canada
-  (ISED, NAICS 33712, 2024), said under the what-if bar to be *not a first-year figure*. Her savings and
+  bar. She has no what-if (since 2026-10-15, the maintainer's pick A): the what-if bar starts empty, and a
+  visitor who wants one types their own, kept nowhere as everywhere and read with the bar's own words.
+  ISED's $610,300, the average yearly revenue of existing small and medium furniture makers of every age in
+  Canada (NAICS 33712, data year 2024) and her what-if from 2026-10-14 to 2026-10-15, is shown only as
+  context in the panel, under *For context, not one of Mara's numbers*: an industry average, not a
+  first-year figure and not one of hers. Her savings and
   her shop space deposit are blank: nothing real can supply them. The banner says *"Mara is invented; the
   prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved."*
   and its **Where these numbers come from** opens a panel listing every number, how it is worked out,
@@ -277,14 +281,15 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   invented). "Recommending tools" is built as information: a pick of the tools the trade's official
   descriptions name, with what sellers charge, never ranked, never "buy this" and never called the trade's
   whole list. `tests/example-sources.spec.ts` traces every number to its entry, recomputes every average,
-  reads `lib/examples/mara.ts` to check her three numbers are worked out there and none is typed, checks
+  reads `lib/examples/mara.ts` to check her two numbers are worked out there, her what-if is null and none
+  of them, nor the context figure, is typed as a number or written as money, checks
   the old invented numbers are gone, and keeps verdict and framing words (`tests/helpers/verdict-words.ts`,
   each word with a control) out of the words, the data and the example's components; the browser test
   reads the same lists over the rendered banner, goal bar, what-if bar and panel (2026-10-14, after
   review).
 - **The same cockpit, read-only.** `/example/mara` (`app/example/[id]/page.tsx`; any other id is not
   found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
-  fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if on. A banner that
+  fed from the file instead of `GET /api/futures/<id>`, with the what-if bar empty. A banner that
   never folds says what is invented and what is real (above) with **Where these numbers come from** and
   **Start my own future →** (`/start`). It sits above the cockpit's grid,
   never inside it, and stays at the top of the window when the page scrolls on a phone; the phone sheets
@@ -1955,6 +1960,14 @@ savings and a $45,000 what-if, are invented and stay here only as the sketch. Th
 are real since the maintainer's option A of 2026-10-14: a $14,993.62 tools line from sellers' listed
 prices, a $52,255 income goal from alis, a $610,300 what-if from ISED, and no savings or deposit; § 1, The
 example future as built.)*
+
+*(2026-10-15, the maintainer's pick A, "I agree, it should be A": the built example has no what-if. The
+what-if bar starts empty for the visitor, who can type their own, never kept, as everywhere. ISED's
+$610,300 stays only as context in **Where these numbers come from**, labelled as what it is: the average
+yearly revenue of existing small and medium businesses of every age in NAICS 33712, Canada, data year 2024;
+an industry average, not a first-year figure and not one of Mara's numbers. Nothing else changed: Mara stays
+invented with real numbers, averages appear only in this invented example, and her $52,255 income goal and
+$14,993.62 tools line are as they were. The sketch's $45,000 what-if below stays as the sketch.)*
 
 She picks *Start from where I want to be* and types *"My own small furniture shop, four-day weeks,
 home for supper."* The receipt: *"Saved word for word, dated today. This goes at the top of your
