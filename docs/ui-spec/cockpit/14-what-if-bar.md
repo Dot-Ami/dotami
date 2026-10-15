@@ -4,7 +4,8 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/what-i
 `lib/cockpit/words.ts` `whatIf`)
 Type: form + banner
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
+Last updated: 2026-10-14 (it no longer covers the legend, below); 2026-10-12 (built; docs/architecture/future-cockpit.md
+§ 2, Cockpit screen as built, part 2)
 
 ## What it is
 
@@ -19,6 +20,11 @@ reader:
   own. Mara's what-if is a published statistic, so it says *Mara's what-if is an industry average (Data year
   2024), not a first-year figure.* (docs/ui-spec/example/_index.md). On the same line, not a new one: a line
   more under the bar squeezes the map above it. A person's own future never shows it.
+
+The bar starts where the map's legend ends and never covers it: from 768 px, when a what-if makes the
+bar taller than the room left under the road's minimum area (12rem), the column holding the road, the
+legend and the bar scrolls down instead (12-folding-and-phone.md, "The road's minimum area"; until
+2026-10-14 the legend slid under the bar and its **Fold the legend** couldn't be clicked).
 
 ## What it does (behavior on interact)
 

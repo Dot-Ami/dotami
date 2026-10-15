@@ -41,12 +41,10 @@ import type { Scenario } from "@/lib/scenarios/types";
 
 import { inventedCitation } from "./helpers/invented-road";
 import { input, inventedIdea, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
 const ALL_ON: Overlays = { skills: true, money: true, rules: true };
-
-/** The same verdict words road evaluation's words are checked against (tests/road-evaluation.spec.ts). */
-const VERDICT = /\b(enough|ready|best|should|recommend\w*|on track|behind)\b/i;
 
 /** A figure as the figures list returns it; only what agreedPlanning and the rules read matters here. */
 function figure(change: Partial<FigureView>): FigureView {
@@ -298,12 +296,14 @@ describe("Next on your road", () => {
       // Nothing the map's own chip calls "not on your path" or "done".
       for (const id of next) expect(["ghost", "complete"]).not.toContain(getScenarioNodeStatus(id, scenario));
     }
-    // A first visit on the default picks: stage 0 is drawn done, so the list starts at the three
-    // before-you-open steps that follow it in the first column (2026-10-12), then stage 1.
-    expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea(), 4).map((s) => s.stepId)).toEqual([
+    // A first visit on the default picks: stage 0 is drawn done, so the list starts at the
+    // before-you-open steps that follow it in the first column (three on 2026-10-12, and Keep your
+    // records from day one since 2026-10-14), then stage 1.
+    expect(nextOnYourRoad(evaluateRoad(road0Input()), inventedIdea(), 5).map((s) => s.stepId)).toEqual([
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
+      "step-start-keep-records",
       "stage-1-sole-prop-activation",
     ]);
   });

@@ -20,6 +20,7 @@ import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 import { getScenarioNodeStatus } from "@/lib/scenarios/graph";
 
 import { input, inventedIdea, ROAD_ID, roadToEvaluate, skillItems, TODAY } from "./helpers/road-to-evaluate";
+import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
 const stateOf = (result: RoadEvaluation) => Object.fromEntries(result.steps.map((s) => [s.stepId, s.state]));
 const stepOf = (result: RoadEvaluation, id: string) => result.steps.find((s) => s.stepId === id)!;
@@ -114,8 +115,9 @@ describe("each step's state and its reason", () => {
     const result = evaluateRoad(road0());
     const map = evaluateScenario(inventedIdea(), { today: TODAY }).nodeStates;
     const asState = { green: "applies", yellow: "check-first", gray: "not-on-your-path" } as const;
-    // The steps the rules read get the map's colours; road 0's before-you-open steps (2026-10-12), which
-    // no rule reads, apply because they are on the road, and say so.
+    // The steps the rules read get the map's colours; road 0's before-you-open steps (2026-10-12, and
+    // Keep your records from day one since 2026-10-14), which no rule reads, apply because they are on
+    // the road, and say so.
     const ruled = new Set(Object.keys(map));
     const states = stateOf(result);
     expect(Object.fromEntries(Object.entries(states).filter(([id]) => ruled.has(id)))).toEqual(
@@ -126,6 +128,7 @@ describe("each step's state and its reason", () => {
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
+      "step-start-keep-records",
     ]);
     for (const step of beforeYouOpen) {
       expect(step.state).toBe("applies");
@@ -645,9 +648,7 @@ describe("receipts: one plain line per change, from the two runs", () => {
 
 describe("the words: counts and arithmetic, never a verdict", () => {
   // A gap is a count or a sum, never "enough", "ready" or "best", and nothing says what to do
-  // (docs/architecture/future-cockpit.md § 4 and § 8).
-  const VERDICT = /\b(enough|ready|best|should|recommend\w*|on track|behind)\b/i;
-
+  // (docs/architecture/future-cockpit.md § 4 and § 8). The words: tests/helpers/verdict-words.ts.
   const runs: RoadEvaluationInput[] = [
     input(),
     input({ forkPicks: { "fork-eval-ending": OWN }, targetMonth: "2029-05" }),

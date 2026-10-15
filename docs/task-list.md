@@ -92,6 +92,17 @@ and the maintainer's six decisions of 2026-10-11:
     - [ ] Still open on it: Alberta's registry fees stay named blanks until a person reads the Registry
       Agent Product Catalogue; a source for the seven start-up names (the BDC and Futurpreneur
       templates keep them in spreadsheets; the maintainer's call, design § 13)
+  - [x] A *Keep your records from day one* step on every business road (2026-10-14): a business must
+    keep its records from the start, and records missed early are hard to put back together. Written once
+    (`lib/engines/roads/v2026/keep-records.ts`) from the CRA's own *Keeping records* pages: who has to
+    keep records and what counts, what the CRA says happens without them, how they must be kept (paper
+    or electronic, with backups), and where and for how long (generally six years from the end of the
+    last tax year they relate to, and two of the other periods the CRA lists); four cited *done when* lines, every source a tool check that day, no
+    read claimed. On today's Alberta road it is a fourth *before you open* step, on the path for every
+    idea; on the apprentice road it is first in *Open the doors*, after *Open your own shop*, so it is on
+    the path once the person picks their own shop ([engines/roads.md](engines/roads.md))
+    - [ ] Still open on it: a person's read of the three CRA pages; whether the step panel should point
+      to *Your expenses* as one place to keep expense records (information only, the maintainer's call)
   - [x] What you tell DotAmi is kept: your skill marks (once, for every future), your progress on each
     step, the future's road, ending, your date and the sales at which you'd incorporate, and three new
     kinds of number you agree to (income you want, kept once for you rather than on one future;
@@ -201,8 +212,12 @@ and the maintainer's six decisions of 2026-10-11:
       prices when sales end or pages move
     - [ ] Still open on it: the front door's still picture of a filled-in cockpit (§ 1 row 1), drawn from
       her example; the appendix's *Since last time* line, which needs the return visit's list
-  - [ ] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
-    skill → price a line → what-if → compare → *This is mine*
+  - [x] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
+    skill → price a line → what-if → compare → *This is mine* (2026-10-14: `e2e/journey.spec.ts`, on to
+    *Your plan*, a reload and *Your futures*, plus the *I already have an idea* door to road 0; and
+    `e2e/no-verdict.spec.ts`, which fails if any screen of the journey shows advice or ranking words as it
+    opens, the journey test doing the same after each thing a person does; the list in
+    `tests/helpers/verdict-words.ts`)
   - [ ] Day-5 checkpoint: the gauges, receipts and the Skills and Money overlays running on today's
     Alberta road, for the maintainer to click through. Raise then: *I don't know* on a skill keeps no
     mark (the design's table listed it as a fourth mark; [§ 7](architecture/future-cockpit.md))

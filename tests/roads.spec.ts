@@ -45,6 +45,8 @@ const SHIPPED_IDS: Record<
       "step-start-register-name",
       "step-start-permits-bizpal",
       "step-start-business-account",
+      // Keep your records from day one (2026-10-14), after them in the first column.
+      "step-start-keep-records",
     ],
     // The keys today's saved branch picks are stored under (ScenarioState.activeBranches).
     forks: ["gstTiming", "incorporationTiming"],
@@ -97,6 +99,11 @@ const SHIPPED_IDS: Record<
       "dw-start-account-named",
       "dw-start-account-billing",
       "dw-start-account-statements",
+      // Keep your records from day one (2026-10-14).
+      "dw-start-records-what",
+      "dw-start-records-every-transaction",
+      "dw-start-records-how",
+      "dw-start-records-where-how-long",
     ],
     costs: [
       "cost-start-name-government-fee",
@@ -134,6 +141,8 @@ const SHIPPED_IDS: Record<
       "step-shop-gst-small-supplier",
       "step-shop-first-hire",
       "step-shop-sponsor-apprentice",
+      // Keep your records from day one (2026-10-14).
+      "step-shop-keep-records",
     ],
     forks: ["fork-shop-employed-or-own"],
     doneWhen: [
@@ -198,6 +207,11 @@ const SHIPPED_IDS: Record<
       "dw-shop-sponsor-own-confirmed",
       "dw-shop-sponsor-own-ratio",
       "dw-shop-sponsor-own-wages",
+      // Keep your records from day one (2026-10-14).
+      "dw-shop-records-what",
+      "dw-shop-records-every-transaction",
+      "dw-shop-records-how",
+      "dw-shop-records-where-how-long",
     ],
     costs: [
       "cost-shop-apprentice-application",
@@ -318,8 +332,9 @@ describe("road 0, Starting any business in Alberta, is today's ten-step map, plu
     expect(road.provinces).toEqual(["AB"]);
   });
 
-  // The three steps written for it on 2026-10-12, in the first column after the map's own stages.
-  const BEFORE_YOU_OPEN = ["step-start-register-name", "step-start-permits-bizpal", "step-start-business-account"];
+  // The three steps written for it on 2026-10-12, in the first column after the map's own stages, and
+  // Keep your records from day one after them (2026-10-14).
+  const BEFORE_YOU_OPEN = ["step-start-register-name", "step-start-permits-bizpal", "step-start-business-account", "step-start-keep-records"];
 
   it("its columns are today's four tiers, in order, with the same names, lines and toggles", () => {
     expect(road.columns.map((c) => c.id)).toEqual(cfeTiersV2026.map((t) => t.id));

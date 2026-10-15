@@ -133,15 +133,19 @@ describe("every source is a tool check with its quotes, and none claims a read",
   const all = citationsOf(road);
 
   it("every step, done-when line, fee and sourced cost line has one", () => {
-    // 16 steps; more citations than steps, since every done-when line carries its own.
-    expect(road.steps).toHaveLength(16);
+    // 17 steps (16 on 2026-10-12, and Keep your records from day one since 2026-10-14); more citations
+    // than steps, since every done-when line carries its own.
+    expect(road.steps).toHaveLength(17);
     expect(all.length).toBeGreaterThan(road.steps.length * 3);
   });
 
-  it("each was checked by the tool on 2026-10-12, with at least one quote of three words or more", () => {
+  it("each was checked by the tool on 2026-10-12 (the records step's on 2026-10-14), with at least one quote of three words or more", () => {
+    // Keep your records from day one was added on 2026-10-14, its CRA pages checked that day.
+    const checkedOnFor = (where: string) =>
+      where === "step-shop-keep-records" || where.startsWith("dw-shop-records-") ? "2026-10-14" : "2026-10-12";
     for (const { where, citation } of all) {
       expect(citation.toolCheck, where).toBeDefined();
-      expect(citation.toolCheck!.checkedOn, where).toBe("2026-10-12");
+      expect(citation.toolCheck!.checkedOn, where).toBe(checkedOnFor(where));
       expect(citation.toolCheck!.quotes.length, where).toBeGreaterThan(0);
       for (const quote of citation.toolCheck!.quotes) {
         expect(quote.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length, `${where}: ${quote}`).toBeGreaterThanOrEqual(3);

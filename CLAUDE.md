@@ -69,7 +69,8 @@ says where it is going.
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
   its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
-  three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
+  four *before you open* steps (the fourth, since 2026-10-14, *Keep your records from day one*, which
+  every business road has, `lib/engines/roads/v2026/keep-records.ts`), which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
   since 2026-10-13); the step panel, which keeps node detail whole; playbook
   export, which opens *Your plan* (`/plan?venture=<id>`, since 2026-10-13: one idea's plan to read and
@@ -232,7 +233,14 @@ binary while `next dev` holds it), and delete `.next` before restarting the dev 
 a production build. `tests/engine-integrity.spec.ts` must stay green; new catalog work adds
 its test first. Never claim green without the command and its output.
 `npm run test:browser` (Playwright, `e2e/`) runs the production build on a throwaway database in
-Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path.
+Chromium; CI runs it as its own job. A new screen arrives with a browser test for its main path, and
+joins the walk in `e2e/no-verdict.spec.ts`, which reads the visible text of every screen of the journey
+as it opens and fails on advice or ranking words ("you should", "we recommend", "DotAmi recommends", "top
+pick", "#1"…). Those words, and the only official quotes allowed to carry one (each with its reason, and
+only inside quote marks), are one list: `tests/helpers/verdict-words.ts`, which the words files' unit tests
+share too. `e2e/journey.spec.ts` walks the whole journey in one test, front door to *Your futures*, and
+reads the page with the same check after each thing a person does (a what-if, an agree prompt, a mark,
+*This is mine*): words drawn only after an action are read there, so a new one belongs in that walk.
 Dev mode hides production-only failures (a CSP-blocked page looked fine in `next dev` for two
 weeks) — browser tests run the real build for that reason.
 Its server starts with `DOTAMI_E2E_RATE_LIMITS=opt-in`, set only in `playwright.config.ts`: every

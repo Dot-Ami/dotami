@@ -37,12 +37,14 @@ function draw(road: Road, c: MapCase): string {
 
 /**
  * The before-you-open steps added to road 0 on 2026-10-12 (docs/architecture/future-cockpit.md § 6,
- * "Road 0's content as built"): the only cards the map gained. No rule colours them yet.
+ * "Road 0's content as built"), and Keep your records from day one (2026-10-14): the only cards the map
+ * gained. No rule colours them yet.
  */
 const ADDED = [
   { id: "step-start-register-name", label: "Register your business name, if you use one" },
   { id: "step-start-permits-bizpal", label: "Look up your permits and licences (BizPaL)" },
   { id: "step-start-business-account", label: "A separate bank account for the business, if it has a name other than yours" },
+  { id: "step-start-keep-records", label: "Keep your records from day one" },
 ];
 
 /** The wrapper of one stage card, found by the card's name. */
@@ -68,13 +70,13 @@ function withoutAdded(html: string): { rest: string; cards: string[] } {
 }
 
 describe("today's map, drawn as the road Starting any business in Alberta", () => {
-  it.each(mapCases)("draws $name exactly as the old map did, plus the three before-you-open cards", (c) => {
+  it.each(mapCases)("draws $name exactly as the old map did, plus the four before-you-open cards", (c) => {
     // Each file is one line of HTML; only its line ending can differ by checkout (CRLF on Windows).
     const before = readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd();
     const { rest, cards } = withoutAdded(draw(generalRoadV2026, c));
     // Everything that was there is there, byte for byte; the before pictures are not re-recorded.
     expect(rest).toBe(before);
-    expect(cards).toHaveLength(3);
+    expect(cards).toHaveLength(4);
   });
 
   it("an added card makes no colour claim and no place claim: no rule reads it yet", () => {

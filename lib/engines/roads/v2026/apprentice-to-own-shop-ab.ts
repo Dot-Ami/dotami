@@ -1,5 +1,6 @@
 import { feeLine } from "../../fees/v2026";
 import type { CitationAuthority, EngineCitation, Province } from "../../shared/types";
+import { keepRecordsStep } from "./keep-records";
 import type { NamedCostLine, Road, SkillItem } from "./types";
 
 /**
@@ -19,6 +20,11 @@ import type { NamedCostLine, Road, SkillItem } from "./types";
  * Its official fees are written once, in the official fees catalog (lib/engines/fees/v2026/, since
  * 2026-10-12): each fee line here names its fee by id through `feeLine`, which copies the amount, source
  * and condition, so no amount is typed in this file.
+ *
+ * Since 2026-10-14 the shop's business part starts with "Keep your records from day one"
+ * (./keep-records.ts, shared with road 0, its sources checked by the tool that day): first in "Open the
+ * doors", reached only from "Open your own shop", so road evaluation puts it on the path once the person
+ * picks the shop and off it if they stay employed. No rule code reads it; the `next` arrows decide.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
@@ -393,8 +399,8 @@ export const roadApprenticeToOwnShopAB: Road = {
     {
       id: "col-shop-open",
       label: "Open the doors",
-      summary: "Register your business name, receive your business number, and check permits and licences.",
-      steps: ["step-shop-register-name", "step-shop-business-number", "step-shop-permits-licence"],
+      summary: "Keep your records from day one, register your business name, receive your business number, and check permits and licences.",
+      steps: ["step-shop-keep-records", "step-shop-register-name", "step-shop-business-number", "step-shop-permits-licence"],
     },
     {
       id: "col-shop-first-years",
@@ -834,7 +840,8 @@ export const roadApprenticeToOwnShopAB: Road = {
       // "Incorporating" column; a test keeps these names in step with road 0).
       summary:
         "You decide to work for yourself. The next columns open the shop as a sole proprietorship or partnership; if you choose a corporation, see Incorporating on Starting any business in Alberta, where this road joins it.",
-      next: ["step-shop-register-name", "step-shop-blue-seal"],
+      // Records from the shop's first expense: its own step, first in the next column (2026-10-14).
+      next: ["step-shop-register-name", "step-shop-blue-seal", "step-shop-keep-records"],
       doneWhen: [
         {
           id: "dw-shop-own-certificate",
@@ -947,6 +954,16 @@ export const roadApprenticeToOwnShopAB: Road = {
     },
 
     // ---- Open the doors
+    keepRecordsStep(
+      {
+        step: "step-shop-keep-records",
+        what: "dw-shop-records-what",
+        everyTransaction: "dw-shop-records-every-transaction",
+        how: "dw-shop-records-how",
+        whereHowLong: "dw-shop-records-where-how-long",
+      },
+      [],
+    ),
     {
       id: "step-shop-register-name",
       label: "Register your business name",
