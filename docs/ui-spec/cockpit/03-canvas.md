@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-13 (in the cockpit, SR&ED deepening on an idea without a research kind of work is
+Last updated: 2026-10-14 (road 0's Tier 1 gains a fifth card, *Keep your records from day one*, and the
+apprentice road's *Open the doors* starts with the same step; 2026-10-13: in the cockpit, SR&ED deepening on an idea without a research kind of work is
 drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
 instead of a colour; the cockpit screen, part 1: the overlay switches over the map, colours from
@@ -48,6 +49,15 @@ gained: with them cut out, the HTML of the six saved states is byte for byte wha
 unchanged, so hovering or selecting the baseline dims all three, and selecting one of them dims the
 baseline and the other two. Their order down the column is the order they are written in, not a
 ranking. The legend has no line for "no rule yet".
+
+**Keep your records from day one (2026-10-14).** Tier 1 now holds five cards: the four above, then *Keep
+your records from day one*, which also leads to *Sole Prop activation* and behaves like the other
+before-you-open cards (in the cockpit, road evaluation colours it as on your road; drawn without it, it
+says "no rule yet"); with all four cut out, the six saved states are still byte for byte what the old map
+drew. On the apprentice road it is the first card in *Open the doors*: only *Open your own shop* leads to
+it, so it says *check first* until the person picks an ending, *applies as answered* once they pick their
+own shop, and *not on your path* if they stay employed. Hover counts from Sole Prop activation and from a
+before-you-open card are unchanged.
 
 ## What it is
 

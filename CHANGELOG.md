@@ -11,6 +11,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Keep your records from day one: a step on every business road** (2026-10-14) — a business must keep
+  its records from the start, and someone who learns that late can't rebuild them. The step's four *done
+  when* lines come from the CRA's own *Keeping records* pages: the law asks anyone carrying on a business
+  to keep records, and what counts as one; what the CRA says happens without them (expenses and input tax
+  credits forgotten at tax time, other methods used in an audit, claims disallowed); how they must be
+  kept, electronic records and backups included; and where and for how long (at your place of business or
+  residence in Canada, generally six years from the end of the last tax year they relate to). Every
+  source was checked by the quote tool that day; none is claimed as read. On *Starting any business in
+  Alberta* it is a fourth step in the first column, before *Sole Prop activation*, and on your path for
+  every idea; on *From apprentice to your own shop* it is first in *Open the doors*, on your path once
+  you pick your own shop and off it if you stay employed. No cost line, no amount; written once
+  (`lib/engines/roads/v2026/keep-records.ts`), each road with its own permanent ids.
 - **Your plan: a page to read and print, from the cockpit's Export** (part of #41: the Export panel itself
   still shows the raw markdown) — **Open your plan to
   read or print** in the Export panel opens `/plan?venture=<id>`: one idea's plan laid out for a partner,

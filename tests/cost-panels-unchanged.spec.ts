@@ -21,7 +21,9 @@
  * the person told DotAmi); its moved sources stay as they were. Redrawn on 2026-10-14 from that main
  * (e7969ca) plus only the doubled full stop fix (tests/step-panel-double-full-stop.spec.ts): two entries
  * change, the apprentice road's TQ recognized-credential panel and its money list, each by one removed
- * "." in "rewrite it.. Not added to any total.". Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * "." in "rewrite it.. Not added to any total.". Redrawn on 2026-10-14 from that main (5d8da50) plus only
+ * the records step (tests/keep-records-step.spec.ts): two entries are added, the new Keep your records from
+ * day one panel on each road, and none of the 32 already there changes. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

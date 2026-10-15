@@ -10,7 +10,9 @@ import type { EngineCitation } from "@/lib/engines/shared/types";
  * Road 0's content (docs/architecture/future-cockpit.md § 6, "Road 0's content as built"): about three
  * cited done-when lines on each of today's ten steps, and the three "before you open" steps the design
  * names. Every line is written from an official page and recorded as a tool check made on 2026-10-12
- * (option B, docs/engines/citations.md): found words, never a read nobody did.
+ * (option B, docs/engines/citations.md): found words, never a read nobody did. Since 2026-10-14 the first
+ * column also holds Keep your records from day one, whose lines were checked by the tool that day
+ * (tests/keep-records-step.spec.ts holds that step to its own rules).
  */
 const road = roadStartingAnyBusinessAB;
 const step = (id: string): RoadStep => {
@@ -28,6 +30,16 @@ const quotesOf = (...citations: (EngineCitation | undefined)[]) =>
 
 const BEFORE_YOU_OPEN = ["step-start-register-name", "step-start-permits-bizpal", "step-start-business-account"];
 
+/** Keep your records from day one (2026-10-14): after the three in the first column, its sources checked that day. */
+const KEEP_RECORDS = "step-start-keep-records";
+const KEEP_RECORDS_CHECKED_ON = "2026-10-14";
+
+/** Every step written for road 0 rather than wrapped from the tax map: the three, then the records step. */
+const ADDED_STEPS = [...BEFORE_YOU_OPEN, KEEP_RECORDS];
+
+/** The day the tool checked a citation's quotes: the records step's on 2026-10-14, the rest on 2026-10-12. */
+const checkedOnFor = (where: string) => (where === KEEP_RECORDS || where.startsWith("dw-start-records-") ? KEEP_RECORDS_CHECKED_ON : "2026-10-12");
+
 /** Where the named start-up cost lines sit: the first step where the business runs (2026-10-12). */
 const START_UP_STEP = "stage-1-sole-prop-activation";
 
@@ -35,7 +47,7 @@ const START_UP_STEP = "stage-1-sole-prop-activation";
 function newCitations(): { where: string; citation: EngineCitation }[] {
   return road.steps.flatMap((s) => [
     ...s.doneWhen.map((d) => ({ where: d.id, citation: d.citation })),
-    ...(BEFORE_YOU_OPEN.includes(s.id) ? s.citations.map((citation) => ({ where: s.id, citation })) : []),
+    ...(ADDED_STEPS.includes(s.id) ? s.citations.map((citation) => ({ where: s.id, citation })) : []),
     ...s.costs.flatMap((c) =>
       c.kind === "official-fee" ? [{ where: c.id, citation: c.citation }] : c.nameSource ? [{ where: c.id, citation: c.nameSource }] : [],
     ),
@@ -99,7 +111,8 @@ describe("every step on road 0 has its done-when lines", () => {
   });
 
   it("every step, the new ones too, has at least three, each a plain one-liner", () => {
-    expect(road.steps).toHaveLength(13);
+    // Ten map stages, three before-you-open steps, and Keep your records from day one (2026-10-14).
+    expect(road.steps).toHaveLength(14);
     for (const s of road.steps) {
       expect(s.doneWhen.length, s.id).toBeGreaterThanOrEqual(3);
       for (const d of s.doneWhen) {
@@ -114,7 +127,8 @@ describe("the three before-you-open steps the design names", () => {
   it("sit in the first column, under the baseline, and each leads to Sole Prop activation", () => {
     const first = road.columns[0]!;
     expect(first.id).toBe("tier-1-before");
-    expect(first.steps).toEqual(["stage-0-employee-apprentice-baseline", ...BEFORE_YOU_OPEN]);
+    // Keep your records from day one follows them (2026-10-14).
+    expect(first.steps).toEqual(["stage-0-employee-apprentice-baseline", ...BEFORE_YOU_OPEN, KEEP_RECORDS]);
     for (const id of BEFORE_YOU_OPEN) expect(step(id).next, id).toEqual(["stage-1-sole-prop-activation"]);
     expect(BEFORE_YOU_OPEN.map((id) => step(id).label)).toEqual([
       "Register your business name, if you use one",
@@ -227,16 +241,17 @@ describe("road 0's legal requirements come from the compliance catalog, where it
   });
 });
 
-describe("every new source is a tool check made on 2026-10-12, and none claims a read", () => {
+describe("every new source is a tool check made on 2026-10-12 (the records step's on 2026-10-14), and none claims a read", () => {
   const all = newCitations();
 
   it("each has quotes of three words or more, found by the tool that day, on an https page", () => {
-    // 47 done-when lines, plus the new steps' own sources and their cost lines' name sources.
-    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(47);
-    expect(all.length).toBeGreaterThan(47);
+    // 47 done-when lines from 2026-10-12 and the records step's 4 (2026-10-14), plus the new steps' own
+    // sources and their cost lines' name sources.
+    expect(road.steps.flatMap((s) => s.doneWhen)).toHaveLength(51);
+    expect(all.length).toBeGreaterThan(51);
     for (const { where, citation } of all) {
       expect(citation.toolCheck, where).toBeDefined();
-      expect(citation.toolCheck!.checkedOn, where).toBe("2026-10-12");
+      expect(citation.toolCheck!.checkedOn, where).toBe(checkedOnFor(where));
       expect(citation.toolCheck!.quotes.length, where).toBeGreaterThan(0);
       for (const quote of citation.toolCheck!.quotes) {
         expect(quote.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length, `${where}: ${quote}`).toBeGreaterThanOrEqual(3);
@@ -271,7 +286,7 @@ describe("every new source is a tool check made on 2026-10-12, and none claims a
     // The map stages' own sources ride along on the road's steps, and since #145 a few of them are tool
     // checks as well (the CRA's small-supplier page), so the checker's list holds those plus this content's.
     const fromStages = road.steps
-      .filter((s) => !BEFORE_YOU_OPEN.includes(s.id))
+      .filter((s) => !ADDED_STEPS.includes(s.id))
       .flatMap((s) => s.citations.filter((c) => c.toolCheck !== undefined));
     expect(listed.map((l) => l.citation)).toEqual(expect.arrayContaining(all.map((a) => a.citation)));
     expect(listed).toHaveLength(all.length + fromStages.length);
@@ -293,7 +308,7 @@ describe("a line says what its own page says", () => {
         const quoted = numbersIn(quotesOf(d.citation));
         for (const n of numbersIn(d.text)) expect(quoted.has(n), `${d.id}: "${n}" isn't in its own quotes`).toBe(true);
       }
-      if (!BEFORE_YOU_OPEN.includes(s.id)) continue;
+      if (!ADDED_STEPS.includes(s.id)) continue;
       const quoted = numbersIn(quotesOf(...s.citations));
       for (const n of numbersIn(s.summary)) expect(quoted.has(n), `${s.id}: "${n}" isn't in its own quotes`).toBe(true);
       for (const c of s.costs) expect(numbersIn(c.label).size, c.id).toBe(0);

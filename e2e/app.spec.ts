@@ -282,6 +282,8 @@ test("the map draws today's road: columns, cards, toggles and hover arrows, plus
         "Register your business name, if you use one",
         "Look up your permits and licences (BizPaL)",
         "A separate bank account for the business, if it has a name other than yours",
+        // Since 2026-10-14 (docs/engines/roads.md, road 0's table row).
+        "Keep your records from day one",
       ],
       toggle: null,
     },

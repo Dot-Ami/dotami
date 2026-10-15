@@ -12,8 +12,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 
-// Road 0 (today's general road) counted from its own data: its ten map stages plus the three "before
-// you open" steps added on 2026-10-12, so the Steps gauge reads "0 of 13".
+// Road 0 (today's general road) counted from its own data: its ten map stages, the three "before you
+// open" steps added on 2026-10-12 and Keep your records from day one (2026-10-14), so the Steps gauge
+// reads "0 of 14".
 const road0Steps = generalRoadV2026.steps.length;
 const soleProp = generalRoadV2026.steps.find((s) => s.id === "stage-1-sole-prop-activation")!;
 
