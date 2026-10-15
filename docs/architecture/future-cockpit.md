@@ -261,18 +261,27 @@ in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
   seen and the day, kept only when a second check found the price or figure on the page again; not legal
   citations, which name only government sources and back a rule), and every average is worked out by
   `lib/examples/stats.ts`. Her one start-up cost line, *Woodworking machines and tools*, is $14,993.62:
-  the 12 tools the Alberta curriculum, the Red Seal standard and NOC 72311 name, mid-range shop grade, one
-  of each at its average of 3 to 5 listed prices from Canadian sellers. Her yearly income goal is $52,255,
+  12 of the tools the Alberta curriculum, the Red Seal standard and NOC 72311 name, picked for this example
+  (they name more; the panel lists the ones not priced), mid-range shop grade, one of each at its average
+  of 3 to 5 listed prices from Canadian sellers. Her yearly income goal is $52,255,
   the average yearly salary of employed cabinetmakers in Alberta (alis, 2023), said as that in the goal
   bar. Her what-if is $610,300, the average yearly revenue of small and medium furniture makers in Canada
   (ISED, NAICS 33712, 2024), said under the what-if bar to be *not a first-year figure*. Her savings and
   her shop space deposit are blank: nothing real can supply them. The banner says *"Mara is invented; the
   prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved."*
   and its **Where these numbers come from** opens a panel listing every number, how it is worked out,
-  every source with its link and the day seen, the software a small shop uses with its listed plans, and
-  what stayed blank and why. "Recommending tools" is built as information: the trade's own list with what
-  sellers charge, never ranked and never "buy this". `tests/example-sources.spec.ts` traces every number
-  to its entry, recomputes every average and checks the old invented numbers are gone.
+  every source with its link and the day seen, software listed for this example with its listed plans
+  (averaged over the plans billed month to month only; a plan billed once a year is listed apart, whatever
+  unit its page prints), and what stayed blank and why. Its first line says Mara and her answers are
+  invented and every price and statistic is real (not "every number": her marks and her step done are
+  invented). "Recommending tools" is built as information: a pick of the tools the trade's official
+  descriptions name, with what sellers charge, never ranked, never "buy this" and never called the trade's
+  whole list. `tests/example-sources.spec.ts` traces every number to its entry, recomputes every average,
+  reads `lib/examples/mara.ts` to check her three numbers are worked out there and none is typed, checks
+  the old invented numbers are gone, and keeps verdict and framing words (`tests/helpers/verdict-words.ts`,
+  each word with a control) out of the words, the data and the example's components; the browser test
+  reads the same lists over the rendered banner, goal bar, what-if bar and panel (2026-10-14, after
+  review).
 - **The same cockpit, read-only.** `/example/mara` (`app/example/[id]/page.tsx`; any other id is not
   found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
   fed from the file instead of `GET /api/futures/<id>`, and opening with her what-if on. A banner that

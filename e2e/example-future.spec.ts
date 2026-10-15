@@ -20,6 +20,7 @@ import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { MARA_SOURCES } from "../lib/examples/mara-sources";
 import { priceSummary } from "../lib/examples/stats";
 import { waitForReact } from "../tests/helpers/react-ready";
+import { FRAMING, VERDICT } from "../tests/helpers/verdict-words";
 
 const BANNER = "Mara is invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved.";
 const CANT_KEEP = "This is an example. Start your own to keep anything.";
@@ -301,7 +302,8 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   // How each of her numbers is worked out.
   await expect(panel).toContainText("Mara's number for “Woodworking machines and tools”: $14,993.62, the 12 tools below added up");
   await expect(panel).toContainText("Mara's yearly income goal: $52,255");
-  await expect(panel).toContainText("Mara's what-if: first-year sales of $610,300");
+  await expect(panel).toContainText("Mara's what-if, tried as first-year sales: $610,300");
+  await expect(panel).toContainText("Every price and statistic on this page is real");
   await expect(panel).toContainText("not a first-year figure");
   await expect(panel).toContainText("Mara's savings and shop space deposit: not priced yet.");
 
@@ -324,13 +326,26 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   await expect(panel.getByText("Model Number: 51-260 $2,699.95 $3,499.99 You save $800.04")).toBeVisible();
 
   // The software, the statistics and what stayed blank.
-  await expect(panel).toContainText("Average of 10 plans listed by the month: $49 a month");
+  await expect(panel).toContainText("Average of 10 plans billed month to month: $49 a month");
+  await expect(panel).toContainText("Average of 3 plans billed month to month: $96.33 a month");
+  await expect(panel).toContainText("$15.08 a month, billed yearly");
   await expect(panel).toContainText("No paid plan here is listed in Canadian dollars");
   await expect(panel).toContainText("Average yearly salary of employed cabinetmakers (NOC 72311) in Alberta");
   await expect(panel).toContainText("Not priced yet, and why");
   await expect(panel).toContainText("Seen but not used, and why");
-  // Information, never a verdict: nothing in it ranks or recommends.
-  expect(await panel.innerText()).not.toMatch(/\b(recommend\w*|best|should|top pick)\b/i);
+  // Information, never a verdict: nothing in the panel, the banner, the goal bar (its target line) or the
+  // what-if bar (its note) ranks, recommends or frames a pick as the trade's (tests/helpers/verdict-words.ts).
+  for (const [name, region] of [
+    ["panel", panel],
+    ["banner", banner(page)],
+    ["goal bar", goalBar(page)],
+    ["what-if bar", whatIf(page)],
+  ] as const) {
+    const text = await region.innerText();
+    expect(text.length, name).toBeGreaterThan(20);
+    expect(text.match(new RegExp(VERDICT.source, "gi")), name).toBeNull();
+    expect(text.match(new RegExp(FRAMING.source, "gi")), name).toBeNull();
+  }
 
   // It closes from the same button, and nothing was sent or kept.
   await banner(page).getByRole("button", { name: "Hide where these numbers come from" }).click();

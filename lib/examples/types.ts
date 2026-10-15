@@ -104,7 +104,13 @@ export interface SoftwarePlan {
   url: string;
   /** In cents, CAD; 0 for a free tier. */
   priceCents: number;
-  per: "month" | "year" | "free";
+  /**
+   * How the page prints the price and how it is billed: "month" is billed month to month; "month-billed-yearly"
+   * is a monthly figure the page prints for a plan billed once a year; "year" is a yearly price. Only "month"
+   * is averaged (lib/examples/stats.ts): a plan billed once a year is a different kind of price, whatever unit
+   * its page prints it in.
+   */
+  per: "month" | "month-billed-yearly" | "year" | "free";
   /** How it is billed or limited, as the page says. */
   note: string;
   quote: string;

@@ -187,6 +187,15 @@ and the maintainer's six decisions of 2026-10-11:
     line from 12 tools' average listed prices at Canadian sellers, her income goal from alis, her what-if
     from ISED, savings and deposit blank; *Where these numbers come from* in the banner
     (`lib/examples/mara-sources.ts`, `lib/examples/stats.ts`, `tests/example-sources.spec.ts`)
+    - [x] Review fixes (2026-10-14): Edmonton's additional rate ($4.99) and gross rent ($16.71) listed, as
+      Calgary's are; plans billed once a year kept out of the software averages for every maker; the
+      panel's intro says every price and statistic is real (not every number); the tools and software
+      said to be picked for this example; a test that her three numbers are worked out, never typed; wider
+      verdict and framing word lists (`tests/helpers/verdict-words.ts`), also over the example's
+      components and the rendered banner, goal bar and what-if bar
+    - [ ] Still open on it: the review couldn't re-open Autodesk Fusion (403), Busy Bee Tools and Lee
+      Valley (429) or QuickBooks (timed out), so those prices rest on the first research's two checks
+      only; and whether Fusion's personal-use page shows the CA$120 monthly price its entry cites
     - [ ] Still open on it: the other cost lines on *Open your own shop* (insurance, vehicle, first
       materials, legal advice, money to live on, design software), not researched yet; re-seeing the
       prices when sales end or pages move

@@ -18,8 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   furniture shop, four-day weeks, home for supper."*), nine skills marked, her pick of *Open your own
   shop* and one step done. **Mara is invented; her numbers are real** (the maintainer, 2026-10-14: real,
   cited numbers where they exist, as in depth as possible, with the sources shown): her start-up cost for
-  *Woodworking machines and tools* is $14,993.62, the 12 tools the trade's official descriptions name
-  (the Alberta cabinetmaker curriculum, the Red Seal standard, the national job classification), one of
+  *Woodworking machines and tools* is $14,993.62, 12 of the tools the trade's official descriptions name,
+  picked for this example (the Alberta cabinetmaker curriculum, the Red Seal standard, the national job
+  classification; they name more, and the panel lists the ones not priced), one of
   each at its average of 3 to 5 prices listed by Canadian sellers on 2026-10-14; her yearly income goal is
   $52,255, what employed cabinetmakers in Alberta average a year (Government of Alberta, 2023); and her
   what-if of $610,300 in first-year sales is the average yearly revenue of small furniture makers in
@@ -28,9 +29,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here
   is saved."*, and its **Where these numbers come from** lists every number, how it was worked out (every
   average is worked out by the app from the listed prices, never typed), every price and statistic with
-  its link and the day it was seen, the software a small shop uses (design, cut lists, bookkeeping) with
-  each plan's listed price and a monthly average, and what stayed blank and why. The tools are information,
-  the trade's own list with what sellers charge: never ranked, never "buy this". A short list, *What Mara
+  its link and the day it was seen, software listed for this example (design, cut lists, bookkeeping) with
+  each plan's listed price and an average of the plans billed month to month (a plan billed once a year is
+  listed apart), market rents with the costs on top and the gross rent where the report gives them, and
+  what stayed blank and why. It says Mara and her answers are invented and every price and statistic is
+  real. The tools are information, a pick with what sellers charge: never ranked, never "buy this". A
+  test checks that her three numbers are worked out in her file, never typed. A short list, *What Mara
   did*, shows what each of her answers changed, worked out by the rules (on today's road: 16 steps, 30
   cost lines still to price; the design's early sketch said 22 and 4). Her answers are labelled hers, not
   yours: *Mara's target …*, *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner

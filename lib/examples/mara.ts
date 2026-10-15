@@ -19,8 +19,10 @@ import type { ExampleFuture } from "./types";
  * cited numbers where they exist; numbers nothing real can supply stay blank"). None is typed here: each is
  * taken from lib/examples/mara-sources.ts, the prices and statistics as seen on 2026-10-14 with their links,
  * and the averages are worked out by lib/examples/stats.ts (tests/example-sources.spec.ts traces each one).
- *  - Her one start-up cost line, "Woodworking machines and tools": the twelve tools the trade's official
- *    descriptions name, one of each at its average listed price, added up.
+ *  - Her one start-up cost line, "Woodworking machines and tools": twelve of the tools the trade's official
+ *    descriptions name, picked for this example, one of each at its average listed price, added up.
+ *    tests/example-sources.spec.ts reads this file to check that each of her three numbers is worked out
+ *    here (toolsTotalCents( or statistic() and none is typed as a number.
  *  - Her yearly income goal: what employed cabinetmakers in Alberta average a year (alis, 2023), the
  *    figure as the source prints it; not what a shop owner earns, and the goal bar says which it is.
  *  - Her what-if: the average yearly revenue of small and medium furniture makers in Canada (ISED, 2024);

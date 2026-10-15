@@ -479,27 +479,29 @@ export const cockpitWords = {
     /**
      * "Where these numbers come from" (2026-10-14; docs/ui-spec/example/_index.md): every number the
      * example shows, how it was worked out, each source with its link and the day it was seen. The tools
-     * are information, the trade's own list with what sellers charge: never ranked, never "buy this".
+     * are information: twelve of the tools the trade's official descriptions name, picked for this example,
+     * with what sellers charge; never ranked, never "buy this", never called the trade's whole list.
      */
     sources: {
       open: "Where these numbers come from",
       close: "Hide where these numbers come from",
       intro: (person: string, seenOn: string) =>
-        `${person} is invented. Every number on this page is real: a price a Canadian seller listed, or a statistic a government or a market report published, each seen on ${seenOn}. Every average is worked out by DotAmi from the prices listed here, never typed by hand.`,
+        `${person} is invented, and so are ${person}'s answers. Every price and statistic on this page is real: a price a Canadian seller listed, or a statistic a government or a market report published, each seen on ${seenOn}; the official fees are from DotAmi's own cited catalog. Every average is worked out by DotAmi from the prices listed here, never typed by hand.`,
       numbersHeading: (person: string) => `${person}'s numbers, and how each is worked out`,
       tools: (person: string, cents: number, n: number) =>
         `${person}'s number for “Woodworking machines and tools”: ${formatMoney(cents)}, the ${n} tools below added up, one of each at its average listed price (one bar clamp, though a glue-up needs several).`,
       income: (person: string, cents: number, what: string, period: string) =>
         `${person}'s yearly income goal: ${formatMoney(cents)}, ${what} (${period}), as the source prints it. What employees earn, not what a shop owner takes home.`,
       whatIf: (person: string, dollars: number, what: string, period: string) =>
-        `${person}'s what-if: first-year sales of ${formatMoney(dollars * 100)}, which is ${what} (${period}). An average over existing businesses, not a first-year figure.`,
+        `${person}'s what-if, tried as first-year sales: ${formatMoney(dollars * 100)}, which is ${what} (${period}). An average over existing businesses, not a first-year figure.`,
       /**
        * Beside the what-if while the example's own what-if is on. Short on purpose (2026-10-14): a second
        * line under the bar took the map's legend out of reach at 1280 by 720. The panel says which average.
        */
       whatIfNote: (person: string, period: string) => `${person}'s what-if is an industry average (${period}), not a first-year figure.`,
       blank: (person: string) => `${person}'s savings and shop space deposit: not priced yet. Nothing real can supply them; the list at the end says why.`,
-      toolsHeading: "Tools the trade's official descriptions name, with average prices from Canadian sellers",
+      /** "Picked for this example": the sources name more tools than are priced (2026-10-14, after review). */
+      toolsHeading: (n: number) => `${n} of the tools the trade's official descriptions name, picked for this example, with average prices from Canadian sellers`,
       toolsOrder: "In the order the Alberta curriculum teaches them, not by price.",
       officialHeading: "The trade's official descriptions",
       average: (n: number, mean: number, median: number, low: number, high: number) =>
@@ -509,11 +511,16 @@ export const cockpitWords = {
       seen: (day: string) => `seen ${day}`,
       page: "the page",
       caution: "Note:",
-      softwareHeading: "Software a small shop uses, with listed prices in Canadian dollars",
+      softwareHeading: "Software listed for this example, with listed prices in Canadian dollars",
       softwareAverage: (n: number, mean: number, median: number, low: number, high: number) =>
-        `Average of ${n} plans listed by the month: ${formatMoney(mean)} a month (median ${formatMoney(median)}; from ${formatMoney(low)} to ${formatMoney(high)})`,
+        `Average of ${n} plans billed month to month: ${formatMoney(mean)} a month (median ${formatMoney(median)}; from ${formatMoney(low)} to ${formatMoney(high)})`,
       softwareNoPaid: "No paid plan here is listed in Canadian dollars; only the free tiers are shown.",
-      per: { month: (cents: number) => `${formatMoney(cents)} a month`, year: (cents: number) => `${formatMoney(cents)} a year`, free: "free" },
+      per: {
+        month: (cents: number) => `${formatMoney(cents)} a month`,
+        "month-billed-yearly": (cents: number) => `${formatMoney(cents)} a month, billed yearly`,
+        year: (cents: number) => `${formatMoney(cents)} a year`,
+        free: "free",
+      },
       groups: {
         earnings: "What cabinetmakers earn in Alberta",
         industry: "Small furniture and cabinet businesses in Canada",

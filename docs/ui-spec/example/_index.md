@@ -32,7 +32,7 @@ second check, and every average is worked out by `lib/examples/stats.ts`:
 
 | Her number | What it is | How it is worked out |
 |---|---|---|
-| *Woodworking machines and tools* on *Open your own shop*: **$14,993.62** | The 12 tools the trade's official descriptions name (Alberta Cabinetmaker Curriculum Guide 0361, the Red Seal standard, NOC 72311), one of each, mid-range shop grade | Each tool's average of its 3 to 5 listed prices from Canadian sellers (KMS Tools, Busy Bee Tools, Canadian Woodworker, Federated Tool Supply, Princess Auto, Lee Valley, ARDEC), the 12 averages added up; *amountFrom* "a link" |
+| *Woodworking machines and tools* on *Open your own shop*: **$14,993.62** | 12 of the tools the trade's official descriptions name (Alberta Cabinetmaker Curriculum Guide 0361, the Red Seal standard, NOC 72311), picked for this example (they name more; the panel's *Not priced yet* lists them), one of each, mid-range shop grade | Each tool's average of its 3 to 5 listed prices from Canadian sellers (KMS Tools, Busy Bee Tools, Canadian Woodworker, Federated Tool Supply, Princess Auto, Lee Valley, ARDEC), the 12 averages added up; *amountFrom* "a link" |
 | Yearly income goal: **$52,255** | The average yearly salary of employed cabinetmakers in Alberta (alis, 2023 Alberta Wage and Salary Survey) | The figure as the source prints it; nothing converted. The goal bar says what it is in place of "agreed" |
 | What-if, first-year sales: **$610,300** | The average yearly revenue of small and medium household and institutional furniture makers in Canada (ISED, NAICS 33712, 2024) | The source's 610.3 thousand dollars; an average over existing businesses, **not a first-year figure**, and the what-if bar says so |
 | Savings, shop space deposit | Blank: **not priced yet** | Nothing real can supply one person's savings, and no source gives a typical lease deposit |
@@ -70,33 +70,41 @@ reached, like everything else behind the sheet. It says:
 A region of that name under the banner (at most 60% of the window's height, scrolling inside), opened and
 closed by the banner's button. Read-only; it sends nothing and keeps nothing. In order:
 
-1. *Mara is invented. Every number on this page is real…*, and **Mara's numbers, and how each is worked
-   out**: the four rows of the table above, each with its source's link.
-2. **Tools the trade's official descriptions name, with average prices from Canadian sellers**, *in the
-   order the Alberta curriculum teaches them, not by price*; the class priced (mid-range, shop-grade,
-   single-phase; benchtop, jobsite, cordless and industrial machines left out; CAD before GST and shipping);
-   the three official descriptions, linked. Then each of the 12 tools as a fold (a native `<details>`,
+1. *Mara is invented, and so are Mara's answers. Every price and statistic on this page is real…; the
+   official fees are from DotAmi's own cited catalog.* (since 2026-10-14, after review: it said *Every
+   number on this page is real*, while her marks, her step done and her day are invented), and **Mara's
+   numbers, and how each is worked out**: the four rows of the table above, each with its source's link
+   (the what-if's row: *Mara's what-if, tried as first-year sales: $610,300, which is …*).
+2. **12 of the tools the trade's official descriptions name, picked for this example, with average prices
+   from Canadian sellers**, *in the order the Alberta curriculum teaches them, not by price*; the class
+   priced (mid-range, shop-grade, picked for this example; single-phase; benchtop, jobsite, cordless and
+   industrial machines left out; CAD before GST and shipping); the three official descriptions, linked. Then each of the 12 tools as a fold (a native `<details>`,
    remembered nowhere): its name and *Average of N listed prices: $X (median $Y; from $low to $high)*;
    opened, where the official descriptions name it, with their words and link, and every price: the amount,
    the seller, the day seen, the page's link, the product as the page names it (a sale, clearance or
    back-order said there), the words seen on the page around the price, and a note where the second check
    found one (a premium model that pulls the average up, a clearance price on an item out of stock, a
    class match in doubt).
-3. **Software a small shop uses, with listed prices in Canadian dollars**: design and drawing (SketchUp,
+3. **Software listed for this example, with listed prices in Canadian dollars**: design and drawing (SketchUp,
    Autodesk Fusion), cut lists and sheet layout (free tiers only: no paid plan is listed in Canadian
    dollars), bookkeeping and invoicing (QuickBooks Online Canada, Xero, FreshBooks, Wave). Each category
-   says *Average of N plans listed by the month: $X a month (median…; from… to…)* over its plans listed by
-   the month only (a yearly price is never turned into a monthly one, and a free tier never pulls an average
-   down), then every plan with its price as listed, how it is billed, its words and link.
+   says *Average of N plans billed month to month: $X a month (median…; from… to…)* over its plans billed
+   month to month only (a yearly price is never turned into a monthly one; a plan billed once a year that
+   its page prints by the month, SketchUp's annual plans, reads *$15.08 a month, billed yearly* and is
+   listed apart, the same as Fusion's yearly term, since 2026-10-14 after review; a free tier never pulls an
+   average down), then every plan with its price as listed, how it is billed, its words and link.
 4. **What cabinetmakers earn in Alberta**, **Small furniture and cabinet businesses in Canada**, **Industrial
    space rents in Alberta, for context**: every statistic with its value as the source prints it, its unit
    and period, the source linked, the day seen, its words and what to know about it (employees only; not a
-   first-year figure; net of taxes and operating costs; an asking rate).
+   first-year figure; net, with the costs on top and the gross rent listed beside it where the report gives
+   them, for Calgary and Edmonton alike; an asking rate; a link that needs the browser's cookies).
 5. **Not priced yet, and why** and **Seen but not used, and why**.
 
-No line in it ranks, recommends or says what to buy: "recommending tools", as the maintainer asked, is the
-trade's own list with what sellers charge (`tests/example-sources.spec.ts` checks the words and the data;
-the browser test checks the panel's text).
+No line in it ranks, recommends or says what to buy: "recommending tools", as the maintainer asked, is a
+pick of the tools the trade's official descriptions name, with what sellers charge, never called the
+trade's whole list. The verdict and framing words are `tests/helpers/verdict-words.ts` (each with a
+control): `tests/example-sources.spec.ts` checks the words, the data and the strings typed in the example's
+components; the browser test checks the rendered banner, goal bar, what-if bar and panel.
 
 ## What works, and what answers instead
 

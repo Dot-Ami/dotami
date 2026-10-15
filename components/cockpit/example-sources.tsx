@@ -90,7 +90,7 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
         <li>{words.blank(person)}</li>
       </ul>
 
-      <Heading>{words.toolsHeading}</Heading>
+      <Heading>{words.toolsHeading(data.tools.length)}</Heading>
       <p className="mt-1 max-w-3xl">{words.toolsOrder}</p>
       <p className="mt-1 max-w-3xl text-[11px] text-stone">{data.tier}</p>
       <p className="mt-2 text-[11px] text-paper">{words.officialHeading}</p>

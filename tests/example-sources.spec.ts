@@ -20,6 +20,7 @@ import { priceSummary, softwareSummaries, toolsTotalCents } from "@/lib/examples
 import { formatMoney } from "@/lib/format/money-and-months";
 
 import { readSource, simplify, sourceFiles, TS_FILES } from "./helpers/source-scan";
+import { FRAMING, VERDICT } from "./helpers/verdict-words";
 
 const ex = exampleMara;
 const src = MARA_SOURCES;
@@ -121,6 +122,54 @@ describe("the software: plans listed in Canadian dollars", () => {
     expect(summaries.find((x) => x.category === "bookkeeping")!.monthly!.meanCents).toBe(4_900);
     expect(summaries.find((x) => x.category === "cut-lists")!.monthly).toBeNull();
   });
+
+  it("a plan billed once a year is never averaged with plans billed month to month, whatever unit its page prints", () => {
+    // Review, 2026-10-14: SketchUp's "per month / billed annually" plans were averaged with month-to-month
+    // ones while Fusion's own billed-annually price was left out. Both makers are now treated the same way.
+    for (const s of src.software) {
+      const ref = `${s.product} / ${s.plan}`;
+      if (/billed annually|pay annually/i.test(s.quote)) expect(s.per, ref).not.toBe("month");
+      if (s.per === "month-billed-yearly") expect(s.quote, ref).toMatch(/billed annually/i);
+    }
+    const design = softwareSummaries(src.software, src.softwareCategories).find((x) => x.category === "design")!;
+    // Control: SketchUp Go and Pro monthly and Fusion's 1-month term, (2899 + 13999 + 12000) / 3.
+    expect(design.monthly).toEqual({ count: 3, meanCents: 9_633, medianCents: 12_000, lowCents: 2_899, highCents: 13_999 });
+    expect(src.software.filter((s) => s.per === "month-billed-yearly").map((s) => s.plan)).toEqual(["Go, annual", "Pro, annual"]);
+    expect(cockpitWords.example.sources.per["month-billed-yearly"](1_508)).toBe("$15.08 a month, billed yearly");
+    expect(cockpitWords.example.sources.softwareAverage(3, 9_633, 12_000, 2_899, 13_999)).toBe(
+      "Average of 3 plans billed month to month: $96.33 a month (median $120; from $28.99 to $139.99)",
+    );
+  });
+});
+
+describe("the statistics say what their source gives", () => {
+  const stat = (id: string) => src.statistics.find((s) => s.id === id);
+
+  it("each market report's whole-market row is listed in full: net rent, the costs on top of it and the gross rent", () => {
+    // Review, 2026-10-14: the Edmonton caveat said the report gives no taxes or operating costs, but its
+    // MARKET STATISTICS row "EDMONTON TOTALS" prints them ($4.99) and the gross rent ($16.71).
+    const rows = [
+      { source: "CBRE Calgary", ids: ["cbre-calgary-net", "cbre-calgary-tmi", "cbre-calgary-gross"], values: ["$11.24", "$5.04", "$16.28"] },
+      { source: "Cushman & Wakefield Edmonton", ids: ["cw-edmonton-net", "cw-edmonton-additional", "cw-edmonton-gross"], values: ["$11.72", "$4.99", "$16.71"] },
+    ];
+    for (const row of rows) {
+      expect(row.ids.map((id) => stat(id)?.value), row.source).toEqual(row.values);
+      for (const id of row.ids) expect(stat(id)!.url, id).toBe(stat(row.ids[0])!.url);
+    }
+    // Nothing is called missing that the source gives.
+    expect(src.statistics.filter((s) => /doesn't give|does not give/i.test(s.caveat) && /tax|operating/i.test(s.caveat)).map((s) => s.id)).toEqual([]);
+  });
+
+  it("every link goes to the page's own address, none through the retired www.ic.gc.ca, which only redirects", () => {
+    const urls = [
+      ...src.tools.flatMap((t) => [t.official.url, ...t.prices.map((p) => p.url)]),
+      ...src.software.map((s) => s.url),
+      ...src.statistics.map((s) => s.url),
+    ];
+    expect(urls.filter((u) => new URL(u).hostname === "www.ic.gc.ca")).toEqual([]);
+    // ISED's report is drawn through its own form and needs the browser's cookies: the caveat says so.
+    expect(stat("ised-337123-margin")!.caveat).toMatch(/cookies/);
+  });
 });
 
 describe("every number in Mara's data traces to a source entry", () => {
@@ -179,6 +228,54 @@ describe("every number in Mara's data traces to a source entry", () => {
   });
 });
 
+describe("Mara's numbers are worked out in her file, never typed there", () => {
+  // The value checks above pass a correct number typed by hand (review, 2026-10-14: `const TOOLS_CENTS =
+  // 1_499_362;` passed every test). The panel says every average is "never typed by hand", so this reads
+  // lib/examples/mara.ts itself: each of her three numbers must come through the function or the statistic,
+  // and none of their values may appear in it as a number.
+  const FILE = "lib/examples/mara.ts";
+  const numbers = () => [toolsTotalCents(src.tools), ex.kept.incomeWanted!.amountCents, ex.whatIfFirstYearSalesDollars!];
+
+  /** What in this code types one of her numbers by hand (empty when each is worked out). */
+  function typedByHand(code: string, values: number[]): string[] {
+    // Comments go and strings are emptied, so only code is read.
+    const bare = simplify(code, false);
+    const problems: string[] = [];
+    if (!/\bTOOLS_CENTS\s*=\s*toolsTotalCents\(\s*MARA_SOURCES\.tools\s*\)/.test(bare)) problems.push("TOOLS_CENTS is not toolsTotalCents(MARA_SOURCES.tools)");
+    if (!/\bagreed\(\s*""\s*,\s*""\s*,\s*TOOLS_CENTS\s*,/.test(bare)) problems.push("the machines-and-tools figure is not TOOLS_CENTS");
+    if (!/\bincomeWanted:\s*\{\s*amountCents:\s*statistic\(\s*INCOME_FROM\s*\)\.amountCents!?\s*,/.test(bare)) problems.push("incomeWanted is not statistic(INCOME_FROM)");
+    if (!/\bwhatIfFirstYearSalesDollars:\s*statistic\(\s*WHAT_IF_FROM\s*\)\.amountCents!?\s*\/\s*100\s*,/.test(bare)) problems.push("the what-if is not statistic(WHAT_IF_FROM) / 100");
+    // Any numeric literal equal to one of her numbers, in cents or in dollars, written with or without "_".
+    const forbidden = new Set(values.flatMap((v) => [v, v / 100, v * 100]));
+    for (const m of bare.matchAll(/\b\d[\d_]*(?:\.\d+)?\b/g)) {
+      if (forbidden.has(Number(m[0].replace(/_/g, "")))) problems.push(`the number ${m[0]} is typed`);
+    }
+    return problems;
+  }
+
+  it("each of the three is read through toolsTotalCents( or statistic(, and none is written as a number", () => {
+    expect(numbers()).toEqual([1_499_362, 5_225_500, 610_300]);
+    expect(typedByHand(readSource(FILE), numbers())).toEqual([]);
+  });
+
+  it("the scan can fail: each number typed by hand, even correctly, is found", () => {
+    const code = readSource(FILE);
+    const typed = [
+      ["toolsTotalCents(MARA_SOURCES.tools)", "1_499_362"],
+      ["statistic(INCOME_FROM).amountCents!", "5_225_500"],
+      ["statistic(WHAT_IF_FROM).amountCents! / 100", "610_300"],
+      ["TOOLS_CENTS,\n", "14993.62 * 100,\n"],
+    ];
+    for (const [from, to] of typed) {
+      const changed = code.replace(from, to);
+      expect(changed, from).not.toBe(code);
+      expect(typedByHand(changed, numbers()).length, from).toBeGreaterThan(0);
+    }
+    // A number typed anywhere else in the file, even in a line that doesn't feed her figures.
+    expect(typedByHand(`${code}\nconst spare = 5225500;`, numbers())).toEqual(["the number 5225500 is typed"]);
+  });
+});
+
 describe("the made-up numbers are gone", () => {
   // Her five old invented figures, in the forms code would write them: whole cents, money as a screen prints
   // it, and the plain dollars of the two big ones ($70,000, $45,000). The others' plain dollars are left out:
@@ -216,10 +313,45 @@ describe("the made-up numbers are gone", () => {
 
 describe("information and options, never a verdict", () => {
   // "recommending tools" is built as a sourced list of what the trade names and what sellers charge: never
-  // "buy this", never a ranking (CLAUDE.md, "Information and options, never a verdict").
-  const VERDICT = /\b(recommend\w*|best|should|must buy|top pick|ranked|ranking|winner)\b/i;
+  // "buy this", never a ranking (CLAUDE.md, "Information and options, never a verdict"). The word lists are
+  // tests/helpers/verdict-words.ts, shared with the browser test.
 
-  it("no sentence of the sources' words, and no text in the sources' data, ranks or recommends", () => {
+  it("the word lists catch every verdict and framing phrase review found, and no ordinary phrase the page uses", () => {
+    // Controls, one per word: each phrase must be caught.
+    const verdicts = [
+      "great value, a must-have",
+      "The table saw is our top choice.",
+      "the top pick",
+      "our pick for a first shop",
+      "We recommend it",
+      "recommended",
+      "the best saw",
+      "You should buy the SawStop",
+      "a must buy",
+      "the ideal router",
+      "my go-to sander",
+      "worth buying",
+      "worth it",
+      "worth the money",
+      "worth every cent",
+      "an essential tool",
+      "good value",
+      "value for money",
+      "ranked by price",
+      "the ranking",
+      "the winner",
+      "a favourite",
+      "a favorite",
+      "the twelve core start-up tools",
+    ];
+    for (const v of verdicts) expect(VERDICT.test(v), v).toBe(true);
+    for (const f of ["the trade's own list", "Software a small shop uses", "tools a small professional shop buys new"]) expect(FRAMING.test(f), f).toBe(true);
+    // Ordinary phrases the example says, which must pass.
+    const ordinary = ["Mara's pick of job", "Pick a future", "must be paid", "the value as the source prints it", "net worth", "picked for this example", "score"];
+    for (const o of ordinary) expect(VERDICT.test(o) || FRAMING.test(o), o).toBe(false);
+  });
+
+  it("no sentence of the sources' words, and no text in the sources' data, ranks, recommends or frames a pick as the trade's", () => {
     const strings: string[] = [];
     const walk = (v: unknown) => {
       if (typeof v === "string") strings.push(v);
@@ -238,7 +370,28 @@ describe("information and options, never a verdict", () => {
     walk(cockpitWords.example);
     walk(src);
     expect(strings.length).toBeGreaterThan(200);
-    expect(strings.filter((s) => VERDICT.test(s))).toEqual([]);
+    expect(strings.filter((s) => VERDICT.test(s) || FRAMING.test(s))).toEqual([]);
+  });
+
+  // The words module isn't the only place text can be typed: a component can hold a string of its own.
+  const EXAMPLE_COMPONENTS = ["components/cockpit/example-sources.tsx", "components/cockpit/example-mode.tsx"];
+  /** Verdict or framing words in a component's code and strings, its comments aside. */
+  const verdictsIn = (code: string) => {
+    const text = simplify(code, true);
+    return [VERDICT, FRAMING].flatMap((re) => text.match(new RegExp(re.source, "gi")) ?? []);
+  };
+
+  it("no string typed in the example's own components ranks, recommends or frames a pick", () => {
+    for (const f of EXAMPLE_COMPONENTS) expect(verdictsIn(readSource(f)), f).toEqual([]);
+  });
+
+  it("the component scan can fail: a verdict typed inline in the panel is found", () => {
+    const code = readSource(EXAMPLE_COMPONENTS[0]);
+    const typed = code.replace("{words.toolsOrder}", "{words.toolsOrder} You should buy the SawStop; it is the best.");
+    expect(typed).not.toBe(code);
+    expect(verdictsIn(typed)).toEqual(["should", "best"]);
+    // A comment saying the same is not a string on the page.
+    expect(verdictsIn(`${code}\n// never "the best", never "you should"`)).toEqual([]);
   });
 
   it("the tools are listed in the order the curriculum teaches them, never sorted by price", () => {
@@ -256,6 +409,29 @@ describe("the banner and the sources' words", () => {
       "Mara is invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved.",
     );
     expect(cockpitWords.example.sources.open).toBe("Where these numbers come from");
+  });
+
+  it("the panel's intro says the prices and statistics are real, not every number: her answers and counts are invented", () => {
+    // Review, 2026-10-14: "Every number on this page is real" while her 9 marks and 1 step done are invented.
+    const intro = cockpitWords.example.sources.intro(ex.person, src.seenOn);
+    expect(intro).toBe(
+      "Mara is invented, and so are Mara's answers. Every price and statistic on this page is real: a price a Canadian seller listed, or a statistic a government or a market report published, each seen on 2026-10-14; the official fees are from DotAmi's own cited catalog. Every average is worked out by DotAmi from the prices listed here, never typed by hand.",
+    );
+    expect(intro).not.toMatch(/every number/i);
+  });
+
+  it("the tools and the software are said to be picked for this example, not the trade's whole list", () => {
+    const w = cockpitWords.example.sources;
+    expect(w.toolsHeading(src.tools.length)).toBe("12 of the tools the trade's official descriptions name, picked for this example, with average prices from Canadian sellers");
+    expect(w.softwareHeading).toBe("Software listed for this example, with listed prices in Canadian dollars");
+    expect(src.tier).toMatch(/^Mid-range, shop-grade, picked for this example:/);
+    expect(src.notPriced.find((n) => n.what.startsWith("Shaper"))!.why).toBe("Named in NOC 72311 or the curriculum, but not among the twelve tools picked for this example.");
+  });
+
+  it("the panel's what-if line says the number was tried as first-year sales, not that it is first-year sales", () => {
+    expect(cockpitWords.example.sources.whatIf(ex.person, 610_300, "an average", "Data year 2024")).toBe(
+      "Mara's what-if, tried as first-year sales: $610,300, which is an average (Data year 2024). An average over existing businesses, not a first-year figure.",
+    );
   });
 
   it("the tools' line says how many prices each average is of, and the range", () => {

@@ -42,8 +42,10 @@ export function toolsTotalCents(tools: readonly ToolPriced[]): number {
 export interface SoftwareSummary {
   category: SoftwareCategoryId;
   /**
-   * Over the plans listed by the month only: a yearly price and a monthly one aren't the same kind of
-   * number, and turning one into the other would be a number no page printed. Null when none is listed.
+   * Over the plans billed month to month only: a yearly price and a monthly one aren't the same kind of
+   * number, and turning one into the other would be a number no page printed. A monthly figure for a plan
+   * billed once a year ("month-billed-yearly") is left out too, so every maker's yearly billing is treated
+   * the same way (2026-10-14, after review). Null when none is listed.
    */
   monthly: PriceSummary | null;
   /** The free tiers, listed apart: a $0 would pull an average of prices down. */
