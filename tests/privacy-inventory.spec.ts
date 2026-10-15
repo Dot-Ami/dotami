@@ -299,6 +299,28 @@ describe("the privacy inventory lists what electron-updater keeps and sends on i
     expect(lines.join("")).toContain(id);
     expect(FOLDERS.find((f) => f.id === "log")!.holds).toMatch(/install ID/);
   });
+
+  // Since the line above lands in the log, deleting .updaterId doesn't take the ID off the computer.
+  // So each "how to remove it" text that tells someone to delete the file also says an earlier ID
+  // stays in the log, or a person following it would think the ID was gone (found in this PR's review,
+  // 2026-10-14). The texts: the file's row on /your-data, and the Delete menu's line for it.
+  const removalTexts = (): [string, string][] => [
+    ["FOLDERS updater-id holds", FOLDERS.find((f) => f.id === "updater-id")!.holds],
+    ["NOT_CLEARED_BY_DELETE install ID", NOT_CLEARED_BY_DELETE.find((n) => n.why.includes(".updaterId"))!.why],
+  ];
+  const tellsAboutLogCopy = (text: string) => !/delete the file/.test(text) || /earlier ID stays in the log/.test(text);
+
+  it("the rule catches a removal text that leaves out the log's copy, and passes one that names it", () => {
+    // Control: the check must be able to fail, and must not fire on a text that says nothing about deleting.
+    expect(tellsAboutLogCopy("To remove it, close DotAmi and delete the file.")).toBe(false);
+    expect(tellsAboutLogCopy("To remove it, close DotAmi and delete the file; an earlier ID stays in the log.")).toBe(true);
+    expect(tellsAboutLogCopy("Not cleared. It holds events.")).toBe(true);
+  });
+
+  it.each(removalTexts())("%s, which says to delete the file, says an earlier ID stays in the log", (_where, text) => {
+    expect(text).toMatch(/delete the file/);
+    expect(tellsAboutLogCopy(text)).toBe(true);
+  });
 });
 
 // Every file the scan reads (tests/helpers/source-scan.ts, networkSourceFiles): all TypeScript and

@@ -236,7 +236,9 @@ person is asked).
   4096 random bytes) and saves it in `.updaterId` in the data folder
   (`node_modules/electron-updater/out/AppUpdater.js:501-526`, 6.8.9); it is the updater's file, which
   DotAmi doesn't write, read or remove. Its line *"Generated new staging user ID: <id>"* (`:518`) is an
-  info line, which `desktop/log.mjs` `updaterLogger` keeps, so `logs/server.log` holds the ID too.
+  info line, which `desktop/log.mjs` `updaterLogger` keeps, so `logs/server.log` holds the ID too, and
+  both "how to remove it" texts (the file's row and Delete's list of what it can't reach) say an earlier
+  ID stays in the log.
   [`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) gains a `FOLDERS` row for the file, the ID in
   the log's row, and a line in `NOT_CLEARED_BY_DELETE`; Settings' Privacy group names it
   ([`components/settings/settings-page.tsx`](../components/settings/settings-page.tsx)).

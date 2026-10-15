@@ -573,7 +573,7 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
   },
   {
     name: "The update checker's install ID",
-    why: "Not deleted. It is the update checker's own file in the data folder (.updaterId), holding only the random code it sends GitHub with each check. To remove it, close DotAmi and delete the file; the next check makes a new one.",
+    why: "Not deleted. It is the update checker's own file in the data folder (.updaterId), holding only the random code it sends GitHub with each check. To remove it, close DotAmi and delete the file; the next check makes a new one. An earlier ID stays in the log (“The log”, above), which nothing clears.",
   },
   {
     name: "Anything that already left this computer",
@@ -785,7 +785,7 @@ export const FOLDERS: readonly FolderEntry[] = [
     relativePath: ".updaterId",
     name: "The update checker's install ID",
     holds:
-      "A random code of 36 letters, digits and dashes that the update checker (electron-updater, the package the desktop app uses to look for a newer version) made the first time it checked, and nothing else: nothing about you, this computer or your data. It sends this same code to GitHub with every update check (see “What leaves this computer”), so whoever receives the checks could tell this copy's checks from other copies' and link them to each other. The checker uses it to offer a release to only part of its users at first; DotAmi's own release steps don't release that way. The file is the updater's, not DotAmi's: DotAmi doesn't write or read it, and Delete doesn't remove it. To remove it, close DotAmi and delete the file; the next update check makes a new random code and sends that one instead. Uninstalling DotAmi leaves it, with the rest of the data folder.",
+      "A random code of 36 letters, digits and dashes that the update checker (electron-updater, the package the desktop app uses to look for a newer version) made the first time it checked, and nothing else: nothing about you, this computer or your data. It sends this same code to GitHub with every update check (see “What leaves this computer”), so whoever receives the checks could tell this copy's checks from other copies' and link them to each other. The checker uses it to offer a release to only part of its users at first; DotAmi's own release steps don't release that way. The file is the updater's, not DotAmi's: DotAmi doesn't write or read it, and Delete doesn't remove it. To remove it, close DotAmi and delete the file; the next update check makes a new random code and sends that one instead. An earlier ID stays in the log (“The log”, above), which the updater wrote when it made the ID. Uninstalling DotAmi leaves it, with the rest of the data folder.",
     writtenBy: { file: "node_modules/electron-updater/out/AppUpdater.js", mentions: 'path.join(this.app.userDataPath, ".updaterId")' },
     desktopOnly: true,
     whenAbsent: "None: the update checker hasn't checked from this data folder yet (a copy run from source never checks).",

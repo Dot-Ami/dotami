@@ -582,7 +582,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   every check (the `x-user-staging-id` header) and writes it into the log once; the privacy list didn't
   say so. `/your-data` now has a row for the file (what it is, that DotAmi doesn't write or read it, that
   Delete doesn't reach it, and how to remove it: close DotAmi and delete the file, and the next check makes
-  a new one), the log's row and the update check's entry name the ID, the update check also names Help →
+  a new one; an earlier ID stays in the log, which both this row and Delete's list of what it can't reach
+  say), the log's row and the update check's entry name the ID, the update check also names Help →
   Check for updates, and Settings' Privacy group says GitHub sees it
   ([`lib/privacy/inventory.ts`](lib/privacy/inventory.ts),
   [`components/settings/settings-page.tsx`](components/settings/settings-page.tsx),

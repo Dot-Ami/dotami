@@ -105,7 +105,8 @@ jump links, then five sections in this order:
    encrypted too. A row for **the update checker's install ID** (`.updaterId`, desktop app only,
    since 2026-10-14): electron-updater's own file, a random code it sends GitHub with every update
    check, that DotAmi doesn't write or read and Delete doesn't remove, and how to remove it (close
-   DotAmi, delete the file; the next check makes a new one); "None: the update checker hasn't checked
+   DotAmi, delete the file; the next check makes a new one; an earlier ID stays in the log, and Delete's
+   list of what it can't reach says so too); "None: the update checker hasn't checked
    from this data folder yet (a copy run from source never checks)." when it isn't there. The log's
    row says the ID is in the log too.
 4. **What leaves this computer** — the intake sentence (to Anthropic only when a model key is set
