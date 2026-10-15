@@ -138,8 +138,12 @@ export const cockpitWords = {
       "your-quote": "your quote · agreed",
       "named-not-priced": "not priced yet",
     },
-    /** Under an official fee that applies only sometimes: its condition, and that no total adds it. */
-    onlyIf: (condition: string) => `Only if: ${condition}. Not added to any total.`,
+    /**
+     * Under an official fee that applies only sometimes: its condition, and that no total adds it. A
+     * catalog's condition may already end its sentence ("…choose to rewrite it."), so a full stop is added
+     * only when it doesn't: no step panel, money list or printed plan reads "rewrite it.. Not added".
+     */
+    onlyIf: (condition: string) => `Only if: ${/[.!?…]$/.test(condition) ? condition : `${condition}.`} Not added to any total.`,
     addQuote: "Add your quote",
     changeQuote: "Change your number",
     costsLeftOut: "Not counted in the sums: this step is not on your path.",
@@ -251,11 +255,11 @@ export const cockpitWords = {
     none: "Nothing yet. Each answer you give shows here, with its day.",
     /** The intake's answers and road 0's map picks keep no day of their own; one is never borrowed. */
     dayNotKept: "day not kept",
-    dayOnYourIdeas: "each figure's day is on Your ideas",
+    dayOnYourIdeas: "each figure's day is on Your futures",
     unlocked: "What it unlocked",
     nothingChanged: "Nothing on the road changes with or without it.",
     required: "The map needs this answer: it can be changed, not taken back.",
-    figuresElsewhere: "Take these back with the idea's figures on Your ideas.",
+    figuresElsewhere: "Take these back with the idea's figures on Your futures.",
     noRoute: "This can't be taken back here yet.",
     change: "Change",
     takeBack: "Take back",
@@ -462,6 +466,71 @@ export const cockpitWords = {
         "what-if": (person: string) => `${person}'s what-if, kept nowhere`,
       },
     },
+  },
+
+  /**
+   * Your plan (2026-10-13, issue #41; docs/ui-spec/plan/_index.md): one idea's plan to read and print,
+   * made from what DotAmi keeps. Where the cockpit already has the words (the goal bar's, the step
+   * panel's, Compare's), the plan uses those; these are the plan's own.
+   */
+  plan: {
+    title: "Your plan",
+    made: (day: string) => `Made on ${day} from what DotAmi keeps for this idea on this computer.`,
+    /** The Export panel's way here, and what it says for an idea not saved yet. */
+    open: "Open your plan to read or print",
+    notSaved: "Save this idea first: the plan is made from what DotAmi keeps.",
+    notFound: "DotAmi keeps no idea with this id on this computer.",
+    /** The data file couldn't be read just now (locked, say): never said as "no such idea". */
+    readFailed: "DotAmi couldn't read this idea from the data file just now; nothing was changed.",
+    back: "← Back to the cockpit",
+    print: "Print",
+    printHelp: "Print opens your computer's print window, where you can also save it as a PDF.",
+    sections: {
+      // Neutral: the idea's own sentence isn't "where you want to be"; the line under each quote says which it is.
+      words: "In your words",
+      road: "The future and its ending",
+      steps: "Each step",
+      // It lists every item the road names, marked or not, legal requirements among them.
+      skills: "Skills and requirements, with your marks",
+      money: "Start-up money",
+      told: "What you've told DotAmi",
+      notAdvice: "What this plan is",
+    },
+    typedFor: (day: string) => `typed for this idea · ${day}`,
+    /** The newest destination is the person's own, kept for no one idea, and its line says so. */
+    destination: (day: string) => `where you want to be · your words, not tied to one idea · ${day}`,
+    wordsNone: "No words of yours are kept for this idea.",
+    roadChosen: (day: string | null) => (day ? `You picked this future on ${day}.` : "You picked this future."),
+    roadDefault: "No future picked: this idea is drawn on the general road.",
+    ending: (fork: string, pick: string) => `${quoted(fork)}: ${pick}`,
+    noForks: "This road has no fork.",
+    gauges: "The four gauges",
+    order: "In the order the road shows them, not importance.",
+    status: (status: string) => `Your status: ${status}`,
+    noStatus: "Your status: not set",
+    /** A step's state in the map's own words. */
+    state: { applies: "applies as answered", "check-first": "check first", "not-on-your-path": "not on your path" },
+    doneWhen: (ticked: number, total: number) => `Done when (${ticked} of ${total} ticked)`,
+    ticked: "ticked",
+    notTicked: "not ticked",
+    /** The box drawn before a done-when line, so a printed page shows which are ticked. */
+    tickBox: { on: "☑", off: "☐" },
+    costCount: (n: number) => `${count(n, "cost line", "cost lines")}, under Start-up money`,
+    sources: "Sources",
+    /** A person's mark on a skill, or none. */
+    mark: { have: "have", learning: "learning", "not-yet": "not yet", none: "not marked" },
+    ownNone: "None added.",
+    job: (label: string, code: string, day: string | null) => `Your pick of job: ${label} · ${code}${day ? ` · picked ${day}` : ""}`,
+    jobNotMarked: (n: number, listed: number) => `${n} not marked, of ${listed} on the government's list`,
+    noJob: "No job picked for the government's skills list.",
+    costKind: {
+      "official-fee": "official fee",
+      "your-quote": "your quote",
+      "named-not-priced": "not priced yet",
+    },
+    quoteNote: (day: string | null, from: string) => `yours, agreed ${day ?? "(day not kept)"}, from ${from}`,
+    notAdvice:
+      "DotAmi is not legal or tax advice. This plan is a preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact comes from, and it ranks nothing.",
   },
 
   /** The left rail's own fields. */

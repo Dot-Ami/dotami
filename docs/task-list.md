@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-12. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-14. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -76,9 +76,11 @@ and the maintainer's six decisions of 2026-10-11:
     separate bank account), every source a tool check (2026-10-12,
     `lib/engines/roads/v2026/starting-any-business-ab.ts`; in the cockpit, road evaluation colours the
     three new cards as on your road; drawn without it, the map shows them as "no rule yet")
-    - [ ] Still open on it: skill items and official links on the ten map stages; four
-      map stages' own sources point at pages that answer "page not found" (a read, or a tool check
-      in place of it, is the maintainer's call); a person's read of each page
+    - [ ] Still open on it: skill items and official links on the ten map stages; one map stage's
+      own sources still point at a page that answers "page not found": *Retained earnings planning*,
+      whose "Paying dividends" and "Salary or dividends" shared one old address and have no current CRA
+      page found (a person's call). Since 2026-10-13 the other stages' moved sources link their new pages
+      with a tool check, `tests/moved-government-pages.spec.ts`; a person's read of each page
   - [x] Official fees and named start-up cost lines (2026-10-12): every official fee written once, in
     one catalog (`lib/engines/fees/v2026/`, [engines/fees.md](engines/fees.md): its amount, what it is
     for, its place as a code such as `CA-AB`, and its source, each re-checked by the quote tool that
@@ -135,8 +137,9 @@ and the maintainer's six decisions of 2026-10-11:
     as built, this visit only)
     - [ ] Still open on it: *Since last time* on a return visit (steps marked since the last visit, dates
       coming up, figure reminders: it needs the day of the last visit, which isn't kept; today *This
-      visit* holds this visit's receipts only); the export gaining the told list, the what-ifs and the
-      ending picked; the yearly income question, and taking it back; remembering the last overlay used;
+      visit* holds this visit's receipts only); the markdown export gaining the told list and the
+      ending picked (*Your plan*, the page to read and print, shows both since 2026-10-13, #41; a what-if is
+      never kept, so neither shows one); the yearly income question, and taking it back; remembering the last overlay used;
       a *Change* on one of the intake's answers opening that question instead of the intake's first
       screen; receipt lines that name the steps and cards they count; a No to buying equipment survives
       a later save from the intake only if the chip is then switched on or answered again in the box
@@ -234,6 +237,7 @@ and the maintainer's six decisions of 2026-10-11:
     the workflow file was unreadable from #77 until its fix on 2026-10-06; v0.2.0 was built before it
   - [x] The app checks for updates, downloads, and asks before installing; pre-releases only reach pre-release copies
   - [x] It says so the moment an update is found and shows the download in the taskbar; the start-up log is written straight to the disk, so a start that stops leaves its reason
+  - [x] The check starts as the app opens, before the server and the first page, and its message waits for the main window (never over the preparing window or the lock question) (2026-10-14)
   - [x] Before a database change, the app backs up the database (and refuses data from a newer version)
   - [x] Proven end to end: a published release reaches an installed app (by hand, on the maintainer's computer: 0.2.0 → 0.2.1, 2026-10-08; not an automated test)
   - [x] Third-party licence notices: the installer carries `THIRD-PARTY-NOTICES.txt` (every package that
@@ -245,6 +249,12 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] Electron 44.5.1 → 44.7.0 (2026-10-11): 55 fixes copied from Chrome's engine, and time-zone
     data 2026d (British Columbia stays on UTC-7 from November 2026, so "today" there turns over an hour
     earlier; a desktop test checks it); reaches installed copies with the next release
+  - [x] The update checker's install ID (`.updaterId`, sent to GitHub with each check, written once into
+    the log) is listed on What DotAmi knows about you and in Settings, with how to remove it (and that an
+    earlier ID stays in the log); a test reads electron-updater's own code and fails while its file or
+    header isn't listed, or while a "how to remove it" text leaves out the log's copy (2026-10-14)
+  - [ ] Decide whether DotAmi needs that install ID at all (the updater uses it only for releases offered
+    to part of its users, which DotAmi doesn't do); nothing changed yet
   - [ ] ⏸ Code signing and app stores — later
 - ⏸ **[7e] Landing page website** — what it is, demos, a download button. Later; hosting not decided.
 - ⏸ **[7f] Move an existing PostgreSQL install into the app** — not planned for now: the maintainer
@@ -551,6 +561,15 @@ roadmap's build order.
     "Checked by a tool on …"); `node scripts/check-quotes.mjs` checks the quotes on the live page · [docs/engines/citations.md](engines/citations.md)
   - [ ] A model proposes the quotes for a source (not built)
 - ⬜ **[11c] Flag stale sources automatically** — with #37
+  - [ ] Kept open on purpose (the maintainer, 2026-10-14), so a person decides later:
+    - [ ] *Alberta Investor Tax Credit* (`grant-abti`, `lib/engines/grants/v2026/programs.ts`): its
+      page answers "page not found", and other sites say Alberta closed the program in 2019. The entry
+      is left as it was until a person reads an official source; then keep it, mark it closed, or
+      retire it (its id stays either way).
+    - [ ] *Retained earnings planning*'s "Paying dividends" and "Salary or dividends" (see [14a]): no
+      current CRA page found; the T5 guide could back "Paying dividends". Left as they are for now.
+    - [ ] *Canada-Alberta Job Grant* (`grant-cajg`): its page now redirects to the Canada-Alberta
+      Productivity Grant. A person reads whether the entry still says what the program does.
 - ⬜ **[11d] Two people per change** — the checker of a source is never its author.
 - ⬜ **[11e] Reviewed by an accountant** — a roadmap is *reviewed* only after a professional reads it.
 - ⬜ **[11f] Strategy roadmaps** · roadmap §6 · #47 — each cited, with its audit and anti-avoidance read:
@@ -580,10 +599,17 @@ roadmap's build order.
   - [x] #6 hide the empty vault line — 2026-10-12
   - [ ] #10 a van buyer sees no vehicle class
   - [ ] #11 prep-tool references filtered by structure
-  - [ ] #40 hide R&D-only steps without an R&D tag
+  - [x] #40 hide R&D-only steps without an R&D tag — 2026-10-13: *SR&ED deepening* is drawn off the
+    path, dashed, with its reason, instead of hidden (the map doesn't pre-filter paths); whether to hide
+    it anyway is the maintainer's call (docs/architecture/future-cockpit.md § 13)
   - [ ] #5 "YOUR PICK" on a branch never picked
   - [ ] #38 "New idea" restarts at About-you
-  - [ ] #41 playbook print view
+  - [ ] #41 playbook print view (2026-10-13: *Your plan*, `/plan?venture=<id>`, a page of its own with **Print**, opened from Export; the Export panel keeps its raw-markdown box, the maintainer's call of 2026-10-14)
+    - [ ] the readout API and the playbook export read road evaluation, so *SR&ED deepening* off the
+      path (#40) isn't "ahead" there (docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
+      work only, as built*)
+  - [x] the step panel's doubled full stop, *"rewrite it.. Not added"* (flagged in PR #165) — 2026-10-14:
+    fixed in the panel's words, so the step panel, the money list and *Your plan* all print one
   - [x] #4 the cockpit on a phone (2026-10-12, with the folding regions)
 
 ## 12 — People and structures

@@ -711,6 +711,9 @@ describe("road evaluation is pure", () => {
   // "@/lib/scenarios/not-said" is two pure functions over the profile's not-said list, importing only
   // lib/scenarios/types (2026-10-12): a picked future's unasked answers are never listed as told.
   const ALLOWED = new Set([
+    // The rules' own tag matcher (type imports only), so a step for some kinds of work only matches tags
+    // exactly as the rules do (2026-10-13).
+    "@/lib/brain/predicates",
     "@/lib/scenarios/branches",
     "./agreed",
     "./evaluate-road",

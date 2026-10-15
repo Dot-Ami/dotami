@@ -585,7 +585,7 @@ answer, before and after it or with and without it. Choices made while building 
   answers through the map's save (the structure back to *not set*, a map pick back to the map's default,
   the person's *I'd incorporate at* number cleared, and so on). The receipt for a take back is therefore
   exactly the row's *what it unlocked*, read the other way. Rows with no take back say why (*the map
-  needs it*; *take back figures on Your ideas*). A yearly income target has no route to take it back
+  needs it*; *take back figures on Your futures*). A yearly income target has no route to take it back
   yet, and no screen asks for it yet, so its row shows no buttons.
 - **Not told yet** lists, in a fixed order that is the order DotAmi asks them and never importance: your
   date; your savings; your numbers for the cost lines not priced yet; your marks on the skills not
@@ -697,6 +697,46 @@ answer, before and after it or with and without it. Choices made while building 
 - **Not in part 2:** the return visit's *Since last time* list (above); remembering the last overlay;
   the export gaining the told list; the yearly income question and taking it back; a receipt per
   keystroke in the *I'd incorporate at* box; folding the rail and phone width (their own items).
+
+### Your plan as built (2026-10-13)
+
+§ 1 row 9's *Your plan*, as a page of its own (issue #41: the export read as developer text, odd for
+something handed to an accountant). Per-control behaviour: [docs/ui-spec/plan/_index.md](../ui-spec/plan/_index.md).
+
+- **Where.** `/plan?venture=<idea id>`, opened from the cockpit's **Export** panel (*Open your plan to read
+  or print*), which keeps **Copy markdown** and **Save as .md** as they were. **← Back to the cockpit**
+  goes back.
+- **What it is made from.** Only what DotAmi keeps for the idea and the catalogs, read on the server for
+  each visit (`lib/futures/read-plan.ts`: the saved idea, what `GET /api/futures/<id>` gives, the idea's
+  figures), turned into one road-evaluation input the way the cockpit turns it (`lib/cockpit/view.ts`
+  `cockpitInput`, with no what-if), and laid out by one pure function, `lib/cockpit/plan.ts` `buildPlan`,
+  which runs road evaluation and the told list itself. So the plan's states, sums and told rows are the
+  cockpit's, from the same functions, never a second reading.
+- **What it shows**, in order: the person's words (the sentence typed for the idea and, when different,
+  the newest destination, word for word and dated) and their agreed yearly income; the future, who picked
+  it, and the ending at each fork; the four gauges; every step of the road, column by column, with the
+  person's status, its state and reason, its *done when* lines ticked or not, the skills it needs with the
+  person's marks, a count of its cost lines, official pages and sources with how each was checked; the
+  skills and requirements the road lists, each with the person's mark or *not marked*, and the person's
+  own skills (names only; the government's list for the job picked shows the marked items and its
+  licence's attribution, never the ratings); start-up money in the three kinds of § 6 (an official fee
+  with its source and the day it was read or tool-checked; the person's agreed quote as theirs, with its
+  day and where it came from; a named line not priced yet with no amount); *What you've told DotAmi*,
+  row for row; and the standing not-advice line, which is also in the heading, so the first page carries
+  it. The words' heading is *In your words*: the idea's own sentence isn't the person's statement of where
+  they want to be, and the destination's line says it isn't tied to one idea.
+- **Print.** `window.print()`, so the computer's own print window, with *Save as PDF*. Print styles (in
+  `app/globals.css` and Tailwind's `print:` variant): no bar, no footer on this page (every other page
+  keeps the footer's not-advice line on paper), black on white, a new page per section, a step never
+  split, every link printed as its address (the link's text is the address). In the desktop app,
+  Electron's `window.print()` is expected to open Windows' print window, and nothing in `desktop/`
+  blocks it; it has not yet been tried in the packaged app.
+- **A failed read.** When the data file can't be read just now, the page says so and that nothing was
+  changed, with the way back to the cockpit; *no idea with this id* is said only when the read found none.
+- **Nothing kept, nothing sent.** No new table, column, browser key, API route or request; one new page,
+  one load from DotAmi's own server. Every sentence is in `lib/cockpit/words.ts` (`plan`); amounts and months
+  go through `lib/format/money-and-months.ts`; the verdict-word check covers them.
+- **Not in it:** the what-if (never kept), *This visit* and *Not told yet*; a Lens summary of any kind.
 
 ## 3. What DotAmi asks, why, and how it's kept
 
@@ -948,6 +988,11 @@ lives in `lib/roads/`.
   order, the first that fits decides:
   1. The person marked the step *not for me*: **not on your path** (*not for me* greys a step; it
      doesn't remove it, § 8).
+  1a. *(2026-10-13, issue #40.)* The road writes the step for some kinds of work only
+     (`onlyForKindsOfWork` on the step) and none of the idea's kinds of work is one of them: **not on
+     your path**, with the step's own reason. Road 0's *SR&ED deepening* is the one such step today. With
+     one of those kinds of work, the next rule decides, as before. Below, *Steps for some kinds of work
+     only, as built*.
   2. Today's rules colour the step (every step of road 0, by its id): the rules' colour, exactly as
      the map shows it today. Green is **applies**, amber **check first**, grey **not on your path**. The
      reason names the answers that colour depends on, found the way receipts are: the rules run again
@@ -1051,6 +1096,74 @@ lives in `lib/roads/`.
   money counted, so both endings are off while what comes after one of them applies. Whether those
   steps should go grey too, or the fork should read as unpicked, is the maintainer's call; until then
   it is built the simple way. (§ 13.)
+
+### Steps for some kinds of work only, as built (2026-10-13)
+
+Issue #40, from the first run as a stranger (2026-09-20): a sign painter's map drew *SR&ED deepening*
+(Tier 4), a research tax credit step, as **ahead**, which reads as a step that idea is headed toward. The
+rules already coloured it grey without a research kind of work, but the chip said *ahead*, the card had
+no reason line, and its *Why this colour* said *"Today's rules give it this colour; no single answer of
+yours changes that."*. That was true for a sole proprietorship, which needs two answers (a corporation
+and a research kind of work), but not for an idea already set as a corporation, where a research kind
+of work alone would change it.
+
+The issue asks for the card not to be drawn. It is drawn, the way the road already treats a step that
+isn't on a person's path: CLAUDE.md, *Every path, in the open*, says the map doesn't pre-filter paths
+by what it thinks the reader should want, and a step that isn't drawn can't be read or brought back.
+Whether to hide it anyway is the maintainer's call (§ 13).
+
+- **The rule is the road's, in the catalog.** A road step may carry `onlyForKindsOfWork`: `tags`, the
+  intake's kinds of work (activity tags, `lib/journey/intent.ts` `ACTIVITY_TAXONOMY`), one of which the
+  step needs to be on the path. Road 0 sets it on *SR&ED deepening* only, with the three kinds of work
+  today's rules already read for that step (Software / SaaS, Manufacturing, AI / ML / R&D;
+  `computeNodeStates` in `lib/brain/evaluate.ts`). A test holds the two lists equal, so the step can
+  never be off the path for a kind of work the rules would light it for, or the other way round. The ids
+  are unchanged. The checks (`roadProblems`) refuse an empty list, and `tests/research-steps.spec.ts` a
+  kind of work the intake doesn't ask (the catalogs import nothing from the intake, so that check is the
+  test's). The catalog carries no sentence: until the review of 2026-10-13 it also had `notTold`, which
+  made every reason a claim about what the person told DotAmi (below, why that was dropped).
+- **Road evaluation** (rule 1a above): with none of those kinds of work, the step is **not on your path**,
+  reason `{ kind: "kinds-of-work", tags }`, because *"None of the kinds of work on this idea is Software /
+  SaaS, Manufacturing or AI / ML / R&D, and this step is on your path only with one of them."* An idea
+  with no kinds of work at all (one saved from *Pick a future*) reads *"This idea has no kinds of work on
+  it, and this step is on your path only with one of Software / SaaS, Manufacturing or AI / ML / R&D."*
+  *Not for me* still comes first. With one of them the rules decide as before: amber (**check first**)
+  for a corporation, grey for a sole proprietorship, its reason naming the structure. Its cost lines (none
+  today) are left out of the sums while it is off the path, like any step off the path.
+- **The reason says only what DotAmi can check** (review of 2026-10-13). The first wording, *"You haven't
+  told DotAmi this idea involves research and development: …"*, was false for a person who typed their own
+  kind of work on the intake (*Add your own kind of work*): "Research and development", "Scientific
+  research" or "Biotech R&D lab" is saved with the listed kinds of work, the rules' matcher
+  (`tagsIntersect`, `lib/brain/predicates.ts`) doesn't match it to any of the three, and the step is off
+  the path, yet that person did tell DotAmi about the research. The sentence now names only the kinds of
+  work on the idea and the ones the step needs, the way the rules' own card speaks only of tags
+  (`lib/brain/evaluate.ts`, *"Your intake has none of the activity tags this card reads"*). Matching a
+  person's own words to a research kind of work would be a change to the rules, the maintainer's call
+  (§ 13). *"Only with one of them"* says what the step needs, not that one is enough: for a sole
+  proprietorship the rules still leave it off with one of them, and the sentence names only the kinds of
+  work, not the structure (§ 13).
+- **On the map** (cockpit only, where road evaluation runs): the card is drawn dashed, its chip says
+  **not on your path** instead of *ahead*, its lever cards are hidden (none apply without a research kind
+  of work: a test holds that every rules card such a step names is grey without one of its kinds of work,
+  for a sole proprietorship and a corporation), and the reason sentence is its line under the trigger, also
+  read out as the card's description. It still opens the step panel, whose *Why this colour* gives the same
+  sentence and keeps every *done when* line and source. `lib/cockpit/view.ts` `mapPlace` gives such a step
+  the map's *not on your path* place; the words are road evaluation's (`lib/roads/words.ts`). Drawn without
+  road evaluation (`tests/road-map.spec.ts`), the map is unchanged.
+- **A research sole proprietorship's card is drawn as before**, solid, chip *ahead*, with its lever cards,
+  though the rules leave the step off the path (grey, *"Today's rules leave it off your path, from your
+  structure (Sole prop)."* in the step panel). So a sole proprietor who adds a research kind of work sees
+  the card go from dashed *not on your path* to solid *ahead*. It is built this way because its two lever
+  cards, the SR&ED tax credit and IRAP, are amber (check first) for that idea, and a dashed card hides its
+  lever cards: dashing it would take two cards that apply out of sight. Whether to draw it off the path
+  anyway is the maintainer's call (§ 13); `tests/research-steps.spec.ts` pins it as built.
+- **Not changed:** *Incorporation for liability/SR&ED* (Tier 3) is about liability as well as research,
+  so it is not a research-only step and keeps its colours and its line. The readout API
+  (`app/api/readout/route.ts`, `stageChipFor`) still gives *SR&ED deepening* the map's worked-out chip
+  (*ahead*) beside its grey colour, and the playbook export (`lib/playbook/build-skeleton.ts`) lists the
+  steps the map's toggles make visible, this one among them, without road evaluation's reason: neither runs
+  road evaluation yet. That belongs to the export and print work, tracked in `docs/task-list.md` beside
+  #41.
 
 ### The first written future as built (2026-10-12)
 
@@ -1722,6 +1835,23 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - ***Not for me* on the side picked at a fork.** Whether the steps only that side leads to go grey
   too, or the fork reads as unpicked; built the simple way until the maintainer says (§ 6, *Road
   evaluation as built*).
+- **Hide a research step, or draw it off the path?** Issue #40 asks for *SR&ED deepening* not to be
+  drawn without a research kind of work; it is drawn off the path with its reason instead (§ 6, *Steps for
+  some kinds of work only, as built*), because the map doesn't pre-filter paths. Hiding it would take a
+  step out of sight that a person can't then read or bring back without knowing to go back to the
+  intake; drawing it keeps it one click away, at the cost of a dashed card on every map without one of
+  the three kinds of work. The maintainer's call.
+- **A research step and the person's own words, and a research sole proprietor's card** (review of
+  2026-10-13; § 6, *Steps for some kinds of work only, as built*). Two open questions. First, a kind of
+  work the person typed themselves ("Research and development") isn't matched to any of the three the
+  rules read, so *SR&ED deepening* stays off their path; the reason now says only which kinds of work are
+  on the idea, never that they didn't tell DotAmi. Matching their own words would change the rules for
+  every card that reads those tags. Second, a sole proprietor with a research kind of work sees the card
+  solid, *ahead*, with its two lever cards (amber for them), though the rules leave the step off the path;
+  without one it is dashed, *not on your path*. Drawing it dashed would hide the two cards that apply;
+  drawing it solid makes the card look more on the path once they say the idea involves research. The
+  reason for a sole proprietor without one names only the kinds of work, not the structure, although both
+  keep it off. Built as described until the maintainer says.
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks. When a person reads
   them in the Registry Agent Product Catalogue, each amount goes into the official fees catalog

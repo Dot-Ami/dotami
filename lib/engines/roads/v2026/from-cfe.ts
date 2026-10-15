@@ -1,7 +1,7 @@
 import type { CFENode } from "../../cfe/v2026/types";
 import type { CFETier } from "../../cfe/v2026/tiers";
 import type { Province } from "../../shared/types";
-import type { CatalogCostLine, DoneWhenLine, Fork, Road, RoadKind, RoadStep } from "./types";
+import type { CatalogCostLine, DoneWhenLine, Fork, OnlyForKindsOfWork, Road, RoadKind, RoadStep } from "./types";
 import { newestReadDate } from "./validate";
 
 /**
@@ -13,10 +13,11 @@ import { newestReadDate } from "./validate";
  *
  * The rules and tax cards each step names come in as `engineHints`, by step id.
  *
- * Four optional inputs carry the road's own content, written in the road's file rather than in the tax
+ * Five optional inputs carry the road's own content, written in the road's file rather than in the tax
  * map's catalog: `doneWhen`, the done-when lines for a step by its id; `costs`, the cost lines for a
  * step by its id (road 0's named start-up lines, 2026-10-12); `needs`, the legal requirements a map
- * stage needs, by its id (2026-10-12); and `addedSteps`, steps that aren't map stages (road 0's "before
+ * stage needs, by its id (2026-10-12); `onlyForKindsOfWork`, a map stage about some kinds of work only,
+ * by its id (2026-10-13); and `addedSteps`, steps that aren't map stages (road 0's "before
  * you open" steps), each placed in a column after that column's stages. Official links on the map
  * stages start empty, and so does any step's cost or needs list the road file doesn't fill; nothing is
  * filled in here that the road file didn't write.
@@ -36,6 +37,8 @@ export function roadFromCfe(input: {
   costs?: Readonly<Record<string, readonly CatalogCostLine[]>>;
   /** The skill items (legal requirements) a map stage needs, by step id; the items are on the shared list. */
   needs?: Readonly<Record<string, readonly string[]>>;
+  /** A map stage that is about some kinds of work only, by step id (a stage left out is for every idea). */
+  onlyForKindsOfWork?: Readonly<Record<string, OnlyForKindsOfWork>>;
   addedSteps?: readonly { columnId: string; step: RoadStep }[];
 }): Road {
   const added = input.addedSteps ?? [];
@@ -67,6 +70,9 @@ export function roadFromCfe(input: {
         officialLinks: [],
         citations: [...node.citations],
         ...(input.engineHints?.[node.id] ? { engineHints: [...input.engineHints[node.id]!] } : {}),
+        ...(input.onlyForKindsOfWork?.[node.id]
+          ? { onlyForKindsOfWork: { ...input.onlyForKindsOfWork[node.id]!, tags: [...input.onlyForKindsOfWork[node.id]!.tags] } }
+          : {}),
       })),
       ...added.map((a) => a.step),
     ],

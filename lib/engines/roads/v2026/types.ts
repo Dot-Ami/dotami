@@ -86,6 +86,22 @@ export interface RoadStep {
    * here from lib/brain/node-items.ts, so a road names its own cards.)
    */
   engineHints?: string[];
+  /**
+   * Set only on a step that is about some kinds of work (road 0's SR&ED deepening, 2026-10-13, issue
+   * #40). Without one of these on the idea, road evaluation puts the step off the person's path with
+   * the reason below; the step stays on the map and still opens, it is never removed.
+   */
+  onlyForKindsOfWork?: OnlyForKindsOfWork;
+}
+
+export interface OnlyForKindsOfWork {
+  /**
+   * The intake's kinds of work (activity tags), one of which the step needs to be on the path. The reason
+   * on screen is built from these and the idea's own kinds of work only, never a sentence about what the
+   * person told DotAmi: a kind of work typed in the person's own words isn't one of these, and may well say
+   * the same thing (review of 2026-10-13).
+   */
+  tags: string[];
 }
 
 export interface DoneWhenLine {

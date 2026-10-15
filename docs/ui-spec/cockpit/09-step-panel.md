@@ -4,7 +4,7 @@ Page: Cockpit (`/cockpit?venture=<id>`) · Component: `components/cockpit/step-p
 step it wraps `components/node-detail-panel.tsx`; the quote box is `components/cockpit/amount-form.tsx`)
 Type: panel (display + toggle buttons + checkboxes + form)
 
-Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
+Last updated: 2026-10-13 (*Why this colour* on SR&ED deepening without a research kind of work, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 1 row 5 and § 2, Cockpit screen as built)
 
 > **Changed 2026-10-12 — part 2.** Every answer given here (a status, ticks, a skill mark, a quote once agreed, the fork's toggle) shows its receipt under the panel's refusal line ([13-receipts.md](./13-receipts.md)); opening another step clears it. At a fork, **Compare the endings** opens *Compare the two endings* on that fork ([15-compare.md](./15-compare.md)); since 2026-10-13 (the maintainer's answer to PR #159's question 1) only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`), so not on a road 0 step, where the toggle is the pick, the tax rules colour the sides whichever is picked, and no Compare button shows. The *I'd incorporate at* box saves as the person types and gives no receipt.
 
@@ -23,7 +23,11 @@ same sections, its cards and *Sources for this step*.
 The sections, in order:
 
 1. **Why this colour** — road evaluation's sentence for the step (*"Today's rules light it, from your place
-   (Alberta) and …"*, *"You marked this step not for me."*).
+   (Alberta) and …"*, *"You marked this step not for me."*; since 2026-10-13, on *SR&ED deepening* for an
+   idea without a research kind of work, *"None of the kinds of work on this idea is Software / SaaS,
+   Manufacturing or AI / ML / R&D, and this step is on your path only with one of them."* (or *"This idea
+   has no kinds of work on it, …"*), never what the person did or didn't tell DotAmi, where it said *"Today's rules give it this colour; no single answer of yours changes that."*, issue #40,
+   [03-canvas.md](./03-canvas.md)).
 2. **The road splits here: you choose** — only on a side of a fork. On today's road, that column's toggle
    (the same as on the map, *default, not your pick yet* until clicked). On another road, *Your pick:
    “…”* or *No side picked yet* (picking an ending is part 2's *Compare*).
@@ -49,7 +53,7 @@ The sections, in order:
    catalog's source.
 6. **Costs** — each line in one of the three kinds: an official fee with its amount, *official fee ·
    source and day read* and its citation (one that applies only sometimes adds *Only if: <its condition>.
-   Not added to any total.*); the person's agreed number with *your quote · agreed* and
+   Not added to any total.*, where a condition that already ends in a full stop gets no second one); the person's agreed number with *your quote · agreed* and
    **Change your number**; or a named line with *not priced yet* and **Add your quote**. A named line whose
    name has a source (a blank template) shows that citation too. Above them, *Not
    counted in the sums: this step is not on your path.* or *Not counted yet: it waits on a pick at “…”.*

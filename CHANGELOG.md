@@ -29,6 +29,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser storage and every request). Her numbers live in one file, `lib/examples/mara.ts`, and a test
   checks no other file the app is built from carries them (the cited catalogs aside, and the what-if
   bar's own hint, whose example of 45000 is the same amount by chance and stays as it was).
+- **Your plan: a page to read and print, from the cockpit's Export** (part of #41: the Export panel itself
+  still shows the raw markdown) — **Open your plan to
+  read or print** in the Export panel opens `/plan?venture=<id>`: one idea's plan laid out for a partner,
+  an accountant or a lawyer, with **Print** (the computer's own print window, which also saves a PDF).
+  In order: your words, word for word and dated (your newest answer to *where do you want to be* marked
+  as not tied to one idea), and the yearly income you agreed to; the future, who
+  picked it, the ending at each fork and the four gauges; every step of the road, column by column, on
+  your path or not, with your status, its state and the reason, its *done when* lines ticked or not, the
+  skills it needs with your marks, and its sources with how each was checked; the road's skills and legal
+  requirements, by name, each with your mark or *not marked*, and your own skills (for your pick of job,
+  only the items you marked, with the licence's line); start-up money in
+  three kinds, an official fee with its source and the day it was read or checked by a tool, your agreed
+  quote as yours with its day and where it came from, and a line not priced yet with no amount, never
+  $0; *What you've told DotAmi*, row for row as the cockpit lists it; and the line that DotAmi is not
+  legal or tax advice but a preparation tool for your accountant and lawyer, at the end and in the heading,
+  so the first page carries it too. On paper the buttons and the app's footer are gone from this page
+  (every other page still prints the footer's not-advice line), it prints black on white, each section
+  starts a new page and every link prints as its address. If the data file can't be read just now, the
+  page says so and that nothing was changed, never that the idea doesn't exist. Made only from what DotAmi
+  keeps, by the cockpit's own functions (`lib/cockpit/plan.ts`); it keeps nothing and sends nothing.
+  Printing from the desktop app hasn't been tried yet. **Copy markdown** and **Save as .md** stay as they were. Words:
+  `lib/cockpit/words.ts` (`plan`); design: `docs/ui-spec/plan/_index.md`.
 - **The front door leads with the dream: three doors, *Your destination* and *Pick a future*** ([14a];
   the maintainer's decision 6 of 2026-10-11) — the front page now reads *"See the road to the work and
   life you want."* with three doors: **Start from where I want to be**, **I already have an idea** (today's
@@ -384,6 +406,51 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   names grey too.
 
 ### Fixed
+- **No more doubled full stop under a fee that applies only sometimes** (flagged in PR #165) — the
+  apprentice road's rewrite fee showed *"Only if: You failed an exam and choose to rewrite it.. Not added
+  to any total."* in its step panel and in the Start-up money list. The words now add a full stop only
+  when the condition doesn't already end its sentence, so both read *"…rewrite it. Not added to any
+  total."*; *Your plan* uses the same words and no longer trims the condition itself.
+- **A sign painter's map no longer shows a research tax credit step as ahead** (issue #40) — in the
+  cockpit, *SR&ED deepening* (Tier 4) on an idea whose kinds of work include none of Software / SaaS,
+  Manufacturing and AI / ML / R&D is drawn dashed with the chip **not on your path** instead of **ahead**,
+  and says why on the card and in the step panel: *"None of the kinds of work on this idea is Software /
+  SaaS, Manufacturing or AI / ML / R&D, and this step is on your path only with one of them."* (or, on an
+  idea with no kinds of work at all, *"This idea has no kinds of work on it, …"*). It says what is on the
+  idea, never what you did or didn't tell DotAmi: a kind of work you typed in your own words, such as
+  "Research and development", isn't one the rules read, but you did tell DotAmi. Its step panel used to
+  say *"no single answer of yours changes that"*: true for a sole proprietorship, which needs two answers
+  (a corporation and one of those kinds of work), but not for an idea already set as a corporation, where
+  one of those kinds of work alone would change it. It is still drawn
+  and still opens, with every *done when* line and source; it is not hidden, since the map doesn't
+  pre-filter paths (whether to hide it is a question for the maintainer, docs/architecture/future-cockpit.md
+  § 13). With one of those kinds of work it is as before. The rule is the road's own, in its catalog
+  (`onlyForKindsOfWork` on the step, docs/engines/roads.md rule 12), with the same three kinds of work the
+  rules already read for that step, and a test holds the two lists equal. No id changed.
+- **The told list names *Your futures*.** Its *"each figure's day is on Your ideas"* and *"Take these back
+  with the idea's figures on Your ideas."* now name the screen by its name since 2026-10-12, *Your
+  futures* (`lib/cockpit/words.ts`; the cockpit's list and Your plan pick a row's day through one
+  function, `lib/cockpit/told.ts` `toldDay`).
+- **Sources that led to "Page not found" now lead to the page where that rule is today.** A recount on
+  2026-10-13 opened every government page DotAmi cites (104 addresses, twice): 20 answered "page not
+  found", mostly because the CRA moved its business-expense, SR&ED and corporation pages. 23 sources on
+  19 of those addresses now link the page where the same government keeps that content, and each says
+  *Checked by a tool on 2026-10-13* with the words found there, until a person reads it (the old read
+  date was for the old page, so it no longer shows). Three sources are left as they were for the
+  maintainer: the Alberta Investor Tax Credit page (it answers page not found; news reports say the
+  program ended in 2019, not checked against an official page) and the two sources of *Retained earnings
+  planning* (`tests/moved-government-pages.spec.ts`).
+- **The update message comes sooner after the app opens** ([7d]; the maintainer, 2026-10-08 and
+  2026-10-13) — the installed app asked GitHub for a newer version only after its server had started and
+  the whole first page had loaded. It now asks as soon as its log is open, alongside the rest of the
+  start (`desktop/main.mjs`, `desktop/update-check.mjs`), and *"DotAmi <version> is available,
+  downloading now"* shows the moment the main window is on the screen if the answer came first. Never over
+  *Preparing DotAmi…* or the *Lock your data file with a key?* question: every update message waits for
+  the main window, and a download that finished meanwhile goes straight to *Restart and update* /
+  *Later*. Installing is still only that click; drafts stay invisible; the download is still checked
+  against the release's SHA-512; a failed check is still one log line with the error's name and code;
+  Help → Check for updates and a copy run from source are unchanged. The running version decides when
+  the message shows, so this is first seen when a copy with this change finds the version after it.
 - **What you've told DotAmi says only what you said, and what was saved stays saved.** Every idea made on
   the intake read as *"you told us you're not buying equipment, a vehicle or tools"*: the intake's chip
   starts off, and off was saved as your no. Off is now *not answered* (the rules still read it as no, and
@@ -532,6 +599,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
+  review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
+  first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with
+  every check (the `x-user-staging-id` header) and writes it into the log once; the privacy list didn't
+  say so. `/your-data` now has a row for the file (what it is, that DotAmi doesn't write or read it, that
+  Delete doesn't reach it, and how to remove it: close DotAmi and delete the file, and the next check makes
+  a new one; an earlier ID stays in the log, which both this row and Delete's list of what it can't reach
+  say), the log's row and the update check's entry name the ID, the update check also names Help →
+  Check for updates, and Settings' Privacy group says GitHub sees it
+  ([`lib/privacy/inventory.ts`](lib/privacy/inventory.ts),
+  [`components/settings/settings-page.tsx`](components/settings/settings-page.tsx),
+  [docs/architecture/desktop-app.md § Updates](docs/architecture/desktop-app.md#updates)).
+  [`tests/privacy-inventory.spec.ts`](tests/privacy-inventory.spec.ts) reads electron-updater's own
+  `AppUpdater.js` and fails while a file it writes beside the data file, or a header it adds to the
+  check, isn't listed. No behaviour changes; whether DotAmi needs the ID is still open.
 - **The rate limiter says how it works on the person's computer.** Its comments described Vercel's
   hosted servers (warm serverless instances, a hosted store as a later upgrade); they now say the
   server runs on the person's own computer, who can reach it (only programs on the same computer for

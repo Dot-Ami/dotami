@@ -9,7 +9,19 @@
  * (4e643d7, that main plus #158) and compared with that main's drawing, it changes one panel only,
  * Mandatory GST registration, whose "No skills are listed for this step yet." becomes its legal
  * requirement, A GST/HST registration with the Canada Revenue Agency; that change is applied to the
- * fixture as #162 left it. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * fixture as #162 left it. Redrawn on 2026-10-13 for two panels when the map stages' dead government
+ * pages moved (tests/moved-government-pages.spec.ts): Employee/Apprentice baseline and SR&ED deepening,
+ * whose sources now link the new pages and say "Checked by a tool"; no other panel changed. Redrawn
+ * again on 2026-10-14 when issue #40 (research tax credit steps off the path without a research kind of
+ * work) joined that main (6d13ccd): drawn from that main plus only #40's change and compared with that
+ * main's fixture, it changes one panel of 32 only, SR&ED deepening, whose "Why this colour" sentence
+ * "Today's rules give it this colour; no single answer of yours changes that." becomes "None of the kinds
+ * of work on this idea is Software / SaaS, Manufacturing or AI / ML / R&D, and this step is on your path
+ * only with one of them." (the invented idea is a trade; the sentence says what is on the idea, not what
+ * the person told DotAmi); its moved sources stay as they were. Redrawn on 2026-10-14 from that main
+ * (e7969ca) plus only the doubled full stop fix (tests/step-panel-double-full-stop.spec.ts): two entries
+ * change, the apprentice road's TQ recognized-credential panel and its money list, each by one removed
+ * "." in "rewrite it.. Not added to any total.". Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

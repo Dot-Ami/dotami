@@ -49,11 +49,19 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Register for a GST/HST account",
+        title: "Register as a resident with a Canadian business",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/register-account.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/gst-hst-businesses/register-account.html, read 2026-06-08) answered
+        // 404 on 2026-10-13. The CRA's GST/HST page now sends registering to Business Registration
+        // Online on this page; a tool found this sentence, which names GST/HST accounts, on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/business-number-program-account/how-register/resident.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Registering online is the fastest and easiest way to get a business number (BN) and certain CRA program accounts such as GST/HST and payroll.",
+          ],
+        },
         note: "CRA guidance on registering for GST/HST.",
       },
       {
@@ -88,19 +96,31 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Corporation income tax",
+        title: "Corporation tax rates",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old overview (…/topics/corporations/corporation-income-tax.html, read 2026-06-08)
+        // answered 404 on 2026-10-13. The rates this rung relies on are on this CRA page; a tool found
+        // these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html",
+        toolCheck: { checkedOn: "2026-10-13", quotes: ["The basic rate of Part I tax is 38% of your taxable income"] },
         note: "CRA corporate income tax overview.",
       },
       {
         title: "Small business deduction",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax/small-business-deduction.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/corporation-income-tax/small-business-deduction.html, read
+        // 2026-06-08) answered 404 on 2026-10-13. The CRA's T2 guide explains the deduction at line 430
+        // on this page; a tool found these words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-4-page-4-t2-return.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "throughout the tax year may be able to claim the small business deduction",
+            "reduces Part I tax that the corporation would otherwise have to pay.",
+          ],
+        },
         note: "CRA SBD guidance for CCPCs.",
       },
     ],
@@ -127,8 +147,18 @@ export const structureLadderV2026 = [
         title: "Intercorporate dividends",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-income-tax/returns/completing-your-corporation-income-tax-t2-return/line-4600-dividends-received.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/completing-your-corporation-income-tax-t2-return/line-4600-dividends-received.html,
+        // read 2026-06-08) answered 404 on 2026-10-13. The CRA's T2 guide explains the deduction for
+        // dividends from other Canadian corporations at line 320 on this page; a tool found these
+        // words on it that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/t4012/t2-corporation-income-tax-guide-chapter-3-page-3-t2-return.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "When calculating taxable income, you can deduct, under section 112, any of the following types of taxable dividends received:",
+            "dividends from a taxable Canadian corporation, or from a corporation resident in Canada and controlled by the receiving corporation",
+          ],
+        },
         note: "CRA framing for dividends between connected corporations.",
       },
     ],
@@ -152,11 +182,22 @@ export const structureLadderV2026 = [
     },
     citations: [
       {
-        title: "Tax on split income (TOSI)",
+        title: "Line 40424 – Tax on split income",
         authority: "CRA",
         jurisdiction: "CA",
-        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account/tfsa/tax-on-split-income.html",
-        lastVerified: LAST_VERIFIED,
+        // Moved: the old address (…/tax-free-savings-account/tfsa/tax-on-split-income.html, read
+        // 2026-06-08) answered 404 on 2026-10-13. The CRA's line 40424 page states the tax on split
+        // income (TOSI) as it is law today (the glossary cites it too); its income-sprinkling guidance
+        // page explains the same tax, but as the draft proposals of December 13, 2017, so it isn't used
+        // here. A tool found these words on the line 40424 page that day.
+        url: "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-40424-federal-tax-on-split-income.html",
+        toolCheck: {
+          checkedOn: "2026-10-13",
+          quotes: [
+            "Tax on split income (TOSI) is a special tax that applies to certain income received from a related business.",
+            "Split income includes taxable dividends on shares of a corporation (other than shares of a class listed on a designated stock exchange and those of a mutual fund corporation) that you received directly, or through a partnership or a trust (other than a mutual fund trust).",
+          ],
+        },
         note: "CRA TOSI rules affecting dividends to related persons.",
       },
     ],

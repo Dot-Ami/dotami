@@ -72,7 +72,10 @@ says where it is going.
   three *before you open* steps, which road evaluation colours as on your road (drawn without it, they
   say "no rule yet"), unless the idea is on another road (the first written future, listed on `/futures`
   since 2026-10-13); the step panel, which keeps node detail whole; playbook
-  export; the cards' colours come from the rules run on the venture's own branch
+  export, which opens *Your plan* (`/plan?venture=<id>`, since 2026-10-13: one idea's plan to read and
+  print, drawn on the server from what is kept by `lib/futures/read-plan.ts` and `lib/cockpit/plan.ts`
+  `buildPlan`, with Print, the browser's own `window.print()`; issue #41); the cards' colours come from
+  the rules run on the venture's own branch
   picks, `lib/scenarios/evaluate-scenario.ts`) · `/ventures` (*Your futures*, until 2026-10-12 *Your
   ideas*: every saved venture, its stage, notes,
   cross-references, and the sentence typed on the front door for it with the goals marked on the intake) · `/settings` (every setting from `lib/settings/catalog.ts`, kept in step
@@ -160,7 +163,10 @@ says where it is going.
   whether it can reach the network; not the packages those pull in) and every request of the kinds
   the privacy test names (other than a literal `/api/…` path on DotAmi's own server) is listed in
   `lib/privacy/inventory.ts`; `tests/privacy-inventory.spec.ts` fails until a new one is added
-  there, and `/your-data` is drawn from that list. The network check reads the
+  there, and `/your-data` is drawn from that list. So are the file electron-updater keeps in the data
+  folder and the header it adds to every update check (`.updaterId`, `x-user-staging-id`: a random
+  install ID; since 2026-10-14), which the same test reads from the updater's own
+  `node_modules/electron-updater/out/AppUpdater.js`. The network check reads the
   syntax tree of every `.ts`/`.tsx`/`.mts`/`.cts`/`.js`/`.jsx`/`.mjs`/`.cjs` file under `app/`,
   `components/`, `lib/` and `desktop/` and in the top folder, and names fetch-style calls, WebRTC,
   node's `net`/`child_process` calls one by one, electron's `net`/`autoUpdater`/`loadURL`/`loadFile`/

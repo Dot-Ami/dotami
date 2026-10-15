@@ -1,6 +1,7 @@
 # Cockpit canvas — the map as tier columns
 
-Last updated: 2026-10-12 (road 0 gains three "before you open" cards in Tier 1, which road evaluation
+Last updated: 2026-10-13 (in the cockpit, SR&ED deepening on an idea without a research kind of work is
+drawn dashed, chip "not on your path" with its reason, instead of "ahead", issue #40; 2026-10-12: road 0 gains three "before you open" cards in Tier 1, which road evaluation
 colours as on your road, and drawn without road evaluation a card no rule colours says "no rule yet"
 instead of a colour; the cockpit screen, part 1: the overlay switches over the map, colours from
 road evaluation's states, the chip showing the person's own status where they set one, the Skills and
@@ -129,6 +130,32 @@ toggle's options read **When you decide** and **Liability / SR&ED**. Retained ea
 **Liability / SR&ED (Tier 3)** lights from the idea's activity tags (Software / SaaS, Manufacturing,
 AI / ML / R&D), not from a need the person stated, and since 2026-10-11 its card says so under the
 trigger, naming the tag that lit it, or that none of the three is on the intake.
+
+**SR&ED deepening (Tier 4) on an idea without a research kind of work (2026-10-13, issue #40).** In the
+cockpit, where road evaluation runs, an idea whose kinds of work include none of Software / SaaS,
+Manufacturing and AI / ML / R&D draws this card dashed, with the chip **not on your path** (until then
+**ahead**, which read as a step that idea was headed toward), no lever cards, and the line under the
+trigger *"None of the kinds of work on this idea is Software / SaaS, Manufacturing or AI / ML / R&D, and
+this step is on your path only with one of them."* (on an idea with no kinds of work at all, *"This idea
+has no kinds of work on it, and this step is on your path only with one of Software / SaaS, Manufacturing
+or AI / ML / R&D."*), also the card's accessible description. It never says what the person did or didn't
+tell DotAmi: a kind of work typed in their own words ("Research and development") isn't one of the three,
+but they did tell DotAmi. Its name reads "SR&ED deepening, not on your path, doesn't apply as answered,
+opens detail". It is still drawn and still opens the step panel, whose *Why this colour* gives the same
+sentence. With one of the three kinds of work the card is as before (amber for a corporation, grey for a
+sole proprietorship, chip **ahead**, solid, with its lever cards).
+
+*Open question for the maintainer (review of 2026-10-13):* for a sole proprietor, adding a research kind
+of work moves this card from dashed **not on your path** to solid **ahead**, though the rules still leave
+it off the path (its step panel says *"Today's rules leave it off your path, from your structure (Sole
+prop)."*). It is built so because its two lever cards, the SR&ED tax credit and IRAP, are amber (check
+first) for that idea, and a dashed card hides its lever cards. docs/architecture/future-cockpit.md § 13.
+
+The rule is the road's (`onlyForKindsOfWork` on the step, `lib/engines/roads/v2026/`); the place comes
+from `lib/cockpit/view.ts` `mapPlace`. Drawn without road evaluation, the card is unchanged.
+`tests/research-steps.spec.ts`; in the browser, `e2e/app.spec.ts` (*the map draws today's road*). Design:
+docs/architecture/future-cockpit.md § 6, *Steps for some kinds of
+work only, as built*.
 
 Lever cards are hidden under a stage that is "not on your path". Grey (not applicable) items
 are never drawn. A legend sits under the grid, with the three colours in the same words as the

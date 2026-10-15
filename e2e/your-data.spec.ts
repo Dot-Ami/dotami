@@ -11,7 +11,7 @@ import type { PrismaClient } from "@prisma/client";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
-import { SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
+import { FOLDERS, SENT_ELSEWHERE, SET_ASIDE_RECEIPTS_WARNING as WARNING, TABLES, WINDOW_STORAGE } from "../lib/privacy/inventory";
 
 /** The amount typed in the test. It must never appear in a URL, and the statement's words only as a count. */
 const AMOUNT_TYPED = "12,345.67";
@@ -123,6 +123,12 @@ test("what DotAmi knows lists every table and window key the inventory names, an
   for (const w of WINDOW_STORAGE) {
     await expect(computer.getByText(w.key, { exact: true })).toBeVisible();
   }
+  // Every file and folder beside the data file has its row, the update checker's install ID among them
+  // (2026-10-14); a copy run from source never checks for updates, so that row says it isn't there.
+  for (const f of FOLDERS) {
+    await expect(computer.getByRole("heading", { name: f.name, level: 3, exact: true })).toBeVisible();
+  }
+  await expect(computer).toContainText(FOLDERS.find((f) => f.id === "updater-id")!.whenAbsent!);
 
   // No model key in the test run (playwright.config.ts), and the browser tests run from source.
   const leaves = page.getByRole("region", { name: "What leaves this computer" });
