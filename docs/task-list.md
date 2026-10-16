@@ -169,7 +169,7 @@ and the maintainer's six decisions of 2026-10-11:
     `lib/front-door/questions.ts`; a second idea skips *About you*, issue #38; an idea picked there keeps
     its work situation, kind of venture, equipment and revenue estimates as "not said"; answers already
     in the data file count as answered)
-    - [ ] Still open on it: the third door waits for the invented example below; *Pick a future* doesn't
+    - [ ] Still open on it: *Pick a future* doesn't
       ask the job closest to your work (the OaSIS line below) or draw the road in grey before the pick;
       *What DotAmi knows about you* and its Delete menu still say *Your ideas*; the kind of venture
       (service, product, side gig) isn't asked on this way in (kept as "not said"); whether the place gets an *I don't know* (design § 13)
@@ -188,7 +188,35 @@ and the maintainer's six decisions of 2026-10-11:
     [§ 6](architecture/future-cockpit.md))
     - [ ] Still open on it: whether the government's ratings are shown beside the names (the
       maintainer's call); *Pick a future* asking for the job too (that screen is built and doesn't ask it yet)
-  - [ ] *Show me an example first*: a filled-in, clearly invented example future
+  - [x] *Show me an example first*: a filled-in, clearly invented example future (2026-10-13: the
+    maintainer picked Mara, a new invented person on the first written road; her answers are data in
+    `lib/examples/mara.ts`, drawn read-only at `/example/mara` by the same cockpit and road evaluation,
+    under a banner that never folds; nothing is saved or stored;
+    [§ 1, The example future as built](architecture/future-cockpit.md),
+    [docs/ui-spec/example/](ui-spec/example/_index.md))
+  - [x] Mara's numbers real, with their sources shown (2026-10-14, the maintainer's option A): her tools
+    line from 12 tools' average listed prices at Canadian sellers, her income goal from alis, her what-if
+    from ISED, savings and deposit blank; *Where these numbers come from* in the banner
+    (`lib/examples/mara-sources.ts`, `lib/examples/stats.ts`, `tests/example-sources.spec.ts`)
+    - [x] Review fixes (2026-10-14): Edmonton's additional rate ($4.99) and gross rent ($16.71) listed, as
+      Calgary's are; plans billed once a year kept out of the software averages for every maker; the
+      panel's intro says every price and statistic is real (not every number); the tools and software
+      said to be picked for this example; a test that her three numbers are worked out, never typed; wider
+      verdict and framing word lists (`tests/helpers/verdict-words.ts`), also over the example's
+      components and the rendered banner, goal bar and what-if bar
+    - [x] Her what-if starts empty (2026-10-15, the maintainer's pick A): the visitor types their own if
+      they want one, kept nowhere; ISED's $610,300 shown only as context in *Where these numbers come
+      from*, labelled an industry average over existing businesses of every age, not a first-year figure
+      and not one of Mara's numbers; the what-if bar's example note removed; and her Steps gauge caught up
+      with main (road 1 has 17 steps since *Keep your records from day one*)
+    - [ ] Still open on it: the review couldn't re-open Autodesk Fusion (403), Busy Bee Tools and Lee
+      Valley (429) or QuickBooks (timed out), so those prices rest on the first research's two checks
+      only; and whether Fusion's personal-use page shows the CA$120 monthly price its entry cites
+    - [ ] Still open on it: the other cost lines on *Open your own shop* (insurance, vehicle, first
+      materials, legal advice, money to live on, design software), not researched yet; re-seeing the
+      prices when sales end or pages move
+    - [ ] Still open on it: the front door's still picture of a filled-in cockpit (§ 1 row 1), drawn from
+      her example; the appendix's *Since last time* line, which needs the return visit's list
   - [x] A browser test for the main path: front door → destination → pick a future → cockpit → mark a
     skill → price a line → what-if → compare → *This is mine* (2026-10-14: `e2e/journey.spec.ts`, on to
     *Your plan*, a reload and *Your futures*, plus the *I already have an idea* door to road 0; and

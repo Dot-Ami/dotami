@@ -23,7 +23,10 @@ import type { FigureRemindersValue, ReminderDismissal } from "@/lib/settings/val
  * This hook only ever sends the one key it is changing (`ideaIds` or `dismissed`), so it can't
  * undo a cadence the person ticked on the Settings page.
  */
-export function useIdeaReminders() {
+export function useIdeaReminders(
+  /** False on the invented example future: it reads none of the person's settings (docs/ui-spec/example/_index.md). */
+  enabled = true,
+) {
   const [value, setValue] = useState<FigureRemindersValue | null>(null);
   // Which part of the setting the last failed save was changing, so each screen words its own message.
   const [failedKey, setFailedKey] = useState<"ideaIds" | "dismissed" | null>(null);
@@ -44,6 +47,7 @@ export function useIdeaReminders() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     read();
     // The browser's Back/Forward buttons can bring a page back from memory, and a window can sit
     // open while the person changes the Settings page; read again whenever the page comes back
@@ -59,7 +63,7 @@ export function useIdeaReminders() {
       window.removeEventListener("focus", read);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [read]);
+  }, [read, enabled]);
 
   /** Puts a new list for one key of the setting on screen now and queues its save. */
   const change = useCallback(<K extends "ideaIds" | "dismissed">(key: K, next: FigureRemindersValue[K]) => {

@@ -114,10 +114,13 @@ each choice that differs from the table above says why.
      idea). The box is not moved behind a click, so nothing typed before the page has loaded is lost.
      This door doesn't say the words stay on this computer: with a model key set up, the intake's
      parser sends the sentence to that model (Settings says so).
-  3. **Show me an example first**: the invented example future (§ 13, *the example future's content*)
-     isn't written yet, so the door is drawn without a link and says so: *"Coming: a filled-in future
-     for an invented person, clearly labelled. It isn't written yet."* Nothing is invented here. The
-     still picture of a filled-in cockpit (row 1 above) waits for that example too.
+  3. **Show me an example first**: until 2026-10-13 the invented example future wasn't written, so the
+     door was drawn without a link and said so. Since the maintainer's pick of 2026-10-13 (§ 13, *the
+     example future's content*: Mara) it says *"Look inside a filled-in future for Mara, an invented
+     apprentice cabinetmaker in Alberta on her way to her own shop. Her numbers are invented, and nothing
+     in it is saved."* and links to **Show me Mara's example →**, `/example/mara` (*The example future as
+     built*, below). The still picture of a filled-in cockpit (row 1 above) can now be drawn from her
+     example; it isn't yet.
 
   The header's *Your ideas →* becomes **Your futures →**.
 - **Your destination (`/start`): four questions, one at a time, written as data.** The questions are a
@@ -235,6 +238,74 @@ each choice that differs from the table above says why.
 - **Words** for the new screens are in `lib/front-door/words.ts` (the questions' own words are in the
   questions list, since the questions are data); amounts and months go through
   `lib/format/money-and-months.ts`.
+
+### The example future as built (2026-10-13; real numbers 2026-10-14)
+
+The front door's third door, built from the maintainer's pick of 2026-10-13 (§ 13): Mara, the invented
+person of the appendix below, on the first written road. Written before the code; the page's controls are
+in [docs/ui-spec/example/_index.md](../ui-spec/example/_index.md).
+
+- **Her answers are data in their own file**, `lib/examples/mara.ts` (listed by `lib/examples/index.ts`):
+  not a catalog and not the database. Every answer the appendix gives is there. The steps, fees, skills and
+  sources are the catalogs' own, named by id, and a test checks each id exists. Where the appendix names
+  something the catalog calls differently, the catalog's real item is used: *Set up your shop* is *Open your
+  own shop* (she prices its *Woodworking machines and tools* line); her 9 marks are road 1's two legal requirements
+  that fit an Alberta apprentice (both *have*) and seven items of the government's list for Cabinetmakers,
+  the job she picked as closest to her work (road 1 lists only three skills of its own); her 1 step done
+  is the road's first, *Register as a Cabinetmaker apprentice*.
+- **Mara is invented; her numbers are real (2026-10-14).** The maintainer's option A (*"ground Mara's
+  example in real, cited numbers where they exist; numbers nothing real can supply stay blank"*), asked for
+  "as in depth as possible; like recommending tools, software, and lets use stats to drum up the average
+  cost of these tools", with the sources shown. Her file types no number: each is taken from
+  `lib/examples/mara-sources.ts` (prices and statistics seen on 2026-10-14, each with its link, the words
+  seen and the day, kept only when a second check found the price or figure on the page again; not legal
+  citations, which name only government sources and back a rule), and every average is worked out by
+  `lib/examples/stats.ts`. Her one start-up cost line, *Woodworking machines and tools*, is $14,993.62:
+  12 of the tools the Alberta curriculum, the Red Seal standard and NOC 72311 name, picked for this example
+  (they name more; the panel lists the ones not priced), mid-range shop grade, one of each at its average
+  of 3 to 5 listed prices from Canadian sellers. Her yearly income goal is $52,255,
+  the average yearly salary of employed cabinetmakers in Alberta (alis, 2023), said as that in the goal
+  bar. She has no what-if (since 2026-10-15, the maintainer's pick A): the what-if bar starts empty, and a
+  visitor who wants one types their own, kept nowhere as everywhere and read with the bar's own words.
+  ISED's $610,300, the average yearly revenue of existing small and medium furniture makers of every age in
+  Canada (NAICS 33712, data year 2024) and her what-if from 2026-10-14 to 2026-10-15, is shown only as
+  context in the panel, under *For context, not one of Mara's numbers*: an industry average, not a
+  first-year figure and not one of hers. Her savings and
+  her shop space deposit are blank: nothing real can supply them. The banner says *"Mara is invented; the
+  prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved."*
+  and its **Where these numbers come from** opens a panel listing every number, how it is worked out,
+  every source with its link and the day seen, software listed for this example with its listed plans
+  (averaged over the plans billed month to month only; a plan billed once a year is listed apart, whatever
+  unit its page prints), and what stayed blank and why. Its first line says Mara and her answers are
+  invented and every price and statistic is real (not "every number": her marks and her step done are
+  invented). "Recommending tools" is built as information: a pick of the tools the trade's official
+  descriptions name, with what sellers charge, never ranked, never "buy this" and never called the trade's
+  whole list. `tests/example-sources.spec.ts` traces every number to its entry, recomputes every average,
+  reads `lib/examples/mara.ts` to check her two numbers are worked out there, her what-if is null and none
+  of them, nor the context figure, is typed as a number or written as money, checks
+  the old invented numbers are gone, and keeps verdict and framing words (`tests/helpers/verdict-words.ts`,
+  each word with a control) out of the words, the data and the example's components; the browser test
+  reads the same lists over the rendered banner, goal bar, what-if bar and panel (2026-10-14, after
+  review).
+- **The same cockpit, read-only.** `/example/mara` (`app/example/[id]/page.tsx`; any other id is not
+  found) draws `CockpitPage` with the example: the same components and the same one run of `evaluateRoad`,
+  fed from the file instead of `GET /api/futures/<id>`, with the what-if bar empty. A banner that
+  never folds says what is invented and what is real (above) with **Where these numbers come from** and
+  **Start my own future →** (`/start`). It sits above the cockpit's grid,
+  never inside it, and stays at the top of the window when the page scrolls on a phone; the phone sheets
+  and the tablet drawer start under it (its height is `--example-banner-h`), so nothing is drawn over it
+  (2026-10-14, after review).
+- **Nothing is written, anywhere.** Every control that would save is disabled with *"This is an example.
+  Start your own to keep anything."*, or answers with that sentence and does nothing; no request that
+  writes is sent, none of the real person's data is read, and no browser storage is read or written (the
+  page sits outside the journey's pages, so the journey draft isn't touched, and the fold answers are
+  remembered nowhere). `e2e/example-future.spec.ts` compares the data file's row counts, both storages and
+  the requests sent before and after clicking Keep and Export (the two save controls not disabled), and
+  checks that every other save control in the ui-spec's table is disabled.
+- **The appendix's counts against the catalog's.** The page shows what road evaluation gives on today's
+  catalog, which differs from the appendix's sketch: 17 steps (not 22; 16 until *Keep your records from day one* was added on 2026-10-14), 31 lines to price before her
+  numbers and 30 after (not 6 and 4), and her marks complete the listed skills of 4 steps (not 3). The
+  appendix is left as written, a sketch from before the road was; the ui-spec lists the true receipts.
 
 ## 2. The cockpit
 
@@ -1853,8 +1924,10 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - **The government's ratings, or names only** (the maintainer's item 20). Built names only, the
   documented default; the ratings are kept in the data. Showing them ("3 - Moderate Level") would show
   each with its own scale.
-- **The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
-  on the first written road.
+- ~~**The example future's content:** the seeded *Chinook Sign Painting* demo, or a new invented person
+  on the first written road.~~ Settled 2026-10-13: the maintainer picked a new invented person on the
+  first written road, Mara (the appendix below). Built at `/example/mara` from `lib/examples/mara.ts`
+  (§ 1, *The example future as built*).
 - ~~**Listing a road nobody has read.**~~ Settled 2026-10-13: the maintainer said yes, *Pick a future*
   lists the first written future, its card saying in amber that its sources were checked by a tool and
   not read by a person yet (`LISTED_ROAD_IDS` in `lib/front-door/futures.ts`; § 1, The way in as built).
@@ -1882,6 +1955,24 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 
 **Invented person, invented numbers, not real data.** Mara (invented) is a second-year cabinetmaking
 apprentice in Alberta.
+
+*(2026-10-13: the maintainer picked Mara as the front door's example future. She is built at
+`/example/mara`, her answers in `lib/examples/mara.ts`; § 1, The example future as built, says where the
+built page's counts differ from this sketch, which was written before road 1 was.)*
+
+*(2026-10-14: the numbers in this sketch, $70,000 a year, quotes of $3,400 and $2,000, $12,000 of
+savings and a $45,000 what-if, are invented and stay here only as the sketch. The built example's numbers
+are real since the maintainer's option A of 2026-10-14: a $14,993.62 tools line from sellers' listed
+prices, a $52,255 income goal from alis, a $610,300 what-if from ISED, and no savings or deposit; § 1, The
+example future as built.)*
+
+*(2026-10-15, the maintainer's pick A, "I agree, it should be A": the built example has no what-if. The
+what-if bar starts empty for the visitor, who can type their own, never kept, as everywhere. ISED's
+$610,300 stays only as context in **Where these numbers come from**, labelled as what it is: the average
+yearly revenue of existing small and medium businesses of every age in NAICS 33712, Canada, data year 2024;
+an industry average, not a first-year figure and not one of Mara's numbers. Nothing else changed: Mara stays
+invented with real numbers, averages appear only in this invented example, and her $52,255 income goal and
+$14,993.62 tools line are as they were. The sketch's $45,000 what-if below stays as the sketch.)*
 
 She picks *Start from where I want to be* and types *"My own small furniture shop, four-day weeks,
 home for supper."* The receipt: *"Saved word for word, dated today. This goes at the top of your

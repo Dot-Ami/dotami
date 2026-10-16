@@ -38,7 +38,19 @@ export function GoalBar({
   onCompare,
   folded = false,
   onToggleFold,
+  person = null,
+  targetFrom = null,
 }: {
+  /**
+   * On an example whose target is a published statistic (2026-10-14): which one and when, said in place of
+   * "agreed". Null otherwise.
+   */
+  targetFrom?: { what: string; period: string } | null;
+  /**
+   * An invented example person's name (docs/ui-spec/example/_index.md): the words, target, tags and money
+   * are then labelled theirs, never the viewer's. Null on a person's own future.
+   */
+  person?: string | null;
   /**
    * Opens "Compare the two endings" (part 2, 2026-10-12). The button shows only when it is given, and the
    * page gives it only on a road with a fork whose own pick, not the rules, puts steps on or off the path
@@ -66,7 +78,10 @@ export function GoalBar({
   /** Folds or shows the bar; left out, the bar has no fold button (as other screens and tests draw it). */
   onToggleFold?: () => void;
 }) {
-  const view = gaugeView(evaluation, road, scenario);
+  const view = gaugeView(evaluation, road, scenario, person);
+  // Each gauge's name and the tag saying whose numbers they are; on an example, the example person's.
+  const gaugeLabel = (id: GaugeId) => (person && id === "date" ? words.example.theirs.dateLabel(person) : words.gauges[id].label);
+  const gaugeTag = (id: GaugeId) => (person ? words.example.theirs.tags(person)[id] : words.gauges[id].tag);
   // A road written for all of Canada ("CA") covers every province; otherwise the idea's own must be listed.
   const place = scenario.profile.province;
   // An idea's province can be one no road names yet (MB, QC…), so the list is read as plain strings.
@@ -76,7 +91,7 @@ export function GoalBar({
   const shownWords = firstWords
     ? { text: firstWords.text, line: words.goal.yourWords(firstWords.saidAt) }
     : destination
-      ? { text: destination.text, line: words.goal.destination(destination.saidAt) }
+      ? { text: destination.text, line: person ? words.example.theirs.destination(person, destination.saidAt) : words.goal.destination(destination.saidAt) }
       : null;
 
   const isFolded = folded && onToggleFold !== undefined;
@@ -99,7 +114,7 @@ export function GoalBar({
                   active === id ? "border-maple" : "border-rule"
                 }`}
               >
-                <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">{words.gauges[id].label}</span>
+                <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">{gaugeLabel(id)}</span>
                 <span className="truncate text-[12px] tabular-nums text-paper">{view[id].value}</span>
               </button>
             ))}
@@ -112,7 +127,15 @@ export function GoalBar({
         {shownWords ? <p className="font-serif text-[17px] italic leading-snug text-paper">“{shownWords.text}”</p> : null}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-stone">
           {shownWords ? <span>{shownWords.line}</span> : null}
-          {target ? <span>{words.goal.target(target.amountCents, target.agreedOn)}</span> : null}
+          {target ? (
+            <span>
+              {person
+                ? targetFrom
+                  ? words.example.theirs.targetFrom(person, target.amountCents, targetFrom.what, targetFrom.period)
+                  : words.example.theirs.target(person, target.amountCents, target.agreedOn)
+                : words.goal.target(target.amountCents, target.agreedOn)}
+            </span>
+          ) : null}
           <span>
             {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
           </span>
@@ -130,7 +153,6 @@ export function GoalBar({
         <div className="grid auto-cols-[minmax(190px,1fr)] grid-flow-col gap-2.5 overflow-x-auto">
           {GAUGES.map((id) => {
             const gauge = view[id];
-            const label = words.gauges[id];
             return (
               <button
                 key={id}
@@ -142,8 +164,8 @@ export function GoalBar({
                 }`}
               >
                 <span className="flex justify-between gap-2 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">
-                  {label.label}
-                  <span className="normal-case tracking-normal text-stone-dim">{label.tag}</span>
+                  {gaugeLabel(id)}
+                  <span className="normal-case tracking-normal text-stone-dim">{gaugeTag(id)}</span>
                 </span>
                 <span className="text-[13px] tabular-nums text-paper">{gauge.value}</span>
                 {gauge.lines.map((line) => (

@@ -28,10 +28,12 @@ export const frontDoorWords = {
       title: "I already have an idea",
       body: "Describe it in a sentence, and DotAmi maps its tax and structure road.",
     },
+    // Since 2026-10-13 (the maintainer's pick): Mara, the invented example future (lib/examples/mara.ts).
     example: {
       title: "Show me an example first",
-      body: "Coming: a filled-in future for an invented person, clearly labelled. It isn't written yet.",
-      tag: "Not written yet",
+      body: "Look inside a filled-in future for Mara, an invented apprentice cabinetmaker in Alberta on her way to her own shop. Her numbers are invented, and nothing in it is saved.",
+      tag: "Invented example",
+      go: "Show me Mara's example →",
     },
   },
   nav: { futures: "Your futures →", cockpit: "Open cockpit →", settings: "Settings" },

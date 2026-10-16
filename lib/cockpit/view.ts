@@ -210,8 +210,11 @@ export interface GaugeLines {
   invite: string | null;
 }
 
-/** The four gauges' words, from one road evaluation. */
-export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scenario): Record<GaugeId, GaugeLines> {
+/**
+ * The four gauges' words, from one road evaluation. `person` is an invented example person's name
+ * (docs/ui-spec/example/_index.md): their own numbers are then called theirs, never the viewer's.
+ */
+export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scenario, person: string | null = null): Record<GaugeId, GaugeLines> {
   const g = evaluation.gauges;
   const label = (id: string) => road.steps.find((s) => s.id === id)?.label ?? id;
 
@@ -228,9 +231,14 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   const s = g.skills;
   const own = s.addedByYou;
   // The person's own skills, then the government's list for their pick of job, each on its own line.
+  const job = s.yourPickOfJob;
   const ownLine = [
-    ...(own.have + own.learning + own.notYet > 0 ? [words.gauges.skills.own(own.have, own.learning, own.notYet)] : []),
-    ...(s.yourPickOfJob ? [words.gauges.skills.job(s.yourPickOfJob.have, s.yourPickOfJob.learning, s.yourPickOfJob.notYet, s.yourPickOfJob.listed)] : []),
+    ...(own.have + own.learning + own.notYet > 0
+      ? [person ? words.example.theirs.ownSkills(person, own.have, own.learning, own.notYet) : words.gauges.skills.own(own.have, own.learning, own.notYet)]
+      : []),
+    ...(job
+      ? [person ? words.example.theirs.job(person, job.have, job.learning, job.notYet, job.listed) : words.gauges.skills.job(job.have, job.learning, job.notYet, job.listed)]
+      : []),
   ];
   const skills: GaugeLines =
     s.listed === 0
@@ -248,7 +256,13 @@ export function gaugeView(evaluation: RoadEvaluation, road: Road, scenario: Scen
   // for a person who gave none (the same rule as the badges, where a blank is never $0).
   const moneyParts = [
     ...(m.officialFeeLines > 0 ? [words.gauges.money.fees(m.officialFeesCents, m.officialFeeLines)] : []),
-    m.yourNumberLines > 0 ? words.gauges.money.yours(m.yourNumbersCents, m.yourNumberLines) : words.gauges.money.yoursNone,
+    m.yourNumberLines > 0
+      ? person
+        ? words.example.theirs.numbers(person, m.yourNumbersCents, m.yourNumberLines)
+        : words.gauges.money.yours(m.yourNumbersCents, m.yourNumberLines)
+      : person
+        ? words.example.theirs.numbersNone(person)
+        : words.gauges.money.yoursNone,
   ];
   const money: GaugeLines = {
     value: anyLines ? moneyParts.join(" · ") : words.gauges.money.noLines,

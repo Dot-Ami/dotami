@@ -276,6 +276,23 @@ person is asked).
   updates, and *can it be taken back* says no, with deleting the file as the way to get a new ID.
   Nothing new is sent; this is the list catching up.
 
+- **The front door's example future keeps nothing, and reads nothing of the person's (2026-10-13).**
+  *Show me an example first* opens `/example/mara`: an invented person's answers, shipped as data in the
+  app ([`lib/examples/mara.ts`](../lib/examples/mara.ts)), drawn read-only in the cockpit. It writes no
+  row (every control that would save is disabled or says it is an example, and no request that writes is
+  sent), it doesn't ask for the person's ideas, figures, settings or statements, and it reads and writes
+  no browser storage: the page sits outside the journey's pages, so the tab's journey draft
+  (`dotami-journey-v3`) isn't touched, and its folds are remembered nowhere (`dotami-cockpit-folds` is
+  neither read nor written there). [`e2e/example-future.spec.ts`](../e2e/example-future.spec.ts) compares
+  the data file's row counts, both storages and the requests sent before and after clicking Keep and
+  Export (the two save controls that aren't disabled), checks that every other save control is disabled,
+  and fails on any request to DotAmi's API but the law-text route. No inventory entry changes.
+  Since 2026-10-14 its *Where these numbers come from* panel lists the pages behind Mara's numbers
+  (Canadian tool sellers, software makers' pricing pages, Government of Alberta and Government of Canada
+  statistics, two commercial real-estate reports) as plain links: the page loads none of them, and only a
+  click opens one, in a new tab, where that site sees the visit as from any browser. Nothing of the
+  person's goes with it; the browser test checks the panel sends no request.
+
 ### Packages that ship
 
 - **Electron 44.7.0 in the desktop app, up from 44.5.1 (2026-10-11).** The same browser engine

@@ -417,6 +417,126 @@ export const cockpitWords = {
   },
 
   /**
+   * The cockpit drawn read-only for an invented example person (docs/ui-spec/example/_index.md; since
+   * 2026-10-13). The banner never folds; every control that would save says `cantKeep`.
+   */
+  example: {
+    region: "Invented example",
+    /**
+     * Since 2026-10-14 (the maintainer's option A) the person is invented and the numbers are real: the
+     * banner says both, and the day the sources were seen.
+     */
+    banner: (person: string, seenOn: string) =>
+      `${person} is invented; the prices and statistics are real, from the sources listed, seen on ${seenOn}. Nothing here is saved.`,
+    /** For an example whose numbers have no sources (none today): the banner Mara had until 2026-10-14. */
+    bannerInvented: "Invented person, invented numbers, not real data. Nothing here is saved.",
+    whose: (person: string) => `${person}'s example future: an invented person on a written road.`,
+    cantKeep: "This is an example. Start your own to keep anything.",
+    startOwn: "Start my own future →",
+    back: "← Front door",
+    /** The example person's own words, in the rail where a person's own statements would be. */
+    theirWords: (person: string) => `In ${person}'s words`,
+    /**
+     * Said once in the banner and once over the story (2026-10-14, after review): the receipts and the
+     * buttons are the same words every person's own cockpit uses, so their "you" means the example person.
+     */
+    youMeans: (person: string) => `Here, “you” and “your” mean ${person}, the invented person.`,
+    /**
+     * The labels that would otherwise call the example person's answers the viewer's own ("yours, agreed",
+     * "your marks", "things you've told DotAmi"), with the example person's name instead.
+     */
+    theirs: {
+      destination: (person: string, day: string) => `where ${person} wants to be · ${person}'s words · ${day}`,
+      target: (person: string, cents: number, day: string) =>
+        `${person}'s target: ${formatMoney(cents)} a year, before tax (${person}'s, agreed ${day})`,
+      /** A target that is a published statistic: which one and when, in place of "agreed". */
+      targetFrom: (person: string, cents: number, what: string, period: string) =>
+        `${person}'s target: ${formatMoney(cents)} a year, before tax: ${what} (${period})`,
+      tags: (person: string) => ({ steps: "count", skills: `${person}'s marks`, money: `${person}'s + cited`, date: `${person}'s` }),
+      dateLabel: (person: string) => `${person}'s date`,
+      numbers: (person: string, cents: number, lines: number) => `${formatMoney(cents)} ${person}'s numbers (${count(lines, "line", "lines")})`,
+      numbersNone: (person: string) => `${person}'s numbers: not given yet`,
+      ownSkills: (person: string, have: number, learning: number, notYet: number) =>
+        `${person}'s own skills: ${have} have · ${learning} learning · ${notYet} not yet`,
+      job: (person: string, have: number, learning: number, notYet: number, listed: number) =>
+        `${person}'s pick of job: ${have} have · ${learning} learning · ${notYet} not yet, of ${listed} listed`,
+      toldRegion: (person: string) => `What ${person} told DotAmi`,
+      toldCount: (person: string, n: number) => `${count(n, "thing", "things")} ${person} told DotAmi`,
+    },
+    story: {
+      region: (person: string) => `What ${person} did`,
+      note: "Each line is worked out by the rules: the road without the answer, compared with the road with it.",
+      // By the person's name, not a pronoun: an example is any entry of lib/examples/, not Mara alone.
+      parts: {
+        marks: (person: string) => `${person}'s skill marks`,
+        costs: (person: string) => `${person}'s start-up cost, from listed prices`,
+        savings: (person: string) => `${person}'s savings`,
+        "this-is-mine": (person: string) => `${person}'s pick: This is mine`,
+        "step-done": (person: string) => `The step ${person} marked done`,
+        "what-if": (person: string) => `${person}'s what-if, kept nowhere`,
+      },
+    },
+    /**
+     * "Where these numbers come from" (2026-10-14; docs/ui-spec/example/_index.md): every number the
+     * example shows, how it was worked out, each source with its link and the day it was seen. The tools
+     * are information: twelve of the tools the trade's official descriptions name, picked for this example,
+     * with what sellers charge; never ranked, never "buy this", never called the trade's whole list.
+     */
+    sources: {
+      open: "Where these numbers come from",
+      close: "Hide where these numbers come from",
+      intro: (person: string, seenOn: string) =>
+        `${person} is invented, and so are ${person}'s answers. Every price and statistic on this page is real: a price a Canadian seller listed, or a statistic a government or a market report published, each seen on ${seenOn}; the official fees are from DotAmi's own cited catalog. Every average is worked out by DotAmi from the prices listed here, never typed by hand.`,
+      numbersHeading: (person: string) => `${person}'s numbers, and how each is worked out`,
+      tools: (person: string, cents: number, n: number) =>
+        `${person}'s number for “Woodworking machines and tools”: ${formatMoney(cents)}, the ${n} tools below added up, one of each at its average listed price (one bar clamp, though a glue-up needs several).`,
+      income: (person: string, cents: number, what: string, period: string) =>
+        `${person}'s yearly income goal: ${formatMoney(cents)}, ${what} (${period}), as the source prints it. What employees earn, not what a shop owner takes home.`,
+      blank: (person: string) => `${person}'s savings and shop space deposit: not priced yet. Nothing real can supply them; the list at the end says why.`,
+      /**
+       * A statistic shown beside the example person's numbers for context, never as one of them (the
+       * maintainer's pick A, 2026-10-15): ISED's average revenue, which was Mara's what-if until then. Said
+       * as what it is: an average over existing businesses of every age, not a first-year figure.
+       */
+      contextHeading: (person: string) => `For context, not one of ${person}'s numbers`,
+      context: (person: string, cents: number, what: string, period: string) =>
+        `${formatMoney(cents)} a year: ${what} (${period}). An industry average over existing businesses of every age, not a first-year figure and not one of ${person}'s numbers.`,
+      // No "you" here: the banner says "you" on this page means the example person, not the visitor.
+      contextWhatIf: (person: string) =>
+        `${person}'s example has no what-if: the what-if bar under the map starts empty, and a number tried there is for that look only, kept nowhere.`,
+      /** "Picked for this example": the sources name more tools than are priced (2026-10-14, after review). */
+      toolsHeading: (n: number) => `${n} of the tools the trade's official descriptions name, picked for this example, with average prices from Canadian sellers`,
+      toolsOrder: "In the order the Alberta curriculum teaches them, not by price.",
+      officialHeading: "The trade's official descriptions",
+      average: (n: number, mean: number, median: number, low: number, high: number) =>
+        `Average of ${n} listed prices: ${formatMoney(mean)} (median ${formatMoney(median)}; from ${formatMoney(low)} to ${formatMoney(high)})`,
+      named: "Named in",
+      price: (cents: number) => formatMoney(cents),
+      seen: (day: string) => `seen ${day}`,
+      page: "the page",
+      caution: "Note:",
+      softwareHeading: "Software listed for this example, with listed prices in Canadian dollars",
+      softwareAverage: (n: number, mean: number, median: number, low: number, high: number) =>
+        `Average of ${n} plans billed month to month: ${formatMoney(mean)} a month (median ${formatMoney(median)}; from ${formatMoney(low)} to ${formatMoney(high)})`,
+      softwareNoPaid: "No paid plan here is listed in Canadian dollars; only the free tiers are shown.",
+      per: {
+        month: (cents: number) => `${formatMoney(cents)} a month`,
+        "month-billed-yearly": (cents: number) => `${formatMoney(cents)} a month, billed yearly`,
+        year: (cents: number) => `${formatMoney(cents)} a year`,
+        free: "free",
+      },
+      groups: {
+        earnings: "What cabinetmakers earn in Alberta",
+        industry: "Small furniture and cabinet businesses in Canada",
+        space: "Industrial space rents in Alberta, for context",
+      },
+      statistic: (value: string, unit: string, period: string) => `${value} ${unit} · ${period}`,
+      notPricedHeading: "Not priced yet, and why",
+      leftOutHeading: "Seen but not used, and why",
+    },
+  },
+
+  /**
    * Your plan (2026-10-13, issue #41; docs/ui-spec/plan/_index.md): one idea's plan to read and print,
    * made from what DotAmi keeps. Where the cockpit already has the words (the goal bar's, the step
    * panel's, Compare's), the plan uses those; these are the plan's own.

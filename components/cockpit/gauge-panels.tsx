@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AmountForm } from "@/components/cockpit/amount-form";
+import { CantKeepNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { MarkButtons, SkillRow } from "@/components/cockpit/step-panel";
 import { CitationLinks } from "@/components/shared/citation-links";
@@ -112,7 +113,7 @@ export function SkillsListPanel({
 
   return (
     <PanelShell title={words.lists.skillsTitle} onClose={onClose} error={error} receipt={receipt}>
-      {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      {!canSave ? <CantKeepNote className="text-[11px] text-amber" /> : null}
       <h3 className={heading}>{words.lists.roadTitle}</h3>
       {listed.length === 0 ? (
         <p className="text-[12px] text-stone">{words.lists.skillsNone}</p>
@@ -343,7 +344,7 @@ export function MoneyListPanel({
 
   return (
     <PanelShell title={words.lists.moneyTitle} onClose={onClose} error={error} receipt={receipt}>
-      {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      {!canSave ? <CantKeepNote className="text-[11px] text-amber" /> : null}
       <div>
         <h3 className={heading}>{words.lists.savingsTitle}</h3>
         <p className="font-mono text-[13px] text-paper">{savings === null ? words.lists.savingsNone : formatMoney(savings)}</p>
@@ -441,7 +442,7 @@ export function DatePanel({
 
   return (
     <PanelShell title={words.lists.dateTitle} onClose={onClose} error={problem ?? error} receipt={receipt}>
-      {!canSave ? <p className="text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      {!canSave ? <CantKeepNote className="text-[11px] text-amber" /> : null}
       {targetMonth && months !== null ? (
         <p className="text-[13px] text-paper">
           {formatMonth(targetMonth)} · {monthsFromToday(months)}

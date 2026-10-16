@@ -1,5 +1,6 @@
 "use client";
 
+import { CantKeepNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import type { CompareView } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
@@ -70,7 +71,7 @@ export function CompareEndings({
           {error}
         </p>
       ) : null}
-      {!canSave ? <p className="mt-3 text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      {!canSave ? <CantKeepNote className="mt-3 text-[11px] text-amber" /> : null}
 
       {forks.length > 1 ? (
         <div className="mt-4">

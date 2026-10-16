@@ -20,6 +20,10 @@ from *Your destination* in its place, with its day: *where you want to be · you
 A band under the header, across the whole page, named *Your goal and gauges* for a screen reader:
 
 - The idea's first sentence, the one typed on the front door for it, in quotes, word for word.
+- On the invented example (since 2026-10-14) the target line says what the number is when it is a published
+  statistic, in place of *agreed*: *Mara's target: $52,255 a year, before tax: the average yearly salary of
+  employed cabinetmakers in Alberta (alis, Government of Alberta) (2023 Alberta Wage and Salary Survey)*
+  (`targetFrom`; docs/ui-spec/example/_index.md).
 - A line: *your words · 2026-10-10* (the day it was typed); *Your target: $70,000 a year, before tax
   (yours, agreed 2026-10-11)* only when the person agreed to a yearly income; *Future: <road's name>*, or,
   when the road isn't written for the idea's province (nor for all of Canada), *Map drawn: <road's name> ·
