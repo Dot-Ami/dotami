@@ -29,13 +29,20 @@ export interface FoldControls {
 /** Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. */
 const FOLD_CONTROL = "data-fold-control";
 
-export function useFolds(): FoldControls {
+/**
+ * `remember` false (the invented example future, docs/ui-spec/example/_index.md): folding works for this
+ * page only, and the browser's storage is neither read nor written.
+ */
+export function useFolds(remember = true): FoldControls {
   // Everything open on the first drawing, which the server makes too; the browser's remembered answers
   // are read once the page is in the browser, so the server's HTML and the first client drawing agree.
   const [folds, setFolds] = useState<Folds>(ALL_OPEN);
   useEffect(() => {
-    setFolds(readFolds());
-  }, []);
+    if (remember) setFolds(readFolds());
+  }, [remember]);
+  const keep = useCallback((next: Folds) => {
+    if (remember) writeFolds(next);
+  }, [remember]);
 
   // The region the person just folded or showed. The button they pressed is usually gone or hidden after
   // (a folded rail is a strip, a folded goal bar a different line), which would drop keyboard focus to
@@ -56,19 +63,19 @@ export function useFolds(): FoldControls {
     focusAfter.current = region;
     setFolds((current) => {
       const next = { ...current, [region]: !current[region] };
-      writeFolds(next);
+      keep(next);
       return next;
     });
-  }, []);
+  }, [keep]);
 
   // The header's button stays where it is, and keeps focus, so nothing moves it.
   const toggleAll = useCallback(() => {
     setFolds((current) => {
       const next = allFolded(current) ? ALL_OPEN : ALL_FOLDED;
-      writeFolds(next);
+      keep(next);
       return next;
     });
-  }, []);
+  }, [keep]);
 
   return { folds, toggle, toggleAll };
 }

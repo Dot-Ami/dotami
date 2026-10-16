@@ -15,7 +15,7 @@ sourced, risk-rated, cited to the law. Canada is the first jurisdiction mapped."
 
 | Group | File | Summary |
 |-------|------|---------|
-| The three doors | `04-three-doors.md` | Start from where I want to be (`/start`) · I already have an idea (the box below) · Show me an example first (not written yet, no link) |
+| The three doors | `04-three-doors.md` | Start from where I want to be (`/start`) · I already have an idea (the box below) · Show me an example first (`/example/mara`, the invented example future, since 2026-10-13) |
 | Free-text box + Map it | `01-free-text-entry.md` | Door 2 — captures text, calls intent parse, routes to intake |
 | Example chips | `02-example-chips.md` | Fill the box, no submission |
 | Escape hatches | `03-escape-hatches.md` | Sample venture + open cockpit — both skip parsing |

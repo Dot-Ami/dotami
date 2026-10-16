@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { CompareEndings } from "@/components/cockpit/compare-endings";
+import { ExampleFrame, ExampleNoteContext, ExampleOnlyNote, ExampleStory } from "@/components/cockpit/example-mode";
 import { FoldButton, FoldedBar, FoldedStrip, useFolds } from "@/components/cockpit/folding";
 import { useIsPhone, useSheet } from "@/components/cockpit/use-sheet";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
@@ -46,6 +47,8 @@ import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { oasisListForJob } from "@/lib/engines/oasis/v2026";
 import { generalRoadV2026, roadsV2026, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
+import type { ExampleFuture } from "@/lib/examples";
+import { exampleStory } from "@/lib/examples/story";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { AUTOSAVE_DELAY_MS, formatSavedAt, saveScenario } from "@/lib/journey/save-scenario";
 import { evaluateRoad, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
@@ -98,6 +101,11 @@ import Link from "next/link";
  * 2026-10-13, every region folds: the told / not-told list folds with the rail it sits in and Compare with
  * the panel; the what-if bar and "This visit" under the map fold together with their own button, the fifth
  * answer remembered (lib/cockpit/folds.ts `whatIf`), and the header's "Fold all panels" folds it too.
+ *
+ * 2026-10-13, the invented example future (docs/ui-spec/example/_index.md): given `example`, the page draws
+ * that example's answers (lib/examples/) through the same road evaluation, read-only. It fetches nothing of
+ * the person's, keeps folds for this page only, and every way to save either is disabled with the example's
+ * note or answers in the banner, which never folds; nothing reaches the data file or the browser's storage.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
@@ -148,12 +156,15 @@ interface CockpitPageProps {
   initialScenario: Scenario | null;
   /** S2.5.4i: `?venture=<id>` was explicit — it wins over the session and becomes the session. */
   pinned?: boolean;
+  /** An invented example future, drawn read-only in place of a saved idea (docs/ui-spec/example/_index.md). */
+  example?: ExampleFuture;
 }
 
-export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProps) {
+export function CockpitPage({ initialScenario, pinned = false, example }: CockpitPageProps) {
+  const isExample = example !== undefined;
   const { scenario: journeyScenario, setScenario, hydrated } = useJourney();
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(
-    pinned ? initialScenario : (journeyScenario ?? initialScenario),
+    example ? example.scenario : pinned ? initialScenario : (journeyScenario ?? initialScenario),
   );
 
   // `JourneyProvider` reads sessionStorage in its own effect, so on first paint
@@ -161,7 +172,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // settles, adopt the session's scenario if one exists and differs — the user's most recent
   // unsaved edits win over the server snapshot (audit-2026-07-04 C2).
   useEffect(() => {
-    if (!hydrated) return;
+    // The example is its own: no session scenario ever replaces it.
+    if (!hydrated || isExample) return;
     if (pinned) {
       // An explicit `?venture=` is a deliberate choice: make it the session's scenario.
       if (initialScenario && journeyScenario?.id !== initialScenario.id) setScenario(initialScenario);
@@ -182,7 +194,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   // Which regions are folded (remembered in this browser), and, below 768 px, whether the rail's sheet is
   // open (not remembered: it starts closed so the road is what a phone shows first).
-  const { folds, toggle, toggleAll } = useFolds();
+  const { folds, toggle, toggleAll } = useFolds(!isExample);
   const [railSheet, setRailSheet] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
@@ -193,7 +205,11 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // The receipt of an answer kept with the map, until its save answers; and a counter for focus keys and edits.
   const pendingReceipt = useRef<PendingReceipt | null>(null);
   const counter = useRef(0);
-  const [whatIf, setWhatIf] = useState<number | null>(null);
+  // An example may open with its own what-if on (kept nowhere, as every what-if); Mara's starts empty.
+  const [whatIf, setWhatIf] = useState<number | null>(example?.whatIfFirstYearSalesDollars ?? null);
+  // On the example, a count of clicks on controls that would save: the banner says nothing is kept.
+  const [exampleNotice, setExampleNotice] = useState(0);
+  const sayExample = () => setExampleNotice((n) => n + 1);
   const [compareForkId, setCompareForkId] = useState<string | null>(null);
   // Road evaluation's input before a number went into the agree prompt: its receipt comes once it is agreed.
   const reviewBefore = useRef<{ input: RoadEvaluationInput; place: ReceiptPlace } | null>(null);
@@ -216,13 +232,20 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   // The saved idea behind this scenario, its figures (every state: the reminder banner needs to know
   // what is still waiting), and what the cockpit keeps for it. An idea not saved yet has none of it.
-  const reminders = useIdeaReminders();
+  // The example reads nothing of the person's: no settings, no saved idea, no figures.
+  const reminders = useIdeaReminders(!isExample);
   const scenarioId = currentScenario?.id ?? null;
-  const { ventureId, figures, kept, reload } = useCockpitData(scenarioId);
+  const saved = useCockpitData(isExample ? null : scenarioId);
+  // The example's answers stand in for what GET /api/futures/<id> and the figures list would give.
+  const ventureId = isExample ? null : saved.ventureId;
+  const figures = example ? example.figures : saved.figures;
+  const kept: KeptForIdea | null = example ? example.kept : saved.kept;
+  const reload = saved.reload;
   const ideaFigures = ventureId && figures ? { ideaId: ventureId, figures } : null;
 
   // The road this idea is drawn on: its own when it names one the catalog has, else today's general road.
-  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, kept?.future.roadId ?? null), [kept]);
+  const roadId = kept?.future.roadId ?? null;
+  const road = useMemo(() => roadForFuture(SHIPPED_ROADS_CATALOG, roadId), [roadId]);
   // The government's skills list for the job the person picked as closest to their work, or none.
   const jobCode = kept?.future.job?.code ?? null;
   const job = useMemo(() => (jobCode ? oasisListForJob(jobCode) : null), [jobCode]);
@@ -285,6 +308,16 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // the path (the maintainer, 2026-10-13). None on today's Alberta road, whose sides the tax rules colour
   // whichever is picked, so both columns' counts would come out the same.
   const compareForks = useMemo(() => (told ? forksToCompare(told.input) : []), [told]);
+  // The example's story: what each of the example person's answers changed, from road evaluation.
+  const story = useMemo(
+    () => (example && told ? exampleStory(told.input, example.whatIfFirstYearSalesDollars) : null),
+    [example, told],
+  );
+  // Where the example's income goal comes from (2026-10-14): the statistic it is, so the goal bar says what
+  // the number is rather than calling it the example person's own.
+  const exampleStat = (id: string | null | undefined) => (id ? (example?.sources?.data.statistics.find((s) => s.id === id) ?? null) : null);
+  const targetStat = exampleStat(example?.sources?.incomeWantedFrom);
+  const targetFrom = targetStat ? { what: targetStat.inSentence ?? targetStat.what, period: targetStat.period } : null;
   const stepEvaluations = useMemo(
     () => new Map((roadEvaluation?.steps ?? []).map((step) => [step.stepId, step])),
     [roadEvaluation],
@@ -328,6 +361,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
    * waiting on this save is worked out from the idea as the save read it back, or marked not saved.
    */
   async function persist(target: Scenario) {
+    // Never reached on the example (changeScenario and Save now stop first); a second guard costs nothing.
+    if (isExample) return sayExample();
     setSaveState("saving");
     const waiting = pendingReceipt.current;
     const result = await saveScenario(target);
@@ -384,6 +419,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
     place: ReceiptPlace | null,
     opts: { before?: RoadEvaluationInput | null; whatIf?: number | null; empty?: string } = {},
   ) {
+    // The example's answers are its own: nothing changes on screen, nothing is saved, the banner says so.
+    if (isExample) return sayExample();
     const before = opts.before !== undefined ? opts.before : inputFor();
     setCurrentScenario(next);
     setScenario(next);
@@ -433,6 +470,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   /** "Save now": skips the pause. Also the retry when autosave reported the database away. */
   function handleSave() {
+    if (isExample) return sayExample();
     if (autosaveTimer.current !== null) {
       window.clearTimeout(autosaveTimer.current);
       autosaveTimer.current = null;
@@ -500,10 +538,15 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
    * receipt where it was given (road evaluation before the save against after it, from what was read
    * back), else shows the refusal.
    */
-  async function saveAnswer(pending: ReturnType<typeof postJson>, place: ReceiptPlace, empty?: string): Promise<string | null> {
+  async function saveAnswer(pending: () => ReturnType<typeof postJson>, place: ReceiptPlace, empty?: string): Promise<string | null> {
+    // On the example nothing is sent: `pending` is only called below, so no request ever starts.
+    if (isExample) {
+      sayExample();
+      return words.example.cantKeep;
+    }
     setAnswerError(null);
     const before = inputFor();
-    const result = await pending;
+    const result = await pending();
     if (!result.ok) {
       setAnswerError(result.error);
       return result.error;
@@ -517,25 +560,25 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   function handleStatus(status: StepStatus | null) {
     if (!ventureId || !selectedNodeId) return;
     const stepId = selectedNodeId;
-    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }), "step");
+    void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, status }), "step");
   }
 
   /** Resolves once the ticks are saved and read back, so the step panel can hold its boxes until then. */
   function handleTicks(doneWhenIds: string[]): Promise<unknown> {
     if (!ventureId || !selectedNodeId) return Promise.resolve();
     const stepId = selectedNodeId;
-    return saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }), "step");
+    return saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/progress`, { roadId: road.id, stepId, doneWhenIds }), "step");
   }
 
   function handleMark(skill: SkillKey, mark: SkillMarkValue | null, place: ReceiptPlace) {
-    void saveAnswer(postJson("/api/skill-marks", { ...skill, mark }), place);
+    void saveAnswer(() => postJson("/api/skill-marks", { ...skill, mark }), place);
   }
 
   /** The person's pick of job for the government's skills list, or null to take it back. */
   function handlePickJob(code: string | null) {
     if (!ventureId) return;
     // Picked in the Skills list, so its receipt shows there.
-    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/job`, { code }), "skills");
+    void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/job`, { code }), "skills");
   }
 
   /** From the step panel: the Skills list, where the job's list is (or the question, when none is picked). */
@@ -553,6 +596,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
    * number is that day's amount.
    */
   async function proposeNumber(figure: Record<string, unknown>, place: ReceiptPlace): Promise<string | null> {
+    if (isExample) {
+      sayExample();
+      return words.example.cantKeep;
+    }
     if (!ventureId) return null;
     setAnswerError(null);
     // A proposed number counts for nothing, so the receipt compares now with after the person agrees.
@@ -584,7 +631,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   async function handleSaveDate(month: string | null): Promise<string | null> {
     if (!ventureId) return null;
     const id = ventureId;
-    return saveAnswer(postJson(`/api/futures/${encodeURIComponent(id)}/date`, { month }), "date");
+    return saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(id)}/date`, { month }), "date");
   }
 
   /** After the agree prompt: the receipt of the number agreed, against the screen before it was proposed. */
@@ -609,6 +656,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   /** Takes one answer back the way `withoutAnswer` does, so the receipt is the row's "what it unlocked" undone. */
   function handleTakeBack(row: ToldRow) {
+    if (isExample) return sayExample();
     const back = row.takeBack;
     const id = ventureId ? encodeURIComponent(ventureId) : null;
     // A take back that changes nothing on the road still says what was taken back.
@@ -619,13 +667,13 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       return;
     }
     if (!id) return;
-    if (back.kind === "skill-mark") void saveAnswer(postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
-    else if (back.kind === "own-skill") void saveAnswer(postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
-    else if (back.kind === "step-status") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
-    else if (back.kind === "step-ticks") void saveAnswer(postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
-    else if (back.kind === "figures") void saveAnswer(postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
-    else if (back.kind === "date") void saveAnswer(postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
-    else if (back.kind === "ending") void saveAnswer(postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);
+    if (back.kind === "skill-mark") void saveAnswer(() => postJson("/api/skill-marks", { skillItemId: back.skillItemId, mark: null }), "told", empty);
+    else if (back.kind === "own-skill") void saveAnswer(() => postJson("/api/skill-marks", { ownLabel: back.ownLabel, mark: null }), "told", empty);
+    else if (back.kind === "step-status") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, status: null }), "told", empty);
+    else if (back.kind === "step-ticks") void saveAnswer(() => postJson(`/api/futures/${id}/progress`, { roadId: road.id, stepId: back.stepId, doneWhenIds: [] }), "told", empty);
+    else if (back.kind === "figures") void saveAnswer(() => postJson("/api/figures/retract", { ventureId, figureIds: back.figureIds }), "told", empty);
+    else if (back.kind === "date") void saveAnswer(() => postJson(`/api/futures/${id}/date`, { month: null }), "told", empty);
+    else if (back.kind === "ending") void saveAnswer(() => postJson(`/api/futures/${id}/ending`, { forkId: back.forkId, stepId: null }), "told", empty);
   }
 
   function handleNotToldAnswer(row: NotToldRow) {
@@ -653,7 +701,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       title = q.date.question;
       why = q.date.why;
       control = { kind: "month", min: today.slice(0, 7), value: kept?.future.targetMonth ?? null };
-      save = async (month) => (ventureId ? done(await saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/date`, { month }), "told")) : null);
+      save = async (month) => (ventureId ? done(await saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/date`, { month }), "told")) : null);
     } else if (question === "savings") {
       title = q.savings.question;
       why = q.savings.why;
@@ -711,6 +759,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   // --- Compare and This is mine
 
   function handleThisIsMine(forkId: string, stepId: string) {
+    if (isExample) return sayExample();
     const decision = branchDecisions.find((d) => d.id === forkId);
     // Road 0's forks are the map's toggles, kept with the map; every other road's ending is kept on the future.
     if (road.id === generalRoadV2026.id && decision) {
@@ -718,7 +767,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
       return;
     }
     if (!ventureId) return;
-    void saveAnswer(postJson(`/api/futures/${encodeURIComponent(ventureId)}/ending`, { forkId, stepId }), "compare");
+    void saveAnswer(() => postJson(`/api/futures/${encodeURIComponent(ventureId)}/ending`, { forkId, stepId }), "compare");
   }
 
   // --- The what-if
@@ -732,6 +781,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
 
   /** Keep: the what-if becomes the idea's own first-year sales (never a figure), and the what-if goes. */
   function handleKeepWhatIf() {
+    // Keeping would make it the example's first-year sales: the example keeps nothing, and its what-if stays on.
+    if (isExample) return sayExample();
     if (whatIf === null) return;
     const next = keepWhatIf(scenario, whatIf);
     setWhatIf(null);
@@ -799,15 +850,23 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
   const behindSheet = railModal || panelModal;
 
   return (
-    <div className="grid h-[calc(100vh-2.5rem)] grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible">
+    // On the example every panel's "nothing can be kept" line says it is an example (example-mode.tsx).
+    <ExampleNoteContext.Provider value={isExample ? words.example.cantKeep : null}>
+    {/* The example's banner: above the cockpit, outside every region that folds, so it never folds, and on a
+        phone it stays at the top of the window (example-mode.tsx). On a person's own future this adds nothing. */}
+    <ExampleFrame example={example ?? null} notice={exampleNotice} inert={behindSheet}>
+    <div
+      className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
+    >
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
       <header
         inert={behindSheet}
         className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]"
       >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
-          <Link href="/ventures" className="font-mono text-[11px] text-stone transition hover:text-paper">
-            ← Your futures
+          {/* The example has no saved futures behind it: its way back is the front door it came from. */}
+          <Link href={isExample ? "/" : "/ventures"} className="font-mono text-[11px] text-stone transition hover:text-paper">
+            {isExample ? words.example.back : "← Your futures"}
           </Link>
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
           <span className="max-md:hidden">
@@ -840,7 +899,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
           <Pill
             variant={rightPanel === "playbook" ? "maple" : "maple-out"}
             size="small"
-            onClick={() => setRightPanel(rightPanel === "playbook" ? null : "playbook")}
+            // The example makes no plan: the banner says nothing here is kept.
+            onClick={() => (isExample ? sayExample() : setRightPanel(rightPanel === "playbook" ? null : "playbook"))}
           >
             Export
           </Pill>
@@ -861,6 +921,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
+            person={example?.person ?? null}
+            targetFrom={targetFrom}
           />
         ) : null}
       </div>
@@ -882,7 +944,10 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             if (!folds.rail) railScroll.current = event.currentTarget.scrollTop;
           }}
           className={`min-w-0 border-r border-rule bg-ink3 ${folds.rail ? "md:overflow-hidden" : "md:overflow-y-auto"} ${
-            railSheet ? "max-md:fixed max-md:inset-0 max-md:z-40 max-md:overflow-y-auto" : "max-md:hidden"
+            // The sheet starts under the example's banner, which stays on screen (0 px on a person's own future).
+            railSheet
+              ? "max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-[var(--example-banner-h,0px)] max-md:z-40 max-md:overflow-y-auto"
+              : "max-md:hidden"
           }`}
         >
           {folds.rail ? (
@@ -900,9 +965,12 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 {words.folds.railSheet.close}
               </Pill>
             </div>
+            {/* The example's story first: what each of the example person's answers changed. */}
+            {example && story ? <ExampleStory person={example.person} parts={story} /> : null}
             {/* Part 2: what the person told DotAmi and what isn't told yet, above the rail as it was. */}
             {told ? (
               <ToldList
+                person={example?.person ?? null}
                 rows={told.rows}
                 notTold={told.notTold}
                 receipt={toldReceipt}
@@ -951,6 +1019,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 </span>
                 <select
                   aria-label="Structure"
+                  disabled={isExample}
                   value={structureAssumed ? "" : scenario.profile.structure}
                   onChange={(e) => handleStructureChange(e.target.value as "" | VentureStructure)}
                   className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
@@ -965,6 +1034,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                   Map assumes sole prop until you set it.
                 </p>
               ) : null}
+              <ExampleOnlyNote className="mt-1 text-[10px] leading-snug text-amber" />
             </div>
             <FieldRow
               label="Employed"
@@ -972,13 +1042,23 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               value={scenario.profile.employmentStatus === "not-said" ? EMPLOYMENT_WORDS["not-said"] : scenario.profile.employmentStatus}
             />
 
-            {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. */}
+            {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. On the example,
+                the example person's words from its file: never the real person's statements. */}
             <section className="border-t border-rule-soft pt-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-                In your words
+                {example ? words.example.theirWords(example.person) : "In your words"}
               </p>
               <div className="mt-2">
-                <PersonStatements variant="rail" />
+                {example ? (
+                  example.kept.destination ? (
+                    <p className="text-[12px] leading-snug text-paper">
+                      “{example.kept.destination.text}”{" "}
+                      <span className="font-mono text-[9.5px] text-stone">{example.kept.destination.saidAt}</span>
+                    </p>
+                  ) : null
+                ) : (
+                  <PersonStatements variant="rail" />
+                )}
               </div>
             </section>
 
@@ -996,6 +1076,16 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
               <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
             )}
 
+            {/* The example keeps nothing, so it has no save line: its one way on is to start your own. */}
+            {example ? (
+              <div className="mt-4 flex flex-col gap-2.5">
+                <Link href="/start">
+                  <Pill variant="maple" className="w-full justify-center">
+                    {words.example.startOwn}
+                  </Pill>
+                </Link>
+              </div>
+            ) : (
             <div className="mt-4 flex flex-col gap-2.5">
               <Pill variant="maple" className="w-full justify-center" onClick={() => handleSave()}>
                 {saveState === "saving" ? "Saving…" : "Save now"}
@@ -1026,6 +1116,7 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
                 </Pill>
               </Link>
             </div>
+            )}
 
             <p className="mt-auto border-t border-rule-soft pt-4 text-[10.5px] leading-snug text-stone">
               <span className="font-serif italic text-paper">Compass, not GPS.</span> Profile drives
@@ -1094,7 +1185,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
             className={`flex min-h-0 min-w-0 flex-col bg-ink3 ${
               folds.panel
                 ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-rule"
-                : "max-lg:fixed max-lg:inset-0 max-lg:z-40 md:max-lg:top-[52px] md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
+                : // Under the example's banner too, when there is one (its height is 0 px on a person's own future).
+                  "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-md:top-[var(--example-banner-h,0px)] md:max-lg:top-[calc(52px_+_var(--example-banner-h,0px))] md:max-lg:left-auto md:max-lg:w-[420px] md:max-lg:shadow-2xl"
             }`}
           >
             {folds.panel ? (
@@ -1248,6 +1340,8 @@ export function CockpitPage({ initialScenario, pinned = false }: CockpitPageProp
         />
       ) : null}
     </div>
+    </ExampleFrame>
+    </ExampleNoteContext.Provider>
   );
 }
 

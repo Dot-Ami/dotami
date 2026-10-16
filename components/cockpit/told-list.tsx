@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 
+import { ExampleOnlyNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines, type ShownReceipt } from "@/components/cockpit/receipt-lines";
 import { toldDay, type BoxQuestion, type NotToldRow, type ToldRow } from "@/lib/cockpit/told";
 import { cockpitWords as words } from "@/lib/cockpit/words";
@@ -26,6 +27,7 @@ const heading = "font-mono text-[10px] uppercase tracking-[0.14em] text-stone";
 const small = "rounded-full border border-rule px-2 py-0.5 text-[10.5px] text-stone hover:bg-ink2 disabled:opacity-50";
 
 export function ToldList({
+  person = null,
   rows,
   notTold,
   receipt,
@@ -36,6 +38,8 @@ export function ToldList({
   onAnswer,
   boxFor,
 }: {
+  /** An invented example person's name: the list is then "What <name> told DotAmi", never the viewer's. */
+  person?: string | null;
   rows: readonly ToldRow[];
   notTold: readonly NotToldRow[];
   /** The last answer's receipt, when it was given here; null for none. */
@@ -63,12 +67,17 @@ export function ToldList({
   const asked = notTold.filter((q) => showDontKnow || !dontKnow.has(q.id));
   const folded = notTold.filter((q) => dontKnow.has(q.id)).length;
   const visible = showAll ? asked : asked.slice(0, VISIBLE_QUESTIONS);
+  const toldRegion = person ? words.example.theirs.toldRegion(person) : words.told.region;
 
   return (
     <div className="flex flex-col gap-4">
-      <section aria-label={words.told.region}>
-        <h2 className={heading}>{words.told.region}</h2>
-        <p className="mt-0.5 text-[11px] text-stone-dim">{words.told.count(rows.length)}</p>
+      <section aria-label={toldRegion}>
+        <h2 className={heading}>{toldRegion}</h2>
+        <p className="mt-0.5 text-[11px] text-stone-dim">
+          {person ? words.example.theirs.toldCount(person, rows.length) : words.told.count(rows.length)}
+        </p>
+        {/* On the invented example the buttons below are disabled; this says why. */}
+        <ExampleOnlyNote className="mt-1 text-[11px] text-amber" />
         {error ? (
           <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
             {error}

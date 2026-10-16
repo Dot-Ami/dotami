@@ -11,6 +11,41 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Show me an example first: Mara, an invented example future** (the maintainer's pick of 2026-10-13) —
+  the front door's third door now opens a filled-in future for an invented person: Mara, an apprentice
+  cabinetmaker in Alberta, on *From apprentice to your own shop (Alberta)*. It is the same cockpit anyone
+  gets for their own future, drawn from her answers through the same rules: her words (*"My own small
+  furniture shop, four-day weeks, home for supper."*), nine skills marked, her pick of *Open your own
+  shop* and one step done. **Mara is invented; her numbers are real** (the maintainer, 2026-10-14: real,
+  cited numbers where they exist, as in depth as possible, with the sources shown): her start-up cost for
+  *Woodworking machines and tools* is $14,993.62, 12 of the tools the trade's official descriptions name,
+  picked for this example (the Alberta cabinetmaker curriculum, the Red Seal standard, the national job
+  classification; they name more, and the panel lists the ones not priced), one of
+  each at its average of 3 to 5 prices listed by Canadian sellers on 2026-10-14; her yearly income goal is
+  $52,255, what employed cabinetmakers in Alberta average a year (Government of Alberta, 2023). She has
+  no what-if (the maintainer's pick A, 2026-10-15): the what-if bar starts empty, and you can try a number
+  of your own, kept nowhere as everywhere. The average yearly revenue of small furniture makers in Canada,
+  $610,300 (Government of Canada, 2024), is shown only for context in the panel below, said to be an
+  industry average over existing businesses of every age, *not a first-year figure* and not one of
+  Mara's numbers. Her savings and a
+  shop deposit stay blank, *not priced yet*: nothing real can supply them. The banner says *"Mara is
+  invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here
+  is saved."*, and its **Where these numbers come from** lists every number, how it was worked out (every
+  average is worked out by the app from the listed prices, never typed), every price and statistic with
+  its link and the day it was seen, software listed for this example (design, cut lists, bookkeeping) with
+  each plan's listed price and an average of the plans billed month to month (a plan billed once a year is
+  listed apart), market rents with the costs on top and the gross rent where the report gives them, and
+  what stayed blank and why. It says Mara and her answers are invented and every price and statistic is
+  real. The tools are information, a pick with what sellers charge: never ranked, never "buy this". A
+  test checks that her two numbers and the context figure are worked out in her file, never typed. A
+  short list, *What Mara
+  did*, shows what each of her answers changed, worked out by the rules (on today's road: 17 steps, 30
+  cost lines still to price; the design's early sketch said 22 and 4). Her answers are labelled hers, not
+  yours: *Mara's target …*, *Mara's numbers*, *Mara's marks*, *What Mara told DotAmi*; and the banner
+  says once that "you" in the receipts means Mara. Nothing is saved from it: every button that would keep
+  something is greyed out and says *"This is an example. Start your own to keep anything."*, or says so
+  when clicked, and the page reads none of your own data and writes nothing to the browser either (a
+  browser test checks the data file, both kinds of browser storage and every request).
 - **Keep your records from day one: a step on every business road** (2026-10-14) — a business must keep
   its records from the start, and records missed early are hard to put back together. The step's four *done
   when* lines come from the CRA's own *Keeping records* pages: the law asks anyone carrying on a business

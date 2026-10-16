@@ -4,8 +4,10 @@ Page: Landing (`/`) · Component: `components/discovery/landing-page.tsx` (words
 `lib/front-door/words.ts`)
 Type: link + embedded entry box + display
 
-Last updated: 2026-10-12 (built; the maintainer's decision 6 of 2026-10-11, "the front door leads with
-the dream"; design: docs/architecture/future-cockpit.md § 1, The way in as built)
+Last updated: 2026-10-13 (door 3 opens the invented example future, Mara: the maintainer's pick of
+2026-10-13, [../example/_index.md](../example/_index.md)). Built 2026-10-12 (the maintainer's decision 6
+of 2026-10-11, "the front door leads with the dream"; design: docs/architecture/future-cockpit.md § 1, The
+way in as built)
 
 ## What it is
 
@@ -18,7 +20,7 @@ footer stays in the window (the same goes for `/start` and `/futures`).
 |---|---|---|
 | 1, the main one | **Start from where I want to be** | One line on what it does, *"What you type here stays on this computer."*, and the link **Start here →** (`/start`). Drawn with the accent border. |
 | 2 | **I already have an idea** | One line, then today's box, **Map it →** and the three example chips, exactly as before ([01-free-text-entry.md](./01-free-text-entry.md), [02-example-chips.md](./02-example-chips.md)). |
-| 3 | **Show me an example first** | *"Coming: a filled-in future for an invented person, clearly labelled. It isn't written yet."* and a muted *Not written yet* tag. No link and no button: nothing is clickable in it. |
+| 3 | **Show me an example first** | *"Look inside a filled-in future for Mara, an invented apprentice cabinetmaker in Alberta on her way to her own shop. Her numbers are invented, and nothing in it is saved."*, a muted *Invented example* tag, and the link **Show me Mara's example →** (`/example/mara`). (Until 2026-10-13 it said the example wasn't written yet and had no link.) |
 
 Headline (level 1): *"See the road to the work and life you want."*; under it *"Every step, skill and
 start-up cost, with its sources."*
@@ -29,7 +31,9 @@ start-up cost, with its sources."*
   already given in this tab are still there.
 - Door 2 behaves as the box always has: **Map it →** resets the tab's journey, reads the sentence and
   opens the intake.
-- Door 3 does nothing yet.
+- **Show me Mara's example →** opens `/example/mara`, the cockpit drawn read-only for an invented person
+  ([../example/_index.md](../example/_index.md)). It doesn't touch the tab's journey: the example page
+  reads and writes no browser storage, so answers already given in this tab are still there after it.
 
 ## Why it exists (user purpose)
 
@@ -48,12 +52,14 @@ None (door 2: see its own file).
 
 ## Downstream consumers (where the data goes today)
 
-`/start` → `/futures` → `/cockpit?venture=<id>`.
+`/start` → `/futures` → `/cockpit?venture=<id>`; door 3: `/example/mara`, whose **Start my own future →**
+leads to `/start`.
 
 ## Cleanup / open questions
 
-- Door 3 waits for the invented example future (docs/architecture/future-cockpit.md § 13, *the example
-  future's content*). The still picture of a filled-in cockpit waits for it too.
+- ~~Door 3 waits for the invented example future.~~ Settled 2026-10-13: Mara (docs/architecture/
+  future-cockpit.md § 13). The still picture of a filled-in cockpit (§ 1 row 1) can now be drawn from her
+  example; not done yet.
 
 ## Backend wiring
 

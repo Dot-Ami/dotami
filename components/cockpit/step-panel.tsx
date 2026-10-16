@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 
 import { AmountForm } from "@/components/cockpit/amount-form";
+import { CantKeepNote } from "@/components/cockpit/example-mode";
 import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { BranchToggle } from "@/components/cockpit/strategy-map";
 import { Fold, ItemRow, NodeDetailPanel } from "@/components/node-detail-panel";
@@ -193,7 +194,7 @@ function StepSections({
 
   return (
     <div className="mt-5 space-y-5">
-      {!canSave ? <p className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">{words.panel.notSaved}</p> : null}
+      {!canSave ? <CantKeepNote className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber" /> : null}
       {error ? (
         <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
           {error}
