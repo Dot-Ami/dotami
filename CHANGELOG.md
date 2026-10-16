@@ -643,6 +643,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **Two designs, written before any code, each waiting on the maintainer's calls** (2026-10-15).
+  [docs/architecture/other-ways-to-build.md](docs/architecture/other-ways-to-build.md) ([14f]): each
+  start-up cost line offered as already have it, buy, rent or lease side by side, each with the person's
+  own number and the CRA's treatment of that way, the cited rules the person's picks bring into view, and
+  a *Where to ask* list for tax and legal help; nine calls.
+  [docs/architecture/competitive-landscape.md](docs/architecture/competitive-landscape.md) ([14g]):
+  Statistics Canada's count of businesses by area and industry (June 2026), a dated list of public
+  places to look, a plain line that ordinary ad spend isn't published in Canada, and the person's own
+  list of businesses they're watching; ten calls. Nothing DotAmi keeps, sends, ships or asks changes.
 - **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
   review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
   first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with

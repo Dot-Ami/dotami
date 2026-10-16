@@ -1794,6 +1794,11 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   Lens exists.
 - A second written future; provinces other than Alberta for the written future.
 - The real examples library and the person's own test results ([task list](../task-list.md) § 15–16).
+- Two stories asked for on 2026-10-15, designed and not built, each waiting on the maintainer's calls:
+  buying, renting or leasing each start-up item and where to ask about tax and legal questions
+  ([other-ways-to-build.md](other-ways-to-build.md)), and others in the same line of work
+  ([competitive-landscape.md](competitive-landscape.md)). The second asks (its call 1) whether an
+  official count of businesses may appear for a real person, which this section rules out today.
 
 ## 13. Open items
 
