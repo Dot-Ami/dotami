@@ -12,10 +12,11 @@ import type { NamedCostLine, Road, SkillItem } from "./types";
  *
  * Every source here is a tool check, not a read (option B, docs/engines/citations.md): each quote was
  * found word for word on its live page by `node scripts/check-quotes.mjs --url … --quote …` on
- * CHECKED_ON. Nobody is recorded as having read these pages, so no citation has a read date and the
- * road's own `lastVerified` is empty. A line says only what its quotes say; anything a page doesn't
- * state (Alberta's registry fees, which sit in a catalogue that stops tools; a wage figure; a WCB rate)
- * is a named line or left out, never guessed.
+ * CHECKED_ON (the citations added when its blanks were looked up again, on BLANKS_CHECKED_ON). Nobody is
+ * recorded as having read these pages, so no citation has a read date and the road's own `lastVerified` is
+ * empty. A line says only what its quotes say; anything a page doesn't state (Alberta's registry fees,
+ * which sit in a catalogue that stops tools; a wage figure; a WCB rate) is a named line or left out, never
+ * guessed, and a named line for a fee says in its label why it has no amount.
  *
  * Its official fees are written once, in the official fees catalog (lib/engines/fees/v2026/, since
  * 2026-10-12): each fee line here names its fee by id through `feeLine`, which copies the amount, source
@@ -27,8 +28,14 @@ import type { NamedCostLine, Road, SkillItem } from "./types";
  * picks the shop and off it if they stay employed. No rule code reads it; the `next` arrows decide.
  */
 
-/** The day scripts/check-quotes.mjs found every quote below on its page. */
+/** The day scripts/check-quotes.mjs found every quote below on its page, except those checked on BLANKS_CHECKED_ON. */
 const CHECKED_ON = "2026-10-12";
+
+/**
+ * The day the road's named blanks were looked up again (build list item 19): the tool found the quotes of
+ * the citations made with it on that day.
+ */
+const BLANKS_CHECKED_ON = "2026-10-15";
 
 interface Page {
   title: string;
@@ -248,8 +255,13 @@ const PAGES = {
  * there. Never a read date: nobody is recorded as having read these pages.
  */
 function checked(page: Page, ...quotes: string[]): EngineCitation {
+  return checkedOn(CHECKED_ON, page, ...quotes);
+}
+
+/** The same, for a citation whose quotes the tool found on another day. */
+function checkedOn(day: string, page: Page, ...quotes: string[]): EngineCitation {
   const { title, authority, jurisdiction, url, note } = page;
-  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: CHECKED_ON, quotes } };
+  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: day, quotes } };
 }
 
 /** A cost line the person prices; never an amount here. */
@@ -794,10 +806,13 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [],
       costs: [
-        named(
+        // Priced on Tradesecrets' Apply Online page since 2026-10-15 (build list item 19); the Red Seal page
+        // itself gives no amount. Conditional in the catalog: the application is the way for a certified
+        // person, and the page names no fee for an apprentice writing it in their final period.
+        feeLine(
           "cost-shop-red-seal-application",
-          "Red Seal application fee (the page gives no amount)",
-          checked(PAGES.redSeal, Q.redSealApply, "with applicable fee and another training plan, if required."),
+          "Red Seal application fee (only if you apply after you're certified)",
+          "fee-ab-red-seal-application",
         ),
       ],
       officialLinks: [{ label: "Red Seal Endorsement", url: PAGES.redSeal.url }],
@@ -1011,19 +1026,31 @@ export const roadApprenticeToOwnShopAB: Road = {
       ],
       needs: [],
       costs: [
-        // Both amounts sit in Alberta's Registry Agent Product Catalogue, which stops tools with a human
-        // check; they stay named until a person reads them there.
+        // The government fee's amount sits only in Alberta's Registry Agent Product Catalogue, a PDF whose
+        // open.alberta.ca page stops tools with a human check (looked up again on 2026-10-15, build list
+        // item 19); alberta.ca's own pages say the fee exists and point to the catalogue, with no amount. It
+        // stays named until a person reads it there. The agent's service fee is set by each agent, and the
+        // Business Name Report comes from NUANS members, not the government: no official amount for either.
         named(
           "cost-shop-name-government-fee",
-          "Government fee to register the name (in Alberta's Registry Agent Product Catalogue)",
-          checked(PAGES.registerName, "Service providers will charge a government fee and a service fee to register your business name."),
+          "Government fee to register the name (the amount is in Alberta's Registry Agent Product Catalogue)",
+          checkedOn(
+            BLANKS_CHECKED_ON,
+            PAGES.registerName,
+            "Service providers will charge a government fee and a service fee to register your business name.",
+            "See the Registry agent product catalogue.",
+          ),
         ),
         named(
           "cost-shop-name-service-fee",
           "Registry agent's service fee (set by your agent)",
           checked(PAGES.findRegistry, "Service fees are not regulated and may vary from one agent to another."),
         ),
-        named("cost-shop-name-report", "Business Name Report (optional)"),
+        named(
+          "cost-shop-name-report",
+          "Business Name Report (optional; provided by authorized NUANS members; the page gives no amount)",
+          checkedOn(BLANKS_CHECKED_ON, PAGES.registerName, "Step 2: Get a Business Name Report", "The report is provided by authorized NUANS members."),
+        ),
       ],
       officialLinks: [
         { label: "Register a business name", url: PAGES.registerName.url },

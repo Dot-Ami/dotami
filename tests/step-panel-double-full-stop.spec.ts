@@ -68,6 +68,8 @@ describe("every step panel and money list of every road", () => {
     const withCondition = Object.keys(panels).filter((key) => panels[key].includes("Only if: "));
     expect(withCondition.sort()).toEqual([
       "road-apprentice-to-own-shop-ab/money",
+      // The Red Seal application fee, conditional since 2026-10-15 (build list item 19).
+      "road-apprentice-to-own-shop-ab/step-shop-red-seal",
       "road-apprentice-to-own-shop-ab/step-shop-tq-recognized-credential",
     ]);
   });
