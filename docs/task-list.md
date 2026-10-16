@@ -251,14 +251,26 @@ and the maintainer's six decisions of 2026-10-11:
   For each start-up cost line, the ways to get it side by side (already have it, buy, rent, lease), each
   with the person's own number and the official tax treatment of that way; the cited rules the person's
   picks bring into view; and a *Where to ask* list of government offices, regulators' directories and
-  government-funded advice. Asked for 2026-10-15. Design written, nothing built; waiting on the
-  maintainer's nine calls: [architecture/other-ways-to-build.md](architecture/other-ways-to-build.md) § 9.
+  government-funded advice. Asked for 2026-10-15. Design written, nothing built; call 1 answered (C),
+  waiting on the maintainer's other calls: [architecture/other-ways-to-build.md](architecture/other-ways-to-build.md) § 9.
 - ⏸ **[14g] Others in this line of work (the competitive landscape).** An official Statistics Canada
   count of businesses by area and industry, a dated list of public places to look (city licence lists,
   public contract records, ad libraries), a plain line that ordinary ad spend isn't published in Canada,
-  and the person's own list of businesses they're watching. Asked for 2026-10-15. Design written,
-  nothing built; waiting on the maintainer's ten calls:
-  [architecture/competitive-landscape.md](architecture/competitive-landscape.md) § 9.
+  the person's own list of businesses they're watching, and later look-ups on the person's own account and
+  a list from open data. Asked for 2026-10-15. Design written, nothing built; calls 1 and 3 answered,
+  waiting on the maintainer's other calls:
+  [architecture/competitive-landscape.md](architecture/competitive-landscape.md) § 12.
+- ⏸ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
+  choose* control on screen, put the person's own options in order by one measure they name, with every
+  number worked out by DotAmi's code, the gaps counted, and the words "your choice" on screen; questions
+  that need a forecast get a plain "DotAmi can't answer that" and where to ask. Asked for 2026-10-15.
+  Design written, nothing built; waiting on the maintainer's calls:
+  [architecture/lens-comparisons.md](architecture/lens-comparisons.md) § 10.
+- ⏸ **[14i] One research kit for every job.** A list of every outside source and its terms, one import
+  for the government's job and business data, code keys on every road, and a script that hands whoever
+  writes a new road an empty, cited outline, so nothing is built again for each job. Asked for
+  2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
+  [architecture/research-kit.md](architecture/research-kit.md) § 10.
 
 ## 7 — The desktop app (one download, everything on your computer)
 
