@@ -353,7 +353,7 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   await expect(panel).toContainText("Not priced yet, and why");
   await expect(panel).toContainText("Seen but not used, and why");
   // Information, never a verdict: nothing in the panel, the banner, the goal bar (its target line) or the
-  // what-if bar (its note) ranks, recommends or frames a pick as the trade's (tests/helpers/verdict-words.ts).
+  // what-if bar ranks, recommends or frames a pick as the trade's (tests/helpers/verdict-words.ts).
   for (const [name, region] of [
     ["panel", panel],
     ["banner", banner(page)],

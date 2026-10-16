@@ -331,16 +331,17 @@ describe("Mara's numbers are worked out in her file, never typed there", () => {
 
   it("the scan can fail: each number typed by hand, even correctly, is found", () => {
     const code = readSource(FILE);
-    const typed = [
+    const typed: [string | RegExp, string][] = [
       ["toolsTotalCents(MARA_SOURCES.tools)", "1_499_362"],
       ["statistic(INCOME_FROM).amountCents!", "5_225_500"],
       ["whatIfFirstYearSalesDollars: null", "whatIfFirstYearSalesDollars: 610_300"],
-      ["TOOLS_CENTS,\n", "14993.62 * 100,\n"],
+      // A Windows clone with core.autocrlf=true ends this line with \r\n.
+      [/TOOLS_CENTS,\r?\n/, "14993.62 * 100,\n"],
     ];
     for (const [from, to] of typed) {
       const changed = code.replace(from, to);
-      expect(changed, from).not.toBe(code);
-      expect(typedByHand(changed, numbers()).length, from).toBeGreaterThan(0);
+      expect(changed, String(from)).not.toBe(code);
+      expect(typedByHand(changed, numbers()).length, String(from)).toBeGreaterThan(0);
     }
     // A number typed anywhere else in the file, even in a line that doesn't feed her figures.
     expect(typedByHand(`${code}\nconst spare = 5225500;`, numbers())).toEqual(["the number 5225500 is typed"]);
