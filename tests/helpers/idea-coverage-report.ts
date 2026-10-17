@@ -53,9 +53,20 @@ export function coverageReport(args: {
   lines.push("## Where the typed way in ended", "");
   table(["Ended", "Ideas"], [...reached]);
 
+  // The picked way: what the person clicked on Pick a future, and the road the cockpit drew.
+  const pickedRoad = (run: IdeaRun) =>
+    run.picked ? `${run.picked.pick?.by === "not-here" ? "“Not here yet?” note" : "card"} → ${run.picked.road.id}` : "stops before Pick a future (no province or territory)";
+  const picked = new Map<string, number>();
+  for (const run of runs) picked.set(pickedRoad(run), (picked.get(pickedRoad(run)) ?? 0) + 1);
+  lines.push("## Where the picked way in ended", "");
+  table(["Clicked → drawn on", "Ideas"], [...picked]);
+
   const fallbacks = failures.filter((f) => f.invariant === "ends:no-silent-fallback");
   lines.push(`## Silent fallbacks: ${new Set(fallbacks.map((f) => f.ideaId)).size}`, "");
-  lines.push("An idea drawn on a road written for its place that isn't the road written for it, with nothing saying so.", "");
+  lines.push(
+    "Typed: an idea drawn on a road written for its place that isn't the road written for it, with nothing saying so. Picked: a road drawn that isn't the one the person picked, or not kept as their pick.",
+    "",
+  );
   for (const f of fallbacks) lines.push(`- ${f.ideaId}: ${f.detail}`);
   lines.push("");
 
@@ -94,7 +105,7 @@ export function coverageReport(args: {
       run.idea.place,
       run.idea.road,
       typedRoad(run),
-      run.picked ? run.picked.road.id : "–",
+      run.picked ? pickedRoad(run) : "–",
       [...new Set((byIdea.get(run.idea.id) ?? []).map((f) => f.invariant))].join(", ") || "–",
     ]),
   );

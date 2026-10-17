@@ -68,7 +68,7 @@ vi.mock("@/lib/scenarios/build-scenario-from-intake", async (importOriginal) => 
 
 import { IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, gapKey, type InvariantId } from "./helpers/idea-invariants";
-import { runIdea } from "./helpers/idea-pipeline";
+import { pickedChoice, runIdea } from "./helpers/idea-pipeline";
 
 const idea = (id: string) => IDEAS_V1.find((i) => i.id === id)!;
 // An Alberta business written for road 0, a cabinetmaker written for road 1 (which also has known gaps on
@@ -103,6 +103,19 @@ describe("the harness fails on a planted product regression", () => {
     expect(addedKeys(ROAD_0_IDEA, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${ROAD_0_IDEA.id} · ends:no-silent-fallback · picked`]);
     // Road 1 picked: the typed way's own fallback (a known gap) must not hide the picked way's new one.
     expect(addedKeys(ROAD_1_IDEA, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${ROAD_1_IDEA.id} · ends:no-silent-fallback · picked`]);
+  });
+
+  it("a silent fallback on every click Pick a future offers, written for the idea or not", () => {
+    // Pick a future lists both roads for any place in Canada, and "Not here yet?" opens road 0 anywhere.
+    const clicks = [
+      [idea("idea-v1-0003"), { by: "card", roadId: "road-starting-any-business-ab" }], // British Columbia
+      [idea("idea-v1-0004"), { by: "card", roadId: "road-apprentice-to-own-shop-ab" }], // Ontario, a bakery
+      [idea("idea-v1-0008"), { by: "not-here", roadId: "road-starting-any-business-ab" }], // Alberta, a career
+    ] as const;
+    for (const [target, click] of clicks) {
+      expect(pickedChoice(target)).toEqual(click);
+      expect(addedKeys(target, "dropPickedRoad", "ends:no-silent-fallback")).toEqual([`${target.id} · ends:no-silent-fallback · picked`]);
+    }
   });
 
   it("a job picked for the person by road evaluation's input", () => {

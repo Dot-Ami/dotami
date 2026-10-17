@@ -5,7 +5,8 @@ import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/
 import type { FigureView } from "@/lib/figures/types";
 import { futureCards, listedRoads, sourcesLine } from "@/lib/front-door/futures";
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
-import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt } from "@/lib/front-door/receipts";
+import { destinationReceipt, incomeReceipt, lookingForReceipt, placeName, placeReceipt } from "@/lib/front-door/receipts";
+import { pickWords } from "@/lib/front-door/words";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { firstSaveFromIntake } from "@/lib/journey/first-save";
@@ -18,7 +19,7 @@ import { monthsFromToday } from "@/lib/roads/words";
 import { buildScenarioFromIntake } from "@/lib/scenarios/build-scenario-from-intake";
 import { setIncorporateAt, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
-import { PROVINCES, type EmploymentStatus, type Province, type Scenario } from "@/lib/scenarios/types";
+import { PROVINCE_LABELS, PROVINCES, type EmploymentStatus, type Province, type Scenario } from "@/lib/scenarios/types";
 
 import { ROAD_IDS, type Idea, type PeopleType } from "../fixtures/ideas/v1";
 import { officialFeeAmounts, quotedOfficialAmounts, type AmountLedger } from "./number-provenance";
@@ -32,9 +33,10 @@ import type { TextPiece } from "./text-pieces";
  *   what the app runs when no AI key is set, as in CI) → `applyIntentToDraft` → the intake's two screens →
  *   `buildScenarioFromIntake` → the road the saved idea is drawn on (`roadForFuture`, as lib/futures/future.ts
  *   reads it: the intake saves no road, so road 0) → the cockpit.
- * - **picked**: *Your destination* and *Pick a future*, picking the road the corpus expects
- *   (`scenarioForPickedFuture`, `firstSaveForPickedFuture`) → the cockpit. Only for an idea whose expected
- *   road is written.
+ * - **picked**: *Your destination* and *Pick a future* → the person's click (`pickedChoice`: the road written
+ *   for the idea, or else road 0, road 1 or the "Not here yet?" note, as the page offers all of them for any
+ *   place in Canada) → `scenarioForPickedFuture`, `firstSaveForPickedFuture` → the cockpit. For every idea
+ *   with a province or territory.
  *
  * In the cockpit the invented person answers a fixed list, one answer at a time, each with its receipt
  * (`answerReceipt`, two runs of road evaluation compared): their date, their savings, a quote for a cost
@@ -78,6 +80,8 @@ export type IntakeEnd =
 
 export interface CockpitRun {
   way: "typed" | "picked";
+  /** On the picked way, what the person clicked on Pick a future and the road it opens; null on the typed way. */
+  pick: { by: "card" | "not-here"; roadId: string } | null;
   road: Road;
   roadChosen: boolean;
   /** As the cockpit first opens, before the person answers anything there. */
@@ -442,6 +446,7 @@ function runCockpit(
   const yours = [...plan.yours, own.savingsCents, ...(line ? [own.quoteCents] : []), ...(plan.incomeWantedCents === null ? [] : [plan.incomeWantedCents])];
   return {
     way,
+    pick: null,
     road,
     roadChosen,
     fresh: { input: freshInput, evaluation: freshEval, notTold: freshNotTold, next: freshNext },
@@ -616,10 +621,29 @@ const DOOR_LOOKING_FOR: Record<Idea["lookingFor"], DoorLookingFor | null> = {
   "not-said": null,
 };
 
-/** The picked way in: Your destination's four answers, Pick a future, the road the corpus expects, then the cockpit. */
+/**
+ * What the invented person clicks on *Pick a future*. The page lists every written road for any place in
+ * Canada (a road written for elsewhere says "Written for Alberta. You said …"), and "Not here yet?" keeps a
+ * note and opens the general road. So: the road written for the idea when there is one; otherwise, by the
+ * idea's number, road 0's card, road 1's card, or the note (road 0's card when there are no words to note).
+ */
+export function pickedChoice(idea: Idea): { by: "card" | "not-here"; roadId: string } {
+  if (idea.road !== "none-written-yet") return { by: "card", roadId: ROAD_IDS[idea.road] };
+  const n = Number(idea.id.slice(-4));
+  if (n % 3 === 1) return { by: "card", roadId: ROAD_IDS["road-1"] };
+  if (n % 3 === 2 && idea.words.trim().length > 0) return { by: "not-here", roadId: generalRoadV2026.id };
+  return { by: "card", roadId: generalRoadV2026.id };
+}
+
+/**
+ * The picked way in, for every idea in Canada: Your destination's four answers (question 2, business or
+ * career, left unanswered when the idea doesn't say), Pick a future, the person's click (`pickedChoice`),
+ * then the cockpit.
+ */
 function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): CockpitRun | null {
-  if (idea.road === "none-written-yet" || !isProvince(idea.place)) return null;
-  const roadId = ROAD_IDS[idea.road];
+  // Pick a future asks for a province or territory first ("Say which province or territory you're in first").
+  if (!isProvince(idea.place)) return null;
+  const choice = pickedChoice(idea);
   const listed = listedRoads(roadsV2026);
   const own = ownNumbers(idea);
   const add = (where: string, text: string, kind: TextPiece["kind"] = "dotami") => pieces.push({ where: `picked › ${where}`, text, kind });
@@ -629,25 +653,39 @@ function pickedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Cock
   if (lookingFor) add("looking for › receipt", lookingForReceipt(lookingFor, listed));
   add("place › receipt", placeReceipt(placeCode(idea.place), listed));
   add("income › receipt", incomeReceipt({ kind: "agreed", amountCents: own.incomeWantedCents, agreedOn: HARNESS_TODAY }));
+  // Each card as components/front-door/pick-future-page.tsx writes it.
   for (const card of futureCards(listed, skillItemsV2026)) {
-    add(`pick a future › ${card.roadId}`, card.label, "catalog");
-    for (const part of sourcesLine(card.sources)) add(`pick a future › ${card.roadId} › sources`, part.text);
+    const at = `pick a future › ${card.roadId}`;
+    add(at, card.label, "catalog");
+    add(`${at} › kind`, pickWords.kind[card.kind]);
+    const places: readonly string[] = card.writtenFor;
+    const names = places.map((p) => (p === "CA" ? pickWords.allOfCanada : ((PROVINCE_LABELS as Record<string, string>)[p] ?? p))).join(", ");
+    add(`${at} › written for`, pickWords.writtenFor(names));
+    if (!places.includes("CA") && !places.includes(idea.place)) add(`${at} › you said`, pickWords.youSaid(placeName(placeCode(idea.place))));
+    add(`${at} › counts`, pickWords.counts(card.steps, card.skillsListed, card.officialFees, card.linesToPrice));
+    for (const part of sourcesLine(card.sources)) add(`${at} › sources`, part.text);
   }
-  const picked = roadsV2026.find((r) => r.id === roadId)!;
+  // "Not here yet?": the note is kept as one of the person's statements (not shown in the plan), and the
+  // general road opens the same way a card does.
+  if (choice.by === "not-here") add("not here › your note", idea.words, "person");
+  const picked = roadsV2026.find((r) => r.id === choice.roadId)!;
   const scenario = scenarioForPickedFuture({ road: picked, place: placeCode(idea.place), name: "" }, `scenario-${idea.id}-picked`);
   const firstSave = firstSaveForPickedFuture(picked, lookingFor);
   const road = roadForFuture(SHIPPED_ROADS_CATALOG, firstSave.roadId ?? null);
   const roadChosen = firstSave.roadId !== undefined && firstSave.roadId === road.id;
-  return runCockpit(
-    idea,
-    "picked",
-    road,
-    roadChosen,
-    scenario,
-    { firstWords: null, destination: words ? { text: words, saidAt: HARNESS_TODAY } : null, incomeWantedCents: own.incomeWantedCents, yours: [] },
-    pieces,
-    options,
-  );
+  return {
+    ...runCockpit(
+      idea,
+      "picked",
+      road,
+      roadChosen,
+      scenario,
+      { firstWords: null, destination: words ? { text: words, saidAt: HARNESS_TODAY } : null, incomeWantedCents: own.incomeWantedCents, yours: [] },
+      pieces,
+      options,
+    ),
+    pick: choice,
+  };
 }
 
 export interface RunOptions {
@@ -659,7 +697,10 @@ export interface RunOptions {
   probeQuestions: boolean;
 }
 
-/** One idea, both ways in. */
+/**
+ * One idea, each way in it can take: typed for every idea with words, picked for every idea with a province
+ * or territory, and one click on Pick a future of the several the page offers (see `pickedChoice`).
+ */
 export function runIdea(idea: Idea, options: RunOptions = { probeQuestions: true }): IdeaRun {
   const pieces: TextPiece[] = [];
   const typed = typedWayIn(idea, pieces, options);
@@ -675,6 +716,7 @@ export function runIdea(idea: Idea, options: RunOptions = { probeQuestions: true
 export function runDigest(run: IdeaRun): string {
   const cockpit = (c: CockpitRun | null) =>
     c && {
+      pick: c.pick,
       road: c.road.id,
       roadChosen: c.roadChosen,
       fresh: { evaluation: c.fresh.evaluation, notTold: c.fresh.notTold, next: c.fresh.next },

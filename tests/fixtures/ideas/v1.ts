@@ -151,6 +151,7 @@ const P11: PeopleType = "outside-canada";
 const B: LookingFor = "business";
 const C: LookingFor = "career";
 const BOTH: LookingFor = "both";
+const UNSAID: LookingFor = "not-said";
 const R0: ExpectedRoad = "road-0";
 const R1: ExpectedRoad = "road-1";
 const NONE: ExpectedRoad = "none-written-yet";
@@ -642,4 +643,17 @@ export const IDEAS_V1: readonly Idea[] = [
   I(355, P2, "NS", B, 5, "influencer brand deals", [CR], NONE, "influencer in Halifax doing brand deals after my day job", { named: ["NS"], ws: "employee" }),
   I(356, P1, "MB", B, 5, "creator selling presets", [CR, EC], NONE, "creator in Winnipeg selling photo presets to my Instagram followers", { named: ["MB"] }),
   I(357, P5, "NB", B, 8, "landscaping and snow removal companies", [TR], NONE, "two companies in Fredericton: one for landscaping, one for snow removal", { named: ["NB"], ws: "business-owner", jobs: ["82031.00"], y3: 300_000 }),
+
+  // --- Business or career not said: the person leaves Your destination's second question unanswered, and
+  // their words don't say either (added 2026-10-17, the review of the picked way in).
+  I(358, P1, "AB", UNSAID, 6, "baking bread", [], NONE, "people keep asking for my sourdough loaves, I live in Lethbridge", { named: ["AB"], odd: ["city-no-province"] }),
+  I(359, P2, "AB", UNSAID, 6, "dog walking and training", [], NONE, "something with dogs, walking or training them, around my day job in Calgary", { named: ["AB"], ws: "employee" }),
+  I(360, P1, "BC", UNSAID, 1, "something with numbers", [], NONE, "I'm good with numbers and want to do more with that, Kamloops BC", { named: ["BC"] }),
+  I(361, P1, "ON", UNSAID, 7, "bicycle repair", [], NONE, "fixing bikes for neighbours in Ottawa, could it become more?", { named: ["ON"] }),
+  I(362, P6, "SK", UNSAID, 6, "sewing alterations", [], NONE, "sewing alterations for people saskatoon", { named: ["SK"] }),
+  I(363, P1, "QC", UNSAID, 6, "cooking for others", [], NONE, "j'aime cuisiner pour les autres, à Québec", { named: ["QC"], odd: ["french"] }),
+  I(364, P1, "NS", UNSAID, 4, "math tutoring", [CON], NONE, "tutoring math for high school kids in Halifax", { named: ["NS"] }),
+  I(365, P8, "MB", UNSAID, 9, "candles and soap", [MF], NONE, "I make candles and soap, receipts all over, in Brandon Manitoba", { named: ["MB"] }),
+  I(366, P1, "NL", UNSAID, 5, "guitar lessons", [], NONE, "guitar lessons in Corner Brook, Newfoundland", { named: ["NL"] }),
+  I(367, P7, "AB", UNSAID, 5, "photography", [], NONE, "Agent summary: the person wants to do more with their photography, based in Red Deer", { named: ["AB"] }),
 ];

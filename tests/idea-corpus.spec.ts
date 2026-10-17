@@ -14,7 +14,7 @@ import { PROVINCES } from "@/lib/scenarios/types";
 import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, RETIRED_IDEA_IDS, ROAD_IDS, type Idea } from "./fixtures/ideas/v1";
 
 /** The minimums (the plan of 2026-10-17, S2.5.29a), and the written roads' (CONTRIBUTING.md: 10 ideas per road). */
-const CORPUS_MINIMUMS ={ peopleType: 25, place: 10, nocCategory: 15, activityTag: 10, oddKind: 3, writtenRoad: 10 } as const;
+const CORPUS_MINIMUMS ={ peopleType: 25, place: 10, lookingFor: 10, nocCategory: 15, activityTag: 10, oddKind: 3, writtenRoad: 10 } as const;
 
 const PLACES = [...PROVINCES, "outside-canada", "not-said"] as const;
 const NOC_CATEGORIES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -58,6 +58,11 @@ describe("the idea corpus (tests/fixtures/ideas/v1.ts)", () => {
 
   it("has every province and territory, outside Canada and not said, at least 10 times each", () => {
     expect(under(counts(PLACES, (i) => [i.place]), CORPUS_MINIMUMS.place)).toEqual([]);
+  });
+
+  it("has every answer to business or career, not said included, at least 10 times", () => {
+    // Not said: Your destination's second question left unanswered, a path Pick a future takes too.
+    expect(under(counts(["business", "career", "both", "not-said"] as const, (i) => [i.lookingFor]), CORPUS_MINIMUMS.lookingFor)).toEqual([]);
   });
 
   it("has every broad job category (NOC 2021, 0 to 9) at least 15 times", () => {

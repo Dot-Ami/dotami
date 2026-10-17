@@ -218,14 +218,16 @@ function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
   if (!writtenHere) fail("ends:road-written-for-place", c.way, `${c.way}: drawn on ${c.road.id}, written for ${places.join(", ")}; the idea is in ${province}`);
   const expected = run.idea.road === "none-written-yet" ? null : ROAD_IDS[run.idea.road];
   // Typed: the road written for the idea, wherever it is written for. Picked: the road the person picked
-  // on Pick a future (the one written for the idea), kept as their pick. Drawn as "No future picked", even
-  // on the right road, it fell back to the general road without saying so.
-  const silent = c.way === "picked" ? expected !== c.road.id || !c.roadChosen : writtenHere && expected !== c.road.id;
+  // on Pick a future (a card, or the general road "Not here yet?" opens), kept as their pick, whether or
+  // not it is the one written for the idea: the person chose it. Drawn as "No future picked", even on the
+  // right road, it fell back to the general road without saying so.
+  const silent = c.pick ? c.pick.roadId !== c.road.id || !c.roadChosen : writtenHere && expected !== c.road.id;
   if (silent) {
+    const meant = c.pick ? `the road the person picked is ${c.pick.roadId}` : `the road written for this idea is ${expected ?? "none yet"}`;
     fail(
       "ends:no-silent-fallback",
       c.way,
-      `${c.way}: drawn on ${c.road.id}${c.roadChosen ? "" : " as no future picked"} (“${plan.road.picked}”), but the road written for this idea is ${expected ?? "none yet"}, and nothing says so`,
+      `${c.way}: drawn on ${c.road.id}${c.roadChosen ? "" : " as no future picked"} (“${plan.road.picked}”), but ${meant}, and nothing says so`,
     );
   }
 
