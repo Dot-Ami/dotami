@@ -193,7 +193,12 @@ What are you doing?
       └─ Company                   → Year-end? → Paying yourself salary, dividends, both? → …
 ```
 
-Open: who writes the question files first; how to test that every path ends somewhere.
+Open: who writes the question files first; how to test that every path ends somewhere. For today's
+roads and screens the second has a first answer (2026-10-17, S2.5.29): the idea harness,
+`tests/idea-harness.spec.ts`, runs a corpus of invented ideas through the app and checks that each ends
+on a road with a next step, an unanswered question or the road done, that every fork side reaches the
+end, and that every question asked changes something when answered. The questionnaire's own paths join
+it once its question files exist.
 
 ## How a card is decided — three real examples
 

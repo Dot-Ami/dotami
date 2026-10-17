@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { evaluateProfile } from "@/lib/brain";
 import type { ConfirmedFigure, EvaluationProfile } from "@/lib/brain";
-import { readRevenue } from "@/lib/brain/records";
+import { formatCad, readRevenue } from "@/lib/brain/records";
 
 /**
  * [8a] Confirmed figures and the GST/HST small-supplier card: a figure beats an estimate where it
@@ -338,5 +338,19 @@ describe("the card says how recent its figures are", () => {
     const { card } = gstCard(10_000, [fig("2026-10-01", "2026-10-31", 31_200)]);
     expect(card.fromRecords?.newestPeriodEnd).toBeNull();
     expect(card.fromRecords?.notes.some((n) => n.startsWith("Newest figure"))).toBe(false);
+  });
+});
+
+describe("formatCad writes an amount the same way, call after call", () => {
+  // Road evaluation formats amounts thousands of times a run; the formatter is made once, not per call.
+  it("whole dollars without cents, two decimals with them", () => {
+    expect([2_740_000, 2_740_050, 0, 5, 3_000_000, 2_740_000].map(formatCad)).toEqual([
+      "$27,400",
+      "$27,400.50",
+      "$0",
+      "$0.05",
+      "$30,000",
+      "$27,400",
+    ]);
   });
 });
