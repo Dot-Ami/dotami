@@ -96,6 +96,17 @@ describe("the harness's checks catch what they guard", () => {
   });
 });
 
+describe("the harness builds the cockpit as the app does", () => {
+  it("passes the agreed yearly income beside the plan, never to road evaluation", () => {
+    // components/cockpit/cockpit-page.tsx and lib/futures/read-plan.ts pass `personFigures: []` to
+    // cockpitInput: the income shows as Your plan's target line, and no list or rule reads it.
+    const picked = runIdea(road0Idea).picked!;
+    expect(picked.fresh.input.agreed.incomeWantedCents).toBeNull();
+    expect(picked.final.input.agreed.incomeWantedCents).toBeNull();
+    expect(picked.final.plan.target).not.toBeNull();
+  });
+});
+
 describe("the words no-times lets through", () => {
   it("catches a time in a sentence, and lets the person's own date through only as their date", () => {
     expect(findTimeWords("Registration takes about 6 weeks.")).not.toEqual([]);

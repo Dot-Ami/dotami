@@ -7,7 +7,6 @@ import { futureCards, listedRoads, sourcesLine } from "@/lib/front-door/futures"
 import type { LookingFor as DoorLookingFor } from "@/lib/front-door/questions";
 import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt } from "@/lib/front-door/receipts";
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
-import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
 import { firstSaveFromIntake } from "@/lib/journey/first-save";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
@@ -148,7 +147,8 @@ function figure(idea: Idea, change: Partial<FigureView>): FigureView {
 interface Kept {
   scenario: Scenario;
   figures: FigureView[];
-  personFigures: PersonFigureView[];
+  /** The day the person agreed to a yearly income, or null: the plan lists it, road evaluation never reads it. */
+  incomeWantedOn: string | null;
   progress: { stepId: string; status: StepStatus | null; doneWhenIds: string[] }[];
   skillMarks: { skillItemId: string | null; ownLabel: string | null; mark: SkillMarkValue }[];
   future: KeptFuture;
@@ -163,7 +163,9 @@ function inputOf(road: Road, roadChosen: boolean, kept: Kept): RoadEvaluationInp
     skillItems: skillItemsV2026,
     scenario: kept.scenario,
     figures: kept.figures,
-    personFigures: kept.personFigures,
+    // As the app passes them (components/cockpit/cockpit-page.tsx, lib/futures/read-plan.ts): the agreed
+    // income is shown beside the plan as its target line, never read by road evaluation.
+    personFigures: [],
     future: kept.future,
     progress: kept.progress,
     skillMarks: kept.skillMarks,
@@ -184,14 +186,13 @@ function keptAnswers(kept: Kept): KeptAnswers {
     forkPickedOn: kept.forkPickedOn,
     targetMonthSetOn: kept.targetMonthSetOn,
     figures: kept.figures,
-    incomeWantedOn: kept.personFigures.length > 0 ? HARNESS_TODAY : null,
+    incomeWantedOn: kept.incomeWantedOn,
   };
 }
 
 const clone = (kept: Kept): Kept => ({
   ...kept,
   figures: [...kept.figures],
-  personFigures: [...kept.personFigures],
   progress: kept.progress.map((p) => ({ ...p, doneWhenIds: [...p.doneWhenIds] })),
   skillMarks: [...kept.skillMarks],
   future: { forkPicks: { ...kept.future.forkPicks }, targetMonth: kept.future.targetMonth },
@@ -270,25 +271,7 @@ function runCockpit(
   const kept: Kept = {
     scenario,
     figures: [],
-    personFigures:
-      plan.incomeWantedCents === null
-        ? []
-        : [
-            {
-              id: `person-figure-${idea.id}`,
-              kind: "income-wanted",
-              amountCents: plan.incomeWantedCents,
-              currency: "CAD",
-              per: "year",
-              sourceKind: "typed",
-              sourceLabel: "typed by you",
-              status: "confirmed",
-              editedByPerson: false,
-              proposedAt: AT_NOON,
-              confirmedAt: AT_NOON,
-              retractedAt: null,
-            },
-          ],
+    incomeWantedOn: plan.incomeWantedCents === null ? null : HARNESS_TODAY,
     progress: [],
     skillMarks: [],
     future: { forkPicks: {}, targetMonth: null },
