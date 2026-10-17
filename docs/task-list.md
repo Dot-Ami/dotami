@@ -282,7 +282,26 @@ and the maintainer's six decisions of 2026-10-11:
   2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
-- 🔄 **[14j] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
+- 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
+  ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
+  (tests plus a calm screen first).
+  - [x] 29a: the idea corpus, `tests/fixtures/ideas/v1.ts`, 367 invented ideas with permanent ids, every kind
+    of person, place, business or career answer, job category, kind of work and odd case;
+    `tests/idea-corpus.spec.ts` holds the minimums
+  - [x] 29b: the harness, `tests/idea-harness.spec.ts`: each idea typed, and each idea in Canada picked on
+    *Pick a future*; no verdict, no $0 for a blank, every amount cited or the person's own, no times, every
+    path ends somewhere honest (every question answered too), nothing derived, the same output; the known
+    gaps listed with their stories (`tests/fixtures/ideas/known-gaps.ts`), the list only shrinking; writes
+    `test-results/idea-coverage.md`. It reads the lines the app code it calls writes, plus every plain
+    sentence in the words files for times; whole screens wait for 29e
+  - [x] 29c: `tests/helpers/number-provenance.ts`, every amount an official fee, the person's own, a quoted
+    threshold or a sum of those (the Lens's reply guard reuses it later)
+  - [ ] 29d: property tests over the whole answer space, with `fast-check`
+  - [ ] 29e: `e2e/idea-sweep.spec.ts`, fixed and weekly ideas from the front door to the plan in the browser
+  - [ ] 29f: `npm run eval:intent`, the AI parser on the developer's own key, never in CI
+  - [x] 29g: the rule that a new road or screen adds 10 ideas that should reach it and passes the harness
+    ([engines/roads.md](engines/roads.md) rule 13, [CONTRIBUTING.md](../CONTRIBUTING.md))
+- 🔄 **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
   with testing any idea: a calm first view, enforced by a limit on how busy a screen can get.
   - [x] The layout rule: one primary thing per screen (on the cockpit, the road); new features open in the
     right-hand panel or the step panel, never as a new region; the first visit shows the least; everything

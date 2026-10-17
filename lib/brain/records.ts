@@ -193,15 +193,13 @@ export function readRevenue(
   };
 }
 
+// Made once: building an Intl.NumberFormat is slow, and the rules format amounts on every evaluation.
+const CAD_WHOLE = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const CAD_CENTS = new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 /** "$27,400" or "$27,400.50" — whole dollars when there are no cents. */
 export function formatCad(cents: number): string {
-  const whole = cents % 100 === 0;
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    minimumFractionDigits: whole ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(cents / 100);
+  return (cents % 100 === 0 ? CAD_WHOLE : CAD_CENTS).format(cents / 100);
 }
 
 /** "March 2026" for a "2026-03" month key. */

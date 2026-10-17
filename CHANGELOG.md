@@ -24,6 +24,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   compares them with the baseline and with main's, so a budget once lowered can't be raised back); the calm
   first view lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
   test reads).
+- **Tests: 367 invented ideas, and a harness every road and screen must pass** (S2.5.29a, b, c and g, the
+  plan of 2026-10-17; developers only, nothing in the app changes but how fast road evaluation writes an
+  amount: the rules' money formatter is now made once instead of on every call, which the harness needed to
+  fit its time). `tests/fixtures/ideas/v1.ts` holds 367
+  invented ideas as people would type them, each with a permanent id: every one of the eleven kinds of person
+  in the plan, every province and territory, outside Canada and not said, business, career, both and not said,
+  every broad job category, every
+  kind of work the intake offers, and the odd cases (nothing typed, 2,000 characters, emoji, French, two ideas
+  at once, "50k", a city with no province, two provinces, a regulated profession, work the law forbids, "ignore
+  your rules", ID-like digits made at run time from one repeated digit). `tests/idea-harness.spec.ts` takes
+  each one through the app the way a person's words go today (the keyword parser, the intake, the road it is
+  drawn on, road evaluation, *What you've told DotAmi* and *Not told yet*, the receipts, *Compare* and *Your
+  plan*), and every idea in Canada through *Pick a future* too (the road written for it, or road 0, road 1 or
+  the "Not here yet?" note, all of which the page offers anywhere in Canada), in about 15 seconds. It checks
+  that no line those parts of the app write is a verdict, shows $0 for a blank, states an amount that isn't
+  an official fee, the person's own or quoted by a citation (`tests/helpers/number-provenance.ts`), or a time
+  (official requirements such as "1,360 hours" are listed with their step); that every path ends somewhere
+  honest, with every question answered too; that nothing about the person is derived; and that the same idea
+  gives the same output. A second test reads every plain sentence in the words files for times. Whole screens
+  are read in the browser by the idea sweep, still to come (S2.5.29e). What it finds today and
+  a planned story fixes, or that is a bug for the maintainer, is listed in `tests/fixtures/ideas/known-gaps.ts`
+  with its story; the harness fails on anything new and on a listed gap that now passes, so the list only
+  shrinks. A new road adds 10 ideas that should reach it, and the corpus test counts them for every road in the
+  catalog (`docs/engines/roads.md` rule 13); a new screen does too, checked by the reviewer (CONTRIBUTING.md).
+  Each check has a control that plants a failure and must be caught, some planted in the app's own code
+  (`tests/idea-invariants.spec.ts`, `tests/idea-harness-plants.spec.ts`).
 
 ## [0.4.0] — 2026-10-17
 
