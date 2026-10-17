@@ -37,6 +37,13 @@ person is asked).
 
 ## [Unreleased]
 
+---
+
+## [0.4.0] — 2026-10-17
+
+Your destination, Pick a future and the cockpit's answers, skill marks and step progress, an invented
+example, your plan to print, and businesses you're watching ([CHANGELOG](../CHANGELOG.md)).
+
 ### What DotAmi keeps, and where
 
 - **Keeps: businesses you choose to watch, with your notes. On this computer only; deleted with the idea.
@@ -74,9 +81,9 @@ person is asked).
   as before (only when a model key is set), and is now also kept in the data file.
 - **What the future cockpit will be told can now be kept (2026-10-11).** The storage for the cockpit's
   phase 1 ([docs/architecture/future-cockpit.md § 7, Storage as built](architecture/future-cockpit.md)),
-  with no screen that writes to it yet, so a copy of this version holds none of it until those screens
-  land. Three new tables in the data file: **skill marks** (`SkillMark`: the person's mark, *have*,
-  *learning* or *not yet*, on a skill item from a road's list or on a skill they added in their own
+  added before any screen wrote to it; the cockpit's screens and Your destination write to it since
+  2026-10-12 (the lines below). Three new tables in the data file: **skill marks** (`SkillMark`: the
+  person's mark, *have*, *learning* or *not yet*, on a skill item from a road's list or on a skill they added in their own
   words, with the day; kept for the person, not for an idea), **progress on each step** (`StepProgress`:
   per idea, road and step, the status *doing*, *done* or *not for me*, the *done when* lines ticked, and
   the moment of each status change, the newest 100 per step), and **numbers about the person**
@@ -92,9 +99,9 @@ person is asked).
   page's form doesn't offer them. The storage code is in [`lib/futures/`](../lib/futures/); the migration
   is hand-written, plain column additions and three new tables
   ([`prisma/migrations/20261011180000_cockpit_storage`](../prisma/migrations/20261011180000_cockpit_storage/migration.sql)).
-  Nothing about the person leaves the computer. Nothing new is asked yet, but DotAmi's figures routes
-  accept the two new kinds, so a program on this computer could propose one; like any figure, it waits
-  for the person's agreement in DotAmi's own window.
+  Nothing about the person leaves the computer. What is asked, and where, is in the lines below; DotAmi's
+  figures routes also accept the two new kinds, so a program on this computer could propose one; like
+  any figure, it waits for the person's agreement in DotAmi's own window.
 - **Each idea's place is stored as its international code, and every cockpit answer has its date
   (2026-10-12).** The data file now writes an idea's province as its code from ISO 3166-2:CA (`CA-AB`
   for Alberta, where it wrote `AB`); the maintainer's decision of 2026-10-11. A hand-written migration
@@ -106,8 +113,9 @@ person is asked).
   moment it was picked, inside `forkPicks`, so *What you've told DotAmi* can date each answer. Agreeing
   to a new savings number for an idea, or a new number for the same start-up cost, now takes back the
   one agreed before (kept, as *taken back*). A savings number or a start-up cost has to be dated the
-  day it is given. On today's Alberta road a step's status stays with the map, as before, and the new
-  step-progress table doesn't keep a second one. Nothing new leaves the computer or is asked.
+  day it is given. On today's Alberta road a step's status stayed with the map at first; since the
+  cockpit's first screen it is kept in the step-progress table too (the next line). Nothing new leaves
+  the computer or is asked.
 - **The cockpit now asks, and keeps what the person gives (2026-10-12).** The cockpit's first screen
   ([docs/architecture/future-cockpit.md § 2, Cockpit screen as built](architecture/future-cockpit.md))
   writes to the storage above for the first time. It asks, all optional and one click or one box at a
@@ -168,10 +176,12 @@ person is asked).
   map row (`ScenarioState.activeBranches`, the JSON that holds the GST and incorporation picks) under
   its own key `incorporateAt`, so no table or column was added
   ([`lib/db/scenario-state-json.ts`](../lib/db/scenario-state-json.ts)). It is set only by what is
-  saved for the idea: the person's typing on the Incorporating stage, or a program on this computer that
-  saves the idea through DotAmi's own save route (`/api/scenario/save`, which accepts it like the rest of
-  the idea). It lights one stage and is read by nothing else. It is also in the browser tab's saved draft
-  (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
+  saved for the idea: the person's typing on the Incorporating stage or, since the cockpit's second part
+  (2026-10-12), in its one-question box, or a program on this computer that saves the idea through
+  DotAmi's own save route (`/api/scenario/save`, which accepts it like the rest of the idea). It lights
+  one stage, and the cockpit shows it back as one of the person's answers (*What you've told DotAmi*,
+  with what it changed, and the printed plan); it is read by nothing else. It is also in the browser
+  tab's saved draft (`dotami-journey-v3`), like the rest of the idea, and in the readout API's `scenario`. Nothing leaves
   the computer.
 - **The way in: Your destination and Pick a future (2026-10-12).** The front door's first door,
   *Start from where I want to be*, asks four questions
@@ -224,8 +234,9 @@ person is asked).
   [`tests/error-logging.spec.ts`](../tests/error-logging.spec.ts) now reads every file under `desktop/`
   for the same rule, writes to the log file included.
 - **Which cockpit panels the person folded, in the browser's own storage (2026-10-12).** The cockpit's
-  venture details, goal bar, right-hand panel and map legend each fold, and the four yes-or-no answers
-  are kept in `localStorage` under `dotami-cockpit-folds`, a JSON object such as
+  venture details, goal bar, right-hand panel and map legend each fold, and the yes-or-no answers (four
+  at first, five since 2026-10-13, the next line) are kept in `localStorage` under
+  `dotami-cockpit-folds`, a JSON object such as
   `{"rail":true,"goal":false,"panel":false,"legend":true}` ([`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)),
   so the cockpit opens the way the person left it. Nothing about the person or their ideas is in it,
   nothing goes in the data file, nothing leaves the computer. Listed in
@@ -304,8 +315,9 @@ person is asked).
   and fails on any request to DotAmi's API but the law-text route. No inventory entry changes.
   Since 2026-10-14 its *Where these numbers come from* panel lists the pages behind Mara's numbers
   (Canadian tool sellers, software makers' pricing pages, Government of Alberta and Government of Canada
-  statistics, two commercial real-estate reports) as plain links: the page loads none of them, and only a
-  click opens one, in a new tab, where that site sees the visit as from any browser. Nothing of the
+  statistics, the cabinetmaker trade's Alberta curriculum guide, Red Seal standard and job classification,
+  and four commercial real-estate reports from CBRE and Cushman & Wakefield) as plain links: the page
+  loads none of them, and only a click opens one, in a new tab, where that site sees the visit as from any browser. Nothing of the
   person's goes with it; the browser test checks the panel sends no request.
 
 ### Packages that ship
@@ -329,6 +341,14 @@ person is asked).
   measure). Not a package: it can reach nothing. The third-party notices list it with the licence's
   attribution line, under *Data*.
 
+### New powers or permissions
+
+- **None on the computer.** The window's bridge to the desktop app is unchanged since 0.3.0
+  ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs) has no change), and the desktop app's own
+  changes are when the update check runs and what its log keeps (both above). The new routes on DotAmi's
+  own server are listed above, each with which callers it answers; **Print** on the plan is the browser's
+  own print window.
+
 ### What the person must agree to
 
 - **The yearly income on Your destination (2026-10-12)** goes through an agree prompt of its own
@@ -340,7 +360,7 @@ person is asked).
 ### How to remove it
 
 - **The cockpit's folds** (`dotami-cockpit-folds`) go when the browser's site data for DotAmi is
-  cleared. Opening every panel again leaves the key in place with four "no" answers; DotAmi has no button
+  cleared. Opening every panel again leaves the key in place with five "no" answers; DotAmi has no button
   that removes it.
 - **The first sentence** is one of the person's statements: Delete on `/your-data` with "Your
   statements" ticked removes it with the rest, and the idea's card stops showing it. Deleting "Your
@@ -356,8 +376,10 @@ person is asked).
   are deleted; each wipes every row of its table. **Progress on each step**, an idea's road, endings and
   month, and the two new kinds of figure go with "Your ideas" (the figures also with "Your figures"); the
   answers to "where do you want to be" go with "Your statements", all at once
-  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). No screen removes one mark,
-  one step's progress or one income target yet; the cockpit's screens will.
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `DELETE_MENU`). Since the cockpit's screens
+  (2026-10-12, the lines below), *I don't know* removes one mark; no screen removes one step's progress
+  (its status can be taken back, and the row stays) or one income target (agreeing to a new one takes
+  back the one before, kept as *taken back*).
 - **From the cockpit (2026-10-12):** *I don't know* on a skill removes its mark; pressing a step's status
   that is on takes it back (the change stays in the step's list of changes); unticking a *done when* line
   removes the tick; **Clear** removes the month. A savings number or a quote is taken back the way any
@@ -388,9 +410,11 @@ person is asked).
   they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
 - Since the cockpit's first screen (2026-10-12): the person's marks on skills, their progress on each step
   (on every road, today's Alberta road included), their own month and their own numbers for savings and
-  start-up costs are kept in the data file on their computer; the yearly income they want will be, once
-  a screen asks it. The skill marks and the income target are kept for the person, not for an idea, so
-  deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
+  start-up costs are kept in the data file on their computer; so is the yearly income they want, from
+  the moment they enter it on Your destination and its agree prompt opens (since 2026-10-12): kept
+  whether it is then agreed, turned down, left waiting or later taken back, until Delete removes it;
+  outside that prompt, only an agreed one is shown or used. The skill marks and the income target are
+  kept for the person, not for an idea, so deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
 - A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
   their own planning number, never set by DotAmi.
 - The job a person picks as closest to their work is kept with the idea, only if they pick one; DotAmi
