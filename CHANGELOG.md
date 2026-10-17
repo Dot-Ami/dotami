@@ -51,6 +51,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Each check has a control that plants a failure and must be caught, some planted in the app's own code
   (`tests/idea-invariants.spec.ts`, `tests/idea-harness-plants.spec.ts`).
 
+### Fixed
+- **Six things the idea harness caught** (2026-10-17; each was a "bug" entry in
+  `tests/fixtures/ideas/known-gaps.ts`, now gone, so the harness fails if one comes back):
+  - *Not told yet* asks "The yearly sales at which you'd incorporate" only once the idea has a third-year
+    sales estimate, the one number the rule compares it with, and its line now says so ("“Incorporating”
+    lighting once your third-year sales estimate reaches your own number"). Before, it was asked with the
+    estimate blank, and every answer gave "Saved. Nothing on the road changed." (`lib/cockpit/told.ts`).
+    The step's own panel still takes the number at any time.
+  - *Not told yet* no longer asks a road 0 map pick that no rule reads for the idea: worked out from the
+    road, when picking the other side changes nothing. Today that is GST timing for ride-share and taxi
+    driving, registered from the first paid ride either way.
+  - The keyword parser (used without an AI key) proposes a province only when the words name one place in
+    Canada: none when a place outside Canada is named with a Canadian city's name ("Surrey, England",
+    "Brandon, Florida"), none when two provinces are named (the person picks), never by the order the
+    provinces are listed in, and a city that is also a first name (Victoria, Regina, Brandon, Hamilton) only
+    after "in", "from", "to"… or beside its province (`lib/journey/intent-fallback.ts`).
+  - It proposes a kind of work only when the words say it is the person's own: a workshop or barber shop is
+    not retail, nor is "I work retail"; an app, website, game or program the person uses is not software;
+    the "ai" of the French "J'ai", or an AI assistant the person codes with, is not an AI business; the
+    customers' trade ("an app for HVAC outfits", "software to clinics"), an IT contractor or a painter of
+    pictures is not the trades; real estate photography is not real estate; Instagram deposits don't make a
+    creator; an AI tutor app is not tutoring.
+  - It proposes "Equipment / vehicle purchase on the path" only when the words say the person is buying,
+    leasing, needs or wants to write off equipment, a vehicle or tools ("buying a used truck", "I want to
+    write off my PC"), not from a vehicle or tool only named ("trucker", "my own car", "machine learning").
+    The AI parser's own instruction says the same (`app/api/intent/parse/route.ts`).
+  - Road 1's first step no longer says how long a period is designed to take: its summary ends at "4 periods
+    (levels)." The official page's words stay quoted in its source.
+
 ## [0.4.0] — 2026-10-17
 
 The future cockpit's first phase. The front door has three doors: Start from where I want to be (then Pick

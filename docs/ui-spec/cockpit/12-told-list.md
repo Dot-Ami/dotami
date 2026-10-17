@@ -28,9 +28,13 @@ ladder, the save line). Two regions:
   the order DotAmi asks them (a line says *In the order DotAmi asks them, not importance*): your date;
   your savings; your numbers for the cost lines not priced yet; your marks on the skills not marked; an
   ending at each fork with no pick (roads other than road 0); your pick at each of road 0's forks while
-  it is the map's default and not picked by you; your structure while the map assumes one; buying
+  it is the map's default and not picked by you, and only where picking the other side changes something
+  on the road (since 2026-10-17: GST timing isn't asked of ride-share and taxi drivers, registered from the
+  first paid ride either way); your structure while the map assumes one; buying
   equipment while unanswered (the intake's chip left off is unanswered: off is the chip not picked);
-  your own *I'd incorporate at* number (road 0). At most five show; **n more** shows the rest. Each row
+  your own *I'd incorporate at* number (road 0), only once the idea has a third-year sales estimate, the
+  number it is compared with (since 2026-10-17; its line: *“Incorporating” lighting once your third-year
+  sales estimate reaches your own number*; the step's panel takes the number at any time). At most five show; **n more** shows the rest. Each row
   has **Answer** (or **Open the list** / **Compare the endings** for the rows answered elsewhere) and
   **I don't know**. With none missing: *Nothing missing that DotAmi asks here.*
   Rows the person said *I don't know* to fold into *n you don't know yet* with **Show them**.
