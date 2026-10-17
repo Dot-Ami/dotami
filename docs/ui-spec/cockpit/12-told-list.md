@@ -32,8 +32,9 @@ ladder, the save line). Two regions:
   on the road (since 2026-10-17: GST timing isn't asked of ride-share and taxi drivers, registered from the
   first paid ride either way); your structure while the map assumes one; buying
   equipment while unanswered (the intake's chip left off is unanswered: off is the chip not picked);
-  your own *I'd incorporate at* number (road 0), only once the idea has a third-year sales estimate, the
-  number it is compared with (since 2026-10-17; its line: *“Incorporating” lighting once your third-year
+  your own *I'd incorporate at* number (road 0), only where some answer changes the road: once the idea
+  has a third-year sales estimate, the number it is compared with, and while Incorporation timing holds
+  *Incorporating* (with Liability / SR&ED picked the step is off the path whatever the number) (since 2026-10-17; its line: *“Incorporating” lighting once your third-year
   sales estimate reaches your own number*; the step's panel takes the number at any time). At most five show; **n more** shows the rest. Each row
   has **Answer** (or **Open the list** / **Compare the endings** for the rows answered elsewhere) and
   **I don't know**. With none missing: *Nothing missing that DotAmi asks here.*

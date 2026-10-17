@@ -636,9 +636,11 @@ answer, before and after it or with and without it. Choices made while building 
   number. *(2026-10-17, the idea harness's findings: a question no answer can change isn't asked. A road 0
   pick is asked only where picking the other side changes something on the road, so GST timing isn't
   asked of ride-share and taxi drivers, who register from the first paid ride either way; and *I'd
-  incorporate at* only once the idea has a third-year sales estimate, the one number the rule compares it
-  with, as § 3's table planned (*"a Not told yet row once a sales what-if is kept"*), its line naming that
-  comparison. The step's panel still takes the number at any time.)* Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
+  incorporate at* only where some answer changes the road: the rule reads the Incorporation timing pick
+  and compares the number with the idea's third-year sales estimate, so it is asked only with that
+  estimate and with Incorporation timing on the side that holds *Incorporating* (the review of PR #182
+  added the pick), as § 3's table planned (*"a Not told yet row once a sales what-if is kept"*), its line
+  naming that comparison. The step's panel still takes the number at any time.)* Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
   answer feeds (a gauge part, a step that can light, the map reading your pick instead of its default),
   never a promise of a result. At most five show; the rest are behind *n more*. Every row has **I don't
   know**, which keeps nothing: it folds the row away for this visit (*n you don't know yet · Show them*),

@@ -302,7 +302,8 @@ and the maintainer's six decisions of 2026-10-11:
   - [x] 29g: the rule that a new road or screen adds 10 ideas that should reach it and passes the harness
     ([engines/roads.md](engines/roads.md) rule 13, [CONTRIBUTING.md](../CONTRIBUTING.md))
   - [x] The six bugs the harness found, fixed (phase 1 batch 2, 2026-10-17): "I'd incorporate at" asked only
-    with a third-year estimate to compare it with; no map pick asked that no rule reads (GST timing for
+    where an answer changes the road (a third-year estimate to compare it with, and Incorporation timing
+    on the side that holds the step); no map pick asked that no rule reads (GST timing for
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
     Still listed for the maintainer: equipment on a picked future can't be answered, and the front door's

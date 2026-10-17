@@ -54,19 +54,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **Six things the idea harness caught** (2026-10-17; each was a "bug" entry in
   `tests/fixtures/ideas/known-gaps.ts`, now gone, so the harness fails if one comes back):
-  - *Not told yet* asks "The yearly sales at which you'd incorporate" only once the idea has a third-year
-    sales estimate, the one number the rule compares it with, and its line now says so ("“Incorporating”
-    lighting once your third-year sales estimate reaches your own number"). Before, it was asked with the
-    estimate blank, and every answer gave "Saved. Nothing on the road changed." (`lib/cockpit/told.ts`).
-    The step's own panel still takes the number at any time.
+  - *Not told yet* asks "The yearly sales at which you'd incorporate" only where some answer changes the
+    road: once the idea has a third-year sales estimate, the number the rule compares it with, and while
+    Incorporation timing holds "Incorporating" (with Liability / SR&ED picked the step is off the path
+    whatever the number). Its line now says what the number is compared with ("“Incorporating” lighting
+    once your third-year sales estimate reaches your own number"). Before, it was asked with the estimate
+    blank or the other side picked, and every answer gave "Saved. Nothing on the road changed."
+    (`lib/cockpit/told.ts`). The step's own panel still takes the number at any time.
   - *Not told yet* no longer asks a road 0 map pick that no rule reads for the idea: worked out from the
     road, when picking the other side changes nothing. Today that is GST timing for ride-share and taxi
     driving, registered from the first paid ride either way.
   - The keyword parser (used without an AI key) proposes a province only when the words name one place in
-    Canada: none when a place outside Canada is named with a Canadian city's name ("Surrey, England",
-    "Brandon, Florida"), none when two provinces are named (the person picks), never by the order the
+    Canada: a Canadian city's name doesn't count when a place outside Canada is named right after it
+    ("Surrey, England", "Brandon, Florida"), none when the person is moving out of Canada ("moving … to
+    Portland, Oregon"), none when two provinces are named (the person picks), never by the order the
     provinces are listed in, and a city that is also a first name (Victoria, Regina, Brandon, Hamilton) only
-    after "in", "from", "to"… or beside its province (`lib/journey/intent-fallback.ts`).
+    after "in", "from", "to"… or beside its province (`lib/journey/intent-fallback.ts`). A place outside
+    Canada named anywhere else changes nothing: "Calgary … customers in the United States" is still Alberta.
   - It proposes a kind of work only when the words say it is the person's own: a workshop or barber shop is
     not retail, nor is "I work retail"; an app, website, game or program the person uses is not software;
     the "ai" of the French "J'ai", or an AI assistant the person codes with, is not an AI business; the
@@ -75,8 +79,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     creator; an AI tutor app is not tutoring.
   - It proposes "Equipment / vehicle purchase on the path" only when the words say the person is buying,
     leasing, needs or wants to write off equipment, a vehicle or tools ("buying a used truck", "I want to
-    write off my PC"), not from a vehicle or tool only named ("trucker", "my own car", "machine learning").
-    The AI parser's own instruction says the same (`app/api/intent/parse/route.ts`).
+    write off my PC"), not from a vehicle or tool only named ("trucker", "my own car", "machine learning"),
+    words that rule a purchase out ("I don't need any equipment", "no need to buy a vehicle"), one the person
+    has ("I need my car to get to clients"), one the customers need ("people who need a van") or a part of
+    one ("I replace car windshields"). The AI parser's own instruction says the same
+    (`app/api/intent/parse/route.ts`).
   - Road 1's first step no longer says how long a period is designed to take: its summary ends at "4 periods
     (levels)." The official page's words stay quoted in its source.
 
