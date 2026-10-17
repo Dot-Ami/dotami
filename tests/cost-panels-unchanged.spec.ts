@@ -30,7 +30,9 @@
  * blanks looked up again, tests/road-apprentice-to-own-shop.spec.ts): three entries of 34 change, the
  * apprentice road's Red Seal panel (its application fee now $150, from Tradesecrets' Apply Online page,
  * applying only sometimes), its Register your business name panel (the blanks' reasons and sources) and its
- * money list (both of those); no other panel changes. The only cards allowed to change are the ones
+ * money list (both of those); no other panel changes. Edited on 2026-10-17 for one sentence only, under "no
+ * times": the apprentice road's Register as a Cabinetmaker apprentice panel, whose summary ends at "4 periods
+ * (levels)." instead of going on ", each designed to take about a year." (the source's quote stays). The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

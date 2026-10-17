@@ -51,7 +51,9 @@ const INTENT_TOOL: Anthropic.Tool = {
       },
       capitalPurchasePlanned: {
         type: "boolean",
-        description: "True if the text mentions buying/owning equipment, vehicles, computers, or tools.",
+        // 2026-10-17: owning one isn't buying one; the keyword fallback holds to the same line.
+        description:
+          "True only if the text says the person is buying, leasing, needs, or wants to write off equipment, vehicles, computers, or tools. A vehicle or tool only named (a trucker, my own car) is false.",
       },
       unmapped: {
         type: "array",

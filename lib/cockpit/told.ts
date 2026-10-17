@@ -299,16 +299,34 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
   } else {
     for (const fork of input.road.forks) {
       if (!notGiven(`map-pick:${fork.id}`)) continue;
+      // A pick no rule reads for this idea isn't asked: when the side the map doesn't hold changes nothing
+      // on the road, neither answer would (GST timing for ride-share and taxi driving, where registration
+      // is required from the first paid ride whichever side is picked, 2026-10-11). Worked out from the
+      // road, as forksToCompare is, so a rule that starts reading the pick brings the question back.
+      if (!pickChangesSomething(input, evaluation, fork)) continue;
       rows.push({ id: `map-pick:${fork.id}`, question: q.mapPick.question(fork.label), unlocks: q.mapPick.unlocks, answer: "box", forkId: fork.id });
     }
   }
   if (notGiven("idea:structure")) rows.push({ id: "structure", question: q.structure.question, unlocks: q.structure.unlocks, answer: "box" });
   if (notGiven("idea:equipment")) rows.push({ id: "equipment", question: q.equipment.question, unlocks: q.equipment.unlocks, answer: "box" });
   const incorporating = input.road.steps.find((s) => s.id === INCORPORATING_STEP);
-  if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null) {
+  // The rule compares the person's number with their own third-year sales estimate (lib/brain/evaluate.ts
+  // computeNodeStates), and nothing else. Without that estimate no answer here can light the step, so it is
+  // asked only once there is one (the design's "a Not told yet row once a sales number is kept", § 3), and
+  // its line says what it is compared with. The step's own panel still takes the number at any time.
+  const hasThirdYear = input.scenario.profile.targetRevenueY3 > 0;
+  if (onRoad0 && incorporating && hasThirdYear && (input.scenario.state.incorporateAt ?? null) === null) {
     rows.push({ id: "incorporate-at", question: q.incorporateAt.question, unlocks: q.incorporateAt.unlocks(incorporating.label), answer: "box" });
   }
   return rows;
+}
+
+/** True when picking the side of a road 0 fork the map doesn't hold now changes something on the road. */
+function pickChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvaluation, fork: Fork): boolean {
+  const held = (input.scenario.state.activeBranches as Record<string, string>)[fork.id];
+  const other = fork.sides.find((side) => side !== held);
+  if (!other) return true;
+  return roadReceipt(evaluation, evaluateRoad(withSide(input, fork, other))).length > 0;
 }
 
 // --- The what-if
