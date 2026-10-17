@@ -10,6 +10,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-17
+
+The future cockpit's first phase. The front door has three doors: Start from where I want to be (then Pick
+a future), I already have an idea, and Show me an example first (Mara, invented, with real sourced
+prices and statistics). The cockpit shows your goal, a road with steps, skills and costs, and what you've told
+DotAmi; Export opens your plan to read and print. Also: a records step on every business road, the Red
+Seal fee priced and the other fee blanks explained (the fee to register a business name stays blank,
+with its reason), and Businesses you're watching.
+
 ### Added
 - **Others in this line of work: keep a list of businesses you're watching** (the maintainer, 2026-10-17:
   *"yah, this is fine. Lets do it"*) — a new panel in the cockpit, opened from the goal bar on every road and
