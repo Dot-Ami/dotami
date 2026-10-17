@@ -85,12 +85,16 @@ export const BASELINE: ClutterTable = {
  *
  * Lowered on 2026-10-17, before the limit reached main, where the count got stricter than the baseline's:
  * a control now counts only when at least 24 px of it shows each way (or all of it), so a card's bare edge
- * under a fold no longer does (the front door on a tablet, the cockpit on both roads); and *What DotAmi knows
- * about you* is measured on the seed alone, on the spec's own server, where it was measured after the
- * suite's earlier tests had filled the data file with figures.
+ * under a fold no longer does (the cockpit on both roads, CI run 39067156272); and *What DotAmi knows about
+ * you* is measured on the seed alone, on the spec's own server, where it was measured after the suite's
+ * earlier tests had filled the data file with figures.
+ *
+ * The front door at tablet size stays at 11: on Windows its last button ("Show me Mara's example") shows
+ * only a strip above the site footer and isn't counted (10); on Ubuntu, the gate, enough of it shows to count
+ * (11, CI run 39067156272).
  */
 export const BUDGETS: ClutterTable = {
-  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 10, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
+  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
   start: { phone: m(3, 5, 4, 10), tablet: m(3, 5, 4, 10), laptop: m(3, 5, 4, 10) },
   futures: { phone: m(6, 5, 10, 10), tablet: m(6, 7, 10, 10), laptop: m(6, 6, 10, 10) },
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
