@@ -711,7 +711,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   time; the typed-times task (S2.5.25j) is dropped. lens-comparisons.md: the Lens may state a number only
   when it comes from DotAmi, from a cost link it found (shown with the link and the day seen), or from a new
   calculator tool, and its reply check now matches each number to those sources instead of banning digits;
-  a calculator task and a cost-link lookup task are added. Nothing DotAmi keeps, sends, ships or asks changes.
+  a calculator task and a cost-link lookup task are added. research-kit.md also records his answer that the
+  person's own list of businesses they're watching may be built now. Nothing DotAmi keeps, sends, ships or
+  asks changes.
 - **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
   review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
   first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with

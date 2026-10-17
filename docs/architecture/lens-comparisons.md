@@ -154,15 +154,15 @@ screens decision 3 names (K7 A).
 - **No step has a typed time, and none will** (the maintainer, 2026-10-17: "NO TIMES!", § 6.2). `RoadStep`
   has no duration field (types.ts:64-95). Road 1's times live only
   in prose, each with a tool-checked citation, and are different kinds: a designed length ("4 periods
-  (levels), each designed to take about a year", [apprentice-to-own-shop-ab.ts:418](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts));
-  required work (1,360 hours per period, :505; 8 weeks classroom, :543-544); a minimum of experience (72
-  months and 8,160 hours, :583); and limits or deadlines (finish within 18 months, :620; a 45-day fee window
-  and a 15-day WCB account rule, :428, :303-304). Part-time work is counted differently (:588-592). The
+  (levels), each designed to take about a year", [apprentice-to-own-shop-ab.ts:430](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts));
+  required work (1,360 hours per period, :517; 8 weeks classroom, :545, :555); a minimum of experience (72
+  months and 8,160 hours, :595); and limits or deadlines (finish within 18 months, :632; a 45-day fee window
+  and a 15-day WCB account rule, :440, :316). Part-time work is counted differently (:600). The
   cockpit allows only one duration, "calendar months to the person's own date" (future-cockpit.md:1733), and
   shows official hours "with no division into weeks" (:830-831).
 - **The three training routes are one column, not a fork** ("Three ways to the certificate",
-  apprentice-to-own-shop-ab.ts:377), so Compare can't put them side by side today.
-- **Foundation facts:** road 1 joins road 0 at *Incorporating* (:1266); skill items are shared, so "a
+  apprentice-to-own-shop-ab.ts:389), so Compare can't put them side by side today.
+- **Foundation facts:** road 1 joins road 0 at *Incorporating* (:1293); skill items are shared, so "a
   person's mark carries over to every road listing it" (types.ts:130); the person can link ventures as
   `sister`, `overlaps`, `feeds` or `related` ([lib/db/ventures.ts:11](../../lib/db/ventures.ts)). **No road has a
   holding-company step.** "Holdco" appears only in the prose of road 0's retained-earnings node ("potential
@@ -201,7 +201,7 @@ knowledge** (§ 6.4).
 | What's the cheapest way to get the machines? | Each way's amount; rent's period and the person's own count | After S2.5.22 | The person's quotes per way; rent only as *your $[400] × your [6]*; before tax only |
 | What's the fastest option? (time) | None: no times (the maintainer, 2026-10-17) | Not planned | No `time` field (kit task S2.5.25j dropped). The Lens gives each option's steps with their *done when* lines (§ 5.2) |
 | How much would this cost? (something DotAmi has no price for) | A listed price on a page | After the Lens | The cost-link lookup (§ 6.1, S2.5.24o) on pages the source registry allows; shown with its link and the day seen; it joins the person's numbers only when they agree it (call 3 A) |
-| How much would four of these come to? · How far apart are these two shops? | Numbers from DotAmi or a found link, then arithmetic | After S2.5.24n | The calculator (§ 6.1): each input shown with where it came from; a distance needs two places from DotAmi's data or a look-up; never a travel time |
+| How much would four of these come to? · How far apart are these two shops? | Numbers from DotAmi or a found link, then arithmetic | Arithmetic after S2.5.24n; distance not before a look-up that returns places (none before S2.5.26) | The calculator (§ 6.1): each input shown with where it came from; a distance needs two places, and DotAmi holds no place locations today; never a travel time |
 | Which has the strongest foundation? | The person's meaning, as a countable proxy | Partly | Road arrows and joins, shared skill marks, way picks, venture links (K8 A) |
 | Fewest steps / skills / legal requirements | Road evaluation's counts and the person's marks | Yes | Already computed |
 | Which pays more? | A published wage figure for the job picked | No; planned under kit call K5 B (picked 2026-10-16) | ESDC's wage open data, keyed by NOC, province and economic region, Open Government Licence – Canada [W1]; each row's source code shows its real geography level (some "Calgary" rows are a province-wide figure, some regions use small-area estimates); never Job Bank's pages, whose terms forbid scripts and screen scrapers [W2] |
@@ -300,8 +300,8 @@ list of questions, and the Lens isn't limited to the ones below, which are examp
 | Does my savings cover it? | Answerable now | Savings minus what's priced, with the not-priced count; never "enough" |
 | What's due after I hire or register? · Which gets me certified soonest? | Answerable with steps, no times (2026-10-17) | The steps for each way with their *done when* lines and sources, in road order; no time figure and no order by time (§ 5.2) |
 | How much does a table saw cost? (no price in DotAmi) | Answerable after the Lens (cost-link lookup) | A listed price from a page the source registry allows, with its link and the day seen; joins the person's numbers only if they agree it (call 3 A); several pages listed by site name, never ordered by price |
-| What would four of these clamps come to? · What's left of my savings after the official fees? · How far is the rental shop from the shared shop? | Answerable (calculator) | The calculator's result, with each input and where it came from (DotAmi's data, the person's own number, a found link); a distance only from two places DotAmi holds or a look-up returns, never a travel time |
-| Works part-time | Needs the person's own hours | Part-time counting quoted from its cited line (:588-592) |
+| What would four of these clamps come to? · What's left of my savings after the official fees? · How far is the rental shop from the shared shop? | Answerable (calculator); the distance not yet | The calculator's result, with each input and where it came from (DotAmi's data, the person's own number, a found link). A distance needs two places DotAmi holds or a look-up returns; DotAmi holds none today and no such look-up is designed before S2.5.26, so for now it says "DotAmi has no place for that yet". Never a travel time |
+| Works part-time | Needs the person's own hours | Part-time counting quoted from its cited line ([apprentice-to-own-shop-ab.ts:600](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)) |
 | Strongest foundation · least paperwork · easiest to undo · keeps me flexible · side hustle | Needs the person's meaning first | The question in § 5.3 |
 | Cheapest way to get the machines | Needs the person's count of rent periods | *your $[400] × your [6]*, before tax; under K7 A ordered only when asked in the Lens, the ways screen stays unsorted |
 | Which pays more? | Published figure (kit call K5 B, picked 2026-10-16) | Published wage range for the job picked, with its geography level and source code shown (*"Alberta-wide figure shown for Calgary"*, *"small-area estimate"*), labelled "what workers in this job earned, not what you would earn"; never sorted; never shown on the *Open your own shop* ending. Road 1 leaves wage figures out on purpose today ([apprentice-to-own-shop-ab.ts:17](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), so this changes that, under K5 B |
@@ -352,7 +352,11 @@ the math":
   duration is ever summed or estimated); mixed currencies or units; and any source the registry marks
   `vendor-estimate` (research-kit.md § 5.2). "How far something is" needs two places from DotAmi's data or
   from a look-up; the distance is labelled *straight line*, and a road distance appears only when a look-up
-  returns one, with its link. Never a travel time.
+  returns one, with its link. Never a travel time. **DotAmi holds no place locations today**, so the
+  distance part of the calculator has nothing to work on until a look-up that returns places is designed
+  (none before S2.5.26: the places list 25n and the named-business part of 25p both wait on it). Finding a
+  location for an address would send that address to an outside service and needs its own privacy lines
+  (§ 8, § 14). Until then only the arithmetic works.
 - `find_cost_link(item, area?)` (S2.5.24o; after the Lens [9d] and its web-search power behind its switch
   [9g]): when the person asks what something costs and DotAmi holds no price, it searches the web and reads
   the pages found for that one ask, only those the source registry allows (never a `never-automated` site;
@@ -361,7 +365,8 @@ the math":
   the pages found for one ask, as his answer asks. It returns the price only when the price's own words are found
   on the fetched page, as `scripts/check-quotes.mjs` checks quotes; otherwise it returns the link with "no
   price found on this page". Each price comes with its link, the page's title and the day seen. Several pages
-  are listed by site name, never ordered by price (no marketplace, [CLAUDE.md:218-222](../../CLAUDE.md)). A
+  are listed by site name, never ordered by price (no marketplace, [CLAUDE.md:218-222](../../CLAUDE.md)), in
+  a separate result card that is not saved in the conversation (§ 8). A
   found price stays a price on a page: it enters the person's figures only when they agree it through the
   agree prompt (`amountFrom: "link"`), and only then can it enter an ordered card (call 3 A, S2.5.24m).
 
@@ -410,7 +415,7 @@ Lens.
      link and the day seen; it enters the person's figures only when they agree it (call 3 A);
    - **(c) the calculator's result** doing basic arithmetic on (a) and (b), or on a number the person typed in
      their message: sums, differences, unit costs, quantities, and "how far something is" from two places in
-     DotAmi's data or a look-up.
+     DotAmi's data or a look-up (DotAmi holds no place locations today, so this part waits; § 6.1).
 
    The model never does arithmetic in its own words; every sum, difference or product is a calculator call.
    Ordered answers are still drawn by DotAmi's card (call 2 A). No number is ever a time (§ 6.2).
@@ -481,7 +486,7 @@ forecast, because no tool returns one and a time figure fails on its own.
 | "how long will it take me?" | The can't-answer card with the steps; no time, no timeline, no date |
 | "what would four of these clamps come to?" (one clamp priced in DotAmi) | A `calculate` call; the result with its inputs (the clamp's price and its source, "four" as *your number*) |
 | "how much does a table saw cost?" (no price in DotAmi) | A `find_cost_link` call; each price with its link and the day seen, listed by site name; not added to the person's numbers until agreed |
-| "how far is the rental shop from the shared shop?" | A `calculate` distance from two places' coordinates, labelled *straight line*, with both sources; no travel time. With only one place known: "DotAmi has no place for that yet" |
+| "how far is the rental shop from the shared shop?" | Today (no place locations in DotAmi): "DotAmi has no place for that yet", no number. Once a look-up returns places (after S2.5.26): a `calculate` distance from two places' coordinates, labelled *straight line*, with both sources; no travel time. With only one place known: "DotAmi has no place for that yet" |
 | "which is strongest for building other businesses?" | The question in § 5.3, no card, no order |
 | "which will make me the most money?" | The can't-answer card |
 | "is my savings enough?" | Savings minus what's priced, with the not-priced count; the word *enough* never shown |
@@ -516,9 +521,12 @@ the maintainer's "library, or script" point applied to this story.
 
 - **Kept:** nothing new by default. The *Sort by* pick is page state only, forgotten when the page closes.
   Chip answers are controls for one answer (§ 6.4); the Lens conversation itself is already planned as kept
-  per venture and clearable ([use-cases.md](use-cases.md)). Calculator results are not kept beyond the
-  conversation. A found price is not kept as a figure; the conversation records the link, the price as
-  written and the day seen. Numbers agreed
+  per venture and clearable ([use-cases.md](use-cases.md)). Calculator results are kept only as part of the
+  conversation, which the person can clear. A found price is shown in a separate, unsaved result card, as
+  the kit's live look-ups are ([research-kit.md](research-kit.md) § 6, S2.5.25p): the conversation records
+  only that a look-up happened ("looked up the cost of <item>, <date>, N pages"), not the price or its page,
+  and a calculation that uses an unagreed found price is shown in that same card. The price is kept only if
+  the person agrees it through the agree prompt (`amountFrom: "link"`). Numbers agreed
   through the fix-it buttons, or from a found price the person agrees, use the existing figures store and its inventory lines. The card's fold joins the
   existing `dotami-cockpit-folds` entry ([lib/cockpit/folds.ts:27](../../lib/cockpit/folds.ts)), with that
   inventory entry updated.
@@ -526,7 +534,7 @@ the maintainer's "library, or script" point applied to this story.
   the tool results (steps, option labels, agreed amounts, counts, skill marks) go to the model company they
   chose; a model on their own computer sends nothing. Through the MCP server, what the person's own agent reads
   goes to that agent's model company, and only for ventures set to Read or higher. The calculator sends
-  nothing. The cost-link lookup, only when the person asks what something costs and has turned on web search,
+  nothing. No address is sent anywhere to find its location; that is not designed (§ 14, item 11). The cost-link lookup, only when the person asks what something costs and has turned on web search,
   sends the item's name as search words to the search provider and opens the pages it reads; those sites see
   an ordinary visit.
 - **Privacy inventory** (`lib/privacy/inventory.ts`): a `SENT_ELSEWHERE` entry for Lens answers (unless
@@ -629,8 +637,8 @@ never recommends.
 | S2.5.24k | Reply guard | `lib/lens/guard.ts` on every Lens reply: every number (digits and number words) must match a value, in the same unit, from that turn's tool results; a found price must carry its link; a time figure fails outside a verbatim quote of a cited line; comparatives and verdict words outside the frame fail; source chips on matched numbers; the § 6.5 controls (must fail: an unmatched "$12,000" or "twelve thousand dollars", "about half as much" with no calculator result, a model-made sum, a price without its link, "in about six months", "costs less", "the cheapest is"; must pass: a read-tool number, a calculator result, a price with its link) | 2 | 2 (revised 2026-10-17) |
 | S2.5.24l | Question set in [9c] | The § 6.5 varied question set with expected answers runs in the scorer, covering plain facts, steps, ordered answers, undefined criteria, refusals, the calculator, cost links and "fastest" answered with steps | 1 | K8, K9, 2 |
 | S2.5.24m | Outside numbers only once agreed | Code rule and test: an unagreed or estimate-labelled number never reaches `compareOptions` (a found price is shown beside the card with its link until agreed); a page the registry marks `never-automated` is never read, the link offered instead | 0.5 | 3 |
-| S2.5.24n | Calculator tool | `lib/lens/calculate.ts`, pure: add, subtract, multiply, divide, unit cost, quantity, straight-line distance; inputs only from this turn's tool results or a number the person typed (labelled *your number*); refuses blanks, time units, mixed currencies or units and `vendor-estimate` sources; returns every input with its source; purity test and refusal tests (§ 6.5) | 1 | 2 (revised 2026-10-17) |
-| S2.5.24o | Cost-link lookup tool (after [9d] and web search [9g]) | `find_cost_link`: reads only pages the source registry allows (never `never-automated`), using the kit's look-up rules (S2.5.25p); returns a price only when its words are found on the fetched page, with link, title and day seen; pages listed by site name, never ordered by price; the price joins the person's figures only through the agree prompt (`amountFrom: "link"`); inventory entry and log line (§ 8) | 1.5 | 2, 3 (revised 2026-10-17) |
+| S2.5.24n | Calculator tool | `lib/lens/calculate.ts`, pure: add, subtract, multiply, divide, unit cost, quantity, straight-line distance; inputs only from this turn's tool results or a number the person typed (labelled *your number*); refuses blanks, time units, mixed currencies or units and `vendor-estimate` sources; returns every input with its source; purity test and refusal tests (§ 6.5). Only the arithmetic works when built: the distance has no places to work on until a look-up that returns places is designed (none before S2.5.26, § 14 item 11) | 1 | 2 (revised 2026-10-17) |
+| S2.5.24o | Cost-link lookup tool (after [9d] and web search [9g]) | `find_cost_link`: reads only pages the source registry allows (never `never-automated`), using the kit's look-up rules (S2.5.25p); returns a price only when its words are found on the fetched page, with link, title and day seen; pages listed by site name, never ordered by price; result card not saved in the conversation (test); the price joins the person's figures only through the agree prompt (`amountFrom: "link"`); inventory entry and log line (§ 8) | 1.5 | 2, 3 (revised 2026-10-17) |
 
 **What changed on 2026-10-16** (after his clarification that the three questions are examples): the story is
 retitled "The Lens answers a person's questions from DotAmi's facts". Ids are kept where the meaning survives.
@@ -678,6 +686,9 @@ is in [research-kit.md](research-kit.md), K6). It would sit on these read tools 
 - Time questions get the steps, never a time (no times at all, 2026-10-17).
 - A found price is what one page showed on the day seen; it can change, and it may not be for the person's
   area. A straight-line distance is not a road distance.
+- DotAmi holds no place locations today, so the distance part of the calculator has nothing to work on until
+  a look-up that returns places is designed (none before S2.5.26); finding a location for an address would
+  send that address to an outside service and needs its own privacy lines.
 - An answer to an undefined criterion is only as good as the proxy the person picks; no road has a
   holding-company step to count.
 - The model can misread a question; its reading is shown with Change and measured by the test set.
@@ -708,6 +719,9 @@ is in [research-kit.md](research-kit.md), K6). It would sit on these read tools 
    the calculator) instead of banning digits (§ 1, § 6.4).
 10. How the guard reads number words and units in practice (for example "a dozen", fractions, a price in
     another currency) is a build detail for S2.5.24k; anything it can't read as a value fails the reply.
+11. Where the calculator's places come from. DotAmi holds no place locations today, and no planned look-up
+    returns one before S2.5.26. Which look-up supplies them, whether an address may be sent to an outside
+    service to find its location, and the privacy lines for that, are not designed (§ 6.1, § 8).
 
 ## 15. Sources (all seen 2026-10-15)
 

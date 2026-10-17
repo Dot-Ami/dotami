@@ -3,8 +3,9 @@
 Status: **Design, not built. Calls K1–K9 answered by the maintainer on 2026-10-16 (§ 10).** Written
 2026-10-15; answers added 2026-10-16. Named businesses (K3) and ad spend beyond v1 (K4) are **on hold**
 until research story S2.5.26 is done. On 2026-10-17 the maintainer answered the question about adding up
-times: **no times at all** (§ 5.5, K9), so the typed-times task 25j is dropped. Still open: whether the person's own
-watched list waits too (§ 10, *Still open*).
+times: **no times at all** (§ 5.5, K9), so the typed-times task 25j is dropped. On 2026-10-17 he also answered that the person's own
+watched list (23i) may be built now, before S2.5.26: "yah, this is fine. Lets do it" (§ 10, *Still open*,
+item 2; competitive-landscape.md, its own pull request).
 No product code in this pull request. Tracker: S2.5.25 (this kit; S2.5.25a is this doc). It builds on two
 designs in the same pull request (#175): [other-ways-to-build.md](other-ways-to-build.md) (S2.5.22: buy, rent
 or lease, plus tax and legal pointers) and [competitive-landscape.md](competitive-landscape.md) (S2.5.23:
@@ -412,7 +413,7 @@ Two notes, not decisions (both left as they are unless the maintainer says other
 | 23f counts import | First adapter on the import core (25d) | No; one import serves every road |
 | 23g area and industry questions | The person's side of the code keys (25e uses them) | No |
 | 23h panel | Generic over the code keys | No |
-| 23i watched businesses | Held with K3 (competitive-landscape call 2, route A) until S2.5.26, unless the maintainer releases it (competitive-landscape.md § 15, item 11) | — |
+| 23i watched businesses | Released from the K3 hold on 2026-10-17 ("yah, this is fine. Lets do it"): the person's own list (competitive-landscape call 2, route A) may be built before S2.5.26 ends; its design change is in competitive-landscape.md's own pull request (§ 15, item 11) | — |
 | 23j *Advertising* cost line | A future story (competitive-landscape call 8 A, 2026-10-16), not this build; its tasks are written when it is taken up | — |
 | 22f ways catalog; 22g tax entries; 22m where to ask | Already keyed by line kind, asset kind and province, not by job | No |
 | 22p Lens proposes a listed price; 23m Lens looks up records by name | **One** feature: Lens live look-up through registry sources (25p); its named-business part waits on S2.5.26 | Merged: about 5 days becomes 3 |
@@ -432,7 +433,7 @@ list the Lens is limited to; the Lens is general.
 |---|---|---|---|
 | Least cash up front | Official fees + agreed quotes, with blanks counted, never treated as $0 | Yes ([evaluate-road.ts:549-569](../../lib/roads/evaluate-road.ts)) | Read tools (25k) |
 | Fastest | None: **no times** (K9, 2026-10-17). The Lens gives the steps with their *done when* lines instead | Steps, yes | 25k (25j dropped) |
-| Strongest foundation | The person's chosen measure: `next` arrows and `joins` (road 1 joins road 0 at *Incorporating*, [apprentice-to-own-shop-ab.ts:1266](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), skill items shared across roads ([types.ts:130](../../lib/engines/roads/v2026/types.ts)), way picks, venture links | Mostly | 25k |
+| Strongest foundation | The person's chosen measure: `next` arrows and `joins` (road 1 joins road 0 at *Incorporating*, [apprentice-to-own-shop-ab.ts:1293](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), skill items shared across roads ([types.ts:130](../../lib/engines/roads/v2026/types.ts)), way picks, venture links | Mostly | 25k |
 | Fewest steps left or new skills; what I lose by picking X | Compare rows ([told.ts:343](../../lib/cockpit/told.ts)) | Yes | 25k |
 | About the job and industry | Job facts, counts | After 25d and 25i | 25k |
 | Will it succeed; most income; most tax-efficient | A forecast or advice | Never ([CLAUDE.md:22-24, :200](../../CLAUDE.md)) | — |
@@ -489,7 +490,7 @@ vendor, and is listed in the privacy inventory.
 | Registry, code keys, job links, job facts, counts, NAICS list | Shipped catalogs; nothing about the person | No request; made by the maintainer's scripts before release |
 | The research pack | The developer's checkout only | Never shipped |
 | Places list (K3 C; **on hold until S2.5.26**) | Shipped catalog | No request. It would hold **data about other people**: sole proprietors' trade names |
-| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: what a source may keep (for example a vendor's id) only within that limit; named-business look-ups and the watched list wait on S2.5.26 (K3 on hold) | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
+| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: what a source may keep (for example a vendor's id) only within that limit; named-business look-ups, and adding their results to the watched list, wait on S2.5.26 (K3 on hold); the person's own watched list, typed by them, was released on 2026-10-17 (23i) | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
 | The Lens conversation | Already kept per venture, clearable ([use-cases.md](use-cases.md)) | Vendor results **never** enter it; it records only "looked up <vendor>, <date>, N results" and ids |
 | The person's key or sign-in for a vendor tool (K2 B) | The operating system's keychain (§ 5.9), **never** in `dotami.db` | Only to that company |
 
@@ -675,8 +676,8 @@ separate.**
   build it out just yet, and don't make a full plan around this just yet, but we need to make note of it,
   because we need to do more research on this topic." So K3 is **on hold until research story S2.5.26**
   (free software, websites and repos that already do competitor lists and ad intelligence) is done. Its tasks
-  (25m, 25n, 25o and the named-business part of 25p, and 23i, the person's own list (route A), unless the
-  maintainer releases it) wait on S2.5.26, not on a pick. The facts already found
+  (25m, 25n, 25o and the named-business part of 25p) wait on S2.5.26, not on a pick. 23i, the person's own
+  list (route A), was released on 2026-10-17: "yah, this is fine. Lets do it" (§ 10, *Still open*, item 2). The facts already found
   (§ 3.2, § 3.3) are kept as inputs to that research.
 
 **K4. Ad spend after v1?** (answer 2; same decision as competitive-landscape call 11) *Why it matters:* no
@@ -800,9 +801,10 @@ times are prose today, and the cockpit allows only months to the person's own da
 **Still open after 2026-10-16 (for the maintainer):**
 1. ~~May official times of one kind ever be added up?~~ **Answered 2026-10-17: no times at all** (K9
    above, § 5.5).
-2. **May 23i (*Businesses you're watching*, K3 route A) be built before S2.5.26 ends?** It needs no outside
-   tool, ships no names and sends nothing, and K4 A's saved ad links live on it. Asked once, in
-   [competitive-landscape.md](competitive-landscape.md) § 15, item 11.
+2. ~~May 23i (*Businesses you're watching*, K3 route A) be built before S2.5.26 ends?~~ **Answered
+   2026-10-17: "yah, this is fine. Lets do it".** It needs no outside tool, ships no names and sends nothing,
+   and K4 A's saved ad links live on it. Asked in [competitive-landscape.md](competitive-landscape.md) § 15,
+   item 11, which records the answer in its own pull request.
 
 ## 11. Tasks
 

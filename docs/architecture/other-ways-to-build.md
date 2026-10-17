@@ -108,7 +108,7 @@ comparison question such as "which is cheapest?", the Lens answers from the pers
   `NamedCostLine` :168); a screen shows three kinds: official fee, your quote, named but not priced (`CostLineAsShown`
   :184). None has a buy, rent or lease dimension. Road 1's *Open your own shop* names eight lines, including tools,
   *Shop space deposit*, *Vehicle*, *Design or CAD software* and a cited *Legal advice on the business form*
-  (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts:866-879`); road 0 names seven
+  (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts:881-893`); road 0 names seven
   (`lib/engines/roads/v2026/starting-any-business-ab.ts:786-792`).
 - **The person's numbers.** A `start-up-cost-line` Figure prices one named line; `amountFrom` records quote, link,
   receipt or your guess (`lib/figures/types.ts`). One current number per line per idea (`future-cockpit.md:1673-1678`).
