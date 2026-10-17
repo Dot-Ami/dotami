@@ -298,4 +298,62 @@ describe("“Equipment / vehicle purchase on the path” only when the words say
       expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(true);
     }
   });
+
+  // The review of PR #182 (2026-10-17): words that rule a purchase out, a vehicle the person already has,
+  // or one the customers need said nothing about buying one, though the chip came on.
+  it("is not proposed when the words rule a purchase out, or the vehicle is the person's own or a customer's", () => {
+    for (const text of [
+      "I don't need any equipment, just my skills",
+      "I don't plan on buying a truck, I'll rent one",
+      "No need to buy a vehicle, I bike",
+      "I won’t be buying a van",
+      "I need my car to get to clients, I do mobile dog grooming",
+      "I replace car windshields for people in Calgary",
+      "I help people who need a van for moving day",
+      "I give financial advice on equipment leasing to farmers",
+    ]) {
+      expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(false);
+    }
+    for (const text of [
+      "I'm buying a used truck for the business",
+      "I need to buy a new laptop for school",
+      "I need a van for my moving business",
+      "I'm financing a truck through the dealer",
+      "I need to replace my truck this year",
+      "I'll need a camera and lights",
+    ]) {
+      expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(true);
+    }
+  });
+});
+
+// The review of PR #182 (2026-10-17): until then any of some ninety words for places outside Canada,
+// anywhere in the words, dropped the province, a province named outright included.
+describe("a place outside Canada drops only the Canadian city it is named with", () => {
+  it("still reads a province or city in Canada when a place outside Canada is named elsewhere", () => {
+    const cases: [string, string][] = [
+      ["I'm based in Calgary and sell on Amazon to customers in the United States", "AB"],
+      ["Ontario-based Etsy shop shipping mostly to the USA", "ON"],
+      ["Selling maple syrup online from Quebec to customers in Texas", "QC"],
+      ["I import tea from India and sell it in Toronto", "ON"],
+      ["I sell fine china and antiques from my home in Edmonton", "AB"],
+      ["I breed Maine Coon cats in Calgary", "AB"],
+      ["My partner Virginia and I want to open a cafe in Edmonton", "AB"],
+      ["I moved to Calgary from Texas and want to start a roofing company", "AB"],
+    ];
+    for (const [text, province] of cases) expect(parseIntentFallback(text).province, text).toBe(province);
+  });
+
+  it("proposes none when the city is named as one outside Canada, or the person is moving out of Canada", () => {
+    for (const text of [
+      "Surrey, England — I want to do dog grooming",
+      "landscaping in Surrey England",
+      "a cafe in Vancouver, Washington",
+      "I live in Saint John, U.S. Virgin Islands and want a boat tour company",
+      "Moving my bakery from London, Ontario to Portland, Oregon",
+      "relocating from Toronto to the United States to open a gym",
+    ]) {
+      expect(parseIntentFallback(text).province, text).toBeNull();
+    }
+  });
 });

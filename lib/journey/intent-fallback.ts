@@ -140,10 +140,11 @@ const NAME_LIKE_CITIES = new Set(["victoria", "regina", "brandon", "hamilton"]);
 const PLACE_WORD_BEFORE = /\b(?:in|from|near|around|to|outside|at|of)\s+$/;
 
 /**
- * Places outside Canada that share their names with Canadian cities ("Surrey, England", "Hamilton, New
- * Zealand", "Brandon, Florida", "Saint John, US Virgin Islands"). When the words name one, DotAmi proposes
- * no province: the person picks. Whole words only. Not "america" (North America includes Canada) and not
- * a bare "us" (the pronoun).
+ * Places outside Canada, read in two spots only (2026-10-17, the review of PR #182): right after a Canadian
+ * city's name, where they say the city is another one ("Surrey, England", "Vancouver, Washington", "Saint
+ * John, US Virgin Islands"), and after "moving to", where the person is leaving Canada. Anywhere else they
+ * say nothing about where the person is: "customers in the United States", "tea from India", "fine china",
+ * "my partner Virginia". Not "america" (North America includes Canada) and not a bare "us" (the pronoun).
  */
 const OUTSIDE_CANADA = [
   "united states", "usa", "u.s.", "u.s.a", "virgin islands", "puerto rico",
@@ -158,6 +159,14 @@ const OUTSIDE_CANADA = [
   "france", "germany", "italy", "spain", "portugal", "netherlands", "poland", "ukraine", "mexico", "brazil",
   "jamaica", "haiti", "nigeria", "kenya", "south africa", "dubai", "singapore", "hong kong",
 ];
+// Escaped here rather than with `escape` below, which isn't defined yet when these lines run.
+const OUTSIDE_CANADA_NAMES = OUTSIDE_CANADA.map((place) => place.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+/** Right after a city: "Surrey, England", "Saint John, U.S. Virgin Islands", "Hamilton New Zealand". */
+const CITY_OUTSIDE_CANADA = new RegExp(`^,?\\s+(?:the\\s+)?(?:u\\.?s\\.?\\s+)?(?:${OUTSIDE_CANADA_NAMES})(?![a-z0-9])`);
+/** Moving there: "moving … to Portland, Oregon", "relocating to the United States". */
+const MOVING_OUT_OF_CANADA = new RegExp(
+  `\\b(?:move|moves|moved|moving|relocat\\w*)\\b[^.!?;\\n]*?\\bto\\s+(?:the\\s+)?(?:[a-z'’-]+(?:\\s+[a-z'’-]+)?,\\s+)?(?:${OUTSIDE_CANADA_NAMES})(?![a-z0-9])`,
+);
 
 /** Equipment, vehicles and tools: proposed as a purchase only with words that say one (`statesAPurchase`). */
 const CAPITAL_KEYWORDS = [
@@ -294,53 +303,78 @@ function tagNamed(text: string, tag: ActivityTag): boolean {
   );
 }
 
-/** A whole word or phrase: "oregon" but not "oregonian", "uk" but not "ukulele". */
-function wholeWordNamed(text: string, phrase: string): boolean {
-  return new RegExp(`(?:^|[^a-z0-9])${escape(phrase)}(?![a-z0-9])`).test(text);
-}
-
 function cityNamed(text: string, city: string, province: Province): boolean {
-  if (!NAME_LIKE_CITIES.has(city)) return matchesKeyword(text, city);
+  // "Surrey, England" is another Surrey. The rest of the text, not the sentence: "U.S." has full stops.
+  const hits = keywordHits(text, city).filter((hit) => !CITY_OUTSIDE_CANADA.test(text.slice(hit.end)));
+  if (!NAME_LIKE_CITIES.has(city)) return hits.length > 0;
   // "Victoria BC", "Brandon, Manitoba": the province beside it says it is the place.
   const beside = [province.toLowerCase(), ...PROVINCE_NAMES[province]].map(escape).join("|");
   const besideIt = new RegExp(`^,?\\s+(?:${beside})(?![a-z0-9])`);
-  return keywordHits(text, city).some((hit) => {
+  return hits.some((hit) => {
     const a = around(text, hit, SENTENCE_BREAK);
     return PLACE_WORD_BEFORE.test(a.before) || besideIt.test(a.after);
   });
 }
 
 /**
- * The province the words name, or null. Only one place in Canada, named unambiguously: none when a place
- * outside Canada is named with it ("Surrey, England"), none when two provinces are named ("from Winnipeg
- * to Regina": the person picks), and a city only when nothing names another province. Never by the
- * order the provinces are listed in.
+ * The province the words name, or null. Only one place in Canada, named unambiguously: a city named as
+ * one outside Canada doesn't count ("Surrey, England"), none when the person is moving out of Canada
+ * ("moving to Portland, Oregon"), none when two provinces are named ("from Winnipeg to Regina": the
+ * person picks), and a city only when nothing names another province. Never by the order the provinces
+ * are listed in. A place outside Canada named anywhere else ("customers in the United States") changes
+ * nothing.
  */
 function provinceNamed(text: string): Province | null {
-  if (OUTSIDE_CANADA.some((place) => wholeWordNamed(text, place))) return null;
+  if (MOVING_OUT_OF_CANADA.test(text)) return null;
   const named = PROVINCES.filter(
     (code) => PROVINCE_NAMES[code].some((name) => matchesKeyword(text, name)) || CITIES[code].some((city) => cityNamed(text, city, code)),
   );
   return named.length === 1 ? named[0] : null;
 }
 
-/** Words that say the person is buying, leasing, needs, or wants to write off what comes after them. */
+/**
+ * Words that say the person is buying, leasing, needs, or wants to write off what comes after them, at
+ * most two words before it. Groups: the words before the verb, the verb, the words between it and the
+ * thing. "financ" only as the verb: "financial advice" buys nothing.
+ */
 const PURCHASE_BEFORE =
-  /\b(?:buy|buys|buying|bought|purchas\w*|lease|leases|leasing|leased|financ\w*|need|needs|needed|upgrad\w*|replace|replacing|invest\w*\s+in|write\s+off|write-off|writeoff|writing\s+off|deduct\w*|claim\w*|want\s+my\s+own|receipts?\s+for)\s+(?:\S+\s+){0,2}$/;
+  /^([\s\S]*?)\b(buy|buys|buying|bought|purchas\w*|lease|leases|leasing|leased|financ(?:e|es|ed|ing)|need|needs|needed|upgrad\w*|replace|replacing|invest\w*\s+in|write\s+off|write-off|writeoff|writing\s+off|deduct\w*|claim\w*|want\s+my\s+own|receipts?\s+for)\s+((?:\S+\s+){0,2})$/;
 /** The same said after it: "want my truck to count", "my laptop as a write-off". */
 const PURCHASE_AFTER = /^\s+(?:to\s+count|to\s+be\s+written\s+off|as\s+a\s+write-?off|written\s+off|as\s+an\s+expense)\b/;
+/** A purchase ruled out just before the verb: "I don't need", "no need to buy", "won't be buying". */
+const RULED_OUT = /\b(?:don[’']?t|do\s+not|doesn[’']?t|does\s+not|didn[’']?t|did\s+not|won[’']?t|will\s+not|wouldn[’']?t|would\s+not|not|never|no|without)\s+(?:\S+\s+){0,3}$/;
+/** Someone else needs it: "people who need a van", "customers need". */
+const SOMEONE_ELSE = /\b(?:who|that|people|customers|clients|folks|families|businesses|they|others)\s+$/;
+/** "Need" of something the person has: "I need my car to get to clients". */
+const OWN_ALREADY = /^(?:my|our|his|her|their|your)\s/;
+const NEEDS = new Set(["need", "needs", "needed"]);
+/** A plural noun right after the thing makes the thing a describer: "car windshields", "truck parts". */
+const DESCRIBES_NEXT_WORD = /^\s([a-z]{2,}[^s\W]s)(?![a-z0-9'’])/;
+const NOT_A_PLURAL = new Set([
+  "this", "thus", "plus", "always", "perhaps", "sometimes", "towards", "afterwards", "besides", "whereas",
+  "lens", "chassis", "series", "news",
+]);
 
 /**
  * "Equipment / vehicle purchase on the path", proposed only when the words say so: "buying a used truck",
  * "need to buy brewing equipment", "I want to write off my PC". A vehicle or tool only named ("trucker",
  * "selling the trucks", "my own car", "I fix computers", "camping gear" the person reviews) says nothing
- * about buying one.
+ * about buying one, and neither do words that rule it out ("I don't need any equipment"), one the person
+ * has ("I need my car"), one someone else needs ("people who need a van") or a part of one ("I replace
+ * car windshields"). The review of PR #182, 2026-10-17.
  */
 function statesAPurchase(text: string): boolean {
   return CAPITAL_KEYWORDS.some((keyword) =>
     keywordHits(text, keyword).some((hit) => {
       const a = around(text, hit, CLAUSE_BREAK);
-      return PURCHASE_BEFORE.test(a.before) || PURCHASE_AFTER.test(a.after);
+      const next = DESCRIBES_NEXT_WORD.exec(a.after);
+      if (next && !NOT_A_PLURAL.has(next[1])) return false;
+      if (PURCHASE_AFTER.test(a.after)) return true;
+      const said = PURCHASE_BEFORE.exec(a.before);
+      if (!said) return false;
+      const [, lead, verb, between] = said;
+      if (RULED_OUT.test(lead) || SOMEONE_ELSE.test(lead)) return false;
+      return !(NEEDS.has(verb) && OWN_ALREADY.test(between));
     }),
   );
 }
