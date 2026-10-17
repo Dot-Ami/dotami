@@ -11,6 +11,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **A layout rule, and a clutter limit every screen must stay under** (the maintainer, 2026-10-17: a calm
+  first view, enforced by a limit on how busy a screen can get). The rule, in
+  [docs/ui-spec/README.md](docs/ui-spec/README.md): one primary thing per screen (on the cockpit, the road);
+  new features open in the right-hand panel or the step panel, never as a new region; the first visit shows
+  the least; everything folds and is remembered; with a table of where each planned feature lands. The
+  limit: a browser test opens ten main screens at phone, tablet and laptop sizes and counts the regions, the
+  controls in the first window (a control counts when at least 24 px of it shows), the text sizes and the
+  smallest text; it fails when a screen goes over its budget, or shows a header, nav, section or other block
+  that isn't marked as a region and sits in none. It runs on a server and data file of its own, so the
+  other tests' data doesn't change what it counts. The budgets start at what the screens measure today on CI and can only go down (a unit test
+  compares them with the baseline and with main's, so a budget once lowered can't be raised back); the calm
+  first view lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
+  test reads).
 - **Tests: 367 invented ideas, and a harness every road and screen must pass** (S2.5.29a, b, c and g, the
   plan of 2026-10-17; developers only, nothing in the app changes but how fast road evaluation writes an
   amount: the rules' money formatter is now made once instead of on every call, which the harness needed to

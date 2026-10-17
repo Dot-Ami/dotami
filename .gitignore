@@ -32,3 +32,5 @@ prisma/receipts/
 prisma/e2e/
 # The data folder of the browser test that starts a server of its own (e2e/receipt-new-key.spec.ts).
 prisma/e2e-new-key/
+# The clutter limit's own data folder (e2e/clutter-budget.spec.ts starts a server of its own too).
+prisma/e2e-clutter/

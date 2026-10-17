@@ -206,7 +206,8 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
 
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         {screen === "about" ? (
           <GhostLink href="/" tone="stone">
             ← Back
@@ -227,7 +228,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
       </nav>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_420px]">
-        <div className="overflow-y-auto bg-ink2 px-8 py-10 md:px-10">
+        <div data-region="intake" className="overflow-y-auto bg-ink2 px-8 py-10 md:px-10">
           <div className="mx-auto max-w-2xl space-y-8">
             {screen === "about" ? (
               <AboutScreen onContinue={() => setScreen("confirm")} />
@@ -664,7 +665,7 @@ function PreviewRail({
   const hiddenCount = unlocks.length - visible.length;
 
   return (
-    <aside className="flex flex-col border-t border-rule-soft bg-ink px-6 py-8 lg:border-l lg:border-t-0">
+    <aside data-region="preview" className="flex flex-col border-t border-rule-soft bg-ink px-6 py-8 lg:border-l lg:border-t-0">
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Live preview</p>
 
       {coverage === "federal-only" ? (

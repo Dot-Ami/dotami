@@ -177,6 +177,8 @@ export function StrategyMap({
           ? {
               role: "region",
               "aria-label": cockpitWords.folds.roadRegion,
+              // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+              "data-region": "road",
               className:
                 // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
                 // would make its minimum the height of every card): with the what-if bar open it used to
@@ -534,6 +536,7 @@ function Legend({
   // Folded, the lines stay on the page, hidden: the button brings them back as they were.
   return (
     <footer
+      data-region="legend"
       role="group"
       aria-label={cockpitWords.folds.legend.title}
       className="flex items-start gap-3 border-t border-rule bg-ink3 px-5 py-2 font-mono text-[9px] uppercase tracking-wider text-stone"

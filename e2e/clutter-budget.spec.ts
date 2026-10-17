@@ -1,0 +1,419 @@
+/**
+ * The clutter limit (docs/ui-spec/README.md, "The layout rule"; the maintainer's pick of 2026-10-17: a calm
+ * first view, enforced by a limit on how busy a screen can get), in a real browser on the production build.
+ *
+ * Each main screen is opened at 375x812, 768x1024 and 1280x720, as a person arriving on it sees it (nothing
+ * clicked, nothing scrolled), and four things are measured:
+ *
+ * - regions: drawn blocks marked `data-region="<name>"`, anywhere on the page;
+ * - controls: usable links, buttons, boxes, menus and switches inside the first window, at least 24 px of
+ *   each showing (or all of it, if smaller);
+ * - text sizes: the distinct computed font sizes of the text drawn on the page;
+ * - the smallest text size.
+ *
+ * Each is held to its budget in `e2e/budgets.ts`, which can only go down. Regions are counted by their marks,
+ * so the test also fails on any drawn landmark or section (header, nav, aside, footer, section, main, and
+ * their roles, a group) that is no region, sits inside none and holds none. A screenshot of each screen at
+ * each size, and what was counted (the regions' names, each control's name, the sizes), are saved with the
+ * results (test-results/; CI keeps only the log lines, one per screen and size). The budgets are what CI
+ * measures on Ubuntu; a run on Windows adds the few extras recorded in `WINDOWS_EXTRA`.
+ *
+ * This file starts a server of its own, from the suite's build, over a data folder of its own
+ * (prisma/e2e-clutter/) holding only the two demo ventures, so what it measures doesn't depend on what the
+ * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
+ * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
+ * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
+ * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list.
+ */
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import net from "node:net";
+import path from "node:path";
+
+import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+
+import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { waitForReact } from "../tests/helpers/react-ready";
+import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
+
+const Q1 = /what do you want your work and life to look like/;
+const Q2 = "Are you after a business of your own, a job or career, or both?";
+const Q3 = "Which province or territory are you in?";
+
+// This file's own server (e2e/receipt-new-key.spec.ts starts one the same way, on 3124).
+const PORT = 3125;
+const DATABASE_URL = "file:./e2e-clutter/dotami.db";
+const root = process.cwd();
+const folder = path.join(root, "prisma", "e2e-clutter");
+let server: ChildProcess | null = null;
+
+/** True when something already answers on the port (another run's server). */
+const portTaken = () =>
+  new Promise<boolean>((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port: PORT });
+    socket.setTimeout(2000);
+    socket.on("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on("error", () => resolve(false));
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+
+/** A fresh data folder holding what the suite's own starts with: the tables and the two demo ventures. */
+function prepareFolder() {
+  if (existsSync(folder)) rmSync(folder, { recursive: true, force: true });
+  mkdirSync(folder, { recursive: true });
+  const env = { ...process.env, DATABASE_URL, CHECKPOINT_DISABLE: "1" };
+  const run = (script: string[], args: string[]) =>
+    execFileSync(process.execPath, [path.join(root, "node_modules", ...script), ...args], { env, stdio: "pipe" });
+  run(["prisma", "build", "index.js"], ["migrate", "deploy"]);
+  run(["tsx", "dist", "cli.mjs"], ["prisma/seed.ts"]);
+}
+
+test.beforeAll(async () => {
+  test.setTimeout(180_000);
+  if (await portTaken()) throw new Error(`Port ${PORT} is already in use: another run's server is answering there. Stop it, then start again.`);
+  prepareFolder();
+  // The environment the suite's own server gets (playwright.config.ts), over this file's data folder.
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    DATABASE_URL,
+    ANTHROPIC_API_KEY: "",
+    NEXT_TELEMETRY_DISABLED: "1",
+    DOTAMI_E2E_RATE_LIMITS: "opt-in",
+  };
+  delete env.DOTAMI_DESKTOP;
+  delete env.DOTAMI_RECEIPT_LOCK;
+  delete env.DOTAMI_RECEIPT_KEY;
+  // The build the suite's own server is running (playwright.config.ts built it before starting).
+  server = spawn(process.execPath, [path.join(root, "scripts", "next.mjs"), "start", "-H", "127.0.0.1", "-p", String(PORT)], {
+    cwd: root,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  // Ready when THIS server says so (the same rule as the suite's own server).
+  await new Promise<void>((resolve, reject) => {
+    let said = "";
+    const timer = setTimeout(() => reject(new Error(`this file's server didn't start:\n${said}`)), 90_000);
+    const listen = (chunk: Buffer) => {
+      said += chunk.toString();
+      if (/Ready in \d/.test(said)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    };
+    server!.stdout!.on("data", listen);
+    server!.stderr!.on("data", listen);
+    server!.on("exit", (code) => {
+      clearTimeout(timer);
+      reject(new Error(`this file's server stopped (code ${code}):\n${said}`));
+    });
+  });
+});
+
+test.afterAll(async () => {
+  if (server && server.exitCode === null) {
+    const stopped = new Promise((resolve) => server!.once("exit", resolve));
+    server.kill();
+    await stopped;
+  }
+  server = null;
+  rmSync(folder, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+});
+
+test.use({ baseURL: `http://127.0.0.1:${PORT}` });
+
+/** What one measurement found: the four numbers, and what was counted, for the report. */
+interface Measured extends Clutter {
+  regionNames: string[];
+  controlNames: string[];
+  sizesPx: number[];
+  /** Drawn landmarks and sections that are no region, inside none and hold none: each fails the test. */
+  unmarkedBlocks: string[];
+}
+
+/**
+ * Measures the page as it is drawn now. Runs in the page, so it must stand alone.
+ *
+ * Controls are counted only where a person can see them in the first window: a control is clipped by every
+ * box around it that hides or scrolls its overflow (the road's own area, the rail), then by the window.
+ * Text is counted anywhere on the page, scrolled to or not, except text drawn only for a screen reader (a
+ * box of 1 px or less that hides its overflow, Tailwind's `sr-only`).
+ */
+function measurePage(): Measured {
+  const CONTROL =
+    'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="combobox"], [contenteditable="true"]';
+
+  const drawn = (el: Element) => {
+    if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+
+  /**
+   * Whether enough of the element shows in the first window to be seen and pressed, after every box around
+   * it that clips it: at least 24 px each way (WCAG 2.2's smallest target size, 2.5.8), or all of it where
+   * it is smaller than that. A card's bare top edge peeking out under a fold doesn't count.
+   */
+  const MIN_SHOWN_PX = 24;
+  const inFirstWindow = (el: Element) => {
+    const r = el.getBoundingClientRect();
+    let left = r.left;
+    let top = r.top;
+    let right = r.right;
+    let bottom = r.bottom;
+    for (let node: Element | null = el; node && node !== document.documentElement; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (node !== el && (style.overflowX !== "visible" || style.overflowY !== "visible")) {
+        const box = node.getBoundingClientRect();
+        left = Math.max(left, box.left);
+        top = Math.max(top, box.top);
+        right = Math.min(right, box.right);
+        bottom = Math.min(bottom, box.bottom);
+      }
+      // Boxes around a fixed element don't clip it (a sheet, the panel's bar on a phone).
+      if (style.position === "fixed") break;
+    }
+    left = Math.max(left, 0);
+    top = Math.max(top, 0);
+    right = Math.min(right, window.innerWidth);
+    bottom = Math.min(bottom, window.innerHeight);
+    // Half a pixel of slack: sub-pixel layout can draw a whole 24 px control at 23.8.
+    const enough = (shown: number, whole: number) => shown > 0 && shown >= Math.min(MIN_SHOWN_PX, whole) - 0.5;
+    return enough(right - left, r.width) && enough(bottom - top, r.height);
+  };
+
+  const regionNames = [...document.querySelectorAll<HTMLElement>("[data-region]")]
+    .filter(drawn)
+    .map((el) => el.dataset.region ?? "");
+
+  // Regions are counted by their marks, so a block nobody marked would slip past the count. Every drawn
+  // landmark or section must be a marked region, sit inside one, or hold one (a page's <main> around its
+  // regions); any other is listed here and fails the test.
+  const BLOCK =
+    'header, nav, aside, footer, section, main, [role="region"], [role="group"], [role="banner"], [role="navigation"], [role="complementary"], [role="contentinfo"], [role="main"], [role="search"], [role="form"]';
+  const unmarkedBlocks = [...document.querySelectorAll<HTMLElement>(BLOCK)]
+    .filter((el) => drawn(el) && !el.closest("[data-region]") && !el.querySelector("[data-region]"))
+    .map((el) => {
+      const role = el.getAttribute("role");
+      const name = el.getAttribute("aria-label") ?? el.id ?? "";
+      return `${el.tagName.toLowerCase()}${role ? `[role=${role}]` : ""}${name ? ` "${name}"` : ""}`;
+    });
+
+  const controlNames = [...document.querySelectorAll(CONTROL)]
+    .filter((el) => {
+      // A control inside another (a button inside a link) is one thing to press.
+      if (el.parentElement?.closest(CONTROL)) return false;
+      if (el.matches(":disabled") || el.getAttribute("aria-disabled") === "true") return false;
+      // Behind a sheet: the page under it can't be used.
+      if (el.closest("[inert]")) return false;
+      return drawn(el) && inFirstWindow(el);
+    })
+    .map((el) => {
+      const name = (el.getAttribute("aria-label") ?? (el as HTMLElement).innerText ?? "").replace(/\s+/g, " ").trim();
+      return `${el.tagName.toLowerCase()}: ${name.slice(0, 60)}`;
+    });
+
+  /** Text only a screen reader hears: inside a box of 1 px or less that hides its overflow. */
+  const screenReaderOnly = (el: Element) => {
+    for (let node: Element | null = el; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.overflowX !== "visible" || style.overflowY !== "visible") {
+        const box = node.getBoundingClientRect();
+        if (box.width <= 1 || box.height <= 1) return true;
+      }
+    }
+    return false;
+  };
+
+  const sizes = new Set<number>();
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    const parent = node.parentElement;
+    if (!parent || parent.closest("script, style, noscript, template")) continue;
+    if (!parent.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
+    range.selectNodeContents(node);
+    const box = range.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) continue;
+    if (screenReaderOnly(parent)) continue;
+    sizes.add(Math.round(parseFloat(getComputedStyle(parent).fontSize) * 100) / 100);
+  }
+  const sizesPx = [...sizes].sort((a, b) => a - b);
+
+  return {
+    regions: regionNames.length,
+    controls: controlNames.length,
+    textSizes: sizesPx.length,
+    smallestTextPx: sizesPx[0] ?? 0,
+    regionNames,
+    controlNames,
+    sizesPx,
+    unmarkedBlocks,
+  };
+}
+
+/**
+ * Opens the screen at each of the three sizes with `open` (which loads it and waits until it is ready),
+ * measures it, saves a screenshot and what was counted, and holds it to its budget. Every size is measured
+ * and saved before the test fails, so one failing size doesn't hide another.
+ */
+async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: ScreenId, open: () => Promise<void>) {
+  const found: Record<string, Measured> = {};
+  for (const size of WIDTHS) {
+    const label = `${screen} at ${size.width}x${size.height}`;
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await open();
+    // Text sizes and line breaks are final only once the self-hosted fonts are in.
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      window.scrollTo(0, 0);
+    });
+    const measured = await page.evaluate(measurePage);
+    found[size.id] = measured;
+
+    const shot = testInfo.outputPath(`${screen}-${size.width}x${size.height}.png`);
+    await page.screenshot({ path: shot });
+    await testInfo.attach(`${label}.png`, { path: shot, contentType: "image/png" });
+    console.log(
+      `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
+    );
+
+    // Checked whatever the budgets say: a block without a mark isn't counted, so it must not be there.
+    expect
+      .soft(measured.unmarkedBlocks, `${label}: blocks with no data-region mark, inside no region (the region count can't see them)`)
+      .toEqual([]);
+
+    const gate = BUDGETS[screen]?.[size.id];
+    expect.soft(gate, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
+    if (!gate) continue;
+    // The budgets are what CI (Ubuntu) measures; on Windows, where Chromium draws a few screens a little
+    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA).
+    const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.[size.id] ?? {}) : {};
+    const budget: Clutter = {
+      ...gate,
+      regions: gate.regions + (extra.regions ?? 0),
+      controls: gate.controls + (extra.controls ?? 0),
+      textSizes: gate.textSizes + (extra.textSizes ?? 0),
+    };
+    expect.soft(measured.regions, `${label}: regions (${measured.regionNames.join(", ")})`).toBeLessThanOrEqual(budget.regions);
+    expect.soft(measured.controls, `${label}: controls in the first window (${measured.controlNames.join(" | ")})`).toBeLessThanOrEqual(
+      budget.controls,
+    );
+    expect.soft(measured.textSizes, `${label}: text sizes (${measured.sizesPx.join(", ")} px)`).toBeLessThanOrEqual(budget.textSizes);
+    expect.soft(measured.smallestTextPx, `${label}: the smallest text, px`).toBeGreaterThanOrEqual(budget.smallestTextPx);
+  }
+  // What was counted, beside the screenshots: the regions' names, every control's name and the sizes.
+  const counted = testInfo.outputPath(`${screen}.json`);
+  writeFileSync(counted, JSON.stringify(found, null, 2));
+  await testInfo.attach(`${screen}.json`, { path: counted, contentType: "application/json" });
+}
+
+/** Loads a page and waits until it is drawn, taken over by React and done fetching. */
+async function load(page: Page, url: string, ready: (page: Page) => Locator) {
+  await page.goto(url);
+  const marker = ready(page);
+  await expect(marker).toBeVisible();
+  await waitForReact(marker);
+  await page.waitForLoadState("networkidle");
+}
+
+/**
+ * *Your destination* answered in this tab the way a person who doesn't know yet answers it: question 1 "I
+ * don't know yet" (keeps nothing) unless the data file already holds a destination, a business of their own,
+ * Alberta, and question 4 skipped (keeps nothing) unless an income is already agreed. Ends on its way on.
+ */
+async function answerDestination(page: Page) {
+  await page.goto("/start");
+  const q1 = page.getByRole("textbox", { name: Q1 });
+  await expect(q1.or(page.getByRole("heading", { name: Q2, level: 2 })).first()).toBeVisible();
+  if (await q1.isVisible()) {
+    const dontKnow = page.getByRole("button", { name: "I don't know yet" });
+    await waitForReact(dontKnow);
+    await dontKnow.click();
+  }
+  const business = page.getByRole("button", { name: "A business of my own" });
+  await waitForReact(business);
+  await business.click();
+  await page.getByRole("combobox", { name: Q3 }).selectOption("CA-AB");
+  await page.getByRole("button", { name: "Use this place" }).click();
+  const next = page.getByRole("link", { name: "Pick a future →" });
+  const skip = page.getByRole("button", { name: "Skip" });
+  await expect(next.or(skip).first()).toBeVisible();
+  if (await skip.isVisible()) await skip.click();
+  await expect(next).toBeVisible();
+}
+
+/** A fresh idea picked on *Pick a future*, as a person picks one; returns the cockpit's address for it. */
+async function pickFuture(page: Page, roadLabel: string): Promise<string> {
+  await answerDestination(page);
+  await page.getByRole("link", { name: "Pick a future →" }).click();
+  await expect(page).toHaveURL(/\/futures$/);
+  const lookInside = page.getByRole("button", { name: `Look inside ${roadLabel}` });
+  await waitForReact(lookInside);
+  await lookInside.click();
+  await expect(page).toHaveURL(/\/cockpit\?venture=/);
+  return new URL(page.url()).pathname + new URL(page.url()).search;
+}
+
+const road = (page: Page) => page.getByRole("region", { name: "The road" });
+
+// First, before any test here saves anything: the page counts everything in the data file, so it is
+// measured on the seed alone (a test retried after a failure gets a fresh server and folder too).
+test("What DotAmi knows about you stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "your-data", () => load(page, "/your-data", (p) => p.getByRole("heading", { level: 1 })));
+});
+
+test("the front door stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "front-door", () => load(page, "/", (p) => p.getByRole("heading", { level: 1 })));
+});
+
+test("Your destination stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "start", () => load(page, "/start", (p) => p.getByRole("heading", { level: 2 }).first()));
+});
+
+test("Pick a future stays within its clutter budget", async ({ page }, testInfo) => {
+  await answerDestination(page);
+  await measureAtEverySize(page, testInfo, "futures", () =>
+    load(page, "/futures", (p) => p.getByRole("button", { name: `Look inside ${generalRoadV2026.label}` })),
+  );
+});
+
+test("the intake stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "intake", () => load(page, "/intake", (p) => p.getByRole("heading", { level: 1 })));
+});
+
+test("Your futures stays within its clutter budget", async ({ page }, testInfo) => {
+  // A future just picked is listed first (the list is by last touched), so the first window shows the same
+  // card whatever the suite's earlier tests saved.
+  await pickFuture(page, generalRoadV2026.label);
+  await measureAtEverySize(page, testInfo, "ventures", async () => {
+    await load(page, "/ventures", (p) => p.getByRole("heading", { level: 1 }));
+    await expect(page.getByText("Loading…", { exact: true })).toHaveCount(0);
+  });
+});
+
+test("the example, Mara, stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "example-mara", () => load(page, "/example/mara", road));
+});
+
+test("the cockpit on road 0, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, generalRoadV2026.label);
+  await measureAtEverySize(page, testInfo, "cockpit-road-0", () => load(page, cockpit, road));
+});
+
+test("the cockpit on road 1, a first visit, stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, roadApprenticeToOwnShopAB.label);
+  await measureAtEverySize(page, testInfo, "cockpit-road-1", () => load(page, cockpit, road));
+});
+
+test("Your plan stays within its clutter budget", async ({ page }, testInfo) => {
+  const cockpit = await pickFuture(page, generalRoadV2026.label);
+  const plan = cockpit.replace("/cockpit", "/plan");
+  await measureAtEverySize(page, testInfo, "plan", () => load(page, plan, (p) => p.getByRole("heading", { level: 1 })));
+});

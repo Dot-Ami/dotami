@@ -51,7 +51,8 @@ export function VenturesPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
           ← Back
         </GhostLink>
@@ -66,7 +67,7 @@ export function VenturesPage() {
       </nav>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-10">
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header data-region="intro" className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
               Every future, <span className="font-normal italic text-maple">saved and cross-referenced.</span>
@@ -89,7 +90,7 @@ export function VenturesPage() {
         {ventures === null ? (
           <p className="mt-10 text-sm text-stone">Loading…</p>
         ) : ventures.length === 0 ? (
-          <div className="mt-10 rounded-lg border border-dashed border-rule p-8 text-center">
+          <div data-region="futures" className="mt-10 rounded-lg border border-dashed border-rule p-8 text-center">
             <p className="text-sm text-stone">Nothing saved yet. Describe one on the intake and press Save on its map.</p>
             <div className="mt-4 flex justify-center">
               <Pill variant="maple" onClick={anotherFuture}>
@@ -98,7 +99,7 @@ export function VenturesPage() {
             </div>
           </div>
         ) : (
-          <ul className="mt-8 space-y-4">
+          <ul data-region="futures" className="mt-8 space-y-4">
             {ventures.map((v) => (
               <VentureCard
                 key={v.id}

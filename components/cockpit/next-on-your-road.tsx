@@ -26,7 +26,8 @@ export function NextOnYourRoad({
   const next = nextOnYourRoad(evaluation, scenario);
   const label = (id: string) => road.steps.find((s) => s.id === id)?.label ?? id;
   return (
-    <section aria-label={words.next.title} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-rule bg-ink2 px-5 py-2 text-[12px]">
+    // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+    <section data-region="next-on-your-road" aria-label={words.next.title} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-rule bg-ink2 px-5 py-2 text-[12px]">
       <h2 className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone">
         {words.next.title} <span className="normal-case tracking-normal text-stone-dim">· {words.next.note}</span>
       </h2>

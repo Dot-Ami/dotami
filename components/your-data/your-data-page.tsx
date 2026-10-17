@@ -53,7 +53,8 @@ const SECTIONS = [
 export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/settings" tone="stone">
           ← Settings
         </GhostLink>
@@ -62,7 +63,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
-        <header>
+        <header data-region="intro">
           <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
             What DotAmi <span className="font-normal italic text-maple">knows about you</span>
           </h1>
@@ -79,7 +80,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
           </p>
         ) : (
           <>
-            <nav aria-label="On this page" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
+            <nav data-region="on-this-page" aria-label="On this page" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
               {SECTIONS.map((s) => (
                 <a
                   key={s.id}
@@ -199,7 +200,7 @@ export function YourDataPage({ holdings }: { holdings: Holdings | null }) {
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6">
+    <section id={id} data-region={id} aria-labelledby={`${id}-title`} className="scroll-mt-6">
       <h2 id={`${id}-title`} className="font-serif text-xl font-bold tracking-tight text-paper">
         {title}
       </h2>

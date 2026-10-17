@@ -301,6 +301,24 @@ and the maintainer's six decisions of 2026-10-11:
   - [ ] 29f: `npm run eval:intent`, the AI parser on the developer's own key, never in CI
   - [x] 29g: the rule that a new road or screen adds 10 ideas that should reach it and passes the harness
     ([engines/roads.md](engines/roads.md) rule 13, [CONTRIBUTING.md](../CONTRIBUTING.md))
+- 🔄 **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
+  with testing any idea: a calm first view, enforced by a limit on how busy a screen can get.
+  - [x] The layout rule: one primary thing per screen (on the cockpit, the road); new features open in the
+    right-hand panel or the step panel, never as a new region; the first visit shows the least; everything
+    folds and is remembered; and where each planned feature lands
+    ([ui-spec/README.md](ui-spec/README.md), "The layout rule")
+  - [x] The clutter limit: a browser test measures ten main screens at phone, tablet and laptop sizes
+    (regions, controls in the first window, text sizes, the smallest text) and fails when one goes over its
+    budget in `e2e/budgets.ts`, or shows a block with no region mark; the budgets start at today's numbers
+    and can only go down
+  - [ ] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
+    visit*): road and skills on, later columns folded into *The road ahead*, one coach line; Compare,
+    *Others in this line of work* and *About this job* behind one *Look closer* menu; the last overlay
+    remembered. Lowers the cockpit's budgets to at most 5 regions and 20 controls on a laptop, 3 and 12 on a
+    phone
+  - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
+  - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
+    the components
 
 ## 7 — The desktop app (one download, everything on your computer)
 
