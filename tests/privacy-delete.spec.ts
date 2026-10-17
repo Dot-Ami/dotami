@@ -356,6 +356,24 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(entry.removedBy).toMatch(/deleted with the idea|Deleting your ideas/i);
   });
 
+  it("the screen specs keep up: delete-menu.md lists every box in the menu's order, and _index.md names each card that is about other people", () => {
+    // CLAUDE.md: "Change the control, change the file, same commit." A box added to DELETE_MENU without its
+    // entry in the spec was missed once (#178), so the spec's list of boxes is read back here.
+    const straight = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+    const menuSpec = straight(readFileSync(path.join(process.cwd(), "docs/ui-spec/your-data/delete-menu.md"), "utf8"));
+    // The boxes are the bold items of the menu's list (three-space indent, under "2. **The menu**").
+    const listed = [...menuSpec.matchAll(/^ {3}- \*\*(.+?)\*\*/gm)].map((m) => m[1]);
+    expect(listed).toEqual(DELETE_MENU.map((e) => straight(e.label)));
+
+    // A card that can hold something about other people draws an "About other people" line; the page's spec
+    // names the card and the line.
+    const pageSpec = straight(readFileSync(path.join(process.cwd(), "docs/ui-spec/your-data/_index.md"), "utf8"));
+    const aboutOthers = TABLES.filter((t) => t.aboutOthers);
+    expect(aboutOthers.length).toBeGreaterThan(0);
+    expect(pageSpec).toContain("About other people");
+    for (const t of aboutOthers) expect(pageSpec).toContain(`"${straight(t.name)}"`);
+  });
+
   it("says what goes with each box and has a Learn more for it; a box not built yet deletes nothing", () => {
     for (const e of DELETE_MENU) {
       expect(e.label.trim()).not.toBe("");
