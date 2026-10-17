@@ -56,8 +56,13 @@ const m = (regions: number, controls: number, textSizes: number, smallestTextPx:
 });
 
 /**
- * What each screen measured on 2026-10-17 (main 6f1aa3f plus the `data-region` marks), in Chromium on
- * Windows, the larger of this spec run on its own and in the full suite. A record: never edit it.
+ * What each screen measured on 2026-10-17 (main 6f1aa3f plus the `data-region` marks), as the gate measures
+ * it: in Chromium on Ubuntu, in CI's Browser tests job (run 39061924221), the full suite. A record: never
+ * edit it.
+ *
+ * Chromium on Windows measured the same everywhere (on its own and in the full suite, the larger kept) but
+ * at one place: the cockpit on road 1 at laptop size, 30 controls in the first window where Ubuntu has 27.
+ * The gate's number is the one kept; `WINDOWS_EXTRA` below lets a local run on Windows pass.
  */
 export const BASELINE: ClutterTable = {
   "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
@@ -68,7 +73,7 @@ export const BASELINE: ClutterTable = {
   "your-data": { phone: m(9, 10, 11, 9.5), tablet: m(9, 12, 11, 9.5), laptop: m(9, 11, 11, 9.5) },
   "example-mara": { phone: m(9, 13, 11, 8.5), tablet: m(10, 26, 14, 8.5), laptop: m(10, 23, 14, 8.5) },
   "cockpit-road-0": { phone: m(8, 19, 12, 8), tablet: m(9, 42, 15, 8), laptop: m(9, 37, 15, 8) },
-  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 38, 14, 8.5), laptop: m(9, 30, 14, 8.5) },
+  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 38, 14, 8.5), laptop: m(9, 27, 14, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
 
@@ -86,6 +91,20 @@ export const BUDGETS: ClutterTable = {
   "your-data": { phone: m(9, 10, 11, 9.5), tablet: m(9, 12, 11, 9.5), laptop: m(9, 11, 11, 9.5) },
   "example-mara": { phone: m(9, 13, 11, 8.5), tablet: m(10, 26, 14, 8.5), laptop: m(10, 23, 14, 8.5) },
   "cockpit-road-0": { phone: m(8, 19, 12, 8), tablet: m(9, 42, 15, 8), laptop: m(9, 37, 15, 8) },
-  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 38, 14, 8.5), laptop: m(9, 30, 14, 8.5) },
+  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 38, 14, 8.5), laptop: m(9, 27, 14, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
+};
+
+/** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */
+export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>;
+
+/**
+ * Where Chromium on Windows draws a screen differently from the gate, the extra it measures over the budget
+ * there. Added to the budget only when the browser test runs on Windows, so a local run there passes on an
+ * unchanged screen; CI runs on Ubuntu and never reads this, so it never loosens the gate. Measured on
+ * 2026-10-17: road 1 at laptop size, 30 controls on Windows (three runs, on its own and in the full suite)
+ * and 27 on Ubuntu (CI run 39061924221). When a change makes the two agree, take its line out.
+ */
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
+  "cockpit-road-1": { laptop: { controls: 3 } },
 };

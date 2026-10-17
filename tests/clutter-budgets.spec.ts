@@ -8,13 +8,13 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { BASELINE, BUDGETS, SCREENS, WIDTHS } from "../e2e/budgets";
+import { BASELINE, BUDGETS, SCREENS, WIDTHS, WINDOWS_EXTRA } from "../e2e/budgets";
 
 /**
  * The baseline as recorded on 2026-10-17. The baseline is a record, so it never changes: this fails on any edit
  * to it, which would otherwise let a budget rise with it.
  */
-const BASELINE_SHA256 = "5e76571033619394f381bc6292ffa7458cdd5e0dcca1b54763280be8dc76d57a";
+const BASELINE_SHA256 = "f0c673671f47416cbb51f71408989c36d633f0ddbfd3ccae5b2c53994724b070";
 
 const sizes = WIDTHS.map((w) => w.id);
 
@@ -43,6 +43,22 @@ describe("the clutter budgets (e2e/budgets.ts)", () => {
       }
     }
     expect(over).toEqual([]);
+  });
+
+  it("add a Windows extra only on a real screen and size, and only as a whole number above zero", () => {
+    // WINDOWS_EXTRA is read only on Windows, never by CI, so it can't loosen the gate; this keeps it to the
+    // shape the browser test expects.
+    const wrong: string[] = [];
+    for (const [screen, bySize] of Object.entries(WINDOWS_EXTRA)) {
+      if (!(SCREENS as readonly string[]).includes(screen)) wrong.push(`${screen}: not a screen`);
+      for (const [size, extra] of Object.entries(bySize ?? {})) {
+        if (!(sizes as readonly string[]).includes(size)) wrong.push(`${screen} ${size}: not a size`);
+        for (const [measure, value] of Object.entries(extra ?? {})) {
+          if (!Number.isInteger(value) || value <= 0) wrong.push(`${screen} ${size} ${measure}: ${value}`);
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
   });
 
   it("keep the baseline exactly as it was recorded", () => {

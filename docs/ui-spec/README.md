@@ -54,6 +54,11 @@ limit is above its baseline, or the smallest text below it. A screen over its li
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`. The test saves a screenshot of each screen at each width with its results.
 
+The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Chromium on Windows measured
+the same on 2026-10-17 at every screen and size but one: the cockpit on road 1 at 1280×720 has 30 controls
+in its first window there and 27 on Ubuntu. `WINDOWS_EXTRA` in `e2e/budgets.ts` adds those 3 for a run on
+Windows only, so a local run there passes on an unchanged screen; CI never reads it.
+
 ## Convention
 
 | Layer | Location | Purpose |

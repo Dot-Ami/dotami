@@ -12,7 +12,8 @@
  *
  * Each is held to its budget in `e2e/budgets.ts`, which can only go down. A screenshot of each screen at each
  * size, and what was counted (the regions' names, each control's name, the sizes), are saved with the
- * results (test-results/, and the HTML report on CI).
+ * results (test-results/; CI keeps only the log lines, one per screen and size). The budgets are what CI
+ * measures on Ubuntu; a run on Windows adds the few extras recorded in `WINDOWS_EXTRA`.
  *
  * The cockpit is measured on a fresh idea straight after *Pick a future*, the designed first visit
  * (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on road 0 and on road 1.
@@ -28,7 +29,7 @@ import { expect, test, type Locator, type Page, type TestInfo } from "@playwrigh
 
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
-import { BUDGETS, WIDTHS, type Clutter, type ScreenId } from "./budgets";
+import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
 
 const Q1 = /what do you want your work and life to look like/;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
@@ -168,9 +169,18 @@ async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: Screen
       `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
     );
 
-    const budget = BUDGETS[screen]?.[size.id];
-    expect.soft(budget, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
-    if (!budget) continue;
+    const gate = BUDGETS[screen]?.[size.id];
+    expect.soft(gate, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
+    if (!gate) continue;
+    // The budgets are what CI (Ubuntu) measures; on Windows, where Chromium draws a few screens a little
+    // differently, the extra recorded for that screen is added (e2e/budgets.ts, WINDOWS_EXTRA).
+    const extra = process.platform === "win32" ? (WINDOWS_EXTRA[screen]?.[size.id] ?? {}) : {};
+    const budget: Clutter = {
+      ...gate,
+      regions: gate.regions + (extra.regions ?? 0),
+      controls: gate.controls + (extra.controls ?? 0),
+      textSizes: gate.textSizes + (extra.textSizes ?? 0),
+    };
     expect.soft(measured.regions, `${label}: regions (${measured.regionNames.join(", ")})`).toBeLessThanOrEqual(budget.regions);
     expect.soft(measured.controls, `${label}: controls in the first window (${measured.controlNames.join(" | ")})`).toBeLessThanOrEqual(
       budget.controls,
