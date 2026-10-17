@@ -172,15 +172,17 @@ function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
     for (const found of timeWordsIn([piece.text, ...c.dateWords].join("\u0000"))) fail("no-time-words", placeOf(piece), `${piece.where}: ${found}`);
   }
 
-  // 5. Every path ends somewhere honest.
+  // 5. Every path ends somewhere honest. The checks on the run as a whole name their way in as the subject:
+  // the typed and picked ways reach the road through different code, so a failure on one is never the
+  // same failure as a known gap on the other.
   const plan = c.final.plan;
   if (c.final.evaluation.steps.length === 0 || !plan.road.future || !plan.road.picked) {
-    fail("ends:road-drawn", "", `${c.way}: no road drawn, or no line saying why (“${plan.road.picked}”)`);
+    fail("ends:road-drawn", c.way, `${c.way}: no road drawn, or no line saying why (“${plan.road.picked}”)`);
   }
   for (const [when, state] of [["as it opens", c.fresh], ["after the answers", c.final]] as const) {
     const done = state.evaluation.steps.every((s) => s.state === "not-on-your-path" || s.status === "done");
     if (state.next.length === 0 && state.notTold.length === 0 && !done) {
-      fail("ends:next-question-or-done", when, `${c.way} ${when}: no next step, no question asked, and the road isn't done`);
+      fail("ends:next-question-or-done", `${c.way} › ${when}`, `${c.way} ${when}: no next step, no question asked, and the road isn't done`);
     }
   }
   for (const fork of c.road.forks) {
@@ -198,18 +200,22 @@ function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
   const province = c.final.input.scenario.profile.province;
   const places: readonly string[] = c.road.provinces;
   const writtenHere = places.includes(province) || places.includes("CA");
-  if (!writtenHere) fail("ends:road-written-for-place", "", `${c.way}: drawn on ${c.road.id}, written for ${places.join(", ")}; the idea is in ${province}`);
+  if (!writtenHere) fail("ends:road-written-for-place", c.way, `${c.way}: drawn on ${c.road.id}, written for ${places.join(", ")}; the idea is in ${province}`);
   const expected = run.idea.road === "none-written-yet" ? null : ROAD_IDS[run.idea.road];
-  if (writtenHere && expected !== c.road.id) {
+  // Typed: the road written for the idea, wherever it is written for. Picked: the road the person picked
+  // on Pick a future (the one written for the idea), kept as their pick. Drawn as "No future picked", even
+  // on the right road, it fell back to the general road without saying so.
+  const silent = c.way === "picked" ? expected !== c.road.id || !c.roadChosen : writtenHere && expected !== c.road.id;
+  if (silent) {
     fail(
       "ends:no-silent-fallback",
-      "",
-      `${c.way}: drawn on ${c.road.id} (“${plan.road.picked}”), but the road written for this idea is ${expected ?? "none yet"}, and nothing says so`,
+      c.way,
+      `${c.way}: drawn on ${c.road.id}${c.roadChosen ? "" : " as no future picked"} (“${plan.road.picked}”), but the road written for this idea is ${expected ?? "none yet"}, and nothing says so`,
     );
   }
 
   // 6. Nothing derived downstream: no job picked for the person, the place they picked kept as picked.
-  if (c.fresh.input.job || c.final.input.job || plan.skills.job) fail("nothing-derived:job", "", `${c.way}: a job is set though the person picked none`);
+  if (c.fresh.input.job || c.final.input.job || plan.skills.job) fail("nothing-derived:job", c.way, `${c.way}: a job is set though the person picked none`);
   if (c.way === "typed" && province !== run.province) fail("nothing-derived:place-kept", "", `typed: the person picked ${run.province}, the cockpit reads ${province}`);
   if (c.way === "picked") {
     const p = c.fresh.input.scenario.profile;
@@ -228,7 +234,8 @@ export function checkRun(run: IdeaRun): Failure[] {
   const failures: Failure[] = [];
   const seen = new Set<string>();
   const fail: Fail = (invariant, subject, detail) => {
-    // One failure per idea, invariant and subject: the same line in the typed and picked runs is one.
+    // One failure per idea, invariant and subject: the same line in the typed and picked runs is one. The
+    // checks on a run as a whole carry their way in as the subject, so they are never merged this way.
     const failure = { ideaId: run.idea.id, invariant, subject, detail };
     if (seen.has(gapKey(failure))) return;
     seen.add(gapKey(failure));

@@ -9,6 +9,7 @@ import { destinationReceipt, incomeReceipt, lookingForReceipt, placeReceipt } fr
 import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import type { PersonFigureView } from "@/lib/futures/person-figures";
 import { roadForFuture, SHIPPED_ROADS_CATALOG, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
+import { firstSaveFromIntake } from "@/lib/journey/first-save";
 import { applyIntentToDraft, type IntentParseResult } from "@/lib/journey/intent";
 import { parseIntentFallback } from "@/lib/journey/intent-fallback";
 import { defaultIntakeDraft, type IntakeDraft } from "@/lib/journey/types";
@@ -547,9 +548,9 @@ function typedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Pick<
     },
     `scenario-${idea.id}`,
   );
-  // The intake's first save keeps no road (lib/journey/first-save.ts), so the saved idea is drawn as
-  // lib/futures/future.ts reads it: roadForFuture with no road id, and "chosen" only when its id was kept.
-  const roadId: string | null = null;
+  // The road the intake's first save keeps (lib/journey/first-save.ts: today none), drawn as
+  // lib/futures/future.ts reads it: roadForFuture with that id, and "chosen" only when its id was kept.
+  const roadId: string | null = firstSaveFromIntake(draft, HARNESS_TODAY).roadId ?? null;
   const road = roadForFuture(SHIPPED_ROADS_CATALOG, roadId);
   const roadChosen = roadId !== null && roadId === road.id;
   const typed = runCockpit(

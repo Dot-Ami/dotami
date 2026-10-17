@@ -29,7 +29,7 @@ const MAINTAINERS_CALL = "none yet: found by S2.5.29b, the maintainer's call";
 export const KNOWN_GAPS: readonly KnownGap[] = [
   {
     invariant: "ends:road-written-for-place",
-    subject: "",
+    subject: "typed",
     kind: "planned",
     story: "S2.5.28d (outside Alberta, honestly)",
     why: "Every typed idea is drawn on road 0, which is written for Alberta only, wherever the idea is. The plan's goal line says “written for AB; this idea is in …”, but every step still reads as Alberta's. 28d draws the federal steps that apply everywhere and says “Written for Alberta” with the person's own province named.",
@@ -45,7 +45,7 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
   },
   {
     invariant: "ends:no-silent-fallback",
-    subject: "",
+    subject: "typed",
     kind: "planned",
     story: "S2.5.28c (honest road match)",
     why: "Nothing matches a typed idea to a road, so an Alberta idea with no road written for it (a career, work the law forbids) and a cabinetmaker idea (road 1 is written for it) all land on road 0 with only “No future picked: this idea is drawn on the general road.” 28c puts the road written for the picked job first, or says “No road is written for this job yet”.",
