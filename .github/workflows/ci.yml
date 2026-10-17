@@ -30,6 +30,12 @@ jobs:
       DATABASE_URL: file:./ci.db
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Two commits deep, so the checked-out commit's first parent is here: main, on a pull request
+          # (checked out as the branch merged into main), or main before this push.
+          # tests/clutter-budgets.spec.ts compares the clutter budgets with main's, so a budget once
+          # lowered can't be raised again.
+          fetch-depth: 2
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:

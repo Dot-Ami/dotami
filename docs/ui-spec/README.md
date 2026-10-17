@@ -50,7 +50,9 @@ you* and the example, Mara) at 375×812, 768×1024 and 1280×720, and measures f
 
 The limits are in `e2e/budgets.ts`. They started at what each screen measured on 2026-10-17 (the baseline,
 kept beside them), and they can only go down: a unit test (`tests/clutter-budgets.spec.ts`) fails if any
-limit is above its baseline, or the smallest text below it. A screen over its limit fails the browser
+limit is above its baseline or above what it is on main, or the smallest text below either, so a limit once
+lowered can't be raised back later (CI compares with main; locally, with where the branch left
+`origin/main`). A screen over its limit fails the browser
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`. The test saves a screenshot of each screen at each width with its results.
 

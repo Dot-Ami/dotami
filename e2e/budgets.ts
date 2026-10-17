@@ -6,9 +6,9 @@
  * Two tables:
  * - `BASELINE` is what each screen measured on the day the limit was set. It is a record: never edit it.
  * - `BUDGETS` is the limit each screen is held to. It starts equal to the baseline and can only go down
- *   (the smallest text size can only go up): `tests/clutter-budgets.spec.ts` fails otherwise. When a change
- *   makes a screen calmer, lower its budget in the same pull request, so the room it freed can't fill up
- *   again unseen.
+ *   (the smallest text size can only go up): `tests/clutter-budgets.spec.ts` fails on a budget above the
+ *   baseline or above main's. When a change makes a screen calmer, lower its budget in the same pull
+ *   request, so the room it freed can't fill up again unseen; once that is on main, it can't be raised back.
  */
 
 /** The screens measured, in the order the spec opens them. */

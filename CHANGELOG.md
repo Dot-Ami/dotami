@@ -18,8 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the least; everything folds and is remembered; with a table of where each planned feature lands. The
   limit: a browser test opens ten main screens at phone, tablet and laptop sizes and counts the regions, the
   controls in the first window, the text sizes and the smallest text; it fails when a screen goes over its
-  budget. The budgets start at what the screens measure today and can only go down; the calm first view
-  lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
+  budget. The budgets start at what the screens measure today on CI and can only go down (a unit test
+  compares them with the baseline and with main's, so a budget once lowered can't be raised back); the calm
+  first view lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
   test reads).
 - **Others in this line of work: keep a list of businesses you're watching** (the maintainer, 2026-10-17:
   *"yah, this is fine. Lets do it"*) — a new panel in the cockpit, opened from the goal bar on every road and
