@@ -7,7 +7,8 @@
  *
  * The main path: add a business with a link, a note and an ad link with the day seen; add another; edit one;
  * remove one; a javascript: link refused on screen; the list in the order added, kept after a reload. Every
- * request the page makes goes to DotAmi's own server, and the panel is read with the verdict check.
+ * request the page makes goes to DotAmi's own server, and the panel is read with the verdict check. And in an
+ * edit, removing the middle one of three ad links keeps the other two, each with its own day.
  */
 import path from "node:path";
 
@@ -201,4 +202,74 @@ test("today's Alberta road: the panel opens from the goal bar too", async ({ pag
   await expect(panel(page)).toBeVisible();
   await expect(watchedList(page).getByRole("listitem")).toHaveCount(0);
   expect(findVerdicts(await panel(page).innerText())).toEqual([]);
+});
+
+test("removing one ad link in the middle keeps the others, each with its own day, on screen and in the file", async ({ page }) => {
+  const stamp = Date.now();
+  const ventureId = await saveIdea(page, `Invented — landscape ad links ${stamp}`);
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const open = goalBar(page).getByRole("button", { name: REGION, exact: true });
+  await waitForReact(open);
+  await open.click();
+
+  // A business with three ad links, each seen on its own day.
+  const name = `Invented Shop C ${stamp}`;
+  await panel(page).getByRole("button", { name: "+ Add a business" }).click();
+  await addForm(page).getByLabel("Name").fill(name);
+  for (const n of [1, 2, 3]) {
+    await addForm(page).getByRole("button", { name: "+ Add an ad link" }).click();
+    await addForm(page).getByLabel(`Ad link ${n}`, { exact: true }).fill(`https://example.com/ads/c-${n}`);
+    await addForm(page).getByLabel(`Day you saw ad link ${n}`).fill(`2026-10-0${n}`);
+  }
+  await addForm(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(panel(page).getByRole("status")).toContainText("Added to your list.");
+
+  // What the file holds for this idea's list, read straight from the data file. Polled: the status line can
+  // already say "Saved." from the edit before, so it doesn't by itself mean this save has landed.
+  const kept = () =>
+    withE2eDb(async (db) => {
+      const rows = await db.watchedBusiness.findMany({ where: { ventureId } });
+      return rows.map((r) => (typeof r.adLinks === "string" ? JSON.parse(r.adLinks) : r.adLinks));
+    });
+  await expect.poll(kept).toEqual([
+    [
+      { url: "https://example.com/ads/c-1", seenOn: "2026-10-01" },
+      { url: "https://example.com/ads/c-2", seenOn: "2026-10-02" },
+      { url: "https://example.com/ads/c-3", seenOn: "2026-10-03" },
+    ],
+  ]);
+
+  // Edit, and remove the second: the third moves up to "Ad link 2" and brings its own link and day with it.
+  await business(page, name).getByRole("button", { name: `Edit ${name}` }).click();
+  let editForm = panel(page).getByRole("form", { name: `Edit ${name}` });
+  await editForm.getByRole("button", { name: "Remove ad link 2", exact: true }).click();
+  await expect(editForm.getByLabel("Ad link 3", { exact: true })).toHaveCount(0);
+  await expect(editForm.getByLabel("Ad link 1", { exact: true })).toHaveValue("https://example.com/ads/c-1");
+  await expect(editForm.getByLabel("Day you saw ad link 1")).toHaveValue("2026-10-01");
+  await expect(editForm.getByLabel("Ad link 2", { exact: true })).toHaveValue("https://example.com/ads/c-3");
+  await expect(editForm.getByLabel("Day you saw ad link 2")).toHaveValue("2026-10-03");
+  await editForm.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(panel(page).getByRole("status")).toContainText("Saved.");
+  await expect(business(page, name)).not.toContainText("ads/c-2");
+  await expect(business(page, name)).toContainText("seen 2026-10-01");
+  await expect(business(page, name)).toContainText("seen 2026-10-03");
+  await expect.poll(kept).toEqual([
+    [
+      { url: "https://example.com/ads/c-1", seenOn: "2026-10-01" },
+      { url: "https://example.com/ads/c-3", seenOn: "2026-10-03" },
+    ],
+  ]);
+
+  // A later edit that changes only the first link keeps the other one and its day as they were.
+  await business(page, name).getByRole("button", { name: `Edit ${name}` }).click();
+  editForm = panel(page).getByRole("form", { name: `Edit ${name}` });
+  await editForm.getByLabel("Ad link 1", { exact: true }).fill("https://example.com/ads/c-1b");
+  await editForm.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(panel(page).getByRole("status")).toContainText("Saved.");
+  await expect.poll(kept).toEqual([
+    [
+      { url: "https://example.com/ads/c-1b", seenOn: "2026-10-01" },
+      { url: "https://example.com/ads/c-3", seenOn: "2026-10-03" },
+    ],
+  ]);
 });

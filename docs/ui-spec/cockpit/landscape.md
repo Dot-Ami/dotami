@@ -141,8 +141,10 @@ watch, with your notes. On this computer only; deleted with the idea."*
 `tests/watched-businesses.spec.ts` (storage and routes: order, caps, the link-scheme control, the window check,
 the body cap, the rate limit, deleted with the idea), `tests/landscape-words.spec.ts` (the words),
 `tests/desktop-migrate.spec.ts` (the new table only; ideas, figures and links survive),
-`tests/privacy-delete.spec.ts`; in the browser `e2e/landscape.spec.ts` (add, edit, remove, a `javascript:` link
-refused, kept after a reload, opened from the step, no request off the computer), `e2e/journey.spec.ts`,
+`tests/privacy-delete.spec.ts` (a real watched business: deleted with its idea, or alone from its own box, its
+note gone from the file's bytes); in the browser `e2e/landscape.spec.ts` (add, edit, remove, a `javascript:` link
+refused, kept after a reload, opened from the step, no request off the computer, and **Remove ad link 2** of
+three keeping links 1 and 3 with their own days), `e2e/journey.spec.ts`,
 `e2e/no-verdict.spec.ts` and `e2e/example-future.spec.ts`.
 
 ## Downstream consumers
