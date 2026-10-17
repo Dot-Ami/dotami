@@ -124,13 +124,14 @@ test("the apprentice road: open the panel, add, edit and remove businesses you'r
   await addForm(page).getByRole("button", { name: "Save", exact: true }).click();
   await expect(panel(page).getByRole("status")).toContainText("Added to your list.");
   await expect(business(page, first)).toBeVisible();
-  const shopLink = business(page, first).getByRole("link", { name: /example\.com\/shop-a/ });
+  // The link's text is the address itself; matched exactly (an open-ended pattern trips CodeQL's anchor check).
+  const shopLink = business(page, first).getByRole("link", { name: "https://example.com/shop-a", exact: true });
   await expect(shopLink).toHaveAttribute("href", "https://example.com/shop-a");
   await expect(shopLink).toHaveAttribute("rel", "noopener noreferrer");
   await expect(shopLink).toHaveAttribute("target", "_blank");
   await expect(business(page, first)).toContainText("Saw their van downtown.");
   await expect(business(page, first)).toContainText("seen 2026-10-01");
-  await expect(business(page, first).getByRole("link", { name: /example\.com\/ads\/a-1/ })).toHaveAttribute("href", "https://example.com/ads/a-1");
+  await expect(business(page, first).getByRole("link", { name: "https://example.com/ads/a-1", exact: true })).toHaveAttribute("href", "https://example.com/ads/a-1");
 
   // A javascript: link is refused on screen, and nothing is added.
   await panel(page).getByRole("button", { name: "+ Add a business" }).click();
