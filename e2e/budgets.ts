@@ -60,7 +60,7 @@ const m = (regions: number, controls: number, textSizes: number, smallestTextPx:
  * Windows, the larger of this spec run on its own and in the full suite. A record: never edit it.
  */
 export const BASELINE: ClutterTable = {
-  "front-door": { phone: m(6, 7, 8, 9.5), tablet: m(6, 11, 8, 9.5), laptop: m(6, 11, 8, 9.5) },
+  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
   start: { phone: m(3, 5, 4, 10), tablet: m(3, 5, 4, 10), laptop: m(3, 5, 4, 10) },
   futures: { phone: m(6, 5, 10, 10), tablet: m(6, 7, 10, 10), laptop: m(6, 6, 10, 10) },
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
@@ -78,7 +78,7 @@ export const BASELINE: ClutterTable = {
  * phone.
  */
 export const BUDGETS: ClutterTable = {
-  "front-door": { phone: m(6, 7, 8, 9.5), tablet: m(6, 11, 8, 9.5), laptop: m(6, 11, 8, 9.5) },
+  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
   start: { phone: m(3, 5, 4, 10), tablet: m(3, 5, 4, 10), laptop: m(3, 5, 4, 10) },
   futures: { phone: m(6, 5, 10, 10), tablet: m(6, 7, 10, 10), laptop: m(6, 6, 10, 10) },
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },

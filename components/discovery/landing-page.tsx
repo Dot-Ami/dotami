@@ -104,9 +104,14 @@ export function LandingPage() {
           </div>
 
           {/* The three doors (decision 6 of 2026-10-11), in this order: the dream first. Side by side on a
-              wide window, one under the other on a narrow one. */}
-          <ul aria-label={frontDoorWords.doorsLabel} className="mt-8 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]">
-            <li data-region="door-dream" className="flex flex-col gap-3 rounded-[10px] border border-maple-soft bg-ink2 p-5">
+              wide window, one under the other on a narrow one. One list, so one region for the clutter limit
+              (the layout rule: items of one list are one region together). */}
+          <ul
+            data-region="doors"
+            aria-label={frontDoorWords.doorsLabel}
+            className="mt-8 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]"
+          >
+            <li className="flex flex-col gap-3 rounded-[10px] border border-maple-soft bg-ink2 p-5">
               <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.dream.title}</h2>
               <p className="text-[13px] leading-relaxed text-paper-dim">{doors.dream.body}</p>
               <p className="text-[12px] text-stone">{doors.dream.stays}</p>
@@ -120,7 +125,7 @@ export function LandingPage() {
               </div>
             </li>
 
-            <li data-region="door-idea" className="flex flex-col gap-3 rounded-[10px] border border-rule bg-ink2 p-5">
+            <li className="flex flex-col gap-3 rounded-[10px] border border-rule bg-ink2 p-5">
               <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.idea.title}</h2>
               <p className="text-[13px] leading-relaxed text-paper-dim">{doors.idea.body}</p>
               {/* Today's box, unchanged: everything it did, it still does (docs/ui-spec/landing/01-free-text-entry.md). */}
@@ -164,7 +169,7 @@ export function LandingPage() {
             </li>
 
             {/* The invented example future, read-only: it keeps nothing and touches no storage. */}
-            <li data-region="door-example" className="flex flex-col gap-3 rounded-[10px] border border-dashed border-rule bg-ink p-5">
+            <li className="flex flex-col gap-3 rounded-[10px] border border-dashed border-rule bg-ink p-5">
               <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.example.title}</h2>
               <p className="text-[13px] leading-relaxed text-paper-dim">{doors.example.body}</p>
               <p className="self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone-dim">
