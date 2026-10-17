@@ -306,8 +306,13 @@ and the maintainer's six decisions of 2026-10-11:
     on the side that holds the step); no map pick asked that no rule reads (GST timing for
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
-    Still listed for the maintainer: equipment on a picked future can't be answered, and the front door's
-    "in a few years"
+    Still listed for the maintainer: equipment on a picked future can't be answered, the front door's
+    "in a few years", and "Incorporating" on a future picked on road 0 can't light at all: the rule compares
+    "I'd incorporate at" with a third-year sales estimate, Pick a future keeps none (it saves 0,
+    `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
+    sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that
+    estimate (second review of PR #182, pinned in `tests/cockpit-told.spec.ts`), but the panel's box still
+    takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call
 - 🔄 **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
   with testing any idea: a calm first view, enforced by a limit on how busy a screen can get.
   - [x] The layout rule: one primary thing per screen (on the cockpit, the road); new features open in the

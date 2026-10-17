@@ -35,7 +35,8 @@ ladder, the save line). Two regions:
   your own *I'd incorporate at* number (road 0), only where some answer changes the road: once the idea
   has a third-year sales estimate, the number it is compared with, and while Incorporation timing holds
   *Incorporating* (with Liability / SR&ED picked the step is off the path whatever the number) (since 2026-10-17; its line: *“Incorporating” lighting once your third-year
-  sales estimate reaches your own number*; the step's panel takes the number at any time). At most five show; **n more** shows the rest. Each row
+  sales estimate reaches your own number*; the step's panel takes the number at any time, and without an
+  estimate the step says it needs one, which a future picked on road 0 can't give yet: `docs/task-list.md`). At most five show; **n more** shows the rest. Each row
   has **Answer** (or **Open the list** / **Compare the endings** for the rows answered elsewhere) and
   **I don't know**. With none missing: *Nothing missing that DotAmi asks here.*
   Rows the person said *I don't know* to fold into *n you don't know yet* with **Show them**.

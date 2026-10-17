@@ -640,7 +640,10 @@ answer, before and after it or with and without it. Choices made while building 
   and compares the number with the idea's third-year sales estimate, so it is asked only with that
   estimate and with Incorporation timing on the side that holds *Incorporating* (the review of PR #182
   added the pick), as § 3's table planned (*"a Not told yet row once a sales what-if is kept"*), its line
-  naming that comparison. The step's panel still takes the number at any time.)* Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
+  naming that comparison. The step's panel still takes the number at any time. That hides no dead end: a
+  future picked on road 0 keeps no third-year estimate and nothing in the cockpit asks for one, so there
+  *Incorporating* can't light; its card and panel say it needs that estimate (second review of PR #182),
+  and whether the cockpit asks for one is listed for the maintainer in `docs/task-list.md`.)* Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
   answer feeds (a gauge part, a step that can light, the map reading your pick instead of its default),
   never a promise of a result. At most five show; the rest are behind *n more*. Every row has **I don't
   know**, which keeps nothing: it folds the row away for this visit (*n you don't know yet · Show them*),
