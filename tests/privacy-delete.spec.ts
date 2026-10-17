@@ -21,6 +21,7 @@ import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario
 import { recordRetentionV2026 } from "@/lib/engines/compliance/v2026";
 import { chooseRoad } from "@/lib/futures/future";
 import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-figures";
+import { addWatched } from "@/lib/landscape/watched";
 import { markSkill } from "@/lib/futures/skill-marks";
 import { setStepProgress } from "@/lib/futures/step-progress";
 import { addTypedStatement } from "@/lib/person/statements";
@@ -88,6 +89,14 @@ async function seed(prisma: PrismaClient) {
   await prisma.sourceAccount.create({ data: { name: "Business chequing", allowance: "always", agreedAt: new Date("2026-09-01T00:00:00Z") } });
   await prisma.sourceAccount.create({
     data: { name: "Visa ending 1234", allowance: "once", agreedAt: new Date("2026-09-02T00:00:00Z"), retiredAt: new Date("2026-09-03T00:00:00Z") },
+  });
+  // 2026-10-17: a business the person is watching for the first idea. Its note can name another person (an
+  // owner trading under their own name), so it holds the marker and has to leave the file's bytes too.
+  await addWatched(prisma, a, {
+    nameAsTyped: `watched ${MARKER}`,
+    url: "https://example.com/",
+    note: `watched note ${MARKER}`,
+    adLinks: [{ url: "https://example.com/ad", seenOn: "2026-09-01" }],
   });
   for (const ventureId of [a, b]) {
     await prisma.figure.create({
@@ -487,6 +496,28 @@ describe("deleteData", () => {
     expect(readFileSync(file).includes(Buffer.from(`skill ${MARKER}`))).toBe(false);
   });
 
+  it("businesses you're watching with a real row: their own box takes the list and nothing else, and the note leaves the file's bytes", async () => {
+    const { prisma, file } = makeDb("watched-rows");
+    await seed(prisma);
+    const before = await countAll(prisma);
+    expect(before.WatchedBusiness).toBe(1);
+
+    const seen = await seenFor(prisma, ["watched-businesses"]);
+    expect(seen).toEqual({ WatchedBusiness: 1 });
+    const result = await deleteData(prisma, { kinds: ["watched-businesses"], seen });
+    expect(result).toEqual({ status: "deleted", deleted: { WatchedBusiness: 1 }, left: { WatchedBusiness: 0 }, wiped: true });
+    // The ideas, and everything else, stay.
+    expect(await countAll(prisma)).toEqual({ ...before, WatchedBusiness: 0 });
+
+    // The person's note (which can name an owner) is gone from the file, while the other marked words, kept on
+    // purpose here, are still there: so the search would have found the note had it stayed.
+    await prisma.$disconnect();
+    const bytes = readFileSync(file);
+    expect(bytes.includes(Buffer.from(`watched note ${MARKER}`))).toBe(false);
+    expect(bytes.includes(Buffer.from(`watched ${MARKER}`))).toBe(false);
+    expect(bytes.includes(Buffer.from(`statement ${MARKER}`))).toBe(true);
+  });
+
   it("deleting ideas takes their links, map progress and figures, keeps every expense record (not attached yet), and leaves statements and settings", async () => {
     // The case that made the counts wrong: 2 records attached to an idea and 1 not attached.
     const { prisma } = makeDb("ideas");
@@ -500,12 +531,13 @@ describe("deleteData", () => {
     expect(before.Expense).toBe(3);
 
     // What the page shows and sends: whole-table counts for what goes, and how many records are attached.
-    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
+    // The first idea's watched business goes with it (2026-10-17).
+    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 1, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
     expect(await seenFor(prisma, ["ideas"])).toEqual(seen);
     const result = await deleteData(prisma, { kinds: ["ideas"], seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 1, Figure: 2 },
       left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, WatchedBusiness: 0, Figure: 0 },
       kept: { Expense: { unlinked: 2, total: 3 }, PersonStatement: { unlinked: 1, total: 2 } },
       wiped: true,
@@ -517,7 +549,7 @@ describe("deleteData", () => {
     });
 
     const after = await countAll(prisma);
-    expect(after).toEqual({ ...before, Venture: 0, VentureLink: 0, ScenarioState: 0, Figure: 0 });
+    expect(after).toEqual({ ...before, Venture: 0, VentureLink: 0, ScenarioState: 0, WatchedBusiness: 0, Figure: 0 });
     expect(after.Expense).toBe(3);
     expect(await prisma.expense.count({ where: { ventureId: { not: null } } })).toBe(0);
     expect((await prisma.expense.findUniqueOrThrow({ where: { id: loose.id } })).paidTo).toBe("Example Cafe");
@@ -551,11 +583,11 @@ describe("deleteData", () => {
     // The expense records are counted whole, once, and no "kept" count is asked for them. Their receipts
     // (none here) go with them. Statements aren't ticked, so the ones typed for an idea (none here,
     // 2026-10-11) are still counted as kept.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 1, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, Expense: 3, Receipt: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 1, Figure: 2, Expense: 3, Receipt: 0 },
       left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, WatchedBusiness: 0, Figure: 0, Expense: 0, Receipt: 0 },
       kept: { PersonStatement: { unlinked: 0, total: 2 } },
       wiped: true,
@@ -668,6 +700,7 @@ describe("the deleted words are gone from the file, not just hidden", () => {
     await prisma.figure.deleteMany();
     await prisma.expense.deleteMany();
     await prisma.ventureLink.deleteMany();
+    await prisma.watchedBusiness.deleteMany();
     await prisma.venture.updateMany({ data: { notes: "" } });
     await prisma.$disconnect();
     expect(markerOnDisk(folder)).toEqual(["dotami.db"]);
@@ -754,6 +787,7 @@ describe("on an encrypted data file, the deleted words are gone from the decrypt
     await prisma.expense.deleteMany();
     await prisma.ventureLink.deleteMany();
     await prisma.sourceAccount.deleteMany();
+    await prisma.watchedBusiness.deleteMany();
     await prisma.venture.updateMany({ data: { notes: "" } });
     await prisma.$disconnect();
     expect(imageHoldsMarker(file)).toBe(false);
