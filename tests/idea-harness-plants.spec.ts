@@ -19,7 +19,17 @@ const plants = vi.hoisted(() => ({
   moveToAlberta: false,
   /** *Next on your road* shows nothing, whatever is left on the road. */
   emptyNext: false,
+  /** "I'd incorporate at" keeps nothing: the cockpit's save of it leaves the idea as it was. */
+  dropIncorporateAt: false,
 }));
+
+vi.mock("@/lib/scenarios/branches", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/scenarios/branches")>();
+  return {
+    ...real,
+    setIncorporateAt: (...args: Parameters<typeof real.setIncorporateAt>) => (plants.dropIncorporateAt ? args[0] : real.setIncorporateAt(...args)),
+  };
+});
 
 vi.mock("@/lib/front-door/start-future", async (importOriginal) => {
   const real = await importOriginal<typeof import("@/lib/front-door/start-future")>();
@@ -66,6 +76,8 @@ const idea = (id: string) => IDEAS_V1.find((i) => i.id === id)!;
 const ROAD_0_IDEA = idea("idea-v1-0001");
 const ROAD_1_IDEA = idea("idea-v1-0046");
 const BC_IDEA = idea("idea-v1-0003");
+// An Alberta plumber on road 0 who typed a Year 3 number into the intake.
+const Y3_IDEA = idea("idea-v1-0051");
 
 /** The failure keys of one invariant that the plant adds to the idea's own run. */
 function addedKeys(target: typeof ROAD_0_IDEA, plant: keyof typeof plants, invariant: InvariantId, probeQuestions = false): string[] {
@@ -82,6 +94,7 @@ afterEach(() => {
   plants.deriveJob = false;
   plants.moveToAlberta = false;
   plants.emptyNext = false;
+  plants.dropIncorporateAt = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
@@ -109,6 +122,14 @@ describe("the harness fails on a planted product regression", () => {
     expect(addedKeys(ROAD_1_IDEA, "emptyNext", "ends:next-question-or-done", true)).toEqual([
       `${ROAD_1_IDEA.id} · ends:next-question-or-done · typed › after every question`,
       `${ROAD_1_IDEA.id} · ends:next-question-or-done · picked › after every question`,
+    ]);
+  });
+
+  it("“I'd incorporate at” broken for a person who gave a Year 3 number", () => {
+    // The plumber gave the intake's Year 3 box a number, so on the typed way the answer lights the step;
+    // their picked way already fails it (a known gap), and that must not hide the typed way's new failure.
+    expect(addedKeys(Y3_IDEA, "dropIncorporateAt", "ends:questions-change-something", true)).toEqual([
+      `${Y3_IDEA.id} · ends:questions-change-something · typed › incorporate-at`,
     ]);
   });
 

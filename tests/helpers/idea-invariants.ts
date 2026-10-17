@@ -205,9 +205,11 @@ function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
       }
     }
   }
+  // By way in: the typed way carries the intake's answers (the Year 3 box) and the picked way doesn't, so the
+  // same question can end on one way and not the other, and a known gap on one must not hide the other.
   for (const q of c.questions) {
     if (q.changes === 0) {
-      fail("ends:questions-change-something", q.id, `${c.way}: “Not told yet” asks “${q.id}”, and no answer to it changes anything on ${c.road.id}`);
+      fail("ends:questions-change-something", `${c.way} › ${q.id}`, `${c.way}: “Not told yet” asks “${q.id}”, and no answer to it changes anything on ${c.road.id}`);
     }
   }
   const province = c.final.input.scenario.profile.province;

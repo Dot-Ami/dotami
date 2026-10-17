@@ -243,9 +243,12 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
       );
     case "equipment":
       return [true, false].map((yes) => (k: Kept) => void (k.scenario = { ...k.scenario, profile: { ...k.scenario.profile, capitalPurchasePlanned: yes } }));
-    case "incorporate-at":
-      // Under and over a third-year number, were there one; the rule reads only that comparison.
-      return [80_000, 30_000].map((dollars) => (k: Kept) => void (k.scenario = setIncorporateAt(k.scenario, dollars)));
+    case "incorporate-at": {
+      // The rule compares the answer with the person's own third-year estimate: their estimate itself first
+      // (reaching it lights the step), then numbers under and over one, for an estimate left blank.
+      const y3 = scenario.profile.targetRevenueY3;
+      return [...(y3 > 0 ? [y3] : []), 80_000, 30_000].map((dollars) => (k: Kept) => void (k.scenario = setIncorporateAt(k.scenario, dollars)));
+    }
   }
   if (row.id.startsWith("ending:") || row.id.startsWith("map-pick:")) {
     const fork = road.forks.find((f) => f.id === row.forkId);
@@ -570,8 +573,9 @@ function typedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Pick<
       // "My venture" is the intake's own default name; the parse's sentence is never used as one.
       name: draft.name.trim() || "My venture",
       type: draft.ventureType,
+      // The intake's optional sales boxes: the person's own numbers, 0 when they leave a box blank.
       targetRevenueY1: idea.y1 ?? 0,
-      targetRevenueY3: 0,
+      targetRevenueY3: idea.y3 ?? 0,
       province,
       hireFirst: draft.hireFirst,
       employmentStatus: idea.ws ?? SCREEN_WORK_SITUATION[idea.people],
@@ -593,7 +597,12 @@ function typedWayIn(idea: Idea, pieces: TextPiece[], options: RunOptions): Pick<
     road,
     roadChosen,
     scenario,
-    { firstWords: { text: words, saidAt: HARNESS_TODAY }, destination: null, incomeWantedCents: null, yours: idea.y1 ? [idea.y1 * 100] : [] },
+    {
+      firstWords: { text: words, saidAt: HARNESS_TODAY },
+      destination: null,
+      incomeWantedCents: null,
+      yours: [...(idea.y1 ? [idea.y1 * 100] : []), ...(idea.y3 ? [idea.y3 * 100] : [])],
+    },
     pieces,
     options,
   );
