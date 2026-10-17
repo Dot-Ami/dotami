@@ -1,6 +1,6 @@
 # Task list — what's being built, and what you can pick up
 
-Last updated: 2026-10-15. Every story planned for DotAmi, with its tasks. The plan behind it is
+Last updated: 2026-10-17. Every story planned for DotAmi, with its tasks. The plan behind it is
 [architecture/use-cases.md](architecture/use-cases.md) (who it's for, the decisions, the build
 order); the settings and edge cases each story must test are in
 [architecture/settings-and-edge-cases.md](architecture/settings-and-edge-cases.md) — the codes in
@@ -270,11 +270,14 @@ and the maintainer's six decisions of 2026-10-11:
   that need a forecast get a plain "DotAmi can't answer that" and where to ask. Asked for 2026-10-15.
   Design written, nothing built; waiting on the maintainer's calls:
   [architecture/lens-comparisons.md](architecture/lens-comparisons.md) § 10.
+  2026-10-17, the maintainer: no times anywhere, and the Lens may state a number only when it comes from
+  DotAmi, a cost link it found or its calculator, never made up (§ 6.4; a calculator and a cost-link tool added).
 - ⏸ **[14i] One research kit for every job.** A list of every outside source and its terms, one import
   for the government's job and business data, code keys on every road, and a script that hands whoever
   writes a new road an empty, cited outline, so nothing is built again for each job. Asked for
   2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
+  2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
 
 ## 7 — The desktop app (one download, everything on your computer)
 

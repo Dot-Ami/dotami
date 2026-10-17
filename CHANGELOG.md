@@ -705,6 +705,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   source registry, import core, code keys and research-pack script so every job reuses the same data;
   nine calls (K1–K9); the maintainer's picks of 2026-10-16 are now recorded in all four designs. Nothing
   DotAmi keeps, sends, ships or asks changes.
+- **No times anywhere, and where the Lens's numbers may come from** (the maintainer's answers of
+  2026-10-17). research-kit.md, lens-comparisons.md and other-ways-to-build.md: no typed time fields, no
+  time gauge, no durations added up or estimated, and the Lens never answers "how long" or "fastest" with a
+  time; the typed-times task (S2.5.25j) is dropped. lens-comparisons.md: the Lens may state a number only
+  when it comes from DotAmi, from a cost link it found (shown with the link and the day seen), or from a new
+  calculator tool, and its reply check now matches each number to those sources instead of banning digits;
+  a calculator task and a cost-link lookup task are added. Nothing DotAmi keeps, sends, ships or asks changes.
 - **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
   review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
   first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with
