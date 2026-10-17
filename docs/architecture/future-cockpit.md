@@ -437,9 +437,10 @@ road, the goal and the next steps, with everything else folded one click away. N
   two clicks away, and that a switch left the page when it was switched off with the layers folded, taking
   keyboard focus with it. Every switch is drawn again; only the layer is off, as the design asks. A switch
   whose layer has nothing on the road (road 1's *Rules & tax · 0 cards*) is drawn off and can't be pressed.
-- **Blocks.** The header and the goal bar are one block, *the top*; the overlay row, the map and *Next on
-  your road* are one block, *the road*, inside which the legend and the what-if bar are regions of their own
-  while open (docs/ui-spec/README.md, "The cockpit's regions").
+- **Regions.** The header and the goal bar share one strip, and the overlay row, the map and *Next on your
+  road* one column, but each block is still a region of its own for the clutter limit, as the layout rule
+  defines one, and so is the coach line while it is drawn (docs/ui-spec/README.md, "The cockpit's regions").
+  A first visit has 8 regions from 768 px and 7 on a phone, one fewer than before the calm view.
 - **Return visits.** Whatever the person folds, opens or switches is remembered in this browser under the
   same key as before, `dotami-cockpit-folds`: the six folds, the overlays last on (*the last overlay used
   is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written

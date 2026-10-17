@@ -52,9 +52,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  *
  * 2026-10-17, the calm first view (S2.5.30c): in the cockpit, the columns after the first two can fold into
  * one column, "The road ahead · N steps", which shows them (`cockpit.roadAhead`); the folded legend is hidden
- * whole, its "Show the legend" drawn by the cockpit under the map; and the road's area no longer carries the
- * clutter limit's "road" mark, which is on the cockpit's road block around it. Drawn without `cockpit`, the
- * HTML is still unchanged.
+ * whole, its "Show the legend" drawn by the cockpit under the map. The road's area keeps the clutter limit's
+ * "road" mark. Drawn without `cockpit`, the HTML is still unchanged.
  */
 
 /** What the cockpit adds to the map: the legend's fold, and the road ahead's. */
@@ -198,8 +197,8 @@ export function StrategyMap({
           ? {
               role: "region",
               "aria-label": cockpitWords.folds.roadRegion,
-              // The clutter limit's "road" region is the cockpit's road block around this (its switches, this
-              // area and its next steps; cockpit-page.tsx), so this area carries no mark of its own.
+              // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+              "data-region": "road",
               className:
                 // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
                 // would make its minimum the height of every card): with the what-if bar open it used to

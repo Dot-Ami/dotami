@@ -315,8 +315,8 @@ and the maintainer's six decisions of 2026-10-11:
     visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
     coach line, the rail, the legend and the what-if bar folded one click away, every overlay switch drawn; Compare and
     *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
-    last overlay remembered (`dotami-cockpit-folds`). The cockpit's first visit now measures 4 regions (3 on a
-    phone) and 29 controls on a laptop on road 0 (31 on a tablet, 17 on a phone); the plan's 20 and 12 would
+    last overlay remembered (`dotami-cockpit-folds`). The cockpit's first visit now measures 8 regions (7 on a
+    phone; 9 and 8 before) and 29 controls on a laptop on road 0 (31 on a tablet, 17 on a phone); the plan's 20 and 12 would
     need road cards hidden, so the budgets are set to what it measures (S2.5.30c)
   - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
   - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in

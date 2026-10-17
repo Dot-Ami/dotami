@@ -119,8 +119,9 @@ import Link from "next/link";
  * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead), with only
  * Road and Skills on (every overlay switch drawn) and one coach line; a return visit opens as the person left it, the
  * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
- * Look closer menu. The header and the goal bar are one block, "the top"; the overlay row, the map and Next
- * on your road one block, "the road", where the folded legend and what-if bar keep their one button each.
+ * Look closer menu. The folded legend and what-if bar keep their one button each at the end of Next on your
+ * road. Every block still drawn is a region of its own for the clutter limit (the header, the goal bar, the
+ * overlay switches, the coach line, the road, Next on your road), as the layout rule defines a region.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
@@ -890,13 +891,16 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     <div
       className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
-      {/* The top: the header and the goal bar, one block (the calm first view, 2026-10-17). data-region marks
-          the cockpit's regions for the clutter limit (docs/ui-spec/README.md, "The layout rule"): the top, the
-          rail, the road (its switches, the map and its next steps) and the panel here; the legend and the
-          what-if bar in their own components, drawn only while they are open. */}
-      <div data-region="top" className="min-w-0 border-b border-rule bg-[#0f0e12]">
+      {/* The top: the header and the goal bar, in one grid row (the calm first view, 2026-10-17). data-region
+          marks each block the clutter limit counts (docs/ui-spec/README.md, "The layout rule", rule 2): the
+          header, the rail, the coach line and the panel here; the goal bar, the overlay switches, the road, the
+          legend, the what-if bar and Next on your road in their own components. Each block still drawn keeps its
+          own mark, so the count sees what a person sees: a review of the calm first view found three blocks that
+          had been counted as one with a neighbour. */}
+      <div className="min-w-0 border-b border-rule bg-[#0f0e12]">
       {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
       <header
+        data-region="header"
         inert={behindSheet}
         className="grid h-[52px] grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule-soft md:grid-cols-[240px_minmax(0,1fr)_auto]"
       >
@@ -1175,10 +1179,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             own fold button, as it did until 2026-10-14 (12-folding-and-phone.md). */}
         <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4 md:overflow-y-auto">
           {evaluation ? (
-            // The road's block (the calm first view, 2026-10-17): its overlay switches on top, the map, and its
-            // next steps at the foot, one region. The legend and the what-if bar sit in it as before, each a
-            // region of its own while open; folded, each is one button in the foot line, where it was.
-            <div data-region="road" className="flex flex-1 flex-col">
+            // The road's column (the calm first view, 2026-10-17): the overlay switches on top, the coach line,
+            // the map, the what-if bar and Next on your road at the foot, each a region of its own while drawn;
+            // the folded legend and what-if bar are one button each in the foot line, where they were.
+            <div className="flex flex-1 flex-col">
               <OverlaySwitches
                 overlays={overlays}
                 counts={overlayCounts(road, evaluation, scenario)}
@@ -1190,7 +1194,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
               {/* The first visit's one coach line; put away, it doesn't come back (remembered with the folds).
                   Not on the example: nothing can be told there, and its banner already says what it is. */}
               {!coachDismissed && !isExample ? (
+                // A block of its own while drawn, so the clutter limit counts it (a region on a first visit only).
                 <p
+                  data-region="coach"
                   role="note"
                   aria-label={words.coach.region}
                   className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule-soft bg-ink3 px-5 py-1.5 text-[12px] text-paper-dim"

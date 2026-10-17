@@ -35,13 +35,16 @@ screen may get. Every screen, and every feature added to one, follows these four
 | The Lens ([architecture/use-cases.md](../architecture/use-cases.md)) | The right-hand panel; on a phone, a sheet (`components/cockpit/use-sheet.ts`) | One button in the header, and *Ask the Lens about this* in the step panel |
 | *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures*, *Compare* and the alternatives on road 1's training column, nowhere else (S2.5.24f, lens-comparisons.md § 11; the 2026-10-17 plan's list named the first two) |
 
-**The cockpit's regions, as built for the calm first view (2026-10-17, S2.5.30c).** *The top*: the header and
-the goal bar, one block. *The rail*. *The road*: its overlay row, the map, and *Next on your road* at its foot,
-one block; the legend and the what-if bar sit in it and count as regions of their own while open. *The
-panel*, while it holds something. The example's banner on Mara's page, and the site's footer. On a first
-visit the rail is a folded strip from 768 px (a header button below), and the legend, the what-if bar and the
-road's later columns are each one button: 4 regions from 768 px, 3 on a phone
-([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)).
+**The cockpit's regions, as rule 2 counts them (2026-10-17, with the calm first view, S2.5.30c).** The header;
+the goal bar; the rail (a folded strip from 768 px counts too); the overlay switches; the coach line, on a
+first visit until *Got it*; the road; the legend and the what-if bar while open; *Next on your road*; the panel
+while it holds something; the site's footer; and the example's banner on Mara's page. The header and the goal
+bar share one strip, and the overlay row, the map and *Next on your road* one column, but each is a block a
+person takes in on its own, so each keeps its own mark. A first visit folds the legend, the what-if bar and the
+road's later columns to one button each: 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
+once the coach line is put away ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)). For a
+few hours on 2026-10-17 the strip and the column were each counted as one region, which read as 4 and 3; a
+review found the blocks still drawn and the rule's own definition unchanged, so the marks went back.
 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)
 

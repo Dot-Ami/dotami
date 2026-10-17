@@ -39,9 +39,9 @@ the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-1
 >   from.* with **Got it**, which puts it away for good in this browser (`coachDismissed`). Not on the
 >   example, where nothing can be told.
 > - **Fold all panels** folds all six, and **Show all panels** opens all six (the road ahead included).
-> - The header and the goal bar are one block, *the top*, and the overlay row, the map, the legend, the
->   what-if bar and *Next on your road* sit in one block, *the road* (the clutter limit counts the legend
->   and the what-if bar as regions of their own while they are open).
+> - The header and the goal bar share one strip, and the overlay row, the coach line, the map, the what-if
+>   bar and *Next on your road* one column; the clutter limit still counts each as a region of its own while
+>   it is drawn (the legend and the what-if bar only while open, the coach line only until *Got it*).
 
 ## What it is
 

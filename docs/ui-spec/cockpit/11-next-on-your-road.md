@@ -8,7 +8,7 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 
 > **Changed 2026-10-12 — part 2.** Above it, under the map: the what-if bar ([14-what-if-bar.md](./14-what-if-bar.md)) and, once an answer was given this visit, *Since last time* ([13-receipts.md](./13-receipts.md)).
 
-> **Changed 2026-10-17 — the calm first view (S2.5.30c).** The line is the foot of the road's block, not a region of its own. After the steps it carries **Show the legend** and **Show the what-if bar** while those are folded (both are on a first visit), under the map where they were ([12-folding-and-phone.md](./12-folding-and-phone.md)).
+> **Changed 2026-10-17 — the calm first view (S2.5.30c).** The line is the foot of the road's column, still a region of its own for the clutter limit. After the steps it carries **Show the legend** and **Show the what-if bar** while those are folded (both are on a first visit), under the map where they were ([12-folding-and-phone.md](./12-folding-and-phone.md)).
 
 ## What it is
 

@@ -82,19 +82,26 @@ export const BASELINE: ClutterTable = {
  * The limit each screen is held to: at most the baseline, and lowered as screens get calmer.
  *
  * The calm first view (S2.5.30c, 2026-10-17) lowered the cockpit's first visit and Mara's example to what they
- * measure with it: regions 9 to 4 on a laptop and tablet and 8 to 3 on a phone (the plan's aim was at most 5,
- * 4 and 3), controls in the first window 34 to 28, 39 to 31 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
+ * measure with it: regions 9 to 8 on a laptop and tablet and 8 to 7 on a phone (the plan's aim was at most 5,
+ * 4 and 3; see below), controls in the first window 34 to 28, 39 to 31 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
  * to 14 on road 1), short of the plan's aim of 20, 16 and 12. What is left in the first window is the road's
  * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
  * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
- * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 5
- * regions, and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
+ * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 8
+ * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
  * `WINDOWS_EXTRA`).
  *
  * One control more on road 0's phone and laptop, the same day (17 and 29; 31 on a tablet, unchanged): a review
  * found Rules & tax two clicks away behind "Show more layers", so the Money and Rules & tax switches are drawn
  * again and that button is gone. Road 1 and Mara's example, on road 1, are unchanged: road 1 has no rules and tax
  * cards, so its Rules & tax switch is drawn but can't be pressed (it has nothing to show) and isn't counted.
+ *
+ * The regions, the same day: the calm view first set them at 4, 4 and 3 (Mara 5, 5 and 4) by marking the header
+ * and the goal bar as one region and the overlay row, the map and Next on your road as another. A review found
+ * those blocks all still drawn in the first window, and the layout rule's own definition (docs/ui-spec/README.md,
+ * rule 2) still naming the header, the goal bar and a bar under the road as regions of their own, so each
+ * block's own mark went back, and the coach line, a block of its own on a first visit, got one. The first
+ * visit folds the legend and the what-if bar (two regions fewer) and adds the coach line (one more).
  *
  * Lowered on 2026-10-17, before the limit reached main, where the count got stricter than the baseline's:
  * a control now counts only when at least 24 px of it shows each way (or all of it), so a card's bare edge
@@ -113,9 +120,9 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
   ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
   "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(4, 11, 11, 8.5), tablet: m(5, 26, 13, 8.5), laptop: m(5, 21, 13, 8.5) },
-  "cockpit-road-0": { phone: m(3, 17, 11, 8.5), tablet: m(4, 31, 12, 8.5), laptop: m(4, 29, 12, 8.5) },
-  "cockpit-road-1": { phone: m(3, 14, 10, 8.5), tablet: m(4, 28, 12, 8.5), laptop: m(4, 25, 12, 8.5) },
+  "example-mara": { phone: m(7, 11, 11, 8.5), tablet: m(8, 26, 13, 8.5), laptop: m(8, 21, 13, 8.5) },
+  "cockpit-road-0": { phone: m(7, 17, 11, 8.5), tablet: m(8, 31, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
+  "cockpit-road-1": { phone: m(7, 14, 10, 8.5), tablet: m(8, 28, 12, 8.5), laptop: m(8, 25, 12, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
 

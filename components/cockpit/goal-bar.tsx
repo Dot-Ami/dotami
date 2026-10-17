@@ -24,8 +24,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  *
  * The calm first view (2026-10-17, S2.5.30c): what the bar can open in the right-hand panel (Compare, Others
  * in this line of work, and later About this job) shares one "Look closer" menu instead of a button each.
- * The bar is no longer a region of its own: the cockpit draws it under its header, the two one block, "the
- * top" (docs/ui-spec/cockpit/07-goal-bar.md).
+ * The cockpit draws it under its header in one strip, but it is still a region of its own for the clutter
+ * limit, as the layout rule defines one (docs/ui-spec/cockpit/07-goal-bar.md).
  */
 
 /** The bar's id, for its fold button's aria-controls. */
@@ -115,8 +115,8 @@ export function GoalBar({
   ];
 
   return (
-    // No data-region here: the cockpit's header and this bar are one block, the top, marked around both.
-    <section id={GOAL_BAR_ID} aria-label={words.goal.region}>
+    // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+    <section id={GOAL_BAR_ID} data-region="goal-bar" aria-label={words.goal.region}>
       {isFolded ? (
         // One line: the gauges by name and value, scrolling sideways inside the line when they don't fit.
         <div className="flex min-w-0 items-center gap-2 px-5 py-1.5">

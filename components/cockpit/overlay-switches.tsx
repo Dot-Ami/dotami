@@ -32,7 +32,8 @@ export function OverlaySwitches({
     { id: "rules", label: words.road.rules, count: words.road.rulesCount(counts.rulesCards), empty: counts.rulesCards === 0 },
   ];
   return (
-    <div role="group" aria-label={words.road.overlays} className="flex flex-wrap items-center gap-1.5 border-b border-rule bg-ink3 px-5 py-2 text-[11px] text-stone">
+    // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+    <div data-region="overlays" role="group" aria-label={words.road.overlays} className="flex flex-wrap items-center gap-1.5 border-b border-rule bg-ink3 px-5 py-2 text-[11px] text-stone">
       <span className="font-mono text-[9.5px] uppercase tracking-[0.12em]">{words.road.overlays}</span>
       <span className="rounded-full border border-rule px-2.5 py-0.5 text-paper-dim">
         {words.road.road} <span className="text-stone-dim">· {words.road.alwaysOn}</span>
