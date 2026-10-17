@@ -163,9 +163,14 @@ const OUTSIDE_CANADA = [
 const OUTSIDE_CANADA_NAMES = OUTSIDE_CANADA.map((place) => place.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
 /** Right after a city: "Surrey, England", "Saint John, U.S. Virgin Islands", "Hamilton New Zealand". */
 const CITY_OUTSIDE_CANADA = new RegExp(`^,?\\s+(?:the\\s+)?(?:u\\.?s\\.?\\s+)?(?:${OUTSIDE_CANADA_NAMES})(?![a-z0-9])`);
-/** Moving there: "moving … to Portland, Oregon", "relocating to the United States". */
+/**
+ * Moving there: "moving … to Portland, Oregon", "relocating to the United States". The destination is the
+ * move's own, the first "to" after the move word, with at most six words between ("my bakery from London,
+ * Ontario"; "St." is let through for "St. John's"): "moving to Calgary to open a store that ships to the USA"
+ * moves to Calgary, and the later "to the USA" is where the goods go (the second review of PR #182).
+ */
 const MOVING_OUT_OF_CANADA = new RegExp(
-  `\\b(?:move|moves|moved|moving|relocat\\w*)\\b[^.!?;\\n]*?\\bto\\s+(?:the\\s+)?(?:[a-z'’-]+(?:\\s+[a-z'’-]+)?,\\s+)?(?:${OUTSIDE_CANADA_NAMES})(?![a-z0-9])`,
+  `\\b(?:move|moves|moved|moving|relocat\\w*)\\s+(?:(?!to\\b)(?:st\\.|[^\\s.!?;]+)\\s+){0,6}to\\s+(?:the\\s+)?(?:[a-z'’-]+(?:\\s+[a-z'’-]+)?,\\s+)?(?:${OUTSIDE_CANADA_NAMES})(?![a-z0-9])`,
 );
 
 /** Equipment, vehicles and tools: proposed as a purchase only with words that say one (`statesAPurchase`). */
@@ -333,35 +338,79 @@ function provinceNamed(text: string): Province | null {
 }
 
 /**
- * Words that say the person is buying, leasing, needs, or wants to write off what comes after them, at
- * most two words before it. Groups: the words before the verb, the verb, the words between it and the
- * thing. "financ" only as the verb: "financial advice" buys nothing.
+ * Words that say the person is buying, leasing, getting, needs, or wants to write off what comes after
+ * them. "financ" only as the verb: "financial advice" buys nothing.
  */
-const PURCHASE_BEFORE =
-  /^([\s\S]*?)\b(buy|buys|buying|bought|purchas\w*|lease|leases|leasing|leased|financ(?:e|es|ed|ing)|need|needs|needed|upgrad\w*|replace|replacing|invest\w*\s+in|write\s+off|write-off|writeoff|writing\s+off|deduct\w*|claim\w*|want\s+my\s+own|receipts?\s+for)\s+((?:\S+\s+){0,2})$/;
+const PURCHASE_VERBS =
+  "buy|buys|buying|bought|purchas\\w*|lease|leases|leasing|leased|financ(?:e|es|ed|ing)|need|needs|needed|get|gets|getting|got|upgrad\\w*|replace|replacing|invest\\w*\\s+in|write\\s+off|write-off|writeoff|writing\\s+off|deduct\\w*|claim\\w*|want\\s+my\\s+own|receipts?\\s+for";
+const PURCHASE_VERB = new RegExp(`\\b(${PURCHASE_VERBS})(?=\\s)`, "g");
+/** One more verb chained on: "need to buy", "need to get", "going to be buying". */
+const CHAINED_VERB = new RegExp(`^\\s+(?:to\\s+)?(?:be\\s+)?(${PURCHASE_VERBS})(?=\\s)`);
+/**
+ * At most four words between the last verb and the thing ("a brand new delivery van"), none of which starts
+ * another phrase: "buy groceries for my van trips" buys groceries.
+ */
+const MOST_WORDS_BETWEEN = 4;
+const STARTS_ANOTHER_PHRASE = new Set([
+  "for", "to", "with", "from", "in", "on", "at", "and", "or", "but", "so", "because", "that", "which", "who",
+  "when", "while", "if", "by", "into", "about", "than", "then",
+]);
 /** The same said after it: "want my truck to count", "my laptop as a write-off". */
 const PURCHASE_AFTER = /^\s+(?:to\s+count|to\s+be\s+written\s+off|as\s+a\s+write-?off|written\s+off|as\s+an\s+expense)\b/;
 /** A purchase ruled out just before the verb: "I don't need", "no need to buy", "won't be buying". */
 const RULED_OUT = /\b(?:don[’']?t|do\s+not|doesn[’']?t|does\s+not|didn[’']?t|did\s+not|won[’']?t|will\s+not|wouldn[’']?t|would\s+not|not|never|no|without)\s+(?:\S+\s+){0,3}$/;
 /** Someone else needs it: "people who need a van", "customers need". */
 const SOMEONE_ELSE = /\b(?:who|that|people|customers|clients|folks|families|businesses|they|others)\s+$/;
-/** "Need" of something the person has: "I need my car to get to clients". */
-const OWN_ALREADY = /^(?:my|our|his|her|their|your)\s/;
-const NEEDS = new Set(["need", "needs", "needed"]);
+/** Or anyone named in the plural just before the verb: "contractors need", "small offices need". */
+const PLURAL_BEFORE = /\b([a-z]*[^s\W]s)\s+$/;
+/** "Need" or "get" of something the person has: "I need my car to get to clients". Not "my own truck". */
+const OWN_ALREADY = /^(?:my|our|his|her|their|your)\s(?!own\b)/;
+const NEED_OR_GET = /^(?:need|needs|needed|get|gets|getting|got)$/;
+/** "Replace" and "upgrade" buy only the person's own ("replace my truck"); "I replace computers" is a service. */
+const OWN_ONLY = /^(?:replace|replacing|upgrad\w*)$/;
+/** Work done on the thing, not buying it: "trucks detailed", "equipment repaired", "computers set up". */
+const WORK_DONE_ON_IT = /^\s+(?:(?!used\b)[a-z]+ed|done|set\s+up|built|made)\b/;
 /** A plural noun right after the thing makes the thing a describer: "car windshields", "truck parts". */
 const DESCRIBES_NEXT_WORD = /^\s([a-z]{2,}[^s\W]s)(?![a-z0-9'’])/;
 const NOT_A_PLURAL = new Set([
   "this", "thus", "plus", "always", "perhaps", "sometimes", "towards", "afterwards", "besides", "whereas",
-  "lens", "chassis", "series", "news",
+  "lens", "chassis", "series", "news", "is", "was", "has", "does", "its", "us", "as", "yes", "his", "hers",
+  "ours", "yours", "theirs",
 ]);
+
+/**
+ * The verb the words before a thing say it is bought with, or null: the first purchase verb whose chain
+ * ("need to buy") ends at most four words before the thing. `lead` is what comes before the chain (read
+ * for "don't" and for whose purchase it is), `verb` the chain's last verb, `object` the words between.
+ */
+function purchaseSaidBefore(
+  before: string,
+): { lead: string; verb: string; object: string[]; upgradeTo: boolean } | null {
+  for (const m of before.matchAll(PURCHASE_VERB)) {
+    let verb = m[1];
+    let rest = before.slice(m.index + m[0].length);
+    for (let next = CHAINED_VERB.exec(rest); next; next = CHAINED_VERB.exec(rest)) {
+      verb = next[1];
+      rest = rest.slice(next[0].length);
+    }
+    let object = rest.trim().split(/\s+/).filter(Boolean);
+    // "upgrading to a new camera": the "to" belongs to the verb.
+    const upgradeTo = /^upgrad/.test(verb) && object[0] === "to";
+    if (upgradeTo) object = object.slice(1);
+    if (object.length > MOST_WORDS_BETWEEN || object.some((word) => STARTS_ANOTHER_PHRASE.has(word))) continue;
+    return { lead: before.slice(0, m.index), verb, object, upgradeTo };
+  }
+  return null;
+}
 
 /**
  * "Equipment / vehicle purchase on the path", proposed only when the words say so: "buying a used truck",
  * "need to buy brewing equipment", "I want to write off my PC". A vehicle or tool only named ("trucker",
  * "selling the trucks", "my own car", "I fix computers", "camping gear" the person reviews) says nothing
  * about buying one, and neither do words that rule it out ("I don't need any equipment"), one the person
- * has ("I need my car"), one someone else needs ("people who need a van") or a part of one ("I replace
- * car windshields"). The review of PR #182, 2026-10-17.
+ * has ("I need my car"), one someone else needs ("people who need a van", "contractors need trucks
+ * detailed"), a service on other people's ("I replace computers for small offices") or a part of one ("I
+ * replace car windshields"). The reviews of PR #182, 2026-10-17.
  */
 function statesAPurchase(text: string): boolean {
   return CAPITAL_KEYWORDS.some((keyword) =>
@@ -370,11 +419,17 @@ function statesAPurchase(text: string): boolean {
       const next = DESCRIBES_NEXT_WORD.exec(a.after);
       if (next && !NOT_A_PLURAL.has(next[1])) return false;
       if (PURCHASE_AFTER.test(a.after)) return true;
-      const said = PURCHASE_BEFORE.exec(a.before);
+      if (WORK_DONE_ON_IT.test(a.after)) return false;
+      const said = purchaseSaidBefore(a.before);
       if (!said) return false;
-      const [, lead, verb, between] = said;
+      const { lead, verb, object } = said;
       if (RULED_OUT.test(lead) || SOMEONE_ELSE.test(lead)) return false;
-      return !(NEEDS.has(verb) && OWN_ALREADY.test(between));
+      const plural = PLURAL_BEFORE.exec(lead);
+      if (plural && !NOT_A_PLURAL.has(plural[1])) return false;
+      if (NEED_OR_GET.test(verb) && OWN_ALREADY.test(`${object.join(" ")} `)) return false;
+      // "replace my truck", "upgrading to a new camera" buy one; "upgrade gaming PCs for customers" is work.
+      if (OWN_ONLY.test(verb)) return said.upgradeTo || object[0] === "my" || object[0] === "our";
+      return true;
     }),
   );
 }

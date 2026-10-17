@@ -325,6 +325,40 @@ describe("“Equipment / vehicle purchase on the path” only when the words say
       expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(true);
     }
   });
+
+  // The second review of PR #182 (2026-10-17): a purchase the words state was lost when more than two
+  // words sat between the verb and the thing, or the verb was "get", which the keyword-only parser on main
+  // still read.
+  it("is proposed with a few describing words between the verb and the thing, or with “get”", () => {
+    for (const text of [
+      "I need to buy a brand new delivery van",
+      "I'm going to buy a refurbished commercial espresso machine",
+      "I need to purchase a commercial espresso machine",
+      "I want to get a truck",
+      "I'm getting a new laptop for work",
+      "I need my own truck for the business",
+      "I'm upgrading to a new camera",
+    ]) {
+      expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(true);
+    }
+  });
+
+  // The same review: the stated rule is "only when the words say the person is buying", yet what customers
+  // need done to their vehicles and a service of replacing or upgrading other people's machines still came
+  // on as the person's purchase (main did the same; nothing to regress, but the rule says never).
+  it("is not proposed for what the customers need done, a service on their machines, or words across a clause", () => {
+    for (const text of [
+      "Contractors need trucks detailed so I run a mobile detailing service",
+      "Small farms need equipment repaired, I fix tractors in Lethbridge",
+      "I replace computers for small offices in Calgary",
+      "I upgrade gaming PCs for customers",
+      "I get trucks detailed for dealerships",
+      "I need to buy groceries for my van camping trips",
+      "Offices need computers set up, that's my business",
+    ]) {
+      expect(parseIntentFallback(text).capitalPurchasePlanned, text).toBe(false);
+    }
+  });
 });
 
 // The review of PR #182 (2026-10-17): until then any of some ninety words for places outside Canada,
@@ -344,6 +378,20 @@ describe("a place outside Canada drops only the Canadian city it is named with",
     for (const [text, province] of cases) expect(parseIntentFallback(text).province, text).toBe(province);
   });
 
+  // The second review of PR #182 (2026-10-17): the moving-out check paired a move word with any later "to"
+  // in the sentence, so a person moving INTO Canada who sells to a place outside it lost their province.
+  // The destination is the move's own: the first "to" after the move word.
+  it("reads the province of a move into Canada when the sentence later sends something outside it", () => {
+    const cases: [string, string][] = [
+      ["I'm moving to Calgary to open a store that ships to the USA", "AB"],
+      ["Moving to Edmonton and selling my art to Texas collectors", "AB"],
+      ["We relocated to Winnipeg and export maple syrup to Japan", "MB"],
+      ["Relocating to Halifax and selling online to buyers in the UK", "NS"],
+      ["I moved from Texas to Calgary and ship to Florida", "AB"],
+    ];
+    for (const [text, province] of cases) expect(parseIntentFallback(text).province, text).toBe(province);
+  });
+
   it("proposes none when the city is named as one outside Canada, or the person is moving out of Canada", () => {
     for (const text of [
       "Surrey, England — I want to do dog grooming",
@@ -352,6 +400,9 @@ describe("a place outside Canada drops only the Canadian city it is named with",
       "I live in Saint John, U.S. Virgin Islands and want a boat tour company",
       "Moving my bakery from London, Ontario to Portland, Oregon",
       "relocating from Toronto to the United States to open a gym",
+      "Moving from Calgary to Texas to open a shop",
+      "I'm moving my bakery from Edmonton to Seattle, Washington",
+      "We moved to the USA from Toronto",
     ]) {
       expect(parseIntentFallback(text).province, text).toBeNull();
     }
