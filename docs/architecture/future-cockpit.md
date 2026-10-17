@@ -1888,8 +1888,9 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
 - Two more designs asked for the same day, also not built and waiting on calls: the Lens answering
   "cheapest", "fastest" and "strongest foundation" by a measure the person names
-  ([lens-comparisons.md](lens-comparisons.md)), which would bring decision 3's sort forward from phase 2 and
-  add typed official times (lifting the months-only rule above for cited times), and one research kit that
+  ([lens-comparisons.md](lens-comparisons.md)), which would bring decision 3's sort forward from phase 2 (it
+  adds no typed times: the maintainer answered "NO TIMES!" on 2026-10-17, so the months-only rule above
+  stands), and one research kit that
   makes all of this work for any job ([research-kit.md](research-kit.md)), whose call K5 asks whether
   government wage figures may appear for a real person, which this section rules out today.
 

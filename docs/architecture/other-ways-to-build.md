@@ -72,8 +72,13 @@ measure the person names, in the Lens and on the screens decision 3 names; ways 
 > phone calls, or the actual work required to start or maintain a business. It should just provide steps; VERY
 > similar to how you and I are working with stories and tasks."
 
-The main session reads K9 as: no timeline or date forecast, ever; an official time for one step may be shown as a
-cited fact; whether times of one kind may be added up is an open question for him (§ 12).
+The main session read K9 then as: no timeline or date forecast, ever; an official time for one step may be shown as a
+cited fact; whether times of one kind may be added up was an open question for him. **He answered it on 2026-10-17,
+word for word:** "no; no times at all. How on earth would we even make a slightly realistic time gauge for ANY given
+task or activity? It's just more work than it's worth. NO TIMES!" So no time figure appears anywhere: no typed time,
+no time gauge, no sum or estimate of a duration ([research-kit.md](research-kit.md) § 5.5). Nothing in this doc
+carried one. The same day he answered how the Lens may use numbers: from DotAmi, from a cost link it finds, or from a
+calculator, never made up ([lens-comparisons.md](lens-comparisons.md) § 6.4).
 
 Rulings kept: **pick 2A** (2026-10-11: a real person's cost lines are official fees plus their own quotes; averages only
 in the invented example); **option B** (2026-10-11: sources checked by a tool or read by a person); **2026-09-24**
@@ -103,7 +108,7 @@ comparison question such as "which is cheapest?", the Lens answers from the pers
   `NamedCostLine` :168); a screen shows three kinds: official fee, your quote, named but not priced (`CostLineAsShown`
   :184). None has a buy, rent or lease dimension. Road 1's *Open your own shop* names eight lines, including tools,
   *Shop space deposit*, *Vehicle*, *Design or CAD software* and a cited *Legal advice on the business form*
-  (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts:866-879`); road 0 names seven
+  (`lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts:881-893`); road 0 names seven
   (`lib/engines/roads/v2026/starting-any-business-ab.ts:786-792`).
 - **The person's numbers.** A `start-up-cost-line` Figure prices one named line; `amountFrom` records quote, link,
   receipt or your guess (`lib/figures/types.ts`). One current number per line per idea (`future-cockpit.md:1673-1678`).
@@ -346,8 +351,9 @@ general: the three questions below are the maintainer's examples (§ 1), used he
 can't answer. The Lens reads them through the kit's read tools (`list_options`, `road_view`; task S2.5.25k), each value
 returned with its source. **What it can show from this design** (K7 A allows sorting the person's own numbers by a
 measure they name; the ways rows on screen stay unsorted). DotAmi's code draws the card (Lens call 2, A); every amount
-and product comes from `list_options`, and the Lens's reply guard (lens-comparisons.md § 6.4) fails any digit, number
-word, comparative or verdict word in the model's own text outside the card (Lens call 2, A). Each blank carries a button that opens the agree prompt (Lens call 1, C):
+and product comes from `list_options`, and the Lens's reply guard (lens-comparisons.md § 6.4, revised 2026-10-17)
+fails any number in the model's own text that matches no tool result, and any comparative or verdict word outside the
+card (Lens call 2, A). Each blank carries a button that opens the agree prompt (Lens call 1, C):
 
 ```
 Woodworking machines and tools · your numbers, before tax
@@ -362,11 +368,13 @@ Not in these numbers: what the machine is worth after, tax, Lease (no number), 3
 > your accountant.
 
 - **"Cheapest":** only the person's own agreed per-way numbers, like for like (same period, or their own count). Never
-  after tax; never a listed price the person didn't agree to (Lens call 3, A). Every answer carries the *Not in these
-  numbers* line. A shared-shop number is shown once, with the lines it covers.
-- **"Fastest":** nothing here carries a time; a rental period is a price, not a wait. Under K9 A, DotAmi gives no
-  timeline or date forecast; an official time for one road step may be shown as a cited fact (task S2.5.25j), and
-  whether times of one kind may be added up is still open (§ 12).
+  after tax; never a listed price the person didn't agree to inside the sorted card (Lens call 3, A). Since 2026-10-17
+  the Lens may show a listed price it found beside the card, with its link and the day seen, and its calculator may
+  work out *your $[400] × your [6]* in words; a found price joins the person's numbers only when they agree it. Every
+  answer carries the *Not in these numbers* line. A shared-shop number is shown once, with the lines it covers.
+- **"Fastest":** nothing here carries a time; a rental period is a price, not a wait. No times at all (K9, the
+  maintainer's answer of 2026-10-17): no time figure, gauge, sum or estimate, so the Lens answers with the steps
+  (task S2.5.25j, typed times, is dropped).
 - **"Strongest long-term foundation":** the Lens lays out the cited differences (Buy: property in a CCA class; Lease:
   deductible payments and the T2145 election; Rent: a deductible expense) and asks what the person means by
   "foundation", their own words first (K8 A). Which matters most is the person's measure.
@@ -408,7 +416,12 @@ Not in these numbers: what the machine is worth after, tax, Lease (no number), 3
   a sign-in such as Google's is acceptable there, § 1), replacing S2.5.22p. Only after the person turns on web
   search or the browser behind its warning, and only when they ask (*"Find listed prices for Rent: Woodworking machines
   and tools"*), it reads only the one page they name, once per ask: no crawling, no cache. It may *propose* a Figure
-  with `amountFrom: "link"`, the page, the words seen and the day; it counts only after the agree prompt.
+  with `amountFrom: "link"`, the page, the words seen and the day; it counts only after the agree prompt. Since the
+  maintainer's answer of 2026-10-17 ("when someone is asking about how much something costs, it should be able to find
+  links to the cost of a given item"), the Lens may also **find** the links itself when asked: its cost-link lookup
+  (lens-comparisons.md § 6.1, S2.5.24o) reads the pages a web search returns for that one ask, only those the source
+  registry allows, still with no crawling and no cache. That widens "the one page they name" to "the pages found for
+  this one ask"; the agree prompt rule is unchanged.
   `never-automated` domains are unreachable in code, not by prompt.
 
 ### 5.1 What the kit makes generic, and what stays per road
@@ -454,7 +467,7 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
 |---|---|
 | Information and options, never a verdict (CLAUDE.md:22-24) | Fixed way order, identical rows, *DotAmi doesn't pick one*, no difference line; help grouped by kind, alphabetical, *doesn't recommend or rank anyone*; new screens join the no-verdict walk |
 | Doesn't rank options by what it thinks matters to the person | **Settled 2026-10-16 by K7 A and K8 A:** the Lens sorts only the person's own numbers by a measure the person names, said on the card, before tax, blanks counted; "strongest" is asked back, not judged; ways screens stay unsorted and say nothing about which costs less |
-| No timelines (K9 A, the maintainer's note of 2026-10-16, § 1) | No timeline or date forecast anywhere; the only times here are cited rule periods (records kept six years, a lease of more than one year) and periods the person types, none added up or projected |
+| No times (K9: the maintainer's note of 2026-10-16 and "NO TIMES!" of 2026-10-17, § 1) | No time figure, time gauge, timeline or date forecast anywhere; the only periods here are cited rule words (records kept six years, a lease of more than one year) and rent periods the person types as part of a price, none added up or projected |
 | Rules decide; the Lens never changes a catalog (:25-30) | Treatments, conditions, questions, places and registry cards are versioned catalogs; the Lens only proposes a number the person agrees to |
 | Every rule, rate, threshold, date cited (:31-40) | Every catalog line cited and read or tool-checked; quotes checked first (S2.5.22e); DotAmi's labels carry no quote marks; regulators, non-profits and cities get their own citation kinds |
 | Not legal or tax advice; never files (:41-43) | Class, election, passenger vehicle, return line and consumer-law reach are questions to take; Form T2145 linked, never filled |
@@ -603,7 +616,7 @@ tax treatment and *Where to ask* before any per-way number is kept; stage 2 adds
   story).
 - Ask-in-writing lists and *Where to ask* rows for provinces other than Alberta (the keys are ready; the reading isn't);
   typical numbers for a real person (phase-2 open item, `future-cockpit.md` § 13).
-- Any timeline or date forecast (K9 A, § 1).
+- Any time figure, time gauge, timeline or date forecast (K9; "NO TIMES!", 2026-10-17, § 1).
 
 ## 12. Open questions (never stated as fact in the product)
 
@@ -628,7 +641,7 @@ tax treatment and *Where to ask* before any per-way number is kept; stage 2 adds
   own terms and DotAmi's citation rules decide later whether and how any could be used.
 - **Call 2's reading:** whether "a combo of A & E" means what § 9 says (A's shape, built in E's order, tax entries kept
   current). The main session's reading; the maintainer can correct it.
-- **Adding up times (K9):** whether official times of one kind may be added up. Until he answers, nothing adds times.
+- ~~**Adding up times (K9)**~~ **Answered 2026-10-17: no times at all** (§ 1).
 - **Keys:** whether competitive-landscape's own area answer (its call 6) may narrow *Where to ask*; whether six line
   kinds cover every road's lines.
 - **Makerspace membership tax treatment:** none found; the row sends it to the accountant. **Legal reach:** whether

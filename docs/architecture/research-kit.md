@@ -2,8 +2,10 @@
 
 Status: **Design, not built. Calls K1–K9 answered by the maintainer on 2026-10-16 (§ 10).** Written
 2026-10-15; answers added 2026-10-16. Named businesses (K3) and ad spend beyond v1 (K4) are **on hold**
-until research story S2.5.26 is done; two questions are still open: adding up times, and whether the person's own
-watched list waits too (§ 10, *Still open*).
+until research story S2.5.26 is done. On 2026-10-17 the maintainer answered the question about adding up
+times: **no times at all** (§ 5.5, K9), so the typed-times task 25j is dropped. On 2026-10-17 he also answered that the person's own
+watched list (23i) may be built now, before S2.5.26: "yah, this is fine. Lets do it" (§ 10, *Still open*,
+item 2; competitive-landscape.md, its own pull request).
 No product code in this pull request. Tracker: S2.5.25 (this kit; S2.5.25a is this doc). It builds on two
 designs in the same pull request (#175): [other-ways-to-build.md](other-ways-to-build.md) (S2.5.22: buy, rent
 or lease, plus tax and legal pointers) and [competitive-landscape.md](competitive-landscape.md) (S2.5.23:
@@ -239,7 +241,9 @@ The open-data list (K3 C), also on hold until S2.5.26, would only ever follow a 
 
 The conversation itself is designed in [lens-comparisons.md](lens-comparisons.md). The three questions below
 are examples a person may ask, not what the Lens is built around (§ 1). What the kit guarantees is that each
-answer is built from typed, cited values and counts its blanks. With K7 A (2026-10-16), the order is always
+answer is built from typed, cited values and counts its blanks; every number the Lens states comes from
+DotAmi's data, a cost link it found, or its calculator, never from the model (the maintainer, 2026-10-17;
+[lens-comparisons.md](lens-comparisons.md) § 6.4). With K7 A (2026-10-16), the order is always
 the person's choice, said in the frame:
 
 > **Sorted by money to start, on what's priced so far: your choice. DotAmi doesn't rank futures.**
@@ -248,15 +252,12 @@ the person's choice, said in the frame:
 > With 5 lines not priced, this order can change once you price them. Before tax; what it costs after tax is a
 > question for your accountant. Sources ▸
 
-> **Official times, step by step, where one is cited. No timeline and no dates.** Apprenticeship: 4 periods,
-> each "designed to take about a year" (Alberta Apprenticeship and Industry Training). Trades Qualifier: no
-> designed length is cited; it asks for 72 months and 8,160 hours of verifiable work experience, which is a
-> different kind of time, so DotAmi doesn't compare it. 3 later steps have no cited time.
+> **DotAmi doesn't give times.** Here are the steps for each of the three ways to the certificate, in road
+> order, each with its *done when* lines and sources. [Show the steps]
 
-With K9 A and the maintainer's note on it (§ 10), a time question is answered only with the official times
-each step cites, quoted as the facts they are. DotAmi and the Lens never turn them into a timeline or a date.
-Whether times of one kind may ever be added up is still open (§ 10, *Still open*), so this draft shows no
-total.
+A time question ("fastest", "how long", "when will I be done") gets **no time figure at all**: no typed time,
+no time gauge, no sum, no estimate, no timeline, no date (the maintainer's answer of 2026-10-17, § 5.5). The
+Lens answers with the steps, the way his K9 note asks.
 
 > "Strongest" can mean different things, and DotAmi doesn't choose for you. What do you mean by it?
 > *[In my own words…]*
@@ -366,38 +367,43 @@ employees, so the import covers every NAICS code down to 4 digits for each Alber
 and 6 digits only for Alberta and Canada. Snapshots ship with each release and are not fetched on the person's
 computer.
 
-### 5.5 Typed times: the data a time question needs (K9 A, answered 2026-10-16)
+### 5.5 No times (K9, answered 2026-10-16 and again 2026-10-17)
 
-No road step carries a typed time today. Times are prose only, for example 4 periods "designed to take about a
-year" and 72 months and 8,160 hours
-([apprentice-to-own-shop-ab.ts:418, :583](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)). That
-breaks "Numbers the engine reasons about are typed fields" ([CLAUDE.md:196](../../CLAUDE.md)).
+On 2026-10-16 the maintainer picked K9 A (typed, cited times, "summed only within one kind") and wrote: "it
+shouldn't even give you a timeline for any of this. It should generally help you pick up the pace for anything
+done online because it should be able to help you with things done on a computer, but it can't do schooling,
+or phone calls, or the actual work required to start or maintain a business. It should just provide steps;
+VERY similar to how you and I are working with stories and tasks." Whether times of one kind could be added
+up was left open. **He answered it on 2026-10-17, word for word:**
 
-`RoadStep` ([types.ts:64](../../lib/engines/roads/v2026/types.ts)) would gain an optional `time` list. Each entry
-has a kind, an amount, a unit, `approximate` (true when the quote says "about"), a citation and the official
-words. The five kinds are kept apart:
-- `designed-length` (4 periods, each "about a year": approximate)
-- `required-work` (1,360 hours per period)
-- `minimum-experience` (72 months and 8,160 hours)
-- `must-finish-within` (18 months)
-- `deadline-after` (45 days to pay, 15 days to open a WCB account)
+> "no; no times at all. How on earth would we even make a slightly realistic time gauge for ANY given task or
+> activity? It's just more work than it's worth. NO TIMES!"
 
-`processing` (official turnaround times) is reserved for when one is cited; none is on disk. The validator
-refuses an amount that is not in the citation's tool-checked quote, the rule fees already follow.
+So K9 now reads:
+- **No typed time fields.** `RoadStep` ([types.ts:64](../../lib/engines/roads/v2026/types.ts)) gains no `time`
+  list; the five kinds of time and the `approximate` flag drafted here on 2026-10-16 are dropped, with task
+  25j (§ 11).
+- **No time gauge**, anywhere in DotAmi or the Lens.
+- **No durations summed or estimated**: not within one kind, not across kinds, not by DotAmi's code and not
+  by the model.
+- **The Lens never answers "how long" or "fastest" with a time.** It gives the steps, each with its *done
+  when* lines and sources, and says plainly that DotAmi doesn't give times (§ 4.4;
+  [lens-comparisons.md](lens-comparisons.md) § 5.2).
+- Nothing here asks for official processing times (K9 C is not needed).
 
-**How K9 is applied.** The maintainer picked A and wrote: "it shouldn't even give you a timeline for any of
-this. It should generally help you pick up the pace for anything done online because it should be able to
-help you with things done on a computer, but it can't do schooling, or phone calls, or the actual work
-required to start or maintain a business. It should just provide steps; VERY similar to how you and I are
-working with stories and tasks." So:
-- DotAmi and the Lens **never produce a timeline or a date forecast**: no "you'll be done by", no end date,
-  no total length of a road.
-- Typed, cited times are shown **per step**, as the official facts they are (with the `approximate` flag and
-  the official words), the way a step shows its fee.
-- Unlike kinds are never added together, and an approximate amount is never treated as exact.
-- Whether times of **one** kind may ever be added up (A's "summed only within one kind") is **an open
-  question for the maintainer** (§ 10, *Still open*), because his note says "it shouldn't even give you a
-  timeline for any of this". Until he answers, nothing sums times.
+"Numbers the engine reasons about are typed fields" ([CLAUDE.md:196](../../CLAUDE.md)) is still met: the
+engine reasons about no time, so no time needs a typed field.
+
+Two notes, not decisions (both left as they are unless the maintainer says otherwise):
+- **Official requirement words stay.** Some cited step texts and *done when* lines already quote an official
+  requirement in words, for example the apprenticeship's 4 periods, "each designed to take about a year", and
+  "72 months and 8,160 hours of verifiable Cabinetmaker work experience"
+  ([apprentice-to-own-shop-ab.ts:430, :595](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)). They
+  stay as quoted requirement text: what the official page says a person must do. They are not a gauge, and
+  nothing adds them up or reads them as a number.
+- **"Your date" stays.** The cockpit's *Your date* gauge counts the months from today to the month the person
+  typed themselves ([lib/cockpit/words.ts:295](../../lib/cockpit/words.ts)). That is the person's own date,
+  already built, not a DotAmi estimate of how long anything takes.
 
 ### 5.6 How S2.5.22 and S2.5.23 map onto the kit
 
@@ -407,7 +413,7 @@ working with stories and tasks." So:
 | 23f counts import | First adapter on the import core (25d) | No; one import serves every road |
 | 23g area and industry questions | The person's side of the code keys (25e uses them) | No |
 | 23h panel | Generic over the code keys | No |
-| 23i watched businesses | Held with K3 (competitive-landscape call 2, route A) until S2.5.26, unless the maintainer releases it (competitive-landscape.md § 15, item 11) | — |
+| 23i watched businesses | Released from the K3 hold on 2026-10-17 ("yah, this is fine. Lets do it"): the person's own list (competitive-landscape call 2, route A) may be built before S2.5.26 ends; its design change is in competitive-landscape.md's own pull request (§ 15, item 11) | — |
 | 23j *Advertising* cost line | A future story (competitive-landscape call 8 A, 2026-10-16), not this build; its tasks are written when it is taken up | — |
 | 22f ways catalog; 22g tax entries; 22m where to ask | Already keyed by line kind, asset kind and province, not by job | No |
 | 22p Lens proposes a listed price; 23m Lens looks up records by name | **One** feature: Lens live look-up through registry sources (25p); its named-business part waits on S2.5.26 | Merged: about 5 days becomes 3 |
@@ -417,14 +423,17 @@ working with stories and tasks." So:
 
 ### 5.7 What the Lens needs from the kit (S2.5.24's data side)
 
-The Lens knows only what its read tools return. Code computes every number; the model words it. The rows
-below are the worked examples from § 1, not a list the Lens is limited to; the Lens is general.
+The Lens knows only what its tools return. Every number it states comes from DotAmi's own data for the idea,
+its catalogs and docs (read tools), a link it found when asked what something costs, or its calculator doing
+basic arithmetic on those; the model never makes one up (the maintainer's answer of 2026-10-17,
+[lens-comparisons.md](lens-comparisons.md) § 6.4). The rows below are the worked examples from § 1, not a
+list the Lens is limited to; the Lens is general.
 
 | Question | Data | Exists today? | Kit task |
 |---|---|---|---|
 | Least cash up front | Official fees + agreed quotes, with blanks counted, never treated as $0 | Yes ([evaluate-road.ts:549-569](../../lib/roads/evaluate-road.ts)) | Read tools (25k) |
-| Fastest | Typed, cited times by kind, shown per step; never a timeline or a date (K9) | **No** | 25j |
-| Strongest foundation | The person's chosen measure: `next` arrows and `joins` (road 1 joins road 0 at *Incorporating*, [apprentice-to-own-shop-ab.ts:1266](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), skill items shared across roads ([types.ts:130](../../lib/engines/roads/v2026/types.ts)), way picks, venture links | Mostly | 25k |
+| Fastest | None: **no times** (K9, 2026-10-17). The Lens gives the steps with their *done when* lines instead | Steps, yes | 25k (25j dropped) |
+| Strongest foundation | The person's chosen measure: `next` arrows and `joins` (road 1 joins road 0 at *Incorporating*, [apprentice-to-own-shop-ab.ts:1293](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), skill items shared across roads ([types.ts:130](../../lib/engines/roads/v2026/types.ts)), way picks, venture links | Mostly | 25k |
 | Fewest steps left or new skills; what I lose by picking X | Compare rows ([told.ts:343](../../lib/cockpit/told.ts)) | Yes | 25k |
 | About the job and industry | Job facts, counts | After 25d and 25i | 25k |
 | Will it succeed; most income; most tax-efficient | A forecast or advice | Never ([CLAUDE.md:22-24, :200](../../CLAUDE.md)) | — |
@@ -478,10 +487,10 @@ vendor, and is listed in the privacy inventory.
 
 | New thing | Kept where | Leaves the computer? |
 |---|---|---|
-| Registry, code keys, job links, job facts, counts, NAICS list, typed times | Shipped catalogs; nothing about the person | No request; made by the maintainer's scripts before release |
+| Registry, code keys, job links, job facts, counts, NAICS list | Shipped catalogs; nothing about the person | No request; made by the maintainer's scripts before release |
 | The research pack | The developer's checkout only | Never shipped |
 | Places list (K3 C; **on hold until S2.5.26**) | Shipped catalog | No request. It would hold **data about other people**: sole proprietors' trade names |
-| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: what a source may keep (for example a vendor's id) only within that limit; named-business look-ups and the watched list wait on S2.5.26 (K3 on hold) | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
+| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: what a source may keep (for example a vendor's id) only within that limit; named-business look-ups, and adding their results to the watched list, wait on S2.5.26 (K3 on hold); the person's own watched list, typed by them, was released on 2026-10-17 (23i) | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
 | The Lens conversation | Already kept per venture, clearable ([use-cases.md](use-cases.md)) | Vendor results **never** enter it; it records only "looked up <vendor>, <date>, N results" and ids |
 | The person's key or sign-in for a vendor tool (K2 B) | The operating system's keychain (§ 5.9), **never** in `dotami.db` | Only to that company |
 
@@ -515,10 +524,10 @@ Privacy log lines, under [Unreleased]:
 |---|---|
 | Information and options; no ranking by what DotAmi thinks matters (:22-24) | The person picks every measure; code sorts; the answer says "your choice". No combined score, no "best". Vendor results shown alphabetically, never counted or compared |
 | Rules decide; models explain; the Lens never changes a catalog (:25-30) | Catalogs change only through the maintainer's scripts and validators. The research pack is a checklist, not a catalog |
-| Every claim cited and dated (:31-40) | Importers record table, period, checksum and licence. Typed times must match a checked quote. Registry rows carry their terms quote and day |
-| Numbers the engine reasons about are typed (:196) | Times move from prose to typed fields (K9 A), shown per step; never a timeline or a date |
+| Every claim cited and dated (:31-40) | Importers record table, period, checksum and licence. Registry rows carry their terms quote and day. A price the Lens found is shown with its link and the day seen |
+| Numbers the engine reasons about are typed (:196) | The engine reasons about no time (K9, 2026-10-17: no times at all), so none needs a typed field; official requirement words stay quoted text that nothing adds up |
 | Never derive a fact about the person (:199) | Job, industry and area are the person's picks. A job's industry candidates are labelled, never picked for them. A wage is never shown as theirs. A job with no road doesn't assume a business |
-| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. Unlike kinds of time are never added; approximate times never treated as exact; no timeline or date forecast; adding up one kind is still open. No vendor estimate in v1 (K4 A); anything beyond v1 waits on S2.5.26 |
+| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. No times at all: no time field, gauge, sum, estimate, timeline or date forecast (K9, 2026-10-17). Every number the Lens states matches a tool result: DotAmi's data, a found price with its link, or the calculator (lens-comparisons.md § 6.4). No vendor estimate in v1 (K4 A); anything beyond v1 waits on S2.5.26 |
 | Not legal or tax advice (:41-43) | "Most tax-efficient" goes to the questions for the accountant; comparisons are before tax |
 | Scope guard; powerful Lens actions off until switched on (:218-222) | Live look-ups sit behind the Lens's planned connector switch and warning. DotAmi runs no scraper |
 | Agent connects; DotAmi holds no logins (2026-09-24) | **Relaxed by the maintainer, 2026-10-16 (K2 B)** for vendor keys and sign-ins, OAuth such as Google sign-in included, where it gives people better information (§ 5.9); the key stays in the keychain, read by DotAmi's Lens only at look-up time, as [9a] does for the model key |
@@ -535,8 +544,8 @@ call was answered on 2026-10-16:
    which way costs less after tax, the Lens included" (§ 8). **K7 A** keeps both: screens unchanged for ways,
    and every Lens answer on buy vs rent is before tax only.
 4. "Fastest" vs future-cockpit.md:830-831 and :1733, "The only duration is calendar months to the person's
-   own date" (K9). **A, with his note:** no timeline and no date forecast ever; official times shown per step;
-   adding up one kind is still open (§ 10, *Still open*).
+   own date" (K9). **A, with his note (2026-10-16), then "NO TIMES!" (2026-10-17):** no time figure of any
+   kind; future-cockpit.md's months-only rule stands unchanged; "fastest" is answered with steps (§ 5.5).
 5. "Eventually build this out" vs decision 2 and § 12 of future-cockpit.md, and "no projections" for outlook
    ratings (K5). **B:** wage rows change decision 2 for those rows only; no outlook ratings, so "no
    projections" is untouched.
@@ -546,9 +555,9 @@ call was answered on 2026-10-16:
 
 ## 8. Honest limits
 
-- No source gives a start-up cost or a duration for a job in general. "Cheapest" means "on what is priced",
-  and a time question is answered only with the official time each step cites, never as a timeline or a
-  date. Both always report how many blanks remain.
+- No source gives a start-up cost or a duration for a job in general. "Cheapest" means "on what is priced"
+  and always reports how many blanks remain. A time question is answered with the steps, never with a time
+  (K9, 2026-10-17).
 - There is no official NOC-to-NAICS link at the detail a road needs, so each job's links are hand-reviewed.
 - OaSIS and NOC have no structured tools list, so equipment lines stay written per road.
 - BizPaL has no API and allows only non-commercial copying, so permits stay links or written lists.
@@ -572,7 +581,7 @@ source's own terms, and DotAmi's citation rules (an official, dated source behin
 
 ## 9. Phases
 
-- **A, now (no Lens needed):** registry, import core, code keys and job links, research pack, typed times,
+- **A, now (no Lens needed):** registry, import core, code keys and job links, research pack,
   *About this job*, read tools, and a second road written with the kit. Research stories S2.5.26 and S2.5.27
   can run alongside.
 - **B, with the Lens's first version ([task list](../task-list.md) [9d]):** comparison answers (S2.5.24).
@@ -667,8 +676,8 @@ separate.**
   build it out just yet, and don't make a full plan around this just yet, but we need to make note of it,
   because we need to do more research on this topic." So K3 is **on hold until research story S2.5.26**
   (free software, websites and repos that already do competitor lists and ad intelligence) is done. Its tasks
-  (25m, 25n, 25o and the named-business part of 25p, and 23i, the person's own list (route A), unless the
-  maintainer releases it) wait on S2.5.26, not on a pick. The facts already found
+  (25m, 25n, 25o and the named-business part of 25p) wait on S2.5.26, not on a pick. 23i, the person's own
+  list (route A), was released on 2026-10-17: "yah, this is fine. Lets do it" (§ 10, *Still open*, item 2). The facts already found
   (§ 3.2, § 3.3) are kept as inputs to that research.
 
 **K4. Ad spend after v1?** (answer 2; same decision as competitive-landscape call 11) *Why it matters:* no
@@ -780,18 +789,22 @@ times are prose today, and the cockpit allows only months to the person's own da
   of this. It should generally help you pick up the pace for anything done online because it should be able
   to help you with things done on a computer, but it can't do schooling, or phone calls, or the actual work
   required to start or maintain a business. It should just provide steps; VERY similar to how you and I are
-  working with stories and tasks." Applied (§ 5.5): DotAmi and the Lens never produce a timeline or a date
-  forecast; typed, cited times are shown per step as the official facts they are. Whether they may ever be
-  added up within one kind is left open below.
+  working with stories and tasks." Applied then: no timeline or date forecast; typed, cited times shown per
+  step; whether they may be added up within one kind left open.
+- **Answered again 2026-10-17 (the maintainer), on the open part:** "no; no times at all. How on earth would
+  we even make a slightly realistic time gauge for ANY given task or activity? It's just more work than it's
+  worth. NO TIMES!" Applied (§ 5.5): no typed time fields, no time gauge, no durations summed or estimated,
+  and the Lens never answers "how long" or "fastest" with a time; task 25j is dropped. Cited requirement
+  words already in step texts and *done when* lines stay as quoted text, and *Your date* stays as the
+  person's own date (both notes in § 5.5, not decisions).
 
 **Still open after 2026-10-16 (for the maintainer):**
-1. **May official times of one kind ever be added up?** K9 A as written says "summed only within one kind";
-   his note says "it shouldn't even give you a timeline for any of this". For example: may the Lens say "4
-   periods, about a year each" as one figure of about four years, or only quote each period's own time? Until
-   he answers, nothing adds times up, and no task builds a sum.
-2. **May 23i (*Businesses you're watching*, K3 route A) be built before S2.5.26 ends?** It needs no outside
-   tool, ships no names and sends nothing, and K4 A's saved ad links live on it. Asked once, in
-   [competitive-landscape.md](competitive-landscape.md) § 15, item 11.
+1. ~~May official times of one kind ever be added up?~~ **Answered 2026-10-17: no times at all** (K9
+   above, § 5.5).
+2. ~~May 23i (*Businesses you're watching*, K3 route A) be built before S2.5.26 ends?~~ **Answered
+   2026-10-17: "yah, this is fine. Lets do it".** It needs no outside tool, ships no names and sends nothing,
+   and K4 A's saved ad links live on it. Asked in [competitive-landscape.md](competitive-landscape.md) § 15,
+   item 11, which records the answer in its own pull request.
 
 ## 11. Tasks
 
@@ -805,7 +818,7 @@ times are prose today, and the cockpit allows only months to the person's own da
 | S2.5.25g | Validator and guide | Unfilled slots refused; checklist in docs/engines/roads.md and CONTRIBUTING.md | 1 | K1 |
 | S2.5.25h | *About this job* panel | Same panel for any job, rows per K5, fixed order; wage label's area from the row's source code; road 0 offered in *Pick a future*, never assumed; verdict checks; browser test; no-verdict walk | 2.5 | K5, K6 |
 | S2.5.25i | Job facts importers | Wages with source codes, geography level and periods kept (no outlooks: K5 C not picked); tests read known rows | 2 | K5 |
-| S2.5.25j | Typed, cited times | `RoadStep.time` with five kinds and `approximate`; amount must be in the checked quote; shown per step only; no timeline, date forecast or sum anywhere (a test), until the open question in § 10 is answered; road 1 typed; cockpit § 4 updated | 2.5 | K9 |
+| S2.5.25j | ~~Typed, cited times~~ **Dropped 2026-10-17** | Not built. The maintainer: "no times at all … NO TIMES!" (§ 5.5). No `RoadStep.time` field, no time gauge, no sum or estimate of any time | 0 | K9 |
 | S2.5.25k | Read tools cover roads and kit | `road_view`, `list_options`, `reachable`, `job_facts`, `industry_counts`; readout covers road 1; each value returns its source; no measure reads `transitionTrigger` strings; an outside agent gets them only for ventures set to Read or higher | 2 | K7, K8 |
 | S2.5.25l | Prove it: second road | A hairstylist road (Alberta) with no new code outside its road file and its job-links entry; validators green | 3 | K6, K9 |
 | S2.5.25m | Places coverage sample | Counts of Overture places under the job's categories and of Calgary and Edmonton licence-list name matches, in Calgary and Edmonton, duplicates noted, written up before any list is promised | 1 | **Waits on S2.5.26** (K3 on hold) |
@@ -813,10 +826,11 @@ times are prose today, and the cockpit allows only months to the person's own da
 | S2.5.25o | Lawyer questions | Open-data names questions added to the 23l page | 0.5 | **Waits on S2.5.26** (K3 on hold) |
 | S2.5.25p | Live look-ups on the person's account | After [9g]: replaces 22p and 23m; `lens-live` sources only; alphabetical; `keepLimit` per field enforced in code; `compareAllowed: no` sources refused by the comparison function; vendor results never saved in the Lens conversation (test); `never-automated` domains unreachable; key or sign-in in the keychain; `SENT_ELSEWHERE` entries; log line. Named-business part (Google Places field masks with no rating fields; Grounding Lite's display conditions and model-use confirmation; Yelp): written only after S2.5.26, kept here as research inputs | 3 (after Lens) | K2 B; **the named-business part (Google Places, Yelp) waits on S2.5.26** (K3 on hold) |
 | S2.5.25q | Labelled vendor estimates | Only if S2.5.26 and a later call bring it back, and a vendor returns a figure: vendor, account and date shown; never kept past the limit or summed; dated CLAUDE.md exception | 1.5 (after Lens) | **Waits on S2.5.26** (K4: A for v1) |
-| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, :830, :1733, § 12 and the #175 docs match the answers, dated: the 2026-09-24 logins reading relaxed (K2), wage rows (K5), sorting where decision 3 names (K7), per-step times and no timeline (K9) | 0.5 | K2, K5, K7, K9 |
+| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, § 12 and the #175 docs match the answers, dated: the 2026-09-24 logins reading relaxed (K2), wage rows (K5), sorting where decision 3 names (K7), no times at all (K9, 2026-10-17; future-cockpit :830 and :1733 stay as they are) | 0.5 | K2, K5, K7, K9 |
 
-On the answers of 2026-10-16 (K1 A, K2 B, K3 on hold, K4 A for v1, K5 B, K6 A, K7 A, K8 A, K9 A), the kit is
-about 21 build days before the Lens (25b–25l and 25r). That leaves out 25m, 25n and 25o (5.5 days), which wait
+On the answers of 2026-10-16 (K1 A, K2 B, K3 on hold, K4 A for v1, K5 B, K6 A, K7 A, K8 A, K9 A) and
+2026-10-17 (no times, so 25j's 2.5 days are dropped), the kit is about 18.5 build days before the Lens
+(25b–25i, 25k, 25l and 25r; it was 21 with 25j). That leaves out 25m, 25n and 25o (5.5 days), which wait
 on S2.5.26. After the Lens it is 25p's 3 days, part of which (named businesses) also waits on S2.5.26; 25q
 waits on S2.5.26. 25p still merges 22p and 23m into one feature, which saves about 2 days. K1 D is a future
 note (§ 9); no task yet. Research stories S2.5.26 and S2.5.27 have no day count yet. The comparison function, reply guard
@@ -826,7 +840,9 @@ and conversation are S2.5.24's own tasks (lens-comparisons.md § 11).
 
 - Any score, combined measure, "best" or winner named by DotAmi or the Lens.
 - Forecasts of income, success or tax.
-- A timeline or a date forecast, from DotAmi or the Lens (K9, the maintainer's note of 2026-10-16).
+- Any time figure, from DotAmi or the Lens: typed time fields, a time gauge, a sum or estimate of any
+  duration, a timeline or a date forecast (K9, the maintainer's note of 2026-10-16 and "NO TIMES!" of
+  2026-10-17).
 - A full plan for named businesses or ad spend beyond v1 before research story S2.5.26 is done, and any plan
   for community and unofficial sources before S2.5.27 is done.
 - A DotAmi-run scraper or crawler.
@@ -853,8 +869,8 @@ and conversation are S2.5.24's own tasks (lens-comparisons.md § 11).
    table 33-10-1176 stops at 4-digit industry groups. The Innovation, Science and Economic Development Canada
    (ISED) Financial Performance Data structure. Census table 98-10-0594. The Red Seal tools-and-equipment
    block. These were reported but not confirmed.
-5. **Permits and process times.** Whether BizPaL lists Calgary and Edmonton permits. Official processing times
-   for registry and business-number steps (none on disk).
+5. **Permits.** Whether BizPaL lists Calgary and Edmonton permits. (Official processing times are no longer
+   needed: no times, 2026-10-17.)
 6. **Foundation measures.** A holding-company step becomes a countable measure only once a road step or
    structure entry with a checked citation exists; the structure ladder's transition lines need citations
    before any surface quotes them.
