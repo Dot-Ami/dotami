@@ -31,9 +31,9 @@ screen may get. Every screen, and every feature added to one, follows these four
 |---|---|---|
 | The ways to get each cost line (already have it, buy, rent, lease; [architecture/other-ways-to-build.md](../architecture/other-ways-to-build.md)) | The step panel, folded inside each cost row | The cost row itself |
 | *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar, and a step that opens a business |
-| *About this job* (the job's facts, wages and requirements) | The right-hand panel | The goal bar, and the skills list |
+| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar, like *Compare* (§ 4.2; once the calm first view is built, its *Look closer* menu, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): the no-road screen offers it beside road 0 and the career road (S2.5.28c) |
 | The Lens ([architecture/use-cases.md](../architecture/use-cases.md)) | The right-hand panel; on a phone, a sheet (`components/cockpit/use-sheet.ts`) | One button in the header, and *Ask the Lens about this* in the step panel |
-| *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures* and *Compare*, nowhere else |
+| *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures*, *Compare* and the alternatives on road 1's training column, nowhere else (S2.5.24f, lens-comparisons.md § 11; the 2026-10-17 plan's list named the first two) |
 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)
 
