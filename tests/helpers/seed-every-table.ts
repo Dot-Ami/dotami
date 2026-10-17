@@ -11,6 +11,7 @@ import { agreeToPersonFigures, proposeIncomeWanted } from "@/lib/futures/person-
 import { chooseRoad } from "@/lib/futures/future";
 import { markSkill } from "@/lib/futures/skill-marks";
 import { setStepProgress } from "@/lib/futures/step-progress";
+import { addWatched } from "@/lib/landscape/watched";
 import { addDestination, addTypedStatement } from "@/lib/person/statements";
 import { writeSetting } from "@/lib/settings/store";
 import { demoScenarios } from "../../prisma/seed-data";
@@ -18,8 +19,8 @@ import { inventedRoad, inventedSkillItems } from "./invented-road";
 
 /**
  * Two ideas, a link between them, statements (a destination among them), a setting, a bank account, a
- * figure, expenses with a refund and a receipt row, a skill mark, progress on a step and the income the
- * person wants.
+ * figure, expenses with a refund and a receipt row, a skill mark, progress on a step, the income the
+ * person wants and a business the person is watching.
  */
 export async function seedEveryTable(prisma: PrismaClient, marker: string) {
   const a = (await ensureVentureFromScenario(prisma, demoScenarios[0])).ventureId;
@@ -83,6 +84,13 @@ export async function seedEveryTable(prisma: PrismaClient, marker: string) {
   });
   await prisma.receipt.create({
     data: { id: "0123456789abcdef0123456789abcdef", expenseId: bought.id, type: "image/png", bytes: 1234, sha256: "a".repeat(64) },
+  });
+  // A business the person is watching for the first idea, with their note and an ad link (2026-10-17).
+  await addWatched(prisma, a, {
+    nameAsTyped: `watched ${marker}`,
+    url: "https://example.com/",
+    note: `watched note ${marker}`,
+    adLinks: [{ url: "https://example.com/ad", seenOn: "2026-09-01" }],
   });
   return { a, b };
 }

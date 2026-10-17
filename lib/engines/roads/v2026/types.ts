@@ -92,6 +92,13 @@ export interface RoadStep {
    * the reason below; the step stays on the map and still opens, it is never removed.
    */
   onlyForKindsOfWork?: OnlyForKindsOfWork;
+  /**
+   * Set only on the step where the person opens a business of their own (road 1's Open your own shop,
+   * 2026-10-17). Its step panel then offers "Others in this line of work" too, as the goal bar does on every
+   * road (docs/architecture/competitive-landscape.md § 6). It says what the step is about, nothing more: no
+   * rule reads it and it changes no colour.
+   */
+  opensABusiness?: true;
 }
 
 export interface OnlyForKindsOfWork {

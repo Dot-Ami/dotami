@@ -8,6 +8,7 @@ import { FoldButton, FoldedBar, FoldedStrip, useFolds } from "@/components/cockp
 import { useIsPhone, useSheet } from "@/components/cockpit/use-sheet";
 import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/components/cockpit/gauge-panels";
 import { GoalBar } from "@/components/cockpit/goal-bar";
+import { LandscapePanel } from "@/components/cockpit/landscape-panel";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
 import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { StepPanel } from "@/components/cockpit/step-panel";
@@ -41,6 +42,7 @@ import {
 } from "@/lib/cockpit/told";
 import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCounts, type GaugeId, type Overlays } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
+import { landscapeWords } from "@/lib/landscape/words";
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
 import { useLocalToday } from "@/lib/figures/use-local-today";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
@@ -106,6 +108,11 @@ import Link from "next/link";
  * that example's answers (lib/examples/) through the same road evaluation, read-only. It fetches nothing of
  * the person's, keeps folds for this page only, and every way to save either is disabled with the example's
  * note or answers in the banner, which never folds; nothing reaches the data file or the browser's storage.
+ *
+ * 2026-10-17, "Others in this line of work" (docs/ui-spec/cockpit/landscape.md): one more thing the right-hand
+ * panel can hold, opened from the goal bar on every road and from a step its road marks as opening a business.
+ * It holds the person's own list of businesses they're watching, read and kept through its own page-only
+ * routes; it gives no receipt, because nothing on the road reads it.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
@@ -117,8 +124,8 @@ const LEGEND_ID = "cockpit-map-legend";
 /** A folded rail or panel on a wide window is a strip this wide. */
 const STRIP = "44px";
 
-/** One thing at a time in the right-hand slot: a step, the export, or one gauge's list. */
-type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare";
+/** One thing at a time in the right-hand slot: a step, the export, one gauge's list, Compare, or Others in this line of work. */
+type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare" | "landscape";
 
 /** Where an answer was given, so its receipt shows there (the map's own toggles show theirs in "This visit" only). */
 type ReceiptPlace = "step" | "skills" | "money" | "date" | "told" | "compare" | "what-if" | "map";
@@ -510,6 +517,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   }
 
   /**
+   * Opens "Others in this line of work" (2026-10-17; docs/ui-spec/cockpit/landscape.md): from the goal bar on
+   * every road, and from a step its road marks as opening a business. It changes nothing on the road.
+   */
+  function openLandscape() {
+    setAnswerError(null);
+    setReceipt(null);
+    setActiveGauge(null);
+    setRightPanel("landscape");
+  }
+
+  /**
    * A gauge opens its overlay and its list (Steps opens the next step on the road). Pressed again, it
    * closes what it opened, so its pressed state is a real toggle; the overlay it switched on stays on.
    */
@@ -813,6 +831,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     rightPanel === "money" ||
     rightPanel === "date" ||
     rightPanel === "compare" ||
+    rightPanel === "landscape" ||
     (rightPanel === "node" && selectedStep !== undefined && selectedStepEvaluation !== undefined);
 
   /** What the right-hand panel holds, named on its folded strip. */
@@ -827,7 +846,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             ? words.lists.dateTitle
             : rightPanel === "compare"
               ? words.compare.region
-              : words.folds.exportTitle;
+              : rightPanel === "landscape"
+                ? landscapeWords.region
+                : words.folds.exportTitle;
 
   // The body's columns from 768 px (the rail and the road) and from 1024 px (with the panel, when one is
   // open). A folded rail or panel keeps a narrow strip, so its way back stays where it was. The open rail is
@@ -919,6 +940,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             active={activeGauge}
             onGauge={handleGauge}
             onCompare={compareForks.length > 0 ? () => openCompare() : undefined}
+            onLandscape={openLandscape}
             folded={folds.goal}
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
@@ -1243,6 +1265,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                     receipt={receiptAt("step")}
                     // Only on a side of a fork Compare is offered at; anywhere else the panel shows no Compare at all.
                     onCompare={compareForks.some((fork) => fork.sides.includes(selectedStep.id)) ? openCompare : undefined}
+                    // Only on the step a road marks as opening a business (road 1's Open your own shop).
+                    onLandscape={selectedStep.opensABusiness ? openLandscape : undefined}
                   />
                 </div>
               ) : null}
@@ -1314,6 +1338,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   onThisIsMine={(stepId) => compareForkId && handleThisIsMine(compareForkId, stepId)}
                   onClose={() => setRightPanel(null)}
                 />
+              ) : null}
+
+              {rightPanel === "landscape" ? (
+                <LandscapePanel ventureId={ventureId} canSave={canSave} isExample={isExample} today={today} onClose={() => setRightPanel(null)} />
               ) : null}
 
               {rightPanel === "playbook" ? (

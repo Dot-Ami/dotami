@@ -257,13 +257,17 @@ and the maintainer's six decisions of 2026-10-11:
   picks bring into view; and a *Where to ask* list of government offices, regulators' directories and
   government-funded advice. Asked for 2026-10-15. Design written, nothing built; call 1 answered (C),
   waiting on the maintainer's other calls: [architecture/other-ways-to-build.md](architecture/other-ways-to-build.md) § 9.
-- ⏸ **[14g] Others in this line of work (the competitive landscape).** An official Statistics Canada
+- 🟡 **[14g] Others in this line of work (the competitive landscape).** An official Statistics Canada
   count of businesses by area and industry, a dated list of public places to look (city licence lists,
   public contract records, ad libraries), a plain line that ordinary ad spend isn't published in Canada,
   the person's own list of businesses they're watching, and later look-ups on the person's own account and
-  a list from open data. Asked for 2026-10-15. Design written, nothing built; calls 1 and 3 answered,
-  waiting on the maintainer's other calls:
-  [architecture/competitive-landscape.md](architecture/competitive-landscape.md) § 12.
+  a list from open data. Asked for 2026-10-15. Design written; calls 1 and 3 to 10 answered, calls 2 and
+  11 on hold for research: [architecture/competitive-landscape.md](architecture/competitive-landscape.md) § 12.
+  **Built 2026-10-17:** the panel, opened from the goal bar and from *Open your own shop*, with the plain
+  line on ad spend, links to the two ad libraries, and *Businesses you're watching*: the person's own list
+  for each idea (the name as typed, a link, a note, the ads they saw with the day), kept on this computer,
+  deleted with the idea ([ui-spec/cockpit/landscape.md](ui-spec/cockpit/landscape.md)). Still to build: the
+  counts, the area and industry questions, *Where to look*, and Mara's landscape.
 - ⏸ **[14h] Ask the Lens "what's cheapest, fastest, strongest?"** The Lens, and a *Sort by one thing you
   choose* control on screen, put the person's own options in order by one measure they name, with every
   number worked out by DotAmi's code, the gaps counted, and the words "your choice" on screen; questions

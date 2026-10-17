@@ -334,6 +334,19 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     for (const box of [marks, income]) expect(box.goesWithIt).toMatch(/your ideas stay/i);
   });
 
+  it("businesses you're watching (2026-10-17): deleted with their idea, or on their own from their own box", () => {
+    // Each list belongs to one idea (onDelete: Cascade), so Delete's ideas box takes every list with it.
+    expect(DELETE_MENU.find((e) => e.id === "ideas")!.alsoDeletes).toContain("WatchedBusiness");
+    const watched = DELETE_MENU.find((e) => e.id === "watched-businesses")!;
+    expect(watched).toMatchObject({ tables: ["WatchedBusiness"], alsoDeletes: [], keeps: [], built: true });
+    expect(watched.goesWithIt).toMatch(/your ideas stay/i);
+    // The page says the list can name other people: a business can be one person trading under their own name.
+    const entry = TABLES.find((t) => t.model === "WatchedBusiness")!;
+    expect(entry.aboutOthers).toMatch(/owner/);
+    expect(entry.holds).toMatch(/stay on this computer|Leaves the computer: no/i);
+    expect(entry.removedBy).toMatch(/deleted with the idea|Deleting your ideas/i);
+  });
+
   it("says what goes with each box and has a Learn more for it; a box not built yet deletes nothing", () => {
     for (const e of DELETE_MENU) {
       expect(e.label.trim()).not.toBe("");
@@ -487,13 +500,13 @@ describe("deleteData", () => {
     expect(before.Expense).toBe(3);
 
     // What the page shows and sends: whole-table counts for what goes, and how many records are attached.
-    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
+    const seen = { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, "Expense.ventureId": 2, "PersonStatement.ventureId": 1 };
     expect(await seenFor(prisma, ["ideas"])).toEqual(seen);
     const result = await deleteData(prisma, { kinds: ["ideas"], seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2 },
-      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, Figure: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, WatchedBusiness: 0, Figure: 0 },
       kept: { Expense: { unlinked: 2, total: 3 }, PersonStatement: { unlinked: 1, total: 2 } },
       wiped: true,
     });
@@ -538,12 +551,12 @@ describe("deleteData", () => {
     // The expense records are counted whole, once, and no "kept" count is asked for them. Their receipts
     // (none here) go with them. Statements aren't ticked, so the ones typed for an idea (none here,
     // 2026-10-11) are still counted as kept.
-    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
+    expect(seen).toEqual({ Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, Expense: 3, Receipt: 0, "PersonStatement.ventureId": 0 });
     const result = await deleteData(prisma, { kinds, seen });
     expect(result).toEqual({
       status: "deleted",
-      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, Figure: 2, Expense: 3, Receipt: 0 },
-      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, Figure: 0, Expense: 0, Receipt: 0 },
+      deleted: { Venture: 2, VentureLink: 1, ScenarioState: 2, StepProgress: 0, WatchedBusiness: 0, Figure: 2, Expense: 3, Receipt: 0 },
+      left: { Venture: 0, VentureLink: 0, ScenarioState: 0, StepProgress: 0, WatchedBusiness: 0, Figure: 0, Expense: 0, Receipt: 0 },
       kept: { PersonStatement: { unlinked: 0, total: 2 } },
       wiped: true,
     });

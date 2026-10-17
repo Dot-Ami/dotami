@@ -14,6 +14,8 @@ from *Your destination* in its place, with its day: *where you want to be · you
 > **Changed 2026-10-12 — part 2.** After the future's name, on a road with a fork, a **Compare** button opens *Compare the two endings* in the right-hand panel ([15-compare.md](./15-compare.md)).
 >
 > **Changed 2026-10-13 — the maintainer's answer to PR #159's question 1.** The **Compare** button shows only on a road with a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`): today the apprentice road, not today's Alberta road (road 0), where a toggle moves steps only through the tax rules, which colour the sides whichever is picked, so both columns' counts would come out the same. With none, there is no button.
+>
+> **Changed 2026-10-17 — Others in this line of work.** After *Compare* (or after the future's name where Compare isn't offered), on every road, a button **Others in this line of work** opens that panel in the right-hand slot ([landscape.md](./landscape.md)). It is on the open bar only; the folded bar keeps the gauges alone.
 
 ## What it is
 

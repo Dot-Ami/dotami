@@ -226,6 +226,14 @@ test("every other control in the ui-spec's table is drawn disabled, and none of 
   await allDisabled(stepPanel(page).getByRole("button", { name: /^(Doing|Done|Not for me)$/ }), "step: status");
   await allDisabled(stepPanel(page).getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "step: skill marks");
 
+  // Others in this line of work (2026-10-17): her list stays empty, saying why, and + Add a business is disabled.
+  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  const landscape = page.getByRole("region", { name: "Others in this line of work" });
+  await expect(landscape).toContainText("An invented person's list would mean inventing businesses, so this stays empty in the example.");
+  await expect(landscape).toContainText("This is an example. Start your own to keep anything.");
+  await expect(landscape.getByRole("list", { name: "Businesses you're watching" }).getByRole("listitem")).toHaveCount(0);
+  await allDisabled(landscape.getByRole("button", { name: "+ Add a business" }), "landscape: Add a business");
+
   expect(await storage(page)).toBe(JSON.stringify({ local: {}, session: {} }));
   expect(requests).toEqual([]);
 });

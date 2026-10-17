@@ -37,6 +37,10 @@ describe("the phrases a screen may never show", () => {
       "ranked first": "Ranked first of the futures",
       "top-rated": "Top-rated future",
       "most popular": "Most popular",
+      // The competitive landscape's own verdicts (docs/architecture/competitive-landscape.md § 6, 2026-10-17).
+      crowded: "This line of work is crowded.",
+      saturated: "A saturated market",
+      "room for you": "There's room for you here.",
     };
     // Every phrase on the list has a sample, so none is added without being tried.
     expect(Object.keys(samples).sort()).toEqual(VERDICT_PHRASES.map((p) => p.phrase).sort());

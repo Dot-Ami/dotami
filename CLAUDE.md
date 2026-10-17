@@ -67,7 +67,7 @@ says where it is going.
   768 px the page never scrolls sideways, the rail and the panel opening as full-width sheets; part 2, since 2026-10-12: *What you've told DotAmi /
   Not told yet* with the one-question box at the top of the left rail, a receipt after every answer (two
   runs compared, `lib/cockpit/told.ts`, `lib/roads/` `withoutAnswer`; an answer kept with the map gets
-  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
+  its receipt from the idea the save read back) and *This visit*, the what-if bar, and *Compare the two endings* with *This is mine*, offered only at a fork whose own pick, not the rules, puts steps on or off the path (`lib/cockpit/told.ts` `forksToCompare`, worked out from the road's steps; none on road 0, whose sides the tax rules colour, since 2026-10-13); since 2026-10-17 *Others in this line of work* in the right-hand panel, opened from the goal bar on every road and from a step its road marks as opening a business (`RoadStep.opensABusiness`, road 1's *Open your own shop*): the fixed "not published" line on what their ads cost with plain links to the two ad libraries, and *Businesses you're watching*, the person's own list per idea (`components/cockpit/landscape-panel.tsx`, words in `lib/landscape/words.ts`, `docs/ui-spec/cockpit/landscape.md`; no counts or named businesses yet, `docs/architecture/competitive-landscape.md`); and the map: the columns of a road, `lib/engines/roads/v2026/`, as stage cards +
   lever cards; every idea is drawn on road 0, *Starting any business in Alberta*, today's ten steps plus
   four *before you open* steps (the fourth, since 2026-10-14, *Keep your records from day one*, which
   every business road has, `lib/engines/roads/v2026/keep-records.ts`), which road evaluation colours as on your road (drawn without it, they
@@ -110,8 +110,10 @@ says where it is going.
   (GET what the cockpit keeps for an idea: its road, picks, month, job picked and step progress, the
   person's skill marks, their agreed yearly income, the idea's first sentence and the person's newest
   destination; + `/progress`, `/date`, `/ending` and `/job`, POST a step's status or ticks, the person's
-  month, the ending picked at a fork of a road other than road 0, and their pick of job) · `skill-marks`
-  (POST one mark); the five writes answer only DotAmi's own window.
+  month, the ending picked at a fork of a road other than road 0, and their pick of job; + `/watched` (GET the
+  businesses the person is watching for the idea, POST one more) and `/watched/<business id>` (POST an edit,
+  and `/remove`), since 2026-10-17, each answering only DotAmi's own window, the read too, with only http and
+  https links kept) · `skill-marks` (POST one mark); the five writes answer only DotAmi's own window.
 - Data: SQLite via Prisma, one file on the person's machine (`dotami.db`; [8i] the desktop app encrypts
   it and its safety copies with a key kept only wrapped by Windows, `database.key`
   (`desktop/database-key.mjs`, `desktop/encrypt-database.mjs`), a new or existing file only after the
@@ -157,7 +159,7 @@ says where it is going.
   record, described: its type read from the bytes, size and SHA-256; the file itself is a copy in `receipts/` beside the data file,
   named by DotAmi with a random id, never the person's file name, and encrypted by the desktop app with a key kept only wrapped by Windows (`desktop/receipt-crypto.mjs`, `desktop/receipt-key.mjs`; a copy run from source keeps it plain and says so); receipts Start a new key set aside in `backups/receipts-locked-…` are brought back, once their old key opens again, only by the desktop app's main process, asked from DotAmi's own window (`desktop/receipt-bring-back.mjs`); `lib/expenses/receipts/`; [8i]) · `Setting` (the person's saved choices, one row per setting: a
   catalog id and a small JSON value; what a value may hold is `lib/settings/values.ts`; [8e]) · `SourceAccount` (the bank and card
-  accounts the person allowed, under their own name for each, with the warning button and the days; never a number; nothing links to it yet; [8g]). SQLite has no list columns: list fields are JSON arrays, read back
+  accounts the person allowed, under their own name for each, with the warning button and the days; never a number; nothing links to it yet; [8g]) · `WatchedBusiness` (since 2026-10-17: a business the person is watching for one idea, the name as typed, an optional http or https link, their note and the ads they saw as a JSON list of links with the day seen; checked by nothing, read by no rule, never counted against anything, not in the plan; deleted with its idea; the inventory says it can name another person, an owner; `lib/landscape/watched.ts`). SQLite has no list columns: list fields are JSON arrays, read back
   through `lib/db/json-list.ts`. Catalogs are code, never rows. Every table, every
   browser-storage key, every package that ships and that DotAmi names itself (in `package.json`
   "dependencies", copied into the installer, or imported from `app/`, `components/` or `lib/`; with
