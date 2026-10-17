@@ -1,6 +1,6 @@
 # What DotAmi knows about you (`/your-data`) — page overview
 
-Last updated: 2026-10-10 ([8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Bring these receipts back in the receipts folder's row; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
+Last updated: 2026-10-17 (the "Businesses you're watching" card, the first with an "About other people" line, and its Delete box; 2026-10-10: [8i] — the four rows for turning locking off, and the data file key's row says when DotAmi deletes it; Bring these receipts back in the receipts folder's row; Delete's safety-copies box also clears the receipt folders set aside in the backups folder, with a warning; after Start a new key the desktop app restarts by itself; 2026-10-09: [8i] — how the receipt files are kept, and the key's file; Start a new key while the key can't be opened; 2026-10-08: [8h] — the "Books / file" kind; [8d] — the Delete menu, and its safety-copies box and unfinished-wipe note; deleting ideas keeps their expense records, "not attached yet", and the menu says how many before you confirm; first slice read-only 2026-10-06; a card for expense records, [8i])
 
 **Route:** `/your-data` · **Page:** `app/(journey)/your-data/page.tsx` (server-rendered on every
 visit, `force-dynamic`, like `/settings`) · **Components:** `components/your-data/` · **Reader:**
@@ -57,6 +57,19 @@ jump links, then five sections in this order:
    The ideas, statements and figures cards also say what they now can hold (an idea's road, endings
    and month; the answers to "where do you want to be"; savings toward starting and start-up costs).
    Only counts are shown: no skill name, no amount.
+   "Businesses you're watching" (added 2026-10-17, last in the list, `WatchedBusiness`) counts the
+   businesses the person added under *Others in this line of work* in the cockpit, on every idea
+   ([../cockpit/landscape.md](../cockpit/landscape.md)), 0 until the first one. It says what one holds
+   (the name as typed, a link if given, the note, the ad links with the day seen; only http and https
+   links kept), that DotAmi checks none of it, no rule reads it and it isn't in the plan, and that it
+   doesn't leave the computer. Its "What takes it out" names **Remove** in the cockpit, deleting the idea,
+   and its own Delete box. No name, link or note is shown here, only the count.
+   A card whose table can hold something about other people, not only about the person, has one more
+   line between what it holds and what takes it out: **About other people ·** and a sentence
+   (`aboutOthers` in `TABLES`, `lib/privacy/inventory.ts`), in the same small label style as "What takes
+   it out". So far only "Businesses you're watching" has one: a business can be one person trading
+   under their own name, so a name or a note can be about its owner; it is what the person typed, kept
+   for their own planning on this computer, and sent nowhere. The other cards have no such line.
 3. **On this computer, outside the data file** — the data file's path with **Copy path**; the
    safety-copies folder and the log (desktop app only): how many files, how big, the day of the
    newest, the path with **Copy path** — only counted and dated, never opened (the log's row says
@@ -224,10 +237,12 @@ entry says so.
 
 `e2e/your-data.spec.ts`: a typed and agreed figure appears under "typed by you" with its agreed day;
 the response is `Cache-Control: no-store`; no amount in any URL; every inventory table and window key
-is on the page; reached from Settings → Privacy; until Delete is opened there are no form controls and
+is on the page, and only the cards with an `aboutOthers` sentence show the "About other people" line; reached from Settings → Privacy; until Delete is opened there are no form controls and
 no forget button; no sideways scroll at 390 px wide; and the Delete menu's main path (see
 [delete-menu.md](delete-menu.md)). `tests/privacy-delete.spec.ts` covers what each box deletes, the
-one transaction, the count check and the wipe (a byte scan of the file).
+one transaction, the count check and the wipe (a byte scan of the file), and (since 2026-10-17) that
+[delete-menu.md](delete-menu.md) lists every box in the menu's order and this file names each card that
+has an "About other people" line.
 
 Checked by hand on 2026-10-06 against the production build and a scratch database (seven invented
 figures across two ideas): the response header is `Cache-Control: private, no-cache, no-store,

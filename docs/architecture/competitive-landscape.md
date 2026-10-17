@@ -1,10 +1,17 @@
 # Others in this line of work: the competitive landscape (design)
 
-Status: **Design, not built.** Revised 2026-10-15: calls 1 and 3 answered, call 2 not accepted and reworked.
+Status: **Design, partly built** (since 2026-10-17: the person's own list, 23i, and the part of the panel 23h
+that holds it; see below and § 13). Revised 2026-10-15: calls 1 and 3 answered, call 2 not accepted and reworked.
 Revised 2026-10-16: calls 4 to 10 answered (§ 12); calls 2 and 11 (named businesses, and ad spend after v1)
 **on hold** until research story S2.5.26 is done (§ 6.3, § 6.5). No product code until the maintainer's
 picks are written into the docs. Public task list: [14g](../task-list.md) (tracker story S2.5.23). This
 document does tasks 23a–23d; build tasks are in § 13.
+Revised 2026-10-17: § 15 item 11 answered (the maintainer: *"yah, this is fine. Lets do it"*): the person's own
+list, *Businesses you're watching* (23i), is **built**, ahead of research story S2.5.26, in a minimal *Others in
+this line of work* panel ([docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md)): it opens from
+the goal bar and the *open your own* step and holds the ad-cost line, the list and the footer, which is part of
+23h. The rest of call 2 and call 11 stay on hold; counts, the area questions and *Where to look* are still to
+build.
 
 Read with [future-cockpit.md](future-cockpit.md), [use-cases.md](use-cases.md) (the Lens, the built-in agent
 on the person's own model), [connectors-and-agents.md](connectors-and-agents.md),
@@ -42,7 +49,7 @@ building all of this out repeatedly for every single job and business possibilit
 | The person wants to know | What DotAmi can honestly show | What it can't |
 |---|---|---|
 | How many others do this near me? | An official **count** by area and industry (§ 4.1) | One-person shops with no payroll |
-| Who are they? | The person's own list, if released before S2.5.26 (§ 15 item 11); anything more waits on research story S2.5.26 (call 2 on hold, § 6.3) | A complete named list for Alberta |
+| Who are they? | The person's own list (released 2026-10-17, § 15 item 11; built, 23i); anything more waits on research story S2.5.26 (call 2 on hold, § 6.3) | A complete named list for Alberta |
 | What have they accomplished? | Public records only, such as federal contracts over $10,000 (§ 4.5) | Sales or profit of a private small business |
 | What do their ads look like? | The ads, in Meta's and Google's public libraries, opened by the person (§ 4.6) | A copy of the ads inside DotAmi |
 | How much do their ads cost? | "Not published" for ordinary Canadian ads; anything more waits on S2.5.26 (call 11 on hold, § 6.5) | A published spend figure: none exists |
@@ -264,9 +271,11 @@ Asked when the panel opens, because the count depends on them; not in the *Not t
 5. **Businesses you're watching · in the order you added them.** *+ Add a business*: name as typed, optional
    link, note and ad links with the day seen. *"DotAmi doesn't check these. They stay on this computer and no
    rule reads them."* The count never appears here; nothing says "3 of the 101". Links and the person's notes
-   only, never a business's own words quoted (call 9 A). This list is call 2's option A, which is on hold with
-   the rest of call 2; its saved ad links are already part of v1 (call 3 B, research-kit call K4 A), so whether
-   it may be built before S2.5.26 ends is open (§ 15).
+   only, never a business's own words quoted (call 9 A). This list is call 2's option A; its saved ad links are
+   part of v1 (call 3 B, research-kit call K4 A). **Released 2026-10-17** before S2.5.26 ends (§ 15 item 11,
+   the maintainer: *"yah, this is fine. Lets do it"*) and **built** (23i), with items 4 and 6 around it as its
+   host; the rest of call 2 stays on hold. Per-control behaviour:
+   [docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md).
 6. Footer: *"Facts from public sources, side by side. Nothing here says whether this line of work fits you.
    Not legal advice."*
 
@@ -282,8 +291,8 @@ need to make note of it, because we need to do more research on this topic."*
 
 So there is no plan here for DotAmi supplying named businesses, by any route, until research story
 **S2.5.26** (free software, websites and GitHub repos that already make competitor lists) is done. The
-person's own list (call 2's option A) is held with the rest of call 2 (§ 6.2, item 5). What the research
-starts from:
+person's own list (call 2's option A) was released on 2026-10-17 and is built (§ 6.2, item 5); it ships no
+names and sends nothing, and the rest of call 2 stays on hold. What the research starts from:
 - The open data seen, with its terms and limits: Calgary's and Edmonton's licence lists, Overture Maps,
   Foursquare's open places, OpenStreetMap, the federal corporations list (§ 4.2).
 - The services seen and what their terms allow: Google Places and Maps Grounding Lite, Yelp, Foursquare's
@@ -313,8 +322,10 @@ future idea only.
 
 ### 6.5 Waiting on research: ad spend beyond v1 (call 11 = research-kit call K4, on hold for S2.5.26)
 
-v1 stands (call 3 B, research-kit call K4 A): links to Meta's and Google's ad libraries on *Where to look*,
-the "not published" line, and the person's saved ad links. Anything beyond that waits on research story
+v1 stands (call 3 B, research-kit call K4 A): links to Meta's and Google's ad libraries, the "not published"
+line, and the person's saved ad links. All three are built (2026-10-17); the links were designed for *Where to
+look*, which isn't built yet, so today they sit under *What their ads cost*, below the line
+([docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md) § 1). Anything beyond that waits on research story
 **S2.5.26**, which also looks for free tools and sites that already gather ads and estimate spend. The
 maintainer, in chat on 2026-10-16: *"thats why we have to do our research around this topic first; no
 different than the competitor list. I know this stuff exista out there so we have to look for it and plan for
@@ -347,7 +358,7 @@ questions below are examples of what a person might ask, not a list it is built 
   one trade, its date), never "crowded" or "room for you".
 - **"Who's the biggest?" "Which is most popular?" "Is this market crowded?" "Is there room for me?"** The
   facts the panel holds, and *"DotAmi doesn't rank businesses or judge a market."*
-- **"Who else does this near me?"** The person's own list (if built, § 15 item 11) and *Where to look*; DotAmi supplies no names while
+- **"Who else does this near me?"** The person's own list (built 2026-10-17, § 15 item 11) and *Where to look*; DotAmi supplies no names while
   call 2 is on hold (§ 6.3).
 - **"What do their ads cost?"** The "not published" line; nothing more while call 11 is on hold (§ 6.5).
 
@@ -388,7 +399,7 @@ way it seems like best of both worlds (at least to me)"*.
 | Road keys and job links | `Road.codes.occupations`; industry candidates per NOC (place candidates wait on S2.5.26) | Road files; `lib/engines/research-kit/v2026/job-links.ts` (S2.5.25e) | `provinces` ([roads types.ts:23](../../lib/engines/roads/v2026/types.ts)) |
 | Area and industry picks (call 6 A) | The person's answers | `Venture.landscapeArea`, `Venture.industryCode` with set-at dates; nullable, add-column only | `occupationCode` |
 | More about where (call 6 note) | The person's own words, optional | A nullable `Venture` text column with its set-at date, or a dated `PersonStatement` linked to the idea; which one is settled in 23g | `PersonStatement` |
-| Watched businesses (held with call 2, § 6.2 item 5) | The person's own notes | Table `WatchedBusiness` {id, ventureId, nameAsTyped, url?, note?, adLinks, status, addedAt}; fields for names from a list or the Lens wait on S2.5.26 | `lib/db/json-list.ts`; `DELETE_MENU` ([inventory.ts:391](../../lib/privacy/inventory.ts)) |
+| Watched businesses (§ 6.2 item 5; **built 2026-10-17**) | The person's own notes | Table `WatchedBusiness` {id, ventureId, nameAsTyped, url?, note?, adLinks, addedAt, updatedAt}, as built: `adLinks` a JSON list of {url, seenOn} on the row (read and written only with its business, so no child table); no `status` (nothing sets one yet); links http and https only (`lib/landscape/links.ts`); storage `lib/landscape/watched.ts`; page-only routes `app/api/futures/[id]/watched/`. Fields for names from a list or the Lens wait on S2.5.26 | `DELETE_MENU` ([inventory.ts](../../lib/privacy/inventory.ts)) |
 | Public-record look-ups and the marketing summary (call 4 B) | Lens features, after the Lens | The public-record part of S2.5.25p, and 23r; results arrive as proposals; the summary tagged as the person's model's; never-automated pages opened, never read | Lens [9d]/[9g] ([task-list.md](../task-list.md)) |
 | Named-business look-ups and open-data places (call 2) | On hold for S2.5.26 | No design until the research ends (§ 6.3) | — |
 | *Advertising* cost line (call 8 A) | Named line priced by the person; **a future story**, not this build | Each road's start-up lines | `NamedCostLine` (roads types.ts:168) |
@@ -403,7 +414,7 @@ separate parts of the panel and never joined, because of Statistics Canada's no-
 |---|---|---|
 | Area and industry picks | `Venture` columns | No |
 | More about where (optional, the person's words) | With the idea, dated, as typed; deleted with the idea | No |
-| Watched businesses (held with call 2) | `WatchedBusiness`, local file, encrypted in the desktop app; deleted with the idea | No; not in the plan export |
+| Watched businesses (built 2026-10-17) | `WatchedBusiness`, local file, encrypted in the desktop app; deleted with the idea | No; not in the plan export |
 | Counts, registry | Shipped in the app; made by a maintainer's script | No request at run time |
 | Opening a link | The person's browser | The site sees a visit; no person or idea data in the link |
 | Lens conversation | Already kept per idea, clearable ([use-cases.md](use-cases.md)) | What the Lens sends follows the rows below |
@@ -415,9 +426,11 @@ separate parts of the panel and never joined, because of Statistics Canada's no-
 - *"Your pick of area and industry for Others in this line of work, and anything you wrote about where. Read
   by no rule. Leaves the computer: no."*
 - *"Businesses you're watching: names and links you typed, your notes, ad links. Deleted with the idea or from
-  Your data. Leaves the computer: no."* Plus a `DELETE_MENU` row. (Held with call 2, § 6.2 item 5.)
+  Your data. Leaves the computer: no."* Plus a `DELETE_MENU` row. (Built 2026-10-17: the entry
+  *Businesses you're watching* and the Delete menu's box of that name.)
 - A new line for **data about other people**: watched businesses can name an owner. Inventory scope today is
-  "Everything DotAmi keeps about the person" (inventory.ts:2).
+  "Everything DotAmi keeps about the person" (inventory.ts:2). (Built 2026-10-17: `TableEntry.aboutOthers`,
+  shown on *What DotAmi knows about you* as *About other people*.)
 - `SENT_ELSEWHERE` ([inventory.ts:796](../../lib/privacy/inventory.ts)), with the Lens: *"When you ask the
   Lens to look up public records or summarise a business's marketing, the business name you gave goes to the
   government search site, and the name and the pages read go to your model. Results can name other businesses
@@ -429,7 +442,7 @@ separate parts of the panel and never joined, because of Statistics Canada's no-
 - *"Asks: the area and industry you pick for Others in this line of work, and, if you want, more about where in
   your own words. Kept on this computer. Nothing new is sent."*
 - *"Keeps: businesses you choose to watch, with your notes. On this computer only; deleted with the idea."*
-  (When the watched list is built.)
+  (Added 2026-10-17, with the list.)
 - *"Ships: Statistics Canada's Canadian Business Counts (June 2026), under the Statistics Canada Open Licence."*
 - With the Lens: *"Sends, only when you ask: a business name to the government's public-records search, and
   the name and the pages read to your model for a marketing summary."*
@@ -468,11 +481,12 @@ separate parts of the panel and never joined, because of Statistics Canada's no-
 ## 11. Phases
 
 - **A: counts, where to look, the area questions, Mara.** 23e–23h, 23k, 23n. No network, no model. The
-  person's own list (23i) joins it if the maintainer releases it before S2.5.26 ends (§ 15).
+  person's own list (23i) was released on 2026-10-17 (§ 15 item 11) and is built first, in a minimal panel
+  (the ad-cost line, the list and the footer; part of 23h, § 13); the rest of phase A fills that panel in.
 - **C: the Lens.** Public records by name and the marketing summary (call 4 B): the public-record part of
   S2.5.25p, and 23r, after the Lens.
-- **On hold for research story S2.5.26:** named businesses by any route (call 2: 23i if not released, 23l,
-  23o, 23p, the named part of 23m) and ad spend after v1 (call 11: 23q).
+- **On hold for research story S2.5.26:** named businesses by any route (call 2: 23l, 23o, 23p, the named
+  part of 23m) and ad spend after v1 (call 11: 23q).
 
 **Future notes, no task lists yet** (recorded from the maintainer's notes of 2026-10-16):
 - **The *Advertising* cost line (call 8 A).** His words: *"this could work, but it would take a lot of work to
@@ -509,7 +523,7 @@ already do this, because I've definitely seen stuff like this before. So don't b
 don't make a full plan around this just yet, but we need to make note of it, because we need to do more
 research on this topic."* Nothing is built or planned for call 2 until research story **S2.5.26** is done;
 the findings it starts from are § 3, § 4.2–4.4 and § 6.3. Whether the person's own list (route A) may go
-ahead first is open (§ 15).
+ahead first: **answered 2026-10-17, yes** (§ 15 item 11); it is built.
 
 **Call 3: ads and ad cost.** Answered 2026-10-15 (the maintainer): **B for v1**, *"I think this would be
 acceptable for v1, but there are clearly tonnes of software tools and websites that do this, and so we could
@@ -576,8 +590,8 @@ story's days.
 | S2.5.23e | *Where to look* as a registry view | The panel lists registry sources (S2.5.25b) in the fixed order; a test fails on any person or idea data in a link | 0.5 | — |
 | S2.5.23f | Counts for every industry | Built on the import core (S2.5.25c, 25d): every industry down to 4 digits × Alberta areas, 6 digits for the province; Calgary (455) × 3371 and Edmonton (467) × 3371 equal the imported file, area members re-checked by query first; the 4-digit and employer-only limits written in the catalog; checksum; engine-integrity green | 2 | — |
 | S2.5.23g | Ask area and industry | Nullable columns; the two questions (call 6 A); the optional *More about where* box, kept as typed and dated, read by no rule; picker lists the job's candidates (job-links catalog) first, labelled; inventory and log lines | 2.5, plus the box (not yet estimated) | 6 |
-| S2.5.23h | The panel | Opens from the goal bar and the *open your own* step (call 7 A); count with limits, amber line, where to look, ad-cost line; no business's own words quoted (call 9 A); words pass both lists; UI spec; browser test; in the no-verdict walk | 3 | 7, 9 |
-| S2.5.23i | Businesses you're watching | **Held with call 2** unless the maintainer releases it (§ 15). Table, API, form, ad links, edit, remove; deleted with the idea; `DELETE_MENU`; data-about-others line; joins `e2e/journey.spec.ts` | 2 | 2, 9 |
+| S2.5.23h | The panel | Opens from the goal bar and the *open your own* step (call 7 A); count with limits, amber line, where to look, ad-cost line; no business's own words quoted (call 9 A); words pass both lists; UI spec; browser test; in the no-verdict walk. **Part built 2026-10-17** with 23i: the opening from the goal bar and the *open your own* step, the ad-cost line (with the ad libraries' links), no business's own words, the words passing both lists, the UI spec ([landscape.md](../ui-spec/cockpit/landscape.md)), a browser test (`e2e/landscape.spec.ts`) and a place in the no-verdict walk. Still to build: the count with its limits, the amber line and *Where to look*, with their words, spec lines and tests | 3 (estimated before the part built; not re-estimated) | 7, 9 |
+| S2.5.23i | Businesses you're watching | **Built 2026-10-17** (released that day, § 15 item 11), in a minimal panel holding § 6.2 items 4, 5 and 6. Table, API, form, ad links with the day seen, edit, remove; http and https links only; deleted with the idea; `DELETE_MENU`; data-about-others line; joins `e2e/journey.spec.ts` and `e2e/no-verdict.spec.ts` | 2 | 2, 9 |
 | S2.5.23j | *Advertising* cost line | **A future story, not this build** (call 8 A, § 11): named line on every road; the money gauge counts the person's quote. Its tasks are written when that story starts | — | 8 |
 | S2.5.23k | Mara's example | Call 10 B: Calgary area and 3371, labelled invented, with the real count; the watched list says why it stays empty | 0.5 | 10 |
 | S2.5.23l | Lawyer questions | **Waits for S2.5.26** (call 5 C: before DotAmi ships names). § 15 items 1–4 plus whatever S2.5.26 leads to, quoted with links, for the maintainer to send | 1 | 5 |
@@ -588,9 +602,10 @@ story's days.
 | S2.5.23q | Vendor ad estimates | **On hold** for S2.5.26 (was = S2.5.25q) | — | 11 |
 | S2.5.23r | Marketing summary | After the Lens (call 4 B): drafted by the person's own model, tagged so every time it shows, pages listed with links and days; reads only pages the registry allows; never-automated pages opened in the person's browser, never read; words pass both lists; `SENT_ELSEWHERE` and log lines | 2 (after the Lens) | 4, 9 |
 
-Answered path (4 B, 5 C, 6 A, 7 A, 8 A as a future story, 9 A, 10 B): **9 days** in this story now (23e,
-23f, 23g, 23h, 23k, 23n), plus the optional box in 23g (not yet estimated), plus 2 days for 23i if the
-maintainer releases it before S2.5.26 ends, plus the kit's share (25b, 25c). After the Lens: the public-record
+Answered path (4 B, 5 C, 6 A, 7 A, 8 A as a future story, 9 A, 10 B): **9 days** in this story as estimated
+before 2026-10-17 (23e, 23f, 23g, 23h, 23k, 23n), plus the optional box in 23g (not yet estimated), plus the
+kit's share (25b, 25c). 23i was released on 2026-10-17 and is built, and part of 23h with it (its row says
+which part); the 9 days still count 23h's whole 3 and were not re-estimated after that. After the Lens: the public-record
 part of 25p, and 23r (2 days). On hold for S2.5.26: 23l, 23o, 23p, 23q and the named part of 23m. A future
 story: 23j.
 
@@ -608,8 +623,8 @@ Ontario in the first build (the keys allow them later).
 
 ## 15. Open questions (not verified; nothing above relies on them as fact)
 
-The lawyer questions (items 1–4) wait with 23l for research story S2.5.26 (call 5 C). Items 11 and 12 are for
-the maintainer.
+The lawyer questions (items 1–4) wait with 23l for research story S2.5.26 (call 5 C). Item 12 is for the
+maintainer; item 11 was answered on 2026-10-17.
 
 1. **Lawyer:** is a person planning their own business on their own computer acting "for personal or domestic
    purposes"? Does keeping sole proprietors' names change that?
@@ -634,10 +649,11 @@ the maintainer.
 9. Whether *Businesses you're watching* ever goes in the plan export ([10e]). Left out by default.
 10. [README.md:64](../../README.md) says nothing is sent anywhere; the inventory already contradicts it. The
    Lens task's wording must not add to that.
-11. **For the maintainer:** call 2 is on hold as a whole, including the person's own list (*Businesses you're
+11. **Answered 2026-10-17.** Call 2 was on hold as a whole, including the person's own list (*Businesses you're
     watching*, 23i, call 2's route A), which needs no outside tool, ships no names and sends nothing. Its saved
     ad links are part of v1 (call 3 B, research-kit call K4 A). May 23i be built before S2.5.26 ends, or does it
-    wait with the rest of call 2?
+    wait with the rest of call 2? The maintainer, 2026-10-17: *"yah, this is fine. Lets do it"*. Built
+    (23i, § 6.2 item 5); the rest of call 2 stays on hold.
 12. **For the maintainer:** the marketing summary (call 4 B, § 6.8): may the person's model also read the
     person's own notes on that business, and is the summary kept with the idea (and so in *Your data* and
     deleted with the idea) or shown once and not kept?

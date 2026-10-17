@@ -78,6 +78,12 @@ export interface TableEntry {
   holds: string;
   /** What takes a row out today — including "nothing", said plainly. */
   removedBy: string;
+  /**
+   * Set when the table can hold something about other people, not only about the person (2026-10-17): the
+   * list is "everything DotAmi keeps about the person", and a business the person watches can be one person
+   * trading under their own name. The page shows it under the entry.
+   */
+  aboutOthers?: string;
 }
 
 /**
@@ -309,6 +315,16 @@ export const TABLES: readonly TableEntry[] = [
     removedBy:
       "“Take back” beside the account in Settings stops it being used, but the row (its name and days) stays in the data file. Delete, at the bottom of this page, with “Your bank and card accounts” ticked, erases every one from the file. Figures read from an account's statements are not deleted with it.",
   },
+  {
+    model: "WatchedBusiness",
+    name: "Businesses you're watching",
+    holds:
+      "For each idea, the businesses you added under “Others in this line of work” in the cockpit (since 2026-10-17): the name as you typed it, a link if you gave one, your note, and the links to ads you saw, each with the day you said you saw it, in the order you added them. Links are kept only when they start with http:// or https://. DotAmi doesn't check any of it, no rule reads it, it is never counted against anything, and it isn't in your plan. Leaves the computer: no. DotAmi opens none of the links itself; your browser opens one only when you click it.",
+    removedBy:
+      "“Remove” beside a business in the cockpit's “Others in this line of work” deletes that one from the file. Each list is deleted with the idea: Deleting your ideas (Delete, at the bottom of this page) takes every list with them, and “Businesses you're watching” on the Delete menu deletes every list and leaves the ideas.",
+    aboutOthers:
+      "This is about other people's businesses, not about you, and a business can be one person trading under their own name, so a name or a note here can be about its owner. It is what you typed, kept for your own planning on this computer; DotAmi sends it nowhere.",
+  },
 ];
 
 /** The kinds of data on the Delete menu. Ids are permanent: the page and its request name them. */
@@ -321,6 +337,7 @@ export type DeleteKindId =
   | "statements"
   | "skill-marks"
   | "income-wanted"
+  | "watched-businesses"
   | "settings"
   | "backups"
   | "remembered-columns";
@@ -393,7 +410,7 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     id: "ideas",
     label: "Your ideas, with their notes, links and map progress",
     tables: ["Venture"],
-    alsoDeletes: ["VentureLink", "ScenarioState", "StepProgress", "Figure"],
+    alsoDeletes: ["VentureLink", "ScenarioState", "StepProgress", "Figure", "WatchedBusiness"],
     keeps: [
       {
         model: "Expense",
@@ -415,9 +432,9 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
       },
     ],
     goesWithIt:
-      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked, and your progress on each step of their roads. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too. So do the sentences you typed on the front door for them, among your statements, unless you tick “Your statements” too.",
+      "Deleting your ideas also deletes their notes, the links between them, their map progress and every figure, even if those boxes aren't ticked, your progress on each step of their roads, and the businesses you're watching for them. Your expense records stay, as “not attached yet”, with their receipts, unless you tick “Your expense records” too. So do the sentences you typed on the front door for them, among your statements, unless you tick “Your statements” too.",
     learnMore:
-      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, goals, stage and your notes, and the road it is drawn on, the endings you picked, your own month and year and the job you picked if you set them. Its figures go with it, and so does your progress on each step of its road. Your skill marks and the yearly income you want are yours, not an idea's, so they stay unless you tick their boxes. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them, including the sentence you typed on the front door for each idea, which stays tied to no idea. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
+      "Every idea you saved goes: its name, province, revenue estimates, employment status, tags, goals, stage and your notes, and the road it is drawn on, the endings you picked, your own month and year and the job you picked if you set them. Its figures go with it, and so do your progress on each step of its road and the businesses you're watching for it, with your notes. Your skill marks and the yearly income you want are yours, not an idea's, so they stay unless you tick their boxes. Expense records attached to an idea are kept, as “not attached yet”: they stay in DotAmi's data file on this computer, this page keeps counting them under “Your expense records”, and the Expenses page lists the ones you haven't turned down under “Not attached to an idea yet”. Records you turned down are kept and counted too, but no list shows them. To delete them as well, tick “Your expense records” too; DotAmi can't delete a single record yet. The Ideas page and the map start empty, as at first launch; a copy run from source loses its two demo ideas too. Your statements and settings stay unless you tick them, including the sentence you typed on the front door for each idea, which stays tied to no idea. If an idea had its reminder switch on, the setting still holds the idea's made-up number, which no longer matches anything.",
     built: true,
   },
   {
@@ -500,6 +517,17 @@ export const DELETE_MENU: readonly DeleteMenuEntry[] = [
     goesWithIt: "Every one goes, whether agreed, waiting, taken back or turned down. Your ideas stay, and so do their figures.",
     learnMore:
       "This is the yearly income, before tax, you said you want: kept once for you, not for one idea, which is why deleting your ideas doesn't remove it. Afterwards the cockpit has no target of yours to show beside a future until you give one again and agree to it.",
+    built: true,
+  },
+  {
+    id: "watched-businesses",
+    label: "Businesses you're watching",
+    tables: ["WatchedBusiness"],
+    alsoDeletes: [],
+    keeps: [],
+    goesWithIt: "Every list goes, on every idea: the names you typed, their links, your notes and the ad links. Your ideas stay, and so does everything else.",
+    learnMore:
+      "These are the businesses you added under “Others in this line of work” in the cockpit, for each idea, with your notes and the links to their ads you saw. Nothing else uses them, so nothing else changes: each idea's list is empty afterwards. To remove one business, use “Remove” beside it in the cockpit instead. Deleting your ideas deletes their lists too, whether this is ticked or not.",
     built: true,
   },
   {

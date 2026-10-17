@@ -1384,3 +1384,86 @@ describe("desktop migrator — the job picked for the government's skills list (
     expect(query<{ id: string }>(dbFile, `SELECT id FROM "SkillMark"`)).toEqual([{ id: "m1" }]);
   }, 60_000);
 });
+
+describe("desktop migrator — businesses you're watching (2026-10-17)", () => {
+  const watchedMigration = localNames.find((name) => name.endsWith("_watched_businesses"));
+
+  it("is one new table and its index: Venture and every other table are left alone", () => {
+    expect(watchedMigration, "no migration ending in _watched_businesses").toBeDefined();
+    const statements = statementsOf(watchedMigration!);
+    expect(statements).toHaveLength(2);
+    expect(statements[0]).toMatch(/^CREATE TABLE "WatchedBusiness" \(/);
+    // Its link to the idea deletes the list with the idea, and nothing else.
+    expect(statements[0]).toMatch(
+      /CONSTRAINT "WatchedBusiness_ventureId_fkey" FOREIGN KEY \("ventureId"\) REFERENCES "Venture" \("id"\) ON DELETE CASCADE ON UPDATE CASCADE/,
+    );
+    expect(statements[1]).toMatch(/^CREATE INDEX "WatchedBusiness_ventureId_idx" ON "WatchedBusiness"\("ventureId"\)$/);
+    // The desktop migrator runs with foreign keys on: a copy-and-drop of Venture would cascade-delete every
+    // idea's figures, links and map progress, so nothing here may drop, rename, alter or copy anything.
+    // (The foreign key's own "ON DELETE CASCADE" is the link checked above, not a statement that deletes.)
+    for (const s of statements) expect(s.replace("ON DELETE CASCADE ON UPDATE CASCADE", "")).not.toMatch(/\b(DROP|ALTER|RENAME|INSERT|DELETE|PRAGMA)\b/i);
+  });
+
+  it("keeps every idea, figure, link, statement, map and step progress and mark; the new list is empty and goes with its idea", () => {
+    const before = path.join(dir, "migrations-before-watched");
+    cpSync(migrations, before, { recursive: true });
+    for (const name of localNames.filter((n) => n >= watchedMigration!)) {
+      rmSync(path.join(before, name), { recursive: true, force: true });
+    }
+    migrate(dbFile, before);
+    expect(tables(dbFile)).not.toContain("WatchedBusiness");
+    expect(query<{ foreign_keys: number }>(dbFile, "PRAGMA foreign_keys")).toEqual([{ foreign_keys: 1 }]);
+
+    runSql(
+      dbFile,
+      `
+      INSERT INTO "User" (id, updatedAt) VALUES ('u1', 0);
+      INSERT INTO "Venture" (id, userId, name, type, province, targetRevenueY1, targetRevenueY3, employmentStatus, notes, roadId, roadChosenAt, forkPicks, targetMonth, targetMonthSetAt, occupationCode, occupationPickedAt, updatedAt)
+        VALUES ('v1', 'u1', 'Invented shop', 'SERVICE', 'CA-AB', 1000, 3000, 'APPRENTICE', 'note', 'road-apprentice-to-own-shop-ab', 5, '{}', '2029-05', 6, '72311.00', 7, 0),
+               ('v2', 'u1', 'Second idea', 'PRODUCT', 'CA-BC', 2000, 6000, 'EMPLOYEE', '', NULL, NULL, '{}', NULL, NULL, NULL, NULL, 0);
+      INSERT INTO "PersonStatement" (id, userId, text, saidAt, ventureId, kind) VALUES ('s1', 'u1', 'My own shop', 1, 'v1', NULL);
+      INSERT INTO "VentureLink" (id, fromId, toId, kind, note) VALUES ('l1', 'v1', 'v2', 'SISTER', 'same customers');
+      INSERT INTO "ScenarioState" (id, ventureId, activeNodeIds, completedNodeIds, ghostedNodeIds, activeBranches, updatedAt)
+        VALUES ('p1', 'v1', '["a"]', '["b"]', '[]', '{}', 0), ('p2', 'v2', '[]', '[]', '[]', '{}', 0);
+      INSERT INTO "Figure" (id, ventureId, kind, periodStart, periodEnd, amountCents, sourceKind, sourceLabel, status)
+        VALUES ('f1', 'v1', 'savings-for-start', 0, 0, 1200000, 'typed', 'typed by you', 'confirmed'),
+               ('f2', 'v2', 'gross-revenue', 2, 3, 99, 'typed', 'typed by you', 'confirmed');
+      INSERT INTO "StepProgress" (id, ventureId, roadId, stepId, status, updatedAt)
+        VALUES ('sp1', 'v1', 'road-apprentice-to-own-shop-ab', 'step-shop-register-apprentice', 'done', 0);
+      INSERT INTO "SkillMark" (id, userId, skillItemId, mark) VALUES ('m1', 'u1', 'skill-ab-alberta-student-number', 'have');
+    `,
+    );
+    const tablesKept = ["User", "PersonStatement", "Venture", "VentureLink", "ScenarioState", "Figure", "StepProgress", "SkillMark"];
+    const columnsBefore = Object.fromEntries(tablesKept.map((t) => [t, columns(dbFile, t).map(columnAsBefore).join(", ")]));
+    const everything = () => Object.fromEntries(tablesKept.map((t) => [t, query(dbFile, `SELECT ${columnsBefore[t]} FROM "${t}" ORDER BY 1`)]));
+    const held = everything();
+    expect(held.Venture).toHaveLength(2);
+    expect(held.Figure).toHaveLength(2);
+
+    const { applied, backup } = migrate(dbFile, migrations, { backupDir: path.join(dir, "backups"), now: () => 29 });
+    expect(applied).toEqual(localNames.filter((n) => n >= watchedMigration!));
+    expect(backup).not.toBeNull();
+
+    // Every row of every table is as it was, and the new list is there and empty.
+    expect(everything()).toEqual(held);
+    expect(query(dbFile, `SELECT * FROM "WatchedBusiness"`)).toEqual([]);
+    expect(tables(backup!)).not.toContain("WatchedBusiness");
+    expect(query(dbFile, "PRAGMA foreign_key_check")).toEqual([]);
+    expect(query(dbFile, "PRAGMA integrity_check")).toEqual([{ integrity_check: "ok" }]);
+    const status = prisma(["migrate", "status"], dbFile);
+    expect(status.out).toContain("Database schema is up to date");
+    expect(status.code).toBe(0);
+
+    // A business on each idea; deleting one idea takes its own list, and nothing of the other's.
+    runSql(
+      dbFile,
+      `INSERT INTO "WatchedBusiness" (id, ventureId, nameAsTyped, url, note, adLinks, updatedAt)
+         VALUES ('w1', 'v1', 'Invented Shop A', 'https://example.com', 'a note', '[{"url":"https://example.com/ad","seenOn":"2026-10-01"}]', 0),
+                ('w2', 'v2', 'Invented Shop B', NULL, NULL, '[]', 0);`,
+    );
+    runSql(dbFile, `DELETE FROM "Venture" WHERE id = 'v1'`);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "WatchedBusiness"`)).toEqual([{ id: "w2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "Figure"`)).toEqual([{ id: "f2" }]);
+    expect(query<{ id: string }>(dbFile, `SELECT id FROM "SkillMark"`)).toEqual([{ id: "m1" }]);
+  }, 60_000);
+});

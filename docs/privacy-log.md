@@ -39,6 +39,21 @@ person is asked).
 
 ### What DotAmi keeps, and where
 
+- **Keeps: businesses you choose to watch, with your notes. On this computer only; deleted with the idea.
+  (2026-10-17.)** A new table in the data file, `WatchedBusiness`
+  ([`prisma/migrations/20261017000000_watched_businesses`](../prisma/migrations/20261017000000_watched_businesses/migration.sql),
+  one CREATE TABLE and its index; no other table changes): for each idea, the businesses the person adds
+  under *Others in this line of work* in the cockpit, each the name as they typed it, an optional link, their
+  note, and the links to ads they saw, each with the day they set. Only `http://` and `https://` links are
+  kept ([`lib/landscape/links.ts`](../lib/landscape/links.ts)). Nothing checks it, no rule reads it, and it is
+  not in the plan export. It can be about other people: a business can be one person trading under their own
+  name, so the inventory says so on *What DotAmi knows about you* ("About other people"). Taken out by
+  *Remove* beside a business, by deleting the idea, or by Delete's new *Businesses you're watching* box
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)). Read and changed only from DotAmi's own window
+  (`/api/futures/<id>/watched`). Nothing new is sent: the panel's links to Meta's and Google's ad libraries,
+  and the person's own links, open in their browser only when clicked, with nothing about the person or the
+  idea in the address; DotAmi itself requests none of them.
+
 - **The sentence typed on the front door, and the goal chips, are kept with the idea (2026-10-11).**
   Until now both lived only in the browser tab (`dotami-journey-v3` in sessionStorage) and went when it
   closed. When the intake first saves an idea, the sentence becomes one of the person's statements

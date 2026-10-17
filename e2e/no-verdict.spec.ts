@@ -9,7 +9,8 @@
  *
  * It walks the journey and reads the visible text of every screen on it, as each is opened: the front
  * door, the intake's screens, Your destination, Pick a future, the cockpit on both written futures (with
- * every card's panel opened, its sources unfolded, each gauge's list, Compare and Export), Your plan for
+ * every card's panel opened, its sources unfolded, each gauge's list, Compare, Others in this line of work
+ * and Export), Your plan for
  * both, Your futures, What DotAmi knows about you, Settings, Your expenses and the Licences page's own
  * words. What a screen shows after a person does something there (a skill marked, an agree prompt, a
  * priced line, a date, a what-if, This is mine) is read by e2e/journey.spec.ts, which does each of those
@@ -89,6 +90,13 @@ async function readCockpit(seen: Seen[], page: Page, road: string, offersCompare
     await expect(compare).toBeVisible();
     await read(seen, page, `cockpit (${road}), Compare the two endings`, compare);
   }
+
+  // Others in this line of work, from the goal bar, on every road (docs/ui-spec/cockpit/landscape.md).
+  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  const landscape = page.getByRole("region", { name: "Others in this line of work" });
+  await expect(landscape).toBeVisible();
+  await expect(landscape).toContainText("DotAmi has no number for it.");
+  await read(seen, page, `cockpit (${road}), Others in this line of work`, landscape);
 
   await page.getByRole("button", { name: "Export", exact: true }).click();
   await expect(page.getByRole("link", { name: /^Open your plan to read or print/ })).toBeVisible();

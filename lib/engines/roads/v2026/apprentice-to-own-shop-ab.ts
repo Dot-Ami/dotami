@@ -857,6 +857,8 @@ export const roadApprenticeToOwnShopAB: Road = {
         "You decide to work for yourself. The next columns open the shop as a sole proprietorship or partnership; if you choose a corporation, see Incorporating on Starting any business in Alberta, where this road joins it.",
       // Records from the shop's first expense: its own step, first in the next column (2026-10-14).
       next: ["step-shop-register-name", "step-shop-blue-seal", "step-shop-keep-records"],
+      // Where the person opens a business of their own: its panel offers "Others in this line of work" (2026-10-17).
+      opensABusiness: true,
       doneWhen: [
         {
           id: "dw-shop-own-certificate",

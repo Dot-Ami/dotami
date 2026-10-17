@@ -27,9 +27,13 @@ with where they are kept, before confirming.
      "Your statements" with the link cleared, as "not tied to an idea"; ticking "Your statements"
      too deletes them. Since 2026-10-11 (the future cockpit's phase 1 storage) it also takes **Your
      progress on each step** (`StepProgress`, counted on the box like the rest), and the road, endings
-     and month kept on each idea; the box's sentence ends "and your progress on each step of their roads", and its
+     and month kept on each idea; the box's sentence names "your progress on each step of their roads", and its
      Learn more says the skill marks and the yearly income wanted stay, because they are the person's,
-     not an idea's.
+     not an idea's. Since 2026-10-17 it also takes **Businesses you're watching** (`WatchedBusiness`,
+     each idea's own list from the cockpit's *Others in this line of work*, deleted with its idea by the
+     schema's cascade, counted on the box like the rest); the box's sentence now ends "…your progress on
+     each step of their roads, and the businesses you're watching for them", and its Learn more says
+     those go "with your notes".
    - **Your figures** — every figure, in every state; cards go back to the estimates. Since
      2026-10-11 that includes the person's own planning numbers for an idea (savings toward starting,
      start-up costs), and its Learn more says so.
@@ -52,6 +56,14 @@ with where they are kept, before confirming.
      state. "Every one goes, whether agreed, waiting, taken back or turned down. Your ideas stay, and so
      do their figures." Learn more: kept once for the person, not for one idea; afterwards the cockpit
      has no target of theirs until they give one again. Switched off until a screen asks for one.
+   - **Businesses you're watching** (added 2026-10-17, `WatchedBusiness`) — every list, on every idea:
+     the names as typed, their links, the person's notes and the ad links. "Every list goes, on every
+     idea: the names you typed, their links, your notes and the ad links. Your ideas stay, and so does
+     everything else." Learn more: these are the businesses added under *Others in this line of work*
+     in the cockpit ([../cockpit/landscape.md](../cockpit/landscape.md)); nothing else uses them, so
+     nothing else changes and each idea's list is empty afterwards; one business is removed with
+     **Remove** beside it in the cockpit instead; deleting the ideas deletes their lists too, ticked or
+     not. Switched off ("Nothing to delete") until the person adds one.
    - **Your settings** — every saved choice goes back to its default. [8i] That includes whether to
      encrypt the data file: a "Never" is forgotten, so the desktop app's next start asks again (an
      encrypted file stays encrypted); the box says so. Since 2026-10-10 its "learn more" also says that a
@@ -173,8 +185,9 @@ and their sentences are in `DELETE_MENU`.
 
 ## State touched (field names only)
 
-Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`;
-`Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`, `Expense` (and,
+Every row of `Venture` (and, by the schema's cascade, `VentureLink`, `ScenarioState`, `Figure`,
+`WatchedBusiness`; `Expense.ventureId` is cleared to null on those ideas' records, which stay), `Figure`,
+`WatchedBusiness` (its own box, since 2026-10-17), `Expense` (and,
 by the cascade, `Receipt`), `Receipt`, `SourceAccount`, `PersonStatement`, `Setting`. Never `User`
 (`KEPT_BY_DELETE`). On disk: when receipts were deleted, the files in `receipts/` beside the data
 file that no row describes any more (`sweepOrphanReceipts` in `lib/expenses/receipts/store.ts`; a
@@ -188,8 +201,8 @@ is reset through the journey provider, so a Save on the map can't bring a delete
 
 ## Downstream consumers (where the data goes today)
 
-Nowhere: rows are deleted. The Ideas page, the map, the agree prompt, "In your words" and the
-settings page read empty or default afterwards.
+Nowhere: rows are deleted. The Ideas page, the map, the agree prompt, "In your words", the
+cockpit's *Businesses you're watching* and the settings page read empty or default afterwards.
 
 ## Cleanup / open questions
 

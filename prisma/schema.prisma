@@ -181,6 +181,8 @@ model Venture {
   statements       PersonStatement[]
   /// The person's progress on each step of this future's road; deleted with the future.
   stepProgress     StepProgress[]
+  /// The businesses the person is watching for this idea (2026-10-17); deleted with the idea.
+  watchedBusinesses WatchedBusiness[]
 
   @@index([userId])
 }
@@ -451,4 +453,29 @@ model PersonFigure {
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, kind, status])
+}
+
+/// A business the person is watching for one idea (2026-10-17; "Businesses you're watching" in the
+/// cockpit's "Others in this line of work", docs/architecture/competitive-landscape.md § 6.2 item 5). Only
+/// what the person typed: the name as they wrote it, a link, their note, and the ads they saw, each with the
+/// day they saw it. DotAmi checks none of it, no rule reads it, and nothing leaves the computer. Links are
+/// http: or https: only (lib/landscape/links.ts). Deleted with its idea. lib/landscape/watched.ts.
+model WatchedBusiness {
+  id          String   @id @default(cuid())
+  ventureId   String
+  /// The name as the person typed it (trimmed at the ends only).
+  nameAsTyped String
+  /// An http: or https: address the person gave, or null.
+  url         String?
+  /// The person's own note, word for word, or null.
+  note        String?
+  /// The ads the person saw, oldest given first: `[{ "url": "https://…", "seenOn": "YYYY-MM-DD" }]`, the day
+  /// as the person set it. A JSON array, read back through lib/landscape/watched.ts.
+  adLinks     Json     @default("[]")
+  /// The moment the person added it; the list is shown in this order.
+  addedAt     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  venture     Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+
+  @@index([ventureId])
 }

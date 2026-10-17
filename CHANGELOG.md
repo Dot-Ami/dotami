@@ -11,6 +11,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Others in this line of work: keep a list of businesses you're watching** (the maintainer, 2026-10-17:
+  *"yah, this is fine. Lets do it"*) — a new panel in the cockpit, opened from the goal bar on every road and
+  from *Open your own shop* on the apprentice road. It says plainly what their ads cost: *"Meta and Google
+  don't publish this for ordinary ads in Canada, as their pages read on 15 October 2026. DotAmi has no number
+  for it."*, with the pages it was read from and plain links to Meta's Ad Library and Google's Ads
+  Transparency Center (links only: DotAmi fetches nothing). Under it, **Businesses you're watching · in the
+  order you added them**: add a business under the name you'd write it, with a link, your note and the links
+  to ads you saw, each with the day you saw it (the day starts on today; change it); edit or remove one. Only
+  `http://` and `https://` links are kept, checked on screen, by the server and again when read back. *"DotAmi
+  doesn't check these. They stay on this computer and no rule reads them."* The list is never counted against
+  anything and never quotes a business's own words. It is kept per idea in the data file and deleted with the
+  idea; *What DotAmi knows about you* lists it, says it can name another person (an owner), and has a Delete
+  box for it. In the invented example it stays empty and says why. Not in this version: official counts,
+  the area and industry questions, *Where to look*, or named businesses from anywhere but you
+  ([docs/ui-spec/cockpit/landscape.md](docs/ui-spec/cockpit/landscape.md),
+  [docs/architecture/competitive-landscape.md](docs/architecture/competitive-landscape.md) § 6.2).
 - **Show me an example first: Mara, an invented example future** (the maintainer's pick of 2026-10-13) —
   the front door's third door now opens a filled-in future for an invented person: Mara, an apprentice
   cabinetmaker in Alberta, on *From apprentice to your own shop (Alberta)*. It is the same cockpit anyone
