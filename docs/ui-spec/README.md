@@ -71,7 +71,8 @@ measured first, on that seed alone.
 
 The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
 measures more on a screen, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on Windows
-only, so a local run there passes on an unchanged screen; CI never reads it. It is empty today: the one
+only, so a local run there passes on an unchanged screen; CI never reads it. Since the calm first view it holds
+one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu). It was emptied once: the one
 such difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 27 on Ubuntu) was three road
 cards showing only their edge on Windows, which the count no longer takes in. Windows measures one fewer
 in one place, the front door at 768×1024 (10 controls; 11 on Ubuntu), where its last button shows only a

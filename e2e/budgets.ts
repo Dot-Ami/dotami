@@ -83,11 +83,13 @@ export const BASELINE: ClutterTable = {
  *
  * The calm first view (S2.5.30c, 2026-10-17) lowered the cockpit's first visit and Mara's example to what they
  * measure with it: regions 9 to 4 on a laptop and tablet and 8 to 3 on a phone (the plan's aim was at most 5,
- * 4 and 3), controls in the first window 34 to 28, 39 to 30 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
+ * 4 and 3), controls in the first window 34 to 28, 39 to 31 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
  * to 14 on road 1), short of the plan's aim of 20, 16 and 12. What is left in the first window is the road's
  * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
  * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
- * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px.
+ * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 5
+ * regions, and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
+ * `WINDOWS_EXTRA`).
  *
  * Lowered on 2026-10-17, before the limit reached main, where the count got stricter than the baseline's:
  * a control now counts only when at least 24 px of it shows each way (or all of it), so a card's bare edge
@@ -106,8 +108,8 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
   ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
   "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(4, 11, 11, 8.5), tablet: m(5, 26, 13, 8.5), laptop: m(5, 23, 13, 8.5) },
-  "cockpit-road-0": { phone: m(3, 16, 11, 8.5), tablet: m(4, 30, 12, 8.5), laptop: m(4, 28, 12, 8.5) },
+  "example-mara": { phone: m(4, 11, 11, 8.5), tablet: m(5, 26, 13, 8.5), laptop: m(5, 21, 13, 8.5) },
+  "cockpit-road-0": { phone: m(3, 16, 11, 8.5), tablet: m(4, 31, 12, 8.5), laptop: m(4, 28, 12, 8.5) },
   "cockpit-road-1": { phone: m(3, 14, 10, 8.5), tablet: m(4, 28, 12, 8.5), laptop: m(4, 25, 12, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
@@ -121,7 +123,13 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  * unchanged screen; CI runs on Ubuntu and never reads this, so it never loosens the gate. When a change
  * makes the two agree, take its line out.
  *
- * Empty since 2026-10-17: the one difference (road 1 at laptop size, 30 controls on Windows and 27 on
+ * Emptied on 2026-10-17: the one difference then (road 1 at laptop size, 30 controls on Windows and 27 on
  * Ubuntu) was three road cards showing only a sliver of their edge on Windows, which no longer count.
+ *
+ * Mara's example at laptop size, since the calm first view (2026-10-17): 23 controls on Windows, 21 on Ubuntu
+ * (CI run 39077075677). Windows' text wraps a little shorter in the goal bar, so the road starts higher and
+ * two more of its cards show enough to count.
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
+  "example-mara": { laptop: { controls: 2 } },
+};

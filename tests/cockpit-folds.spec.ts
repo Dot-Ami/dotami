@@ -385,19 +385,19 @@ describe("the extra layers fold behind one button (the calm first view, 2026-10-
     const folded = draw(FIRST_OVERLAYS, true);
     expect(folded).toContain(cockpitWords.road.skills);
     expect(folded).not.toContain(cockpitWords.road.money);
-    expect(folded).not.toContain(cockpitWords.road.rules.replace("&", "&amp;"));
+    expect(folded).not.toContain(escapeAttribute(cockpitWords.road.rules));
     expect(folded).toContain(`>${words.layers.show}<`);
     expect(folded).toContain(`aria-controls="${LAYERS_ID}"`);
     const open = draw(FIRST_OVERLAYS, false);
     expect(open).toContain(cockpitWords.road.money);
-    expect(open).toContain(cockpitWords.road.rules.replace("&", "&amp;"));
+    expect(open).toContain(escapeAttribute(cockpitWords.road.rules));
     expect(open).toContain(`>${words.layers.fold}<`);
   });
 
   it("folded, a layer that is on keeps its switch in sight, so it can be switched off where it is", () => {
     const html = draw({ skills: true, money: true, rules: false }, true);
     expect(html).toContain(cockpitWords.road.money);
-    expect(html).not.toContain(cockpitWords.road.rules.replace("&", "&amp;"));
+    expect(html).not.toContain(escapeAttribute(cockpitWords.road.rules));
   });
 
   it("drawn without the fold (as before), every switch shows", () => {
