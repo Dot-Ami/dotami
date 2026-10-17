@@ -139,10 +139,16 @@ describe("every source is a tool check with its quotes, and none claims a read",
     expect(all.length).toBeGreaterThan(road.steps.length * 3);
   });
 
-  it("each was checked by the tool on 2026-10-12 (the records step's on 2026-10-14), with at least one quote of three words or more", () => {
-    // Keep your records from day one was added on 2026-10-14, its CRA pages checked that day.
+  it("each was checked by the tool on 2026-10-12 (the records step's on 2026-10-14, the blanks looked up again on 2026-10-15), with at least one quote of three words or more", () => {
+    // Keep your records from day one was added on 2026-10-14, its CRA pages checked that day; the three
+    // cost lines whose sources changed when the blanks were looked up again (build list item 19) on 2026-10-15.
+    const BLANKS = ["cost-shop-red-seal-application", "cost-shop-name-government-fee", "cost-shop-name-report"];
     const checkedOnFor = (where: string) =>
-      where === "step-shop-keep-records" || where.startsWith("dw-shop-records-") ? "2026-10-14" : "2026-10-12";
+      BLANKS.includes(where)
+        ? "2026-10-15"
+        : where === "step-shop-keep-records" || where.startsWith("dw-shop-records-")
+          ? "2026-10-14"
+          : "2026-10-12";
     for (const { where, citation } of all) {
       expect(citation.toolCheck, where).toBeDefined();
       expect(citation.toolCheck!.checkedOn, where).toBe(checkedOnFor(where));
@@ -201,6 +207,8 @@ describe("costs: official fees only where a page states them, everything else a 
       "cost-shop-tqrc-rewrite": 50_00,
       "cost-shop-blue-seal-application": 150_00,
       "cost-shop-business-number": 0,
+      // Build list item 19 (2026-10-15): Tradesecrets' Apply Online page prices the Red Seal application.
+      "cost-shop-red-seal-application": 150_00,
     });
     for (const fee of fees) expect(fee.citation, fee.id).toBeDefined();
   });
@@ -217,8 +225,44 @@ describe("costs: official fees only where a page states them, everything else a 
     const rewrite = fees.find((f) => f.id === "cost-shop-tqrc-rewrite")!;
     expect(rewrite.label).toMatch(/only if you fail/i);
     expect(rewrite.onlyIf).toMatch(/fail/i);
-    // Every other fee applies to everyone on its step.
-    for (const fee of fees.filter((f) => f.id !== "cost-shop-tqrc-rewrite")) expect(fee.onlyIf, fee.id).toBeUndefined();
+    // Every other fee but the Red Seal application (below) applies to everyone on its step.
+    const conditional = ["cost-shop-tqrc-rewrite", "cost-shop-red-seal-application"];
+    for (const fee of fees.filter((f) => !conditional.includes(f.id))) expect(fee.onlyIf, fee.id).toBeUndefined();
+  });
+
+  it("the Red Seal fee applies only to an application made after you're certified, the way the Red Seal page splits the two ways", () => {
+    const redSeal = fees.find((f) => f.id === "cost-shop-red-seal-application")!;
+    expect(redSeal.label).toMatch(/only if you apply after you're certified/i);
+    expect(redSeal.onlyIf).toMatch(/after you're certified/);
+    // The page's application (with its fee) is for people already certified; an apprentice in a Red Seal
+    // trade writes the exam in their final period, and the page names no fee for that.
+    expect(quotesOf(line("dw-shop-red-seal-later").citation)).toContain("you can apply to write the Red Seal exam at any time afterward");
+    expect(quotesOf(line("dw-shop-red-seal-apprentice").citation)).not.toMatch(/fee|pay/i);
+  });
+
+  it("every cost line still blank says why: no official page gives an amount, or its amount is in a catalogue a tool can't read", () => {
+    const blanks = Object.fromEntries(costs.filter((c) => c.kind === "named").map((c) => [c.id, c]));
+    // The exam and registry blanks this road had before build list item 19, each with its stated reason.
+    const reasons: Record<string, RegExp> = {
+      "cost-shop-tqwe-rewrite": /the page gives no amount/,
+      "cost-shop-tqwe-panel-interview": /the page gives no amount/,
+      "cost-shop-name-government-fee": /Registry Agent Product Catalogue/,
+      "cost-shop-name-service-fee": /set by your agent/,
+      "cost-shop-name-report": /NUANS members; the page gives no amount/,
+    };
+    for (const [id, reason] of Object.entries(reasons)) {
+      expect(blanks[id], id).toBeDefined();
+      expect(blanks[id]!.label, id).toMatch(reason);
+      // Each reason is backed by the page's own words.
+      expect(blanks[id]!.kind === "named" && blanks[id]!.nameSource, id).toBeTruthy();
+    }
+    // The government fee's page points to the catalogue that holds it.
+    expect(quotesOf(blanks["cost-shop-name-government-fee"]!.kind === "named" ? blanks["cost-shop-name-government-fee"]!.nameSource : undefined)).toContain(
+      "See the Registry agent product catalogue.",
+    );
+    expect(quotesOf(blanks["cost-shop-name-report"]!.kind === "named" ? blanks["cost-shop-name-report"]!.nameSource : undefined)).toContain(
+      "The report is provided by authorized NUANS members.",
+    );
   });
 
   it("named lines carry no amount at all", () => {

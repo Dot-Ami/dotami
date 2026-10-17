@@ -1232,7 +1232,9 @@ made while writing it, each for a reason:
   read keeps today's rule.
 - **Alberta's registry fees stay named lines.** The government fee and the agent's service fee to
   register a name are named lines with no amount: the Registry Agent Product Catalogue that holds them
-  stops tools with a human check, which is never bypassed. A person can read it and fill them in.
+  stops tools with a human check, which is never bypassed. A person can read it and fill them in (the
+  government fee; the service fee is each agent's own). Still so on 2026-10-15, when the blanks were looked
+  up again.
 - **Skill items are the legal requirements only:** an Alberta Student Number, an apprenticeship
   education agreement with a sponsor, and a recognized trade certificate from outside Alberta, each
   cited. Their ids share one pattern, `skill-<place>-…` (`skill-ab-…` for these three). Skills from the government's list (OaSIS, occupation 72311 *Cabinetmakers*, profile
@@ -1399,8 +1401,18 @@ each for a reason:
 - **Not in the catalog: a fee nobody could read.** Alberta's registry fees (incorporating, registering
   a name, the annual return, a federal corporation registering in Alberta) and the NUANS report stay
   named blanks on their cards: the Registry Agent Product Catalogue that holds them stops tools with a
-  human check, which is never bypassed. A fee whose page names no amount (the Red Seal application, the
-  Work Experience rewrite) stays a named line. The catalog holds amounts only.
+  human check, which is never bypassed. A fee whose page names no amount (the Work Experience rewrite and
+  panel interview) stays a named line. The catalog holds amounts only.
+- **The blanks looked up again (2026-10-15, build list item 19).** The first written future's exam,
+  Red Seal and registry blanks were looked up on Alberta's official pages. One is filled: the Red Seal
+  application, $150 on Tradesecrets' *Apply Online* page (`fee-ab-red-seal-application`), typed as a fee
+  that applies only sometimes, since the Red Seal page makes the application the way for someone already
+  certified and names no fee for an apprentice writing the exam in their final period. The rest stay
+  named, each label saying why: the Work Experience rewrite and panel interview (their pages give no
+  amount; the $50 rewrite fee is stated only on the Recognized Credential page, for that program), the
+  government fee to register a name (only in the Registry Agent Product Catalogue, whose page still stops
+  tools), the agent's service fee (set by each agent) and the Business Name Report (provided by NUANS
+  members; alberta.ca gives no amount).
 - **Road 0's start-up cost lines, on *Sole Prop activation*.** The seven names § 5 lists, as named
   lines with no amount: *Tools and equipment*, *Space deposit*, *Insurance*, *Vehicle*, *First
   materials*, *Software*, *Money to live on while starting* (ids `cost-start-…`, permanent). They sit on
@@ -1902,7 +1914,9 @@ The maintainer expects the layout, and so the back end, to change as this is bui
 - **Alberta's fees.** Whether Alberta's trade-name and incorporation fees are set by the province or by
   each registry agent is read from Alberta's page; until then they are named blanks. When a person reads
   them in the Registry Agent Product Catalogue, each amount goes into the official fees catalog
-  (`lib/engines/fees/v2026/`, § 6) and the named blank becomes a line naming it.
+  (`lib/engines/fees/v2026/`, § 6) and the named blank becomes a line naming it. On 2026-10-15 alberta.ca's
+  *Register a business name* and *Find a business registry* pages still gave no amount, only a pointer to
+  that catalogue, and the agent's service fee is "not regulated".
 - **A source for the start-up cost lines' names** (§ 6, *The official fees catalog and start-up cost
   lines as built*). The seven names on road 0 cite nothing yet: the BDC and Futurpreneur templates keep
   their lines inside spreadsheets, and Futurpreneur is a not-for-profit, which the citation type has no

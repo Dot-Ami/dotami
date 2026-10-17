@@ -25,7 +25,12 @@
  * the records step (tests/keep-records-step.spec.ts): two entries are added, the new Keep your records from
  * day one panel on each road, and none of the 32 already there changes. Those two entries were redrawn the
  * same day, and only they, when the step's summary and its where-and-how-long line gained the CRA's other
- * retention periods and its note on records kept abroad. Drawn again now, each is the same HTML, byte for byte. The only cards allowed to change are the ones
+ * retention periods and its note on records kept abroad. Drawn again now, each is the same HTML, byte for byte.
+ * Redrawn on 2026-10-15 from main (1e96a04) plus only build list item 19 (the first written future's fee
+ * blanks looked up again, tests/road-apprentice-to-own-shop.spec.ts): three entries of 34 change, the
+ * apprentice road's Red Seal panel (its application fee now $150, from Tradesecrets' Apply Online page,
+ * applying only sometimes), its Register your business name panel (the blanks' reasons and sources) and its
+ * money list (both of those); no other panel changes. The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

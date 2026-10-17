@@ -33,7 +33,12 @@ const SHIPPED_FEE_IDS = [
   "fee-ab-trades-qualifier-recognized-credential-rewrite",
   "fee-ab-blue-seal-application",
   "fee-ab-business-number",
+  // Build list item 19 (2026-10-15): the one blank on the first written future an official page prices.
+  "fee-ab-red-seal-application",
 ];
+
+/** The day each fee's page was checked by the tool: 2026-10-12, except fees added later. */
+const CHECKED_ON: Record<string, string> = { "fee-ab-red-seal-application": "2026-10-15" };
 
 const fee = (id: string): OfficialFee => {
   const found = officialFeeById(id);
@@ -65,21 +70,34 @@ describe("the official fees catalog", () => {
       "fee-ab-trades-qualifier-recognized-credential-rewrite": ["CA-AB", 50_00, null],
       "fee-ab-blue-seal-application": ["CA-AB", 150_00, null],
       "fee-ab-business-number": ["CA-AB", 0, null],
+      "fee-ab-red-seal-application": ["CA-AB", 150_00, null],
     });
     for (const f of officialFeesV2026) {
       expect(PLACE_CODES, f.id).toContain(f.place);
       expect(f.label.trim().length, f.id).toBeGreaterThan(0);
     }
-    // The only fee that applies only sometimes keeps its condition.
+    // The two fees that apply only sometimes keep their conditions.
     expect(fee("fee-ab-trades-qualifier-recognized-credential-rewrite").onlyIf).toBe("You failed an exam and choose to rewrite it.");
-    expect(officialFeesV2026.filter((f) => f.onlyIf !== undefined)).toHaveLength(1);
+    expect(fee("fee-ab-red-seal-application").onlyIf).toBe(
+      "You apply to write the Red Seal exam after you're certified, through an Interprovincial Red Seal Application.",
+    );
+    expect(officialFeesV2026.filter((f) => f.onlyIf !== undefined).map((f) => f.id).sort()).toEqual([
+      "fee-ab-red-seal-application",
+      "fee-ab-trades-qualifier-recognized-credential-rewrite",
+    ]);
   });
 
-  it("every source is a tool check made on 2026-10-12, whose quotes hold the amount; none claims a read", () => {
+  it("the Red Seal fee is the Apply Online page's own line for it, listed with the programs for experienced workers", () => {
+    const redSeal = fee("fee-ab-red-seal-application");
+    expect(redSeal.citation.url).toBe("https://tradesecrets.alberta.ca/mytradesecrets/apply-online/");
+    expect(redSeal.citation.toolCheck?.quotes).toEqual(["Red Seal Application | $150", "Programs for Experienced Workers"]);
+  });
+
+  it("every source is a tool check made on its day (2026-10-12, or the day a later fee was added), whose quotes hold the amount; none claims a read", () => {
     for (const f of officialFeesV2026) {
       const how = howChecked(f.citation);
       expect(how.kind, f.id).toBe("tool");
-      expect(how.on, f.id).toBe("2026-10-12");
+      expect(how.on, f.id).toBe(CHECKED_ON[f.id] ?? "2026-10-12");
       expect(f.citation.lastVerified, f.id).toBeUndefined();
       expect(f.citation.readBy, f.id).toBeUndefined();
     }
@@ -149,9 +167,9 @@ describe("roads and the ways to incorporate name a fee by id instead of typing i
     expect(feeReferenceProblems(officialFeesV2026, roadsV2026, incorporationRoutesV2026)).toEqual([]);
     const onRoads = roadsV2026.flatMap((r) => r.steps.flatMap((s) => s.costs)).filter((c) => c.kind === "official-fee");
     const onRoutes = incorporationRoutesV2026.flatMap((r) => r.lines).filter((l) => l.kind === "official-fee");
-    // Eight fee lines on the first written future (the practical exam on two steps), three on the federal
-    // way to incorporate.
-    expect(onRoads).toHaveLength(8);
+    // Nine fee lines on the first written future (the practical exam on two steps; the Red Seal application
+    // since 2026-10-15), three on the federal way to incorporate.
+    expect(onRoads).toHaveLength(9);
     expect(onRoutes).toHaveLength(3);
     // Every catalog fee is used somewhere: nothing sits in the catalog that no card shows.
     const used = new Set([...onRoads.map((c) => c.feeId), ...onRoutes.map((l) => l.feeId)]);
