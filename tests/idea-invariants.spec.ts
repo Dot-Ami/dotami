@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
-import { IDEAS_V1 } from "./fixtures/ideas/v1";
+import { fakeIdDigits, IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, reachesTheEnd, sameOutput, type InvariantId } from "./helpers/idea-invariants";
 import { runDigest, runIdea, type IdeaRun } from "./helpers/idea-pipeline";
 import { findTimeWords, OFFICIAL_TIME_ALLOWANCES, YOUR_DATE_ALLOWANCES } from "./helpers/time-words";
@@ -79,6 +79,17 @@ describe("the harness's checks catch what they guard", () => {
 
   it("6. a province the words don't name", () => {
     expect(added(road0Idea, "nothing-derived:province", (run) => void (run.parse = { ...run.parse!, province: "BC" }))).toBe(1);
+  });
+
+  it("6. the person's ID-like digits copied into DotAmi's words, however they are spaced", () => {
+    // Its words hold fakeIdDigits("0"): one digit repeated, made at run time, never typed.
+    const withDigits = IDEAS_V1.find((idea) => idea.id === "idea-v1-0253")!;
+    const digits = fakeIdDigits("0", [9]);
+    for (const copy of [fakeIdDigits("0"), digits, fakeIdDigits("0").replaceAll(" ", "-"), fakeIdDigits("0").replaceAll(" ", ".")]) {
+      expect(added(withDigits, "nothing-derived:id-digits", plant(`Plan for ${copy}`)), copy).toBe(1);
+    }
+    // An amount with the same digits, written with commas, is not a copy; nor is a longer number.
+    expect(added(withDigits, "nothing-derived:id-digits", plant(`$1,000,000,000 and 1${digits}`))).toBe(0);
   });
 
   it("6. a job picked for the person", () => {

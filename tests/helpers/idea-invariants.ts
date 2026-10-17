@@ -259,10 +259,14 @@ export function checkRun(run: IdeaRun): Failure[] {
       fail("nothing-derived:equipment", "", "the parser proposed “Equipment / vehicle purchase on the path”; the words don't say the person is buying any");
     }
   }
-  // ID-like digits typed by the person stay in the person's words only.
-  for (const digits of idea.words.match(/\d[\d ]{7,}\d/g) ?? []) {
+  // ID-like digits typed by the person stay in the person's words only, however they are spaced: the same
+  // digits in order, with or without spaces, dashes, dots or slashes between them ("000 000 000",
+  // "000000000", "000-000-000"). A comma isn't one of them, so "$1,000,000" is an amount, not a copy.
+  for (const typed of idea.words.match(/\d[\d -]{7,}\d/g) ?? []) {
+    const digits = typed.replace(/\D/g, "");
+    const copied = new RegExp(`(?<!\\d)${digits.split("").join("[\\s./–-]*")}(?!\\d)`);
     for (const piece of run.pieces.filter(dotamiMade)) {
-      if (piece.text.includes(digits)) fail("nothing-derived:id-digits", placeOf(piece), `${piece.where}: the person's digits “${digits}” are copied into DotAmi's text`);
+      if (copied.test(piece.text)) fail("nothing-derived:id-digits", placeOf(piece), `${piece.where}: the person's digits “${typed}” are copied into DotAmi's text`);
     }
   }
 
