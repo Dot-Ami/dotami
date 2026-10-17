@@ -92,7 +92,8 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
 
   return (
     <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/" tone="stone">
           {words.back}
         </GhostLink>
@@ -103,7 +104,7 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
       </nav>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
+        <div data-region="questions" className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10 sm:px-8">
           {/* The page's name for a screen reader; the nav above already says it on screen. */}
           <h1 className="sr-only">{words.pageHeading}</h1>
           {/* The tab's answers are read after the first paint; asking before then could ask one already answered. */}

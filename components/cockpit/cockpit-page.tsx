@@ -879,8 +879,12 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     <div
       className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
-      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
+      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow.
+          data-region marks the cockpit's top-level regions for the clutter limit (docs/ui-spec/README.md,
+          "The layout rule"): the header, the rail and the panel here; the goal bar, the overlay switches, the
+          road, the legend, the what-if bar and Next on your road in their own components. */}
       <header
+        data-region="header"
         inert={behindSheet}
         className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]"
       >
@@ -958,6 +962,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             the header's button opens it. */}
         <aside
           id={RAIL_ID}
+          data-region="rail"
           ref={railRef}
           aria-label={words.folds.railSheet.open}
           inert={panelModal}
@@ -1201,6 +1206,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         {showRightSlot ? (
           <div
             id={PANEL_ID}
+            data-region="panel"
             ref={panelRef}
             inert={railModal}
             {...(folds.panel ? { "data-cockpit-bottom-bar": "" } : {})}

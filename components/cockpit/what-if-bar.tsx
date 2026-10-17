@@ -69,7 +69,8 @@ export function WhatIfBar({
 
   return (
     <>
-      <section aria-label={words.whatIf.region} className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-[12px]">
+      {/* data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md). */}
+      <section data-region="what-if" aria-label={words.whatIf.region} className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-[12px]">
         {fold ? (
           <div className="flex flex-wrap items-center gap-2">
             <FoldButton
