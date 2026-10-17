@@ -17,8 +17,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   new features open in the right-hand panel or the step panel, never as a new region; the first visit shows
   the least; everything folds and is remembered; with a table of where each planned feature lands. The
   limit: a browser test opens ten main screens at phone, tablet and laptop sizes and counts the regions, the
-  controls in the first window, the text sizes and the smallest text; it fails when a screen goes over its
-  budget. The budgets start at what the screens measure today on CI and can only go down (a unit test
+  controls in the first window (a control counts when at least 24 px of it shows), the text sizes and the
+  smallest text; it fails when a screen goes over its budget, or shows a header, nav, section or other block
+  that isn't marked as a region and sits in none. It runs on a server and data file of its own, so the
+  other tests' data doesn't change what it counts. The budgets start at what the screens measure today on CI and can only go down (a unit test
   compares them with the baseline and with main's, so a budget once lowered can't be raised back); the calm
   first view lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
   test reads).

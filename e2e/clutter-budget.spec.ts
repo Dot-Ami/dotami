@@ -6,24 +6,29 @@
  * clicked, nothing scrolled), and four things are measured:
  *
  * - regions: drawn blocks marked `data-region="<name>"`, anywhere on the page;
- * - controls: usable links, buttons, boxes, menus and switches at least partly inside the first window;
+ * - controls: usable links, buttons, boxes, menus and switches inside the first window, at least 24 px of
+ *   each showing (or all of it, if smaller);
  * - text sizes: the distinct computed font sizes of the text drawn on the page;
  * - the smallest text size.
  *
- * Each is held to its budget in `e2e/budgets.ts`, which can only go down. A screenshot of each screen at each
- * size, and what was counted (the regions' names, each control's name, the sizes), are saved with the
+ * Each is held to its budget in `e2e/budgets.ts`, which can only go down. Regions are counted by their marks,
+ * so the test also fails on any drawn landmark or section (header, nav, aside, footer, section, main, and
+ * their roles, a group) that is no region, sits inside none and holds none. A screenshot of each screen at
+ * each size, and what was counted (the regions' names, each control's name, the sizes), are saved with the
  * results (test-results/; CI keeps only the log lines, one per screen and size). The budgets are what CI
  * measures on Ubuntu; a run on Windows adds the few extras recorded in `WINDOWS_EXTRA`.
  *
- * The cockpit is measured on a fresh idea straight after *Pick a future*, the designed first visit
- * (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on road 0 and on road 1.
- * *Your futures* is measured with a fresh idea at the top of its list, so its first window is the same
- * whatever ran before. *What DotAmi knows about you* counts everything in the data file, which the suite's
- * earlier tests (e2e/app.spec.ts, which runs first) fill with figures: its budget is the larger of a run of
- * this file on its own and a full run, and a new earlier test that keeps figures from a new source can push
- * it over (each source is one more row in its first window).
+ * This file starts a server of its own, from the suite's build, over a data folder of its own
+ * (prisma/e2e-clutter/) holding only the two demo ventures, so what it measures doesn't depend on what the
+ * suite's other files saved. *What DotAmi knows about you* is measured first, on that seed alone: it counts
+ * everything in the data file. The cockpit is then measured on a fresh idea straight after *Pick a future*,
+ * the designed first visit (docs/architecture/future-cockpit.md § 2, "First visit and return visits"), on
+ * road 0 and on road 1, and *Your futures* with a fresh idea at the top of its list.
  */
-import { writeFileSync } from "node:fs";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import net from "node:net";
+import path from "node:path";
 
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
@@ -35,11 +40,100 @@ const Q1 = /what do you want your work and life to look like/;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
 const Q3 = "Which province or territory are you in?";
 
+// This file's own server (e2e/receipt-new-key.spec.ts starts one the same way, on 3124).
+const PORT = 3125;
+const DATABASE_URL = "file:./e2e-clutter/dotami.db";
+const root = process.cwd();
+const folder = path.join(root, "prisma", "e2e-clutter");
+let server: ChildProcess | null = null;
+
+/** True when something already answers on the port (another run's server). */
+const portTaken = () =>
+  new Promise<boolean>((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port: PORT });
+    socket.setTimeout(2000);
+    socket.on("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on("error", () => resolve(false));
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+
+/** A fresh data folder holding what the suite's own starts with: the tables and the two demo ventures. */
+function prepareFolder() {
+  if (existsSync(folder)) rmSync(folder, { recursive: true, force: true });
+  mkdirSync(folder, { recursive: true });
+  const env = { ...process.env, DATABASE_URL, CHECKPOINT_DISABLE: "1" };
+  const run = (script: string[], args: string[]) =>
+    execFileSync(process.execPath, [path.join(root, "node_modules", ...script), ...args], { env, stdio: "pipe" });
+  run(["prisma", "build", "index.js"], ["migrate", "deploy"]);
+  run(["tsx", "dist", "cli.mjs"], ["prisma/seed.ts"]);
+}
+
+test.beforeAll(async () => {
+  test.setTimeout(180_000);
+  if (await portTaken()) throw new Error(`Port ${PORT} is already in use: another run's server is answering there. Stop it, then start again.`);
+  prepareFolder();
+  // The environment the suite's own server gets (playwright.config.ts), over this file's data folder.
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    DATABASE_URL,
+    ANTHROPIC_API_KEY: "",
+    NEXT_TELEMETRY_DISABLED: "1",
+    DOTAMI_E2E_RATE_LIMITS: "opt-in",
+  };
+  delete env.DOTAMI_DESKTOP;
+  delete env.DOTAMI_RECEIPT_LOCK;
+  delete env.DOTAMI_RECEIPT_KEY;
+  // The build the suite's own server is running (playwright.config.ts built it before starting).
+  server = spawn(process.execPath, [path.join(root, "scripts", "next.mjs"), "start", "-H", "127.0.0.1", "-p", String(PORT)], {
+    cwd: root,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  // Ready when THIS server says so (the same rule as the suite's own server).
+  await new Promise<void>((resolve, reject) => {
+    let said = "";
+    const timer = setTimeout(() => reject(new Error(`this file's server didn't start:\n${said}`)), 90_000);
+    const listen = (chunk: Buffer) => {
+      said += chunk.toString();
+      if (/Ready in \d/.test(said)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    };
+    server!.stdout!.on("data", listen);
+    server!.stderr!.on("data", listen);
+    server!.on("exit", (code) => {
+      clearTimeout(timer);
+      reject(new Error(`this file's server stopped (code ${code}):\n${said}`));
+    });
+  });
+});
+
+test.afterAll(async () => {
+  if (server && server.exitCode === null) {
+    const stopped = new Promise((resolve) => server!.once("exit", resolve));
+    server.kill();
+    await stopped;
+  }
+  server = null;
+  rmSync(folder, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+});
+
+test.use({ baseURL: `http://127.0.0.1:${PORT}` });
+
 /** What one measurement found: the four numbers, and what was counted, for the report. */
 interface Measured extends Clutter {
   regionNames: string[];
   controlNames: string[];
   sizesPx: number[];
+  /** Drawn landmarks and sections that are no region, inside none and hold none: each fails the test. */
+  unmarkedBlocks: string[];
 }
 
 /**
@@ -60,7 +154,12 @@ function measurePage(): Measured {
     return r.width > 0 && r.height > 0;
   };
 
-  /** The part of the element inside the first window, after every box around it that clips it. */
+  /**
+   * Whether enough of the element shows in the first window to be seen and pressed, after every box around
+   * it that clips it: at least 24 px each way (WCAG 2.2's smallest target size, 2.5.8), or all of it where
+   * it is smaller than that. A card's bare top edge peeking out under a fold doesn't count.
+   */
+  const MIN_SHOWN_PX = 24;
   const inFirstWindow = (el: Element) => {
     const r = el.getBoundingClientRect();
     let left = r.left;
@@ -83,12 +182,27 @@ function measurePage(): Measured {
     top = Math.max(top, 0);
     right = Math.min(right, window.innerWidth);
     bottom = Math.min(bottom, window.innerHeight);
-    return right - left > 0 && bottom - top > 0;
+    // Half a pixel of slack: sub-pixel layout can draw a whole 24 px control at 23.8.
+    const enough = (shown: number, whole: number) => shown > 0 && shown >= Math.min(MIN_SHOWN_PX, whole) - 0.5;
+    return enough(right - left, r.width) && enough(bottom - top, r.height);
   };
 
   const regionNames = [...document.querySelectorAll<HTMLElement>("[data-region]")]
     .filter(drawn)
     .map((el) => el.dataset.region ?? "");
+
+  // Regions are counted by their marks, so a block nobody marked would slip past the count. Every drawn
+  // landmark or section must be a marked region, sit inside one, or hold one (a page's <main> around its
+  // regions); any other is listed here and fails the test.
+  const BLOCK =
+    'header, nav, aside, footer, section, main, [role="region"], [role="group"], [role="banner"], [role="navigation"], [role="complementary"], [role="contentinfo"], [role="main"], [role="search"], [role="form"]';
+  const unmarkedBlocks = [...document.querySelectorAll<HTMLElement>(BLOCK)]
+    .filter((el) => drawn(el) && !el.closest("[data-region]") && !el.querySelector("[data-region]"))
+    .map((el) => {
+      const role = el.getAttribute("role");
+      const name = el.getAttribute("aria-label") ?? el.id ?? "";
+      return `${el.tagName.toLowerCase()}${role ? `[role=${role}]` : ""}${name ? ` "${name}"` : ""}`;
+    });
 
   const controlNames = [...document.querySelectorAll(CONTROL)]
     .filter((el) => {
@@ -140,6 +254,7 @@ function measurePage(): Measured {
     regionNames,
     controlNames,
     sizesPx,
+    unmarkedBlocks,
   };
 }
 
@@ -168,6 +283,11 @@ async function measureAtEverySize(page: Page, testInfo: TestInfo, screen: Screen
     console.log(
       `clutter ${label}: ${measured.regions} regions, ${measured.controls} controls, ${measured.textSizes} text sizes, smallest ${measured.smallestTextPx}px`,
     );
+
+    // Checked whatever the budgets say: a block without a mark isn't counted, so it must not be there.
+    expect
+      .soft(measured.unmarkedBlocks, `${label}: blocks with no data-region mark, inside no region (the region count can't see them)`)
+      .toEqual([]);
 
     const gate = BUDGETS[screen]?.[size.id];
     expect.soft(gate, `${label}: no budget in e2e/budgets.ts (measured ${JSON.stringify({ ...measured, controlNames: undefined })})`).toBeDefined();
@@ -243,6 +363,12 @@ async function pickFuture(page: Page, roadLabel: string): Promise<string> {
 
 const road = (page: Page) => page.getByRole("region", { name: "The road" });
 
+// First, before any test here saves anything: the page counts everything in the data file, so it is
+// measured on the seed alone (a test retried after a failure gets a fresh server and folder too).
+test("What DotAmi knows about you stays within its clutter budget", async ({ page }, testInfo) => {
+  await measureAtEverySize(page, testInfo, "your-data", () => load(page, "/your-data", (p) => p.getByRole("heading", { level: 1 })));
+});
+
 test("the front door stays within its clutter budget", async ({ page }, testInfo) => {
   await measureAtEverySize(page, testInfo, "front-door", () => load(page, "/", (p) => p.getByRole("heading", { level: 1 })));
 });
@@ -270,10 +396,6 @@ test("Your futures stays within its clutter budget", async ({ page }, testInfo) 
     await load(page, "/ventures", (p) => p.getByRole("heading", { level: 1 }));
     await expect(page.getByText("Loading…", { exact: true })).toHaveCount(0);
   });
-});
-
-test("What DotAmi knows about you stays within its clutter budget", async ({ page }, testInfo) => {
-  await measureAtEverySize(page, testInfo, "your-data", () => load(page, "/your-data", (p) => p.getByRole("heading", { level: 1 })));
 });
 
 test("the example, Mara, stays within its clutter budget", async ({ page }, testInfo) => {

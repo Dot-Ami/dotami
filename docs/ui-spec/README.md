@@ -43,8 +43,8 @@ you* and the example, Mara) at 375×812, 768×1024 and 1280×720, and measures f
 
 | Measure | What it counts |
 |---|---|
-| Regions | Blocks marked `data-region="<name>"` that are drawn (not hidden, not zero-sized), anywhere on the page |
-| Controls | Links, buttons, boxes, menus and switches that can be used (not disabled, not behind a sheet) and are at least partly inside the first window, before any scrolling; a control inside another counts once |
+| Regions | Blocks marked `data-region="<name>"` that are drawn (not hidden, not zero-sized), anywhere on the page. The count sees only marked blocks, so the test also fails on any drawn landmark or section (`header`, `nav`, `aside`, `footer`, `section`, `main`, their ARIA roles, and `role="group"`) that has no mark, sits inside no region and holds none |
+| Controls | Links, buttons, boxes, menus and switches that can be used (not disabled, not behind a sheet) and show inside the first window, before any scrolling: at least 24 px of each showing each way (WCAG 2.2's smallest target size), or all of it where it is smaller, so a card's bare edge under a fold isn't counted; a control inside another counts once |
 | Text sizes | Distinct computed font sizes of the text drawn on the page (text a screen reader alone hears is left out) |
 | Smallest text | The smallest of those sizes, in px |
 
@@ -56,10 +56,16 @@ lowered can't be raised back later (CI compares with main; locally, with where t
 suite. To add a region, take one away first; a new screen arrives with its own `data-region` marks and its
 own row in `e2e/budgets.ts`. The test saves a screenshot of each screen at each width with its results.
 
-The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Chromium on Windows measured
-the same on 2026-10-17 at every screen and size but one: the cockpit on road 1 at 1280×720 has 30 controls
-in its first window there and 27 on Ubuntu. `WINDOWS_EXTRA` in `e2e/budgets.ts` adds those 3 for a run on
-Windows only, so a local run there passes on an unchanged screen; CI never reads it.
+The test starts a server of its own, from the suite's build, over a data folder of its own
+(`prisma/e2e-clutter/`, holding only the two demo ventures), so what it measures doesn't depend on what
+the suite's other tests saved. *What DotAmi knows about you* counts everything in the data file, so it is
+measured first, on that seed alone.
+
+The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
+measures a screen differently, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on
+Windows only, so a local run there passes on an unchanged screen; CI never reads it. It is empty today:
+the one difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 27 on Ubuntu) was three
+road cards showing only their edge on Windows, which the count no longer takes in.
 
 ## Convention
 

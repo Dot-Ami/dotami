@@ -290,7 +290,8 @@ and the maintainer's six decisions of 2026-10-11:
     ([ui-spec/README.md](ui-spec/README.md), "The layout rule")
   - [x] The clutter limit: a browser test measures ten main screens at phone, tablet and laptop sizes
     (regions, controls in the first window, text sizes, the smallest text) and fails when one goes over its
-    budget in `e2e/budgets.ts`; the budgets start at today's numbers and can only go down
+    budget in `e2e/budgets.ts`, or shows a block with no region mark; the budgets start at today's numbers
+    and can only go down
   - [ ] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
     visit*): road and skills on, later columns folded into *The road ahead*, one coach line; Compare,
     *Others in this line of work* and *About this job* behind one *Look closer* menu; the last overlay
