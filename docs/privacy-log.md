@@ -410,8 +410,10 @@ example, your plan to print, and businesses you're watching ([CHANGELOG](../CHAN
   they typed them, until they delete their statements; deleting the idea alone doesn't remove them.
 - Since the cockpit's first screen (2026-10-12): the person's marks on skills, their progress on each step
   (on every road, today's Alberta road included), their own month and their own numbers for savings and
-  start-up costs are kept in the data file on their computer; so is the yearly income they want, once
-  they agree to it on Your destination (since 2026-10-12). The skill marks and the income target are
+  start-up costs are kept in the data file on their computer; so is the yearly income they want, from
+  the moment they enter it on Your destination and its agree prompt opens (since 2026-10-12): kept
+  whether it is then agreed, turned down, left waiting or later taken back, until Delete removes it;
+  outside that prompt, only an agreed one is shown or used. The skill marks and the income target are
   kept for the person, not for an idea, so deleting ideas doesn't remove them; each has its own Delete box. None of it is used to rank anything.
 - A sales amount at which the person says they'd incorporate is kept with the idea if they type one; it is
   their own planning number, never set by DotAmi.
