@@ -341,6 +341,21 @@ describe("Not told yet", () => {
     expect(answerReceipt(given, { ...given, scenario: setIncorporateAt(given.scenario, 90_000) })).not.toEqual([]);
   });
 
+  // The review of PR #182 (2026-10-17): the rule also reads Incorporation timing. With Liability / SR&ED
+  // picked, "Incorporating" is off the path whatever the number, so no answer can change anything.
+  it("doesn't ask “I'd incorporate at” when Incorporation timing is on the other side", () => {
+    const base = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: 90_000 }) });
+    const otherSide = { ...base, scenario: updateScenarioBranch(base.scenario, "incorporationTiming", "stage-3b-incorporation-liability-sred") };
+    expect(notToldYet(otherSide, evaluateRoad(otherSide)).map((r) => r.id)).not.toContain("incorporate-at");
+    // Why: every answer leaves the road as it was.
+    for (const dollars of [1, 50_000, 90_000, 500_000]) {
+      expect(answerReceipt(otherSide, { ...otherSide, scenario: setIncorporateAt(otherSide.scenario, dollars) }), String(dollars)).toEqual([]);
+    }
+    // Picked back, the question is back.
+    const back = { ...otherSide, scenario: updateScenarioBranch(otherSide.scenario, "incorporationTiming", "stage-3a-incorporation-80k-net") };
+    expect(notToldYet(back, evaluateRoad(back)).map((r) => r.id)).toContain("incorporate-at");
+  });
+
   // The idea harness's finding (2026-10-17): ride-share and taxi drivers register for GST/HST from the first
   // paid ride, so the rules colour both GST timing sides the same and neither pick changes anything.
   it("doesn't ask a map pick no rule reads for the idea: GST timing for ride-share and taxi driving", () => {

@@ -310,15 +310,30 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
   if (notGiven("idea:structure")) rows.push({ id: "structure", question: q.structure.question, unlocks: q.structure.unlocks, answer: "box" });
   if (notGiven("idea:equipment")) rows.push({ id: "equipment", question: q.equipment.question, unlocks: q.equipment.unlocks, answer: "box" });
   const incorporating = input.road.steps.find((s) => s.id === INCORPORATING_STEP);
-  // The rule compares the person's number with their own third-year sales estimate (lib/brain/evaluate.ts
-  // computeNodeStates), and nothing else. Without that estimate no answer here can light the step, so it is
-  // asked only once there is one (the design's "a Not told yet row once a sales number is kept", § 3), and
-  // its line says what it is compared with. The step's own panel still takes the number at any time.
-  const hasThirdYear = input.scenario.profile.targetRevenueY3 > 0;
-  if (onRoad0 && incorporating && hasThirdYear && (input.scenario.state.incorporateAt ?? null) === null) {
+  // Asked only when some answer would change the road (the design's "a Not told yet row once a sales number
+  // is kept", § 3); its line says what the number is compared with. The step's own panel still takes the
+  // number at any time.
+  if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null && incorporateAtChangesSomething(input, evaluation)) {
     rows.push({ id: "incorporate-at", question: q.incorporateAt.question, unlocks: q.incorporateAt.unlocks(incorporating.label), answer: "box" });
   }
   return rows;
+}
+
+/**
+ * True when some "I'd incorporate at" answer changes something on the road. The rule (lib/brain/evaluate.ts
+ * computeNodeStates) reads the Incorporation timing pick and compares the number with the person's own
+ * third-year sales estimate: without the estimate, or with the other side picked, every answer leaves the
+ * road as it was (the idea harness's finding and the review of PR #182, 2026-10-17). The estimate itself is
+ * the answer that would light the most, so it is the one tried, the way pickChangesSomething tries the other
+ * side: a rule that starts reading something else is checked the same way.
+ */
+function incorporateAtChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvaluation): boolean {
+  const thirdYear = input.scenario.profile.targetRevenueY3;
+  if (!(thirdYear > 0)) return false;
+  // The number is put on the scenario directly, not through the box's save (setIncorporateAt): this asks
+  // whether the rule reads it, and a broken save must still show up as a question that changes nothing.
+  const answered = { ...input.scenario, state: { ...input.scenario.state, incorporateAt: thirdYear } };
+  return roadReceipt(evaluation, evaluateRoad({ ...input, scenario: answered })).length > 0;
 }
 
 /** True when picking the side of a road 0 fork the map doesn't hold now changes something on the road. */
