@@ -18,20 +18,29 @@ import { normaliseSpaces } from "./text-pieces";
  */
 
 export const TIME_PATTERNS: readonly { phrase: string; pattern: RegExp }[] = [
-  // "3 weeks", "6-8 months", "18 months", "2 years", "40 hours".
+  // "3 weeks", "6-8 months", "18 months", "2 years", "40 hours", and joined up: "a 30-day window", "6-month".
   {
     phrase: "a duration",
-    pattern: /\b\d[\d,.]*(?:\s*(?:-|–|to)\s*\d[\d,.]*)?\s*(?:minutes?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)\b/i,
+    pattern: /\b\d[\d,.]*(?:\s*(?:-|–|to)\s*\d[\d,.]*)?(?:\s*|\s*-\s*)(?:minutes?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)\b/i,
   },
-  // "two weeks", "a few months", "several years". Not "a year": "$70,000 a year" is a rate, not a wait.
+  // "two weeks", "a few months", "several years", "a one-year course". Not "a year" on its own: "$70,000 a
+  // year" is a rate, not a wait (see "a year, as a wait" below).
   {
     phrase: "a duration in words",
-    pattern: /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|a couple of|several|many)\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\b/i,
+    pattern:
+      /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|a couple of|several|many)(?:\s+|\s*-\s*)(?:minutes?|hours?|days?|weeks?|months?|years?)\b/i,
   },
+  // "in a year", "within a week of applying", "plan for a month", "about a year", "allow half a year".
+  {
+    phrase: "a year, as a wait",
+    pattern:
+      /\b(?:in|within|for|over|under|after|about|around|roughly|nearly|almost|up to|at least|at most|allow|take|takes|taking)\s+(?:a|an|one|half an?|a half)\s+(?:minute|hour|day|week|month|year)\b/i,
+  },
+  { phrase: "half a year", pattern: /\bhalf an?\s+(?:minute|hour|day|week|month|year)\b|\b(?:an?|one)\s+(?:minute|hour|day|week|month|year)\s+and a half\b/i },
   { phrase: "takes about", pattern: /\btakes?\s+(?:about|around|roughly|approximately|up to|at least|only|just|\d)/i },
   { phrase: "how long", pattern: /\bhow long\b/i },
   { phrase: "months to", pattern: /\b(?:days?|weeks?|months?|years?)\s+(?:to|until|till|before)\b/i },
-  { phrase: "fastest", pattern: /\b(?:fastest|quickest|soonest|faster|quicker|sooner|speediest)\b/i },
+  { phrase: "fastest", pattern: /\b(?:fastest|quickest|soonest|shortest|faster|quicker|sooner|speediest)\b/i },
   { phrase: "timeline", pattern: /\btime[- ]?lines?\b/i },
   { phrase: "time to", pattern: /\btime to (?:open|launch|start|finish|complete|get|market|revenue|profit)\b/i },
   { phrase: "ETA", pattern: /\b(?:ETA|estimated time|time estimate)\b/i },
@@ -67,8 +76,8 @@ const official = (text: string, where: string, why: string): TimeAllowance => ({
 /**
  * Official requirement text a road's step states from its official page: a period the law or the program
  * sets, which the person must meet (keep records six years, register within 29 days, 1,360 hours a period),
- * shown with that page as the line's source. One entry per line, found by the harness on the written
- * roads. A line that says how long something takes or will take is not a requirement and is never listed
+ * shown with that page as the line's source. One entry per line: tests/idea-invariants.spec.ts reads every
+ * line the written roads hold and fails on one with a time that is neither listed here nor a known gap. A line that says how long something takes or will take is not a requirement and is never listed
  * here (road 1's "each designed to take about a year" is a known gap instead, tests/fixtures/ideas/known-gaps.ts).
  */
 export const OFFICIAL_TIME_ALLOWANCES: readonly TimeAllowance[] = [
@@ -171,6 +180,11 @@ export const OFFICIAL_TIME_ALLOWANCES: readonly TimeAllowance[] = [
     "Those months and hours count full-time work (more than 30 hours a week); part-time work is counted by the trade's approved industry average.",
     `${ROAD_1} step-shop-tq-work-experience (done-when line)`,
     "The program's definition of full-time work for that requirement, cited.",
+  ),
+  official(
+    "You have a current Alberta employer in the trade, or had one within a year of applying.",
+    `${ROAD_1} step-shop-tq-work-experience (done-when line)`,
+    "The Trades Qualifier's employer condition: the person has had an Alberta employer in the trade within a year of the application date, cited.",
   ),
   official(
     "You finished every requirement within 18 months of your application's approval date.",

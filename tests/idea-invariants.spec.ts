@@ -126,6 +126,37 @@ describe("the words no-times lets through", () => {
     expect(findTimeWords("$70,000 a year, before tax")).toEqual([]);
   });
 
+  it("catches a time however it is written", () => {
+    const missed = [
+      "Registering takes a 30-day window.",
+      "A 6-month program, then the exam.",
+      "Most people finish this step in a year.",
+      "plan for a month",
+      "Expect this within a week of applying.",
+      "A one-year course at NAIT.",
+      "Allow half a year for this.",
+      "about a year",
+      "This is the shortest path to opening.",
+    ].filter((text) => findTimeWords(text).length === 0);
+    expect(missed).toEqual([]);
+    // A rate or a frequency is not a wait.
+    expect(["$70,000 a year, before tax", "a domain name that renews every year", "once a year"].flatMap((t) => findTimeWords(t))).toEqual([]);
+  });
+
+  it("finds every time on the written roads either listed as official requirement text or a known gap", () => {
+    // Every line a road writes, by where it is. A line with a time left over must be one known gap.
+    const lines = roadsV2026.flatMap((road) =>
+      road.steps.flatMap((step) => [
+        { where: `${road.id} › ${step.id} › summary`, text: step.summary },
+        ...step.doneWhen.map((line) => ({ where: `${road.id} › ${step.id} › ${line.id}`, text: line.text })),
+        ...[...step.citations, ...step.doneWhen.map((line) => line.citation)].map((c) => ({ where: `${road.id} › ${step.id} › source`, text: c.title })),
+      ]),
+    );
+    const withTimes = [...new Set(lines.filter((line) => findTimeWords(line.text).length > 0).map((line) => line.where))];
+    // known-gaps.ts: road 1's first step, "each designed to take about a year".
+    expect(withTimes).toEqual(["road-apprentice-to-own-shop-ab › step-shop-register-apprentice › summary"]);
+  });
+
   it("lets through only official requirement text still on a road, word for word", () => {
     const roadTexts = new Set(
       roadsV2026.flatMap((road) =>
