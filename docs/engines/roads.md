@@ -140,7 +140,10 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     the plan of 2026-10-17). Add at least 10 ideas to the idea corpus (`tests/fixtures/ideas/v1.ts`, at
     the next free numbers, written the way a person would type them) whose `road` is the new one: people
     of different kinds, and the odd ways they write (a city with no province, two provinces, French, a
-    typo). `tests/idea-corpus.spec.ts` fails while a written road has fewer than 10. `npm run test` then
+    typo). Give the road a name in the corpus's `ROAD_IDS` (and `ExpectedRoad`) so ideas can expect it:
+    `tests/idea-corpus.spec.ts` counts the ideas expecting each road in the catalog (`roadsV2026`) and
+    fails while one has fewer than 10, so a road with no name there counts 0 and fails. The harness's
+    *Pick a future* way in runs every named road. `npm run test` then
     runs `tests/idea-harness.spec.ts`, which takes every idea through the app the way a person's words go
     through it today and checks, on the new road too: no verdict words, no $0 for a blank cost line, every
     amount an official fee, the person's own or quoted by a citation, no times (a period an official page

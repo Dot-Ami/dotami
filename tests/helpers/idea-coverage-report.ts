@@ -2,7 +2,7 @@ import { searchOasisJobs } from "@/lib/engines/oasis/v2026";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
 import { PROVINCES } from "@/lib/scenarios/types";
 
-import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, type Idea } from "../fixtures/ideas/v1";
+import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, ROAD_IDS, type Idea } from "../fixtures/ideas/v1";
 import type { KnownGap } from "../fixtures/ideas/known-gaps";
 import type { Failure } from "./idea-invariants";
 import type { IdeaRun } from "./idea-pipeline";
@@ -44,7 +44,7 @@ export function coverageReport(args: {
   table(["Kind of work", "Ideas"], count(ACTIVITY_TAXONOMY, (i) => i.tags));
   table(["Odd case", "Ideas"], count(ODD_KINDS, (i) => i.odd ?? []));
   table(["Looking for", "Ideas"], count(["business", "career", "both", "not-said"], (i) => [i.lookingFor]));
-  table(["Road written for it", "Ideas"], count(["road-0", "road-1", "none-written-yet"], (i) => [i.road]));
+  table(["Road written for it", "Ideas"], count([...(Object.keys(ROAD_IDS) as Idea["road"][]), "none-written-yet"], (i) => [i.road]));
 
   // Where each idea ended, each way in.
   const typedRoad = (run: IdeaRun) => run.typed?.road.id ?? `stops at the ${run.intakeEnd}`;

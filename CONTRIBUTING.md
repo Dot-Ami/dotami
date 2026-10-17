@@ -232,7 +232,10 @@ verdict words, no $0 for a blank, every amount cited or the person's own, no tim
 ending somewhere honest, nothing derived about the person, and the same output for the same input.
 A failure that a planned story fixes is listed in `tests/fixtures/ideas/known-gaps.ts` with that
 story; a bug is listed there only with the maintainer told, in the pull request. The rule for roads
-is rule 13 of [docs/engines/roads.md](docs/engines/roads.md).
+is rule 13 of [docs/engines/roads.md](docs/engines/roads.md): `tests/idea-corpus.spec.ts` fails while
+a road in the catalog has fewer than 10 ideas. Screens aren't counted: an idea has no field naming
+the screens it reaches, so for a new screen the reviewer checks the 10 ideas, and the screen's
+words join the harness only once `tests/helpers/idea-pipeline.ts` collects them.
 
 ## Local development and the gate
 

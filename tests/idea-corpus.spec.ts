@@ -7,17 +7,27 @@
 import { describe, expect, it } from "vitest";
 
 import { oasisJobByCode } from "@/lib/engines/oasis/v2026";
+import { roadsV2026 } from "@/lib/engines/roads/v2026";
 import { ACTIVITY_TAXONOMY } from "@/lib/journey/intent";
 import { PROVINCES } from "@/lib/scenarios/types";
 
-import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, RETIRED_IDEA_IDS, type Idea } from "./fixtures/ideas/v1";
+import { IDEAS_V1, ODD_KINDS, PEOPLE_TYPES, RETIRED_IDEA_IDS, ROAD_IDS, type Idea } from "./fixtures/ideas/v1";
 
 /** The minimums (the plan of 2026-10-17, S2.5.29a), and the written roads' (CONTRIBUTING.md: 10 ideas per road). */
 const CORPUS_MINIMUMS ={ peopleType: 25, place: 10, nocCategory: 15, activityTag: 10, oddKind: 3, writtenRoad: 10 } as const;
 
 const PLACES = [...PROVINCES, "outside-canada", "not-said"] as const;
 const NOC_CATEGORIES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-const ROADS = ["road-0", "road-1"] as const;
+/**
+ * How many ideas expect each road of a catalog, by the road's id. Read from the catalog itself
+ * (lib/engines/roads/v2026), so a new road is counted the day it is written: with no name in ROAD_IDS, no
+ * idea can expect it, and it counts 0.
+ */
+function ideasPerRoad(catalog: readonly { id: string }[]): Record<string, number> {
+  return Object.fromEntries(
+    catalog.map((road) => [road.id, IDEAS_V1.filter((idea) => idea.road !== "none-written-yet" && ROAD_IDS[idea.road] === road.id).length]),
+  );
+}
 
 function counts<K extends string | number>(keys: readonly K[], of: (idea: Idea) => readonly K[]): Record<string, number> {
   return Object.fromEntries(keys.map((key) => [String(key), IDEAS_V1.filter((idea) => of(idea).includes(key)).length]));
@@ -62,8 +72,17 @@ describe("the idea corpus (tests/fixtures/ideas/v1.ts)", () => {
     expect(under(counts(ODD_KINDS, (i) => i.odd ?? []), CORPUS_MINIMUMS.oddKind)).toEqual([]);
   });
 
-  it("has at least 10 ideas that should reach each written road", () => {
-    expect(under(counts(ROADS, (i) => [i.road]), CORPUS_MINIMUMS.writtenRoad)).toEqual([]);
+  it("has at least 10 ideas that should reach each road in the catalog", () => {
+    expect(under(ideasPerRoad(roadsV2026), CORPUS_MINIMUMS.writtenRoad)).toEqual([]);
+    // A road added to the catalog with no ideas, and so no name in ROAD_IDS, is counted and fails.
+    expect(under(ideasPerRoad([...roadsV2026, { id: "road-planted-with-no-ideas" }]), CORPUS_MINIMUMS.writtenRoad)).toEqual([
+      `road-planted-with-no-ideas: 0 < ${CORPUS_MINIMUMS.writtenRoad}`,
+    ]);
+  });
+
+  it("names only roads the catalog has", () => {
+    const ids: readonly string[] = roadsV2026.map((road) => road.id);
+    expect(Object.values(ROAD_IDS).filter((id) => !ids.includes(id))).toEqual([]);
   });
 
   it("names only jobs the government's list has", () => {
