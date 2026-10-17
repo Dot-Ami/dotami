@@ -282,6 +282,22 @@ and the maintainer's six decisions of 2026-10-11:
   2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
+- 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
+  ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
+  (tests plus a calm screen first).
+  - [x] 29a: the idea corpus, `tests/fixtures/ideas/v1.ts`, 357 invented ideas with permanent ids, every kind
+    of person, place, job category, kind of work and odd case; `tests/idea-corpus.spec.ts` holds the minimums
+  - [x] 29b: the harness, `tests/idea-harness.spec.ts`: no verdict, no $0 for a blank, every amount cited or
+    the person's own, no times, every path ends somewhere honest, nothing derived, the same output; the known
+    gaps listed with their stories (`tests/fixtures/ideas/known-gaps.ts`), the list only shrinking; writes
+    `test-results/idea-coverage.md`
+  - [x] 29c: `tests/helpers/number-provenance.ts`, every amount an official fee, the person's own, a quoted
+    threshold or a sum of those (the Lens's reply guard reuses it later)
+  - [ ] 29d: property tests over the whole answer space, with `fast-check`
+  - [ ] 29e: `e2e/idea-sweep.spec.ts`, fixed and weekly ideas from the front door to the plan in the browser
+  - [ ] 29f: `npm run eval:intent`, the AI parser on the developer's own key, never in CI
+  - [x] 29g: the rule that a new road or screen adds 10 ideas that should reach it and passes the harness
+    ([engines/roads.md](engines/roads.md) rule 13, [CONTRIBUTING.md](../CONTRIBUTING.md))
 
 ## 7 — The desktop app (one download, everything on your computer)
 

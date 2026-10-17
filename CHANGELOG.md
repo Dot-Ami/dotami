@@ -408,6 +408,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   one place, `tests/helpers/verdict-words.ts`, with the only two allowances, both official sentences quoted
   from Alberta's *Register a business name* page, each with its reason, and each allowed only inside quote
   marks, as a source's quote shows: the same words written as DotAmi's own line are caught.
+- **Tests: 357 invented ideas, and a harness every road and screen must pass** (S2.5.29a, b, c and g, the
+  plan of 2026-10-17; developers only, nothing in the app changes). `tests/fixtures/ideas/v1.ts` holds 357
+  invented ideas as people would type them, each with a permanent id: every one of the eleven kinds of person
+  in the plan, every province and territory, outside Canada and not said, every broad job category, every
+  kind of work the intake offers, and the odd cases (nothing typed, 2,000 characters, emoji, French, two ideas
+  at once, "50k", a city with no province, two provinces, a regulated profession, work the law forbids, "ignore
+  your rules", ID-like digits made at run time from one repeated digit). `tests/idea-harness.spec.ts` takes
+  each one through the app the way a person's words go today (the keyword parser, the intake, the road it is
+  drawn on, road evaluation, *What you've told DotAmi* and *Not told yet*, the receipts, *Compare* and *Your
+  plan*), and through *Pick a future* where a road is written for it, in about 35 seconds, and checks that
+  nothing DotAmi writes is a verdict, shows $0 for a blank, states an amount that isn't an official fee, the
+  person's own or quoted by a citation (`tests/helpers/number-provenance.ts`), or a time (official
+  requirements such as "1,360 hours" are listed with their step); that every path ends somewhere honest; that
+  nothing about the person is derived; and that the same idea gives the same output. What it finds today and
+  a planned story fixes, or that is a bug for the maintainer, is listed in `tests/fixtures/ideas/known-gaps.ts`
+  with its story; the harness fails on anything new and on a listed gap that now passes, so the list only
+  shrinks. A new road or screen adds 10 ideas that should reach it (`docs/engines/roads.md` rule 13,
+  CONTRIBUTING.md).
   `tests/verdict-words.spec.ts` checks each allowance is still a quote a tool found on that page and that no
   other quote in the catalogs needs one. A control plants "Top pick" on a real screen and the guard catches
   it. Checked by hand on 2026-10-14: a "Top pick" badge added to every card on *Your futures* passed all

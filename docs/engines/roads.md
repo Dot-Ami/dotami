@@ -136,6 +136,20 @@ A road may name where it carries on after its last column: `joins: { roadId, col
     step names grey without one of them (a dashed card hides its lever cards; a test holds that too). The
     checks refuse an empty list; `tests/research-steps.spec.ts` refuses a kind of work the intake doesn't
     ask.
+13. **A new road comes with the ideas that should reach it, and passes the idea harness** (S2.5.29g,
+    the plan of 2026-10-17). Add at least 10 ideas to the idea corpus (`tests/fixtures/ideas/v1.ts`, at
+    the next free numbers, written the way a person would type them) whose `road` is the new one: people
+    of different kinds, and the odd ways they write (a city with no province, two provinces, French, a
+    typo). `tests/idea-corpus.spec.ts` fails while a written road has fewer than 10. `npm run test` then
+    runs `tests/idea-harness.spec.ts`, which takes every idea through the app the way a person's words go
+    through it today and checks, on the new road too: no verdict words, no $0 for a blank cost line, every
+    amount an official fee, the person's own or quoted by a citation, no times (a period an official page
+    requires, such as "1,360 hours", is listed with its step in `tests/helpers/time-words.ts`), every path
+    ending somewhere honest (every fork side reaches the road's end or its join, every question asked
+    changes something), nothing derived, and the same output for the same input. It fails on any failure
+    the known-gaps list (`tests/fixtures/ideas/known-gaps.ts`) doesn't name, and on any gap it names that
+    now passes, so a road that fixes a gap takes those ideas off the list in the same pull request. What
+    it saw is written to `test-results/idea-coverage.md`.
 
 How a road meets a person's answers (each step's state and its reason, the four gauges, the receipts)
 is not in the catalog: it is `lib/roads/` ([future-cockpit.md § 6, *Road evaluation as

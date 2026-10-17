@@ -224,6 +224,16 @@ CSV files in English and French, under the [Open Government Licence – Canada](
 Node and entry ids are permanent once merged — progress, links and citations key on them.
 Rename the label, never the id.
 
+**A new road or a new screen comes with 10 or more ideas that should reach it** (added
+2026-10-17). Add them to the idea corpus, `tests/fixtures/ideas/v1.ts`: invented, written as a
+person would type them, at the next free numbers (an idea's id is never reused). The idea harness,
+`tests/idea-harness.spec.ts`, runs every idea in the corpus through the app and must pass: no
+verdict words, no $0 for a blank, every amount cited or the person's own, no times, every path
+ending somewhere honest, nothing derived about the person, and the same output for the same input.
+A failure that a planned story fixes is listed in `tests/fixtures/ideas/known-gaps.ts` with that
+story; a bug is listed there only with the maintainer told, in the pull request. The rule for roads
+is rule 13 of [docs/engines/roads.md](docs/engines/roads.md).
+
 ## Local development and the gate
 
 ```bash
