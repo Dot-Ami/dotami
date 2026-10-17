@@ -107,8 +107,9 @@ advice."* (§ 6.2 item 6)
 A rank, score, rating order, *crowded*, *saturated*, *room for you*, market share, businesses per person, a trend
 arrow, or any order by size, spend or reviews. `crowded`, `saturated` and `room for you` are verdict phrases on
 every screen (`tests/helpers/verdict-words.ts` `VERDICT_PHRASES`, read by `e2e/no-verdict.spec.ts`); the
-panel's own words are also checked against *opportunity*, *gap*, *market share*, *per person*, *top* and
-*best-rated* (`LANDSCAPE_WORDS`, `tests/landscape-words.spec.ts`). A business's own words are never quoted.
+panel's own words, its link labels among them, are also checked against the verdict words and against
+*opportunity*, *gap*, *market share*, *per person*, *top* and *best-rated* (`LANDSCAPE_WORDS`,
+`tests/landscape-words.spec.ts`). A business's own words are never quoted.
 
 ## State touched (field names only)
 

@@ -33,7 +33,9 @@ function sentencesOf(words: unknown): string[] {
   return out;
 }
 
-const sentences = sentencesOf(landscapeWords);
+// The link labels are drawn on the panel too (the two ad libraries, and the pages the "not published" line was
+// read from), so they're read with the same checks as the words object.
+const sentences = [...sentencesOf(landscapeWords), ...[...AD_LIBRARIES, ...AD_COST_READ_FROM].map((link) => link.label)];
 
 describe("the panel's words", () => {
   it("has words to check", () => {

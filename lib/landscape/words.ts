@@ -6,8 +6,9 @@
  * official counts, the area and industry questions and *Where to look* come with their own tasks.
  *
  * The words are the same on every road: they name no trade. tests/landscape-words.spec.ts checks every
- * sentence against the verdict words and the landscape's own list (crowded, saturated, room for you,
- * opportunity, gap, market share, per person, top, best-rated: tests/helpers/verdict-words.ts).
+ * sentence, and every link label below, against the verdict words and the landscape's own list (crowded,
+ * saturated, room for you, opportunity, gap, market share, per person, top, best-rated:
+ * tests/helpers/verdict-words.ts).
  */
 
 /** A page the person opens themselves, in their own browser. No search words and nothing about them in the address. */
