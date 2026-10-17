@@ -285,12 +285,15 @@ and the maintainer's six decisions of 2026-10-11:
 - 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
   ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
   (tests plus a calm screen first).
-  - [x] 29a: the idea corpus, `tests/fixtures/ideas/v1.ts`, 357 invented ideas with permanent ids, every kind
-    of person, place, job category, kind of work and odd case; `tests/idea-corpus.spec.ts` holds the minimums
-  - [x] 29b: the harness, `tests/idea-harness.spec.ts`: no verdict, no $0 for a blank, every amount cited or
-    the person's own, no times, every path ends somewhere honest, nothing derived, the same output; the known
+  - [x] 29a: the idea corpus, `tests/fixtures/ideas/v1.ts`, 367 invented ideas with permanent ids, every kind
+    of person, place, business or career answer, job category, kind of work and odd case;
+    `tests/idea-corpus.spec.ts` holds the minimums
+  - [x] 29b: the harness, `tests/idea-harness.spec.ts`: each idea typed, and each idea in Canada picked on
+    *Pick a future*; no verdict, no $0 for a blank, every amount cited or the person's own, no times, every
+    path ends somewhere honest (every question answered too), nothing derived, the same output; the known
     gaps listed with their stories (`tests/fixtures/ideas/known-gaps.ts`), the list only shrinking; writes
-    `test-results/idea-coverage.md`
+    `test-results/idea-coverage.md`. It reads the lines the app code it calls writes, plus every plain
+    sentence in the words files for times; whole screens wait for 29e
   - [x] 29c: `tests/helpers/number-provenance.ts`, every amount an official fee, the person's own, a quoted
     threshold or a sum of those (the Lens's reply guard reuses it later)
   - [ ] 29d: property tests over the whole answer space, with `fast-check`

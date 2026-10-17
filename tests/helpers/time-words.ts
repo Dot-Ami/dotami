@@ -13,8 +13,11 @@ import { normaliseSpaces } from "./text-pieces";
  *   step shows its source beside it.
  *
  * `findTimeWords` takes the allowed words out of a text first, then names what is left. The harness runs it
- * over every line DotAmi writes for an idea (tests/idea-harness.spec.ts), and tests/idea-invariants.spec.ts
- * checks each allowance is still in use, so a stale one can't sit here unnoticed.
+ * over every line it collects for an idea (tests/idea-harness.spec.ts: what the app code it calls writes),
+ * tests/idea-invariants.spec.ts runs it over every line the written roads hold and every plain sentence in
+ * the words files, and checks each allowance is still in use, so a stale one can't sit here unnoticed. The
+ * patterns catch the ways of writing a time listed below, not every way there is: a new phrasing that
+ * slips through is added here with a probe in that spec.
  */
 
 // The units of a duration, singular (a pattern adds "s?" where plurals are meant). "season" and "quarter"
