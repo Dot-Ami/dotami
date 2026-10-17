@@ -686,6 +686,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   use the system Node's time-zone data, as before.
 
 ### Documented
+- **Two designs, written before any code, each waiting on the maintainer's calls** (2026-10-15).
+  [docs/architecture/other-ways-to-build.md](docs/architecture/other-ways-to-build.md) ([14f]): each
+  start-up cost line offered as already have it, buy, rent or lease side by side, each with the person's
+  own number and the CRA's treatment of that way, the cited rules the person's picks bring into view, and
+  a *Where to ask* list for tax and legal help; nine calls.
+  [docs/architecture/competitive-landscape.md](docs/architecture/competitive-landscape.md) ([14g]):
+  Statistics Canada's count of businesses by area and industry (June 2026), a dated list of public
+  places to look, a plain line that ordinary ad spend isn't published in Canada, and the person's own
+  list of businesses they're watching; ten calls. Nothing DotAmi keeps, sends, ships or asks changes.
+- **Both designs revised after the maintainer's answers, and two more written** (2026-10-15).
+  other-ways-to-build.md: call 1 answered (C). competitive-landscape.md: calls 1 (A) and 3 (B for v1)
+  answered; call 2 reworked as separate picks (the person's own list, look-ups on the person's own account,
+  a list from open data), with what each outside tool's own terms allow.
+  [docs/architecture/lens-comparisons.md](docs/architecture/lens-comparisons.md) ([14h]): the Lens and a
+  *Sort by* control order the person's own options by one measure they name, every number from DotAmi's
+  code; four calls. [docs/architecture/research-kit.md](docs/architecture/research-kit.md) ([14i]): one
+  source registry, import core, code keys and research-pack script so every job reuses the same data;
+  nine calls (K1–K9); the maintainer's picks of 2026-10-16 are now recorded in all four designs. Nothing
+  DotAmi keeps, sends, ships or asks changes.
 - **The update checker's install ID is on What DotAmi knows about you and in Settings** (found in the
   review of #169). The desktop app's update package, electron-updater, makes a random install ID on its
   first check, keeps it in a file of its own, `.updaterId`, in the data folder, sends it to GitHub with

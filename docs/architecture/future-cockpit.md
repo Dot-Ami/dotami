@@ -1877,6 +1877,18 @@ The maintainer expects the layout, and so the back end, to change as this is bui
   Lens exists.
 - A second written future; provinces other than Alberta for the written future.
 - The real examples library and the person's own test results ([task list](../task-list.md) § 15–16).
+- Two stories asked for on 2026-10-15, designed and not built, each waiting on the maintainer's calls:
+  buying, renting or leasing each start-up item and where to ask about tax and legal questions
+  ([other-ways-to-build.md](other-ways-to-build.md)), and others in the same line of work
+  ([competitive-landscape.md](competitive-landscape.md)). The second asks (its call 1) whether an
+  official count of businesses may appear for a real person, which this section rules out today.
+  The maintainer answered that "A" on 2026-10-15 (counts may appear; recorded here once built, task 23n).
+- Two more designs asked for the same day, also not built and waiting on calls: the Lens answering
+  "cheapest", "fastest" and "strongest foundation" by a measure the person names
+  ([lens-comparisons.md](lens-comparisons.md)), which would bring decision 3's sort forward from phase 2 and
+  add typed official times (lifting the months-only rule above for cited times), and one research kit that
+  makes all of this work for any job ([research-kit.md](research-kit.md)), whose call K5 asks whether
+  government wage figures may appear for a real person, which this section rules out today.
 
 ## 13. Open items
 
