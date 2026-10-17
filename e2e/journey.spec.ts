@@ -2,8 +2,8 @@
  * The whole journey in one go, in a real browser on the production build (docs/architecture/future-cockpit.md
  * § 1, "The journey, screen by screen", and § 2): the front door, Your destination's four questions with
  * their receipts, Pick a future, the cockpit on the first written future (skills marked, a start-up line
- * priced with the person's own number, their month, a what-if, Compare and This is mine, a region folded
- * and opened again), Your plan, then a reload that reads back what was kept, and Your futures listing it.
+ * priced with the person's own number, their month, a what-if, Compare and This is mine, a business added
+ * to Others in this line of work with an ad link, a region folded and opened again), Your plan, then a reload that reads back what was kept, and Your futures listing it.
  * Then the other way in: "I already have an idea", to the cockpit on road 0.
  *
  * The screens are each tested on their own elsewhere (e2e/front-door.spec.ts, e2e/cockpit*.spec.ts,
@@ -226,6 +226,24 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(compare(page).getByRole("status")).toContainText(`Because you picked “${ownShop}” at “${fork.label}”`);
   await look(seen, page, "cockpit, Compare after This is mine");
 
+  // Others in this line of work: a business the person is watching, with an ad link and the day it was seen.
+  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  const landscape = page.getByRole("region", { name: "Others in this line of work" });
+  await expect(landscape).toContainText("DotAmi has no number for it.");
+  const watchedName = `Invented Shop ${stamp}`;
+  await landscape.getByRole("button", { name: "+ Add a business" }).click();
+  const addBusiness = landscape.getByRole("form", { name: "Add a business" });
+  await addBusiness.getByLabel("Name").fill(watchedName);
+  await addBusiness.getByLabel("Your note (optional)").fill("A stall at the weekend market.");
+  await addBusiness.getByRole("button", { name: "+ Add an ad link" }).click();
+  await addBusiness.getByLabel("Ad link 1", { exact: true }).fill("https://example.com/ads/1");
+  await addBusiness.getByLabel("Day you saw ad link 1").fill("2026-10-01");
+  await addBusiness.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(landscape.getByRole("status")).toContainText("Added to your list.");
+  const watchedRow = landscape.getByRole("list", { name: "Businesses you're watching" }).getByRole("listitem").filter({ hasText: watchedName });
+  await expect(watchedRow).toContainText("seen 2026-10-01");
+  await look(seen, page, "cockpit, Others in this line of work with a business and an ad link added");
+
   // Fold a region and open it again: what it held is back.
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
   await expect(legendLine).toBeVisible();
@@ -297,6 +315,7 @@ test("the whole journey: front door → destination → pick a future → the co
   expect(at("cockpit, the agree prompt for a start-up line")).toMatch(/Agree to these figures\?/i);
   expect(at("Your destination, the agree prompt")).toMatch(/Agree to this number\?/i);
   expect(at("cockpit, Compare after This is mine")).toContain(`Because you picked “${ownShop}”`);
+  expect(at("cockpit, Others in this line of work")).toContain("A stall at the weekend market.");
   expect(verdictsIn(seen)).toEqual([]);
 });
 

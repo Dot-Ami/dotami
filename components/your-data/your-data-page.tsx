@@ -235,6 +235,13 @@ function TableRow({ table, ideasWithNotes }: { table: TableCount; ideasWithNotes
         </span>
       </div>
       <p className="mt-1 text-[12.5px] text-paper-dim">{entry.holds}</p>
+      {/* A table that can hold something about other people says so, under the same kind of label. */}
+      {entry.aboutOthers ? (
+        <p className="mt-2 text-[12px] text-paper-dim">
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">About other people · </span>
+          {entry.aboutOthers}
+        </p>
+      ) : null}
       <Removal>{entry.removedBy}</Removal>
     </li>
   );

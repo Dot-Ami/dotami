@@ -17,6 +17,7 @@ import type { Road, RoadStep, SkillItem } from "@/lib/engines/roads/v2026";
 import type { CostLineAmountFrom } from "@/lib/figures/types";
 import { formatMoney } from "@/lib/format/money-and-months";
 import { SKILL_MARKS, STEP_STATUSES, type SkillMarkValue, type StepStatus } from "@/lib/futures/types";
+import { landscapeWords } from "@/lib/landscape/words";
 import type { StepEvaluation } from "@/lib/roads";
 import type { BranchDecision } from "@/lib/scenarios/branches";
 
@@ -75,6 +76,11 @@ export interface StepPanelProps {
    * page passes it only for a fork Compare is offered at (lib/cockpit/told.ts `forksToCompare`).
    */
   onCompare?: (forkId: string) => void;
+  /**
+   * Opens "Others in this line of work" (2026-10-17); the page passes it only on a step its road marks as
+   * opening a business (`RoadStep.opensABusiness`), as the goal bar offers it on every road.
+   */
+  onLandscape?: () => void;
 }
 
 export function StepPanel(props: StepPanelProps) {
@@ -161,6 +167,7 @@ function StepSections({
   onProposeQuote,
   receipt,
   onCompare,
+  onLandscape,
   job = null,
   onOpenJobList,
 }: StepPanelProps) {
@@ -222,6 +229,15 @@ function StepSections({
               {words.compare.openAtFork}
             </Pill>
           ) : null}
+        </div>
+      ) : null}
+
+      {/* On the step where a business of one's own opens: the same panel the goal bar opens. */}
+      {onLandscape ? (
+        <div>
+          <Pill size="small" variant="ghost" onClick={onLandscape}>
+            {landscapeWords.open}
+          </Pill>
         </div>
       ) : null}
 

@@ -350,7 +350,10 @@ where it came from.
   into *The road ahead · N steps* until opened.
 - **Right — the step panel.** Whatever is selected, one thing at a time (today's single right-hand
   slot): a step (§ 1 row 5), a skill (which steps need it, the person's mark, the official way to get
-  it, cited) or a cost line (its step, where its amount came from, *proposed* or *agreed*).
+  it, cited) or a cost line (its step, where its amount came from, *proposed* or *agreed*). Since
+  2026-10-17 it can also hold *Others in this line of work* (call 7 A of
+  [competitive-landscape.md](competitive-landscape.md)), opened from the goal bar and from a step its road
+  marks as opening a business: [docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md).
 - **Bottom — Next on your road and the what-if bar.** *Next on your road:* the next three undone
   steps, labelled *"the order steps happen, not importance"*. The what-if bar: *"Try first-year sales
   of $___"* relights the rules under a fixed banner *"Your what-if, not a forecast"*, with *Keep* and

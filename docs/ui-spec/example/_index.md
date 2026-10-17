@@ -141,6 +141,7 @@ the banner's status line and does nothing else:
 | **This is mine** | Disabled, the note shown; her pick stays pressed |
 | The told list's **Change**, **Take back** and the not-told rows' **Answer** | Disabled, the note shown under the list's heading |
 | The rail's **Structure** select | Disabled, the note under it |
+| *Others in this line of work*'s **+ Add a business** (since 2026-10-17) | Disabled, the note shown; her list stays empty with *"An invented person's list would mean inventing businesses, so this stays empty in the example."* and nothing is read ([../cockpit/landscape.md](../cockpit/landscape.md)) |
 | The what-if bar's **Keep** (drawn once the visitor tries a what-if) | Answers in the banner; the what-if stays on |
 | **Export** (the header) | Answers in the banner; no plan is made |
 | The step panel's *I'd incorporate at* box, a map toggle | Answers in the banner (neither is drawn on road 1 today) |

@@ -4,6 +4,7 @@ import { FoldButton } from "@/components/cockpit/folding";
 import { gaugeView, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { Road } from "@/lib/engines/roads/v2026";
+import { landscapeWords } from "@/lib/landscape/words";
 import type { RoadEvaluation } from "@/lib/roads";
 import type { Scenario } from "@/lib/scenarios/types";
 
@@ -36,11 +37,17 @@ export function GoalBar({
   active,
   onGauge,
   onCompare,
+  onLandscape,
   folded = false,
   onToggleFold,
   person = null,
   targetFrom = null,
 }: {
+  /**
+   * Opens "Others in this line of work" in the right-hand panel (2026-10-17; docs/ui-spec/cockpit/landscape.md).
+   * The page gives it on every road, so the button shows wherever the bar is open.
+   */
+  onLandscape?: () => void;
   /**
    * On an example whose target is a published statistic (2026-10-14): which one and when, said in place of
    * "agreed". Null otherwise.
@@ -142,6 +149,11 @@ export function GoalBar({
           {onCompare ? (
             <button type="button" onClick={onCompare} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
               {words.compare.open}
+            </button>
+          ) : null}
+          {onLandscape ? (
+            <button type="button" onClick={onLandscape} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
+              {landscapeWords.open}
             </button>
           ) : null}
           {onToggleFold ? (

@@ -67,7 +67,23 @@ export const VERDICT_PHRASES: readonly { phrase: string; pattern: RegExp }[] = [
   { phrase: "ranked first", pattern: /\branked (?:first|1st|highest|top)\b/i },
   { phrase: "top-rated", pattern: /\b(?:top|highest|best)[- ](?:rated|ranked)\b/i },
   { phrase: "most popular", pattern: /\bmost popular\b/i },
+  // A market judged, not described (docs/architecture/competitive-landscape.md § 6, 2026-10-17): DotAmi shows
+  // what is there and never says whether a line of work has space for the person.
+  { phrase: "crowded", pattern: /\b(?:over)?crowded\b/i },
+  { phrase: "saturated", pattern: /\b(?:over)?saturated\b/i },
+  { phrase: "room for you", pattern: /\broom for (?:you|me|one more|another)\b/i },
 ];
+
+/**
+ * The words "Others in this line of work" never uses in its own sentences (docs/architecture/competitive-landscape.md
+ * § 6): a market judged ("crowded", "saturated", "room for you", "opportunity", "gap"), a share or a measure per
+ * head ("market share", "per person"), or a rank ("top", "best-rated"). Checked over lib/landscape/words.ts by
+ * tests/landscape-words.spec.ts. The first three are verdict phrases above too, so e2e/no-verdict.spec.ts catches
+ * them on any screen; the others are ordinary words elsewhere ("top" of a page, a "gap" in a road), so they are
+ * checked over the panel's own words only. Whole words: "stop", "laptop" and "gaps" don't match.
+ */
+export const LANDSCAPE_WORDS =
+  /\b(crowded|saturated|room for you|opportunit(?:y|ies)|gap|market share|per person|top|best[- ]rated)\b/i;
 
 /** One space for every run of spaces and line breaks, and straight apostrophes, so a phrase split by layout still matches. */
 const normalise = (text: string) => text.replace(/[‘’]/g, "'").replace(/\s+/g, " ");

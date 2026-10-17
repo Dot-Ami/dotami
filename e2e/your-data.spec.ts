@@ -115,6 +115,11 @@ test("what DotAmi knows lists every table and window key the inventory names, an
   const file = page.getByRole("region", { name: "Everything else in the data file" });
   for (const t of TABLES) {
     await expect(file.getByRole("heading", { name: t.name, level: 3, exact: true })).toBeVisible();
+    // A card that can hold something about other people (the businesses being watched, 2026-10-17) says so
+    // on its own line; the other cards have no such line.
+    const card = file.getByRole("listitem").filter({ has: page.getByRole("heading", { name: t.name, level: 3, exact: true }) });
+    if (t.aboutOthers) await expect(card).toContainText(`About other people · ${t.aboutOthers}`);
+    else await expect(card).not.toContainText("About other people");
   }
 
   const computer = page.getByRole("region", { name: "On this computer, outside the data file" });
