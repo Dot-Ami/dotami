@@ -47,6 +47,8 @@ function Section({ id, index, children }: { id: SectionId; index: number; childr
   const headingId = `plan-${id}`;
   return (
     <section
+      // A block the clutter limit counts (docs/ui-spec/README.md, "The layout rule").
+      data-region={headingId}
       aria-labelledby={headingId}
       // A new page for every section after the first, on paper only.
       className={`border-t border-ink/15 pt-6 print:border-t-0 ${index > 0 ? "print:break-before-page" : ""}`}
@@ -132,8 +134,8 @@ function Step({ step }: { step: PlanStep }) {
 export function PlanPage({ view, backHref }: { view: PlanView; backHref: string }) {
   return (
     <div className="plan-page px-4 py-6 print:p-0">
-      {/* The bar: on screen only. */}
-      <div data-plan-bar="" className="mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-between gap-3 print:hidden">
+      {/* The bar: on screen only. data-region marks the blocks the clutter limit counts. */}
+      <div data-plan-bar="" data-region="plan-bar" className="mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href={backHref} className="font-mono text-[11px] text-stone transition hover:text-paper">
           {words.plan.back}
         </Link>
@@ -144,7 +146,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
       </div>
 
       <article className="mx-auto grid max-w-[820px] gap-6 rounded-md bg-paper p-6 text-[13px] leading-relaxed text-ink md:p-10 print:max-w-none print:rounded-none print:bg-white print:p-0 print:text-black">
-        <header>
+        <header data-region="plan-header">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/70 print:text-black">{view.title}</p>
           <h1 className="mt-1 font-serif text-[28px] font-bold leading-tight tracking-tight">{view.ideaName}</h1>
           <p className="mt-1 text-[12px] text-ink/80 print:text-black">{view.made}</p>

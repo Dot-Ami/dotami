@@ -56,6 +56,8 @@ export function ExampleBanner({
   const seenOn = example.sources?.data.seenOn ?? null;
   return (
     <section
+      // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+      data-region="example-banner"
       aria-label={words.example.region}
       className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber/50 bg-amber/10 px-4 py-2 text-[12px] md:px-[22px]"
     >

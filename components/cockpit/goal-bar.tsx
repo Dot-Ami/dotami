@@ -104,7 +104,8 @@ export function GoalBar({
   const isFolded = folded && onToggleFold !== undefined;
 
   return (
-    <section id={GOAL_BAR_ID} aria-label={words.goal.region} className="border-b border-rule bg-ink2">
+    // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
+    <section id={GOAL_BAR_ID} data-region="goal-bar" aria-label={words.goal.region} className="border-b border-rule bg-ink2">
       {isFolded ? (
         // One line: the gauges by name and value, scrolling sideways inside the line when they don't fit.
         <div className="flex min-w-0 items-center gap-2 px-5 py-1.5">

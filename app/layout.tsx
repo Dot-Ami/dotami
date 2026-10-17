@@ -43,7 +43,8 @@ export default async function RootLayout({
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen bg-ink font-sans text-[13px] leading-snug text-paper antialiased">
         {children}
-        <footer className="flex h-10 shrink-0 items-center justify-center border-t border-rule-soft px-8 text-center text-[11px] text-stone-dim md:px-14">
+        {/* data-region: a block the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+        <footer data-region="site-footer" className="flex h-10 shrink-0 items-center justify-center border-t border-rule-soft px-8 text-center text-[11px] text-stone-dim md:px-14">
           Information, not legal or tax advice · a prep tool for you and your accountant ·{" "}
           <a
             href="https://github.com/Dot-Ami/dotami"

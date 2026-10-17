@@ -101,7 +101,8 @@ export function PickFuturePage() {
 
   return (
     <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
-      <nav className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
+      {/* data-region marks the blocks the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
+      <nav data-region="nav" className="flex items-center gap-6 border-b border-rule-soft px-8 py-[18px]">
         <GhostLink href="/start" tone="stone">
           {words.back}
         </GhostLink>
@@ -113,7 +114,7 @@ export function PickFuturePage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-10 sm:px-8">
-          <header>
+          <header data-region="intro">
             <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
               {words.heading}
             </h1>
@@ -126,7 +127,7 @@ export function PickFuturePage() {
           </header>
 
           {!hydrated ? null : !place ? (
-            <p className="rounded-lg border border-dashed border-rule p-6 text-sm text-stone">
+            <p data-region="no-place" className="rounded-lg border border-dashed border-rule p-6 text-sm text-stone">
               {words.noPlace}{" "}
               <Link href="/start" className="border-b border-rule-soft text-paper hover:text-maple">
                 {words.noPlaceLink}
@@ -134,7 +135,7 @@ export function PickFuturePage() {
             </p>
           ) : (
             <>
-              <div className="max-w-sm">
+              <div data-region="name-it" className="max-w-sm">
                 <label
                   htmlFor={nameId}
                   className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-stone"
@@ -161,7 +162,7 @@ export function PickFuturePage() {
                 </p>
               ) : null}
 
-              <ul aria-label={words.listLabel} className="grid gap-4 md:grid-cols-2">
+              <ul data-region="futures" aria-label={words.listLabel} className="grid gap-4 md:grid-cols-2">
                 {cards.map((card) => {
                   const road = LISTED.find((r) => r.id === card.roadId)!;
                   return (
@@ -178,6 +179,7 @@ export function PickFuturePage() {
               </ul>
 
               <section
+                data-region="not-here"
                 aria-labelledby={noteId}
                 className="space-y-3 rounded-lg border border-rule bg-ink2 p-5"
               >

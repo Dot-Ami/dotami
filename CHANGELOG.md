@@ -11,6 +11,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **A layout rule, and a clutter limit every screen must stay under** (the maintainer, 2026-10-17: a calm
+  first view, enforced by a limit on how busy a screen can get). The rule, in
+  [docs/ui-spec/README.md](docs/ui-spec/README.md): one primary thing per screen (on the cockpit, the road);
+  new features open in the right-hand panel or the step panel, never as a new region; the first visit shows
+  the least; everything folds and is remembered; with a table of where each planned feature lands. The
+  limit: a browser test opens ten main screens at phone, tablet and laptop sizes and counts the regions, the
+  controls in the first window, the text sizes and the smallest text; it fails when a screen goes over its
+  budget. The budgets start at what the screens measure today and can only go down; the calm first view
+  lowers them next. The screens look and work exactly as before (they gained only `data-region` marks the
+  test reads).
 - **Others in this line of work: keep a list of businesses you're watching** (the maintainer, 2026-10-17:
   *"yah, this is fine. Lets do it"*) — a new panel in the cockpit, opened from the goal bar on every road and
   from *Open your own shop* on the apprentice road. It says plainly what their ads cost: *"Meta and Google
