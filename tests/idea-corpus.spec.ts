@@ -80,6 +80,16 @@ describe("the idea corpus (tests/fixtures/ideas/v1.ts)", () => {
     expect(wrong).toEqual([]);
   });
 
+  it("expects no written road for closing, pausing, selling or catching up: none is written yet", () => {
+    // docs/architecture/use-cases.md, people 9 and 10: the closing steps and the catch-up paths "None of
+    // this exists yet" / "Needs". Road 0 is for starting a business, so it isn't the road written for them.
+    // (Road 1 stays written for a cabinetmaker who is also behind: its apprenticeship steps are about them.)
+    const closingOrBehind =
+      /\b(?:closing|close (?:my|the|down)|wind(?:ing)? down|paus(?:e|ing)|shutting down|selling (?:the|my) company|never (?:registered|filed|reported|claimed|charged|set up)|not filed|hasn't filed|haven't done taxes|didn't report|behind on)\b/i;
+    const wrong = IDEAS_V1.filter((idea) => idea.road === "road-0" && closingOrBehind.test(idea.words)).map((idea) => idea.id);
+    expect(wrong).toEqual([]);
+  });
+
   it("is what each odd case says it is", () => {
     const wrong = IDEAS_V1.flatMap((idea) =>
       (idea.odd ?? []).flatMap((odd) => {

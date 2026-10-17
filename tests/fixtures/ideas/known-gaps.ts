@@ -52,6 +52,14 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     ideas: [8, 46, 125, 180, 193, 250, 252, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286],
   },
   {
+    invariant: "ends:no-silent-fallback",
+    subject: "typed",
+    kind: "planned",
+    story: "S2.5.28c (honest road match) says so; the roads themselves are not planned yet (docs/architecture/use-cases.md, people 9 and 10)",
+    why: "An Alberta business that is closing, pausing, being sold, or behind on its filings is drawn on road 0, “Starting any business in Alberta”, with only “No future picked”. No road is written for closing or catching up: use-cases.md says of the closing steps “None of this exists yet” and lists catch-up paths as a need. 28c would say “No road is written for this yet” instead of drawing road 0 as if it were the road for them.",
+    ideas: [178, 183, 191, 195, 196, 201, 204, 205, 207, 209, 330, 331],
+  },
+  {
     invariant: "ends:questions-change-something",
     subject: "incorporate-at",
     kind: "bug",
