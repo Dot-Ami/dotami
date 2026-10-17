@@ -51,6 +51,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Each check has a control that plants a failure and must be caught, some planted in the app's own code
   (`tests/idea-invariants.spec.ts`, `tests/idea-harness-plants.spec.ts`).
 
+### Changed
+- **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the
+  maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
+  [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit
+  now shows the road, your goal and its gauges, and your next three steps, with one tip line (*Start
+  anywhere…*, put away with *Got it*). Folded, each with one button that says what it shows: the venture
+  details rail, the map's legend, the what-if bar, the road's later columns (one column, *The road ahead · 6
+  steps*, naming them) and the Money and Rules & tax switches (*Show more layers*). Only Road and Skills are
+  on at first (Rules & tax started on until now). The goal bar's *Compare* and *Others in this line of work*
+  are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a
+  menu to a screen reader. Nothing was removed. A return visit opens the way you left it, including the
+  layers you last had on, remembered in this browser only. Mara's example opens the same calm way, banner
+  unchanged. The clutter limit for the cockpit's first visit is lowered to what it now measures (see the
+  pull request; [e2e/budgets.ts](e2e/budgets.ts)).
+
 ## [0.4.0] — 2026-10-17
 
 The future cockpit's first phase. The front door has three doors: Start from where I want to be (then Pick

@@ -6,6 +6,8 @@ Type: toggle group + map decoration
 
 Last updated: 2026-10-13 (the chip on a step for some kinds of work only, issue #40; built 2026-10-12, docs/architecture/future-cockpit.md § 2, Cockpit screen as built)
 
+> **Changed 2026-10-17 — the calm first view (S2.5.30c).** A first visit opens with **Road** and **Skills** on (until now Rules & tax started on and Skills off), as designed (future-cockpit.md § 2, "First visit and return visits"). **Money** and **Rules & tax** fold behind **Show more layers** at the end of the row, folded on a first visit; a layer that is on keeps its switch in sight even folded, so it can be switched off where it is. The overlays the person last had on are remembered in this browser with the folds (`dotami-cockpit-folds`, `overlays`), so a return visit opens on them. The row is the top line of the road's block, not a region of its own; while the road ahead is open, **Fold the road ahead** ends it ([12-folding-and-phone.md](./12-folding-and-phone.md)).
+
 ## What it is
 
 A row over the map, a group named *Overlays*: **Road · always on** (not a button), then three toggle

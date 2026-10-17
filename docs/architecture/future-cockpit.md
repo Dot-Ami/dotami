@@ -407,6 +407,44 @@ Click anything to see where it comes from."*
 overlay on, scrolled to the first step not done, with *"Since last time: …"*. The left list folds to
 a count (*"12 things you've told DotAmi"*).
 
+### First visit and return visits as built (2026-10-17, the calm first view, S2.5.30c)
+
+Asked for by the maintainer on 2026-10-17 (*"there's a LOT on the screen"*; his picks: tests and a calm
+screen first, a calm first view enforced by the clutter limit, "Your date" kept) and held to the layout rule
+([docs/ui-spec/README.md](../ui-spec/README.md)): the road is the primary thing, and a first visit shows the
+road, the goal and the next steps, with everything else folded one click away. Nothing was removed.
+
+- **A first visit** is a browser with nothing remembered for the cockpit (`lib/cockpit/folds.ts`
+  `FIRST_VISIT`): the rail folded (its strip from 768 px; the header's *Venture details* below), the legend
+  and the what-if bar folded, the road's columns after the first two folded into *The road ahead · N steps*,
+  the Money and Rules & tax switches folded behind *Show more layers*, and only *Road* and *Skills* on. The
+  goal bar is open with its gauges and their invitations, and the coach line from the design sits under the
+  overlay row with *Got it*, which puts it away for good in this browser.
+- **What is not built from the design:** the rail does not open with the *Not told yet* list on a first visit
+  (it is folded with the rest of the rail; one click, and its questions are at its top as before); the page
+  does not scroll to the first step not done, and the folded rail shows no count of what was told. The
+  gauges show their counts and invitations rather than a **?**.
+- **Look closer.** The goal bar's *Compare* and *Others in this line of work* are one menu button, *Look
+  closer*, and *About this job* joins it when built (`components/cockpit/look-closer-menu.tsx`, a WAI-ARIA
+  menu button; [docs/ui-spec/cockpit/07-goal-bar.md](../ui-spec/cockpit/07-goal-bar.md)).
+- **Folded means one button, not a line.** The folded legend and what-if bar are hidden whole, each with its
+  *Show* button at the end of *Next on your road*, under the map where they were (while a what-if is on,
+  that button is followed by *Your what-if, not a forecast* and its number). The folded road ahead is one
+  column naming the later columns; the folded layers are one button at the end of the overlay row, and a
+  layer that is on keeps its switch in sight.
+- **Blocks.** The header and the goal bar are one block, *the top*; the overlay row, the map and *Next on
+  your road* are one block, *the road*, inside which the legend and the what-if bar are regions of their own
+  while open (docs/ui-spec/README.md, "The cockpit's regions").
+- **Return visits.** Whatever the person folds, opens or switches is remembered in this browser under the
+  same key as before, `dotami-cockpit-folds`: the seven folds, the overlays last on (*the last overlay used
+  is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written
+  until the person changes something. A value stored before 2026-10-17 reads its new folds as open, so a
+  person who had everything open still has. The privacy inventory lists what the key holds.
+- **The example** (`/example/mara`) opens the same calm way, its banner unchanged, with no coach line (nothing
+  can be told there); nothing is remembered on it.
+- **Measured** (the clutter limit, `e2e/clutter-budget.spec.ts`, a fresh idea on *Pick a future*): see the
+  pull request; `e2e/budgets.ts` holds the new limits.
+
 ### Cockpit screen as built (2026-10-12, part 1 of 2)
 
 The first cockpit pull request builds the top, the centre, the right panel and *Next on your road* on
@@ -452,7 +490,7 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   *Rules & tax* starts on, so the map looks as it does today; *Skills* and *Money* start off. On, *Skills*
   puts *needs 3 · you have 2* on each step that lists skills, and *Money* puts the step's priced sum and
   *n not priced* on each step with cost lines; off, *Rules & tax* hides the lever cards. The badges are in
-  each card's accessible name too. The last overlay used is not remembered yet.
+  each card's accessible name too. The last overlay used is not remembered yet. *(2026-10-17: remembered in this browser, and a first visit opens with Road and Skills on: "First visit and return visits as built" above.)*
   Step colours are road evaluation's states (*applies*, *check first*, *not on your path*), which on
   road 0 are exactly the rules' colours. A step the person marked *not for me* is grey by their choice,
   so its card's name says *set aside by you* rather than *doesn't apply as answered*, and the legend says

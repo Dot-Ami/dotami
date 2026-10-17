@@ -28,6 +28,8 @@ import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/road
 import { waitForReact } from "../tests/helpers/react-ready";
 import { OFFICIAL_QUOTE_ALLOWANCES, findVerdicts } from "../tests/helpers/verdict-words";
 
+import { lookCloser, lookCloserItems, openTheCockpit } from "./cockpit-calm";
+
 const GENERAL = generalRoadV2026.label;
 const APPRENTICE = roadApprenticeToOwnShopAB.label;
 
@@ -54,13 +56,19 @@ const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
- * The cockpit, read whole: as opened, with every question showing, each gauge's list, Compare where the
- * road offers it, Export, and the panel of every card on the road (steps, and rules and tax cards).
+ * The cockpit, read whole: as opened (the calm first view, with its coach line), then with everything
+ * folded on a first visit shown (the rail and every question in it, the road ahead, the legend, the
+ * what-if bar, every layer and Rules & tax on), each gauge's list, Compare where the road offers it, Others
+ * in this line of work, Export, and the panel of every card on the road (steps, and rules and tax cards).
  * Returns how many cards' panels were read.
  */
 async function readCockpit(seen: Seen[], page: Page, road: string, offersCompare: boolean): Promise<number> {
   await expect(goalBar(page)).toContainText(`Future: ${road}`);
   await expect(page.getByRole("region", { name: "The road" })).toBeVisible();
+  // The first visit as it opens (2026-10-17), coach line included; then everything it folds, shown.
+  await expect(page.getByRole("note", { name: "A first look" })).toBeVisible();
+  await read(seen, page, `cockpit (${road}), the first visit as it opens`);
+  await openTheCockpit(page);
   // The section is drawn (its questions and its "N more" come in the same render) before the button is
   // looked for, so a late draw can't skip it quietly.
   const notTold = page.getByRole("region", { name: "Not told yet" });
@@ -82,17 +90,19 @@ async function readCockpit(seen: Seen[], page: Page, road: string, offersCompare
 
   // Compare is offered only at a fork whose own pick puts steps on or off the path (none on road 0): said
   // per road, so a Compare that stops showing fails here instead of going unread.
-  const compareButton = goalBar(page).getByRole("button", { name: "Compare", exact: true });
-  await expect(compareButton).toHaveCount(offersCompare ? 1 : 0);
+  // Since 2026-10-17 both are items of the goal bar's Look closer menu.
+  const items = await lookCloserItems(page, goalBar(page));
+  expect(items.includes("Compare the two endings"), "Compare in Look closer").toBe(offersCompare);
   if (offersCompare) {
-    await compareButton.click();
+    await lookCloser(page, "Compare the two endings", goalBar(page));
     const compare = page.getByRole("region", { name: "Compare the two endings" });
     await expect(compare).toBeVisible();
     await read(seen, page, `cockpit (${road}), Compare the two endings`, compare);
   }
 
   // Others in this line of work, from the goal bar, on every road (docs/ui-spec/cockpit/landscape.md).
-  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  expect(items).toContain("Others in this line of work");
+  await lookCloser(page, "Others in this line of work", goalBar(page));
   const landscape = page.getByRole("region", { name: "Others in this line of work" });
   await expect(landscape).toBeVisible();
   await expect(landscape).toContainText("DotAmi has no number for it.");

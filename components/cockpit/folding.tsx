@@ -6,17 +6,21 @@ import {
   ALL_FOLDED,
   ALL_OPEN,
   allFolded,
-  readFolds,
-  writeFolds,
+  FIRST_VISIT_MEMORY,
+  readMemory,
+  writeMemory,
+  type CockpitMemory,
   type FoldRegion,
   type Folds,
 } from "@/lib/cockpit/folds";
+import { FIRST_OVERLAYS, type Overlays } from "@/lib/cockpit/view";
 
 /**
  * Folding the cockpit's regions (docs/architecture/future-cockpit.md § 2, "Folding and phone width"): the
- * hook that holds and remembers the five answers (lib/cockpit/folds.ts), and the buttons every region uses: one to fold it, the
- * narrow strip a folded rail or panel becomes on a wide window, and the bar a folded panel becomes along the
- * bottom of a narrow one. Their words come from lib/cockpit/words.ts.
+ * hook that holds and remembers the fold answers, the overlays last on and the coach line put away
+ * (lib/cockpit/folds.ts), and the buttons every region uses: one to fold it, the narrow strip a folded rail
+ * or panel becomes on a wide window, and the bar a folded panel becomes along the bottom of a narrow one.
+ * Their words come from lib/cockpit/words.ts.
  */
 
 export interface FoldControls {
@@ -24,25 +28,41 @@ export interface FoldControls {
   toggle: (region: FoldRegion) => void;
   /** The header's button: folds every region, or opens them all once they are all folded. */
   toggleAll: () => void;
+  /** The overlays on the road: the person's last ones on a return visit, the first visit's otherwise. */
+  overlays: Overlays;
+  /** Changes the overlays, and remembers them (the last overlay picked, 2026-10-17). */
+  setOverlays: (change: (current: Overlays) => Overlays) => void;
+  /** Whether the first visit's coach line has been put away. */
+  coachDismissed: boolean;
+  dismissCoach: () => void;
 }
 
 /** Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. */
-const FOLD_CONTROL = "data-fold-control";
+export const FOLD_CONTROL = "data-fold-control";
 
 /**
- * `remember` false (the invented example future, docs/ui-spec/example/_index.md): folding works for this
- * page only, and the browser's storage is neither read nor written.
+ * `remember` false (the invented example future, docs/ui-spec/example/_index.md): the example opens calm
+ * like a first visit, folding works for this page only, and the browser's storage is neither read nor written.
  */
 export function useFolds(remember = true): FoldControls {
-  // Everything open on the first drawing, which the server makes too; the browser's remembered answers
+  // The first visit on the first drawing, which the server makes too; the browser's remembered answers
   // are read once the page is in the browser, so the server's HTML and the first client drawing agree.
-  const [folds, setFolds] = useState<Folds>(ALL_OPEN);
+  const [memory, setMemory] = useState<CockpitMemory>(FIRST_VISIT_MEMORY);
   useEffect(() => {
-    if (remember) setFolds(readFolds());
+    if (remember) setMemory(readMemory());
   }, [remember]);
-  const keep = useCallback((next: Folds) => {
-    if (remember) writeFolds(next);
-  }, [remember]);
+  const folds = memory.folds;
+  // Every change goes through here: worked out from the memory as it is, kept, and drawn.
+  const change = useCallback(
+    (next: (current: CockpitMemory) => CockpitMemory) => {
+      setMemory((current) => {
+        const updated = next(current);
+        if (remember) writeMemory(updated);
+        return updated;
+      });
+    },
+    [remember],
+  );
 
   // The region the person just folded or showed. The button they pressed is usually gone or hidden after
   // (a folded rail is a strip, a folded goal bar a different line), which would drop keyboard focus to
@@ -59,25 +79,35 @@ export function useFolds(remember = true): FoldControls {
     drawn?.focus();
   }, [folds]);
 
-  const toggle = useCallback((region: FoldRegion) => {
-    focusAfter.current = region;
-    setFolds((current) => {
-      const next = { ...current, [region]: !current[region] };
-      keep(next);
-      return next;
-    });
-  }, [keep]);
+  const toggle = useCallback(
+    (region: FoldRegion) => {
+      focusAfter.current = region;
+      change((current) => ({ ...current, folds: { ...current.folds, [region]: !current.folds[region] } }));
+    },
+    [change],
+  );
 
   // The header's button stays where it is, and keeps focus, so nothing moves it.
   const toggleAll = useCallback(() => {
-    setFolds((current) => {
-      const next = allFolded(current) ? ALL_OPEN : ALL_FOLDED;
-      keep(next);
-      return next;
-    });
-  }, [keep]);
+    change((current) => ({ ...current, folds: allFolded(current.folds) ? ALL_OPEN : ALL_FOLDED }));
+  }, [change]);
 
-  return { folds, toggle, toggleAll };
+  const setOverlays = useCallback(
+    (next: (current: Overlays) => Overlays) =>
+      change((current) => ({ ...current, overlays: next(current.overlays ?? FIRST_OVERLAYS) })),
+    [change],
+  );
+  const dismissCoach = useCallback(() => change((current) => ({ ...current, coachDismissed: true })), [change]);
+
+  return {
+    folds,
+    toggle,
+    toggleAll,
+    overlays: memory.overlays ?? FIRST_OVERLAYS,
+    setOverlays,
+    coachDismissed: memory.coachDismissed,
+    dismissCoach,
+  };
 }
 
 /** The small button that folds a region, or shows it again; it says which, and whether the region is open. */

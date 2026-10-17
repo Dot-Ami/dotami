@@ -79,9 +79,15 @@ export const BASELINE: ClutterTable = {
 };
 
 /**
- * The limit each screen is held to: at most the baseline, and lowered as screens get calmer. The calm first
- * view (S2.5.30c) brings the cockpit down to at most 5 regions and 20 controls on a laptop, 3 and 12 on a
- * phone.
+ * The limit each screen is held to: at most the baseline, and lowered as screens get calmer.
+ *
+ * The calm first view (S2.5.30c, 2026-10-17) lowered the cockpit's first visit and Mara's example to what they
+ * measure with it: regions 9 to 4 on a laptop and tablet and 8 to 3 on a phone (the plan's aim was at most 5,
+ * 4 and 3), controls in the first window 34 to 28, 39 to 30 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
+ * to 14 on road 1), short of the plan's aim of 20, 16 and 12. What is left in the first window is the road's
+ * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
+ * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
+ * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px.
  *
  * Lowered on 2026-10-17, before the limit reached main, where the count got stricter than the baseline's:
  * a control now counts only when at least 24 px of it shows each way (or all of it), so a card's bare edge
@@ -100,9 +106,9 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
   ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
   "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(9, 13, 11, 8.5), tablet: m(10, 26, 14, 8.5), laptop: m(10, 23, 14, 8.5) },
-  "cockpit-road-0": { phone: m(8, 18, 12, 8), tablet: m(9, 39, 15, 8), laptop: m(9, 34, 15, 8) },
-  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 35, 14, 8.5), laptop: m(9, 27, 14, 8.5) },
+  "example-mara": { phone: m(4, 11, 11, 8.5), tablet: m(5, 26, 13, 8.5), laptop: m(5, 23, 13, 8.5) },
+  "cockpit-road-0": { phone: m(3, 16, 11, 8.5), tablet: m(4, 30, 12, 8.5), laptop: m(4, 28, 12, 8.5) },
+  "cockpit-road-1": { phone: m(3, 14, 10, 8.5), tablet: m(4, 28, 12, 8.5), laptop: m(4, 25, 12, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
 

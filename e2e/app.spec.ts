@@ -23,6 +23,8 @@ import { files as sage50Files } from "../tests/fixtures/packages/sage-50-canadia
 import { files as waveFiles } from "../tests/fixtures/packages/wave";
 import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 
+import { startAsAReturnVisit } from "./cockpit-calm";
+
 /**
  * One of the intake's dropdowns, found by the name a screen reader says for it ("Province /
  * territory", "Current employment"). Until 2026-10-12 the name above each was a plain <p> tied to
@@ -31,6 +33,14 @@ import { files as xeroFiles } from "../tests/fixtures/packages/xero";
 function groupSelect(page: Page, label: string) {
   return page.getByRole("combobox", { name: label, exact: true });
 }
+
+// These tests read the map's content and the other screens, not how the cockpit first looks: each starts as
+// a person who had opened everything on the cockpit (a return visit, e2e/cockpit-calm.ts), as every cockpit
+// looked before the calm first view of 2026-10-17. The first view is held by cockpit.spec.ts, journey.spec.ts
+// and the clutter limit.
+test.beforeEach(async ({ page }) => {
+  await startAsAReturnVisit(page);
+});
 
 test("one sentence becomes a saved map", async ({ page }) => {
   // Let the page finish loading so the test types into the live page. (This test is what caught

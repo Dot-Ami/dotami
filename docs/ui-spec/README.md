@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below); 2026-06-10
+Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -30,10 +30,18 @@ screen may get. Every screen, and every feature added to one, follows these four
 | Planned feature | Where it opens | Opened from |
 |---|---|---|
 | The ways to get each cost line (already have it, buy, rent, lease; [architecture/other-ways-to-build.md](../architecture/other-ways-to-build.md)) | The step panel, folded inside each cost row | The cost row itself |
-| *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar, and a step that opens a business |
-| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar, like *Compare* (§ 4.2; once the calm first view is built, its *Look closer* menu, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): the no-road screen offers it beside road 0 and the career road (S2.5.28c) |
+| *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar's *Look closer* menu (since 2026-10-17), and a step that opens a business |
+| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar's *Look closer* menu, beside *Compare the two endings* and *Others in this line of work* (§ 4.2; the menu since 2026-10-17, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): the no-road screen offers it beside road 0 and the career road (S2.5.28c) |
 | The Lens ([architecture/use-cases.md](../architecture/use-cases.md)) | The right-hand panel; on a phone, a sheet (`components/cockpit/use-sheet.ts`) | One button in the header, and *Ask the Lens about this* in the step panel |
 | *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures*, *Compare* and the alternatives on road 1's training column, nowhere else (S2.5.24f, lens-comparisons.md § 11; the 2026-10-17 plan's list named the first two) |
+
+**The cockpit's regions, as built for the calm first view (2026-10-17, S2.5.30c).** *The top*: the header and
+the goal bar, one block. *The rail*. *The road*: its overlay row, the map, and *Next on your road* at its foot,
+one block; the legend and the what-if bar sit in it and count as regions of their own while open. *The
+panel*, while it holds something. The example's banner on Mara's page, and the site's footer. On a first
+visit the rail is a folded strip from 768 px (a header button below), and the legend, the what-if bar, the
+road's later columns and the extra overlay switches are each one button: 4 regions from 768 px, 3 on a phone
+([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)).
 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)
 

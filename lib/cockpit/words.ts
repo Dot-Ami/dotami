@@ -31,6 +31,22 @@ export const cockpitWords = {
     /** A road written for other places than the idea's: it is the map drawn, not the person's future. */
     drawnOnly: (roadLabel: string, roadPlaces: readonly string[], ideaPlace: string) =>
       `Map drawn: ${roadLabel} · written for ${roadPlaces.join(", ")}; this idea is in ${ideaPlace}`,
+    /**
+     * The goal bar's one menu for the things it can open in the right-hand panel (the calm first view,
+     * 2026-10-17): Compare (where a fork's own pick moves steps), Others in this line of work, and later
+     * About this job. Their own words stay with them (compare.region, lib/landscape/words.ts).
+     */
+    lookCloser: "Look closer",
+  },
+
+  /**
+   * The first visit's one coach line (future-cockpit.md § 2, "First visit and return visits"), in the
+   * design's words; put away, it doesn't come back.
+   */
+  coach: {
+    region: "A first look",
+    line: "Start anywhere. Each thing you tell us lights up part of the road. Click anything to see where it comes from.",
+    dismiss: "Got it",
   },
 
   gauges: {
@@ -234,6 +250,21 @@ export const cockpitWords = {
     legend: { fold: "Fold the legend", show: "Show the legend", title: "Legend" },
     /** The what-if bar and "This visit" under the map (2026-10-13). */
     whatIf: { fold: "Fold the what-if bar", show: "Show the what-if bar" },
+    /**
+     * The road's later columns, folded on a first visit into one column that names them (the calm first view,
+     * 2026-10-17): the folded column is the button that shows them.
+     */
+    roadAhead: {
+      fold: "Fold the road ahead",
+      show: "Show the road ahead",
+      title: (steps: number) => `The road ahead · ${count(steps, "step", "steps")}`,
+      columns: (labels: readonly string[]) => labels.join(" · "),
+      /** The folded column's name for a screen reader: what it does, then what it holds. */
+      showNamed: (labels: readonly string[], steps: number) =>
+        `Show the road ahead: ${labels.join(" · ")} (${count(steps, "step", "steps")})`,
+    },
+    /** The overlay switches past Skills (Money, Rules & tax), folded on a first visit (2026-10-17). */
+    layers: { fold: "Fold the extra layers", show: "Show more layers" },
     all: { fold: "Fold all panels", show: "Show all panels" },
     /** Below 768 px the rail is a sheet, opened from the header. */
     railSheet: { open: "Venture details", close: "Close venture details" },

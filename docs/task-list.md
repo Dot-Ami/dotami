@@ -311,11 +311,13 @@ and the maintainer's six decisions of 2026-10-11:
     (regions, controls in the first window, text sizes, the smallest text) and fails when one goes over its
     budget in `e2e/budgets.ts`, or shows a block with no region mark; the budgets start at today's numbers
     and can only go down
-  - [ ] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
-    visit*): road and skills on, later columns folded into *The road ahead*, one coach line; Compare,
-    *Others in this line of work* and *About this job* behind one *Look closer* menu; the last overlay
-    remembered. Lowers the cockpit's budgets to at most 5 regions and 20 controls on a laptop, 3 and 12 on a
-    phone
+  - [x] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
+    visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
+    coach line, the rail, the legend, the what-if bar and the extra layers folded one click away; Compare and
+    *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
+    last overlay remembered (`dotami-cockpit-folds`). The cockpit's first visit now measures 4 regions (3 on a
+    phone) and 28 controls on a laptop on road 0 (30 on a tablet, 16 on a phone); the plan's 20 and 12 would
+    need road cards hidden, so the budgets are set to what it measures (S2.5.30c)
   - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
   - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
     the components

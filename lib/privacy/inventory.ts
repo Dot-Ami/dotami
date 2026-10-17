@@ -635,11 +635,11 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
   {
     store: "localStorage",
     key: "dotami-cockpit-folds",
-    name: "Which cockpit panels you folded",
+    name: "How you left the cockpit",
     holds:
-      "Five yes-or-no answers: whether the venture details, the goal bar, the right-hand panel, the map's legend and the what-if bar are folded on the cockpit. Nothing about you or your ideas.",
+      "Yes-or-no answers about the cockpit's screen only: whether the venture details, the goal bar, the right-hand panel, the map's legend, the what-if bar, the road ahead and the extra layers are folded; since 2026-10-17 also which of the Skills, Money and Rules & tax layers you last had on, and whether you put away the first visit's tip. Written only once you fold, open or switch something. Nothing about you or your ideas.",
     lasts:
-      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens with everything showing again, but the old answers stay in the app's own folder.",
+      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens as a first visit again, but the old answers stay in the app's own folder.",
   },
   {
     store: "sessionStorage",

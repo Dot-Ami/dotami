@@ -17,8 +17,9 @@ import { expect, test, type Page, type Request } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
-import { waitForReact } from "../tests/helpers/react-ready";
 import { findVerdicts } from "../tests/helpers/verdict-words";
+
+import { lookCloser } from "./cockpit-calm";
 
 const REGION = "Others in this line of work";
 const ownShop = roadApprenticeToOwnShopAB.steps.find((s) => s.id === "step-shop-open-own-shop")!;
@@ -84,9 +85,8 @@ test("the apprentice road: open the panel, add, edit and remove businesses you'r
   await expect(goalBar(page)).toContainText(`Future: ${roadApprenticeToOwnShopAB.label}`);
 
   // From the goal bar.
-  const open = goalBar(page).getByRole("button", { name: REGION, exact: true });
-  await waitForReact(open);
-  await open.click();
+  // From the goal bar's Look closer menu (since 2026-10-17).
+  await lookCloser(page, REGION, goalBar(page));
   await expect(panel(page)).toBeVisible();
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(REGION);
 
@@ -169,7 +169,7 @@ test("the apprentice road: open the panel, add, edit and remove businesses you'r
 
   // Kept after a reload, in the order added.
   await page.reload();
-  await goalBar(page).getByRole("button", { name: REGION, exact: true }).click();
+  await lookCloser(page, REGION, goalBar(page));
   await expect(watchedList(page).getByRole("listitem").getByRole("heading")).toHaveText([first, second]);
 
   // Remove the second: asked once more, then gone.
@@ -197,9 +197,8 @@ test("today's Alberta road: the panel opens from the goal bar too", async ({ pag
   const ventureId = await saveIdea(page, `Invented — landscape road 0 ${Date.now()}`);
   await page.goto(`/cockpit?venture=${ventureId}`);
   await expect(goalBar(page)).toContainText(`Future: ${generalRoadV2026.label}`);
-  const open = goalBar(page).getByRole("button", { name: REGION, exact: true });
-  await waitForReact(open);
-  await open.click();
+  // From the goal bar's Look closer menu (since 2026-10-17).
+  await lookCloser(page, REGION, goalBar(page));
   await expect(panel(page)).toBeVisible();
   await expect(watchedList(page).getByRole("listitem")).toHaveCount(0);
   expect(findVerdicts(await panel(page).innerText())).toEqual([]);
@@ -209,9 +208,8 @@ test("removing one ad link in the middle keeps the others, each with its own day
   const stamp = Date.now();
   const ventureId = await saveIdea(page, `Invented — landscape ad links ${stamp}`);
   await page.goto(`/cockpit?venture=${ventureId}`);
-  const open = goalBar(page).getByRole("button", { name: REGION, exact: true });
-  await waitForReact(open);
-  await open.click();
+  // From the goal bar's Look closer menu (since 2026-10-17).
+  await lookCloser(page, REGION, goalBar(page));
 
   // A business with three ad links, each seen on its own day.
   const name = `Invented Shop C ${stamp}`;

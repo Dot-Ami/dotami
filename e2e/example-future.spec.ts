@@ -22,6 +22,8 @@ import { priceSummary } from "../lib/examples/stats";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { FRAMING, VERDICT } from "../tests/helpers/verdict-words";
 
+import { lookCloser, showLegend, showRail, showWhatIfBar } from "./cockpit-calm";
+
 const BANNER = "Mara is invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved.";
 const CANT_KEEP = "This is an example. Start your own to keep anything.";
 const road = roadApprenticeToOwnShopAB;
@@ -96,6 +98,14 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await door.getByRole("link", { name: "Show me Mara's example →" }).click();
   await expect(page).toHaveURL(/\/example\/mara$/);
 
+  // The same calm first view as a person's own future (2026-10-17), with no coach line (nothing can be told
+  // here): the rail with her story and the what-if bar are each one click away, and open for this look only.
+  await expect(stage(page, "Open your own shop")).toBeVisible();
+  await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "What Mara did" })).toBeHidden();
+  await showRail(page);
+  await showWhatIfBar(page);
+
   // The banner, and everything drawn from her file through road evaluation.
   await expect(banner(page)).toContainText(BANNER);
   await expect(goalBar(page)).toContainText("“My own small furniture shop, four-day weeks, home for supper.”");
@@ -130,7 +140,7 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(stepPanel(page).getByRole("button", { name: /^Change your number|^Add your quote/ }).first()).toBeDisabled();
 
   // Compare: her pick is pressed, and This is mine can't be pressed again.
-  await goalBar(page).getByRole("button", { name: "Compare", exact: true }).click();
+  await lookCloser(page, "Compare the two endings", goalBar(page));
   await expect(compare(page)).toContainText(CANT_KEEP);
   await expect(compare(page).getByRole("button", { name: "This is mine" }).nth(1)).toHaveAttribute("aria-pressed", "true");
   await expect(compare(page).getByRole("button", { name: "This is mine" }).nth(0)).toBeDisabled();
@@ -175,14 +185,16 @@ test("opened directly in a fresh tab: no browser storage is written and none of 
   await page.goto("/example/mara", { waitUntil: "networkidle" });
   await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
   await expect(banner(page)).toContainText(BANNER);
-  // The legend folds for this look only.
+  // The legend opens and folds for this look only (folded on the first view since 2026-10-17).
+  await showLegend(page);
   await page.getByRole("button", { name: "Fold the legend" }).click();
   await expect(page.getByRole("button", { name: "Show the legend" })).toBeVisible();
   await page.getByRole("button", { name: /^Skills/ }).first().click();
+  // Mara's words in the rail, never the person's own statements.
+  await showRail(page);
+  await expect(page.getByRole("complementary")).toContainText("My own small furniture shop, four-day weeks, home for supper.");
   expect(await storage(page)).toBe(JSON.stringify({ local: {}, session: {} }));
   expect(requests).toEqual([]);
-  // Mara's words in the rail, never the person's own statements.
-  await expect(page.getByRole("complementary")).toContainText("My own small furniture shop, four-day weeks, home for supper.");
 });
 
 /** Every button the locator finds is disabled, and it finds at least one (so the check can fail). */
@@ -197,6 +209,7 @@ test("every other control in the ui-spec's table is drawn disabled, and none of 
   await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
 
   // The rail: the Structure select, the told list's Change and Take back, the not-told rows' Answer.
+  await showRail(page);
   await expect(page.getByRole("combobox", { name: "Structure" })).toBeDisabled();
   await allDisabled(told(page).getByRole("button", { name: /^Change/ }), "told: Change");
   await allDisabled(told(page).getByRole("button", { name: /^Take back/ }), "told: Take back");
@@ -227,7 +240,7 @@ test("every other control in the ui-spec's table is drawn disabled, and none of 
   await allDisabled(stepPanel(page).getByRole("button", { name: /^(Have|Learning|Not yet)$/ }), "step: skill marks");
 
   // Others in this line of work (2026-10-17): her list stays empty, saying why, and + Add a business is disabled.
-  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  await lookCloser(page, "Others in this line of work", goalBar(page));
   const landscape = page.getByRole("region", { name: "Others in this line of work" });
   await expect(landscape).toContainText("An invented person's list would mean inventing businesses, so this stays empty in the example.");
   await expect(landscape).toContainText("This is an example. Start your own to keep anything.");
@@ -310,6 +323,9 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   await page.goto("/example/mara", { waitUntil: "networkidle" });
   await waitForReact(goalBar(page).getByRole("button", { name: /^Steps/ }));
 
+  // The what-if bar, folded on the first view (2026-10-17), opened to be read at the end.
+  await showWhatIfBar(page);
+
   const open = banner(page).getByRole("button", { name: "Where these numbers come from" });
   await expect(open).toHaveAttribute("aria-expanded", "false");
   await open.click();
@@ -361,7 +377,8 @@ test("Where these numbers come from: opened from the banner, it lists every tool
   await expect(panel).toContainText("Not priced yet, and why");
   await expect(panel).toContainText("Seen but not used, and why");
   // Information, never a verdict: nothing in the panel, the banner, the goal bar (its target line) or the
-  // what-if bar ranks, recommends or frames a pick as the trade's (tests/helpers/verdict-words.ts).
+  // what-if bar ranks, recommends or frames a pick as the trade's (tests/helpers/verdict-words.ts). The
+  // what-if bar is folded on the first view (2026-10-17), so it was opened at the start, to be read.
   for (const [name, region] of [
     ["panel", panel],
     ["banner", banner(page)],

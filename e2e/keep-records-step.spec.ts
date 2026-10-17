@@ -12,6 +12,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
+import { lookCloser, showRoadAhead } from "./cockpit-calm";
+
 const LABEL = "Keep your records from day one";
 const road0Step = generalRoadV2026.steps.find((s) => s.id === "step-start-keep-records")!;
 
@@ -81,11 +83,13 @@ test("the apprentice road: the records step waits on the fork, then is on your r
   const ventureId = await saveIdea(page, "Invented — records on the apprentice road");
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
+  // Its column, Open the doors, is in the road ahead, folded on a first visit (2026-10-17).
+  await showRoadAhead(page);
 
   await expect(card(page)).toHaveAccessibleName(/check first/);
 
   // Pick "Open your own shop" through Compare's "This is mine", as a person would.
-  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await lookCloser(page, "Compare the two endings");
   await compare(page).getByRole("button", { name: "This is mine" }).nth(1).click();
   await expect(compare(page).getByRole("button", { name: "This is mine" }).nth(1)).toHaveAttribute("aria-pressed", "true");
   await expect(card(page)).toHaveAccessibleName(/applies as answered/);

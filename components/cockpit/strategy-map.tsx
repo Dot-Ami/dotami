@@ -2,7 +2,7 @@
 
 import { useCallback, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 
-import { FoldButton } from "@/components/cockpit/folding";
+import { FOLD_CONTROL, FoldButton } from "@/components/cockpit/folding";
 import { ArrowOverlay } from "@/components/cockpit/map-arrows";
 import { StatusChip, worstStatus } from "@/components/shared/citation-links";
 import { itemsForStep } from "@/lib/brain/node-items";
@@ -49,16 +49,32 @@ import type { Scenario } from "@/lib/scenarios/types";
  * snap) at 70 % of the window's height. Without `cockpit` none of that is drawn and the HTML is unchanged.
  * 2026-10-14: from 768 px the road's area keeps at least 12rem of height, so the legend under it never
  * slides under the cockpit's what-if bar (the cockpit's canvas scrolls instead).
+ *
+ * 2026-10-17, the calm first view (S2.5.30c): in the cockpit, the columns after the first two can fold into
+ * one column, "The road ahead · N steps", which shows them (`cockpit.roadAhead`); the folded legend is hidden
+ * whole, its "Show the legend" drawn by the cockpit under the map; and the road's area no longer carries the
+ * clutter limit's "road" mark, which is on the cockpit's road block around it. Drawn without `cockpit`, the
+ * HTML is still unchanged.
  */
 
-/** What the cockpit adds to the map: the legend's fold. */
+/** What the cockpit adds to the map: the legend's fold, and the road ahead's. */
 export interface MapInCockpit {
   legendFolded: boolean;
   onToggleLegend: () => void;
+  /**
+   * The calm first view (2026-10-17): the columns after the first `openColumns` fold into one column, "The
+   * road ahead · N steps", which is the button that shows them. Left out, every column shows.
+   */
+  roadAhead?: { folded: boolean; onShow: () => void; openColumns: number };
 }
 
 /** The legend's id, for its fold button's aria-controls. */
-const LEGEND_ID = "cockpit-map-legend";
+export const LEGEND_ID = "cockpit-map-legend";
+
+/** The ids of the columns the road ahead folds (every column after the first `openColumns`). */
+export function roadAheadColumnIds(road: Road, openColumns: number): string[] {
+  return road.columns.slice(openColumns).map((column) => `cockpit-road-ahead-${column.id}`);
+}
 
 /** A toggle option's id: a step the toggle switches between. */
 type BranchOptionId = BranchDecision["options"][number]["id"];
@@ -161,7 +177,12 @@ export function StrategyMap({
 
   // In the cockpit the columns are set by classes, so a phone-width window can give each column the
   // window's width; the number of columns comes in as a CSS variable. Outside it, the inline style as before.
-  const columnCount = road.columns.length;
+  // The road ahead, folded: the first columns, then one column standing for the rest (they stay on the page,
+  // hidden). Only when there is a column to fold.
+  const ahead = cockpit?.roadAhead;
+  const openColumns = ahead ? Math.max(1, ahead.openColumns) : road.columns.length;
+  const aheadFolded = ahead !== undefined && ahead.folded && road.columns.length > openColumns;
+  const columnCount = aheadFolded ? openColumns + 1 : road.columns.length;
   const grid = cockpit
     ? {
         className:
@@ -177,8 +198,8 @@ export function StrategyMap({
           ? {
               role: "region",
               "aria-label": cockpitWords.folds.roadRegion,
-              // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
-              "data-region": "road",
+              // The clutter limit's "road" region is the cockpit's road block around this (its switches, this
+              // area and its next steps; cockpit-page.tsx), so this area carries no mark of its own.
               className:
                 // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
                 // would make its minimum the height of every card): with the what-if bar open it used to
@@ -189,11 +210,16 @@ export function StrategyMap({
       >
         <div ref={setWrap} className="relative">
           <div className={grid.className} style={grid.style}>
-            {road.columns.map((column, i) => (
+            {/* One list of children, the folded road ahead appended to it, so the map drawn without the cockpit
+                keeps the same element tree, and the same generated ids, as before (tests/road-map.spec.ts). */}
+            {[
+              ...road.columns.map((column, i) => (
               <TierColumn
                 key={column.id}
                 column={column}
                 ordinal={i + 1}
+                // A column of the road ahead: folded, it stays on the page, hidden, behind the column below.
+                {...(ahead && i >= openColumns ? { id: `cockpit-road-ahead-${column.id}`, hidden: aheadFolded } : {})}
                 // The road's checks guarantee every listed step exists; the filter only keeps types honest.
                 steps={column.steps.map((id) => stepsById.get(id)).filter((s): s is RoadStep => s !== undefined)}
                 scenario={scenario}
@@ -207,7 +233,18 @@ export function StrategyMap({
                 linkedSkillId={linkedSkillId}
                 snap={cockpit !== undefined}
               />
-            ))}
+              )),
+              ...(aheadFolded && ahead
+                ? [
+                    <RoadAheadColumn
+                      key="cockpit-road-ahead"
+                      columns={road.columns.slice(openColumns)}
+                      controls={roadAheadColumnIds(road, openColumns).join(" ")}
+                      onShow={ahead.onShow}
+                    />,
+                  ]
+                : []),
+            ]}
           </div>
           <ArrowOverlay container={wrap} cards={cardsRef.current} columnOf={columnOf} edges={edges} />
         </div>
@@ -264,6 +301,8 @@ function TierColumn({
   stepEvaluations,
   linkedSkillId,
   snap,
+  id,
+  hidden,
 }: Omit<StrategyMapProps, "road" | "cockpit"> & {
   column: RoadColumn;
   ordinal: number;
@@ -271,13 +310,16 @@ function TierColumn({
   focus: MapFocus;
   /** In the cockpit on a phone-width window, the road's sideways scroll stops at each column's edge. */
   snap: boolean;
+  /** A column of the road ahead (cockpit only): its id, for the fold buttons, and whether it is folded away. */
+  id?: string;
+  hidden?: boolean;
 }) {
   // A fork gets a toggle when it is one of today's two (GST timing, Incorporation timing); the
   // toggle keeps its own option names. Other roads' forks are picked on Compare, later in phase 1.
   const decision = column.forkId ? branchDecisions.find((d) => d.id === column.forkId) : undefined;
 
   return (
-    <section className={snap ? "flex min-w-0 flex-col gap-3 pb-6 max-md:snap-start" : "flex min-w-0 flex-col gap-3 pb-6"}>
+    <section id={id} hidden={hidden || undefined} className={snap ? "flex min-w-0 flex-col gap-3 pb-6 max-md:snap-start" : "flex min-w-0 flex-col gap-3 pb-6"}>
       <header className="border-b border-rule pb-2.5">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {ordinal}</p>
         <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
@@ -515,6 +557,40 @@ export function BranchToggle({
   );
 }
 
+/**
+ * The road ahead, folded (the calm first view, 2026-10-17; future-cockpit.md § 2, "First visit and return
+ * visits"): one column in place of the road's later columns, naming them and counting their steps. The whole
+ * column is the button that shows them; the folded columns are on the page, hidden.
+ */
+function RoadAheadColumn({ columns, controls, onShow }: { columns: readonly RoadColumn[]; controls: string; onShow: () => void }) {
+  const steps = columns.reduce((n, column) => n + column.steps.length, 0);
+  return (
+    <section className="flex min-w-0 flex-col pb-6 max-md:snap-start">
+      <button
+        type="button"
+        aria-expanded={false}
+        aria-controls={controls}
+        aria-label={cockpitWords.folds.roadAhead.showNamed(
+          columns.map((column) => column.label),
+          steps,
+        )}
+        {...{ [FOLD_CONTROL]: "roadAhead" }}
+        onClick={onShow}
+        className="grid content-start gap-1.5 rounded-lg border border-dashed border-rule bg-ink3/60 p-3 text-left transition hover:border-maple-soft"
+      >
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">{cockpitWords.folds.roadAhead.title(steps)}</span>
+        <span className="font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">
+          {cockpitWords.folds.roadAhead.columns(columns.map((column) => column.label))}
+        </span>
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-stone">
+          <span aria-hidden>+ </span>
+          {cockpitWords.folds.roadAhead.show}
+        </span>
+      </button>
+    </section>
+  );
+}
+
 function Legend({
   coverage,
   setAsideShown,
@@ -533,22 +609,19 @@ function Legend({
       </footer>
     );
   }
-  // Folded, the lines stay on the page, hidden: the button brings them back as they were.
+  // Folded, the whole legend stays on the page, hidden, and the cockpit draws its "Show the legend" button in
+  // the road's bottom line, under the map where the legend was (the calm first view, 2026-10-17); until then
+  // the folded legend was a line of its own with that button. Open, it is a region of its own again.
   return (
     <footer
       data-region="legend"
       role="group"
       aria-label={cockpitWords.folds.legend.title}
+      hidden={fold.legendFolded || undefined}
       className="flex items-start gap-3 border-t border-rule bg-ink3 px-5 py-2 font-mono text-[9px] uppercase tracking-wider text-stone"
     >
-      <FoldButton
-        folded={fold.legendFolded}
-        region="legend"
-        label={fold.legendFolded ? cockpitWords.folds.legend.show : cockpitWords.folds.legend.fold}
-        controls={LEGEND_ID}
-        onClick={fold.onToggleLegend}
-      />
-      <div id={LEGEND_ID} hidden={fold.legendFolded} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5">
+      <FoldButton folded={false} region="legend" label={cockpitWords.folds.legend.fold} controls={LEGEND_ID} onClick={fold.onToggleLegend} />
+      <div id={LEGEND_ID} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5">
         {lines}
       </div>
     </footer>

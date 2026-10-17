@@ -15,6 +15,8 @@ import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { branchDecisions } from "../lib/scenarios/branches";
 
+import { lookCloserItems, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+
 const road0Steps = generalRoadV2026.steps.length;
 const label0 = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)!.label;
 const gstFork = generalRoadV2026.forks.find((f) => f.id === "gstTiming")!;
@@ -71,6 +73,10 @@ const gauge = (page: Page, name: string) => goalBar(page).getByRole("button", { 
 test("told and not told: answer, see the receipt, take it back, a what-if, no Compare on today's road, a pick at a fork, kept after a reload", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — told list test");
   await page.goto(`/cockpit?venture=${ventureId}`);
+  // Folded on a first visit (2026-10-17): the rail, where the told list is, and the what-if bar. Opened once,
+  // they stay open after the reloads below.
+  await showRail(page);
+  await showWhatIfBar(page);
 
   // What the person told the intake, in their own words; the intake keeps no day for each answer.
   await expect(told(page).getByText("You told us your place is Alberta", { exact: true })).toBeVisible();
@@ -126,7 +132,7 @@ test("told and not told: answer, see the receipt, take it back, a what-if, no Co
   // moves steps, but the tax rules do that, not the fork's own pick, and both columns would hold the same
   // numbers. Not in the goal bar, and not in the step panel of a fork's side.
   const [first, second] = gstFork.sides;
-  await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toHaveCount(0);
+  expect(await lookCloserItems(page, goalBar(page))).not.toContain("Compare the two endings");
   await stage(page, label0(second)).click();
   await expect(stepPanel(page).getByText("The road splits here: you choose", { exact: true })).toBeVisible();
   await expect(stepPanel(page).getByRole("button", { name: "Compare the endings" })).toHaveCount(0);
@@ -154,6 +160,9 @@ test("told and not told: answer, see the receipt, take it back, a what-if, no Co
 test("the map's default side, picked in the box or on the map's toggle, is still the person's after a reload; a save that fails never says Saved", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — default side test");
   await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  // Incorporating is in the road ahead, folded on a first visit (2026-10-17).
+  await showRoadAhead(page);
   const incFork = generalRoadV2026.forks.find((f) => f.id === "incorporationTiming")!;
   // The map's default side at each fork: the second at GST timing, the first at incorporation timing.
   const gstDefault = gstFork.sides[1]!;
@@ -229,10 +238,11 @@ test("on the first written future: compare its two endings, This is mine, kept a
   const ventureId = await saveIdea(page, "Invented — ending test");
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: road.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
 
   // Here the fork's own pick puts one ending's steps on the path and the other's off it, so Compare is
-  // offered: in the goal bar, and from the question.
-  await expect(goalBar(page).getByRole("button", { name: "Compare", exact: true })).toBeVisible();
+  // offered: in the goal bar (its Look closer menu, since 2026-10-17), and from the question.
+  expect(await lookCloserItems(page, goalBar(page))).toContain("Compare the two endings");
   const endingRow = notTold(page).getByRole("listitem").filter({ hasText: `Which ending at “${fork.label}”?` });
   await endingRow.getByRole("button", { name: "Compare the endings" }).click();
   await expect(compare(page).getByText("No side picked yet.")).toBeVisible();

@@ -7,6 +7,8 @@ Type: form + banner
 Last updated: 2026-10-14 (it no longer covers the legend, below); 2026-10-12 (built; docs/architecture/future-cockpit.md
 § 2, Cockpit screen as built, part 2)
 
+> **Changed 2026-10-17 — the calm first view (S2.5.30c).** Folded on a first visit. Folded, the bar and *This visit* are hidden whole (a half-typed number kept) and **Show the what-if bar** sits in *Next on your road*, followed while a what-if is on by *Your what-if, not a forecast* and its number. Open, it is a region of its own with **Fold the what-if bar** at its start, as before ([12-folding-and-phone.md](./12-folding-and-phone.md)).
+
 ## What it is
 
 A band under the map, above *This visit* and *Next on your road*, named *What-if* for a screen

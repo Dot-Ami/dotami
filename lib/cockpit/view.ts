@@ -26,8 +26,12 @@ export interface Overlays {
   rules: boolean;
 }
 
-/** The first visit: Rules & tax on (the map as it looked before the overlays), Skills and Money off. */
-export const FIRST_OVERLAYS: Overlays = { skills: false, money: false, rules: true };
+/**
+ * The first visit (future-cockpit.md § 2, "First visit and return visits"): only Road and Skills on, so the
+ * road is what shows. Until the calm first view (2026-10-17, S2.5.30c) Rules & tax started on, the map as it
+ * looked before the overlays. A return visit opens on the overlays the person last had on (lib/cockpit/folds.ts).
+ */
+export const FIRST_OVERLAYS: Overlays = { skills: true, money: false, rules: false };
 
 export type GaugeId = "steps" | "skills" | "money" | "date";
 

@@ -23,6 +23,8 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
+import { lookCloser, overlayOn, showLegend, showMoreLayers, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+
 /** The run's own data file, for the test that draws an idea on another road. */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
   const file = path.join(process.cwd(), "prisma", "e2e", "dotami.db").split(path.sep).join("/");
@@ -93,7 +95,12 @@ test("every region folds and opens with its own named button, and the cockpit re
   const ventureId = await saveIdea(page, "Invented — folding test");
   await page.goto(`/cockpit?venture=${ventureId}`);
 
-  // Everything starts open, as part 1 drew it.
+  // A first visit opens calm (2026-10-17): open everything first, each with its one button.
+  await showRail(page);
+  await showLegend(page);
+  await showWhatIfBar(page);
+  await showRoadAhead(page);
+  await showMoreLayers(page);
   const inYourWords = page.getByRole("complementary", { name: "Venture details" }).getByText("In your words", { exact: true });
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
   const stepsLine = gauge(page, "Steps").getByText(/^next on your road:/);
@@ -121,6 +128,14 @@ test("every region folds and opens with its own named button, and the cockpit re
   await fold(page, "Fold the what-if bar", "Show the what-if bar");
   await expect(tryBox).toBeHidden();
 
+  // The road ahead and the extra layers (2026-10-17).
+  const incorporating = stage(page, "Incorporating");
+  await expect(incorporating).toBeVisible();
+  await button(page, "Fold the road ahead").click();
+  await expect(incorporating).toBeHidden();
+  await expect(page.getByRole("button", { name: /^Show the road ahead: / })).toHaveAttribute("aria-expanded", "false");
+  await fold(page, "Fold the extra layers", "Show more layers");
+
   // The panel: a step opened, then folded; its strip names it, and it stays folded when another step is picked.
   await stage(page, "Sole Prop activation").click();
   await expect(stepPanel(page)).toBeVisible();
@@ -132,9 +147,10 @@ test("every region folds and opens with its own named button, and the cockpit re
 
   // A reload remembers them all.
   await page.reload();
-  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar"]) {
+  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar", "Show more layers"]) {
     await expect(button(page, name)).toHaveAttribute("aria-expanded", "false");
   }
+  await expect(incorporating).toBeHidden();
   await expect(inYourWords).toBeHidden();
   await expect(legendLine).toBeHidden();
   await stage(page, "Sole Prop activation").click();
@@ -151,6 +167,10 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(legendLine).toBeVisible();
   await button(page, "Show the what-if bar").click();
   await expect(tryBox).toBeVisible();
+  await page.getByRole("button", { name: /^Show the road ahead: / }).click();
+  await expect(incorporating).toBeVisible();
+  await button(page, "Show more layers").click();
+  await expect(page.getByRole("group", { name: "Overlays" }).getByRole("button", { name: /^Rules & tax/ })).toBeVisible();
 
   // The header folds them all at once, and opens them all again.
   await button(page, "Fold all panels").click();
@@ -159,12 +179,15 @@ test("every region folds and opens with its own named button, and the cockpit re
     "Show goal and gauges",
     "Show the legend",
     "Show the what-if bar",
+    "Show more layers",
     "Show the panel: Sole Prop activation",
   ]) {
     await expect(button(page, name)).toBeVisible();
   }
+  await expect(incorporating).toBeHidden();
   await button(page, "Show all panels").click();
   await expect(inYourWords).toBeVisible();
+  await expect(incorporating).toBeVisible();
   await expect(stepPanel(page)).toBeVisible();
   await expect(button(page, "Fold all panels")).toBeVisible();
 });
@@ -213,6 +236,10 @@ test("at 1280x720 with every panel folded, every card on the road fits in the wi
 
   await button(page, "Fold all panels").click();
   await expect(button(page, "Show all panels")).toBeVisible();
+  // Every card on the road: the road ahead shown, and the rules and tax cards switched on (both folded or off
+  // on a first visit since 2026-10-17); the panels stay folded.
+  await showRoadAhead(page);
+  await overlayOn(page, "Rules & tax");
 
   const { measured, scrolledAround, areaHeight } = await measureCards(road(page));
   // Every stage card of road 0 was measured, and the rules and tax cards with them.
@@ -231,6 +258,12 @@ test("folding or showing a region from the keyboard leaves focus on the button t
   const ventureId = await saveIdea(page, "Invented — focus test");
   await page.goto(`/cockpit?venture=${ventureId}`);
   await expect(road(page)).toBeVisible();
+  // A first visit opens calm (2026-10-17): open everything first.
+  await showRail(page);
+  await showLegend(page);
+  await showWhatIfBar(page);
+  await showRoadAhead(page);
+  await showMoreLayers(page);
 
   // With no panel open, "Fold all panels" names only regions that are on the page.
   const named = async () => (await button(page, "Fold all panels").getAttribute("aria-controls"))!.split(" ");
@@ -247,11 +280,16 @@ test("folding or showing a region from the keyboard leaves focus on the button t
     ["Fold the panel", "Show the panel: Sole Prop activation"],
     ["Fold the legend", "Show the legend"],
     ["Fold the what-if bar", "Show the what-if bar"],
+    ["Fold the extra layers", "Show more layers"],
+    ["Fold the road ahead", "Show the road ahead"],
   ];
+  // The folded road ahead's name goes on to say what it holds.
+  const shown = (name: string) =>
+    name === "Show the road ahead" ? page.getByRole("button", { name: /^Show the road ahead: / }) : button(page, name);
   for (const [foldName, showName] of pairs) {
     await button(page, foldName).focus();
     await page.keyboard.press("Enter");
-    await expect(button(page, showName), `after ${foldName}`).toBeFocused();
+    await expect(shown(showName), `after ${foldName}`).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(button(page, foldName), `after ${showName}`).toBeFocused();
   }
@@ -328,10 +366,13 @@ test("with a what-if on and Compare open, the legend is never under the what-if 
   const ventureId = await saveIdea(page, "Invented — what-if fit test");
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: roadApprenticeToOwnShopAB.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
+  // Folded on a first visit (2026-10-17): the what-if bar and the legend, each with its one button.
+  await showWhatIfBar(page);
+  await showLegend(page);
   await tryWhatIf(page, "45000");
   // Compare in the right-hand panel, as a person who has just compared the two endings has it: from 1024 px
   // a column beside the road, which narrows the road and makes the legend wrap onto more lines.
-  await goalBar(page).getByRole("button", { name: "Compare", exact: true }).click();
+  await lookCloser(page, "Compare the two endings", goalBar(page));
   await expect(page.getByRole("region", { name: "Compare the two endings" })).toBeVisible();
 
   for (const size of [
@@ -347,6 +388,8 @@ test("with a what-if on and Compare open, the legend is never under the what-if 
 test("with a what-if on, at tablet and phone widths every control under the road can be clicked (768x1024, 375x812)", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — what-if narrow fit test");
   await page.goto(`/cockpit?venture=${ventureId}`);
+  await showWhatIfBar(page);
+  await showLegend(page);
   await tryWhatIf(page, "45000");
   // No panel open: below 1024 px the panel is a drawer or a sheet over the road by design (12-folding-and-phone.md).
   await page.setViewportSize({ width: 768, height: 1024 });
@@ -459,10 +502,13 @@ test.describe("phone width (issue #4)", () => {
     expect(await onTop(footerLink)).toBe(true);
     expect(await onTop(page.getByText(/^Information, not legal or tax advice/))).toBe(true);
 
-    // The fold buttons are at least 32 px tall on a phone.
-    for (const name of ["Fold goal and gauges", "Fold the legend"]) {
+    // The fold buttons are at least 32 px tall on a phone, and so are the first visit's show buttons
+    // (2026-10-17), Look closer and the coach line's Got it.
+    for (const name of ["Fold goal and gauges", "Show the legend", "Show the what-if bar", "Show more layers", "Got it"]) {
       const b = (await button(page, name).boundingBox())!;
       expect(b.height, name).toBeGreaterThanOrEqual(32);
     }
+    const look = (await goalBar(page).getByRole("button", { name: "Look closer" }).boundingBox())!;
+    expect(look.height, "Look closer").toBeGreaterThanOrEqual(32);
   });
 });

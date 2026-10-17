@@ -6,6 +6,8 @@ Type: panel (table + toggle buttons)
 
 Last updated: 2026-10-13 (offered only where a fork's own pick puts steps on or off the path; docs/architecture/future-cockpit.md § 2, Cockpit screen as built, part 2)
 
+> **Changed 2026-10-17 — Look closer.** The goal bar's way in is now the item *Compare the two endings* in its **Look closer** menu ([07-goal-bar.md](./07-goal-bar.md)); the step panel's *Compare the endings* is unchanged.
+
 > **Changed 2026-10-13 — the maintainer's answer to PR #159's question 1.** Compare is offered only at a
 > fork whose own pick, not the rules, puts steps on or off the path: `lib/cockpit/told.ts`
 > `forksToCompare` runs road evaluation once with each side picked (without the person's step statuses

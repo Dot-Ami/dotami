@@ -10,14 +10,14 @@ import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/com
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { LandscapePanel } from "@/components/cockpit/landscape-panel";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
-import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
+import { LAYERS_ID, OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { StepPanel } from "@/components/cockpit/step-panel";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { TemplatesRail } from "@/components/cockpit/templates-rail";
-import { StrategyMap } from "@/components/cockpit/strategy-map";
+import { LEGEND_ID, roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
 import { QuestionBox, ToldList, type BoxControl } from "@/components/cockpit/told-list";
 import { useCockpitData, type KeptForIdea } from "@/components/cockpit/use-cockpit-data";
-import { WHAT_IF_BAR_ID, WhatIfBar } from "@/components/cockpit/what-if-bar";
+import { WHAT_IF_BAR_ID, WhatIfBar, WhatIfShowButton } from "@/components/cockpit/what-if-bar";
 import type { ShownReceipt } from "@/components/cockpit/receipt-lines";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
@@ -40,7 +40,7 @@ import {
   type NotToldRow,
   type ToldRow,
 } from "@/lib/cockpit/told";
-import { cockpitInput, costLineNote, FIRST_OVERLAYS, nextOnYourRoad, overlayCounts, type GaugeId, type Overlays } from "@/lib/cockpit/view";
+import { cockpitInput, costLineNote, nextOnYourRoad, overlayCounts, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import { landscapeWords } from "@/lib/landscape/words";
 import type { CostLineAmountFrom, FigureView } from "@/lib/figures/types";
@@ -113,16 +113,26 @@ import Link from "next/link";
  * panel can hold, opened from the goal bar on every road and from a step its road marks as opening a business.
  * It holds the person's own list of businesses they're watching, read and kept through its own page-only
  * routes; it gives no receipt, because nothing on the road reads it.
+ *
+ * 2026-10-17, the calm first view (S2.5.30c; future-cockpit.md § 2, "First visit and return visits as built";
+ * docs/ui-spec/README.md, "The layout rule"): a first visit shows the road, the goal and the next steps, and
+ * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead, the extra
+ * layers), with only Road and Skills on and one coach line; a return visit opens as the person left it, the
+ * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
+ * Look closer menu. The header and the goal bar are one block, "the top"; the overlay row, the map and Next
+ * on your road one block, "the road", where the folded legend and what-if bar keep their one button each.
  */
 
 /** The regions' ids, for the fold buttons' aria-controls. */
 const RAIL_ID = "cockpit-rail";
 const PANEL_ID = "cockpit-panel";
 const GOAL_BAR_ID = "cockpit-goal-bar";
-const LEGEND_ID = "cockpit-map-legend";
 
 /** A folded rail or panel on a wide window is a strip this wide. */
 const STRIP = "44px";
+
+/** The road's first columns stay open on a first visit; the rest fold into the road ahead (§ 2, "First visit"). */
+const OPEN_COLUMNS = 2;
 
 /** One thing at a time in the right-hand slot: a step, the export, one gauge's list, Compare, or Others in this line of work. */
 type RightPanel = null | "node" | "playbook" | "skills" | "money" | "date" | "compare" | "landscape";
@@ -195,13 +205,13 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // A step id from the road on the map (today's map: the CFE node ids, unchanged).
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightPanel, setRightPanel] = useState<RightPanel>(null);
-  // The overlays on the road, the gauge whose list is open, and a skill selected to light its steps.
-  const [overlays, setOverlays] = useState<Overlays>(FIRST_OVERLAYS);
+  // The gauge whose list is open, and a skill selected to light its steps.
   const [activeGauge, setActiveGauge] = useState<GaugeId | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
-  // Which regions are folded (remembered in this browser), and, below 768 px, whether the rail's sheet is
-  // open (not remembered: it starts closed so the road is what a phone shows first).
-  const { folds, toggle, toggleAll } = useFolds(!isExample);
+  // Which regions are folded, the overlays on the road and whether the coach line was put away, remembered
+  // in this browser (a first visit opens calm: lib/cockpit/folds.ts); and, below 768 px, whether the rail's
+  // sheet is open (not remembered: it starts closed so the road is what a phone shows first).
+  const { folds, toggle, toggleAll, overlays, setOverlays, coachDismissed, dismissCoach } = useFolds(!isExample);
   const [railSheet, setRailSheet] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
@@ -862,9 +872,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const everythingFolded = allFolded(folds);
   // The header's button names the regions that are drawn: the panel only while it holds something, the
   // goal bar, the legend and the what-if bar only once the road is evaluated.
+  const aheadIds = roadAheadColumnIds(road, OPEN_COLUMNS);
   const foldAllControls = [
     RAIL_ID,
-    ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID, WHAT_IF_BAR_ID] : []),
+    ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID, WHAT_IF_BAR_ID, LAYERS_ID, ...aheadIds] : []),
     ...(showRightSlot ? [PANEL_ID] : []),
   ].join(" ");
   // While a sheet covers the page on a phone, everything behind it is inert.
@@ -877,16 +888,17 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         phone it stays at the top of the window (example-mode.tsx). On a person's own future this adds nothing. */}
     <ExampleFrame example={example ?? null} notice={exampleNotice} inert={behindSheet}>
     <div
-      className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[52px_auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
+      className={`grid ${example ? "min-h-0 flex-1" : "h-[calc(100vh-2.5rem)]"} grid-rows-[auto_1fr] overflow-hidden bg-ink max-md:h-auto max-md:min-h-[calc(100vh-2.5rem)] max-md:overflow-visible`}
     >
-      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow.
-          data-region marks the cockpit's top-level regions for the clutter limit (docs/ui-spec/README.md,
-          "The layout rule"): the header, the rail and the panel here; the goal bar, the overlay switches, the
-          road, the legend, the what-if bar and Next on your road in their own components. */}
+      {/* The top: the header and the goal bar, one block (the calm first view, 2026-10-17). data-region marks
+          the cockpit's regions for the clutter limit (docs/ui-spec/README.md, "The layout rule"): the top, the
+          rail, the road (its switches, the map and its next steps) and the panel here; the legend and the
+          what-if bar in their own components, drawn only while they are open. */}
+      <div data-region="top" className="min-w-0 border-b border-rule bg-[#0f0e12]">
+      {/* Header — S2.5.4c: minmax(0, …) columns so nothing overlaps when the window is narrow. */}
       <header
-        data-region="header"
         inert={behindSheet}
-        className="grid grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule bg-[#0f0e12] md:grid-cols-[240px_minmax(0,1fr)_auto]"
+        className="grid h-[52px] grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule-soft md:grid-cols-[240px_minmax(0,1fr)_auto]"
       >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
           {/* The example has no saved futures behind it: its way back is the front door it came from. */}
@@ -895,7 +907,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           </Link>
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
           <span className="max-md:hidden">
-            <WordMark size="sm" />
+            {/* On the example the back link beside it already goes to the front door, so the word mark is
+                plain there rather than a second link to the same place (the calm first view, 2026-10-17). */}
+            <WordMark size="sm" href={isExample ? "" : undefined} />
           </span>
         </div>
 
@@ -951,6 +965,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             targetFrom={targetFrom}
           />
         ) : null}
+      </div>
       </div>
 
       {/* Body: one column below 768 px, the rail and the road from 768 px, and the panel too from 1024 px. */}
@@ -1160,12 +1175,33 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             own fold button, as it did until 2026-10-14 (12-folding-and-phone.md). */}
         <div inert={behindSheet} className="relative flex min-h-0 flex-col bg-ink4 md:overflow-y-auto">
           {evaluation ? (
-            <>
+            // The road's block (the calm first view, 2026-10-17): its overlay switches on top, the map, and its
+            // next steps at the foot, one region. The legend and the what-if bar sit in it as before, each a
+            // region of its own while open; folded, each is one button in the foot line, where it was.
+            <div data-region="road" className="flex flex-1 flex-col">
               <OverlaySwitches
                 overlays={overlays}
                 counts={overlayCounts(road, evaluation, scenario)}
                 onToggle={(overlay) => setOverlays((o) => ({ ...o, [overlay]: !o[overlay] }))}
+                layers={{ folded: folds.layers, onToggle: () => toggle("layers") }}
+                roadAhead={
+                  !folds.roadAhead && aheadIds.length > 0 ? { controls: aheadIds.join(" "), onFold: () => toggle("roadAhead") } : undefined
+                }
               />
+              {/* The first visit's one coach line; put away, it doesn't come back (remembered with the folds).
+                  Not on the example: nothing can be told there, and its banner already says what it is. */}
+              {!coachDismissed && !isExample ? (
+                <p
+                  role="note"
+                  aria-label={words.coach.region}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule-soft bg-ink3 px-5 py-1.5 text-[12px] text-paper-dim"
+                >
+                  <span>{words.coach.line}</span>
+                  <button type="button" onClick={dismissCoach} className="rounded-full border border-rule px-2 py-0 text-[11px] text-stone hover:text-paper max-md:min-h-8">
+                    {words.coach.dismiss}
+                  </button>
+                </p>
+              ) : null}
               {/* No min-h-0 here: the box's minimum is the road's minimum area plus the legend. */}
               <div className="flex-1">
                 <StrategyMap
@@ -1182,7 +1218,11 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   overlays={overlays}
                   stepEvaluations={stepEvaluations}
                   linkedSkillId={selectedSkillId}
-                  cockpit={{ legendFolded: folds.legend, onToggleLegend: () => toggle("legend") }}
+                  cockpit={{
+                    legendFolded: folds.legend,
+                    onToggleLegend: () => toggle("legend"),
+                    roadAhead: { folded: folds.roadAhead, onShow: () => toggle("roadAhead"), openColumns: OPEN_COLUMNS },
+                  }}
                 />
               </div>
               <WhatIfBar
@@ -1194,8 +1234,25 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 onClear={handleClearWhatIf}
                 fold={{ folded: folds.whatIf, onToggle: () => toggle("whatIf") }}
               />
-              <NextOnYourRoad road={road} evaluation={evaluation} scenario={scenario} onSelectStep={openStep} />
-            </>
+              <NextOnYourRoad
+                road={road}
+                evaluation={evaluation}
+                scenario={scenario}
+                onSelectStep={openStep}
+                after={
+                  folds.legend || folds.whatIf ? (
+                    <>
+                      {folds.legend ? (
+                        <FoldButton folded region="legend" label={words.folds.legend.show} controls={LEGEND_ID} onClick={() => toggle("legend")} />
+                      ) : null}
+                      {folds.whatIf ? (
+                        <WhatIfShowButton whatIf={whatIf} hasThisVisit={thisVisit.length > 0} onShow={() => toggle("whatIf")} />
+                      ) : null}
+                    </>
+                  ) : null
+                }
+              />
+            </div>
           ) : null}
         </div>
 

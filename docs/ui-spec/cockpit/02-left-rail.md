@@ -4,6 +4,8 @@
 
 > **2026-10-12 — the rail folds.** **Fold venture details** at the rail's top folds it to a narrow strip with **Show venture details**; remembered in this browser. Below 768 px the rail is not a column: **Venture details** in the header opens it as a full-width sheet. [12-folding-and-phone.md](./12-folding-and-phone.md).
 
+> **Changed 2026-10-17 — the calm first view (S2.5.30c).** The rail is folded on a first visit (the narrow strip, **Show venture details**, from 768 px; below that the header's **Venture details** as before). A return visit keeps the person's own answer ([12-folding-and-phone.md](./12-folding-and-phone.md)).
+
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 
