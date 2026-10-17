@@ -1,14 +1,17 @@
 # One research kit for every job and business (design)
 
-Status: **Design, not built. Waiting on the maintainer's calls (§ 10).** Written 2026-10-15. No product code
-until the calls are answered. Tracker: S2.5.25 (this kit; S2.5.25a is this doc). It builds on two designs in
-the same pull request (#175): [other-ways-to-build.md](other-ways-to-build.md) (S2.5.22: buy, rent or lease,
-plus tax and legal pointers) and [competitive-landscape.md](competitive-landscape.md) (S2.5.23: others in this
-line of work). It also supplies the **data side** of S2.5.24, the Lens answering comparison questions, whose
-conversation is designed in [lens-comparisons.md](lens-comparisons.md) (S2.5.24a). Calls K7, K8 and K9 below
-are asked **once**, here, for both docs. Read with [future-cockpit.md](future-cockpit.md),
-[use-cases.md](use-cases.md) (the Lens) and [connectors-and-agents.md](connectors-and-agents.md) (the planned
-facts interface and MCP server).
+Status: **Design, not built. Calls K1–K9 answered by the maintainer on 2026-10-16 (§ 10).** Written
+2026-10-15; answers added 2026-10-16. Named businesses (K3) and ad spend beyond v1 (K4) are **on hold**
+until research story S2.5.26 is done; two questions are still open: adding up times, and whether the person's own
+watched list waits too (§ 10, *Still open*).
+No product code in this pull request. Tracker: S2.5.25 (this kit; S2.5.25a is this doc). It builds on two
+designs in the same pull request (#175): [other-ways-to-build.md](other-ways-to-build.md) (S2.5.22: buy, rent
+or lease, plus tax and legal pointers) and [competitive-landscape.md](competitive-landscape.md) (S2.5.23:
+others in this line of work). It also supplies the **data side** of S2.5.24, the Lens answering comparison
+questions, whose conversation is designed in [lens-comparisons.md](lens-comparisons.md) (S2.5.24a). Calls K7,
+K8 and K9 below were asked **once**, here, for both docs, and answered on 2026-10-16. Read with
+[future-cockpit.md](future-cockpit.md), [use-cases.md](use-cases.md) (the Lens) and
+[connectors-and-agents.md](connectors-and-agents.md) (the planned facts interface and MCP server).
 
 Conventions:
 - **Every outside link below was seen on 2026-10-15.** Anything the research could not confirm is in § 13 and
@@ -60,6 +63,13 @@ The maintainer, 2026-10-15, word for word, answering four of PR #175's calls:
 
 His closing paragraph is this story: build each tool and tactic **once**, keyed so it works for any job,
 career, business, industry and place.
+
+**What the Lens questions are, in his words (2026-10-16):** "so something i want to make clear right off the
+bat in regards to the examples of "the Lens answering "cheapest, fastest, strongest", and one research kit for
+every job."; is that this is literally just an example of questions that a user may ask. I'm not saying we
+need to gear the lense chat towards these questions specifically." So *cheapest*, *fastest* and *strongest*
+are examples only. The Lens is general; the kit supplies typed, cited data for whatever a person asks, and
+these three are the worked examples in this doc.
 
 ## 2. The idea in one paragraph
 
@@ -123,11 +133,22 @@ customer "solely responsible for the legality" of the data
 listings. Its own README warns that "Unauthorized scraping may violate terms of service", and Google's
 [Maps terms](https://www.google.com/help/terms_maps/) bar building a "business listings database" (with
 scraping barred in the [Platform terms § 3.2.3](https://cloud.google.com/maps-platform/terms)). A person running
-any of these on their own is their own act. DotAmi bundling one is a different thing, and that is call K2 C/D.
+any of these on their own is their own act. DotAmi bundling one is a different thing; that was K2 C/D. The
+maintainer picked K2 B (§ 10), so for now DotAmi bundles no scraper. Research story S2.5.26 looks at existing
+free software, websites and repos first, and any route it turns up comes back to him as a new call.
+
+**Before building anything for named businesses or ad intelligence**, the maintainer asked for research first,
+2026-10-16: "well before we implement this, lets look for free software and websites or repos that already do
+this, because I've definitely seen stuff like this before. So don't build it out just yet, and don't make a
+full plan around this just yet, but we need to make note of it, because we need to do more research on this
+topic." That research is story **S2.5.26** (free software, websites and GitHub repos that already do
+competitor lists and ad intelligence). The facts in § 3.2 and § 3.3 stay as verified inputs to it; they are
+not a plan.
 
 ### 3.3 What "build our own" can honestly mean
 
-- **Named businesses: yes, from open data, once it is proven.** Two kinds of shippable open source list named
+- **Named businesses: on hold until S2.5.26 (K3, § 10).** What the research found, kept as an input to S2.5.26:
+  two kinds of shippable open source list named
   businesses: Overture places (map data) and the Calgary and Edmonton business-licence lists (*Open Government
   Licence – City of Calgary* / *– Edmonton*, credit line required; licensed businesses only; both licences
   exempt personal information, and Calgary's list flags home businesses). Overture measures existence only,
@@ -144,8 +165,10 @@ any of these on their own is their own act. DotAmi bundling one is a different t
   ([methodology](https://support.similarweb.com/hc/en-us/articles/360001631538-Similarweb-Data-Methodology),
   [help](https://support.similarweb.com/hc/en-us/articles/207698639-What-does-Not-enough-data-mean-)); Semrush
   publishes "estimated traffic metrics". No vendor read so far was seen to return a dollar ad-spend figure
-  (§ 13). An in-house figure would be a number DotAmi made, and that collides with "Never invent a number"
-  (call K4).
+  (§ 13). An in-house figure would be a number DotAmi made, and that collides with "Never invent a number".
+  The maintainer picked K4 A for v1; anything beyond v1 waits on S2.5.26, in his words "thats why we have to
+  do our research around this topic first; no different than the competitor list. I know this stuff exista out
+  there so we have to look for it and plan for it instead of just builing blindly." (2026-10-16).
 
 ## 4. What a person sees
 
@@ -158,7 +181,7 @@ allowed only inside the "Sorted by …: your choice" frame (lens-comparisons.md 
 
 The person already picks "the job closest to the work you'd do yourself" (`Venture.occupationCode`, an OaSIS
 code such as `72311.00` whose first five digits are the NOC code; [prisma/schema.prisma:169](../../prisma/schema.prisma)).
-With call K6 A, a job that has no written road shows *About this job* by default:
+With K6 A (answered 2026-10-16), a job that has no written road shows *About this job* by default:
 
 > **No written road for Hairstylists and barbers (NOC 63210) yet.**
 > Here is what the government publishes about this job. If you plan to run your own business, you can open
@@ -166,10 +189,15 @@ With call K6 A, a job that has no written road shows *About this job* by default
 
 No new question is asked, and nothing assumes the person is starting a business.
 
+Later, not planned yet: K6 C, the Lens drafting a personal road, is a future story the maintainer wants
+(§ 9, *Later*).
+
 ### 4.2 *About this job* (the same panel for every job)
 
-It opens from the goal bar, in the right-hand panel, like *Compare*. Which rows appear for a real person is
-call K5. They always appear in this fixed order: rules, wages, outlook, counts, links.
+It opens from the goal bar, in the right-hand panel, like *Compare*. Which rows appear for a real person was
+call K5; the maintainer picked **K5 B** on 2026-10-16: counts plus official wage ranges, each labelled with its
+real geography level. Government outlook ratings (K5 C) were not picked, so there is no outlook row. The rows
+always appear in this fixed order: rules, wages, counts, links.
 
 > **About this job · Cabinetmakers (NOC 72311) · your pick of job**
 > **Certification in Alberta:** "Optional Certification" (Alberta Tradesecrets, trade 0361).
@@ -177,9 +205,6 @@ call K5. They always appear in this fixed order: rules, wages, outlook, counts, 
 > source code says so; *small-area estimate* where it is one) **· reference period shown:** low $NN · median $NN
 > · high $NN (Job Bank wage file). *What workers in this job were paid. Not what a shop earns, and not what you
 > would earn.*
-> *(Only with K5 C)* **Government outlook, all of Canada, 2024–2033:** "Moderate risk of Shortage" (Employment
-> and Social Development Canada). *The government's own projection for the whole country. It says nothing
-> about you.*
 > **Places of business with employees, your area and industry group:** the count from competitive-landscape
 > § 4.1. *One-person shops with no payroll aren't in this count.*
 > **Where to look yourself:** Job Bank's page for this job · BizPaL · the trade's Tradesecrets page.
@@ -189,8 +214,11 @@ The area in the wage label comes from the row's source code, never from the row'
 
 ### 4.3 *Others in this line of work*, with outside tools (answers 2 and 3)
 
-The S2.5.23 panel stays as designed. With K2 B and K3 B, rows appear only once the person has connected their
-own account and turned on the Lens's connector switch:
+The S2.5.23 panel stays as designed. **The two drafts below are on hold** (2026-10-16): named businesses
+(K3) and anything about ad spend beyond v1 (K4) wait on research story S2.5.26 (§ 3.2). They are kept only
+as a record of what the research found possible; they are not a plan. K2 B itself is answered: a row like
+these would appear only once the person has connected their own account and turned on the Lens's connector
+switch.
 
 > **Look up businesses near you · Google Places · your own Google Cloud project (billed to you per request)**
 > *Name, address and Google's link only, in alphabetical order. Shown now, not kept by DotAmi beyond the place
@@ -199,7 +227,7 @@ own account and turned on the Lens's connector switch:
 > *Semrush's own estimate, seen 15 Oct 2026. Not published by the business. Removed after Semrush's one-month
 > limit; no DotAmi total uses it.*
 
-With K3 C, after the coverage sample:
+The open-data list (K3 C), also on hold until S2.5.26, would only ever follow a coverage sample:
 
 > **Overture Maps: places in the category "cabinet maker" near Calgary · data of September 2026**
 > **Calgary's licence list: trade names containing the word "cabinet"** *(a name match, not a trade; shops
@@ -209,8 +237,10 @@ With K3 C, after the coverage sample:
 
 ### 4.4 Asking the Lens (data side of S2.5.24)
 
-The conversation itself is designed in [lens-comparisons.md](lens-comparisons.md). What the kit guarantees is
-that each answer is built from typed, cited values and counts its blanks:
+The conversation itself is designed in [lens-comparisons.md](lens-comparisons.md). The three questions below
+are examples a person may ask, not what the Lens is built around (§ 1). What the kit guarantees is that each
+answer is built from typed, cited values and counts its blanks. With K7 A (2026-10-16), the order is always
+the person's choice, said in the frame:
 
 > **Sorted by money to start, on what's priced so far: your choice. DotAmi doesn't rank futures.**
 > *Stay employed:* $NNN in official fees · 0 lines not priced yet
@@ -218,10 +248,15 @@ that each answer is built from typed, cited values and counts its blanks:
 > With 5 lines not priced, this order can change once you price them. Before tax; what it costs after tax is a
 > question for your accountant. Sources ▸
 
-> **Sorted by official designed length, where one is cited: your choice.** Apprenticeship: 4 periods, each
-> "designed to take about a year" (Alberta Apprenticeship and Industry Training). Trades Qualifier: no
+> **Official times, step by step, where one is cited. No timeline and no dates.** Apprenticeship: 4 periods,
+> each "designed to take about a year" (Alberta Apprenticeship and Industry Training). Trades Qualifier: no
 > designed length is cited; it asks for 72 months and 8,160 hours of verifiable work experience, which is a
 > different kind of time, so DotAmi doesn't compare it. 3 later steps have no cited time.
+
+With K9 A and the maintainer's note on it (§ 10), a time question is answered only with the official times
+each step cites, quoted as the facts they are. DotAmi and the Lens never turn them into a timeline or a date.
+Whether times of one kind may ever be added up is still open (§ 10, *Still open*), so this draft shows no
+total.
 
 > "Strongest" can mean different things, and DotAmi doesn't choose for you. What do you mean by it?
 > *[In my own words…]*
@@ -239,11 +274,13 @@ that each answer is built from typed, cited values and counts its blanks:
 2. **A road skeleton** with empty, cited slots. The road validator refuses the road until every slot is filled
    or explicitly marked "none": for example, "no licensing step" for a software developer.
 
-The pack is a checklist for a person or contributor. It never becomes a catalog by itself.
+The pack is a checklist for a person or contributor. It never becomes a catalog by itself. Later, once the
+slots are proven, a model may draft road files from the pack (K1 D, § 5.1); every draft would still pass the
+same validator and quote check before it is merged.
 
 ## 5. How it's built
 
-### 5.1 Shape: a library plus scripts (call K1)
+### 5.1 Shape: a library plus scripts (K1 A, answered 2026-10-16)
 
 - **Scripts** (developer tools, never shipped, outside the app's network check like
   [scripts/import-oasis.mjs](../../scripts/import-oasis.mjs)):
@@ -253,6 +290,12 @@ The pack is a checklist for a person or contributor. It never becomes a catalog 
 - **Library** (`lib/research-kit/`, pure code, no network): keyed lookups over the shipped catalogs (job →
   facts, industry × area → counts), the registry, the job-links catalog and road code keys. The screens, the
   Lens's read tools and the MCP server all call it.
+- **Room for D, later.** The maintainer picked A and asked to "make room for D; especially in our stories and
+  tasks later on": a model drafting road files from the research pack at build time, every quote
+  tool-checked before merge. It is planned as a later step, in his words "shortly after the slots are proven
+  worth while" (the second road, 25l, is the first proof), and is a future note in § 9 *Later*; its story and tasks are written when it is taken up. So the pack and
+  skeleton keep one fixed, machine-readable slot list a drafting step can fill, and the validator stays the
+  only gate.
 
 ### 5.2 The source registry ("connector cards")
 
@@ -323,7 +366,7 @@ employees, so the import covers every NAICS code down to 4 digits for each Alber
 and 6 digits only for Alberta and Canada. Snapshots ship with each release and are not fetched on the person's
 computer.
 
-### 5.5 Typed times: the data "fastest" needs (call K9)
+### 5.5 Typed times: the data a time question needs (K9 A, answered 2026-10-16)
 
 No road step carries a typed time today. Times are prose only, for example 4 periods "designed to take about a
 year" and 72 months and 8,160 hours
@@ -340,8 +383,21 @@ words. The five kinds are kept apart:
 - `deadline-after` (45 days to pay, 15 days to open a WCB account)
 
 `processing` (official turnaround times) is reserved for when one is cited; none is on disk. The validator
-refuses an amount that is not in the citation's tool-checked quote, the rule fees already follow. Sums happen
-only within one kind, and an approximate amount is never summed as if it were exact.
+refuses an amount that is not in the citation's tool-checked quote, the rule fees already follow.
+
+**How K9 is applied.** The maintainer picked A and wrote: "it shouldn't even give you a timeline for any of
+this. It should generally help you pick up the pace for anything done online because it should be able to
+help you with things done on a computer, but it can't do schooling, or phone calls, or the actual work
+required to start or maintain a business. It should just provide steps; VERY similar to how you and I are
+working with stories and tasks." So:
+- DotAmi and the Lens **never produce a timeline or a date forecast**: no "you'll be done by", no end date,
+  no total length of a road.
+- Typed, cited times are shown **per step**, as the official facts they are (with the `approximate` flag and
+  the official words), the way a step shows its fee.
+- Unlike kinds are never added together, and an approximate amount is never treated as exact.
+- Whether times of **one** kind may ever be added up (A's "summed only within one kind") is **an open
+  question for the maintainer** (§ 10, *Still open*), because his note says "it shouldn't even give you a
+  timeline for any of this". Until he answers, nothing sums times.
 
 ### 5.6 How S2.5.22 and S2.5.23 map onto the kit
 
@@ -350,21 +406,24 @@ only within one kind, and an approximate amount is never summed as if it were ex
 | 23e *Where to look* list; 22n rent-price places | Views over the registry (25b) | No; the registry replaces both lists |
 | 23f counts import | First adapter on the import core (25d) | No; one import serves every road |
 | 23g area and industry questions | The person's side of the code keys (25e uses them) | No |
-| 23h panel; 23i watched businesses; 23j advertising line | Generic over the code keys; the skeleton adds the advertising line to every road | No |
+| 23h panel | Generic over the code keys | No |
+| 23i watched businesses | Held with K3 (competitive-landscape call 2, route A) until S2.5.26, unless the maintainer releases it (competitive-landscape.md § 15, item 11) | — |
+| 23j *Advertising* cost line | A future story (competitive-landscape call 8 A, 2026-10-16), not this build; its tasks are written when it is taken up | — |
 | 22f ways catalog; 22g tax entries; 22m where to ask | Already keyed by line kind, asset kind and province, not by job | No |
-| 22p Lens proposes a listed price; 23m Lens looks up records by name | **One** feature: Lens live look-up through registry sources (25p) | Merged: about 5 days becomes 3 |
-| 23l lawyer questions | Gains the open-data names questions (25o) | No |
-| 23o, 23p places sample and list | = 25m, 25n | No |
+| 22p Lens proposes a listed price; 23m Lens looks up records by name | **One** feature: Lens live look-up through registry sources (25p); its named-business part waits on S2.5.26 | Merged: about 5 days becomes 3 |
+| 23l lawyer questions | Gains the open-data names questions (25o), waiting on S2.5.26 | No |
+| 23o, 23p places sample and list | = 25m, 25n, both waiting on S2.5.26 | No |
 | 22o, 23k Mara's example | Stays per example | — |
 
 ### 5.7 What the Lens needs from the kit (S2.5.24's data side)
 
-The Lens knows only what its read tools return. Code computes every number; the model words it.
+The Lens knows only what its read tools return. Code computes every number; the model words it. The rows
+below are the worked examples from § 1, not a list the Lens is limited to; the Lens is general.
 
 | Question | Data | Exists today? | Kit task |
 |---|---|---|---|
 | Least cash up front | Official fees + agreed quotes, with blanks counted, never treated as $0 | Yes ([evaluate-road.ts:549-569](../../lib/roads/evaluate-road.ts)) | Read tools (25k) |
-| Fastest | Typed, cited times by kind | **No** | 25j |
+| Fastest | Typed, cited times by kind, shown per step; never a timeline or a date (K9) | **No** | 25j |
 | Strongest foundation | The person's chosen measure: `next` arrows and `joins` (road 1 joins road 0 at *Incorporating*, [apprentice-to-own-shop-ab.ts:1266](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)), skill items shared across roads ([types.ts:130](../../lib/engines/roads/v2026/types.ts)), way picks, venture links | Mostly | 25k |
 | Fewest steps left or new skills; what I lose by picking X | Compare rows ([told.ts:343](../../lib/cockpit/told.ts)) | Yes | 25k |
 | About the job and industry | Job facts, counts | After 25d and 25i | 25k |
@@ -392,7 +451,7 @@ function, the reply guard and the conversation belong to S2.5.24.
 | Privacy | `SENT_ELSEWHERE` ([lib/privacy/inventory.ts:796](../../lib/privacy/inventory.ts)), [docs/privacy-log.md](../privacy-log.md) |
 | Keys | The OS keychain the Lens plan already uses for the model key ([use-cases.md](use-cases.md), task [9a]) |
 
-### 5.9 Where a connector's key lives (K2)
+### 5.9 Where a connector's key lives (K2 B, answered 2026-10-16)
 
 A live look-up needs the person's own credential for that vendor: a Google Cloud API key, a Yelp key, a
 Semrush sign-in. The Lens is built into DotAmi, so if the Lens makes the look-up, **DotAmi's own process reads
@@ -402,9 +461,18 @@ is kept; task [9a]). A vendor key would sit in the same keychain, never in `dota
 moment of a look-up, go only to that vendor, and be listed in `lib/privacy/inventory.ts`.
 
 Said plainly: that is DotAmi holding a login, which bends the 2026-09-24 ruling ("an agent connects, DotAmi
-holds no logins") the same way [9a]'s model key already does. The literal reading is K2 option E: the person's
-own outside agent (one they run, with its own connectors) makes every live look-up, reading DotAmi's facts
-through DotAmi's MCP server, and DotAmi never sees a vendor key.
+holds no logins") the same way [9a]'s model key already does. The literal reading was K2 option E: the
+person's own outside agent makes every live look-up and DotAmi never sees a vendor key.
+
+**The maintainer's answer, 2026-10-16: K2 B, and the 2026-09-24 reading is relaxed.** His note on the page:
+"at this point, im less and less concerned about the intial rule. At this point, I'm more concerned with
+tangible results that ensure users get the best experience. So even though "B" is currently selected; the
+option I personally pick is whichever one gives the users the best info and opportunities." And in chat the
+same day: "yah that's fine. we can use things like google auth if we have to". So, where it gives people
+better information, DotAmi may hold a person's vendor key or sign-in (an OAuth sign-in, such as signing in
+with Google, is acceptable). The rest of this section still holds: the key or sign-in stays in the
+operating system's keychain, never in `dotami.db`, is read only at the moment of a look-up, goes only to that
+vendor, and is listed in the privacy inventory.
 
 ## 6. What's stored, and what leaves the computer
 
@@ -412,10 +480,10 @@ through DotAmi's MCP server, and DotAmi never sees a vendor key.
 |---|---|---|
 | Registry, code keys, job links, job facts, counts, NAICS list, typed times | Shipped catalogs; nothing about the person | No request; made by the maintainer's scripts before release |
 | The research pack | The developer's checkout only | Never shipped |
-| Places list (K3 C) | Shipped catalog | No request. It holds **data about other people**: sole proprietors' trade names |
-| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: a watched business keeps the name the person types and, for Google, the place id | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
+| Places list (K3 C; **on hold until S2.5.26**) | Shipped catalog | No request. It would hold **data about other people**: sole proprietors' trade names |
+| Lens live look-up (K2 B) | Shown in a separate, unsaved result card. Kept only within the source's `keepLimit`: what a source may keep (for example a vendor's id) only within that limit; named-business look-ups and the watched list wait on S2.5.26 (K3 on hold) | **Yes.** The search words go to that company under the person's own account, and the results go to the model the person chose |
 | The Lens conversation | Already kept per venture, clearable ([use-cases.md](use-cases.md)) | Vendor results **never** enter it; it records only "looked up <vendor>, <date>, N results" and ids |
-| The person's key for a vendor tool | The operating system's keychain (§ 5.9), **never** in `dotami.db`; none at all with K2 E | Only to that company |
+| The person's key or sign-in for a vendor tool (K2 B) | The operating system's keychain (§ 5.9), **never** in `dotami.db` | Only to that company |
 
 **The Lens's connector warning**, shown before a `lens-live` source is turned on, says what the vendor's
 terms say about models and money: *"This tool's terms forbid using it with a model that trains on what you
@@ -428,14 +496,15 @@ Privacy inventory lines (the privacy test fails until each exists):
   connected, your search words go to that company under your account. Results can include names and details of
   other businesses and people; they go to the model you chose, and whether that model's company keeps them
   depends on its terms, not DotAmi. DotAmi keeps nothing from the results beyond what that company allows."*
-- One entry for each vendor key kept in the keychain (K2 B).
-- With K3 C: *"Shipped with the app: names and places of businesses from open map data and city licence lists.
-  This is about other people, not you. Leaves the computer: no."*
+- One entry for each vendor key or sign-in kept in the keychain (K2 B).
+- Only if K3 C comes back after S2.5.26: *"Shipped with the app: names and places of businesses from open map
+  data and city licence lists. This is about other people, not you. Leaves the computer: no."*
 
 Privacy log lines, under [Unreleased]:
 1. *"Ships: the government's published facts about jobs and Statistics Canada's business counts, each with
    its licence line. Nothing is sent."*
-2. *"Ships, if built: open map data and city licence lists naming nearby businesses, with their credit lines.
+2. (On hold until S2.5.26.) *"Ships, if built: open map data and city licence lists naming nearby
+   businesses, with their credit lines.
    Nothing is sent."*
 3. *"Sends, only when you ask the Lens and only through a tool you connected: your search words to that
    company; results go to your model and aren't kept by DotAmi."*
@@ -447,32 +516,39 @@ Privacy log lines, under [Unreleased]:
 | Information and options; no ranking by what DotAmi thinks matters (:22-24) | The person picks every measure; code sorts; the answer says "your choice". No combined score, no "best". Vendor results shown alphabetically, never counted or compared |
 | Rules decide; models explain; the Lens never changes a catalog (:25-30) | Catalogs change only through the maintainer's scripts and validators. The research pack is a checklist, not a catalog |
 | Every claim cited and dated (:31-40) | Importers record table, period, checksum and licence. Typed times must match a checked quote. Registry rows carry their terms quote and day |
-| Numbers the engine reasons about are typed (:196) | Times move from prose to typed fields (K9) |
+| Numbers the engine reasons about are typed (:196) | Times move from prose to typed fields (K9 A), shown per step; never a timeline or a date |
 | Never derive a fact about the person (:199) | Job, industry and area are the person's picks. A job's industry candidates are labelled, never picked for them. A wage is never shown as theirs. A job with no road doesn't assume a business |
-| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. Unlike kinds of time are never added; approximate times never summed as exact. Vendor estimates appear only under K4 B, labelled as the vendor's |
+| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. Unlike kinds of time are never added; approximate times never treated as exact; no timeline or date forecast; adding up one kind is still open. No vendor estimate in v1 (K4 A); anything beyond v1 waits on S2.5.26 |
 | Not legal or tax advice (:41-43) | "Most tax-efficient" goes to the questions for the accountant; comparisons are before tax |
 | Scope guard; powerful Lens actions off until switched on (:218-222) | Live look-ups sit behind the Lens's planned connector switch and warning. DotAmi runs no scraper |
-| Agent connects; DotAmi holds no logins (2026-09-24) | **Bent by K2 B** (the key in the keychain, read by DotAmi's Lens), as [9a] bends it for the model key; K2 E keeps it literally |
+| Agent connects; DotAmi holds no logins (2026-09-24) | **Relaxed by the maintainer, 2026-10-16 (K2 B)** for vendor keys and sign-ins, OAuth such as Google sign-in included, where it gives people better information (§ 5.9); the key stays in the keychain, read by DotAmi's Lens only at look-up time, as [9a] does for the model key |
 | Inventory and privacy log; value over more safety settings | § 6. No new setting; everything reuses the Lens's planned switches |
 
-**Where the maintainer's asks collide with a binding rule or another design**, said plainly (each is a call):
-1. "Build our own" ad-spend figures vs "Never invent a number" (K4).
-2. "Which is strongest" vs "does not rank options by what it thinks matters" (K8).
+**Where the maintainer's asks collided with a binding rule or another design**, said plainly, with how each
+call was answered on 2026-10-16:
+1. "Build our own" ad-spend figures vs "Never invent a number" (K4). **A for v1; nothing beyond v1 until
+   S2.5.26.** No rule changes now.
+2. "Which is strongest" vs "does not rank options by what it thinks matters" (K8). **A:** the person says what
+   they mean; code counts each measure on its own row.
 3. "Cheapest" on rent vs buy. The reworked other-ways-to-build.md hands "cheapest" to the Lens under K7 (its
    § 2 and § 4.10) but keeps "No difference line on any screen" (§ 4.1) and says "Nobody here can say …
-   which way costs less after tax, the Lens included" (§ 8). K7 A keeps both: screens unchanged for ways, and
-   every Lens answer on buy vs rent is before tax only.
+   which way costs less after tax, the Lens included" (§ 8). **K7 A** keeps both: screens unchanged for ways,
+   and every Lens answer on buy vs rent is before tax only.
 4. "Fastest" vs future-cockpit.md:830-831 and :1733, "The only duration is calendar months to the person's
-   own date" (K9).
+   own date" (K9). **A, with his note:** no timeline and no date forecast ever; official times shown per step;
+   adding up one kind is still open (§ 10, *Still open*).
 5. "Eventually build this out" vs decision 2 and § 12 of future-cockpit.md, and "no projections" for outlook
-   ratings (K5).
-6. "Build our own" names vs the privacy of sole proprietors' names (K3).
-7. Live look-ups on the person's own account vs "DotAmi holds no logins" (K2, § 5.9).
+   ratings (K5). **B:** wage rows change decision 2 for those rows only; no outlook ratings, so "no
+   projections" is untouched.
+6. "Build our own" names vs the privacy of sole proprietors' names (K3). **On hold until S2.5.26.**
+7. Live look-ups on the person's own account vs "DotAmi holds no logins" (K2, § 5.9). **B; the maintainer
+   relaxed the 2026-09-24 reading** for vendor keys and sign-ins where it gives people better information.
 
 ## 8. Honest limits
 
 - No source gives a start-up cost or a duration for a job in general. "Cheapest" means "on what is priced",
-  and "fastest" works only where a time is cited. Both always report how many blanks remain.
+  and a time question is answered only with the official time each step cites, never as a timeline or a
+  date. Both always report how many blanks remain.
 - There is no official NOC-to-NAICS link at the detail a road needs, so each job's links are hand-reviewed.
 - OaSIS and NOC have no structured tools list, so equipment lines stay written per road.
 - BizPaL has no API and allows only non-commercial copying, so permits stay links or written lists.
@@ -484,21 +560,42 @@ Privacy log lines, under [Unreleased]:
 - Ordinary Canadian ad spend is published nowhere. Vendor figures are their own estimates.
 - Most vendors' results can't be kept, and Yelp's can't be analysed, so live look-ups are a look, not a store.
 - "Strongest" can only be sorted by a measure the person chose.
+- Named businesses and ad spend beyond v1 are on hold until research story S2.5.26 looks for free software,
+  websites and GitHub repos that already do competitor lists and ad intelligence (§ 3.2).
+
+**Filling the gaps: research story S2.5.27 (community and unofficial sources).** The maintainer on the kit's
+gaps, 2026-10-16: "this is why we'll need to probably reach out to as many sources as possible in order for us
+to figure out whats possible in so many different ways. IE, influencers, jobs boards, reddit, facebook,
+instagram, quora, LinkedIN, etc." S2.5.27 researches those kinds of sources. Nothing is planned yet. Each
+source's own terms, and DotAmi's citation rules (an official, dated source behind every claim,
+[CLAUDE.md:31-40](../../CLAUDE.md)), decide later whether and how any of them could be used.
 
 ## 9. Phases
 
 - **A, now (no Lens needed):** registry, import core, code keys and job links, research pack, typed times,
-  *About this job*, read tools, a second road written with the kit, and the coverage sample.
+  *About this job*, read tools, and a second road written with the kit. Research stories S2.5.26 and S2.5.27
+  can run alongside.
 - **B, with the Lens's first version ([task list](../task-list.md) [9d]):** comparison answers (S2.5.24).
-- **C, with the Lens's connector powers ([9g]):** live look-ups on the person's own account, and labelled
-  vendor estimates. Places list only after the coverage sample (and a lawyer's reading, if the maintainer
-  wants one).
+- **C, with the Lens's connector powers ([9g]):** live look-ups on the person's own account (K2 B). The
+  named-business part of those look-ups, the coverage sample, the places list and any ad-spend step beyond v1
+  wait on S2.5.26.
+- **Later (future notes, no task list yet):**
+  - **K1 D:** a model drafts road files from the research pack at build time, every quote tool-checked before
+    merge, shortly after the slots are proven (a future note; no task list yet).
+  - **K6 C:** the Lens drafts a personal road for a job with no written road. The maintainer, 2026-10-16: "So
+    for now A, but lets make note of C for future builds", and "that's what will make dotami EXPLODE later
+    on. I feel like this is something that we will have to build out later on, but we can just turn "C" into
+    a story and task list later on for a future build." A future story; its tasks are written when it is
+    taken up. The risk the call named stays to be solved then: a drafted road can read as DotAmi's own
+    cited road.
 
 ## 10. Calls for the maintainer
 
 Recommendations here are to the maintainer; the product itself never recommends. K3 and K4 are the same
 decisions as competitive-landscape.md calls 2 and 11; K7, K8 and K9 settle lens-comparisons.md too. Each is
-answered once, here.
+answered once, here. **All nine were answered on 2026-10-16** on the calls page; each answer is under its
+call, with his note word for word where he wrote one. Where the main session read an answer together with his
+chat words of the same day, that is said.
 
 **K1. What shape is the kit?** *Why it matters:* it decides whether each new job reuses shared data or gets
 researched again by hand.
@@ -511,6 +608,10 @@ researched again by hand.
   About 3 more days. Risk: model-written catalog text that must still be checked line by line.
 - *Recommended: A.* Importers are scripts and lookups are a library, so each half does a real job. D can follow
   once the second road proves the slots.
+- **Answered 2026-10-16 (the maintainer): A** (Library + scripts in this repo). His note: "I agree that it
+  should stsart with A, but I do like the idea of setting up D shortly after the slots are proven worth while.
+  So lets go with A for now, but make room for D; especially in our stories and tasks later on." Applied:
+  § 5.1 (room for D), § 9 *Later* (a future note; no task yet).
 
 **K2. How may outside tools be reached?** (answers 2 and 3) *Why it matters:* each vendor's terms allow
 different routes, anything live sends the person's words off the computer, and a live look-up needs the
@@ -532,6 +633,15 @@ person's key somewhere.
   vendors' published API and MCP pages describe; each vendor's terms for agent use are checked before its
   registry entry is marked `lens-live`. E is the choice if the 2026-09-24 ruling is read strictly. Playwright
   stays for the one page the person opens.
+- **Answered 2026-10-16 (the maintainer): B** (A, plus the Lens live through official APIs or MCP servers on
+  the person's own account, key in the OS keychain read only at look-up time). His note: "at this point, im
+  less and less concerned about the intial rule. At this point, I'm more concerned with tangible results that
+  ensure users get the best experience. So even though "B" is currently selected; the option I personally
+  pick is whichever one gives the users the best info and opportunities." In chat the same day: "yah that's
+  fine. we can use things like google auth if we have to". Applied: the 2026-09-24 "DotAmi holds no logins"
+  reading is relaxed by the maintainer for vendor keys and sign-ins (OAuth such as Google sign-in is
+  acceptable) where it gives people better information (§ 5.9, § 7). Each vendor's terms for agent use are
+  still read before its registry entry is marked `lens-live`.
 
 **K3. Named businesses: which routes?** (answer 3; same decision as competitive-landscape call 2) *Why it
 matters:* the earlier recommendation (the person now, the Lens later from government data) was declined.
@@ -550,6 +660,16 @@ separate.**
   About 3 days. Risk: against each site's stated terms; breakable; DotAmi distributes copied names.
 - *Recommended: A, B and C; not D.* It uses existing tools on their own terms and keeps "build our own" on
   the path once it is shown to work. D is listed because he named GitHub repos and Playwright.
+- **Answered 2026-10-16 (the maintainer): B on the page, and ON HOLD.** The page allowed only one tick, and
+  the note there ("Recommended: A, B and C; not D") was filled in by "Pick all recommended", not typed by him.
+  In chat the same day, on named businesses: "well before we implement this, lets look for free software and
+  websites or repos that already do this, because I've definitely seen stuff like this before. So don't
+  build it out just yet, and don't make a full plan around this just yet, but we need to make note of it,
+  because we need to do more research on this topic." So K3 is **on hold until research story S2.5.26**
+  (free software, websites and repos that already do competitor lists and ad intelligence) is done. Its tasks
+  (25m, 25n, 25o and the named-business part of 25p, and 23i, the person's own list (route A), unless the
+  maintainer releases it) wait on S2.5.26, not on a pick. The facts already found
+  (§ 3.2, § 3.3) are kept as inputs to that research.
 
 **K4. Ad spend after v1?** (answer 2; same decision as competitive-landscape call 11) *Why it matters:* no
 source publishes ordinary Canadian ad spend, so "build our own" collides with "Never invent a number".
@@ -569,6 +689,12 @@ source publishes ordinary Canadian ad spend, so "build our own" collides with "N
   the lawyer); Meta forbids automated collection without written permission.
 - *Recommended: A now, then B after the Lens*, if he accepts the rule exception. Both B and C are rule
   changes; the call is his.
+- **Answered 2026-10-16 (the maintainer): A** (v1 only: ad-library links, "not published", saved ad links).
+  The page's note ("Recommended: A now, then B after the Lens.") was filled in by "Pick all recommended", not
+  typed by him. In chat the same day: "thats why we have to do our research around this topic first; no
+  different than the competitor list. I know this stuff exista out there so we have to look for it and plan
+  for it instead of just builing blindly." So v1 is A, and **anything beyond v1 waits on S2.5.26**; task 25q
+  waits on it too. No rule exception is made now.
 
 **K5. Beyond counts, which job facts may a real person see?** (answer 4) *Why it matters:* decision 2 and § 12 of
 future-cockpit.md keep government wage and industry figures off a real person's screen in phase 1.
@@ -579,6 +705,8 @@ future-cockpit.md keep government wage and industry figures off a real person's 
 - C. **B, plus official outlook ratings** (3-year outlook by region; COPS national), quoted as the government's
   projection. About 1.5 more days. **Collides with "no projections"** unless that rule covers only DotAmi's own.
 - *Recommended: B.* Past, official and keyed as the kit is; the "build out" with the least rule change.
+- **Answered 2026-10-16 (the maintainer): B** (Plus official wage ranges by job and economic region, each
+  labelled with its real geography level). No note. Applied: § 4.2 (no outlook row), tasks 25e, 25h, 25i.
 
 **K6. What does a person see for a job with no written road?** *Why it matters:* this is what "applied to any job
 or career path" means on screen.
@@ -589,6 +717,12 @@ or career path" means on screen.
   the Lens. Risk: it can read as DotAmi's own cited road.
 - *Recommended: A.* Real, cited value for every job now, with no invented steps and no assumption about a
   business.
+- **Answered 2026-10-16 (the maintainer): A** ("About this job" by default, with road 0 one click away in
+  *Pick a future* for those planning a business). His note: "So; lets go with A for now, but I would like to
+  plan for C eventually as that's what will make dotami EXPLODE later on. I feel like this is something that
+  we will have to build out later on, but we can just turn "C" into a story and task list later on for a
+  future build. So for now A, but lets make note of C for future builds." Applied: C is a future note in § 9
+  *Later*, with no task list yet.
 
 **K7. When the person names what to sort by, where may DotAmi put their options in that order?** (answer 1;
 settles lens-comparisons.md) *Why it matters:* decision 3 allows "one countable measure the person picks,
@@ -608,6 +742,9 @@ always said on screen" (future-cockpit.md:47-48, :836-837; phase 2 there), while
 - E. **The Lens picks the criterion or names a winner.** Needs a change to CLAUDE.md:22-24 and the no-verdict
   tests. Risk: a verdict nobody can cite or test.
 - *Recommended: A.* It answers his question in decision 3's own words, with code doing every sum.
+- **Answered 2026-10-16 (the maintainer): A** (In the Lens and on the screens decision 3 names (Your futures,
+  Compare, the training routes), always with the frame and blank counts; ways rows stay unsorted on screen
+  and are sorted only when asked in the Lens, before tax). No note.
 
 **K8. "Strongest long-term foundation"?** (answer 1; settles lens-comparisons.md) *Why it matters:*
 "strongest" has no countable meaning, and judging it is the ranking the rule forbids.
@@ -623,6 +760,8 @@ always said on screen" (future-cockpit.md:47-48, :836-837; phase 2 there), while
 - E. **Decline the question.** 0.25 day. Risk: his own example goes unanswered.
 - *Recommended: A.* The person supplies the meaning and code counts, following S2.5.21g's "ask clarifying
   questions until the user is confident".
+- **Answered 2026-10-16 (the maintainer): A** (The Lens asks what the person means: their own words first,
+  then things DotAmi can count, alphabetical; each picked measure its own row, never combined). No note.
 
 **K9. Typed times so "fastest" can be answered?** (answer 1; settles lens-comparisons.md) *Why it matters:*
 times are prose today, and the cockpit allows only months to the person's own date.
@@ -636,6 +775,23 @@ times are prose today, and the cockpit allows only months to the person's own da
   About 1.5 more days and a new stored value per step, with inventory and log lines. Risk: guesses beside
   official figures.
 - *Recommended: A.* It closes a hard-constraint gap without ever adding unlike kinds of time.
+- **Answered 2026-10-16 (the maintainer): A** (Typed, cited times with five kinds kept apart and an
+  "approximate" flag, summed only within one kind). His note: "it shouldn't even give you a timeline for any
+  of this. It should generally help you pick up the pace for anything done online because it should be able
+  to help you with things done on a computer, but it can't do schooling, or phone calls, or the actual work
+  required to start or maintain a business. It should just provide steps; VERY similar to how you and I are
+  working with stories and tasks." Applied (§ 5.5): DotAmi and the Lens never produce a timeline or a date
+  forecast; typed, cited times are shown per step as the official facts they are. Whether they may ever be
+  added up within one kind is left open below.
+
+**Still open after 2026-10-16 (for the maintainer):**
+1. **May official times of one kind ever be added up?** K9 A as written says "summed only within one kind";
+   his note says "it shouldn't even give you a timeline for any of this". For example: may the Lens say "4
+   periods, about a year each" as one figure of about four years, or only quote each period's own time? Until
+   he answers, nothing adds times up, and no task builds a sum.
+2. **May 23i (*Businesses you're watching*, K3 route A) be built before S2.5.26 ends?** It needs no outside
+   tool, ships no names and sends nothing, and K4 A's saved ad links live on it. Asked once, in
+   [competitive-landscape.md](competitive-landscape.md) § 15, item 11.
 
 ## 11. Tasks
 
@@ -644,30 +800,35 @@ times are prose today, and the cockpit allows only months to the person's own da
 | S2.5.25b | Source registry | Every source in § 3.2 entered with all § 5.2 fields (`keepLimit` per field, `modelUseRule`, `compareAllowed`); one `never-automated` list for every story; validator; test fails on a missing field or a `vendor-estimate` feeding a total; 23e and 22n lists are views over it | 2 | K1, K2 |
 | S2.5.25c | Import core; OaSIS refit | `import-kit.mjs` with encodings, licence line, period, next release; `import-oasis.mjs --check` unchanged | 1.5 | K1 |
 | S2.5.25d | Counts for every industry | 23f built on the core for every NAICS code down to 4 digits × Alberta census metropolitan areas, 6 digits for Alberta and Canada; the 4-digit and employer-only limits checked against the table and written in the catalog | 0.5 over 23f | K1 |
-| S2.5.25e | Code keys, job links, NAICS list | `Road.codes.occupations`; `job-links.ts` keyed by NOC with reviewed industry and place candidates; unknown codes refused; roads 0 and 1 carry codes; the picker lists the job's candidates first, labelled; economic-region key if K5 B | 1.5 | K1, K5 |
+| S2.5.25e | Code keys, job links, NAICS list | `Road.codes.occupations`; `job-links.ts` keyed by NOC with reviewed industry and place candidates; unknown codes refused; roads 0 and 1 carry codes; the picker lists the job's candidates first, labelled; economic-region key (K5 B) | 1.5 | K1, K5 |
 | S2.5.25f | Research-pack script | Pack and skeleton for 72311, 63210, 21232; no job text in the script; never shipped | 2 | K1, K9 |
 | S2.5.25g | Validator and guide | Unfilled slots refused; checklist in docs/engines/roads.md and CONTRIBUTING.md | 1 | K1 |
 | S2.5.25h | *About this job* panel | Same panel for any job, rows per K5, fixed order; wage label's area from the row's source code; road 0 offered in *Pick a future*, never assumed; verdict checks; browser test; no-verdict walk | 2.5 | K5, K6 |
-| S2.5.25i | Job facts importers | Wages (and outlooks with K5 C) with source codes, geography level and periods kept; outlook HTML stripped; tests read known rows | 2 (+1.5) | K5 |
-| S2.5.25j | Typed, cited times | `RoadStep.time` with five kinds and `approximate`; amount must be in the checked quote; approximate amounts never summed as exact; road 1 typed; cockpit § 4 updated | 2.5 | K9 |
+| S2.5.25i | Job facts importers | Wages with source codes, geography level and periods kept (no outlooks: K5 C not picked); tests read known rows | 2 | K5 |
+| S2.5.25j | Typed, cited times | `RoadStep.time` with five kinds and `approximate`; amount must be in the checked quote; shown per step only; no timeline, date forecast or sum anywhere (a test), until the open question in § 10 is answered; road 1 typed; cockpit § 4 updated | 2.5 | K9 |
 | S2.5.25k | Read tools cover roads and kit | `road_view`, `list_options`, `reachable`, `job_facts`, `industry_counts`; readout covers road 1; each value returns its source; no measure reads `transitionTrigger` strings; an outside agent gets them only for ventures set to Read or higher | 2 | K7, K8 |
 | S2.5.25l | Prove it: second road | A hairstylist road (Alberta) with no new code outside its road file and its job-links entry; validators green | 3 | K6, K9 |
-| S2.5.25m | Places coverage sample | Counts of Overture places under the job's categories and of Calgary and Edmonton licence-list name matches, in Calgary and Edmonton, duplicates noted, written up before any list is promised | 1 | K3 |
-| S2.5.25n | Places list | Only if the sample passes: per-city extract from Overture and the city lists, home-business rows left out, credit lines and NOTICE, panel section, never joined to counts, inventory and log lines | 4 | K3 |
-| S2.5.25o | Lawyer questions | Open-data names questions added to the 23l page | 0.5 | K3 |
-| S2.5.25p | Live look-ups on the person's account | After [9g]: replaces 22p and 23m; `lens-live` sources only; field masks with no rating fields; alphabetical; `keepLimit` per field enforced in code; `compareAllowed: no` sources refused by the comparison function; Grounding Lite's display conditions and model-use confirmation; vendor results never saved in the Lens conversation (test); `never-automated` domains unreachable; key in the keychain (or none with K2 E); `SENT_ELSEWHERE` entries; log line | 3 (after Lens) | K2, K3 |
-| S2.5.25q | Labelled vendor estimates | Only with K4 B and a vendor that returns a figure: vendor, account and date shown; never kept past the limit or summed; dated CLAUDE.md exception | 1.5 (after Lens) | K4 |
-| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, :830, :1733, § 12 and the #175 docs match the answers, dated | 0.5 | K4, K5, K7, K9 |
+| S2.5.25m | Places coverage sample | Counts of Overture places under the job's categories and of Calgary and Edmonton licence-list name matches, in Calgary and Edmonton, duplicates noted, written up before any list is promised | 1 | **Waits on S2.5.26** (K3 on hold) |
+| S2.5.25n | Places list | Only if the sample passes: per-city extract from Overture and the city lists, home-business rows left out, credit lines and NOTICE, panel section, never joined to counts, inventory and log lines | 4 | **Waits on S2.5.26** (K3 on hold) |
+| S2.5.25o | Lawyer questions | Open-data names questions added to the 23l page | 0.5 | **Waits on S2.5.26** (K3 on hold) |
+| S2.5.25p | Live look-ups on the person's account | After [9g]: replaces 22p and 23m; `lens-live` sources only; alphabetical; `keepLimit` per field enforced in code; `compareAllowed: no` sources refused by the comparison function; vendor results never saved in the Lens conversation (test); `never-automated` domains unreachable; key or sign-in in the keychain; `SENT_ELSEWHERE` entries; log line. Named-business part (Google Places field masks with no rating fields; Grounding Lite's display conditions and model-use confirmation; Yelp): written only after S2.5.26, kept here as research inputs | 3 (after Lens) | K2 B; **the named-business part (Google Places, Yelp) waits on S2.5.26** (K3 on hold) |
+| S2.5.25q | Labelled vendor estimates | Only if S2.5.26 and a later call bring it back, and a vendor returns a figure: vendor, account and date shown; never kept past the limit or summed; dated CLAUDE.md exception | 1.5 (after Lens) | **Waits on S2.5.26** (K4: A for v1) |
+| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, :830, :1733, § 12 and the #175 docs match the answers, dated: the 2026-09-24 logins reading relaxed (K2), wage rows (K5), sorting where decision 3 names (K7), per-step times and no timeline (K9) | 0.5 | K2, K5, K7, K9 |
 
-On the recommended path (K1 A, K2 B, K3 A+B+C, K4 A then B, K5 B, K6 A, K7 A, K8 A, K9 A) the kit is about 27
-build days before the Lens, or 23 if the coverage sample stops the places list. It is 4.5 days after the Lens.
-That includes merging 22p and 23m into one feature, which saves about 2 days. The comparison function, reply
-guard and conversation are S2.5.24's own tasks (lens-comparisons.md § 11).
+On the answers of 2026-10-16 (K1 A, K2 B, K3 on hold, K4 A for v1, K5 B, K6 A, K7 A, K8 A, K9 A), the kit is
+about 21 build days before the Lens (25b–25l and 25r). That leaves out 25m, 25n and 25o (5.5 days), which wait
+on S2.5.26. After the Lens it is 25p's 3 days, part of which (named businesses) also waits on S2.5.26; 25q
+waits on S2.5.26. 25p still merges 22p and 23m into one feature, which saves about 2 days. K1 D is a future
+note (§ 9); no task yet. Research stories S2.5.26 and S2.5.27 have no day count yet. The comparison function, reply guard
+and conversation are S2.5.24's own tasks (lens-comparisons.md § 11).
 
 ## 12. Not in scope
 
 - Any score, combined measure, "best" or winner named by DotAmi or the Lens.
 - Forecasts of income, success or tax.
+- A timeline or a date forecast, from DotAmi or the Lens (K9, the maintainer's note of 2026-10-16).
+- A full plan for named businesses or ad spend beyond v1 before research story S2.5.26 is done, and any plan
+  for community and unofficial sources before S2.5.27 is done.
 - A DotAmi-run scraper or crawler.
 - Shipping OpenStreetMap-derived data.
 - Matching a person to grants: the open Business Benefits Finder file has no eligibility fields

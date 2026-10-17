@@ -1,17 +1,18 @@
 # Other ways to build: buy, rent or lease, and where to look for tax and legal help (design)
 
-Status: **Design, not built. Waiting on the maintainer's calls (§ 9).** Written 2026-10-15; revised the same day after
-the maintainer's answers. **Call 1 is answered (C).** Calls 2–9 still wait on the maintainer, plus two the research kit
-adds (§ 9). No product code until they are answered. In the public task list this is [14f](../task-list.md) (the maintainer's tracker: story S2.5.22, tasks
-22a–22d); the build tasks are S2.5.22e onward (§ 10).
+Status: **Design, not built. Every call is answered (§ 9):** call 1 on 2026-10-15; calls 2–10 on 2026-10-16; call 11
+by the research kit's K7 (A) the same day. One reading is the main session's, not the maintainer's, and he can correct
+it: what his "combo of A & E" means for call 2 (§ 9). Anything still undecided is in § 12. No product code until this
+doc merges with the picks written in. In the public task list this is [14f](../task-list.md) (the maintainer's tracker:
+story S2.5.22, tasks 22a–22d); the build tasks are S2.5.22e onward (§ 10).
 
 Read with [future-cockpit.md](future-cockpit.md) (the cockpit, the road data model, decision 2: no averages for a real
 person), [use-cases.md](use-cases.md) (the Lens, the planned built-in agent, and its permission levels),
 [connectors-and-agents.md](connectors-and-agents.md) (agents propose, the person confirms) and
 [competitive-landscape.md](competitive-landscape.md) (S2.5.23). Added after the answers:
 [research-kit.md](research-kit.md) (S2.5.25, one kit that makes all of this work for any job, not only the cabinetmaker)
-and [lens-comparisons.md](lens-comparisons.md) (S2.5.24, the Lens answering "cheapest", "fastest" and "strongest
-foundation").
+and [lens-comparisons.md](lens-comparisons.md) (S2.5.24, the Lens answering comparison questions; "cheapest", "fastest"
+and "strongest foundation" are only the maintainer's examples, § 1).
 
 Every fact about a rule, a price source, a licence or terms of use carries a source number ([S1]…) from § 13, all seen
 on **2026-10-15**. `*` = read through a summarising tool; `†` = reported by the design's reviewer, not yet read. Every
@@ -52,21 +53,49 @@ What that changes here: the Lens questions are story S2.5.24 ([lens-comparisons.
 what this doc gives it. The "any job" ask is story S2.5.25 ([research-kit.md](research-kit.md)); § 5.1 re-keys
 everything here that was written for the cabinetmaker, so any road gets it.
 
+**On the Lens examples, 2026-10-16, word for word:**
+
+> "so something i want to make clear right off the bat in regards to the examples of "the Lens answering "cheapest,
+> fastest, strongest", and one research kit for every job."; is that this is literally just an example of questions
+> that a user may ask. I'm not saying we need to gear the lense chat towards these questions specifically."
+
+So "cheapest", "fastest" and "strongest foundation" are example questions. The Lens is general; § 4.10 only says what
+this doc's facts can give any question a person asks about ways.
+
+**His picks of 2026-10-16** answer calls 2–10 here (§ 9, with his notes word for word) and the research kit's K1–K9
+([research-kit.md](research-kit.md) § 10). Three of those settle this doc's call 11 and § 4.10: **K7 A** (sorting by a
+measure the person names, in the Lens and on the screens decision 3 names; ways rows stay unsorted on screen), **K8 A**
+(the Lens asks what the person means, their own words first) and **K9 A**, with his note, word for word:
+
+> "it shouldn't even give you a timeline for any of this. It should generally help you pick up the pace for anything
+> done online because it should be able to help you with things done on a computer, but it can't do schooling, or
+> phone calls, or the actual work required to start or maintain a business. It should just provide steps; VERY
+> similar to how you and I are working with stories and tasks."
+
+The main session reads K9 as: no timeline or date forecast, ever; an official time for one step may be shown as a
+cited fact; whether times of one kind may be added up is an open question for him (§ 12).
+
 Rulings kept: **pick 2A** (2026-10-11: a real person's cost lines are official fees plus their own quotes; averages only
 in the invented example); **option B** (2026-10-11: sources checked by a tool or read by a person); **2026-09-24**
-("dotami shouldn't hold the data… access only if the user allows it, like any other software"); **value over more safety
-settings**.
+("dotami shouldn't hold the data… access only if the user allows it, like any other software"), with its "DotAmi holds
+no logins" reading **relaxed by the maintainer on 2026-10-16** for vendor keys and sign-ins (K2 B: official APIs or MCP servers on the
+person's own account, the key in the operating system's keychain and read only at look-up time; his chat note the same
+day adds that a sign-in such as Google's is acceptable where it gives people better information). His words: "yah that's fine. we can use things like
+google auth if we have to", and in his K2 note, "the option I personally pick is whichever one gives the users the best
+info and opportunities"; **value over more safety settings**.
 
 ## 2. The idea in one paragraph, from the person's side
 
 Today *Open your own shop* shows *Woodworking machines and tools: add your quote*: one blank that only fits a purchase.
 After this story, any line that can be had more than one way, on **any road**, asks **How would you get this?**
-(*Already have it · Buy · Rent · Lease · Not decided*). Each way gets its own row, always in that order, with the
-person's own number (or *add your quote*) and how the Canada Revenue Agency (CRA) treats that way, quoted and linked.
-The start-up money gauge counts only the way picked; rent and lease payments sit in their own row. Picking a way brings
-the official rules it touches into view, and *Where to ask* names the government offices, regulators and funded
-non-profits that match the road's province, area and job. The screens pick no way and rank none. If the person asks the
-Lens "which is cheapest?", the Lens answers from the person's own numbers, as call K7 settles (§ 4.10).
+(*Already have it · Buy · Rent · Lease · Use a shared shop · Not decided*; the shared-shop way, call 8 B, appears only
+on lines whose kind offers it, § 4.1). Each way gets its own row, always in that order, with the person's own number
+(or *add your quote*) and how the Canada Revenue Agency (CRA) treats that way, quoted and linked. The start-up money
+gauge counts only the way picked; rent, lease and shared-shop payments sit in their own row. Picking a way brings the
+official rules it touches into view, and *Where to ask* names the government offices, regulators and funded non-profits
+that match the road's province, area and job. The screens pick no way and rank none. If the person asks the Lens a
+comparison question such as "which is cheapest?", the Lens answers from the person's own numbers, as K7 A settled
+(§ 4.10).
 
 ## 3. What the design starts from (already built)
 
@@ -106,20 +135,21 @@ All words go through `lib/cockpit/words.ts` and the verdict-word checks (`tests/
 `e2e/no-verdict.spec.ts`, `e2e/journey.spec.ts`): no *best*, *better*, *should*, *recommend* or *#1*. Those lists
 don't hold *cheaper*, *cheapest*, *save*, *saves*, *lowest*, *fastest*, *strongest* or *costs less* today, so a
 `WAYS_WORDS` list with them is checked on the ways words file (task S2.5.22j).
-Ways always appear as Already have it · Buy · Rent · Lease; the order never depends on price. **Amounts in mockups are
-round placeholders, not sourced figures.** The screens are the same on every road; only line names and *Where to ask*
+Ways always appear as Already have it · Buy · Rent · Lease · Use a shared shop; the order never depends on price.
+**Amounts in mockups are round placeholders, not sourced figures.** The screens are the same on every road; only line names and *Where to ask*
 rows differ, chosen by the road's keys (§ 5.1).
 
 ### 4.1 The step panel: a cost line with ways
 
 ```
 Woodworking machines and tools · How would you get this?
-  [Already have it] [Buy] [Rent] [Lease] [Not decided]
+  [Already have it] [Buy] [Rent] [Lease] [Use a shared shop] [Not decided]
   DotAmi doesn't pick one. You can price more than one way and pick later.
   See the ways side by side ▾
-  Buy     $10,000 · your quote
-  Rent    $400 every 4 weeks · your quote
-  Lease   Add your quote
+  Buy          $10,000 · your quote
+  Rent         $400 every 4 weeks · your quote
+  Lease        Add your quote
+  Shared shop  Add your number once, then tick the lines it covers
   How the tax rules treat each way ▸     What to ask for in writing ▸ (Lease)
   Places that publish rent prices ▸ (links)
   Nothing on this line counts in Start-up money until you pick a way.
@@ -130,6 +160,14 @@ Woodworking machines and tools · How would you get this?
 - **No difference line on any screen.** Never "Rent costs $X less"; each row shows only the person's number.
 - *Places that publish rent prices* (call 1, C) lists links for this kind of item, alphabetical, no amounts, with
   *"DotAmi doesn't recommend or rank anyone."* It is a view over the kit's source registry (§ 5).
+- **Use a shared shop** (call 8, B). One membership the person prices once, on the line where they add it, and marks as
+  covering other lines they tick (for example the tools line and the shop space line). Offered by default on equipment,
+  small-tools and space lines, with the per-line override of call 10. It is a running cost with the period the person
+  types, like rent. A covered line shows *covered by your shared shop* instead of an amount, so the membership counts
+  once. Picking it is the person's own click on each line: answering *shared space* to *Where would you work?* (§ 4.8)
+  picks no way. No CRA page on the tax treatment of a membership was found (§ 12), so its row says only *How a
+  membership is treated for tax is a question for your accountant*, and that question goes in *Your plan*. Road 1 says
+  *shop*; the kit's generic word is *space*.
 
 ### 4.2 How the tax rules treat each way
 
@@ -148,6 +186,12 @@ Cited lines from the write-offs catalog, each opening *Sources* with *Checked by
     your accountant.* No dates or multiplier until S2.5.22e reads them in the enacted Act or Regulations (§ 12). Once
     read, it uses the same entry's `firstYearIncentive` field and amber state (`lib/brain/evaluate.ts:137-150`); until
     then it is an amber note on that entry, never a separate card, so the two can't drift apart.
+  - **Every amber line (call 6, B)** is one dated line per item, with no numbers and no unread dates, feeding nothing,
+    and it carries a link to the official page it rests on, cited like any catalog line (here the Folio [S7] and T4002
+    [S4]), with the day it was seen. A change with no official page to link to is not shown. The same holds for the
+    Productivity Mega Deduction while it is a proposal: one amber line linking Finance Canada's releases [S9][S10],
+    saying it is proposed, not law, and that whether it would apply is a question for your accountant. Each amber line
+    is re-checked before every release (§ 5).
   - *Which class each item goes in is a question for your accountant.*
 - **Rent.** "You can deduct rent incurred for property used in your business." [S12] On space lines only, the row adds
   that this is line 8910 of form T2125 [S12]; that page doesn't address renting equipment, so elsewhere *which line of
@@ -182,7 +226,7 @@ whether tax is included, and what delivery costs.* No company page is cited in a
 as received (their own mark). Both lists are keyed by **province**: another province shows its own cited list once a
 person reads one, and none until then.
 
-### 4.4 The Money gauge (call 4, option C)
+### 4.4 The Money gauge (call 4: C)
 
 > **To start:** $8,000 · 4 lines you priced, 2 official fees · 3 lines not priced yet · **1 line priced 2 ways, not
 > picked: not counted**
@@ -192,7 +236,9 @@ person reads one, and none until then.
 A line priced two or more ways and not picked counts in neither total, and says so (the incorporation-routes precedent).
 *Already have it* is neither priced nor unpriced (*"1 line you said you have"*). A picked Rent or Lease amount goes in
 *Paid as you go* with the period typed: never turned into months, never added to *To start*, never compared with a Buy
-number; the multiplied line appears only when the person typed a count. Receipts compare two runs of the rules:
+number; the multiplied line appears only when the person typed a count. A shared-shop number goes in *Paid as you go*
+once, however many lines it covers, and says so (*"covers 2 of your lines"*); the covered lines add nothing.
+Receipts compare two runs of the rules:
 *"Because you picked Lease for Vehicle: 2 rules now in view; the line moved to Paid as you go."*
 
 ### 4.5 Rules your answers bring into view (Rules & tax overlay)
@@ -254,11 +300,12 @@ Opening a link is the person's own click; nothing about the person goes in it.
 word and dated; (3) **Questions to take to your accountant / to your lawyer**, one catalog question per rule in view
 with its source, e.g. *"Which capital cost allowance class does each item go in?"*, *"Does my lease qualify for the
 T2145 election?"*, *"Which line of my return does renting equipment go on?"*, *"Is my vehicle a passenger vehicle for
-tax?"*, *"Does any Alberta licence apply to what I'd sell?"*; (4) **Where to ask**. The line *not legal or tax advice; a
+tax?"*, *"How is a shared-shop membership treated for tax?"*, *"Does any Alberta licence apply to what I'd sell?"*;
+(4) **Where to ask**. The line *not legal or tax advice; a
 prep tool for your accountant and lawyer* (`lib/cockpit/words.ts:601`) stays. Questions belong to asset kinds and rules,
 so every road gets them.
 
-### 4.8 The new questions (22c, call 3)
+### 4.8 The new questions (22c; call 3: C)
 
 Questions are asked only while something on screen depends on them (`future-cockpit.md:781`); *I don't know* is always
 an answer:
@@ -266,8 +313,9 @@ an answer:
 1. **"How would you get this?"** per line with ways, in the money list (a many-answer question isn't a one-box question,
    `future-cockpit.md:638-644`); *Not told yet* (`lib/cockpit/told.ts:248-306`) gains *"How you'd get 5 start-up
    items"*.
-2. **"What's your number?"** per way: today's agree prompt plus the way's name; for Rent or Lease also *every* (4 hours
-   · day · week · 4 weeks · month · year) and, optionally, *how many*.
+2. **"What's your number?"** per way: today's agree prompt plus the way's name; for Rent, Lease or a shared shop also
+   *every* (4 hours · day · week · 4 weeks · month · year) and, optionally, *how many*; for a shared shop also *which
+   of your lines it covers* (ticks).
 3. **After a Lease pick:** *"Is the lease longer than one year?"* and *"What is everything in it worth?"* (their
    number).
 4. **Once per idea, after any line is priced:** *"Are you registered for GST/HST?"* (yes · no · I don't know), kept only
@@ -283,26 +331,29 @@ hours question (hours are phase 2, `future-cockpit.md:807`).
 
 ### 4.9 Mara's example (invented person, real numbers; call 9)
 
-With call 9 A1 or A2, Mara's tools line shows a **Rent** row beside her Buy total and her space line two shared-shop
-memberships, each credited in *Where these numbers come from*: Rogers Rent-All, Calgary, 10-inch table saw on a stand:
+Call 9 is answered A2 (§ 9): once short written OKs from the three places are recorded, Mara's tools line shows a
+**Rent** row beside her Buy total and her space line two shared-shop memberships, each credited in *Where these numbers
+come from*: Rogers Rent-All, Calgary, 10-inch table saw on a stand:
 $50 a day, $198 a week, and $398, which the page labels "Monthly" [S20]; the shop's policies define its longest period
 as a 4-week rental, "any 28 consecutive day period" [S21], and Mara's row shows the period in the shop's own word.
 Protospace, Calgary: "$55 / month for 24/7 access", with a wood shop [S23]. ENTS, Edmonton: $120 a month, joined in
 person after a safety orientation, members 18 or older [S24]. The example picks no way for Mara.
 
-### 4.10 Asking the Lens about the ways (S2.5.24; settled by calls K7, K8 and K9)
+### 4.10 Asking the Lens about the ways (S2.5.24; settled 2026-10-16 by K7 A, K8 A and K9 A)
 
-The conversation is designed in [lens-comparisons.md](lens-comparisons.md); this doc supplies the facts. The Lens reads
-them through the kit's read tools (`list_options`, `road_view`; task S2.5.25k), each value returned with its source.
-**What it could show from this design, if K7 allows sorting the person's own numbers.** DotAmi's code draws the card;
-every amount and product comes from `list_options`, and the Lens's reply guard (lens-comparisons.md § 6.4) fails any
-digit or comparison word in the model's own text:
+The conversation is designed in [lens-comparisons.md](lens-comparisons.md); this doc supplies the facts. The Lens is
+general: the three questions below are the maintainer's examples (§ 1), used here to show what this doc's facts can and
+can't answer. The Lens reads them through the kit's read tools (`list_options`, `road_view`; task S2.5.25k), each value
+returned with its source. **What it can show from this design** (K7 A allows sorting the person's own numbers by a
+measure they name; the ways rows on screen stay unsorted). DotAmi's code draws the card (Lens call 2, A); every amount
+and product comes from `list_options`, and the Lens's reply guard (lens-comparisons.md § 6.4) fails any digit, number
+word, comparative or verdict word in the model's own text outside the card (Lens call 2, A). Each blank carries a button that opens the agree prompt (Lens call 1, C):
 
 ```
 Woodworking machines and tools · your numbers, before tax
   Buy     $10,000 · your quote · once
   Rent    $400 · your quote · every 4 weeks × your 6 = $2,400 (your numbers multiplied, not a forecast)
-  Lease   not priced
+  Lease   not priced  [Add a number for Lease]
 Sorted by money paid for this line, on your numbers: your choice. DotAmi doesn't rank ways.
 Not in these numbers: what the machine is worth after, tax, Lease (no number), 3 other lines not priced.
 ```
@@ -311,26 +362,28 @@ Not in these numbers: what the machine is worth after, tax, Lease (no number), 3
 > your accountant.
 
 - **"Cheapest":** only the person's own agreed per-way numbers, like for like (same period, or their own count). Never
-  after tax; never a listed price the person didn't agree to. Every answer carries the *Not in these numbers* line.
-- **"Fastest":** nothing here carries a time; a rental period is a price, not a wait. Only typed, cited times on road
-  steps could answer it (call K9, task S2.5.25j).
-- **"Strongest long-term foundation":** the Lens can lay out the cited differences (Buy: property in a CCA class; Lease:
-  deductible payments and the T2145 election; Rent: a deductible expense) and ask what the person means by "foundation".
-  Which matters most is the person's measure (call K8).
+  after tax; never a listed price the person didn't agree to (Lens call 3, A). Every answer carries the *Not in these
+  numbers* line. A shared-shop number is shown once, with the lines it covers.
+- **"Fastest":** nothing here carries a time; a rental period is a price, not a wait. Under K9 A, DotAmi gives no
+  timeline or date forecast; an official time for one road step may be shown as a cited fact (task S2.5.25j), and
+  whether times of one kind may be added up is still open (§ 12).
+- **"Strongest long-term foundation":** the Lens lays out the cited differences (Buy: property in a CCA class; Lease:
+  deductible payments and the T2145 election; Rent: a deductible expense) and asks what the person means by
+  "foundation", their own words first (K8 A). Which matters most is the person's measure.
 
 ## 5. How it's built
 
 | Piece | Kind | Lives in |
 |---|---|---|
 | Way ids, **line kinds** and the ways each kind offers, questions to take, ask-in-writing lists | Catalog | `lib/engines/ways/v2026/` (new): `ways.ts`, `line-kinds.ts`, `ask-for.ts` (keyed by province), `questions.ts`, `validate.ts`. Points to write-off entries; no tax text of its own |
-| Which kind a named line is | Catalog | `NamedCostLine.lineKind?` (equipment · small-tools · vehicle · space · software · none) plus an optional `ways?: WayId[]` override, in `lib/engines/roads/v2026/types.ts`; set in roads 0 and 1 and emitted by the research-pack skeleton (S2.5.25f) |
+| Which kind a named line is | Catalog | `NamedCostLine.lineKind?` (equipment · small-tools · vehicle · space · software · none) plus an optional `ways?: WayId[]` override, in `lib/engines/roads/v2026/types.ts` (call 10, B); set in roads 0 and 1 and emitted by the research-pack skeleton (S2.5.25f). The `shared-space` way (call 8, B; road 1 labels it *Use a shared shop*) is offered by default on equipment, small-tools and space |
 | Tax treatment of each way | Catalog | `lib/engines/writeoffs/v2026/categories.ts`, keyed by asset kind and its existing `provinces`: new *Rent of business property*, *Leasing costs* (election as condition), *Small tools (Class 12)*; *Vehicle* gains the 2026 amounts [S5]; *Capital equipment* gains the amber line |
-| Proposed or unclear measures | Catalog | Same catalog, `status: "proposed"`, day seen, re-check before each release; no rule reads them (calls 6, 7) |
+| Proposed or unclear measures | Catalog | Same catalog, `status: "proposed"`, day seen, the official page's link and citation (call 6 B: an entry with no official page is refused), re-check before each release; no rule reads them (calls 6, 7) |
 | Places to ask | Catalog | `lib/engines/help/v2026/places.ts` (new); each row has `provinces` and optional `areas`, `occupations` (NOC), `industries` (NAICS); citation authority gains `"regulator"`, `"not-for-profit"`, `"municipal"` (`lib/engines/shared/types.ts:5`, `docs/engines/citations.md`) |
 | Places that publish rent prices (call 1 C) | Source registry cards, not legal citations | The kit's registry (`lib/engines/sources/v2026/registry.ts`, S2.5.25b): link, what the page lists, day seen, how checked, link-only display, keyed by line kind and area. No company page enters a catalog |
 | Pages the Lens must never fetch | Source registry cards | Same registry, access `never-automated`, one list for every story: every source whose terms forbid automated access (S2.5.25b), including DOZR [S25], Meta [S26]`*`, Kijiji [S42]`†` once its quote passes, and the sites in competitive-landscape.md § 4.4 |
 | The person's number for one way | Person's data | `Figure` gains nullable `wayId`, `rentEvery` (4h · day · week · 4weeks · month · year), `rentCount`, by `ALTER TABLE ADD COLUMN` only; names avoid `periodStart`/`periodEnd` (`prisma/schema.prisma:223-224`) |
-| Way picked, follow-ups, ticks | Person's answers | `ScenarioState.activeBranches` JSON via `lib/db/scenario-state-json.ts`: `lineWays` (line id → way, `leaseOverOneYear`, `ticks`), `gstRegistered`, `workplace`; read only through `readMapAnswers` |
+| Way picked, follow-ups, ticks | Person's answers | `ScenarioState.activeBranches` JSON via `lib/db/scenario-state-json.ts`: `lineWays` (line id → way, `leaseOverOneYear`, `ticks`, and for a shared shop `coveredBy`, the line its one number is kept on), `gstRegistered`, `workplace`; read only through `readMapAnswers` |
 | "How you'd set this up" | Person's words | `PersonStatement` `kind: "how-id-build"` (`prisma/schema.prisma:92`) |
 | Mara's rent and membership prices; words | Example data; screen text | `lib/examples/` sources (PR #170, merged); `lib/cockpit/words.ts` (`ways`, `help`), generic wording only |
 
@@ -341,13 +394,18 @@ Not in these numbers: what the machine is worth after, tax, Lease (no number), 3
   as `wayId = null`: *"your number, way not said"*.
 - **Money.** `evaluateRoad` (`lib/roads/`) yields one `CostLineAsShown` per priced way: *To start* adds fees and the
   picked way's one-time amount; *Paid as you go* lists picked Rent and Lease by period; new counts
-  `waysPricedNotPicked`, `saidHave`; a test proves nothing counts twice. The same rows are what `list_options`
+  `waysPricedNotPicked`, `saidHave`, `coveredBySharedShop`; a test proves nothing counts twice, a shared-shop number
+  covering several lines included. The same rows are what `list_options`
   (S2.5.25k) returns to the Lens.
 - **Rules.** A pure function beside `evaluateRoad` lights § 4.5 from catalog conditions, the person's answers and the
   road's steps. The profile gains `waysPicked`; `lib/brain/evaluate.ts:130` also reads a Buy pick. A priced line alone
   lights nothing (the person might rent); a test proves it.
+- **Kept current as the rules change** (call 2, read with E). The tax-treatment entries are the part that moves:
+  proposed or unclear changes to the write-off rules are amber, dated, linked lines (call 6), and
+  each is re-checked before every release, so a change of law updates one catalog entry and every road follows.
 - **The Lens, later** (task list [9d] and [9g]; not built). Finding listed prices is now one shared feature for every
-  source, S2.5.25p (*live look-ups on the person's own account*), replacing S2.5.22p. Only after the person turns on web
+  source, S2.5.25p (*live look-ups on the person's own account*; since K2 B and his chat note of 2026-10-16, a vendor key or
+  a sign-in such as Google's is acceptable there, § 1), replacing S2.5.22p. Only after the person turns on web
   search or the browser behind its warning, and only when they ask (*"Find listed prices for Rent: Woodworking machines
   and tools"*), it reads only the one page they name, once per ask: no crawling, no cache. It may *propose* a Figure
   with `amountFrom: "link"`, the page, the words seen and the day; it counts only after the agree prompt.
@@ -380,8 +438,9 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
   `lib/engines/roads/v2026/types.ts:78`). The Lens look-up is S2.5.25p's request (the one named page, plus the person's
   own model), with its `SENT_ELSEWHERE` entry and privacy log line in that task.
 - **Privacy log lines** (`docs/privacy-log.md`, [Unreleased], one per pull request that adds them):
-  1. *"Added: for each start-up cost line of an idea, how you say you'd get it (already have it, buy, rent, lease, not
-     decided). The rules read it to show which tax pages apply. Deleted with the idea. Nothing is sent."*
+  1. *"Added: for each start-up cost line of an idea, how you say you'd get it (already have it, buy, rent, lease, use a
+     shared shop, not decided), and which lines a shared shop covers. The rules read it to show which tax pages apply.
+     Deleted with the idea. Nothing is sent."*
   2. *"Added: a start-up number can name the way it prices and, for rent or a lease, how often it is paid and how many
      times, as you typed it. Nothing is sent."*
   3. *"Added, if you say: whether a lease runs more than a year and what it covers is worth, whether you're registered
@@ -394,7 +453,8 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
 | Rule | How this design meets it |
 |---|---|
 | Information and options, never a verdict (CLAUDE.md:22-24) | Fixed way order, identical rows, *DotAmi doesn't pick one*, no difference line; help grouped by kind, alphabetical, *doesn't recommend or rank anyone*; new screens join the no-verdict walk |
-| Doesn't rank options by what it thinks matters to the person | **Collision, stated plainly:** the maintainer wants the Lens to answer "cheapest" and "strongest foundation"; this doc's screens say nothing about which costs less. Screens unchanged until call 11 (K7/K8) decides |
+| Doesn't rank options by what it thinks matters to the person | **Settled 2026-10-16 by K7 A and K8 A:** the Lens sorts only the person's own numbers by a measure the person names, said on the card, before tax, blanks counted; "strongest" is asked back, not judged; ways screens stay unsorted and say nothing about which costs less |
+| No timelines (K9 A, the maintainer's note of 2026-10-16, § 1) | No timeline or date forecast anywhere; the only times here are cited rule periods (records kept six years, a lease of more than one year) and periods the person types, none added up or projected |
 | Rules decide; the Lens never changes a catalog (:25-30) | Treatments, conditions, questions, places and registry cards are versioned catalogs; the Lens only proposes a number the person agrees to |
 | Every rule, rate, threshold, date cited (:31-40) | Every catalog line cited and read or tool-checked; quotes checked first (S2.5.22e); DotAmi's labels carry no quote marks; regulators, non-profits and cities get their own citation kinds |
 | Not legal or tax advice; never files (:41-43) | Class, election, passenger vehicle, return line and consumer-law reach are questions to take; Form T2145 linked, never filled |
@@ -417,7 +477,8 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
 - **Reusing published prices is unsettled, so a DotAmi-built rent-price list is not offered.** Rogers Rent-All has no
   terms page but a copyright line [S22]. CBRE's Calgary report "cannot be reproduced without prior written permission"
   [S31]. DOZR's terms forbid "any collection and use of any product listings, descriptions, or prices" [S25]. Mara's
-  prices rest on the same kind of reuse; asking each shop first removes the question (call 9).
+  prices rest on the same kind of reuse; asking each shop first removes the question (call 9 A2: the maintainer asks
+  them).
 - **Statistics Canada publishes only a price index** for equipment rental and leasing [S32], not dollar prices.
 - **Nobody here can say what a deduction is worth, or which way costs less after tax**, the Lens included: that needs
   the person's tax situation and a projection.
@@ -434,30 +495,45 @@ proof (S2.5.25l, a hairstylist road) must get ways, tax rows and *Where to ask* 
 
 ## 9. Calls for the maintainer
 
-Recommendations are to the maintainer; the product recommends nothing. Options, costs and risks for calls 2–9 are
-unchanged and stay in the pull request and the calls list that comes with this doc.
+Recommendations were to the maintainer; the product recommends nothing. Every call is now answered. Options, costs and
+risks stay in the pull request and the calls list that came with this doc. His notes are quoted word for word.
 
 1. **Where a real person's rent and lease prices come from. Answered 2026-10-15 (the maintainer): C**: own quotes plus
    the checklist and links to places that publish rent prices, now; the Lens finds listed prices on request later. His
    words begin "agreed. And not only this, but when they use the lense chat…" (full text in § 1). Built as registry
    cards (S2.5.25b) and the shared look-up (S2.5.25p); his comparison ask is S2.5.24.
-2. **How ways are kept and counted.** Unchanged. Recommended: A (one picked way per line, a number for each way, only
-   the picked way counts); E (staged) if the tax and legal pointers are wanted sooner.
-3. **How much more to ask.** Unchanged. Recommended: C (picks light cited cards, three follow-ups, the own-words box).
-4. **How rent and lease amounts are entered and shown.** Unchanged. Recommended: C (*Paid as you go* with period,
-   optional count, *your numbers multiplied*). The count is also what lets the Lens put Buy and Rent on one scale (§
-   4.10).
-5. **Which places appear in *Where to ask*.** Options unchanged. Recommended: C (government, regulators' directories,
-   Business Link Alberta). The kit changes only where rows live (keyed), so a job's own regulator can be one more row.
-6. **Proposed or unclear tax changes.** Unchanged. Recommended: B (an amber, dated line with no numbers).
-7. **Where the tax treatment lives.** Unchanged. Recommended: B (the write-offs catalog). The kit leans on B: those
-   entries already carry `provinces`, so asset-kind keys reach every road with no copy.
-8. **Which ways a line offers.** Unchanged. Recommended: A (Already have it, Buy, Rent, Lease; shared space through
-   *Where would you work?*).
-9. **Mara's example.** Unchanged. Recommended: A2 (credited prices after a short written OK from Rogers Rent-All,
-   Protospace and ENTS, emails the maintainer sends), with B shown until the OKs arrive.
+2. **How ways are kept and counted. Answered 2026-10-16 (the maintainer): A** (one picked way per line, a number for
+   each way, only the picked way counts), with his note: "I would like to do a combo of A & E, because A seems like it
+   could potentially be the most simple setup, but if we ad E-like tooling, then we could know how someone could write
+   of their tools (especially because even currently the canadian gov't is changing rules soon-ish on how quickly you
+   can write off buisness expenses." **The main session's reading of "a combo of A & E", for him to confirm or
+   correct:** A's shape, built in E's order. Stage 1 ships the ways, their tax treatment and *Where to ask*; stage 2
+   adds a number for each way (§ 10). The tax-treatment entries are kept current as the write-off rules change: a
+   proposed or unclear change is an amber, dated line linked to its official page (call 6), re-checked before every
+   release, feeding no number (§ 4.2, § 5).
+3. **How much more to ask. Answered 2026-10-16 (the maintainer): C** (picks light cited cards, three follow-ups, the
+   own-words box; § 4.5, § 4.8).
+4. **How rent and lease amounts are entered and shown. Answered 2026-10-16 (the maintainer): C** (*Paid as you go*
+   with period, optional count, *your numbers multiplied*; § 4.4). The count is also what lets the Lens put Buy and
+   Rent on one scale (§ 4.10).
+5. **Which places appear in *Where to ask*. Answered 2026-10-16 (the maintainer): C** (government, regulators'
+   directories, Business Link Alberta; § 4.6). The kit changes only where rows live (keyed), so a job's own regulator
+   can be one more row.
+6. **Proposed or unclear tax changes. Answered 2026-10-16 (the maintainer): B** (one amber, dated line per item, no
+   numbers or unread dates, feeding nothing), with his note: "of course a hyperlink to an official and reliable source
+   must be included and cited as well". So every amber line carries a link to the official page it rests on, cited, with
+   the day seen; a change with no official page to link to is not shown (§ 4.2, § 5).
+7. **Where the tax treatment lives. Answered 2026-10-16 (the maintainer): B** (the write-offs catalog). Those entries
+   already carry `provinces`, so asset-kind keys reach every road with no copy.
+8. **Which ways a line offers. Answered 2026-10-16 (the maintainer): B** (A, plus a *Use a shared shop* way covering
+   several lines; § 4.1). It adds about 1.5 days (task S2.5.22q) and one new stored shape: which lines a shared-shop
+   number covers. *Where would you work?* stays as a question and picks no way.
+9. **Mara's example. Answered 2026-10-16 (the maintainer): A2** (credited prices after a short written OK from Rogers
+   Rent-All, Protospace and ENTS). The maintainer sends the short written requests. Task S2.5.22o waits on their replies. The recommendation also showed B (Rent and Lease as named blanks with
+   links) until the OKs arrive; his pick doesn't say, so that stays open (§ 12).
 
-**10. New, from the kit: how does a line get its ways on a road nobody has written yet?** *Why it matters:* the
+**10. New, from the kit: how does a line get its ways on a road nobody has written yet? Answered 2026-10-16 (the
+maintainer): B** (by line kind, with a per-line override; already counted in S2.5.22f). *Why it mattered:* the
 maintainer said "it makes no sense building all of this out repeatedly for every single job"; tagging ways by hand on
 every line of every road is exactly that.
 
@@ -469,10 +545,11 @@ every line of every road is exactly that.
 - **C. By line kind and job code**, so a job could narrow its ways. +1 day. Risk: no source says which jobs rent or
   lease what, so choosing would be DotAmi's judgment, close to "never derive a fact".
 
-Recommended: **B**. It does what his words ask with the least judgment by DotAmi.
+Recommended then: **B**, which he picked.
 
 **11. Where call 1's new ask meets the binding rules (decided once, as K7 and K8 in [research-kit.md](research-kit.md)
-§ 10; answering K7 answers this).** The binding rule says DotAmi "does not rank options by what it thinks matters to the
+§ 10). Answered 2026-10-16 by K7 A** (with K8 A for "strongest" and K9 A for "fastest"; § 1, § 4.10). The options as
+they were asked follow. The binding rule says DotAmi "does not rank options by what it thinks matters to the
 person". Decision 3 already allows sorting by "one countable measure the person picks, always said on screen"
 (`future-cockpit.md:47-48`, :836-837), and the research found that consistent with `CLAUDE.md:22-24`. The options as
 they touch this doc:
@@ -487,29 +564,32 @@ they touch this doc:
 - **C. Screens also sort ways by the person's numbers** (= K7 C). Risk: the screen starts to look like a recommendation,
   and the verdict checks need rewriting.
 
-Recommended: **A** for "cheapest"; "fastest" and "strongest" follow K9 and K8 (nothing here carries a time, and
-DotAmi holds no measure of "foundation"). His call; this doc follows K7/K8.
+Recommended then: **A** for "cheapest"; "fastest" and "strongest" follow K9 and K8 (nothing here carries a time, and
+DotAmi holds no measure of "foundation"). He picked K7 A, K8 A and K9 A; this doc follows them.
 
 ## 10. Tasks
 
 | Id | Title | Done when | Days | Waits on |
 |---|---|---|---|---|
 | S2.5.22e | Re-check quotes; read the enhanced-deduction text | Every quote in § 4 found by `scripts/check-quotes.mjs` or read by a person, day recorded (PDFs S8, S29); anything not found dropped, not reworded; enhanced first-year rules and dates read in the enacted text, or recorded as not consolidated | 1 | — |
-| S2.5.22f | Ways catalog and line kinds | `lib/engines/ways/v2026/` with ways, line kinds, questions, ask-in-writing lists keyed by province (Lease cited; Rent in DotAmi's words); road 0 and road 1 lines carry a kind; validate refuses ways on fees and named lines with no kind; integrity green | 2 | 2, 8, 10, K1 |
-| S2.5.22g | Tax treatment entries | Rent, leasing (election and its "often do not" line), Class 12; vehicle 2026 amounts and "passenger vehicle" line; amber line under half-year; proposed items per call 6; entries keyed by asset kind; every citation read or tool-checked | 2 | 6, 7 |
-| S2.5.22h | Storage | `Figure` `wayId`/`rentEvery`/`rentCount` by ADD COLUMN; JSON keys via `readMapAnswers`; store key per way; `future-cockpit.md` § 7 updated; inventory, Delete menu, privacy log; migrate test passes | 1.5 | 2, 3, 4 |
-| S2.5.22i | Road evaluation and money | *To start*, *Paid as you go*, *not picked*, *said have*; receipts; no-double-count test; per-way rows readable by S2.5.25k's `list_options` | 1.5 | 2, 4 |
-| S2.5.22j | Screens: ways side by side | Step panel rows, agree prompt with way and period, money list, rent-price links fold, phone width; fold in `dotami-cockpit-folds` with inventory updated; ui-spec with round placeholders; browser test; no-verdict and journey walks; a words test fails on any `WAYS_WORDS` entry (cheaper, cheapest, save, saves, lowest, fastest, strongest, costs less) on a ways screen | 2.5 | 2, 4, 8 |
-| S2.5.22k | Rules your answers bring into view | Pure function plus `evaluate.ts` predicate; each card names its answer or step; records card from the records step; no licence card; tests: a priced line alone lights nothing, `gstTiming` never lights GST | 2 | 3, 6, 7 |
-| S2.5.22l | The new questions | § 4.8 in *Not told yet* only when needed; *I don't know*; `gstRegistered` only as its own answer; no passenger-vehicle question; own-words statement kept | 1.25 | 3 |
-| S2.5.22m | Where to ask and questions to take | Keyed help catalog (province, area, job, industry); new citation kinds in the type and `docs/engines/citations.md`; Find a Lawyer and CRA's current Liaison Officer page tool-checked; panel and four *Your plan* sections; print test; a road with no matching rows says so | 2.25 | 5, K1 |
-| S2.5.22n | Places that publish rent prices | **Now a view over the source registry (S2.5.25b):** cards for Rogers Rent-All, Protospace and ENTS, keyed by line kind and area; in the link check | 0 here | 1 (answered) |
-| S2.5.22o | Mara's ways | Rows per call 9, every number sourced and credited, periods in the shop's words; with A2, written OKs recorded first (about 0.25 day of the maintainer's time); example tests green | 1 | 9 |
-| S2.5.22p | Lens proposes a listed price | **Replaced by S2.5.25p** (one live look-up feature for every source); § 5's limits (one named page, no crawl, no cache, agree prompt, `never-automated` unreachable) are its done-when for prices | 0 here | 1 (answered) |
+| S2.5.22f | Ways catalog and line kinds | `lib/engines/ways/v2026/` with ways, line kinds, questions, ask-in-writing lists keyed by province (Lease cited; Rent in DotAmi's words); road 0 and road 1 lines carry a kind; validate refuses ways on fees and named lines with no kind; the `shared-space` way offered by default on equipment, small-tools and space; integrity green | 2 | — (calls 2, 8, 10 and K1 answered) |
+| S2.5.22g | Tax treatment entries | Rent, leasing (election and its "often do not" line), Class 12; vehicle 2026 amounts and "passenger vehicle" line; amber line under half-year; proposed items per call 6 B, one amber dated line each, with the official page's link and citation (an entry with no official page is refused), listed for re-check before every release; entries keyed by asset kind; every citation read or tool-checked | 2 | — (calls 6, 7 answered) |
+| S2.5.22h | Storage | `Figure` `wayId`/`rentEvery`/`rentCount` by ADD COLUMN; JSON keys via `readMapAnswers`; store key per way; `future-cockpit.md` § 7 updated; inventory, Delete menu, privacy log; migrate test passes | 1.5 | — (calls 2, 3, 4 answered) |
+| S2.5.22i | Road evaluation and money | *To start*, *Paid as you go*, *not picked*, *said have*; receipts; no-double-count test; per-way rows readable by S2.5.25k's `list_options` | 1.5 | — (calls 2, 4 answered) |
+| S2.5.22j | Screens: ways side by side | Step panel rows, agree prompt with way and period, money list, rent-price links fold, phone width; fold in `dotami-cockpit-folds` with inventory updated; ui-spec with round placeholders; browser test; no-verdict and journey walks; a words test fails on any `WAYS_WORDS` entry (cheaper, cheapest, save, saves, lowest, fastest, strongest, costs less) on a ways screen | 2.5 | — (calls 2, 4, 8 answered) |
+| S2.5.22k | Rules your answers bring into view | Pure function plus `evaluate.ts` predicate; each card names its answer or step; records card from the records step; no licence card; tests: a priced line alone lights nothing, `gstTiming` never lights GST | 2 | — (calls 3, 6, 7 answered) |
+| S2.5.22l | The new questions | § 4.8 in *Not told yet* only when needed; *I don't know*; `gstRegistered` only as its own answer; no passenger-vehicle question; own-words statement kept | 1.25 | — (call 3 answered) |
+| S2.5.22m | Where to ask and questions to take | Keyed help catalog (province, area, job, industry); new citation kinds in the type and `docs/engines/citations.md`; Find a Lawyer and CRA's current Liaison Officer page tool-checked; panel and four *Your plan* sections; print test; a road with no matching rows says so | 2.25 | — (calls 5, K1 answered) |
+| S2.5.22n | Places that publish rent prices | **Now a view over the source registry (S2.5.25b):** cards for Rogers Rent-All, Protospace and ENTS, keyed by line kind and area; in the link check | 0 here | — (call 1 answered) |
+| S2.5.22o | Mara's ways | Rows per call 9 A2, every number sourced and credited, periods in the shop's words; the three places' written OKs recorded first (the maintainer sends the short requests; about 0.25 day of his time); example tests green | 1 | Replies from Rogers Rent-All, Protospace and ENTS |
+| S2.5.22p | Lens proposes a listed price | **Replaced by S2.5.25p** (one live look-up feature for every source); § 5's limits (one named page, no crawl, no cache, agree prompt, `never-automated` unreachable) are its done-when for prices | 0 here | — (call 1 answered) |
+| S2.5.22q | Use a shared shop (call 8 B) | The `shared-space` way: one number kept on the line the person adds it on, `coveredBy` on each line it covers (JSON in `lineWays`, no new column); counted once in *Paid as you go*; covered lines say so; no-double-count test across covered lines; a test that answering *shared space* to *Where would you work?* picks no way; its tax row and *Your plan* question send membership treatment to the accountant; inventory and privacy log line 1 | 1.5 | S2.5.22h, S2.5.22i |
 
-About **17 build days before the Lens**; the kit's own tasks are counted in research-kit.md. With call 2 option E, a
-first stage of about 5 days (S2.5.22e, S2.5.22g, S2.5.22m and the pick part of S2.5.22f) ships the tax treatment, the
-pointers and *Where to ask* before any per-way number is kept. S2.5.22d (this doc) is done when calls 2–11 are answered.
+About **18.5 build days before the Lens** (17, plus 1.5 for call 8 B); the kit's own tasks are counted in
+research-kit.md. **Built in call 2's order (A's shape, E's order; the main session's reading, § 9):** stage 1, about 5
+days as call 2's option E costed it (S2.5.22e, S2.5.22g, S2.5.22m and the pick part of S2.5.22f), ships the ways, their
+tax treatment and *Where to ask* before any per-way number is kept; stage 2 adds a number per way and the rest
+(S2.5.22h–l, S2.5.22o, S2.5.22q). S2.5.22d (this doc) is done when it merges with these picks written in.
 
 ## 11. Not in scope
 
@@ -523,6 +603,7 @@ pointers and *Where to ask* before any per-way number is kept. S2.5.22d (this do
   story).
 - Ask-in-writing lists and *Where to ask* rows for provinces other than Alberta (the keys are ready; the reading isn't);
   typical numbers for a real person (phase-2 open item, `future-cockpit.md` § 13).
+- Any timeline or date forecast (K9 A, § 1).
 
 ## 12. Open questions (never stated as fact in the product)
 
@@ -540,12 +621,21 @@ pointers and *Where to ask* before any per-way number is kept. S2.5.22d (this do
   CRA's current Liaison Officer page.
 - **Rent-price sources beyond links:** whether any rental shop or marketplace offers an official API (application
   programming interface) or MCP (Model Context Protocol) server whose terms allow look-ups on the person's own account.
-  Not researched; the registry records it per source if found (call K2).
+  Not researched; the registry records it per source if found (K2 B allows such look-ups on the person's own account; his
+  chat note adds sign-ins such as Google's, § 1). Community and unofficial sources (influencers, job boards, Reddit, Facebook, Instagram,
+  Quora, LinkedIn and others) are the new research story S2.5.27, opened to fill the research kit's gaps
+  ([research-kit.md](research-kit.md)): nothing is planned from them yet, and each source's
+  own terms and DotAmi's citation rules decide later whether and how any could be used.
+- **Call 2's reading:** whether "a combo of A & E" means what § 9 says (A's shape, built in E's order, tax entries kept
+  current). The main session's reading; the maintainer can correct it.
+- **Adding up times (K9):** whether official times of one kind may be added up. Until he answers, nothing adds times.
 - **Keys:** whether competitive-landscape's own area answer (its call 6) may narrow *Where to ask*; whether six line
   kinds cover every road's lines.
 - **Makerspace membership tax treatment:** none found; the row sends it to the accountant. **Legal reach:** whether
   Alberta's consumer lease rules reach a business lease; what personal property registration means for a lessee.
-  **Permission:** whether Rogers Rent-All, Protospace and ENTS agree to their prices in Mara's example (call 9 A2).
+  **Permission:** whether Rogers Rent-All, Protospace and ENTS agree to their prices in Mara's example (call 9 A2; the
+  maintainer sends the requests). **Meanwhile:** whether Mara's example shows option B (Rent and Lease as named blanks
+  with links) until the replies arrive, as the recommendation said, or nothing new; his pick didn't say.
 
 ## 13. Sources (seen 2026-10-15; `*` = read through a summariser, re-check by tool; `†` = reported by the reviewer, not yet read)
 
