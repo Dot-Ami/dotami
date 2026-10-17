@@ -22,9 +22,11 @@ import { findVerdicts, VERDICT_WORDS } from "./verdict-words";
  * 4. no-time-words: no durations, "weeks", "fastest"… in DotAmi's text; Your date and official requirement
  *    text allowed through ./time-words.ts.
  * 5. every path ends somewhere honest (docs/architecture/use-cases.md, "how to test that every path ends
- *    somewhere"): a road is drawn and says why; a next step, an unanswered question or the road done; every
- *    fork side reaches the end; every question asked changes something when answered; the road is written
- *    for the idea's place; and the road is the one written for the idea, not a silent fallback.
+ *    somewhere"): a road is drawn and says why; a next step, an unanswered question or the road done, and
+ *    once every question is answered, a next step or the road done; every fork side reaches the end; every
+ *    question asked changes something when answered, and goes off *Not told yet* once answered; the road is
+ *    written for the idea's place; and the road drawn is the one written for the idea (typed) or the one the
+ *    person picked (picked), not a silent fallback.
  * 6. nothing derived: no province, kind of work, equipment purchase or job set without the person's words
  *    naming it or the person picking it; a picked future's unasked answers stay "not said"; ID-like digits
  *    never copied into DotAmi's own text.
@@ -39,6 +41,7 @@ export const INVARIANTS = [
   "ends:next-question-or-done",
   "ends:forks-reach-the-end",
   "ends:questions-change-something",
+  "ends:answered-question-goes",
   "ends:road-written-for-place",
   "ends:no-silent-fallback",
   "nothing-derived:province",
@@ -179,11 +182,21 @@ function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
   if (c.final.evaluation.steps.length === 0 || !plan.road.future || !plan.road.picked) {
     fail("ends:road-drawn", c.way, `${c.way}: no road drawn, or no line saying why (“${plan.road.picked}”)`);
   }
-  for (const [when, state] of [["as it opens", c.fresh], ["after the answers", c.final]] as const) {
+  // As it opens and after the fixed answers, *Not told yet* always asks something (the fixed answers never
+  // answer structure, equipment or "I'd incorporate at"), so the last state, with every question answered,
+  // is the one where a missing next step shows. A question still asked there was already answered (the
+  // check below), so it can't be the honest end: there, only a next step or the road done is.
+  const states = [["as it opens", c.fresh], ["after the answers", c.final], ...(c.answered ? [["after every question", c.answered] as const] : [])] as const;
+  for (const [when, state] of states) {
     const done = state.evaluation.steps.every((s) => s.state === "not-on-your-path" || s.status === "done");
-    if (state.next.length === 0 && state.notTold.length === 0 && !done) {
+    const asked = when === "after every question" ? 0 : state.notTold.length;
+    if (state.next.length === 0 && asked === 0 && !done) {
       fail("ends:next-question-or-done", `${c.way} › ${when}`, `${c.way} ${when}: no next step, no question asked, and the road isn't done`);
     }
+  }
+  // An answered question goes off *Not told yet*: one still asked after it was answered never ends.
+  for (const row of c.answered?.notTold ?? []) {
+    fail("ends:answered-question-goes", `${c.way} › ${row.id}`, `${c.way}: “Not told yet” still asks “${row.id}” after the person answered it (“${row.question}”)`);
   }
   for (const fork of c.road.forks) {
     for (const side of fork.sides) {

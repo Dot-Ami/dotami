@@ -17,6 +17,8 @@ const plants = vi.hoisted(() => ({
   deriveJob: false,
   /** The intake's scenario builder puts every idea in Alberta, whatever place the person answered. */
   moveToAlberta: false,
+  /** *Next on your road* shows nothing, whatever is left on the road. */
+  emptyNext: false,
 }));
 
 vi.mock("@/lib/front-door/start-future", async (importOriginal) => {
@@ -39,6 +41,7 @@ vi.mock("@/lib/cockpit/view", async (importOriginal) => {
     ...real,
     cockpitInput: (args: Parameters<typeof real.cockpitInput>[0]) =>
       real.cockpitInput(plants.deriveJob ? { ...args, job: oasisListForJob("72311.00") } : args),
+    nextOnYourRoad: (...args: Parameters<typeof real.nextOnYourRoad>) => (plants.emptyNext ? [] : real.nextOnYourRoad(...args)),
   };
 });
 
@@ -65,8 +68,8 @@ const ROAD_1_IDEA = idea("idea-v1-0046");
 const BC_IDEA = idea("idea-v1-0003");
 
 /** The failure keys of one invariant that the plant adds to the idea's own run. */
-function addedKeys(target: typeof ROAD_0_IDEA, plant: keyof typeof plants, invariant: InvariantId): string[] {
-  const keys = () => new Set(checkRun(runIdea(target, { probeQuestions: false })).filter((f) => f.invariant === invariant).map(gapKey));
+function addedKeys(target: typeof ROAD_0_IDEA, plant: keyof typeof plants, invariant: InvariantId, probeQuestions = false): string[] {
+  const keys = () => new Set(checkRun(runIdea(target, { probeQuestions })).filter((f) => f.invariant === invariant).map(gapKey));
   const before = keys();
   plants[plant] = true;
   const after = keys();
@@ -78,6 +81,7 @@ afterEach(() => {
   plants.dropPickedRoad = false;
   plants.deriveJob = false;
   plants.moveToAlberta = false;
+  plants.emptyNext = false;
 });
 
 describe("the harness fails on a planted product regression", () => {
@@ -92,6 +96,19 @@ describe("the harness fails on a planted product regression", () => {
     expect(addedKeys(ROAD_0_IDEA, "deriveJob", "nothing-derived:job")).toEqual([
       `${ROAD_0_IDEA.id} · nothing-derived:job · typed`,
       `${ROAD_0_IDEA.id} · nothing-derived:job · picked`,
+    ]);
+  });
+
+  it("Next on your road left empty while the road isn't done", () => {
+    // *Not told yet* always asks something after the fixed answers, so the check answers every question
+    // it asks first: with nothing left to ask, the road must show a next step or be done.
+    expect(addedKeys(ROAD_0_IDEA, "emptyNext", "ends:next-question-or-done", true)).toEqual([
+      `${ROAD_0_IDEA.id} · ends:next-question-or-done · typed › after every question`,
+      `${ROAD_0_IDEA.id} · ends:next-question-or-done · picked › after every question`,
+    ]);
+    expect(addedKeys(ROAD_1_IDEA, "emptyNext", "ends:next-question-or-done", true)).toEqual([
+      `${ROAD_1_IDEA.id} · ends:next-question-or-done · typed › after every question`,
+      `${ROAD_1_IDEA.id} · ends:next-question-or-done · picked › after every question`,
     ]);
   });
 

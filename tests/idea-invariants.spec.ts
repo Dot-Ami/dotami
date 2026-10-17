@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 
+import type { NotToldRow } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
@@ -69,6 +70,17 @@ describe("the harness's checks catch what they guard", () => {
   it("5. a question no answer changes, and a road drawn with no line saying why", () => {
     expect(added(road0Idea, "ends:questions-change-something", (run) => void run.typed!.questions.push({ id: "planted", changes: 0 }))).toBe(1);
     expect(added(road0Idea, "ends:road-drawn", (run) => void (run.typed!.final.plan.road.picked = ""))).toBe(1);
+  });
+
+  it("5. a question still asked after every question was answered, and no next step then", () => {
+    const left: NotToldRow = { id: "structure", question: "Planted?", unlocks: "", answer: "box" };
+    expect(added(road0Idea, "ends:answered-question-goes", (run) => void run.typed!.answered!.notTold.push(left))).toBe(1);
+    // With every question answered, a question still asked doesn't stand in for a next step.
+    expect(
+      added(road0Idea, "ends:next-question-or-done", (run) => {
+        run.typed!.answered = { ...run.typed!.answered!, next: [], notTold: [left] };
+      }),
+    ).toBe(1);
   });
 
   it("5. a road drawn that isn't the one written for the idea, with nothing saying so", () => {

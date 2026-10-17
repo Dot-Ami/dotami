@@ -84,6 +84,13 @@ export interface CockpitRun {
   fresh: { input: RoadEvaluationInput; evaluation: RoadEvaluation; notTold: NotToldRow[]; next: string[] };
   /** After every simulated answer. */
   final: { input: RoadEvaluationInput; evaluation: RoadEvaluation; notTold: NotToldRow[]; next: string[]; plan: PlanView };
+  /**
+   * After the fixed answers and then every question *Not told yet* still asks, answered one way each (only
+   * with the question probes on; null without). The fixed answers never answer some questions (structure,
+   * equipment, "I'd incorporate at"…), so *Not told yet* is never empty at `final`; here it can be, and
+   * then the road must show a next step or be done.
+   */
+  answered: { evaluation: RoadEvaluation; notTold: NotToldRow[]; next: string[] } | null;
   /** Each answer and the receipt it gave. */
   receipts: { answer: string; lines: string[] }[];
   /** Each question *Not told yet* asked at first, and the receipt lines of the first answer to it that changed something (0: none did). */
@@ -121,7 +128,8 @@ function ownNumbers(idea: Idea) {
 
 function figure(idea: Idea, change: Partial<FigureView>): FigureView {
   return {
-    id: `figure-${idea.id}-${change.kind}`,
+    // One figure per kind, and per cost line for quotes: the person can quote every line.
+    id: `figure-${idea.id}-${change.kind}${change.costLine ? `-${change.costLine.lineId}` : ""}`,
     ventureId: `venture-${idea.id}`,
     kind: "savings-for-start",
     periodStart: HARNESS_TODAY,
@@ -256,6 +264,31 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
   return [];
 }
 
+/**
+ * One question on *Not told yet*, answered all the way: a quote for every line not priced, a mark on every
+ * skill not marked, and for the rest the first answer `answersTo` gives.
+ */
+function answerEverything(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea: Idea, k: Kept) {
+  const own = ownNumbers(idea);
+  if (row.id === "cost-lines") {
+    for (const step of evaluation.steps) {
+      if (!road.steps.some((s) => s.id === step.stepId)) continue;
+      for (const c of step.costs.filter((c) => c.kind === "named-not-priced")) {
+        k.figures.push(figure(idea, { kind: "start-up-cost-line", amountCents: own.quoteCents, costLine: { roadId: road.id, stepId: step.stepId, lineId: c.lineId, amountFrom: "quote" } }));
+      }
+    }
+    return;
+  }
+  if (row.id === "skills") {
+    const marked = new Set(k.skillMarks.map((m) => m.skillItemId));
+    for (const item of new Set(road.steps.flatMap((s) => s.needs))) {
+      if (!marked.has(item)) k.skillMarks.push({ skillItemId: item, ownLabel: null, mark: "have" });
+    }
+    return;
+  }
+  answersTo(row, road, evaluation, idea, k.scenario)[0]?.(k);
+}
+
 /** The cockpit for one idea on one road: the person's answers, the lists, Compare and the plan. */
 function runCockpit(
   idea: Idea,
@@ -384,6 +417,23 @@ function runCockpit(
   });
   addPlan(planView);
 
+  // --- Then every question still asked, answered one way each, round after round (an answer can bring a
+  // new question: a fork picked opens its side's skills), until nothing is asked or nothing more can be.
+  let answered: CockpitRun["answered"] = null;
+  if (options.probeQuestions) {
+    const k = clone(kept);
+    let evaluation = finalEval;
+    let notTold = finalNotTold;
+    for (let round = 0; round < 6 && notTold.length > 0; round += 1) {
+      const before = JSON.stringify(notTold);
+      for (const row of notTold) answerEverything(row, road, evaluation, idea, k);
+      evaluation = evaluateRoad(inputOf(road, roadChosen, k));
+      notTold = notToldYet(inputOf(road, roadChosen, k), evaluation);
+      if (JSON.stringify(notTold) === before) break;
+    }
+    answered = { evaluation, notTold, next: nextOnYourRoad(evaluation, k.scenario).map((s) => s.stepId) };
+  }
+
   const months = finalEval.gauges.date?.monthsFromToday;
   const roadFees = road.steps.flatMap((s) => s.costs.flatMap((c) => (c.kind === "official-fee" ? [c.amountCents] : [])));
   const yours = [...plan.yours, own.savingsCents, ...(line ? [own.quoteCents] : []), ...(plan.incomeWantedCents === null ? [] : [plan.incomeWantedCents])];
@@ -393,6 +443,7 @@ function runCockpit(
     roadChosen,
     fresh: { input: freshInput, evaluation: freshEval, notTold: freshNotTold, next: freshNext },
     final: { input: finalInput, evaluation: finalEval, notTold: finalNotTold, next: finalNext, plan: planView },
+    answered,
     receipts,
     questions,
     ledger: {

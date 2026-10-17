@@ -97,6 +97,19 @@ export const KNOWN_GAPS: readonly KnownGap[] = [
     ideas: [100],
   },
   {
+    invariant: "ends:answered-question-goes",
+    subject: "picked › equipment",
+    kind: "bug",
+    story: MAINTAINERS_CALL,
+    why: "On a future picked on Pick a future, equipment is saved as not said (lib/front-door/start-future.ts). Answering “Are you buying equipment, a vehicle or tools?” in the cockpit sets the answer but leaves equipment on the not-said list (components/cockpit/cockpit-page.tsx, the equipment question's save), so road evaluation still reads it as unanswered and “Not told yet” keeps asking; the save drops the answer too (lib/db/parse-scenario-input.ts keeps no equipment answer while equipment is not said).",
+    ideas: [
+      1, 2, 6, 12, 14, 17, 19, 21, 23, 25, 26, 27, 31, 34, 39, 41, 44, 46, 48, 51, 55, 57, 62, 65, 68, 70, 71, 72, 74, 77, 81, 83, 87, 89, 90, 93,
+      95, 99, 104, 106, 108, 110, 116, 120, 122, 127, 131, 132, 134, 136, 137, 139, 141, 143, 144, 146, 147, 149, 151, 153, 155, 157, 159, 162,
+      168, 170, 174, 176, 187, 193, 244, 253, 256, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 291, 292, 293, 325, 326, 327, 328, 329,
+      333, 335, 336, 338, 339, 340, 341, 342, 343, 344, 345, 347, 348, 349, 350,
+    ],
+  },
+  {
     invariant: "no-time-words",
     subject: "plan › step step-shop-register-apprentice › summary",
     kind: "bug",
