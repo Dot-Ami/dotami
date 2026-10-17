@@ -32,7 +32,11 @@
  * applying only sometimes), its Register your business name panel (the blanks' reasons and sources) and its
  * money list (both of those); no other panel changes. Edited on 2026-10-17 for one sentence only, under "no
  * times": the apprentice road's Register as a Cabinetmaker apprentice panel, whose summary ends at "4 periods
- * (levels)." instead of going on ", each designed to take about a year." (the source's quote stays). The only cards allowed to change are the ones
+ * (levels)." instead of going on ", each designed to take about a year." (the source's quote stays). Edited
+ * again on 2026-10-17 for one sentence only (the second review of PR #182): road 0's two Incorporating panels
+ * (Alberta and British Columbia), whose "Your answers" line for an idea with no third-year estimate no longer
+ * says "set your own number to see this light", a light no number could give, but that it needs that
+ * estimate too (lib/brain/evaluate.ts computeNodeStates). The only cards allowed to change are the ones
  * that gained road 0's named start-up cost lines (docs/architecture/future-cockpit.md § 6, "The official
  * fees catalog and start-up cost lines as built"); with those seven lines taken out, they match too.
  */

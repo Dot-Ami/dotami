@@ -32,6 +32,7 @@ import { cockpitWords } from "@/lib/cockpit/words";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
+import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { clearScenarioBranch, defaultActiveBranches, setIncorporateAt, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
@@ -39,6 +40,7 @@ import { isBranchDecided } from "@/lib/scenarios/graph";
 import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
 import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
+const INCORPORATING = "stage-3a-incorporation-80k-net" satisfies CFENodeId;
 const FORK = "fork-eval-ending";
 const OWN = "step-eval-own";
 const EMPLOYED = "step-eval-employed";
@@ -339,6 +341,29 @@ describe("Not told yet", () => {
     expect(cockpitWords.questions.incorporateAt.why).toContain("third-year sales estimate");
     // With the estimate, an answer it reaches lights the step: the receipt says so.
     expect(answerReceipt(given, { ...given, scenario: setIncorporateAt(given.scenario, 90_000) })).not.toEqual([]);
+  });
+
+  // The second review of PR #182 (2026-10-17): a future picked on road 0 keeps no third-year estimate and
+  // nothing in the cockpit asks for one, so the row going away hid the dead end rather than fixing it. The
+  // step's own words (its card and its panel's "Your answers") now say the light needs that estimate too,
+  // instead of inviting a number no answer could make count. Giving one is the maintainer's call
+  // (docs/task-list.md, "Still listed for the maintainer"); this pins what the words say until then.
+  it("on a future picked on road 0, Incorporating says it needs a third-year estimate the idea doesn't have", () => {
+    const picked = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-road-0");
+    expect(picked.profile.targetRevenueY3).toBe(0);
+    const road0 = input({ road: generalRoadV2026, roadChosen: true, skillItems: [], scenario: picked });
+    const evaluation = evaluateRoad(road0);
+    expect(notToldYet(road0, evaluation).map((r) => r.id)).not.toContain("incorporate-at");
+    const reason = evaluation.rules.nodeReasons[INCORPORATING]!;
+    expect(reason).not.toMatch(/set your own number to see this light/i);
+    expect(reason).toMatch(/third-year revenue estimate reaches a number of your own/);
+    expect(reason).toMatch(/no third-year revenue estimate on this idea/);
+    // The panel's box still keeps a number (it is the person's), and the step then says what is missing.
+    const answered = { ...road0, scenario: setIncorporateAt(road0.scenario, 50_000) };
+    expect(answerReceipt(road0, answered)).toEqual([]);
+    expect(evaluateRoad(answered).rules.nodeReasons[INCORPORATING]).toBe(
+      "Check first: there's no third-year revenue estimate on this idea to compare with your own number ($50,000).",
+    );
   });
 
   // The review of PR #182 (2026-10-17): the rule also reads Incorporation timing. With Liability / SR&ED

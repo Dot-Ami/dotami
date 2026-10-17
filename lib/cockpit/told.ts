@@ -312,7 +312,9 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
   const incorporating = input.road.steps.find((s) => s.id === INCORPORATING_STEP);
   // Asked only when some answer would change the road (the design's "a Not told yet row once a sales number
   // is kept", § 3); its line says what the number is compared with. The step's own panel still takes the
-  // number at any time.
+  // number at any time, and without a third-year estimate the step says it needs one too. That is not a fix:
+  // a future picked on road 0 keeps no estimate and nothing in the cockpit asks for one, so there the step
+  // can't light at all (docs/task-list.md, "Still listed for the maintainer"; the second review of PR #182).
   if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null && incorporateAtChangesSomething(input, evaluation)) {
     rows.push({ id: "incorporate-at", question: q.incorporateAt.question, unlocks: q.incorporateAt.unlocks(incorporating.label), answer: "box" });
   }
