@@ -7,18 +7,24 @@ import type { OfficialFee } from "./types";
  * is changed here and nowhere else.
  *
  * Every source is a tool check (option B, docs/engines/citations.md): `node scripts/check-quotes.mjs`
- * found each quote below, word for word, on its live page on CHECKED_ON, and each fee's quotes hold its
- * amount as the page writes it. Nobody is recorded as having read these pages, so none has a read date.
- * The pages' titles and notes are the ones the roads and the incorporation routes already showed, so a
- * card that cites one looks exactly as before.
+ * found each quote below, word for word, on its live page on CHECKED_ON (or, for a fee added later, on
+ * its own day), and each fee's quotes hold its amount as the page writes it. Nobody is recorded as having
+ * read these pages, so none has a read date. The pages' titles and notes are the ones the roads and the
+ * incorporation routes already showed, so a card that cites one looks exactly as before.
  *
- * Not here: Alberta's registry fees (incorporating, registering a name, annual returns, the NUANS report).
- * They sit in the Registry Agent Product Catalogue, which stops tools with a human check; they stay named
- * blanks until a person reads them there. Never take an amount from a search result's summary.
+ * Not here: Alberta's registry fees (incorporating, registering a name, annual returns). They sit in the
+ * Registry Agent Product Catalogue, which stops tools with a human check (checked again on 2026-10-15:
+ * its open.alberta.ca page answers a tool with Cloudflare's "Just a moment…" and a 403, and the catalogue
+ * itself is a PDF, which the quote check doesn't read); alberta.ca's own pages on registering a name and on
+ * registry agents say a government fee exists but give no amount. They stay named blanks until a person
+ * reads them in the catalogue. Never take an amount from a search result's summary.
  */
 
 /** The day scripts/check-quotes.mjs found every quote below on its page. */
 const CHECKED_ON = "2026-10-12";
+
+/** The day the first written future's blanks were looked up again (build list item 19). */
+const BLANKS_CHECKED_ON = "2026-10-15";
 
 interface Page {
   title: string;
@@ -66,6 +72,13 @@ const PAGES = {
     url: `${TRADESECRETS}/become-certified/trades-qualifier-programs/qualify-for-alberta-certification/program-details/`,
     note: "Qualifying for an Alberta certificate with a recognized trade certificate from outside Alberta.",
   },
+  applyOnline: {
+    title: "Apply Online (Tradesecrets, Alberta)",
+    authority: "provincial",
+    jurisdiction: "AB",
+    url: `${TRADESECRETS}/mytradesecrets/apply-online/`,
+    note: "The apprenticeship and certification programs and services you can apply for online, each with its fee.",
+  },
   blueSeal: {
     title: "Blue Seal Program (Tradesecrets, Alberta)",
     authority: "provincial",
@@ -84,8 +97,13 @@ const PAGES = {
 
 /** A citation of one page: the quotes the tool found there on CHECKED_ON. Never a read date. */
 function checked(page: Page, ...quotes: string[]): EngineCitation {
+  return checkedOn(CHECKED_ON, page, ...quotes);
+}
+
+/** The same, for a fee whose page the tool checked on another day. */
+function checkedOn(day: string, page: Page, ...quotes: string[]): EngineCitation {
   const { title, authority, jurisdiction, url, note } = page;
-  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: CHECKED_ON, quotes } };
+  return { title, authority, jurisdiction, url, note, toolCheck: { checkedOn: day, quotes } };
 }
 
 export const officialFeesV2026: readonly OfficialFee[] = [
@@ -166,6 +184,19 @@ export const officialFeesV2026: readonly OfficialFee[] = [
     place: "CA-AB",
     amountCents: 150_00,
     citation: checked(PAGES.blueSeal, "There is a $150.00 non-refundable application fee."),
+  },
+  {
+    // The Red Seal page says to "pay for" the application but gives no amount; the Apply Online page lists
+    // it, under its programs for experienced workers. That application is the one a certified person makes
+    // (the Red Seal page's "Alberta Journeypersons and Qualification Certificate holders"); for an
+    // apprentice writing the exam in their final period the page names no fee, so a total leaves it out
+    // unless the person applies that way.
+    id: "fee-ab-red-seal-application",
+    label: "Applying to write the Red Seal exam in Alberta after you're certified (an Interprovincial Red Seal Application)",
+    place: "CA-AB",
+    amountCents: 150_00,
+    onlyIf: "You apply to write the Red Seal exam after you're certified, through an Interprovincial Red Seal Application.",
+    citation: checkedOn(BLANKS_CHECKED_ON, PAGES.applyOnline, "Red Seal Application | $150", "Programs for Experienced Workers"),
   },
 
   // ---- Alberta: registering a business ----------------------------------------------------------------

@@ -162,10 +162,11 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
     // Nothing real can supply one person's savings, so there are none, and no difference is worked out.
     expect(m.savingsCents).toBeNull();
     expect(m.differenceCents).toBeNull();
-    // The catalog's count of lines not priced yet: 30 with only the machines line priced (the appendix said 4).
-    expect(m.notPricedLines).toBe(30);
+    // The catalog's count of lines not priced yet: 29 with only the machines line priced (the appendix said 4;
+    // 30 until 2026-10-15, when the Red Seal application became an official fee that applies only sometimes).
+    expect(m.notPricedLines).toBe(29);
     expect(view.money.value).toBe(`${formatMoney(m.officialFeesCents)} official fees (${m.officialFeeLines} lines) · $14,993.62 your numbers (1 line)`);
-    expect(view.money.lines).toEqual(["1 official fee applies only sometimes, not added up", "30 not priced yet", "savings: not given yet"]);
+    expect(view.money.lines).toEqual(["2 official fees apply only sometimes, not added up", "29 not priced yet", "savings: not given yet"]);
     // Today's catalog: seven official fees on her path, $1,220.
     expect(view.money.value.startsWith("$1,220 official fees (7 lines)")).toBe(true);
   });
@@ -180,7 +181,7 @@ describe("the cockpit run on Mara's answers gives the ui-spec's receipts", () =>
       "Because you marked 9 skills, the government's list for “Cabinetmakers” now reads 4 have, 2 learning, 1 not yet, 37 not marked.",
     ]);
     expect(story.costs).toContain(
-      "Because you told us your number for “Woodworking machines and tools” on “Open your own shop” is $14,993.62, 30 cost lines are not priced yet.",
+      "Because you told us your number for “Woodworking machines and tools” on “Open your own shop” is $14,993.62, 29 cost lines are not priced yet.",
     );
     // No savings, so no savings part: a part is shown only when its answer changed something.
     expect(story.savings).toBeUndefined();

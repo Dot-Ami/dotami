@@ -199,6 +199,14 @@ The incorporation routes are in the list every check reads
 ([`lib/engines/all-citations.ts`](../../lib/engines/all-citations.ts)), so running the script with no
 arguments checks them again with the rest.
 
+On 2026-10-15 (build list item 19) three more citations on the first written future were checked:
+Tradesecrets' *Apply Online* page for the Red Seal application fee (*"Red Seal Application | $150"*, a
+list item whose own vertical bars are part of the quote, and *"Programs for Experienced Workers"*), and
+alberta.ca's *Register a business name* for two named lines' reasons (the pointer to the Registry Agent
+Product Catalogue, and that the Business Name Report is provided by NUANS members). The script's
+whole-word match was also shown to fail where it should: *"Red Seal Application | $15"* was reported NOT
+FOUND on the same page.
+
 ## When a cited page moves
 
 On 2026-10-13 every distinct address the catalogs cite (104, from

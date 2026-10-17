@@ -178,9 +178,13 @@ and the maintainer's six decisions of 2026-10-11:
     fees, cost-line names, legal requirements (in the catalog 2026-10-12, every source a tool check,
     `lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts`; listed on *Pick a future* since 2026-10-13, the
     maintainer's yes to listing a road no person has read, its card saying so in amber)
+    - [x] Its exam, Red Seal and registry blanks looked up again on official pages (2026-10-15): the Red
+      Seal application is $150 on Tradesecrets' *Apply Online* page, a fee that applies only sometimes;
+      every other blank's label says why it has no amount
     - [ ] Still open on it: Alberta's registry fees (the Registry Agent Product Catalogue stops
-      tools, so a person reads them); the apprentice wage percentages per period (they need a typed
-      field); a person's read of each page, which turns its "checked by a tool" into a read
+      tools, so a person reads them); the Work Experience exam rewrite and panel interview (no page gives
+      an amount); the apprentice wage percentages per period (they need a typed field); a person's read of
+      each page, which turns its "checked by a tool" into a read
   - [x] The government's skills list (OaSIS) for the job you pick, tagged *your pick of job*; the job
     you pick is kept on the future (an occupation code and the day you picked it: one added column each)
     (2026-10-12: picked from the cockpit's Skills list, names only; today's road lists its GST/HST

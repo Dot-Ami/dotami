@@ -203,11 +203,12 @@ The told list shows, for each of Mara's answers, what it unlocked, through the s
 - The Steps gauge: *1 of 17 marked done* (the appendix wrote *0 of 22* before she marked one; road 1 has
   17 steps since 2026-10-14, when *Keep your records from day one* was added; 16 before).
 - The money gauge, plain arithmetic: *$1,220 official fees (7 lines) · $14,993.62 Mara's numbers (1 line)*,
-  *1 official fee applies only sometimes, not added up*, *30 not priced yet*, *savings: not given yet* (no
-  difference is worked out without savings; the appendix wrote *4 lines not priced yet*; road 1 names 31
-  lines to price, 30 once the machines line is priced).
+  *2 official fees apply only sometimes, not added up*, *29 not priced yet*, *savings: not given yet* (no
+  difference is worked out without savings; the appendix wrote *4 lines not priced yet*; road 1 names 30
+  lines to price, 29 once the machines line is priced; until 2026-10-15 it named 31, when the Red Seal
+  application became an official fee that applies only sometimes).
 - Her start-up cost: *"Because you told us your number for “Woodworking machines and tools” on “Open your
-  own shop” is $14,993.62, 30 cost lines are not priced yet."* No savings part: a part is shown only when
+  own shop” is $14,993.62, 29 cost lines are not priced yet."* No savings part: a part is shown only when
   its answer changed something.
 - No what-if part (since 2026-10-15): she has no what-if, so *What Mara did* tells only what she answered.
   Until then it said *"Because you tried first-year sales of $610,300 (your what-if, not a forecast), 1 rules

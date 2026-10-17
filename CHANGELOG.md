@@ -403,6 +403,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   glossary, which is a document, not a screen.
 
 ### Changed
+- **The Red Seal application fee is priced: $150** — on *From apprentice to your own shop (Alberta)*, the
+  Red Seal step's application fee was a blank because the Red Seal page gives no amount; Tradesecrets'
+  *Apply Online* page lists it at $150, so it is now an official fee (checked by a tool on 2026-10-15). It
+  applies only if you apply after you're certified, which is how the Red Seal page describes the
+  application, so no total adds it. The road's other fee blanks now say on the card why they have no
+  amount: the Trades Qualifier work-experience rewrite and panel interview (their pages give none), the
+  government fee to register a name (only in Alberta's Registry Agent Product Catalogue, which tools can't
+  open), the registry agent's own service fee, and the Business Name Report (provided by NUANS members).
 - **A second idea no longer passes through *About you*** (issue #38) — the intake opens on *About you*
   only for a person with no saved idea yet; anyone with one starts on the screen they came for, and
   **← Back** still reaches *About you*. Decided on the server when the page is drawn, so the first screen

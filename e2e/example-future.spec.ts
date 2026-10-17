@@ -111,7 +111,7 @@ test("door 3 opens Mara's example: the banner, her words, the road, the gauges; 
   await expect(goalBar(page).getByRole("button", { name: /^Mara's date/ })).toContainText("Mara's");
   await expect(told(page)).toContainText("things Mara told DotAmi");
   await expect(page.getByRole("region", { name: "What Mara did" })).toContainText("Mara's skill marks");
-  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("30 not priced yet");
+  await expect(goalBar(page).getByRole("button", { name: /^Start-up money/ })).toContainText("29 not priced yet");
   await expect(goalBar(page).getByRole("button", { name: /^Skills/ })).toContainText("Mara's pick of job: 4 have · 2 learning · 1 not yet");
   await expect(stage(page, "Open your own shop")).toBeVisible();
   // No what-if on open (the maintainer's pick A, 2026-10-15): the box is empty and the "not a forecast"
