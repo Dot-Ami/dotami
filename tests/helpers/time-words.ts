@@ -17,30 +17,60 @@ import { normaliseSpaces } from "./text-pieces";
  * checks each allowance is still in use, so a stale one can't sit here unnoticed.
  */
 
+// The units of a duration, singular (a pattern adds "s?" where plurals are meant). "season" and "quarter"
+// are left out of the plain list: "your busy season" and "a calendar quarter" (the CRA's GST tests) name a
+// time of year, not a wait; "lasts a season" is caught below.
+const UNIT = "(?:minute|hour|day|week|fortnight|month|semester|year|decade)";
+// Number words: "eighteen", "twenty-four", "a dozen", "a few".
+const NUMBER_WORD =
+  "(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a hundred|a dozen|dozens of|a few|a couple of|several|many)";
+
 export const TIME_PATTERNS: readonly { phrase: string; pattern: RegExp }[] = [
-  // "3 weeks", "6-8 months", "18 months", "2 years", "40 hours", and joined up: "a 30-day window", "6-month".
+  // "3 weeks", "6-8 months", "18 months", "2 years", "40 hours", "6 mo.", and joined up: "a 30-day window",
+  // "6-month".
   {
     phrase: "a duration",
-    pattern: /\b\d[\d,.]*(?:\s*(?:-|–|to)\s*\d[\d,.]*)?(?:\s*|\s*-\s*)(?:minutes?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)\b/i,
+    pattern: new RegExp(
+      `\\b\\d[\\d,.]*(?:\\s*(?:-|–|to)\\s*\\d[\\d,.]*)?(?:\\s*|\\s*-\\s*)(?:${UNIT}s?|hrs?|yrs?|mos?\\b\\.?)(?![a-z])`,
+      "i",
+    ),
   },
-  // "two weeks", "a few months", "several years", "a one-year course". Not "a year" on its own: "$70,000 a
-  // year" is a rate, not a wait (see "a year, as a wait" below).
+  // "two weeks", "eighteen months", "twenty-four months", "a few months", "several years", "a one-year
+  // course". Not "a year" on its own: "$70,000 a year" is a rate, not a wait (see "a year, as a wait").
   {
     phrase: "a duration in words",
-    pattern:
-      /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a few|a couple of|several|many)(?:\s+|\s*-\s*)(?:minutes?|hours?|days?|weeks?|months?|years?)\b/i,
+    pattern: new RegExp(`\\b${NUMBER_WORD}(?:[\\s-]+${NUMBER_WORD})*(?:\\s+|\\s*-\\s*)${UNIT}s?\\b`, "i"),
   },
+  // "a year-long course", "month-long".
+  { phrase: "a duration in words", pattern: new RegExp(`\\b${UNIT}s?[\\s-]long\\b`, "i") },
+  // A decade, a fortnight and a semester are only ever lengths of time.
+  { phrase: "a duration in words", pattern: /\b(?:decades?|fortnights?|semesters?)\b/i },
+  // "lasts a season", "for a season".
+  { phrase: "a duration in words", pattern: /\b(?:last|lasts|lasting|for|over|in|within|takes?|taking)\s+(?:a|one|the|a whole|a full)\s+seasons?\b/i },
   // "in a year", "within a week of applying", "plan for a month", "about a year", "allow half a year".
   {
     phrase: "a year, as a wait",
-    pattern:
-      /\b(?:in|within|for|over|under|after|about|around|roughly|nearly|almost|up to|at least|at most|allow|take|takes|taking)\s+(?:a|an|one|half an?|a half)\s+(?:minute|hour|day|week|month|year)\b/i,
+    pattern: new RegExp(
+      `\\b(?:in|within|for|over|under|after|about|around|roughly|nearly|almost|up to|at least|at most|allow|take|takes|taking)\\s+(?:a|an|one|half an?|a half|a whole|a full)\\s+${UNIT}\\b`,
+      "i",
+    ),
   },
-  { phrase: "half a year", pattern: /\bhalf an?\s+(?:minute|hour|day|week|month|year)\b|\b(?:an?|one)\s+(?:minute|hour|day|week|month|year)\s+and a half\b/i },
+  // "over the next year", "within the year", "in the coming months".
+  {
+    phrase: "a year, as a wait",
+    pattern: new RegExp(`\\b(?:in|within|over|during|by)\\s+(?:the|this|next|the next|the coming|the following)\\s+(?:few\\s+)?${UNIT}s?\\b`, "i"),
+  },
+  // "It takes a while", "a long time", "in no time".
+  { phrase: "a while", pattern: /\b(?:a (?:little |long |short |good |great )?while|a long time|a short time|in no time|no time at all)\b/i },
+  { phrase: "half a year", pattern: new RegExp(`\\bhalf an?\\s+${UNIT}\\b|\\b(?:an?|one)\\s+${UNIT}\\s+and a half\\b`, "i") },
   { phrase: "takes about", pattern: /\btakes?\s+(?:about|around|roughly|approximately|up to|at least|only|just|\d)/i },
   { phrase: "how long", pattern: /\bhow long\b/i },
-  { phrase: "months to", pattern: /\b(?:days?|weeks?|months?|years?)\s+(?:to|until|till|before)\b/i },
-  { phrase: "fastest", pattern: /\b(?:fastest|quickest|soonest|shortest|faster|quicker|sooner|speediest)\b/i },
+  { phrase: "months to", pattern: new RegExp(`\\b${UNIT}s?\\s+(?:to|until|till|before)\\b`, "i") },
+  // "fastest" in other words: "quick", "quickly", "speedy", "rapid", "swift". Not "fast food".
+  {
+    phrase: "fastest",
+    pattern: /\b(?:fast(?:er|est)?(?!\s+food)|quick(?:er|est|ly)?|soonest|sooner|shortest|speed(?:y|ier|iest|ily)|rapid(?:ly)?|swift(?:ly|er|est)?)\b/i,
+  },
   { phrase: "timeline", pattern: /\btime[- ]?lines?\b/i },
   { phrase: "time to", pattern: /\btime to (?:open|launch|start|finish|complete|get|market|revenue|profit)\b/i },
   { phrase: "ETA", pattern: /\b(?:ETA|estimated time|time estimate)\b/i },
@@ -65,6 +95,11 @@ export const YOUR_DATE_ALLOWANCES: readonly TimeAllowance[] = [
     text: "Add your month and year to count the months to it",
     where: "lib/cockpit/words.ts gauges.date.invite",
     why: "Your date: the person's own month, which only they set; DotAmi counts the calendar months to it and nothing else.",
+  },
+  {
+    text: "Only you set it. DotAmi counts the months to it and nothing else.",
+    where: "lib/cockpit/words.ts lists.dateHelp and questions.date.why (shown beside Your date's box)",
+    why: "Your date: says the month is the person's own and that the count of calendar months to it is all DotAmi does with it.",
   },
 ];
 

@@ -26,6 +26,28 @@ export interface KnownGap {
 
 const MAINTAINERS_CALL = "none yet: found by S2.5.29b, the maintainer's call";
 
+/** A sentence a screen shows straight from a words file that the no-times check finds a time in. */
+export interface ShownWordsGap {
+  /** The file and the string's path in it, as tests/idea-invariants.spec.ts names it. */
+  where: string;
+  kind: "bug";
+  story: string;
+  why: string;
+}
+
+/**
+ * The same ratchet for the words files (tests/idea-invariants.spec.ts reads every plain string in them):
+ * the spec fails on a sentence with a time not listed here, and on a listed one that no longer has one.
+ */
+export const SHOWN_WORDS_GAPS: readonly ShownWordsGap[] = [
+  {
+    where: "lib/front-door/words.ts frontDoorWords.doors.dream.body",
+    kind: "bug",
+    story: MAINTAINERS_CALL,
+    why: "The front door's first door (components/discovery/landing-page.tsx) says “Say where you want to be in a few years, in your own words”: a span of time DotAmi writes, though it asks about the person's own future rather than how long something takes. Whether it breaks “no times at all” (2026-10-17) is the maintainer's call.",
+  },
+];
+
 export const KNOWN_GAPS: readonly KnownGap[] = [
   {
     invariant: "ends:road-written-for-place",

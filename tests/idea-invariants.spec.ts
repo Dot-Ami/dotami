@@ -12,6 +12,12 @@ import type { NotToldRow } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
 import { roadsV2026 } from "@/lib/engines/roads/v2026";
 
+import * as cockpitFile from "@/lib/cockpit/words";
+import * as frontDoorFile from "@/lib/front-door/words";
+import * as landscapeFile from "@/lib/landscape/words";
+import * as roadsFile from "@/lib/roads/words";
+
+import { SHOWN_WORDS_GAPS } from "./fixtures/ideas/known-gaps";
 import { fakeIdDigits, IDEAS_V1 } from "./fixtures/ideas/v1";
 import { checkRun, reachesTheEnd, sameOutput, type InvariantId } from "./helpers/idea-invariants";
 import { runDigest, runIdea, type IdeaRun } from "./helpers/idea-pipeline";
@@ -30,6 +36,14 @@ function added(idea: typeof road0Idea, invariant: InvariantId, change: (run: Ide
   return failures(run, invariant) - before;
 }
 const plant = (text: string) => (run: IdeaRun) => void run.pieces.push({ where: "typed › plan › planted", text, kind: "dotami" });
+
+/** Every string in a module's exports, with its path ("frontDoorWords.doors.dream.body"). Functions are skipped. */
+function plainStrings(value: unknown, path = ""): { path: string; text: string }[] {
+  if (typeof value === "string") return [{ path, text: value }];
+  if (Array.isArray(value)) return value.flatMap((v, i) => plainStrings(v, `${path}[${i}]`));
+  if (value && typeof value === "object") return Object.entries(value).flatMap(([k, v]) => plainStrings(v, path ? `${path}.${k}` : k));
+  return [];
+}
 
 describe("the harness's checks catch what they guard", () => {
   it("1. a verdict word or phrase in DotAmi's words", () => {
@@ -149,10 +163,37 @@ describe("the words no-times lets through", () => {
       "Allow half a year for this.",
       "about a year",
       "This is the shortest path to opening.",
+      // The second review's probes (2026-10-17): every one passed before.
+      "in eighteen months",
+      "Most people finish in twenty-four months.",
+      "a year-long course",
+      "This usually takes a decade.",
+      "Allow a fortnight for the reply.",
+      "Most people finish in 6 mo.",
+      "It takes a while.",
+      "Over the next year you register.",
+      "Within the year you register.",
+      "a semester of classes",
+      "lasts a season",
+      "in no time",
+      "Do this quickly.",
+      "The quick route to opening.",
+      "speedy path",
+      "a rapid start",
     ].filter((text) => findTimeWords(text).length === 0);
     expect(missed).toEqual([]);
-    // A rate or a frequency is not a wait.
-    expect(["$70,000 a year, before tax", "a domain name that renews every year", "once a year"].flatMap((t) => findTimeWords(t))).toEqual([]);
+    // A rate or a frequency is not a wait, and a season of the year isn't a duration.
+    expect(
+      [
+        "$70,000 a year, before tax",
+        "a domain name that renews every year",
+        "once a year",
+        "your busy season",
+        "Year 1 sales",
+        "for a fresh start",
+        "fast food",
+      ].flatMap((t) => findTimeWords(t)),
+    ).toEqual([]);
   });
 
   it("finds every time on the written roads either listed as official requirement text or a known gap", () => {
@@ -181,6 +222,18 @@ describe("the words no-times lets through", () => {
       ),
     );
     expect(OFFICIAL_TIME_ALLOWANCES.filter((a) => !roadTexts.has(a.text)).map((a) => a.where)).toEqual([]);
+  });
+
+  it("finds no time in a plain sentence of the words files, past the listed ones", () => {
+    // The harness reads what the lib functions it calls write; a screen also shows sentences straight from
+    // these files (the front door's doors, the cockpit's help lines). Each plain string is read here; the
+    // functions among them are read when the harness calls them, and whole screens by the browser sweep (29e).
+    const files = { "lib/front-door/words.ts": frontDoorFile, "lib/cockpit/words.ts": cockpitFile, "lib/landscape/words.ts": landscapeFile, "lib/roads/words.ts": roadsFile };
+    const withTimes = Object.entries(files).flatMap(([file, mod]) =>
+      plainStrings(mod).flatMap(({ path, text }) => (findTimeWords(text).length > 0 ? [`${file} ${path}`] : [])),
+    );
+    // known-gaps.ts SHOWN_WORDS_GAPS: each one the maintainer's call.
+    expect(withTimes).toEqual(SHOWN_WORDS_GAPS.map((gap) => gap.where));
   });
 
   it("lets through only Your date's own words, still in the cockpit's words", () => {
