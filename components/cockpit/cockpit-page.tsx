@@ -10,7 +10,7 @@ import { DatePanel, MoneyListPanel, SkillsListPanel, type SkillKey } from "@/com
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { LandscapePanel } from "@/components/cockpit/landscape-panel";
 import { NextOnYourRoad } from "@/components/cockpit/next-on-your-road";
-import { LAYERS_ID, OverlaySwitches } from "@/components/cockpit/overlay-switches";
+import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { StepPanel } from "@/components/cockpit/step-panel";
 import { StructureLadderRail } from "@/components/cockpit/structure-ladder-rail";
 import { TemplatesRail } from "@/components/cockpit/templates-rail";
@@ -116,8 +116,8 @@ import Link from "next/link";
  *
  * 2026-10-17, the calm first view (S2.5.30c; future-cockpit.md § 2, "First visit and return visits as built";
  * docs/ui-spec/README.md, "The layout rule"): a first visit shows the road, the goal and the next steps, and
- * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead, the extra
- * layers), with only Road and Skills on and one coach line; a return visit opens as the person left it, the
+ * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead), with only
+ * Road and Skills on (every overlay switch drawn) and one coach line; a return visit opens as the person left it, the
  * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
  * Look closer menu. The header and the goal bar are one block, "the top"; the overlay row, the map and Next
  * on your road one block, "the road", where the folded legend and what-if bar keep their one button each.
@@ -875,7 +875,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   const aheadIds = roadAheadColumnIds(road, OPEN_COLUMNS);
   const foldAllControls = [
     RAIL_ID,
-    ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID, WHAT_IF_BAR_ID, LAYERS_ID, ...aheadIds] : []),
+    ...(evaluation ? [GOAL_BAR_ID, LEGEND_ID, WHAT_IF_BAR_ID, ...aheadIds] : []),
     ...(showRightSlot ? [PANEL_ID] : []),
   ].join(" ");
   // While a sheet covers the page on a phone, everything behind it is inert.
@@ -1183,7 +1183,6 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 overlays={overlays}
                 counts={overlayCounts(road, evaluation, scenario)}
                 onToggle={(overlay) => setOverlays((o) => ({ ...o, [overlay]: !o[overlay] }))}
-                layers={{ folded: folds.layers, onToggle: () => toggle("layers") }}
                 roadAhead={
                   !folds.roadAhead && aheadIds.length > 0 ? { controls: aheadIds.join(" "), onFold: () => toggle("roadAhead") } : undefined
                 }

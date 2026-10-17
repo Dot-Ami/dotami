@@ -13,7 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GoalBar } from "@/components/cockpit/goal-bar";
-import { LAYERS_ID, OverlaySwitches } from "@/components/cockpit/overlay-switches";
+import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
 import { roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
 import { THIS_VISIT_ID, WHAT_IF_BAR_ID, WhatIfBar, WhatIfShowButton } from "@/components/cockpit/what-if-bar";
 import {
@@ -60,16 +60,17 @@ afterEach(() => {
 });
 
 describe("the remembered answers", () => {
-  it("are seven folds: the rail, the goal bar, the panel, the legend, the what-if bar, the road ahead and the extra layers", () => {
-    expect([...FOLD_REGIONS]).toEqual(["rail", "goal", "panel", "legend", "whatIf", "roadAhead", "layers"]);
-    expect(ALL_OPEN).toEqual({ rail: false, goal: false, panel: false, legend: false, whatIf: false, roadAhead: false, layers: false });
-    expect(ALL_FOLDED).toEqual({ rail: true, goal: true, panel: true, legend: true, whatIf: true, roadAhead: true, layers: true });
+  it("are six folds: the rail, the goal bar, the panel, the legend, the what-if bar and the road ahead", () => {
+    // The overlay switches don't fold (a review of the calm first view, 2026-10-17): every one is drawn.
+    expect([...FOLD_REGIONS]).toEqual(["rail", "goal", "panel", "legend", "whatIf", "roadAhead"]);
+    expect(ALL_OPEN).toEqual({ rail: false, goal: false, panel: false, legend: false, whatIf: false, roadAhead: false });
+    expect(ALL_FOLDED).toEqual({ rail: true, goal: true, panel: true, legend: true, whatIf: true, roadAhead: true });
     expect(COCKPIT_FOLDS_KEY).toBe("dotami-cockpit-folds");
   });
 
   it("a first visit (nothing stored) opens calm: only the goal bar open, the panel open when it holds something", () => {
     // The layout rule's third line (docs/ui-spec/README.md): the road, the goal and the next steps.
-    expect(FIRST_VISIT).toEqual({ rail: true, goal: false, panel: false, legend: true, whatIf: true, roadAhead: true, layers: true });
+    expect(FIRST_VISIT).toEqual({ rail: true, goal: false, panel: false, legend: true, whatIf: true, roadAhead: true });
     expect(FIRST_VISIT_MEMORY).toEqual({ folds: FIRST_VISIT, overlays: null, coachDismissed: false });
     expect(parseMemory(null)).toEqual(FIRST_VISIT_MEMORY);
     expect(parseMemory("")).toEqual(FIRST_VISIT_MEMORY);
@@ -83,8 +84,10 @@ describe("the remembered answers", () => {
       ...ALL_FOLDED,
       whatIf: false,
       roadAhead: false,
-      layers: false,
     });
+    // A "layers" answer stored while the overlay switches folded (a few hours of 2026-10-17) is read as
+    // nothing: there is no such fold any more.
+    expect(parseFolds('{"rail":true,"layers":true}')).toEqual({ ...ALL_OPEN, rail: true });
     // A person who had everything open before the calm first view (2026-10-17) still has it all open.
     const before = '{"rail":false,"goal":false,"panel":false,"legend":false,"whatIf":false}';
     expect(parseMemory(before)).toEqual({ folds: ALL_OPEN, overlays: null, coachDismissed: false });
@@ -94,14 +97,13 @@ describe("the remembered answers", () => {
     expect(parseFolds("not json {")).toEqual(ALL_OPEN);
     expect(parseFolds("[true,true]")).toEqual(ALL_OPEN);
     expect(parseFolds("null")).toEqual(ALL_OPEN);
-    expect(parseFolds('{"rail":true,"goal":"true","panel":1,"legend":true,"whatIf":"yes","roadAhead":true,"layers":0,"other":true}')).toEqual({
+    expect(parseFolds('{"rail":true,"goal":"true","panel":1,"legend":true,"whatIf":"yes","roadAhead":true,"other":true}')).toEqual({
       rail: true,
       goal: false,
       panel: false,
       legend: true,
       whatIf: false,
       roadAhead: true,
-      layers: false,
     });
     // Each region on its own: a truthy value that isn't `true` never folds it.
     for (const region of FOLD_REGIONS) {
@@ -128,16 +130,14 @@ describe("the remembered answers", () => {
   it("are written as one small JSON object and read back the same", () => {
     const storage = fakeStorage();
     vi.stubGlobal("localStorage", storage);
-    const folds = { rail: true, goal: false, panel: true, legend: false, whatIf: true, roadAhead: false, layers: true };
+    const folds = { rail: true, goal: false, panel: true, legend: false, whatIf: true, roadAhead: false };
     writeMemory({ folds, overlays: null, coachDismissed: false });
-    expect(storage.items.get(COCKPIT_FOLDS_KEY)).toBe(
-      '{"rail":true,"goal":false,"panel":true,"legend":false,"whatIf":true,"roadAhead":false,"layers":true}',
-    );
+    expect(storage.items.get(COCKPIT_FOLDS_KEY)).toBe('{"rail":true,"goal":false,"panel":true,"legend":false,"whatIf":true,"roadAhead":false}');
     expect(readMemory()).toEqual({ folds, overlays: null, coachDismissed: false });
     // The overlays and the coach line only once the person changed them.
     writeMemory({ folds, overlays: { skills: true, money: true, rules: false }, coachDismissed: true });
     expect(storage.items.get(COCKPIT_FOLDS_KEY)).toBe(
-      '{"rail":true,"goal":false,"panel":true,"legend":false,"whatIf":true,"roadAhead":false,"layers":true,"overlays":{"skills":true,"money":true,"rules":false},"coachDismissed":true}',
+      '{"rail":true,"goal":false,"panel":true,"legend":false,"whatIf":true,"roadAhead":false,"overlays":{"skills":true,"money":true,"rules":false},"coachDismissed":true}',
     );
     expect(readMemory()).toEqual({ folds, overlays: { skills: true, money: true, rules: false }, coachDismissed: true });
   });
@@ -161,7 +161,7 @@ describe("the remembered answers", () => {
     expect(() => writeMemory(FIRST_VISIT_MEMORY)).not.toThrow();
   });
 
-  it("says when all seven are folded, for the header's button", () => {
+  it("says when all six are folded, for the header's button", () => {
     expect(allFolded(ALL_FOLDED)).toBe(true);
     expect(allFolded(ALL_OPEN)).toBe(false);
     expect(allFolded(FIRST_VISIT)).toBe(false);
@@ -186,7 +186,6 @@ describe("the fold buttons' words", () => {
     expect(words.roadAhead.show).toBe("Show the road ahead");
     expect(words.roadAhead.title(6)).toBe("The road ahead · 6 steps");
     expect(words.roadAhead.title(1)).toBe("The road ahead · 1 step");
-    expect(words.layers).toEqual({ fold: "Fold the extra layers", show: "Show more layers" });
     expect(words.railSheet).toEqual({ open: "Venture details", close: "Close venture details" });
     expect(words.roadRegion).toBe("The road");
   });
@@ -374,36 +373,47 @@ describe("the what-if bar folds, with This visit, to one line (2026-10-13)", () 
   });
 });
 
-describe("the extra layers fold behind one button (the calm first view, 2026-10-17)", () => {
+describe("every overlay switch is drawn, on or off (a review of the calm first view, 2026-10-17)", () => {
   const counts = { skillsListed: 3, costLines: 4, rulesCards: 2 };
-  const draw = (overlays: { skills: boolean; money: boolean; rules: boolean }, folded: boolean) =>
-    renderToStaticMarkup(
-      createElement(OverlaySwitches, { overlays, counts, onToggle: () => {}, layers: { folded, onToggle: () => {} } }),
+  const draw = (overlays: { skills: boolean; money: boolean; rules: boolean }) =>
+    renderToStaticMarkup(createElement(OverlaySwitches, { overlays, counts, onToggle: () => {} }));
+
+  it("a first visit: Skills on, Money and Rules & tax off, all three switches drawn, so each layer is one click away", () => {
+    const html = draw(FIRST_OVERLAYS);
+    const pressed = (label: string) => new RegExp(`aria-pressed="(true|false)"[^>]*>${label}<`).exec(html)?.[1];
+    expect(pressed(cockpitWords.road.skills)).toBe("true");
+    expect(pressed(cockpitWords.road.money)).toBe("false");
+    expect(pressed(escapeAttribute(cockpitWords.road.rules))).toBe("false");
+    // No button folds or shows them.
+    expect(html).not.toContain("Show more layers");
+    expect(html).not.toContain("data-fold-control");
+  });
+
+  it("switching layers on or off never takes a switch off the page", () => {
+    for (const overlays of [
+      { skills: false, money: false, rules: false },
+      { skills: true, money: true, rules: true },
+      { skills: false, money: true, rules: false },
+    ]) {
+      const html = draw(overlays);
+      expect(html.match(/aria-pressed=/g)?.length, JSON.stringify(overlays)).toBe(3);
+    }
+  });
+
+  it("a layer with nothing on this road is drawn off, can't be pressed, and its count says why", () => {
+    const html = renderToStaticMarkup(
+      createElement(OverlaySwitches, {
+        overlays: { skills: true, money: false, rules: true },
+        counts: { skillsListed: 3, costLines: 4, rulesCards: 0 },
+        onToggle: () => {},
+      }),
     );
-
-  it("folded: Road and Skills, and a button to show the rest; open: every switch and a button to fold them", () => {
-    const folded = draw(FIRST_OVERLAYS, true);
-    expect(folded).toContain(cockpitWords.road.skills);
-    expect(folded).not.toContain(cockpitWords.road.money);
-    expect(folded).not.toContain(escapeAttribute(cockpitWords.road.rules));
-    expect(folded).toContain(`>${words.layers.show}<`);
-    expect(folded).toContain(`aria-controls="${LAYERS_ID}"`);
-    const open = draw(FIRST_OVERLAYS, false);
-    expect(open).toContain(cockpitWords.road.money);
-    expect(open).toContain(escapeAttribute(cockpitWords.road.rules));
-    expect(open).toContain(`>${words.layers.fold}<`);
-  });
-
-  it("folded, a layer that is on keeps its switch in sight, so it can be switched off where it is", () => {
-    const html = draw({ skills: true, money: true, rules: false }, true);
-    expect(html).toContain(cockpitWords.road.money);
-    expect(html).not.toContain(escapeAttribute(cockpitWords.road.rules));
-  });
-
-  it("drawn without the fold (as before), every switch shows", () => {
-    const html = renderToStaticMarkup(createElement(OverlaySwitches, { overlays: FIRST_OVERLAYS, counts, onToggle: () => {} }));
-    expect(html).toContain(cockpitWords.road.money);
-    expect(html).not.toContain(words.layers.show);
+    const rules = new RegExp(`<button[^>]*>${escapeAttribute(cockpitWords.road.rules)}<`).exec(html)?.[0] ?? "";
+    expect(rules).toContain('aria-pressed="false"');
+    expect(rules).toContain('disabled=""');
+    expect(html).toContain(cockpitWords.road.rulesCount(0));
+    // The others still switch.
+    expect(html.match(/disabled=""/g)?.length).toBe(1);
   });
 });
 

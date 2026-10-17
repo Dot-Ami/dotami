@@ -23,7 +23,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
-import { lookCloser, overlayOn, showLegend, showMoreLayers, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+import { lookCloser, overlayOn, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
 
 /** The run's own data file, for the test that draws an idea on another road. */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
@@ -100,7 +100,6 @@ test("every region folds and opens with its own named button, and the cockpit re
   await showLegend(page);
   await showWhatIfBar(page);
   await showRoadAhead(page);
-  await showMoreLayers(page);
   const inYourWords = page.getByRole("complementary", { name: "Venture details" }).getByText("In your words", { exact: true });
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
   const stepsLine = gauge(page, "Steps").getByText(/^next on your road:/);
@@ -128,13 +127,12 @@ test("every region folds and opens with its own named button, and the cockpit re
   await fold(page, "Fold the what-if bar", "Show the what-if bar");
   await expect(tryBox).toBeHidden();
 
-  // The road ahead and the extra layers (2026-10-17).
+  // The road ahead (2026-10-17).
   const incorporating = stage(page, "Incorporating");
   await expect(incorporating).toBeVisible();
   await button(page, "Fold the road ahead").click();
   await expect(incorporating).toBeHidden();
   await expect(page.getByRole("button", { name: /^Show the road ahead: / })).toHaveAttribute("aria-expanded", "false");
-  await fold(page, "Fold the extra layers", "Show more layers");
 
   // The panel: a step opened, then folded; its strip names it, and it stays folded when another step is picked.
   await stage(page, "Sole Prop activation").click();
@@ -147,7 +145,7 @@ test("every region folds and opens with its own named button, and the cockpit re
 
   // A reload remembers them all.
   await page.reload();
-  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar", "Show more layers"]) {
+  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar"]) {
     await expect(button(page, name)).toHaveAttribute("aria-expanded", "false");
   }
   await expect(incorporating).toBeHidden();
@@ -169,8 +167,6 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(tryBox).toBeVisible();
   await page.getByRole("button", { name: /^Show the road ahead: / }).click();
   await expect(incorporating).toBeVisible();
-  await button(page, "Show more layers").click();
-  await expect(page.getByRole("group", { name: "Overlays" }).getByRole("button", { name: /^Rules & tax/ })).toBeVisible();
 
   // The header folds them all at once, and opens them all again.
   await button(page, "Fold all panels").click();
@@ -179,7 +175,6 @@ test("every region folds and opens with its own named button, and the cockpit re
     "Show goal and gauges",
     "Show the legend",
     "Show the what-if bar",
-    "Show more layers",
     "Show the panel: Sole Prop activation",
   ]) {
     await expect(button(page, name)).toBeVisible();
@@ -263,7 +258,6 @@ test("folding or showing a region from the keyboard leaves focus on the button t
   await showLegend(page);
   await showWhatIfBar(page);
   await showRoadAhead(page);
-  await showMoreLayers(page);
 
   // With no panel open, "Fold all panels" names only regions that are on the page.
   const named = async () => (await button(page, "Fold all panels").getAttribute("aria-controls"))!.split(" ");
@@ -280,7 +274,6 @@ test("folding or showing a region from the keyboard leaves focus on the button t
     ["Fold the panel", "Show the panel: Sole Prop activation"],
     ["Fold the legend", "Show the legend"],
     ["Fold the what-if bar", "Show the what-if bar"],
-    ["Fold the extra layers", "Show more layers"],
     ["Fold the road ahead", "Show the road ahead"],
   ];
   // The folded road ahead's name goes on to say what it holds.
@@ -305,6 +298,38 @@ test("folding or showing a region from the keyboard leaves focus on the button t
   await button(page, "Show all panels").click();
   await expect(button(page, "Fold venture details")).toBeVisible();
   expect(await rail.evaluate((el) => el.scrollTop)).toBe(scrolled);
+});
+
+test("a layer switch keeps keyboard focus when it switches its layer off, on a return visit that had the extra layers folded", async ({ page }) => {
+  // A review of the calm first view (2026-10-17) found focus dropped to the page's body here: the Rules & tax
+  // switch, on and so still drawn while the extra layers were folded, removed itself when switched off. The
+  // switches no longer fold (every one is drawn), so a stored "layers" answer is read as nothing.
+  await page.addInitScript(() => {
+    try {
+      if (window.localStorage.getItem("dotami-cockpit-folds") === null) {
+        window.localStorage.setItem(
+          "dotami-cockpit-folds",
+          JSON.stringify({ rail: true, legend: true, whatIf: true, roadAhead: true, layers: true, overlays: { skills: true, money: true, rules: true } }),
+        );
+      }
+    } catch {
+      // A page with no storage of its own: nothing to do.
+    }
+  });
+  const ventureId = await saveIdea(page, "Invented — layer focus test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const overlays = page.getByRole("group", { name: "Overlays" });
+  for (const label of ["Money", "Rules & tax"]) {
+    const toggle = overlays.getByRole("button", { name: new RegExp(`^${label}`) });
+    await expect(toggle, label).toHaveAttribute("aria-pressed", "true");
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    await expect(toggle, `${label} switched off`).toHaveAttribute("aria-pressed", "false");
+    await expect(toggle, `${label} keeps focus`).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(toggle, `${label} switched on again`).toHaveAttribute("aria-pressed", "true");
+    await expect(toggle, `${label} still has focus`).toBeFocused();
+  }
 });
 
 test("between 768 and 1023 px, a step's drawer leaves the header's buttons free to click", async ({ page }) => {
@@ -503,10 +528,14 @@ test.describe("phone width (issue #4)", () => {
     expect(await onTop(page.getByText(/^Information, not legal or tax advice/))).toBe(true);
 
     // The fold buttons are at least 32 px tall on a phone, and so are the first visit's show buttons
-    // (2026-10-17), Look closer and the coach line's Got it.
-    for (const name of ["Fold goal and gauges", "Show the legend", "Show the what-if bar", "Show more layers", "Got it"]) {
+    // (2026-10-17), Look closer, the coach line's Got it and the overlay switches.
+    for (const name of ["Fold goal and gauges", "Show the legend", "Show the what-if bar", "Got it"]) {
       const b = (await button(page, name).boundingBox())!;
       expect(b.height, name).toBeGreaterThanOrEqual(32);
+    }
+    for (const label of ["Skills", "Money", "Rules & tax"]) {
+      const b = (await page.getByRole("group", { name: "Overlays" }).getByRole("button", { name: new RegExp(`^${label}`) }).boundingBox())!;
+      expect(b.height, label).toBeGreaterThanOrEqual(32);
     }
     const look = (await goalBar(page).getByRole("button", { name: "Look closer" }).boundingBox())!;
     expect(look.height, "Look closer").toBeGreaterThanOrEqual(32);

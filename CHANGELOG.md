@@ -58,8 +58,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   now shows the road, your goal and its gauges, and your next three steps, with one tip line (*Start
   anywhere…*, put away with *Got it*). Folded, each with one button that says what it shows: the venture
   details rail, the map's legend, the what-if bar, the road's later columns (one column, *The road ahead · 6
-  steps*, naming them) and the Money and Rules & tax switches (*Show more layers*). Only Road and Skills are
-  on at first (Rules & tax started on until now). The goal bar's *Compare* and *Others in this line of work*
+  steps*, naming them). Only Road and Skills are on at first (Rules & tax started on until now); the Money and
+  Rules & tax switches are drawn beside them, one click away (a switch with nothing on the road, such as
+  *Rules & tax · 0 cards* on the apprentice road, is drawn off and can't be pressed). The goal bar's *Compare* and *Others in this line of work*
   are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a
   menu to a screen reader. Nothing was removed. A return visit opens the way you left it, including the
   layers you last had on, remembered in this browser only. Mara's example opens the same calm way, banner

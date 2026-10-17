@@ -637,7 +637,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     key: "dotami-cockpit-folds",
     name: "How you left the cockpit",
     holds:
-      "Yes-or-no answers about the cockpit's screen only: whether the venture details, the goal bar, the right-hand panel, the map's legend, the what-if bar, the road ahead and the extra layers are folded; since 2026-10-17 also which of the Skills, Money and Rules & tax layers you last had on, and whether you put away the first visit's tip. Written only once you fold, open or switch something. Nothing about you or your ideas.",
+      "Yes-or-no answers about the cockpit's screen only: whether the venture details, the goal bar, the right-hand panel, the map's legend, the what-if bar and the road ahead are folded; since 2026-10-17 also which of the Skills, Money and Rules & tax layers you last had on, and whether you put away the first visit's tip. Written only once you fold, open or switch something. Nothing about you or your ideas.",
     lasts:
       "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens as a first visit again, but the old answers stay in the app's own folder.",
   },

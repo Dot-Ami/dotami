@@ -263,8 +263,6 @@ export const cockpitWords = {
       showNamed: (labels: readonly string[], steps: number) =>
         `Show the road ahead: ${labels.join(" · ")} (${count(steps, "step", "steps")})`,
     },
-    /** The overlay switches past Skills (Money, Rules & tax), folded on a first visit (2026-10-17). */
-    layers: { fold: "Fold the extra layers", show: "Show more layers" },
     all: { fold: "Fold all panels", show: "Show all panels" },
     /** Below 768 px the rail is a sheet, opened from the header. */
     railSheet: { open: "Venture details", close: "Close venture details" },

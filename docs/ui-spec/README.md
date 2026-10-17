@@ -39,8 +39,8 @@ screen may get. Every screen, and every feature added to one, follows these four
 the goal bar, one block. *The rail*. *The road*: its overlay row, the map, and *Next on your road* at its foot,
 one block; the legend and the what-if bar sit in it and count as regions of their own while open. *The
 panel*, while it holds something. The example's banner on Mara's page, and the site's footer. On a first
-visit the rail is a folded strip from 768 px (a header button below), and the legend, the what-if bar, the
-road's later columns and the extra overlay switches are each one button: 4 regions from 768 px, 3 on a phone
+visit the rail is a folded strip from 768 px (a header button below), and the legend, the what-if bar and the
+road's later columns are each one button: 4 regions from 768 px, 3 on a phone
 ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)).
 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)

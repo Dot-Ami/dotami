@@ -1,7 +1,7 @@
 /**
  * The calm first view (2026-10-17, S2.5.30c; docs/architecture/future-cockpit.md § 2, "First visit and return
  * visits"): every browser test starts in a fresh browser, so every cockpit it opens is a first visit, with the
- * rail, the legend, the what-if bar, the road ahead and the extra layers folded, Rules & tax off, and Compare
+ * rail, the legend, the what-if bar and the road ahead folded, Money and Rules & tax off, and Compare
  * and Others in this line of work behind the goal bar's "Look closer" menu. These open what a test needs, the
  * way a person would, with the same buttons; nothing here changes what a test then checks.
  */
@@ -44,21 +44,21 @@ export const showLegend = (page: Page) => show(page, "Show the legend", "Fold th
 export const showWhatIfBar = (page: Page) => show(page, "Show the what-if bar", "Fold the what-if bar");
 /** The road's later columns. */
 export const showRoadAhead = (page: Page) => show(page, "Show the road ahead", "Fold the road ahead");
-/** The Money and Rules & tax switches. */
-export const showMoreLayers = (page: Page) => show(page, "Show more layers", "Fold the extra layers");
-
-/** Switches an overlay on (Skills, Money or Rules & tax), showing the extra switches first. */
+/** Switches an overlay on (Skills, Money or Rules & tax); every switch is drawn, on or off. */
 export async function overlayOn(page: Page, label: "Skills" | "Money" | "Rules & tax") {
-  await showMoreLayers(page);
+  await cockpitSettled(page);
   const overlays = page.getByRole("group", { name: "Overlays" });
   const button = overlays.getByRole("button", { name: new RegExp(`^${label}`) });
+  // A layer with nothing on this road (road 1 has no rules and tax cards) has a switch that can't be
+  // pressed: there is nothing for it to show.
+  if (await button.isDisabled()) return;
   if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
   await expect(button).toHaveAttribute("aria-pressed", "true");
 }
 
 /**
  * Everything the cockpit had open before the calm first view: the rail, the legend, the what-if bar, the road
- * ahead, every overlay switch, and Rules & tax on (it started on until 2026-10-17).
+ * ahead, and Rules & tax on (it started on until 2026-10-17).
  */
 export async function openTheCockpit(page: Page) {
   await showRail(page);
@@ -89,7 +89,6 @@ export async function startAsAReturnVisit(page: Page) {
             legend: false,
             whatIf: false,
             roadAhead: false,
-            layers: false,
             overlays: { skills: false, money: false, rules: true },
             coachDismissed: true,
           }),

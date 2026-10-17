@@ -42,8 +42,8 @@ person is asked).
 - **Keeps: how you left the cockpit's screen, now also the layers you last had on and the first visit's tip
   put away. In this browser only; nothing in the data file, nothing sent. (2026-10-17.)** The calm first view
   (S2.5.30c) keeps more answers under the same browser-storage key as before, `dotami-cockpit-folds`
-  (localStorage, [`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)): two more folds (the road ahead and the
-  extra overlay switches), which of the Skills, Money and Rules & tax layers were last on, and whether the
+  (localStorage, [`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)): one more fold (the road ahead), which of
+  the Skills, Money and Rules & tax layers were last on, and whether the
   tip at the top of the road was put away. Yes-or-no answers about the screen only, nothing about the person
   or their ideas, written only once the person folds, opens or switches something. A browser that refuses
   storage gets the calm first visit every time. Cleared with the browser's site data; in the desktop app each

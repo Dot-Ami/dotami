@@ -12,7 +12,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 
-import { lookCloserItems, showMoreLayers } from "./cockpit-calm";
+import { lookCloserItems } from "./cockpit-calm";
 
 // Road 0 (today's general road) counted from its own data: its ten map stages, the three "before you
 // open" steps added on 2026-10-12 and Keep your records from day one (2026-10-14), so the Steps gauge
@@ -93,14 +93,16 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Steps")).toContainText("next on your road: “Register your business name, if you use one”");
 
   // The overlays: Road is always on. A first visit has only Road and Skills on (the calm first view,
-  // 2026-10-17; until then Rules & tax started on); Money and Rules & tax wait behind "Show more layers".
+  // 2026-10-17; until then Rules & tax started on). Money and Rules & tax are off with their switches drawn,
+  // so the rules and tax cards are one click away (a review of the calm first view found them two).
   await expect(overlays(page).getByText("always on")).toBeVisible();
   await expect(overlays(page).getByRole("button", { name: /^Skills/ })).toHaveAttribute("aria-pressed", "true");
   const rules = overlays(page).getByRole("button", { name: /^Rules & tax/ });
-  await expect(rules).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Write-off: / })).toHaveCount(0);
-  await showMoreLayers(page);
+  await expect(rules).toBeVisible();
   await expect(rules).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show more layers" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Write-off: / })).toHaveCount(0);
   await rules.click();
   await expect(rules).toHaveAttribute("aria-pressed", "true");
   const lever = page.getByRole("button", { name: /^Write-off: .*, opens detail$/ }).first();
@@ -215,8 +217,11 @@ test("the calm first view: the road, the goal and the next steps, everything els
   const coach = page.getByRole("note", { name: "A first look" });
   await expect(coach).toHaveText(/^Start anywhere\. Each thing you tell us lights up part of the road\. Click anything to see where it comes from\./);
 
-  // Folded, each with the one button that shows it: the rail, the legend, the what-if bar, the road ahead
-  // and the extra layers. Nothing is gone: each opens with one click and its content is there.
+  // Folded, each with the one button that shows it: the rail, the legend, the what-if bar and the road
+  // ahead. Nothing is gone: each opens with one click and its content is there. Every overlay switch is
+  // drawn, Money and Rules & tax off (2026-10-17, after a review found them behind a second click).
+  await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "false");
   await expect(button("Fold venture details")).toBeHidden();
   await expect(page.getByRole("group", { name: "Legend" })).toBeHidden();
   await expect(page.getByRole("region", { name: "What-if" })).toBeHidden();

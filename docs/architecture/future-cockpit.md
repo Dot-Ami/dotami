@@ -417,7 +417,8 @@ road, the goal and the next steps, with everything else folded one click away. N
 - **A first visit** is a browser with nothing remembered for the cockpit (`lib/cockpit/folds.ts`
   `FIRST_VISIT`): the rail folded (its strip from 768 px; the header's *Venture details* below), the legend
   and the what-if bar folded, the road's columns after the first two folded into *The road ahead · N steps*,
-  the Money and Rules & tax switches folded behind *Show more layers*, and only *Road* and *Skills* on. The
+  and only *Road* and *Skills* on, every overlay switch drawn (Money and Rules & tax off, each one click
+  away). The
   goal bar is open with its gauges and their invitations, and the coach line from the design sits under the
   overlay row with *Got it*, which puts it away for good in this browser.
 - **What is not built from the design:** the rail does not open with the *Not told yet* list on a first visit
@@ -430,13 +431,17 @@ road, the goal and the next steps, with everything else folded one click away. N
 - **Folded means one button, not a line.** The folded legend and what-if bar are hidden whole, each with its
   *Show* button at the end of *Next on your road*, under the map where they were (while a what-if is on,
   that button is followed by *Your what-if, not a forecast* and its number). The folded road ahead is one
-  column naming the later columns; the folded layers are one button at the end of the overlay row, and a
-  layer that is on keeps its switch in sight.
+  column naming the later columns.
+- **The overlay switches don't fold.** For a few hours on 2026-10-17 Money and Rules & tax folded behind
+  *Show more layers*. A review found that this put the rules and tax cards, on by default until that day,
+  two clicks away, and that a switch left the page when it was switched off with the layers folded, taking
+  keyboard focus with it. Every switch is drawn again; only the layer is off, as the design asks. A switch
+  whose layer has nothing on the road (road 1's *Rules & tax · 0 cards*) is drawn off and can't be pressed.
 - **Blocks.** The header and the goal bar are one block, *the top*; the overlay row, the map and *Next on
   your road* are one block, *the road*, inside which the legend and the what-if bar are regions of their own
   while open (docs/ui-spec/README.md, "The cockpit's regions").
 - **Return visits.** Whatever the person folds, opens or switches is remembered in this browser under the
-  same key as before, `dotami-cockpit-folds`: the seven folds, the overlays last on (*the last overlay used
+  same key as before, `dotami-cockpit-folds`: the six folds, the overlays last on (*the last overlay used
   is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written
   until the person changes something. A value stored before 2026-10-17 reads its new folds as open, so a
   person who had everything open still has. The privacy inventory lists what the key holds.

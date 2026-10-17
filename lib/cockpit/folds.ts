@@ -5,13 +5,14 @@ import type { Overlays } from "@/lib/cockpit/view";
  * future-cockpit.md § 2, "Folding and phone width" and "First visit and return visits"): which regions
  * they folded, the overlays they last had on, and whether they put the first visit's coach line away.
  *
- * Seven fold answers, true meaning folded: the left rail, the goal bar, the right-hand panel, the map's
- * legend, the what-if bar under the map, the road ahead (the road's later columns) and the extra layers
- * (the Money and Rules & tax switches).
+ * Six fold answers, true meaning folded: the left rail, the goal bar, the right-hand panel, the map's
+ * legend, the what-if bar under the map and the road ahead (the road's later columns).
  *
  * - The what-if bar (with "This visit") joined on 2026-10-13, so that every region of the cockpit folds.
- * - The road ahead and the extra layers joined on 2026-10-17 with the calm first view (S2.5.30c), and so did
- *   the overlays and the coach line.
+ * - The road ahead joined on 2026-10-17 with the calm first view (S2.5.30c), and so did the overlays and the
+ *   coach line. The Money and Rules & tax switches folded too for a few hours that day, behind "Show more
+ *   layers"; a review found that put the rules and tax cards two clicks away and dropped keyboard focus when
+ *   a switch left the page, so every switch is drawn again and a stored "layers" answer is read as nothing.
  *
  * A first visit (nothing stored yet) opens calm: the road, the goal and the next steps, everything else
  * folded one click away (`FIRST_VISIT`). A return visit opens the way the person left it. An answer stored
@@ -25,11 +26,11 @@ import type { Overlays } from "@/lib/cockpit/view";
  * everything, so a damaged value can never hide a region.
  */
 
-export type FoldRegion = "rail" | "goal" | "panel" | "legend" | "whatIf" | "roadAhead" | "layers";
+export type FoldRegion = "rail" | "goal" | "panel" | "legend" | "whatIf" | "roadAhead";
 export type Folds = Readonly<Record<FoldRegion, boolean>>;
 
 /** In the order the regions sit on the screen, left to right and top to bottom. */
-export const FOLD_REGIONS: readonly FoldRegion[] = ["rail", "goal", "panel", "legend", "whatIf", "roadAhead", "layers"];
+export const FOLD_REGIONS: readonly FoldRegion[] = ["rail", "goal", "panel", "legend", "whatIf", "roadAhead"];
 
 /** Everything open: what a stored value that can't be read falls back to. */
 export const ALL_OPEN: Folds = {
@@ -39,7 +40,6 @@ export const ALL_OPEN: Folds = {
   legend: false,
   whatIf: false,
   roadAhead: false,
-  layers: false,
 };
 export const ALL_FOLDED: Folds = {
   rail: true,
@@ -48,7 +48,6 @@ export const ALL_FOLDED: Folds = {
   legend: true,
   whatIf: true,
   roadAhead: true,
-  layers: true,
 };
 
 /**
@@ -62,7 +61,6 @@ export const FIRST_VISIT: Folds = {
   legend: true,
   whatIf: true,
   roadAhead: true,
-  layers: true,
 };
 
 /** Everything the cockpit remembers in this browser. */
