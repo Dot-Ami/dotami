@@ -1,14 +1,17 @@
 # Others in this line of work: the competitive landscape (design)
 
-Status: **Design, not built.** Revised 2026-10-15: calls 1 and 3 answered, call 2 not accepted and reworked.
+Status: **Design, partly built** (since 2026-10-17: the person's own list, 23i, and the part of the panel 23h
+that holds it; see below and § 13). Revised 2026-10-15: calls 1 and 3 answered, call 2 not accepted and reworked.
 Revised 2026-10-16: calls 4 to 10 answered (§ 12); calls 2 and 11 (named businesses, and ad spend after v1)
 **on hold** until research story S2.5.26 is done (§ 6.3, § 6.5). No product code until the maintainer's
 picks are written into the docs. Public task list: [14g](../task-list.md) (tracker story S2.5.23). This
 document does tasks 23a–23d; build tasks are in § 13.
 Revised 2026-10-17: § 15 item 11 answered (the maintainer: *"yah, this is fine. Lets do it"*): the person's own
 list, *Businesses you're watching* (23i), is **built**, ahead of research story S2.5.26, in a minimal *Others in
-this line of work* panel ([docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md)). The rest of
-call 2 and call 11 stay on hold; counts, the area questions and *Where to look* are still to build.
+this line of work* panel ([docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md)): it opens from
+the goal bar and the *open your own* step and holds the ad-cost line, the list and the footer, which is part of
+23h. The rest of call 2 and call 11 stay on hold; counts, the area questions and *Where to look* are still to
+build.
 
 Read with [future-cockpit.md](future-cockpit.md), [use-cases.md](use-cases.md) (the Lens, the built-in agent
 on the person's own model), [connectors-and-agents.md](connectors-and-agents.md),
@@ -319,8 +322,10 @@ future idea only.
 
 ### 6.5 Waiting on research: ad spend beyond v1 (call 11 = research-kit call K4, on hold for S2.5.26)
 
-v1 stands (call 3 B, research-kit call K4 A): links to Meta's and Google's ad libraries on *Where to look*,
-the "not published" line, and the person's saved ad links. Anything beyond that waits on research story
+v1 stands (call 3 B, research-kit call K4 A): links to Meta's and Google's ad libraries, the "not published"
+line, and the person's saved ad links. All three are built (2026-10-17); the links were designed for *Where to
+look*, which isn't built yet, so today they sit under *What their ads cost*, below the line
+([docs/ui-spec/cockpit/landscape.md](../ui-spec/cockpit/landscape.md) § 1). Anything beyond that waits on research story
 **S2.5.26**, which also looks for free tools and sites that already gather ads and estimate spend. The
 maintainer, in chat on 2026-10-16: *"thats why we have to do our research around this topic first; no
 different than the competitor list. I know this stuff exista out there so we have to look for it and plan for
@@ -477,7 +482,7 @@ separate parts of the panel and never joined, because of Statistics Canada's no-
 
 - **A: counts, where to look, the area questions, Mara.** 23e–23h, 23k, 23n. No network, no model. The
   person's own list (23i) was released on 2026-10-17 (§ 15 item 11) and is built first, in a minimal panel
-  (the ad-cost line, the list and the footer); the rest of phase A fills that panel in.
+  (the ad-cost line, the list and the footer; part of 23h, § 13); the rest of phase A fills that panel in.
 - **C: the Lens.** Public records by name and the marketing summary (call 4 B): the public-record part of
   S2.5.25p, and 23r, after the Lens.
 - **On hold for research story S2.5.26:** named businesses by any route (call 2: 23l, 23o, 23p, the named
@@ -585,7 +590,7 @@ story's days.
 | S2.5.23e | *Where to look* as a registry view | The panel lists registry sources (S2.5.25b) in the fixed order; a test fails on any person or idea data in a link | 0.5 | — |
 | S2.5.23f | Counts for every industry | Built on the import core (S2.5.25c, 25d): every industry down to 4 digits × Alberta areas, 6 digits for the province; Calgary (455) × 3371 and Edmonton (467) × 3371 equal the imported file, area members re-checked by query first; the 4-digit and employer-only limits written in the catalog; checksum; engine-integrity green | 2 | — |
 | S2.5.23g | Ask area and industry | Nullable columns; the two questions (call 6 A); the optional *More about where* box, kept as typed and dated, read by no rule; picker lists the job's candidates (job-links catalog) first, labelled; inventory and log lines | 2.5, plus the box (not yet estimated) | 6 |
-| S2.5.23h | The panel | Opens from the goal bar and the *open your own* step (call 7 A); count with limits, amber line, where to look, ad-cost line; no business's own words quoted (call 9 A); words pass both lists; UI spec; browser test; in the no-verdict walk | 3 | 7, 9 |
+| S2.5.23h | The panel | Opens from the goal bar and the *open your own* step (call 7 A); count with limits, amber line, where to look, ad-cost line; no business's own words quoted (call 9 A); words pass both lists; UI spec; browser test; in the no-verdict walk. **Part built 2026-10-17** with 23i: the opening from the goal bar and the *open your own* step, the ad-cost line (with the ad libraries' links), no business's own words, the words passing both lists, the UI spec ([landscape.md](../ui-spec/cockpit/landscape.md)), a browser test (`e2e/landscape.spec.ts`) and a place in the no-verdict walk. Still to build: the count with its limits, the amber line and *Where to look*, with their words, spec lines and tests | 3 (estimated before the part built; not re-estimated) | 7, 9 |
 | S2.5.23i | Businesses you're watching | **Built 2026-10-17** (released that day, § 15 item 11), in a minimal panel holding § 6.2 items 4, 5 and 6. Table, API, form, ad links with the day seen, edit, remove; http and https links only; deleted with the idea; `DELETE_MENU`; data-about-others line; joins `e2e/journey.spec.ts` and `e2e/no-verdict.spec.ts` | 2 | 2, 9 |
 | S2.5.23j | *Advertising* cost line | **A future story, not this build** (call 8 A, § 11): named line on every road; the money gauge counts the person's quote. Its tasks are written when that story starts | — | 8 |
 | S2.5.23k | Mara's example | Call 10 B: Calgary area and 3371, labelled invented, with the real count; the watched list says why it stays empty | 0.5 | 10 |
@@ -597,9 +602,10 @@ story's days.
 | S2.5.23q | Vendor ad estimates | **On hold** for S2.5.26 (was = S2.5.25q) | — | 11 |
 | S2.5.23r | Marketing summary | After the Lens (call 4 B): drafted by the person's own model, tagged so every time it shows, pages listed with links and days; reads only pages the registry allows; never-automated pages opened in the person's browser, never read; words pass both lists; `SENT_ELSEWHERE` and log lines | 2 (after the Lens) | 4, 9 |
 
-Answered path (4 B, 5 C, 6 A, 7 A, 8 A as a future story, 9 A, 10 B): **9 days** in this story now (23e,
-23f, 23g, 23h, 23k, 23n), plus the optional box in 23g (not yet estimated), plus the kit's share (25b, 25c);
-23i was released on 2026-10-17 and is built. After the Lens: the public-record
+Answered path (4 B, 5 C, 6 A, 7 A, 8 A as a future story, 9 A, 10 B): **9 days** in this story as estimated
+before 2026-10-17 (23e, 23f, 23g, 23h, 23k, 23n), plus the optional box in 23g (not yet estimated), plus the
+kit's share (25b, 25c). 23i was released on 2026-10-17 and is built, and part of 23h with it (its row says
+which part); the 9 days still count 23h's whole 3 and were not re-estimated after that. After the Lens: the public-record
 part of 25p, and 23r (2 days). On hold for S2.5.26: 23l, 23o, 23p, 23q and the named part of 23m. A future
 story: 23j.
 
