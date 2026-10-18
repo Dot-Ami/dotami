@@ -447,7 +447,9 @@ describe("the goal bar's Look closer menu (the calm first view, 2026-10-17)", ()
     expect(draw({})).not.toContain(cockpitWords.goal.lookCloser);
   });
 
-  it("is no region of its own: the cockpit marks the header and the bar together, the top", () => {
-    expect(draw({ onLandscape: () => {} })).not.toContain("data-region");
+  it("the bar is still a region of its own for the clutter limit, as the layout rule defines one (a review, 2026-10-17)", () => {
+    const html = draw({ onLandscape: () => {} });
+    expect(html.match(/data-region="/g)?.length).toBe(1);
+    expect(html).toContain('data-region="goal-bar"');
   });
 });
