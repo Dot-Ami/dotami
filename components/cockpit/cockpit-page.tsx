@@ -213,6 +213,13 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
   // in this browser (a first visit opens calm: lib/cockpit/folds.ts); and, below 768 px, whether the rail's
   // sheet is open (not remembered: it starts closed so the road is what a phone shows first).
   const { folds, toggle, toggleAll, overlays, setOverlays, coachDismissed, dismissCoach } = useFolds(!isExample);
+  const showCoach = !coachDismissed && !isExample;
+  // Got it takes its own button off the page with the line, which left keyboard focus on the page's body (a
+  // review, 2026-10-17); focus goes to the road first, the thing the line was about, without scrolling to it.
+  const putCoachAway = useCallback(() => {
+    document.querySelector<HTMLElement>(`[data-region="road"]`)?.focus({ preventScroll: true });
+    dismissCoach();
+  }, [dismissCoach]);
   const [railSheet, setRailSheet] = useState(false);
   // The last refusal from a save of the person's answers, in the server's words, shown where they clicked.
   const [answerError, setAnswerError] = useState<string | null>(null);
@@ -1192,21 +1199,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 }
               />
               {/* The first visit's one coach line; put away, it doesn't come back (remembered with the folds).
-                  Not on the example: nothing can be told there, and its banner already says what it is. */}
-              {!coachDismissed && !isExample ? (
-                // A block of its own while drawn, so the clutter limit counts it (a region on a first visit only).
-                <p
-                  data-region="coach"
-                  role="note"
-                  aria-label={words.coach.region}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule-soft bg-ink3 px-5 py-1.5 text-[12px] text-paper-dim"
-                >
-                  <span>{words.coach.line}</span>
-                  <button type="button" onClick={dismissCoach} className="rounded-full border border-rule px-2 py-0 text-[11px] text-stone hover:text-paper max-md:min-h-8">
-                    {words.coach.dismiss}
-                  </button>
-                </p>
-              ) : null}
+                  Not on the example: nothing can be told there, and its banner already says what it is.
+                  From 768 px it sits over the road; on a phone, under it (below). */}
+              {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-b max-md:hidden" /> : null}
               {/* No min-h-0 here: the box's minimum is the road's minimum area plus the legend. */}
               <div className="flex-1">
                 <StrategyMap
@@ -1230,6 +1225,10 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                   }}
                 />
               </div>
+              {/* On a phone nothing above the road folds, so a line over it would push the road down (82 px, a
+                  review found, 2026-10-17); under it, it costs the road nothing. Hidden from 768 px, where the
+                  one above is drawn, so only one is ever on the page. */}
+              {showCoach ? <CoachLine onDismiss={putCoachAway} className="border-y md:hidden" /> : null}
               <WhatIfBar
                 whatIf={whatIf}
                 receipt={receiptAt("what-if")}
@@ -1442,6 +1441,27 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
 }
 
 /** No venture saved and none in this session: say so, point at the intake. */
+/**
+ * The first visit's coach line, in the design's words, with Got it (docs/architecture/future-cockpit.md § 2,
+ * "First visit and return visits"). A block of its own while drawn, so the clutter limit counts it (a region on
+ * a first visit only). `className` places it: its border, and the widths it is drawn at.
+ */
+function CoachLine({ onDismiss, className }: { onDismiss: () => void; className: string }) {
+  return (
+    <p
+      data-region="coach"
+      role="note"
+      aria-label={words.coach.region}
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-rule-soft bg-ink3 px-5 py-1.5 text-[12px] text-paper-dim ${className}`}
+    >
+      <span>{words.coach.line}</span>
+      <button type="button" onClick={onDismiss} className="rounded-full border border-rule px-2 py-0 text-[11px] text-stone hover:text-paper max-md:min-h-8">
+        {words.coach.dismiss}
+      </button>
+    </p>
+  );
+}
+
 function EmptyCockpit() {
   return (
     <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">

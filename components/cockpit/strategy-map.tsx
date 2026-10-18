@@ -199,6 +199,9 @@ export function StrategyMap({
               "aria-label": cockpitWords.folds.roadRegion,
               // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
               "data-region": "road",
+              // Focus can be put here (not reached by Tab): the coach line's Got it hands it to the road as
+              // the line goes (components/cockpit/cockpit-page.tsx).
+              tabIndex: -1,
               className:
                 // From 768 px the area is at least 12rem tall, grown from a zero basis (a percentage basis
                 // would make its minimum the height of every card): with the what-if bar open it used to

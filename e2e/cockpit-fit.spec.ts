@@ -23,7 +23,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
-import { lookCloser, overlayOn, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+import { cockpitSettled, lookCloser, overlayOn, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
 
 /** The run's own data file, for the test that draws an idea on another road. */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
@@ -332,6 +332,22 @@ test("a layer switch keeps keyboard focus when it switches its layer off, on a r
   }
 });
 
+test("Got it from the keyboard puts the coach line away and leaves focus on the road, not the page", async ({ page }) => {
+  // A review (2026-10-17) found focus dropped to the page's body: the button removes itself with its line.
+  const ventureId = await saveIdea(page, "Invented — coach focus test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const coach = page.getByRole("note", { name: "A first look" });
+  const gotIt = coach.getByRole("button", { name: "Got it" });
+  await cockpitSettled(page);
+  await gotIt.focus();
+  await page.keyboard.press("Enter");
+  await expect(coach).toHaveCount(0);
+  await expect(road(page)).toBeFocused();
+  // The next Tab goes on into the road's own cards.
+  await page.keyboard.press("Tab");
+  expect(await holdsFocus(road(page))).toBe(true);
+});
+
 test("between 768 and 1023 px, a step's drawer leaves the header's buttons free to click", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
   const ventureId = await saveIdea(page, "Invented — tablet test");
@@ -426,6 +442,30 @@ test("with a what-if on, at tablet and phone widths every control under the road
 
 test.describe("phone width (issue #4)", () => {
   test.use({ viewport: { width: 375, height: 812 } });
+
+  test("at 375x812 a first visit's coach line sits under the road, so the road starts where it does without it", async ({ page }) => {
+    // A review (2026-10-17) measured the coach line 82 px tall above the road on a phone, where nothing above
+    // the road folds: the calm view put the road lower than before it. Under the road it costs the road nothing.
+    const ventureId = await saveIdea(page, "Invented — phone coach test");
+    await page.goto(`/cockpit?venture=${ventureId}`);
+    await cockpitSettled(page);
+    const coach = page.getByRole("note", { name: "A first look" });
+    await expect(coach).toBeVisible();
+    // Where the road starts on the page, not in the window: clicking Got it scrolls the page down to it.
+    const roadTop = () => road(page).evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const first = (await road(page).boundingBox())!;
+    const firstTop = await roadTop();
+    const line = (await coach.boundingBox())!;
+    expect(line.y).toBeGreaterThanOrEqual(first.y + first.height - 1);
+    // The overlay switches wrap to two lines of 24 px switches, not 32 px ones (the row measured 87 px).
+    const switches = (await page.getByRole("group", { name: "Overlays" }).boundingBox())!;
+    expect(switches.height).toBeLessThanOrEqual(64);
+
+    await coach.getByRole("button", { name: "Got it" }).click();
+    await expect(coach).toHaveCount(0);
+    expect(Math.abs((await roadTop()) - firstTop)).toBeLessThanOrEqual(1);
+    expect(await noSidewaysScroll(page)).toBe(true);
+  });
 
   test("at 375x812 the page never scrolls sideways, the road scrolls in its own area, and a step opens as a full-width sheet and closes", async ({ page }) => {
     const ventureId = await saveIdea(page, "Invented — phone test");
@@ -528,14 +568,17 @@ test.describe("phone width (issue #4)", () => {
     expect(await onTop(page.getByText(/^Information, not legal or tax advice/))).toBe(true);
 
     // The fold buttons are at least 32 px tall on a phone, and so are the first visit's show buttons
-    // (2026-10-17), Look closer, the coach line's Got it and the overlay switches.
+    // (2026-10-17), Look closer and the coach line's Got it.
     for (const name of ["Fold goal and gauges", "Show the legend", "Show the what-if bar", "Got it"]) {
       const b = (await button(page, name).boundingBox())!;
       expect(b.height, name).toBeGreaterThanOrEqual(32);
     }
+    // The overlay switches at least 24 px, the smallest target WCAG 2.5.8 asks for (about 20 px before the
+    // calm view): they wrap to two lines above the road, and at 32 px that row pushed the road down (a review,
+    // 2026-10-17).
     for (const label of ["Skills", "Money", "Rules & tax"]) {
       const b = (await page.getByRole("group", { name: "Overlays" }).getByRole("button", { name: new RegExp(`^${label}`) }).boundingBox())!;
-      expect(b.height, label).toBeGreaterThanOrEqual(32);
+      expect(b.height, label).toBeGreaterThanOrEqual(24);
     }
     const look = (await goalBar(page).getByRole("button", { name: "Look closer" }).boundingBox())!;
     expect(look.height, "Look closer").toBeGreaterThanOrEqual(32);

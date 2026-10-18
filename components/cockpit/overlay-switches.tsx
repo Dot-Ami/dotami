@@ -33,7 +33,10 @@ export function OverlaySwitches({
   ];
   return (
     // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
-    <div data-region="overlays" role="group" aria-label={words.road.overlays} className="flex flex-wrap items-center gap-1.5 border-b border-rule bg-ink3 px-5 py-2 text-[11px] text-stone">
+    // On a phone the row wraps to two lines above the road, so it is kept tight there: switches 24 px tall (the
+    // smallest target WCAG 2.5.8 asks for) and less padding. At 32 px they made the row 87 px tall and, with the
+    // coach line, put the road about 100 px lower than before the calm view (a review, 2026-10-17).
+    <div data-region="overlays" role="group" aria-label={words.road.overlays} className="flex flex-wrap items-center gap-1.5 border-b border-rule bg-ink3 px-5 py-2 text-[11px] text-stone max-md:gap-y-1 max-md:py-1">
       <span className="font-mono text-[9.5px] uppercase tracking-[0.12em]">{words.road.overlays}</span>
       <span className="rounded-full border border-rule px-2.5 py-0.5 text-paper-dim">
         {words.road.road} <span className="text-stone-dim">· {words.road.alwaysOn}</span>
@@ -48,7 +51,7 @@ export function OverlaySwitches({
           aria-pressed={overlays[id] && !empty}
           disabled={empty}
           onClick={() => onToggle(id)}
-          className={`rounded-full border px-2.5 py-0.5 max-md:min-h-8 ${overlays[id] && !empty ? "border-maple bg-[#2a1a15] text-paper" : "border-rule text-paper-dim hover:border-spruce-line"} disabled:cursor-default disabled:hover:border-rule`}
+          className={`rounded-full border px-2.5 py-0.5 max-md:min-h-6 ${overlays[id] && !empty ? "border-maple bg-[#2a1a15] text-paper" : "border-rule text-paper-dim hover:border-spruce-line"} disabled:cursor-default disabled:hover:border-rule`}
         >
           {label}
           <span className="ml-1 text-stone-dim">· {count}</span>

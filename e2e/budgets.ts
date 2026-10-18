@@ -110,6 +110,13 @@ export const BASELINE: ClutterTable = {
  * you* is measured on the seed alone, on the spec's own server, where it was measured after the suite's
  * earlier tests had filled the data file with figures.
  *
+ * On a phone, the same day, a review found the calm view had put the road about 100 px lower than before it:
+ * nothing above the road folds there, and the coach line (82 px) and the overlay switches, drawn 32 px tall,
+ * were added above it. The coach line moved under the road on a phone and the switches went to 24 px, so the
+ * road starts where it did before the calm view; with the road higher, road 0 shows two more of its own cards
+ * in the first window and Got it leaves it (17 to 18; road 1 stays at 14, one card in and Got it out). Still at
+ * most the baseline's 19.
+ *
  * The front door at tablet size stays at 11: on Windows its last button ("Show me Mara's example") shows
  * only a strip above the site footer and isn't counted (10); on Ubuntu, the gate, enough of it shows to count
  * (11, CI run 39067156272).
@@ -122,7 +129,7 @@ export const BUDGETS: ClutterTable = {
   ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
   "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
   "example-mara": { phone: m(7, 11, 11, 8.5), tablet: m(8, 26, 13, 8.5), laptop: m(8, 21, 13, 8.5) },
-  "cockpit-road-0": { phone: m(7, 17, 11, 8.5), tablet: m(8, 32, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
+  "cockpit-road-0": { phone: m(7, 18, 11, 8.5), tablet: m(8, 32, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
   "cockpit-road-1": { phone: m(7, 14, 10, 8.5), tablet: m(8, 28, 12, 8.5), laptop: m(8, 25, 12, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
