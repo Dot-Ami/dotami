@@ -17,9 +17,9 @@ import type { ExpenseView } from "@/lib/expenses/types";
  */
 
 const FIELD =
-  "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft aria-invalid:border-amber";
-const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
-const HINT = "mt-0.5 text-[10.5px] text-stone-dim";
+  "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft aria-invalid:border-amber";
+const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
+const HINT = "mt-0.5 text-small text-stone-dim";
 
 export function ExpenseForm({
   values,
@@ -68,7 +68,7 @@ export function ExpenseForm({
     <form onSubmit={submit} aria-label="Type an expense" className="rounded-sm border border-rule-soft bg-ink2 px-4 py-4" noValidate>
       <fieldset>
         <legend className={FIELD_LABEL}>This is</legend>
-        <div className="mt-1.5 flex flex-wrap gap-4 text-sm text-paper">
+        <div className="mt-1.5 flex flex-wrap gap-4 text-lead text-paper">
           <label className="flex items-center gap-2">
             <input type="radio" name={`${uid}-is`} checked={!refund} onChange={() => set({ is: "purchase" })} className="accent-maple" />
             A purchase
@@ -84,7 +84,7 @@ export function ExpenseForm({
         <div className="mt-3 rounded-sm border border-rule-soft bg-ink px-3 py-3">
           <fieldset>
             <legend className={FIELD_LABEL}>Keep it as</legend>
-            <div className="mt-1.5 space-y-1.5 text-sm text-paper">
+            <div className="mt-1.5 space-y-1.5 text-lead text-paper">
               <label className="flex items-start gap-2">
                 <input
                   type="radio"
@@ -95,7 +95,7 @@ export function ExpenseForm({
                 />
                 <span>
                   A negative amount on a record
-                  <span className="block text-[11px] text-stone">The record holds minus the amount that came back.</span>
+                  <span className="block text-body text-stone">The record holds minus the amount that came back.</span>
                 </span>
               </label>
               <label className="flex items-start gap-2">
@@ -108,12 +108,12 @@ export function ExpenseForm({
                 />
                 <span>
                   A separate refund record, linked to the purchase
-                  <span className="block text-[11px] text-stone">The purchase keeps its own amount; the refund sits beside it.</span>
+                  <span className="block text-body text-stone">The purchase keeps its own amount; the refund sits beside it.</span>
                 </span>
               </label>
             </div>
           </fieldset>
-          <p className="mt-2 text-[11px] text-stone-dim">
+          <p className="mt-2 text-body text-stone-dim">
             Either way it keeps the refund&apos;s date, the purchase it came from, the GST/HST part and the credit note when you give them. Which way is yours to choose; DotAmi doesn&apos;t say how a refund is taxed.
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
@@ -279,7 +279,7 @@ export function ExpenseForm({
       </div>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-[11px] text-stone hover:text-paper">The seller&apos;s address and GST/HST number (optional)</summary>
+        <summary className="cursor-pointer text-body text-stone hover:text-paper">The seller&apos;s address and GST/HST number (optional)</summary>
         <div className="mt-2 flex flex-wrap gap-3">
           <div className="min-w-[16rem] flex-[2]">
             <label htmlFor={id("sellerAddress")} className={FIELD_LABEL}>
@@ -311,7 +311,7 @@ export function ExpenseForm({
       </details>
 
       {problem ? (
-        <p role="alert" className="mt-3 text-[11px] text-amber">
+        <p role="alert" className="mt-3 text-body text-amber">
           {problem.error}
         </p>
       ) : null}
@@ -320,7 +320,7 @@ export function ExpenseForm({
         <Pill type="submit" variant="maple" size="small">
           Add to the list
         </Pill>
-        <p className="text-[11px] text-stone-dim">Nothing is kept until you agree. No bank or card numbers here.</p>
+        <p className="text-body text-stone-dim">Nothing is kept until you agree. No bank or card numbers here.</p>
       </div>
     </form>
   );

@@ -254,7 +254,7 @@ describe("the panel draws the lines", () => {
     expect(html).toMatch(/after 2026, …<\/p><\/div>$/);
 
     const withNote = renderToStaticMarkup(createElement(ProvisionText, { text: ITA_18_12.text, more: false }));
-    expect(withNote).toContain('<p class="whitespace-pre-wrap pl-0 text-[10px] italic text-stone">When s. (15) applies to money lenders</p>');
+    expect(withNote).toContain('<p class="whitespace-pre-wrap pl-0 text-small italic text-stone">When s. (15) applies to money lenders</p>');
     expect(withNote).not.toContain("…");
   });
 });

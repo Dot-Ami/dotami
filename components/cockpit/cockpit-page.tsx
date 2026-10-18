@@ -643,7 +643,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
     reviewBefore.current = before ? { input: before, place } : null;
     const result = await postJson("/api/figures/propose", {
       ventureId,
-      source: { kind: "typed", label: "typed by you" },
+      source: { kind: "typed", label: words.typedByYou },
       figures: [{ periodStart: today, periodEnd: today, currency: "CAD", ...figure }],
     });
     if (!result.ok) return result.error;
@@ -913,8 +913,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
       >
         <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
           {/* The example has no saved futures behind it: its way back is the front door it came from. */}
-          <Link href={isExample ? "/" : "/ventures"} className="font-mono text-[11px] text-stone transition hover:text-paper">
-            {isExample ? words.example.back : "← Your futures"}
+          <Link href={isExample ? "/" : "/ventures"} className="font-mono text-body text-stone transition hover:text-paper">
+            {isExample ? words.example.back : words.header.back}
           </Link>
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}
           <span className="max-md:hidden">
@@ -926,7 +926,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
 
         <div className="flex min-w-0 items-center px-3 md:px-5">
           <span
-            className="min-w-0 truncate font-serif text-sm font-bold tracking-tight text-paper"
+            className="min-w-0 truncate font-serif text-lead font-bold tracking-tight text-paper"
             title={scenario.profile.name}
           >
             {scenario.profile.name}
@@ -952,7 +952,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             // The example makes no plan: the banner says nothing here is kept.
             onClick={() => (isExample ? sayExample() : setRightPanel(rightPanel === "playbook" ? null : "playbook"))}
           >
-            Export
+            {words.header.export}
           </Pill>
         </div>
       </header>
@@ -1037,12 +1037,12 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             ) : null}
 
             <div className="border-t border-rule-soft pt-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Venture</p>
-              <h3 className="mt-0.5 font-serif text-[22px] font-bold tracking-tight">
+              <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.rail.venture}</p>
+              <h3 className="mt-0.5 font-serif text-2xl font-bold tracking-tight">
                 {scenario.profile.name}
               </h3>
               {/* "Not said" stays as written; a kind the person gave is capitalised, as before. */}
-              <p className={`text-[11px] text-stone ${isNotSaid(scenario.profile, "venture-type") ? "" : "capitalize"}`}>
+              <p className={`text-body text-stone ${isNotSaid(scenario.profile, "venture-type") ? "" : "capitalize"}`}>
                 {ventureLine(scenario.profile)}
               </p>
             </div>
@@ -1065,32 +1065,28 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             {profileRows(scenario.profile).map((row) => (
               <FieldRow key={row.label} label={row.label} value={row.value} />
             ))}
-            <div className="border-t border-rule-soft py-2 text-xs">
+            <div className="border-t border-rule-soft py-2 text-body">
               <div className="grid grid-cols-[1fr_auto] items-baseline gap-4">
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
-                  Structure
+                <span className="font-mono text-label uppercase tracking-[0.14em] text-stone">
+                  {words.rail.structure}
                 </span>
                 <select
-                  aria-label="Structure"
+                  aria-label={words.rail.structure}
                   disabled={isExample}
                   value={structureAssumed ? "" : scenario.profile.structure}
                   onChange={(e) => handleStructureChange(e.target.value as "" | VentureStructure)}
-                  className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
+                  className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-body text-paper"
                 >
-                  <option value="">Not set</option>
-                  <option value="sole-prop">Sole prop</option>
-                  <option value="corporation">Corporation</option>
+                  <option value="">{words.rail.structureOptions.notSet}</option>
+                  <option value="sole-prop">{words.rail.structureOptions.soleProp}</option>
+                  <option value="corporation">{words.rail.structureOptions.corporation}</option>
                 </select>
               </div>
-              {structureAssumed ? (
-                <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-                  Map assumes sole prop until you set it.
-                </p>
-              ) : null}
-              <ExampleOnlyNote className="mt-1 text-[10px] leading-snug text-amber" />
+              {structureAssumed ? <p className="mt-1 text-small leading-snug text-stone-dim">{words.rail.structureAssumed}</p> : null}
+              <ExampleOnlyNote className="mt-1 text-small leading-snug text-amber" />
             </div>
             <FieldRow
-              label="Employed"
+              label={words.rail.employed}
               // A future picked on Pick a future was saved before anyone asked: say so in words, not as a code.
               value={scenario.profile.employmentStatus === "not-said" ? EMPLOYMENT_WORDS["not-said"] : scenario.profile.employmentStatus}
             />
@@ -1098,15 +1094,15 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             {/* S2.5.4a "In your words" — dated verbatim statements, shown back, never scored. On the example,
                 the example person's words from its file: never the real person's statements. */}
             <section className="border-t border-rule-soft pt-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-                {example ? words.example.theirWords(example.person) : "In your words"}
+              <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">
+                {example ? words.example.theirWords(example.person) : words.rail.inYourWords}
               </p>
               <div className="mt-2">
                 {example ? (
                   example.kept.destination ? (
-                    <p className="text-[12px] leading-snug text-paper">
+                    <p className="text-body leading-snug text-paper">
                       “{example.kept.destination.text}”{" "}
-                      <span className="font-mono text-[9.5px] text-stone">{example.kept.destination.saidAt}</span>
+                      <span className="font-mono text-label text-stone">{example.kept.destination.saidAt}</span>
                     </p>
                   ) : null
                 ) : (
@@ -1118,12 +1114,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             <StructureLadderRail activeStepId={ladderStepId} />
             {structureAssumed ? (
               <section className="border-t border-rule-soft pt-4">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-                  Prep-tool references
-                </p>
-                <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-                  Appear once your structure is set.
-                </p>
+                <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.rail.prepTools}</p>
+                <p className="mt-1 text-small leading-snug text-stone-dim">{words.rail.prepToolsWait}</p>
               </section>
             ) : (
               <TemplatesRail templateIds={ALL_TEMPLATE_IDS} />
@@ -1141,26 +1133,18 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             ) : (
             <div className="mt-4 flex flex-col gap-2.5">
               <Pill variant="maple" className="w-full justify-center" onClick={() => handleSave()}>
-                {saveState === "saving" ? "Saving…" : "Save now"}
+                {saveState === "saving" ? words.rail.save.saving : words.rail.save.now}
               </Pill>
               {/* The save line — always truthful about where the person's edits are. */}
-              {saveState === "dirty" ? (
-                <p className="text-center font-mono text-[10px] text-stone">Unsaved changes…</p>
-              ) : null}
+              {saveState === "dirty" ? <p className="text-center font-mono text-small text-stone">{words.rail.save.unsaved}</p> : null}
               {saveState === "saved" && savedAt ? (
-                <p className="text-center font-mono text-[10px] text-sage">Saved · {formatSavedAt(savedAt)}</p>
+                <p className="text-center font-mono text-small text-sage">{words.rail.save.savedAt(formatSavedAt(savedAt))}</p>
               ) : null}
-              {saveState === "error" ? (
-                <p className="text-center text-[10px] text-maple">
-                  Save unavailable — kept in this tab. Save now retries.
-                </p>
-              ) : null}
-              {saveState === "idle" ? (
-                <p className="text-center font-mono text-[10px] text-stone-dim">Edits save automatically.</p>
-              ) : null}
+              {saveState === "error" ? <p className="text-center text-small text-maple">{words.rail.save.unavailable}</p> : null}
+              {saveState === "idle" ? <p className="text-center font-mono text-small text-stone-dim">{words.rail.save.automatic}</p> : null}
               <Link href="/intake">
                 <Pill variant="ghost" className="w-full justify-center">
-                  Edit venture profile
+                  {words.rail.editProfile}
                 </Pill>
               </Link>
               <Link href="/ventures">
@@ -1171,10 +1155,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             </div>
             )}
 
-            <p className="mt-auto border-t border-rule-soft pt-4 text-[10.5px] leading-snug text-stone">
-              <span className="font-serif italic text-paper">Compass, not GPS.</span> Profile drives
-              which surfaces appear on the map. DotAmi never files, predicts, or replaces an
-              accountant.
+            <p className="mt-auto border-t border-rule-soft pt-4 text-small leading-snug text-stone">
+              <span className="font-serif italic text-paper">{words.rail.compass.lead}</span> {words.rail.compass.rest}
             </p>
           </div>
         </aside>
@@ -1452,10 +1434,10 @@ function CoachLine({ onDismiss, className }: { onDismiss: () => void; className:
       data-region="coach"
       role="note"
       aria-label={words.coach.region}
-      className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-rule-soft bg-ink3 px-5 py-1.5 text-[12px] text-paper-dim ${className}`}
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-rule-soft bg-ink3 px-5 py-1.5 text-body text-paper-dim ${className}`}
     >
       <span>{words.coach.line}</span>
-      <button type="button" onClick={onDismiss} className="rounded-full border border-rule px-2 py-0 text-[11px] text-stone hover:text-paper max-md:min-h-8">
+      <button type="button" onClick={onDismiss} className="rounded-full border border-rule px-2 py-0 text-body text-stone hover:text-paper max-md:min-h-8">
         {words.coach.dismiss}
       </button>
     </p>
@@ -1466,24 +1448,21 @@ function EmptyCockpit() {
   return (
     <div className="flex h-[calc(100vh-2.5rem)] flex-col bg-ink">
       <header className="flex h-[52px] items-center gap-[18px] border-b border-rule bg-[#0f0e12] px-[22px]">
-        <Link href="/" className="font-mono text-[11px] text-stone transition hover:text-paper">
-          ← Back
+        <Link href="/" className="font-mono text-body text-stone transition hover:text-paper">
+          {words.empty.back}
         </Link>
         <WordMark size="sm" />
       </header>
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="max-w-md text-center">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Cockpit</p>
-          <h1 className="mt-2 font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
-            No venture on the map <span className="font-normal italic text-maple">yet.</span>
+          <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.empty.kicker}</p>
+          <h1 className="mt-2 font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
+            {words.empty.title} <span className="font-normal italic text-maple">{words.empty.titleEnd}</span>
           </h1>
-          <p className="mt-3 text-sm text-paper-dim">
-            The cockpit shows the venture you describe on the intake. Nothing here is a sample —
-            it is empty until it is yours.
-          </p>
+          <p className="mt-3 text-lead text-paper-dim">{words.empty.body}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/intake">
-              <Pill variant="maple">Describe a venture →</Pill>
+              <Pill variant="maple">{words.empty.describe}</Pill>
             </Link>
             <Link href="/ventures">
               <Pill variant="ghost">{words.allFutures}</Pill>

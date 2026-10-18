@@ -133,8 +133,8 @@ export function GoalBar({
                   active === id ? "border-maple" : "border-rule"
                 }`}
               >
-                <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">{gaugeLabel(id)}</span>
-                <span className="truncate text-[12px] tabular-nums text-paper">{view[id].value}</span>
+                <span className="shrink-0 font-mono text-label uppercase tracking-[0.1em] text-stone">{gaugeLabel(id)}</span>
+                <span className="truncate text-body tabular-nums text-paper">{view[id].value}</span>
               </button>
             ))}
           </div>
@@ -143,8 +143,8 @@ export function GoalBar({
       ) : null}
       {/* The open bar. Folded, it stays on the page, hidden, so folding never removes anything. */}
       <div hidden={isFolded} className="grid gap-2.5 px-5 py-3">
-        {shownWords ? <p className="font-serif text-[17px] italic leading-snug text-paper">“{shownWords.text}”</p> : null}
-        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-stone">
+        {shownWords ? <p className="font-serif text-title italic leading-snug text-paper">“{shownWords.text}”</p> : null}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-body text-stone">
           {shownWords ? <span>{shownWords.line}</span> : null}
           {target ? (
             <span>
@@ -178,17 +178,17 @@ export function GoalBar({
                   active === id ? "border-maple" : "border-rule"
                 }`}
               >
-                <span className="flex justify-between gap-2 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">
+                <span className="flex justify-between gap-2 font-mono text-label uppercase tracking-[0.1em] text-stone">
                   {gaugeLabel(id)}
                   <span className="normal-case tracking-normal text-stone-dim">{gaugeTag(id)}</span>
                 </span>
-                <span className="text-[13px] tabular-nums text-paper">{gauge.value}</span>
+                <span className="text-body tabular-nums text-paper">{gauge.value}</span>
                 {gauge.lines.map((line) => (
-                  <span key={line} className="text-[11px] text-stone">
+                  <span key={line} className="text-body text-stone">
                     {line}
                   </span>
                 ))}
-                {gauge.invite ? <span className="text-[11px] text-amber">{gauge.invite}</span> : null}
+                {gauge.invite ? <span className="text-body text-amber">{gauge.invite}</span> : null}
               </button>
             );
           })}

@@ -45,7 +45,7 @@ export function ReceiptKeyProblem({ setAsideTo = null, desktop = false }: { setA
   if (state !== "key-unreadable" && state !== "key-out-of-reach" && state !== "new-key-at-restart") return null;
   const { headline, detail } = receiptProtectionText(state, setAsideTo, { desktop });
   return (
-    <div className="mt-4 max-w-2xl rounded-sm border border-amber/40 px-3 py-2 text-[12.5px] text-amber">
+    <div className="mt-4 max-w-2xl rounded-sm border border-amber/40 px-3 py-2 text-body text-amber">
       <p role="status">
         <strong className="font-semibold">{headline}</strong> {detail}
       </p>

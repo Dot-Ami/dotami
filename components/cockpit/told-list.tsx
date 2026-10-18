@@ -23,8 +23,8 @@ import { parseMoneyToCents } from "@/lib/figures/money";
 /** Questions not told yet that show before "n more". */
 const VISIBLE_QUESTIONS = 5;
 
-const heading = "font-mono text-[10px] uppercase tracking-[0.14em] text-stone";
-const small = "rounded-full border border-rule px-2 py-0.5 text-[10.5px] text-stone hover:bg-ink2 disabled:opacity-50";
+const heading = "font-mono text-small uppercase tracking-[0.14em] text-stone";
+const small = "rounded-full border border-rule px-2 py-0.5 text-small text-stone hover:bg-ink2 disabled:opacity-50";
 
 export function ToldList({
   person = null,
@@ -73,13 +73,13 @@ export function ToldList({
     <div className="flex flex-col gap-4">
       <section aria-label={toldRegion}>
         <h2 className={heading}>{toldRegion}</h2>
-        <p className="mt-0.5 text-[11px] text-stone-dim">
+        <p className="mt-0.5 text-body text-stone-dim">
           {person ? words.example.theirs.toldCount(person, rows.length) : words.told.count(rows.length)}
         </p>
         {/* On the invented example the buttons below are disabled; this says why. */}
-        <ExampleOnlyNote className="mt-1 text-[11px] text-amber" />
+        <ExampleOnlyNote className="mt-1 text-body text-amber" />
         {error ? (
-          <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+          <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
             {error}
           </p>
         ) : null}
@@ -88,14 +88,14 @@ export function ToldList({
             <ReceiptLines {...receipt} />
           </div>
         ) : null}
-        {rows.length === 0 ? <p className="mt-2 text-[11.5px] text-stone">{words.told.none}</p> : null}
+        {rows.length === 0 ? <p className="mt-2 text-body text-stone">{words.told.none}</p> : null}
         <ul className="mt-2 space-y-2">
           {rows.map((row) => {
             const boxOpen = open === `told:${row.id}` && row.change.kind === "box";
             return (
               <li key={row.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
-                <p className="text-[12px] leading-snug text-paper">{row.said}</p>
-                <p className="mt-0.5 font-mono text-[9.5px] text-stone">
+                <p className="text-body leading-snug text-paper">{row.said}</p>
+                <p className="mt-0.5 font-mono text-label text-stone">
                   {toldDay(row)}
                 </p>
                 <Unlocked row={row} />
@@ -118,7 +118,7 @@ export function ToldList({
                   ) : null}
                 </div>
                 {row.takeBack.kind === "none" ? (
-                  <p className="mt-1 text-[10.5px] text-stone-dim">
+                  <p className="mt-1 text-small text-stone-dim">
                     {row.takeBack.why === "required" ? words.told.required : row.takeBack.why === "figures" ? words.told.figuresElsewhere : words.told.noRoute}
                   </p>
                 ) : null}
@@ -131,8 +131,8 @@ export function ToldList({
 
       <section aria-label={words.notTold.region}>
         <h2 className={heading}>{words.notTold.region}</h2>
-        <p className="mt-0.5 text-[10.5px] text-stone-dim">{words.notTold.order}</p>
-        {asked.length === 0 ? <p className="mt-2 text-[11.5px] text-stone">{words.notTold.none}</p> : null}
+        <p className="mt-0.5 text-small text-stone-dim">{words.notTold.order}</p>
+        {asked.length === 0 ? <p className="mt-2 text-body text-stone">{words.notTold.none}</p> : null}
         <ul className="mt-2 space-y-2">
           {visible.map((q) => {
             const boxOpen = open === `ask:${q.id}`;
@@ -150,7 +150,7 @@ export function ToldList({
                     : words.notTold.compare;
             return (
               <li key={q.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
-                <p className="text-[12px] leading-snug text-paper">
+                <p className="text-body leading-snug text-paper">
                   {q.question} <span className="text-stone">{`→ ${words.notTold.unlocks(q.unlocks)}`}</span>
                 </p>
                 <div className="mt-1.5 flex flex-wrap gap-1">
@@ -174,7 +174,7 @@ export function ToldList({
             );
           })}
         </ul>
-        <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10.5px]">
+        <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-small">
           {asked.length > VISIBLE_QUESTIONS ? (
             <button type="button" className="text-stone underline hover:text-paper" onClick={() => setShowAll((v) => !v)}>
               {showAll ? words.notTold.fewer : words.notTold.more(asked.length - VISIBLE_QUESTIONS)}
@@ -199,13 +199,13 @@ function Unlocked({ row }: { row: ToldRow }) {
   if (row.unlocked === null) return null;
   return (
     <div className="mt-1">
-      <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-stone-dim">{words.told.unlocked}</p>
+      <p className="font-mono text-label uppercase tracking-[0.12em] text-stone-dim">{words.told.unlocked}</p>
       {row.unlocked.length === 0 ? (
-        <p className="text-[11px] text-stone">{words.told.nothingChanged}</p>
+        <p className="text-body text-stone">{words.told.nothingChanged}</p>
       ) : (
         <div className="space-y-0.5">
           {row.unlocked.map((line) => (
-            <p key={line} className="text-[11px] leading-snug text-stone">
+            <p key={line} className="text-body leading-snug text-stone">
               {line}
             </p>
           ))}
@@ -279,14 +279,14 @@ export function QuestionBox({
 
   return (
     <form onSubmit={(e) => void save(e)} className="flex flex-col gap-1.5 rounded-sm border border-rule bg-ink p-2.5">
-      <p id={`${id}-title`} className="text-[12px] font-semibold text-paper">
+      <p id={`${id}-title`} className="text-body font-semibold text-paper">
         {title}
       </p>
-      <p className="text-[10.5px] text-stone">{why}</p>
+      <p className="text-small text-stone">{why}</p>
       {control.kind === "choice" ? (
         <fieldset aria-labelledby={`${id}-title`} className="flex flex-wrap gap-x-3 gap-y-1">
           {control.options.map((option) => (
-            <label key={option.id} className="flex items-center gap-1.5 text-[11.5px] text-paper">
+            <label key={option.id} className="flex items-center gap-1.5 text-body text-paper">
               <input type="radio" name={`${id}-choice`} checked={choice === option.id} onChange={() => setChoice(option.id)} className="accent-[#c2593a]" />
               {option.label}
             </label>
@@ -294,7 +294,7 @@ export function QuestionBox({
         </fieldset>
       ) : (
         <>
-          <label htmlFor={`${id}-value`} className="font-mono text-[9px] uppercase tracking-wider text-stone">
+          <label htmlFor={`${id}-value`} className="font-mono text-label uppercase tracking-wider text-stone">
             {control.kind === "month" ? words.questions.box.month : control.kind === "dollars" ? control.label : words.amounts.amount}
           </label>
           <input
@@ -305,18 +305,18 @@ export function QuestionBox({
             value={text}
             onChange={(e) => setText(e.target.value)}
             aria-invalid={problem ? true : undefined}
-            className="w-40 rounded-sm border border-rule bg-ink2 px-2 py-1 font-mono text-[12px] text-paper outline-hidden focus:border-maple-soft"
+            className="w-40 rounded-sm border border-rule bg-ink2 px-2 py-1 font-mono text-body text-paper outline-hidden focus:border-maple-soft"
           />
         </>
       )}
-      {control.kind === "money" ? <p className="text-[10.5px] text-stone">{words.amounts.agreeFirst}</p> : null}
+      {control.kind === "money" ? <p className="text-small text-stone">{words.amounts.agreeFirst}</p> : null}
       {problem ? (
-        <p role="alert" className="text-[11px] text-amber">
+        <p role="alert" className="text-body text-amber">
           {problem}
         </p>
       ) : null}
       <div className="flex gap-1.5">
-        <button type="submit" disabled={!canSave || busy} className="rounded-full border border-maple bg-maple px-2.5 py-0.5 text-[11px] text-[#fff8ee] disabled:opacity-50">
+        <button type="submit" disabled={!canSave || busy} className="rounded-full border border-maple bg-maple px-2.5 py-0.5 text-body text-[#fff8ee] disabled:opacity-50">
           {words.questions.box.save}
         </button>
         <button type="button" onClick={onDontKnow} className={small}>

@@ -9,7 +9,7 @@ export function OrDivider({ children = "or describe it yourself", className }: O
   return (
     <div
       className={cn(
-        "flex w-full max-w-[1320px] items-center gap-[18px] font-mono text-[10px] uppercase tracking-[0.14em] text-stone-dim",
+        "flex w-full max-w-[1320px] items-center gap-[18px] font-mono text-small uppercase tracking-[0.14em] text-stone-dim",
         className,
       )}
     >

@@ -104,7 +104,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
         aria-controls={open ? menuId : undefined}
         onClick={() => (open ? close(false) : openAt("first"))}
         onKeyDown={onButtonKey}
-        className="inline-flex items-center gap-1 rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink max-md:min-h-8"
+        className="inline-flex items-center gap-1 rounded-full border border-rule px-2 py-0 text-body text-paper-dim hover:bg-ink max-md:min-h-8"
       >
         {words.goal.lookCloser}
         <span aria-hidden>{open ? "▴" : "▾"}</span>
@@ -131,7 +131,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
                 close(true);
                 item.onSelect();
               }}
-              className="rounded-sm px-2.5 py-1.5 text-left text-[12px] text-paper-dim hover:bg-ink2 hover:text-paper focus:bg-ink2 focus:text-paper focus:outline-hidden max-md:min-h-8"
+              className="rounded-sm px-2.5 py-1.5 text-left text-body text-paper-dim hover:bg-ink2 hover:text-paper focus:bg-ink2 focus:text-paper focus:outline-hidden max-md:min-h-8"
             >
               {item.label}
             </button>

@@ -22,24 +22,24 @@ function SourceLink({ href, children }: { href: string; children: ReactNode }) {
 }
 
 function Heading({ children }: { children: ReactNode }) {
-  return <h3 className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{children}</h3>;
+  return <h3 className="mt-4 font-mono text-small uppercase tracking-[0.14em] text-stone">{children}</h3>;
 }
 
 /** The words seen on the page, word for word, in quotation marks. */
 function Seen({ quote }: { quote: string }) {
-  return <q className="text-[10.5px] text-stone-dim">{quote}</q>;
+  return <q className="text-small text-stone-dim">{quote}</q>;
 }
 
 function StatisticRow({ stat }: { stat: Statistic }) {
   return (
     <li className="rounded-sm border border-rule-soft bg-ink p-2">
-      <p className="text-[11.5px] text-paper">{stat.what}</p>
-      <p className="text-[11.5px] tabular-nums text-paper">{words.statistic(stat.value, stat.unit, stat.period)}</p>
-      <p className="text-[10.5px] text-paper-dim">
+      <p className="text-body text-paper">{stat.what}</p>
+      <p className="text-body tabular-nums text-paper">{words.statistic(stat.value, stat.unit, stat.period)}</p>
+      <p className="text-small text-paper-dim">
         <SourceLink href={stat.url}>{stat.source}</SourceLink> · {words.seen(stat.seenOn)}
       </p>
       <Seen quote={stat.quote} />
-      <p className="text-[10.5px] text-stone">{stat.caveat}</p>
+      <p className="text-small text-stone">{stat.caveat}</p>
     </li>
   );
 }
@@ -71,9 +71,9 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
     <section
       id={EXAMPLE_SOURCES_ID}
       aria-label={words.open}
-      className="max-h-[60vh] overflow-y-auto border-b border-amber/40 bg-ink2 px-4 py-3 text-[12px] leading-snug text-paper-dim md:px-[22px]"
+      className="max-h-[60vh] overflow-y-auto border-b border-amber/40 bg-ink2 px-4 py-3 text-body leading-snug text-paper-dim md:px-[22px]"
     >
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-amber">{words.open}</h2>
+      <h2 className="font-mono text-body uppercase tracking-[0.14em] text-amber">{words.open}</h2>
       <p className="mt-1 max-w-3xl">{words.intro(person, data.seenOn)}</p>
 
       <Heading>{words.numbersHeading(person)}</Heading>
@@ -104,9 +104,9 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
 
       <Heading>{words.toolsHeading(data.tools.length)}</Heading>
       <p className="mt-1 max-w-3xl">{words.toolsOrder}</p>
-      <p className="mt-1 max-w-3xl text-[11px] text-stone">{data.tier}</p>
-      <p className="mt-2 text-[11px] text-paper">{words.officialHeading}</p>
-      <ul className="mt-0.5 space-y-0.5 text-[11px]">
+      <p className="mt-1 max-w-3xl text-body text-stone">{data.tier}</p>
+      <p className="mt-2 text-body text-paper">{words.officialHeading}</p>
+      <ul className="mt-0.5 space-y-0.5 text-body">
         {data.officialSources.map((o) => (
           <li key={o.url}>
             <SourceLink href={o.url}>{o.label}</SourceLink>
@@ -125,13 +125,13 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
                     {words.average(sum.count, sum.meanCents, sum.medianCents, sum.lowCents, sum.highCents)}
                   </span>
                 </summary>
-                <p className="mt-1.5 text-[11px]">
+                <p className="mt-1.5 text-body">
                   {words.named} {tool.official.mention} <Seen quote={tool.official.quote} />{" "}
                   <SourceLink href={tool.official.url}>{words.page}</SourceLink>
                 </p>
                 <ul className="mt-1.5 space-y-1">
                   {tool.prices.map((p) => (
-                    <li key={p.seller} className="border-l border-rule pl-2 text-[11px]">
+                    <li key={p.seller} className="border-l border-rule pl-2 text-body">
                       <span className="font-semibold tabular-nums text-paper">{words.price(p.priceCents)}</span> · {p.seller} ·{" "}
                       {words.seen(p.seenOn)} · <SourceLink href={p.url}>{words.page}</SourceLink>
                       <span className="block">{p.product}</span>
@@ -170,7 +170,7 @@ export function ExampleSources({ example }: { example: ExampleFuture }) {
             </p>
             <ul className="mt-1 space-y-1">
               {plans.map((plan) => (
-                <li key={`${plan.product} ${plan.plan}`} className="border-l border-rule pl-2 text-[11px]">
+                <li key={`${plan.product} ${plan.plan}`} className="border-l border-rule pl-2 text-body">
                   <span className="font-semibold tabular-nums text-paper">
                     {plan.per === "free" ? words.per.free : words.per[plan.per](plan.priceCents)}
                   </span>{" "}

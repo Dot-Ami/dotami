@@ -334,9 +334,20 @@ and the maintainer's six decisions of 2026-10-11:
     a tablet, 18 on a phone), with what is left being the road's own cards, the gauges and the next steps. The
     maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
     numbers, and they can only go down from here.
-  - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
-  - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
-    the components
+  - [x] Six named text sizes in place of the ad hoc ones (S2.5.30d, 2026-10-17): `text-label` 9.5 px,
+    `text-small` 10.5, `text-body` 12, `text-lead` 14, `text-title` 18 and `text-display` 26, theme tokens in
+    `app/globals.css`, each with its line height, in place of 661 arbitrary sizes of 23 values (and Tailwind's
+    text-xs, text-sm, text-base and text-lg, which they stand in for); headlines keep Tailwind's text-xl and up.
+    `tests/type-scale.spec.ts` refuses a new arbitrary size; `tests/helpers/type-scale-renames.ts` reads the
+    map's and the cost panels' recordings with the new names so they aren't re-recorded. The smallest text on
+    every screen is now at least 9.5 px, and the text-size counts in `e2e/budgets.ts` went down on every screen
+    ([ui-spec/README.md](ui-spec/README.md), *The type scale*)
+  - [x] The cockpit rail's sentences moved into `lib/cockpit/words.ts` (S2.5.30e, 2026-10-17): the rail's,
+    the header's, the empty cockpit's and the map's chips, card names and legend (68 pieces of text in five
+    files), the text on screen unchanged; `tests/cockpit-own-words.spec.ts` reads every file in
+    `components/cockpit/` and fails on a sentence or label written there (one allowance: the legend's
+    *Compass, not GPS — nothing here is a recommendation*, see the test), in place of the three older
+    four-word checks over named files
 
 ## 7 — The desktop app (one download, everything on your computer)
 

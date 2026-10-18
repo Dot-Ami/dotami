@@ -47,7 +47,7 @@ export function AmountForm({
 
   return (
     <form onSubmit={(e) => void submit(e)} className="mt-2 flex flex-col gap-2 rounded-sm border border-rule-soft bg-ink p-2.5">
-      <label htmlFor={`${id}-amount`} className="font-mono text-[9px] uppercase tracking-wider text-stone">
+      <label htmlFor={`${id}-amount`} className="font-mono text-label uppercase tracking-wider text-stone">
         {words.amounts.amount}
       </label>
       <input
@@ -58,18 +58,18 @@ export function AmountForm({
         onChange={(e) => setAmount(e.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="w-36 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-sm text-paper outline-hidden focus:border-maple-soft"
+        className="w-36 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-lead text-paper outline-hidden focus:border-maple-soft"
       />
       {askFrom ? (
         <>
-          <label htmlFor={`${id}-from`} className="font-mono text-[9px] uppercase tracking-wider text-stone">
+          <label htmlFor={`${id}-from`} className="font-mono text-label uppercase tracking-wider text-stone">
             {words.amounts.from}
           </label>
           <select
             id={`${id}-from`}
             value={from}
             onChange={(e) => setFrom(e.target.value as CostLineAmountFrom)}
-            className="w-40 rounded-sm border border-rule bg-ink2 px-1.5 py-1 text-[12px] text-paper"
+            className="w-40 rounded-sm border border-rule bg-ink2 px-1.5 py-1 text-body text-paper"
           >
             {COST_LINE_AMOUNT_FROM.map((value) => (
               <option key={value} value={value}>
@@ -80,11 +80,11 @@ export function AmountForm({
         </>
       ) : null}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="text-[11px] text-amber">
+        <p id={`${id}-error`} role="alert" className="text-body text-amber">
           {error}
         </p>
       ) : null}
-      <p className="text-[11px] text-stone">{words.amounts.agreeFirst}</p>
+      <p className="text-body text-stone">{words.amounts.agreeFirst}</p>
       <div className="flex gap-2">
         <Pill type="submit" variant="maple" size="small" disabled={disabled || busy}>
           {words.amounts.next}

@@ -52,8 +52,8 @@ type Show = string;
 const ALL = "all";
 const NONE = "none";
 
-const FIELD = "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden focus:border-maple-soft";
-const SECTION_LABEL = "font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
+const FIELD = "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden focus:border-maple-soft";
+const SECTION_LABEL = "font-mono text-label uppercase tracking-[0.14em] text-stone";
 
 const titleOf = (r: { date: string; paidTo: string; whatFor: string }) => `${r.date} · ${r.paidTo} — ${r.whatFor}`;
 /** Newest day first, then the most recently proposed. */
@@ -291,7 +291,7 @@ export function ExpensesPage({
           ← Your futures
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your expenses</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Your expenses</p>
         <GhostLink href="/settings" tone="stone">
           Settings
         </GhostLink>
@@ -299,10 +299,10 @@ export function ExpensesPage({
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-10">
         <header>
-          <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+          <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
             Your expense records, <span className="font-normal italic text-maple">in your own words.</span>
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-paper-dim">
+          <p className="mt-2 max-w-2xl text-lead text-paper-dim">
             Each business expense you keep, one record at a time, on this computer. DotAmi keeps what you type and agree to. It never
             picks a category, never sets the business share, and never says what is deductible or how a refund is taxed. Not tax advice.
           </p>
@@ -321,24 +321,24 @@ export function ExpensesPage({
         </div>
 
         {loadError ? (
-          <p role="alert" className="mt-4 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p role="alert" className="mt-4 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
             {loadError}
           </p>
         ) : null}
         {actionError ? (
-          <p role="alert" className="mt-4 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p role="alert" className="mt-4 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
             {actionError}
           </p>
         ) : null}
         {notice ? (
-          <p role="status" className="mt-4 rounded-sm border border-spruce-line bg-ink2 px-3 py-2 text-sm text-paper">
+          <p role="status" className="mt-4 rounded-sm border border-spruce-line bg-ink2 px-3 py-2 text-lead text-paper">
             {notice}
           </p>
         ) : null}
 
         {waiting.length > 0 ? (
           <section aria-label="Waiting for you" className="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
-            <p className="text-sm text-amber">
+            <p className="text-lead text-amber">
               {waiting.length} {waiting.length === 1 ? "record" : "records"} waiting for you to agree (proposed by an agent, a file, or typed earlier)
             </p>
             <Pill
@@ -356,10 +356,10 @@ export function ExpensesPage({
         ) : null}
 
         <section aria-labelledby="type-heading" className="mt-8">
-          <h2 id="type-heading" className="font-serif text-lg font-bold text-paper">
+          <h2 id="type-heading" className="font-serif text-title font-bold text-paper">
             Type expenses
           </h2>
-          <p className="mt-1 text-[12px] text-stone">Type as many as you like; they wait on the list below until you agree to them, all at once.</p>
+          <p className="mt-1 text-body text-stone">Type as many as you like; they wait on the list below until you agree to them, all at once.</p>
           <div ref={formBox} id="expense-form" className="mt-3 scroll-mt-4">
             <ExpenseForm values={form} onChange={setForm} onAdd={addDraft} today={today} purchases={purchases} newKey={newKey} />
           </div>
@@ -368,7 +368,7 @@ export function ExpensesPage({
             <div className="mt-4 rounded-sm border border-rule bg-ink2 px-4 py-3">
               <div className="flex flex-wrap items-center gap-3">
                 <p className={SECTION_LABEL}>Typed, not kept yet · {drafts.length}</p>
-                <label htmlFor="expenses-target" className="ml-auto text-[11px] text-stone">
+                <label htmlFor="expenses-target" className="ml-auto text-body text-stone">
                   For
                 </label>
                 <select id="expenses-target" value={target} onChange={(e) => setTarget(e.target.value)} className={FIELD}>
@@ -378,22 +378,22 @@ export function ExpensesPage({
               </div>
               <ul aria-label="Typed, not kept yet" className="mt-2 space-y-1.5">
                 {drafts.map((d) => (
-                  <li key={d.key} className="text-xs">
+                  <li key={d.key} className="text-body">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                       <span className="text-paper">{titleOf(d)}</span>
                       <span className="font-mono text-paper">{moneyText(d.amountCents, d.currency)}</span>
-                      <button type="button" onClick={() => editDraft(d.key)} className="ml-auto text-[10.5px] text-stone hover:text-paper">
+                      <button type="button" onClick={() => editDraft(d.key)} className="ml-auto text-small text-stone hover:text-paper">
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => setDrafts((current) => current.filter((x) => x.key !== d.key))}
-                        className="text-[10.5px] text-stone-dim hover:text-maple"
+                        className="text-small text-stone-dim hover:text-maple"
                       >
                         Remove
                       </button>
                     </div>
-                    {factsFor(d).length > 0 ? <p className="text-[10.5px] text-stone">{factsFor(d).join(" · ")}</p> : null}
+                    {factsFor(d).length > 0 ? <p className="text-small text-stone">{factsFor(d).join(" · ")}</p> : null}
                   </li>
                 ))}
               </ul>
@@ -408,20 +408,20 @@ export function ExpensesPage({
                 >
                   Review {drafts.length}
                 </Pill>
-                <p className="text-[11px] text-stone-dim">Kept only once you agree. Closing this window forgets this list.</p>
+                <p className="text-body text-stone-dim">Kept only once you agree. Closing this window forgets this list.</p>
               </div>
             </div>
           ) : null}
         </section>
 
         <section aria-labelledby="kept-heading" className="mt-10">
-          <h2 id="kept-heading" className="font-serif text-lg font-bold text-paper">
+          <h2 id="kept-heading" className="font-serif text-title font-bold text-paper">
             Records you agreed to
           </h2>
           {records === null ? (
-            <p className="mt-2 text-[12px] text-stone-dim">Loading…</p>
+            <p className="mt-2 text-body text-stone-dim">Loading…</p>
           ) : agreed.length === 0 ? (
-            <p className="mt-2 text-[12px] text-stone-dim">None here yet.</p>
+            <p className="mt-2 text-body text-stone-dim">None here yet.</p>
           ) : (
             <ul aria-label="Records you agreed to" className="mt-3 space-y-2">
               {agreed.map((r) => (
@@ -449,7 +449,7 @@ export function ExpensesPage({
               <p className={`${SECTION_LABEL} mt-6`}>Taken back</p>
               <ul aria-label="Taken back" className="mt-2 space-y-1.5 opacity-70">
                 {takenBack.map((r) => (
-                  <li key={r.id} className="text-xs text-stone">
+                  <li key={r.id} className="text-body text-stone">
                     <span className="text-paper-dim">{titleOf(r)}</span> <span className="font-mono">{moneyText(r.amountCents, r.currency)}</span>
                     {r.retractedAt ? ` · taken back ${r.retractedAt.slice(0, 10)}` : ""}
                     {/* Taking a record back keeps its receipt; this is where that one receipt can still be removed. */}
@@ -522,27 +522,27 @@ function RecordRow({
   const selectId = `move-${record.id}`;
 
   return (
-    <li className="rounded-sm border border-rule-soft bg-ink2 px-3 py-2 text-xs">
+    <li className="rounded-sm border border-rule-soft bg-ink2 px-3 py-2 text-body">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
         <span className="font-semibold text-paper">{titleOf(record)}</span>
         <span className="font-mono text-paper">{moneyText(record.amountCents, record.currency)}</span>
         <span className="text-stone-dim">{ideaName === null ? "Not attached to an idea yet" : `For ${ideaName}`}</span>
         <span className="text-stone-dim">from {record.sourceLabel}</span>
-        {record.editedByPerson ? <span className="font-mono text-[9px] uppercase tracking-wider text-maple">edited by you</span> : null}
+        {record.editedByPerson ? <span className="font-mono text-label uppercase tracking-wider text-maple">edited by you</span> : null}
       </div>
-      {facts.length > 0 ? <p className="mt-0.5 text-[11px] text-stone">{facts.join(" · ")}</p> : null}
+      {facts.length > 0 ? <p className="mt-0.5 text-body text-stone">{facts.join(" · ")}</p> : null}
       {refunds.length > 0 ? (
-        <p className="mt-0.5 text-[11px] text-stone">
+        <p className="mt-0.5 text-body text-stone">
           Refunds linked to it:{" "}
           {refunds.map((x) => `${moneyText(Math.abs(x.amountCents), x.currency)} on ${x.date}${x.status === "proposed" ? " (waiting)" : x.status === "retracted" ? " (taken back)" : ""}`).join("; ")}
         </p>
       ) : null}
       <ReceiptLine record={record} onChanged={onReceiptChanged} />
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <label htmlFor={selectId} className="text-[10.5px] text-stone">
+        <label htmlFor={selectId} className="text-small text-stone">
           {record.ventureId === null ? "Attach to" : "Move to"}
         </label>
-        <select id={selectId} value={moveTo} onChange={(e) => setMoveTo(e.target.value)} disabled={busy} className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 text-[11px] text-paper">
+        <select id={selectId} value={moveTo} onChange={(e) => setMoveTo(e.target.value)} disabled={busy} className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 text-body text-paper">
           <option value={NONE}>Not attached to an idea yet</option>
           {ideaOptions}
         </select>
@@ -550,22 +550,22 @@ function RecordRow({
           {record.ventureId === null ? "Attach" : "Move"}
         </Pill>
         {onRecordRefund ? (
-          <button type="button" onClick={onRecordRefund} className="text-[10.5px] text-stone hover:text-paper">
+          <button type="button" onClick={onRecordRefund} className="text-small text-stone hover:text-paper">
             Record a refund for this
           </button>
         ) : null}
         {confirming ? (
           <span className="ml-auto flex items-center gap-2">
-            <span className="text-[11px] text-paper-dim">Take this record back? It stays listed as taken back.</span>
-            <button type="button" onClick={onTakeBack} disabled={busy} className="text-[11px] text-maple hover:underline">
+            <span className="text-body text-paper-dim">Take this record back? It stays listed as taken back.</span>
+            <button type="button" onClick={onTakeBack} disabled={busy} className="text-body text-maple hover:underline">
               Take back
             </button>
-            <button type="button" onClick={() => onConfirm(false)} className="text-[11px] text-stone hover:text-paper">
+            <button type="button" onClick={() => onConfirm(false)} className="text-body text-stone hover:text-paper">
               Keep
             </button>
           </span>
         ) : (
-          <button type="button" onClick={() => onConfirm(true)} className="ml-auto text-[10.5px] text-stone-dim hover:text-maple">
+          <button type="button" onClick={() => onConfirm(true)} className="ml-auto text-small text-stone-dim hover:text-maple">
             Take back
           </button>
         )}

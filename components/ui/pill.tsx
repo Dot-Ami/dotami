@@ -38,7 +38,7 @@ export function Pill({
       type={type}
       className={cn(
         "inline-flex items-center gap-2 rounded-full border font-medium tracking-wide cursor-pointer transition",
-        size === "small" ? "px-2.5 py-1 text-[11px]" : "px-4 py-2 text-xs",
+        size === "small" ? "px-2.5 py-1 text-body" : "px-4 py-2 text-body",
         variantClasses[variant],
         className,
       )}

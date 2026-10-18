@@ -101,24 +101,20 @@ interface StrategyMapProps {
  * drawn on every map says "open choice".
  */
 const STAGE_CHIP: Record<StageChipKind, { label: string; className: string }> = {
-  now: { label: "now", className: "text-maple bg-maple/15" },
-  "your-pick": { label: "your pick", className: "text-amber bg-amber/15" },
-  default: { label: "default", className: "text-stone border border-amber/50" },
-  "open-choice": { label: "open choice", className: "text-stone border border-rule" },
-  done: { label: "done", className: "text-sage bg-sage/15" },
-  ahead: { label: "ahead", className: "text-stone bg-rule/30" },
-  "not-on-your-path": { label: "not on your path", className: "text-stone-dim border border-stone-dim" },
+  now: { label: cockpitWords.map.chips.now, className: "text-maple bg-maple/15" },
+  "your-pick": { label: cockpitWords.map.chips["your-pick"], className: "text-amber bg-amber/15" },
+  default: { label: cockpitWords.map.chips.default, className: "text-stone border border-amber/50" },
+  "open-choice": { label: cockpitWords.map.chips["open-choice"], className: "text-stone border border-rule" },
+  done: { label: cockpitWords.map.chips.done, className: "text-sage bg-sage/15" },
+  ahead: { label: cockpitWords.map.chips.ahead, className: "text-stone bg-rule/30" },
+  "not-on-your-path": { label: cockpitWords.map.chips["not-on-your-path"], className: "text-stone-dim border border-stone-dim" },
 };
 
 /**
  * The left accent in words, for the card's accessible name, so the colour is never the only way to
  * tell (2026-10-11). The same words as the legend.
  */
-const COLOUR_WORDS: Record<"green" | "yellow" | "gray", string> = {
-  green: "applies as answered",
-  yellow: "check first",
-  gray: "doesn't apply as answered",
-};
+const COLOUR_WORDS: Record<"green" | "yellow" | "gray", string> = cockpitWords.map.colours;
 
 /** The person's own status as the card's chip, where they set one. */
 const STATUS_CHIP: Record<StepStatus, { label: string; className: string }> = {
@@ -281,7 +277,7 @@ function colourOf(evaluation: EvaluationResult, stepId: string): NodeStateColor 
 }
 
 /** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
-const NO_RULE_CHIP = { label: "no rule yet", className: "text-stone border border-rule" };
+const NO_RULE_CHIP = { label: cockpitWords.map.noRule, className: "text-stone border border-rule" };
 
 /** The rules' sentence naming the person's answers behind a step's colour, by step id (today's road only). */
 function reasonOf(evaluation: EvaluationResult, stepId: string): string | undefined {
@@ -323,11 +319,11 @@ function TierColumn({
   return (
     <section id={id} hidden={hidden || undefined} className={snap ? "flex min-w-0 flex-col gap-3 pb-6 max-md:snap-start" : "flex min-w-0 flex-col gap-3 pb-6"}>
       <header className="border-b border-rule pb-2.5">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">Tier {ordinal}</p>
-        <h3 className="mt-0.5 font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
-        <p className="mt-0.5 text-[10.5px] leading-snug text-stone">{column.summary}</p>
+        <p className="font-mono text-label uppercase tracking-[0.16em] text-maple">{cockpitWords.map.tier(ordinal)}</p>
+        <h3 className="mt-0.5 font-serif text-lead font-bold leading-tight tracking-tight text-paper">{column.label}</h3>
+        <p className="mt-0.5 text-small leading-snug text-stone">{column.summary}</p>
         {overlays && column.forkId ? (
-          <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-amber">{cockpitWords.road.forkSplits}</p>
+          <p className="mt-1 font-mono text-label uppercase tracking-wider text-amber">{cockpitWords.road.forkSplits}</p>
         ) : null}
         {decision ? (
           <BranchToggle
@@ -433,9 +429,7 @@ function StageCard({
   const ruled = colour !== undefined;
   // The colour in words, so it is never the only way to tell. A step with no colour says so instead.
   const accessibleName =
-    colourWords === null
-      ? `${step.label}, no rule reads this step yet, shows where it leads`
-      : `${step.label}, ${chip.label}, ${colourWords}, ${badges.map((b) => `${b}, `).join("")}opens detail`;
+    colourWords === null ? cockpitWords.map.cardNameNoRule(step.label) : cockpitWords.map.cardName(step.label, chip.label, colourWords, badges);
   return (
     <button
       ref={registerCard}
@@ -455,21 +449,21 @@ function StageCard({
       } ${ruled ? ACCENT[colour] : "border-l-rule-soft"} ${selected ? "ring-2 ring-maple/30" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-serif text-[14px] font-bold leading-tight tracking-tight text-paper">{step.label}</h4>
-        <span className={`shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-wider ${chip.className}`}>
+        <h4 className="font-serif text-lead font-bold leading-tight tracking-tight text-paper">{step.label}</h4>
+        <span className={`shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-label uppercase tracking-wider ${chip.className}`}>
           {chip.label}
         </span>
       </div>
-      <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone">{step.summary}</p>
+      <p className="mt-1.5 line-clamp-2 text-body leading-snug text-stone">{step.summary}</p>
       {reason ? (
-        <p id={reasonId} className="mt-1.5 text-[10.5px] leading-snug text-paper-dim">
+        <p id={reasonId} className="mt-1.5 text-small leading-snug text-paper-dim">
           {reason}
         </p>
       ) : null}
       {badges.length > 0 ? (
         <span className="mt-1.5 flex flex-wrap gap-1">
           {badges.map((badge) => (
-            <span key={badge} className="rounded-xs border border-rule-soft bg-ink px-1.5 py-0.5 font-mono text-[9.5px] text-paper-dim">
+            <span key={badge} className="rounded-xs border border-rule-soft bg-ink px-1.5 py-0.5 font-mono text-label text-paper-dim">
               {badge}
             </span>
           ))}
@@ -482,12 +476,12 @@ function StageCard({
 /** The one dated fact the evaluator carries for this item, or nothing — never an invented range.
  * (Figures like the GST/HST line stay in the catalog and reach the screen through `item.why`.) */
 function leverFact(item: UnlockItem): string | null {
-  return item.expires ? `in use before ${item.expires.slice(0, 4)}` : null;
+  return item.expires ? cockpitWords.map.lever.inUseBefore(item.expires.slice(0, 4)) : null;
 }
 
 function LeverCard({ item, onClick }: { item: UnlockItem; onClick: () => void }) {
   const dot = item.state === "green" ? "bg-sage" : "bg-amber";
-  const label = item.state === "green" ? "applies" : "check first";
+  const label = item.state === "green" ? cockpitWords.map.lever.applies : cockpitWords.map.colours.yellow;
   const fact = leverFact(item);
   const partial = worstStatus(item.citations) === "partial";
   return (
@@ -495,22 +489,22 @@ function LeverCard({ item, onClick }: { item: UnlockItem; onClick: () => void })
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${item.typeChip}: ${item.title}, ${label}${item.fork ? ", fork" : ""}${partial ? ", partial citation" : ""}${fact ? `, ${fact}` : ""}, opens detail`}
+        aria-label={cockpitWords.map.lever.name(item.typeChip, item.title, label, Boolean(item.fork), partial, fact)}
         className="w-full rounded-md border border-rule bg-ink2 px-2.5 py-2 text-left transition hover:border-maple-soft"
       >
         <div className="flex items-center gap-2">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} aria-hidden />
-          <span className="shrink-0 rounded-sm border border-rule px-1 py-0.5 font-mono text-[8px] uppercase tracking-wider text-stone">
+          <span className="shrink-0 rounded-sm border border-rule px-1 py-0.5 font-mono text-label uppercase tracking-wider text-stone">
             {item.typeChip}
           </span>
-          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-paper" title={item.title}>
+          <span className="min-w-0 flex-1 truncate text-body font-semibold text-paper" title={item.title}>
             {item.title}
           </span>
           {partial ? <StatusChip status="partial" className="shrink-0" /> : null}
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 font-mono text-[8.5px] uppercase tracking-wider">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 font-mono text-label uppercase tracking-wider">
           <span className={item.state === "green" ? "text-sage" : "text-amber"}>{label}</span>
-          {item.fork ? <span className="text-amber">· fork</span> : null}
+          {item.fork ? <span className="text-amber">{cockpitWords.map.lever.fork}</span> : null}
           {fact ? <span className="text-stone-dim">· {fact}</span> : null}
         </div>
       </button>
@@ -533,9 +527,9 @@ export function BranchToggle({
   return (
     <fieldset className="mt-2.5 rounded-md border border-rule bg-ink3/90 p-2">
       <legend className="sr-only">{decision.label}</legend>
-      <span className="mb-1 block font-mono text-[9px] uppercase tracking-wider text-stone">
+      <span className="mb-1 block font-mono text-label uppercase tracking-wider text-stone">
         {decision.label}
-        {isDefault ? <span className="ml-1.5 text-amber">· default, not your pick yet</span> : null}
+        {isDefault ? <span className="ml-1.5 text-amber">{cockpitWords.map.defaultNotPicked}</span> : null}
       </span>
       <div className="flex gap-1">
         {decision.options.map((option) => {
@@ -546,7 +540,7 @@ export function BranchToggle({
               type="button"
               aria-pressed={isActive}
               onClick={() => onChange(option.id)}
-              className={`rounded-full px-2 py-1 text-[10px] font-medium ${
+              className={`rounded-full px-2 py-1 text-small font-medium ${
                 isActive ? "bg-maple text-[#fff8ee]" : "text-stone hover:bg-ink2"
               }`}
             >
@@ -580,11 +574,11 @@ function RoadAheadColumn({ columns, controls, onShow }: { columns: readonly Road
         onClick={onShow}
         className="grid content-start gap-1.5 rounded-lg border border-dashed border-rule bg-ink3/60 p-3 text-left transition hover:border-maple-soft"
       >
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-maple">{cockpitWords.folds.roadAhead.title(steps)}</span>
-        <span className="font-serif text-[15px] font-bold leading-tight tracking-tight text-paper">
+        <span className="font-mono text-label uppercase tracking-[0.16em] text-maple">{cockpitWords.folds.roadAhead.title(steps)}</span>
+        <span className="font-serif text-lead font-bold leading-tight tracking-tight text-paper">
           {cockpitWords.folds.roadAhead.columns(columns.map((column) => column.label))}
         </span>
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-stone">
+        <span className="font-mono text-label uppercase tracking-[0.08em] text-stone">
           <span aria-hidden>+ </span>
           {cockpitWords.folds.roadAhead.show}
         </span>
@@ -606,7 +600,7 @@ function Legend({
   const lines = <LegendLines coverage={coverage} setAsideShown={setAsideShown} />;
   if (!fold) {
     return (
-      <footer className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule bg-ink3 px-5 py-2.5 font-mono text-[9px] uppercase tracking-wider text-stone">
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule bg-ink3 px-5 py-2.5 font-mono text-label uppercase tracking-wider text-stone">
         {lines}
       </footer>
     );
@@ -620,7 +614,7 @@ function Legend({
       role="group"
       aria-label={cockpitWords.folds.legend.title}
       hidden={fold.legendFolded || undefined}
-      className="flex items-start gap-3 border-t border-rule bg-ink3 px-5 py-2 font-mono text-[9px] uppercase tracking-wider text-stone"
+      className="flex items-start gap-3 border-t border-rule bg-ink3 px-5 py-2 font-mono text-label uppercase tracking-wider text-stone"
     >
       <FoldButton folded={false} region="legend" label={cockpitWords.folds.legend.fold} controls={LEGEND_ID} onClick={fold.onToggleLegend} />
       <div id={LEGEND_ID} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5">
@@ -630,18 +624,27 @@ function Legend({
   );
 }
 
-/** The legend's lines: the arrows, the chips, the three colours, and the notes that apply to this map. */
+/**
+ * The legend's lines: the arrows, the chips, the three colours, and the notes that apply to this map. The
+ * words are lib/cockpit/words.ts `map.legend` and `map.colours`, except the last line: the strict word
+ * list the words file is checked against (tests/helpers/verdict-words.ts VERDICT_WORDS) refuses the word
+ * "recommendation" even in a line that denies one, and the map's recordings hold this line word for
+ * word, so it stays here under tests/cockpit-own-words.spec.ts's one allowance until the maintainer
+ * picks other words for it (2026-10-17).
+ */
 function LegendLines({ coverage, setAsideShown }: { coverage: EvaluationResult["provinceCoverage"]; setAsideShown: boolean }) {
+  const legend = cockpitWords.map.legend;
+  const colours = cockpitWords.map.colours;
   return (
     <>
-      <span className="text-maple">Hover a card: arrows show where it leads — solid next, dashed further on</span>
-      <span className="text-stone-dim">Stage chip = where it sits on your path</span>
-      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-sage" /> applies as answered</span>
-      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-amber" /> check first — confirm, time-boxed, or one fork away</span>
-      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-rule" /> doesn&apos;t apply as answered</span>
-      <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-xs bg-rule" /> left bar = what your answers support</span>
+      <span className="text-maple">{legend.arrows}</span>
+      <span className="text-stone-dim">{legend.chip}</span>
+      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-sage" /> {colours.green}</span>
+      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-amber" /> {legend.checkFirst}</span>
+      <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-rule" /> {colours.gray}</span>
+      <span className="flex items-center gap-1.5"><i className="h-2.5 w-[3px] rounded-xs bg-rule" /> {legend.leftBar}</span>
       {setAsideShown ? <span className="text-stone-dim">{cockpitWords.road.setAsideLegend}</span> : null}
-      {coverage === "federal-only" ? <span className="text-amber">federal rules only for this province</span> : null}
+      {coverage === "federal-only" ? <span className="text-amber">{legend.federalOnly}</span> : null}
       <span className="ml-auto normal-case tracking-normal text-stone-dim">Compass, not GPS — nothing here is a recommendation.</span>
     </>
   );

@@ -120,18 +120,28 @@ export const BASELINE: ClutterTable = {
  * The front door at tablet size stays at 11: on Windows its last button ("Show me Mara's example") shows
  * only a strip above the site footer and isn't counted (10); on Ubuntu, the gate, enough of it shows to count
  * (11, CI run 39067156272).
+ *
+ * The type scale, the same day (S2.5.30d; docs/ui-spec/README.md, "The type scale"): six named text sizes in
+ * place of twenty-three ad hoc ones, so every screen counts fewer distinct sizes and none draws text under
+ * 9.5 px. Text sizes and the smallest text set to what the screens measure with it (Chromium, the same on
+ * Windows and Ubuntu: a computed font size doesn't depend on the platform): the cockpit on both roads 11, 12
+ * and 12 to 4, 5 and 5 (smallest 8.5 to 9.5 px), Mara's example 11, 13 and 13 to 5, the front door 8 to 6,
+ * Your destination 4 to 3 (smallest 10 to 10.5 px), Pick a future 10 to 6 (10 to 10.5 px), the intake 6 to 5
+ * (8.5 to 9.5 px), Your futures 9 to 7 (9 to 9.5 px), What DotAmi knows about you 11 to 7, and Your plan 10
+ * to 5 (10 to 10.5 px). Regions and controls measured the same as before on every screen, and their budgets
+ * stay where they were.
  */
 export const BUDGETS: ClutterTable = {
-  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
-  start: { phone: m(3, 5, 4, 10), tablet: m(3, 5, 4, 10), laptop: m(3, 5, 4, 10) },
-  futures: { phone: m(6, 5, 10, 10), tablet: m(6, 7, 10, 10), laptop: m(6, 6, 10, 10) },
-  intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
-  ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
-  "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(7, 11, 11, 8.5), tablet: m(8, 26, 13, 8.5), laptop: m(8, 21, 13, 8.5) },
-  "cockpit-road-0": { phone: m(7, 18, 11, 8.5), tablet: m(8, 32, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
-  "cockpit-road-1": { phone: m(7, 14, 10, 8.5), tablet: m(8, 28, 12, 8.5), laptop: m(8, 25, 12, 8.5) },
-  plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
+  "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
+  start: { phone: m(3, 5, 3, 10.5), tablet: m(3, 5, 3, 10.5), laptop: m(3, 5, 3, 10.5) },
+  futures: { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
+  ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
+  "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
+  "example-mara": { phone: m(7, 11, 5, 9.5), tablet: m(8, 26, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
+  "cockpit-road-0": { phone: m(7, 18, 4, 9.5), tablet: m(8, 32, 5, 9.5), laptop: m(8, 29, 5, 9.5) },
+  "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 28, 5, 9.5), laptop: m(8, 25, 5, 9.5) },
+  plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */

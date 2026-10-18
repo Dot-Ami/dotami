@@ -1,5 +1,9 @@
+import { cockpitWords } from "@/lib/cockpit/words";
 import { structureLadderV2026 } from "@/lib/engines/structure/v2026";
 import type { StructureStepId } from "@/lib/engines/structure/v2026";
+
+/** The ladder's words (lib/cockpit/words.ts, since 2026-10-17). */
+const words = cockpitWords.rail.ladder;
 
 interface StructureLadderRailProps {
   /** null = the person has not set a structure yet (S2.5.4d) — no rung is "Current" or "Passed". */
@@ -12,17 +16,9 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
 
   return (
     <section className="border-t border-rule-soft pt-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-        Structure ladder
-      </p>
-      <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-        Entity progression — Canada, the first jurisdiction mapped. Prep orientation, not filing advice.
-      </p>
-      {activeStepId === null ? (
-        <p className="mt-1 text-[10px] leading-snug text-amber">
-          No rung marked — set your structure above and the ladder places you.
-        </p>
-      ) : null}
+      <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.title}</p>
+      <p className="mt-1 text-small leading-snug text-stone-dim">{words.note}</p>
+      {activeStepId === null ? <p className="mt-1 text-small leading-snug text-amber">{words.noRung}</p> : null}
       <ol className="mt-3 space-y-0">
         {structureLadderV2026.map((step, index) => {
           const isActive = step.id === activeStepId;
@@ -39,16 +35,16 @@ export function StructureLadderRail({ activeStepId }: StructureLadderRailProps) 
               }`}
             >
               <p
-                className={`font-mono text-[9px] uppercase tracking-wider ${
+                className={`font-mono text-label uppercase tracking-wider ${
                   isActive ? "text-maple" : isPast ? "text-sage" : "text-stone-dim"
                 }`}
               >
-                {isActive ? "Current" : isPast ? "Passed" : activeStepId === null ? "" : "Ahead"}
+                {isActive ? words.current : isPast ? words.passed : activeStepId === null ? "" : words.ahead}
               </p>
-              <p className={`text-xs font-semibold ${isActive ? "text-paper" : "text-stone"}`}>
+              <p className={`text-body font-semibold ${isActive ? "text-paper" : "text-stone"}`}>
                 {step.label}
               </p>
-              <p className="mt-0.5 text-[10px] leading-snug text-stone-dim">{step.trigger}</p>
+              <p className="mt-0.5 text-small leading-snug text-stone-dim">{step.trigger}</p>
             </li>
           );
         })}

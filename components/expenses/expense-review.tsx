@@ -132,28 +132,28 @@ export function ExpenseReview({
             <h2 id={titleId} className="font-serif text-xl font-bold tracking-tight text-paper">
               {title}
             </h2>
-            <p id={introId} className="mt-1 text-sm text-paper-dim">
+            <p id={introId} className="mt-1 text-lead text-paper-dim">
               {intro}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="shrink-0 text-[11px] text-stone hover:text-paper">
+          <button type="button" onClick={onClose} className="shrink-0 text-body text-stone hover:text-paper">
             Close
           </button>
         </div>
 
         {error ? (
-          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
             {error}
           </p>
         ) : null}
 
         <ol ref={listRef} onScroll={checkScrolled} className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-          {rows.length === 0 ? <li className="text-sm text-stone">Nothing left to review.</li> : null}
+          {rows.length === 0 ? <li className="text-lead text-stone">Nothing left to review.</li> : null}
           {rows.map((row, i) => {
             const boxId = `${titleId}-tick-${i}`;
             return (
               <li key={row.key} className="rounded-sm border border-rule-soft bg-ink px-3 py-2">
-                <div className="flex items-start gap-3 text-sm">
+                <div className="flex items-start gap-3 text-lead">
                   <input
                     id={boxId}
                     type="checkbox"
@@ -171,14 +171,14 @@ export function ExpenseReview({
                       type="button"
                       onClick={() => onTurnDown(row.key)}
                       disabled={busy}
-                      className="shrink-0 text-[11px] text-stone-dim hover:text-maple disabled:opacity-50"
+                      className="shrink-0 text-body text-stone-dim hover:text-maple disabled:opacity-50"
                     >
                       Turn down
                     </button>
                   ) : null}
                 </div>
                 {row.facts.length > 0 ? (
-                  <ul className="ml-7 mt-1 space-y-0.5 text-[11px] text-stone">
+                  <ul className="ml-7 mt-1 space-y-0.5 text-body text-stone">
                     {row.facts.map((fact) => (
                       <li key={fact}>{fact}</li>
                     ))}
@@ -190,13 +190,13 @@ export function ExpenseReview({
         </ol>
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-rule-soft pt-3">
-          <p className="basis-full text-sm text-paper-dim">{CHECK_FIRST_LINE}</p>
+          <p className="basis-full text-lead text-paper-dim">{CHECK_FIRST_LINE}</p>
           {waitingToScroll ? (
-            <p className="mr-auto text-[11px] text-stone" role="status">
+            <p className="mr-auto text-body text-stone" role="status">
               Scroll through all {rows.length} to agree
             </p>
           ) : ticked.length < rows.length ? (
-            <p className="mr-auto text-[11px] text-stone" role="status">
+            <p className="mr-auto text-body text-stone" role="status">
               {rows.length - ticked.length} left out: {rows.length - ticked.length === 1 ? "it stays" : "they stay"} where {rows.length - ticked.length === 1 ? "it is" : "they are"}
             </p>
           ) : null}

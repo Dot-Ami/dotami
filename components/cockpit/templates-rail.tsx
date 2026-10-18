@@ -1,3 +1,4 @@
+import { cockpitWords } from "@/lib/cockpit/words";
 import { templatesCatalogV2026 } from "@/lib/engines/templates/v2026";
 import type { TemplateReferenceId } from "@/lib/engines/templates/v2026";
 
@@ -16,12 +17,8 @@ export function TemplatesRail({ templateIds }: TemplatesRailProps) {
 
   return (
     <section className="border-t border-rule-soft pt-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
-        Prep-tool references
-      </p>
-      <p className="mt-1 text-[10px] leading-snug text-stone-dim">
-        Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.
-      </p>
+      <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{cockpitWords.rail.prepTools}</p>
+      <p className="mt-1 text-small leading-snug text-stone-dim">{cockpitWords.rail.prepToolsNote}</p>
       <ul className="mt-3 space-y-2">
         {templates.map((template) => (
           <li key={template.id}>
@@ -31,9 +28,9 @@ export function TemplatesRail({ templateIds }: TemplatesRailProps) {
               rel="noreferrer"
               className="block rounded-md border border-rule bg-ink2 p-2.5 transition hover:border-maple-soft"
             >
-              <p className="text-xs font-semibold text-paper">{template.label}</p>
-              <p className="mt-1 text-[10px] leading-snug text-stone">{template.description}</p>
-              <p className="mt-1.5 font-mono text-[9px] text-maple">Open reference ↗</p>
+              <p className="text-body font-semibold text-paper">{template.label}</p>
+              <p className="mt-1 text-small leading-snug text-stone">{template.description}</p>
+              <p className="mt-1.5 font-mono text-label text-maple">{cockpitWords.rail.openReference}</p>
             </a>
           </li>
         ))}

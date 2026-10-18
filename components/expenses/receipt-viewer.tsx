@@ -95,25 +95,25 @@ export function ReceiptViewer({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id={titleId} className="font-serif text-lg font-bold tracking-tight text-paper">
+            <h2 id={titleId} className="font-serif text-title font-bold tracking-tight text-paper">
               Receipt: {title}
             </h2>
-            <p className="mt-0.5 text-[11.5px] text-stone">
+            <p className="mt-0.5 text-body text-stone">
               {typeName(type)}, shown inside DotAmi from its copy on this computer
               {type === "image/heic" ? ", drawn by this computer's graphics chip" : ""}. Nothing in it can be clicked or run.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-xs text-stone hover:text-paper">
+          <button type="button" onClick={onClose} className="text-body text-stone hover:text-paper">
             Close
           </button>
         </div>
         <div className="mt-3 min-h-0 flex-1 overflow-auto">
           {error ? (
-            <p role="alert" className="text-sm text-amber">
+            <p role="alert" className="text-lead text-amber">
               {error}
             </p>
           ) : !shown ? (
-            <p role="status" className="text-sm text-paper-dim">
+            <p role="status" className="text-lead text-paper-dim">
               Opening the receipt…
             </p>
           ) : shown.kind === "drawn" ? (
@@ -121,7 +121,7 @@ export function ReceiptViewer({
             <PageCanvas bitmap={shown.picture} label={`The receipt photo (${shown.width} × ${shown.height} pixels)`} />
           ) : shown.kind === "picture" ? (
             pictureFailed ? (
-              <p role="alert" className="text-sm text-amber">
+              <p role="alert" className="text-lead text-amber">
                 {VIEW_MESSAGES.pictureFailed}
               </p>
             ) : (
@@ -144,7 +144,7 @@ export function ReceiptViewer({
               ))}
               {/* Fewer pages than the PDF has: past MAX_PDF_PAGES, or past the memory budget for all pages together. */}
               {shown.pages.length < shown.pageCount ? (
-                <p className="text-[11.5px] text-stone">
+                <p className="text-body text-stone">
                   DotAmi shows the first {shown.pages.length === 1 ? "page" : `${shown.pages.length} pages`}; this PDF has{" "}
                   {shown.pageCount}. The rest are kept in the file.
                 </p>

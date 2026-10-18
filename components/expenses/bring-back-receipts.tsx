@@ -54,8 +54,8 @@ const refusedText = (reason: string) => BRING_BACK_REFUSED[reason as BringBackRe
  */
 export function BringBackReceipts({ lockedFolders, lockState, desktop }: { lockedFolders: number; lockState: ReceiptLockState; desktop: boolean }) {
   if (lockedFolders <= 0) return null;
-  if (!desktop) return <p className="mt-2 text-[12px] text-paper-dim">{SET_ASIDE_FROM_SOURCE}</p>;
-  if (lockState !== "on") return <p className="mt-2 text-[12px] text-paper-dim">{SET_ASIDE_NEEDS_OPEN_KEY}</p>;
+  if (!desktop) return <p className="mt-2 text-body text-paper-dim">{SET_ASIDE_FROM_SOURCE}</p>;
+  if (lockState !== "on") return <p className="mt-2 text-body text-paper-dim">{SET_ASIDE_NEEDS_OPEN_KEY}</p>;
   return <SetAsideFolders />;
 }
 
@@ -100,7 +100,7 @@ function SetAsideFolders() {
   }
 
   return (
-    <div className="mt-2 space-y-2 text-[12px] text-paper-dim">
+    <div className="mt-2 space-y-2 text-body text-paper-dim">
       {listError ? <p>{listError}</p> : null}
       {(folders ?? []).map((folder) => {
         const { summary, canBringBack } = setAsideFolderText(folder);
@@ -114,7 +114,7 @@ function SetAsideFolders() {
                   setError(null);
                   setAsking(folder);
                 }}
-                className="mt-1 rounded-sm border border-rule px-2.5 py-1 text-[12px] font-semibold text-paper transition hover:border-maple hover:text-maple"
+                className="mt-1 rounded-sm border border-rule px-2.5 py-1 text-body font-semibold text-paper transition hover:border-maple hover:text-maple"
               >
                 Bring these receipts back
               </button>
@@ -132,7 +132,7 @@ function SetAsideFolders() {
           onCancel={() => setAsking(null)}
           onConfirm={() => void bringBack(asking)}
         >
-          <div className="space-y-2 text-[12.5px] text-paper-dim">
+          <div className="space-y-2 text-body text-paper-dim">
             <p className="break-words">From {asking.path}.</p>
             <p>
               A receipt whose record was deleted since, or that doesn&apos;t match its record, stays where it is, and DotAmi names
@@ -153,7 +153,7 @@ function SetAsideFolders() {
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-paper-dim">
               {result.left.map((l) => (
                 <li key={l.name} className="break-words">
-                  <code className="font-mono text-[11.5px]">{l.name}</code>: {BRING_BACK_LEFT[l.why] ?? BRING_BACK_LEFT["not-written"]}
+                  <code className="font-mono text-body">{l.name}</code>: {BRING_BACK_LEFT[l.why] ?? BRING_BACK_LEFT["not-written"]}
                 </li>
               ))}
             </ul>
@@ -162,7 +162,7 @@ function SetAsideFolders() {
       ) : null}
 
       {error ? (
-        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-[12.5px] text-amber">
+        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
           {error}
         </p>
       ) : null}

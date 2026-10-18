@@ -54,7 +54,7 @@ export function ReceiptLines({
       aria-label={words.receipts.region}
       // Focusable from script only: it is a message, not a stop in the tab order.
       tabIndex={-1}
-      className={`rounded-sm border px-2.5 py-2 text-[11.5px] leading-snug text-paper-dim outline-hidden focus-visible:ring-1 focus-visible:ring-maple-soft ${
+      className={`rounded-sm border px-2.5 py-2 text-body leading-snug text-paper-dim outline-hidden focus-visible:ring-1 focus-visible:ring-maple-soft ${
         status === "failed" ? "border-amber/40 bg-amber/5" : "border-sage/40 bg-sage/5"
       }`}
     >

@@ -15,7 +15,7 @@ import type { ReturnReadResult, T2125Copy } from "@/lib/figures/return/types";
  * for someone who never uses this.
  */
 
-const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
+const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber";
 const ACCEPT = ".pdf,application/pdf";
 
 type Phase = "pick" | "reading" | "done";
@@ -128,7 +128,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               : "border-rule hover:border-maple-soft focus-within:border-maple-soft"
           }`}
         >
-          <p className="text-xs text-paper">
+          <p className="text-body text-paper">
             Drop the PDF of last year&apos;s return that your tax software saved, or
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -151,7 +151,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               className="sr-only"
             />
           </div>
-          <p id={`${uid}-hint`} className="mt-2 text-[11px] text-stone-dim">
+          <p id={`${uid}-hint`} className="mt-2 text-body text-stone-dim">
             {T2125_HINT} It&apos;s read here, on this computer, and never kept. Nothing is added to
             your figures.
           </p>
@@ -163,7 +163,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
           data-autofocus
           tabIndex={-1}
           role="status"
-          className="text-[11px] text-stone-dim outline-hidden"
+          className="text-body text-stone-dim outline-hidden"
         >
           Reading {fileName}…
         </p>
@@ -177,20 +177,20 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
 
       {phase === "done" && result?.ok ? (
         <div>
-          <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
+          <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
             File: <span className="text-paper">{fileName}</span> · {result.pageCount}{" "}
             {result.pageCount === 1 ? "page" : "pages"} ·{" "}
             {result.copies.length === 1 ? "1 T2125" : `${result.copies.length} T2125s`}
           </p>
           {result.copies.map((copy, index) => (
-            <table key={copy.firstPage} className="mt-3 text-xs">
-              <caption className="mb-1 text-left font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+            <table key={copy.firstPage} className="mt-3 text-body">
+              <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
                 {result.copies.length === 1
                   ? `T2125 on ${pagesText(copy)}`
                   : `T2125 ${index + 1} of ${result.copies.length}, on ${pagesText(copy)}`}
               </caption>
               <thead>
-                <tr className="text-left text-[10px] text-stone-dim">
+                <tr className="text-left text-small text-stone-dim">
                   <th scope="col" className="pr-4 font-normal">Line</th>
                   <th scope="col" className="pr-4 font-normal">On the form</th>
                   <th scope="col" className="pr-4 font-normal">Page</th>
@@ -230,7 +230,7 @@ export function ReturnDrop({ onClose }: { onClose: () => void }) {
               </tbody>
             </table>
           ))}
-          <p className="mt-3 max-w-prose text-[11px] text-stone-dim">
+          <p className="mt-3 max-w-prose text-body text-stone-dim">
             Check these against your return. DotAmi only shows them: nothing is added to your
             figures or kept, and Close forgets the file.
           </p>

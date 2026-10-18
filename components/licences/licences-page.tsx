@@ -47,15 +47,15 @@ export function LicencesPage({ notices }: { notices: Notices | "missing" | "unre
           ← Settings
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Licences</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Licences</p>
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
         <header>
-          <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+          <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
             Licences, <span className="font-normal italic text-maple">and who wrote what.</span>
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-paper-dim">
+          <p className="mt-2 max-w-xl text-lead text-paper-dim">
             DotAmi is open source under the{" "}
             <a href={LICENSE_URL} target="_blank" rel="noreferrer" className="text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple">
               Apache License 2.0
@@ -89,13 +89,13 @@ function Listed({ notices }: { notices: Notices }) {
   );
   return (
     <>
-      <p className="mt-4 text-[12px] text-stone">
+      <p className="mt-4 text-body text-stone">
         {notices.entries.length} entries, from <Code>THIRD-PARTY-NOTICES.txt</Code>, written when this copy was built (
         {notices.header.split("\n")[1] ?? "DotAmi"}).
       </p>
       <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
         {sections.map((s) => (
-          <a key={s.id} href={`#${s.id}`} className="text-xs text-stone underline decoration-rule underline-offset-4 hover:text-paper">
+          <a key={s.id} href={`#${s.id}`} className="text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
             {s.title} ({s.entries.length})
           </a>
         ))}
@@ -106,7 +106,7 @@ function Listed({ notices }: { notices: Notices }) {
             <h2 id={`${s.id}-title`} className="font-serif text-xl font-bold tracking-tight text-paper">
               {s.title}
             </h2>
-            <p className="mt-0.5 text-[12px] text-stone">{s.blurb}</p>
+            <p className="mt-0.5 text-body text-stone">{s.blurb}</p>
             <ul className="mt-3 space-y-2">
               {s.entries.map((e) => (
                 <EntryRow key={`${e.name}@${e.version}`} entry={e} />
@@ -126,19 +126,19 @@ function EntryRow({ entry }: { entry: NoticeEntry }) {
       <details>
         <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5">
           <span className="font-semibold text-paper">{entry.name}</span>
-          <span className="font-mono text-[11px] text-stone">{entry.version}</span>
-          <span className="ml-auto rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-paper-dim">
+          <span className="font-mono text-body text-stone">{entry.version}</span>
+          <span className="ml-auto rounded-sm border border-rule px-1.5 py-0.5 font-mono text-small tracking-wide text-paper-dim">
             {entry.licence}
           </span>
         </summary>
         <div className="border-t border-rule-soft px-4 py-3">
-          <ul className="space-y-0.5 text-[12px] text-paper-dim">
+          <ul className="space-y-0.5 text-body text-paper-dim">
             {entry.shipsIn.map((s) => (
               <li key={s}>Ships in {s}.</li>
             ))}
           </ul>
-          {entry.note ? <p className="mt-2 text-[12px] text-amber">{entry.note}</p> : null}
-          <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded border border-rule-soft bg-ink px-3 py-2 font-mono text-[11px] leading-relaxed text-paper-dim">
+          {entry.note ? <p className="mt-2 text-body text-amber">{entry.note}</p> : null}
+          <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded border border-rule-soft bg-ink px-3 py-2 font-mono text-body leading-relaxed text-paper-dim">
             {entry.text}
           </pre>
         </div>
@@ -149,12 +149,12 @@ function EntryRow({ entry }: { entry: NoticeEntry }) {
 
 function Alert({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="mt-8 rounded-lg border border-amber/40 bg-amber/5 px-4 py-3 text-sm text-amber">
+    <p role="alert" className="mt-8 rounded-lg border border-amber/40 bg-amber/5 px-4 py-3 text-lead text-amber">
       {children}
     </p>
   );
 }
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="break-all rounded-sm bg-ink2 px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
+  return <code className="break-all rounded-sm bg-ink2 px-1.5 py-0.5 font-mono text-body text-paper">{children}</code>;
 }

@@ -10,6 +10,7 @@ import { evaluateScenario } from "@/lib/scenarios/evaluate-scenario";
 
 import { inventedRoad } from "./helpers/invented-road";
 import { MAP_TODAY, mapCases, type MapCase } from "./helpers/strategy-map-cases";
+import { withTypeScaleNames } from "./helpers/type-scale-renames";
 
 /**
  * The map draws any road, and today's map, drawn as road 0, is exactly what it was.
@@ -19,6 +20,9 @@ import { MAP_TODAY, mapCases, type MapCase } from "./helpers/strategy-map-cases"
  * lines changed the old map on purpose) for each
  * state in tests/helpers/strategy-map-cases.ts, plus where every card's arrows went and which column
  * each card sat in. Drawing the same states through the road must give the same HTML, byte for byte.
+ * Since the type scale (2026-10-17, S2.5.30d) the recordings are read with the six named text sizes put
+ * in for the pixel classes they replaced (tests/helpers/type-scale-renames.ts); the files themselves stay
+ * as recorded, and every word and every other class is still compared exactly.
  */
 const fixtures = new URL("./fixtures/strategy-map/", import.meta.url);
 
@@ -72,7 +76,7 @@ function withoutAdded(html: string): { rest: string; cards: string[] } {
 describe("today's map, drawn as the road Starting any business in Alberta", () => {
   it.each(mapCases)("draws $name exactly as the old map did, plus the four before-you-open cards", (c) => {
     // Each file is one line of HTML; only its line ending can differ by checkout (CRLF on Windows).
-    const before = readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd();
+    const before = withTypeScaleNames(readFileSync(new URL(`${c.name}.html`, fixtures), "utf8").trimEnd());
     const { rest, cards } = withoutAdded(draw(generalRoadV2026, c));
     // Everything that was there is there, byte for byte; the before pictures are not re-recorded.
     expect(rest).toBe(before);

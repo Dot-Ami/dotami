@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c); 2026-06-10
+Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -80,6 +80,31 @@ such difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 
 cards showing only their edge on Windows, which the count no longer takes in. Windows measures one fewer
 in one place, the front door at 768×1024 (10 controls; 11 on Ubuntu), where its last button shows only a
 strip above the site footer.
+
+## The type scale (S2.5.30d, 2026-10-17)
+
+Six named text sizes, and no others. They are Tailwind theme tokens in `app/globals.css` (`--text-label` …
+`--text-display`, each with its line height as a length), used as `text-label` … `text-display`:
+
+| Name | Size | Line | Where it is used |
+|---|---|---|---|
+| `text-label` | 9.5 px | 13 px | kickers and chips: the mono, uppercase, tracked labels over a block or on a card |
+| `text-small` | 10.5 px | 14 px | notes under a field, the legend, a secondary line |
+| `text-body` | 12 px | 16 px | running text, buttons, rows, the map's card lines (Tailwind's `text-xs`) |
+| `text-lead` | 14 px | 20 px | card and column headings, the intake's box, a page's subline (`text-sm`) |
+| `text-title` | 18 px | 28 px | section headings, a quoted sentence (`text-lg`) |
+| `text-display` | 26 px | 32 px | page titles |
+
+Headlines larger than that (the front door's hero, a door's title, the word mark) keep Tailwind's own steps,
+`text-xl` and up. Before this the screens had grown twenty-three ad hoc sizes (`text-[8px]` to `text-[46px]`,
+in 661 places, half-pixel neighbours among them), and one screen counted fifteen distinct sizes. Each old
+size went to the nearest named one (`tests/helpers/type-scale-renames.ts` has the whole table): 8–9.5 px to
+label, 10–10.5 to small, 11–13 to body, 14–15 to lead, 16–19 to title, 26–28 to display, and the few above
+to Tailwind's steps. The smallest text on any screen is now 9.5 px (the baseline's was 8 px; 8.5 px after the
+calm first view). `tests/type-scale.spec.ts` refuses any arbitrary size written as a class (`text-[9px]`,
+`text-[0.7rem]`, `text-[length:…]`) and the four Tailwind sizes the named ones replaced, with a control that
+plants each kind. A new size is a change to the scale, made in the theme and in this table, never in a
+component.
 
 ## Convention
 

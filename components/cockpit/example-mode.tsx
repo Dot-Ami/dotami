@@ -59,7 +59,7 @@ export function ExampleBanner({
       // One of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
       data-region="example-banner"
       aria-label={words.example.region}
-      className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber/50 bg-amber/10 px-4 py-2 text-[12px] md:px-[22px]"
+      className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber/50 bg-amber/10 px-4 py-2 text-body md:px-[22px]"
     >
       <p className="font-semibold text-amber">{seenOn ? words.example.banner(person, seenOn) : words.example.bannerInvented}</p>
       <p className="text-paper-dim">
@@ -75,14 +75,14 @@ export function ExampleBanner({
           aria-expanded={sourcesOpen}
           aria-controls={EXAMPLE_SOURCES_ID}
           onClick={onToggleSources}
-          className="inline-flex items-center rounded-full border border-amber/60 px-3 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/10"
+          className="inline-flex items-center rounded-full border border-amber/60 px-3 py-1 text-body font-medium text-amber hover:bg-amber/10"
         >
           {sourcesOpen ? words.example.sources.close : words.example.sources.open}
         </button>
       ) : null}
       <Link
         href="/start"
-        className="ml-auto inline-flex items-center rounded-full border border-maple bg-maple px-3 py-1 text-[11.5px] font-medium text-[#fff8ee]"
+        className="ml-auto inline-flex items-center rounded-full border border-maple bg-maple px-3 py-1 text-body font-medium text-[#fff8ee]"
       >
         {words.example.startOwn}
       </Link>
@@ -148,17 +148,17 @@ export function ExampleFrame({
 export function ExampleStory({ person, parts }: { person: string; parts: readonly StoryPart[] }) {
   return (
     <section aria-label={words.example.story.region(person)} className="flex flex-col gap-2">
-      <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{words.example.story.region(person)}</h2>
-      <p className="text-[10.5px] leading-snug text-stone-dim">{words.example.story.note}</p>
+      <h2 className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.example.story.region(person)}</h2>
+      <p className="text-small leading-snug text-stone-dim">{words.example.story.note}</p>
       {/* The lines are the receipts every person's own cockpit gives, "you" and all: said once who that is. */}
-      <p className="text-[10.5px] leading-snug text-amber">{words.example.youMeans(person)}</p>
+      <p className="text-small leading-snug text-amber">{words.example.youMeans(person)}</p>
       <ul className="space-y-2">
         {parts.map((part) => (
           <li key={part.id} className="rounded-sm border border-rule-soft bg-ink2 p-2">
-            <p className="text-[11.5px] font-semibold text-paper">{words.example.story.parts[part.id](person)}</p>
+            <p className="text-body font-semibold text-paper">{words.example.story.parts[part.id](person)}</p>
             <ul className="mt-1 space-y-0.5">
               {part.lines.map((line) => (
-                <li key={line} className="text-[11px] leading-snug text-paper-dim">
+                <li key={line} className="text-body leading-snug text-paper-dim">
                   {line}
                 </li>
               ))}

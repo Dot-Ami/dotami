@@ -80,7 +80,7 @@ export function WhatIfBar({
         data-region="what-if"
         aria-label={words.whatIf.region}
         hidden={folded || undefined}
-        className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-[12px]"
+        className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-body"
       >
         {fold ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -105,21 +105,21 @@ export function WhatIfBar({
               value={text}
               onChange={(e) => setText(e.target.value)}
               aria-invalid={problem ? true : undefined}
-              className="w-28 rounded-sm border border-rule bg-ink px-2 py-0.5 text-right font-mono text-[12px] text-paper outline-hidden focus:border-maple-soft"
+              className="w-28 rounded-sm border border-rule bg-ink px-2 py-0.5 text-right font-mono text-body text-paper outline-hidden focus:border-maple-soft"
             />
             <Pill type="submit" size="small" variant="ghost">
               {words.whatIf.try}
             </Pill>
             {problem ? (
-              <span role="alert" className="text-[11px] text-amber">
+              <span role="alert" className="text-body text-amber">
                 {problem}
               </span>
             ) : null}
           </form>
           {whatIf !== null ? (
             <div className="grid gap-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2">
-              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</p>
-              <p className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</p>
+              <p className="font-mono text-small uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</p>
+              <p className="text-body text-paper-dim">{words.whatIf.on(whatIf)}</p>
               {receipt ? <ReceiptLines lines={receipt} empty={words.whatIf.nothingChanged} /> : null}
               <div className="flex flex-wrap items-center gap-2">
                 <Pill
@@ -136,7 +136,7 @@ export function WhatIfBar({
                 <Pill size="small" variant="ghost" onClick={onClear}>
                   {words.whatIf.clear}
                 </Pill>
-                <span className="text-[10.5px] text-stone">{words.whatIf.keepHelp}</span>
+                <span className="text-small text-stone">{words.whatIf.keepHelp}</span>
               </div>
             </div>
           ) : receipt ? (
@@ -146,11 +146,11 @@ export function WhatIfBar({
         </div>
       </section>
       {hasThisVisit ? (
-        <section id={THIS_VISIT_ID} hidden={folded || undefined} aria-label={words.receipts.thisVisit} className="border-t border-rule bg-ink2 px-5 py-1.5 text-[11px]">
+        <section id={THIS_VISIT_ID} hidden={folded || undefined} aria-label={words.receipts.thisVisit} className="border-t border-rule bg-ink2 px-5 py-1.5 text-body">
           <div className="flex items-baseline gap-3">
-            <h2 className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone">{words.receipts.thisVisit}</h2>
+            <h2 className="font-mono text-label uppercase tracking-[0.12em] text-stone">{words.receipts.thisVisit}</h2>
             {sinceLastTime.length > 1 ? (
-              <button type="button" className="text-[10.5px] text-stone underline hover:text-paper" aria-expanded={allLines} onClick={() => setAllLines((v) => !v)}>
+              <button type="button" className="text-small text-stone underline hover:text-paper" aria-expanded={allLines} onClick={() => setAllLines((v) => !v)}>
                 {allLines ? words.receipts.fewer : words.receipts.moreThisVisit(sinceLastTime.length - 1)}
               </button>
             ) : null}
@@ -183,8 +183,8 @@ export function WhatIfShowButton({ whatIf, hasThisVisit, onShow }: { whatIf: num
       />
       {whatIf !== null ? (
         <>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
-          <span className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</span>
+          <span className="font-mono text-small uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
+          <span className="text-body text-paper-dim">{words.whatIf.on(whatIf)}</span>
         </>
       ) : null}
     </>

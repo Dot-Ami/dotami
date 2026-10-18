@@ -50,15 +50,15 @@ export function SettingsPage({
           ← Back
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Settings</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Settings</p>
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-8 py-10">
         <header>
-          <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+          <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
             Settings, <span className="font-normal italic text-maple">and what&apos;s true today.</span>
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-paper-dim">
+          <p className="mt-2 max-w-xl text-lead text-paper-dim">
             Each group starts with what this copy of DotAmi does right now. Below that is every
             setting planned for it: its default, its choices, and the warning you&apos;ll see
             before switching on anything risky. Only the ones with a tick-box below can be
@@ -73,7 +73,7 @@ export function SettingsPage({
 
         <nav aria-label="Setting groups" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
           {SETTING_GROUPS.map((g) => (
-            <a key={g.id} href={`#${g.id}`} className="text-xs text-stone underline decoration-rule underline-offset-4 hover:text-paper">
+            <a key={g.id} href={`#${g.id}`} className="text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
               {g.title}
             </a>
           ))}
@@ -85,11 +85,11 @@ export function SettingsPage({
               <h2 id={`${g.id}-title`} className="font-serif text-xl font-bold tracking-tight text-paper">
                 {g.title}
               </h2>
-              <p className="mt-0.5 text-[12px] text-stone">{g.blurb}</p>
+              <p className="mt-0.5 text-body text-stone">{g.blurb}</p>
 
               <div className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3">
-                <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-sage">Today</p>
-                <div className="mt-1.5 space-y-2 text-sm leading-relaxed text-paper">{todayFor(g.id, today)}</div>
+                <p className="font-mono text-label uppercase tracking-[0.14em] text-sage">Today</p>
+                <div className="mt-1.5 space-y-2 text-lead leading-relaxed text-paper">{todayFor(g.id, today)}</div>
               </div>
 
               <ul className="mt-3 space-y-3">
@@ -137,16 +137,16 @@ function SettingRow({
         <h3 className="font-semibold text-paper">{setting.label}</h3>
         {status ? (
           // Not upper-cased: the story code must read exactly as the task list writes it ("[7b]").
-          <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-stone">
+          <span className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-small tracking-wide text-stone">
             {status}
           </span>
         ) : null}
       </div>
-      <p className="mt-1 text-[12.5px] text-paper-dim">{setting.does}</p>
-      <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[12px]">
-        <dt className="font-mono text-[9.5px] uppercase leading-[18px] tracking-[0.14em] text-stone">Default</dt>
+      <p className="mt-1 text-body text-paper-dim">{setting.does}</p>
+      <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-body">
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">Default</dt>
         <dd className="text-paper">{setting.defaultValue}</dd>
-        <dt className="font-mono text-[9.5px] uppercase leading-[18px] tracking-[0.14em] text-stone">Choices</dt>
+        <dt className="font-mono text-label uppercase leading-[18px] tracking-[0.14em] text-stone">Choices</dt>
         <dd className="text-paper-dim">
           {setting.status === "undecided" ? (
             <a href={PART_4_URL} target="_blank" rel="noreferrer" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
@@ -158,8 +158,8 @@ function SettingRow({
         </dd>
       </dl>
       {setting.warning ? (
-        <p className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-1.5 text-[12px] text-amber">
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]">Warning · </span>
+        <p className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-1.5 text-body text-amber">
+          <span className="font-mono text-label uppercase tracking-[0.14em]">Warning · </span>
           {setting.warning}
         </p>
       ) : null}
@@ -229,7 +229,7 @@ function DatabaseProtectionLine({ database }: { database: SettingsToday["databas
 }
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[12px] text-paper">{children}</code>;
+  return <code className="break-all rounded-sm bg-ink px-1.5 py-0.5 font-mono text-body text-paper">{children}</code>;
 }
 
 /** The "Today" lines for one group. Every sentence here must stay true of the running app. */

@@ -632,9 +632,119 @@ export const cockpitWords = {
       "DotAmi is not legal or tax advice. This plan is a preparation tool for your accountant and lawyer: it shows what you told DotAmi and where each fact comes from, and it ranks nothing.",
   },
 
-  /** The left rail's own fields. */
+  /**
+   * The left rail's own fields: the venture block, its structure and prep-tool sections, the save line and
+   * its buttons, and the compass line at its foot (the rail as it stood since 2026-09-14, S2.5.4h; its
+   * sentences moved here from the component on 2026-10-17, S2.5.30e, so the words tests read them).
+   */
   rail: {
     /** A Year 1 / Year 3 sales target: no number is not given, never a $0 target (2026-10-12, after review). */
     salesTarget: (dollars: number) => (dollars > 0 ? formatMoney(dollars * 100) : "not given"),
+    venture: "Venture",
+    structure: "Structure",
+    structureOptions: { notSet: "Not set", soleProp: "Sole prop", corporation: "Corporation" },
+    structureAssumed: "Map assumes sole prop until you set it.",
+    employed: "Employed",
+    inYourWords: "In your words",
+    /** The prep-tool references (lib/engines/templates/): shown once the structure is set, else the wait line. */
+    prepTools: "Prep-tool references",
+    prepToolsWait: "Appear once your structure is set.",
+    prepToolsNote: "Orientation links for your accountant or lawyer — DotAmi does not generate legal documents.",
+    openReference: "Open reference ↗",
+    /** The structure ladder (lib/engines/structure/): where the idea's structure sits on it. */
+    ladder: {
+      title: "Structure ladder",
+      note: "Entity progression — Canada, the first jurisdiction mapped. Prep orientation, not filing advice.",
+      noRung: "No rung marked — set your structure above and the ladder places you.",
+      current: "Current",
+      passed: "Passed",
+      ahead: "Ahead",
+    },
+    /** The save line, always truthful about where the person's edits are (issue #1). */
+    save: {
+      now: "Save now",
+      saving: "Saving…",
+      unsaved: "Unsaved changes…",
+      savedAt: (when: string) => `Saved · ${when}`,
+      unavailable: "Save unavailable — kept in this tab. Save now retries.",
+      automatic: "Edits save automatically.",
+    },
+    editProfile: "Edit venture profile",
+    /** The rail's foot: the lead in serif, then the rest. */
+    compass: {
+      lead: "Compass, not GPS.",
+      rest: "Profile drives which surfaces appear on the map. DotAmi never files, predicts, or replaces an accountant.",
+    },
+  },
+
+  /** The header's own two: the way back to every saved idea, and the export. */
+  header: {
+    back: "← Your futures",
+    export: "Export",
+  },
+
+  /** While the cockpit's code loads. */
+  loading: "Loading cockpit…",
+
+  /**
+   * The source label of a number typed in the cockpit (a quote, savings), as the figures list and *What
+   * DotAmi knows about you* show it; the ideas page and the expenses page write the same words for theirs.
+   */
+  typedByYou: "typed by you",
+
+  /** No venture saved and none in this session: the empty cockpit points at the intake. */
+  empty: {
+    back: "← Back",
+    kicker: "Cockpit",
+    title: "No venture on the map",
+    /** The title's last word, in the accent colour. */
+    titleEnd: "yet.",
+    body: "The cockpit shows the venture you describe on the intake. Nothing here is a sample — it is empty until it is yours.",
+    describe: "Describe a venture →",
+  },
+
+  /**
+   * The map's own words (components/cockpit/strategy-map.tsx): the chips, the colours in words, each card's
+   * accessible name and the legend. The recordings in tests/fixtures/strategy-map/ hold these word for word,
+   * so a change here re-records the map, which tests/road-map.spec.ts never does on its own.
+   */
+  map: {
+    /** The chip's words (lib/scenarios/graph.ts `stageChipFor` decides which; issue #5, 2026-10-11). */
+    chips: {
+      now: "now",
+      "your-pick": "your pick",
+      default: "default",
+      "open-choice": "open choice",
+      done: "done",
+      ahead: "ahead",
+      "not-on-your-path": "not on your path",
+    },
+    /** The chip on a step no rule reads yet: it claims neither a colour nor a place on the person's path. */
+    noRule: "no rule yet",
+    /** The left accent in words, so the colour is never the only way to tell (2026-10-11); the legend's words too. */
+    colours: { green: "applies as answered", yellow: "check first", gray: "doesn't apply as answered" },
+    tier: (n: number) => `Tier ${n}`,
+    /** A stage card's accessible name: the step, its chip, its colour in words, its badges, and that it opens. */
+    cardName: (step: string, chip: string, colour: string, badges: readonly string[]) =>
+      `${step}, ${chip}, ${colour}, ${badges.map((b) => `${b}, `).join("")}opens detail`,
+    cardNameNoRule: (step: string) => `${step}, no rule reads this step yet, shows where it leads`,
+    /** A lever card: its state in a word, the one dated fact it carries, and its accessible name. */
+    lever: {
+      applies: "applies",
+      /** The one dated fact the evaluator carries for an item: in use before the year it expires. */
+      inUseBefore: (year: string) => `in use before ${year}`,
+      name: (typeChip: string, title: string, state: string, fork: boolean, partial: boolean, fact: string | null) =>
+        `${typeChip}: ${title}, ${state}${fork ? ", fork" : ""}${partial ? ", partial citation" : ""}${fact ? `, ${fact}` : ""}, opens detail`,
+      fork: "· fork",
+    },
+    /** On a fork's toggle until the person picks: the active side is the map's default. */
+    defaultNotPicked: "· default, not your pick yet",
+    legend: {
+      arrows: "Hover a card: arrows show where it leads — solid next, dashed further on",
+      chip: "Stage chip = where it sits on your path",
+      checkFirst: "check first — confirm, time-boxed, or one fork away",
+      leftBar: "left bar = what your answers support",
+      federalOnly: "federal rules only for this province",
+    },
   },
 };

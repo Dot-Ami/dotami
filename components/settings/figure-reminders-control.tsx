@@ -77,10 +77,10 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
 
   return (
     <fieldset disabled={read !== "ready"}>
-      <legend className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Remind me</legend>
+      <legend className="font-mono text-label uppercase tracking-[0.14em] text-stone">Remind me</legend>
       <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1.5">
         {REMINDER_CADENCES.map((c) => (
-          <label key={c} className="flex items-center gap-2 text-sm text-paper">
+          <label key={c} className="flex items-center gap-2 text-lead text-paper">
             <input
               type="checkbox"
               checked={ticked.includes(c)}
@@ -91,7 +91,7 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
           </label>
         ))}
       </div>
-      <p role="status" className="mt-1.5 min-h-4 font-mono text-[9px] uppercase tracking-wider text-stone-dim">
+      <p role="status" className="mt-1.5 min-h-4 font-mono text-label uppercase tracking-wider text-stone-dim">
         {read === "failed"
           ? "Couldn't read your saved choice, so it can't be changed right now."
           : state === "saving"
@@ -109,11 +109,11 @@ export function FigureRemindersControl({ initial }: { initial: ReminderCadence[]
           type="button"
           onClick={addToCalendar}
           disabled={ticked.length === 0 || state === "saving"}
-          className="shrink-0 rounded-sm border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-stone transition hover:border-maple-soft hover:text-paper disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-rule disabled:hover:text-stone"
+          className="shrink-0 rounded-sm border border-rule px-2 py-0.5 font-mono text-small uppercase tracking-wider text-stone transition hover:border-maple-soft hover:text-paper disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-rule disabled:hover:text-stone"
         >
           Add to my calendar
         </button>
-        <p className="min-w-0 flex-1 text-xs leading-relaxed text-stone">
+        <p className="min-w-0 flex-1 text-body leading-relaxed text-stone">
           Saves a calendar file (.ics) with one repeating event per ticked box, on the first day after
           each month, quarter or year ends. Open it with your calendar app, or use its Import menu.
           Google Calendar: import it on a computer at calendar.google.com (Settings, then Import &amp;

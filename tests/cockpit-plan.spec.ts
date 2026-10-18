@@ -558,16 +558,8 @@ describe("the page", () => {
     for (const [, href, text] of links) expect(text).toBe(href);
   });
 
-  it("the page's components hold no sentence of their own: words come from lib/cockpit/words.ts", () => {
-    for (const file of ["plan-page.tsx", "print-button.tsx"]) {
-      const source = readFileSync(path.join(process.cwd(), "components", "cockpit", file), "utf8")
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/className=(\{`[^`]*`\}|"[^"]*")/g, "");
-      const jsxText = [...source.matchAll(/>\s*([A-Z][a-z]+(?: [a-z’'A-Z]+){3,}[.:]?)\s*</g)].map((m) => m[1]);
-      expect(jsxText, file).toEqual([]);
-    }
-  });
+  // That the plan's components write no sentence or label of their own is tests/cockpit-own-words.spec.ts
+  // (2026-10-17), which reads every file in components/cockpit/.
 
   it("the plan's content builder reads no file, database, network or clock", () => {
     const source = readFileSync(path.join(process.cwd(), "lib", "cockpit", "plan.ts"), "utf8");

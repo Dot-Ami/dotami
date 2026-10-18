@@ -147,20 +147,20 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                 ? "Something about you, in your words…"
                 : "Anything you want DotAmi to know about you — how you work, what you won't do, what you're after. Your words, kept as-is."
             }
-            className="w-full resize-y rounded-lg border border-rule bg-ink px-3 py-2.5 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
+            className="w-full resize-y rounded-lg border border-rule bg-ink px-3 py-2.5 text-lead text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
+            <label className="flex items-center gap-1.5 font-mono text-small uppercase tracking-[0.14em] text-stone">
               Said on
               <input
                 type="date"
                 value={saidAt}
                 max={todayIso()}
                 onChange={(e) => setSaidAt(e.target.value)}
-                className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] normal-case tracking-normal text-paper"
+                className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-body normal-case tracking-normal text-paper"
               />
             </label>
-            <span className="font-mono text-[10px] text-stone-dim">
+            <span className="font-mono text-small text-stone-dim">
               {draft.length}/{STATEMENT_MAX_CHARS}
             </span>
             <div className="ml-auto flex items-center gap-2">
@@ -168,7 +168,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                 <button
                   type="button"
                   onClick={() => setComposerOpen(false)}
-                  className="text-[10px] text-stone hover:text-paper"
+                  className="text-small text-stone hover:text-paper"
                 >
                   Cancel
                 </button>
@@ -180,7 +180,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
           </div>
           {saveNote ? (
             <p
-              className={`text-[11px] ${
+              className={`text-body ${
                 saveNote.startsWith("Kept, with") ? "text-sage" : "text-amber"
               }`}
             >
@@ -192,7 +192,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="rounded-sm border border-rule px-2 py-1 text-[10px] text-stone transition hover:border-maple-soft hover:text-paper"
+          className="rounded-sm border border-rule px-2 py-1 text-small text-stone transition hover:border-maple-soft hover:text-paper"
         >
           + Add something
         </button>
@@ -200,13 +200,13 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
 
       {/* Status lines — the guardrails, visible */}
       {loaded && !loaded.db.available ? (
-        <p className="text-[11px] text-amber">{loaded.db.reason}</p>
+        <p className="text-body text-amber">{loaded.db.reason}</p>
       ) : null}
-      {loadError ? <p className="text-[11px] text-amber">{loadError}</p> : null}
+      {loadError ? <p className="text-body text-amber">{loadError}</p> : null}
 
       {/* The record */}
       {statements.length === 0 ? (
-        <p className="text-[11px] text-stone-dim">
+        <p className="text-body text-stone-dim">
           {loaded || loadError ? "Nothing on record yet." : "Loading what's on record…"}
         </p>
       ) : (
@@ -216,9 +216,9 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
             return (
               <li key={s.id} className="rounded-lg border border-rule-soft bg-ink px-3 py-2.5">
                 <div className="flex min-w-0 items-baseline gap-2">
-                  <span className="shrink-0 whitespace-nowrap font-mono text-[10px] tracking-[0.08em] text-stone">{s.saidAt}</span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-small tracking-[0.08em] text-stone">{s.saidAt}</span>
                   <span
-                    className={`min-w-0 truncate font-mono text-[9px] uppercase tracking-[0.12em] ${
+                    className={`min-w-0 truncate font-mono text-label uppercase tracking-[0.12em] ${
                       s.persisted === false ? "text-amber" : "text-stone-dim"
                     }`}
                   >
@@ -228,18 +228,18 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
                     <button
                       type="button"
                       onClick={() => setExpandedId(open ? null : s.id)}
-                      className="ml-auto font-mono text-[11px] text-stone hover:text-paper"
+                      className="ml-auto font-mono text-body text-stone hover:text-paper"
                       aria-label={open ? "Collapse" : "Expand"}
                     >
                       {open ? "−" : "+"}
                     </button>
                   ) : null}
                 </div>
-                <p className={`mt-1 whitespace-pre-wrap font-serif text-paper ${isRail ? "text-[12.5px] leading-snug" : "text-[15px] leading-relaxed"}`}>
+                <p className={`mt-1 whitespace-pre-wrap font-serif text-paper ${isRail ? "text-body leading-snug" : "text-lead leading-relaxed"}`}>
                   {s.text}
                 </p>
                 {open && s.body ? (
-                  <p className="mt-2 whitespace-pre-wrap border-t border-rule-soft pt-2 text-[12px] leading-relaxed text-paper-dim">
+                  <p className="mt-2 whitespace-pre-wrap border-t border-rule-soft pt-2 text-body leading-relaxed text-paper-dim">
                     {s.body}
                   </p>
                 ) : null}
@@ -249,7 +249,7 @@ export function PersonStatements({ variant = "full" }: { variant?: "full" | "rai
         </ul>
       )}
 
-      <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone-dim">
+      <p className="font-mono text-label uppercase tracking-[0.12em] text-stone-dim">
         Shown back as you said it · not scored · not summarised · newer sits above older
       </p>
     </div>

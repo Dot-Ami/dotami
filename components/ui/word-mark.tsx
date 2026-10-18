@@ -8,8 +8,8 @@ interface WordMarkProps {
 }
 
 const sizeClasses = {
-  sm: "text-lg",
-  md: "text-[22px]",
+  sm: "text-title",
+  md: "text-2xl",
   lg: "text-2xl",
 };
 

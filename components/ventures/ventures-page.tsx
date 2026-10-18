@@ -57,7 +57,7 @@ export function VenturesPage() {
           ← Back
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Your futures</p>
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">Your futures</p>
         <GhostLink href="/expenses" tone="stone">
           Your expenses
         </GhostLink>
@@ -69,10 +69,10 @@ export function VenturesPage() {
       <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-10">
         <header data-region="intro" className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+            <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
               Every future, <span className="font-normal italic text-maple">saved and cross-referenced.</span>
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-paper-dim">
+            <p className="mt-2 max-w-xl text-lead text-paper-dim">
               Listed by when you last touched them — not ranked. Each opens in its own cockpit. Link
               the ones that overlap or could become sister companies; the map reads the links, it
               never scores them.
@@ -84,14 +84,14 @@ export function VenturesPage() {
         </header>
 
         {dbDown ? (
-          <p className="mt-6 rounded-lg border border-amber/40 bg-amber/5 px-4 py-3 text-sm text-amber">{dbDown}</p>
+          <p className="mt-6 rounded-lg border border-amber/40 bg-amber/5 px-4 py-3 text-lead text-amber">{dbDown}</p>
         ) : null}
 
         {ventures === null ? (
-          <p className="mt-10 text-sm text-stone">Loading…</p>
+          <p className="mt-10 text-lead text-stone">Loading…</p>
         ) : ventures.length === 0 ? (
           <div data-region="futures" className="mt-10 rounded-lg border border-dashed border-rule p-8 text-center">
-            <p className="text-sm text-stone">Nothing saved yet. Describe one on the intake and press Save on its map.</p>
+            <p className="text-lead text-stone">Nothing saved yet. Describe one on the intake and press Save on its map.</p>
             <div className="mt-4 flex justify-center">
               <Pill variant="maple" onClick={anotherFuture}>
                 Start a future →
@@ -196,7 +196,7 @@ function VentureCard({
           <h2 className="truncate font-serif text-xl font-bold tracking-tight text-paper" title={venture.name}>
             {venture.name}
           </h2>
-          <p className="mt-0.5 text-[11px] capitalize text-stone">
+          <p className="mt-0.5 text-body capitalize text-stone">
             {venture.type} · {venture.province} · structure{" "}
             {venture.structureSource === "assumed" ? "not set" : venture.structure}
             {venture.targetRevenueY1 > 0 ? ` · Y1 $${venture.targetRevenueY1.toLocaleString("en-CA")}` : ""}
@@ -204,7 +204,7 @@ function VentureCard({
           {venture.activityTags.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {venture.activityTags.map((t) => (
-                <span key={t} className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-stone">
+                <span key={t} className="rounded-sm border border-rule px-1.5 py-0.5 font-mono text-label uppercase tracking-wider text-stone">
                   {t}
                 </span>
               ))}
@@ -213,12 +213,12 @@ function VentureCard({
           <FirstWords venture={venture} />
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <label className="flex items-center gap-2 text-[11px] text-stone">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]">Stage</span>
+          <label className="flex items-center gap-2 text-body text-stone">
+            <span className="font-mono text-label uppercase tracking-[0.14em]">Stage</span>
             <select
               value={venture.stage}
               onChange={(e) => void patch({ stage: e.target.value as VentureStage })}
-              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[11px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-body text-paper"
             >
               {VENTURE_STAGES.map((s) => (
                 <option key={s} value={s}>
@@ -236,7 +236,7 @@ function VentureCard({
       </div>
 
       <div className="mt-4">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Your notes</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Your notes</p>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -245,15 +245,15 @@ function VentureCard({
           }}
           rows={3}
           placeholder="Anything about this idea, in your words. Saved when you click away."
-          className="mt-1.5 w-full resize-y rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+          className="mt-1.5 w-full resize-y rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
         />
-        <p className="mt-1 text-right font-mono text-[9px] uppercase tracking-wider text-stone-dim">
+        <p className="mt-1 text-right font-mono text-label uppercase tracking-wider text-stone-dim">
           {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved." : saving === "error" ? "Save failed." : `touched ${venture.updatedAt.slice(0, 10)}`}
         </p>
       </div>
 
       <div className="mt-4 border-t border-rule-soft pt-3">
-        <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-paper has-disabled:cursor-not-allowed has-disabled:opacity-60">
+        <label className="flex w-fit cursor-pointer items-center gap-2.5 text-lead text-paper has-disabled:cursor-not-allowed has-disabled:opacity-60">
           {/* A native checkbox drawn as a switch, so it keeps its keyboard and screen-reader behaviour. */}
           <input
             type="checkbox"
@@ -265,46 +265,46 @@ function VentureCard({
           />
           Remind me about this idea
         </label>
-        <p className="mt-1 text-[11px] text-stone-dim">
+        <p className="mt-1 text-body text-stone-dim">
           Off until you turn it on. How often is your choice under{" "}
           <Link href="/settings#figures" className="underline decoration-stone-dim underline-offset-2 hover:text-paper">
             Settings → Figure reminders
           </Link>
           ; the reminder shows here, and on this idea&apos;s map, when a period has ended that your figures don&apos;t cover.
         </p>
-        {remindFailed ? <p className="mt-1 text-[11px] text-amber">Couldn&apos;t save that — the switch is back where it was.</p> : null}
+        {remindFailed ? <p className="mt-1 text-body text-amber">Couldn&apos;t save that — the switch is back where it was.</p> : null}
       </div>
 
       <FiguresPanel ventureId={venture.id} ventureName={venture.name} reminders={reminders} openAddSignal={addSignal} />
 
       <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule-soft pt-3">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Expense records</p>
-        <p className="text-[11px] text-stone-dim">Single business expenses you keep for this idea, typed and agreed to one list at a time.</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Expense records</p>
+        <p className="text-body text-stone-dim">Single business expenses you keep for this idea, typed and agreed to one list at a time.</p>
         {/* Only the idea's id goes in the address; the records themselves load in the page's request bodies. */}
         <Link
           href={`/expenses?idea=${encodeURIComponent(venture.id)}`}
-          className="ml-auto text-[11px] text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
+          className="ml-auto text-body text-paper underline decoration-stone-dim underline-offset-2 hover:text-maple"
         >
           Expense records for this idea →
         </Link>
       </div>
 
       <div className="mt-3 border-t border-rule-soft pt-3">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Cross-references</p>
+        <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Cross-references</p>
         {venture.links.length === 0 ? (
-          <p className="mt-1 text-[11px] text-stone-dim">None yet.</p>
+          <p className="mt-1 text-body text-stone-dim">None yet.</p>
         ) : (
           <ul className="mt-1.5 space-y-1">
             {venture.links.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-baseline gap-2 text-xs">
-                <span className="font-mono text-[9px] uppercase tracking-wider text-maple">
+              <li key={l.id} className="flex flex-wrap items-baseline gap-2 text-body">
+                <span className="font-mono text-label uppercase tracking-wider text-maple">
                   {VENTURE_LINK_LABELS[l.kind]}
                 </span>
                 <Link href={`/cockpit?venture=${encodeURIComponent(l.otherId)}`} className="font-semibold text-paper hover:underline">
                   {l.otherName}
                 </Link>
                 {l.note ? <span className="text-stone">— {l.note}</span> : null}
-                <button type="button" onClick={() => void removeLink(l.id)} className="ml-auto text-[10px] text-stone-dim hover:text-maple">
+                <button type="button" onClick={() => void removeLink(l.id)} className="ml-auto text-small text-stone-dim hover:text-maple">
                   remove
                 </button>
               </li>
@@ -316,7 +316,7 @@ function VentureCard({
             <select
               value={linkKind}
               onChange={(e) => setLinkKind(e.target.value as VentureLinkKind)}
-              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-small text-paper"
             >
               {VENTURE_LINK_KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -327,7 +327,7 @@ function VentureCard({
             <select
               value={linkTo}
               onChange={(e) => setLinkTo(e.target.value)}
-              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-[10px] text-paper"
+              className="rounded-sm border border-rule bg-ink px-1.5 py-0.5 font-mono text-small text-paper"
             >
               <option value="">Choose an idea…</option>
               {others.map((o) => (
@@ -340,7 +340,7 @@ function VentureCard({
               value={linkNote}
               onChange={(e) => setLinkNote(e.target.value)}
               placeholder="why (optional)"
-              className="min-w-[160px] flex-1 rounded-sm border border-rule bg-ink px-2 py-0.5 text-xs text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+              className="min-w-[160px] flex-1 rounded-sm border border-rule bg-ink px-2 py-0.5 text-body text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
             />
             <Pill variant="ghost" size="small" onClick={() => void addLink()} disabled={!linkTo}>
               + Link
@@ -367,14 +367,14 @@ function FirstWords({ venture }: { venture: VentureSummary }) {
     <div className="mt-3 max-w-[60ch]">
       {venture.firstWords ? (
         <>
-          <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">In your words, {venture.firstWords.saidAt}</p>
+          <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">In your words, {venture.firstWords.saidAt}</p>
           {/* whitespace-pre-wrap: the sentence is shown exactly as typed, spaces and line breaks too. */}
-          <p className="mt-1 whitespace-pre-wrap font-serif text-[14px] italic leading-snug text-paper-dim">
+          <p className="mt-1 whitespace-pre-wrap font-serif text-lead italic leading-snug text-paper-dim">
             “{venture.firstWords.text}”
           </p>
         </>
       ) : null}
-      {goals.length > 0 ? <p className="mt-1.5 text-[11px] text-stone">Goals marked on the intake: {goals.join(" · ")}</p> : null}
+      {goals.length > 0 ? <p className="mt-1.5 text-body text-stone">Goals marked on the intake: {goals.join(" · ")}</p> : null}
     </div>
   );
 }

@@ -8,8 +8,6 @@
  * Most cases use the invented trade road (tests/helpers/road-to-evaluate.ts); road 0's map picks are
  * checked on today's general road.
  */
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -643,16 +641,8 @@ describe("the new components", () => {
     expect(html).toContain("Saved. Nothing on the road changed.");
   });
 
-  it("the new components hold no sentence of their own: words come from lib/cockpit/words.ts", () => {
-    for (const file of ["told-list.tsx", "compare-endings.tsx", "what-if-bar.tsx", "receipt-lines.tsx"]) {
-      const source = readFileSync(path.join(process.cwd(), "components", "cockpit", file), "utf8")
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/className=(\{`[^`]*`\}|"[^"]*")/g, "");
-      const jsxText = [...source.matchAll(/>\s*([A-Z][a-z]+(?: [a-z’'A-Z]+){3,}[.:]?)\s*</g)].map((m) => m[1]);
-      expect(jsxText, file).toEqual([]);
-    }
-  });
+  // That these components write no sentence or label of their own is tests/cockpit-own-words.spec.ts
+  // (2026-10-17), which reads every file in components/cockpit/.
 
   it("every new sentence is free of verdict words", () => {
     const sentences: string[] = [];

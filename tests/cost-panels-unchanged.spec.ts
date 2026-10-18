@@ -46,10 +46,16 @@ import { describe, expect, it } from "vitest";
 import { generalRoadV2026, roadsV2026, type Road } from "@/lib/engines/roads/v2026";
 
 import { drawCostPanels } from "./helpers/cost-panels";
+import { withTypeScaleNames } from "./helpers/type-scale-renames";
 
-const before = JSON.parse(
-  readFileSync(new URL("./fixtures/official-fees/panels-before.json", import.meta.url), "utf8"),
-) as Record<string, string>;
+// Read with the six named text sizes put in for the pixel classes they replaced on 2026-10-17 (S2.5.30d;
+// tests/helpers/type-scale-renames.ts): the recording stays as drawn, and every word and every other class
+// is still compared exactly.
+const before = Object.fromEntries(
+  Object.entries(
+    JSON.parse(readFileSync(new URL("./fixtures/official-fees/panels-before.json", import.meta.url), "utf8")) as Record<string, string>,
+  ).map(([key, html]) => [key, withTypeScaleNames(html)]),
+);
 
 /** Road 0's named start-up cost lines, the only lines added to a road since the fixture was drawn. */
 const START_UP_STEP = "stage-1-sole-prop-activation";

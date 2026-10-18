@@ -52,6 +52,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`tests/idea-invariants.spec.ts`, `tests/idea-harness-plants.spec.ts`).
 
 ### Changed
+- **Six text sizes instead of twenty-three** (S2.5.30d, the plan of 2026-10-17). The screens had grown
+  twenty-three ad hoc text sizes, from 8 px to 46 px with half-pixel neighbours among them, in 661 places;
+  one screen drew fifteen distinct sizes. They are now six named sizes, theme tokens in
+  [app/globals.css](app/globals.css) ([docs/ui-spec/README.md](docs/ui-spec/README.md), *The type scale*):
+  label 9.5 px, small 10.5, body 12, lead 14, title 18 and display 26, each with its line height, with
+  Tailwind's larger steps kept for headlines. Each old size went to the nearest named one, so the smallest
+  text on any screen is now 9.5 px (it was 8.5 px on the cockpit and the intake), the map's card lines and
+  most running text are 12 px where they were 11, and every screen counts fewer distinct sizes: the cockpit
+  on a laptop 12 to 5, the front door 8 to 6, Mara's example 13 to 5, *What DotAmi knows about you* 11 to 7,
+  *Your plan* 10 to 5 (`e2e/budgets.ts` holds the new, lower limits; regions and controls measured the same
+  on every screen). A unit test refuses any new arbitrary size, and Tailwind's text-xs, text-sm, text-base
+  and text-lg, which the named sizes stand in for. The map's and the cost panels' recordings are read with
+  the new names put in for the old classes, so they are not re-recorded. Screenshots before and after, the
+  cockpit on road 0 and the front door at phone, tablet and laptop sizes, are in
+  [docs/media/type-scale/](docs/media/type-scale/).
+- **Every cockpit sentence in one words file** (S2.5.30e, the same plan). The cockpit's rail (*Venture*,
+  *Structure* and its options, *Employed*, *In your words*, the structure ladder, the prep-tool references,
+  **Save now** and its save line, **Edit venture profile**, the *Compass, not GPS* line), the header's
+  **← Your futures** and **Export**, the empty cockpit and the map's chips, card names and legend, 68 pieces of
+  text that were written in five components, now come from [lib/cockpit/words.ts](lib/cockpit/words.ts),
+  which the words tests read (verdict words, time words). The text on screen is unchanged. A unit test reads
+  every file in `components/cockpit/` and fails on a sentence or label written there, with one allowance it
+  explains: the legend's *Compass, not GPS — nothing here is a recommendation*, which the strict verdict-word
+  list refuses even as a denial and the map's recordings hold word for word.
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the
   maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit
