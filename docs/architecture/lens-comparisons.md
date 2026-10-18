@@ -153,8 +153,9 @@ screens decision 3 names (K7 A).
   "No score, no total, no order but the fork's own" ([lib/cockpit/told.ts:409-416](../../lib/cockpit/told.ts)).
 - **No step has a typed time, and none will** (the maintainer, 2026-10-17: "NO TIMES!", § 6.2). `RoadStep`
   has no duration field (types.ts:64-95). Road 1's times live only
-  in prose, each with a tool-checked citation, and are different kinds: a designed length ("4 periods
-  (levels), each designed to take about a year", [apprentice-to-own-shop-ab.ts:430](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts));
+  in prose, each with a tool-checked citation, and are different kinds: a designed length (until 2026-10-17
+  "4 periods (levels), each designed to take about a year", [apprentice-to-own-shop-ab.ts:430](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts);
+  the summary now stops at "4 periods (levels)", and the length is only in the source's quote);
   required work (1,360 hours per period, :517; 8 weeks classroom, :545, :555); a minimum of experience (72
   months and 8,160 hours, :595); and limits or deadlines (finish within 18 months, :632; a 45-day fee window
   and a 15-day WCB account rule, :440, :316). Part-time work is counted differently (:600). The
@@ -251,8 +252,7 @@ Each step shows its "done when" lines and their sources.   Sources ▸
 ```
 
 The step counts are read-tool values (bracketed placeholders here). The ways are in **no order**: there is no measure of
-time to sort by. Where a step's text or *done when* line already quotes an official requirement in words (the
-apprenticeship's 4 periods, "each designed to take about a year"; "72 months and 8,160 hours of verifiable
+time to sort by. Where a step's text or *done when* line already quotes an official requirement in words ("72 months and 8,160 hours of verifiable
 Cabinetmaker work experience" for the Trades Qualifier), the step shows it as the official page's own words,
 with its source: a requirement the person must meet, not a gauge, and nothing adds it up or compares it
 (a note, not a decision; kept as it is unless the maintainer says otherwise). The cockpit's *Your date* gauge,

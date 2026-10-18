@@ -32,13 +32,15 @@ import { cockpitWords } from "@/lib/cockpit/words";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
+import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
-import { clearScenarioBranch, defaultActiveBranches, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
+import { clearScenarioBranch, defaultActiveBranches, setIncorporateAt, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
 
 import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
 import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
 
+const INCORPORATING = "stage-3a-incorporation-80k-net" satisfies CFENodeId;
 const FORK = "fork-eval-ending";
 const OWN = "step-eval-own";
 const EMPLOYED = "step-eval-employed";
@@ -309,7 +311,8 @@ describe("Not told yet", () => {
   });
 
   it("on today's road: the map's default picks and the person's own incorporation number, never an ending of its own", () => {
-    const road0 = input({ road: generalRoadV2026, roadChosen: false, skillItems: [] });
+    // A third-year sales estimate on the intake: the number "I'd incorporate at" is compared with.
+    const road0 = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: 90_000 }) });
     const ids = notToldYet(road0, evaluateRoad(road0)).map((r) => r.id);
     expect(ids).toEqual(expect.arrayContaining(["map-pick:gstTiming", "map-pick:incorporationTiming", "structure", "equipment", "incorporate-at"]));
     expect(ids.some((id) => id.startsWith("ending:"))).toBe(false);
@@ -318,6 +321,80 @@ describe("Not told yet", () => {
     // The map's picks are asked only on today's road, where the map draws them.
     const other = input();
     expect(notToldYet(other, evaluateRoad(other)).map((r) => r.id).some((id) => id.startsWith("map-pick:"))).toBe(false);
+  });
+
+  // The idea harness's finding (2026-10-17): the rule compares "I'd incorporate at" with the third-year
+  // sales estimate only, so without one no answer could light Incorporating, though the row said it would.
+  it("asks “I'd incorporate at” only once there is a third-year sales estimate to compare it with, and says what it is compared with", () => {
+    const onRoad0 = (y3: number) => input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: y3 }) });
+    const blank = onRoad0(0);
+    expect(notToldYet(blank, evaluateRoad(blank)).map((r) => r.id)).not.toContain("incorporate-at");
+    // Why: with the box blank, every answer leaves the road as it was.
+    for (const dollars of [1, 30_000, 80_000]) {
+      expect(answerReceipt(blank, { ...blank, scenario: setIncorporateAt(blank.scenario, dollars) }), String(dollars)).toEqual([]);
+    }
+
+    const given = onRoad0(90_000);
+    const row = notToldYet(given, evaluateRoad(given)).find((r) => r.id === "incorporate-at");
+    expect(row).toMatchObject({ answer: "box", question: "The yearly sales at which you'd incorporate" });
+    expect(row!.unlocks).toBe("“Incorporating” lighting once your third-year sales estimate reaches your own number");
+    expect(cockpitWords.questions.incorporateAt.why).toContain("third-year sales estimate");
+    // With the estimate, an answer it reaches lights the step: the receipt says so.
+    expect(answerReceipt(given, { ...given, scenario: setIncorporateAt(given.scenario, 90_000) })).not.toEqual([]);
+  });
+
+  // The second review of PR #182 (2026-10-17): a future picked on road 0 keeps no third-year estimate and
+  // nothing in the cockpit asks for one, so the row going away hid the dead end rather than fixing it. The
+  // step's own words (its card and its panel's "Your answers") now say the light needs that estimate too,
+  // instead of inviting a number no answer could make count. Giving one is the maintainer's call
+  // (docs/task-list.md, "Still listed for the maintainer"); this pins what the words say until then.
+  it("on a future picked on road 0, Incorporating says it needs a third-year estimate the idea doesn't have", () => {
+    const picked = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-road-0");
+    expect(picked.profile.targetRevenueY3).toBe(0);
+    const road0 = input({ road: generalRoadV2026, roadChosen: true, skillItems: [], scenario: picked });
+    const evaluation = evaluateRoad(road0);
+    expect(notToldYet(road0, evaluation).map((r) => r.id)).not.toContain("incorporate-at");
+    const reason = evaluation.rules.nodeReasons[INCORPORATING]!;
+    expect(reason).not.toMatch(/set your own number to see this light/i);
+    expect(reason).toMatch(/third-year revenue estimate reaches a number of your own/);
+    expect(reason).toMatch(/no third-year revenue estimate on this idea/);
+    // The panel's box still keeps a number (it is the person's), and the step then says what is missing.
+    const answered = { ...road0, scenario: setIncorporateAt(road0.scenario, 50_000) };
+    expect(answerReceipt(road0, answered)).toEqual([]);
+    expect(evaluateRoad(answered).rules.nodeReasons[INCORPORATING]).toBe(
+      "Check first: there's no third-year revenue estimate on this idea to compare with your own number ($50,000).",
+    );
+  });
+
+  // The review of PR #182 (2026-10-17): the rule also reads Incorporation timing. With Liability / SR&ED
+  // picked, "Incorporating" is off the path whatever the number, so no answer can change anything.
+  it("doesn't ask “I'd incorporate at” when Incorporation timing is on the other side", () => {
+    const base = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ targetRevenueY3: 90_000 }) });
+    const otherSide = { ...base, scenario: updateScenarioBranch(base.scenario, "incorporationTiming", "stage-3b-incorporation-liability-sred") };
+    expect(notToldYet(otherSide, evaluateRoad(otherSide)).map((r) => r.id)).not.toContain("incorporate-at");
+    // Why: every answer leaves the road as it was.
+    for (const dollars of [1, 50_000, 90_000, 500_000]) {
+      expect(answerReceipt(otherSide, { ...otherSide, scenario: setIncorporateAt(otherSide.scenario, dollars) }), String(dollars)).toEqual([]);
+    }
+    // Picked back, the question is back.
+    const back = { ...otherSide, scenario: updateScenarioBranch(otherSide.scenario, "incorporationTiming", "stage-3a-incorporation-80k-net") };
+    expect(notToldYet(back, evaluateRoad(back)).map((r) => r.id)).toContain("incorporate-at");
+  });
+
+  // The idea harness's finding (2026-10-17): ride-share and taxi drivers register for GST/HST from the first
+  // paid ride, so the rules colour both GST timing sides the same and neither pick changes anything.
+  it("doesn't ask a map pick no rule reads for the idea: GST timing for ride-share and taxi driving", () => {
+    const driver = input({ road: generalRoadV2026, roadChosen: false, skillItems: [], scenario: inventedIdea({ activityTags: ["Ride-share or taxi driving"] }) });
+    const ids = notToldYet(driver, evaluateRoad(driver)).map((r) => r.id);
+    expect(ids).not.toContain("map-pick:gstTiming");
+    // The other pick still changes the road, so it is still asked.
+    expect(ids).toContain("map-pick:incorporationTiming");
+    for (const side of ["stage-2a-voluntary-gst-registration", "stage-2b-mandatory-gst-registration"] as const) {
+      expect(answerReceipt(driver, { ...driver, scenario: updateScenarioBranch(driver.scenario, "gstTiming", side) }), side).toEqual([]);
+    }
+    // The control: the same idea with a trade instead is asked.
+    const trade = input({ road: generalRoadV2026, roadChosen: false, skillItems: [] });
+    expect(notToldYet(trade, evaluateRoad(trade)).map((r) => r.id)).toContain("map-pick:gstTiming");
   });
 });
 

@@ -396,9 +396,8 @@ engine reasons about no time, so no time needs a typed field.
 
 Two notes, not decisions (both left as they are unless the maintainer says otherwise):
 - **Official requirement words stay.** Some cited step texts and *done when* lines already quote an official
-  requirement in words, for example the apprenticeship's 4 periods, "each designed to take about a year", and
-  "72 months and 8,160 hours of verifiable Cabinetmaker work experience"
-  ([apprentice-to-own-shop-ab.ts:430, :595](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)). They
+  requirement in words, for example "72 months and 8,160 hours of verifiable Cabinetmaker work experience"
+  ([apprentice-to-own-shop-ab.ts:595](../../lib/engines/roads/v2026/apprentice-to-own-shop-ab.ts)). They
   stay as quoted requirement text: what the official page says a person must do. They are not a gauge, and
   nothing adds them up or reads them as a number.
 - **"Your date" stays.** The cockpit's *Your date* gauge counts the months from today to the month the person

@@ -414,7 +414,10 @@ describe("a line says what its own page says, no more and no less", () => {
     ]) {
       expect(allText, spelled).toContain(spelled);
     }
-    expect(step("step-shop-register-apprentice").summary).toMatch(/about a year/);
+    // A period is explained as a level. No times (2026-10-17): the summary doesn't say how long a period is
+    // designed to take; that stays only in the official page's own words, quoted in the step's source.
+    expect(step("step-shop-register-apprentice").summary).toContain("4 periods (levels)");
+    expect(step("step-shop-register-apprentice").summary).not.toMatch(/about a year/);
     expect(quotesOf(...step("step-shop-register-apprentice").citations)).toContain("Each period designed to take ~1 year");
     const wages = line("dw-shop-sponsor-own-wages");
     expect(wages.text).toContain("Apprenticeship Education and Industry Training Programs Regulation");

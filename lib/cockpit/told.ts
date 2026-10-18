@@ -299,16 +299,51 @@ export function notToldYet(input: RoadEvaluationInput, evaluation: RoadEvaluatio
   } else {
     for (const fork of input.road.forks) {
       if (!notGiven(`map-pick:${fork.id}`)) continue;
+      // A pick no rule reads for this idea isn't asked: when the side the map doesn't hold changes nothing
+      // on the road, neither answer would (GST timing for ride-share and taxi driving, where registration
+      // is required from the first paid ride whichever side is picked, 2026-10-11). Worked out from the
+      // road, as forksToCompare is, so a rule that starts reading the pick brings the question back.
+      if (!pickChangesSomething(input, evaluation, fork)) continue;
       rows.push({ id: `map-pick:${fork.id}`, question: q.mapPick.question(fork.label), unlocks: q.mapPick.unlocks, answer: "box", forkId: fork.id });
     }
   }
   if (notGiven("idea:structure")) rows.push({ id: "structure", question: q.structure.question, unlocks: q.structure.unlocks, answer: "box" });
   if (notGiven("idea:equipment")) rows.push({ id: "equipment", question: q.equipment.question, unlocks: q.equipment.unlocks, answer: "box" });
   const incorporating = input.road.steps.find((s) => s.id === INCORPORATING_STEP);
-  if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null) {
+  // Asked only when some answer would change the road (the design's "a Not told yet row once a sales number
+  // is kept", § 3); its line says what the number is compared with. The step's own panel still takes the
+  // number at any time, and without a third-year estimate the step says it needs one too. That is not a fix:
+  // a future picked on road 0 keeps no estimate and nothing in the cockpit asks for one, so there the step
+  // can't light at all (docs/task-list.md, "Still listed for the maintainer"; the second review of PR #182).
+  if (onRoad0 && incorporating && (input.scenario.state.incorporateAt ?? null) === null && incorporateAtChangesSomething(input, evaluation)) {
     rows.push({ id: "incorporate-at", question: q.incorporateAt.question, unlocks: q.incorporateAt.unlocks(incorporating.label), answer: "box" });
   }
   return rows;
+}
+
+/**
+ * True when some "I'd incorporate at" answer changes something on the road. The rule (lib/brain/evaluate.ts
+ * computeNodeStates) reads the Incorporation timing pick and compares the number with the person's own
+ * third-year sales estimate: without the estimate, or with the other side picked, every answer leaves the
+ * road as it was (the idea harness's finding and the review of PR #182, 2026-10-17). The estimate itself is
+ * the answer that would light the most, so it is the one tried, the way pickChangesSomething tries the other
+ * side: a rule that starts reading something else is checked the same way.
+ */
+function incorporateAtChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvaluation): boolean {
+  const thirdYear = input.scenario.profile.targetRevenueY3;
+  if (!(thirdYear > 0)) return false;
+  // The number is put on the scenario directly, not through the box's save (setIncorporateAt): this asks
+  // whether the rule reads it, and a broken save must still show up as a question that changes nothing.
+  const answered = { ...input.scenario, state: { ...input.scenario.state, incorporateAt: thirdYear } };
+  return roadReceipt(evaluation, evaluateRoad({ ...input, scenario: answered })).length > 0;
+}
+
+/** True when picking the side of a road 0 fork the map doesn't hold now changes something on the road. */
+function pickChangesSomething(input: RoadEvaluationInput, evaluation: RoadEvaluation, fork: Fork): boolean {
+  const held = (input.scenario.state.activeBranches as Record<string, string>)[fork.id];
+  const other = fork.sides.find((side) => side !== held);
+  if (!other) return true;
+  return roadReceipt(evaluation, evaluateRoad(withSide(input, fork, other))).length > 0;
 }
 
 // --- The what-if

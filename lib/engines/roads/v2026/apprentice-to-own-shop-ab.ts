@@ -427,7 +427,7 @@ export const roadApprenticeToOwnShopAB: Road = {
       id: "step-shop-register-apprentice",
       label: "Register as a Cabinetmaker apprentice",
       summary:
-        "You sign up online as a registered apprentice and pay the application fee; the program has 4 periods (levels), each designed to take about a year.",
+        "You sign up online as a registered apprentice and pay the application fee; the program has 4 periods (levels).",
       next: ["step-shop-sponsor-hours"],
       doneWhen: [
         {

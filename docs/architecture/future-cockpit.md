@@ -685,7 +685,17 @@ answer, before and after it or with and without it. Choices made while building 
   marked; an ending at each fork of the road with no pick (not road 0, whose forks always have the map's
   pick); your pick at each of road 0's forks while it is still the map's default; your structure while
   the map assumes one; buying equipment while unanswered; and, on road 0, your own *I'd incorporate at*
-  number. Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
+  number. *(2026-10-17, the idea harness's findings: a question no answer can change isn't asked. A road 0
+  pick is asked only where picking the other side changes something on the road, so GST timing isn't
+  asked of ride-share and taxi drivers, who register from the first paid ride either way; and *I'd
+  incorporate at* only where some answer changes the road: the rule reads the Incorporation timing pick
+  and compares the number with the idea's third-year sales estimate, so it is asked only with that
+  estimate and with Incorporation timing on the side that holds *Incorporating* (the review of PR #182
+  added the pick), as § 3's table planned (*"a Not told yet row once a sales what-if is kept"*), its line
+  naming that comparison. The step's panel still takes the number at any time. That hides no dead end: a
+  future picked on road 0 keeps no third-year estimate and nothing in the cockpit asks for one, so there
+  *Incorporating* can't light; its card and panel say it needs that estimate (second review of PR #182),
+  and whether the cockpit asks for one is listed for the maintainer in `docs/task-list.md`.)* Each row is *"<question> → unlocks <what>"*, where *what* names the part of the screen the
   answer feeds (a gauge part, a step that can light, the map reading your pick instead of its default),
   never a promise of a result. At most five show; the rest are behind *n more*. Every row has **I don't
   know**, which keeps nothing: it folds the row away for this visit (*n you don't know yet · Show them*),
@@ -1321,8 +1331,8 @@ made while writing it, each for a reason:
   still follow the certificate, as the maintainer's first future lays them out. The *Stay employed*
   side cites the trade's own classes of individuals, not a general page's "ticket to work".
 - **Plain words.** Each abbreviation (NAIT, SAIT, the CRA, WCB-Alberta, GST/HST) is spelled out once in
-  a one-line summary, a *period* is explained as a level designed to take about a year (the profile's
-  words), and *Schedule 1* names the regulation it belongs to.
+  a one-line summary, a *period* is explained as a level (until 2026-10-17 also "designed to take about a year", the
+  profile's words, taken out under no times: the source still quotes them), and *Schedule 1* names the regulation it belongs to.
 
 ### Road 0's content as built (2026-10-12)
 

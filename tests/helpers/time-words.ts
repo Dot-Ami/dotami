@@ -116,7 +116,7 @@ const official = (text: string, where: string, why: string): TimeAllowance => ({
  * sets, which the person must meet (keep records six years, register within 29 days, 1,360 hours a period),
  * shown with that page as the line's source. One entry per line: tests/idea-invariants.spec.ts reads every
  * line the written roads hold and fails on one with a time that is neither listed here nor a known gap. A line that says how long something takes or will take is not a requirement and is never listed
- * here (road 1's "each designed to take about a year" is a known gap instead, tests/fixtures/ideas/known-gaps.ts).
+ * here: it is reworded without the time (road 1's "each designed to take about a year" was, on 2026-10-17).
  */
 export const OFFICIAL_TIME_ALLOWANCES: readonly TimeAllowance[] = [
   official(
