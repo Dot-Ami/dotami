@@ -56,14 +56,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit
   now shows the road, your goal and its gauges, and your next three steps, with one tip line (*Start
-  anywhere…*, put away with *Got it*). Folded, each with one button that says what it shows: the venture
+  anywhere…*, put away with *Got it*, which leaves keyboard focus on the road; on a phone the line sits under
+  the road, so the road starts where it did before). Folded, each with one button that says what it shows: the venture
   details rail, the map's legend, the what-if bar, the road's later columns (one column, *The road ahead · 6
   steps*, naming them). Only Road and Skills are on at first (Rules & tax started on until now); the Money and
   Rules & tax switches are drawn beside them, one click away (a switch with nothing on the road, such as
   *Rules & tax · 0 cards* on the apprentice road, is drawn off and can't be pressed). The goal bar's *Compare* and *Others in this line of work*
   are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a
   menu to a screen reader. Nothing was removed. A return visit opens the way you left it, including the
-  layers you last had on, remembered in this browser only (in the desktop app too, the next line). Mara's
+  layers you last had on, remembered in this browser only (in the desktop app too, the next line). A browser
+  that kept its folds before this change opens as a return visit too: Rules & tax on as before, and no tip. Mara's
   example opens the same calm way, banner unchanged. The clutter limit for the cockpit's first visit is
   lowered to what it now measures: 8 regions from 768 px and 7 on a phone, one fewer than before (see the
   pull request; [e2e/budgets.ts](e2e/budgets.ts)).
@@ -71,7 +73,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([desktop/app-port.mjs](desktop/app-port.mjs)), and another only when that one is taken. Until now every
   launch had a new address, so the window's browser storage started empty each time: the cockpit opened as
   a first visit with its tip back, and the intake's list of job descriptions you typed was never offered
-  again.
+  again. Now that list is offered back at every launch; Delete doesn't reach it, and *What DotAmi knows about
+  you* and the Delete menu now say so and how to remove it (close DotAmi and delete the “Local Storage” folder
+  in the data folder).
 
 ## [0.4.0] — 2026-10-17
 

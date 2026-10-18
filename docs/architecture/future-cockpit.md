@@ -420,7 +420,10 @@ road, the goal and the next steps, with everything else folded one click away. N
   and only *Road* and *Skills* on, every overlay switch drawn (Money and Rules & tax off, each one click
   away). The
   goal bar is open with its gauges and their invitations, and the coach line from the design sits under the
-  overlay row with *Got it*, which puts it away for good in this browser.
+  overlay row with *Got it*, which puts it away for good in this browser and leaves keyboard focus on the
+  road. On a phone, where nothing above the road folds, the coach line sits under the road instead, and the
+  overlay switches are 24 px tall rather than 32: a review (2026-10-17) found the line and taller switches
+  had put the road about 100 px lower on a phone than before the calm view; now it starts where it did.
 - **What is not built from the design:** the rail does not open with the *Not told yet* list on a first visit
   (it is folded with the rest of the rail; one click, and its questions are at its top as before); the page
   does not scroll to the first step not done, and the folded rail shows no count of what was told. The
@@ -444,8 +447,10 @@ road, the goal and the next steps, with everything else folded one click away. N
 - **Return visits.** Whatever the person folds, opens or switches is remembered in this browser under the
   same key as before, `dotami-cockpit-folds`: the six folds, the overlays last on (*the last overlay used
   is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written
-  until the person changes something. A value stored before 2026-10-17 reads its new folds as open, so a
-  person who had everything open still has. The privacy inventory lists what the key holds. In the desktop
+  until the person changes something. A value stored before 2026-10-17 (it has no `roadAhead`) is a return
+  visit in every way: its new folds read as open, so a person who had everything open still has; the
+  overlays are the ones every visit had then (Rules & tax on, Skills and Money off); and the coach line,
+  which is for a first visit, isn't drawn (a review found that browser with Rules & tax off and the tip back). The privacy inventory lists what the key holds. In the desktop
   app this lasts between launches since the same day: the app uses the same local address each time
   (`desktop/app-port.mjs`); until then each launch had a new address, empty storage, and so a first visit.
 - **The example** (`/example/mara`) opens the same calm way, its banner unchanged, with no coach line (nothing

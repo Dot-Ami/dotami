@@ -32,11 +32,15 @@ the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-1
 >   followed by *Your what-if, not a forecast* and its number. Open, each has its fold button where it was.
 > - **Remembered too:** the overlays last on, and the coach line put away (below). An answer stored before
 >   2026-10-17 has no `roadAhead`, which reads as open, so a person who had everything open
->   still has. A browser that refuses storage gets the first visit every time; a stored value that can't
+>   still has; it is a return visit in every way, with the overlays every visit had then (Rules & tax on)
+>   and no coach line. A browser that refuses storage gets the first visit every time; a stored value that can't
 >   be read opens everything, as before.
 > - **The coach line.** Under the overlay row on a first visit, one line in the design's words: *Start
 >   anywhere. Each thing you tell us lights up part of the road. Click anything to see where it comes
->   from.* with **Got it**, which puts it away for good in this browser (`coachDismissed`). Not on the
+>   from.* with **Got it**, which puts it away for good in this browser (`coachDismissed`) and leaves
+>   keyboard focus on the road. On a phone it sits under the road instead (nothing above the road folds
+>   there, so a line over it would push the road down), and the overlay switches are 24 px tall, not 32,
+>   so their two lines stay short; the road starts where it did before the calm view. Not on the
 >   example, where nothing can be told.
 > - **Fold all panels** folds all six, and **Show all panels** opens all six (the road ahead included).
 > - The header and the goal bar share one strip, and the overlay row, the coach line, the map, the what-if

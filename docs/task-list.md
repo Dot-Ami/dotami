@@ -315,9 +315,13 @@ and the maintainer's six decisions of 2026-10-11:
     visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
     coach line, the rail, the legend and the what-if bar folded one click away, every overlay switch drawn; Compare and
     *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
-    last overlay remembered (`dotami-cockpit-folds`). The cockpit's first visit now measures 8 regions (7 on a
-    phone; 9 and 8 before) and 29 controls on a laptop on road 0 (32 on a tablet, 17 on a phone); the plan's 20 and 12 would
-    need road cards hidden, so the budgets are set to what it measures (S2.5.30c)
+    last overlay remembered (`dotami-cockpit-folds`); on a phone the coach line sits under the road, so the
+    road starts where it did before (S2.5.30c)
+  - [ ] The plan's budget for that first view: at most 5 regions and 20 controls at 1280 px, and 3 and 12 on a
+    phone. Not met: road 0's first visit measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on
+    a laptop (32 on a tablet, 18 on a phone); `e2e/budgets.ts` holds what it measures. Waits on the
+    maintainer's ruling on PR #183's decisions 1 and 2 (to go lower: hide road cards or a way back to something
+    folded, or count the header and goal bar as one region)
   - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
   - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
     the components
@@ -460,7 +464,9 @@ roadmap's build order.
   - [x] *Delete* can also clear the backups folder (only DotAmi's own safety copies, never through a
     link), and a wipe that didn't finish completes at the next start of the desktop app, only when
     Delete left its "wipe pending" note
-  - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
+  - [ ] *Delete* clears what the window keeps in its own storage (a later decision; reachable from the page
+    since the desktop app's address stopped changing on 2026-10-17, and until then the menu says how to
+    remove it by hand)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
 - ✅ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the
