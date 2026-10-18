@@ -88,7 +88,7 @@ account" for, nor for any account while "Always allow every account" stands. The
 is read-only.
 
 **The Electron app [7b]** (first slice 2026-10-05; status per case — [desktop-app.md](desktop-app.md))
-- The local port is already taken → pick another, never fail to open. *Built: the app asks the system for a free port each launch.*
+- The local port is already taken → pick another, never fail to open. *Built: the app asks for the same port on every launch, one picked from its data folder's path (`desktop/app-port.mjs`, 2026-10-17, so the window's browser storage lasts between launches), and for any free port when that one is taken; tested in `e2e-desktop/desktop.spec.ts`.*
 - Two copies of the app opened at once → the second brings the first to the front; one writer. *Built (one copy per data folder); not tested.*
 - First launch with no data folder, or one the person can't write to → say so, offer another folder. *Built: a missing folder is created (tested); an unwritable one gets a plain message and the app stops — offering another folder waits for the data-folder setting. Not tested.*
 - The app is closed in the middle of a save → nothing half-written (SQLite transactions) — test by killing the process. *Not tested.*

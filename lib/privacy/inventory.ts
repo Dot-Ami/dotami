@@ -630,7 +630,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     holds:
       "Up to 20 job descriptions you typed under “Other…” on the intake, offered back to you next time.",
     lasts:
-      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so a list from an earlier launch can't be read again, but it stays in the app's own folder.",
+      "Until this window's site data is cleared; it has no end date. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, starts without it, and the list stays in the app's own folder for the next launch on the usual address.",
   },
   {
     store: "localStorage",
@@ -639,7 +639,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     holds:
       "Yes-or-no answers about the cockpit's screen only: whether the venture details, the goal bar, the right-hand panel, the map's legend, the what-if bar and the road ahead are folded; since 2026-10-17 also which of the Skills, Money and Rules & tax layers you last had on, and whether you put away the first visit's tip. Written only once you fold, open or switch something. Nothing about you or your ideas.",
     lasts:
-      "Until this window's site data is cleared; it has no end date. In the desktop app each launch uses its own local address, so the cockpit opens as a first visit again, but the old answers stay in the app's own folder.",
+      "Until this window's site data is cleared; it has no end date. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, opens as a first visit, and the answers stay in the app's own folder for the next launch on the usual address.",
   },
   {
     store: "sessionStorage",
@@ -890,17 +890,17 @@ export const LOCAL_REQUESTS: readonly AllowedCall[] = [
   {
     file: "desktop/main.mjs",
     call: "fetch(origin",
-    why: "Waits for DotAmi's own server to start answering. origin is http://127.0.0.1:<port>, built from a free port a few lines earlier in the same file.",
+    why: "Waits for DotAmi's own server to start answering. origin is http://127.0.0.1:<port>, built a few lines earlier in the same file from the data folder's usual port when it is free, or any free port.",
   },
   {
     file: "desktop/main.mjs",
     call: "net.createServer(",
-    why: "freePort: asks the system for a free port on 127.0.0.1 for DotAmi's own server, then closes the probe at once. It listens only on 127.0.0.1 and makes no outgoing connection. A net.connect, net.createConnection or new net.Socket anywhere would be named and need a line of its own.",
+    why: "freePort: checks that the data folder's usual port (desktop/app-port.mjs) is free on 127.0.0.1, or asks the system for any free one there, for DotAmi's own server, then closes the probe at once. It listens only on 127.0.0.1 and makes no outgoing connection. A net.connect, net.createConnection or new net.Socket anywhere would be named and need a line of its own.",
   },
   {
     file: "desktop/main.mjs",
     call: "loadURL(origin",
-    why: "Opens the window on DotAmi's own server. origin is http://127.0.0.1:<port>, built from the free port a few lines earlier in the same file; lockDown then keeps the window from navigating anywhere else (an outside link opens in the person's own browser).",
+    why: "Opens the window on DotAmi's own server. origin is http://127.0.0.1:<port>, built from the port picked a few lines earlier in the same file; lockDown then keeps the window from navigating anywhere else (an outside link opens in the person's own browser).",
   },
   {
     file: "desktop/main.mjs",

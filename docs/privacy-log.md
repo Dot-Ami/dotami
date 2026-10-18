@@ -46,9 +46,22 @@ person is asked).
   the Skills, Money and Rules & tax layers were last on, and whether the
   tip at the top of the road was put away. Yes-or-no answers about the screen only, nothing about the person
   or their ideas, written only once the person folds, opens or switches something. A browser that refuses
-  storage gets the calm first visit every time. Cleared with the browser's site data; in the desktop app each
-  launch starts empty, as before. Listed in the inventory ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts),
+  storage gets the calm first visit every time. Cleared with the browser's site data; in the desktop app it now
+  lasts between launches (the next line). Listed in the inventory ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts),
   "How you left the cockpit").
+- **Keeps: in the desktop app, the window's browser storage now lasts from one launch to the next. Nothing
+  new is kept or written, nothing sent. (2026-10-17.)** The desktop app serves its window from
+  `http://127.0.0.1:<port>`, and a browser keeps its storage per address and port. Until now each launch
+  asked for any free port, so each launch had a new address and found its storage empty. Now it asks for
+  the same port every time, one worked out from the data folder's path and written nowhere
+  ([`desktop/app-port.mjs`](../desktop/app-port.mjs)), and any free port only when that one is taken. So the
+  two keys DotAmi keeps in the window's storage are read again at the next launch: how you left the
+  cockpit (`dotami-cockpit-folds`) and the job descriptions you typed under *Other…* on the intake
+  (`dotami-employment-suggestions`), which until now stayed unread in the app's folder after each launch.
+  Both were already kept there; now they are used. Chromium also keeps its compiled copy of the app's own
+  scripts between launches (its code cache, in the data folder); that holds code, nothing you typed. The
+  server still answers only on this computer, behind the same Host check. The inventory's lines for the two
+  keys say so.
 
 ---
 

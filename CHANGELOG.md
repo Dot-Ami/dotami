@@ -63,9 +63,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   *Rules & tax · 0 cards* on the apprentice road, is drawn off and can't be pressed). The goal bar's *Compare* and *Others in this line of work*
   are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a
   menu to a screen reader. Nothing was removed. A return visit opens the way you left it, including the
-  layers you last had on, remembered in this browser only. Mara's example opens the same calm way, banner
-  unchanged. The clutter limit for the cockpit's first visit is lowered to what it now measures (see the
+  layers you last had on, remembered in this browser only (in the desktop app too, the next line). Mara's
+  example opens the same calm way, banner unchanged. The clutter limit for the cockpit's first visit is
+  lowered to what it now measures: 8 regions from 768 px and 7 on a phone, one fewer than before (see the
   pull request; [e2e/budgets.ts](e2e/budgets.ts)).
+- **The desktop app uses the same local address on every launch**, one worked out from its data folder
+  ([desktop/app-port.mjs](desktop/app-port.mjs)), and another only when that one is taken. Until now every
+  launch had a new address, so the window's browser storage started empty each time: the cockpit opened as
+  a first visit with its tip back, and the intake's list of job descriptions you typed was never offered
+  again.
 
 ## [0.4.0] — 2026-10-17
 

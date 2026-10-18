@@ -445,7 +445,9 @@ road, the goal and the next steps, with everything else folded one click away. N
   same key as before, `dotami-cockpit-folds`: the six folds, the overlays last on (*the last overlay used
   is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written
   until the person changes something. A value stored before 2026-10-17 reads its new folds as open, so a
-  person who had everything open still has. The privacy inventory lists what the key holds.
+  person who had everything open still has. The privacy inventory lists what the key holds. In the desktop
+  app this lasts between launches since the same day: the app uses the same local address each time
+  (`desktop/app-port.mjs`); until then each launch had a new address, empty storage, and so a first visit.
 - **The example** (`/example/mara`) opens the same calm way, its banner unchanged, with no coach line (nothing
   can be told there); nothing is remembered on it.
 - **Measured** (the clutter limit, `e2e/clutter-budget.spec.ts`, a fresh idea on *Pick a future*): see the
@@ -591,7 +593,8 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
   In the desktop app each launch is served from its own local address, so its storage starts empty: the
   folds last until the app closes and it opens with everything showing (the same as the intake's list of
-  typed job descriptions).
+  typed job descriptions). *(2026-10-17: no longer; the app uses the same address on every launch while its
+  usual port is free, `desktop/app-port.mjs`, so the folds last between launches.)*
 - **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
   road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
   least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before

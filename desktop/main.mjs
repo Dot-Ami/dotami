@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell, utilityProcess } from "electron";
 
+import { preferredPort } from "./app-port.mjs";
 import {
   applyRestore,
   BACKUP_EXTENSION,
@@ -228,7 +229,12 @@ async function start() {
   // [8i] Any receipt file not encrypted yet (docs/architecture/expense-records.md § 9).
   if (receiptKey.state === "on") encryptExistingReceipts(receiptKey.key);
 
-  const port = await freePort();
+  // The same port on every launch when it's free, so the window's address, and with it the browser
+  // storage the cockpit keeps how it was left in, stays the same (desktop/app-port.mjs); any free port
+  // otherwise, so the app still opens.
+  const usualPort = preferredPort(dataDir);
+  const port = await freePort(usualPort).catch(() => freePort(0));
+  log.write(`[desktop] port: ${port === usualPort ? "the usual one for this data folder" : "a new one this launch (the usual one was taken)"}\n`);
   server = utilityProcess.fork(serverEntry, [], {
     cwd: path.dirname(serverEntry),
     stdio: "pipe",
@@ -938,13 +944,16 @@ function encryptExistingReceipts(key) {
   }
 }
 
-/** A port nothing is using right now, on this computer only. */
-function freePort() {
+/**
+ * A port nothing is using right now, on this computer only: `wanted` when it is free (rejected when it
+ * is taken or reserved), or any free one when `wanted` is 0.
+ */
+function freePort(wanted) {
   return new Promise((resolve, reject) => {
     const probe = net.createServer();
     probe.unref();
     probe.on("error", reject);
-    probe.listen(0, "127.0.0.1", () => {
+    probe.listen(wanted, "127.0.0.1", () => {
       const { port } = /** @type {net.AddressInfo} */ (probe.address());
       probe.close(() => resolve(port));
     });
