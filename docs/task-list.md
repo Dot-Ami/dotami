@@ -329,11 +329,11 @@ and the maintainer's six decisions of 2026-10-11:
     *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
     last overlay remembered (`dotami-cockpit-folds`); on a phone the coach line sits under the road, so the
     road starts where it did before (S2.5.30c)
-  - [ ] The plan's budget for that first view: at most 5 regions and 20 controls at 1280 px, and 3 and 12 on a
-    phone. Not met: road 0's first visit measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on
-    a laptop (32 on a tablet, 18 on a phone); `e2e/budgets.ts` holds what it measures. Waits on the
-    maintainer's ruling on PR #183's decisions 1 and 2 (to go lower: hide road cards or a way back to something
-    folded, or count the header and goal bar as one region)
+  - [x] The budget for that first view. The plan aimed at 5 regions and 20 controls at 1280 px (3 and 12 on a
+    phone); the built view measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on a laptop (32 on
+    a tablet, 18 on a phone), with what is left being the road's own cards, the gauges and the next steps. The
+    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
+    numbers, and they can only go down from here.
   - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
   - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
     the components
