@@ -69,6 +69,9 @@ export function ArrowOverlay({ container, cards, columnOf, edges }: ArrowOverlay
       const a = cards.get(edge.from);
       const b = cards.get(edge.to);
       if (!a || !b) continue;
+      // A card in a folded part of the road (the road ahead, 2026-10-17) is on the page but not drawn: no arrow
+      // to or from it, rather than one to the corner of the map.
+      if (a.getClientRects().length === 0 || b.getClientRects().length === 0) continue;
       const ra = measure(container, a);
       const rb = measure(container, b);
       const forward = columnOf(edge.to) > columnOf(edge.from);

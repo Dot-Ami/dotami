@@ -390,8 +390,8 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           ) : null}
           {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
           <p className="mt-3 text-[12.5px] text-paper-dim">
-            Everything not ticked stays, and so does what Delete doesn&apos;t reach (what the window stored in earlier launches,
-            the log).
+            Everything not ticked stays, and so does what Delete doesn&apos;t reach (the job descriptions you typed and how
+            you left the cockpit, kept in this window&apos;s own storage and offered back next time; the log).
             {/* Only said when there are copies to leave: a copy run from source has none. */}
             {!copiesTicked && (counts[COPIES] ?? 0) > 0
               ? " The safety copies in the backups folder aren't ticked, so they still hold what you delete."

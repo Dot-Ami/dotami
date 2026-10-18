@@ -10,12 +10,14 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { _electron as electron, expect, test, type ElectronApplication, type Page, type Worker } from "@playwright/test";
 
+import { preferredPort } from "../desktop/app-port.mjs";
 import { readBackup } from "../desktop/backup.mjs";
 import { LEFT_OUT, leftOutIn, ownPlatformBuild } from "../desktop/left-out.mjs";
 import { migrate } from "../desktop/migrate.mjs";
@@ -161,6 +163,12 @@ function filesHolding(dir: string, words: string): string[] {
   const walk = (at: string) => {
     for (const e of readdirSync(at, { withFileTypes: true })) {
       const full = path.join(at, e.name);
+      // Chromium's "Code Cache" holds the app's own scripts, compiled, and nothing the person typed. Since
+      // the window's address is the same on every start (desktop/app-port.mjs, 2026-10-17), Chromium caches
+      // a script it loads again, and the intake's script carries "My venture", its default name for an idea
+      // (components/discovery/intake-page.tsx), as a word of code. The first test checks that what the
+      // person typed never lands there.
+      if (e.isDirectory() && e.name === "Code Cache" && at === dir) continue;
       if (e.isDirectory()) walk(full);
       else if (readFileSync(full).includes(Buffer.from(words))) found.push(path.relative(dir, full));
     }
@@ -321,6 +329,44 @@ test("start → describe a venture → close → start again: the venture is sti
   // [8i] Its name is in the encrypted file, never in its bytes.
   await quit();
   expect(filesHolding(dataDir, "My venture")).toEqual([]);
+  // The byte scan leaves Chromium's code cache out (it holds the app's compiled scripts, where "My venture"
+  // is a word of code): what this person typed is not in it either.
+  const codeCache = path.join(dataDir, "Code Cache");
+  if (existsSync(codeCache)) expect(filesHolding(codeCache, "A mobile bike repair business")).toEqual([]);
+});
+
+test("a second start has the same address, so what the window keeps in its browser storage (how the cockpit was left) is still there (2026-10-17)", async () => {
+  // Until 2026-10-17 each start asked for any free port, so each start had a new address and empty browser
+  // storage: in the desktop app, the cockpit's return visit never happened.
+  let page = await launch();
+  const first = new URL(page.url()).origin;
+  const kept = JSON.stringify({ rail: false, goal: false, panel: false, legend: false, whatIf: false, roadAhead: false, coachDismissed: true });
+  await page.evaluate((value) => localStorage.setItem("dotami-cockpit-folds", value), kept);
+  await quit();
+
+  page = await launch();
+  expect(await page.evaluate(() => localStorage.getItem("dotami-cockpit-folds")), "the storage kept by the first start").toBe(kept);
+  expect(new URL(page.url()).origin).toBe(first);
+  expect(first).toBe(`http://127.0.0.1:${preferredPort(dataDir)}`);
+  expect(desktopLog()).toContain("[desktop] port: the usual one for this data folder");
+});
+
+test("when its usual port is taken, the app still opens, on another port (2026-10-17)", async () => {
+  // Something else on this computer holds the port this data folder's app asks for first.
+  const usual = preferredPort(dataDir);
+  const squatter = net.createServer();
+  await new Promise<void>((resolve, reject) => {
+    squatter.once("error", reject);
+    squatter.listen(usual, "127.0.0.1", () => resolve());
+  });
+  try {
+    const page = await launch();
+    await expect(page.getByRole("heading", { name: /See the road/ })).toBeVisible();
+    expect(new URL(page.url()).port).not.toBe(String(usual));
+    expect(desktopLog()).toContain("[desktop] port: a new one this launch (the usual one was taken)");
+  } finally {
+    await new Promise<void>((resolve) => squatter.close(() => resolve()));
+  }
 });
 
 test("Help → Licences shows the notices for what this app ships, and every package in it has an entry", async () => {

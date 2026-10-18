@@ -28,6 +28,8 @@ import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "..
 import { waitForReact } from "../tests/helpers/react-ready";
 import { findVerdicts } from "../tests/helpers/verdict-words";
 
+import { lookCloser, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+
 const GENERAL = generalRoadV2026.label;
 const APPRENTICE = roadApprenticeToOwnShopAB.label;
 
@@ -157,6 +159,12 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(goalBar(page)).toContainText(`“${words}”`);
   await expect(goalBar(page)).toContainText("Your target: $65,000 a year, before tax");
   await expect(gauge(page, "Steps")).toContainText(`0 of ${roadApprenticeToOwnShopAB.steps.length} marked done`);
+  // The calm first view (2026-10-17): the road, the goal and the next steps, with the one coach line; the
+  // rail (the told list) and the what-if bar are opened here, one click each, as a person would.
+  await expect(page.getByRole("note", { name: "A first look" })).toBeVisible();
+  await look(seen, page, "cockpit, the first visit as it opens");
+  await showRail(page);
+  await showWhatIfBar(page);
 
   // Skills: mark two of the road's own and add one of the person's; each mark gets its receipt.
   await gauge(page, "Skills").click();
@@ -215,8 +223,8 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(told(page).getByText(/what-if/)).toHaveCount(0);
   await look(seen, page, "cockpit, a what-if on");
 
-  // Compare the two endings, side by side, and This is mine on one.
-  await goalBar(page).getByRole("button", { name: "Compare", exact: true }).click();
+  // Compare the two endings, side by side, and This is mine on one (from the goal bar's Look closer menu).
+  await lookCloser(page, "Compare the two endings", goalBar(page));
   await expect(compare(page)).toContainText("In the order the road shows them.");
   await expect(compare(page).getByText("No side picked yet.")).toBeVisible();
   const mine = compare(page).getByRole("button", { name: "This is mine" });
@@ -227,7 +235,7 @@ test("the whole journey: front door → destination → pick a future → the co
   await look(seen, page, "cockpit, Compare after This is mine");
 
   // Others in this line of work: a business the person is watching, with an ad link and the day it was seen.
-  await goalBar(page).getByRole("button", { name: "Others in this line of work", exact: true }).click();
+  await lookCloser(page, "Others in this line of work", goalBar(page));
   const landscape = page.getByRole("region", { name: "Others in this line of work" });
   await expect(landscape).toContainText("DotAmi has no number for it.");
   const watchedName = `Invented Shop ${stamp}`;
@@ -244,7 +252,8 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(watchedRow).toContainText("seen 2026-10-01");
   await look(seen, page, "cockpit, Others in this line of work with a business and an ad link added");
 
-  // Fold a region and open it again: what it held is back.
+  // Fold a region and open it again: what it held is back. The legend, folded on the first visit, opened first.
+  await showLegend(page);
   const legendLine = page.getByRole("group", { name: "Legend" }).getByText("applies as answered", { exact: true });
   await expect(legendLine).toBeVisible();
   await button(page, "Fold the legend").click();
@@ -316,6 +325,7 @@ test("the whole journey: front door → destination → pick a future → the co
   expect(at("Your destination, the agree prompt")).toMatch(/Agree to this number\?/i);
   expect(at("cockpit, Compare after This is mine")).toContain(`Because you picked “${ownShop}”`);
   expect(at("cockpit, Others in this line of work")).toContain("A stall at the weekend market.");
+  expect(at("cockpit, the first visit as it opens")).toContain("Start anywhere. Each thing you tell us lights up part of the road.");
   expect(verdictsIn(seen)).toEqual([]);
 });
 
@@ -342,10 +352,17 @@ test("the other way in: \"I already have an idea\" → the intake → the cockpi
   await expect(goalBar(page)).toContainText(`your words · ${today}`);
   await expect(gauge(page, "Steps")).toContainText(`0 of ${generalRoadV2026.steps.length} marked done`);
   await expect(page.getByRole("region", { name: "Next on your road" }).getByRole("button").first()).toBeVisible();
+  // A first visit: the first two columns drawn, the rest folded into the road ahead, named, one click away.
+  const [firstColumns, ahead] = [generalRoadV2026.columns.slice(0, 2), generalRoadV2026.columns.slice(2)];
+  const label = (id: string) => generalRoadV2026.steps.find((s) => s.id === id)!.label;
+  for (const id of firstColumns.flatMap((c) => c.steps)) await expect(stage(page, label(id)), label(id)).toBeVisible();
+  for (const id of ahead.flatMap((c) => c.steps)) await expect(stage(page, label(id)), label(id)).toBeHidden();
+  const seen: Seen[] = [];
+  await look(seen, page, "cockpit on road 0, from the intake, the first visit");
+  await showRoadAhead(page);
   for (const step of generalRoadV2026.steps) await expect(stage(page, step.label), step.label).toBeVisible();
 
   // And it is one of the person's futures, with the sentence typed for it on the front door.
-  const seen: Seen[] = [];
   await look(seen, page, "cockpit on road 0, from the intake");
   expect(verdictsIn(seen)).toEqual([]);
 

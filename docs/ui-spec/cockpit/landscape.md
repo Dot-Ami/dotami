@@ -30,6 +30,8 @@ So the footer's *"Facts from public sources, side by side"* today stands over th
 - **The goal bar**, on every road: a button **Others in this line of work** beside *Compare* (when Compare is
   offered), on the open bar. The folded bar keeps only the gauges, so it isn't there; *Show goal and gauges*
   brings it back.
+  *(2026-10-17, the calm first view: an item of the goal bar's **Look closer** menu, after *Compare the two
+  endings* when that is offered; [07-goal-bar.md](./07-goal-bar.md).)*
 - **The step panel**, on a step its road marks as opening a business (`RoadStep.opensABusiness`): today only
   road 1's *Open your own shop* (`step-shop-open-own-shop`). The same button, under the fork's lines. Road 0
   marks no step, so there the goal bar is the way in.

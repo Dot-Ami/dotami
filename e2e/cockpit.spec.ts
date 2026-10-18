@@ -12,6 +12,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 
+import { lookCloserItems } from "./cockpit-calm";
+
 // Road 0 (today's general road) counted from its own data: its ten map stages, the three "before you
 // open" steps added on 2026-10-12 and Keep your records from day one (2026-10-14), so the Steps gauge
 // reads "0 of 14".
@@ -82,16 +84,26 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // Keep your records from day one (2026-10-14), shows there only once one of these is done. The Steps
   // gauge names the same first step.
   const next = page.getByRole("region", { name: "Next on your road" });
-  await expect(next.getByRole("button")).toHaveText([
+  // Its list of steps (the line also carries the folded legend's and what-if bar's buttons since 2026-10-17).
+  await expect(next.getByRole("listitem").getByRole("button")).toHaveText([
     "1 · Register your business name, if you use one",
     "2 · Look up your permits and licences (BizPaL)",
     "3 · A separate bank account for the business, if it has a name other than yours",
   ]);
   await expect(gauge(page, "Steps")).toContainText("next on your road: “Register your business name, if you use one”");
 
-  // The overlays: Road is always on; Rules & tax starts on, so the map looks as it did.
+  // The overlays: Road is always on. A first visit has only Road and Skills on (the calm first view,
+  // 2026-10-17; until then Rules & tax started on). Money and Rules & tax are off with their switches drawn,
+  // so the rules and tax cards are one click away (a review of the calm first view found them two).
   await expect(overlays(page).getByText("always on")).toBeVisible();
+  await expect(overlays(page).getByRole("button", { name: /^Skills/ })).toHaveAttribute("aria-pressed", "true");
   const rules = overlays(page).getByRole("button", { name: /^Rules & tax/ });
+  await expect(rules).toBeVisible();
+  await expect(rules).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show more layers" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Write-off: / })).toHaveCount(0);
+  await rules.click();
   await expect(rules).toHaveAttribute("aria-pressed", "true");
   const lever = page.getByRole("button", { name: /^Write-off: .*, opens detail$/ }).first();
   await expect(lever).toBeVisible();
@@ -100,12 +112,10 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(page.getByRole("button", { name: /^Write-off: / })).toHaveCount(0);
   await rules.click();
   await expect(lever).toBeVisible();
-  for (const name of ["Skills", "Money"]) {
-    const toggle = overlays(page).getByRole("button", { name: new RegExp(`^${name}`) });
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  }
+  const moneyToggle = overlays(page).getByRole("button", { name: /^Money/ });
+  await expect(moneyToggle).toHaveAttribute("aria-pressed", "false");
+  await moneyToggle.click();
+  await expect(moneyToggle).toHaveAttribute("aria-pressed", "true");
 
   // A step: the step panel keeps node detail and adds the person's status.
   await stage(page, "Sole Prop activation").click();
@@ -174,8 +184,11 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   await expect(gauge(page, "Your date")).toContainText("May 2099");
   await expect(gauge(page, "Your date")).toContainText(/\d+ months from today/);
 
-  // A reload reads everything back from the data file.
+  // A reload reads everything back from the data file, and the overlays last on from this browser (the
+  // last overlay picked, remembered since 2026-10-17).
   await page.reload();
+  await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "true");
   await expect(gauge(page, "Steps")).toContainText(`1 of ${road0Steps} marked done`);
   await expect(gauge(page, "Skills")).toContainText("your own skills: 1 have · 0 learning · 0 not yet");
   await expect(gauge(page, "Start-up money")).toContainText("savings $12,000");
@@ -185,6 +198,101 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // Pressing the status that's on takes it back.
   await stepPanel(page).getByRole("button", { name: "Done", exact: true }).click();
   await expect(gauge(page, "Steps")).toContainText(`0 of ${road0Steps} marked done`);
+});
+
+// The calm first view (2026-10-17, S2.5.30c; docs/ui-spec/cockpit/12-folding-and-phone.md): a first visit shows
+// the road, the goal and the next steps, everything else folded one click away; a return visit opens the way
+// the person left it.
+test("the calm first view: the road, the goal and the next steps, everything else one click away, and a return visit as left", async ({
+  page,
+}) => {
+  const ventureId = await saveIdea(page, "Invented — calm first view test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  const button = (name: string) => page.getByRole("button", { name, exact: true });
+
+  // Drawn: the goal and its gauges, the road's first two columns, Next on your road, the one coach line.
+  await expect(gauge(page, "Steps")).toBeVisible();
+  await expect(stage(page, "Sole Prop activation")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Next on your road" }).getByRole("button").first()).toBeVisible();
+  const coach = page.getByRole("note", { name: "A first look" });
+  await expect(coach).toHaveText(/^Start anywhere\. Each thing you tell us lights up part of the road\. Click anything to see where it comes from\./);
+
+  // Folded, each with the one button that shows it: the rail, the legend, the what-if bar and the road
+  // ahead. Nothing is gone: each opens with one click and its content is there. Every overlay switch is
+  // drawn, Money and Rules & tax off (2026-10-17, after a review found them behind a second click).
+  await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(button("Fold venture details")).toBeHidden();
+  await expect(page.getByRole("group", { name: "Legend" })).toBeHidden();
+  await expect(page.getByRole("region", { name: "What-if" })).toBeHidden();
+  await expect(stage(page, "Incorporating")).toBeHidden();
+  const ahead = page.getByRole("button", { name: "Show the road ahead: Incorporating · Corporation running (6 steps)", exact: true });
+  await expect(ahead).toHaveAttribute("aria-expanded", "false");
+  await expect(ahead).toContainText("The road ahead · 6 steps");
+
+  await ahead.click();
+  await expect(stage(page, "Incorporating")).toBeVisible();
+  await expect(button("Fold the road ahead")).toBeFocused();
+  await button("Show venture details").click();
+  await expect(page.getByRole("heading", { name: "What you've told DotAmi" })).toBeVisible();
+  await button("Show the legend").click();
+  await expect(page.getByRole("group", { name: "Legend" })).toContainText("applies as answered");
+  await button("Show the what-if bar").click();
+  await expect(page.getByRole("region", { name: "What-if" }).getByLabel("Try first-year sales of $")).toBeVisible();
+
+  // Look closer: one menu button in the goal bar, keyboard first. Road 0 offers no Compare (2026-10-13).
+  const lookCloser = goalBar(page).getByRole("button", { name: "Look closer" });
+  await expect(lookCloser).toHaveAttribute("aria-haspopup", "menu");
+  expect(await lookCloserItems(page, goalBar(page))).toEqual(["Others in this line of work"]);
+  await lookCloser.focus();
+  await page.keyboard.press("ArrowDown");
+  const item = page.getByRole("menuitem", { name: "Others in this line of work" });
+  await expect(item).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(item).toHaveCount(0);
+  await expect(lookCloser).toBeFocused();
+  await expect(lookCloser).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("Enter");
+  await expect(item).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("region", { name: "Others in this line of work" })).toBeVisible();
+
+  // Got it puts the coach line away, and it doesn't come back.
+  await coach.getByRole("button", { name: "Got it" }).click();
+  await expect(coach).toHaveCount(0);
+
+  // A return visit: what was opened stays open, and the coach line stays away.
+  await button("Fold the legend").click();
+  await page.reload();
+  await expect(gauge(page, "Steps")).toBeVisible();
+  await expect(stage(page, "Incorporating")).toBeVisible();
+  await expect(button("Fold venture details")).toBeVisible();
+  await expect(page.getByRole("region", { name: "What-if" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Legend" })).toBeHidden();
+  await expect(button("Show the legend")).toBeVisible();
+  await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
+});
+
+test("a browser that kept its folds before the calm first view comes back as it was left: Rules & tax on, and no coach line", async ({ page }) => {
+  // A review (2026-10-17) set the five answers main kept before the calm view, everything open, and found
+  // this browser opening with Rules & tax switched off (on for every visit until then) and the tip back.
+  await page.addInitScript(() => {
+    try {
+      if (window.localStorage.getItem("dotami-cockpit-folds") === null) {
+        window.localStorage.setItem("dotami-cockpit-folds", JSON.stringify({ rail: false, goal: false, panel: false, legend: false, whatIf: false }));
+      }
+    } catch {
+      // A page with no storage of its own: nothing to do.
+    }
+  });
+  const ventureId = await saveIdea(page, "Invented — kept before the calm view test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await expect(page.getByRole("button", { name: "Fold venture details", exact: true })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Legend" })).toBeVisible();
+  await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(overlays(page).getByRole("button", { name: /^Skills/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
 });
 
 test("skills: road 0's legal requirement on its step, and the government's list for the job you pick, kept after a reload", async ({ page }) => {

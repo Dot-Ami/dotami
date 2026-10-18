@@ -37,6 +37,36 @@ person is asked).
 
 ## [Unreleased]
 
+### What DotAmi keeps, and where
+
+- **Keeps: how you left the cockpit's screen, now also the layers you last had on and the first visit's tip
+  put away. In this browser only; nothing in the data file, nothing sent. (2026-10-17.)** The calm first view
+  (S2.5.30c) keeps more answers under the same browser-storage key as before, `dotami-cockpit-folds`
+  (localStorage, [`lib/cockpit/folds.ts`](../lib/cockpit/folds.ts)): one more fold (the road ahead), which of
+  the Skills, Money and Rules & tax layers were last on, and whether the
+  tip at the top of the road was put away. Yes-or-no answers about the screen only, nothing about the person
+  or their ideas, written only once the person folds, opens or switches something. A browser that refuses
+  storage gets the calm first visit every time. Cleared with the browser's site data; in the desktop app it now
+  lasts between launches (the next line). Listed in the inventory ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts),
+  "How you left the cockpit").
+- **Keeps: in the desktop app, the window's browser storage now lasts from one launch to the next. Nothing
+  new is kept or written, nothing sent. (2026-10-17.)** The desktop app serves its window from
+  `http://127.0.0.1:<port>`, and a browser keeps its storage per address and port. Until now each launch
+  asked for any free port, so each launch had a new address and found its storage empty. Now it asks for
+  the same port every time, one worked out from the data folder's path and written nowhere
+  ([`desktop/app-port.mjs`](../desktop/app-port.mjs)), and any free port only when that one is taken. So the
+  two keys DotAmi keeps in the window's storage are read again at the next launch: how you left the
+  cockpit (`dotami-cockpit-folds`) and the job descriptions you typed under *Other…* on the intake
+  (`dotami-employment-suggestions`), which until now stayed unread in the app's folder after each launch.
+  Both were already kept there; now they are used. Chromium also keeps its compiled copy of the app's own
+  scripts between launches (its code cache, in the data folder); that holds code, nothing you typed. The
+  server still answers only on this computer, behind the same Host check. The inventory's lines for the two
+  keys say so. Delete doesn't reach either key, and the app has no button that clears them: the Delete menu
+  and the inventory now say they are kept and offered back next time, and how to remove them (close DotAmi
+  and delete the “Local Storage” folder in the data folder; in a browser, clear the site's data), where
+  until now they said the window's storage from earlier launches was left unread
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `NOT_CLEARED_BY_DELETE`, found in a review).
+
 ---
 
 ## [0.4.0] — 2026-10-17

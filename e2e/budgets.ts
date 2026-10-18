@@ -79,15 +79,43 @@ export const BASELINE: ClutterTable = {
 };
 
 /**
- * The limit each screen is held to: at most the baseline, and lowered as screens get calmer. The calm first
- * view (S2.5.30c) brings the cockpit down to at most 5 regions and 20 controls on a laptop, 3 and 12 on a
- * phone.
+ * The limit each screen is held to: at most the baseline, and lowered as screens get calmer.
+ *
+ * The calm first view (S2.5.30c, 2026-10-17) lowered the cockpit's first visit and Mara's example to what they
+ * measure with it: regions 9 to 8 on a laptop and tablet and 8 to 7 on a phone (the plan's aim was at most 5,
+ * 4 and 3; see below), controls in the first window 34 to 28, 39 to 31 and 18 to 16 on road 0 (27 to 25, 35 to 28 and 17
+ * to 14 on road 1), short of the plan's aim of 20, 16 and 12. What is left in the first window is the road's
+ * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
+ * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
+ * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 8
+ * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
+ * `WINDOWS_EXTRA`).
+ *
+ * One control more on road 0, the same day (17, 32 and 29; Chromium on Windows counts 31 on a tablet, one fewer
+ * than the gate there, as it did before): a review
+ * found Rules & tax two clicks away behind "Show more layers", so the Money and Rules & tax switches are drawn
+ * again and that button is gone. Road 1 and Mara's example, on road 1, are unchanged: road 1 has no rules and tax
+ * cards, so its Rules & tax switch is drawn but can't be pressed (it has nothing to show) and isn't counted.
+ *
+ * The regions, the same day: the calm view first set them at 4, 4 and 3 (Mara 5, 5 and 4) by marking the header
+ * and the goal bar as one region and the overlay row, the map and Next on your road as another. A review found
+ * those blocks all still drawn in the first window, and the layout rule's own definition (docs/ui-spec/README.md,
+ * rule 2) still naming the header, the goal bar and a bar under the road as regions of their own, so each
+ * block's own mark went back, and the coach line, a block of its own on a first visit, got one. The first
+ * visit folds the legend and the what-if bar (two regions fewer) and adds the coach line (one more).
  *
  * Lowered on 2026-10-17, before the limit reached main, where the count got stricter than the baseline's:
  * a control now counts only when at least 24 px of it shows each way (or all of it), so a card's bare edge
  * under a fold no longer does (the cockpit on both roads, CI run 39067156272); and *What DotAmi knows about
  * you* is measured on the seed alone, on the spec's own server, where it was measured after the suite's
  * earlier tests had filled the data file with figures.
+ *
+ * On a phone, the same day, a review found the calm view had put the road about 100 px lower than before it:
+ * nothing above the road folds there, and the coach line (82 px) and the overlay switches, drawn 32 px tall,
+ * were added above it. The coach line moved under the road on a phone and the switches went to 24 px, so the
+ * road starts where it did before the calm view; with the road higher, road 0 shows two more of its own cards
+ * in the first window and Got it leaves it (17 to 18; road 1 stays at 14, one card in and Got it out). Still at
+ * most the baseline's 19.
  *
  * The front door at tablet size stays at 11: on Windows its last button ("Show me Mara's example") shows
  * only a strip above the site footer and isn't counted (10); on Ubuntu, the gate, enough of it shows to count
@@ -100,9 +128,9 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
   ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
   "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(9, 13, 11, 8.5), tablet: m(10, 26, 14, 8.5), laptop: m(10, 23, 14, 8.5) },
-  "cockpit-road-0": { phone: m(8, 18, 12, 8), tablet: m(9, 39, 15, 8), laptop: m(9, 34, 15, 8) },
-  "cockpit-road-1": { phone: m(8, 17, 10, 8.5), tablet: m(9, 35, 14, 8.5), laptop: m(9, 27, 14, 8.5) },
+  "example-mara": { phone: m(7, 11, 11, 8.5), tablet: m(8, 26, 13, 8.5), laptop: m(8, 21, 13, 8.5) },
+  "cockpit-road-0": { phone: m(7, 18, 11, 8.5), tablet: m(8, 32, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
+  "cockpit-road-1": { phone: m(7, 14, 10, 8.5), tablet: m(8, 28, 12, 8.5), laptop: m(8, 25, 12, 8.5) },
   plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
 };
 
@@ -115,7 +143,13 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  * unchanged screen; CI runs on Ubuntu and never reads this, so it never loosens the gate. When a change
  * makes the two agree, take its line out.
  *
- * Empty since 2026-10-17: the one difference (road 1 at laptop size, 30 controls on Windows and 27 on
+ * Emptied on 2026-10-17: the one difference then (road 1 at laptop size, 30 controls on Windows and 27 on
  * Ubuntu) was three road cards showing only a sliver of their edge on Windows, which no longer count.
+ *
+ * Mara's example at laptop size, since the calm first view (2026-10-17): 23 controls on Windows, 21 on Ubuntu
+ * (CI run 39077075677). Windows' text wraps a little shorter in the goal bar, so the road starts higher and
+ * two more of its cards show enough to count.
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
+  "example-mara": { laptop: { controls: 2 } },
+};

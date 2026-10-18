@@ -323,11 +323,17 @@ and the maintainer's six decisions of 2026-10-11:
     (regions, controls in the first window, text sizes, the smallest text) and fails when one goes over its
     budget in `e2e/budgets.ts`, or shows a block with no region mark; the budgets start at today's numbers
     and can only go down
-  - [ ] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
-    visit*): road and skills on, later columns folded into *The road ahead*, one coach line; Compare,
-    *Others in this line of work* and *About this job* behind one *Look closer* menu; the last overlay
-    remembered. Lowers the cockpit's budgets to at most 5 regions and 20 controls on a laptop, 3 and 12 on a
-    phone
+  - [x] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
+    visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
+    coach line, the rail, the legend and the what-if bar folded one click away, every overlay switch drawn; Compare and
+    *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
+    last overlay remembered (`dotami-cockpit-folds`); on a phone the coach line sits under the road, so the
+    road starts where it did before (S2.5.30c)
+  - [x] The budget for that first view. The plan aimed at 5 regions and 20 controls at 1280 px (3 and 12 on a
+    phone); the built view measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on a laptop (32 on
+    a tablet, 18 on a phone), with what is left being the road's own cards, the gauges and the next steps. The
+    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
+    numbers, and they can only go down from here.
   - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
   - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
     the components
@@ -339,6 +345,8 @@ and the maintainer's six decisions of 2026-10-11:
   ([how it runs](architecture/desktop-app.md); `npm run desktop:build && npm run desktop`).
   - [x] Build Next.js as a self-contained server the app can start
   - [x] Electron starts it on a private local port and opens a window on it
+  - [x] The same port on every launch, from the data folder, so the window's browser storage (how the
+    cockpit was left) lasts between launches; another port only when that one is taken (2026-10-17)
   - [x] The database file in the user's own app folder; created and migrated on first launch
   - [x] App menu: about, quit, open data folder
   - [x] A test: start → describe a venture → close → start again → it's still there
@@ -468,7 +476,9 @@ roadmap's build order.
   - [x] *Delete* can also clear the backups folder (only DotAmi's own safety copies, never through a
     link), and a wipe that didn't finish completes at the next start of the desktop app, only when
     Delete left its "wipe pending" note
-  - [ ] *Delete* clears what the desktop window stored in earlier launches (waits on how to reach it)
+  - [ ] *Delete* clears what the window keeps in its own storage (a later decision; reachable from the page
+    since the desktop app's address stopped changing on 2026-10-17, and until then the menu says how to
+    remove it by hand)
   - [ ] *Forget this source* (waits on where a figure's source is kept)
 - ✅ **[8e] How old is each figure** — its age on screen; cards say when they lean on an old one.
   - [x] Every figure's age; a figure dated after today is flagged and never counted (it could make the

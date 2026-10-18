@@ -1,6 +1,7 @@
 "use client";
 
 import { FoldButton } from "@/components/cockpit/folding";
+import { LookCloserMenu, type LookCloserItem } from "@/components/cockpit/look-closer-menu";
 import { gaugeView, type GaugeId } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { Road } from "@/lib/engines/roads/v2026";
@@ -20,6 +21,11 @@ import type { Scenario } from "@/lib/scenarios/types";
  * Folded, it shows one line: the four gauges as buttons with their name and value (the lines under each
  * in the button's title), and the button to show it all again. The gauges still open their lists from
  * there. The open bar stays on the page behind the line, hidden, the same as every other folded region.
+ *
+ * The calm first view (2026-10-17, S2.5.30c): what the bar can open in the right-hand panel (Compare, Others
+ * in this line of work, and later About this job) shares one "Look closer" menu instead of a button each.
+ * The cockpit draws it under its header in one strip, but it is still a region of its own for the clutter
+ * limit, as the layout rule defines one (docs/ui-spec/cockpit/07-goal-bar.md).
  */
 
 /** The bar's id, for its fold button's aria-controls. */
@@ -102,10 +108,15 @@ export function GoalBar({
       : null;
 
   const isFolded = folded && onToggleFold !== undefined;
+  // "Look closer": the things the bar opens in the right-hand panel, in one menu, in the order they came.
+  const lookCloser: LookCloserItem[] = [
+    ...(onCompare ? [{ id: "compare", label: words.compare.region, onSelect: onCompare }] : []),
+    ...(onLandscape ? [{ id: "landscape", label: landscapeWords.open, onSelect: onLandscape }] : []),
+  ];
 
   return (
     // data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md).
-    <section id={GOAL_BAR_ID} data-region="goal-bar" aria-label={words.goal.region} className="border-b border-rule bg-ink2">
+    <section id={GOAL_BAR_ID} data-region="goal-bar" aria-label={words.goal.region}>
       {isFolded ? (
         // One line: the gauges by name and value, scrolling sideways inside the line when they don't fit.
         <div className="flex min-w-0 items-center gap-2 px-5 py-1.5">
@@ -147,16 +158,7 @@ export function GoalBar({
           <span>
             {writtenForThisPlace ? words.goal.future(road.label) : words.goal.drawnOnly(road.label, road.provinces, place)}
           </span>
-          {onCompare ? (
-            <button type="button" onClick={onCompare} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
-              {words.compare.open}
-            </button>
-          ) : null}
-          {onLandscape ? (
-            <button type="button" onClick={onLandscape} className="rounded-full border border-rule px-2 py-0 text-[11px] text-paper-dim hover:bg-ink">
-              {landscapeWords.open}
-            </button>
-          ) : null}
+          <LookCloserMenu items={lookCloser} />
           {onToggleFold ? (
             <FoldButton folded={false} region="goal" label={words.folds.goal.fold} controls={GOAL_BAR_ID} onClick={onToggleFold} className="ml-auto" />
           ) : null}

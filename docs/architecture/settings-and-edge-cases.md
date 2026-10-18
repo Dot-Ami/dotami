@@ -88,7 +88,7 @@ account" for, nor for any account while "Always allow every account" stands. The
 is read-only.
 
 **The Electron app [7b]** (first slice 2026-10-05; status per case — [desktop-app.md](desktop-app.md))
-- The local port is already taken → pick another, never fail to open. *Built: the app asks the system for a free port each launch.*
+- The local port is already taken → pick another, never fail to open. *Built: the app asks for the same port on every launch, one picked from its data folder's path (`desktop/app-port.mjs`, 2026-10-17, so the window's browser storage lasts between launches), and for any free port when that one is taken; tested in `e2e-desktop/desktop.spec.ts`.*
 - Two copies of the app opened at once → the second brings the first to the front; one writer. *Built (one copy per data folder); not tested.*
 - First launch with no data folder, or one the person can't write to → say so, offer another folder. *Built: a missing folder is created (tested); an unwritable one gets a plain message and the app stops — offering another folder waits for the data-folder setting. Not tested.*
 - The app is closed in the middle of a save → nothing half-written (SQLite transactions) — test by killing the process. *Not tested.*
@@ -211,8 +211,11 @@ and can't be undone (but a backup can restore it).
 - After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
   on the map can't bring the idea back.*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: what the desktop window stored in earlier launches, the
-  log, anything already sent elsewhere, the disk under the data file.
+- Not reached yet, and the menu says so: what the window keeps in its own storage (the job
+  descriptions typed on the intake and how the cockpit was left, offered back next time; in the desktop
+  app from one launch to the next since 2026-10-17, with how to remove them: close DotAmi and delete the
+  "Local Storage" folder in the data folder), the log, anything already sent elsewhere, the disk under
+  the data file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.

@@ -87,8 +87,9 @@ with a test that seeded data survives.
 
 - What still holds deleted data after Delete, said on the menu itself: the safety copies in the
   backups folder unless that box is ticked (the same box clears the receipt folders set aside there,
-  since 2026-10-10), what the desktop window stored in earlier launches (a
-  later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
+  since 2026-10-10), what the window keeps in its own storage (the job descriptions typed on
+  the intake and how the cockpit was left; read again at every desktop launch since 2026-10-17, and the
+  menu says how to remove them by hand; a Delete box for them is a later decision), and the drive under the data file (SQLite's journal and a deleted safety copy are
   removed, not overwritten, and a drive keeps its own spare copies; disk encryption covers that). Until Delete is used, a figure that was taken back or turned down keeps
   its amount in the file, and the page lists it.
 - The wipe needs free disk space about the size of the file and no other connection mid-change. When

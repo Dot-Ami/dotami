@@ -16,6 +16,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 import { waitForReact } from "../tests/helpers/react-ready";
 
+import { showRail } from "./cockpit-calm";
+
 const GENERAL = "Starting any business in Alberta (tax and structure)";
 const APPRENTICE = "From apprentice to your own shop (Alberta)";
 
@@ -130,7 +132,9 @@ test("door 1: four answers, each with its receipt and focus moving on, then the 
   await expect(goal).toContainText(`Future: ${GENERAL}`);
   await expect(goal).toContainText("Your target: $70,000 a year, before tax");
   await expect(page.getByRole("button", { name: /^Sole Prop activation, / })).toBeVisible();
-  // What this way in never asked is said to be not said, not shown as the intake's starting values.
+  // What this way in never asked is said to be not said, not shown as the intake's starting values. It is in
+  // the rail, folded on a first visit (2026-10-17): one click.
+  await showRail(page);
   await expect(page.getByText("Not said · AB")).toBeVisible();
 
   // Kept in the data file: a fresh read of the idea says the road was chosen today, with the answer to question 2.

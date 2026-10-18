@@ -94,7 +94,10 @@ Edge cases: [settings-and-edge-cases.md § The desktop app](settings-and-edge-ca
    which opens the old key file, checks each receipt against its row, locks it again with this start's
    key and puts it back in `receipts/` ([expense-records.md § 12](expense-records.md)).
 5. **The server.** The self-contained Next.js server, started as an Electron utility process on a
-   free port bound to `127.0.0.1` — reachable from this computer only. Its environment never
+   port bound to `127.0.0.1` — reachable from this computer only. Since 2026-10-17 it is the same port on
+   every launch, picked from the data folder's path (`desktop/app-port.mjs`), so the window's address and
+   the browser storage it keeps (how the cockpit was left) last between launches; when that port is taken
+   or reserved, any free port, and that launch's storage starts empty. Its environment never
    carries a model key from the shell that started the app (`ANTHROPIC_API_KEY` is removed):
    DotAmi ships no key, and the person's model will come from the app's own settings ([9a]).
    Nor does it carry the browser tests' rate-limit switch (`DOTAMI_E2E_RATE_LIMITS` is removed in

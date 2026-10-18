@@ -28,6 +28,11 @@ export const THIS_VISIT_ID = "cockpit-this-visit";
  * the cockpit folds. Folded, what they hold stays on the page, hidden (a half-typed number included), and
  * while a what-if is on the one line still says so, banner and number, because the map is still relit by
  * it. Left out, the bar is drawn as before.
+ *
+ * The calm first view (2026-10-17, S2.5.30c): folded, the bar and "This visit" are no line of their own. The
+ * whole bar stays on the page, hidden, and the cockpit draws `WhatIfShowButton` in the road's bottom line,
+ * under the map where the bar was, still saying while a what-if is on that it is one, and its number. Open,
+ * the bar is a region of its own again.
  */
 export function WhatIfBar({
   whatIf,
@@ -69,28 +74,26 @@ export function WhatIfBar({
 
   return (
     <>
-      {/* data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md). */}
-      <section data-region="what-if" aria-label={words.whatIf.region} className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-[12px]">
+      {/* data-region: one of the cockpit's regions the clutter limit counts (docs/ui-spec/README.md), when it
+          is drawn. Folded, it is hidden, never removed: what it holds is there when it opens. */}
+      <section
+        data-region="what-if"
+        aria-label={words.whatIf.region}
+        hidden={folded || undefined}
+        className="flex flex-col gap-1.5 border-t border-rule bg-ink2 px-5 py-2 text-[12px]"
+      >
         {fold ? (
           <div className="flex flex-wrap items-center gap-2">
             <FoldButton
-              folded={folded}
+              folded={false}
               region="whatIf"
-              label={folded ? words.folds.whatIf.show : words.folds.whatIf.fold}
+              label={words.folds.whatIf.fold}
               controls={hasThisVisit ? `${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}` : WHAT_IF_BAR_ID}
               onClick={fold.onToggle}
             />
-            {folded && whatIf !== null ? (
-              // The map is still relit by the what-if, so the one line says so.
-              <>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
-                <span className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</span>
-              </>
-            ) : null}
           </div>
         ) : null}
-        {/* Folded, this is hidden, never removed: what it holds is there when it opens. */}
-        <div id={WHAT_IF_BAR_ID} hidden={folded} className="flex flex-col gap-1.5">
+        <div id={WHAT_IF_BAR_ID} className="flex flex-col gap-1.5">
           <form onSubmit={tryIt} className="flex flex-wrap items-center gap-2">
             <label htmlFor={`${id}-sales`} className="text-paper-dim">
               {words.whatIf.label}
@@ -143,7 +146,7 @@ export function WhatIfBar({
         </div>
       </section>
       {hasThisVisit ? (
-        <section id={THIS_VISIT_ID} hidden={folded} aria-label={words.receipts.thisVisit} className="border-t border-rule bg-ink2 px-5 py-1.5 text-[11px]">
+        <section id={THIS_VISIT_ID} hidden={folded || undefined} aria-label={words.receipts.thisVisit} className="border-t border-rule bg-ink2 px-5 py-1.5 text-[11px]">
           <div className="flex items-baseline gap-3">
             <h2 className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-stone">{words.receipts.thisVisit}</h2>
             {sinceLastTime.length > 1 ? (
@@ -159,6 +162,30 @@ export function WhatIfBar({
             ))}
           </div>
         </section>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * The folded what-if bar's way back (the calm first view, 2026-10-17): one button in the road's bottom line.
+ * While a what-if is on, the map is still relit by it, so the button says so, banner and number.
+ */
+export function WhatIfShowButton({ whatIf, hasThisVisit, onShow }: { whatIf: number | null; hasThisVisit: boolean; onShow: () => void }) {
+  return (
+    <>
+      <FoldButton
+        folded
+        region="whatIf"
+        label={words.folds.whatIf.show}
+        controls={hasThisVisit ? `${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}` : WHAT_IF_BAR_ID}
+        onClick={onShow}
+      />
+      {whatIf !== null ? (
+        <>
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
+          <span className="text-[11.5px] text-paper-dim">{words.whatIf.on(whatIf)}</span>
+        </>
       ) : null}
     </>
   );

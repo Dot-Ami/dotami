@@ -13,6 +13,40 @@ Last updated: 2026-10-14 (the road keeps a minimum area and the canvas scrolls, 
 the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-12 (docs/architecture/future-cockpit.md
 § 2, "Folding and phone width"; closes issue #4)
 
+> **Changed 2026-10-17 — the calm first view (S2.5.30c; [docs/ui-spec/README.md](../README.md), "The layout
+> rule"; [future-cockpit.md](../../architecture/future-cockpit.md) § 2, "First visit as built").**
+>
+> - **A first visit opens calm.** With nothing stored yet in this browser, the cockpit opens with the rail,
+>   the legend, the what-if bar and the road ahead folded, and only Road and Skills on (every overlay switch
+>   drawn, Money and Rules & tax off); the goal bar is open and the
+>   panel opens when something is opened in it. A return visit opens the way the person left it.
+> - **One more fold.** *The road ahead*: the road's columns after the first two fold into one column,
+>   *The road ahead · 6 steps* with their names, which is the button that shows them (**Show the road
+>   ahead**); open, **Fold the road ahead** sits at the end of the overlay row. (For a few hours that day
+>   the Money and Rules & tax switches folded too, behind **Show more layers**; a review found the rules and
+>   tax cards two clicks away and keyboard focus lost when a switch left the page, so they no longer fold, and
+>   a stored `layers` answer is read as nothing.)
+> - **The legend and the what-if bar fold to a button, not a line.** Folded, each is hidden whole, and its
+>   **Show the legend** / **Show the what-if bar** button sits at the end of *Next on your road*, the
+>   road's foot line, under the map where they were. While a what-if is on, *Show the what-if bar* is
+>   followed by *Your what-if, not a forecast* and its number. Open, each has its fold button where it was.
+> - **Remembered too:** the overlays last on, and the coach line put away (below). An answer stored before
+>   2026-10-17 has no `roadAhead`, which reads as open, so a person who had everything open
+>   still has; it is a return visit in every way, with the overlays every visit had then (Rules & tax on)
+>   and no coach line. A browser that refuses storage gets the first visit every time; a stored value that can't
+>   be read opens everything, as before.
+> - **The coach line.** Under the overlay row on a first visit, one line in the design's words: *Start
+>   anywhere. Each thing you tell us lights up part of the road. Click anything to see where it comes
+>   from.* with **Got it**, which puts it away for good in this browser (`coachDismissed`) and leaves
+>   keyboard focus on the road. On a phone it sits under the road instead (nothing above the road folds
+>   there, so a line over it would push the road down), and the overlay switches are 24 px tall, not 32,
+>   so their two lines stay short; the road starts where it did before the calm view. Not on the
+>   example, where nothing can be told.
+> - **Fold all panels** folds all six, and **Show all panels** opens all six (the road ahead included).
+> - The header and the goal bar share one strip, and the overlay row, the coach line, the map, the what-if
+>   bar and *Next on your road* one column; the clutter limit still counts each as a region of its own while
+>   it is drawn (the legend and the what-if bar only while open, the coach line only until *Got it*).
+
 ## What it is
 
 Five regions of the cockpit fold to make room for the road, each with its own button (the fifth, the

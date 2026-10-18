@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below); 2026-06-10
+Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -30,10 +30,21 @@ screen may get. Every screen, and every feature added to one, follows these four
 | Planned feature | Where it opens | Opened from |
 |---|---|---|
 | The ways to get each cost line (already have it, buy, rent, lease; [architecture/other-ways-to-build.md](../architecture/other-ways-to-build.md)) | The step panel, folded inside each cost row | The cost row itself |
-| *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar, and a step that opens a business |
-| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar, like *Compare* (§ 4.2; once the calm first view is built, its *Look closer* menu, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): the no-road screen offers it beside road 0 and the career road (S2.5.28c) |
+| *Others in this line of work* ([cockpit/landscape.md](cockpit/landscape.md)) | The right-hand panel | The goal bar's *Look closer* menu (since 2026-10-17), and a step that opens a business |
+| *About this job* (the job's facts, wages and requirements; [architecture/research-kit.md](../architecture/research-kit.md) § 4) | The right-hand panel | The goal bar's *Look closer* menu, beside *Compare the two endings* and *Others in this line of work* (§ 4.2; the menu since 2026-10-17, S2.5.30c); and a job with no written road shows it by default (§ 4.1, K6 A): the no-road screen offers it beside road 0 and the career road (S2.5.28c) |
 | The Lens ([architecture/use-cases.md](../architecture/use-cases.md)) | The right-hand panel; on a phone, a sheet (`components/cockpit/use-sheet.ts`) | One button in the header, and *Ask the Lens about this* in the step panel |
 | *Sort by one thing you choose* ([architecture/lens-comparisons.md](../architecture/lens-comparisons.md)) | Inside the list it sorts | Only on *Your futures*, *Compare* and the alternatives on road 1's training column, nowhere else (S2.5.24f, lens-comparisons.md § 11; the 2026-10-17 plan's list named the first two) |
+
+**The cockpit's regions, as rule 2 counts them (2026-10-17, with the calm first view, S2.5.30c).** The header;
+the goal bar; the rail (a folded strip from 768 px counts too); the overlay switches; the coach line, on a
+first visit until *Got it*; the road; the legend and the what-if bar while open; *Next on your road*; the panel
+while it holds something; the site's footer; and the example's banner on Mara's page. The header and the goal
+bar share one strip, and the overlay row, the map and *Next on your road* one column, but each is a block a
+person takes in on its own, so each keeps its own mark. A first visit folds the legend, the what-if bar and the
+road's later columns to one button each: 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
+once the coach line is put away ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)). For a
+few hours on 2026-10-17 the strip and the column were each counted as one region, which read as 4 and 3; a
+review found the blocks still drawn and the rule's own definition unchanged, so the marks went back.
 
 ### The clutter limit (`e2e/clutter-budget.spec.ts`)
 
@@ -63,7 +74,8 @@ measured first, on that seed alone.
 
 The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
 measures more on a screen, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on Windows
-only, so a local run there passes on an unchanged screen; CI never reads it. It is empty today: the one
+only, so a local run there passes on an unchanged screen; CI never reads it. Since the calm first view it holds
+one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu). It was emptied once: the one
 such difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 27 on Ubuntu) was three road
 cards showing only their edge on Windows, which the count no longer takes in. Windows measures one fewer
 in one place, the front door at 768×1024 (10 controls; 11 on Ubuntu), where its last button shows only a

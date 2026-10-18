@@ -152,8 +152,9 @@ logs only the error's name and code.
   source is kept (a later decision). Delete works on whole kinds of data only: statements are
   deleted all at once or not at all (the maintainer's decision, 2026-10-07), and there is no
   delete-one-idea or delete-one-figure control here.
-- **Delete doesn't clear the window's earlier leftovers yet.** The menu says so in plain words; how
-  to reach what the desktop window stored in earlier launches is a later decision. The safety copies
+- **Delete doesn't clear what the window keeps in its own storage.** The menu says so in plain words,
+  and how to remove it by hand; since 2026-10-17 the desktop app reads that storage again at every
+  launch. A Delete box for it is a later decision. The safety copies
   in the backups folder have their own box (2026-10-08).
 - **No query string, no amounts in a URL** (privacy review, rule 1): the page takes none, and the
   source names it shows are text on the page, never links.

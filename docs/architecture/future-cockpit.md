@@ -407,6 +407,57 @@ Click anything to see where it comes from."*
 overlay on, scrolled to the first step not done, with *"Since last time: …"*. The left list folds to
 a count (*"12 things you've told DotAmi"*).
 
+### First visit and return visits as built (2026-10-17, the calm first view, S2.5.30c)
+
+Asked for by the maintainer on 2026-10-17 (*"there's a LOT on the screen"*; his picks: tests and a calm
+screen first, a calm first view enforced by the clutter limit, "Your date" kept) and held to the layout rule
+([docs/ui-spec/README.md](../ui-spec/README.md)): the road is the primary thing, and a first visit shows the
+road, the goal and the next steps, with everything else folded one click away. Nothing was removed.
+
+- **A first visit** is a browser with nothing remembered for the cockpit (`lib/cockpit/folds.ts`
+  `FIRST_VISIT`): the rail folded (its strip from 768 px; the header's *Venture details* below), the legend
+  and the what-if bar folded, the road's columns after the first two folded into *The road ahead · N steps*,
+  and only *Road* and *Skills* on, every overlay switch drawn (Money and Rules & tax off, each one click
+  away). The
+  goal bar is open with its gauges and their invitations, and the coach line from the design sits under the
+  overlay row with *Got it*, which puts it away for good in this browser and leaves keyboard focus on the
+  road. On a phone, where nothing above the road folds, the coach line sits under the road instead, and the
+  overlay switches are 24 px tall rather than 32: a review (2026-10-17) found the line and taller switches
+  had put the road about 100 px lower on a phone than before the calm view; now it starts where it did.
+- **What is not built from the design:** the rail does not open with the *Not told yet* list on a first visit
+  (it is folded with the rest of the rail; one click, and its questions are at its top as before); the page
+  does not scroll to the first step not done, and the folded rail shows no count of what was told. The
+  gauges show their counts and invitations rather than a **?**.
+- **Look closer.** The goal bar's *Compare* and *Others in this line of work* are one menu button, *Look
+  closer*, and *About this job* joins it when built (`components/cockpit/look-closer-menu.tsx`, a WAI-ARIA
+  menu button; [docs/ui-spec/cockpit/07-goal-bar.md](../ui-spec/cockpit/07-goal-bar.md)).
+- **Folded means one button, not a line.** The folded legend and what-if bar are hidden whole, each with its
+  *Show* button at the end of *Next on your road*, under the map where they were (while a what-if is on,
+  that button is followed by *Your what-if, not a forecast* and its number). The folded road ahead is one
+  column naming the later columns.
+- **The overlay switches don't fold.** For a few hours on 2026-10-17 Money and Rules & tax folded behind
+  *Show more layers*. A review found that this put the rules and tax cards, on by default until that day,
+  two clicks away, and that a switch left the page when it was switched off with the layers folded, taking
+  keyboard focus with it. Every switch is drawn again; only the layer is off, as the design asks. A switch
+  whose layer has nothing on the road (road 1's *Rules & tax · 0 cards*) is drawn off and can't be pressed.
+- **Regions.** The header and the goal bar share one strip, and the overlay row, the map and *Next on your
+  road* one column, but each block is still a region of its own for the clutter limit, as the layout rule
+  defines one, and so is the coach line while it is drawn (docs/ui-spec/README.md, "The cockpit's regions").
+  A first visit has 8 regions from 768 px and 7 on a phone, one fewer than before the calm view.
+- **Return visits.** Whatever the person folds, opens or switches is remembered in this browser under the
+  same key as before, `dotami-cockpit-folds`: the six folds, the overlays last on (*the last overlay used
+  is remembered*, from § 2's interactions), and whether the coach line was put away; nothing is written
+  until the person changes something. A value stored before 2026-10-17 (it has no `roadAhead`) is a return
+  visit in every way: its new folds read as open, so a person who had everything open still has; the
+  overlays are the ones every visit had then (Rules & tax on, Skills and Money off); and the coach line,
+  which is for a first visit, isn't drawn (a review found that browser with Rules & tax off and the tip back). The privacy inventory lists what the key holds. In the desktop
+  app this lasts between launches since the same day: the app uses the same local address each time
+  (`desktop/app-port.mjs`); until then each launch had a new address, empty storage, and so a first visit.
+- **The example** (`/example/mara`) opens the same calm way, its banner unchanged, with no coach line (nothing
+  can be told there); nothing is remembered on it.
+- **Measured** (the clutter limit, `e2e/clutter-budget.spec.ts`, a fresh idea on *Pick a future*): see the
+  pull request; `e2e/budgets.ts` holds the new limits.
+
 ### Cockpit screen as built (2026-10-12, part 1 of 2)
 
 The first cockpit pull request builds the top, the centre, the right panel and *Next on your road* on
@@ -452,7 +503,7 @@ answer), the what-if bar, *Compare* and *This is mine*. The left rail stays as i
   *Rules & tax* starts on, so the map looks as it does today; *Skills* and *Money* start off. On, *Skills*
   puts *needs 3 · you have 2* on each step that lists skills, and *Money* puts the step's priced sum and
   *n not priced* on each step with cost lines; off, *Rules & tax* hides the lever cards. The badges are in
-  each card's accessible name too. The last overlay used is not remembered yet.
+  each card's accessible name too. The last overlay used is not remembered yet. *(2026-10-17: remembered in this browser, and a first visit opens with Road and Skills on: "First visit and return visits as built" above.)*
   Step colours are road evaluation's states (*applies*, *check first*, *not on your path*), which on
   road 0 are exactly the rules' colours. A step the person marked *not for me* is grey by their choice,
   so its card's name says *set aside by you* rather than *doesn't apply as answered*, and the legend says
@@ -547,7 +598,8 @@ wrapped to 342 px and left the road 20 px; at 768x1024 with a step open the road
   inventory lists the key. Everything starts open, so a person who never folds sees part 1 unchanged.
   In the desktop app each launch is served from its own local address, so its storage starts empty: the
   folds last until the app closes and it opens with everything showing (the same as the intake's list of
-  typed job descriptions).
+  typed job descriptions). *(2026-10-17: no longer; the app uses the same address on every launch while its
+  usual port is free, `desktop/app-port.mjs`, so the folds last between launches.)*
 - **The proof at 1280x720.** With every panel folded, each stage card and each rules and tax card on the
   road is fully inside the window once the road's own area is scrolled to it, and the road's area is at
   least 400 px tall (`e2e/cockpit-fit.spec.ts`). The pull request carries a 1440x900 screenshot before

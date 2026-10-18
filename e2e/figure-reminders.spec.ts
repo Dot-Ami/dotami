@@ -17,6 +17,14 @@
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { startAsAReturnVisit } from "./cockpit-calm";
+
+// The map's reminder banner sits in the cockpit's rail, folded on a first visit since 2026-10-17: these tests
+// are about the reminders, so each starts as a person who had opened everything (e2e/cockpit-calm.ts).
+test.beforeEach(async ({ page }) => {
+  await startAsAReturnVisit(page);
+});
+
 // Noon in Vancouver on October 7, 2026, so the person's own day is 2026-10-07 wherever this runs.
 const NOW = "2026-10-07T19:00:00Z";
 const SEPTEMBER_BANNER = "Figure reminder, monthly: September 2026";

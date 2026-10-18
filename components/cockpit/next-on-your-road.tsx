@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { nextOnYourRoad } from "@/lib/cockpit/view";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 import type { Road } from "@/lib/engines/roads/v2026";
@@ -10,18 +12,25 @@ import type { Scenario } from "@/lib/scenarios/types";
  * "Next on your road" (docs/architecture/future-cockpit.md § 2): the next three steps on the person's path
  * that aren't done or set aside, as each card's own chip shows it, in the order the road runs. The screen says that order is the
  * order steps happen, never importance. Clicking one opens it in the step panel.
+ *
+ * The calm first view (2026-10-17, S2.5.30c): the line is the foot of the road's column, still a region of its
+ * own for the clutter limit, and it carries, after the steps, the buttons that show what folds under the map
+ * (`after`: the legend and the what-if bar), where those were.
  */
 export function NextOnYourRoad({
   road,
   evaluation,
   scenario,
   onSelectStep,
+  after,
 }: {
   road: Road;
   evaluation: RoadEvaluation;
   /** The idea, for the map's own chips (road 0's done and not-on-your-path cards). */
   scenario: Scenario;
   onSelectStep: (stepId: string) => void;
+  /** Drawn at the end of the line: the buttons that show the folded legend and what-if bar. */
+  after?: ReactNode;
 }) {
   const next = nextOnYourRoad(evaluation, scenario);
   const label = (id: string) => road.steps.find((s) => s.id === id)?.label ?? id;
@@ -44,6 +53,7 @@ export function NextOnYourRoad({
           ))}
         </ol>
       )}
+      {after ? <span className="ml-auto flex flex-wrap items-center gap-2">{after}</span> : null}
     </section>
   );
 }
