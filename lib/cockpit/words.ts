@@ -332,8 +332,10 @@ export const cockpitWords = {
     },
     incorporateAt: {
       question: "The yearly sales at which you'd incorporate",
-      why: "DotAmi has no number of its own for this, so it waits for yours.",
-      unlocks: (step: string) => `${quoted(step)} lighting from your own number`,
+      why: "DotAmi has no number of its own for this, so it waits for yours. It is compared with your third-year sales estimate.",
+      // Asked only once the idea has a third-year sales estimate (lib/cockpit/told.ts notToldYet): the one
+      // number the rule compares it with, so the line says so rather than promise a light it can't give.
+      unlocks: (step: string) => `${quoted(step)} lighting once your third-year sales estimate reaches your own number`,
       box: "Dollars of yearly sales",
     },
     /** The box's own controls. */

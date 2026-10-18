@@ -81,6 +81,27 @@ describe("Incorporating never states an estimate the person didn't give", () => 
     expect(reason).toContain("$100,000");
   });
 
+  // The second review of PR #182 (2026-10-17): a future picked on Pick a future keeps no third-year
+  // estimate and nothing in the cockpit asks for one, yet the card and the step panel invited "set your own
+  // number to see this light", which no number could do. They now say what the light needs and what's missing.
+  it("with neither number, it never invites a number that can't light it", () => {
+    const blank = evaluateProfile({ ...base, targetRevenueY3: 0 }, { today: TODAY, activeBranches: picks, incorporateAt: null });
+    expect(blank.nodeStates[INCORPORATING]).toBe("yellow");
+    const reason = blank.nodeReasons[INCORPORATING]!;
+    expect(reason).not.toMatch(/set your own number to see this light/i);
+    expect(reason).toMatch(/no third-year revenue estimate/i);
+    expect(reason).toMatch(/DotAmi has no number of its own/);
+    // The control: with an estimate, the number is all it waits for, and it says so.
+    const withEstimate = evaluateProfile({ ...base, targetRevenueY3: 90_000 }, { today: TODAY, activeBranches: picks, incorporateAt: null });
+    expect(withEstimate.nodeReasons[INCORPORATING]).toMatch(/^Check first: set your own number to see this light/);
+  });
+
+  it("with a number and no estimate, it names the idea, not an intake a picked future never had", () => {
+    expect(run(0, 50_000).nodeReasons[INCORPORATING]).toBe(
+      "Check first: there's no third-year revenue estimate on this idea to compare with your own number ($50,000).",
+    );
+  });
+
   it("a $0 number of the person's own doesn't light it from a missing estimate", () => {
     const result = run(0, 0);
     expect(result.nodeStates[INCORPORATING]).toBe("yellow");

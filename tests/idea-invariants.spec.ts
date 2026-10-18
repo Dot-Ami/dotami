@@ -206,8 +206,9 @@ describe("the words no-times lets through", () => {
       ]),
     );
     const withTimes = [...new Set(lines.filter((line) => findTimeWords(line.text).length > 0).map((line) => line.where))];
-    // known-gaps.ts: road 1's first step, "each designed to take about a year".
-    expect(withTimes).toEqual(["road-apprentice-to-own-shop-ab › step-shop-register-apprentice › summary"]);
+    // None left: road 1's first step said "each designed to take about a year" until 2026-10-17, when the
+    // duration came out of its summary (it stays only as the official page's words, in the step's source).
+    expect(withTimes).toEqual([]);
   });
 
   it("lets through only official requirement text still on a road, word for word", () => {

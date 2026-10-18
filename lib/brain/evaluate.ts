@@ -574,14 +574,22 @@ function computeNodeStates(
   if (incPick !== incPath) {
     states[incPath] = "gray";
     reasons[incPath] = "Not on your path: Incorporation timing is set to the other way.";
+  } else if (incorporateAt === null && profile.targetRevenueY3 <= 0) {
+    // Neither number: inviting only "your own number" would promise a light no number can give, since
+    // there is no estimate to compare it with (a future picked on Pick a future keeps none, and nothing in
+    // the cockpit asks for one yet: docs/task-list.md, the second review of PR #182, 2026-10-17).
+    states[incPath] = "yellow";
+    reasons[incPath] =
+      "Check first: this lights once your third-year revenue estimate reaches a number of your own, and there's no third-year revenue estimate on this idea. DotAmi has no number of its own for this.";
   } else if (incorporateAt === null) {
     states[incPath] = "yellow";
     reasons[incPath] = "Check first: set your own number to see this light. DotAmi has no number of its own for this.";
   } else if (profile.targetRevenueY3 <= 0) {
     // The intake's numbers are optional and a skipped one is stored as 0, so 0 means "not given":
-    // never quote it back as the person's estimate, and never let 0 >= 0 light the card.
+    // never quote it back as the person's estimate, and never let 0 >= 0 light the card. "On this idea",
+    // not "on your intake": a picked future never had an intake.
     states[incPath] = "yellow";
-    reasons[incPath] = `Check first: there's no third-year revenue estimate on your intake to compare with your own number (${formatCad(incorporateAt * 100)}).`;
+    reasons[incPath] = `Check first: there's no third-year revenue estimate on this idea to compare with your own number (${formatCad(incorporateAt * 100)}).`;
   } else if (profile.targetRevenueY3 >= incorporateAt) {
     states[incPath] = "green";
     reasons[incPath] = `Lit because your third-year revenue estimate (${y3}) reaches your own number (${formatCad(incorporateAt * 100)}).`;

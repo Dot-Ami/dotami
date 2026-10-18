@@ -218,7 +218,9 @@ describe("Incorporating lights only from the person's own number", () => {
     for (const y3 of [0, 80_000, 10_000_000]) {
       const result = evaluateProfile({ ...base, targetRevenueY3: y3 }, { today: TODAY, activeBranches: pickIncorporating });
       expect(result.nodeStates[INCORPORATING], `Y3 ${y3}`).toBe("yellow");
-      expect(result.nodeReasons[INCORPORATING]).toMatch(/your own number/i);
+      // With no estimate it needs both numbers and says so, rather than inviting only the person's own
+      // (the second review of PR #182, 2026-10-17; tests/honest-map-words.spec.ts).
+      expect(result.nodeReasons[INCORPORATING]).toMatch(y3 > 0 ? /your own number/i : /a number of your own/i);
     }
   });
 

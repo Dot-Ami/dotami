@@ -60,7 +60,18 @@ translate it, but never decide for them — Screen A is where they confirm.
 `POST /api/intent/parse` (`app/api/intent/parse/route.ts`) — Anthropic tool-use
 (`report_intent` forced tool), sanitized against `ACTIVITY_TAXONOMY` / `PROVINCES` /
 `GOAL_IDS`; falls back to `lib/journey/intent-fallback.ts` keyword matching when no
-`ANTHROPIC_API_KEY` or on any error.
+`ANTHROPIC_API_KEY` or on any error. Since 2026-10-17 the keyword matching proposes only what the words
+state (the idea harness's findings): a province only when they name one place in Canada (a city named
+with a place outside Canada right after it doesn't count, nor does anything when the person is moving out
+of Canada, read as the move's own first "to"; none with two provinces; a city that is also a first name
+only after "in", "to"… or beside its province; a place outside Canada named anywhere else changes nothing,
+"moving to Calgary to open a store that ships to the USA" included); a kind of work only where it is the
+person's own (not the customers', not their day job, not an app or AI tool they use); and "Equipment /
+vehicle purchase on the path" only when they say buying, leasing, getting, needing or writing one off, with
+up to four describing words between ("buy a brand new delivery van"), not when they rule it out, already
+have it, it is the customers' or the customers need work done on it ("contractors need trucks detailed"),
+or the work is a service on other people's ("I replace computers for small offices"). Each case is in
+`tests/intent-fallback.spec.ts`.
 
 **Persistence:** merged draft written to `sessionStorage` (`journey-provider.tsx`) —
 browser-tab-scoped, no server log. Since 2026-10-11 the sentence is also **saved with the idea**:
