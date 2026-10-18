@@ -41,7 +41,7 @@ import { affectedTables, folderKeys, keptLinkKey, keptLinks, SAFETY_COPIES_KEY, 
  *
  * What this can't reach: the disk under the file (the journal SQLite writes during a change is
  * deleted afterwards, not overwritten; a deleted safety copy isn't overwritten either; and a drive
- * keeps its own spare copies) and what the window stored in earlier launches. The page says each.
+ * keeps its own spare copies) and what the window keeps in its own storage. The page says each.
  */
 
 /** A request this can't carry out as asked; the message is said to the person as is. */

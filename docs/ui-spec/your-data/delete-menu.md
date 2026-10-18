@@ -119,8 +119,9 @@ with where they are kept, before confirming.
    folders set aside there, which the safety-copies box now clears); [8i] the locked data file and the
    key file that couldn't open it, which a lost key's restore or Start fresh set aside, and the
    receipts folder Start fresh set aside (`dotami-locked-…db`, `database-key-unreadable-…key`,
-   `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window stored in earlier
-   launches ("Not cleared yet"), the log (which holds the update checker's install ID too), the update
+   `receipts-before-start-fresh-…`), never deleted by DotAmi; what the window keeps in its own
+   storage ("Not cleared", offered back next time, with how to remove it by hand; until 2026-10-17
+   "what the window stored in earlier launches"), the log (which holds the update checker's install ID too), the update
    checker's install ID (`.updaterId`, electron-updater's own file; close DotAmi and delete it, the next
    check makes a new one; since 2026-10-14), anything that already left the computer, and the disk under
    the data file (which can still hold older pieces of the file, a removed receipt's bytes, deleted
@@ -206,8 +207,10 @@ cockpit's *Businesses you're watching* and the settings page read empty or defau
 
 ## Cleanup / open questions
 
-- Clearing what the desktop window stored in earlier launches: waits on a later decision on how to
-  reach it.
+- Clearing what the window keeps in its own storage: a later decision. Since 2026-10-17 the desktop app
+  uses the same local address on every launch, so the page itself can now reach that storage; until a
+  box does, the menu says how to remove it by hand (close DotAmi and delete the "Local Storage" folder
+  in the data folder).
 - Whether an agent (the Lens, or an outside one) may ever delete: a later decision. Until then the
   route answers only to DotAmi's own page.
 - Known limit: the "wipe pending" note is written just before the rows are deleted. If the computer

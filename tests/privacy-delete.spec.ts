@@ -409,9 +409,17 @@ describe("the Delete menu covers every table, and says what goes with each", () 
     expect(DELETE_MENU.find((e) => e.id === "remembered-columns")!.built).toBe(false);
   });
 
-  it("says plainly what it can't reach: the window's earlier leftovers, the log, the disk", () => {
+  it("says plainly what it can't reach: the window's own storage, the log, the disk", () => {
     const names = NOT_CLEARED_BY_DELETE.map((n) => n.name);
-    expect(NOT_CLEARED_BY_DELETE.find((n) => n.name === "What the window stored in earlier launches")!.why).toMatch(/^Not cleared yet/);
+    // Since the desktop app's address stopped changing (2026-10-17, desktop/app-port.mjs) what the window keeps
+    // is read again at every launch, so it is said as kept and offered back, with how to remove it (a review).
+    expect(names).not.toContain("What the window stored in earlier launches");
+    const window = NOT_CLEARED_BY_DELETE.find((n) => n.name === "What this window keeps in its own storage")!.why;
+    expect(window).toMatch(/^Not cleared\. /);
+    expect(window).toMatch(/offered back/);
+    expect(window).toMatch(/from one launch to the next/);
+    expect(window).toMatch(/close DotAmi and delete the “Local Storage” folder in the data folder/);
+    expect(window).toMatch(/clear this site's data/);
     expect(names).toContain("The log");
     expect(names).toContain("The disk under the data file");
     // The safety copies have their own box now, so they are no longer on this list.

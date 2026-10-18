@@ -211,8 +211,11 @@ and can't be undone (but a backup can restore it).
 - After deleting ideas, the intake in progress in this tab still holds one → *it is reset, so a Save
   on the map can't bring the idea back.*
 - Nothing stored → *the button is off: "Nothing to delete".*
-- Not reached yet, and the menu says so: what the desktop window stored in earlier launches, the
-  log, anything already sent elsewhere, the disk under the data file.
+- Not reached yet, and the menu says so: what the window keeps in its own storage (the job
+  descriptions typed on the intake and how the cockpit was left, offered back next time; in the desktop
+  app from one launch to the next since 2026-10-17, with how to remove them: close DotAmi and delete the
+  "Local Storage" folder in the data folder), the log, anything already sent elsewhere, the disk under
+  the data file.
 
 **How old is each figure [8e]** — a figure from the future (a typo in the date) → flagged; time
 zones: a figure dated "March 31" stays March 31 for everyone.

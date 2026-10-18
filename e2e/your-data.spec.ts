@@ -467,7 +467,8 @@ test("Delete: tick ideas and statements, see what goes and what stays, say yes t
   // The cited records line, and what Delete doesn't reach, said plainly.
   await expect(removing).toContainText("generally kept for six years");
   await expect(removing.getByRole("link", { name: /^CRA: Where to keep your records/ })).toHaveAttribute("href", /canada\.ca\/en\/revenue-agency/);
-  await expect(removing).toContainText("What the window stored in earlier launches. Not cleared yet.");
+  await expect(removing).toContainText("What this window keeps in its own storage. Not cleared.");
+  await expect(removing).not.toContainText("earlier launches");
   // The safety copies have their own box; this run has none, so there is nothing to tick.
   const backupsBox = removing.getByRole("listitem").filter({ has: page.getByLabel(BACKUPS_BOX) });
   await expect(backupsBox).toContainText("Nothing to delete");

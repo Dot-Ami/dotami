@@ -61,7 +61,11 @@ person is asked).
   Both were already kept there; now they are used. Chromium also keeps its compiled copy of the app's own
   scripts between launches (its code cache, in the data folder); that holds code, nothing you typed. The
   server still answers only on this computer, behind the same Host check. The inventory's lines for the two
-  keys say so.
+  keys say so. Delete doesn't reach either key, and the app has no button that clears them: the Delete menu
+  and the inventory now say they are kept and offered back next time, and how to remove them (close DotAmi
+  and delete the “Local Storage” folder in the data folder; in a browser, clear the site's data), where
+  until now they said the window's storage from earlier launches was left unread
+  ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `NOT_CLEARED_BY_DELETE`, found in a review).
 
 ---
 

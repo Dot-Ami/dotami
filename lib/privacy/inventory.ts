@@ -592,8 +592,11 @@ export const NOT_CLEARED_BY_DELETE: readonly { name: string; why: string }[] = [
     why: "Not touched, even with “Safety copies in the backups folder” ticked. When the data file's key can't be opened, Restore from a backup… and Start fresh… move the locked data file into the backups folder (dotami-locked-…db) and never delete it, so it can still be opened if its key comes back; the key file that couldn't open it goes there too (database-key-unreadable-…key), and Start fresh moves the receipts folder there whole (receipts-before-start-fresh-…). Each holds what it held then. To remove them, close DotAmi and delete those files and folders (the backups folder's path is above).",
   },
   {
-    name: "What the window stored in earlier launches",
-    why: "Not cleared yet. The job descriptions you typed under “Other…” on the intake stay in the desktop app's own folder; clearing them is a later step.",
+    // Until 2026-10-17 each desktop launch had a new address, so this storage started empty and was never
+    // read again; since desktop/app-port.mjs it is read at every launch (a review found this line still
+    // said otherwise).
+    name: "What this window keeps in its own storage",
+    why: "Not cleared. The job descriptions you typed under “Other…” on the intake, and how you left the cockpit, are kept in this window's own storage, not in the data file, and offered back next time: in the desktop app from one launch to the next since 2026-10-17, when the app started using the same local address each time. To remove them in the desktop app, close DotAmi and delete the “Local Storage” folder in the data folder (the folder that holds the data file; its path is above); in a browser, clear this site's data.",
   },
   {
     name: "The log",
@@ -630,7 +633,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     holds:
       "Up to 20 job descriptions you typed under “Other…” on the intake, offered back to you next time.",
     lasts:
-      "Until this window's site data is cleared; it has no end date. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, starts without it, and the list stays in the app's own folder for the next launch on the usual address.",
+      "Until this window's site data is cleared; it has no end date, and Delete doesn't reach it. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, starts without it, and the list stays in the app's own folder for the next launch on the usual address. The app has no button that clears it: close DotAmi and delete the “Local Storage” folder in the data folder. In a browser, clear this site's data.",
   },
   {
     store: "localStorage",
@@ -639,7 +642,7 @@ export const WINDOW_STORAGE: readonly WindowStorageEntry[] = [
     holds:
       "Yes-or-no answers about the cockpit's screen only: whether the venture details, the goal bar, the right-hand panel, the map's legend, the what-if bar and the road ahead are folded; since 2026-10-17 also which of the Skills, Money and Rules & tax layers you last had on, and whether you put away the first visit's tip. Written only once you fold, open or switch something. Nothing about you or your ideas.",
     lasts:
-      "Until this window's site data is cleared; it has no end date. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, opens as a first visit, and the answers stay in the app's own folder for the next launch on the usual address.",
+      "Until this window's site data is cleared; it has no end date, and Delete doesn't reach it. In the desktop app it lasts from one launch to the next since 2026-10-17, when the app started using the same local address each time (desktop/app-port.mjs); a launch that has to use another address, because the usual one is taken, opens as a first visit, and the answers stay in the app's own folder for the next launch on the usual address. The app has no button that clears it: close DotAmi and delete the “Local Storage” folder in the data folder. In a browser, clear this site's data.",
   },
   {
     store: "sessionStorage",
