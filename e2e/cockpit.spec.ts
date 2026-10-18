@@ -273,6 +273,28 @@ test("the calm first view: the road, the goal and the next steps, everything els
   await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
 });
 
+test("a browser that kept its folds before the calm first view comes back as it was left: Rules & tax on, and no coach line", async ({ page }) => {
+  // A review (2026-10-17) set the five answers main kept before the calm view, everything open, and found
+  // this browser opening with Rules & tax switched off (on for every visit until then) and the tip back.
+  await page.addInitScript(() => {
+    try {
+      if (window.localStorage.getItem("dotami-cockpit-folds") === null) {
+        window.localStorage.setItem("dotami-cockpit-folds", JSON.stringify({ rail: false, goal: false, panel: false, legend: false, whatIf: false }));
+      }
+    } catch {
+      // A page with no storage of its own: nothing to do.
+    }
+  });
+  const ventureId = await saveIdea(page, "Invented — kept before the calm view test");
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await expect(page.getByRole("button", { name: "Fold venture details", exact: true })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Legend" })).toBeVisible();
+  await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(overlays(page).getByRole("button", { name: /^Skills/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
+});
+
 test("skills: road 0's legal requirement on its step, and the government's list for the job you pick, kept after a reload", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — job pick test");
   await page.goto(`/cockpit?venture=${ventureId}`);

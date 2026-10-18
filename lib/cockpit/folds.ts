@@ -17,7 +17,10 @@ import type { Overlays } from "@/lib/cockpit/view";
  * A first visit (nothing stored yet) opens calm: the road, the goal and the next steps, everything else
  * folded one click away (`FIRST_VISIT`). A return visit opens the way the person left it. An answer stored
  * before an answer existed reads that answer as open, so a person who had everything open before the calm
- * view still has everything open.
+ * view still has everything open. A value stored before the calm view (it has no `roadAhead`) is a return
+ * visit in every way: the overlays every visit had then (`OVERLAYS_BEFORE_CALM_VIEW`, Rules & tax on) and
+ * no coach line, which is for a first visit (a review, 2026-10-17, found that browser opening with Rules & tax
+ * switched off and the tip back).
  *
  * Kept in localStorage under one key as a small JSON object. It is a convenience, never a record: nothing
  * here reaches the data file or leaves the computer, and every read and write is wrapped. A browser that
@@ -95,7 +98,11 @@ export function parseMemory(raw: string | null | undefined): CockpitMemory {
   if (!value || typeof value !== "object" || Array.isArray(value)) return unreadable;
   const stored = value as Partial<Record<FoldRegion | "overlays" | "coachDismissed", unknown>>;
   const folds = Object.fromEntries(FOLD_REGIONS.map((region) => [region, stored[region] === true])) as Record<FoldRegion, boolean>;
-  // The overlays only as an object: anything else reads as never changed, and the first visit's are used.
+  // Every value written since the calm view has all six folds, so one without `roadAhead` was stored before
+  // it, by a person who has already been here.
+  const beforeCalmView = !("roadAhead" in stored);
+  // The overlays only as an object: anything else reads as never changed, and the first visit's are used
+  // (or, stored before the calm view, the ones every visit had then).
   const o = stored.overlays;
   const overlays =
     o && typeof o === "object" && !Array.isArray(o)
@@ -104,9 +111,17 @@ export function parseMemory(raw: string | null | undefined): CockpitMemory {
           money: (o as Record<string, unknown>).money === true,
           rules: (o as Record<string, unknown>).rules === true,
         }
-      : null;
-  return { folds, overlays, coachDismissed: stored.coachDismissed === true };
+      : beforeCalmView
+        ? OVERLAYS_BEFORE_CALM_VIEW
+        : null;
+  return { folds, overlays, coachDismissed: stored.coachDismissed === true || beforeCalmView };
 }
+
+/**
+ * The overlays every visit had before the calm first view (main until 2026-10-17): Rules & tax on, Skills
+ * and Money off. A browser that stored its folds then is given these back, not the first visit's.
+ */
+export const OVERLAYS_BEFORE_CALM_VIEW: Overlays = { skills: false, money: false, rules: true };
 
 /** Just the folds of a stored value (the first visit's when nothing is stored). */
 export function parseFolds(raw: string | null | undefined): Folds {

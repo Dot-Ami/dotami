@@ -24,6 +24,7 @@ import {
   FIRST_VISIT,
   FIRST_VISIT_MEMORY,
   FOLD_REGIONS,
+  OVERLAYS_BEFORE_CALM_VIEW,
   parseFolds,
   parseMemory,
   readMemory,
@@ -90,7 +91,26 @@ describe("the remembered answers", () => {
     expect(parseFolds('{"rail":true,"layers":true}')).toEqual({ ...ALL_OPEN, rail: true });
     // A person who had everything open before the calm first view (2026-10-17) still has it all open.
     const before = '{"rail":false,"goal":false,"panel":false,"legend":false,"whatIf":false}';
-    expect(parseMemory(before)).toEqual({ folds: ALL_OPEN, overlays: null, coachDismissed: false });
+    expect(parseMemory(before).folds).toEqual(ALL_OPEN);
+  });
+
+  it("a value stored before the calm first view is a return visit: the overlays every visit had then, and no coach line", () => {
+    // A review (2026-10-17) found this browser opening with Rules & tax switched off, on by default until
+    // then, and the first visit's tip back. Every value written since the calm view has `roadAhead`.
+    expect(OVERLAYS_BEFORE_CALM_VIEW).toEqual({ skills: false, money: false, rules: true });
+    for (const before of [
+      '{"rail":false,"goal":false,"panel":false,"legend":false,"whatIf":false}',
+      '{"rail":true,"goal":true,"panel":true,"legend":true}',
+      "{}",
+    ]) {
+      const memory = parseMemory(before);
+      expect(memory.overlays, before).toEqual(OVERLAYS_BEFORE_CALM_VIEW);
+      expect(memory.coachDismissed, before).toBe(true);
+    }
+    // Written since the calm view: the first visit's overlays until the person changes them, and the coach
+    // line until Got it.
+    const since = '{"rail":true,"goal":false,"panel":false,"legend":true,"whatIf":true,"roadAhead":true}';
+    expect(parseMemory(since)).toEqual({ folds: FIRST_VISIT, overlays: null, coachDismissed: false });
   });
 
   it("read back only a real true as folded; anything else reads as open, and a damaged value opens everything", () => {
@@ -115,16 +135,16 @@ describe("the remembered answers", () => {
   });
 
   it("the overlays last on and the coach line put away are read the same way: only a real true counts", () => {
-    expect(parseMemory('{"overlays":{"skills":false,"money":true,"rules":"yes"},"coachDismissed":true}')).toEqual({
+    expect(parseMemory('{"roadAhead":false,"overlays":{"skills":false,"money":true,"rules":"yes"},"coachDismissed":true}')).toEqual({
       folds: ALL_OPEN,
       overlays: { skills: false, money: true, rules: false },
       coachDismissed: true,
     });
     // Anything but an object reads as never changed (the first visit's overlays are used).
     for (const notAnObject of ["true", "1", '"skills"', "[true]", "null"]) {
-      expect(parseMemory(`{"overlays":${notAnObject}}`).overlays, notAnObject).toBeNull();
+      expect(parseMemory(`{"roadAhead":false,"overlays":${notAnObject}}`).overlays, notAnObject).toBeNull();
     }
-    expect(parseMemory('{"coachDismissed":"true"}').coachDismissed).toBe(false);
+    expect(parseMemory('{"roadAhead":false,"coachDismissed":"true"}').coachDismissed).toBe(false);
   });
 
   it("are written as one small JSON object and read back the same", () => {
