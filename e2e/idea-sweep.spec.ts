@@ -17,7 +17,8 @@
  * On every screen as it opens (and the cockpit with its rail shown, where the person's answers are listed),
  * three checks, over the page's text read the way the harness reads the app's words: line by line (a block's
  * end is a piece's end, so "$60,000" above "day not kept" is no duration), with the person's own words taken
- * out (every idea's in this run: the rail lists every sentence typed so far, and the corpus has ideas that
+ * out (every idea's in this run, and every statement the data file holds, read before each screen: the rail
+ * lists every sentence typed so far, by this sweep or the suite's earlier tests, and the corpus has ideas that
  * say "you should" and "one day" on purpose):
  *
  * - no verdict phrase (tests/helpers/verdict-words.ts `findVerdicts`, as e2e/no-verdict.spec.ts reads);
@@ -179,10 +180,21 @@ interface Sweep {
 const PIECE = " ¶ ";
 const asPieces = (text: string) => normaliseSpaces(text.replace(/\r?\n+/g, PIECE));
 
+/**
+ * Every statement the data file holds, word for word: the person's own words, which the rail and the plan show
+ * back. Read before every screen, since the suite's earlier tests typed some too (a four-day week among them)
+ * and the intake adds this idea's sentence as it goes.
+ */
+async function theirStatements(page: Page): Promise<string[]> {
+  const response = await page.request.get("/api/person/statements");
+  const body = (await response.json()) as { statements: { text: string }[] };
+  return body.statements.map((statement) => statement.text);
+}
+
 /** The page's text without the person's own words, and without the allowances still listed as gaps. */
-function dotamiOnly(text: string, s: Sweep): string {
+function dotamiOnly(text: string, s: Sweep, statements: readonly string[]): string {
   let rest = asPieces(text);
-  for (const words of s.theirs) {
+  for (const words of [...s.theirs, ...statements]) {
     const theirs = asPieces(words).trim();
     if (theirs.length > 0) rest = rest.split(theirs).join(PIECE);
   }
@@ -215,7 +227,7 @@ function budgetFor(screen: ScreenId): Clutter | null {
  */
 async function read(s: Sweep, where: string, held: ScreenId | null = null) {
   const text = await s.page.locator("body").innerText();
-  const ours = dotamiOnly(text, s);
+  const ours = dotamiOnly(text, s, await theirStatements(s.page));
   const at = `${s.idea.id} › ${where}`;
   for (const found of findVerdicts(ours)) s.findings.push({ where: at, what: `verdict: ${found}` });
   for (const found of findTimeWords(withoutQuotedWords(ours))) s.findings.push({ where: at, what: `time: ${found}` });
