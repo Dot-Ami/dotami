@@ -61,8 +61,9 @@ describe("the cockpit's components write no words of their own", () => {
       const CHIP = { label: "done", className: "text-sage bg-sage/15" };
       const COLOURS = { green: "applies as answered" };
       type State = "idle" | "dirty";
-      export function Planted({ what }: { what: string }) {
+      export function Planted({ what, busy }: { what: string; busy: boolean }) {
         const classes = cn("rounded-full border", what === "x" ? "px-2" : "px-4");
+        const compared = what === "Not shown" || what !== "Never shown";
         if (!what) throw new Error("no venture to draw");
         return (
           <aside id="cockpit-rail" data-region="rail" aria-label="Venture details" className={\`flex \${classes}\`}>
@@ -74,7 +75,11 @@ describe("the cockpit's components write no words of their own", () => {
             <i aria-hidden />
             <b aria-label={\`\${what}: \${what}, opens detail\`} />
             <u aria-label="done" />
-            <code>{what}</code>
+            <em>{what ?? "Not set"}</em>
+            <small>{"Saved · " + what}</small>
+            {busy && "Unsaved changes…"}
+            {busy || "Edits save automatically."}
+            <code>{compared ? what : ""}</code>
             <q>“{what}”</q>
             {" "}
             <span>doesn&apos;t apply as answered</span>
@@ -95,6 +100,10 @@ describe("the cockpit's components write no words of their own", () => {
       "string: ← Your futures",
       "template: ${…}: ${…}, opens detail",
       "attribute aria-label: done",
+      "string: Not set",
+      "string: Saved ·",
+      "string: Unsaved changes…",
+      "string: Edits save automatically.",
       "jsx text: doesn&apos;t apply as answered",
     ]);
   });

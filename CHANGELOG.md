@@ -59,7 +59,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   label 9.5 px, small 10.5, body 12, lead 14, title 18 and display 26, each with its line height, with
   Tailwind's larger steps kept for headlines. Each old size went to the nearest named one, so the smallest
   text on any screen is now 9.5 px (it was 8.5 px on the cockpit and the intake), the map's card lines and
-  most running text are 12 px where they were 11, and every screen counts fewer distinct sizes: the cockpit
+  most running text are 12 px where they were 11, and some text went down a size: the default running text
+  (`app/layout.tsx` and the two journey layouts, so everything that only inherits it), *Your plan*'s
+  article, the front door's three door bodies and five cockpit panels, 13 px to 12 (13 sits exactly between
+  body 12 and lead 14; the maintainer's to reverse); the intake's and *Your destination*'s boxes, the map's
+  column headings and the front door's subline, 15 to 14; and *Your plan*'s title, 28 to 26. Every screen
+  counts fewer distinct sizes: the cockpit
   on a laptop 12 to 5, the front door 8 to 6, Mara's example 13 to 5, *What DotAmi knows about you* 11 to 7,
   *Your plan* 10 to 5 (`e2e/budgets.ts` holds the new, lower limits; regions and controls measured the same
   on every screen). A unit test refuses any new arbitrary size, and Tailwind's text-xs, text-sm, text-base

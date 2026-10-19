@@ -19,10 +19,11 @@
  * arguments, a `className` property), ids and the attributes that hold ids or tokens (id, key, href, src,
  * data-*, aria-controls, role, type, …; aria-label and title are words and are NOT left alone), module
  * names in imports, the "use client" directive, string literal types, what an Error is made with and what
- * is written to the console (for programmers, never shown on a screen), and anything that looks like a path
- * or an address. A string that is one lowercase word with no hint from its property name ("step", "told")
- * is an id as often as a label, so it is left alone too. Beyond that, each file may carry an explicit
- * allowance in the spec, with the reason.
+ * is written to the console (for programmers, never shown on a screen), what a value is compared with
+ * (`=== "done"`, `case "step":`; a string beside `??`, `+`, `&&` or `||` is shown, so it is read), and
+ * anything that looks like a path or an address. A string that is one lowercase word with no hint from its
+ * property name ("step", "told") is an id as often as a label, so it is left alone too. Beyond that, each
+ * file may carry an explicit allowance in the spec, with the reason.
  */
 import ts from "typescript";
 
@@ -188,6 +189,23 @@ const UTILITY_WORDS = new Set([
   "select",
 ]);
 
+/**
+ * The operators that compare a value with a code value (`state === "done"`, `"id" in row`). A string on
+ * either side of one is a token. Every other binary operator (`??`, `+`, `&&`, `||`, …) passes its string on
+ * to be shown, so a string beside one of those is read as words.
+ */
+const COMPARISONS = new Set<ts.SyntaxKind>([
+  ts.SyntaxKind.EqualsEqualsToken,
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.LessThanToken,
+  ts.SyntaxKind.LessThanEqualsToken,
+  ts.SyntaxKind.GreaterThanToken,
+  ts.SyntaxKind.GreaterThanEqualsToken,
+  ts.SyntaxKind.InKeyword,
+]);
+
 /** A plain word: letters, maybe an apostrophe, maybe one mark of punctuation after it. */
 const PLAIN_WORD = /^[A-Za-z]+(?:['’][A-Za-z]+)?[,.;:!?…)]?$/;
 
@@ -259,8 +277,11 @@ function leftAlone(node: ts.Node): boolean {
   // The key side of a property or an element access: `{ "not-for-me": … }`, `x["done"]`.
   if (ts.isPropertyAssignment(parent) && parent.name === node) return true;
   if (ts.isElementAccessExpression(parent) && parent.argumentExpression === node) return true;
-  // A case label or a comparison with a code value: `=== "done"`, `case "step":`.
-  if (ts.isCaseClause(parent) || ts.isBinaryExpression(parent)) return true;
+  // A case label or a comparison with a code value: `=== "done"`, `case "step":`. Only a comparison, though:
+  // a string beside any other operator (`name ?? "Not set"`, `"Saved · " + name`, `busy && "Saving…"`,
+  // `busy || "Edits save automatically."`) is what gets shown, so it is read like any other.
+  if (ts.isCaseClause(parent)) return true;
+  if (ts.isBinaryExpression(parent) && COMPARISONS.has(parent.operatorToken.kind)) return true;
   const attribute = attributeAbove(node);
   if (attribute) {
     const name = attribute.name.getText();

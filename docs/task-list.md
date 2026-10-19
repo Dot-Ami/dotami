@@ -341,7 +341,10 @@ and the maintainer's six decisions of 2026-10-11:
     `tests/type-scale.spec.ts` refuses a new arbitrary size; `tests/helpers/type-scale-renames.ts` reads the
     map's and the cost panels' recordings with the new names so they aren't re-recorded. The smallest text on
     every screen is now at least 9.5 px, and the text-size counts in `e2e/budgets.ts` went down on every screen
-    ([ui-spec/README.md](ui-spec/README.md), *The type scale*)
+    ([ui-spec/README.md](ui-spec/README.md), *The type scale*). Down a size, for the maintainer to keep or
+    reverse: the default running text (`app/layout.tsx` and the two journey layouts), *Your plan*'s article
+    and the front door's door bodies, 13 px to 12; the intake's and *Your destination*'s boxes and the map's
+    column headings, 15 to 14; *Your plan*'s title, 28 to 26
   - [x] The cockpit rail's sentences moved into `lib/cockpit/words.ts` (S2.5.30e, 2026-10-17): the rail's,
     the header's, the empty cockpit's and the map's chips, card names and legend (68 pieces of text in five
     files), the text on screen unchanged; `tests/cockpit-own-words.spec.ts` reads every file in
