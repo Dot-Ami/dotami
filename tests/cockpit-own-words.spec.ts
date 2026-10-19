@@ -73,6 +73,7 @@ describe("the cockpit's components write no words of their own", () => {
             <a href="/ventures">{"← Your futures"}</a>
             <i aria-hidden />
             <b aria-label={\`\${what}: \${what}, opens detail\`} />
+            <u aria-label="done" />
             <code>{what}</code>
             <q>“{what}”</q>
             {" "}
@@ -93,6 +94,7 @@ describe("the cockpit's components write no words of their own", () => {
       "attribute placeholder: Month and year",
       "string: ← Your futures",
       "template: ${…}: ${…}, opens detail",
+      "attribute aria-label: done",
       "jsx text: doesn&apos;t apply as answered",
     ]);
   });

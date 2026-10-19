@@ -287,7 +287,9 @@ export function ownWords(source: string, file = "component.tsx"): OwnWords[] {
     if (leftAlone(node)) return;
     const property = propertyAbove(node);
     const attribute = attributeAbove(node);
-    const forced = (property && WORD_PROPERTIES.has(property)) || (attribute && WORD_PROPERTIES.has(attribute.name.getText().replace(/^aria-/, "ariaL").replace("ariaLabel", "ariaLabel")));
+    // JSX attributes are written kebab-case (aria-label); the property list is camelCase (ariaLabel).
+    const attributeName = attribute?.name.getText().replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+    const forced = (property && WORD_PROPERTIES.has(property)) || (attributeName !== undefined && WORD_PROPERTIES.has(attributeName));
     const placeName = attribute ? `attribute ${attribute.name.getText()}` : property ? `property ${property}` : where;
     if (forced ? /[A-Za-z]/.test(text) : readsAsWords(text)) add(node, text, placeName);
   };
