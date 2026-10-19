@@ -43,13 +43,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (official requirements such as "1,360 hours" are listed with their step); that every path ends somewhere
   honest, with every question answered too; that nothing about the person is derived; and that the same idea
   gives the same output. A second test reads every plain sentence in the words files for times. Whole screens
-  are read in the browser by the idea sweep, still to come (S2.5.29e). What it finds today and
+  are read in the browser by the idea sweep (S2.5.29e, below). What it finds today and
   a planned story fixes, or that is a bug for the maintainer, is listed in `tests/fixtures/ideas/known-gaps.ts`
   with its story; the harness fails on anything new and on a listed gap that now passes, so the list only
   shrinks. A new road adds 10 ideas that should reach it, and the corpus test counts them for every road in the
   catalog (`docs/engines/roads.md` rule 13); a new screen does too, checked by the reviewer (CONTRIBUTING.md).
   Each check has a control that plants a failure and must be caught, some planted in the app's own code
   (`tests/idea-invariants.spec.ts`, `tests/idea-harness-plants.spec.ts`).
+- **Tests: thousands of generated answer sets, a weekly browser walk of twelve ideas, and a way to score the AI
+  parser on your own key** (S2.5.29d, e and f, the plan of 2026-10-17; developers only, nothing in the app
+  changes). `tests/idea-properties.spec.ts` lets `fast-check` (a test-only package that ships nowhere) generate
+  the answers themselves, on both written roads: every place, kind of venture, work situation and structure,
+  the kinds of work, hire-first, equipment, first- and third-year sales with the CRA's $30,000 line and its two
+  neighbours, business figures, the what-if, "I'd incorporate at", the map's picks and road 1's fork, skill
+  marks, step statuses and ticks, a quote on any named line, savings left blank, at $0 or a number, the income
+  wanted and Your date. Each set is run through road evaluation, *Not told yet*, the receipts and *Your plan*
+  and held to the harness's invariants through the same code, plus what only a generated space can show:
+  taking an answer back gives the run before it, word for word; a quote never raises the count of lines not
+  priced; a blank is never $0 and a $0 of the person's own is never a blank; the same input gives the same
+  output; road evaluation's own sweep of what-ifs names exactly the answers a step's colour depends on; and the
+  line is exceeded, never reached. A fixed seed in CI, `IDEA_PROPERTIES_SEED=random` for new cases locally,
+  and a failure prints the seed and the smallest counterexample; `tests/idea-properties-plants.spec.ts` breaks
+  the product on purpose and sees the property fail. `e2e/idea-sweep.spec.ts` takes eight fixed ideas and four
+  that rotate by the week of the year (the same four for a week on every machine) from the front door to *Your
+  plan* in the browser, typed and picked, and reads every screen as it opens for verdict words, time words
+  and the clutter measurer, now in `e2e/clutter-measure.ts` and shared with the clutter limit. `npm run
+  eval:intent` runs every corpus idea through the AI parser on the developer's own key (never in CI, not in
+  `npm test`; it refuses without a key and sends nothing anywhere but the model API), scores the answers
+  against what each idea's words name, and writes `test-results/intent-eval.md` with ids only.
 
 ### Changed
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the

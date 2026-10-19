@@ -296,9 +296,26 @@ and the maintainer's six decisions of 2026-10-11:
     sentence in the words files for times; whole screens wait for 29e
   - [x] 29c: `tests/helpers/number-provenance.ts`, every amount an official fee, the person's own, a quoted
     threshold or a sum of those (the Lens's reply guard reuses it later)
-  - [ ] 29d: property tests over the whole answer space, with `fast-check`
-  - [ ] 29e: `e2e/idea-sweep.spec.ts`, fixed and weekly ideas from the front door to the plan in the browser
-  - [ ] 29f: `npm run eval:intent`, the AI parser on the developer's own key, never in CI
+  - [x] 29d: property tests over the whole answer space, `tests/idea-properties.spec.ts` with `fast-check`
+    (test-only, ships nowhere): generated places, kinds of venture, work situations, structures, kinds of
+    work, map picks, sales at and around the CRA's $30,000 line, figures, what-ifs, "I'd incorporate at",
+    marks, statuses, quotes, savings (blank, $0 or a number) and dates on both roads, held to the harness's
+    invariants through the same code, plus: taking an answer back restores the run before it; a quote never
+    raises the "not priced" count; a blank is never $0; the same input gives the same output; road
+    evaluation's sweep names exactly the answers a step's colour depends on; the line is exceeded, never
+    reached. Fixed seed in CI (`IDEA_PROPERTIES_SEED=random` locally); a failure prints the seed and the
+    smallest counterexample; `tests/idea-properties-plants.spec.ts` breaks the product and sees it caught
+  - [x] 29e: `e2e/idea-sweep.spec.ts`, eight fixed ideas and four that rotate by ISO week, each from the front
+    door to the plan in the browser both ways in, every screen read for verdict words, time words and the
+    clutter measurer (`e2e/clutter-measure.ts`, shared with the clutter limit); findings listed in the file's
+    `SCREEN_GAPS`, never fixed quietly. Two on 2026-10-19, both the maintainer's call: *Your destination*'s
+    first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read);
+    and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
+    budget of 12, measured on a visit with no words
+  - [x] 29f: `npm run eval:intent` (`scripts/eval-intent.mjs`), the AI parser on the developer's own key, scored
+    against the corpus (kinds of work, province, buying equipment), a table and `test-results/intent-eval.md`;
+    refuses to run without a key, exits at once in CI, not in `npm test`; `--fallback` scores the keyword
+    parser instead; later hosts the Lens question set
   - [x] 29g: the rule that a new road or screen adds 10 ideas that should reach it and passes the harness
     ([engines/roads.md](engines/roads.md) rule 13, [CONTRIBUTING.md](../CONTRIBUTING.md))
   - [x] The six bugs the harness found, fixed (phase 1 batch 2, 2026-10-17): "I'd incorporate at" asked only

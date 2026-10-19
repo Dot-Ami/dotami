@@ -130,7 +130,12 @@ function ownNumbers(idea: Idea) {
   };
 }
 
-function figure(idea: Idea, change: Partial<FigureView>): FigureView {
+/**
+ * A figure the invented person agreed to, as the storage would give it back (lib/figures/types.ts FigureView),
+ * on the harness's fixed day. Exported for the property tests, which build the same figures from generated
+ * numbers.
+ */
+export function figure(idea: Pick<Idea, "id">, change: Partial<FigureView>): FigureView {
   return {
     // One figure per kind, and per cost line for quotes: the person can quote every line.
     id: `figure-${idea.id}-${change.kind}${change.costLine ? `-${change.costLine.lineId}` : ""}`,
@@ -319,7 +324,7 @@ function runCockpit(
     targetMonthSetOn: null,
   };
   const at = (part: string) => `${way} › ${part}`;
-  const add = (where: string, text: string | null | undefined, kind: TextPiece["kind"] = "dotami") => {
+  const add: AddPiece = (where, text, kind = "dotami") => {
     if (text) pieces.push({ where: at(where), text, kind });
   };
 
@@ -328,11 +333,8 @@ function runCockpit(
   const freshEval = evaluateRoad(freshInput);
   const freshNotTold = notToldYet(freshInput, freshEval);
   const freshNext = nextOnYourRoad(freshEval, kept.scenario).map((s) => s.stepId);
-  addEvaluation("fresh", freshEval, freshInput);
-  for (const row of freshNotTold) {
-    add(`fresh › not told › ${row.id}`, row.question);
-    add(`fresh › not told › ${row.id} › unlocks`, row.unlocks);
-  }
+  piecesOfEvaluation(add, "fresh", freshEval, freshInput);
+  piecesOfNotTold(add, "fresh", freshNotTold);
 
   // Every question asked, answered each way the screen offers, against the cockpit as it opened, until one
   // answer changes something. A receipt here is the cockpit's own (`answerReceipt` is `roadReceipt` of the
@@ -393,11 +395,8 @@ function runCockpit(
   const finalEval = current;
   const finalNotTold = notToldYet(finalInput, finalEval);
   const finalNext = nextOnYourRoad(finalEval, kept.scenario).map((s) => s.stepId);
-  addEvaluation("final", finalEval, finalInput);
-  for (const row of finalNotTold) {
-    add(`final › not told › ${row.id}`, row.question);
-    add(`final › not told › ${row.id} › unlocks`, row.unlocks);
-  }
+  piecesOfEvaluation(add, "final", finalEval, finalInput);
+  piecesOfNotTold(add, "final", finalNotTold);
   // "What you've told DotAmi" is the plan's list row for row (buildPlan runs `toldRows` itself); the words
   // a take back shows come from road evaluation's answers.
   for (const a of finalEval.answers.filter((a) => a.given)) add(`told › ${a.id} › taken back`, a.takenBack);
@@ -422,7 +421,7 @@ function runCockpit(
     jobPickedOn: null,
     today: HARNESS_TODAY,
   });
-  addPlan(planView);
+  piecesOfPlan(add, planView);
 
   // --- Then every question still asked, answered one way each, round after round (an answer can bring a
   // new question: a fork picked opens its side's skills), until nothing is asked or nothing more can be.
@@ -463,22 +462,40 @@ function runCockpit(
     },
     dateWords: months === undefined ? [] : [monthsFromToday(months)],
   };
+}
 
-  /** The cockpit's own words for one run of road evaluation: each step's reason, the badges and the gauges. */
-  function addEvaluation(when: string, evaluation: RoadEvaluation, input: RoadEvaluationInput) {
-    for (const step of evaluation.steps) {
-      add(`${when} › step ${step.stepId} › because`, step.because);
-      for (const badge of stepBadges(step, { skills: true, money: true, rules: true })) add(`${when} › step ${step.stepId} › badge`, badge);
-    }
-    const gauges = gaugeView(evaluation, road, input.scenario);
-    for (const [id, gauge] of Object.entries(gauges)) {
-      add(`${when} › gauge ${id}`, gauge.value);
-      gauge.lines.forEach((l, i) => add(`${when} › gauge ${id} › ${i + 1}`, l));
-      add(`${when} › gauge ${id} › invite`, gauge.invite);
-    }
+/**
+ * Collects one piece of a screen's text: `where` is its place on screen (without the way in, which the
+ * caller adds), `kind` whose words they are (DotAmi's unless said otherwise). Nothing is collected for an
+ * empty or missing text.
+ */
+export type AddPiece = (where: string, text: string | null | undefined, kind?: TextPiece["kind"]) => void;
+
+/** The cockpit's own words for one run of road evaluation: each step's reason, the badges and the gauges. */
+export function piecesOfEvaluation(add: AddPiece, when: string, evaluation: RoadEvaluation, input: RoadEvaluationInput) {
+  for (const step of evaluation.steps) {
+    add(`${when} › step ${step.stepId} › because`, step.because);
+    for (const badge of stepBadges(step, { skills: true, money: true, rules: true })) add(`${when} › step ${step.stepId} › badge`, badge);
   }
+  const gauges = gaugeView(evaluation, input.road, input.scenario);
+  for (const [id, gauge] of Object.entries(gauges)) {
+    add(`${when} › gauge ${id}`, gauge.value);
+    gauge.lines.forEach((l, i) => add(`${when} › gauge ${id} › ${i + 1}`, l));
+    add(`${when} › gauge ${id} › invite`, gauge.invite);
+  }
+}
 
-  function addPlan(p: PlanView) {
+/** *Not told yet*: each question and what it unlocks. */
+export function piecesOfNotTold(add: AddPiece, when: string, rows: readonly NotToldRow[]) {
+  for (const row of rows) {
+    add(`${when} › not told › ${row.id}`, row.question);
+    add(`${when} › not told › ${row.id} › unlocks`, row.unlocks);
+  }
+}
+
+/** *Your plan*, every line of it, each tagged with whose words it is. */
+export function piecesOfPlan(add: AddPiece, p: PlanView) {
+  {
     add("plan › title", p.title);
     add("plan › made", p.made);
     for (const w of p.words) {
