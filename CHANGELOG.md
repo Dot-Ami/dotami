@@ -86,7 +86,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   2026-10-20). With the larger text, the two buttons at the end of *Next on your road* were pushed under the
   window's edge on Mara's example at laptop size; brought back into view, they took that screen to 23 controls
   against its limit of 21, and the limits only go down. They are now items of *Look closer*, listed while each
-  is folded, so every road's first view has two controls fewer; the folded goal bar's one line carries the menu
+  is folded, so every road's first view has two controls fewer, and `e2e/budgets.ts` holds the lower limits
+  (Mara's example 23 on a tablet; the cockpit on road 0 17, 29 and 27 on a phone, a tablet and a laptop, on
+  road 1 25 and 23 on a tablet and a laptop); the folded goal bar's one line carries the menu
   too, and folding either again puts keyboard focus back on *Look closer*. *Next on your road* still says *Your
   what-if, not a forecast* and its number while the what-if bar is folded and a what-if is on.
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the

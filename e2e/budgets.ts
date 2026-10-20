@@ -145,6 +145,13 @@ export const BASELINE: ClutterTable = {
  * pushed **Show the legend** and **Show the what-if bar** to a line under the window's edge, 5 px showing.
  * From 1024 px those buttons now sit at the right of the line's heading (components/cockpit/next-on-your-road.tsx),
  * so they show again and count again, and on road 0 the line is one row shorter (29 on a laptop, was 28).
+ * With them back, CI on Ubuntu counted Mara's example at laptop size at 23 (run 39371971585), over its 21.
+ *
+ * 2026-10-20, the maintainer's pick (a calmer screen, not a higher limit): those two buttons became items of the
+ * goal bar's Look closer menu, so every road screen counts fewer controls. Lowered to what CI on Ubuntu counts
+ * with it (run 39418090969; Chromium on Windows counts the same for these three screens at all three sizes): Mara's example 26 to 23 on a
+ * tablet (21 on a laptop and 11 on a phone, as budgeted), the cockpit on road 0 18, 32 and 29 to 17, 29 and
+ * 27, and on road 1 28 and 25 to 25 and 23 on a tablet and a laptop (14 on a phone, as budgeted).
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -153,9 +160,9 @@ export const BUDGETS: ClutterTable = {
   intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
   ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
   "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
-  "example-mara": { phone: m(7, 11, 5, 9.5), tablet: m(8, 26, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
-  "cockpit-road-0": { phone: m(7, 18, 4, 9.5), tablet: m(8, 32, 5, 9.5), laptop: m(8, 29, 5, 9.5) },
-  "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 28, 5, 9.5), laptop: m(8, 25, 5, 9.5) },
+  "example-mara": { phone: m(7, 11, 5, 9.5), tablet: m(8, 23, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
+  "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
   plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
 };
 
@@ -176,7 +183,9 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  * two more of its cards show enough to count. (For a few hours on 2026-10-19 the type scale took this line
  * out, counting 21 on Windows; that count was two of Next on your road's buttons pushed below the window, and
  * with them back in view it is 23 again.)
+ *
+ * Emptied again on 2026-10-20: with Show the legend and Show the what-if bar in the Look closer menu, Windows
+ * and Ubuntu both count Mara's example at laptop size at 21 (CI run 39418090969, and the browser tests run on
+ * Windows the same day).
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
-  "example-mara": { laptop: { controls: 2 } },
-};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};
