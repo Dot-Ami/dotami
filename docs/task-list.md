@@ -303,7 +303,8 @@ and the maintainer's six decisions of 2026-10-11:
     invariants through the same code, plus: taking an answer back restores the run before it; a quote never
     raises the "not priced" count; a blank is never $0; the same input gives the same output; road
     evaluation's sweep names exactly the answers a step's colour depends on; the line is exceeded, never
-    reached. Fixed seed in CI (`IDEA_PROPERTIES_SEED=random` locally); a failure prints the seed and the
+    reached; the person's own figures beat the estimate once they settle the CRA's test (a coverage count
+    of the runs that reached it, 0 fails; review of PR #187). Fixed seed in CI (`IDEA_PROPERTIES_SEED=random` locally); a failure prints the seed and the
     smallest counterexample; `tests/idea-properties-plants.spec.ts` breaks the product and sees it caught
   - [x] 29e: `e2e/idea-sweep.spec.ts`, eight fixed ideas and four that rotate by ISO week, each from the front
     door to the plan in the browser both ways in, every screen read for verdict words, time words and the

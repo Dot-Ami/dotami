@@ -15,7 +15,18 @@ import { describe, expect, it } from "vitest";
 
 import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
 
-import { DEFAULT_SIDE, generatedArb, generatedWithAnswer, generatedWithQuote, giveAnswer, PROPERTIES, revenueDollars, toInput } from "./helpers/idea-properties";
+import {
+  assertFiguresPathReached,
+  DEFAULT_SIDE,
+  figuresPathCount,
+  generatedArb,
+  generatedWithAnswer,
+  generatedWithQuote,
+  giveAnswer,
+  PROPERTIES,
+  revenueDollars,
+  toInput,
+} from "./helpers/idea-properties";
 
 /** The seed every run uses unless asked otherwise: the day the properties were written. */
 const FIXED_SEED = 20261017;
@@ -78,12 +89,65 @@ describe("the generated answer space reaches what it must", () => {
   });
 });
 
+/**
+ * The run counts, one place: the properties below and the figures coverage check read the same numbers. Lowered
+ * by about two fifths when the generated figures began reaching the rules (each run then reads them, in every
+ * counterfactual of the sweep too), to keep the file near ten seconds.
+ */
+const RUNS = {
+  holdsTheInvariants: 60,
+  takingAnAnswerBackRestores: 180,
+  aQuoteNeverRaisesNotPriced: 60,
+  aBlankIsNeverZero: 75,
+  sameInputSameOutput: 50,
+  theSweepIsConsistent: 50,
+  theLineIsExceededNotReached: 300,
+  theFiguresBeatTheEstimate: 200,
+} as const satisfies Record<keyof typeof PROPERTIES, number>;
+
 describe("every generated answer set", () => {
-  check("holdsTheInvariants", generatedArb(), (g) => PROPERTIES.holdsTheInvariants(toInput(g)), 100);
-  check("takingAnAnswerBackRestores", generatedWithAnswer, ({ generated, answer }) => PROPERTIES.takingAnAnswerBackRestores(giveAnswer(generated, answer)), 300);
-  check("aQuoteNeverRaisesNotPriced", generatedWithQuote, ({ generated, quote }) => PROPERTIES.aQuoteNeverRaisesNotPriced(toInput(generated), quote), 100);
-  check("aBlankIsNeverZero", generatedArb({ ownZero: true }), (g) => PROPERTIES.aBlankIsNeverZero(toInput(g)), 120);
-  check("sameInputSameOutput", generatedArb({ ownZero: true }), (g) => PROPERTIES.sameInputSameOutput(toInput(g)), 80);
-  check("theSweepIsConsistent", generatedArb({ ownZero: true }), (g) => PROPERTIES.theSweepIsConsistent(toInput(g)), 80);
-  check("theLineIsExceededNotReached", generatedArb({ ownZero: true }), (g) => PROPERTIES.theLineIsExceededNotReached(toInput(g)), 300);
+  check("holdsTheInvariants", generatedArb(), (g) => PROPERTIES.holdsTheInvariants(toInput(g)), RUNS.holdsTheInvariants);
+  check("takingAnAnswerBackRestores", generatedWithAnswer, ({ generated, answer }) => PROPERTIES.takingAnAnswerBackRestores(giveAnswer(generated, answer)), RUNS.takingAnAnswerBackRestores);
+  check("aQuoteNeverRaisesNotPriced", generatedWithQuote, ({ generated, quote }) => PROPERTIES.aQuoteNeverRaisesNotPriced(toInput(generated), quote), RUNS.aQuoteNeverRaisesNotPriced);
+  check("aBlankIsNeverZero", generatedArb({ ownZero: true }), (g) => PROPERTIES.aBlankIsNeverZero(toInput(g)), RUNS.aBlankIsNeverZero);
+  check("sameInputSameOutput", generatedArb({ ownZero: true }), (g) => PROPERTIES.sameInputSameOutput(toInput(g)), RUNS.sameInputSameOutput);
+  check("theSweepIsConsistent", generatedArb({ ownZero: true }), (g) => PROPERTIES.theSweepIsConsistent(toInput(g)), RUNS.theSweepIsConsistent);
+  check("theLineIsExceededNotReached", generatedArb({ ownZero: true }), (g) => PROPERTIES.theLineIsExceededNotReached(toInput(g)), RUNS.theLineIsExceededNotReached);
+  check("theFiguresBeatTheEstimate", generatedArb({ ownZero: true }), (g) => PROPERTIES.theFiguresBeatTheEstimate(toInput(g)), RUNS.theFiguresBeatTheEstimate);
+});
+
+/**
+ * The coverage check (the review of PR #187): a property that reads the figures passes trivially if no
+ * generated figure ever reaches the rules, as none did before (0 of 780 runs). With the same seed and run
+ * count fast-check gives the property, `fc.sample` gives the same sets, so each count below is the number of
+ * that property's own runs in which the person's figures decided the GST/HST card; a count of 0 fails.
+ */
+describe("the person's own figures beat the estimate in a share of every property's runs", () => {
+  type Way = [fc.Arbitrary<unknown>, (value: unknown) => ReturnType<typeof toInput>];
+  const way = <T,>(arb: fc.Arbitrary<T>, inputOf: (value: T) => ReturnType<typeof toInput>): Way => [arb, inputOf as Way[1]];
+  const ways: Partial<Record<keyof typeof PROPERTIES, Way>> = {
+    holdsTheInvariants: way(generatedArb(), toInput),
+    takingAnAnswerBackRestores: way(generatedWithAnswer, ({ generated, answer }) => giveAnswer(generated, answer).after),
+    aQuoteNeverRaisesNotPriced: way(generatedWithQuote, ({ generated }) => toInput(generated)),
+    aBlankIsNeverZero: way(generatedArb({ ownZero: true }), toInput),
+    sameInputSameOutput: way(generatedArb({ ownZero: true }), toInput),
+    theSweepIsConsistent: way(generatedArb({ ownZero: true }), toInput),
+    theFiguresBeatTheEstimate: way(generatedArb({ ownZero: true }), toInput),
+  };
+  for (const [name, [arb, inputOf]] of Object.entries(ways) as [keyof typeof PROPERTIES, Way][]) {
+    it(`${name}: some runs have the figures decide`, () => {
+      const count = figuresPathCount(arb, inputOf, { seed, numRuns: RUNS[name] });
+      process.stdout.write(`idea-properties: ${name}, the figures decide in ${count.reached} of ${count.runs} runs\n`);
+      assertFiguresPathReached(name, count);
+    });
+  }
+
+  it("the control: figures that start on the 2nd of a month never reach the rules, and the check fails", () => {
+    const params = { seed, numRuns: RUNS.theFiguresBeatTheEstimate };
+    const broken = figuresPathCount(generatedArb({ ownZero: true, figureShapeBroken: true }), toInput, params);
+    expect(broken).toEqual({ reached: 0, runs: params.numRuns });
+    expect(() => assertFiguresPathReached("the control", broken)).toThrow(`the control: 0 of ${params.numRuns} generated runs had the person's own figures decide the GST/HST card`);
+    // The same seed with the shape the read counts does reach it: the drop to 0 is the broken shape's.
+    expect(figuresPathCount(generatedArb({ ownZero: true }), toInput, params).reached).toBeGreaterThan(0);
+  });
 });

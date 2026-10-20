@@ -61,8 +61,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and held to the harness's invariants through the same code, plus what only a generated space can show:
   taking an answer back gives the run before it, word for word; a quote never raises the count of lines not
   priced; a blank is never $0 and a $0 of the person's own is never a blank; the same input gives the same
-  output; road evaluation's own sweep of what-ifs names exactly the answers a step's colour depends on; and the
-  line is exceeded, never reached. A fixed seed in CI, `IDEA_PROPERTIES_SEED=random` for new cases locally,
+  output; road evaluation's own sweep of what-ifs names exactly the answers a step's colour depends on; the
+  line is exceeded, never reached; and the person's own figures, once they settle the CRA's test, decide it
+  whatever the estimate says (most generated figures are calendar months and quarters the GST read counts, and
+  the spec counts the runs where the figures decided: a count of 0 fails, with a control that breaks the
+  figures' shape and sees it fail). A fixed seed in CI, `IDEA_PROPERTIES_SEED=random` for new cases locally,
   and a failure prints the seed and the smallest counterexample; `tests/idea-properties-plants.spec.ts` breaks
   the product on purpose and sees the property fail. `e2e/idea-sweep.spec.ts` takes eight fixed ideas and four
   that rotate by the week of the year (the same four for a week on every machine) from the front door to *Your

@@ -241,8 +241,10 @@ words join the harness only once `tests/helpers/idea-pipeline.ts` collects them.
 over thousands of generated answer sets (every place, kind of venture, work situation, structure, map
 pick, number, mark and status the rules read; `tests/helpers/idea-properties.ts` says what else they
 check: taking an answer back restores the run before it, a quote never raises the "not priced" count, a
-blank is never $0, the same input gives the same output, and road evaluation's own sweep names exactly
-the answers a step's colour depends on). They run with a fixed seed, so CI and every checkout run the
+blank is never $0, the same input gives the same output, road evaluation's own sweep names exactly
+the answers a step's colour depends on, and the person's own figures beat the estimate once they settle
+the CRA's test; the spec counts the runs where they did, and a count of 0 fails, so generated figures the
+rules never read can't pass unnoticed). They run with a fixed seed, so CI and every checkout run the
 same cases. To try new ones, `IDEA_PROPERTIES_SEED=random npm test -- idea-properties` (the seed is
 printed first); `IDEA_PROPERTIES_SEED=<number>` reruns one. A failure prints the seed, the path and
 the smallest counterexample fast-check shrank it to (the generated answers, with the road by its id),

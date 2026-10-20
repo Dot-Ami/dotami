@@ -33,7 +33,8 @@ import type { TextPiece } from "./text-pieces";
  * (tests/idea-harness.spec.ts) runs 367 ideas each through one fixed list of answers; here fast-check
  * generates the answers themselves, thousands of sets of them, on the two written roads: the place, the kind
  * of venture, the work situation, the structure, the kinds of work, hire-first, equipment, first- and
- * third-year sales (the CRA's $30,000 line and its two neighbours among them), business figures, the what-if,
+ * third-year sales (the CRA's $30,000 line and its two neighbours among them), business figures (most in the
+ * shape the GST read counts, so in a share of runs the person's own figures beat the estimate), the what-if,
  * the person's own "I'd incorporate at", road 0's two map picks, road 1's fork, skill marks on the road's items
  * and in the person's own words, step statuses and ticks, the savings (blank, $0 or a number), a quote on any
  * named line, the yearly income wanted and Your date.
@@ -44,8 +45,10 @@ import type { TextPiece } from "./text-pieces";
  * generated space can check: taking an answer back restores the run before it; a quote never raises the count
  * of lines not priced; a blank is never $0, and a $0 of the person's own is never a blank; the same input gives
  * the same output; road evaluation's own sweep of counterfactuals (`rulesAnswers`) names exactly the answers a
- * step's colour depends on; and the CRA's line is exceeded, never reached. The spec (tests/idea-properties.spec.ts)
- * runs each with a fixed seed in CI and a random one on request; tests/idea-properties-plants.spec.ts breaks the
+ * step's colour depends on; the CRA's line is exceeded, never reached; and the person's own figures, when they
+ * settle the CRA's test, decide it whatever the estimate says. The spec (tests/idea-properties.spec.ts) runs each
+ * with a fixed seed in CI and a random one on request, and counts the runs in which the figures decided (a count
+ * of 0 fails); tests/idea-properties-plants.spec.ts breaks the
  * product on purpose and sees a property fail with its counterexample.
  *
  * What fast-check generates is a `Generated` record (the road by id, the answers as data), turned into road
@@ -111,29 +114,101 @@ export const targetMonth: fc.Arbitrary<string> = fc.integer({ min: -12, max: 72 
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 });
 
-/** One of the person's agreed business totals, as the rules read it (the GST records verdict). */
-const businessFigure: fc.Arbitrary<ConfirmedFigure> = fc
-  .record({
-    kind: fc.constantFrom(...BUSINESS_TOTAL_KINDS),
-    amountCents: fc.integer({ min: 0, max: 20_000_000 }).map((dollars) => dollars * 100),
-    monthsBack: fc.integer({ min: 1, max: 24 }),
-    n: fc.nat({ max: 1000 }),
-  })
-  .map(({ kind, amountCents, monthsBack, n }) => {
-    const end = 2026 * 12 + 9 - monthsBack;
-    const start = end - 11;
-    const ym = (m: number) => `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, "0")}`;
-    return {
-      id: `figure-generated-${kind}-${n}`,
-      kind,
-      periodStart: `${ym(start)}-01`,
-      periodEnd: `${ym(end)}-28`,
-      amountCents,
-      currency: "CAD",
-      sourceLabel: "typed by you",
-      sourceRows: null,
-    };
-  });
+// --- The person's agreed business figures.
+//
+// The GST/HST card and the map's two GST stages read these (lib/brain/evaluate.ts `recordsVerdict`, through
+// lib/brain/records.ts `readRevenue`), and the figures beat the estimate when they settle the CRA's test. The
+// read counts a figure only when it is "gross-revenue", in CAD, ends by today, and covers exactly one calendar
+// month or one calendar quarter of the four complete quarters before today's. Until the review of PR #187 every
+// generated figure was a twelve-month period ending on the 28th, which the read never counts, so no generated
+// run ever had its figures decide (0 of 780 runs at the fixed seed). Most figures are now generated in the
+// shape the read counts, quarter by quarter; the rest in each shape it keeps but doesn't count.
+
+/** A day's month as "YYYY-MM", from a month index counted from year 0 (January 2026 is 2026 * 12). */
+const ym = (index: number) => `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+/** The last day of a month, from its index: the 0th day of the month after, read in UTC. */
+const lastDayOf = (index: number) => new Date(Date.UTC(Math.floor(index / 12), (index % 12) + 1, 0)).getUTCDate();
+/** A period of whole calendar months, first month to last, as the store keeps it. */
+const monthsPeriod = (first: number, last: number) => ({ periodStart: `${ym(first)}-01`, periodEnd: `${ym(last)}-${String(lastDayOf(last)).padStart(2, "0")}` });
+
+/** Today's month, as an index. */
+const TODAY_MONTH = 2026 * 12 + (Number(PROPERTIES_TODAY.slice(5, 7)) - 1);
+/** The first month of today's calendar quarter. */
+const CURRENT_QUARTER = TODAY_MONTH - (TODAY_MONTH % 3);
+/** The four complete calendar quarters before today's, oldest first, by first month: the GST test's window. */
+export const GST_WINDOW_QUARTERS = [12, 9, 6, 3].map((back) => CURRENT_QUARTER - back);
+
+/** A figure's amount, in whole dollars as cents: the edges of the $30,000 line and its quarter, or any number. */
+const figureCents: fc.Arbitrary<number> = fc
+  .oneof(fc.constantFrom(0, 7_500, 29_999, 30_000, 30_001), fc.integer({ min: 0, max: 45_000 }))
+  .map((dollars) => dollars * 100);
+/** Where the person's figure came from: typed, or a file with its rows counted. */
+const figureSource: fc.Arbitrary<{ sourceLabel: string; sourceRows: number | null }> = fc.constantFrom(
+  { sourceLabel: "typed by you", sourceRows: null },
+  { sourceLabel: "sales-2026.xlsx", sourceRows: 12 },
+);
+
+type FigureShape = Omit<ConfirmedFigure, "id">;
+const revenue = (period: { periodStart: string; periodEnd: string }, amountCents: number, source: { sourceLabel: string; sourceRows: number | null }): FigureShape => ({
+  kind: "gross-revenue",
+  ...period,
+  amountCents,
+  currency: "CAD",
+  ...source,
+});
+
+/**
+ * One window quarter's figures, in a shape the read counts: none, the quarter in one figure, one of its months,
+ * all three months one by one, or the quarter and one of its months both (two figures covering one month: the
+ * read leaves that quarter out until the person chooses).
+ */
+function quarterFigures(first: number): fc.Arbitrary<FigureShape[]> {
+  return fc.oneof(
+    { weight: 3, arbitrary: fc.constant<FigureShape[]>([]) },
+    { weight: 3, arbitrary: fc.tuple(figureCents, figureSource).map(([cents, src]) => [revenue(monthsPeriod(first, first + 2), cents, src)]) },
+    { weight: 2, arbitrary: fc.tuple(fc.integer({ min: 0, max: 2 }), figureCents, figureSource).map(([i, cents, src]) => [revenue(monthsPeriod(first + i, first + i), cents, src)]) },
+    { weight: 1, arbitrary: fc.tuple(figureCents, figureCents, figureCents, figureSource).map(([a, b, c, src]) => [a, b, c].map((cents, i) => revenue(monthsPeriod(first + i, first + i), cents, src))) },
+    {
+      weight: 1,
+      arbitrary: fc
+        .tuple(figureCents, fc.integer({ min: 0, max: 2 }), figureCents, figureSource)
+        .map(([q, i, m, src]) => [revenue(monthsPeriod(first, first + 2), q, src), revenue(monthsPeriod(first + i, first + i), m, src)]),
+    },
+  );
+}
+
+/**
+ * A figure in each shape the read keeps but doesn't count: another of the T2125 totals (never read for GST),
+ * a year to the 28th (not a calendar month or quarter; the shape every generated figure had before), a month
+ * that ends after today, a month in another currency, and a quarter from before the window.
+ */
+const uncountedFigure: fc.Arbitrary<FigureShape> = fc.tuple(figureCents, figureSource).chain(([cents, src]) =>
+  fc.constantFrom<FigureShape>(
+    ...BUSINESS_TOTAL_KINDS.filter((kind) => kind !== "gross-revenue").map((kind) => ({ ...revenue(monthsPeriod(GST_WINDOW_QUARTERS[3], GST_WINDOW_QUARTERS[3] + 2), cents, src), kind })),
+    { ...revenue(monthsPeriod(TODAY_MONTH - 12, TODAY_MONTH - 1), cents, src), periodEnd: `${ym(TODAY_MONTH - 1)}-28` },
+    revenue(monthsPeriod(TODAY_MONTH, TODAY_MONTH), cents, src),
+    { ...revenue(monthsPeriod(GST_WINDOW_QUARTERS[2], GST_WINDOW_QUARTERS[2]), cents, src), currency: "USD" },
+    revenue(monthsPeriod(GST_WINDOW_QUARTERS[0] - 3, GST_WINDOW_QUARTERS[0] - 1), cents, src),
+  ),
+);
+
+const withIds = (shapes: FigureShape[]): ConfirmedFigure[] => shapes.map((shape, i) => ({ id: `figure-generated-${i + 1}`, ...shape }));
+
+/** The four window quarters, each with its figures, and at most one figure the read doesn't count. */
+const windowFigures: fc.Arbitrary<ConfirmedFigure[]> = fc
+  .tuple(fc.tuple(...GST_WINDOW_QUARTERS.map(quarterFigures)), fc.option(uncountedFigure, { nil: null }))
+  .map(([quarters, extra]) => withIds([...quarters.flat(), ...(extra ? [extra] : [])]));
+/** Every window quarter covered, adding up to exactly the line: $30,000 is not over it. */
+const exactlyOnTheLine: fc.Arbitrary<ConfirmedFigure[]> = figureSource.map((src) => withIds(GST_WINDOW_QUARTERS.map((first) => revenue(monthsPeriod(first, first + 2), 750_000, src))));
+/** Only figures the read doesn't count: kept, listed on the card, and the estimate still decides. */
+const uncountedFigures: fc.Arbitrary<ConfirmedFigure[]> = fc.array(uncountedFigure, { minLength: 1, maxLength: 2 }).map(withIds);
+
+/** A set of the person's agreed business figures, never empty: what giving the figures answer gives. */
+export const businessFiguresGiven: fc.Arbitrary<ConfirmedFigure[]> = fc
+  .oneof({ weight: 5, arbitrary: windowFigures }, { weight: 1, arbitrary: exactlyOnTheLine }, { weight: 2, arbitrary: uncountedFigures })
+  .filter((figures) => figures.length > 0);
+/** The person's agreed business figures on a generated idea: none about a third of the time. */
+const businessFigures: fc.Arbitrary<ConfirmedFigure[]> = fc.oneof({ weight: 1, arbitrary: fc.constant<ConfirmedFigure[]>([]) }, { weight: 2, arbitrary: businessFiguresGiven });
 
 /**
  * The idea's answers as the map keeps them. Two forms, as the app has two ways in: typed on the intake (every
@@ -245,7 +320,15 @@ export function toInput(g: Generated): RoadEvaluationInput {
 export interface GenerateOptions {
   /** Let the person's own savings, quotes, income and what-if be $0 too (off for the text invariants: see `savingsCentsGiven`). */
   ownZero?: boolean;
+  /**
+   * The control for the figures coverage check only: every business figure starts on the 2nd of its month, so
+   * none is a calendar month or quarter and none can reach the rules (the spec shows the count drop to 0).
+   */
+  figureShapeBroken?: boolean;
 }
+
+/** Every figure moved to start on the 2nd of its month: kept by the read, never counted. The coverage control. */
+export const breakFigureShape = (figures: ConfirmedFigure[]): ConfirmedFigure[] => figures.map((f) => ({ ...f, periodStart: `${f.periodStart.slice(0, 7)}-02` }));
 
 /** A whole set of answers: a road, the idea's answers, and everything the person told the cockpit. */
 export function generatedArb(options: GenerateOptions = {}): fc.Arbitrary<Generated> {
@@ -276,7 +359,7 @@ export function generatedArb(options: GenerateOptions = {}): fc.Arbitrary<Genera
       roadId: fc.constant(roadId),
       roadChosen: fc.boolean(),
       scenario: scenarioArb,
-      figures: fc.array(businessFigure, { maxLength: 2 }),
+      figures: options.figureShapeBroken ? businessFigures.map(breakFigureShape) : businessFigures,
       forkPicks,
       skillMarks: fc
         .tuple(
@@ -493,7 +576,7 @@ export function answerChoiceArb(g: Generated): fc.Arbitrary<AnswerChoice> {
     fc.constantFrom<VentureStructure>("sole-prop", "corporation").map((structure) => ({ kind: "idea:structure", structure })),
     fc.constant<AnswerChoice>({ kind: "idea:hire-first" }),
     incorporateAtDollars.map((dollars) => ({ kind: "idea:incorporate-at", dollars })),
-    fc.array(businessFigure, { minLength: 1, maxLength: 2 }).map((figures) => ({ kind: "idea:figures", figures })),
+    businessFiguresGiven.map((figures) => ({ kind: "idea:figures", figures })),
     revenueDollars.map((dollars) => ({ kind: "what-if", dollars })),
     fc.tuple(fc.constantFrom(...roadItems(r)), mark).map(([skillItemId, m]) => ({ kind: "skill", skillItemId, mark: m })),
     fc.tuple(ownSkillLabel, mark).map(([ownLabel, m]) => ({ kind: "own-skill", ownLabel, mark: m })),
@@ -849,6 +932,95 @@ export function theLineIsExceededNotReached(input: RoadEvaluationInput): string[
   return problems;
 }
 
+// --- The person's own figures beat the estimate.
+
+/**
+ * What the CRA's test says of the person's figures, worked out here from the figures alone (not through
+ * lib/brain/records.ts): a figure counts when it is gross revenue in CAD, ends by today, and is exactly one
+ * calendar month or quarter starting in the window; a quarter with two figures on one month is left out; the
+ * test is crossed when a quarter alone, or the window's total, is over $30,000; and the figures settle it when
+ * crossed or when every month of the window is covered by exactly one figure.
+ */
+export function figuresVerdict(figures: readonly ConfirmedFigure[]): { decides: boolean; crossed: boolean } {
+  const index = (day: string) => Number(day.slice(0, 4)) * 12 + Number(day.slice(5, 7)) - 1;
+  const byMonth = new Map<number, ConfirmedFigure[]>();
+  for (const f of figures) {
+    if (f.kind !== "gross-revenue" || f.currency !== "CAD" || f.periodEnd > PROPERTIES_TODAY) continue;
+    const first = index(f.periodStart);
+    const last = index(f.periodEnd);
+    const wholeMonths = f.periodStart.endsWith("-01") && Number(f.periodEnd.slice(8)) === lastDayOf(last);
+    const monthOrQuarter = first === last || (first % 3 === 0 && last === first + 2);
+    if (!wholeMonths || !monthOrQuarter || first < GST_WINDOW_QUARTERS[0]) continue;
+    for (let m = first; m <= last; m += 1) byMonth.set(m, [...(byMonth.get(m) ?? []), f]);
+  }
+  const LINE = 3_000_000;
+  let total = 0;
+  let complete = true;
+  let overInAQuarter = false;
+  for (const first of [...GST_WINDOW_QUARTERS, CURRENT_QUARTER]) {
+    const months = [first, first + 1, first + 2].map((m) => byMonth.get(m) ?? []);
+    const conflict = months.some((fs) => fs.length > 1);
+    const cents = conflict ? 0 : [...new Set(months.flat())].reduce((sum, f) => sum + f.amountCents, 0);
+    if (cents > LINE) overInAQuarter = true;
+    if (first === CURRENT_QUARTER) continue;
+    total += cents;
+    if (conflict || months.some((fs) => fs.length !== 1)) complete = false;
+  }
+  const crossed = overInAQuarter || total > LINE;
+  return { decides: crossed || complete, crossed };
+}
+
+/**
+ * Whether the person's figures decided the GST/HST card in this run, read from what road evaluation wrote: the
+ * card's reason is the figures' own ("your confirmed revenue for …"), with the records it leaned on. This is
+ * what the coverage check counts: runs that reached "the person's own figures beat the estimate".
+ */
+export function figuresDecideTheCard(input: RoadEvaluationInput): boolean {
+  const card = evaluateRoad(input).rules.unlocks.find((u) => u.id === GST_CARD);
+  return card !== undefined && card.fromRecords !== undefined && card.why.startsWith("Shown because your confirmed revenue");
+}
+
+/**
+ * Property: when the person's figures settle the CRA's test, they decide, whatever the first-year estimate or
+ * the what-if says: the card's reason is the figures', over $30,000 exactly when the figures are, and the
+ * mandatory stage picked at GST timing lights by the figures (or from the first paid ride, for a driver). When
+ * they don't settle it, the estimate decides, as `theLineIsExceededNotReached` checks.
+ */
+export function theFiguresBeatTheEstimate(input: RoadEvaluationInput): string[] {
+  const problems: string[] = [];
+  const figures = input.confirmedFigures ?? [];
+  const expected = figuresVerdict(figures);
+  const decided = figuresDecideTheCard(input);
+  if (decided !== expected.decides) {
+    problems.push(`the figures ${expected.decides ? "settle" : "don't settle"} the test, but the card ${decided ? "reads them as deciding" : "keeps the estimate"}`);
+    return problems;
+  }
+  if (!expected.decides) return problems;
+  const evaluation = evaluateRoad(input);
+  const card = evaluation.rules.unlocks.find((u) => u.id === GST_CARD)!;
+  const cardOver = /— over \$30,000/.test(card.why);
+  if (cardOver !== expected.crossed) problems.push(`the figures are ${expected.crossed ? "" : "not "}over the line, and the card says “${card.why}”`);
+  if (card.fromRecords!.figureIds.length === 0) problems.push("the card leans on the person's records but names no figure");
+  const driver = (input.scenario.profile.activityTags ?? []).includes(RIDE_SHARE);
+  if (input.scenario.state.activeBranches.gstTiming === MANDATORY_GST) {
+    const colour = (evaluation.rules.nodeStates as Record<string, string>)[MANDATORY_GST];
+    const want = driver || expected.crossed ? "green" : "yellow";
+    if (colour !== want) problems.push(`with the figures ${expected.crossed ? "over" : "not over"} the line${driver ? " (a driver)" : ""} the mandatory stage is ${colour}, not ${want}`);
+  }
+  return problems;
+}
+
+/** How many of the generated sets reach "the person's own figures beat the estimate", out of how many. */
+export function figuresPathCount<T>(arb: fc.Arbitrary<T>, inputOf: (value: T) => RoadEvaluationInput, params: { seed: number; numRuns: number }): { reached: number; runs: number } {
+  const values = fc.sample(arb, params);
+  return { reached: values.filter((value) => figuresDecideTheCard(inputOf(value))).length, runs: values.length };
+}
+
+/** The coverage check: throws when no generated set reached the figures path, so a property can't pass by never going there. */
+export function assertFiguresPathReached(name: string, count: { reached: number; runs: number }): void {
+  if (count.reached === 0) throw new Error(`${name}: 0 of ${count.runs} generated runs had the person's own figures decide the GST/HST card`);
+}
+
 /** Every property, by the name the spec runs it under. */
 export const PROPERTIES = {
   holdsTheInvariants,
@@ -858,6 +1030,7 @@ export const PROPERTIES = {
   sameInputSameOutput,
   theSweepIsConsistent,
   theLineIsExceededNotReached,
+  theFiguresBeatTheEstimate,
 } as const;
 
 /** A generated set plus one answer given to it, for `takingAnAnswerBackRestores` (built by `giveAnswer`). */
