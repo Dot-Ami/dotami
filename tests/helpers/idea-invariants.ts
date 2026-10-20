@@ -139,9 +139,14 @@ export function reachesTheEnd(road: Road, stepId: string): boolean {
   return false;
 }
 
-type Fail = (invariant: InvariantId, subject: string, detail: string) => void;
+export type Fail = (invariant: InvariantId, subject: string, detail: string) => void;
 
-function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
+/**
+ * The failures of one cockpit run (invariants 1 to 6 on a way in). `checkRun` calls it for the typed and
+ * picked ways of an idea; the property tests (tests/helpers/idea-properties.ts) call it on a cockpit run
+ * built from a generated answer set, so the generated space is held to the same checks as the corpus.
+ */
+export function cockpitFailures(run: IdeaRun, c: CockpitRun, fail: Fail) {
   const ours = run.pieces.filter((p) => p.where.startsWith(`${c.way} ›`) && dotamiMade(p));
 
   // 1. No verdict: the phrases over everything DotAmi writes, the strict words over its own sentences.
