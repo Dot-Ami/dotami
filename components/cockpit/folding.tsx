@@ -79,7 +79,12 @@ export function useFolds(remember = true): FoldControls {
     const drawn = [...document.querySelectorAll<HTMLElement>(`[${FOLD_CONTROL}~="${region}"]`)].find(
       (el) => el.getClientRects().length > 0,
     );
-    drawn?.focus();
+    // Folding the legend or the what-if bar sends focus up to Look closer in the goal bar (2026-10-20). On a
+    // phone the whole page scrolls and those two sit under the road, so moving focus there would also scroll
+    // the page back up to the goal bar, away from where the person was reading (a review, 2026-10-20): focus
+    // moves without scrolling. Showing either still scrolls to its fold button, so the region comes into view.
+    const underTheMap = region === "legend" || region === "whatIf";
+    drawn?.focus(underTheMap && folds[region] ? { preventScroll: true } : undefined);
   }, [folds]);
 
   const toggle = useCallback(

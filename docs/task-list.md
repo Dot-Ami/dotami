@@ -344,15 +344,20 @@ and the maintainer's six decisions of 2026-10-11:
     and can only go down
   - [x] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
     visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
-    coach line, the rail, the legend and the what-if bar folded one click away, every overlay switch drawn; Compare and
+    coach line, the rail, the legend and the what-if bar folded one click away (the legend and the what-if bar
+    from *Look closer* since 2026-10-20), every overlay switch drawn; Compare and
     *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
     last overlay remembered (`dotami-cockpit-folds`); on a phone the coach line sits under the road, so the
     road starts where it did before (S2.5.30c)
   - [x] The budget for that first view. The plan aimed at 5 regions and 20 controls at 1280 px (3 and 12 on a
     phone); the built view measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on a laptop (32 on
     a tablet, 18 on a phone), with what is left being the road's own cards, the gauges and the next steps. The
-    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
+    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` held those
     numbers, and they can only go down from here.
+  - [x] Show the legend and Show the what-if bar into *Look closer* (the maintainer's pick, 2026-10-20, over
+    raising Mara's example's laptop limit from 21 to 23 once the type scale's fix brought the two buttons back
+    into view): the cockpit on road 0 now 27 controls on a laptop, 29 on a tablet, 17 on a phone; road 1 23 and
+    25; Mara's example 21 and 23 (`e2e/budgets.ts`, lowered to CI's counts)
   - [x] Six named text sizes in place of the ad hoc ones (S2.5.30d, 2026-10-17): `text-label` 9.5 px,
     `text-small` 10.5, `text-body` 13, `text-lead` 15, `text-title` 19 and `text-display` 28, theme tokens in
     `app/globals.css`, each with its line height, in place of 661 arbitrary sizes of 23 values (and Tailwind's

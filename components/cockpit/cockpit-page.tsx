@@ -116,11 +116,13 @@ import Link from "next/link";
  *
  * 2026-10-17, the calm first view (S2.5.30c; future-cockpit.md § 2, "First visit and return visits as built";
  * docs/ui-spec/README.md, "The layout rule"): a first visit shows the road, the goal and the next steps, and
- * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead), with only
+ * folds everything else (the rail and the road ahead one click away; the legend and the what-if bar, since
+ * 2026-10-20, Look closer and then the item), with only
  * Road and Skills on (every overlay switch drawn) and one coach line; a return visit opens as the person left it, the
  * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
  * Look closer menu. The folded legend and what-if bar were shown from one button each at the end of Next on
- * your road; since 2026-10-20 they are shown from Look closer too, two controls fewer on the first view (the
+ * your road; since 2026-10-20 they are shown from Look closer instead, two controls fewer on a tablet's or a
+ * laptop's first view (on a phone they were under the window's edge already) (the
  * maintainer's pick, so the screens stay within their clutter limits). Every block still drawn is a region of its own for the clutter limit (the header, the goal bar, the
  * overlay switches, the coach line, the road, Next on your road), as the layout rule defines a region.
  */
@@ -1194,7 +1196,8 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
           {evaluation ? (
             // The road's column (the calm first view, 2026-10-17): the overlay switches on top, the coach line,
             // the map, the what-if bar and Next on your road at the foot, each a region of its own while drawn;
-            // the folded legend and what-if bar are one button each in the foot line, where they were.
+            // the folded legend and what-if bar are shown from the goal bar's Look closer menu (2026-10-20), and
+            // the foot line keeps only the what-if note.
             <div className="flex flex-1 flex-col">
               <OverlaySwitches
                 overlays={overlays}

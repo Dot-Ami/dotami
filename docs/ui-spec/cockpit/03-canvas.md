@@ -20,8 +20,9 @@ longer lights from an amount DotAmi chose; 2026-10-06: card notes on how recent 
 Flow graph this file described until 2026-09-16 (see git history before commit S2.5.4j).
 
 **Folding and phone width (2026-10-12).** In the cockpit (the map's `cockpit` prop) the legend starts with
-**Fold the legend**, which folds it to one line with **Show the legend** (remembered in this browser; since
-2026-10-20 an item of the goal bar's *Look closer* menu, [07-goal-bar.md](./07-goal-bar.md)), and the
+**Fold the legend**, which folded it to one line with **Show the legend** (remembered in this browser; since
+2026-10-17 it is hidden whole, and since 2026-10-20 **Show the legend** is an item of the goal bar's *Look
+closer* menu, [07-goal-bar.md](./07-goal-bar.md)), and the
 road's scrolling area is a region named *The road*. Below 768 px each column is the window's width less the
 margins, the area scrolls sideways one column at a time (scroll snap), and it is 70 % of the window's height.
 Drawn without the prop, the map's HTML is unchanged. [12-folding-and-phone.md](./12-folding-and-phone.md).

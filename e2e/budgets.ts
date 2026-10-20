@@ -148,7 +148,8 @@ export const BASELINE: ClutterTable = {
  * With them back, CI on Ubuntu counted Mara's example at laptop size at 23 (run 39371971585), over its 21.
  *
  * 2026-10-20, the maintainer's pick (a calmer screen, not a higher limit): those two buttons became items of the
- * goal bar's Look closer menu, so every road screen counts fewer controls. Lowered to what CI on Ubuntu counts
+ * goal bar's Look closer menu, so the road screens count fewer controls on a tablet and a laptop (on a phone
+ * they were under the window's edge already; road 0 counts one fewer there). Lowered to what CI on Ubuntu counts
  * with it (run 39418090969; Chromium on Windows counts the same for these three screens at all three sizes): Mara's example 26 to 23 on a
  * tablet (21 on a laptop and 11 on a phone, as budgeted), the cockpit on road 0 18, 32 and 29 to 17, 29 and
  * 27, and on road 1 28 and 25 to 25 and 23 on a tablet and a laptop (14 on a phone, as budgeted).

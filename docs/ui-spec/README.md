@@ -42,7 +42,8 @@ while it holds something; the site's footer; and the example's banner on Mara's 
 bar share one strip, and the overlay row, the map and *Next on your road* one column, but each is a block a
 person takes in on its own, so each keeps its own mark. A first visit folds the legend, the what-if bar and the
 road's later columns to one button each (since 2026-10-20 the legend's and the what-if bar's are items of the
-goal bar's *Look closer* menu, two controls fewer): 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
+goal bar's *Look closer* menu, two controls fewer on a tablet or a laptop; on a phone they were already under
+the window's edge): 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
 once the coach line is put away ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)). For a
 few hours on 2026-10-17 the strip and the column were each counted as one region, which read as 4 and 3; a
 review found the blocks still drawn and the rule's own definition unchanged, so the marks went back.
@@ -75,8 +76,10 @@ measured first, on that seed alone.
 
 The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
 measures more on a screen, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on Windows
-only, so a local run there passes on an unchanged screen; CI never reads it. Since the calm first view it holds
-one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu). It was emptied once: the one
+only, so a local run there passes on an unchanged screen; CI never reads it. It is empty: from the calm first
+view until 2026-10-20 it held one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu), gone
+since *Show the legend* and *Show the what-if bar* moved into *Look closer* (21 on both). It was emptied before
+too: the one
 such difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 27 on Ubuntu) was three road
 cards showing only their edge on Windows, which the count no longer takes in. Windows measures one fewer
 in one place, the front door at 768×1024 (10 controls; 11 on Ubuntu), where its last button shows only a

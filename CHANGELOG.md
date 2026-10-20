@@ -110,11 +110,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   2026-10-20). With the larger text, the two buttons at the end of *Next on your road* were pushed under the
   window's edge on Mara's example at laptop size; brought back into view, they took that screen to 23 controls
   against its limit of 21, and the limits only go down. They are now items of *Look closer*, listed while each
-  is folded, so every road's first view has two controls fewer, and `e2e/budgets.ts` holds the lower limits
-  (Mara's example 23 on a tablet; the cockpit on road 0 17, 29 and 27 on a phone, a tablet and a laptop, on
-  road 1 25 and 23 on a tablet and a laptop); the folded goal bar's one line carries the menu
-  too, and folding either again puts keyboard focus back on *Look closer*. *Next on your road* still says *Your
-  what-if, not a forecast* and its number while the what-if bar is folded and a what-if is on.
+  is folded, so each road's first view on a tablet or a laptop has fewer controls (on a phone the buttons were
+  already under the window's edge), and `e2e/budgets.ts` holds the lower limits (Mara's example 23 on a tablet;
+  the cockpit on road 0 17, 29 and 27 on a phone, a tablet and a laptop, on road 1 25 and 23 on a tablet and a
+  laptop). Showing either now takes two steps, *Look closer* and then the item. The folded goal bar's one line
+  carries the menu too, with all its items, and folding either again puts keyboard focus back on *Look closer*
+  without scrolling the page. *Next on your road* still says *Your what-if, not a forecast* and its number
+  while the what-if bar is folded and a what-if is on.
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the
   maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit
@@ -122,7 +124,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   anywhere…*, put away with *Got it*, which leaves keyboard focus on the road; on a phone the line sits under
   the road, so the road starts where it did before). Folded, each with one button that says what it shows: the venture
   details rail, the map's legend, the what-if bar, the road's later columns (one column, *The road ahead · 6
-  steps*, naming them). Only Road and Skills are on at first (Rules & tax started on until now); the Money and
+  steps*, naming them); the legend's and the what-if bar's buttons are items of *Look closer* since the entry
+  above. Only Road and Skills are on at first (Rules & tax started on until now); the Money and
   Rules & tax switches are drawn beside them, one click away (a switch with nothing on the road, such as
   *Rules & tax · 0 cards* on the apprentice road, is drawn off and can't be pressed). The goal bar's *Compare* and *Others in this line of work*
   are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a

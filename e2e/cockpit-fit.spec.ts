@@ -454,6 +454,22 @@ test("with a what-if on, at tablet and phone widths every control under the road
   await page.setViewportSize({ width: 375, height: 812 });
   await controlsUnderTheRoadReachable(page, "375x812", 400);
   expect(await noSidewaysScroll(page)).toBe(true);
+
+  // Folded on a phone (2026-10-20): focus goes up to Look closer, which shows the bar again, without scrolling
+  // the page away from where the person was (a review found it jumped back to the goal bar), and Next on your
+  // road still says the map is relit by a what-if, and its number.
+  const foldWhatIf = button(page, "Fold the what-if bar");
+  await foldWhatIf.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before, "scrolled down to the what-if bar").toBeGreaterThan(300);
+  await foldWhatIf.click();
+  await expect(goalBar(page).getByRole("button", { name: "Look closer" })).toBeFocused();
+  // Only what the folded bar took off the page's end may come off the scroll position, never the way up.
+  expect(await page.evaluate(() => window.scrollY), "the page stays where the person was").toBeGreaterThan(before - 250);
+  const next = page.getByRole("region", { name: "Next on your road" });
+  await expect(next).toContainText("Your what-if, not a forecast");
+  await expect(next).toContainText("First-year sales of $45,000, for this look only");
+  expect(await lookCloserItems(page)).toContain("Show the what-if bar");
 });
 
 test.describe("phone width (issue #4)", () => {

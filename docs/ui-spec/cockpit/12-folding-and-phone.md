@@ -61,8 +61,8 @@ what-if bar, since 2026-10-13, when part 2 put it under the map):
 | Left rail (venture details, *In your words*, the ladder, the save line) | **Fold venture details** (top of the rail) | a narrow strip | **Show venture details** |
 | Goal bar and its four gauges | **Fold goal and gauges** (right of the goal line) | one line: the four gauges as buttons, name and value (the lines under each gauge in the button's title), and **Look closer** (since 2026-10-20) | **Show goal and gauges** |
 | The right-hand panel (a step, a gauge's list, the month box, Export) | **Fold the panel** (a thin bar at the panel's top) | a narrow strip (wide window) or a bar along the bottom that is one full-width button, 44 px tall (narrow window) | **Show the panel: <what it holds>**, e.g. *Show the panel: Sole Prop activation* |
-| The map's legend | **Fold the legend** (start of the legend line) | one line | **Show the legend** (an item of *Look closer* since 2026-10-20) |
-| The what-if bar and *This visit* under the map (part 2) | **Fold the what-if bar** (start of the bar) | one line; while a what-if is on, the line still says *Your what-if, not a forecast* and its number, as the map is still relit by it | **Show the what-if bar** (an item of *Look closer* since 2026-10-20) |
+| The map's legend | **Fold the legend** (start of the legend line) | one line until 2026-10-17; since then nothing (hidden whole) | **Show the legend** (an item of *Look closer* since 2026-10-20) |
+| The what-if bar and *This visit* under the map (part 2) | **Fold the what-if bar** (start of the bar) | one line until 2026-10-17; since then nothing (hidden whole), and while a what-if is on *Next on your road* still says *Your what-if, not a forecast* and its number, as the map is still relit by it | **Show the what-if bar** (an item of *Look closer* since 2026-10-20) |
 
 Part 2's other panels fold with the region they sit in: *What you've told DotAmi / Not told yet* and the
 one-question box are at the top of the left rail and fold with it; *Compare the two endings* and the
@@ -83,8 +83,10 @@ fold buttons are at least 32 px tall.
   (a half-typed statement included, and the rail's scroll position).
 - **Focus follows the fold.** After a fold or show, focus is on the button that now stands for the region
   (the strip, the one line's *Show goal and gauges*, the panel's bar or its *Fold the panel*), never
-  dropped to the top of the page. *Fold all panels*, the legend's button and the what-if bar's button
-  stay where they are and keep focus.
+  dropped to the top of the page. *Fold all panels* stays where it is and keeps focus. Folding the legend
+  or the what-if bar moves focus to **Look closer** in the goal bar, without scrolling the page (since
+  2026-10-20; until then their buttons stayed where they were and kept focus); showing either from
+  *Look closer* moves focus, and the page, to its fold button.
 - **Remembered per browser.** Every click writes the five answers to this browser's storage
   (`localStorage`, key `dotami-cockpit-folds`, a JSON object such as
   `{"rail":true,"goal":false,"panel":false,"legend":true,"whatIf":false}`; an answer stored before

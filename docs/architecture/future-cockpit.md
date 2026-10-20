@@ -412,7 +412,8 @@ a count (*"12 things you've told DotAmi"*).
 Asked for by the maintainer on 2026-10-17 (*"there's a LOT on the screen"*; his picks: tests and a calm
 screen first, a calm first view enforced by the clutter limit, "Your date" kept) and held to the layout rule
 ([docs/ui-spec/README.md](../ui-spec/README.md)): the road is the primary thing, and a first visit shows the
-road, the goal and the next steps, with everything else folded one click away. Nothing was removed.
+road, the goal and the next steps, with everything else folded one click away (since 2026-10-20 the legend
+and the what-if bar from *Look closer*, below). Nothing was removed.
 
 - **A first visit** is a browser with nothing remembered for the cockpit (`lib/cockpit/folds.ts`
   `FIRST_VISIT`): the rail folded (its strip from 768 px; the header's *Venture details* below), the legend

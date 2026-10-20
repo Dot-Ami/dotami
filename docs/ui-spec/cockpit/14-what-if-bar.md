@@ -9,7 +9,7 @@ Last updated: 2026-10-14 (it no longer covers the legend, below); 2026-10-12 (bu
 
 > **Changed 2026-10-17 — the calm first view (S2.5.30c).** Folded on a first visit. Folded, the bar and *This visit* are hidden whole (a half-typed number kept) and **Show the what-if bar** sits in *Next on your road*, followed while a what-if is on by *Your what-if, not a forecast* and its number. Open, it is a region of its own with **Fold the what-if bar** at its start, as before ([12-folding-and-phone.md](./12-folding-and-phone.md)).
 
-> **Changed 2026-10-20 — shown from Look closer (the maintainer's pick).** **Show the what-if bar** is an item of the goal bar's **Look closer** menu while the bar is folded, no longer a button in *Next on your road*, so the first view has one control fewer. *Next on your road* still says *Your what-if, not a forecast* and its number while a what-if is on and the bar is folded ([11-next-on-your-road.md](./11-next-on-your-road.md)).
+> **Changed 2026-10-20 — shown from Look closer (the maintainer's pick).** **Show the what-if bar** is an item of the goal bar's **Look closer** menu while the bar is folded, no longer a button in *Next on your road*, so the first view on a tablet or a laptop has one control fewer. *Next on your road* still says *Your what-if, not a forecast* and its number while a what-if is on and the bar is folded ([11-next-on-your-road.md](./11-next-on-your-road.md)).
 
 ## What it is
 

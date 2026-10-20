@@ -52,7 +52,8 @@ import type { Scenario } from "@/lib/scenarios/types";
  *
  * 2026-10-17, the calm first view (S2.5.30c): in the cockpit, the columns after the first two can fold into
  * one column, "The road ahead · N steps", which shows them (`cockpit.roadAhead`); the folded legend is hidden
- * whole, its "Show the legend" drawn by the cockpit under the map. The road's area keeps the clutter limit's
+ * whole, shown again from the cockpit (since 2026-10-20 an item of the goal bar's Look closer menu). The
+ * road's area keeps the clutter limit's
  * "road" mark. Drawn without `cockpit`, the HTML is still unchanged.
  */
 
@@ -605,9 +606,10 @@ function Legend({
       </footer>
     );
   }
-  // Folded, the whole legend stays on the page, hidden, and the cockpit draws its "Show the legend" button in
-  // the road's bottom line, under the map where the legend was (the calm first view, 2026-10-17); until then
-  // the folded legend was a line of its own with that button. Open, it is a region of its own again.
+  // Folded, the whole legend stays on the page, hidden, and the cockpit shows it again from "Show the legend":
+  // a button in the road's bottom line from 2026-10-17 (the calm first view), an item of the goal bar's Look
+  // closer menu since 2026-10-20; until 2026-10-17 the folded legend was a line of its own with that button.
+  // Open, it is a region of its own again.
   return (
     <footer
       data-region="legend"
