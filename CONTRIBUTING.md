@@ -237,6 +237,38 @@ a road in the catalog has fewer than 10 ideas. Screens aren't counted: an idea h
 the screens it reaches, so for a new screen the reviewer checks the 10 ideas, and the screen's
 words join the harness only once `tests/helpers/idea-pipeline.ts` collects them.
 
+**The property tests** (added 2026-10-17), `tests/idea-properties.spec.ts`, hold the same invariants
+over thousands of generated answer sets (every place, kind of venture, work situation, structure, map
+pick, number, mark and status the rules read; `tests/helpers/idea-properties.ts` says what else they
+check: taking an answer back restores the run before it, a quote never raises the "not priced" count, a
+blank is never $0, the same input gives the same output, road evaluation's own sweep names exactly
+the answers a step's colour depends on, and the person's own figures beat the estimate once they settle
+the CRA's test; the spec counts the runs where they did, and a count of 0 fails, so generated figures the
+rules never read can't pass unnoticed). They run with a fixed seed, so CI and every checkout run the
+same cases. To try new ones, `IDEA_PROPERTIES_SEED=random npm test -- idea-properties` (the seed is
+printed first); `IDEA_PROPERTIES_SEED=<number>` reruns one. A failure prints the seed, the path and
+the smallest counterexample fast-check shrank it to (the generated answers, with the road by its id),
+then the property's own words. `fast-check` is a development dependency that ships nowhere.
+
+**The idea sweep** (added 2026-10-17), `e2e/idea-sweep.spec.ts`, takes twelve corpus ideas from the
+front door to *Your plan* in the browser, both ways in, and reads every screen as it opens for verdict
+words, time words and the clutter measurer. It reads the page the way the harness reads the app's words:
+block by block, with every idea's own words taken out, and, for the time check, without the source quotes
+a screen draws in quote marks (the harness's `official-quote` pieces). Eight ideas are fixed; four rotate
+by ISO week, so a week's run is the same on every machine: `IDEA_SWEEP_WEEK=2026-W42 npx playwright test
+e2e/idea-sweep.spec.ts` reruns that week's four. What it finds is listed in the file's `SCREEN_GAPS` with
+its story, never fixed quietly, and the last test fails on a listed gap no idea shows any more.
+
+**Scoring the AI parser on your own key** (added 2026-10-17; developers only, costs money, never in CI):
+`ANTHROPIC_API_KEY=… npm run eval:intent` runs every corpus idea through the model the front door's box
+uses, with the route's own fixed field lists and cleaning (`app/api/intent/parse/route.ts`), scores the
+answers against what each idea's words name (kinds of work, province, buying equipment), prints a table
+and writes `test-results/intent-eval.md` (ids and fields only; the words are never written anywhere, and
+nothing is sent anywhere but the model API your key belongs to). The route's rate limit applies, so a
+full run takes about 13 minutes; `--limit 40` or `--ids idea-v1-0003,idea-v1-0010` narrows it, and
+`npm run eval:intent -- --fallback` scores the keyword parser instead, sending nothing. It exits at once
+when `CI` is set. Later it also hosts the Lens question set.
+
 ## Local development and the gate
 
 ```bash

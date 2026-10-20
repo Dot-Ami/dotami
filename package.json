@@ -22,6 +22,7 @@
     "prisma:migrate": "node scripts/prisma.mjs migrate dev",
     "prisma:deploy": "node scripts/prisma.mjs migrate deploy",
     "seed": "tsx prisma/seed.ts",
+    "eval:intent": "tsx scripts/eval-intent.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ci:quality": "npm run prisma:generate && npm run typecheck && npm run lint && npm run test && npm run build"
@@ -55,6 +56,7 @@
     "electron-updater": "^6.8.9",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.28",
+    "fast-check": "^4.10.2",
     "postcss": "^8.5.13",
     "prettier": "^3.9.10",
     "prisma": "^6.19.3",
