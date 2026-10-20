@@ -36,9 +36,11 @@
   /* The type scale (the maintainer's story S2.5.30d, 2026-10-17; docs/ui-spec/README.md, "The type
      scale"): six named sizes, used as text-label … text-display, in place of the twenty-three ad hoc
      sizes (text-[9px], text-[12.5px], …) the screens had grown. tests/type-scale.spec.ts refuses any
-     arbitrary size, and Tailwind's own text-xs, text-sm, text-base and text-lg, which these replace
-     (body is text-xs's 12px, lead text-sm's 14px, title text-lg's 18px, so screens drawn with those
-     look the same). Headlines keep Tailwind's larger steps, text-xl and up, where 26px is too small.
+     arbitrary size, and Tailwind's own text-xs, text-sm, text-base and text-lg, which these replace.
+     Each named size is the LARGEST of the old sizes it stands in for (label 8–9.5px, small 10–10.5,
+     body 11–13 and text-xs, lead 14–15 and text-sm, title 16–19, text-base and text-lg, display
+     26–28), so no text got smaller than it was: the default running text stays 13px, and text drawn
+     at 11 or 12px grows to it. Headlines keep Tailwind's larger steps, text-xl and up.
      Each size carries its line height as a LENGTH: v4 writes line heights as ratios, which children
      inherit as a ratio of their OWN size (a 9px label inside a 12px row got 12px instead of 16px, and
      rows across the map, the ideas page and the file panel came out 1–4px shorter); a length inherits
@@ -47,13 +49,13 @@
   --text-label--line-height: 13px;
   --text-small: 10.5px;
   --text-small--line-height: 14px;
-  --text-body: 12px;
+  --text-body: 13px;
   --text-body--line-height: 1rem;
-  --text-lead: 14px;
+  --text-lead: 15px;
   --text-lead--line-height: 1.25rem;
-  --text-title: 18px;
+  --text-title: 19px;
   --text-title--line-height: 1.75rem;
-  --text-display: 26px;
+  --text-display: 28px;
   --text-display--line-height: 2rem;
 
   /* v3's line heights for the Tailwind steps headlines still use, in rem, for the same reason. */

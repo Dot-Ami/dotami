@@ -335,16 +335,15 @@ and the maintainer's six decisions of 2026-10-11:
     maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
     numbers, and they can only go down from here.
   - [x] Six named text sizes in place of the ad hoc ones (S2.5.30d, 2026-10-17): `text-label` 9.5 px,
-    `text-small` 10.5, `text-body` 12, `text-lead` 14, `text-title` 18 and `text-display` 26, theme tokens in
+    `text-small` 10.5, `text-body` 13, `text-lead` 15, `text-title` 19 and `text-display` 28, theme tokens in
     `app/globals.css`, each with its line height, in place of 661 arbitrary sizes of 23 values (and Tailwind's
     text-xs, text-sm, text-base and text-lg, which they stand in for); headlines keep Tailwind's text-xl and up.
     `tests/type-scale.spec.ts` refuses a new arbitrary size; `tests/helpers/type-scale-renames.ts` reads the
     map's and the cost panels' recordings with the new names so they aren't re-recorded. The smallest text on
     every screen is now at least 9.5 px, and the text-size counts in `e2e/budgets.ts` went down on every screen
-    ([ui-spec/README.md](ui-spec/README.md), *The type scale*). Down a size, for the maintainer to keep or
-    reverse: the default running text (`app/layout.tsx` and the two journey layouts), *Your plan*'s article
-    and the front door's door bodies, 13 px to 12; the intake's and *Your destination*'s boxes and the map's
-    column headings, 15 to 14; *Your plan*'s title, 28 to 26
+    ([ui-spec/README.md](ui-spec/README.md), *The type scale*). Each named size is the largest of the old
+    sizes it stands in for, so no text is smaller than before: the default running text stays 13 px, and
+    text that was 11 or 12 px grows to it
   - [x] The cockpit rail's sentences moved into `lib/cockpit/words.ts` (S2.5.30e, 2026-10-17): the rail's,
     the header's, the empty cockpit's and the map's chips, card names and legend (68 pieces of text in five
     files), the text on screen unchanged; `tests/cockpit-own-words.spec.ts` reads every file in

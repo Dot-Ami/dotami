@@ -88,11 +88,9 @@ export const BASELINE: ClutterTable = {
  * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
  * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
  * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 8
- * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
- * `WINDOWS_EXTRA`).
+ * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677).
  *
- * One control more on road 0, the same day (17, 32 and 29; Chromium on Windows counts 31 on a tablet, one fewer
- * than the gate there, as it did before): a review
+ * One control more on road 0, the same day (17, 32 and 29): a review
  * found Rules & tax two clicks away behind "Show more layers", so the Money and Rules & tax switches are drawn
  * again and that button is gone. Road 1 and Mara's example, on road 1, are unchanged: road 1 has no rules and tax
  * cards, so its Rules & tax switch is drawn but can't be pressed (it has nothing to show) and isn't counted.
@@ -128,8 +126,19 @@ export const BASELINE: ClutterTable = {
  * and 12 to 4, 5 and 5 (smallest 8.5 to 9.5 px), Mara's example 11, 13 and 13 to 5, the front door 8 to 6,
  * Your destination 4 to 3 (smallest 10 to 10.5 px), Pick a future 10 to 6 (10 to 10.5 px), the intake 6 to 5
  * (8.5 to 9.5 px), Your futures 9 to 7 (9 to 9.5 px), What DotAmi knows about you 11 to 7, and Your plan 10
- * to 5 (10 to 10.5 px). Regions and controls measured the same as before on every screen, and their budgets
- * stay where they were.
+ * to 5 (10 to 10.5 px). Regions and controls keep their budgets. A review found the scale's first values (body
+ * 12 px, lead 14, title 18, display 26) took text a person reads down a size from main: the default running
+ * text and every 13 px use to 12, 15 to 14, 28 to 26. Each value is now the largest of the old sizes it stands
+ * in for (body 13, lead 15, title 19, display 28), so no text is smaller than on main; the counts above stay,
+ * as each size only moved.
+ *
+ * Chromium on Windows, with those values (the full browser suite, 2026-10-19): regions, text sizes and the
+ * smallest text as budgeted on every screen, and controls in the first window within the budget everywhere,
+ * under it at eight sizes: the front door 10 on a tablet (the strip above the site footer, as before the
+ * scale), and, the larger body text pushing the last of them below the window, Your futures 9 on a phone and
+ * 13 on a laptop, Mara's example 25 on a tablet, the cockpit on road 0 17, 31 and 28, and on road 1 26 on a
+ * tablet. The budgets are the gate's numbers, measured on Ubuntu, so they are lowered from a CI run's, not
+ * from these.
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -156,10 +165,8 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  * Emptied on 2026-10-17: the one difference then (road 1 at laptop size, 30 controls on Windows and 27 on
  * Ubuntu) was three road cards showing only a sliver of their edge on Windows, which no longer count.
  *
- * Mara's example at laptop size, since the calm first view (2026-10-17): 23 controls on Windows, 21 on Ubuntu
- * (CI run 39077075677). Windows' text wraps a little shorter in the goal bar, so the road starts higher and
- * two more of its cards show enough to count.
+ * Emptied again on 2026-10-19: after the calm first view Mara's example at laptop size counted 23 controls
+ * on Windows and 21 on Ubuntu (CI run 39077075677), Windows' text wrapping a little shorter in the goal bar;
+ * with the type scale's body text Windows counts 21 there, within the budget, so its line is out.
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
-  "example-mara": { laptop: { controls: 2 } },
-};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};

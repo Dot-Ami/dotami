@@ -90,18 +90,22 @@ Six named text sizes, and no others. They are Tailwind theme tokens in `app/glob
 |---|---|---|---|
 | `text-label` | 9.5 px | 13 px | kickers and chips: the mono, uppercase, tracked labels over a block or on a card |
 | `text-small` | 10.5 px | 14 px | notes under a field, the legend, a secondary line |
-| `text-body` | 12 px | 16 px | running text, buttons, rows, the map's card lines (Tailwind's `text-xs`) |
-| `text-lead` | 14 px | 20 px | card and column headings, the intake's box, a page's subline (`text-sm`) |
-| `text-title` | 18 px | 28 px | section headings, a quoted sentence (`text-lg`) |
-| `text-display` | 26 px | 32 px | page titles |
+| `text-body` | 13 px | 16 px | running text (the page's default), buttons, rows, the map's card lines (in place of Tailwind's `text-xs`) |
+| `text-lead` | 15 px | 20 px | card and column headings, the intake's box, a page's subline (in place of `text-sm`) |
+| `text-title` | 19 px | 28 px | section headings, a quoted sentence (in place of `text-lg`) |
+| `text-display` | 28 px | 32 px | page titles |
 
 Headlines larger than that (the front door's hero, a door's title, the word mark) keep Tailwind's own steps,
 `text-xl` and up. Before this the screens had grown twenty-three ad hoc sizes (`text-[8px]` to `text-[46px]`,
 in 661 places, half-pixel neighbours among them), and one screen counted fifteen distinct sizes. Each old
-size went to the nearest named one (`tests/helpers/type-scale-renames.ts` has the whole table): 8–9.5 px to
-label, 10–10.5 to small, 11–13 to body, 14–15 to lead, 16–19 to title, 26–28 to display, and the few above
-to Tailwind's steps. The smallest text on any screen is now 9.5 px (the baseline's was 8 px; 8.5 px after the
-calm first view). `tests/type-scale.spec.ts` refuses any arbitrary size written as a class (`text-[9px]`,
+size went to the named size of its group (`tests/helpers/type-scale-renames.ts` has the whole table): 8–9.5 px
+to label, 10–10.5 to small, 11–13 (and `text-xs`, 12) to body, 14–15 (and `text-sm`, 14) to lead, 16–19 (and
+`text-base`, `text-lg`) to title, 26–28 to display, and the few above to Tailwind's steps. Each named size is
+the largest size of its group, so no text is smaller than it was before the scale: the page's default running
+text stays 13 px, and text that was 11 or 12 px grows to it (a first version set body at 12 px, lead 14, title
+18 and display 26, which took the default running text, *Your plan* and the front door's door bodies down a
+pixel; a review found it). The smallest text on any screen is now 9.5 px (the baseline's was 8 px; 8.5 px
+after the calm first view). `tests/type-scale.spec.ts` refuses any arbitrary size written as a class (`text-[9px]`,
 `text-[0.7rem]`, `text-[length:…]`) and the four Tailwind sizes the named ones replaced, with a control that
 plants each kind. A new size is a change to the scale, made in the theme and in this table, never in a
 component.
