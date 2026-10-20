@@ -141,14 +141,14 @@ export function IncomeAgreePrompt({
             <h2 id={titleId} className="font-serif text-xl font-bold tracking-tight text-paper">
               {words.title}
             </h2>
-            <p id={introId} className="mt-1 text-sm text-paper-dim">
+            <p id={introId} className="mt-1 text-lead text-paper-dim">
               {words.intro}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 text-[11px] text-stone hover:text-paper"
+            className="shrink-0 text-body text-stone hover:text-paper"
           >
             {words.close}
           </button>
@@ -157,14 +157,14 @@ export function IncomeAgreePrompt({
         {error ? (
           <p
             role="alert"
-            className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber"
+            className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber"
           >
             {error}
           </p>
         ) : null}
 
         <div className="mt-4 rounded-sm border border-rule-soft bg-ink px-3 py-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-lead">
             <span className="min-w-0 flex-1 text-paper">{words.row(today)}</span>
             <label htmlFor={inputId} className="sr-only">
               {words.amountLabel}
@@ -181,21 +181,21 @@ export function IncomeAgreePrompt({
               }}
               aria-invalid={problem ? true : undefined}
               aria-describedby={problem ? `${inputId}-problem` : undefined}
-              className="w-32 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-sm text-paper outline-hidden focus:border-maple-soft"
+              className="w-32 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-lead text-paper outline-hidden focus:border-maple-soft"
             />
-            <span className="font-mono text-[11px] text-stone">CAD</span>
+            <span className="font-mono text-body text-stone">CAD</span>
           </div>
           {problem ? (
-            <p id={`${inputId}-problem`} className="mt-1 text-[11px] text-amber">
+            <p id={`${inputId}-problem`} className="mt-1 text-body text-amber">
               {problem}
             </p>
           ) : null}
-          <p className="mt-1.5 text-[11px] text-stone">{words.changes}</p>
+          <p className="mt-1.5 text-body text-stone">{words.changes}</p>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-rule-soft pt-3">
           {/* Always shown, as in every agree prompt, worded for a number the person typed themselves. */}
-          <p className="basis-full text-sm text-paper-dim">{words.checkFirst}</p>
+          <p className="basis-full text-lead text-paper-dim">{words.checkFirst}</p>
           <Pill variant="ghost" onClick={() => void turnDown()} disabled={busy}>
             {words.turnDown}
           </Pill>

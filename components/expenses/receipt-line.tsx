@@ -26,7 +26,7 @@ import { ReceiptViewer } from "./receipt-viewer";
  * file's name is never sent. Nothing about it goes in an address.
  */
 
-const LINK = "text-[10.5px] text-stone hover:text-paper";
+const LINK = "text-small text-stone hover:text-paper";
 
 /** The file's bytes as base64, without loading them into a JavaScript string twice. */
 function base64Of(file: Blob): Promise<string> {
@@ -93,7 +93,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
   }
 
   const errorLine = error ? (
-    <p role="alert" className="mt-1 text-[11px] text-amber">
+    <p role="alert" className="mt-1 text-body text-amber">
       {error}
     </p>
   ) : null;
@@ -102,7 +102,7 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
     const r = record.receipt;
     return (
       <div className="mt-1.5">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone">
+        <div className="flex flex-wrap items-center gap-2 text-body text-stone">
           <span>
             {/* The day on the person's own clock: the stored time is UTC, which is already tomorrow on a Canadian evening. */}
             Receipt: {typeName(r.type)} · {sizeWords(r.bytes)} · added {new Date(r.addedAt).toLocaleDateString("en-CA")}
@@ -140,13 +140,13 @@ export function ReceiptLine({ record, onChanged }: { record: ExpenseView; onChan
   // [8i] No key to encrypt with (expense-records.md § 9, § 10): the server would refuse, so Add a receipt
   // isn't offered; the amber line at the top of the page says why and what to do.
   if (!receiptsCanBeAdded(protection)) {
-    return <p className="mt-1.5 text-[11px] text-paper-dim">{RECEIPTS_CANT_BE_ADDED}</p>;
+    return <p className="mt-1.5 text-body text-paper-dim">{RECEIPTS_CANT_BE_ADDED}</p>;
   }
 
   return (
     <div className="mt-1.5">
       {adding ? (
-        <div className="rounded-sm border border-rule bg-ink px-2.5 py-2 text-[11px] text-paper-dim">
+        <div className="rounded-sm border border-rule bg-ink px-2.5 py-2 text-body text-paper-dim">
           <p>
             DotAmi keeps a copy of the file exactly as you give it, on this computer: anything printed on it (the last digits of a card, your name and
             address) is kept too. A JPEG, PNG, WebP or HEIC (iPhone) picture, or a PDF, up to 10 MB; DotAmi checks what is inside the file, not its

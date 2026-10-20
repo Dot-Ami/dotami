@@ -29,8 +29,8 @@ import { ReturnDrop } from "./return-drop";
  */
 
 const FIELD =
-  "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
-const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
+  "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
+const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
 
 /** Newest period first; ties broken by the start day so a month sorts above the year around it. */
 function newestPeriodFirst(a: FigureView, b: FigureView): number {
@@ -145,30 +145,30 @@ export function FiguresPanel({
         reminders={reminders}
         onAddFigures={openAddForm}
       />
-      <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">Your figures</p>
-      <p className="mt-1 text-[11px] text-stone-dim">
+      <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">Your figures</p>
+      <p className="mt-1 text-body text-stone-dim">
         Totals you&apos;ve agreed to — never your individual transactions. Where they settle a rule, cards use
         them instead of your estimates.
       </p>
 
       {loadError ? (
-        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
+        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
           {loadError}
         </p>
       ) : null}
       {actionError ? (
-        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber">
+        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
           {actionError}
         </p>
       ) : null}
 
       {figures === null ? (
-        <p className="mt-2 text-[11px] text-stone-dim">Loading…</p>
+        <p className="mt-2 text-body text-stone-dim">Loading…</p>
       ) : (
         <>
           {proposed.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
-              <p className="text-xs text-amber">
+              <p className="text-body text-amber">
                 {proposed.length} {proposed.length === 1 ? "figure" : "figures"} waiting for you to agree
               </p>
               <Pill variant="amber-out" size="small" className="ml-auto" onClick={() => setReviewing(proposed)}>
@@ -178,13 +178,13 @@ export function FiguresPanel({
           ) : null}
 
           {confirmed.length === 0 && retracted.length === 0 ? (
-            <p className="mt-2 text-[11px] text-stone-dim">No figures yet.</p>
+            <p className="mt-2 text-body text-stone-dim">No figures yet.</p>
           ) : null}
 
           {confirmed.length > 0 ? (
             <ul className="mt-2 space-y-1.5">
               {confirmed.map((f) => (
-                <li key={f.id} className="text-xs">
+                <li key={f.id} className="text-body">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                     <span className="font-semibold text-paper">{FIGURE_KIND_LABELS[f.kind]}</span>
                     <span className="text-stone">{describePeriod(f.periodStart, f.periodEnd)}</span>
@@ -195,7 +195,7 @@ export function FiguresPanel({
                       {f.sourceRows !== null ? ` · ${f.sourceRows} ${f.sourceRows === 1 ? "row" : "rows"}` : ""}
                     </span>
                     {f.editedByPerson ? (
-                      <span className="font-mono text-[9px] uppercase tracking-wider text-maple">edited by you</span>
+                      <span className="font-mono text-label uppercase tracking-wider text-maple">edited by you</span>
                     ) : null}
                     {confirmingId !== f.id ? (
                       <button
@@ -204,7 +204,7 @@ export function FiguresPanel({
                           setActionError(null);
                           setConfirmingId(f.id);
                         }}
-                        className="ml-auto text-[10px] text-stone-dim hover:text-maple"
+                        className="ml-auto text-small text-stone-dim hover:text-maple"
                       >
                         Retract
                       </button>
@@ -214,7 +214,7 @@ export function FiguresPanel({
                   <FutureDateNote periodEnd={f.periodEnd} today={today} />
                   {confirmingId === f.id ? (
                     <div className="mt-1 flex flex-wrap items-center gap-2 rounded-sm border border-rule-soft bg-ink px-3 py-1.5">
-                      <span className="text-[11px] text-paper-dim">Retract this figure? Cards go back to your estimate.</span>
+                      <span className="text-body text-paper-dim">Retract this figure? Cards go back to your estimate.</span>
                       <Pill variant="maple-out" size="small" onClick={() => void retract(f.id)} disabled={retractBusy}>
                         Retract
                       </Pill>
@@ -230,13 +230,13 @@ export function FiguresPanel({
 
           {retracted.length > 0 ? (
             <div className="mt-3">
-              <p className="font-mono text-[9px] uppercase tracking-wider text-stone-dim">Retracted</p>
+              <p className="font-mono text-label uppercase tracking-wider text-stone-dim">Retracted</p>
               <ul className="mt-1 space-y-1">
                 {retracted.map((f) => {
                   // The person's own day, not the UTC day the timestamp starts with.
                   const retractedDay = f.retractedAt ? localDay(f.retractedAt) : null;
                   return (
-                    <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-stone-dim opacity-70">
+                    <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-body text-stone-dim opacity-70">
                       <span>{FIGURE_KIND_LABELS[f.kind]}</span>
                       <span>{describePeriod(f.periodStart, f.periodEnd)}</span>
                       {taxLineWords(f) ? <span>{taxLineWords(f)}</span> : null}
@@ -462,7 +462,7 @@ function AddFigureForm({
       {isTaxLineKind(kind) ? (
         <p
           id={`${uid}-tax-year-hint`}
-          className={`mt-2 text-[11px] ${
+          className={`mt-2 text-body ${
             /^\d{4}$/.test(taxYear.trim()) && taxLineStatus(kind, Number(taxYear.trim()))?.status === "not-read-yet"
               ? "text-amber"
               : "text-stone"
@@ -474,12 +474,12 @@ function AddFigureForm({
         </p>
       ) : null}
       {amountError ? (
-        <p id={`${uid}-amount-problem`} className="mt-2 text-[11px] text-amber">
+        <p id={`${uid}-amount-problem`} className="mt-2 text-body text-amber">
           {amountError}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="mt-2 text-[11px] text-amber">
+        <p role="alert" className="mt-2 text-body text-amber">
           {error}
         </p>
       ) : null}
@@ -491,7 +491,7 @@ function AddFigureForm({
         <Pill variant="ghost" size="small" onClick={onCancel} disabled={busy}>
           Cancel
         </Pill>
-        <p className="text-[11px] text-stone-dim">You&apos;ll be asked to agree before it counts.</p>
+        <p className="text-body text-stone-dim">You&apos;ll be asked to agree before it counts.</p>
       </div>
     </form>
   );

@@ -216,13 +216,13 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
           <button
             type="button"
             onClick={() => setScreen(screen === "ground" ? "confirm" : "about")}
-            className="border-b border-rule-soft pb-0.5 text-xs text-stone transition hover:opacity-80"
+            className="border-b border-rule-soft pb-0.5 text-body text-stone transition hover:opacity-80"
           >
             ← Back
           </button>
         )}
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">
           {SCREEN_LABEL[screen]}
         </p>
       </nav>
@@ -243,11 +243,11 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
               ) : (
                 <>
                   <header>
-                    <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+                    <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
                       Did we get this <span className="font-normal italic text-maple">right?</span>
                     </h1>
                     {intake.intentParse?.rawLabel ? (
-                      <p className="mt-2 text-sm italic text-paper-dim">
+                      <p className="mt-2 text-lead italic text-paper-dim">
                         “{intake.intentParse.rawLabel}”
                       </p>
                     ) : null}
@@ -255,10 +255,10 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
 
                   {intake.intentParse && intake.intentParse.unmapped.length > 0 ? (
                     <div className="rounded-lg border border-amber/40 bg-amber/5 p-4">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber">
+                      <p className="font-mono text-small uppercase tracking-[0.14em] text-amber">
                         We couldn&apos;t map this — pick the closest below
                       </p>
-                      <p className="mt-1.5 text-sm text-paper">
+                      <p className="mt-1.5 text-lead text-paper">
                         {intake.intentParse.unmapped.join(" · ")}
                       </p>
                     </div>
@@ -313,7 +313,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                           e.currentTarget.value = "";
                         }
                       }}
-                      className="mt-3 w-full max-w-xs rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+                      className="mt-3 w-full max-w-xs rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                     />
                   </FieldGroup>
 
@@ -361,7 +361,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
             ) : (
               <>
                 <header>
-                  <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+                  <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
                     Where does this <span className="font-normal italic text-maple">operate?</span>
                   </h1>
                 </header>
@@ -376,7 +376,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                         province: e.target.value === "" ? null : (e.target.value as Province),
                       }))
                     }
-                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-hidden focus:border-maple-soft"
+                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-lead text-paper outline-hidden focus:border-maple-soft"
                   >
                     <option value="">Choose…</option>
                     {PROVINCES.map((code) => (
@@ -385,12 +385,12 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                       </option>
                     ))}
                   </select>
-                  <p className="mt-2 max-w-sm text-[11px] leading-snug text-stone-dim">
+                  <p className="mt-2 max-w-sm text-body leading-snug text-stone-dim">
                     Canada is the first jurisdiction mapped; other countries are not on the map yet.
                   </p>
                   {intake.province !== null &&
                   !FULL_COVERAGE_PROVINCES.includes(intake.province) ? (
-                    <p className="mt-2 max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-[11px] leading-snug text-stone">
+                    <p className="mt-2 max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-body leading-snug text-stone">
                       <span className="text-amber">Federal rules apply.</span> Provincial coverage
                       for {PROVINCE_LABELS[intake.province]} is coming — nothing shown will be
                       wrong, some provincial programs just won&apos;t appear yet.
@@ -411,7 +411,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                             : (e.target.value as EmploymentStatus),
                       }))
                     }
-                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-hidden focus:border-maple-soft"
+                    className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-lead text-paper outline-hidden focus:border-maple-soft"
                   >
                     <option value="">Choose…</option>
                     {EMPLOYMENT_OPTIONS.map((o) => (
@@ -430,7 +430,7 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                         }
                         aria-label="Your employment, in your words"
                         placeholder="Tell us in your words"
-                        className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
+                        className="mt-2 w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft"
                       />
                       <datalist id="employment-suggestions">
                         {readEmploymentSuggestions().map((s) => (
@@ -449,12 +449,12 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                     maxLength={80}
                     onChange={(e) => setIntake((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="What the map should call this venture (default: My venture)"
-                    className="w-full max-w-sm rounded-lg border border-rule bg-ink px-3 py-2 text-sm text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
+                    className="w-full max-w-sm rounded-lg border border-rule bg-ink px-3 py-2 text-lead text-paper placeholder:text-stone-dim focus:border-maple focus:outline-hidden"
                   />
                 </FieldGroup>
 
                 <FieldGroup label="Numbers — optional">
-                  <p className="mb-3 text-[11px] leading-snug text-stone">
+                  <p className="mb-3 text-body leading-snug text-stone">
                     Numbers let the map check your estimates against official tests, like the Canada Revenue Agency&apos;s GST/HST small-supplier tests.
                     Skippable.
                   </p>
@@ -501,11 +501,11 @@ export function IntakePage({ firstScreen = "about" }: { firstScreen?: "about" | 
                   </Pill>
                 </div>
                 {intake.province === null ? (
-                  <p className="text-right text-[11px] text-stone-dim">
+                  <p className="text-right text-body text-stone-dim">
                     Pick a province to open the map — it gates most of the rules.
                   </p>
                 ) : intake.employmentStatus === null ? (
-                  <p className="text-right text-[11px] text-stone-dim">
+                  <p className="text-right text-body text-stone-dim">
                     Choose your current employment context to open the map — it affects which paths may apply.
                   </p>
                 ) : null}
@@ -530,10 +530,10 @@ function AboutScreen({ onContinue }: { onContinue: () => void }) {
   return (
     <>
       <header>
-        <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+        <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
           Before the venture — <span className="font-normal italic text-maple">about you.</span>
         </h1>
-        <p className="mt-2 max-w-xl text-sm text-paper-dim">
+        <p className="mt-2 max-w-xl text-lead text-paper-dim">
           What should DotAmi know about you? How you work, what you won&apos;t do, what
           you&apos;re after. It keeps your words with the date you said them — it does not
           turn them into a type of person, and nothing you write here is used to rank anything.
@@ -543,7 +543,7 @@ function AboutScreen({ onContinue }: { onContinue: () => void }) {
       <PersonStatements variant="full" />
 
       <div className="flex items-center justify-between gap-4 border-t border-rule-soft pt-6">
-        <p className="text-[11px] text-stone-dim">
+        <p className="text-body text-stone-dim">
           You can skip this. Nothing here gates the map.
         </p>
         <Pill variant="maple" onClick={onContinue}>
@@ -568,7 +568,7 @@ function ConfirmEmptyState({
   return (
     <>
       <header>
-        <h1 className="font-serif text-[26px] font-bold leading-[1.15] tracking-tight text-paper">
+        <h1 className="font-serif text-display font-bold leading-[1.15] tracking-tight text-paper">
           What are you <span className="font-normal italic text-maple">building?</span>
         </h1>
       </header>
@@ -583,7 +583,7 @@ function ConfirmEmptyState({
           rows={3}
           // The most a statement holds; the browser drops anything past it, so a note says so below.
           maxLength={STATEMENT_MAX_CHARS}
-          className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-[15px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
+          className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-5 py-4 text-lead leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
         />
         <div className="flex flex-col items-end justify-end self-stretch border-l border-rule-soft px-4 py-3">
           <Pill variant="maple" onClick={onParse} disabled={parsing || freeText.trim().length === 0}>
@@ -592,7 +592,7 @@ function ConfirmEmptyState({
         </div>
       </div>
       {freeText.length >= STATEMENT_MAX_CHARS ? (
-        <p role="status" className="text-[12px] text-amber">
+        <p role="status" className="text-body text-amber">
           {STATEMENT_FULL_NOTE}
         </p>
       ) : null}
@@ -607,7 +607,7 @@ function ConfirmEmptyState({
  * for groups of buttons or of fields that carry names of their own.
  */
 function FieldGroup({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
-  const className = "mb-3 block font-mono text-[10px] uppercase tracking-[0.14em] text-stone";
+  const className = "mb-3 block font-mono text-small uppercase tracking-[0.14em] text-stone";
   return (
     <div>
       {htmlFor ? (
@@ -633,9 +633,9 @@ function RevenueInput({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] text-stone">{label}</span>
+      <span className="mb-1.5 block text-body text-stone">{label}</span>
       <div className="flex items-center rounded-sm border border-rule bg-ink focus-within:border-maple-soft">
-        <span className="pl-3 text-sm text-stone-dim">$</span>
+        <span className="pl-3 text-lead text-stone-dim">$</span>
         <input
           inputMode="numeric"
           value={value === 0 ? "" : value}
@@ -644,7 +644,7 @@ function RevenueInput({
             onChange(Number.isFinite(n) ? n : 0);
           }}
           placeholder="0"
-          className="w-full bg-transparent px-2 py-2 text-sm text-paper outline-hidden placeholder:text-stone-dim"
+          className="w-full bg-transparent px-2 py-2 text-lead text-paper outline-hidden placeholder:text-stone-dim"
         />
       </div>
     </label>
@@ -666,10 +666,10 @@ function PreviewRail({
 
   return (
     <aside data-region="preview" className="flex flex-col border-t border-rule-soft bg-ink px-6 py-8 lg:border-l lg:border-t-0">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Live preview</p>
+      <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">Live preview</p>
 
       {coverage === "federal-only" ? (
-        <p className="mt-3 rounded-sm border border-rule bg-ink2 px-3 py-2 text-[10.5px] leading-snug text-stone">
+        <p className="mt-3 rounded-sm border border-rule bg-ink2 px-3 py-2 text-small leading-snug text-stone">
           <span className="text-amber">Federal rules only</span> for your province so far —
           provincial coverage coming.
         </p>
@@ -677,7 +677,7 @@ function PreviewRail({
 
       <div className="mt-4 flex-1 space-y-2 overflow-y-auto">
         {visible.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-rule p-4 text-xs leading-relaxed text-stone">
+          <p className="rounded-lg border border-dashed border-rule p-4 text-body leading-relaxed text-stone">
             Answer to see what unlocks — every item is sourced, explained, and risk-rated.
           </p>
         ) : (
@@ -691,13 +691,13 @@ function PreviewRail({
           ))
         )}
         {hiddenCount > 0 ? (
-          <p className="pt-1 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-stone-dim">
+          <p className="pt-1 text-center font-mono text-small uppercase tracking-[0.14em] text-stone-dim">
             {hiddenCount} more in your map →
           </p>
         ) : null}
       </div>
 
-      <p className="mt-4 border-t border-rule-soft pt-4 text-[10px] leading-snug text-stone-dim">
+      <p className="mt-4 border-t border-rule-soft pt-4 text-small leading-snug text-stone-dim">
         Compass language: if an item applies, it may unlock a branch. Nothing here is a
         guarantee — sources open in a new tab.
       </p>
@@ -733,26 +733,26 @@ function PreviewRow({
           }`}
           aria-hidden
         />
-        <span className="shrink-0 rounded-sm border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] text-maple">
+        <span className="shrink-0 rounded-sm border border-maple-soft bg-maple/10 px-1.5 py-0.5 font-mono text-label uppercase tracking-[0.14em] text-maple">
           {item.typeChip}
         </span>
-        <span className="flex-1 truncate text-xs font-semibold text-paper">{item.title}</span>
+        <span className="flex-1 truncate text-body font-semibold text-paper">{item.title}</span>
         {worstStatus(item.citations) === "partial" ? <StatusChip status="partial" className="shrink-0" /> : null}
-        <span className="shrink-0 text-[10px] text-stone-dim">{expanded ? "−" : "+"}</span>
+        <span className="shrink-0 text-small text-stone-dim">{expanded ? "−" : "+"}</span>
       </button>
 
       {expanded ? (
-        <div className="space-y-2 border-t border-rule-soft p-3 text-[11px] leading-snug">
+        <div className="space-y-2 border-t border-rule-soft p-3 text-body leading-snug">
           <p className="text-stone">{item.why}</p>
           <p className="text-stone-dim">{item.payoff}</p>
           {item.expires ? (
-            <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-amber">
+            <p className="font-mono text-label uppercase tracking-[0.14em] text-amber">
               Time-boxed — in use before {item.expires.slice(0, 4)}
             </p>
           ) : null}
           {item.fork ? (
             <div className="rounded-sm border border-amber/40 bg-amber/5 p-2">
-              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-amber">
+              <p className="font-mono text-label uppercase tracking-[0.14em] text-amber">
                 {item.fork.label}
               </p>
               <p className="mt-1 text-stone">{item.fork.note}</p>
@@ -761,7 +761,7 @@ function PreviewRow({
           {item.risk ? (
             <div className="rounded-sm border border-rule bg-ink2 p-2">
               <p
-                className={`font-mono text-[9px] uppercase tracking-[0.14em] ${
+                className={`font-mono text-label uppercase tracking-[0.14em] ${
                   item.risk.level === "professional-required" ? "text-maple" : "text-amber"
                 }`}
               >

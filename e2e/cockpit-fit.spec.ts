@@ -23,7 +23,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
 
-import { cockpitSettled, lookCloser, overlayOn, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
+import { cockpitSettled, lookCloser, lookCloserItems, overlayOn, showLegend, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
 
 /** The run's own data file, for the test that draws an idea on another road. */
 async function withE2eDb<T>(fn: (db: PrismaClient) => Promise<T>): Promise<T> {
@@ -91,6 +91,14 @@ async function fold(page: Page, foldName: string, showName: string) {
   await expect(button(page, showName)).toHaveAttribute("aria-expanded", "false");
 }
 
+/** The same for the legend and the what-if bar, shown from the goal bar's Look closer menu since 2026-10-20. */
+async function foldUnderTheMap(page: Page, foldName: string, item: string) {
+  await expect(button(page, foldName)).toHaveAttribute("aria-expanded", "true");
+  await button(page, foldName).click();
+  await expect(button(page, foldName)).toHaveCount(0);
+  expect(await lookCloserItems(page)).toContain(item);
+}
+
 test("every region folds and opens with its own named button, and the cockpit remembers it after a reload", async ({ page }) => {
   const ventureId = await saveIdea(page, "Invented — folding test");
   await page.goto(`/cockpit?venture=${ventureId}`);
@@ -119,12 +127,12 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(gauge(page, "Steps")).toContainText(`0 of ${generalRoadV2026.steps.length} marked done`);
   await expect(gauge(page, "Your date")).toContainText("not set");
 
-  // The legend.
-  await fold(page, "Fold the legend", "Show the legend");
+  // The legend (shown again from Look closer, which the folded goal bar's one line carries too).
+  await foldUnderTheMap(page, "Fold the legend", "Show the legend");
   await expect(legendLine).toBeHidden();
 
   // The what-if bar under the map, with This visit (2026-10-13).
-  await fold(page, "Fold the what-if bar", "Show the what-if bar");
+  await foldUnderTheMap(page, "Fold the what-if bar", "Show the what-if bar");
   await expect(tryBox).toBeHidden();
 
   // The road ahead (2026-10-17).
@@ -145,9 +153,10 @@ test("every region folds and opens with its own named button, and the cockpit re
 
   // A reload remembers them all.
   await page.reload();
-  for (const name of ["Show venture details", "Show goal and gauges", "Show the legend", "Show the what-if bar"]) {
+  for (const name of ["Show venture details", "Show goal and gauges"]) {
     await expect(button(page, name)).toHaveAttribute("aria-expanded", "false");
   }
+  expect(await lookCloserItems(page)).toEqual(expect.arrayContaining(["Show the legend", "Show the what-if bar"]));
   await expect(incorporating).toBeHidden();
   await expect(inYourWords).toBeHidden();
   await expect(legendLine).toBeHidden();
@@ -161,24 +170,19 @@ test("every region folds and opens with its own named button, and the cockpit re
   await expect(inYourWords).toBeVisible();
   await button(page, "Show goal and gauges").click();
   await expect(stepsLine).toBeVisible();
-  await button(page, "Show the legend").click();
+  await lookCloser(page, "Show the legend");
   await expect(legendLine).toBeVisible();
-  await button(page, "Show the what-if bar").click();
+  await lookCloser(page, "Show the what-if bar");
   await expect(tryBox).toBeVisible();
   await page.getByRole("button", { name: /^Show the road ahead: / }).click();
   await expect(incorporating).toBeVisible();
 
   // The header folds them all at once, and opens them all again.
   await button(page, "Fold all panels").click();
-  for (const name of [
-    "Show venture details",
-    "Show goal and gauges",
-    "Show the legend",
-    "Show the what-if bar",
-    "Show the panel: Sole Prop activation",
-  ]) {
+  for (const name of ["Show venture details", "Show goal and gauges", "Show the panel: Sole Prop activation"]) {
     await expect(button(page, name)).toBeVisible();
   }
+  expect(await lookCloserItems(page)).toEqual(expect.arrayContaining(["Show the legend", "Show the what-if bar"]));
   await expect(incorporating).toBeHidden();
   await button(page, "Show all panels").click();
   await expect(inYourWords).toBeVisible();
@@ -272,8 +276,6 @@ test("folding or showing a region from the keyboard leaves focus on the button t
     ["Fold venture details", "Show venture details"],
     ["Fold goal and gauges", "Show goal and gauges"],
     ["Fold the panel", "Show the panel: Sole Prop activation"],
-    ["Fold the legend", "Show the legend"],
-    ["Fold the what-if bar", "Show the what-if bar"],
     ["Fold the road ahead", "Show the road ahead"],
   ];
   // The folded road ahead's name goes on to say what it holds.
@@ -285,6 +287,20 @@ test("folding or showing a region from the keyboard leaves focus on the button t
     await expect(shown(showName), `after ${foldName}`).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(button(page, foldName), `after ${showName}`).toBeFocused();
+  }
+  // The legend and the what-if bar (2026-10-20): folded with their own button, focus goes to Look closer, whose
+  // last item then shows the region again (the up arrow opens the menu on it), and focus is on its fold button.
+  for (const [foldName, item] of [
+    ["Fold the legend", "Show the legend"],
+    ["Fold the what-if bar", "Show the what-if bar"],
+  ] as const) {
+    await button(page, foldName).focus();
+    await page.keyboard.press("Enter");
+    await expect(goalBar(page).getByRole("button", { name: "Look closer" }), `after ${foldName}`).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByRole("menuitem", { name: item, exact: true })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(button(page, foldName), `after ${item}`).toBeFocused();
   }
 
   // The rail comes back scrolled where it was.
@@ -397,7 +413,7 @@ async function controlsUnderTheRoadReachable(page: Page, size: string, minRoadHe
   }
   await button(page, "Fold the legend").click({ timeout: 2_000 });
   await expect(legend.getByText("applies as answered", { exact: true })).toBeHidden();
-  await button(page, "Show the legend").click({ timeout: 2_000 });
+  await lookCloser(page, "Show the legend");
   await expect(legend.getByText("applies as answered", { exact: true })).toBeVisible();
 }
 
@@ -407,7 +423,7 @@ test("with a what-if on and Compare open, the legend is never under the what-if 
   const ventureId = await saveIdea(page, "Invented — what-if fit test");
   await withE2eDb((db) => db.venture.update({ where: { id: ventureId }, data: { roadId: roadApprenticeToOwnShopAB.id, roadChosenAt: new Date() } }));
   await page.goto(`/cockpit?venture=${ventureId}`);
-  // Folded on a first visit (2026-10-17): the what-if bar and the legend, each with its one button.
+  // Folded on a first visit (2026-10-17): the what-if bar and the legend, each shown from Look closer (2026-10-20).
   await showWhatIfBar(page);
   await showLegend(page);
   await tryWhatIf(page, "45000");
@@ -438,6 +454,22 @@ test("with a what-if on, at tablet and phone widths every control under the road
   await page.setViewportSize({ width: 375, height: 812 });
   await controlsUnderTheRoadReachable(page, "375x812", 400);
   expect(await noSidewaysScroll(page)).toBe(true);
+
+  // Folded on a phone (2026-10-20): focus goes up to Look closer, which shows the bar again, without scrolling
+  // the page away from where the person was (a review found it jumped back to the goal bar), and Next on your
+  // road still says the map is relit by a what-if, and its number.
+  const foldWhatIf = button(page, "Fold the what-if bar");
+  await foldWhatIf.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before, "scrolled down to the what-if bar").toBeGreaterThan(300);
+  await foldWhatIf.click();
+  await expect(goalBar(page).getByRole("button", { name: "Look closer" })).toBeFocused();
+  // Only what the folded bar took off the page's end may come off the scroll position, never the way up.
+  expect(await page.evaluate(() => window.scrollY), "the page stays where the person was").toBeGreaterThan(before - 250);
+  const next = page.getByRole("region", { name: "Next on your road" });
+  await expect(next).toContainText("Your what-if, not a forecast");
+  await expect(next).toContainText("First-year sales of $45,000, for this look only");
+  expect(await lookCloserItems(page)).toContain("Show the what-if bar");
 });
 
 test.describe("phone width (issue #4)", () => {
@@ -567,12 +599,18 @@ test.describe("phone width (issue #4)", () => {
     expect(await onTop(footerLink)).toBe(true);
     expect(await onTop(page.getByText(/^Information, not legal or tax advice/))).toBe(true);
 
-    // The fold buttons are at least 32 px tall on a phone, and so are the first visit's show buttons
-    // (2026-10-17), Look closer and the coach line's Got it.
-    for (const name of ["Fold goal and gauges", "Show the legend", "Show the what-if bar", "Got it"]) {
+    // The fold buttons are at least 32 px tall on a phone, and so are Look closer, its items (the first visit's
+    // Show the legend and Show the what-if bar since 2026-10-20) and the coach line's Got it.
+    for (const name of ["Fold goal and gauges", "Got it"]) {
       const b = (await button(page, name).boundingBox())!;
       expect(b.height, name).toBeGreaterThanOrEqual(32);
     }
+    await goalBar(page).getByRole("button", { name: "Look closer" }).click();
+    for (const name of ["Show the legend", "Show the what-if bar"]) {
+      const b = (await page.getByRole("menuitem", { name, exact: true }).boundingBox())!;
+      expect(b.height, name).toBeGreaterThanOrEqual(32);
+    }
+    await page.keyboard.press("Escape");
     // The overlay switches at least 24 px, the smallest target WCAG 2.5.8 asks for (about 20 px before the
     // calm view): they wrap to two lines above the road, and at 32 px that row pushed the road down (a review,
     // 2026-10-17).

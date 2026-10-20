@@ -197,12 +197,12 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
             setOutcome(null);
             setStep(step === "menu" ? "closed" : "menu");
           }}
-          className="rounded-sm border border-amber/50 px-3 py-1.5 text-sm font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-sm border border-amber/50 px-3 py-1.5 text-lead font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Delete
         </button>
         {!anything && step === "closed" ? (
-          <span className="text-[12px] text-stone">Nothing to delete: the data file holds nothing of yours.</span>
+          <span className="text-body text-stone">Nothing to delete: the data file holds nothing of yours.</span>
         ) : null}
       </div>
 
@@ -220,7 +220,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
         />
       ) : null}
       {error && step !== "menu" ? (
-        <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+        <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
           {error}
         </p>
       ) : null}
@@ -229,11 +229,11 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
         <div id={panelId} className="mt-3 rounded-lg border border-rule bg-ink2 px-4 py-4">
           <fieldset>
             <legend className="font-semibold text-paper">What do you want to delete?</legend>
-            <p className="mt-1 text-[12px] text-stone">
+            <p className="mt-1 text-body text-stone">
               Tick what should go. Each box says what else goes with it. Nothing is deleted until you have said yes twice.
             </p>
             {error ? (
-              <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+              <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
                 {error}
               </p>
             ) : null}
@@ -257,7 +257,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                         <label htmlFor={inputId} className="font-semibold text-paper">
                           {e.label}
                         </label>
-                        <p className="mt-0.5 font-mono text-[11px] text-stone">
+                        <p className="mt-0.5 font-mono text-body text-stone">
                           {!e.built
                             ? "Not kept yet"
                             : total === 0
@@ -268,7 +268,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                         </p>
                         {e.built && total > 0
                           ? e.keeps.map((k) => (
-                              <p key={keyOf(k)} className="font-mono text-[11px] text-stone">
+                              <p key={keyOf(k)} className="font-mono text-body text-stone">
                                 {capitalise(k.one)}s attached to them: {keptCounts[keyOf(k)] ?? 0}{" "}
                                 {affected.includes(k.model)
                                   ? `(they go too: “${tableNames[k.model] ?? k.model}” is ticked)`
@@ -277,7 +277,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                             ))
                           : null}
                         {/* The safety copies are the last way back, so their sentence reads as the warning it is. */}
-                        <p className={`mt-1 text-[12.5px] ${e.folder ? "text-amber" : "text-paper-dim"}`}>{e.goesWithIt}</p>
+                        <p className={`mt-1 text-body ${e.folder ? "text-amber" : "text-paper-dim"}`}>{e.goesWithIt}</p>
                         {on && e.folder && setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
                         {on
                           ? kept
@@ -285,10 +285,10 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                               .map((k) => <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />)
                           : null}
                         <details className="mt-1">
-                          <summary className="cursor-pointer text-[12px] text-stone underline decoration-rule underline-offset-4 hover:text-paper">
+                          <summary className="cursor-pointer text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper">
                             Learn more
                           </summary>
-                          <p className="mt-1 text-[12px] text-paper-dim">{e.learnMore}</p>
+                          <p className="mt-1 text-body text-paper-dim">{e.learnMore}</p>
                         </details>
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
             </ul>
           </fieldset>
 
-          <div className="mt-4 space-y-2 text-[12.5px] text-paper-dim">
+          <div className="mt-4 space-y-2 text-body text-paper-dim">
             <p>
               {retention.scope} The CRA says business records are generally kept for {numberWords(retention.retentionYears)}{" "}
               years from {retention.countsFrom}, with exceptions.{" "}
@@ -318,7 +318,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
 
           <div className="mt-4">
             <h4 className="font-semibold text-paper">What Delete doesn&apos;t reach</h4>
-            <ul className="mt-1.5 space-y-1.5 text-[12px] text-paper-dim">
+            <ul className="mt-1.5 space-y-1.5 text-body text-paper-dim">
               {notCleared.map((n) => (
                 <li key={n.name}>
                   <span className="text-paper">{n.name}.</span> {n.why}
@@ -335,7 +335,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                 setError(null);
                 setStep("first-ask");
               }}
-              className="rounded-sm border border-amber/50 px-3 py-1.5 text-sm font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-sm border border-amber/50 px-3 py-1.5 text-lead font-semibold text-amber transition hover:bg-amber/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Delete what&apos;s ticked…
             </button>
@@ -345,7 +345,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
                 setTicked([]);
                 setStep("closed");
               }}
-              className="rounded-sm border border-rule px-3 py-1.5 text-sm text-stone transition hover:text-paper"
+              className="rounded-sm border border-rule px-3 py-1.5 text-lead text-stone transition hover:text-paper"
             >
               Cancel
             </button>
@@ -363,9 +363,9 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
         >
           <ul className="space-y-2">
             {chosen.map((e) => (
-              <li key={e.id} className="text-sm text-paper">
+              <li key={e.id} className="text-lead text-paper">
                 <span className="font-semibold">{e.label}</span>
-                <ul className="mt-0.5 space-y-0.5 pl-4 text-[12.5px] text-paper-dim">
+                <ul className="mt-0.5 space-y-0.5 pl-4 text-body text-paper-dim">
                   {tablesOf(e).map((m) => (
                     <li key={m}>
                       {tableNames[m] ?? m}: {countWords(m, counts[m] ?? 0)}
@@ -377,19 +377,19 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           </ul>
           {kept.length > 0 ? (
             <div className="mt-3">
-              <p className="text-sm font-semibold text-paper">Kept, not deleted</p>
+              <p className="text-lead font-semibold text-paper">Kept, not deleted</p>
               {kept.map((k) => (
                 <KeptWarning key={keyOf(k)} link={k} count={keptCounts[keyOf(k)] ?? 0} />
               ))}
             </div>
           ) : null}
           {copiesGoing ? (
-            <p className="mt-3 text-[12.5px] text-amber">
+            <p className="mt-3 text-body text-amber">
               The safety copies go too, so afterwards only a backup you saved somewhere else could bring anything back.
             </p>
           ) : null}
           {setAsideTicked ? <SetAsideWarning text={setAsideWarning} /> : null}
-          <p className="mt-3 text-[12.5px] text-paper-dim">
+          <p className="mt-3 text-body text-paper-dim">
             Everything not ticked stays, and so does what Delete doesn&apos;t reach (the job descriptions you typed and how
             you left the cockpit, kept in this window&apos;s own storage and offered back next time; the log).
             {/* Only said when there are copies to leave: a copy run from source has none. */}
@@ -416,7 +416,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
           focusCancel
         >
           {copiesGoing ? (
-            <p className="mb-2 text-[12.5px] text-amber">
+            <p className="mb-2 text-body text-amber">
               The safety copies in the backups folder go too. Afterwards, only a backup you saved somewhere else could bring
               anything back.
             </p>
@@ -426,7 +426,7 @@ export function DeleteMenu({ menu, counts, keptCounts, tableNames, notCleared, r
               <SetAsideWarning text={setAsideWarning} />
             </div>
           ) : null}
-          <p className="text-[12.5px] text-paper-dim">
+          <p className="text-body text-paper-dim">
             {desktop
               ? "If you might want them back, cancel and use File → Back up… first; File → Restore puts a backup back."
               : "If you might want them back, cancel and copy the data file somewhere first; it is listed above."}
@@ -450,7 +450,7 @@ interface PendingResult {
  * both asks.
  */
 function SetAsideWarning({ text }: { text: string }) {
-  return <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-amber">{text}</p>;
+  return <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-body text-amber">{text}</p>;
 }
 
 /**
@@ -459,7 +459,7 @@ function SetAsideWarning({ text }: { text: string }) {
  */
 function KeptWarning({ link, count }: { link: KeptLink; count: number }) {
   return (
-    <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-[12.5px] text-paper">
+    <p className="mt-1.5 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-1.5 text-body text-paper">
       <span className="font-semibold">
         {plural(count, link.one)} {count === 1 ? "stays" : "stay"}, as “{link.becomes}”.
       </span>{" "}
@@ -490,9 +490,9 @@ function DoneNote({
   const copiesLeft = copiesLeftOf(outcome);
   const foldersLeft = foldersLeftOf(outcome);
   return (
-    <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-sm text-paper">
+    <div role="status" className="mt-3 rounded-lg border border-spruce-line/60 bg-spruce/20 px-4 py-3 text-lead text-paper">
       <p className="font-semibold">Deleted.</p>
-      <ul className="mt-1 space-y-0.5 text-[12.5px] text-paper-dim">
+      <ul className="mt-1 space-y-0.5 text-body text-paper-dim">
         {rows.map((m) => (
           <li key={m}>
             {tableNames[m] ?? m}: {countWords(m, outcome.deleted[m])} deleted
@@ -508,7 +508,7 @@ function DoneNote({
         {outcome.receiptFiles ? <li>Receipt files: {plural(outcome.receiptFiles.removed, "file")} removed from the receipts folder</li> : null}
       </ul>
       {outcome.receiptFiles === null || (outcome.receiptFiles && outcome.receiptFiles.failed > 0) ? (
-        <p className="mt-2 text-[12.5px] text-amber">
+        <p className="mt-2 text-body text-amber">
           {outcome.receiptFiles === null
             ? "DotAmi couldn't open the receipts folder to remove the receipt files."
             : `${plural(outcome.receiptFiles.failed, "receipt file")} couldn't be removed yet (another program may have it open).`}{" "}
@@ -516,14 +516,14 @@ function DoneNote({
         </p>
       ) : null}
       {outcome.left ? null : (
-        <p className="mt-2 text-[12.5px] text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
+        <p className="mt-2 text-body text-amber">DotAmi couldn&apos;t read the data file back to count what is left. Reload this page to check.</p>
       )}
       {/* Deleting only safety copies and set-aside folders takes nothing out of the data file, so there is no space to speak of. */}
       {outcome.wiped && rows.some((m) => m !== COPIES && m !== SET_ASIDE) ? (
-        <p className="mt-2 text-[12.5px] text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
+        <p className="mt-2 text-body text-paper-dim">Their space in the data file is wiped, so they can&apos;t be read back out of it.</p>
       ) : null}
       {outcome.wiped && copiesLeft === 0 && foldersLeft === 0 ? null : (
-        <div className="mt-2 space-y-1 text-[12.5px] text-amber">
+        <div className="mt-2 space-y-1 text-body text-amber">
           {outcome.wiped ? null : (
             <p>
               They are deleted, but their space in the data file isn&apos;t wiped yet, so their words could still be dug out of
@@ -547,7 +547,7 @@ function DoneNote({
             type="button"
             onClick={onRetry}
             disabled={retrying}
-            className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
+            className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
           >
             {retrying ? "Wiping…" : "Try the wipe again"}
           </button>
@@ -574,13 +574,13 @@ function PendingNote({
 }) {
   if (result && result.wiped && result.backupsLeft === 0 && result.receiptFoldersLeft === 0) {
     return (
-      <p role="status" className="mt-3 text-[12.5px] text-paper-dim">
+      <p role="status" className="mt-3 text-body text-paper-dim">
         Finished: the earlier Delete&apos;s wipe is done.
       </p>
     );
   }
   return (
-    <div role="status" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-[12.5px] text-amber">
+    <div role="status" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
       <p>
         An earlier Delete hasn&apos;t finished: what it deleted could still be dug out of the data file, or a safety copy or
         set-aside receipt folder it was deleting is still there.{" "}
@@ -591,7 +591,7 @@ function PendingNote({
         type="button"
         onClick={onFinish}
         disabled={retrying}
-        className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
+        className="mt-2 rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber hover:bg-amber/10 disabled:opacity-50"
       >
         {retrying ? "Finishing…" : "Finish it now"}
       </button>
@@ -673,7 +673,7 @@ export function ConfirmDialog({
         <h2 id={titleId} className="font-serif text-xl font-bold tracking-tight text-paper">
           {title}
         </h2>
-        <p id={introId} className="mt-1 text-sm text-paper-dim">
+        <p id={introId} className="mt-1 text-lead text-paper-dim">
           {intro}
         </p>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">{children}</div>
@@ -683,7 +683,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-sm border border-rule px-3 py-1.5 text-sm text-paper transition hover:border-maple-soft disabled:opacity-50"
+            className="rounded-sm border border-rule px-3 py-1.5 text-lead text-paper transition hover:border-maple-soft disabled:opacity-50"
           >
             Cancel
           </button>
@@ -692,7 +692,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-sm border border-amber/60 bg-amber/10 px-3 py-1.5 text-sm font-semibold text-amber transition hover:bg-amber/20 disabled:opacity-50"
+            className="rounded-sm border border-amber/60 bg-amber/10 px-3 py-1.5 text-lead font-semibold text-amber transition hover:bg-amber/20 disabled:opacity-50"
           >
             {confirmLabel}
           </button>

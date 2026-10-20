@@ -97,10 +97,10 @@ export function LandingPage() {
       <main className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-8 md:px-14">
         <section className="my-auto w-full max-w-[1120px]">
           <div data-region="headline" className="text-center">
-            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-paper lg:text-[46px]">
+            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-paper lg:text-5xl">
               {frontDoorWords.headline}
             </h1>
-            <p className="mx-auto mt-4 max-w-[560px] text-[15px] leading-relaxed text-paper-dim">{frontDoorWords.subline}</p>
+            <p className="mx-auto mt-4 max-w-[560px] text-lead leading-relaxed text-paper-dim">{frontDoorWords.subline}</p>
           </div>
 
           {/* The three doors (decision 6 of 2026-10-11), in this order: the dream first. Side by side on a
@@ -112,13 +112,13 @@ export function LandingPage() {
             className="mt-8 grid gap-4 text-left lg:grid-cols-[1fr_1.35fr_1fr]"
           >
             <li className="flex flex-col gap-3 rounded-[10px] border border-maple-soft bg-ink2 p-5">
-              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.dream.title}</h2>
-              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.dream.body}</p>
-              <p className="text-[12px] text-stone">{doors.dream.stays}</p>
+              <h2 className="font-serif text-xl font-bold leading-snug tracking-tight text-paper">{doors.dream.title}</h2>
+              <p className="text-body leading-relaxed text-paper-dim">{doors.dream.body}</p>
+              <p className="text-body text-stone">{doors.dream.stays}</p>
               <div className="mt-auto flex justify-end">
                 <Link
                   href="/start"
-                  className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
+                  className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-body font-medium tracking-wide text-[#fff8ee]"
                 >
                   {doors.dream.go}
                 </Link>
@@ -126,8 +126,8 @@ export function LandingPage() {
             </li>
 
             <li className="flex flex-col gap-3 rounded-[10px] border border-rule bg-ink2 p-5">
-              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.idea.title}</h2>
-              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.idea.body}</p>
+              <h2 className="font-serif text-xl font-bold leading-snug tracking-tight text-paper">{doors.idea.title}</h2>
+              <p className="text-body leading-relaxed text-paper-dim">{doors.idea.body}</p>
               {/* Today's box, unchanged: everything it did, it still does (docs/ui-spec/landing/01-free-text-entry.md). */}
               <div className="flex w-full flex-col overflow-hidden rounded-[10px] border border-rule bg-ink3 focus-within:border-maple-soft">
                 <textarea
@@ -141,7 +141,7 @@ export function LandingPage() {
                   rows={3}
                   // The most a statement holds; the browser drops anything past it, so a note says so below.
                   maxLength={STATEMENT_MAX_CHARS}
-                  className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-4 py-3 text-[14px] leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
+                  className="min-h-[88px] flex-1 resize-none border-none bg-transparent px-4 py-3 text-lead leading-relaxed text-paper outline-hidden placeholder:text-stone-dim"
                 />
                 <div className="flex justify-end border-t border-rule-soft px-3 py-2">
                   <Pill variant="maple" onClick={handleMapIt} disabled={parsing || text.trim().length === 0}>
@@ -150,7 +150,7 @@ export function LandingPage() {
                 </div>
               </div>
               {text.length >= STATEMENT_MAX_CHARS ? (
-                <p role="status" className="text-[12px] text-amber">
+                <p role="status" className="text-body text-amber">
                   {STATEMENT_FULL_NOTE}
                 </p>
               ) : null}
@@ -160,7 +160,7 @@ export function LandingPage() {
                     key={prompt}
                     type="button"
                     onClick={() => setText(prompt)}
-                    className="rounded-full border border-rule px-3 py-1.5 text-left text-[12px] text-stone transition hover:border-maple-soft hover:text-paper"
+                    className="rounded-full border border-rule px-3 py-1.5 text-left text-body text-stone transition hover:border-maple-soft hover:text-paper"
                   >
                     {prompt}
                   </button>
@@ -170,15 +170,15 @@ export function LandingPage() {
 
             {/* The invented example future, read-only: it keeps nothing and touches no storage. */}
             <li className="flex flex-col gap-3 rounded-[10px] border border-dashed border-rule bg-ink p-5">
-              <h2 className="font-serif text-[20px] font-bold leading-snug tracking-tight text-paper">{doors.example.title}</h2>
-              <p className="text-[13px] leading-relaxed text-paper-dim">{doors.example.body}</p>
-              <p className="self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone-dim">
+              <h2 className="font-serif text-xl font-bold leading-snug tracking-tight text-paper">{doors.example.title}</h2>
+              <p className="text-body leading-relaxed text-paper-dim">{doors.example.body}</p>
+              <p className="self-start rounded-sm border border-rule px-2 py-0.5 font-mono text-label uppercase tracking-[0.14em] text-stone-dim">
                 {doors.example.tag}
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
                   href={`/example/${FRONT_DOOR_EXAMPLE_ID}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-xs font-medium tracking-wide text-paper transition hover:border-maple-soft"
+                  className="inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-body font-medium tracking-wide text-paper transition hover:border-maple-soft"
                 >
                   {doors.example.go}
                 </Link>

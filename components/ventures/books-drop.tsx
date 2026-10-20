@@ -32,8 +32,8 @@ import { describePeriod, formatAmount } from "./agree-prompt";
  * /api/figures/propose under the source kind "books", and they wait in the agree prompt.
  */
 
-const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
-const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
+const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber";
+const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
 
 /** Same cap as the figures route: how many figures one review may hold. */
 const MAX_FIGURES_PER_FILE = 500;
@@ -90,26 +90,26 @@ export function BookReview({
   return (
     <div className="mt-3">
       {/* Focus lands here once the book is read, since the Choose a file button it came from is gone. */}
-      <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
+      <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
         File: <span className="text-paper">{fileName}</span>
       </p>
       {/* GnuCash writes the book to disk only when the person saves; the file is what was saved. */}
-      <p className="mt-1 text-[11px] text-paper-dim">
+      <p className="mt-1 text-body text-paper-dim">
         DotAmi read your last save. Anything changed in GnuCash after that save isn&apos;t in it.
       </p>
-      <p className="mt-1 text-[11px] text-stone-dim">
+      <p className="mt-1 text-body text-stone-dim">
         DotAmi&apos;s GnuCash reader was tested on invented books written to GnuCash&apos;s file
         format, not on real ones, so check the accounts and totals.
       </p>
 
       <fieldset className="mt-3" aria-describedby={`${uid}-accounts-hint`}>
         <legend className={FIELD_LABEL}>Accounts in this book</legend>
-        <p id={`${uid}-accounts-hint`} className="mt-1 max-w-prose text-[11px] text-stone-dim">
+        <p id={`${uid}-accounts-hint`} className="mt-1 max-w-prose text-body text-stone-dim">
           Accounts GnuCash marks as income start ticked. An income account can also hold
           interest, or GST/HST you collected, which isn&apos;t revenue from sales. Tick or untick
           any account; only the ticked ones are added up.
         </p>
-        <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-2 text-xs">
+        <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-2 text-body">
           {book.accounts.map((account) => {
             const reason = tickable(account);
             const id = `${uid}-acct-${account.id}`;
@@ -131,18 +131,18 @@ export function BookReview({
                 <label htmlFor={id} className={reason === null ? "text-paper" : "text-stone-dim"}>
                   {account.fullName}
                 </label>
-                <span className="text-[11px] text-stone-dim">
+                <span className="text-body text-stone-dim">
                   {accountTypeWords(account.bookType)}
                   {account.currency ? ` · ${account.currency}` : ""}
                 </span>
                 {reason !== null ? (
-                  <span id={`${id}-why`} className="text-[11px] text-stone-dim">
+                  <span id={`${id}-why`} className="text-body text-stone-dim">
                     — can&apos;t be ticked: {reason}
                   </span>
                 ) : null}
                 {note !== null ? (
                   // Amber like the screen's other notes, but not an alert: nothing went wrong.
-                  <span id={`${id}-note`} className="basis-full pl-5 text-[11px] text-amber">
+                  <span id={`${id}-note`} className="basis-full pl-5 text-body text-amber">
                     {note}
                   </span>
                 ) : null}
@@ -154,7 +154,7 @@ export function BookReview({
 
       <div className="mt-3 border-t border-rule-soft pt-3">
         {ticked.size === 0 ? (
-          <p className="text-[11px] text-stone-dim">
+          <p className="text-body text-stone-dim">
             Tick at least one account to see its monthly totals.
           </p>
         ) : !totals.ok ? (
@@ -166,8 +166,8 @@ export function BookReview({
             {splits
               .filter((s) => s.fresh.length > 0)
               .map((s) => (
-                <table key={s.currency} className="mb-2 text-xs">
-                  <caption className="mb-1 text-left font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+                <table key={s.currency} className="mb-2 text-body">
+                  <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
                     Monthly totals from {fileName} ({s.currency})
                   </caption>
                   <tbody>
@@ -188,11 +188,11 @@ export function BookReview({
                 </table>
               ))}
             {freshCount === 0 ? (
-              <p className="text-xs text-paper-dim">Nothing new to propose from this book.</p>
+              <p className="text-body text-paper-dim">Nothing new to propose from this book.</p>
             ) : null}
 
             {splits.some((s) => s.known.length > 0) ? (
-              <ul className="mt-2 space-y-0.5 text-[11px] text-stone-dim">
+              <ul className="mt-2 space-y-0.5 text-body text-stone-dim">
                 {splits.flatMap((s) =>
                   s.known.map((m) => (
                     <li key={`${s.currency}-${m.periodStart}`}>
@@ -206,10 +206,10 @@ export function BookReview({
 
             {skipped.length > 0 ? (
               <div className="mt-2">
-                <p className="font-mono text-[9px] uppercase tracking-wider text-stone-dim">
+                <p className="font-mono text-label uppercase tracking-wider text-stone-dim">
                   Left out
                 </p>
-                <ul className="mt-1 space-y-0.5 text-[11px] text-stone-dim">
+                <ul className="mt-1 space-y-0.5 text-body text-stone-dim">
                   {skipped.map((group) => (
                     <li key={group.reason}>{skipWords(group.reason, group.lines)}</li>
                   ))}
@@ -218,7 +218,7 @@ export function BookReview({
             ) : null}
 
             {totals.scheduledLines > 0 ? (
-              <p className="mt-2 text-[11px] text-stone-dim">
+              <p className="mt-2 text-body text-stone-dim">
                 The book&apos;s scheduled transactions ({totals.scheduledLines}{" "}
                 {lineWord(totals.scheduledLines)}) are plans GnuCash hasn&apos;t posted, so
                 they are never counted.

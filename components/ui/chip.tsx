@@ -12,7 +12,7 @@ export function Chip({ active, children, className, type = "button", ...props }:
       type={type}
       aria-pressed={active}
       className={cn(
-        "rounded-full border px-3 py-1.5 font-mono text-[10.5px] tracking-wide transition",
+        "rounded-full border px-3 py-1.5 font-mono text-small tracking-wide transition",
         active
           ? "border-maple-soft bg-maple/10 text-maple"
           : "border-rule text-stone hover:border-rule-soft",

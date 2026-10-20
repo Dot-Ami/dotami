@@ -58,10 +58,10 @@ export function BankAccountsControl({ initial }: { initial: BankSourcesState }) 
 
   return (
     <section aria-labelledby={headingId}>
-      <h4 id={headingId} className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+      <h4 id={headingId} className="font-mono text-label uppercase tracking-[0.14em] text-stone">
         Your bank and card accounts
       </h4>
-      {empty ? <p className="mt-1.5 text-[12.5px] text-paper-dim">No accounts in your list.</p> : null}
+      {empty ? <p className="mt-1.5 text-body text-paper-dim">No accounts in your list.</p> : null}
       <ul className="mt-1.5 space-y-2">
         {state.everyAccountSince !== null ? (
           <Item
@@ -90,7 +90,7 @@ export function BankAccountsControl({ initial }: { initial: BankSourcesState }) 
         ))}
       </ul>
       {message ? (
-        <p role="status" className="mt-2 text-[12px] text-paper-dim">
+        <p role="status" className="mt-2 text-body text-paper-dim">
           {message}
         </p>
       ) : null}
@@ -113,7 +113,7 @@ function Item(props: {
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
           <p className="break-words font-semibold text-paper">{props.title}</p>
-          <p className="text-[12px] text-paper-dim">{props.detail}</p>
+          <p className="text-body text-paper-dim">{props.detail}</p>
         </div>
         {props.asking ? null : (
           <button
@@ -121,7 +121,7 @@ function Item(props: {
             onClick={props.onAsk}
             disabled={props.working}
             aria-label={`Take back ${props.title}`}
-            className="rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
+            className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
           >
             Take back
           </button>
@@ -129,13 +129,13 @@ function Item(props: {
       </div>
       {props.asking ? (
         <div role="group" aria-label={`Take back ${props.title}?`} className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2">
-          <p className="text-[12px] text-amber">{props.question}</p>
+          <p className="text-body text-amber">{props.question}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={props.onCancel}
               disabled={props.working}
-              className="rounded-sm border border-rule px-2.5 py-1 text-[12px] text-paper transition hover:bg-ink disabled:opacity-50"
+              className="rounded-sm border border-rule px-2.5 py-1 text-body text-paper transition hover:bg-ink disabled:opacity-50"
             >
               Keep it
             </button>
@@ -143,7 +143,7 @@ function Item(props: {
               type="button"
               onClick={props.onConfirm}
               disabled={props.working}
-              className="rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
+              className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10 disabled:opacity-50"
             >
               {props.working ? "Taking back…" : "Yes, take it back"}
             </button>

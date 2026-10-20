@@ -98,7 +98,7 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
           {words.back}
         </GhostLink>
         <WordMark />
-        <p className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-stone">
+        <p className="ml-auto font-mono text-small uppercase tracking-[0.14em] text-stone">
           {asked === null ? words.allAnswered(total) : words.navLabel(askedIndex + 1, total)}
         </p>
       </nav>
@@ -137,7 +137,7 @@ export function DestinationPage({ kept }: { kept: KeptOnRecord }) {
               <Link
                 ref={nextLinkRef}
                 href="/futures"
-                className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-xs font-medium tracking-wide text-[#fff8ee]"
+                className="inline-flex items-center gap-2 rounded-full border border-maple bg-maple px-4 py-2 text-body font-medium tracking-wide text-[#fff8ee]"
               >
                 {words.next}
               </Link>
@@ -167,12 +167,12 @@ function QuestionHead({
         id={headingId}
         ref={headingRef}
         tabIndex={headingRef ? -1 : undefined}
-        className="font-serif text-[22px] font-bold leading-[1.2] tracking-tight text-paper outline-hidden"
+        className="font-serif text-2xl font-bold leading-[1.2] tracking-tight text-paper outline-hidden"
       >
         {question.ask}
       </h2>
-      <p className="mt-2 text-[12px] leading-snug text-stone">{words.why(question.why)}</p>
-      <p className="mt-0.5 text-[12px] leading-snug text-stone">
+      <p className="mt-2 text-body leading-snug text-stone">{words.why(question.why)}</p>
+      <p className="mt-0.5 text-body leading-snug text-stone">
         {words.unlocks(question.unlocks)}
       </p>
     </header>
@@ -314,15 +314,15 @@ function OwnWords({
         onChange={(e) => setText(e.target.value)}
         rows={3}
         maxLength={maxChars}
-        className="min-h-[88px] w-full resize-y rounded-[10px] border border-rule bg-ink px-4 py-3 text-[15px] leading-relaxed text-paper outline-hidden focus:border-maple-soft"
+        className="min-h-[88px] w-full resize-y rounded-[10px] border border-rule bg-ink px-4 py-3 text-lead leading-relaxed text-paper outline-hidden focus:border-maple-soft"
       />
       {text.length >= maxChars ? (
-        <p role="status" className="text-[12px] text-amber">
+        <p role="status" className="text-body text-amber">
           {STATEMENT_FULL_NOTE}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-[12px] text-amber">
+        <p role="alert" className="text-body text-amber">
           {error}
         </p>
       ) : null}
@@ -369,7 +369,7 @@ function PlacePicker({
         aria-labelledby={labelledBy}
         value={place}
         onChange={(e) => setPlace(e.target.value as PlaceCode | "")}
-        className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-sm text-paper outline-hidden focus:border-maple-soft"
+        className="w-full max-w-sm rounded-sm border border-rule bg-ink px-3 py-2.5 text-lead text-paper outline-hidden focus:border-maple-soft"
       >
         <option value="">{words.choosePlace}</option>
         {places.map((code) => (
@@ -448,7 +448,7 @@ function IncomeAmount({
       <form className="space-y-3" onSubmit={(e) => void keep(e)} noValidate>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center rounded-sm border border-rule bg-ink focus-within:border-maple-soft">
-            <span className="pl-3 text-sm text-stone-dim">$</span>
+            <span className="pl-3 text-lead text-stone-dim">$</span>
             <input
               ref={amountRef}
               type="text"
@@ -460,13 +460,13 @@ function IncomeAmount({
                 setText(e.target.value);
                 setProblem(null);
               }}
-              className="w-40 bg-transparent px-2 py-2 text-sm text-paper outline-hidden"
+              className="w-40 bg-transparent px-2 py-2 text-lead text-paper outline-hidden"
             />
           </div>
-          <span className="text-[12px] text-stone">{words.perYear}</span>
+          <span className="text-body text-stone">{words.perYear}</span>
         </div>
         {problem ? (
-          <p role="alert" className="text-[12px] text-amber">
+          <p role="alert" className="text-body text-amber">
             {problem}
           </p>
         ) : null}
@@ -519,11 +519,11 @@ function AnsweredQuestion({
     const kept = draft.destination;
     shown =
       kept.kept === "dont-know" ? (
-        <p className="text-sm text-paper-dim">{question.skip}</p>
+        <p className="text-lead text-paper-dim">{question.skip}</p>
       ) : (
         <>
-          <p className="font-serif text-[17px] italic leading-snug text-paper">“{kept.text}”</p>
-          <p className="text-[11.5px] text-stone">{words.yourWords(kept.saidAt)}</p>
+          <p className="font-serif text-title italic leading-snug text-paper">“{kept.text}”</p>
+          <p className="text-body text-stone">{words.yourWords(kept.saidAt)}</p>
         </>
       );
     receipt = destinationReceipt(kept);
@@ -533,19 +533,19 @@ function AnsweredQuestion({
     question.answer.kind === "one-choice"
   ) {
     const choice = question.answer.choices.find((c) => c.id === draft.lookingFor);
-    shown = <p className="text-sm text-paper">{choice?.label}</p>;
+    shown = <p className="text-lead text-paper">{choice?.label}</p>;
     receipt = lookingForReceipt(draft.lookingFor, LISTED);
   } else if (question.id === "place" && draft.place) {
-    shown = <p className="text-sm text-paper">{words.answeredPlace(placeName(draft.place))}</p>;
+    shown = <p className="text-lead text-paper">{words.answeredPlace(placeName(draft.place))}</p>;
     receipt = placeReceipt(draft.place, LISTED);
   } else if (question.id === "income-wanted" && draft.incomeWanted) {
     const income = draft.incomeWanted;
     // A number turned down in the prompt shows nothing here: its receipt says what became of it.
     shown =
       income.kind === "agreed" ? (
-        <p className="text-sm text-paper">{words.answeredAmount(income.amountCents)}</p>
+        <p className="text-lead text-paper">{words.answeredAmount(income.amountCents)}</p>
       ) : income.kind === "skipped" ? (
-        <p className="text-sm text-paper-dim">{words.skipped}</p>
+        <p className="text-lead text-paper-dim">{words.skipped}</p>
       ) : null;
     receipt = incomeReceipt(income);
   }
@@ -556,19 +556,19 @@ function AnsweredQuestion({
       className="space-y-2 rounded-lg border border-rule bg-ink2 px-5 py-4"
     >
       <div className="flex items-start justify-between gap-4">
-        <h2 id={headingId} className="text-[13px] font-semibold text-paper-dim">
+        <h2 id={headingId} className="text-body font-semibold text-paper-dim">
           {question.ask}
         </h2>
         <button
           type="button"
           onClick={onChange}
-          className="shrink-0 border-b border-rule-soft pb-0.5 text-xs text-stone hover:text-paper"
+          className="shrink-0 border-b border-rule-soft pb-0.5 text-body text-stone hover:text-paper"
         >
           {words.change}
         </button>
       </div>
       {shown}
-      <p role="status" className="text-[12px] text-sage">
+      <p role="status" className="text-body text-sage">
         {receipt}
       </p>
     </section>

@@ -12,7 +12,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadsV2026 } from "../lib/engines/roads/v2026";
 
-import { lookCloserItems } from "./cockpit-calm";
+import { lookCloser as openFromLookCloser, lookCloserItems } from "./cockpit-calm";
 
 // Road 0 (today's general road) counted from its own data: its ten map stages, the three "before you
 // open" steps added on 2026-10-12 and Keep your records from day one (2026-10-14), so the Steps gauge
@@ -84,7 +84,7 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
   // Keep your records from day one (2026-10-14), shows there only once one of these is done. The Steps
   // gauge names the same first step.
   const next = page.getByRole("region", { name: "Next on your road" });
-  // Its list of steps (the line also carries the folded legend's and what-if bar's buttons since 2026-10-17).
+  // Its list of steps (the line carried the folded legend's and what-if bar's buttons 2026-10-17 to 10-20).
   await expect(next.getByRole("listitem").getByRole("button")).toHaveText([
     "1 · Register your business name, if you use one",
     "2 · Look up your permits and licences (BizPaL)",
@@ -201,9 +201,9 @@ test("the cockpit: gauges, overlays, a step's status, your own skill, your savin
 });
 
 // The calm first view (2026-10-17, S2.5.30c; docs/ui-spec/cockpit/12-folding-and-phone.md): a first visit shows
-// the road, the goal and the next steps, everything else folded one click away; a return visit opens the way
-// the person left it.
-test("the calm first view: the road, the goal and the next steps, everything else one click away, and a return visit as left", async ({
+// the road, the goal and the next steps, everything else folded (the legend and the what-if bar behind Look
+// closer since 2026-10-20); a return visit opens the way the person left it.
+test("the calm first view: the road, the goal and the next steps, everything else folded within reach, and a return visit as left", async ({
   page,
 }) => {
   const ventureId = await saveIdea(page, "Invented — calm first view test");
@@ -217,8 +217,8 @@ test("the calm first view: the road, the goal and the next steps, everything els
   const coach = page.getByRole("note", { name: "A first look" });
   await expect(coach).toHaveText(/^Start anywhere\. Each thing you tell us lights up part of the road\. Click anything to see where it comes from\./);
 
-  // Folded, each with the one button that shows it: the rail, the legend, the what-if bar and the road
-  // ahead. Nothing is gone: each opens with one click and its content is there. Every overlay switch is
+  // Folded: the rail and the road ahead, each with the one button that shows it, and the legend and the
+  // what-if bar, shown from Look closer (2026-10-20). Nothing is gone: each opens and its content is there. Every overlay switch is
   // drawn, Money and Rules & tax off (2026-10-17, after a review found them behind a second click).
   await expect(overlays(page).getByRole("button", { name: /^Rules & tax/ })).toHaveAttribute("aria-pressed", "false");
   await expect(overlays(page).getByRole("button", { name: /^Money/ })).toHaveAttribute("aria-pressed", "false");
@@ -235,9 +235,19 @@ test("the calm first view: the road, the goal and the next steps, everything els
   await expect(button("Fold the road ahead")).toBeFocused();
   await button("Show venture details").click();
   await expect(page.getByRole("heading", { name: "What you've told DotAmi" })).toBeVisible();
-  await button("Show the legend").click();
+  // The legend and the what-if bar are shown from Look closer, after what it opens in the right-hand panel
+  // (2026-10-20: two controls fewer on a tablet's or a laptop's first view than a button each under the road).
+  await expect(page.getByRole("region", { name: "Next on your road" }).getByRole("button", { name: /^Show the / })).toHaveCount(0);
+  expect(await lookCloserItems(page, goalBar(page))).toEqual(["Others in this line of work", "Show the legend", "Show the what-if bar"]);
+  // Each says what it shows, for a screen reader (the what-if bar alone: This visit is empty on a first visit).
+  await goalBar(page).getByRole("button", { name: "Look closer" }).click();
+  await expect(page.getByRole("menuitem", { name: "Show the legend", exact: true })).toHaveAttribute("aria-controls", "cockpit-map-legend");
+  await expect(page.getByRole("menuitem", { name: "Show the what-if bar", exact: true })).toHaveAttribute("aria-controls", "cockpit-what-if");
+  await page.keyboard.press("Escape");
+  await openFromLookCloser(page, "Show the legend", goalBar(page));
   await expect(page.getByRole("group", { name: "Legend" })).toContainText("applies as answered");
-  await button("Show the what-if bar").click();
+  await expect(button("Fold the legend")).toBeFocused();
+  await openFromLookCloser(page, "Show the what-if bar", goalBar(page));
   await expect(page.getByRole("region", { name: "What-if" }).getByLabel("Try first-year sales of $")).toBeVisible();
 
   // Look closer: one menu button in the goal bar, keyboard first. Road 0 offers no Compare (2026-10-13).
@@ -269,7 +279,7 @@ test("the calm first view: the road, the goal and the next steps, everything els
   await expect(button("Fold venture details")).toBeVisible();
   await expect(page.getByRole("region", { name: "What-if" })).toBeVisible();
   await expect(page.getByRole("group", { name: "Legend" })).toBeHidden();
-  await expect(button("Show the legend")).toBeVisible();
+  expect(await lookCloserItems(page, goalBar(page))).toEqual(["Others in this line of work", "Show the legend"]);
   await expect(page.getByRole("note", { name: "A first look" })).toHaveCount(0);
 });
 

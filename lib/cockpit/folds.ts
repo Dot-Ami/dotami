@@ -15,7 +15,8 @@ import type { Overlays } from "@/lib/cockpit/view";
  *   a switch left the page, so every switch is drawn again and a stored "layers" answer is read as nothing.
  *
  * A first visit (nothing stored yet) opens calm: the road, the goal and the next steps, everything else
- * folded one click away (`FIRST_VISIT`). A return visit opens the way the person left it. An answer stored
+ * folded (`FIRST_VISIT`), the rail and the road ahead one click away, the legend and the what-if bar from the
+ * goal bar's Look closer menu (since 2026-10-20). A return visit opens the way the person left it. An answer stored
  * before an answer existed reads that answer as open, so a person who had everything open before the calm
  * view still has everything open. A value stored before the calm view (it has no `roadAhead`) is a return
  * visit in every way: the overlays every visit had then (`OVERLAYS_BEFORE_CALM_VIEW`, Rules & tax on) and
@@ -55,7 +56,8 @@ export const ALL_FOLDED: Folds = {
 
 /**
  * The first visit (the layout rule's third line, docs/ui-spec/README.md): the road, the goal and the next
- * steps; everything else folded, each one click away. The panel opens when the person opens something in it.
+ * steps; everything else folded, each a click or the Look closer menu away. The panel opens when the person
+ * opens something in it.
  */
 export const FIRST_VISIT: Folds = {
   rail: true,

@@ -6,8 +6,8 @@ import type { OfficialWords } from "@/lib/engines/shared/types";
  */
 export function OfficialWordsBlock({ words, className = "" }: { words: OfficialWords; className?: string }) {
   return (
-    <figure className={`rounded-md border border-rule bg-ink2 p-2.5 text-xs leading-5 ${className}`}>
-      <figcaption className="font-mono text-[9px] uppercase tracking-wider text-stone">{words.lead}</figcaption>
+    <figure className={`rounded-md border border-rule bg-ink2 p-2.5 text-body leading-5 ${className}`}>
+      <figcaption className="font-mono text-label uppercase tracking-wider text-stone">{words.lead}</figcaption>
       <ul className="mt-1.5 space-y-1.5">
         {words.passages.map((passage) => (
           <li key={passage.id} className="border-l-2 border-rule pl-2 text-paper-dim">
@@ -24,7 +24,7 @@ export function OfficialWordsBlock({ words, className = "" }: { words: OfficialW
         href={words.url}
         target="_blank"
         rel="noreferrer"
-        className="mt-1.5 inline-block font-mono text-[10px] text-maple underline decoration-maple/40 underline-offset-2"
+        className="mt-1.5 inline-block font-mono text-small text-maple underline decoration-maple/40 underline-offset-2"
       >
         Read it on the page
       </a>

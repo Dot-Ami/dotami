@@ -116,19 +116,19 @@ export function StepPanel(props: StepPanelProps) {
 /** A step from a road other than road 0: its own line, the sections, its cards and its sources. */
 function OtherRoadStep({ step, items, onClose, children }: { step: RoadStep; items: ReturnType<typeof itemsForStep>; onClose: () => void; children: ReactNode }) {
   return (
-    <aside className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-[13px] leading-snug">
+    <aside className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-body leading-snug">
       <div className="flex items-start justify-between gap-4">
         <h2 className="min-w-0 font-serif text-2xl font-bold leading-tight text-paper">{step.label}</h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full border border-rule px-2.5 py-1 text-sm text-stone hover:bg-ink2"
+          className="rounded-full border border-rule px-2.5 py-1 text-lead text-stone hover:bg-ink2"
           aria-label={words.lists.close}
         >
           ×
         </button>
       </div>
-      <p className="mt-3 text-sm leading-6 text-paper">{step.summary}</p>
+      <p className="mt-3 text-lead leading-6 text-paper">{step.summary}</p>
       {children}
       {items.forThisStage.length > 0 ? (
         <ul className="mt-6 space-y-2">
@@ -144,9 +144,9 @@ function OtherRoadStep({ step, items, onClose, children }: { step: RoadStep; ite
   );
 }
 
-const heading = "mb-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";
+const heading = "mb-1.5 font-mono text-label uppercase tracking-[0.14em] text-stone-dim";
 const toggle = (on: boolean) =>
-  `rounded-full border px-2.5 py-1 text-[11px] font-medium disabled:opacity-50 ${
+  `rounded-full border px-2.5 py-1 text-body font-medium disabled:opacity-50 ${
     on ? "border-maple bg-maple text-[#fff8ee]" : "border-rule text-stone hover:bg-ink2"
   }`;
 
@@ -201,9 +201,9 @@ function StepSections({
 
   return (
     <div className="mt-5 space-y-5">
-      {!canSave ? <CantKeepNote className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber" /> : null}
+      {!canSave ? <CantKeepNote className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber" /> : null}
       {error ? (
-        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
           {error}
         </p>
       ) : null}
@@ -211,7 +211,7 @@ function StepSections({
 
       <div>
         <h3 className={heading}>{words.panel.whyColour}</h3>
-        <p className="text-[12px] leading-5 text-paper-dim">{evaluation.because}</p>
+        <p className="text-body leading-5 text-paper-dim">{evaluation.because}</p>
       </div>
 
       {fork ? (
@@ -220,7 +220,7 @@ function StepSections({
           {branch ? (
             <BranchToggle decision={branch.decision} activeOptionId={branch.activeOptionId} isDefault={branch.isDefault} onChange={branch.onChange} />
           ) : (
-            <p className="text-[12px] text-paper-dim">
+            <p className="text-body text-paper-dim">
               {pickedSide ? words.panel.forkPicked(road.steps.find((s) => s.id === pickedSide)?.label ?? pickedSide) : words.panel.forkNotPicked}
             </p>
           )}
@@ -260,16 +260,16 @@ function StepSections({
             );
           })}
         </div>
-        <p className="mt-1 text-[10.5px] text-stone-dim">{words.panel.statusHelp}</p>
+        <p className="mt-1 text-small text-stone-dim">{words.panel.statusHelp}</p>
       </div>
 
       <div>
         <h3 className={heading}>{words.panel.doneWhen}</h3>
         {step.doneWhen.length === 0 ? (
-          <p className="text-[12px] text-stone">{words.panel.doneWhenNone}</p>
+          <p className="text-body text-stone">{words.panel.doneWhenNone}</p>
         ) : (
           <>
-            <p className="mb-1.5 font-mono text-[10px] text-stone">{words.panel.doneWhenTicked(evaluation.doneWhen.ticked, evaluation.doneWhen.total)}</p>
+            <p className="mb-1.5 font-mono text-small text-stone">{words.panel.doneWhenTicked(evaluation.doneWhen.ticked, evaluation.doneWhen.total)}</p>
             <ul className="space-y-2">
               {step.doneWhen.map((line) => {
                 const on = shown.has(line.id);
@@ -285,7 +285,7 @@ function StepSections({
                         onChange={() => void tick(on ? [...ticked].filter((id) => id !== line.id) : [...ticked, line.id])}
                         className="mt-0.5 accent-[#c2593a]"
                       />
-                      <label htmlFor={boxId} className="text-[12px] leading-5 text-paper">
+                      <label htmlFor={boxId} className="text-body leading-5 text-paper">
                         {line.text}
                       </label>
                     </div>
@@ -303,7 +303,7 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.skills}</h3>
         {step.needs.length === 0 ? (
-          <p className="text-[12px] text-stone">{words.panel.skillsNone}</p>
+          <p className="text-body text-stone">{words.panel.skillsNone}</p>
         ) : (
           <ul className="space-y-2">
             {step.needs.map((id) => {
@@ -326,7 +326,7 @@ function StepSections({
         {/* The government's list for the person's pick of job belongs to the job, not to a step (no
             official source ties one of its skills to a step), so the panel only counts it and opens it. */}
         {onOpenJobList ? (
-          <div className="mt-2 text-[11px] text-stone">
+          <div className="mt-2 text-body text-stone">
             <p>{job ? words.panel.jobLine(job.label, job.listed, job.marked) : words.panel.noJob}</p>
             <Pill className="mt-1" size="small" variant="ghost" onClick={onOpenJobList}>
               {job ? words.panel.openJobList : words.panel.pickJob}
@@ -338,12 +338,12 @@ function StepSections({
       <div>
         <h3 className={heading}>{words.panel.costs}</h3>
         {evaluation.costs.length === 0 ? (
-          <p className="text-[12px] text-stone">{words.panel.costsNone}</p>
+          <p className="text-body text-stone">{words.panel.costsNone}</p>
         ) : (
           <>
-            {evaluation.money === "left-out" ? <p className="mb-1.5 text-[11px] text-stone">{words.panel.costsLeftOut}</p> : null}
+            {evaluation.money === "left-out" ? <p className="mb-1.5 text-body text-stone">{words.panel.costsLeftOut}</p> : null}
             {evaluation.money === "waits-on-a-pick" && evaluation.waitsOnForkId ? (
-              <p className="mb-1.5 text-[11px] text-amber">
+              <p className="mb-1.5 text-body text-amber">
                 {words.panel.costsWaiting(road.forks.find((f) => f.id === evaluation.waitsOnForkId)?.label ?? evaluation.waitsOnForkId)}
               </p>
             ) : null}
@@ -353,16 +353,16 @@ function StepSections({
                 return (
                   <li key={line.lineId} className="rounded-sm border border-rule-soft bg-ink2 p-2">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
-                      <span className="text-[12px] text-paper">{line.label}</span>
+                      <span className="text-body text-paper">{line.label}</span>
                       {/* A blank has no amount at all, never $0: its kind says it isn't priced yet. */}
-                      <span className="font-mono text-[12px] text-paper">{line.kind === "named-not-priced" ? "" : formatMoney(line.amountCents)}</span>
-                      <span className={`font-mono text-[9px] uppercase tracking-wider ${line.kind === "named-not-priced" ? "text-amber" : "text-stone"}`}>
+                      <span className="font-mono text-body text-paper">{line.kind === "named-not-priced" ? "" : formatMoney(line.amountCents)}</span>
+                      <span className={`font-mono text-label uppercase tracking-wider ${line.kind === "named-not-priced" ? "text-amber" : "text-stone"}`}>
                         {words.panel.costKind[line.kind]}
                       </span>
                     </div>
                     {/* A fee that applies only sometimes shows its condition; no total on the screen adds it. */}
                     {line.kind === "official-fee" && line.onlyIf !== undefined ? (
-                      <p className="mt-1 text-[11px] text-amber">{words.panel.onlyIf(line.onlyIf)}</p>
+                      <p className="mt-1 text-body text-amber">{words.panel.onlyIf(line.onlyIf)}</p>
                     ) : null}
                     {line.kind === "official-fee" ? (
                       <div className="mt-1.5">
@@ -392,7 +392,7 @@ function StepSections({
                           type="button"
                           disabled={!canSave}
                           onClick={() => setQuoting(line.lineId)}
-                          className="mt-1.5 text-[11px] text-maple hover:underline disabled:opacity-50"
+                          className="mt-1.5 text-body text-maple hover:underline disabled:opacity-50"
                         >
                           {line.kind === "your-quote" ? words.panel.changeQuote : words.panel.addQuote}
                         </button>
@@ -413,7 +413,7 @@ function StepSections({
           <ul className="space-y-1">
             {step.officialLinks.map((link) => (
               <li key={link.url}>
-                <a href={link.url} target="_blank" rel="noreferrer" className="text-[12px] text-maple hover:underline">
+                <a href={link.url} target="_blank" rel="noreferrer" className="text-body text-maple hover:underline">
                   {link.label} ↗
                 </a>
               </li>
@@ -452,12 +452,12 @@ export function SkillRow({
           aria-pressed={selected}
           title={words.panel.showSteps(item.label)}
           onClick={onSelect}
-          className={`text-left text-[12px] font-semibold hover:underline ${selected ? "text-maple" : "text-paper"}`}
+          className={`text-left text-body font-semibold hover:underline ${selected ? "text-maple" : "text-paper"}`}
         >
           {item.label}
         </button>
-        <span className="font-mono text-[9px] uppercase tracking-wider text-stone">{words.panel.skillKind[item.kind]}</span>
-        {mark === "have" && item.kind === "legal-requirement" ? <span className="font-mono text-[9px] text-sage">{words.panel.youHold}</span> : null}
+        <span className="font-mono text-label uppercase tracking-wider text-stone">{words.panel.skillKind[item.kind]}</span>
+        {mark === "have" && item.kind === "legal-requirement" ? <span className="font-mono text-label text-sage">{words.panel.youHold}</span> : null}
       </div>
       <MarkButtons mark={mark} canSave={canSave} onMark={onMark} />
       {/* The item's own sources, mark or no mark: a legal requirement is never shown without its law. */}
@@ -465,7 +465,7 @@ export function SkillRow({
         <CitationLinks citations={item.citations} compact />
       </div>
       {mark === "not-yet" && item.howToGetIt ? (
-        <div className="mt-1.5 text-[11px] text-stone">
+        <div className="mt-1.5 text-body text-stone">
           <p>
             {words.panel.howToGet} {item.howToGetIt.text}
           </p>

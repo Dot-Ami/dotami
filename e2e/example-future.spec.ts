@@ -22,7 +22,7 @@ import { priceSummary } from "../lib/examples/stats";
 import { waitForReact } from "../tests/helpers/react-ready";
 import { FRAMING, VERDICT } from "../tests/helpers/verdict-words";
 
-import { lookCloser, showLegend, showRail, showWhatIfBar } from "./cockpit-calm";
+import { lookCloser, lookCloserItems, showLegend, showRail, showWhatIfBar } from "./cockpit-calm";
 
 const BANNER = "Mara is invented; the prices and statistics are real, from the sources listed, seen on 2026-10-14. Nothing here is saved.";
 const CANT_KEEP = "This is an example. Start your own to keep anything.";
@@ -188,7 +188,8 @@ test("opened directly in a fresh tab: no browser storage is written and none of 
   // The legend opens and folds for this look only (folded on the first view since 2026-10-17).
   await showLegend(page);
   await page.getByRole("button", { name: "Fold the legend" }).click();
-  await expect(page.getByRole("button", { name: "Show the legend" })).toBeVisible();
+  // Shown again from the goal bar's Look closer menu (2026-10-20).
+  expect(await lookCloserItems(page)).toContain("Show the legend");
   await page.getByRole("button", { name: /^Skills/ }).first().click();
   // Mara's words in the rail, never the person's own statements.
   await showRail(page);

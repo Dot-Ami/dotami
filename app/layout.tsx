@@ -41,10 +41,11 @@ export default async function RootLayout({
   await connection();
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen bg-ink font-sans text-[13px] leading-snug text-paper antialiased">
+      <body className="min-h-screen bg-ink font-sans text-body leading-snug text-paper antialiased">
         {children}
-        {/* data-region: a block the clutter limit counts (docs/ui-spec/README.md, "The layout rule"). */}
-        <footer data-region="site-footer" className="flex h-10 shrink-0 items-center justify-center border-t border-rule-soft px-8 text-center text-[11px] text-stone-dim md:px-14">
+        {/* data-region: a block the clutter limit counts (docs/ui-spec/README.md, "The layout rule").
+            px-4 on a phone: at the body size, 13 px, the line needs that room to stay on two lines in h-10. */}
+        <footer data-region="site-footer" className="flex h-10 shrink-0 items-center justify-center border-t border-rule-soft px-4 text-center text-body text-stone-dim md:px-14">
           Information, not legal or tax advice · a prep tool for you and your accountant ·{" "}
           <a
             href="https://github.com/Dot-Ami/dotami"

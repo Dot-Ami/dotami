@@ -33,12 +33,12 @@ export function SectionCard({
   return (
     <section className={cn("rounded-lg border border-rule bg-ink3", className)}>
       <div className="flex items-center gap-3 border-b border-rule-soft px-5 py-4">
-        <span className="font-mono text-[11px] tracking-wide text-maple">{number}</span>
-        <h3 className="flex-1 font-serif text-lg font-bold tracking-tight text-paper">{title}</h3>
+        <span className="font-mono text-body tracking-wide text-maple">{number}</span>
+        <h3 className="flex-1 font-serif text-title font-bold tracking-tight text-paper">{title}</h3>
         {badge ? (
           <span
             className={cn(
-              "rounded-sm px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-[0.14em] border",
+              "rounded-sm px-2 py-0.5 font-mono text-label uppercase tracking-[0.14em] border",
               badgeClasses[badge],
             )}
           >

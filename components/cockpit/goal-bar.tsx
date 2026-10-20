@@ -26,6 +26,9 @@ import type { Scenario } from "@/lib/scenarios/types";
  * in this line of work, and later About this job) shares one "Look closer" menu instead of a button each.
  * The cockpit draws it under its header in one strip, but it is still a region of its own for the clutter
  * limit, as the layout rule defines one (docs/ui-spec/cockpit/07-goal-bar.md).
+ *
+ * 2026-10-20: the menu also shows the folded legend and what-if bar (`toShow`), whose buttons were at the end
+ * of Next on your road, and the folded line carries the menu too, between the gauges and the show button.
  */
 
 /** The bar's id, for its fold button's aria-controls. */
@@ -48,7 +51,13 @@ export function GoalBar({
   onToggleFold,
   person = null,
   targetFrom = null,
+  toShow = [],
 }: {
+  /**
+   * What folds under the map that the Look closer menu shows (2026-10-20): the legend and the what-if bar,
+   * each given only while it is folded. After the right-hand panel's items, in the menu open or folded.
+   */
+  toShow?: readonly LookCloserItem[];
   /**
    * Opens "Others in this line of work" in the right-hand panel (2026-10-17; docs/ui-spec/cockpit/landscape.md).
    * The page gives it on every road, so the button shows wherever the bar is open.
@@ -108,10 +117,13 @@ export function GoalBar({
       : null;
 
   const isFolded = folded && onToggleFold !== undefined;
-  // "Look closer": the things the bar opens in the right-hand panel, in one menu, in the order they came.
+  // "Look closer": the things the bar opens in the right-hand panel, in one menu, in the order they came;
+  // then what folds under the map (2026-10-20). In the folded line too, so the legend and the what-if bar
+  // are never more than the menu away.
   const lookCloser: LookCloserItem[] = [
     ...(onCompare ? [{ id: "compare", label: words.compare.region, onSelect: onCompare }] : []),
     ...(onLandscape ? [{ id: "landscape", label: landscapeWords.open, onSelect: onLandscape }] : []),
+    ...toShow,
   ];
 
   return (
@@ -133,18 +145,19 @@ export function GoalBar({
                   active === id ? "border-maple" : "border-rule"
                 }`}
               >
-                <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">{gaugeLabel(id)}</span>
-                <span className="truncate text-[12px] tabular-nums text-paper">{view[id].value}</span>
+                <span className="shrink-0 font-mono text-label uppercase tracking-[0.1em] text-stone">{gaugeLabel(id)}</span>
+                <span className="truncate text-body tabular-nums text-paper">{view[id].value}</span>
               </button>
             ))}
           </div>
+          <LookCloserMenu items={lookCloser} />
           <FoldButton folded region="goal" label={words.folds.goal.show} controls={GOAL_BAR_ID} onClick={onToggleFold} />
         </div>
       ) : null}
       {/* The open bar. Folded, it stays on the page, hidden, so folding never removes anything. */}
       <div hidden={isFolded} className="grid gap-2.5 px-5 py-3">
-        {shownWords ? <p className="font-serif text-[17px] italic leading-snug text-paper">“{shownWords.text}”</p> : null}
-        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-stone">
+        {shownWords ? <p className="font-serif text-title italic leading-snug text-paper">“{shownWords.text}”</p> : null}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-body text-stone">
           {shownWords ? <span>{shownWords.line}</span> : null}
           {target ? (
             <span>
@@ -178,17 +191,17 @@ export function GoalBar({
                   active === id ? "border-maple" : "border-rule"
                 }`}
               >
-                <span className="flex justify-between gap-2 font-mono text-[9.5px] uppercase tracking-[0.1em] text-stone">
+                <span className="flex justify-between gap-2 font-mono text-label uppercase tracking-[0.1em] text-stone">
                   {gaugeLabel(id)}
                   <span className="normal-case tracking-normal text-stone-dim">{gaugeTag(id)}</span>
                 </span>
-                <span className="text-[13px] tabular-nums text-paper">{gauge.value}</span>
+                <span className="text-body tabular-nums text-paper">{gauge.value}</span>
                 {gauge.lines.map((line) => (
-                  <span key={line} className="text-[11px] text-stone">
+                  <span key={line} className="text-body text-stone">
                     {line}
                   </span>
                 ))}
-                {gauge.invite ? <span className="text-[11px] text-amber">{gauge.invite}</span> : null}
+                {gauge.invite ? <span className="text-body text-amber">{gauge.invite}</span> : null}
               </button>
             );
           })}

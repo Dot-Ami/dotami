@@ -1,6 +1,6 @@
 # UI behavior specs
 
-Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c); 2026-06-10
+Last updated: 2026-10-17 (the layout rule and the clutter limit, below; the same day, the cockpit's calm first view and its regions as built, S2.5.30c, and the type scale, S2.5.30d); 2026-06-10
 
 Per-page catalogs of **what each interactive control does and why** — purpose-first, backend wiring deferred until Phase 5.
 
@@ -41,7 +41,9 @@ first visit until *Got it*; the road; the legend and the what-if bar while open;
 while it holds something; the site's footer; and the example's banner on Mara's page. The header and the goal
 bar share one strip, and the overlay row, the map and *Next on your road* one column, but each is a block a
 person takes in on its own, so each keeps its own mark. A first visit folds the legend, the what-if bar and the
-road's later columns to one button each: 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
+road's later columns to one button each (since 2026-10-20 the legend's and the what-if bar's are items of the
+goal bar's *Look closer* menu, two controls fewer on a tablet or a laptop; on a phone they were already under
+the window's edge): 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
 once the coach line is put away ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)). For a
 few hours on 2026-10-17 the strip and the column were each counted as one region, which read as 4 and 3; a
 review found the blocks still drawn and the rule's own definition unchanged, so the marks went back.
@@ -74,12 +76,43 @@ measured first, on that seed alone.
 
 The numbers are the gate's: Chromium on Ubuntu, in CI's *Browser tests* job. Where Chromium on Windows
 measures more on a screen, `WINDOWS_EXTRA` in `e2e/budgets.ts` adds the difference for a run on Windows
-only, so a local run there passes on an unchanged screen; CI never reads it. Since the calm first view it holds
-one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu). It was emptied once: the one
+only, so a local run there passes on an unchanged screen; CI never reads it. It is empty: from the calm first
+view until 2026-10-20 it held one line, Mara's example at 1280×720 (23 controls on Windows, 21 on Ubuntu), gone
+since *Show the legend* and *Show the what-if bar* moved into *Look closer* (21 on both). It was emptied before
+too: the one
 such difference (the cockpit on road 1 at 1280×720, 30 controls on Windows and 27 on Ubuntu) was three road
 cards showing only their edge on Windows, which the count no longer takes in. Windows measures one fewer
 in one place, the front door at 768×1024 (10 controls; 11 on Ubuntu), where its last button shows only a
 strip above the site footer.
+
+## The type scale (S2.5.30d, 2026-10-17)
+
+Six named text sizes, and no others. They are Tailwind theme tokens in `app/globals.css` (`--text-label` …
+`--text-display`, each with its line height as a length), used as `text-label` … `text-display`:
+
+| Name | Size | Line | Where it is used |
+|---|---|---|---|
+| `text-label` | 9.5 px | 13 px | kickers and chips: the mono, uppercase, tracked labels over a block or on a card |
+| `text-small` | 10.5 px | 14 px | notes under a field, the legend, a secondary line |
+| `text-body` | 13 px | 16 px | running text (the page's default), buttons, rows, the map's card lines (in place of Tailwind's `text-xs`) |
+| `text-lead` | 15 px | 20 px | card and column headings, the intake's box, a page's subline (in place of `text-sm`) |
+| `text-title` | 19 px | 28 px | section headings, a quoted sentence (in place of `text-lg`) |
+| `text-display` | 28 px | 32 px | page titles |
+
+Headlines larger than that (the front door's hero, a door's title, the word mark) keep Tailwind's own steps,
+`text-xl` and up. Before this the screens had grown twenty-three ad hoc sizes (`text-[8px]` to `text-[46px]`,
+in 661 places, half-pixel neighbours among them), and one screen counted fifteen distinct sizes. Each old
+size went to the named size of its group (`tests/helpers/type-scale-renames.ts` has the whole table): 8–9.5 px
+to label, 10–10.5 to small, 11–13 (and `text-xs`, 12) to body, 14–15 (and `text-sm`, 14) to lead, 16–19 (and
+`text-base`, `text-lg`) to title, 26–28 to display, and the few above to Tailwind's steps. Each named size is
+the largest size of its group, so no text is smaller than it was before the scale: the page's default running
+text stays 13 px, and text that was 11 or 12 px grows to it (a first version set body at 12 px, lead 14, title
+18 and display 26, which took the default running text, *Your plan* and the front door's door bodies down a
+pixel; a review found it). The smallest text on any screen is now 9.5 px (the baseline's was 8 px; 8.5 px
+after the calm first view). `tests/type-scale.spec.ts` refuses any arbitrary size written as a class (`text-[9px]`,
+`text-[0.7rem]`, `text-[length:…]`) and the four Tailwind sizes the named ones replaced, with a control that
+plants each kind. A new size is a change to the scale, made in the theme and in this table, never in a
+component.
 
 ## Convention
 

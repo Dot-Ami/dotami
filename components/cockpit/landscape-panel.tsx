@@ -44,10 +44,10 @@ interface Draft {
 /** Which form is open: none, the add form, or the edit form of one business. */
 type FormState = null | { kind: "add" } | { kind: "edit"; id: string };
 
-const heading = "font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";
-const field = "mt-1 w-full rounded-md border border-rule bg-ink px-2 py-1.5 text-[12.5px] text-paper focus:border-maple focus:outline-none";
-const labelText = "text-[11px] text-stone";
-const linkClass = "break-all text-[12px] text-maple hover:underline";
+const heading = "font-mono text-label uppercase tracking-[0.14em] text-stone-dim";
+const field = "mt-1 w-full rounded-md border border-rule bg-ink px-2 py-1.5 text-body text-paper focus:border-maple focus:outline-none";
+const labelText = "text-body text-stone";
+const linkClass = "break-all text-body text-maple hover:underline";
 const disabledPill = "disabled:cursor-not-allowed disabled:opacity-50";
 
 /** The person's own link, opened in their browser; DotAmi never requests it. Only http/https reach here. */
@@ -64,7 +64,7 @@ function KeptLink({ href }: { href: string }) {
   return (
     <>
       <OutsideLink href={href}>{href}</OutsideLink>
-      {opensFromDesktop(href) ? null : <span className="ml-1 text-[10.5px] text-stone"> ({words.watched.httpOnly})</span>}
+      {opensFromDesktop(href) ? null : <span className="ml-1 text-small text-stone"> ({words.watched.httpOnly})</span>}
     </>
   );
 }
@@ -145,10 +145,10 @@ export function LandscapePanel({
   }
 
   return (
-    <section aria-label={words.region} className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-[13px] leading-snug max-lg:border-l-0">
+    <section aria-label={words.region} className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-body leading-snug max-lg:border-l-0">
       <div className="flex items-start justify-between gap-4">
         <h2 className="font-serif text-2xl font-bold leading-tight text-paper">{words.region}</h2>
-        <button type="button" onClick={onClose} aria-label={words.close} className="rounded-full border border-rule px-2.5 py-1 text-sm text-stone hover:bg-ink2">
+        <button type="button" onClick={onClose} aria-label={words.close} className="rounded-full border border-rule px-2.5 py-1 text-lead text-stone hover:bg-ink2">
           ×
         </button>
       </div>
@@ -156,8 +156,8 @@ export function LandscapePanel({
       {/* What their ads cost: v1's fixed line, where it was read, and the two libraries as plain links. */}
       <div className="mt-5 space-y-2">
         <h3 className="font-semibold text-paper">{words.adCost.heading}</h3>
-        <p className="text-[12.5px] text-paper-dim">{words.adCost.line}</p>
-        <p className="text-[11px] text-stone">
+        <p className="text-body text-paper-dim">{words.adCost.line}</p>
+        <p className="text-body text-stone">
           {words.adCost.readFrom}{" "}
           {AD_COST_READ_FROM.map((link, i) => (
             <span key={link.url}>
@@ -166,7 +166,7 @@ export function LandscapePanel({
             </span>
           ))}
         </p>
-        <p className="text-[12px] text-paper-dim">{words.adCost.libraries}</p>
+        <p className="text-body text-paper-dim">{words.adCost.libraries}</p>
         <ul className="space-y-1">
           {AD_LIBRARIES.map((link) => (
             <li key={link.url}>
@@ -174,31 +174,31 @@ export function LandscapePanel({
             </li>
           ))}
         </ul>
-        <p className="text-[11px] text-stone">{words.adCost.linksOnly}</p>
+        <p className="text-body text-stone">{words.adCost.linksOnly}</p>
       </div>
 
       {/* Businesses you're watching: the person's own list, in the order added. */}
       <div className="mt-6 space-y-2">
         <h3 className="font-semibold text-paper">{words.watched.heading}</h3>
-        <p className="text-[12px] text-paper-dim">{words.watched.line}</p>
-        <p className="text-[11px] text-stone">{words.watched.yoursOnly}</p>
-        {isExample ? <p className="text-[12px] text-paper-dim">{words.watched.exampleEmpty}</p> : null}
-        {!canSave ? <CantKeepNote className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber" /> : null}
+        <p className="text-body text-paper-dim">{words.watched.line}</p>
+        <p className="text-body text-stone">{words.watched.yoursOnly}</p>
+        {isExample ? <p className="text-body text-paper-dim">{words.watched.exampleEmpty}</p> : null}
+        {!canSave ? <CantKeepNote className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber" /> : null}
         {readFailed ? (
-          <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+          <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
             {words.watched.notRead}
           </p>
         ) : null}
         {error ? (
-          <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+          <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
             {error}
           </p>
         ) : null}
-        <p role="status" className="text-[11.5px] text-paper-dim">
+        <p role="status" className="text-body text-paper-dim">
           {status}
         </p>
 
-        {ventureId && businesses === null && !readFailed ? <p className="text-[12px] text-stone">{words.watched.loading}</p> : null}
+        {ventureId && businesses === null && !readFailed ? <p className="text-body text-stone">{words.watched.loading}</p> : null}
         {/* Always drawn, so the list is there to find even when it is empty (the example's stays empty). */}
         <ul aria-label={words.watched.listName} className="space-y-3">
           {shown.map((b) =>
@@ -236,7 +236,7 @@ export function LandscapePanel({
             ),
           )}
         </ul>
-        {ventureId && businesses !== null && businesses.length === 0 ? <p className="text-[12px] text-stone">{words.watched.empty}</p> : null}
+        {ventureId && businesses !== null && businesses.length === 0 ? <p className="text-body text-stone">{words.watched.empty}</p> : null}
 
         {form?.kind === "add" ? (
           <div className="rounded-md border border-maple/60 bg-ink2 p-3">
@@ -265,7 +265,7 @@ export function LandscapePanel({
         )}
       </div>
 
-      <p className="mt-8 border-t border-rule pt-3 text-[11px] text-stone">{words.footer}</p>
+      <p className="mt-8 border-t border-rule pt-3 text-body text-stone">{words.footer}</p>
     </section>
   );
 }
@@ -297,12 +297,12 @@ function BusinessRow({
         </p>
       ) : null}
       {/* The person's own words, line breaks kept. */}
-      {business.note ? <p className="whitespace-pre-wrap break-words text-[12.5px] text-paper-dim">{business.note}</p> : null}
+      {business.note ? <p className="whitespace-pre-wrap break-words text-body text-paper-dim">{business.note}</p> : null}
       {business.adLinks.length > 0 ? (
         <div>
           <p className={heading}>{words.watched.adLinks}</p>
           {business.adLinks.map((ad, i) => (
-            <p key={`${i}-${ad.url}`} className="text-[12px] text-paper-dim">
+            <p key={`${i}-${ad.url}`} className="text-body text-paper-dim">
               <KeptLink href={ad.url} /> <span className="text-stone">· {words.watched.seen(ad.seenOn)}</span>
             </p>
           ))}
@@ -310,7 +310,7 @@ function BusinessRow({
       ) : null}
       {confirming ? (
         <div className="space-y-1.5 rounded-sm border border-amber/40 bg-amber/5 p-2">
-          <p className="text-[11.5px] text-amber">{words.watched.confirmRemove(business.nameAsTyped)}</p>
+          <p className="text-body text-amber">{words.watched.confirmRemove(business.nameAsTyped)}</p>
           <div className="flex gap-1.5">
             <Pill size="small" variant="ghost" onClick={onRemove}>
               {words.watched.yesRemove}
@@ -408,7 +408,7 @@ function BusinessForm({
           aria-describedby={`${id}-name-hint`}
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         />
-        <span id={`${id}-name-hint`} className="mt-0.5 block text-[10.5px] text-stone">
+        <span id={`${id}-name-hint`} className="mt-0.5 block text-small text-stone">
           {words.watched.nameHint}
         </span>
       </label>
@@ -436,7 +436,7 @@ function BusinessForm({
             <div className="col-span-2">
               <button
                 type="button"
-                className="text-[11px] text-stone underline decoration-rule underline-offset-4 hover:text-paper"
+                className="text-body text-stone underline decoration-rule underline-offset-4 hover:text-paper"
                 onClick={() => setDraft((d) => ({ ...d, adLinks: d.adLinks.filter((x) => x.key !== ad.key) }))}
               >
                 {words.watched.removeAdLink(i + 1)}
@@ -460,7 +460,7 @@ function BusinessForm({
       </fieldset>
 
       {problem ? (
-        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+        <p role="alert" className="rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
           {problem}
         </p>
       ) : null}

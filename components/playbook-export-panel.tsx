@@ -97,13 +97,13 @@ export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookEx
     <aside className="flex h-full flex-col overflow-hidden bg-ink3 text-paper">
       <div className="flex items-start gap-3 border-b border-rule-soft p-5">
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-maple">
+          <p className="font-mono text-small uppercase tracking-[0.14em] text-maple">
             Export playbook
           </p>
           <h2 className="mt-2 font-serif text-xl font-bold leading-tight text-paper">
             {scenario.profile.name}
           </h2>
-          <p className="mt-2 text-xs leading-relaxed text-stone">
+          <p className="mt-2 text-body leading-relaxed text-stone">
             Planning map from catalog data — not advice. Verify with CRA, provincial sources,
             and qualified professionals.
           </p>
@@ -111,7 +111,7 @@ export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookEx
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-full border border-rule px-2.5 py-1 text-sm text-stone hover:bg-ink2"
+          className="shrink-0 rounded-full border border-rule px-2.5 py-1 text-lead text-stone hover:bg-ink2"
           aria-label="Close playbook panel"
         >
           ×
@@ -130,29 +130,29 @@ export function PlaybookExportPanel({ scenario, ventureId, onClose }: PlaybookEx
       {/* Issue #41: the same idea laid out to read and print, on a page of its own (docs/ui-spec/plan/). */}
       <div className="border-b border-rule-soft px-5 py-3">
         {ventureId ? (
-          <Link href={`/plan?venture=${encodeURIComponent(ventureId)}`} className="text-[12px] text-maple hover:underline">
+          <Link href={`/plan?venture=${encodeURIComponent(ventureId)}`} className="text-body text-maple hover:underline">
             {words.plan.open} →
           </Link>
         ) : (
-          <p className="text-[11px] text-stone">{words.plan.notSaved}</p>
+          <p className="text-body text-stone">{words.plan.notSaved}</p>
         )}
       </div>
 
-      {copyHint ? <p className="px-5 py-1 text-xs text-sage">{copyHint}</p> : null}
+      {copyHint ? <p className="px-5 py-1 text-body text-sage">{copyHint}</p> : null}
       {error ? (
-        <p className="mx-5 mt-2 rounded-lg border border-maple-soft bg-maple/10 px-3 py-2 text-xs text-maple">
+        <p className="mx-5 mt-2 rounded-lg border border-maple-soft bg-maple/10 px-3 py-2 text-body text-maple">
           {error}
         </p>
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
-        {loading ? <p className="text-sm text-stone">Building playbook…</p> : null}
+        {loading ? <p className="text-lead text-stone">Building playbook…</p> : null}
         {markdown ? (
-          <pre className="whitespace-pre-wrap wrap-break-word font-sans text-xs leading-relaxed text-stone">
+          <pre className="whitespace-pre-wrap wrap-break-word font-sans text-body leading-relaxed text-stone">
             {markdown}
           </pre>
         ) : !loading && !error ? (
-          <p className="text-sm text-stone">No playbook content available.</p>
+          <p className="text-lead text-stone">No playbook content available.</p>
         ) : null}
       </div>
     </aside>

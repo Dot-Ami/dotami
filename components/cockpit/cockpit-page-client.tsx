@@ -3,8 +3,12 @@
 import { Suspense } from "react";
 import { CockpitPage } from "@/components/cockpit/cockpit-page";
 import { ReadOnlyJourneyProvider } from "@/components/shared/journey-provider";
+import { cockpitWords } from "@/lib/cockpit/words";
 import { exampleById } from "@/lib/examples";
 import type { Scenario } from "@/lib/scenarios/types";
+
+/** While the cockpit's code loads: the same line for a saved idea and for an example. */
+const loading = <div className="flex h-screen items-center justify-center text-stone">{cockpitWords.loading}</div>;
 
 interface CockpitPageClientProps {
   initialScenario: Scenario | null;
@@ -14,7 +18,7 @@ interface CockpitPageClientProps {
 
 export function CockpitPageClient({ initialScenario, pinned = false }: CockpitPageClientProps) {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center text-stone">Loading cockpit…</div>}>
+    <Suspense fallback={loading}>
       <CockpitPage initialScenario={initialScenario} pinned={pinned} />
     </Suspense>
   );
@@ -30,7 +34,7 @@ export function ExampleCockpitClient({ exampleId }: { exampleId: string }) {
   if (!example) return null;
   return (
     <ReadOnlyJourneyProvider scenario={example.scenario}>
-      <Suspense fallback={<div className="flex h-screen items-center justify-center text-stone">Loading cockpit…</div>}>
+      <Suspense fallback={loading}>
         <CockpitPage initialScenario={example.scenario} example={example} />
       </Suspense>
     </ReadOnlyJourneyProvider>

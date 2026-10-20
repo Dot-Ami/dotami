@@ -6,6 +6,8 @@
 
 > **Changed 2026-10-17 — the calm first view (S2.5.30c).** The rail is folded on a first visit (the narrow strip, **Show venture details**, from 768 px; below that the header's **Venture details** as before). A return visit keeps the person's own answer ([12-folding-and-phone.md](./12-folding-and-phone.md)).
 
+> **2026-10-17 — the rail's words in one file (S2.5.30e).** Every sentence and label the rail shows (*Venture*, *Structure* and its three options, *Employed*, *In your words*, the structure ladder, the prep-tool references, **Save now** and its save line, **Edit venture profile**, the *Compass, not GPS* foot line) and the header's **← Your futures** and **Export** are `lib/cockpit/words.ts` (`rail`, `header`), as the map's chips, card names and legend are (`map`); `tests/cockpit-own-words.spec.ts` fails on text written in a component under `components/cockpit/` (its one allowance: the legend's *Compass, not GPS — nothing here is a recommendation*, which the strict verdict-word list refuses even as a denial and the map's recordings hold word for word). The text on screen is unchanged. Sizes: the six named text sizes ([README.md](../README.md), *The type scale*; S2.5.30d).
+
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: sidebar (mixed display + button group + links)
 

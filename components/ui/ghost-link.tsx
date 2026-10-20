@@ -18,7 +18,7 @@ export function GhostLink({ tone = "paper", className, ...props }: GhostLinkProp
   return (
     <Link
       className={cn(
-        "text-xs no-underline border-b pb-0.5 transition hover:opacity-80",
+        "text-body no-underline border-b pb-0.5 transition hover:opacity-80",
         toneClasses[tone],
         className,
       )}

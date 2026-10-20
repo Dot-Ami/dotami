@@ -29,7 +29,7 @@ function Address({ url }: { url: string }) {
 
 function Source({ source }: { source: PlanSource }) {
   return (
-    <div className="text-[11.5px] leading-snug text-ink/80 print:text-black">
+    <div className="text-body leading-snug text-ink/80 print:text-black">
       <p>
         {source.title} · <Address url={source.url} />
       </p>
@@ -53,7 +53,7 @@ function Section({ id, index, children }: { id: SectionId; index: number; childr
       // A new page for every section after the first, on paper only.
       className={`border-t border-ink/15 pt-6 print:border-t-0 ${index > 0 ? "print:break-before-page" : ""}`}
     >
-      <h2 id={headingId} className="mb-3 font-serif text-[20px] font-bold tracking-tight">
+      <h2 id={headingId} className="mb-3 font-serif text-xl font-bold tracking-tight">
         {words.plan.sections[id]}
       </h2>
       {children}
@@ -64,19 +64,19 @@ function Section({ id, index, children }: { id: SectionId; index: number; childr
 function Step({ step }: { step: PlanStep }) {
   return (
     <article className="rounded-sm border border-ink/15 p-4 print:break-inside-avoid print:border-black/30">
-      <h4 className="font-serif text-[16px] font-bold">{step.label}</h4>
-      <p className="text-[12.5px]">{step.summary}</p>
-      <p className="mt-2 text-[12.5px]">
+      <h4 className="font-serif text-title font-bold">{step.label}</h4>
+      <p className="text-body">{step.summary}</p>
+      <p className="mt-2 text-body">
         {step.status} · {step.state}
       </p>
-      <p className="text-[12px] text-ink/80 print:text-black">{step.because}</p>
+      <p className="text-body text-ink/80 print:text-black">{step.because}</p>
 
-      <p className="mt-3 text-[12.5px] font-semibold">{step.doneWhenTitle}</p>
+      <p className="mt-3 text-body font-semibold">{step.doneWhenTitle}</p>
       {step.doneWhen.length > 0 ? (
         <ul className="mt-1 space-y-2">
           {step.doneWhen.map((line) => (
             <li key={line.text}>
-              <p className="text-[12.5px]">
+              <p className="text-body">
                 <span aria-hidden="true">{line.ticked ? words.plan.tickBox.on : words.plan.tickBox.off}</span> {line.text} ({line.mark})
               </p>
               <div className="pl-5">
@@ -89,8 +89,8 @@ function Step({ step }: { step: PlanStep }) {
 
       {step.skills.length > 0 ? (
         <>
-          <p className="mt-3 text-[12.5px] font-semibold">{words.panel.skills}</p>
-          <ul className="mt-1 list-disc pl-5 text-[12.5px]">
+          <p className="mt-3 text-body font-semibold">{words.panel.skills}</p>
+          <ul className="mt-1 list-disc pl-5 text-body">
             {step.skills.map((skill) => (
               <li key={skill.label}>
                 {skill.label}: {skill.mark}
@@ -100,12 +100,12 @@ function Step({ step }: { step: PlanStep }) {
         </>
       ) : null}
 
-      {step.costCount ? <p className="mt-3 text-[12.5px]">{step.costCount}</p> : null}
+      {step.costCount ? <p className="mt-3 text-body">{step.costCount}</p> : null}
 
       {step.officialLinks.length > 0 ? (
         <>
-          <p className="mt-3 text-[12.5px] font-semibold">{words.panel.officialLinks}</p>
-          <ul className="mt-1 space-y-0.5 text-[12px]">
+          <p className="mt-3 text-body font-semibold">{words.panel.officialLinks}</p>
+          <ul className="mt-1 space-y-0.5 text-body">
             {step.officialLinks.map((link) => (
               <li key={link.url}>
                 {link.label}: <Address url={link.url} />
@@ -117,7 +117,7 @@ function Step({ step }: { step: PlanStep }) {
 
       {step.sources.length > 0 ? (
         <>
-          <p className="mt-3 text-[12.5px] font-semibold">{words.plan.sources}</p>
+          <p className="mt-3 text-body font-semibold">{words.plan.sources}</p>
           <ul className="mt-1 space-y-1.5">
             {step.sources.map((source, i) => (
               <li key={`${source.url}-${i}`}>
@@ -136,29 +136,29 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
     <div className="plan-page px-4 py-6 print:p-0">
       {/* The bar: on screen only. data-region marks the blocks the clutter limit counts. */}
       <div data-plan-bar="" data-region="plan-bar" className="mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href={backHref} className="font-mono text-[11px] text-stone transition hover:text-paper">
+        <Link href={backHref} className="font-mono text-body text-stone transition hover:text-paper">
           {words.plan.back}
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-[11px] text-stone">{words.plan.printHelp}</span>
+          <span className="text-body text-stone">{words.plan.printHelp}</span>
           <PrintButton label={words.plan.print} />
         </div>
       </div>
 
-      <article className="mx-auto grid max-w-[820px] gap-6 rounded-md bg-paper p-6 text-[13px] leading-relaxed text-ink md:p-10 print:max-w-none print:rounded-none print:bg-white print:p-0 print:text-black">
+      <article className="mx-auto grid max-w-[820px] gap-6 rounded-md bg-paper p-6 text-body leading-relaxed text-ink md:p-10 print:max-w-none print:rounded-none print:bg-white print:p-0 print:text-black">
         <header data-region="plan-header">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/70 print:text-black">{view.title}</p>
-          <h1 className="mt-1 font-serif text-[28px] font-bold leading-tight tracking-tight">{view.ideaName}</h1>
-          <p className="mt-1 text-[12px] text-ink/80 print:text-black">{view.made}</p>
+          <p className="font-mono text-small uppercase tracking-[0.14em] text-ink/70 print:text-black">{view.title}</p>
+          <h1 className="mt-1 font-serif text-display font-bold leading-tight tracking-tight">{view.ideaName}</h1>
+          <p className="mt-1 text-body text-ink/80 print:text-black">{view.made}</p>
           {/* The standing line on page 1 as well as the last page, for a page handed over on its own. */}
-          <p className="mt-2 text-[12px] italic text-ink/80 print:text-black">{view.notAdvice}</p>
+          <p className="mt-2 text-body italic text-ink/80 print:text-black">{view.notAdvice}</p>
         </header>
 
         <Section id="words" index={0}>
           {view.words.map((said) => (
             <blockquote key={said.line} className="mb-3">
-              <p className="font-serif text-[17px] italic">“{said.text}”</p>
-              <p className="text-[11.5px] text-ink/80 print:text-black">{said.line}</p>
+              <p className="font-serif text-title italic">“{said.text}”</p>
+              <p className="text-body text-ink/80 print:text-black">{said.line}</p>
             </blockquote>
           ))}
           {view.wordsNone ? <p>{view.wordsNone}</p> : null}
@@ -177,10 +177,10 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
           <dl className="mt-1 grid gap-2 sm:grid-cols-2">
             {view.road.gauges.map((gauge) => (
               <div key={gauge.label} className="rounded-sm border border-ink/15 p-3 print:break-inside-avoid print:border-black/30">
-                <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink/70 print:text-black">{gauge.label}</dt>
+                <dt className="font-mono text-small uppercase tracking-[0.1em] text-ink/70 print:text-black">{gauge.label}</dt>
                 <dd>{gauge.value}</dd>
                 {gauge.lines.map((line) => (
-                  <dd key={line} className="text-[12px] text-ink/80 print:text-black">
+                  <dd key={line} className="text-body text-ink/80 print:text-black">
                     {line}
                   </dd>
                 ))}
@@ -190,12 +190,12 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
         </Section>
 
         <Section id="steps" index={2}>
-          <p className="mb-3 text-[12px] italic">{view.steps.order}</p>
+          <p className="mb-3 text-body italic">{view.steps.order}</p>
           <div className="grid gap-5">
             {view.steps.columns.map((column) => (
               <div key={column.label}>
-                <h3 className="font-serif text-[17px] font-bold">{column.label}</h3>
-                <p className="mb-2 text-[12.5px]">{column.summary}</p>
+                <h3 className="font-serif text-title font-bold">{column.label}</h3>
+                <p className="mb-2 text-body">{column.summary}</p>
                 <div className="grid gap-3">
                   {column.steps.map((step) => (
                     <Step key={step.id} step={step} />
@@ -238,7 +238,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
                 ))}
               </ul>
               <p className="mt-1">{view.skills.job.notMarked}</p>
-              <p className="mt-1 text-[11.5px] text-ink/80 print:text-black">{view.skills.job.attribution}</p>
+              <p className="mt-1 text-body text-ink/80 print:text-black">{view.skills.job.attribution}</p>
             </>
           ) : null}
         </Section>
@@ -254,7 +254,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
             {view.money.byStep.map((group) => (
               <div key={group.step} className="print:break-inside-avoid">
                 <h3 className="font-semibold">{group.step}</h3>
-                {group.note ? <p className="text-[12px] italic">{group.note}</p> : null}
+                {group.note ? <p className="text-body italic">{group.note}</p> : null}
                 <ul className="mt-1 space-y-2">
                   {group.lines.map((line) => (
                     <li key={line.lineId} className="rounded-sm border border-ink/15 p-2 print:border-black/30">
@@ -263,8 +263,8 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
                         {/* A blank has no amount at all, never $0: its kind says it isn't priced yet. */}
                         <span className="font-mono tabular-nums">{line.amount ?? ""}</span>
                       </p>
-                      <p className="text-[11.5px] uppercase tracking-wider text-ink/70 print:text-black">{line.kind}</p>
-                      {line.note ? <p className="text-[12px]">{line.note}</p> : null}
+                      <p className="text-body uppercase tracking-wider text-ink/70 print:text-black">{line.kind}</p>
+                      {line.note ? <p className="text-body">{line.note}</p> : null}
                       {line.source ? (
                         <div className="mt-1">
                           <Source source={line.source} />
@@ -287,7 +287,7 @@ export function PlanPage({ view, backHref }: { view: PlanView; backHref: string 
                   {row.said} · <span className="text-ink/80 print:text-black">{row.day}</span>
                 </p>
                 {row.unlocked.length > 0 ? (
-                  <ul className="list-disc pl-5 text-[12px] text-ink/80 print:text-black">
+                  <ul className="list-disc pl-5 text-body text-ink/80 print:text-black">
                     {row.unlocked.map((line) => (
                       <li key={line}>{line}</li>
                     ))}
@@ -315,9 +315,9 @@ export function PlanReadFailed({ backHref }: { backHref: string }) {
   return (
     <div className="px-4 py-10">
       <div className="mx-auto max-w-[620px] text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{words.plan.title}</p>
-        <p className="mt-3 text-sm text-paper-dim">{words.plan.readFailed}</p>
-        <Link href={backHref} className="mt-4 inline-block text-[12px] text-maple hover:underline">
+        <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.plan.title}</p>
+        <p className="mt-3 text-lead text-paper-dim">{words.plan.readFailed}</p>
+        <Link href={backHref} className="mt-4 inline-block text-body text-maple hover:underline">
           {words.plan.back}
         </Link>
       </div>
@@ -330,9 +330,9 @@ export function PlanNotFound() {
   return (
     <div className="plan-page px-4 py-10">
       <div className="mx-auto max-w-[620px] text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{words.plan.title}</p>
-        <p className="mt-3 text-sm text-paper-dim">{words.plan.notFound}</p>
-        <Link href="/ventures" className="mt-4 inline-block text-[12px] text-maple hover:underline">
+        <p className="font-mono text-small uppercase tracking-[0.14em] text-stone">{words.plan.title}</p>
+        <p className="mt-3 text-lead text-paper-dim">{words.plan.notFound}</p>
+        <Link href="/ventures" className="mt-4 inline-block text-body text-maple hover:underline">
           {words.allFutures}
         </Link>
       </div>

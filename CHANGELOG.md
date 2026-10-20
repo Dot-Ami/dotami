@@ -76,6 +76,47 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   against what each idea's words name, and writes `test-results/intent-eval.md` with ids only.
 
 ### Changed
+- **Six text sizes instead of twenty-three** (S2.5.30d, the plan of 2026-10-17). The screens had grown
+  twenty-three ad hoc text sizes, from 8 px to 46 px with half-pixel neighbours among them, in 661 places;
+  one screen drew fifteen distinct sizes. They are now six named sizes, theme tokens in
+  [app/globals.css](app/globals.css) ([docs/ui-spec/README.md](docs/ui-spec/README.md), *The type scale*):
+  label 9.5 px, small 10.5, body 13, lead 15, title 19 and display 28, each with its line height, with
+  Tailwind's larger steps kept for headlines. Each old size went to the named size of its group, and each
+  named size is the largest of its group, so no text is smaller than it was: the default running text
+  (`app/layout.tsx` and the two journey layouts) stays 13 px, the smallest text on any screen is now 9.5 px
+  (it was 8.5 px on the cockpit and the intake), and the map's card lines and most running text are 13 px
+  where they were 11 or 12 (text-xs), headings 15 px where they were 14 (text-sm). Measured in Chromium,
+  every piece of text drawn on nine main screens at laptop size, against main: none of it smaller (the site
+  footer's side padding on a phone went from 32 to 16 px so its line, now 13 px, stays on two lines). Every
+  screen counts fewer distinct
+  sizes: the cockpit
+  on a laptop 12 to 5, the front door 8 to 6, Mara's example 13 to 5, *What DotAmi knows about you* 11 to 7,
+  *Your plan* 10 to 5 (`e2e/budgets.ts` holds the new, lower limits; regions and controls keep their
+  budgets). A unit test refuses any new arbitrary size, and Tailwind's text-xs, text-sm, text-base
+  and text-lg, which the named sizes stand in for. The map's and the cost panels' recordings are read with
+  the new names put in for the old classes, so they are not re-recorded. Screenshots before and after, the
+  cockpit on road 0 and the front door at phone, tablet and laptop sizes, are in
+  [docs/media/type-scale/](docs/media/type-scale/).
+- **Every cockpit sentence in one words file** (S2.5.30e, the same plan). The cockpit's rail (*Venture*,
+  *Structure* and its options, *Employed*, *In your words*, the structure ladder, the prep-tool references,
+  **Save now** and its save line, **Edit venture profile**, the *Compass, not GPS* line), the header's
+  **← Your futures** and **Export**, the empty cockpit and the map's chips, card names and legend, 68 pieces of
+  text that were written in five components, now come from [lib/cockpit/words.ts](lib/cockpit/words.ts),
+  which the words tests read (verdict words, time words). The text on screen is unchanged. A unit test reads
+  every file in `components/cockpit/` and fails on a sentence or label written there, with one allowance it
+  explains: the legend's *Compass, not GPS — nothing here is a recommendation*, which the strict verdict-word
+  list refuses even as a denial and the map's recordings hold word for word.
+- **Show the legend and Show the what-if bar are in the goal bar's Look closer menu** (the maintainer's pick,
+  2026-10-20). With the larger text, the two buttons at the end of *Next on your road* were pushed under the
+  window's edge on Mara's example at laptop size; brought back into view, they took that screen to 23 controls
+  against its limit of 21, and the limits only go down. They are now items of *Look closer*, listed while each
+  is folded, so each road's first view on a tablet or a laptop has fewer controls (on a phone the buttons were
+  already under the window's edge), and `e2e/budgets.ts` holds the lower limits (Mara's example 23 on a tablet;
+  the cockpit on road 0 17, 29 and 27 on a phone, a tablet and a laptop, on road 1 25 and 23 on a tablet and a
+  laptop). Showing either now takes two steps, *Look closer* and then the item. The folded goal bar's one line
+  carries the menu too, with all its items, and folding either again puts keyboard focus back on *Look closer*
+  without scrolling the page. *Next on your road* still says *Your what-if, not a forecast* and its number
+  while the what-if bar is folded and a what-if is on.
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the
   maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit
@@ -83,7 +124,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   anywhere…*, put away with *Got it*, which leaves keyboard focus on the road; on a phone the line sits under
   the road, so the road starts where it did before). Folded, each with one button that says what it shows: the venture
   details rail, the map's legend, the what-if bar, the road's later columns (one column, *The road ahead · 6
-  steps*, naming them). Only Road and Skills are on at first (Rules & tax started on until now); the Money and
+  steps*, naming them); the legend's and the what-if bar's buttons are items of *Look closer* since the entry
+  above. Only Road and Skills are on at first (Rules & tax started on until now); the Money and
   Rules & tax switches are drawn beside them, one click away (a switch with nothing on the road, such as
   *Rules & tax · 0 cards* on the apprentice road, is drawn off and can't be pressed). The goal bar's *Compare* and *Others in this line of work*
   are one **Look closer** menu, which *About this job* will join; it works from the keyboard and reads as a

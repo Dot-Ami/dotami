@@ -88,11 +88,9 @@ export const BASELINE: ClutterTable = {
  * own step cards (the first two columns), the four gauges, Next on your road's three steps and one button for
  * each folded thing; getting to 20 would mean hiding road cards or a way back to something folded (the pull
  * request explains). Text sizes 15 to 12, and the smallest text up from 8 to 8.5 px. Mara's example: 10 to 8
- * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677; Chromium on Windows counts 23 there, see
- * `WINDOWS_EXTRA`).
+ * regions (9 to 7 on a phone), and controls 23 to 21 on a laptop (CI run 39077075677).
  *
- * One control more on road 0, the same day (17, 32 and 29; Chromium on Windows counts 31 on a tablet, one fewer
- * than the gate there, as it did before): a review
+ * One control more on road 0, the same day (17, 32 and 29): a review
  * found Rules & tax two clicks away behind "Show more layers", so the Money and Rules & tax switches are drawn
  * again and that button is gone. Road 1 and Mara's example, on road 1, are unchanged: road 1 has no rules and tax
  * cards, so its Rules & tax switch is drawn but can't be pressed (it has nothing to show) and isn't counted.
@@ -120,18 +118,53 @@ export const BASELINE: ClutterTable = {
  * The front door at tablet size stays at 11: on Windows its last button ("Show me Mara's example") shows
  * only a strip above the site footer and isn't counted (10); on Ubuntu, the gate, enough of it shows to count
  * (11, CI run 39067156272).
+ *
+ * The type scale, the same day (S2.5.30d; docs/ui-spec/README.md, "The type scale"): six named text sizes in
+ * place of twenty-three ad hoc ones, so every screen counts fewer distinct sizes and none draws text under
+ * 9.5 px. Text sizes and the smallest text set to what the screens measure with it (Chromium, the same on
+ * Windows and Ubuntu: a computed font size doesn't depend on the platform): the cockpit on both roads 11, 12
+ * and 12 to 4, 5 and 5 (smallest 8.5 to 9.5 px), Mara's example 11, 13 and 13 to 5, the front door 8 to 6,
+ * Your destination 4 to 3 (smallest 10 to 10.5 px), Pick a future 10 to 6 (10 to 10.5 px), the intake 6 to 5
+ * (8.5 to 9.5 px), Your futures 9 to 7 (9 to 9.5 px), What DotAmi knows about you 11 to 7, and Your plan 10
+ * to 5 (10 to 10.5 px). Regions and controls keep their budgets. A review found the scale's first values (body
+ * 12 px, lead 14, title 18, display 26) took text a person reads down a size from main: the default running
+ * text and every 13 px use to 12, 15 to 14, 28 to 26. Each value is now the largest of the old sizes it stands
+ * in for (body 13, lead 15, title 19, display 28), so no text is smaller than on main; the counts above stay,
+ * as each size only moved.
+ *
+ * Chromium on Windows, with those values (the full browser suite, 2026-10-19): regions, text sizes and the
+ * smallest text as budgeted on every screen, and controls in the first window within the budget everywhere,
+ * under it at seven sizes: the front door 10 on a tablet (the strip above the site footer, as before the
+ * scale), and, the larger body text pushing the last of them below the window, Your futures 9 on a phone and
+ * 13 on a laptop, Mara's example 25 on a tablet, the cockpit on road 0 17 and 31, and on road 1 26 on a
+ * tablet; Mara's example on a laptop counts 23, as before the scale (`WINDOWS_EXTRA`). The budgets are the
+ * gate's numbers, measured on Ubuntu, so they are lowered from a CI run's, not from these.
+ *
+ * The same review (2026-10-19) found the scale's first count of 21 there on Windows came from two buttons
+ * cut off, not a calmer screen: Next on your road's three step names, at body size, filled their row and
+ * pushed **Show the legend** and **Show the what-if bar** to a line under the window's edge, 5 px showing.
+ * From 1024 px those buttons now sit at the right of the line's heading (components/cockpit/next-on-your-road.tsx),
+ * so they show again and count again, and on road 0 the line is one row shorter (29 on a laptop, was 28).
+ * With them back, CI on Ubuntu counted Mara's example at laptop size at 23 (run 39371971585), over its 21.
+ *
+ * 2026-10-20, the maintainer's pick (a calmer screen, not a higher limit): those two buttons became items of the
+ * goal bar's Look closer menu, so the road screens count fewer controls on a tablet and a laptop (on a phone
+ * they were under the window's edge already; road 0 counts one fewer there). Lowered to what CI on Ubuntu counts
+ * with it (run 39418090969; Chromium on Windows counts the same for these three screens at all three sizes): Mara's example 26 to 23 on a
+ * tablet (21 on a laptop and 11 on a phone, as budgeted), the cockpit on road 0 18, 32 and 29 to 17, 29 and
+ * 27, and on road 1 28 and 25 to 25 and 23 on a tablet and a laptop (14 on a phone, as budgeted).
  */
 export const BUDGETS: ClutterTable = {
-  "front-door": { phone: m(4, 7, 8, 9.5), tablet: m(4, 11, 8, 9.5), laptop: m(4, 11, 8, 9.5) },
-  start: { phone: m(3, 5, 4, 10), tablet: m(3, 5, 4, 10), laptop: m(3, 5, 4, 10) },
-  futures: { phone: m(6, 5, 10, 10), tablet: m(6, 7, 10, 10), laptop: m(6, 6, 10, 10) },
-  intake: { phone: m(4, 5, 6, 8.5), tablet: m(4, 5, 6, 8.5), laptop: m(4, 5, 6, 8.5) },
-  ventures: { phone: m(4, 10, 9, 9), tablet: m(4, 19, 9, 9), laptop: m(4, 14, 9, 9) },
-  "your-data": { phone: m(9, 7, 11, 9.5), tablet: m(9, 7, 11, 9.5), laptop: m(9, 7, 11, 9.5) },
-  "example-mara": { phone: m(7, 11, 11, 8.5), tablet: m(8, 26, 13, 8.5), laptop: m(8, 21, 13, 8.5) },
-  "cockpit-road-0": { phone: m(7, 18, 11, 8.5), tablet: m(8, 32, 12, 8.5), laptop: m(8, 29, 12, 8.5) },
-  "cockpit-road-1": { phone: m(7, 14, 10, 8.5), tablet: m(8, 28, 12, 8.5), laptop: m(8, 25, 12, 8.5) },
-  plan: { phone: m(10, 2, 10, 10), tablet: m(10, 2, 10, 10), laptop: m(10, 2, 10, 10) },
+  "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
+  start: { phone: m(3, 5, 3, 10.5), tablet: m(3, 5, 3, 10.5), laptop: m(3, 5, 3, 10.5) },
+  futures: { phone: m(6, 5, 6, 10.5), tablet: m(6, 7, 6, 10.5), laptop: m(6, 6, 6, 10.5) },
+  intake: { phone: m(4, 5, 5, 9.5), tablet: m(4, 5, 5, 9.5), laptop: m(4, 5, 5, 9.5) },
+  ventures: { phone: m(4, 10, 7, 9.5), tablet: m(4, 19, 7, 9.5), laptop: m(4, 14, 7, 9.5) },
+  "your-data": { phone: m(9, 7, 7, 9.5), tablet: m(9, 7, 7, 9.5), laptop: m(9, 7, 7, 9.5) },
+  "example-mara": { phone: m(7, 11, 5, 9.5), tablet: m(8, 23, 5, 9.5), laptop: m(8, 21, 5, 9.5) },
+  "cockpit-road-0": { phone: m(7, 17, 4, 9.5), tablet: m(8, 29, 5, 9.5), laptop: m(8, 27, 5, 9.5) },
+  "cockpit-road-1": { phone: m(7, 14, 4, 9.5), tablet: m(8, 25, 5, 9.5), laptop: m(8, 23, 5, 9.5) },
+  plan: { phone: m(10, 2, 5, 10.5), tablet: m(10, 2, 5, 10.5), laptop: m(10, 2, 5, 10.5) },
 };
 
 /** What Chromium on Windows may count over a budget: only regions, controls and text sizes, never fewer. */
@@ -148,8 +181,12 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  *
  * Mara's example at laptop size, since the calm first view (2026-10-17): 23 controls on Windows, 21 on Ubuntu
  * (CI run 39077075677). Windows' text wraps a little shorter in the goal bar, so the road starts higher and
- * two more of its cards show enough to count.
+ * two more of its cards show enough to count. (For a few hours on 2026-10-19 the type scale took this line
+ * out, counting 21 on Windows; that count was two of Next on your road's buttons pushed below the window, and
+ * with them back in view it is 23 again.)
+ *
+ * Emptied again on 2026-10-20: with Show the legend and Show the what-if bar in the Look closer menu, Windows
+ * and Ubuntu both count Mara's example at laptop size at 21 (CI run 39418090969, and the browser tests run on
+ * Windows the same day).
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
-  "example-mara": { laptop: { controls: 2 } },
-};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};

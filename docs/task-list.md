@@ -312,7 +312,8 @@ and the maintainer's six decisions of 2026-10-11:
     `SCREEN_GAPS`, never fixed quietly. Two on 2026-10-19, both the maintainer's call: *Your destination*'s
     first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read);
     and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
-    budget of 12, measured on a visit with no words
+    budget of 12, measured on a visit with no words (gone with the type scale, 2026-10-20: the words are the
+    title size, one of the six, and the cockpit counts 5 sizes either way; taken out of `SCREEN_GAPS`)
   - [x] 29f: `npm run eval:intent` (`scripts/eval-intent.mjs`), the AI parser on the developer's own key, scored
     against the corpus (kinds of work, province, buying equipment), a table and `test-results/intent-eval.md`;
     refuses to run without a key, exits at once in CI, not in `npm test`; `--fallback` scores the keyword
@@ -343,18 +344,36 @@ and the maintainer's six decisions of 2026-10-11:
     and can only go down
   - [x] The calm first view ([architecture/future-cockpit.md](architecture/future-cockpit.md) § 2, *First
     visit and return visits as built*): road and skills on, later columns folded into *The road ahead*, one
-    coach line, the rail, the legend and the what-if bar folded one click away, every overlay switch drawn; Compare and
+    coach line, the rail, the legend and the what-if bar folded one click away (the legend and the what-if bar
+    from *Look closer* since 2026-10-20), every overlay switch drawn; Compare and
     *Others in this line of work* behind one *Look closer* menu (*About this job* joins it when built); the
     last overlay remembered (`dotami-cockpit-folds`); on a phone the coach line sits under the road, so the
     road starts where it did before (S2.5.30c)
   - [x] The budget for that first view. The plan aimed at 5 regions and 20 controls at 1280 px (3 and 12 on a
     phone); the built view measures 8 regions (7 on a phone; 9 and 8 before) and 29 controls on a laptop (32 on
     a tablet, 18 on a phone), with what is left being the road's own cards, the gauges and the next steps. The
-    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` holds those
+    maintainer, 2026-10-17: *"Accept the clutter budgets where they landed."* `e2e/budgets.ts` held those
     numbers, and they can only go down from here.
-  - [ ] Six named text sizes in place of the ad hoc ones, and a check that refuses new ones
-  - [ ] The cockpit rail's sentences moved into `lib/cockpit/words.ts`, with a test against words written in
-    the components
+  - [x] Show the legend and Show the what-if bar into *Look closer* (the maintainer's pick, 2026-10-20, over
+    raising Mara's example's laptop limit from 21 to 23 once the type scale's fix brought the two buttons back
+    into view): the cockpit on road 0 now 27 controls on a laptop, 29 on a tablet, 17 on a phone; road 1 23 and
+    25; Mara's example 21 and 23 (`e2e/budgets.ts`, lowered to CI's counts)
+  - [x] Six named text sizes in place of the ad hoc ones (S2.5.30d, 2026-10-17): `text-label` 9.5 px,
+    `text-small` 10.5, `text-body` 13, `text-lead` 15, `text-title` 19 and `text-display` 28, theme tokens in
+    `app/globals.css`, each with its line height, in place of 661 arbitrary sizes of 23 values (and Tailwind's
+    text-xs, text-sm, text-base and text-lg, which they stand in for); headlines keep Tailwind's text-xl and up.
+    `tests/type-scale.spec.ts` refuses a new arbitrary size; `tests/helpers/type-scale-renames.ts` reads the
+    map's and the cost panels' recordings with the new names so they aren't re-recorded. The smallest text on
+    every screen is now at least 9.5 px, and the text-size counts in `e2e/budgets.ts` went down on every screen
+    ([ui-spec/README.md](ui-spec/README.md), *The type scale*). Each named size is the largest of the old
+    sizes it stands in for, so no text is smaller than before: the default running text stays 13 px, and
+    text that was 11 or 12 px grows to it
+  - [x] The cockpit rail's sentences moved into `lib/cockpit/words.ts` (S2.5.30e, 2026-10-17): the rail's,
+    the header's, the empty cockpit's and the map's chips, card names and legend (68 pieces of text in five
+    files), the text on screen unchanged; `tests/cockpit-own-words.spec.ts` reads every file in
+    `components/cockpit/` and fails on a sentence or label written there (one allowance: the legend's
+    *Compass, not GPS — nothing here is a recommendation*, see the test), in place of the three older
+    four-word checks over named files
 
 ## 7 — The desktop app (one download, everything on your computer)
 

@@ -95,7 +95,7 @@ export function StartNewReceiptKey() {
             setCanRestart(restartBridge() !== null);
             setStep("warn");
           }}
-          className="rounded-sm border border-amber/50 px-2.5 py-1 text-[12px] font-semibold text-amber transition hover:bg-amber/10"
+          className="rounded-sm border border-amber/50 px-2.5 py-1 text-body font-semibold text-amber transition hover:bg-amber/10"
         >
           Start a new key…
         </button>
@@ -110,7 +110,7 @@ export function StartNewReceiptKey() {
           onCancel={() => setStep("closed")}
           onConfirm={() => setStep("sure")}
         >
-          <div className="space-y-2 text-[12.5px] text-paper-dim">
+          <div className="space-y-2 text-body text-paper-dim">
             <p>
               Nothing is deleted. DotAmi moves the locked receipt files, and the old key file if it&apos;s there, into a new
               folder in the backups folder beside its data file, and tells you where. Your expense records stay; a receipt
@@ -136,19 +136,19 @@ export function StartNewReceiptKey() {
           onCancel={() => setStep("closed")}
           onConfirm={() => void start()}
         >
-          <p className="text-[12.5px] text-paper-dim">Press Cancel to keep things as they are.</p>
+          <p className="text-body text-paper-dim">Press Cancel to keep things as they are.</p>
         </ConfirmDialog>
       ) : null}
 
       {step === "done" && started ? (
-        <p role="status" className="mt-1 text-[12.5px] text-amber">
+        <p role="status" className="mt-1 text-body text-amber">
           {started.movedTo ? `Done. ${movedSentence(started)} moved to ${started.movedTo}.` : "Done. There were no locked receipt files left to move."}{" "}
           {restarting ? "DotAmi will restart now to start the new key…" : "Close DotAmi and open it again to start the new key."}
         </p>
       ) : null}
 
       {error ? (
-        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-[12.5px] text-amber">
+        <p role="alert" className="mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber">
           {error}
         </p>
       ) : null}

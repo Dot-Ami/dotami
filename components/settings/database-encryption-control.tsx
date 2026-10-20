@@ -41,7 +41,7 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
   }, []);
 
   if (lock === "source") {
-    return <p className="text-[12px] text-paper-dim">Only the desktop app encrypts the data file; this copy, run from source, can&apos;t.</p>;
+    return <p className="text-body text-paper-dim">Only the desktop app encrypts the data file; this copy, run from source, can&apos;t.</p>;
   }
   const encrypted = lock === "on";
 
@@ -58,7 +58,7 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
   }
 
   return (
-    <div className="space-y-2 text-[12.5px]">
+    <div className="space-y-2 text-body">
       <label className="flex items-center gap-2 text-paper">
         <input
           type="checkbox"
@@ -112,7 +112,7 @@ export function DatabaseEncryptionControl({ lock }: { lock: DatabaseLockState })
           </div>
         </div>
       ) : null}
-      <p role="status" className="text-[12px] text-paper-dim">
+      <p role="status" className="text-body text-paper-dim">
         {read === "failed"
           ? "DotAmi couldn't read this choice from your data file."
           : state === "error"

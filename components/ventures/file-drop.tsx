@@ -66,11 +66,11 @@ import { BookReview, type BookProposal } from "./books-drop";
  */
 
 const FIELD =
-  "rounded-sm border border-rule bg-ink px-2 py-1 text-sm text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
-const FIELD_LABEL = "block font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone";
-const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
+  "rounded-sm border border-rule bg-ink px-2 py-1 text-lead text-paper outline-hidden placeholder:text-stone-dim focus:border-maple-soft";
+const FIELD_LABEL = "block font-mono text-label uppercase tracking-[0.14em] text-stone";
+const ALERT = "mt-2 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber";
 /** The bank-file notice: the same amber look as ALERT, but it is the first thing in the panel, so no top margin. */
-const BANK_NOTICE = "rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-xs text-amber";
+const BANK_NOTICE = "rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-body text-amber";
 
 /** Same limits as the screen spec: how far down the column names may be, and the route's cap. */
 const HEADER_ROW_CHOICES = 30;
@@ -711,7 +711,7 @@ export function FileDrop({
     >
       {origin === "ask" ? (
         <div>
-          <p id={`${uid}-origin`} className="text-xs text-paper">
+          <p id={`${uid}-origin`} className="text-body text-paper">
             Where is this file from?
           </p>
           <div
@@ -732,7 +732,7 @@ export function FileDrop({
               {BANK_LABEL}
             </Pill>
           </div>
-          <p id={`${uid}-origin-hint`} className="mt-2 text-[11px] text-stone-dim">
+          <p id={`${uid}-origin-hint`} className="mt-2 text-body text-stone-dim">
             Accounting software means QuickBooks, Xero, Wave, FreshBooks, GnuCash or similar; a
             spreadsheet you keep is one in Excel. Nothing is opened until you answer.
           </p>
@@ -756,7 +756,7 @@ export function FileDrop({
 
       {origin === "accounting" ? (
         <div>
-          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-stone-dim">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-body text-stone-dim">
             <span>
               From: <span className="text-paper-dim">{ACCOUNTING_LABEL}</span>
             </span>
@@ -782,7 +782,7 @@ export function FileDrop({
               }`}
             >
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs text-paper-dim">
+                <p className="text-body text-paper-dim">
                   Drop a .xlsx or .csv file, or a GnuCash book, here, or
                 </p>
                 <Pill
@@ -803,7 +803,7 @@ export function FileDrop({
                   className="sr-only"
                 />
               </div>
-              <p className="mt-2 text-[11px] text-stone-dim">
+              <p className="mt-2 text-body text-stone-dim">
                 It&apos;s read here, on this computer, and never kept — only the monthly totals you
                 agree to are saved.
               </p>
@@ -817,7 +817,7 @@ export function FileDrop({
           data-autofocus
           tabIndex={-1}
           role="status"
-          className="mt-2 text-[11px] text-stone-dim outline-hidden"
+          className="mt-2 text-body text-stone-dim outline-hidden"
         >
           Reading {fileName}…
           {readingBook
@@ -848,12 +848,12 @@ export function FileDrop({
       {origin === "accounting" && phase === "ready" && !book ? (
         <div className="mt-3">
           {/* Focus lands here once a file is read, since the Choose a file button it came from is gone. */}
-          <p data-autofocus tabIndex={-1} className="text-xs text-paper-dim outline-hidden">
+          <p data-autofocus tabIndex={-1} className="text-body text-paper-dim outline-hidden">
             File: <span className="text-paper">{fileName}</span>
           </p>
           {/* Shown for every file: DotAmi was only ever tried on invented files laid out from each
               program's help pages (tests/fixtures/packages/), never on a real export. */}
-          <p className="mt-1 text-[11px] text-stone-dim">
+          <p className="mt-1 text-body text-stone-dim">
             Each accounting program&apos;s export was tested on files shaped from that program&apos;s
             help pages, not on real exports, so check the columns and totals.
           </p>
@@ -901,15 +901,15 @@ export function FileDrop({
           </div>
 
           {noGuess ? (
-            <p className="mt-2 text-[11px] text-amber">
+            <p className="mt-2 text-body text-amber">
               DotAmi couldn&apos;t find a row of column names in the first 30 rows.
             </p>
           ) : null}
           {exportInstead ? (
-            <p className="mt-1 max-w-prose text-[11px] text-amber">{exportInstead}</p>
+            <p className="mt-1 max-w-prose text-body text-amber">{exportInstead}</p>
           ) : null}
           {layout === "rows" && guessed ? (
-            <p className="mt-2 text-[11px] text-stone-dim">
+            <p className="mt-2 text-body text-stone-dim">
               DotAmi guessed these from the column names — check them.
             </p>
           ) : null}
@@ -917,12 +917,12 @@ export function FileDrop({
           {layout === "across" ? (
             <div className="mt-2">
               {acrossPicks.monthsRow === null ? (
-                <p className="text-[11px] text-amber">
+                <p className="text-body text-amber">
                   DotAmi couldn&apos;t find a row of month names in the first 30 rows.
                 </p>
               ) : null}
               {acrossGuessed ? (
-                <p className="text-[11px] text-stone-dim">
+                <p className="text-body text-stone-dim">
                   DotAmi guessed the row of month names — check it.
                 </p>
               ) : null}
@@ -973,7 +973,7 @@ export function FileDrop({
                         </option>
                       ))}
                     </select>
-                    <p id={`${uid}-add-up-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    <p id={`${uid}-add-up-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
                       Every row leaves out the file&apos;s own totals rows. Pick one row to take only
                       its figures, such as the file&apos;s Total row.
                     </p>
@@ -981,8 +981,8 @@ export function FileDrop({
                 ) : null}
               </div>
               {acrossPreview && acrossPreview.monthColumns.length > 0 ? (
-                <div className="mt-2 text-[11px] text-stone-dim">
-                  <p className="font-mono text-[9px] uppercase tracking-wider">Read as months</p>
+                <div className="mt-2 text-body text-stone-dim">
+                  <p className="font-mono text-label uppercase tracking-wider">Read as months</p>
                   <ul className="mt-1 space-y-0.5">
                     {acrossPreview.monthColumns.map((m) => (
                       <li key={m.column}>
@@ -1074,7 +1074,7 @@ export function FileDrop({
                         </option>
                       ))}
                     </select>
-                    <p id={`${uid}-tax`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    <p id={`${uid}-tax`} className="mt-1 max-w-xs text-body text-stone-dim">
                       If the file also has a tax column, check whether this one includes the tax.
                     </p>
                   </div>
@@ -1101,7 +1101,7 @@ export function FileDrop({
                         </option>
                       ))}
                     </select>
-                    <p id={`${uid}-refund-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    <p id={`${uid}-refund-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
                       Ledger exports, such as Wave&apos;s Account Transactions, keep sales in one column
                       (Credit) and refunds paid back to customers in another (Debit). Pick the refunds
                       column and each amount in it is taken off the month it was paid back. Choose
@@ -1129,7 +1129,7 @@ export function FileDrop({
                         </option>
                       ))}
                     </select>
-                    <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    <p id={`${uid}-type-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
                       Some files list a sale and the payment received for it as two rows. With a type
                       column, rows typed Payment or Deposit are left out so the sale isn&apos;t
                       counted twice. That also leaves out a Deposit that is the only record of a sale,
@@ -1157,7 +1157,7 @@ export function FileDrop({
                         </option>
                       ))}
                     </select>
-                    <p id={`${uid}-status-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+                    <p id={`${uid}-status-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
                       Invoice lists can include void, deleted and draft invoices, which were never
                       sales. With a status column, rows marked Void, Voided, Deleted or Draft are left
                       out and listed. Choose None to count every row.
@@ -1174,7 +1174,7 @@ export function FileDrop({
           (needsDateQuestion || detectedOrder.conflicting) ? (
             <div className="mt-3">
               {detectedOrder.conflicting ? (
-                <p className="text-[11px] text-amber">
+                <p className="text-body text-amber">
                   Some dates in this column only make sense month first and others only day first —
                   check the column.
                 </p>
@@ -1227,7 +1227,7 @@ export function FileDrop({
                 <option value="2000">{`Yes — ${twoDigitYear} is 20${twoDigitYear}`}</option>
                 <option value="1900">{`No — ${twoDigitYear} is 19${twoDigitYear}`}</option>
               </select>
-              <p id={`${uid}-century-hint`} className="mt-1 max-w-xs text-[11px] text-stone-dim">
+              <p id={`${uid}-century-hint`} className="mt-1 max-w-xs text-body text-stone-dim">
                 This file writes years with two digits. Your answer is used for every date written
                 that way in this column, for this file only.
               </p>
@@ -1270,14 +1270,14 @@ export function FileDrop({
               className={`${FIELD} mt-1 w-16 font-mono uppercase`}
             />
             {!currencyOk ? (
-              <p className="mt-1 text-[11px] text-amber">
+              <p className="mt-1 text-body text-amber">
                 Write the currency as three letters, like CAD.
               </p>
             ) : null}
           </div>
 
           {shown.state === "waiting" && shown.message ? (
-            <p className="mt-3 text-[11px] text-stone-dim">{shown.message}</p>
+            <p className="mt-3 text-body text-stone-dim">{shown.message}</p>
           ) : null}
           {shown.state === "failed" ? (
             <p role="alert" className={ALERT}>
@@ -1291,13 +1291,13 @@ export function FileDrop({
                   a wrong order, century or month shows. */}
               {shown.readSentence ? (
                 <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <p id={`${uid}-dates-read`} className="text-[11px] text-paper-dim">
+                  <p id={`${uid}-dates-read`} className="text-body text-paper-dim">
                     {shown.readSentence}
                   </p>
                   {/* The person confirms the dates before Review (the maintainer's decision,
                       2026-10-07). Emptied whenever the reading changes: see datesKey above. */}
                   {split.fresh.length > 0 ? (
-                    <label className="flex items-center gap-2 text-xs text-paper">
+                    <label className="flex items-center gap-2 text-body text-paper">
                       <input
                         type="checkbox"
                         checked={datesOk}
@@ -1311,8 +1311,8 @@ export function FileDrop({
                 </div>
               ) : null}
               {split.fresh.length > 0 ? (
-                <table className="text-xs">
-                  <caption className="mb-1 text-left font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+                <table className="text-body">
+                  <caption className="mb-1 text-left font-mono text-label uppercase tracking-[0.14em] text-stone">
                     Monthly totals from {fileName}
                   </caption>
                   <tbody>
@@ -1333,20 +1333,20 @@ export function FileDrop({
                   </tbody>
                 </table>
               ) : (
-                <p className="text-xs text-paper-dim">Nothing new to propose from this file.</p>
+                <p className="text-body text-paper-dim">Nothing new to propose from this file.</p>
               )}
 
               {split.fresh.some((m) => m.refunds) ? (
                 // The refund rule's one surprise, said where the totals are: a refund lowers the
                 // month the money went back, which can be a later month than the sale's.
-                <p className="mt-2 text-[11px] text-stone-dim">
+                <p className="mt-2 text-body text-stone-dim">
                   Refunds are taken off the month they were paid back, which may be a later month
                   than the sale they refund.
                 </p>
               ) : null}
 
               {split.known.length > 0 ? (
-                <ul className="mt-2 space-y-0.5 text-[11px] text-stone-dim">
+                <ul className="mt-2 space-y-0.5 text-body text-stone-dim">
                   {split.known.map((m) => (
                     <li key={m.periodStart}>
                       {describePeriod(m.periodStart, m.periodEnd)} — already in DotAmi with the same
@@ -1358,10 +1358,10 @@ export function FileDrop({
 
               {leftOut.length > 0 ? (
                 <div className="mt-2">
-                  <p className="font-mono text-[9px] uppercase tracking-wider text-stone-dim">
+                  <p className="font-mono text-label uppercase tracking-wider text-stone-dim">
                     Left out
                   </p>
-                  <ul className="mt-1 space-y-0.5 text-[11px] text-stone-dim">
+                  <ul className="mt-1 space-y-0.5 text-body text-stone-dim">
                     {leftOut.map((line) => (
                       <li key={line}>{line}</li>
                     ))}
@@ -1401,7 +1401,7 @@ export function FileDrop({
           </Pill>
         ) : null}
         {split && split.fresh.length > 0 && split.fresh.length <= MAX_FIGURES_PER_FILE && !datesOk ? (
-          <p id={`${uid}-confirm-first`} className="text-[11px] text-amber">
+          <p id={`${uid}-confirm-first`} className="text-body text-amber">
             {`Tick "${datesBoxLabel}" once they match the file.`}
           </p>
         ) : null}
@@ -1409,7 +1409,7 @@ export function FileDrop({
           Cancel
         </Pill>
         {origin === "accounting" ? (
-          <p className="text-[11px] text-stone-dim">
+          <p className="text-body text-stone-dim">
             You&apos;ll be asked to agree before anything counts.
           </p>
         ) : null}

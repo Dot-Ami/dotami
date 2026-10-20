@@ -10,7 +10,7 @@ import type { FigureView } from "@/lib/figures/types";
 /** "ended 6 months ago · agreed 2026-10-06" — the agreed part appears once the person has agreed. */
 export function FigureDates({ figure, today }: { figure: FigureView; today: string }) {
   const text = describeFigureDates(figure.periodEnd, today, figure.confirmedAt);
-  return text ? <p className="mt-0.5 text-[11px] text-stone-dim">{text}</p> : null;
+  return text ? <p className="mt-0.5 text-body text-stone-dim">{text}</p> : null;
 }
 
 /**
@@ -19,5 +19,5 @@ export function FigureDates({ figure, today }: { figure: FigureView; today: stri
  */
 export function FutureDateNote({ periodEnd, today }: { periodEnd: string; today: string }) {
   if (!isFuture(periodEnd, today)) return null;
-  return <p className="mt-0.5 text-[11px] text-amber">{describeFuture(periodEnd, today)}</p>;
+  return <p className="mt-0.5 text-body text-amber">{describeFuture(periodEnd, today)}</p>;
 }

@@ -46,7 +46,7 @@ interface Props {
 }
 
 const BUTTON_CLASS =
-  "inline-flex items-center gap-2 rounded-full border border-amber bg-transparent px-2.5 py-1 text-[11px] font-medium tracking-wide text-amber transition hover:bg-amber/10";
+  "inline-flex items-center gap-2 rounded-full border border-amber bg-transparent px-2.5 py-1 text-body font-medium tracking-wide text-amber transition hover:bg-amber/10";
 
 export function FigureReminderBanners({ ideaId, ideaName, figures, today, reminders, onAddFigures, addFiguresHref }: Props) {
   const { ids, cadences, dismissed } = reminders;
@@ -99,8 +99,8 @@ export function FigureReminderBanners({ ideaId, ideaName, figures, today, remind
           aria-label={`Figure reminder, ${reminder.cadence}: ${reminder.period.label}`}
           className="rounded-sm border border-amber/40 bg-amber/5 px-3 py-2"
         >
-          <p className="text-xs wrap-break-word text-amber">{describeReminder(reminder.period, ideaName)}</p>
-          {reminder.waiting > 0 ? <p className="mt-0.5 text-[11px] text-stone">{describeWaiting(reminder.waiting)}</p> : null}
+          <p className="text-body wrap-break-word text-amber">{describeReminder(reminder.period, ideaName)}</p>
+          {reminder.waiting > 0 ? <p className="mt-0.5 text-body text-stone">{describeWaiting(reminder.waiting)}</p> : null}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {onAddFigures ? (
               <Pill variant="amber-out" size="small" onClick={onAddFigures}>
@@ -118,7 +118,7 @@ export function FigureReminderBanners({ ideaId, ideaName, figures, today, remind
         </section>
       ))}
       {reminders.dismissFailed ? (
-        <p role="alert" className="text-[11px] text-amber">
+        <p role="alert" className="text-body text-amber">
           Couldn&apos;t save that — the reminder is back where it was.
         </p>
       ) : null}

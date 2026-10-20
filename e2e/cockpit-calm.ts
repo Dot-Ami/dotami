@@ -2,7 +2,8 @@
  * The calm first view (2026-10-17, S2.5.30c; docs/architecture/future-cockpit.md § 2, "First visit and return
  * visits"): every browser test starts in a fresh browser, so every cockpit it opens is a first visit, with the
  * rail, the legend, the what-if bar and the road ahead folded, Money and Rules & tax off, and Compare
- * and Others in this line of work behind the goal bar's "Look closer" menu. These open what a test needs, the
+ * and Others in this line of work behind the goal bar's "Look closer" menu, which also shows the folded legend
+ * and what-if bar (2026-10-20). These open what a test needs, the
  * way a person would, with the same buttons; nothing here changes what a test then checks.
  */
 import { expect, type Locator, type Page } from "@playwright/test";
@@ -38,10 +39,21 @@ async function show(page: Page, showName: string, foldName: string) {
 
 /** The left rail (from 768 px; below that it is a sheet, opened from the header as before). */
 export const showRail = (page: Page) => show(page, "Show venture details", "Fold venture details");
-/** The map's legend, from the road's foot line. */
-export const showLegend = (page: Page) => show(page, "Show the legend", "Fold the legend");
-/** The what-if bar and This visit, from the road's foot line. */
-export const showWhatIfBar = (page: Page) => show(page, "Show the what-if bar", "Fold the what-if bar");
+/**
+ * Picks the Look closer item that shows a region folded under the map, when it is listed (it is only while
+ * the region is folded); waits for the region's fold button. Since 2026-10-20 the legend and the what-if bar
+ * are shown from there, no longer from a button each at the end of Next on your road.
+ */
+async function showFromLookCloser(page: Page, item: string, foldName: string) {
+  if (!(await lookCloserItems(page)).includes(item)) return;
+  await lookCloser(page, item);
+  await expect(showButton(page, foldName).filter({ visible: true }).first()).toBeVisible();
+}
+
+/** The map's legend, from the goal bar's Look closer menu. */
+export const showLegend = (page: Page) => showFromLookCloser(page, "Show the legend", "Fold the legend");
+/** The what-if bar and This visit, from the goal bar's Look closer menu. */
+export const showWhatIfBar = (page: Page) => showFromLookCloser(page, "Show the what-if bar", "Fold the what-if bar");
 /** The road's later columns. */
 export const showRoadAhead = (page: Page) => show(page, "Show the road ahead", "Fold the road ahead");
 /** Switches an overlay on (Skills, Money or Rules & tax); every switch is drawn, on or off. */
@@ -100,7 +112,10 @@ export async function startAsAReturnVisit(page: Page) {
   });
 }
 
-/** "Look closer" in the goal bar, then one of its items (Compare the two endings, Others in this line of work). */
+/**
+ * "Look closer" in the goal bar, then one of its items (Compare the two endings, Others in this line of work,
+ * and, while folded, Show the legend and Show the what-if bar). Folded, the goal bar's one line has it too.
+ */
 export async function lookCloser(page: Page, item: string, within?: Locator) {
   await cockpitSettled(page);
   const scope = within ?? page;

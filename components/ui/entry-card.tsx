@@ -30,12 +30,12 @@ export function EntryCard({
         className,
       )}
     >
-      <span className="font-serif text-[34px] leading-none text-maple">{symbol}</span>
-      <h2 className="mt-[18px] font-serif text-[19px] font-bold tracking-tight text-paper">
+      <span className="font-serif text-4xl leading-none text-maple">{symbol}</span>
+      <h2 className="mt-[18px] font-serif text-title font-bold tracking-tight text-paper">
         {title}
       </h2>
-      <p className="mt-2.5 flex-1 text-[12.5px] leading-relaxed text-stone">{body}</p>
-      <span className="mt-[18px] border-t border-rule-soft pt-3.5 text-xs tracking-wide text-maple group-hover:underline">
+      <p className="mt-2.5 flex-1 text-body leading-relaxed text-stone">{body}</p>
+      <span className="mt-[18px] border-t border-rule-soft pt-3.5 text-body tracking-wide text-maple group-hover:underline">
         {cta}
       </span>
     </Link>

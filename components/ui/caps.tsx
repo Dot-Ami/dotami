@@ -10,7 +10,7 @@ export function Caps({ children, className }: CapsProps) {
   return (
     <span
       className={cn(
-        "font-mono text-[10.5px] uppercase tracking-[0.14em]",
+        "font-mono text-small uppercase tracking-[0.14em]",
         className,
       )}
     >

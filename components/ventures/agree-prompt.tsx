@@ -301,30 +301,30 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
             <h2 id={titleId} className="font-serif text-xl font-bold tracking-tight text-paper">
               Agree to these figures?
             </h2>
-            <p id={introId} className="mt-1 text-sm text-paper-dim">
+            <p id={introId} className="mt-1 text-lead text-paper-dim">
               Nothing counts until you agree. Check each one against where it came from.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="shrink-0 text-[11px] text-stone hover:text-paper">
+          <button type="button" onClick={onClose} className="shrink-0 text-body text-stone hover:text-paper">
             Close
           </button>
         </div>
 
         {error ? (
-          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-sm text-amber">
+          <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-3 py-2 text-lead text-amber">
             {error}
           </p>
         ) : null}
 
         <div ref={listRef} onScroll={checkScrolled} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-          {rows.length === 0 ? <p className="text-sm text-stone">Nothing left to review.</p> : null}
+          {rows.length === 0 ? <p className="text-lead text-stone">Nothing left to review.</p> : null}
           {groups.map((group) => {
             // Rows are summed only when every figure in the group says how many it covered.
             const allKnown = group.rows.every((r) => r.sourceRows !== null);
             const totalRows = allKnown ? group.rows.reduce((sum, r) => sum + (r.sourceRows ?? 0), 0) : null;
             return (
               <section key={group.label} aria-label={`From ${group.label}`}>
-                <p className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-stone">
+                <p className="font-mono text-label uppercase tracking-[0.14em] text-stone">
                   From {group.label}
                   {totalRows !== null ? ` · ${totalRows} rows` : ""}
                 </p>
@@ -337,7 +337,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
                     firstFieldAssigned = true;
                     return (
                       <li key={row.id} className="rounded-sm border border-rule-soft bg-ink px-3 py-2">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-lead">
                           <span className="min-w-0 flex-1 text-paper">
                             {FIGURE_KIND_LABELS[row.kind]} <span className="text-stone">· {period}</span>
                             {/* [8f] A T2125 total says which tax year and line it is, before the person agrees. */}
@@ -365,14 +365,14 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
                             }}
                             aria-invalid={problem ? true : undefined}
                             aria-describedby={problem ? `${inputId}-problem` : undefined}
-                            className="w-32 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-sm text-paper outline-hidden focus:border-maple-soft"
+                            className="w-32 rounded-sm border border-rule bg-ink2 px-2 py-1 text-right font-mono text-lead text-paper outline-hidden focus:border-maple-soft"
                           />
-                          <span className="font-mono text-[11px] text-stone">{row.currency}</span>
+                          <span className="font-mono text-body text-stone">{row.currency}</span>
                           <button
                             type="button"
                             onClick={() => void discardOne(row.id)}
                             disabled={busy}
-                            className="text-[11px] text-stone-dim hover:text-maple disabled:opacity-50"
+                            className="text-body text-stone-dim hover:text-maple disabled:opacity-50"
                           >
                             Discard
                           </button>
@@ -380,7 +380,7 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
                         <FigureDates figure={row} today={today} />
                         <FutureDateNote periodEnd={row.periodEnd} today={today} />
                         {problem ? (
-                          <p id={`${inputId}-problem`} className="mt-1 text-[11px] text-amber">
+                          <p id={`${inputId}-problem`} className="mt-1 text-body text-amber">
                             {problem}
                           </p>
                         ) : null}
@@ -395,9 +395,9 @@ export function AgreePrompt({ ventureId, figures, onDone, onClose, rowNote }: Ag
 
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-rule-soft pt-3">
           {/* Always shown, so the person is asked to check the work before the button that confirms. */}
-          <p className="basis-full text-sm text-paper-dim">{CHECK_FIRST_LINE}</p>
+          <p className="basis-full text-lead text-paper-dim">{CHECK_FIRST_LINE}</p>
           {waitingToScroll ? (
-            <p className="mr-auto text-[11px] text-stone" role="status">
+            <p className="mr-auto text-body text-stone" role="status">
               Scroll through all {rows.length} to agree
             </p>
           ) : null}

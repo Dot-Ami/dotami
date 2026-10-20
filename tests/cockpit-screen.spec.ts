@@ -7,8 +7,6 @@
  * open" steps (2026-10-12), so most cases draw the invented trade road from tests/helpers/road-to-evaluate.ts. Components are drawn to HTML the
  * way tests/road-map.spec.ts draws the map.
  */
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -99,19 +97,8 @@ describe("the words: one file, counts and sums, never a verdict", () => {
     expect(sentences.filter((s) => VERDICT.test(s))).toEqual([]);
   });
 
-  it("the new screens hold no sentence of their own: words come from lib/cockpit/words.ts", () => {
-    // A long run of plain words in a JSX text node or a string literal would be a sentence outside the
-    // words file. Class names, ids and import paths are not sentences, so only runs of 4+ words count.
-    for (const file of ["goal-bar.tsx", "overlay-switches.tsx", "step-panel.tsx", "gauge-panels.tsx", "next-on-your-road.tsx", "folding.tsx"]) {
-      const source = readFileSync(path.join(process.cwd(), "components", "cockpit", file), "utf8")
-        // Comments are for programmers, not for the person.
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/className=(\{`[^`]*`\}|"[^"]*")/g, "");
-      const jsxText = [...source.matchAll(/>\s*([A-Z][a-z]+(?: [a-z’'A-Z]+){3,}[.:]?)\s*</g)].map((m) => m[1]);
-      expect(jsxText, file).toEqual([]);
-    }
-  });
+  // That every component in components/cockpit/ writes no sentence or label of its own is
+  // tests/cockpit-own-words.spec.ts (2026-10-17), which reads every file there, not a named few.
 });
 
 describe("what the cockpit passes to road evaluation", () => {

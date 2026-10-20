@@ -24,10 +24,10 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * stay for any road where they come up.
  */
 
-const heading = "font-mono text-[9px] uppercase tracking-[0.14em] text-stone-dim";
+const heading = "font-mono text-label uppercase tracking-[0.14em] text-stone-dim";
 // One class for every value cell in both columns, so neither column can be drawn as the better one.
-const cell = "border-b border-rule-soft px-2 py-1.5 align-top font-mono text-[11.5px] text-paper";
-const columnHead = "border-b border-rule px-2 py-1.5 text-left align-bottom text-[12px] font-semibold leading-snug text-paper";
+const cell = "border-b border-rule-soft px-2 py-1.5 align-top font-mono text-body text-paper";
+const columnHead = "border-b border-rule px-2 py-1.5 text-left align-bottom text-body font-semibold leading-snug text-paper";
 
 export function CompareEndings({
   view,
@@ -53,25 +53,25 @@ export function CompareEndings({
 }) {
   const sideLabel = (stepId: string) => view?.sides.find((s) => s.stepId === stepId)?.label ?? stepId;
   return (
-    <section aria-label={words.compare.region} className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-[13px] leading-snug">
+    <section aria-label={words.compare.region} className="h-full overflow-y-auto border-l border-rule bg-ink3 p-5 text-body leading-snug">
       <div className="flex items-start justify-between gap-4">
         <h2 className="font-serif text-2xl font-bold leading-tight text-paper">{words.compare.region}</h2>
         <button
           type="button"
           onClick={onClose}
           aria-label={words.lists.close}
-          className="rounded-full border border-rule px-2.5 py-1 text-sm text-stone hover:bg-ink2"
+          className="rounded-full border border-rule px-2.5 py-1 text-lead text-stone hover:bg-ink2"
         >
           ×
         </button>
       </div>
 
       {error ? (
-        <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-[11px] text-amber">
+        <p role="alert" className="mt-3 rounded-sm border border-amber/40 bg-amber/5 px-2.5 py-2 text-body text-amber">
           {error}
         </p>
       ) : null}
-      {!canSave ? <CantKeepNote className="mt-3 text-[11px] text-amber" /> : null}
+      {!canSave ? <CantKeepNote className="mt-3 text-body text-amber" /> : null}
 
       {forks.length > 1 ? (
         <div className="mt-4">
@@ -83,7 +83,7 @@ export function CompareEndings({
                 type="button"
                 aria-pressed={view?.forkId === fork.id}
                 onClick={() => onPickFork(fork.id)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                className={`rounded-full border px-2.5 py-1 text-body ${
                   view?.forkId === fork.id ? "border-maple text-paper" : "border-rule text-stone hover:bg-ink2"
                 }`}
               >
@@ -95,19 +95,19 @@ export function CompareEndings({
       ) : null}
 
       {view === null ? (
-        <p className="mt-4 text-[12px] text-stone">{words.compare.noForks}</p>
+        <p className="mt-4 text-body text-stone">{words.compare.noForks}</p>
       ) : (
         <div className="mt-4 space-y-3">
-          <p className="text-[12px] text-paper-dim">
+          <p className="text-body text-paper-dim">
             {view.picked === null
               ? words.compare.nonePicked
               : view.picked.byPerson
                 ? words.compare.yourPick(sideLabel(view.picked.stepId))
                 : words.compare.mapDefault(sideLabel(view.picked.stepId))}
           </p>
-          <p className="text-[11px] text-stone">{words.compare.order}</p>
+          <p className="text-body text-stone">{words.compare.order}</p>
           {receipt ? <ReceiptLines lines={receipt} /> : null}
-          {view.sameOnEveryRow ? <p className="text-[11px] text-stone">{words.compare.noRowDiffers}</p> : null}
+          {view.sameOnEveryRow ? <p className="text-body text-stone">{words.compare.noRowDiffers}</p> : null}
           <table className="w-full table-fixed border-collapse">
             <thead>
               <tr>
@@ -116,7 +116,7 @@ export function CompareEndings({
                   <th key={side.stepId} scope="col" className={columnHead}>
                     {side.label}
                     {side.toggleLabel ? (
-                      <span className="mt-0.5 block font-mono text-[10px] font-normal text-stone">{words.compare.onTheMap(side.toggleLabel)}</span>
+                      <span className="mt-0.5 block font-mono text-small font-normal text-stone">{words.compare.onTheMap(side.toggleLabel)}</span>
                     ) : null}
                   </th>
                 ))}
@@ -125,7 +125,7 @@ export function CompareEndings({
             <tbody>
               {view.rows.map((row) => (
                 <tr key={row.id}>
-                  <th scope="row" className="border-b border-rule-soft py-1.5 pr-2 text-left align-top text-[11px] font-normal text-stone">
+                  <th scope="row" className="border-b border-rule-soft py-1.5 pr-2 text-left align-top text-body font-normal text-stone">
                     {row.label}
                   </th>
                   {row.values.map((value, i) => (
@@ -148,7 +148,7 @@ export function CompareEndings({
                         disabled={!canSave}
                         // The pressed one is already the person's: pressing it again changes nothing.
                         onClick={() => (mine ? undefined : onThisIsMine(side.stepId))}
-                        className="rounded-full border border-rule px-2.5 py-1 font-sans text-[11px] text-paper hover:bg-ink2 disabled:opacity-50 aria-pressed:border-maple"
+                        className="rounded-full border border-rule px-2.5 py-1 font-sans text-body text-paper hover:bg-ink2 disabled:opacity-50 aria-pressed:border-maple"
                       >
                         {words.compare.thisIsMine}
                       </button>

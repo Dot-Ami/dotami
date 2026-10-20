@@ -37,7 +37,10 @@ export interface FoldControls {
   dismissCoach: () => void;
 }
 
-/** Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. */
+/**
+ * Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. The
+ * value is the region, or several separated by spaces: the Look closer menu shows the legend and the what-if bar.
+ */
 export const FOLD_CONTROL = "data-fold-control";
 
 /**
@@ -73,10 +76,15 @@ export function useFolds(remember = true): FoldControls {
     const region = focusAfter.current;
     if (!region) return;
     focusAfter.current = null;
-    const drawn = [...document.querySelectorAll<HTMLElement>(`[${FOLD_CONTROL}="${region}"]`)].find(
+    const drawn = [...document.querySelectorAll<HTMLElement>(`[${FOLD_CONTROL}~="${region}"]`)].find(
       (el) => el.getClientRects().length > 0,
     );
-    drawn?.focus();
+    // Folding the legend or the what-if bar sends focus up to Look closer in the goal bar (2026-10-20). On a
+    // phone the whole page scrolls and those two sit under the road, so moving focus there would also scroll
+    // the page back up to the goal bar, away from where the person was reading (a review, 2026-10-20): focus
+    // moves without scrolling. Showing either still scrolls to its fold button, so the region comes into view.
+    const underTheMap = region === "legend" || region === "whatIf";
+    drawn?.focus(underTheMap && folds[region] ? { preventScroll: true } : undefined);
   }, [folds]);
 
   const toggle = useCallback(
@@ -136,7 +144,7 @@ export function FoldButton({
       {...(region ? { [FOLD_CONTROL]: region } : {})}
       onClick={onClick}
       // At least 32 px tall on a phone, where it is pressed with a finger.
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full border border-rule px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.08em] text-stone transition hover:border-spruce-line hover:text-paper max-md:min-h-8 ${className}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border border-rule px-2 py-0.5 font-mono text-label uppercase tracking-[0.08em] text-stone transition hover:border-spruce-line hover:text-paper max-md:min-h-8 ${className}`}
     >
       <span aria-hidden>{folded ? "+" : "−"}</span>
       {label}
@@ -166,7 +174,7 @@ export function FoldedStrip({
       aria-controls={controls}
       {...{ [FOLD_CONTROL]: region }}
       onClick={onClick}
-      className="flex h-full w-full items-start justify-center px-1 py-4 font-mono text-[10px] uppercase tracking-[0.12em] text-stone transition hover:bg-ink2 hover:text-paper"
+      className="flex h-full w-full items-start justify-center px-1 py-4 font-mono text-small uppercase tracking-[0.12em] text-stone transition hover:bg-ink2 hover:text-paper"
     >
       <span className="[writing-mode:vertical-rl]">
         <span aria-hidden>+ </span>
@@ -199,7 +207,7 @@ export function FoldedBar({
       aria-controls={controls}
       {...{ [FOLD_CONTROL]: region }}
       onClick={onClick}
-      className="flex h-11 w-full items-center justify-center gap-1 truncate px-3 font-mono text-[10px] uppercase tracking-[0.08em] text-stone transition hover:bg-ink2 hover:text-paper"
+      className="flex h-11 w-full items-center justify-center gap-1 truncate px-3 font-mono text-small uppercase tracking-[0.08em] text-stone transition hover:bg-ink2 hover:text-paper"
     >
       <span aria-hidden>+</span>
       {label}
