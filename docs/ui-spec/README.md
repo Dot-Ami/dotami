@@ -41,7 +41,8 @@ first visit until *Got it*; the road; the legend and the what-if bar while open;
 while it holds something; the site's footer; and the example's banner on Mara's page. The header and the goal
 bar share one strip, and the overlay row, the map and *Next on your road* one column, but each is a block a
 person takes in on its own, so each keeps its own mark. A first visit folds the legend, the what-if bar and the
-road's later columns to one button each: 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
+road's later columns to one button each (since 2026-10-20 the legend's and the what-if bar's are items of the
+goal bar's *Look closer* menu, two controls fewer): 8 regions from 768 px and 7 on a phone (9 and 8 before), one fewer
 once the coach line is put away ([cockpit/12-folding-and-phone.md](cockpit/12-folding-and-phone.md)). For a
 few hours on 2026-10-17 the strip and the column were each counted as one region, which read as 4 and 3; a
 review found the blocks still drawn and the rule's own definition unchanged, so the marks went back.

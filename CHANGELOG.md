@@ -82,6 +82,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   every file in `components/cockpit/` and fails on a sentence or label written there, with one allowance it
   explains: the legend's *Compass, not GPS — nothing here is a recommendation*, which the strict verdict-word
   list refuses even as a denial and the map's recordings hold word for word.
+- **Show the legend and Show the what-if bar are in the goal bar's Look closer menu** (the maintainer's pick,
+  2026-10-20). With the larger text, the two buttons at the end of *Next on your road* were pushed under the
+  window's edge on Mara's example at laptop size; brought back into view, they took that screen to 23 controls
+  against its limit of 21, and the limits only go down. They are now items of *Look closer*, listed while each
+  is folded, so every road's first view has two controls fewer; the folded goal bar's one line carries the menu
+  too, and folding either again puts keyboard focus back on *Look closer*. *Next on your road* still says *Your
+  what-if, not a forecast* and its number while the what-if bar is folded and a what-if is on.
 - **A calm first view of your future: the road first, everything else one click away** (S2.5.30c, the
   maintainer's pick of 2026-10-17, after *"there's a LOT on the screen"*; the designed first visit of
   [docs/architecture/future-cockpit.md](docs/architecture/future-cockpit.md) § 2). A first visit to the cockpit

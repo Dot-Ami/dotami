@@ -14,8 +14,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GoalBar } from "@/components/cockpit/goal-bar";
 import { OverlaySwitches } from "@/components/cockpit/overlay-switches";
-import { roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
-import { THIS_VISIT_ID, WHAT_IF_BAR_ID, WhatIfBar, WhatIfShowButton } from "@/components/cockpit/what-if-bar";
+import { LEGEND_ID, roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
+import { LookCloserMenu, type LookCloserItem } from "@/components/cockpit/look-closer-menu";
+import { THIS_VISIT_ID, WHAT_IF_BAR_ID, WhatIfBar, WhatIfOnNote } from "@/components/cockpit/what-if-bar";
 import {
   ALL_FOLDED,
   ALL_OPEN,
@@ -303,7 +304,7 @@ describe("the map's legend folds, in the cockpit only", () => {
     expect(html).toContain(`role="group" aria-label="${words.legend.title}"`);
   });
 
-  it("folded: the whole legend stays on the page, hidden, not removed; its show button is the cockpit's, in the road's foot line", () => {
+  it("folded: the whole legend stays on the page, hidden, not removed; it is shown from the goal bar's Look closer menu", () => {
     const html = draw({ legendFolded: true, onToggleLegend: () => {} });
     // Its fold button is inside the hidden legend, not drawn.
     expect(html).not.toContain(`>${words.legend.show}<`);
@@ -359,27 +360,19 @@ describe("the what-if bar folds, with This visit, to one line (2026-10-13)", () 
     expect(html).not.toContain('hidden=""');
   });
 
-  it("folded: the whole bar, the Try box and This visit stay on the page, hidden; its show button is in the road's foot line", () => {
+  it("folded: the whole bar, the Try box and This visit stay on the page, hidden; it is shown from the goal bar's Look closer menu", () => {
     const html = draw(null, { folded: true, onToggle: noop });
     // Its fold button is inside the hidden bar, not drawn.
     expect(html).not.toContain(`>${words.whatIf.show}<`);
     expect(html).toMatch(new RegExp(`<section data-region="what-if"[^>]*hidden=""[^>]*>.*<div id="${WHAT_IF_BAR_ID}"[^>]*>.*Try first-year sales of \\$`));
     expect(html).toMatch(new RegExp(`<section id="${THIS_VISIT_ID}" hidden=""[^>]*>.*A receipt line \\(invented\\)\\.`));
-    // The show button the cockpit draws in its place names the bar and This visit.
-    const show = renderToStaticMarkup(createElement(WhatIfShowButton, { whatIf: null, hasThisVisit: true, onShow: noop }));
-    expect(show).toContain(`>${words.whatIf.show}<`);
-    expect(show).toContain('aria-expanded="false"');
-    expect(show).toContain(`aria-controls="${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}"`);
-    expect(show).toContain('data-fold-control="whatIf"');
   });
 
-  it("folded while a what-if is on, the show button still says it is a what-if, and its number", () => {
-    const show = renderToStaticMarkup(createElement(WhatIfShowButton, { whatIf: 45_000, hasThisVisit: false, onShow: noop }));
-    expect(show).toContain(cockpitWords.whatIf.banner);
-    expect(show).toContain(cockpitWords.whatIf.on(45_000));
-    expect(renderToStaticMarkup(createElement(WhatIfShowButton, { whatIf: null, hasThisVisit: false, onShow: noop }))).not.toContain(
-      cockpitWords.whatIf.banner,
-    );
+  it("folded while a what-if is on, the road's foot line still says it is a what-if, and its number, with nothing to press", () => {
+    const note = renderToStaticMarkup(createElement(WhatIfOnNote, { whatIf: 45_000 }));
+    expect(note).toContain(cockpitWords.whatIf.banner);
+    expect(note).toContain(cockpitWords.whatIf.on(45_000));
+    expect(note).not.toContain("<button");
     // Open, the banner is said once, in the bar itself.
     const open = draw(45_000, { folded: false, onToggle: noop });
     expect(open.split(cockpitWords.whatIf.banner).length - 1).toBe(1);
@@ -438,7 +431,13 @@ describe("every overlay switch is drawn, on or off (a review of the calm first v
 });
 
 describe("the goal bar's Look closer menu (the calm first view, 2026-10-17)", () => {
-  const draw = (opts: { onCompare?: () => void; onLandscape?: () => void }) =>
+  const draw = (opts: {
+    onCompare?: () => void;
+    onLandscape?: () => void;
+    toShow?: readonly LookCloserItem[];
+    folded?: boolean;
+    onToggleFold?: () => void;
+  }) =>
     renderToStaticMarkup(
       createElement(GoalBar, {
         road: roadToEvaluate(),
@@ -471,5 +470,37 @@ describe("the goal bar's Look closer menu (the calm first view, 2026-10-17)", ()
     const html = draw({ onLandscape: () => {} });
     expect(html.match(/data-region="/g)?.length).toBe(1);
     expect(html).toContain('data-region="goal-bar"');
+  });
+
+  // The maintainer's pick (2026-10-20): the folded legend's and what-if bar's buttons moved here from the end of
+  // Next on your road, two controls fewer on the first view, so the screens stay within their clutter limits.
+  const toShow: LookCloserItem[] = [
+    { id: "legend", label: words.legend.show, controls: LEGEND_ID, shows: "legend", onSelect: () => {} },
+    { id: "what-if", label: words.whatIf.show, controls: `${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}`, shows: "whatIf", onSelect: () => {} },
+  ];
+
+  it("also shows the folded legend and what-if bar (2026-10-20), and its button marks both regions so focus can come back to it", () => {
+    const html = draw({ onLandscape: () => {}, toShow });
+    // Still one control while closed: the items aren't drawn.
+    expect(html.match(/aria-haspopup="menu"/g)?.length).toBe(1);
+    expect(html).not.toContain(`>${words.legend.show}<`);
+    expect(html).not.toContain(`>${words.whatIf.show}<`);
+    // Folding either again from its own button finds the menu (components/cockpit/folding.tsx, `~=`).
+    expect(html).toContain('data-fold-control="legend whatIf"');
+    // With nothing folded under the map, the menu marks no region.
+    expect(draw({ onLandscape: () => {} })).not.toContain("data-fold-control");
+  });
+
+  it("is drawn for them even with no panel item to list", () => {
+    expect(draw({ toShow })).toContain(cockpitWords.goal.lookCloser);
+    expect(renderToStaticMarkup(createElement(LookCloserMenu, { items: toShow }))).toContain('aria-haspopup="menu"');
+  });
+
+  it("is in the folded goal bar's one line too, so the legend and the what-if bar are never more than the menu away", () => {
+    const html = draw({ onLandscape: () => {}, toShow, folded: true, onToggleFold: () => {} });
+    const line = html.split(/<div[^>]*hidden=""/)[0]!;
+    expect(line).toContain(cockpitWords.goal.lookCloser);
+    expect(line).toContain('data-fold-control="legend whatIf"');
+    expect(line).toContain(`>${words.goal.show}<`);
   });
 });

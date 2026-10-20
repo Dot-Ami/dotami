@@ -17,7 +17,7 @@ import { TemplatesRail } from "@/components/cockpit/templates-rail";
 import { LEGEND_ID, roadAheadColumnIds, StrategyMap } from "@/components/cockpit/strategy-map";
 import { QuestionBox, ToldList, type BoxControl } from "@/components/cockpit/told-list";
 import { useCockpitData, type KeptForIdea } from "@/components/cockpit/use-cockpit-data";
-import { WHAT_IF_BAR_ID, WhatIfBar, WhatIfShowButton } from "@/components/cockpit/what-if-bar";
+import { THIS_VISIT_ID, WHAT_IF_BAR_ID, WhatIfBar, WhatIfOnNote } from "@/components/cockpit/what-if-bar";
 import type { ShownReceipt } from "@/components/cockpit/receipt-lines";
 import { useJourney } from "@/components/shared/journey-provider";
 import { PersonStatements } from "@/components/shared/person-statements";
@@ -119,8 +119,9 @@ import Link from "next/link";
  * folds everything else one click away (the rail, the legend, the what-if bar, the road ahead), with only
  * Road and Skills on (every overlay switch drawn) and one coach line; a return visit opens as the person left it, the
  * overlays included (lib/cockpit/folds.ts). The goal bar's Compare and Others in this line of work share one
- * Look closer menu. The folded legend and what-if bar keep their one button each at the end of Next on your
- * road. Every block still drawn is a region of its own for the clutter limit (the header, the goal bar, the
+ * Look closer menu. The folded legend and what-if bar were shown from one button each at the end of Next on
+ * your road; since 2026-10-20 they are shown from Look closer too, two controls fewer on the first view (the
+ * maintainer's pick, so the screens stay within their clutter limits). Every block still drawn is a region of its own for the clutter limit (the header, the goal bar, the
  * overlay switches, the coach line, the road, Next on your road), as the layout rule defines a region.
  */
 
@@ -980,6 +981,23 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
             onToggleFold={() => toggle("goal")}
             person={example?.person ?? null}
             targetFrom={targetFrom}
+            // What folds under the map, shown from Look closer while folded (2026-10-20).
+            toShow={[
+              ...(folds.legend
+                ? [{ id: "legend", label: words.folds.legend.show, controls: LEGEND_ID, shows: "legend" as const, onSelect: () => toggle("legend") }]
+                : []),
+              ...(folds.whatIf
+                ? [
+                    {
+                      id: "what-if",
+                      label: words.folds.whatIf.show,
+                      controls: thisVisit.length > 0 ? `${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}` : WHAT_IF_BAR_ID,
+                      shows: "whatIf" as const,
+                      onSelect: () => toggle("whatIf"),
+                    },
+                  ]
+                : []),
+            ]}
           />
         ) : null}
       </div>
@@ -1231,18 +1249,9 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
                 evaluation={evaluation}
                 scenario={scenario}
                 onSelectStep={openStep}
-                after={
-                  folds.legend || folds.whatIf ? (
-                    <>
-                      {folds.legend ? (
-                        <FoldButton folded region="legend" label={words.folds.legend.show} controls={LEGEND_ID} onClick={() => toggle("legend")} />
-                      ) : null}
-                      {folds.whatIf ? (
-                        <WhatIfShowButton whatIf={whatIf} hasThisVisit={thisVisit.length > 0} onShow={() => toggle("whatIf")} />
-                      ) : null}
-                    </>
-                  ) : null
-                }
+                // The folded what-if bar's note: the map is still relit by a what-if that is on. Its show
+                // button is in Look closer (2026-10-20).
+                after={folds.whatIf && whatIf !== null ? <WhatIfOnNote whatIf={whatIf} /> : null}
               />
             </div>
           ) : null}

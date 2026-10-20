@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
+import { FOLD_CONTROL } from "@/components/cockpit/folding";
+import type { FoldRegion } from "@/lib/cockpit/folds";
 import { cockpitWords as words } from "@/lib/cockpit/words";
 
 /**
@@ -9,6 +11,12 @@ import { cockpitWords as words } from "@/lib/cockpit/words";
  * the goal bar can open in the right-hand panel, where each used to be a button of its own. Today *Compare
  * the two endings* (only on a road with a fork whose own pick moves steps) and *Others in this line of work*;
  * *About this job* joins it later (docs/architecture/research-kit.md § 4.2).
+ *
+ * Since 2026-10-20 it also shows what folds under the map on a first visit, the legend and the what-if bar,
+ * whose one button each sat at the end of Next on your road (the maintainer's pick: a calmer screen instead
+ * of a higher clutter limit). Each is listed only while folded, as its button was drawn only then. Folding
+ * one of them again from its own fold button puts focus back here: the menu button carries the fold
+ * regions it can show, the way every fold control marks its region (components/cockpit/folding.tsx).
  *
  * The WAI-ARIA menu button pattern: the button says it has a menu and whether it is open; Enter, Space or
  * the down arrow opens it on its first item, the up arrow on its last; inside, the arrows, Home and End move
@@ -20,6 +28,10 @@ export interface LookCloserItem {
   id: string;
   label: string;
   onSelect: () => void;
+  /** The ids of what the item shows, for the item's aria-controls. */
+  controls?: string;
+  /** The fold region the item shows (the legend, the what-if bar), so focus can come back to the menu. */
+  shows?: FoldRegion;
 }
 
 export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) {
@@ -52,6 +64,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
   }, [open]);
 
   if (items.length === 0) return null;
+  const shows = items.flatMap((item) => (item.shows ? [item.shows] : []));
 
   function openAt(where: "first" | "last") {
     setFocusOnOpen(where);
@@ -104,6 +117,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
         aria-controls={open ? menuId : undefined}
         onClick={() => (open ? close(false) : openAt("first"))}
         onKeyDown={onButtonKey}
+        {...(shows.length > 0 ? { [FOLD_CONTROL]: shows.join(" ") } : {})}
         className="inline-flex items-center gap-1 rounded-full border border-rule px-2 py-0 text-body text-paper-dim hover:bg-ink max-md:min-h-8"
       >
         {words.goal.lookCloser}
@@ -127,6 +141,7 @@ export function LookCloserMenu({ items }: { items: readonly LookCloserItem[] }) 
               type="button"
               role="menuitem"
               tabIndex={-1}
+              aria-controls={item.controls}
               onClick={() => {
                 close(true);
                 item.onSelect();

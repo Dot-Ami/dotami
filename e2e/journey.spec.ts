@@ -258,8 +258,8 @@ test("the whole journey: front door → destination → pick a future → the co
   await expect(legendLine).toBeVisible();
   await button(page, "Fold the legend").click();
   await expect(legendLine).toBeHidden();
-  await expect(button(page, "Show the legend")).toHaveAttribute("aria-expanded", "false");
-  await button(page, "Show the legend").click();
+  // Shown again from the goal bar's Look closer menu (2026-10-20).
+  await lookCloser(page, "Show the legend");
   await expect(legendLine).toBeVisible();
 
   // ---- Your plan, from Export: every section, with what was just done in it.

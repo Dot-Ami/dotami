@@ -37,7 +37,10 @@ export interface FoldControls {
   dismissCoach: () => void;
 }
 
-/** Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. */
+/**
+ * Marks every button that folds or shows a region, so focus can follow the person to the one now drawn. The
+ * value is the region, or several separated by spaces: the Look closer menu shows the legend and the what-if bar.
+ */
 export const FOLD_CONTROL = "data-fold-control";
 
 /**
@@ -73,7 +76,7 @@ export function useFolds(remember = true): FoldControls {
     const region = focusAfter.current;
     if (!region) return;
     focusAfter.current = null;
-    const drawn = [...document.querySelectorAll<HTMLElement>(`[${FOLD_CONTROL}="${region}"]`)].find(
+    const drawn = [...document.querySelectorAll<HTMLElement>(`[${FOLD_CONTROL}~="${region}"]`)].find(
       (el) => el.getClientRects().length > 0,
     );
     drawn?.focus();

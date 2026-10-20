@@ -33,6 +33,9 @@ export const THIS_VISIT_ID = "cockpit-this-visit";
  * whole bar stays on the page, hidden, and the cockpit draws `WhatIfShowButton` in the road's bottom line,
  * under the map where the bar was, still saying while a what-if is on that it is one, and its number. Open,
  * the bar is a region of its own again.
+ *
+ * 2026-10-20: the button moved into the goal bar's Look closer menu (the maintainer's pick, so the screens
+ * stay within their clutter limits); the road's bottom line keeps `WhatIfOnNote`, the banner and number.
  */
 export function WhatIfBar({
   whatIf,
@@ -168,25 +171,15 @@ export function WhatIfBar({
 }
 
 /**
- * The folded what-if bar's way back (the calm first view, 2026-10-17): one button in the road's bottom line.
- * While a what-if is on, the map is still relit by it, so the button says so, banner and number.
+ * The folded what-if bar's note in the road's bottom line (the calm first view, 2026-10-17; its show button
+ * is in the goal bar's Look closer menu since 2026-10-20): while a what-if is on, the map is still relit by
+ * it, so the line says so, banner and number. Nothing to press, so it adds no control to the first view.
  */
-export function WhatIfShowButton({ whatIf, hasThisVisit, onShow }: { whatIf: number | null; hasThisVisit: boolean; onShow: () => void }) {
+export function WhatIfOnNote({ whatIf }: { whatIf: number }) {
   return (
     <>
-      <FoldButton
-        folded
-        region="whatIf"
-        label={words.folds.whatIf.show}
-        controls={hasThisVisit ? `${WHAT_IF_BAR_ID} ${THIS_VISIT_ID}` : WHAT_IF_BAR_ID}
-        onClick={onShow}
-      />
-      {whatIf !== null ? (
-        <>
-          <span className="font-mono text-small uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
-          <span className="text-body text-paper-dim">{words.whatIf.on(whatIf)}</span>
-        </>
-      ) : null}
+      <span className="font-mono text-small uppercase tracking-[0.12em] text-amber">{words.whatIf.banner}</span>
+      <span className="text-body text-paper-dim">{words.whatIf.on(whatIf)}</span>
     </>
   );
 }

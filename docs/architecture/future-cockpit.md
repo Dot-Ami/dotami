@@ -434,7 +434,11 @@ road, the goal and the next steps, with everything else folded one click away. N
 - **Folded means one button, not a line.** The folded legend and what-if bar are hidden whole, each with its
   *Show* button at the end of *Next on your road*, under the map where they were (while a what-if is on,
   that button is followed by *Your what-if, not a forecast* and its number). The folded road ahead is one
-  column naming the later columns.
+  column naming the later columns. **Since 2026-10-20** the legend's and the what-if bar's *Show* buttons are
+  items of *Look closer* instead, listed while each is folded, and the folded goal bar's one line carries the
+  menu too: with both buttons in view, Mara's example at 1280 × 720 counted 23 controls on its first screen
+  against a limit of 21, and the maintainer picked a calmer screen over a higher limit. *Next on your road*
+  keeps only the what-if note.
 - **The overlay switches don't fold.** For a few hours on 2026-10-17 Money and Rules & tax folded behind
   *Show more layers*. A review found that this put the rules and tax cards, on by default until that day,
   two clicks away, and that a switch left the page when it was switched off with the layers folded, taking
