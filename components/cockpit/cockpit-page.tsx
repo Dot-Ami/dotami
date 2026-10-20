@@ -911,9 +911,15 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         inert={behindSheet}
         className="grid h-[52px] grid-cols-[auto_minmax(0,1fr)_auto] border-b border-rule-soft md:grid-cols-[240px_minmax(0,1fr)_auto]"
       >
-        <div className="flex min-w-0 items-center gap-3 border-r border-rule px-4 md:gap-[18px] md:px-[22px]">
-          {/* The example has no saved futures behind it: its way back is the front door it came from. */}
-          <Link href={isExample ? "/" : "/ventures"} className="font-mono text-body text-stone transition hover:text-paper">
+        <div className="flex min-w-0 items-center gap-3 border-r border-rule px-3 md:gap-[18px] md:px-[22px]">
+          {/* The example has no saved futures behind it: its way back is the front door it came from. Below
+              768 px the link wraps onto two lines ("← Your" / "futures"): on one line at body size it took the
+              width the idea's name needs, and a 375 px phone drew no name at all (the type scale's review,
+              2026-10-19). A grid's auto column takes its content's full width before the name's 1fr gets any. */}
+          <Link
+            href={isExample ? "/" : "/ventures"}
+            className="font-mono text-body text-stone transition hover:text-paper max-md:max-w-[9ch]"
+          >
             {isExample ? words.example.back : words.header.back}
           </Link>
           {/* Below 768 px the header keeps the idea's name and its buttons; the word mark gives way. */}

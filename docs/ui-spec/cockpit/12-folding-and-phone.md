@@ -28,7 +28,8 @@ the what-if bar, below); 2026-10-13 (the what-if bar folds too); built 2026-10-1
 >   a stored `layers` answer is read as nothing.)
 > - **The legend and the what-if bar fold to a button, not a line.** Folded, each is hidden whole, and its
 >   **Show the legend** / **Show the what-if bar** button sits at the end of *Next on your road*, the
->   road's foot line, under the map where they were. While a what-if is on, *Show the what-if bar* is
+>   road's foot line, under the map where they were (from 1024 px, since 2026-10-19, at the right of its
+>   heading, above the steps: [11-next-on-your-road.md](./11-next-on-your-road.md)). While a what-if is on, *Show the what-if bar* is
 >   followed by *Your what-if, not a forecast* and its number. Open, each has its fold button where it was.
 > - **Remembered too:** the overlays last on, and the coach line put away (below). An answer stored before
 >   2026-10-17 has no `roadAhead`, which reads as open, so a person who had everything open

@@ -10,6 +10,8 @@ Last updated: 2026-10-12 (built; docs/architecture/future-cockpit.md § 2, Cockp
 
 > **Changed 2026-10-17 — the calm first view (S2.5.30c).** The line is the foot of the road's column, still a region of its own for the clutter limit. After the steps it carries **Show the legend** and **Show the what-if bar** while those are folded (both are on a first visit), under the map where they were ([12-folding-and-phone.md](./12-folding-and-phone.md)).
 
+> **Changed 2026-10-19 — the type scale's review (S2.5.30d).** From 1024 px those buttons sit at the right of the heading, and the steps have the row under it to themselves. With the steps at body size (13 px), three long step names filled the row and pushed the buttons to a line of their own below it: on Mara's example at 1280 × 720 that line was under the window's edge, 5 px of the buttons showing. Below 1024 px the line wraps as before (heading, steps, buttons). The page's order is unchanged either way, so a keyboard reaches the steps before the buttons.
+
 ## What it is
 
 A strip under the map, a region named *Next on your road*: the heading *Next on your road · the order

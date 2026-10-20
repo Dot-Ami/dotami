@@ -134,11 +134,17 @@ export const BASELINE: ClutterTable = {
  *
  * Chromium on Windows, with those values (the full browser suite, 2026-10-19): regions, text sizes and the
  * smallest text as budgeted on every screen, and controls in the first window within the budget everywhere,
- * under it at eight sizes: the front door 10 on a tablet (the strip above the site footer, as before the
+ * under it at seven sizes: the front door 10 on a tablet (the strip above the site footer, as before the
  * scale), and, the larger body text pushing the last of them below the window, Your futures 9 on a phone and
- * 13 on a laptop, Mara's example 25 on a tablet, the cockpit on road 0 17, 31 and 28, and on road 1 26 on a
- * tablet. The budgets are the gate's numbers, measured on Ubuntu, so they are lowered from a CI run's, not
- * from these.
+ * 13 on a laptop, Mara's example 25 on a tablet, the cockpit on road 0 17 and 31, and on road 1 26 on a
+ * tablet; Mara's example on a laptop counts 23, as before the scale (`WINDOWS_EXTRA`). The budgets are the
+ * gate's numbers, measured on Ubuntu, so they are lowered from a CI run's, not from these.
+ *
+ * The same review (2026-10-19) found the scale's first count of 21 there on Windows came from two buttons
+ * cut off, not a calmer screen: Next on your road's three step names, at body size, filled their row and
+ * pushed **Show the legend** and **Show the what-if bar** to a line under the window's edge, 5 px showing.
+ * From 1024 px those buttons now sit at the right of the line's heading (components/cockpit/next-on-your-road.tsx),
+ * so they show again and count again, and on road 0 the line is one row shorter (29 on a laptop, was 28).
  */
 export const BUDGETS: ClutterTable = {
   "front-door": { phone: m(4, 7, 6, 9.5), tablet: m(4, 11, 6, 9.5), laptop: m(4, 11, 6, 9.5) },
@@ -165,8 +171,12 @@ export type Extra = Partial<Pick<Clutter, "regions" | "controls" | "textSizes">>
  * Emptied on 2026-10-17: the one difference then (road 1 at laptop size, 30 controls on Windows and 27 on
  * Ubuntu) was three road cards showing only a sliver of their edge on Windows, which no longer count.
  *
- * Emptied again on 2026-10-19: after the calm first view Mara's example at laptop size counted 23 controls
- * on Windows and 21 on Ubuntu (CI run 39077075677), Windows' text wrapping a little shorter in the goal bar;
- * with the type scale's body text Windows counts 21 there, within the budget, so its line is out.
+ * Mara's example at laptop size, since the calm first view (2026-10-17): 23 controls on Windows, 21 on Ubuntu
+ * (CI run 39077075677). Windows' text wraps a little shorter in the goal bar, so the road starts higher and
+ * two more of its cards show enough to count. (For a few hours on 2026-10-19 the type scale took this line
+ * out, counting 21 on Windows; that count was two of Next on your road's buttons pushed below the window, and
+ * with them back in view it is 23 again.)
  */
-export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {};
+export const WINDOWS_EXTRA: Partial<Record<ScreenId, Partial<Record<WidthId, Extra>>>> = {
+  "example-mara": { laptop: { controls: 2 } },
+};

@@ -3,6 +3,8 @@
 > **S2.5.4h (2026-09-14) — removed.** Tabs, fork chips, Lens, Focus and ? are removed; the header is Back · wordmark · venture name · Export. The behaviour below is the pre-cut record, kept for reference; the shipped surface is described in `CLAUDE.md` § What the app is.
 >
 > **Corrected 2026-10-11 — the back link.** This banner said the header starts with "Back". The shipped header (read in `components/cockpit/cockpit-page.tsx` on 2026-10-11) starts with **"← Ideas"**, a link to `/ventures`; the only "← Back" is on the empty state shown with no saved venture, and it goes to `/`.
+>
+> **Changed 2026-10-19 — the type scale's review (S2.5.30d).** The back link (**← Your futures**, or **← Front door** on Mara's example) is body size, 13 px, up from 11. Below 768 px it wraps onto two lines (*← Your* / *futures*) and the header's left cell is 12 px in from the edge, not 16: on one line it took the width the idea's name needs, and at 375 px the header was 9 px wider than the window with no name drawn (a sliver of one letter on the example). Now the name keeps 38 px there (30 px before the type scale).
 
 Page: Cockpit (`/cockpit`) · Component: `components/cockpit/cockpit-page.tsx`
 Type: nav + tab group + chip strip + button group
