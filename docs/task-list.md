@@ -312,7 +312,8 @@ and the maintainer's six decisions of 2026-10-11:
     `SCREEN_GAPS`, never fixed quietly. Two on 2026-10-19, both the maintainer's call: *Your destination*'s
     first question says "In a few years" (the front door's known gap, in a file the words scan doesn't read);
     and a first visit with the person's words kept shows them in a 13th text size (17 px) against the cockpit's
-    budget of 12, measured on a visit with no words
+    budget of 12, measured on a visit with no words (gone with the type scale, 2026-10-20: the words are the
+    title size, one of the six, and the cockpit counts 5 sizes either way; taken out of `SCREEN_GAPS`)
   - [x] 29f: `npm run eval:intent` (`scripts/eval-intent.mjs`), the AI parser on the developer's own key, scored
     against the corpus (kinds of work, province, buying equipment), a table and `test-results/intent-eval.md`;
     refuses to run without a key, exits at once in CI, not in `npm test`; `--fallback` scores the keyword

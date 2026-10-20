@@ -130,8 +130,6 @@ interface ScreenGap {
 }
 
 const isProvince = (place: string): place is Province => (PROVINCES as readonly string[]).includes(place);
-/** An idea Pick a future takes to the cockpit with the person's own words kept on Your destination. */
-const pickedWithWords = (idea: Idea) => isProvince(idea.place) && idea.words.trim().length > 0;
 
 /**
  * A finding of the sweep the maintainer has been told about: a screen's words or a measure, with its story.
@@ -145,14 +143,10 @@ export const SCREEN_GAPS: readonly ScreenGap[] = [
     story: "none yet: found by S2.5.29e on 2026-10-19, the maintainer's call",
     why: "Your destination's first question (lib/front-door/questions.ts, `ask`) says “In a few years, what do you want your work and life to look like?”: the same span of time as the front door's first door, which tests/fixtures/ideas/known-gaps.ts lists. The words-file scan (tests/idea-invariants.spec.ts) doesn't read the questions file, so only the sweep sees this one. Whether it breaks “no times at all” (2026-10-17) is the maintainer's call, the same call as the front door's.",
   },
-  {
-    // The road's label can hold brackets of its own ("… (tax and structure)").
-    screen: /› cockpit \(picked by [a-z-]+, .+\), the first visit as it opens$/,
-    found: /^clutter: 13 text sizes, budget 12 \(8\.5, 9, 9\.5, 10, 10\.5, 11, 11\.5, 12, 13, 14, 15, 17, 18 px\)$/,
-    expectedFor: pickedWithWords,
-    story: "none yet: found by S2.5.29e on 2026-10-19, the maintainer's call (the budgets only go down)",
-    why: "The cockpit's budget of 12 text sizes (e2e/budgets.ts) was measured on a first visit by a person who answered Your destination with “I don't know yet”, so the goal bar had no words of theirs to show. A person who kept their words sees them in the goal bar in a 13th size, 17 px serif italic (components/cockpit/goal-bar.tsx, `shownWords`; a typed idea's first sentence is drawn the same way). Nothing else differs: regions and controls stay within budget on both roads. The maintainer's call: draw the person's words at one of the sizes already on the screen, or keep the size and say the budget's first visit is the one without words.",
-  },
+  // Taken out on 2026-10-20 with the type scale (S2.5.30d): a first visit with the person's words kept drew
+  // them in a 13th text size (17 px serif italic) against the cockpit's budget of 12, measured on a visit with no
+  // words. The words are now the title size (19 px), one of the six, and the cockpit counts 5 sizes with or
+  // without them (budget 5), so the sweep no longer finds it.
 ];
 
 // --- Reading a screen.
