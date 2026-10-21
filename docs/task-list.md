@@ -60,7 +60,9 @@ file changes; the parked pull request #138 closed with its branch kept; and the 
 (editing your own path, roads for closing, pausing or catching up, and the cockpit's phase 2 pieces, [14b])
 placed in phase 3.
 
-- 🔄 **[14a] Cockpit phase 1 — Look inside one future (Alberta).** About two calendar weeks.
+- 🟡 **[14a] Cockpit phase 1 — Look inside one future (Alberta).** About two calendar weeks. Built and
+  shipped in 0.4.0; the open items below are what's left (corrected 2026-10-20: this line still said
+  "in progress").
   - [x] The design, written before any code ([future-cockpit.md](architecture/future-cockpit.md))
   - [x] Fixes carried in, the first three (#142, 2026-10-11): the uncited $80,000 incorporation
     trigger off the map (the step is now *Incorporating*, cited facts only, lit only while it is the

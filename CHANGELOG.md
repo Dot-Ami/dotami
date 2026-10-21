@@ -194,7 +194,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   area once ([14g]), the test gate's new endings ([14j]), the data check in CI ([14m]), quality numbers
   and the maintainer's walk ([14n]), the screen review ([14k], [13g]) and the release work ([14o]), with
   the maintainer's twelve calls of 2026-10-20. Corrected on the way: [14f], [14h] and [14i] no longer say
-  they wait on calls answered on 2026-10-16; [14j] and [14k] are marked done for phase 1; the cockpit's own
+  they wait on calls answered on 2026-10-16; [14j] and [14k] are marked done for phase 1; [14a] is marked
+  partly done (shipped in 0.4.0, with what's left listed) instead of in progress; the cockpit's own
   phases are called "cockpit phase 1" to "cockpit phase 4", so the cockpit's phase 2 ([14b], now placed in
   the plan's phase 3, its time strip and hours dropped under "no times") no longer reads as the plan's
   phase 2. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
