@@ -10,6 +10,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
+  kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
+  never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
+  equipment on the not-said list: *Not told yet* kept asking, *What you've told DotAmi* didn't list it, and
+  the save dropped it, so after a reload it was gone. Now the answer takes equipment off that list (and only
+  equipment: the kind of venture and the sales targets are still not said), it is saved and read back, the
+  rules and the receipts read it, and *Take back* makes it not said again, as the future was picked
+  (`lib/cockpit/told.ts`, `lib/scenarios/not-said.ts`, `lib/roads/without-answer.ts`). Nothing new is kept:
+  the answer goes where the same answer on any other idea already goes. The idea harness's "bug" entry for
+  it left `tests/fixtures/ideas/known-gaps.ts`.
+
 ## [0.4.1] — 2026-10-20
 
 A calmer first view of your future. The cockpit opens on the road, your goal and your next three steps, with

@@ -16,11 +16,17 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { answerEquipment } from "@/lib/cockpit/told";
 import { createDatabaseClient } from "@/lib/db/client";
 import { ensureVentureFromScenario } from "@/lib/db/ensure-venture-from-scenario";
 import { toStringList } from "@/lib/db/json-list";
+import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import { linkVentures, listVentures, loadVentureScenarioById } from "@/lib/db/ventures";
+import { generalRoadV2026 } from "@/lib/engines/roads/v2026";
+import { firstSaveForPickedFuture, scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { addTypedStatement, listTypedStatements } from "@/lib/person/statements";
+import { withoutIdeaAnswer } from "@/lib/roads";
+import type { Scenario } from "@/lib/scenarios/types";
 import { DEMO_LINK, demoScenarios } from "../prisma/seed-data";
 
 const dbFile = path.join(tmpdir(), `dotami-test-${randomUUID()}.db`);
@@ -79,6 +85,36 @@ describe("database round trip (SQLite)", () => {
 
     await ensureVentureFromScenario(prisma, { ...scenario, state: { ...scenario.state, incorporateAt: null } });
     expect((await loadVentureScenarioById(prisma, ventureId))!.state.incorporateAt ?? null).toBeNull();
+  });
+
+  // The idea harness's bug of 2026-10-17: on a picked future the equipment answer was dropped by the save.
+  it("a picked future's equipment answer, given in the cockpit, is kept, read back, and taken back to not said", async () => {
+    const picked = scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, `picked-${randomUUID()}`);
+    // Saved the way the cockpit's autosave sends it: JSON through the save route's own parser.
+    const save = async (scenario: Scenario) => {
+      const parsed = parseScenarioInput(JSON.parse(JSON.stringify({ scenario })));
+      expect(parsed).not.toBeNull();
+      return ensureVentureFromScenario(prisma, parsed!, firstSaveForPickedFuture(generalRoadV2026, null));
+    };
+    const { ventureId } = await save(picked);
+    const opened = (await loadVentureScenarioById(prisma, ventureId))!;
+    expect(opened.profile.capitalPurchasePlanned).toBeUndefined();
+    expect(opened.profile.notSaid).toEqual(["venture-type", "equipment", "sales-targets"]);
+
+    for (const yes of [true, false]) {
+      await save(answerEquipment(opened, yes));
+      const kept = (await loadVentureScenarioById(prisma, ventureId))!;
+      expect(kept.profile.capitalPurchasePlanned, String(yes)).toBe(yes);
+      // Only equipment is the person's now; the two this way in never asks stay not said.
+      expect(kept.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-targets"]);
+    }
+
+    // Taken back on the told list: not said again, exactly as the future was picked.
+    const answered = (await loadVentureScenarioById(prisma, ventureId))!;
+    await save(withoutIdeaAnswer(answered, "idea:equipment")!);
+    const back = (await loadVentureScenarioById(prisma, ventureId))!;
+    expect(back.profile.capitalPurchasePlanned).toBeUndefined();
+    expect(back.profile).toEqual(opened.profile);
   });
 
   it("saving the same scenario twice updates it instead of adding a second row", async () => {

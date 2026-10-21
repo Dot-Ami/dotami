@@ -1719,7 +1719,8 @@ is mine* pin are **not** added yet: each comes with the screen that asks it, as 
 column. The occupation code's shape waits on the OaSIS import (§ 13). *(2026-10-12: the business / career
 / both answer came with Your destination and Pick a future, as `lookingFor` and `lookingForSetAt`; and
 `notSaid`, the idea's answers a picked future was saved without (`venture-type`, `equipment`,
-`sales-targets`), so nothing reads them as said; § 1, The way in as built.)* *(2026-10-12: the skills pull
+`sales-targets`), so nothing reads them as said; § 1, The way in as built. Since 2026-10-20 an answer to
+the equipment question in the cockpit takes `equipment` off the list, and taking it back puts it on again.)* *(2026-10-12: the skills pull
 request adds the job picked, `Venture.occupationCode` and `occupationPickedAt`; § 6, Skills as built.)*
 
 **The destination (`PersonStatement.kind`).** A new optional column; `destination` marks the
