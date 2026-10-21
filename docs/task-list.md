@@ -276,12 +276,15 @@ and the maintainer's six decisions of 2026-10-11:
   [architecture/lens-comparisons.md](architecture/lens-comparisons.md) § 10.
   2026-10-17, the maintainer: no times anywhere, and the Lens may state a number only when it comes from
   DotAmi, a cost link it found or its calculator, never made up (§ 6.4; a calculator and a cost-link tool added).
-- ⏸ **[14i] One research kit for every job.** A list of every outside source and its terms, one import
+- 🔄 **[14i] One research kit for every job.** A list of every outside source and its terms, one import
   for the government's job and business data, code keys on every road, and a script that hands whoever
   writes a new road an empty, cited outline, so nothing is built again for each job. Asked for
-  2026-10-15. Design written, nothing built; waiting on the maintainer's nine calls (K1–K9):
+  2026-10-15. Design written; the maintainer's nine calls (K1–K9) answered 2026-10-16:
   [architecture/research-kit.md](architecture/research-kit.md) § 10.
   2026-10-17, the maintainer: "NO TIMES!", so the kit has no typed times and that task is dropped (§ 5.5).
+  - [x] 25b: the source registry, one card per outside source with its terms (`lib/engines/research-kit/v2026/`)
+  - [x] 25c: one import core (`scripts/lib/import-kit.mjs`), with the OaSIS import moved onto it unchanged
+  - [x] 31a: `npm run data:check`, every importer checked offline inside `ci:quality` and CI
 - 🔄 **[14j] Testing any idea (S2.5.29).** The gate every new road and screen passes: a corpus of invented
   ideas run through the app, with invariants a person can read. The maintainer's first pick of 2026-10-17
   (tests plus a calm screen first).

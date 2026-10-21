@@ -16,15 +16,16 @@
 // each file's SHA-256, of its text with the byte-order mark dropped and line endings evened out to "\n",
 // since git may check a file out with Windows line endings. Exit code 0 when it worked (or the check
 // matched), 1 when it didn't, 2 for a usage error.
+//
+// Since 2026-10-20 it is one small adapter on the research kit's import core, scripts/lib/import-kit.mjs, which
+// does the reading, pins, header, --check and --download for every importer. What is left here is OaSIS's own:
+// its files and their pins, and how their rows become the module. The dataset's title, publisher, page, file
+// addresses, licence and credit line come from its card in the source registry ("oasis-2025",
+// lib/engines/research-kit/v2026/registry.ts). --check also checks each file against its pin first.
 
-import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { defineImport, evenText, fingerprint, runIfMain } from "./lib/import-kit.mjs";
 
-const DATASET = "https://open.canada.ca/data/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec/resource";
-/** The dataset's page, where the government says what each file is and when it changed. */
-const DATASET_PAGE = "https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec";
+export { evenText, fingerprint };
 
 /** Where the files are kept, relative to the repo's top folder. */
 export const OASIS_DATA_DIR = "data/oasis-2025-v1.0";
@@ -32,41 +33,35 @@ export const OASIS_DATA_DIR = "data/oasis-2025-v1.0";
 export const OASIS_MODULE_PATH = "lib/engines/oasis/v2026/data.ts";
 
 /**
- * The four files, each with its download address on open.canada.ca: the taxonomy (the code of each skill
- * and knowledge area, which becomes its permanent id), the skills and knowledge ratings for each job, and
- * each job's name.
+ * The four files: the taxonomy (the code of each skill and knowledge area, which becomes its permanent id),
+ * the skills and knowledge ratings for each job, and each job's name. Their download addresses on
+ * open.canada.ca are on the registry card.
  *
  * `sha256` pins each file: the fingerprint of the committed copy, taken as `fingerprint` takes it. --download
  * writes a fetched file only when its fingerprint is this one, so a changed file on the server (or anything
  * in between) can't slip into the data folder unnoticed. A new version from the government means updating
- * these by hand, on purpose; tests/oasis-import.spec.ts checks they match what the module records.
+ * these by hand, on purpose; tests/oasis-import.spec.ts checks they match what the module records. All four
+ * are UTF-8, each starting with a byte-order mark.
  */
-export const OASIS_FILES = [
-  {
-    key: "guide",
-    name: "guide_oasis_2025_v4.0.csv",
-    url: `${DATASET}/2a7a17bf-b67c-4fc2-b636-959c7f1d7ae4/download/guide_oasis_2025_v4.0.csv`,
-    sha256: "382910bc4854580d0d6e4f86305b6ad6b6a431a3dc3e7309d0cb5f87fa5e0565",
-  },
-  {
-    key: "skills",
-    name: "skills_oasis_2025_v1.1.csv",
-    url: `${DATASET}/bd9cf3f2-4cd5-47b1-ba74-ab68cd0a941b/download/skills_oasis_2025_v1.1.csv`,
-    sha256: "00b88abc4042cec1e9648b5475436a6bee1de482d5dab18d3f1026acd5afc077",
-  },
-  {
-    key: "knowledge",
-    name: "knowledge_oasis_2025_v.1.1.csv",
-    url: `${DATASET}/b5c3eb08-dda8-4929-ba5d-b90582db6c70/download/knowledge_oasis_2025_v.1.1.csv`,
-    sha256: "7cd7600229c3ba63b9480be6a9dc4ec745df9719e045887c2652c0c37fa25d3c",
-  },
-  {
-    key: "labels",
-    name: "labels_oasis_2025_v1.1.csv",
-    url: `${DATASET}/af53ca1d-5efc-4e52-ad42-9b858a4507c6/download/labels_oasis_2025_v1.1.csv`,
-    sha256: "96de86f4bbf2006683c993206a7bd39c9f396bd11f969354f70be8f0b8d0c13d",
-  },
-];
+const OASIS = defineImport({
+  name: "import-oasis",
+  label: "OaSIS",
+  script: "scripts/import-oasis.mjs",
+  pinsName: "OASIS_FILES",
+  sourceId: "oasis-2025",
+  dataDir: OASIS_DATA_DIR,
+  modulePath: OASIS_MODULE_PATH,
+  files: [
+    { key: "guide", name: "guide_oasis_2025_v4.0.csv", sha256: "382910bc4854580d0d6e4f86305b6ad6b6a431a3dc3e7309d0cb5f87fa5e0565", encoding: "utf-8" },
+    { key: "skills", name: "skills_oasis_2025_v1.1.csv", sha256: "00b88abc4042cec1e9648b5475436a6bee1de482d5dab18d3f1026acd5afc077", encoding: "utf-8" },
+    { key: "knowledge", name: "knowledge_oasis_2025_v.1.1.csv", sha256: "7cd7600229c3ba63b9480be6a9dc4ec745df9719e045887c2652c0c37fa25d3c", encoding: "utf-8" },
+    { key: "labels", name: "labels_oasis_2025_v1.1.csv", sha256: "96de86f4bbf2006683c993206a7bd39c9f396bd11f969354f70be8f0b8d0c13d", encoding: "utf-8" },
+  ],
+  build: (texts) => buildOasisModule(texts),
+});
+
+/** The four files, each with its key, name, download address, pinned SHA-256 and encoding. */
+export const OASIS_FILES = OASIS.files;
 
 /**
  * Each family the import reads: its file, the taxonomy category its columns belong to, and the highest
@@ -80,16 +75,6 @@ const FAMILIES = [
 ];
 
 const JOB_CODE = /^\d{5}\.\d{2}$/;
-
-/** The text as the import reads it: no byte-order mark, "\n" line endings. */
-export function evenText(text) {
-  return text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
-}
-
-/** A file's SHA-256, of its text evened out, so the same file checked out with other line endings matches. */
-export function fingerprint(text) {
-  return createHash("sha256").update(evenText(text), "utf8").digest("hex");
-}
 
 /**
  * Rows of a semicolon-separated file. A field may be in double quotes (the taxonomy quotes a name that
@@ -200,14 +185,10 @@ export function buildOasisModule(texts) {
   const descriptors = families.flatMap(({ family, order }) => order.map((d) => `    [${q(d.code)}, ${q(family.family)}, ${q(tidy(d.name))}],`));
   const occupations = jobs.map((j) => `    [${q(j.code)}, ${q(j.label)}, ${families.map((f) => q(f.ratings.get(j.code))).join(", ")}],`);
   return [
-    "// Contains information licensed under the Open Government Licence – Canada.",
-    "// https://open.canada.ca/en/open-government-licence-canada",
-    "//",
-    "// Occupational and Skills Information System (OaSIS) - 2025 Version 1.0, Employment and Social Development",
-    "// Canada: https://open.canada.ca/data/en/dataset/10ce43bd-fb58-4969-806b-4bffebc87bec",
-    "//",
-    "// Generated by scripts/import-oasis.mjs from the files in data/oasis-2025-v1.0/. Don't edit it by hand:",
-    "// tests/oasis-import.spec.ts rebuilds it on every run and fails on any difference.",
+    // The licence's attribution line and the dataset, from the registry card (scripts/lib/import-kit.mjs).
+    ...OASIS.header(
+      `Generated by scripts/import-oasis.mjs from the files in ${OASIS_DATA_DIR}/. Don't edit it by hand: tests/oasis-import.spec.ts rebuilds it on every run and fails on any difference.`,
+    ),
     "",
     'import type { OasisData } from "./types";',
     "",
@@ -229,91 +210,8 @@ export function buildOasisModule(texts) {
   ].join("\n");
 }
 
-// ---- Running ---------------------------------------------------------------------------------
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-/** The four files' text, read from the data folder. */
-function readFiles(root) {
-  return Object.fromEntries(OASIS_FILES.map((f) => [f.key, readFileSync(path.join(root, OASIS_DATA_DIR, f.name), "utf8")]));
-}
-
-/**
- * Downloads each file into the data folder, as the server sends it, but only when its fingerprint is the
- * one pinned in OASIS_FILES; the first file that differs is not written and stops the download (files
- * before it matched, so they are the committed ones). Never throws: a failure is a message.
- */
-async function download(root, log) {
-  mkdirSync(path.join(root, OASIS_DATA_DIR), { recursive: true });
-  for (const f of OASIS_FILES) {
-    try {
-      const response = await fetch(f.url, { redirect: "follow", headers: { "user-agent": "DotAmi OaSIS import (developer script)" } });
-      if (!response.ok) return `${f.name}: the server answered ${response.status}`;
-      const bytes = Buffer.from(await response.arrayBuffer());
-      // Read as readFiles reads the committed copy (utf8, byte-order mark kept for evenText to drop).
-      const got = fingerprint(bytes.toString("utf8"));
-      if (got !== f.sha256) {
-        // main() adds ". Nothing was rebuilt.", so the message ends without a full stop.
-        return [
-          `${f.name} is not the file this script expects, so it was not written.`,
-          `  Its SHA-256 (of the text, line endings evened out): expected ${f.sha256}, got ${got}.`,
-          `  Check the dataset's page, ${DATASET_PAGE}. If the government has published a new version, read what`,
-          `  changed, then update the pinned sha256 for ${f.name} in OASIS_FILES (scripts/import-oasis.mjs) on purpose`,
-          `  and download again`,
-        ].join("\n");
-      }
-      writeFileSync(path.join(root, OASIS_DATA_DIR, f.name), bytes);
-      log(`downloaded ${f.name}`);
-    } catch (error) {
-      return `${f.name}: couldn't be downloaded (${error instanceof Error ? error.message : String(error)})`;
-    }
-  }
-  return null;
-}
-
-/** The whole run; returns the exit code. */
-export async function main(argv, { root = ROOT, log = console.log } = {}) {
-  const unknown = argv.filter((a) => a !== "--check" && a !== "--download");
-  if (unknown.length > 0 || (argv.includes("--check") && argv.includes("--download"))) {
-    log(`import-oasis: unknown or clashing arguments: ${argv.join(" ")}`);
-    log("Usage: node scripts/import-oasis.mjs [--check | --download]");
-    return 2;
-  }
-  if (argv.includes("--download")) {
-    const problem = await download(root, log);
-    if (problem) {
-      log(`import-oasis: ${problem}. Nothing was rebuilt.`);
-      return 1;
-    }
-  }
-  let made;
-  try {
-    made = buildOasisModule(readFiles(root));
-  } catch (error) {
-    log(`import-oasis: ${error instanceof Error ? error.message : String(error)}`);
-    return 1;
-  }
-  const target = path.join(root, OASIS_MODULE_PATH);
-  if (argv.includes("--check")) {
-    let committed = "";
-    try {
-      committed = readFileSync(target, "utf8").replace(/\r\n/g, "\n");
-    } catch {
-      // No module yet: it differs.
-    }
-    if (committed === made) {
-      log(`${OASIS_MODULE_PATH} is what the files in ${OASIS_DATA_DIR} make.`);
-      return 0;
-    }
-    log(`${OASIS_MODULE_PATH} is NOT what the files in ${OASIS_DATA_DIR} make. Run node scripts/import-oasis.mjs and look at the difference.`);
-    return 1;
-  }
-  writeFileSync(target, made);
-  log(`wrote ${OASIS_MODULE_PATH} (${Buffer.byteLength(made, "utf8")} bytes)`);
-  return 0;
-}
+/** The whole run (rebuild, --check or --download); returns the exit code. */
+export const main = OASIS.main;
 
 // Run only when called as a script, not when a test imports it.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.exitCode = await main(process.argv.slice(2));
-}
+await runIfMain(import.meta.url, OASIS);

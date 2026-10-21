@@ -48,6 +48,11 @@ jobs:
       - name: Generate Prisma Client
         run: npm run prisma:generate
 
+      # Every importer's government files checked against their pinned SHA-256, and each generated module
+      # rebuilt from them and compared (scripts/data-check.mjs). Offline: nothing is downloaded.
+      - name: Check the imported data
+        run: npm run data:check
+
       - name: Typecheck
         run: npm run typecheck
 

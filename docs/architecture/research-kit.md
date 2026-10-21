@@ -288,9 +288,17 @@ same validator and quote check before it is merged.
   - `scripts/lib/import-kit.mjs` (the import core);
   - one small adapter per dataset;
   - `scripts/research-kit.mjs` (the pack and skeleton).
-- **Library** (`lib/research-kit/`, pure code, no network): keyed lookups over the shipped catalogs (job →
-  facts, industry × area → counts), the registry, the job-links catalog and road code keys. The screens, the
-  Lens's read tools and the MCP server all call it.
+- **Library** (`lib/engines/research-kit/v2026/`, pure code, no network): keyed lookups over the shipped
+  catalogs (job → facts, industry × area → counts), the registry, the job-links catalog and road code keys. The
+  screens, the Lens's read tools and the MCP server all call it.
+  - **Where it lives, settled 2026-10-20** (this section said `lib/research-kit/`, § 5.2 said
+    `lib/engines/sources/v2026/` and § 5.3 `lib/engines/research-kit/v2026/`): one folder,
+    `lib/engines/research-kit/v2026/`, for the registry, the job links and the lookups. Every dated, cited
+    catalog DotAmi ships already lives under `lib/engines/<name>/v2026/` (OaSIS, the roads, the rules), named
+    for the year its sources were read, so a later re-read sits beside it; § 5.3 already named this folder for
+    the job links, and keeping the registry next to them means one place to look. The folder imports nothing
+    from outside itself, so no network module can get in (`tests/research-kit-registry.spec.ts`), and
+    `lib/` is inside the app's network scan as well.
 - **Room for D, later.** The maintainer picked A and asked to "make room for D; especially in our stories and
   tasks later on": a model drafting road files from the research pack at build time, every quote
   tool-checked before merge. It is planned as a later step, in his words "shortly after the slots are proven
@@ -300,8 +308,8 @@ same validator and quote check before it is merged.
 
 ### 5.2 The source registry ("connector cards")
 
-The registry lives at `lib/engines/sources/v2026/registry.ts` and is checked by a validator. It has one entry
-per outside source. It reuses the "dated observation, not a legal citation" shape that PR #175 shares with
+The registry lives at `lib/engines/research-kit/v2026/registry.ts` (the folder settled in § 5.1) and is
+checked by a validator (`validate.ts` beside it). It has one entry per outside source. It reuses the "dated observation, not a legal citation" shape that PR #175 shares with
 `ExampleSources` ([lib/examples/types.ts:64](../../lib/examples/types.ts)). A registry entry backs no rule.
 
 | Field | Values | Example |
@@ -326,11 +334,27 @@ A source is marked `lens-live` only after that vendor's terms for agent use have
 
 A test fails on a missing field, and fails if any `vendor-estimate` source feeds a gauge or a total.
 
+**As built (2026-10-20, task 25b).** Fifteen cards: OaSIS's four files today; in phase 2 the OaSIS Example
+Titles file, the NOC 2021 elements file, Job Bank's wage file and the NAICS 2022 list; in phase 3 the business
+counts and census table 98-10-0594 (marked as later); Meta's Ad Library and Google's Ads Transparency Center
+(links only); and the never-automated list (Job Bank's pages, YellowPages.ca, Canada411, Google Maps' consumer
+site, DOZR, Kijiji, and Meta's library). To carry the rules above, each card also says `phase` (now, phase 2,
+phase 3), `feeds` (gauge, total, shown, search; what in DotAmi reads it), `termsUrl` (the page the quote was read
+on), `files` for a shipped source (name and address; the pins stay in its importer) and `neverFetch` for a
+never-automated one (the address beginnings nothing may fetch); `figureKind` gains `none` for a source no figure
+comes from, and `checkedBy` is person, model, tool or not-read. The validator also refuses a licence it doesn't
+know, a shipped source without an open licence or a credit line, a live look-up whose terms nobody has read, and
+any card that would fetch an address a never-automated card bars. The ad-library links of *Others in this line
+of work* (`lib/landscape/words.ts`) are a view over it. Not entered yet: the live look-ups (Google Places, Yelp,
+Semrush, Ahrefs, Similarweb), which come with the Lens's connector powers and S2.5.26; and 22n's rent-price
+places, which have no list in the app yet and whose price reuse waits on their replies.
+
 ### 5.3 The four code keys and the job-links catalog
 
 - `Road` gains `codes`, beside `provinces` ([lib/engines/roads/v2026/types.ts:23](../../lib/engines/roads/v2026/types.ts)).
   It holds `occupations`: the NOC codes the road is written for. That is all a road names.
-- **Job links** live once per job, not per road: `lib/engines/research-kit/v2026/job-links.ts` holds
+- **Job links** live once per job, not per road: `lib/engines/research-kit/v2026/job-links.ts` (beside the
+  registry, § 5.1) holds
   {noc, industryCandidates: [{naics, reason, citation?}], placeCategories: [{source, category or match word,
   reason}]}, reviewed by a person and cited where a source supports the choice (census table 98-10-0594 at
   sector level). A road inherits the links of its NOC codes; a per-road override is allowed only with its own
@@ -360,7 +384,17 @@ It adds what the generic files need:
 - the licence and credit line;
 - the next-release date, so a stale catalog shows amber.
 
-Each dataset is one small adapter. OaSIS is refit first, and `--check` proves its output is unchanged. The
+Each dataset is one small adapter. OaSIS is refit first, and `--check` proves its output is unchanged.
+
+**As built (2026-10-20, tasks 25c and 31a).** `scripts/lib/import-kit.mjs` reads each file in its declared
+encoding (`utf-8`, a byte-order mark allowed, or `latin1`; a file that can't be its encoding is refused by
+name), writes the module's header from the registry card (the credit line, with `{table}` and `{period}` filled
+from the importer's table id and reference period, and the licence's page), checks each file against its pin,
+and prints the amber words ("A newer count may be out.", from `lib/engines/research-kit/v2026/words.ts`) once
+a card's stated next release has come. `scripts/import-oasis.mjs` is now an adapter on it: its `--check`
+output, `tests/oasis-import.spec.ts` and the module it writes are unchanged, byte for byte. `npm run
+data:check` (`scripts/data-check.mjs`) runs every importer's `--check` offline and is a step of
+`npm run ci:quality` and of CI. The
 S2.5.23f counts import is built on the core. As far as the research saw (reported, not confirmed; 23f checks
 it), the census-metropolitan-area table goes down to 4-digit industry groups and counts only businesses with
 employees, so the import covers every NAICS code down to 4 digits for each Alberta census metropolitan area,

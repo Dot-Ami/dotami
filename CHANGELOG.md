@@ -10,6 +10,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **One list of every outside source and its terms** (the research kit's source registry,
+  `lib/engines/research-kit/v2026/registry.ts`; [docs/architecture/research-kit.md](docs/architecture/research-kit.md)
+  § 5.2). Plumbing, with no change on screen: one card per source the kit imports or links in the next two phases
+  (the government's job and skills files, its job titles, the wage file, the industry code list, the business
+  counts and census tables marked as later, the two ad libraries) and the sites whose terms bar scripts (Job
+  Bank's pages, YellowPages.ca, Canada411, Google Maps, DOZR, Kijiji, Meta). Each says how DotAmi may reach it,
+  what may be kept, its licence and credit line, and the words on its own terms page that decided it, with the
+  day (most were found word for word by the quote checker on 2026-10-20). A test refuses a card with a field
+  missing, an unknown licence, a vendor's estimate feeding a total, or a site whose terms bar scripts marked as
+  something DotAmi fetches. It makes possible: every new data source checked the same way before it ships, and
+  one never-fetch list the Lens will obey. The ad-library links in *Others in this line of work* now come from it.
+- **One way to import government data** (`scripts/lib/import-kit.mjs`, § 5.4): each file read in its own text
+  encoding, its pinned checksum checked, its licence line taken from the registry, and a plain "A newer … may be
+  out." once a source's stated next release has come. The OaSIS skills import now runs on it and makes the same
+  module, byte for byte. It makes possible: the job titles, wages and industry list of the next tasks, each as
+  one small file.
+- **`npm run data:check`**, a step of `npm run ci:quality` and of CI on every pull request: every importer's
+  government files checked against their pins and its generated module rebuilt and compared, offline. A changed
+  byte in a government file, or a hand edit to a generated module, now fails the pull request.
+
 ## [0.4.1] — 2026-10-20
 
 A calmer first view of your future. The cockpit opens on the road, your goal and your next three steps, with
