@@ -10,6 +10,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-20
+
+A calmer first view of your future. The cockpit opens on the road, your goal and your next three steps, with
+everything else folded one click away (Show the legend and Show the what-if bar are in Look closer); the
+screens use six text sizes, none smaller than before; every cockpit sentence comes from one words file; and
+the desktop app keeps how you left the cockpit from one launch to the next. Six things the idea harness caught
+are fixed. For developers, the test gate for any idea: 367 invented ideas, a harness, generated answer sets, a
+weekly browser walk, a clutter limit every screen must pass, and `npm run eval:intent`. Package and Actions
+updates. No database changes: an installed 0.4.0's data file is used as it is, with no migration to run.
+
 ### Added
 - **A layout rule, and a clutter limit every screen must stay under** (the maintainer, 2026-10-17: a calm
   first view, enforced by a limit on how busy a screen can get). The rule, in
@@ -142,6 +152,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   again. Now that list is offered back at every launch; Delete doesn't reach it, and *What DotAmi knows about
   you* and the Delete menu now say so and how to remove it (close DotAmi and delete the “Local Storage” folder
   in the data folder).
+- **Package updates** (#185, 2026-10-20): the desktop app moves to Electron 44.8.0 (from 44.7.0: Chromium
+  152.0.7977.167 and Node 24.22.0, with fixes Electron copied from Chromium and V8, by its
+  [release notes](https://github.com/electron/electron/releases/tag/v44.8.0), read 2026-10-20); Next.js
+  15.5.28, React and React DOM 19.3.1, and the intake parser's model client `@anthropic-ai/sdk` 0.135.0,
+  which brings in `@opentelemetry/api` 1.9.1 (see the privacy log); and, for developers, Playwright
+  1.64.1, Vitest 4.1.12 and eslint-config-next 15.5.28. The CodeQL and Scorecard workflows use
+  `github/codeql-action` 4.39.0 (#186).
 ### Fixed
 - **Six things the idea harness caught** (2026-10-17; each was a "bug" entry in
   `tests/fixtures/ideas/known-gaps.ts`, now gone, so the harness fails if one comes back):

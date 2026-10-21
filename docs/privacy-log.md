@@ -37,6 +37,13 @@ person is asked).
 
 ## [Unreleased]
 
+---
+
+## [0.4.1] — 2026-10-20
+
+How you left the cockpit, now also its layers and its tip, kept from one desktop launch to the next; nothing
+new in the data file, nothing new sent ([CHANGELOG](../CHANGELOG.md)).
+
 ### What DotAmi keeps, and where
 
 - **Keeps: how you left the cockpit's screen, now also the layers you last had on and the first visit's tip
@@ -50,11 +57,16 @@ person is asked).
   lasts between launches (the next line). Listed in the inventory ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts),
   "How you left the cockpit").
 - **Keeps: in the desktop app, the window's browser storage now lasts from one launch to the next. Nothing
-  new is kept or written, nothing sent. (2026-10-17.)** The desktop app serves its window from
+  new about you is kept, nothing sent; the desktop log gains one line per launch. (2026-10-17.)** The
+  desktop app serves its window from
   `http://127.0.0.1:<port>`, and a browser keeps its storage per address and port. Until now each launch
   asked for any free port, so each launch had a new address and found its storage empty. Now it asks for
-  the same port every time, one worked out from the data folder's path and written nowhere
-  ([`desktop/app-port.mjs`](../desktop/app-port.mjs)), and any free port only when that one is taken. So the
+  the same port every time, one worked out from the data folder's path, not saved anywhere to be
+  remembered ([`desktop/app-port.mjs`](../desktop/app-port.mjs)), and any free port only when that one is
+  taken. The desktop log (`logs/server.log` in the data folder) names the address each launch serves on,
+  as before (`[desktop] server starting on http://127.0.0.1:<port>`), and now also writes, before it,
+  whether the port was the usual one for this data folder or a new one because the usual one was taken
+  ([`desktop/main.mjs`](../desktop/main.mjs)); neither line holds anything about the person. So the
   two keys DotAmi keeps in the window's storage are read again at the next launch: how you left the
   cockpit (`dotami-cockpit-folds`) and the job descriptions you typed under *Other…* on the intake
   (`dotami-employment-suggestions`), which until now stayed unread in the app's folder after each launch.
@@ -66,6 +78,73 @@ person is asked).
   and delete the “Local Storage” folder in the data folder; in a browser, clear the site's data), where
   until now they said the window's storage from earlier launches was left unread
   ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts) `NOT_CLEARED_BY_DELETE`, found in a review).
+
+### What leaves the computer, and to whom
+
+- **Nothing new leaves the computer.** The intake parser's request to the model goes only when a model key
+  is set up, as before, and carries the person's words as before. One of the field descriptions DotAmi
+  sends with them, the one for buying equipment or a vehicle, is reworded (2026-10-17,
+  [`app/api/intent/parse/route.ts`](../app/api/intent/parse/route.ts) `capitalPurchasePlanned`): DotAmi's
+  own words, nothing about the person.
+- **The model client now brings in `@opentelemetry/api` (2026-10-20, #185).** `@anthropic-ai/sdk` 0.135.0
+  (from 0.133.0) depends on `@opentelemetry/api` 1.9.1, the OpenTelemetry interface, which sends nothing
+  itself. The client starts its traces from the tracer provider, and adds trace headers through the
+  propagator, that the app registers with that interface
+  (`node_modules/@anthropic-ai/sdk/internal/tracing.js`, `getTracer` and `injectContext`); with none
+  registered, both do nothing. DotAmi registers none: no file in `app/`, `lib/`, `components/` or
+  `desktop/` names OpenTelemetry. Whether another package in the built app registers one is *not checked*.
+- **For developers only, `npm run eval:intent` (2026-10-20, S2.5.29f).** It sends the words of the
+  invented ideas in [`tests/fixtures/ideas/v1.ts`](../tests/fixtures/ideas/v1.ts) to the model API on the
+  developer's own key, through the intake parser's own route; nothing of any person's. It refuses without
+  a key, does nothing in CI, isn't part of `npm test`, and writes only idea ids to
+  `test-results/intent-eval.md` ([`scripts/eval-intent.mjs`](../scripts/eval-intent.mjs)). It is not in the
+  app or the installer.
+
+### Packages that ship
+
+- **Electron 44.8.0 in the desktop app, up from 44.7.0 (2026-10-20, #185).** Chromium 152.0.7977.167 and
+  Node 24.22.0 (from 152.0.7977.130 and 24.21.0), with fixes Electron copied from Chromium and V8
+  ([release notes for 44.8.0](https://github.com/electron/electron/releases/tag/v44.8.0), read
+  2026-10-20). Nothing about what DotAmi keeps, sends or asks changes by those notes: they don't mention
+  `safeStorage`, which wraps the data file's and the receipts' keys; the `net.fetch` and `session.fetch`
+  fix is for calls DotAmi doesn't make; the `utilityProcess` fix is for messages posted with
+  `process.parentPort.postMessage()`, which DotAmi's server doesn't use; the new notification buttons are
+  for Linux. What Electron's browser engine writes to the data folder or requests on its own is still *not
+  checked*.
+- **Next.js 15.5.28, React and React DOM 19.3.1, and `@anthropic-ai/sdk` 0.135.0 (2026-10-20, #185)**, with
+  `@opentelemetry/api` 1.9.1 newly pulled in by the last (above). Versions read from the installed packages.
+- **`fast-check` 4.10.2 is for tests only** (a development package in `package.json`, used by
+  `tests/idea-properties.spec.ts`, `tests/idea-properties-plants.spec.ts` and
+  `tests/helpers/idea-properties.ts`); nothing in the app imports it.
+
+### New powers or permissions
+
+- **None on the computer.** The window's bridge to the desktop app is unchanged since 0.4.0
+  ([`desktop/window-preload.cjs`](../desktop/window-preload.cjs) has no change). The desktop app's own
+  change is which local port it asks for first ([`desktop/app-port.mjs`](../desktop/app-port.mjs)); the
+  server still listens on 127.0.0.1 only, behind the same Host check. No route was added.
+
+### What the person must agree to
+
+- **Nothing new.** No prompt was added, and the agree prompts' words are unchanged (only their text sizes
+  changed). Putting away the cockpit's first-visit tip with **Got it** agrees to nothing; it only keeps the
+  tip away in this browser (above).
+
+### How to remove it
+
+- **How you left the cockpit** (`dotami-cockpit-folds`) and **the job descriptions typed under *Other…***
+  (`dotami-employment-suggestions`): Delete doesn't reach either, and the app has no button that clears
+  them. In the desktop app, close DotAmi and delete the “Local Storage” folder in the data folder; in a
+  browser, clear the site's data ([`lib/privacy/inventory.ts`](../lib/privacy/inventory.ts)
+  `NOT_CLEARED_BY_DELETE` and `WINDOW_STORAGE`).
+
+### What the policy will need to say
+
+- In the desktop app, what the window keeps in its own storage lasts from one launch to the next since
+  0.4.1: how the person left the cockpit (yes-or-no answers about the screen only) and the job
+  descriptions they typed under *Other…* on the intake, which are their own words. Delete doesn't reach
+  either; the person removes them by deleting the “Local Storage” folder in the data folder, as the
+  Delete menu says.
 
 ---
 
