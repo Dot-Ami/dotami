@@ -187,6 +187,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Road 1's first step no longer says how long a period is designed to take: its summary ends at "4 periods
     (levels)." The official page's words stay quoted in its source.
 
+### Documented
+- **Phase 2 on the task list** (2026-10-20): [docs/task-list.md](docs/task-list.md) now lists the plan's
+  phase 2, every idea ending honestly in Alberta, with each task and its order: matching a person's words
+  to the government's job list ([14l]), the research kit's core and *About this job* ([14i]), asking the
+  area once ([14g]), the test gate's new endings ([14j]), the data check in CI ([14m]), quality numbers
+  and the maintainer's walk ([14n]), the screen review ([14k], [13g]) and the release work ([14o]), with
+  the maintainer's twelve calls of 2026-10-20. Corrected on the way: [14f], [14h] and [14i] no longer say
+  they wait on calls answered on 2026-10-16; [14j] and [14k] are marked done for phase 1; the cockpit's own
+  phases are called "cockpit phase 1" to "cockpit phase 4", so the cockpit's phase 2 ([14b], now placed in
+  the plan's phase 3, its time strip and hours dropped under "no times") no longer reads as the plan's
+  phase 2. Docs only: nothing DotAmi keeps, sends, ships or asks changes.
+
 ## [0.4.0] — 2026-10-17
 
 The future cockpit's first phase. The front door has three doors: Start from where I want to be (then Pick
