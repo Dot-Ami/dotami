@@ -331,13 +331,16 @@ and the maintainer's six decisions of 2026-10-11:
     on the side that holds the step); no map pick asked that no rule reads (GST timing for
     drivers); the keyword parser's places, kinds of work and equipment proposed only when the words state
     them; no duration in road 1's first step. Their "bug" entries left `tests/fixtures/ideas/known-gaps.ts`.
-    Still listed for the maintainer: equipment on a picked future can't be answered, the front door's
-    "in a few years" (reworded 2026-10-20, "Reword both"; out of the list), and "Incorporating" on a future picked on road 0 can't light at all: the rule compares
+    Still listed for the maintainer (the front door's "in a few years" reworded 2026-10-20, "Reword both", and
+    equipment on a picked future fixed the same day, below; both out of the list): "Incorporating" on a future picked on road 0 can't light at all: the rule compares
     "I'd incorporate at" with a third-year sales estimate, Pick a future keeps none (it saves 0,
     `lib/front-door/start-future.ts`) and nothing in the cockpit asks for one (only the intake's Year 3 box
     sets it). The *Not told yet* row is no longer asked there and the step's card and panel say it needs that
     estimate (second review of PR #182, pinned in `tests/cockpit-told.spec.ts`), but the panel's box still
     takes a number that can't light it; whether the cockpit asks for a third-year estimate is the maintainer's call
+  - [x] Equipment on a picked future answered and kept (the maintainer's "Yes, fix both", 2026-10-20): the
+    box's answer takes equipment off the not-said list, so it is saved, read back and asked no more; taken
+    back, it is not said again. Its "bug" entry left `tests/fixtures/ideas/known-gaps.ts`
 - 🔄 **[14k] A calm screen, kept calm by a limit (S2.5.30).** The maintainer's first pick of 2026-10-17,
   with testing any idea: a calm first view, enforced by a limit on how busy a screen can get.
   - [x] The layout rule: one primary thing per screen (on the cockpit, the road); new features open in the
@@ -802,10 +805,10 @@ roadmap's build order.
   - [ ] A "What does this mean?" link from a card's short form to its glossary entry
   - [ ] Later: the glossary as the translators' word list, once a second language is planned
 - ✅ **[13b] Releases** — tags, changelog, release notes; the app's updates come from these.
-  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0) and [CHANGELOG.md](../CHANGELOG.md)
+  - [x] Version tags (v0.1.0, v0.2.0, v0.2.1, v0.3.0, v0.4.0) and [CHANGELOG.md](../CHANGELOG.md)
   - [x] A tag builds the Windows installer into a draft release; the maintainer writes the notes and publishes
-  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1
-    and v0.3.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
+  - [x] A release after v0.2.0 built by the fixed workflow and published end to end (with [7d]): v0.2.1,
+    v0.3.0 and v0.4.0 were each built by the release workflow from their tag and published; 0.2.0 → 0.2.1
     reached an installed app (by hand, 2026-10-08)
   - [x] A release with a database change ships its migration, which the desktop app applies itself
     (`tests/desktop-migrate.spec.ts`), and says so in its CHANGELOG entry
