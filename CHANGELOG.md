@@ -143,6 +143,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you* and the Delete menu now say so and how to remove it (close DotAmi and delete the “Local Storage” folder
   in the data folder).
 ### Fixed
+- **Your answer to "Are you buying equipment, a vehicle or tools?" on a future picked on Pick a future is
+  kept** (the maintainer's "Yes, fix both", 2026-10-20). Pick a future saves equipment as not said, since it
+  never asks it. Answering in the cockpit's one-question box showed the answer for a moment, but left
+  equipment on the not-said list: *Not told yet* kept asking, *What you've told DotAmi* didn't list it, and
+  the save dropped it, so after a reload it was gone. Now the answer takes equipment off that list (and only
+  equipment: the kind of venture and the sales targets are still not said), it is saved and read back, the
+  rules and the receipts read it, and *Take back* makes it not said again, as the future was picked
+  (`lib/cockpit/told.ts`, `lib/scenarios/not-said.ts`, `lib/roads/without-answer.ts`). Nothing new is kept:
+  the answer goes where the same answer on any other idea already goes. The idea harness's "bug" entry for
+  it left `tests/fixtures/ideas/known-gaps.ts`.
 - **Six things the idea harness caught** (2026-10-17; each was a "bug" entry in
   `tests/fixtures/ideas/known-gaps.ts`, now gone, so the harness fails if one comes back):
   - *Not told yet* asks "The yearly sales at which you'd incorporate" only where some answer changes the

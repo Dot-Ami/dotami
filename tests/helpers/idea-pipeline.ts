@@ -1,5 +1,5 @@
 import { buildPlan, type PlanView } from "@/lib/cockpit/plan";
-import { compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
+import { answerEquipment, compareEndings, forksToCompare, notToldYet, type KeptAnswers, type NotToldRow } from "@/lib/cockpit/told";
 import { cockpitInput, gaugeView, nextOnYourRoad, stepBadges, type KeptFuture } from "@/lib/cockpit/view";
 import { generalRoadV2026, roadsV2026, skillItemsV2026, type Road } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
@@ -251,7 +251,8 @@ function answersTo(row: NotToldRow, road: Road, evaluation: RoadEvaluation, idea
         (structure) => (k: Kept) => void (k.scenario = { ...k.scenario, profile: { ...k.scenario.profile, structure, structureSource: "user" } }),
       );
     case "equipment":
-      return [true, false].map((yes) => (k: Kept) => void (k.scenario = { ...k.scenario, profile: { ...k.scenario.profile, capitalPurchasePlanned: yes } }));
+      // The cockpit's own answer (its one-question box saves through the same function).
+      return [true, false].map((yes) => (k: Kept) => void (k.scenario = answerEquipment(k.scenario, yes)));
     case "incorporate-at": {
       // The rule compares the answer with the person's own third-year estimate: their estimate itself first
       // (reaching it lights the step), then numbers under and over one, for an estimate left blank.

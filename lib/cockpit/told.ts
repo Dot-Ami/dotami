@@ -13,6 +13,7 @@ import {
 } from "@/lib/roads";
 import { branchDecisions, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { withSaid } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import { cockpitWords as words } from "./words";
@@ -359,6 +360,17 @@ export function parseWhatIf(text: string): number | null {
 /** "Keep": the what-if becomes the idea's own first-year sales (the intake's Year 1 field), never a figure. */
 export function keepWhatIf(scenario: Scenario, dollars: number): Scenario {
   return { ...scenario, profile: { ...scenario.profile, targetRevenueY1: dollars } };
+}
+
+// --- The idea's own answers, given in the one-question box
+
+/**
+ * The person's answer to "Are you buying equipment, a vehicle or tools?". On a future picked on Pick a
+ * future equipment starts as not said; the answer takes it off that list, or road evaluation, the save and
+ * the read back would all still treat it as unanswered (the idea harness's bug of 2026-10-17).
+ */
+export function answerEquipment(scenario: Scenario, yes: boolean): Scenario {
+  return { ...scenario, profile: { ...withSaid(scenario.profile, "equipment"), capitalPurchasePlanned: yes } };
 }
 
 // --- Compare the two endings
