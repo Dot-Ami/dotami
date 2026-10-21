@@ -374,6 +374,12 @@ and the maintainer's six decisions of 2026-10-11:
     `components/cockpit/` and fails on a sentence or label written there (one allowance: the legend's
     *Compass, not GPS — nothing here is a recommendation*, see the test), in place of the three older
     four-word checks over named files
+  - [x] Phase 2's screens designed before they are built (28g, 2026-10-20): *What's closest to your work?*,
+    *Where you are*, the road match and the federal steps on Pick a future
+    ([ui-spec/futures/](ui-spec/futures/_index.md)), *About this job* and the *Incorporating* fix in the
+    cockpit ([ui-spec/cockpit/about-this-job.md](ui-spec/cockpit/about-this-job.md),
+    [ui-spec/cockpit/incorporating-estimate.md](ui-spec/cockpit/incorporating-estimate.md)); each within its
+    clutter budget, nothing built yet
 
 ## 7 — The desktop app (one download, everything on your computer)
 

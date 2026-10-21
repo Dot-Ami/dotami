@@ -7,6 +7,13 @@ drawn (`app/(journey)/intake/page.tsx`), so the first screen never changes under
 database it reads as none, and the intake starts on *About you* as before); 2026-09-13 (Screen 0 added;
 2026-07-02 workshop content below verified against shipped code)
 
+> **Designed 2026-10-20, not built yet (task 28g).** Screen B's **Open my map →** becomes **Next: the work
+> closest to yours →**, which shows Pick a future's three steps (the job, where you are, the road) on this
+> page, the live preview rail put away for them; the idea is saved at the road step's **Look inside**, on the
+> road the person opened, so a typed idea no longer lands on the general road without saying why. Design:
+> [../futures/01-whats-closest-to-your-work.md](../futures/01-whats-closest-to-your-work.md) § *Where it sits,
+> on both ways in*.
+
 **Route:** `/intake`
 **Component:** [components/discovery/intake-page.tsx](../../../components/discovery/intake-page.tsx) (one file — both screens + preview rail)
 

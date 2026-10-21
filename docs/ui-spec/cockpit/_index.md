@@ -73,6 +73,9 @@ laid out left-to-right by dagre. Node status comes from `scenario.state`
 | The what-if bar (2026-10-12) | [14-what-if-bar.md](./14-what-if-bar.md) |
 | Compare the two endings · This is mine (2026-10-12) | [15-compare.md](./15-compare.md) |
 | Node detail: your answers line, official words, "I'd incorporate at $___", ways side by side (2026-10-11) | [07-node-detail.md](./07-node-detail.md) |
+| Others in this line of work · Businesses you're watching (2026-10-17) | [landscape.md](./landscape.md) |
+| About this job, from *Look closer* (designed 2026-10-20, not built) | [about-this-job.md](./about-this-job.md) |
+| The Incorporating fix: your third-year sales estimate on a picked future (designed 2026-10-20, not built) | [incorporating-estimate.md](./incorporating-estimate.md) |
 
 ## Flow in / out
 

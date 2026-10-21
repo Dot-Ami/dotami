@@ -10,6 +10,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documented
+- **Phase 2's screens, designed before they are built** (task 28g, 2026-10-20): six ui-spec files, each with
+  every word, what is new, its regions and controls against the clutter limit, how a screen reader hears it,
+  the phone layout and what is not in this version. Pick a future becomes three steps asked before any road
+  is drawn, on both ways in: *What's closest to your work?* (the person's own words searched in the
+  government's example job titles, grouped by how many of their words each job holds, DotAmi's own word list
+  marked as DotAmi's), *Where you are* (which area, then which economic region, never worked out for them),
+  and the road written for the picked job or an honest *No road is written for this job yet* with *About this
+  job* in place ([docs/ui-spec/futures/](docs/ui-spec/futures/_index.md)); the federal steps for a person
+  outside Alberta; *About this job* in the cockpit's right-hand panel
+  ([docs/ui-spec/cockpit/about-this-job.md](docs/ui-spec/cockpit/about-this-job.md)); and the *Incorporating*
+  fix, asking for the third-year sales estimate on a picked future
+  ([docs/ui-spec/cockpit/incorporating-estimate.md](docs/ui-spec/cockpit/incorporating-estimate.md)). Docs
+  only: nothing DotAmi keeps, sends, ships or asks changes yet.
+
 ## [0.4.1] — 2026-10-20
 
 A calmer first view of your future. The cockpit opens on the road, your goal and your next three steps, with
