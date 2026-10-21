@@ -17,6 +17,7 @@ import { ReceiptLines } from "@/components/cockpit/receipt-lines";
 import { ToldList } from "@/components/cockpit/told-list";
 import { WhatIfBar } from "@/components/cockpit/what-if-bar";
 import {
+  answerEquipment,
   answerReceipt,
   compareEndings,
   forksToCompare,
@@ -27,6 +28,7 @@ import {
   type KeptAnswers,
 } from "@/lib/cockpit/told";
 import { cockpitWords } from "@/lib/cockpit/words";
+import { parseScenarioInput } from "@/lib/db/parse-scenario-input";
 import type { CFENodeId } from "@/lib/engines/cfe/v2026";
 import { generalRoadV2026, roadApprenticeToOwnShopAB, skillItemsV2026 } from "@/lib/engines/roads/v2026";
 import type { FigureView } from "@/lib/figures/types";
@@ -34,6 +36,7 @@ import { scenarioForPickedFuture } from "@/lib/front-door/start-future";
 import { evaluateRoad, roadReceipt, withoutAnswer, withoutIdeaAnswer, type RoadEvaluationInput } from "@/lib/roads";
 import { clearScenarioBranch, defaultActiveBranches, setIncorporateAt, updateScenarioBranch, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import type { Scenario } from "@/lib/scenarios/types";
 
 import { input, inventedIdea, roadWithRuledFork, RULED_FORK, skillItems, TODAY } from "./helpers/road-to-evaluate";
 import { VERDICT_WORDS as VERDICT } from "./helpers/verdict-words";
@@ -204,6 +207,67 @@ describe("withoutAnswer: one answer taken away, and nothing else", () => {
     expect(hire.state.ghostedNodeIds).toContain("branch-hire-first-employee");
     expect(withoutIdeaAnswer(idea, "idea:place")).toBeNull();
     expect(withoutIdeaAnswer(idea, "skill:skill-eval-math")).toBeNull();
+  });
+});
+
+// The idea harness's bug of 2026-10-17 (the maintainer's "Yes, fix both", 2026-10-20): on a future picked on
+// Pick a future, equipment is saved as not said. The box's answer set the field but left equipment on the
+// not-said list, so road evaluation still read it as unanswered, "Not told yet" kept asking, and the save
+// dropped it.
+describe("a future picked on Pick a future: the equipment answer", () => {
+  const picked = () => scenarioForPickedFuture({ road: generalRoadV2026, place: "CA-AB", name: "" }, "picked-equipment");
+  const on = (scenario: Scenario) => input({ road: generalRoadV2026, roadChosen: true, skillItems: [], scenario });
+  const asked = (i: RoadEvaluationInput) => notToldYet(i, evaluateRoad(i)).map((r) => r.id);
+  const equipmentAnswer = (i: RoadEvaluationInput) => evaluateRoad(i).answers.find((a) => a.id === "idea:equipment")!;
+
+  it("answered in the box, it is the person's: off “Not told yet”, on the told list, and the receipt names it", () => {
+    const before = on(picked());
+    expect(asked(before)).toContain("equipment");
+    expect(equipmentAnswer(before).given).toBe(false);
+    for (const yes of [true, false]) {
+      const after = on(answerEquipment(before.scenario, yes));
+      expect(after.scenario.profile.capitalPurchasePlanned).toBe(yes);
+      // Only equipment comes off: the kind of venture and the sales targets were still never asked.
+      expect(after.scenario.profile.notSaid).toEqual(["venture-type", "sales-targets"]);
+      expect(asked(after), String(yes)).not.toContain("equipment");
+      expect(equipmentAnswer(after)).toMatchObject({
+        given: true,
+        said: yes ? "you told us you're buying equipment, a vehicle or tools" : "you told us you're not buying equipment, a vehicle or tools",
+      });
+      expect(toldRows(after, evaluateRoad(after), kept()).map((r) => r.id)).toContain("idea:equipment");
+    }
+    // A yes changes the rules on road 0, so its receipt says what it changed, in the person's own answer.
+    const yes = on(answerEquipment(before.scenario, true));
+    expect(answerReceipt(before, yes).join(" ")).toMatch(/you told us you're buying equipment, a vehicle or tools/);
+  });
+
+  it("the save keeps the answer, and nothing else the person didn't say", () => {
+    for (const yes of [true, false]) {
+      const sent = JSON.parse(JSON.stringify({ scenario: answerEquipment(picked(), yes) }));
+      const saved = parseScenarioInput(sent)!;
+      expect(saved.profile.capitalPurchasePlanned, String(yes)).toBe(yes);
+      expect(saved.profile.notSaid, String(yes)).toEqual(["venture-type", "sales-targets"]);
+      expect(asked(on(saved)), String(yes)).not.toContain("equipment");
+    }
+  });
+
+  it("taken back, it is not said again, as the future was picked, and the question is back", () => {
+    const answered = answerEquipment(picked(), true);
+    const back = withoutIdeaAnswer(answered, "idea:equipment")!;
+    expect(back.profile).toEqual(picked().profile);
+    expect(asked(on(back))).toContain("equipment");
+    // The told row's "what it unlocked" is the same change read the other way.
+    expect(withoutAnswer(on(answered), "idea:equipment")!.scenario).toEqual(back);
+  });
+
+  it("on an idea from the intake, which asks every question, it adds no not-said list and changes an answer given", () => {
+    const intake = inventedIdea();
+    expect(intake.profile.notSaid).toBeUndefined();
+    const yes = answerEquipment(intake, true);
+    expect(yes.profile).toEqual({ ...intake.profile, capitalPurchasePlanned: true });
+    expect(answerEquipment(yes, false).profile.capitalPurchasePlanned).toBe(false);
+    // Taken back there, it is unanswered: no list is made up for an idea that never had one.
+    expect(withoutIdeaAnswer(yes, "idea:equipment")!.profile).toEqual(intake.profile);
   });
 });
 

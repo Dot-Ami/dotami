@@ -1,5 +1,6 @@
 import { branchDecisions, clearScenarioBranch, recomputeScenarioState, setIncorporateAt, type BranchDecisionId } from "@/lib/scenarios/branches";
 import { isBranchDecided } from "@/lib/scenarios/graph";
+import { withNotSaidAgain } from "@/lib/scenarios/not-said";
 import type { Scenario } from "@/lib/scenarios/types";
 
 import type { RoadEvaluationInput } from "./evaluate-road";
@@ -49,10 +50,11 @@ export function withoutIdeaAnswer(scenario: Scenario, answerId: string): Scenari
     }
     case "idea:equipment": {
       if (profile.capitalPurchasePlanned === undefined) return null;
-      // Unanswered is the field left out, which the rules read as no and say so.
+      // Unanswered is the field left out, which the rules read as no and say so. On a picked future it
+      // goes back on the not-said list too, so the idea reads as it did before the answer.
       const { capitalPurchasePlanned: _answered, ...rest } = profile;
       void _answered;
-      return { ...scenario, profile: rest as Scenario["profile"] };
+      return { ...scenario, profile: withNotSaidAgain(rest as Scenario["profile"], "equipment") };
     }
     case "idea:sales-year-1":
       return profile.targetRevenueY1 > 0 ? withProfile({ targetRevenueY1: 0 }) : null;

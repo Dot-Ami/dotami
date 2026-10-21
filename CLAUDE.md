@@ -199,7 +199,7 @@ says where it is going.
   rules carry an expiry and surface amber.
 - Never put venture or tax knowledge in a component — it goes in a catalog.
 - Never derive a fact about the person that the person did not state.
-- Never invent a number: no projections, no dollar ranges without a sourced figure.
+- Never invent a number: no projections, no dollar ranges without a sourced figure. A government's own published wage range for a job (Job Bank's low, median and high) is a sourced figure and may appear, always labelled with its geography level (economic region, province-wide figure or small-area estimate, from the row's source code), its reference period and its source, as what workers in the job were paid, never as the person's income, and never added to a cost total or gauge (the maintainer's K5 B of 2026-10-16, written here 2026-10-20: `docs/architecture/research-kit.md` § 4.2, `docs/architecture/future-cockpit.md` decision 2). Outlook ratings and other projections stay out, the government's own included (K5 C was not picked).
 - Stack: Next.js 15 App Router (15.5.24 or later), React 19, TypeScript, Tailwind, Prisma,
   SQLite (PostgreSQL until 2026-09-28; moved so a desktop app needs no database server —
   `docs/architecture/use-cases.md`). Monolith. Moved from 14 on 2026-09-20: the 14.x line has no fix for

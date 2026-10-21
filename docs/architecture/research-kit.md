@@ -560,7 +560,7 @@ Privacy log lines, under [Unreleased]:
 | Every claim cited and dated (:31-40) | Importers record table, period, checksum and licence. Registry rows carry their terms quote and day. A price the Lens found is shown with its link and the day seen |
 | Numbers the engine reasons about are typed (:196) | The engine reasons about no time (K9, 2026-10-17: no times at all), so none needs a typed field; official requirement words stay quoted text that nothing adds up |
 | Never derive a fact about the person (:199) | Job, industry and area are the person's picks. A job's industry candidates are labelled, never picked for them. A wage is never shown as theirs. A job with no road doesn't assume a business |
-| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. No times at all: no time field, gauge, sum, estimate, timeline or date forecast (K9, 2026-10-17). Every number the Lens states matches a tool result: DotAmi's data, a found price with its link, or the calculator (lens-comparisons.md § 6.4). No vendor estimate in v1 (K4 A); anything beyond v1 waits on S2.5.26 |
+| Never invent a number (:200) | No DotAmi estimate. Blanks are counted. No times at all: no time field, gauge, sum, estimate, timeline or date forecast (K9, 2026-10-17). Every number the Lens states matches a tool result: DotAmi's data, a found price with its link, or the calculator (lens-comparisons.md § 6.4). No vendor estimate in v1 (K4 A); anything beyond v1 waits on S2.5.26. Official wage ranges are a sourced figure, shown with their geography level, reference period and source, never added to anything (K5 B; CLAUDE.md's rule says so since 2026-10-20); no outlook ratings (K5 C not picked) |
 | Not legal or tax advice (:41-43) | "Most tax-efficient" goes to the questions for the accountant; comparisons are before tax |
 | Scope guard; powerful Lens actions off until switched on (:218-222) | Live look-ups sit behind the Lens's planned connector switch and warning. DotAmi runs no scraper |
 | Agent connects; DotAmi holds no logins (2026-09-24) | **Relaxed by the maintainer, 2026-10-16 (K2 B)** for vendor keys and sign-ins, OAuth such as Google sign-in included, where it gives people better information (§ 5.9); the key stays in the keychain, read by DotAmi's Lens only at look-up time, as [9a] does for the model key |
@@ -749,6 +749,8 @@ future-cockpit.md keep government wage and industry figures off a real person's 
 - *Recommended: B.* Past, official and keyed as the kit is; the "build out" with the least rule change.
 - **Answered 2026-10-16 (the maintainer): B** (Plus official wage ranges by job and economic region, each
   labelled with its real geography level). No note. Applied: § 4.2 (no outlook row), tasks 25e, 25h, 25i.
+  Rule and doc text (task 25r's K5 part, moved into phase 2) written 2026-10-20: CLAUDE.md's numbers rule,
+  future-cockpit.md decision 2, § 12 and § 13 (its "typical numbers" item closed) now say the same.
 
 **K6. What does a person see for a job with no written road?** *Why it matters:* this is what "applied to any job
 or career path" means on screen.
@@ -859,7 +861,7 @@ times are prose today, and the cockpit allows only months to the person's own da
 | S2.5.25o | Lawyer questions | Open-data names questions added to the 23l page | 0.5 | **Waits on S2.5.26** (K3 on hold) |
 | S2.5.25p | Live look-ups on the person's account | After [9g]: replaces 22p and 23m; `lens-live` sources only; alphabetical; `keepLimit` per field enforced in code; `compareAllowed: no` sources refused by the comparison function; vendor results never saved in the Lens conversation (test); `never-automated` domains unreachable; key or sign-in in the keychain; `SENT_ELSEWHERE` entries; log line. Named-business part (Google Places field masks with no rating fields; Grounding Lite's display conditions and model-use confirmation; Yelp): written only after S2.5.26, kept here as research inputs | 3 (after Lens) | K2 B; **the named-business part (Google Places, Yelp) waits on S2.5.26** (K3 on hold) |
 | S2.5.25q | Labelled vendor estimates | Only if S2.5.26 and a later call bring it back, and a vendor returns a figure: vendor, account and date shown; never kept past the limit or summed; dated CLAUDE.md exception | 1.5 (after Lens) | **Waits on S2.5.26** (K4: A for v1) |
-| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, § 12 and the #175 docs match the answers, dated: the 2026-09-24 logins reading relaxed (K2), wage rows (K5), sorting where decision 3 names (K7), no times at all (K9, 2026-10-17; future-cockpit :830 and :1733 stay as they are) | 0.5 | K2, K5, K7, K9 |
+| S2.5.25r | Rule and doc text | CLAUDE.md, future-cockpit decision 2, § 12 and the #175 docs match the answers, dated: the 2026-09-24 logins reading relaxed (K2), wage rows (K5), sorting where decision 3 names (K7), no times at all (K9, 2026-10-17; future-cockpit :830 and :1733 stay as they are). The wage-rows part (K5) was done on its own on 2026-10-20, ahead of the rest | 0.5 | K2, K5, K7, K9 |
 
 On the answers of 2026-10-16 (K1 A, K2 B, K3 on hold, K4 A for v1, K5 B, K6 A, K7 A, K8 A, K9 A) and
 2026-10-17 (no times, so 25j's 2.5 days are dropped), the kit is about 18.5 build days before the Lens
