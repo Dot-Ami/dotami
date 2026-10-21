@@ -29,6 +29,7 @@ import { FieldRow, Pill, WordMark } from "@/components/ui";
 import { allFolded } from "@/lib/cockpit/folds";
 import { profileRows, ventureLine } from "@/lib/cockpit/profile-rows";
 import {
+  answerEquipment,
   answerReceipt,
   compareEndings,
   forksToCompare,
@@ -771,7 +772,7 @@ export function CockpitPage({ initialScenario, pinned = false, example }: Cockpi
         ],
         value: answered === undefined ? null : answered ? "yes" : "no",
       };
-      save = (value) => viaScenario({ ...scenario, profile: { ...scenario.profile, capitalPurchasePlanned: value === "yes" } });
+      save = (value) => viaScenario(answerEquipment(scenario, value === "yes"));
     } else if (question === "incorporate-at") {
       title = q.incorporateAt.question;
       why = q.incorporateAt.why;

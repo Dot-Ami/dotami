@@ -38,7 +38,8 @@ import { waitForReact } from "../tests/helpers/react-ready";
 import { BUDGETS, WIDTHS, WINDOWS_EXTRA, type Clutter, type ScreenId } from "./budgets";
 import { measurePage, type Measured } from "./clutter-measure";
 
-const Q1 = /what do you want your work and life to look like/;
+// Case-blind: the question starts with "What" since 2026-10-20 (it began "In a few years, what …").
+const Q1 = /what do you want your work and life to look like/i;
 const Q2 = "Are you after a business of your own, a job or career, or both?";
 const Q3 = "Which province or territory are you in?";
 

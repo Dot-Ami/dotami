@@ -13,6 +13,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { createDatabaseClient } from "../lib/db/client";
 import { generalRoadV2026, roadApprenticeToOwnShopAB } from "../lib/engines/roads/v2026";
+import { firstSaveForPickedFuture, scenarioForPickedFuture } from "../lib/front-door/start-future";
 import { branchDecisions } from "../lib/scenarios/branches";
 
 import { lookCloserItems, showRail, showRoadAhead, showWhatIfBar } from "./cockpit-calm";
@@ -260,4 +261,60 @@ test("on the first written future: compare its two endings, This is mine, kept a
   await pick.getByRole("button", { name: "Take back" }).click();
   await expect(told(page).getByRole("status")).toContainText(`Because you took back your pick at “${fork.label}”`);
   await expect(notTold(page).getByText(`Which ending at “${fork.label}”?`)).toBeVisible();
+});
+
+// The idea harness's bug of 2026-10-17 (fixed 2026-10-20): on a future picked on Pick a future the answer
+// showed for a moment, "Not told yet" kept asking, and the save dropped it.
+test("on a future picked on Pick a future, the equipment answer is kept after a reload, and taken back it is asked again", async ({ page }) => {
+  // Saved the way Pick a future saves a future ("Not here yet?" opens the general road): nothing but the
+  // place and the road, with the kind of venture, equipment and the sales targets not said.
+  const scenario = scenarioForPickedFuture(
+    { road: generalRoadV2026, place: "CA-AB", name: "Invented — picked equipment test" },
+    `picked-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  );
+  const saved = await page.request.post("/api/scenario/save", { data: { scenario, ...firstSaveForPickedFuture(generalRoadV2026, null) } });
+  expect(saved.ok()).toBe(true);
+  const ventureId = ((await saved.json()) as { ventureId: string }).ventureId;
+  const keptRow = () =>
+    withE2eDb((db) => db.venture.findUniqueOrThrow({ where: { id: ventureId }, select: { capitalPurchasePlanned: true, notSaid: true } }));
+  expect(await keptRow()).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-targets"] });
+
+  await page.goto(`/cockpit?venture=${ventureId}`);
+  await showRail(page);
+  const question = "Are you buying equipment, a vehicle or tools?";
+  const said = "You told us you're buying equipment, a vehicle or tools";
+  const showAll = async () => {
+    const more = notTold(page).getByRole("button", { name: /^\d+ more$/ });
+    if ((await more.count()) > 0) await more.click();
+  };
+
+  // Answered Yes in its box: the receipt names the answer, the told list has it, and the question goes.
+  await showAll();
+  const row = notTold(page).getByRole("listitem").filter({ hasText: question });
+  await row.getByRole("button", { name: /^Answer/ }).click();
+  await row.getByLabel("Yes", { exact: true }).check();
+  await row.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(told(page).getByRole("status")).toContainText(`Because ${said.charAt(0).toLowerCase()}${said.slice(1)}`);
+  await expect(told(page).getByText(said, { exact: true })).toBeVisible();
+  await showAll();
+  await expect(notTold(page).getByText(question)).toHaveCount(0);
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+
+  // The data file holds it, and only equipment came off the not-said list.
+  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: true, notSaid: ["venture-type", "sales-targets"] });
+  await page.reload();
+  await expect(told(page).getByText(said, { exact: true })).toBeVisible();
+  await showAll();
+  await expect(notTold(page).getByText(question)).toHaveCount(0);
+
+  // Taken back: not said again, as the future was picked, and the question is back after a reload.
+  await told(page).getByRole("listitem").filter({ hasText: said }).getByRole("button", { name: /^Take back/ }).click();
+  // Equipment always has a line in road evaluation (answered or not), so the receipt names the line it is back to.
+  await expect(told(page).getByRole("status")).toContainText("Because buying equipment, a vehicle or tools is not answered yet, so the rules read it as no");
+  await expect(page.getByText(/^Saved · /)).toBeVisible();
+  await expect.poll(keptRow).toEqual({ capitalPurchasePlanned: false, notSaid: ["venture-type", "equipment", "sales-targets"] });
+  await page.reload();
+  await expect(told(page).getByText(said, { exact: true })).toHaveCount(0);
+  await showAll();
+  await expect(notTold(page).getByText(question)).toBeVisible();
 });
